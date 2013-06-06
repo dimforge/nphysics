@@ -1,0 +1,3 @@
+[submodule "ncollide"]
+	path = ncollide
+	url = git://github.com/sebcrozet/ncollide
