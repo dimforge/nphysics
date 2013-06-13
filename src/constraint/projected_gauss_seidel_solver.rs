@@ -26,19 +26,30 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
   // warm start
   for uint::iterate(0u, num_equations) |i|
   {
-    let b1 = idx[i * 2];
-    let b2 = idx[i * 2 + 1];
+    let b1 = unsafe { idx.unsafe_get(i * 2)     };
+    let b2 = unsafe { idx.unsafe_get(i * 2 + 1) };
 
     if (b1 >= 0)
     {
       for uint::iterate(0u, sparcity) |j|
-      { MJLambda[b1 as uint * sparcity + j] += MJ[i * sparcity * 2 + j] * lambda[i]; }
+      {
+        unsafe {
+          *MJLambda.unsafe_mut_ref(b1 as uint * sparcity + j) +=
+            MJ.unsafe_get(i * sparcity * 2 + j) * lambda.unsafe_get(i);
+        }
+      }
     }
 
     if (b2 >= 0)
     {
       for uint::iterate(0u, sparcity) |j|
-      { MJLambda[b2 as uint * sparcity + j] += MJ[i * sparcity * 2 + sparcity + j] * lambda[i]; }
+      {
+        unsafe {
+          *MJLambda.unsafe_mut_ref(b2 as uint * sparcity + j) +=
+            MJ.unsafe_get(i * sparcity * 2 + sparcity + j) *
+            lambda.unsafe_get(i);
+        }
+      }
     }
   }
 
@@ -50,13 +61,19 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
     /*
      * J and MJ^t have the same sparcity
      */
-    d[i] = Zero::zero();
+    unsafe {
+      d.unsafe_set(i, Zero::zero());
+    }
 
     for uint::iterate(0u, sparcity) |j|
     {
-      d[i] +=
-        J[i * sparcity * 2 + j] * MJ[i * sparcity * 2 + j]
-        + J[i * sparcity * 2 + j + sparcity] * MJ[sparcity + i * sparcity * 2 + j];
+      unsafe {
+        *d.unsafe_mut_ref(i) +=
+          J.unsafe_get(i * sparcity * 2 + j) *
+          MJ.unsafe_get(i * sparcity * 2 + j)
+          + J.unsafe_get(i * sparcity * 2 + j + sparcity) *
+            MJ.unsafe_get(sparcity + i * sparcity * 2 + j);
+      }
     }
   }
 
@@ -67,48 +84,74 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
   {
     for uint::iterate(0u, num_equations) |i|
     {
-      let b1 = idx[i * 2 + 0] * (sparcity as int);
-      let b2 = idx[i * 2 + 1] * (sparcity as int);
+      let b1 = unsafe { idx.unsafe_get(i * 2 + 0) } * (sparcity as int);
+      let b2 = unsafe { idx.unsafe_get(i * 2 + 1) } * (sparcity as int);
 
-      let mut d_lambda_i = b[i];
+      let mut d_lambda_i = unsafe { b.unsafe_get(i) };
 
       if (b1 >= 0)
       {
         for uint::iterate(0u, sparcity) |j|
-        { d_lambda_i -= J[2 * sparcity * i + j] * MJLambda[b1 as uint + j] }
+        {
+          unsafe {
+            d_lambda_i -= J.unsafe_get(2 * sparcity * i + j) *
+                          MJLambda.unsafe_get(b1 as uint + j)
+          }
+        }
       }
 
       if (b2 >= 0)
       {
         for uint::iterate(0u, sparcity) |j|
-        { d_lambda_i -= J[2 * sparcity * i + sparcity + j] * MJLambda[b2 as uint + j] }
+        {
+          unsafe {
+            d_lambda_i -= J.unsafe_get(2 * sparcity * i + sparcity + j) *
+                          MJLambda.unsafe_get(b2 as uint + j)
+          }
+        }
       }
 
-      d_lambda_i /= d[i];
+      d_lambda_i /= unsafe { d.unsafe_get(i) };
 
       /*
        * clamp the value such that: lambda- <= lambda <= lambda+
        * (this is the ``projected'' flavour of Gauss-Seidel
        */
-      let lambda_i_0 = lambda[i];
+      let lambda_i_0 = unsafe { lambda.unsafe_get(i) };
 
       // FIXME: clamp takes pointers as arguments… would it be faster if it did
       // not?
-      lambda[i] = (lambda_i_0 + d_lambda_i).clamp(&bounds[i * 2], &bounds[i * 2 + 1]);
+      unsafe {
+        lambda.unsafe_set(
+          i,
+          (lambda_i_0 + d_lambda_i).clamp(&bounds.unsafe_get(i * 2),
+                                          &bounds.unsafe_get(i * 2 + 1))
+        );
+      }
 
-      d_lambda_i = lambda[i] - lambda_i_0;
+      d_lambda_i = unsafe { lambda.unsafe_get(i) } - lambda_i_0;
 
 
       if (b1 >= 0)
       {
         for uint::iterate(0u, sparcity) |j|
-        { MJLambda[b1 as uint + j] += d_lambda_i * MJ[i * sparcity * 2 + j] }
+        {
+          unsafe {
+            *MJLambda.unsafe_mut_ref(b1 as uint + j) +=
+              d_lambda_i * MJ.unsafe_get(i * sparcity * 2 + j)
+          }
+        }
       }
 
       if (b2 >= 0)
       {
         for uint::iterate(0u, sparcity) |j|
-        { MJLambda[b2 as uint + j] += d_lambda_i * MJ[i * sparcity * 2 + sparcity + j] }
+        {
+          unsafe {
+            *MJLambda.unsafe_mut_ref(b2 as uint + j) +=
+              d_lambda_i * MJ.unsafe_get(i * sparcity * 2 + sparcity + j)
+          }
+        }
       }
     }
   }
