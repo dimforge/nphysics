@@ -24,7 +24,7 @@ You will need the last rust compiler from the incomming branch.
 I pull the compiler and fix my code almost every days. If you encounter
 problems, make sure you have the last version.
 
-The simplest way to build **ndemo** and all its dependencies is to do a
+The simplest way to build **nphysics** and all its dependencies is to do a
 recursive clone:
 
 
