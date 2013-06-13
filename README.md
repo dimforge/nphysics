@@ -1,10 +1,11 @@
 nphysics
 ========
+**nphysics** is a n-dimensional physics engine for games and animations.
 
-The most distinctive feature is its genericity wrt the simulation
+Its most distinctive feature is its genericity wrt the simulation
 dimension. That means you can use it for both 2-dimensional physics and
-3-dimensional physics. Higher dimensions should be possible but never tested
-(it you happen to have a 4-dimensional renderer let me know).
+3-dimensional physics. Higher dimensions should be possible but I never tested
+(it you happen to have a 4-dimensional renderer let me know)!
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
