@@ -2,6 +2,7 @@ nalgebra_lib_path=./ncollide/nalgebra/lib
 ncollide_lib_path=./ncollide/lib
 
 all:
+	mkdir -p lib
 	rust build -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/nphysics.rc --out-dir lib --opt-level 3
 
 deps:
