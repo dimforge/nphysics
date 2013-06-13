@@ -1,3 +1,4 @@
+// FIXME: define that on nalgebra?
 pub trait Transformable<M>
 {
   fn local_to_world(&self) -> M;

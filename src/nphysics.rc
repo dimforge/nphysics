@@ -7,20 +7,34 @@
 
 extern mod std;
 extern mod nalgebra;
-
-pub use world::world::World;
+extern mod ncollide;
 
 pub mod world
 {
   pub mod world;
+}
+
+pub mod graph
+{
+  pub mod accumulator;
   pub mod collision_graph;
+  pub mod island_accumulator;
 }
 
 pub mod body
 {
+  pub mod can_move;
+  pub mod volumetric;
   pub mod transformable;
   pub mod dynamic;
   pub mod rigid_body;
+}
+
+pub mod proxy
+{
+  pub mod has_proxy;
+  pub mod index_proxy;
+  pub mod bounding_volume_proxy;
 }
 
 pub mod integrator
@@ -32,7 +46,18 @@ pub mod integrator
   pub mod composite_integrator;
 }
 
+pub mod constraint
+{
+  pub mod constraint_solver;
+  pub mod projected_gauss_seidel_solver;
+  pub mod contact_equation;
+  pub mod contact_with_impulse;
+  pub mod accumulated_impulse_solver;
+  pub mod geometric_contact_with_impulse;
+}
+
 pub mod dim2
 {
   pub mod aliases;
+  pub mod volumetric_impl;
 }

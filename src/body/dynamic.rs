@@ -1,4 +1,4 @@
-pub trait Dynamic<T, LV, AV, II>
+pub trait Dynamic<N, LV, AV, II>
 {
   fn lin_vel(&self) -> LV;
   fn set_lin_vel(&mut self, &LV);
@@ -6,8 +6,8 @@ pub trait Dynamic<T, LV, AV, II>
   fn ang_vel(&self) -> AV;
   fn set_ang_vel(&mut self, &AV);
 
-  fn inv_mass(&self) -> T;
-  fn set_inv_mass(&mut self, &T);
+  fn inv_mass(&self) -> N;
+  fn set_inv_mass(&mut self, &N);
 
   fn inv_inertia(&self) -> II;
   fn set_inv_inertia(&mut self, &II);

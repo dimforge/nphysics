@@ -1,4 +1,4 @@
-use std::num::One;
+use std::num::{One, Zero};
 use nalgebra::traits::workarounds::scalar_op::ScalarMul;
 use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::translation::Translation;
@@ -7,33 +7,36 @@ use body::transformable::Transformable;
 use integrator::integrator::Integrator;
 use integrator::euler;
 
-struct BodyGravityIntegrator<LV, AV, T, RB, II, M>
+struct BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
   linear_gravity:  LV,
   angular_gravity: AV
 }
 
-impl<LV: Copy, AV: Copy, T, RB, II, M>
-BodyGravityIntegrator<LV, AV, T, RB, II, M>
+impl<LV: Copy, AV: Copy, N, RB, II, M>
+BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
   pub fn new(&lin_g: &LV, &ang_g: &AV) ->
-         BodyGravityIntegrator<LV, AV, T, RB, II, M>
+         BodyGravityIntegrator<LV, AV, N, RB, II, M>
   { BodyGravityIntegrator { linear_gravity: lin_g, angular_gravity: ang_g } }
 }
 
-impl<RB: Dynamic<T, LV, AV, II> + Transformable<M>,
+impl<RB: Dynamic<N, LV, AV, II> + Transformable<M>,
      M:  Translation<LV> + Rotation<AV> + One,
-     LV: Add<LV, LV> + ScalarMul<T> + Neg<LV>,
-     AV: Add<AV, AV> + ScalarMul<T>,
-     T:  Copy,
+     LV: Add<LV, LV> + ScalarMul<N> + Neg<LV>,
+     AV: Add<AV, AV> + ScalarMul<N>,
+     N:  Zero + Copy,
      II>
-    Integrator<T, RB> for BodyGravityIntegrator<LV, AV, T, RB, II, M>
+    Integrator<N, RB> for BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
-  fn integrate(&self, dt: T, b: &mut RB)
+  fn integrate(&self, dt: N, b: &mut RB)
   {
-    b.set_ext_lin_force(&self.linear_gravity);
-    b.set_ext_ang_force(&self.angular_gravity);
-    euler::integrate_body_velocity(dt, b);
-    euler::integrate_body_position(dt, b);
+    if (!b.inv_mass().is_zero())
+    {
+      b.set_ext_lin_force(&self.linear_gravity);
+      b.set_ext_ang_force(&self.angular_gravity);
+      euler::integrate_body_velocity(dt, b);
+      euler::integrate_body_position(dt, b);
+    }
   }
 }
