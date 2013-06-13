@@ -8,6 +8,7 @@ use body::transformable::Transformable;
 
 // FIXME: find a way to do the sampling: v *= 0.9998
 
+#[inline(always)]
 fn integrate_force<T, V: Add<V, V> + ScalarMul<T>>(dt: T, f: &V, v: &V) -> V
 { v + f.scalar_mul(&dt) }
 

@@ -105,34 +105,46 @@ RigidBody<S, N, M, LV, AV, II>
 impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy>
     Dynamic<N, LV, AV, II> for RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn lin_vel(&self) -> LV
   { self.lin_vel }
+  #[inline(always)]
   fn set_lin_vel(&mut self, &lv: &LV)
   { self.lin_vel = lv }
 
+  #[inline(always)]
   fn ang_vel(&self) -> AV
   { self.ang_vel }
+  #[inline(always)]
   fn set_ang_vel(&mut self, &av: &AV)
   { self.ang_vel = av }
 
+  #[inline(always)]
   fn inv_mass(&self) -> N
   { self.inv_mass }
+  #[inline(always)]
   fn set_inv_mass(&mut self, &m: &N)
   { self.inv_mass = m }
 
+  #[inline(always)]
   fn inv_inertia(&self) -> II
   { self.inv_inertia }
+  #[inline(always)]
   fn set_inv_inertia(&mut self, &ii: &II)
   { self.inv_inertia = ii }
 
   // FIXME: create another trait for forces?
+  #[inline(always)]
   fn ext_lin_force(&self) -> LV
   { self.lin_force }
+  #[inline(always)]
   fn set_ext_lin_force(&mut self, &lf: &LV)
   { self.lin_force = lf }
 
+  #[inline(always)]
   fn ext_ang_force(&self) -> AV
   { self.ang_force }
+  #[inline(always)]
   fn set_ext_ang_force(&mut self, &af: &AV)
   { self.ang_force = af }
 }
@@ -146,12 +158,15 @@ impl<S: gt::Transformable<M, S>,
 Transformable<M> for
     RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn local_to_world(&self) -> M
   { self.local_to_world }
 
+  #[inline(always)]
   fn world_to_local(&self) -> M
   { self.world_to_local }
 
+  #[inline(always)]
   fn append(&mut self, &to_append: &M)
   {
     self.local_to_world *= to_append;
@@ -168,9 +183,11 @@ impl<S: Copy + gt::Transformable<M, S>,
      II: Copy + Mul<II, II>>
     Translation<LV> for RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn translation(&self) -> LV
   { self.local_to_world.translation() }
 
+  #[inline(always)]
   fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II>
   {
     let mut &cpy = copy self;
@@ -180,6 +197,7 @@ impl<S: Copy + gt::Transformable<M, S>,
     cpy
   }
 
+  #[inline(always)]
   fn translate(&mut self, trans: &LV)
   {
     self.local_to_world.translate(trans);
@@ -195,9 +213,11 @@ impl<S:  Copy + gt::Transformable<M, S>,
      II: Copy + Mul<II, II>>
     Rotation<AV> for RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn rotation(&self) -> AV
   { self.local_to_world.rotation() }
 
+  #[inline(always)]
   fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II>
   {
     let mut &cpy = copy self;
@@ -207,6 +227,7 @@ impl<S:  Copy + gt::Transformable<M, S>,
     cpy
   }
 
+  #[inline(always)]
   fn rotate(&mut self, rot: &AV)
   {
     self.local_to_world.rotate(rot);
@@ -217,27 +238,33 @@ impl<S:  Copy + gt::Transformable<M, S>,
 impl<S, N, M, LV, AV, II>
     HasProxy<IndexProxy> for RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn proxy<'l>(&'l self) -> &'l IndexProxy
   { &'l self.index }
 
+  #[inline(always)]
   fn proxy_mut<'l>(&'l mut self) -> &'l mut IndexProxy
   { &mut self.index }
 
+  #[inline(always)]
   fn set_proxy(&mut self, index: &IndexProxy)
   { self.index = *index }
 }
 
 impl<S, N, M, LV, AV, II> HasGeom<S> for RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn geom<'r>(&'r self) -> &'r S
   { &'r self.transformed_geom }
 
+  #[inline(always)]
   fn geom_mut<'r>(&'r mut self) -> &'r mut S
   { &'r mut self.transformed_geom }
 }
 
 impl<S, N, M, LV, AV, II> CanMove for RigidBody<S, N, M, LV, AV, II>
 {
+  #[inline(always)]
   fn can_move(&self) -> bool
   {
     match self.state
