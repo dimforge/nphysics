@@ -1,3 +1,6 @@
+nphysics
+========
+
 The most distinctive feature is its genericity wrt the simulation
 dimension. That means you can use it for both 2-dimensional physics and
 3-dimensional physics. Higher dimensions should be possible but never tested
