@@ -1,5 +1,4 @@
 use std::num::{Zero, Orderable};
-use std::uint;
 use std::vec;
 use nalgebra::traits::division_ring::DivisionRing;
 
@@ -24,39 +23,49 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
    * compute MJLambda = MJ * lambda
    */
   // warm start
-  for uint::iterate(0u, num_equations) |i|
+  let mut i = 0;
+  while(i != num_equations)
   {
     let b1 = unsafe { idx.unsafe_get(i * 2)     };
     let b2 = unsafe { idx.unsafe_get(i * 2 + 1) };
 
     if (b1 >= 0)
     {
-      for uint::iterate(0u, sparcity) |j|
+      let mut j = 0;
+      while(j != sparcity)
       {
         unsafe {
           *MJLambda.unsafe_mut_ref(b1 as uint * sparcity + j) +=
             MJ.unsafe_get(i * sparcity * 2 + j) * lambda.unsafe_get(i);
         }
+
+        j += 1;
       }
     }
 
     if (b2 >= 0)
     {
-      for uint::iterate(0u, sparcity) |j|
+      let mut j = 0;
+      while(j != sparcity)
       {
         unsafe {
           *MJLambda.unsafe_mut_ref(b2 as uint * sparcity + j) +=
             MJ.unsafe_get(i * sparcity * 2 + sparcity + j) *
             lambda.unsafe_get(i);
         }
+
+        j += 1;
       }
     }
+
+    i += 1;
   }
 
   /*
    * init JB's diagonal
    */
-  for uint::iterate(0u, num_equations) |i|
+  let mut i = 0;
+  while (i != num_equations)
   {
     /*
      * J and MJ^t have the same sparcity
@@ -65,7 +74,8 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
       d.unsafe_set(i, Zero::zero());
     }
 
-    for uint::iterate(0u, sparcity) |j|
+    let mut j = 0;
+    while(j != sparcity)
     {
       unsafe {
         *d.unsafe_mut_ref(i) +=
@@ -74,15 +84,22 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
           + J.unsafe_get(i * sparcity * 2 + j + sparcity) *
             MJ.unsafe_get(sparcity + i * sparcity * 2 + j);
       }
+
+      j += 1;
     }
+
+    i += 1;
   }
 
   /*
    * solve the system
    */
-  for num_iterations.times
+
+  let mut time = 0;
+  while(time != num_iterations)
   {
-    for uint::iterate(0u, num_equations) |i|
+    let mut i = 0;
+    while(i != num_equations)
     {
       let b1 = unsafe { idx.unsafe_get(i * 2 + 0) } * (sparcity as int);
       let b2 = unsafe { idx.unsafe_get(i * 2 + 1) } * (sparcity as int);
@@ -91,23 +108,29 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
 
       if (b1 >= 0)
       {
-        for uint::iterate(0u, sparcity) |j|
+        let mut j = 0;
+        while(j != sparcity)
         {
           unsafe {
             d_lambda_i -= J.unsafe_get(2 * sparcity * i + j) *
                           MJLambda.unsafe_get(b1 as uint + j)
           }
+
+          j += 1;
         }
       }
 
       if (b2 >= 0)
       {
-        for uint::iterate(0u, sparcity) |j|
+        let mut j = 0;
+        while(j != sparcity)
         {
           unsafe {
             d_lambda_i -= J.unsafe_get(2 * sparcity * i + sparcity + j) *
                           MJLambda.unsafe_get(b2 as uint + j)
           }
+
+          j += 1;
         }
       }
 
@@ -134,26 +157,36 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
 
       if (b1 >= 0)
       {
-        for uint::iterate(0u, sparcity) |j|
+        let mut j = 0;
+        while(j != sparcity)
         {
           unsafe {
             *MJLambda.unsafe_mut_ref(b1 as uint + j) +=
               d_lambda_i * MJ.unsafe_get(i * sparcity * 2 + j)
           }
+
+          j += 1;
         }
       }
 
       if (b2 >= 0)
       {
-        for uint::iterate(0u, sparcity) |j|
+        let mut j = 0;
+        while(j != sparcity)
         {
           unsafe {
             *MJLambda.unsafe_mut_ref(b2 as uint + j) +=
               d_lambda_i * MJ.unsafe_get(i * sparcity * 2 + sparcity + j)
           }
+
+          j += 1;
         }
       }
+
+      i += 1;
     }
+
+    time += 1;
   }
 
   MJLambda
