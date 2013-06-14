@@ -7,7 +7,7 @@ dimension. That means you can use it for both 2-dimensional physics and
 3-dimensional physics. Higher dimensions should be possible but I never tested
 (it you happen to have a 4-dimensional renderer let me know)!
 
-See the **ndemo** project (git://github.com/sebcrozet/ndemo.git) for
+See the **ndemo** project (https://github.com/sebcrozet/ndemo) for
 demonstrations.
 
 ## Why another physics engine?
