@@ -9,11 +9,10 @@ use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
 use nalgebra::traits::rlmul::RMul;
-use ncollide::utils::has_proxy::HasProxy;
 use body::dynamic::Dynamic;
 use body::transformable::Transformable;
 use body::can_move::CanMove;
-use constraint::index_proxy::IndexProxy;
+use constraint::index_proxy::HasIndexProxy;
 use constraint::contact_with_impulse::ContactWithImpulse;
 use constraint::contact_equation;
 use constraint::constraint_solver::ConstraintSolver;
@@ -39,7 +38,7 @@ impl<C:  ContactWithImpulse<LV, N>,
      LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
      AV: Flatten<N> + VectorSpace<N> + Dot<N>,
      N:  DivisionRing + Orderable + Bounded + Copy,
-     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasProxy<IndexProxy> +
+     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
          Transformable<M> + CanMove,
      II: RMul<AV>,
      M: Translation<LV> + Rotation<AV> + One>
@@ -230,7 +229,7 @@ impl<C:  ContactWithImpulse<LV, N>,
      LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
      AV: Flatten<N> + VectorSpace<N> + Dot<N>,
      N:  DivisionRing + Orderable + Bounded + Copy,
-     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasProxy<IndexProxy> +
+     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
          Transformable<M> + CanMove,
      II: RMul<AV>,
      M: Translation<LV> + Rotation<AV> + One>

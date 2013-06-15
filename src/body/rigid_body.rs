@@ -3,14 +3,18 @@ use nalgebra::traits::inv::Inv;
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotation;
 // FIXME: use nalgebra::traits::delta_transform::DeltaTransform;
-use ncollide::utils::has_proxy::HasProxy;
+use ncollide::broad::brute_force_bounding_volume_broad_phase::BoundingVolumeProxy;
+use ncollide::broad::brute_force_bounding_volume_broad_phase::HasBoundingVolumeProxy;
+use ncollide::bounding_volume::has_bounding_volume::HasBoundingVolume;
 use gt = ncollide::geom::transformable;
 use ncollide::geom::has_geom::HasGeom;
+use ncollide::utils::exact::Exact;
+use ncollide::utils::default::Default;
 use body::volumetric::Volumetric;
 use body::dynamic::Dynamic;
 use body::transformable::Transformable;
 use body::can_move::CanMove;
-use constraint::index_proxy::IndexProxy;
+use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
 pub enum RigidBodyState {
   Static,
@@ -19,7 +23,7 @@ pub enum RigidBodyState {
 }
 
 
-pub struct RigidBody<S, N, M, LV, AV, II>
+pub struct RigidBody<S, N, M, LV, AV, II, BPP>
 {
   priv state:            RigidBodyState,
   priv geom:             S,
@@ -34,11 +38,13 @@ pub struct RigidBody<S, N, M, LV, AV, II>
   priv lin_force:        LV,
   priv ang_force:        AV,
   priv index:            IndexProxy,
+  priv bp_proxy:         BPP
 }
 
 impl<S: gt::Transformable<M, S>, N, M/*FIXME: : DeltaTransform<II>*/, LV, AV,
-     II: Mul<II, II> + Copy>
-RigidBody<S, N, M, LV, AV, II>
+     II: Mul<II, II> + Copy,
+     BPP>
+RigidBody<S, N, M, LV, AV, II, BPP>
 {
   fn moved(&mut self)
   {
@@ -51,15 +57,16 @@ RigidBody<S, N, M, LV, AV, II>
   }
 }
 
-impl<S:  gt::Transformable<M, S> + Volumetric<N, II>,
-     N:  One + Zero + Div<N, N> + Mul<N, N>,
-     M:  One, // FIXME: + DeltaTransform<II>,
-     LV: Zero,
-     AV: Zero,
-     II: One + Zero + Inv + Mul<II, II> + Copy>
-RigidBody<S, N, M, LV, AV, II>
+impl<S:   gt::Transformable<M, S> + Volumetric<N, II>,
+     N:   One + Zero + Div<N, N> + Mul<N, N>,
+     M:   One, // FIXME: + DeltaTransform<II>,
+     LV:  Zero,
+     AV:  Zero,
+     II:  One + Zero + Inv + Mul<II, II> + Copy,
+     BPP: Default>
+RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  pub fn new(geom: S, density: N, state: RigidBodyState) -> RigidBody<S, N, M, LV, AV, II>
+  pub fn new(geom: S, density: N, state: RigidBodyState) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
     let (inv_mass, inv_inertia) =
       match state
@@ -93,7 +100,8 @@ RigidBody<S, N, M, LV, AV, II>
         inv_inertia:      inv_inertia,
         lin_force:        Zero::zero(),
         ang_force:        Zero::zero(),
-        index:            IndexProxy::new()
+        index:            IndexProxy::new(),
+        bp_proxy:         Default::default()
       };
 
     res.moved();
@@ -102,8 +110,8 @@ RigidBody<S, N, M, LV, AV, II>
   }
 }
 
-impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy>
-    Dynamic<N, LV, AV, II> for RigidBody<S, N, M, LV, AV, II>
+impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy, BPP>
+    Dynamic<N, LV, AV, II> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn lin_vel(&self) -> LV
@@ -154,9 +162,10 @@ impl<S: gt::Transformable<M, S>,
      M: Copy + Inv + Mul<M, M>, // FIXME: + DeltaTransform<II>,
      LV,
      AV,
-     II: Mul<II, II> + Copy>
+     II: Mul<II, II> + Copy,
+     BPP>
 Transformable<M> for
-    RigidBody<S, N, M, LV, AV, II>
+    RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn local_to_world(&self) -> M
@@ -180,15 +189,16 @@ impl<S: Copy + gt::Transformable<M, S>,
      M: Copy + Translation<LV>, // FIXME: + DeltaTransform<II>,
      LV: Copy,
      AV: Copy,
-     II: Copy + Mul<II, II>>
-    Translation<LV> for RigidBody<S, N, M, LV, AV, II>
+     II: Copy + Mul<II, II>,
+     BPP: Copy>
+    Translation<LV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn translation(&self) -> LV
   { self.local_to_world.translation() }
 
   #[inline(always)]
-  fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II>
+  fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
     let mut &cpy = copy self;
 
@@ -210,15 +220,16 @@ impl<S:  Copy + gt::Transformable<M, S>,
      M:  Copy + Rotation<AV>, // FIXME: + DeltaTransform<II>,
      LV: Copy,
      AV: Copy,
-     II: Copy + Mul<II, II>>
-    Rotation<AV> for RigidBody<S, N, M, LV, AV, II>
+     II: Copy + Mul<II, II>,
+     BPP: Copy>
+    Rotation<AV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn rotation(&self) -> AV
   { self.local_to_world.rotation() }
 
   #[inline(always)]
-  fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II>
+  fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
     let mut &cpy = copy self;
 
@@ -235,19 +246,7 @@ impl<S:  Copy + gt::Transformable<M, S>,
   }
 }
 
-impl<S, N, M, LV, AV, II>
-    HasProxy<IndexProxy> for RigidBody<S, N, M, LV, AV, II>
-{
-  #[inline(always)]
-  fn proxy<'l>(&'l self) -> &'l IndexProxy
-  { &'l self.index }
-
-  #[inline(always)]
-  fn proxy_mut<'l>(&'l mut self) -> &'l mut IndexProxy
-  { &mut self.index }
-}
-
-impl<S, N, M, LV, AV, II> HasGeom<S> for RigidBody<S, N, M, LV, AV, II>
+impl<S, N, M, LV, AV, II, BPP> HasGeom<S> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn geom<'r>(&'r self) -> &'r S
@@ -258,7 +257,7 @@ impl<S, N, M, LV, AV, II> HasGeom<S> for RigidBody<S, N, M, LV, AV, II>
   { &'r mut self.transformed_geom }
 }
 
-impl<S, N, M, LV, AV, II> CanMove for RigidBody<S, N, M, LV, AV, II>
+impl<S, N, M, LV, AV, II, BPP> CanMove for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn can_move(&self) -> bool
@@ -269,4 +268,36 @@ impl<S, N, M, LV, AV, II> CanMove for RigidBody<S, N, M, LV, AV, II>
       _       => false
     }
   }
+}
+
+impl<S: HasBoundingVolume<BV>, N, M, LV, AV, II, BPP, BV>
+    HasBoundingVolume<BV> for RigidBody<S, N, M, LV, AV, II, BPP>
+{
+  fn bounding_volume(&self) -> BV
+  { self.transformed_geom.bounding_volume() }
+}
+
+// Implementation of proxys
+impl<S, N, M, LV, AV, II, BPP>
+    HasIndexProxy for RigidBody<S, N, M, LV, AV, II, BPP>
+{
+  #[inline(always)]
+  fn proxy<'l>(&'l self) -> &'l IndexProxy
+  { &'l self.index }
+
+  #[inline(always)]
+  fn proxy_mut<'l>(&'l mut self) -> &'l mut IndexProxy
+  { &mut self.index }
+}
+
+impl<S, N, M, LV, AV, II, BPP: Exact<BoundingVolumeProxy<BV>>, BV>
+    HasBoundingVolumeProxy<BV> for RigidBody<S, N, M, LV, AV, II, BPP>
+{
+  #[inline(always)]
+  fn proxy<'l>(&'l self) -> &'l BoundingVolumeProxy<BV>
+  { self.bp_proxy.exact() }
+
+  #[inline(always)]
+  fn proxy_mut<'l>(&'l mut self) -> &'l mut BoundingVolumeProxy<BV>
+  { self.bp_proxy.exact_mut() }
 }

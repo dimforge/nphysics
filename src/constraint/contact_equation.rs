@@ -7,10 +7,9 @@ use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
 use nalgebra::traits::rlmul::RMul;
 use ncollide::contact::contact::Contact;
-use ncollide::utils::has_proxy::HasProxy;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
-use constraint::index_proxy::IndexProxy;
+use constraint::index_proxy::HasIndexProxy;
 use constraint::contact_with_impulse::ContactWithImpulse;
 
 pub fn needs_first_order_resolution<C: ContactWithImpulse<V, N>, V, N: Ord>
@@ -22,7 +21,7 @@ pub fn fill_first_order_contact_equation
         LV: Flatten<N> + VectorSpace<N> + Cross<AV>,
         AV: Flatten<N> + VectorSpace<N>,
         N:  DivisionRing + Orderable + Bounded,
-        RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasProxy<IndexProxy> +
+        RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
             CanMove,
         II: RMul<AV>>
        (dt:          N,
@@ -82,7 +81,7 @@ pub fn fill_second_order_contact_equation
         LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
         AV: Flatten<N> + VectorSpace<N> + Dot<N>,
         N:  DivisionRing + Orderable + Bounded + Copy,
-        RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasProxy<IndexProxy> +
+        RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
             CanMove,
         II: RMul<AV>>
        (dt:          N,
@@ -154,10 +153,10 @@ pub fn fill_second_order_contact_equation
   set_contact_bounds(idbounds, bounds);
 }
 
-fn set_idx<RB: HasProxy<IndexProxy>>(ididx: &mut uint,
-                                     idx:   &mut [int],
-                                     rb1:   &RB,
-                                     rb2:   &RB)
+fn set_idx<RB: HasIndexProxy>(ididx: &mut uint,
+                              idx:   &mut [int],
+                              rb1:   &RB,
+                              rb2:   &RB)
 {
   idx[*ididx] = rb1.proxy().index;
   *ididx += 1;
@@ -182,7 +181,7 @@ fn fill_M_MJ<C:  Contact<LV, N>,
              LV: Flatten<N> + VectorSpace<N> + Cross<AV>,
              AV: Flatten<N> + VectorSpace<N>,
              N:  DivisionRing,
-             RB: Dynamic<N, LV, AV, II> + HasProxy<IndexProxy> +
+             RB: Dynamic<N, LV, AV, II> + HasIndexProxy +
                  Translation<LV> + CanMove,
              II: RMul<AV>>
    (coll: &C, rb: &RB, J: &mut [N], MJ: &mut [N], idJ: uint, neg: bool) -> AV
