@@ -1,5 +1,5 @@
 use std::num::{One, Zero};
-use nalgebra::traits::workarounds::scalar_op::ScalarMul;
+use nalgebra::traits::scalar_op::ScalarMul;
 use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::translation::Translation;
 use body::dynamic::Dynamic;

@@ -1,5 +1,5 @@
 use std::num::One;
-use nalgebra::traits::workarounds::scalar_op::ScalarMul;
+use nalgebra::traits::scalar_op::ScalarMul;
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::translation::Translation;

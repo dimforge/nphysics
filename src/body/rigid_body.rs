@@ -3,14 +3,14 @@ use nalgebra::traits::inv::Inv;
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotation;
 // FIXME: use nalgebra::traits::delta_transform::DeltaTransform;
+use ncollide::utils::has_proxy::HasProxy;
 use gt = ncollide::geom::transformable;
 use ncollide::geom::has_geom::HasGeom;
 use body::volumetric::Volumetric;
 use body::dynamic::Dynamic;
 use body::transformable::Transformable;
 use body::can_move::CanMove;
-use proxy::index_proxy::IndexProxy;
-use proxy::has_proxy::HasProxy;
+use constraint::index_proxy::IndexProxy;
 
 pub enum RigidBodyState {
   Static,
@@ -245,10 +245,6 @@ impl<S, N, M, LV, AV, II>
   #[inline(always)]
   fn proxy_mut<'l>(&'l mut self) -> &'l mut IndexProxy
   { &mut self.index }
-
-  #[inline(always)]
-  fn set_proxy(&mut self, index: &IndexProxy)
-  { self.index = *index }
 }
 
 impl<S, N, M, LV, AV, II> HasGeom<S> for RigidBody<S, N, M, LV, AV, II>

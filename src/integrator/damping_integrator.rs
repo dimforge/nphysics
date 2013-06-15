@@ -1,4 +1,4 @@
-use nalgebra::traits::workarounds::scalar_op::ScalarMul;
+use nalgebra::traits::scalar_op::ScalarMul;
 use body::dynamic::Dynamic;
 use integrator::integrator::Integrator;
 

@@ -5,12 +5,12 @@ use nalgebra::traits::flatten::Flatten;
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
-use nalgebra::traits::workarounds::rlmul::RMul;
+use nalgebra::traits::rlmul::RMul;
 use ncollide::contact::contact::Contact;
-use proxy::has_proxy::HasProxy;
-use proxy::index_proxy::IndexProxy;
+use ncollide::utils::has_proxy::HasProxy;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
+use constraint::index_proxy::IndexProxy;
 use constraint::contact_with_impulse::ContactWithImpulse;
 
 pub fn needs_first_order_resolution<C: ContactWithImpulse<V, N>, V, N: Ord>

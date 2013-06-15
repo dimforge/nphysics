@@ -30,13 +30,6 @@ pub mod body
   pub mod rigid_body;
 }
 
-pub mod proxy
-{
-  pub mod has_proxy;
-  pub mod index_proxy;
-  pub mod bounding_volume_proxy;
-}
-
 pub mod integrator
 {
   pub mod integrator;
@@ -48,6 +41,7 @@ pub mod integrator
 
 pub mod constraint
 {
+  pub mod index_proxy;
   pub mod constraint_solver;
   pub mod projected_gauss_seidel_solver;
   pub mod contact_equation;
