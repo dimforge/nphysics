@@ -82,7 +82,7 @@ RigidBody<S, N, M, LV, AV, II>
     let mut res =
       RigidBody {
         state:            state,
-        transformed_geom: geom.transform(&One::one()),
+        transformed_geom: geom.transformed(&One::one()),
         geom:             geom,
         local_to_world:   One::one(),
         world_to_local:   One::one(),
