@@ -39,7 +39,7 @@ World<RB, I, NF, BP, CS, C, N>
   pub fn step(&mut self, dt: N)
   {
     for self.bodies.each |&b|
-    { self.integrator.integrate(dt, b) }
+    { self.integrator.integrate(copy dt, b) }
 
     let pairs = self.broad_phase.collision_pairs(self.bodies);
 
@@ -57,10 +57,10 @@ World<RB, I, NF, BP, CS, C, N>
     let acc = &mut IslandAccumulator::new::<RB, NF, C>();
 
     // FIXME: do not pass the whole bodies vector: pass only active bodies
-    let islands = self.coll_graph.accumulate(self.bodies, acc);
+    let mut islands = self.coll_graph.accumulate(self.bodies, acc);
 
-    for islands.each |island|
-    { self.solver.solve(dt, *island, self.bodies); }
+    for islands.mut_iter().advance |island|
+    { self.solver.solve(copy dt, *island, self.bodies); }
   }
 
   pub fn add(&mut self, body: @mut RB)

@@ -52,7 +52,7 @@ RigidBody<S, N, M, LV, AV, II, BPP>
 
     // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
     self.inv_inertia = // FIXME: self.local_to_world.delta_transform() *
-                       self.ls_inv_inertia // FIXME:                  *
+                       copy self.ls_inv_inertia // FIXME:                  *
                        // FIXME: self.world_to_local.delta_transform()
   }
 }
@@ -96,7 +96,7 @@ RigidBody<S, N, M, LV, AV, II, BPP>
         lin_vel:          Zero::zero(),
         ang_vel:          Zero::zero(),
         inv_mass:         inv_mass,
-        ls_inv_inertia:   inv_inertia,
+        ls_inv_inertia:   copy inv_inertia,
         inv_inertia:      inv_inertia,
         lin_force:        Zero::zero(),
         ang_force:        Zero::zero(),
@@ -115,46 +115,46 @@ impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy, BPP>
 {
   #[inline(always)]
   fn lin_vel(&self) -> LV
-  { self.lin_vel }
+  { copy self.lin_vel }
   #[inline(always)]
-  fn set_lin_vel(&mut self, &lv: &LV)
-  { self.lin_vel = lv }
+  fn set_lin_vel(&mut self, lv: &LV)
+  { self.lin_vel = copy *lv }
 
   #[inline(always)]
   fn ang_vel(&self) -> AV
-  { self.ang_vel }
+  { copy self.ang_vel }
   #[inline(always)]
-  fn set_ang_vel(&mut self, &av: &AV)
-  { self.ang_vel = av }
+  fn set_ang_vel(&mut self, av: &AV)
+  { self.ang_vel = copy *av }
 
   #[inline(always)]
   fn inv_mass(&self) -> N
-  { self.inv_mass }
+  { copy self.inv_mass }
   #[inline(always)]
-  fn set_inv_mass(&mut self, &m: &N)
-  { self.inv_mass = m }
+  fn set_inv_mass(&mut self, m: &N)
+  { self.inv_mass = copy *m }
 
   #[inline(always)]
   fn inv_inertia(&self) -> II
-  { self.inv_inertia }
+  { copy self.inv_inertia }
   #[inline(always)]
-  fn set_inv_inertia(&mut self, &ii: &II)
-  { self.inv_inertia = ii }
+  fn set_inv_inertia(&mut self, ii: &II)
+  { self.inv_inertia = copy *ii }
 
   // FIXME: create another trait for forces?
   #[inline(always)]
   fn ext_lin_force(&self) -> LV
-  { self.lin_force }
+  { copy self.lin_force }
   #[inline(always)]
-  fn set_ext_lin_force(&mut self, &lf: &LV)
-  { self.lin_force = lf }
+  fn set_ext_lin_force(&mut self, lf: &LV)
+  { self.lin_force = copy *lf }
 
   #[inline(always)]
   fn ext_ang_force(&self) -> AV
-  { self.ang_force }
+  { copy self.ang_force }
   #[inline(always)]
-  fn set_ext_ang_force(&mut self, &af: &AV)
-  { self.ang_force = af }
+  fn set_ext_ang_force(&mut self, af: &AV)
+  { self.ang_force = copy *af }
 }
 
 impl<S: gt::Transformable<M, S>,
@@ -169,16 +169,16 @@ Transformable<M> for
 {
   #[inline(always)]
   fn local_to_world(&self) -> M
-  { self.local_to_world }
+  { copy self.local_to_world }
 
   #[inline(always)]
   fn world_to_local(&self) -> M
-  { self.world_to_local }
+  { copy self.world_to_local }
 
   #[inline(always)]
   fn append(&mut self, &to_append: &M)
   {
-    self.local_to_world *= to_append;
+    self.local_to_world = self.local_to_world * to_append;
     self.world_to_local = self.local_to_world.inverse();
     self.moved();
   }

@@ -50,7 +50,7 @@ pub fn fill_first_order_contact_equation
   fill_M_MJ(coll, rb1, J, MJ, *idJ, true);
   fill_M_MJ(coll, rb2, J, MJ, *idJ + _LV_sz + _AV_sz, false);
 
-  *idJ += 2 * (_AV_sz + _LV_sz);
+  *idJ = *idJ + 2 * (_AV_sz + _LV_sz);
 
   /*
    * Fill idx
@@ -67,7 +67,7 @@ pub fn fill_first_order_contact_equation
    */
   lambda[*idb] = Zero::zero();
 
-  *idb += 1;
+  *idb = *idb + 1;
 
   /*
    * Fill bounds
@@ -111,7 +111,7 @@ pub fn fill_second_order_contact_equation
   let rot_axis1 = fill_M_MJ(coll, rb1, J, MJ, *idJ, true);
   let rot_axis2 = fill_M_MJ(coll, rb2, J, MJ, *idJ + _LV_sz + _AV_sz, false);
 
-  *idJ += 2 * (_AV_sz + _LV_sz);
+  *idJ = *idJ + 2 * (_AV_sz + _LV_sz);
 
   /*
    * Fill idx
@@ -127,25 +127,25 @@ pub fn fill_second_order_contact_equation
 
   if (rb1.can_move())
   {
-    b[idbv] +=
+    b[idbv] = b[idbv] +
       - (rb1.lin_vel() + rb1.ext_lin_force().scalar_mul(&dt)).dot(&coll.normal())
       + (rb1.ang_vel() + rb1.ext_ang_force().scalar_mul(&dt)).dot(&rot_axis1);
   }
 
   if (rb2.can_move())
   {
-    b[idbv] +=
+    b[idbv] = b[idbv] +
         (rb2.lin_vel() + rb2.ext_lin_force().scalar_mul(&dt)).dot(&coll.normal())
       + (rb2.ang_vel() + rb2.ext_ang_force().scalar_mul(&dt)).dot(&rot_axis2);
   }
 
-  b[idbv] -= corr_factor * (coll.depth().min(&depth_limit) - depth_eps).max(&Zero::zero()) / dt;
+  b[idbv] = b[idbv] - corr_factor * (coll.depth().min(&depth_limit) - depth_eps).max(&Zero::zero()) / dt;
 
   b[idbv] = -b[idbv];
 
   lambda[idbv] = coll.impulse();
 
-  *idb += 1;
+  *idb = *idb + 1;
 
   /*
    * Fill bounds
@@ -159,9 +159,9 @@ fn set_idx<RB: HasIndexProxy>(ididx: &mut uint,
                               rb2:   &RB)
 {
   idx[*ididx] = rb1.proxy().index;
-  *ididx += 1;
+  *ididx = *ididx + 1;
   idx[*ididx] = rb2.proxy().index;
-  *ididx += 1;
+  *ididx = *ididx + 1;
 }
 
 fn set_contact_bounds<N: Zero + Bounded>(idbounds: &mut uint, bounds: &mut [N])
@@ -172,9 +172,9 @@ fn set_contact_bounds<N: Zero + Bounded>(idbounds: &mut uint, bounds: &mut [N])
 fn set_constraints_bounds<N>(idbounds: &mut uint, bounds: &mut [N], lo: N, hi: N)
 {
   bounds[*idbounds] = lo;
-  *idbounds += 1;
+  *idbounds = *idbounds + 1;
   bounds[*idbounds] = hi;
-  *idbounds += 1;
+  *idbounds = *idbounds + 1;
 }
 
 fn fill_M_MJ<C:  Contact<LV, N>,
@@ -202,7 +202,7 @@ fn fill_M_MJ<C:  Contact<LV, N>,
     for Flatten::flat_size::<N, LV>().times
     {
       MJ[idJb] = J[idJb] * rb.inv_mass();
-      idJb += 1;
+      idJb = idJb + 1;
     }
 
     // rotation axis

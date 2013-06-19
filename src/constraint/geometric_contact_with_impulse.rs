@@ -76,5 +76,5 @@ impl<V, N: Copy> ContactWithImpulse<V, N> for GeometricContactWithImpulse<V, N>
 
   #[inline(always)]
   fn impulse(&self) -> N
-  { self.impulse }
+  { copy self.impulse }
 }

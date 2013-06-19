@@ -13,8 +13,8 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
   { 
     match *self
     {
-      Plane(p) => p.volume(),
-      Ball(b)  => b.volume()
+      Plane(ref p) => p.volume(),
+      Ball(ref b)  => b.volume()
     }
   }
 
@@ -23,8 +23,8 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
   {
     match *self
     {
-      Plane(p) => p.inertia(),
-      Ball(b)  => b.inertia()
+      Plane(ref p) => p.inertia(),
+      Ball(ref b)  => b.inertia()
     }
   }
 }
@@ -43,9 +43,9 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Ball3d<N>
     let diag = NumCast::from::<N, float>(3.0 / 5.0) * self.radius() *
                                                       self.radius();
 
-    Mat3::new(diag, _0  , _0,
-              _0  , diag, _0,
-              _0  , _0  , diag)
+    Mat3::new(copy diag, copy _0  , copy _0,
+              copy _0  , copy diag, copy _0,
+              copy _0  , copy _0  , copy diag)
   }
 }
 

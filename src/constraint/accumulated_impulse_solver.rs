@@ -1,4 +1,6 @@
 use std::vec;
+use std::rand;
+use std::rand::RngUtil;
 use std::num::{Zero, One, Orderable, Bounded};
 use nalgebra::traits::vector_space::VectorSpace;
 use nalgebra::traits::division_ring::DivisionRing;
@@ -21,6 +23,7 @@ use pgs = constraint::projected_gauss_seidel_solver;
 
 pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 {
+  priv rng:                   rand::IsaacRng,
   priv depth_limit:           N,
   priv corr_factor:           N,
   priv depth_eps:             N,
@@ -52,6 +55,7 @@ impl<C:  ContactWithImpulse<LV, N>,
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
   {
     AccumulatedImpulseSolver {
+      rng:         rand::IsaacRng::new_seeded([42]),
       depth_limit: depth_limit,
       corr_factor: corr_factor,
       depth_eps:   depth_eps,
@@ -71,11 +75,11 @@ impl<C:  ContactWithImpulse<LV, N>,
     let _0      = Zero::zero::<N>();
     let max_dim = Flatten::flat_size::<N, LV>() + Flatten::flat_size::<N, AV>();
 
-    vec::grow_set(&mut self.J, num_equations * 2 * max_dim, &_0, _0);
-    vec::grow_set(&mut self.MJ, num_equations * 2 * max_dim, &_0, _0);
-    vec::grow_set(&mut self.b, num_equations, &_0, _0);
-    vec::grow_set(&mut self.lambda, num_equations, &_0, _0);
-    vec::grow_set(&mut self.bounds, num_equations * 2, &_0, _0);
+    vec::grow_set(&mut self.J, num_equations * 2 * max_dim, &_0, copy _0);
+    vec::grow_set(&mut self.MJ, num_equations * 2 * max_dim, &_0, copy _0);
+    vec::grow_set(&mut self.b, num_equations, &_0, copy _0);
+    vec::grow_set(&mut self.lambda, num_equations, &_0, copy _0);
+    vec::grow_set(&mut self.bounds, num_equations * 2, &_0, copy _0);
     vec::grow_set(&mut self.idx, num_equations * 2, &0, 0);
   }
 
@@ -84,10 +88,10 @@ impl<C:  ContactWithImpulse<LV, N>,
                        island: &[(@mut RB, @mut RB, @mut C)],
                        bodies: &[@mut RB])
   {
-    let equations_per_contacts = 1;
-    let num_equations          = equations_per_contacts * island.len();
+    let equations_per_contact = 1;
+    let num_equations          = equations_per_contact * island.len();
 
-    if (island.any(|&(_, _, c)| contact_equation::needs_first_order_resolution(c, self.depth_limit)))
+    if (island.any(|&(_, _, c)| contact_equation::needs_first_order_resolution(c, copy self.depth_limit)))
     {
       self.resize_buffers(num_equations);
 
@@ -104,12 +108,12 @@ impl<C:  ContactWithImpulse<LV, N>,
       for island.each |&(rb1, rb2, c)|
       {
         contact_equation::fill_first_order_contact_equation(
-          dt,
+          copy dt,
           c,
           rb1, rb2,
           self.J, self.MJ, self.b, self.lambda, self.bounds, self.idx,
           &mut ididx, &mut idJ, &mut idb, &mut idbounds,
-          self.depth_limit, self.corr_factor
+          copy self.depth_limit, copy self.corr_factor
         );
       }
 
@@ -124,7 +128,8 @@ impl<C:  ContactWithImpulse<LV, N>,
         max_dim,
         num_equations,
         bodies.len(),
-        self.num_first_order_iter
+        self.num_first_order_iter,
+        true
       );
 
       for bodies.each |&b|
@@ -154,8 +159,8 @@ impl<C:  ContactWithImpulse<LV, N>,
                         island: &[(@mut RB, @mut RB, @mut C)],
                         bodies: &[@mut RB])
   {
-    let equations_per_contacts = 1; // FIXME: add friction
-    let num_equations          = equations_per_contacts * island.len();
+    let equations_per_contact = 1; // FIXME: add friction
+    let num_equations          = equations_per_contact * island.len();
 
     self.resize_buffers(num_equations);
 
@@ -172,12 +177,12 @@ impl<C:  ContactWithImpulse<LV, N>,
     for island.each |&(rb1, rb2, c)|
     {
       contact_equation::fill_second_order_contact_equation(
-        dt,
+        copy dt,
         c,
         rb1, rb2,
         self.J, self.MJ, self.b, self.lambda, self.bounds, self.idx,
         &mut ididx, &mut idJ, &mut idb, &mut idbounds,
-        self.depth_limit, self.corr_factor, self.depth_eps
+        copy self.depth_limit, copy self.corr_factor, copy self.depth_eps
       );
     }
 
@@ -192,7 +197,8 @@ impl<C:  ContactWithImpulse<LV, N>,
       max_dim,
       num_equations,
       bodies.len(),
-      self.num_second_order_iter
+      self.num_second_order_iter,
+      false
       );
 
     for bodies.each |&b|
@@ -214,14 +220,9 @@ impl<C:  ContactWithImpulse<LV, N>,
       }
     }
 
-    // copy back the impulse buffer
-    // FIXME: let mut i = 0u;
-
-    // FIXME: for island.each |&(_, _, c)|
-    // FIXME: {
-    // FIXME:   c.set_impulse(self.lambda[i]);
-    // FIXME:   i += 1;
-    // FIXME: }
+    // FIXME: copy back the impulse buffer
+    // for island.eachi |i, &(_, _, c)|
+    // { c.set_impulse(self.lambda[i]) }
   }
 }
 
@@ -238,7 +239,7 @@ impl<C:  ContactWithImpulse<LV, N>,
 {
   fn solve(&mut self,
            dt:     N,
-           island: &[(@mut RB, @mut RB, @mut C)],
+           island: &mut [(@mut RB, @mut RB, @mut C)],
            bodies: &[@mut RB])
   {
     if (island.len() != 0)
@@ -252,12 +253,12 @@ impl<C:  ContactWithImpulse<LV, N>,
         else
         {
           b.proxy_mut().index = i;
-          i += 1;
+          i = i + 1;
         }
       }
 
-      // FIXME: shuffle the constraints list
-      self.second_order_solve(dt, island, bodies);
+      self.rng.shuffle_mut(island);
+      self.second_order_solve(copy dt, island, bodies);
       self.first_order_solve(dt, island, bodies);
     }
   }

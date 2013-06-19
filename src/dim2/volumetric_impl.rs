@@ -9,12 +9,12 @@ impl<N: Real + DivisionRing + NumCast + Zero + Copy>
 Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
 {
   #[inline(always)]
-  fn volume(&self)  -> N
+  fn volume(&self) -> N
   { 
     match *self
     {
-      Plane(p) => p.volume(),
-      Ball(b)  => b.volume()
+      Plane(ref p) => p.volume(),
+      Ball(ref b)  => b.volume()
     }
   }
 
@@ -23,8 +23,8 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
   {
     match *self
     {
-      Plane(p) => p.inertia(),
-      Ball(b)  => b.inertia()
+      Plane(ref p) => p.inertia(),
+      Ball(ref b)  => b.inertia()
     }
   }
 }

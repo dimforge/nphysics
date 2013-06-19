@@ -222,7 +222,7 @@ impl<N, E> Graph<N, E>
   {
     let mut results = ~[];
 
-    self.timestamp += 1;
+    self.timestamp = self.timestamp + 1;
 
     for nodes.each |&node|
     {
@@ -247,7 +247,7 @@ impl<N, E> Graph<N, E>
   {
     let mut results = ~[];
 
-    self.timestamp += 1;
+    self.timestamp = self.timestamp + 1;
 
     for self.nodes.each_value |&node|
     {
@@ -310,6 +310,6 @@ impl<N, E> Graph<N, E>
       }
     }
 
-    self.cleanup_timestamp += 1;
+    self.cleanup_timestamp = self.cleanup_timestamp + 1;
   }
 }
