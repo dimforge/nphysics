@@ -31,7 +31,7 @@ impl<RB: Dynamic<N, LV, AV, II> + Transformable<M>,
 {
   fn integrate(&self, dt: N, b: &mut RB)
   {
-    if (!b.inv_mass().is_zero())
+    if !b.inv_mass().is_zero()
     {
       b.set_ext_lin_force(&self.linear_gravity);
       b.set_ext_ang_force(&self.angular_gravity);

@@ -125,14 +125,14 @@ pub fn fill_second_order_contact_equation
 
   b[idbv] = Zero::zero();
 
-  if (rb1.can_move())
+  if rb1.can_move()
   {
     b[idbv] = b[idbv] +
       - (rb1.lin_vel() + rb1.ext_lin_force().scalar_mul(&dt)).dot(&coll.normal())
       + (rb1.ang_vel() + rb1.ext_ang_force().scalar_mul(&dt)).dot(&rot_axis1);
   }
 
-  if (rb2.can_move())
+  if rb2.can_move()
   {
     b[idbv] = b[idbv] +
         (rb2.lin_vel() + rb2.ext_lin_force().scalar_mul(&dt)).dot(&coll.normal())
@@ -186,13 +186,13 @@ fn fill_M_MJ<C:  Contact<LV, N>,
              II: RMul<AV>>
    (coll: &C, rb: &RB, J: &mut [N], MJ: &mut [N], idJ: uint, neg: bool) -> AV
 {
-  if (rb.can_move())
+  if rb.can_move()
   {
     let mut idJb = idJ;
 
     // translation
     let normal = 
-      if (neg)
+      if neg
       { -coll.normal() }
       else
       { coll.normal() };

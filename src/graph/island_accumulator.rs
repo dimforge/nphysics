@@ -40,7 +40,7 @@ for IslandAccumulator<RB, NF, C>
     nf.update(b1, b2);
     nf.colls(&mut self.collector);
 
-    for self.collector.each |&c|
+    for self.collector.iter().advance |&c|
     { self.contacts.push((b1, b2 ,c)) }
 
     self.collector.clear();

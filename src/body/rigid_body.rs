@@ -74,9 +74,9 @@ RigidBody<S, N, M, LV, AV, II, BPP>
         Static    => (Zero::zero(), Zero::zero()),
         Dynamic   => {
           let volume = geom.volume();
-          if (volume.is_zero())
+          if volume.is_zero()
           { fail!("A dynamic body cannot have a zero volume.") }
-          if (density.is_zero())
+          if density.is_zero()
           { fail!("A dynamic body cannot have a zero density.") }
           (One::one::<N>() / (density * volume), geom.inertia().inverse())
         },

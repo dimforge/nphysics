@@ -89,9 +89,9 @@ impl<C:  ContactWithImpulse<LV, N>,
                        bodies: &[@mut RB])
   {
     let equations_per_contact = 1;
-    let num_equations          = equations_per_contact * island.len();
+    let num_equations         = equations_per_contact * island.len();
 
-    if (island.any(|&(_, _, c)| contact_equation::needs_first_order_resolution(c, copy self.depth_limit)))
+    if island.iter().any_(|&(_, _, c)| contact_equation::needs_first_order_resolution(c, copy self.depth_limit))
     {
       self.resize_buffers(num_equations);
 
@@ -105,7 +105,7 @@ impl<C:  ContactWithImpulse<LV, N>,
       let mut idb      = 0;
       let mut idbounds = 0;
 
-      for island.each |&(rb1, rb2, c)|
+      for island.iter().advance |&(rb1, rb2, c)|
       {
         contact_equation::fill_first_order_contact_equation(
           copy dt,
@@ -132,9 +132,9 @@ impl<C:  ContactWithImpulse<LV, N>,
         true
       );
 
-      for bodies.each |&b|
+      for bodies.iter().advance |&b|
       {
-        if (b.proxy().index >= 0)
+        if b.proxy().index >= 0
         {
           let offset = b.proxy().index as uint * max_dim;
           let dp     = Flatten::from_flattened::<N, LV>(MJLambda, offset).scalar_mul(&dt);
@@ -174,7 +174,7 @@ impl<C:  ContactWithImpulse<LV, N>,
     let mut idb      = 0;
     let mut idbounds = 0;
 
-    for island.each |&(rb1, rb2, c)|
+    for island.iter().advance |&(rb1, rb2, c)|
     {
       contact_equation::fill_second_order_contact_equation(
         copy dt,
@@ -201,9 +201,9 @@ impl<C:  ContactWithImpulse<LV, N>,
       false
       );
 
-    for bodies.each |&b|
+    for bodies.iter().advance |&b|
     {
-      if (b.proxy().index >= 0)
+      if b.proxy().index >= 0
       {
         let offset = b.proxy().index as uint * max_dim;
         let dlv    = Flatten::from_flattened::<N, LV>(MJLambda, offset);
@@ -242,13 +242,13 @@ impl<C:  ContactWithImpulse<LV, N>,
            island: &mut [(@mut RB, @mut RB, @mut C)],
            bodies: &[@mut RB])
   {
-    if (island.len() != 0)
+    if island.len() != 0
     {
       let mut i = 0;
 
-      for bodies.each |b|
+      for bodies.iter().advance |b|
       {
-        if (!b.can_move())
+        if !b.can_move()
         { b.proxy_mut().index = -1 }
         else
         {

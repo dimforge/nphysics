@@ -24,7 +24,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
    * compute MJLambda = MJ * lambda
    */
   // warm start
-  if (!is_lambda_zero)
+  if !is_lambda_zero
   {
     let mut i = 0;
     while(i != num_equations)
@@ -32,7 +32,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
       let b1 = unsafe { idx.unsafe_get(i * 2)     } * (sparcity as int);
       let b2 = unsafe { idx.unsafe_get(i * 2 + 1) } * (sparcity as int);
 
-      if (b1 >= 0)
+      if b1 >= 0
       {
         let mut j = 0;
         while(j != sparcity)
@@ -47,7 +47,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
         }
       }
 
-      if (b2 >= 0)
+      if b2 >= 0
       {
         let mut j = 0;
         while(j != sparcity)
@@ -113,7 +113,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
 
       let mut d_lambda_i = unsafe { b.unsafe_get(i) };
 
-      if (b1 >= 0)
+      if b1 >= 0
       {
         let mut j = 0;
         while(j != sparcity)
@@ -127,7 +127,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
         }
       }
 
-      if (b2 >= 0)
+      if b2 >= 0
       {
         let mut j = 0;
         while(j != sparcity)
@@ -162,7 +162,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
       d_lambda_i = unsafe { lambda.unsafe_get(i) } - lambda_i_0;
 
 
-      if (b1 >= 0)
+      if b1 >= 0
       {
         let mut j = 0;
         while(j != sparcity)
@@ -177,7 +177,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
         }
       }
 
-      if (b2 >= 0)
+      if b2 >= 0
       {
         let mut j = 0;
         while(j != sparcity)

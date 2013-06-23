@@ -38,16 +38,16 @@ World<RB, I, NF, BP, CS, C, N>
 
   pub fn step(&mut self, dt: N)
   {
-    for self.bodies.each |&b|
+    for self.bodies.iter().advance |&b|
     { self.integrator.integrate(copy dt, b) }
 
     let pairs = self.broad_phase.collision_pairs(self.bodies);
 
-    for pairs.each |&(b1, b2)|
+    for pairs.iter().advance |&(b1, b2)|
     {
-      if (b1.can_move() || b2.can_move())
+      if b1.can_move() || b2.can_move()
       {
-        if (!self.coll_graph.prepare_insersion(b1, b2))
+        if !self.coll_graph.prepare_insersion(b1, b2)
         { self.coll_graph.add_edge(@mut CollisionDetector::new(b1, b2), b1, b2) }
       }
     }
