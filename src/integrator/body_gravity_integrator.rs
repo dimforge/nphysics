@@ -36,7 +36,7 @@ impl<RB: Dynamic<N, LV, AV, II> + Transformable<M>,
       b.set_ext_lin_force(&self.linear_gravity);
       b.set_ext_ang_force(&self.angular_gravity);
       euler::integrate_body_velocity(copy dt, b);
-      euler::integrate_body_position(copy dt, b);
+      euler::integrate_body_position(dt, b);
     }
   }
 }

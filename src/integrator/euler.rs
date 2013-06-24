@@ -34,7 +34,7 @@ pub fn integrate_body_velocity<RB: Dynamic<T, LV, AV, II>,
   let lv = integrate_force(copy dt, &body.ext_lin_force(), &body.lin_vel());
   body.set_lin_vel(&lv);
 
-  let av = integrate_force(copy dt, &body.ext_ang_force(), &body.ang_vel());
+  let av = integrate_force(dt, &body.ext_ang_force(), &body.ang_vel());
   body.set_ang_vel(&av);
 }
 
