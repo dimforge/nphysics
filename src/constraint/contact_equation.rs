@@ -140,7 +140,6 @@ pub fn fill_second_order_contact_equation
   }
 
   b[idbv] = b[idbv] - corr_factor * (coll.depth().min(&depth_limit) - depth_eps).max(&Zero::zero()) / dt;
-
   b[idbv] = -b[idbv];
 
   lambda[idbv] = coll.impulse();

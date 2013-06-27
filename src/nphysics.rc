@@ -25,9 +25,9 @@ pub mod body
 {
   pub mod can_move;
   pub mod volumetric;
-  pub mod transformable;
   pub mod dynamic;
   pub mod rigid_body;
+  pub mod implicit_volumetric_transformation_bounding_volume;
 }
 
 pub mod integrator

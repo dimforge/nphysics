@@ -3,6 +3,7 @@ use ncollide::contact::contact::Contact;
 use ncollide::contact::geometric_contact::GeometricContact;
 use constraint::contact_with_impulse::ContactWithImpulse;
 
+#[deriving(ToStr)]
 pub struct GeometricContactWithImpulse<V, N>
 {
   priv contact: GeometricContact<V, N>,
@@ -13,7 +14,7 @@ impl<V: Copy + Neg<V>, N: Zero + Copy> Contact<V, N> for
 GeometricContactWithImpulse<V, N>
 {
   #[inline(always)]
-  fn new(center: &V, normal: &V, depth: &N, world1: &V, world2: &V)
+  fn new(center: V, normal: V, depth: N, world1: V, world2: V)
      -> GeometricContactWithImpulse<V, N>
   {
     GeometricContactWithImpulse {
@@ -27,7 +28,7 @@ GeometricContactWithImpulse<V, N>
   { self.contact.flip() }
 
   #[inline(always)]
-  fn set_center(&mut self, center: &V)
+  fn set_center(&mut self, center: V)
   { self.contact.set_center(center) }
 
   #[inline(always)]
@@ -35,7 +36,7 @@ GeometricContactWithImpulse<V, N>
   { self.contact.center() }
 
   #[inline(always)]
-  fn set_normal(&mut self, normal: &V)
+  fn set_normal(&mut self, normal: V)
   { self.contact.set_normal(normal) }
 
   #[inline(always)]
@@ -43,7 +44,7 @@ GeometricContactWithImpulse<V, N>
   { self.contact.normal() }
 
   #[inline(always)]
-  fn set_depth(&mut self, depth: &N)
+  fn set_depth(&mut self, depth: N)
   { self.contact.set_depth(depth) }
 
   #[inline(always)]
@@ -51,7 +52,7 @@ GeometricContactWithImpulse<V, N>
   { self.contact.depth() }
 
   #[inline(always)]
-  fn set_world1(&mut self, world1: &V)
+  fn set_world1(&mut self, world1: V)
   { self.contact.set_world1(world1) }
 
   #[inline(always)]
@@ -59,7 +60,7 @@ GeometricContactWithImpulse<V, N>
   { self.contact.world1() }
 
   #[inline(always)]
-  fn set_world2(&mut self, world2: &V)
+  fn set_world2(&mut self, world2: V)
   { self.contact.set_world2(world2) }
 
   #[inline(always)]

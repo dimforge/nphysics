@@ -1,21 +1,21 @@
 use std::num::{Zero, One};
 use nalgebra::traits::inv::Inv;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::Rotation;
+use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::rotation::{Rotation, Rotatable};
+use nalgebra::traits::transformation::Transformation;
 // FIXME: use nalgebra::traits::delta_transform::DeltaTransform;
 use ncollide::broad::brute_force_bounding_volume_broad_phase::BoundingVolumeProxy;
 use ncollide::broad::brute_force_bounding_volume_broad_phase::HasBoundingVolumeProxy;
 use ncollide::bounding_volume::has_bounding_volume::HasBoundingVolume;
-use gt = ncollide::geom::transformable;
 use ncollide::geom::has_geom::HasGeom;
 use ncollide::utils::exact::Exact;
 use ncollide::utils::default::Default;
 use body::volumetric::Volumetric;
 use body::dynamic::Dynamic;
-use body::transformable::Transformable;
 use body::can_move::CanMove;
 use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
+#[deriving(ToStr)]
 pub enum RigidBodyState {
   Static,
   Dynamic,
@@ -23,11 +23,11 @@ pub enum RigidBodyState {
 }
 
 
+#[deriving(ToStr)]
 pub struct RigidBody<S, N, M, LV, AV, II, BPP>
 {
   priv state:            RigidBodyState,
   priv geom:             S,
-  priv transformed_geom: S, // FIXME: use another type for transformed geom?
   priv local_to_world:   M,
   priv world_to_local:   M,
   priv lin_vel:          LV,
@@ -41,14 +41,18 @@ pub struct RigidBody<S, N, M, LV, AV, II, BPP>
   priv bp_proxy:         BPP
 }
 
-impl<S: gt::Transformable<M, S>, N, M/*FIXME: : DeltaTransform<II>*/, LV, AV,
+impl<S: Transformation<M>,
+     N,
+     M/*FIXME: : DeltaTransform<II>*/,
+     LV,
+     AV,
      II: Mul<II, II> + Copy,
      BPP>
 RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  fn moved(&mut self)
+  fn moved(&mut self, delta: &M)
   {
-    self.geom.transform_to(&self.local_to_world, &mut self.transformed_geom);
+    self.geom.transform_by(delta);
 
     // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
     self.inv_inertia = // FIXME: self.local_to_world.delta_transform() *
@@ -57,7 +61,7 @@ RigidBody<S, N, M, LV, AV, II, BPP>
   }
 }
 
-impl<S:   gt::Transformable<M, S> + Volumetric<N, II>,
+impl<S:   Transformation<M> + Volumetric<N, II>,
      N:   One + Zero + Div<N, N> + Mul<N, N>,
      M:   One, // FIXME: + DeltaTransform<II>,
      LV:  Zero,
@@ -89,7 +93,6 @@ RigidBody<S, N, M, LV, AV, II, BPP>
     let mut res =
       RigidBody {
         state:            state,
-        transformed_geom: geom.transformed(&One::one()),
         geom:             geom,
         local_to_world:   One::one(),
         world_to_local:   One::one(),
@@ -104,7 +107,7 @@ RigidBody<S, N, M, LV, AV, II, BPP>
         bp_proxy:         Default::default()
       };
 
-    res.moved();
+    res.moved(&One::one());
 
     res
   }
@@ -157,46 +160,64 @@ impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy, BPP>
   { self.ang_force = copy *af }
 }
 
-impl<S: gt::Transformable<M, S>,
+impl<S: Transformation<M>,
      N,
      M: Copy + Inv + Mul<M, M>, // FIXME: + DeltaTransform<II>,
      LV,
      AV,
      II: Mul<II, II> + Copy,
      BPP>
-Transformable<M> for
+Transformation<M> for
     RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
-  fn local_to_world(&self) -> M
+  fn transformation(&self) -> M
   { copy self.local_to_world }
 
   #[inline(always)]
-  fn world_to_local(&self) -> M
-  { copy self.world_to_local }
-
-  #[inline(always)]
-  fn append(&mut self, &to_append: &M)
+  fn transform_by(&mut self, to_append: &M)
   {
-    self.local_to_world = self.local_to_world * to_append;
+    self.local_to_world = *to_append * self.local_to_world;
     self.world_to_local = self.local_to_world.inverse();
-    self.moved();
+    self.moved(to_append);
   }
 }
 
-impl<S: Copy + gt::Transformable<M, S>,
-     N: Copy,
-     M: Copy + Translation<LV>, // FIXME: + DeltaTransform<II>,
-     LV: Copy,
-     AV: Copy,
-     II: Copy + Mul<II, II>,
-     BPP: Copy>
+// FIXME: implement Transfomable too
+
+impl<S: Transformation<M>,
+     N,
+     M: Translation<LV> + One, // FIXME: + DeltaTransform<II>,
+     LV,
+     AV,
+     II: Mul<II, II> + Copy,
+     BPP>
     Translation<LV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn translation(&self) -> LV
   { self.local_to_world.translation() }
 
+  #[inline(always)]
+  fn translate(&mut self, trans: &LV)
+  {
+    self.local_to_world.translate(trans);
+
+    let mut delta = One::one::<M>();
+    delta.translate(trans);
+    self.moved(&delta);
+  }
+}
+
+impl<S: Copy + Transformation<M>,
+     N: Copy,
+     M: Copy + Translation<LV> + One, // FIXME: + DeltaTransform<II>,
+     LV: Copy,
+     AV: Copy,
+     II: Copy + Mul<II, II>,
+     BPP: Copy>
+    Translatable<LV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
+{
   #[inline(always)]
   fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
@@ -206,28 +227,41 @@ impl<S: Copy + gt::Transformable<M, S>,
 
     cpy
   }
-
-  #[inline(always)]
-  fn translate(&mut self, trans: &LV)
-  {
-    self.local_to_world.translate(trans);
-    self.moved();
-  }
 }
 
-impl<S:  Copy + gt::Transformable<M, S>,
-     N:  Copy,
-     M:  Copy + Rotation<AV>, // FIXME: + DeltaTransform<II>,
-     LV: Copy,
-     AV: Copy,
-     II: Copy + Mul<II, II>,
-     BPP: Copy>
+impl<S: Transformation<M>,
+     N,
+     M: Rotation<AV> + One,
+     LV,
+     AV,
+     II: Mul<II, II> + Copy,
+     BPP>
     Rotation<AV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn rotation(&self) -> AV
   { self.local_to_world.rotation() }
 
+  #[inline(always)]
+  fn rotate(&mut self, rot: &AV)
+  {
+    self.local_to_world.rotate(rot);
+
+    let mut delta = One::one::<M>();
+    delta.rotate(rot);
+    self.moved(&delta);
+  }
+}
+
+impl<S:  Copy + Transformation<M>,
+     N:  Copy,
+     M:  Copy + Rotation<AV> + One,
+     LV: Copy,
+     AV: Copy,
+     II: Copy + Mul<II, II>,
+     BPP: Copy>
+    Rotatable<AV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
+{
   #[inline(always)]
   fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
@@ -237,24 +271,17 @@ impl<S:  Copy + gt::Transformable<M, S>,
 
     cpy
   }
-
-  #[inline(always)]
-  fn rotate(&mut self, rot: &AV)
-  {
-    self.local_to_world.rotate(rot);
-    self.moved();
-  }
 }
 
 impl<S, N, M, LV, AV, II, BPP> HasGeom<S> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline(always)]
   fn geom<'r>(&'r self) -> &'r S
-  { &'r self.transformed_geom }
+  { &'r self.geom }
 
   #[inline(always)]
   fn geom_mut<'r>(&'r mut self) -> &'r mut S
-  { &'r mut self.transformed_geom }
+  { &'r mut self.geom }
 }
 
 impl<S, N, M, LV, AV, II, BPP> CanMove for RigidBody<S, N, M, LV, AV, II, BPP>
@@ -274,7 +301,7 @@ impl<S: HasBoundingVolume<BV>, N, M, LV, AV, II, BPP, BV>
     HasBoundingVolume<BV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   fn bounding_volume(&self) -> BV
-  { self.transformed_geom.bounding_volume() }
+  { self.geom.bounding_volume() }
 }
 
 // Implementation of proxys

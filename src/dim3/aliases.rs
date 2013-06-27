@@ -6,9 +6,11 @@ use ncollide::broad::brute_force_bounding_volume_broad_phase::BruteForceBounding
 use ncollide::broad::brute_force_bounding_volume_broad_phase::BoundingVolumeProxy;
 use ncollide::narrow::default_default::DefaultDefaultCollisionDetector;
 use ncollide::narrow::has_geom_has_geom::HasGeomHasGeomCollisionDetector;
+use ncollide::narrow::algorithm::johnson_simplex::JohnsonSimplex;
 use ncollide::geom::default_geom::DefaultGeom;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
+use ncollide::geom::implicit::Implicit;
 use ncollide::bounding_volume::aabb::AABB;
 use body::rigid_body::RigidBody;
 use graph::island_accumulator::IslandAccumulator;
@@ -21,7 +23,11 @@ pub type Transform3d<N> =  Transform<Rotmat<Mat3<N>>, Vec3<N>>;
 pub type LinearVelocity3d<N>  = Vec3<N>;
 pub type AngularVelocity3d<N> = Vec3<N>;
 pub type InertiaTensor3d<N> = Mat3<N>;
-pub type Geom3d<N> = DefaultGeom<N, LinearVelocity3d<N>>;
+pub type ImplicitGeom3d<N> = ~Implicit<LinearVelocity3d<N>>; // VolumetricTransformableImplicit<N,
+                              //                                 LinearVelocity3d<N>,
+                              //                                 InertiaTensor3d<N>,
+                              //                                 Transform3d<N>>;
+pub type Geom3d<N> = DefaultGeom<N, LinearVelocity3d<N>, Transform3d<N>, ImplicitGeom3d<N>>;
 pub type AABB3d<N> = AABB<Vec3<N>>;
 pub type RigidBody3d<N> = RigidBody<Geom3d<N>,
                                     N,
@@ -37,8 +43,13 @@ pub type Integrator3d<N> = BodyGravityIntegrator<LinearVelocity3d<N>,
                                                  RigidBody3d<N>,
                                                  InertiaTensor3d<N>,
                                                  Transform3d<N>>;
-pub type CollisionDetector3d<N> = DefaultDefaultCollisionDetector<Contact3d<N>, N,
-                                                                  LinearVelocity3d<N>>;
+pub type JohnsonSimplex3d<N> = JohnsonSimplex<LinearVelocity3d<N>, N>;
+pub type CollisionDetector3d<N> = DefaultDefaultCollisionDetector<Contact3d<N>,
+                                                                  N,
+                                                                  LinearVelocity3d<N>,
+                                                                  Transform3d<N>,
+                                                                  JohnsonSimplex3d<N>,
+                                                                  ImplicitGeom3d<N>>;
 pub type NarrowPhase3d<N> = HasGeomHasGeomCollisionDetector<
                             Contact3d<N>,
                             RigidBody3d<N>,
@@ -68,7 +79,6 @@ pub type DefaultWorld3d<N> = World<RigidBody3d<N>,
 
 pub type Ball3d<N> = Ball<N, Vec3<N>>;
 pub type Plane3d<N> = Plane<Vec3<N>>;
-pub type DefaultGeom3d<N> = DefaultGeom<N, Vec3<N>>;
 
 pub type IslandAccumulator3d<N> = IslandAccumulator<RigidBody3d<N>,
                                                     NarrowPhase3d<N>,

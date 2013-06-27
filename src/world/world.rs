@@ -22,7 +22,7 @@ impl<RB: CanMove,
      BP: BroadPhase<RB>,
      CS: ConstraintSolver<N, RB, C>,
      C,
-     N: Copy>
+     N: Copy + ToStr>
 World<RB, I, NF, BP, CS, C, N>
 {
   pub fn new(integrator:   ~I,

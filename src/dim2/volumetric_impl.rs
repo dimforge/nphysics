@@ -1,7 +1,7 @@
 use std::num::{One, Zero, Real, NumCast};
 use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::dim1::mat1::Mat1;
-use ncollide::geom::default_geom::{Plane, Ball};
+use ncollide::geom::default_geom::{Plane, Ball, Implicit};
 use body::volumetric::Volumetric;
 use dim2::aliases;
 
@@ -13,8 +13,9 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
   { 
     match *self
     {
-      Plane(ref p) => p.volume(),
-      Ball(ref b)  => b.volume()
+      Plane(ref p)    => p.volume(),
+      Ball(ref b)     => b.volume(),
+      Implicit(ref i) => i.volume()
     }
   }
 
@@ -23,8 +24,9 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
   {
     match *self
     {
-      Plane(ref p) => p.inertia(),
-      Ball(ref b)  => b.inertia()
+      Plane(ref p)    => p.inertia(),
+      Ball(ref b)     => b.inertia(),
+      Implicit(ref i) => i.inertia()
     }
   }
 }

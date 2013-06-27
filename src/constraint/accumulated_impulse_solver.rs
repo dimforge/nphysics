@@ -5,14 +5,14 @@ use std::num::{Zero, One, Orderable, Bounded};
 use nalgebra::traits::vector_space::VectorSpace;
 use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::flatten::Flatten;
-use nalgebra::traits::translation::Translation;
+use nalgebra::traits::translation::{Translation, Translatable};
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
+use nalgebra::traits::transformation::Transformation;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
 use nalgebra::traits::rlmul::RMul;
 use body::dynamic::Dynamic;
-use body::transformable::Transformable;
 use body::can_move::CanMove;
 use constraint::index_proxy::HasIndexProxy;
 use constraint::contact_with_impulse::ContactWithImpulse;
@@ -41,10 +41,10 @@ impl<C:  ContactWithImpulse<LV, N>,
      LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
      AV: Flatten<N> + VectorSpace<N> + Dot<N>,
      N:  DivisionRing + Orderable + Bounded + Copy,
-     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
-         Transformable<M> + CanMove,
+     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
+         Transformation<M>,
      II: RMul<AV>,
-     M: Translation<LV> + Rotation<AV> + One>
+     M: Translation<LV> + Translatable<LV, M> + Rotation<AV> + One>
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 {
   pub fn new(depth_limit:           N,
@@ -143,9 +143,9 @@ impl<C:  ContactWithImpulse<LV, N>,
                          offset + Flatten::flat_size::<N, LV>()
                        ).scalar_mul(&dt);
 
-          let center = &b.local_to_world().translation();
+          let center = &b.translation();
 
-          b.append(
+          b.transform_by(
             &rotation::rotate_wrt_point(&One::one::<M>(), &da, center)
             .translated(&dp)
           );
@@ -230,10 +230,10 @@ impl<C:  ContactWithImpulse<LV, N>,
      LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
      AV: Flatten<N> + VectorSpace<N> + Dot<N>,
      N:  DivisionRing + Orderable + Bounded + Copy,
-     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
-         Transformable<M> + CanMove,
+     RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
+         Transformation<M>,
      II: RMul<AV>,
-     M: Translation<LV> + Rotation<AV> + One>
+     M: Translation<LV> + Translatable<LV, M> + Rotation<AV> + One>
     ConstraintSolver<N, RB, C> for
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 {

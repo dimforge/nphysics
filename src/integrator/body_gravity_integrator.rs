@@ -1,9 +1,9 @@
 use std::num::{One, Zero};
 use nalgebra::traits::scalar_op::ScalarMul;
 use nalgebra::traits::rotation::Rotation;
-use nalgebra::traits::translation::Translation;
+use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::transformation::Transformation;
 use body::dynamic::Dynamic;
-use body::transformable::Transformable;
 use integrator::integrator::Integrator;
 use integrator::euler;
 
@@ -21,8 +21,8 @@ BodyGravityIntegrator<LV, AV, N, RB, II, M>
   { BodyGravityIntegrator { linear_gravity: lin_g, angular_gravity: ang_g } }
 }
 
-impl<RB: Dynamic<N, LV, AV, II> + Transformable<M>,
-     M:  Translation<LV> + Rotation<AV> + One,
+impl<RB: Dynamic<N, LV, AV, II> + Transformation<M>,
+     M:  Translation<LV> + Rotation<AV> + Translatable<LV, M> + One,
      LV: Add<LV, LV> + ScalarMul<N> + Neg<LV>,
      AV: Add<AV, AV> + ScalarMul<N>,
      N:  Zero + Copy,
