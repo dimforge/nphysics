@@ -8,7 +8,7 @@ use body::dynamic::Dynamic;
 
 // FIXME: find a way to do the sampling: v *= 0.9998
 
-#[inline(always)]
+#[inline]
 fn integrate_force<N, V: Add<V, V> + ScalarMul<N>>(dt: N, f: &V, v: &V) -> V
 { v + f.scalar_mul(&dt) }
 

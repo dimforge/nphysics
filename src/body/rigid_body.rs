@@ -116,46 +116,46 @@ RigidBody<S, N, M, LV, AV, II, BPP>
 impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy, BPP>
     Dynamic<N, LV, AV, II> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn lin_vel(&self) -> LV
   { copy self.lin_vel }
-  #[inline(always)]
+  #[inline]
   fn set_lin_vel(&mut self, lv: &LV)
   { self.lin_vel = copy *lv }
 
-  #[inline(always)]
+  #[inline]
   fn ang_vel(&self) -> AV
   { copy self.ang_vel }
-  #[inline(always)]
+  #[inline]
   fn set_ang_vel(&mut self, av: &AV)
   { self.ang_vel = copy *av }
 
-  #[inline(always)]
+  #[inline]
   fn inv_mass(&self) -> N
   { copy self.inv_mass }
-  #[inline(always)]
+  #[inline]
   fn set_inv_mass(&mut self, m: &N)
   { self.inv_mass = copy *m }
 
-  #[inline(always)]
+  #[inline]
   fn inv_inertia(&self) -> II
   { copy self.inv_inertia }
-  #[inline(always)]
+  #[inline]
   fn set_inv_inertia(&mut self, ii: &II)
   { self.inv_inertia = copy *ii }
 
   // FIXME: create another trait for forces?
-  #[inline(always)]
+  #[inline]
   fn ext_lin_force(&self) -> LV
   { copy self.lin_force }
-  #[inline(always)]
+  #[inline]
   fn set_ext_lin_force(&mut self, lf: &LV)
   { self.lin_force = copy *lf }
 
-  #[inline(always)]
+  #[inline]
   fn ext_ang_force(&self) -> AV
   { copy self.ang_force }
-  #[inline(always)]
+  #[inline]
   fn set_ext_ang_force(&mut self, af: &AV)
   { self.ang_force = copy *af }
 }
@@ -170,11 +170,11 @@ impl<S: Transformation<M>,
 Transformation<M> for
     RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn transformation(&self) -> M
   { copy self.local_to_world }
 
-  #[inline(always)]
+  #[inline]
   fn transform_by(&mut self, to_append: &M)
   {
     self.local_to_world = *to_append * self.local_to_world;
@@ -194,11 +194,11 @@ impl<S: Transformation<M>,
      BPP>
     Translation<LV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn translation(&self) -> LV
   { self.local_to_world.translation() }
 
-  #[inline(always)]
+  #[inline]
   fn translate(&mut self, trans: &LV)
   {
     self.local_to_world.translate(trans);
@@ -218,7 +218,7 @@ impl<S: Copy + Transformation<M>,
      BPP: Copy>
     Translatable<LV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
     let mut &cpy = copy self;
@@ -238,11 +238,11 @@ impl<S: Transformation<M>,
      BPP>
     Rotation<AV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn rotation(&self) -> AV
   { self.local_to_world.rotation() }
 
-  #[inline(always)]
+  #[inline]
   fn rotate(&mut self, rot: &AV)
   {
     self.local_to_world.rotate(rot);
@@ -262,7 +262,7 @@ impl<S:  Copy + Transformation<M>,
      BPP: Copy>
     Rotatable<AV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
     let mut &cpy = copy self;
@@ -275,18 +275,18 @@ impl<S:  Copy + Transformation<M>,
 
 impl<S, N, M, LV, AV, II, BPP> HasGeom<S> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn geom<'r>(&'r self) -> &'r S
   { &'r self.geom }
 
-  #[inline(always)]
+  #[inline]
   fn geom_mut<'r>(&'r mut self) -> &'r mut S
   { &'r mut self.geom }
 }
 
 impl<S, N, M, LV, AV, II, BPP> CanMove for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn can_move(&self) -> bool
   {
     match self.state
@@ -308,11 +308,11 @@ impl<S: HasBoundingVolume<BV>, N, M, LV, AV, II, BPP, BV>
 impl<S, N, M, LV, AV, II, BPP>
     HasIndexProxy for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn proxy<'l>(&'l self) -> &'l IndexProxy
   { &'l self.index }
 
-  #[inline(always)]
+  #[inline]
   fn proxy_mut<'l>(&'l mut self) -> &'l mut IndexProxy
   { &mut self.index }
 }
@@ -320,11 +320,11 @@ impl<S, N, M, LV, AV, II, BPP>
 impl<S, N, M, LV, AV, II, BPP: Exact<BoundingVolumeProxy<BV>>, BV>
     HasBoundingVolumeProxy<BV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  #[inline(always)]
+  #[inline]
   fn proxy<'l>(&'l self) -> &'l BoundingVolumeProxy<BV>
   { self.bp_proxy.exact() }
 
-  #[inline(always)]
+  #[inline]
   fn proxy_mut<'l>(&'l mut self) -> &'l mut BoundingVolumeProxy<BV>
   { self.bp_proxy.exact_mut() }
 }

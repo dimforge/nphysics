@@ -28,27 +28,27 @@ ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV> for T
 {
   // FIXME: those methods are workarounds: why dont trait objects of this
   // traits dont inherit from all the parent traits?
-  #[inline(always)]
+  #[inline]
   fn _support_point(&self, dir: &V) -> V
   { self.support_point(dir) }
 
-  #[inline(always)]
+  #[inline]
   fn _volume(&self) -> N
   { self.volume() }
 
-  #[inline(always)]
+  #[inline]
   fn _inertia(&self) -> II
   { self.inertia() }
 
-  #[inline(always)]
+  #[inline]
   fn _transformation(&self) -> M
   { self.transformation() }
 
-  #[inline(always)]
+  #[inline]
   fn _transform_by(&mut self, m: &M)
   { self.transform_by(m) }
 
-  #[inline(always)]
+  #[inline]
   fn _bounding_volume(&self) -> BV
   { self.bounding_volume() }
 }
@@ -73,7 +73,7 @@ pub fn new_implicit<
 impl<V, N, M, II, BV> Implicit<V>
 for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 {
-  #[inline(always)]
+  #[inline]
   fn support_point(&self, dir: &V) -> V
   { self._support_point(dir) }
 }
@@ -81,11 +81,11 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 impl<V, N, M, II, BV> Volumetric<N, II>
 for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self) -> N
   { self._volume() }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> II
   { self._inertia() }
 }
@@ -93,11 +93,11 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 impl<V, N, M, II, BV> Transformation<M>
 for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 {
-  #[inline(always)]
+  #[inline]
   fn transformation(&self) -> M
   { self._transformation() }
 
-  #[inline(always)]
+  #[inline]
   fn transform_by(&mut self, m: &M)
   { self._transform_by(m) }
 }
@@ -105,7 +105,7 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 impl<V, N, M, II, BV> HasBoundingVolume<BV>
 for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 {
-  #[inline(always)]
+  #[inline]
   fn bounding_volume(&self) -> BV
   { self._bounding_volume() }
 }

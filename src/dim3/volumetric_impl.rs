@@ -8,7 +8,7 @@ use dim3::aliases;
 impl<N: Real + DivisionRing + NumCast + Zero + Copy>
 Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self)  -> N
   { 
     match *self
@@ -19,7 +19,7 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
     }
   }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> aliases::InertiaTensor3d<N>
   {
     match *self
@@ -34,11 +34,11 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
 impl<N: Real + DivisionRing + NumCast + Copy>
 Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Ball3d<N>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self)  -> N
   { Real::pi::<N>() * self.radius() * self.radius() * self.radius() }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> aliases::InertiaTensor3d<N>
   {
     let _0   = Zero::zero();
@@ -54,11 +54,11 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Ball3d<N>
 impl<N: Zero + Copy>
 Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Plane3d<N>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self)  -> N
   { Zero::zero() }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> aliases::InertiaTensor3d<N>
   { Zero::zero() }
 }

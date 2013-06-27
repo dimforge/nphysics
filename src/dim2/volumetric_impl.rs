@@ -8,7 +8,7 @@ use dim2::aliases;
 impl<N: Real + DivisionRing + NumCast + Zero + Copy>
 Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self) -> N
   { 
     match *self
@@ -19,7 +19,7 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
     }
   }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> aliases::InertiaTensor2d<N>
   {
     match *self
@@ -34,11 +34,11 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Geom2d<N>
 impl<N: Real + DivisionRing + NumCast + Copy>
 Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Ball2d<N>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self)  -> N
   { Real::pi::<N>() * self.radius() * self.radius() }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> aliases::InertiaTensor2d<N>
     // FIXME: remove the inverse
   { Mat1::new(One::one::<N>() / (NumCast::from::<N, float>(2.0 / 5.0) *
@@ -48,11 +48,11 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Ball2d<N>
 impl<N: Zero + Copy>
 Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Plane2d<N>
 {
-  #[inline(always)]
+  #[inline]
   fn volume(&self)  -> N
   { Zero::zero() }
 
-  #[inline(always)]
+  #[inline]
   fn inertia(&self) -> aliases::InertiaTensor2d<N>
   { Zero::zero() }
 }
