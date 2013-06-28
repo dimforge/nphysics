@@ -14,6 +14,7 @@ pub trait ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
   fn _volume(&self)                 -> N;
   fn _inertia(&self)                -> II;
   fn _transformation(&self)         -> M;
+  fn _inv_transformation(&self)     -> M;
   fn _transform_by(&mut self, &M);
   fn _bounding_volume(&self)        -> BV;
 }
@@ -43,6 +44,10 @@ ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV> for T
   #[inline]
   fn _transformation(&self) -> M
   { self.transformation() }
+
+  #[inline]
+  fn _inv_transformation(&self) -> M
+  { self.inv_transformation() }
 
   #[inline]
   fn _transform_by(&mut self, m: &M)
@@ -96,6 +101,11 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
   #[inline]
   fn transformation(&self) -> M
   { self._transformation() }
+
+  #[inline]
+  fn inv_transformation(&self) -> M
+  { self._inv_transformation() }
+
 
   #[inline]
   fn transform_by(&mut self, m: &M)

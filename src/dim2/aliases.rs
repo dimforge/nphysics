@@ -1,7 +1,6 @@
 use nalgebra::dim2::mat2::Mat2;
-use nalgebra::dim2::vec2::Vec2;
-use nalgebra::dim1::vec1::Vec1;
 use nalgebra::dim1::mat1::Mat1;
+use nalgebra::vec::{Vec1, Vec2};
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::adaptors::transform::Transform;
 use ncollide::broad::brute_force_bounding_volume_broad_phase::BruteForceBoundingVolumeBroadPhase;

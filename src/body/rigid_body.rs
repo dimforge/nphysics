@@ -28,12 +28,12 @@ pub struct RigidBody<S, N, M, LV, AV, II, BPP>
 {
   priv state:            RigidBodyState,
   priv geom:             S,
-  priv local_to_world:   M,
+  priv local_to_world:   M, // FIXME: useless in fact…
   priv world_to_local:   M,
   priv lin_vel:          LV,
   priv ang_vel:          AV,
   priv inv_mass:         N,
-  priv ls_inv_inertia:   II,
+  priv ls_inv_inertia:   II, // NOTE: 'ls' means 'local space'…
   priv inv_inertia:      II,
   priv lin_force:        LV,
   priv ang_force:        AV,
@@ -175,6 +175,11 @@ Transformation<M> for
   { copy self.local_to_world }
 
   #[inline]
+  fn inv_transformation(&self) -> M
+  { copy self.world_to_local }
+
+
+  #[inline]
   fn transform_by(&mut self, to_append: &M)
   {
     self.local_to_world = *to_append * self.local_to_world;
@@ -199,12 +204,17 @@ impl<S: Transformation<M>,
   { self.local_to_world.translation() }
 
   #[inline]
-  fn translate(&mut self, trans: &LV)
+  fn inv_translation(&self) -> LV
+  { self.local_to_world.inv_translation() }
+
+
+  #[inline]
+  fn translate_by(&mut self, trans: &LV)
   {
-    self.local_to_world.translate(trans);
+    self.local_to_world.translate_by(trans);
 
     let mut delta = One::one::<M>();
-    delta.translate(trans);
+    delta.translate_by(trans);
     self.moved(&delta);
   }
 }
@@ -223,7 +233,7 @@ impl<S: Copy + Transformation<M>,
   {
     let mut &cpy = copy self;
 
-    cpy.translate(trans);
+    cpy.translate_by(trans);
 
     cpy
   }
@@ -243,12 +253,16 @@ impl<S: Transformation<M>,
   { self.local_to_world.rotation() }
 
   #[inline]
-  fn rotate(&mut self, rot: &AV)
+  fn inv_rotation(&self) -> AV
+  { self.local_to_world.inv_rotation() }
+
+  #[inline]
+  fn rotate_by(&mut self, rot: &AV)
   {
-    self.local_to_world.rotate(rot);
+    self.local_to_world.rotate_by(rot);
 
     let mut delta = One::one::<M>();
-    delta.rotate(rot);
+    delta.rotate_by(rot);
     self.moved(&delta);
   }
 }
@@ -267,7 +281,7 @@ impl<S:  Copy + Transformation<M>,
   {
     let mut &cpy = copy self;
 
-    cpy.rotate(rot);
+    cpy.rotate_by(rot);
 
     cpy
   }

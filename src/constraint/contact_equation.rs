@@ -1,11 +1,12 @@
 use std::num::{Zero, Orderable, Bounded};
+use nalgebra::traits::dim::Dim;
 use nalgebra::traits::vector_space::VectorSpace;
 use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::flatten::Flatten;
+use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::translation::Translation;
+use nalgebra::traits::transformation::Transform;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
-use nalgebra::traits::rlmul::RMul;
 use ncollide::contact::contact::Contact;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
@@ -18,12 +19,12 @@ pub fn needs_first_order_resolution<C: ContactWithImpulse<V, N>, V, N: Ord>
 
 pub fn fill_first_order_contact_equation
        <C:  Contact<LV, N>,
-        LV: Flatten<N> + VectorSpace<N> + Cross<AV>,
-        AV: Flatten<N> + VectorSpace<N>,
-        N:  DivisionRing + Orderable + Bounded,
+        LV: Iterable<N> + VectorSpace<N> + Cross<AV> + Dim, // FIXME: is Dim safe?
+        AV: Iterable<N> + VectorSpace<N> + Dim, // FIXME: is Dim safe?
+        N:  DivisionRing + Orderable + Bounded + Copy,
         RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
             CanMove,
-        II: RMul<AV>>
+        II: Transform<AV>>
        (dt:          N,
         coll:        &C,
         rb1:         &RB,
@@ -41,8 +42,8 @@ pub fn fill_first_order_contact_equation
         depth_limit: N,
         corr_factor: N)
 {
-  let _LV_sz = Flatten::flat_size::<N, LV>();
-  let _AV_sz = Flatten::flat_size::<N, AV>();
+  let _LV_sz = Dim::dim::<LV>();
+  let _AV_sz = Dim::dim::<AV>();
 
   /*
    * Fill J and MJ
@@ -78,12 +79,12 @@ pub fn fill_first_order_contact_equation
  // FIXME: note that removing the Copy constraint on N leads to an ICE
 pub fn fill_second_order_contact_equation
        <C:  ContactWithImpulse<LV, N>,
-        LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
-        AV: Flatten<N> + VectorSpace<N> + Dot<N>,
+        LV: Iterable<N> + VectorSpace<N> + Cross<AV>  + Dot<N> + Dim,
+        AV: Iterable<N> + VectorSpace<N> + Dot<N> + Dim,
         N:  DivisionRing + Orderable + Bounded + Copy,
         RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
             CanMove,
-        II: RMul<AV>>
+        II: Transform<AV>>
        (dt:          N,
         coll:        &C,
         rb1:         &RB,
@@ -102,8 +103,8 @@ pub fn fill_second_order_contact_equation
         corr_factor: N,
         depth_eps:   N)
 {
-  let _LV_sz = Flatten::flat_size::<N, LV>();
-  let _AV_sz = Flatten::flat_size::<N, AV>();
+  let _LV_sz = Dim::dim::<LV>();
+  let _AV_sz = Dim::dim::<AV>();
 
   /*
    * Fill J and MJ
@@ -177,38 +178,41 @@ fn set_constraints_bounds<N>(idbounds: &mut uint, bounds: &mut [N], lo: N, hi: N
 }
 
 fn fill_M_MJ<C:  Contact<LV, N>,
-             LV: Flatten<N> + VectorSpace<N> + Cross<AV>,
-             AV: Flatten<N> + VectorSpace<N>,
-             N:  DivisionRing,
+             LV: Iterable<N> + VectorSpace<N> + Cross<AV> + Dim,
+             AV: Iterable<N> + VectorSpace<N>,
+             N:  DivisionRing + Copy,
              RB: Dynamic<N, LV, AV, II> + HasIndexProxy +
                  Translation<LV> + CanMove,
-             II: RMul<AV>>
+             II: Transform<AV>>
    (coll: &C, rb: &RB, J: &mut [N], MJ: &mut [N], idJ: uint, neg: bool) -> AV
 {
   if rb.can_move()
   {
     let mut idJb = idJ;
 
-    // translation
-    let normal = 
-      if neg
-      { -coll.normal() }
-      else
-      { coll.normal() };
+    // normal
+    let normal = if neg { -coll.normal() } else { coll.normal() };
 
-    normal.flatten_to(J, idJb);
+    // rotation axis
+    let rot_axis = (coll.center() - rb.translation()).cross(&normal);
 
-    for Flatten::flat_size::<N, LV>().times
+    // dump everything
+    for normal.iter().enumerate().advance |(i, e)|
+    { J[idJb + i] = copy *e }
+
+    for Dim::dim::<LV>().times
     {
       MJ[idJb] = J[idJb] * rb.inv_mass();
       idJb = idJb + 1;
     }
 
-    // rotation axis
-    let rot_axis = (coll.center() - rb.translation()).cross(&normal);
-    rot_axis.flatten_to(J, idJb);
+    for rot_axis.iter().enumerate().advance |(i, e)|
+    { J[idJb + i] = copy *e }
+
     // rotation momentum
-    rb.inv_inertia().rmul(&rot_axis).flatten_to(MJ, idJb);
+    let w_rot_axis = rb.inv_inertia().transform_vec(&rot_axis);
+    for w_rot_axis.iter().enumerate().advance |(i, e)|
+    { MJ[idJb + i] = copy *e }
 
     rot_axis
   }

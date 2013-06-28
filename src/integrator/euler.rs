@@ -23,7 +23,7 @@ fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                                            &ang_vel.scalar_mul(&dt),
                                            &orig.translation());
 
-  res.translate(&lin_vel.scalar_mul(&dt));
+  res.translate_by(&lin_vel.scalar_mul(&dt));
 
   res
 }

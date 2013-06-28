@@ -1,6 +1,5 @@
 use std::managed::{mut_ptr_eq};
 use std::ptr;
-use std::vec;
 use std::hashmap::HashMap;
 use graph::accumulator::Accumulator;
 
@@ -139,7 +138,7 @@ impl<N, E> Node<N, E>
   pub fn add_edge(@mut self, edge: @mut Edge<E, N>) -> uint
   {
     self.existing_pairs.insert(keyof(edge.other_node(self)), edge);
-    vec::push(&mut self.edges, edge);
+    self.edges.push(edge);
 
     return self.edges.len() - 1;
   }

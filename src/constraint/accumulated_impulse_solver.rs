@@ -2,16 +2,16 @@ use std::vec;
 use std::rand;
 use std::rand::RngUtil;
 use std::num::{Zero, One, Orderable, Bounded};
+use nalgebra::traits::dim::Dim;
 use nalgebra::traits::vector_space::VectorSpace;
 use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::flatten::Flatten;
+use nalgebra::traits::iterable::{Iterable, FromAnyIterator};
 use nalgebra::traits::translation::{Translation, Translatable};
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
-use nalgebra::traits::transformation::Transformation;
+use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
-use nalgebra::traits::rlmul::RMul;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
 use constraint::index_proxy::HasIndexProxy;
@@ -38,12 +38,12 @@ pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 }
 
 impl<C:  ContactWithImpulse<LV, N>,
-     LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
-     AV: Flatten<N> + VectorSpace<N> + Dot<N>,
+     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> + Dot<N> + Dim,
+     AV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Dot<N> + Dim,
      N:  DivisionRing + Orderable + Bounded + Copy,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M>,
-     II: RMul<AV>,
+     II: Transform<AV>,
      M: Translation<LV> + Translatable<LV, M> + Rotation<AV> + One>
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 {
@@ -73,7 +73,7 @@ impl<C:  ContactWithImpulse<LV, N>,
   fn resize_buffers(&mut self, num_equations: uint)
   {
     let _0      = Zero::zero::<N>();
-    let max_dim = Flatten::flat_size::<N, LV>() + Flatten::flat_size::<N, AV>();
+    let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
 
     vec::grow_set(&mut self.J, num_equations * 2 * max_dim, &_0, copy _0);
     vec::grow_set(&mut self.MJ, num_equations * 2 * max_dim, &_0, copy _0);
@@ -98,7 +98,7 @@ impl<C:  ContactWithImpulse<LV, N>,
       // FIXME: move all those inside of the solver to reuse them (and avoid
       // allocations)
       let _0      = Zero::zero::<N>();
-      let max_dim = Flatten::flat_size::<N, LV>() + Flatten::flat_size::<N, AV>();
+      let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
 
       let mut ididx    = 0;
       let mut idJ      = 0;
@@ -132,16 +132,17 @@ impl<C:  ContactWithImpulse<LV, N>,
         true
       );
 
+      let mut MJLambda_iter = MJLambda.iter();
+
       for bodies.iter().advance |&b|
       {
         if b.proxy().index >= 0
         {
-          let offset = b.proxy().index as uint * max_dim;
-          let dp     = Flatten::from_flattened::<N, LV>(MJLambda, offset).scalar_mul(&dt);
-          let da     = Flatten::from_flattened::<N, AV>(
-                         MJLambda,
-                         offset + Flatten::flat_size::<N, LV>()
-                       ).scalar_mul(&dt);
+          let mut dp : LV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
+          let mut da : AV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
+
+          dp.scalar_mul_inplace(&dt);
+          da.scalar_mul_inplace(&dt);
 
           let center = &b.translation();
 
@@ -160,14 +161,14 @@ impl<C:  ContactWithImpulse<LV, N>,
                         bodies: &[@mut RB])
   {
     let equations_per_contact = 1; // FIXME: add friction
-    let num_equations          = equations_per_contact * island.len();
+    let num_equations         = equations_per_contact * island.len();
 
     self.resize_buffers(num_equations);
 
     // FIXME: move all those inside of the solver to reuse them (and avoid
     // allocations)
     let _0      = Zero::zero::<N>();
-    let max_dim = Flatten::flat_size::<N, LV>() + Flatten::flat_size::<N, AV>();
+    let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
 
     let mut ididx    = 0;
     let mut idJ      = 0;
@@ -201,16 +202,14 @@ impl<C:  ContactWithImpulse<LV, N>,
       false
       );
 
+    let mut MJLambda_iter = MJLambda.iter();
+
     for bodies.iter().advance |&b|
     {
       if b.proxy().index >= 0
       {
-        let offset = b.proxy().index as uint * max_dim;
-        let dlv    = Flatten::from_flattened::<N, LV>(MJLambda, offset);
-        let dav    = Flatten::from_flattened::<N, AV>(
-          MJLambda,
-          offset + Flatten::flat_size::<N, LV>()
-        );
+        let dlv: LV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
+        let dav: AV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
 
         let curr_lin_vel = b.lin_vel();
         let curr_ang_vel = b.ang_vel();
@@ -227,12 +226,12 @@ impl<C:  ContactWithImpulse<LV, N>,
 }
 
 impl<C:  ContactWithImpulse<LV, N>,
-     LV: Flatten<N> + VectorSpace<N> + Cross<AV>  + Dot<N>,
-     AV: Flatten<N> + VectorSpace<N> + Dot<N>,
+     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> + Dot<N> + Dim,
+     AV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Dot<N> + Dim,
      N:  DivisionRing + Orderable + Bounded + Copy,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M>,
-     II: RMul<AV>,
+     II: Transform<AV>,
      M: Translation<LV> + Translatable<LV, M> + Rotation<AV> + One>
     ConstraintSolver<N, RB, C> for
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>

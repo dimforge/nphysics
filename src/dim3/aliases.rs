@@ -1,5 +1,5 @@
 use nalgebra::dim3::mat3::Mat3;
-use nalgebra::dim3::vec3::Vec3;
+use nalgebra::vec::Vec3;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::adaptors::transform::Transform;
 use ncollide::broad::brute_force_bounding_volume_broad_phase::BruteForceBoundingVolumeBroadPhase;
