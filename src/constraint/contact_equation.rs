@@ -22,8 +22,7 @@ pub fn fill_first_order_contact_equation
         LV: Iterable<N> + VectorSpace<N> + Cross<AV> + Dim, // FIXME: is Dim safe?
         AV: Iterable<N> + VectorSpace<N> + Dim, // FIXME: is Dim safe?
         N:  DivisionRing + Orderable + Bounded + Copy,
-        RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
-            CanMove,
+        RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove,
         II: Transform<AV>>
        (dt:          N,
         coll:        &C,

@@ -1,6 +1,6 @@
 use std::num::{Zero, Real, NumCast};
 use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::dim3::mat3::Mat3;
+use nalgebra::mat::Mat3;
 use ncollide::geom::default_geom::{Plane, Ball, Implicit};
 use body::volumetric::Volumetric;
 use dim3::aliases;
@@ -15,7 +15,7 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
     {
       Plane(ref p)    => p.volume(),
       Ball(ref b)     => b.volume(),
-      Implicit(_) => fail!("") // i.volume()
+      Implicit(ref i) => i.volume()
     }
   }
 
@@ -26,7 +26,7 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Geom3d<N>
     {
       Plane(ref p)    => p.inertia(),
       Ball(ref b)     => b.inertia(),
-      Implicit(_) => fail!("") // i.inertia()
+      Implicit(ref i) => i.inertia()
     }
   }
 }
@@ -45,9 +45,9 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Ball3d<N>
     let diag = NumCast::from::<N, float>(3.0 / 5.0) * self.radius() *
                                                       self.radius();
 
-    Mat3::new(copy diag, copy _0  , copy _0,
-              copy _0  , copy diag, copy _0,
-              copy _0  , copy _0  , copy diag)
+    Mat3::new( [ copy diag, copy _0  , copy _0,
+                 copy _0  , copy diag, copy _0,
+                 copy _0  , copy _0  , copy diag ])
   }
 }
 

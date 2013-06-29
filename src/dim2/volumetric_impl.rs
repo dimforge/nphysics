@@ -1,6 +1,6 @@
 use std::num::{One, Zero, Real, NumCast};
 use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::dim1::mat1::Mat1;
+use nalgebra::mat::Mat1;
 use ncollide::geom::default_geom::{Plane, Ball, Implicit};
 use body::volumetric::Volumetric;
 use dim2::aliases;
@@ -41,8 +41,8 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Ball2d<N>
   #[inline]
   fn inertia(&self) -> aliases::InertiaTensor2d<N>
     // FIXME: remove the inverse
-  { Mat1::new(One::one::<N>() / (NumCast::from::<N, float>(2.0 / 5.0) *
-                                 self.radius() * self.radius())) }
+  { Mat1::new( [ One::one::<N>() / (NumCast::from::<N, float>(2.0 / 5.0) *
+                                    self.radius() * self.radius()) ] ) }
 }
 
 impl<N: Zero + Copy>

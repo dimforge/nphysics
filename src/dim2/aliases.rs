@@ -1,5 +1,4 @@
-use nalgebra::dim2::mat2::Mat2;
-use nalgebra::dim1::mat1::Mat1;
+use nalgebra::mat::{Mat1, Mat2};
 use nalgebra::vec::{Vec1, Vec2};
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::adaptors::transform::Transform;

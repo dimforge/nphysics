@@ -60,7 +60,7 @@ ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV> for T
 
 pub fn new_implicit<
   G:  Transformable<M, G2>,
-  G2: Owned + ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>,
+  G2: Send + ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>,
   V, N, M: One, II, BV>
   (geom: &G) -> DefaultGeom<N, V, M, ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>>
 {

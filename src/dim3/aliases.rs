@@ -1,4 +1,4 @@
-use nalgebra::dim3::mat3::Mat3;
+use nalgebra::mat::Mat3;
 use nalgebra::vec::Vec3;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::adaptors::transform::Transform;
@@ -10,9 +10,9 @@ use ncollide::narrow::algorithm::johnson_simplex::JohnsonSimplex;
 use ncollide::geom::default_geom::DefaultGeom;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
-use ncollide::geom::implicit::Implicit;
 use ncollide::bounding_volume::aabb::AABB;
 use body::rigid_body::RigidBody;
+use body::implicit_volumetric_transformation_bounding_volume::ImplicitVolumetricTransformationBoundingVolume;
 use graph::island_accumulator::IslandAccumulator;
 use integrator::body_gravity_integrator::BodyGravityIntegrator;
 use constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
@@ -23,10 +23,13 @@ pub type Transform3d<N> =  Transform<Rotmat<Mat3<N>>, Vec3<N>>;
 pub type LinearVelocity3d<N>  = Vec3<N>;
 pub type AngularVelocity3d<N> = Vec3<N>;
 pub type InertiaTensor3d<N> = Mat3<N>;
-pub type ImplicitGeom3d<N> = ~Implicit<LinearVelocity3d<N>>; // VolumetricTransformableImplicit<N,
-                              //                                 LinearVelocity3d<N>,
-                              //                                 InertiaTensor3d<N>,
-                              //                                 Transform3d<N>>;
+pub type ImplicitGeom3d<N> = ~ImplicitVolumetricTransformationBoundingVolume<
+                                LinearVelocity3d<N>,
+                                N,
+                                Transform3d<N>,
+                                InertiaTensor3d<N>,
+                                AABB3d<N>
+                              >;
 pub type Geom3d<N> = DefaultGeom<N, LinearVelocity3d<N>, Transform3d<N>, ImplicitGeom3d<N>>;
 pub type AABB3d<N> = AABB<Vec3<N>>;
 pub type RigidBody3d<N> = RigidBody<Geom3d<N>,

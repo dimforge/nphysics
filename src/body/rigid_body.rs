@@ -231,7 +231,7 @@ impl<S: Copy + Transformation<M>,
   #[inline]
   fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
-    let mut &cpy = copy self;
+    let mut cpy = copy *self;
 
     cpy.translate_by(trans);
 
@@ -267,19 +267,19 @@ impl<S: Transformation<M>,
   }
 }
 
-impl<S:  Copy + Transformation<M>,
-     N:  Copy,
-     M:  Copy + Rotation<AV> + One,
-     LV: Copy,
-     AV: Copy,
-     II: Copy + Mul<II, II>,
+impl<S:   Copy + Transformation<M>,
+     N:   Copy,
+     M:   Copy + Rotation<AV> + One,
+     LV:  Copy,
+     AV:  Copy,
+     II:  Copy + Mul<II, II>,
      BPP: Copy>
     Rotatable<AV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline]
   fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
-    let mut &cpy = copy self;
+    let mut cpy = copy *self;
 
     cpy.rotate_by(rot);
 
