@@ -1,3 +1,4 @@
+use std::uint;
 use std::vec;
 use std::rand;
 use std::rand::RngUtil;
@@ -12,10 +13,12 @@ use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::dot::Dot;
+use nalgebra::traits::basis::Basis;
+use body::material::Material;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
 use constraint::index_proxy::HasIndexProxy;
-use constraint::contact_with_impulse::ContactWithImpulse;
+use constraint::contact_with_impulses::ContactWithImpulses;
 use constraint::contact_equation;
 use constraint::constraint_solver::ConstraintSolver;
 use pgs = constraint::projected_gauss_seidel_solver;
@@ -27,6 +30,7 @@ pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
   priv depth_limit:           N,
   priv corr_factor:           N,
   priv depth_eps:             N,
+  priv rest_eps:              N,
   priv num_first_order_iter:  uint,
   priv num_second_order_iter: uint,
   priv J:                     ~[N],
@@ -37,12 +41,13 @@ pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
   priv idx:                   ~[int]
 }
 
-impl<C:  ContactWithImpulse<LV, N>,
-     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> + Dot<N> + Dim,
+impl<C:  ContactWithImpulses<LV, N>,
+     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> +
+         Dot<N> + Dim + Basis + Copy,
      AV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Dot<N> + Dim,
      N:  DivisionRing + Orderable + Bounded + Copy,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
-         Transformation<M>,
+         Transformation<M> + Material<N>,
      II: Transform<AV>,
      M: Translation<LV> + Translatable<LV, M> + Rotation<AV> + One>
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
@@ -50,6 +55,7 @@ impl<C:  ContactWithImpulse<LV, N>,
   pub fn new(depth_limit:           N,
              corr_factor:           N,
              depth_eps:             N,
+             rest_eps:              N,
              num_first_order_iter:  uint,
              num_second_order_iter: uint) ->
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
@@ -59,6 +65,7 @@ impl<C:  ContactWithImpulse<LV, N>,
       depth_limit: depth_limit,
       corr_factor: corr_factor,
       depth_eps:   depth_eps,
+      rest_eps:    rest_eps,
       num_first_order_iter:  num_first_order_iter,
       num_second_order_iter: num_second_order_iter,
       J:           ~[],
@@ -95,8 +102,6 @@ impl<C:  ContactWithImpulse<LV, N>,
     {
       self.resize_buffers(num_equations);
 
-      // FIXME: move all those inside of the solver to reuse them (and avoid
-      // allocations)
       let _0      = Zero::zero::<N>();
       let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
 
@@ -162,13 +167,11 @@ impl<C:  ContactWithImpulse<LV, N>,
                         island: &[(@mut RB, @mut RB, @mut C)],
                         bodies: &[@mut RB])
   {
-    let equations_per_contact = 1; // FIXME: add friction
+    let equations_per_contact = Dim::dim::<LV>(); // normal + friction
     let num_equations         = equations_per_contact * island.len();
 
     self.resize_buffers(num_equations);
 
-    // FIXME: move all those inside of the solver to reuse them (and avoid
-    // allocations)
     let _0      = Zero::zero::<N>();
     let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
 
@@ -185,7 +188,8 @@ impl<C:  ContactWithImpulse<LV, N>,
         rb1, rb2,
         self.J, self.MJ, self.b, self.lambda, self.bounds, self.idx,
         &mut ididx, &mut idJ, &mut idb, &mut idbounds,
-        copy self.depth_limit, copy self.corr_factor, copy self.depth_eps
+        copy self.depth_limit, copy self.corr_factor, copy self.depth_eps,
+        copy self.rest_eps
       );
     }
 
@@ -221,18 +225,21 @@ impl<C:  ContactWithImpulse<LV, N>,
       }
     }
 
-    // FIXME: copy back the impulse buffer
-    // for island.eachi |i, &(_, _, c)|
-    // { c.set_impulse(self.lambda[i]) }
+    for island.iter().enumerate().advance |(i, &(_, _, c))|
+    {
+      for uint::iterate(0, equations_per_contact) |j|
+      { c.impulses_mut()[j] = copy self.lambda[i * equations_per_contact + j] };
+    }
   }
 }
 
-impl<C:  ContactWithImpulse<LV, N>,
-     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> + Dot<N> + Dim,
+impl<C:  ContactWithImpulses<LV, N>,
+     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> +
+         Basis + Dot<N> + Dim + Copy,
      AV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Dot<N> + Dim,
      N:  DivisionRing + Orderable + Bounded + Copy,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
-         Transformation<M>,
+         Transformation<M> + Material<N>,
      II: Transform<AV>,
      M: Translation<LV> + Translatable<LV, M> + Rotation<AV> + One>
     ConstraintSolver<N, RB, C> for

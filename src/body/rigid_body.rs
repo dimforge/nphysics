@@ -13,6 +13,7 @@ use ncollide::utils::default::Default;
 use body::volumetric::Volumetric;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
+use body::material::Material;
 use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
 #[deriving(ToStr)]
@@ -37,8 +38,10 @@ pub struct RigidBody<S, N, M, LV, AV, II, BPP>
   priv inv_inertia:      II,
   priv lin_force:        LV,
   priv ang_force:        AV,
+  priv restitution:      N,
+  priv friction:         N,
   priv index:            IndexProxy,
-  priv bp_proxy:         BPP
+  priv bp_proxy:         BPP,
 }
 
 impl<S: Transformation<M>,
@@ -70,7 +73,11 @@ impl<S:   Transformation<M> + Volumetric<N, II>,
      BPP: Default>
 RigidBody<S, N, M, LV, AV, II, BPP>
 {
-  pub fn new(geom: S, density: N, state: RigidBodyState) -> RigidBody<S, N, M, LV, AV, II, BPP>
+  pub fn new(geom:        S,
+             density:     N,
+             state:       RigidBodyState,
+             restitution: N,
+             friction:    N) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
     let (inv_mass, inv_inertia) =
       match state
@@ -103,6 +110,8 @@ RigidBody<S, N, M, LV, AV, II, BPP>
         inv_inertia:      inv_inertia,
         lin_force:        Zero::zero(),
         ang_force:        Zero::zero(),
+        friction:         friction,
+        restitution:      restitution,
         index:            IndexProxy::new(),
         bp_proxy:         Default::default()
       };
@@ -341,4 +350,16 @@ impl<S, N, M, LV, AV, II, BPP: Exact<BoundingVolumeProxy<BV>>, BV>
   #[inline]
   fn proxy_mut<'l>(&'l mut self) -> &'l mut BoundingVolumeProxy<BV>
   { self.bp_proxy.exact_mut() }
+}
+
+impl<S, N: Copy, M, LV, AV, II, BPP>
+    Material<N> for RigidBody<S, N, M, LV, AV, II, BPP>
+{
+  #[inline]
+  pub fn restitution_coefficient(&self) -> N
+  { copy self.restitution }
+
+  #[inline]
+  pub fn friction_coefficient(&self) -> N
+  { copy self.friction }
 }

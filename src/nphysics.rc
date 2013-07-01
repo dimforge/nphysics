@@ -23,6 +23,7 @@ pub mod graph
 
 pub mod body
 {
+  pub mod material;
   pub mod can_move;
   pub mod volumetric;
   pub mod dynamic;
@@ -45,7 +46,7 @@ pub mod constraint
   pub mod constraint_solver;
   pub mod projected_gauss_seidel_solver;
   pub mod contact_equation;
-  pub mod contact_with_impulse;
+  pub mod contact_with_impulses;
   pub mod accumulated_impulse_solver;
   pub mod geometric_contact_with_impulse;
 }

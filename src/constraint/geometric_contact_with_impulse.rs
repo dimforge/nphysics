@@ -1,16 +1,18 @@
 use std::num::Zero;
+use std::vec;
+use nalgebra::traits::dim::Dim;
 use ncollide::contact::contact::Contact;
 use ncollide::contact::geometric_contact::GeometricContact;
-use constraint::contact_with_impulse::ContactWithImpulse;
+use constraint::contact_with_impulses::ContactWithImpulses;
 
 #[deriving(ToStr)]
 pub struct GeometricContactWithImpulse<V, N>
 {
-  priv contact: GeometricContact<V, N>,
-  priv impulse: N
+  priv contact:  GeometricContact<V, N>,
+  priv impulses: ~[N]
 }
 
-impl<V: Copy + Neg<V>, N: Zero + Copy> Contact<V, N> for
+impl<V: Copy + Neg<V> + Dim, N: Zero + Copy> Contact<V, N> for
 GeometricContactWithImpulse<V, N>
 {
   #[inline]
@@ -18,8 +20,8 @@ GeometricContactWithImpulse<V, N>
      -> GeometricContactWithImpulse<V, N>
   {
     GeometricContactWithImpulse {
-      contact: Contact::new(center, normal, depth, world1, world2),
-      impulse: Zero::zero()
+      contact:  Contact::new(center, normal, depth, world1, world2),
+      impulses: vec::from_elem(Dim::dim::<V>(), Zero::zero())
     }
   }
 
@@ -69,13 +71,13 @@ GeometricContactWithImpulse<V, N>
 
 }
 
-impl<V, N: Copy> ContactWithImpulse<V, N> for GeometricContactWithImpulse<V, N>
+impl<V, N: Copy> ContactWithImpulses<V, N> for GeometricContactWithImpulse<V, N>
 {
   #[inline]
-  fn set_impulse(&mut self, impulse: N)
-  { self.impulse = impulse; }
+  fn impulses_mut<'r>(&'r mut self) -> &'r mut ~[N]
+  { &'r mut self.impulses }
 
   #[inline]
-  fn impulse(&self) -> N
-  { copy self.impulse }
+  fn impulses<'r>(&'r self) -> &'r ~[N]
+  { &'r self.impulses }
 }
