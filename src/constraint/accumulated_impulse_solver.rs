@@ -144,10 +144,12 @@ impl<C:  ContactWithImpulse<LV, N>,
           dp.scalar_mul_inplace(&dt);
           da.scalar_mul_inplace(&dt);
 
+          da = Zero::zero();
+
           let center = &b.translation();
 
           b.transform_by(
-            &rotation::rotate_wrt_point(&One::one::<M>(), &da, center)
+            &rotation::rotated_wrt_point(&One::one::<M>(), &da, center)
             .translated(&dp)
           );
         }

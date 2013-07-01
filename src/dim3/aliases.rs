@@ -10,6 +10,7 @@ use ncollide::narrow::algorithm::johnson_simplex::JohnsonSimplex;
 use ncollide::geom::default_geom::DefaultGeom;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
+use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::bounding_volume::aabb::AABB;
 use body::rigid_body::RigidBody;
 use body::implicit_volumetric_transformation_bounding_volume::ImplicitVolumetricTransformationBoundingVolume;
@@ -46,7 +47,7 @@ pub type Integrator3d<N> = BodyGravityIntegrator<LinearVelocity3d<N>,
                                                  RigidBody3d<N>,
                                                  InertiaTensor3d<N>,
                                                  Transform3d<N>>;
-pub type JohnsonSimplex3d<N> = JohnsonSimplex<LinearVelocity3d<N>, N>;
+pub type JohnsonSimplex3d<N> = JohnsonSimplex<AnnotatedPoint<LinearVelocity3d<N>>, N>;
 pub type CollisionDetector3d<N> = DefaultDefaultCollisionDetector<Contact3d<N>,
                                                                   N,
                                                                   LinearVelocity3d<N>,

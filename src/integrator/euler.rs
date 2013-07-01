@@ -19,9 +19,9 @@ fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                 N>
   (dt: N, orig: M, lin_vel: &LV, ang_vel: &AV) -> M2
 {
-  let mut res = rotation::rotate_wrt_point(&One::one::<M>(),
-                                           &ang_vel.scalar_mul(&dt),
-                                           &orig.translation());
+  let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
+                                            &ang_vel.scalar_mul(&dt),
+                                            &orig.translation());
 
   res.translate_by(&lin_vel.scalar_mul(&dt));
 
