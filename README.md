@@ -13,18 +13,18 @@ demonstrations.
 ## Why another physics engine?
 There are a lot of physics engine out there.
 However having a physics engine written in rust is much more fun than writing
-bindings and has several adventages:
+bindings and has several advantages:
 - it shows that rust is suitable for soft real-time applications
 - it shows how well rust behaves with highly generic code
 - it shows that there is no need to write one physics engine per dimension:
   genericity wrt the dimension is possible
-- in a not-that-near future, C++ will die of ugglyness. Then, people will
+- in a not-that-near future, C++ will die of ugliness. Then, people will
   search for a physics engine and **nphysics** will be there, proudly
   exhibiting its _rusty_ sexyness.
 
 ## Compilation
 You will need the last rust compiler from the master branch.
-I pull the compiler and fix my code almost every days. If you encounter
+I pull the compiler and fix my code almost every day. If you encounter
 problems, make sure you have the last version.
 
 The simplest way to build **nphysics** and all its dependencies is to do a
