@@ -1,25 +1,27 @@
 use std::num::One;
-use nalgebra::traits::transformation::{Transformation, Transformable};
+use nalgebra::traits::transformation::{Transformation, Transformable, Transform};
 use ncollide::bounding_volume::has_bounding_volume::HasBoundingVolume;
 use ncollide::geom::default_geom::{DefaultGeom, Implicit};
 use ncollide::geom::implicit::Implicit;
 use body::volumetric::Volumetric;
 
 pub trait ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
-          : Implicit<V> + Volumetric<N, II> + Transformation<M> + HasBoundingVolume<BV>
+          : Implicit<V> + Volumetric<N, II> + Transformation<M> + Transform<V> + HasBoundingVolume<BV>
 {
   // FIXME: those methods are workarounds: why dont trait objects of this
   // traits dont inherit from all the parent traits?
   fn _support_point(&self, dir: &V) -> V;
   fn _volume(&self)                 -> N;
-  fn _inertia(&self)                -> II;
+  fn _inertia(&self, &N)            -> II;
   fn _transformation(&self)         -> M;
   fn _inv_transformation(&self)     -> M;
   fn _transform_by(&mut self, &M);
   fn _bounding_volume(&self)        -> BV;
+  fn _transform_vec(&self, &V)  -> V;
+  fn _inv_transform(&self, &V)  -> V;
 }
 
-impl<T: Implicit<V> + Volumetric<N, II> + Transformation<M> + HasBoundingVolume<BV>,
+impl<T: Implicit<V> + Volumetric<N, II> + Transformation<M> + Transform<V> + HasBoundingVolume<BV>,
      V,
      N,
      M,
@@ -38,8 +40,8 @@ ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV> for T
   { self.volume() }
 
   #[inline]
-  fn _inertia(&self) -> II
-  { self.inertia() }
+  fn _inertia(&self, mass: &N) -> II
+  { self.inertia(mass) }
 
   #[inline]
   fn _transformation(&self) -> M
@@ -56,6 +58,14 @@ ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV> for T
   #[inline]
   fn _bounding_volume(&self) -> BV
   { self.bounding_volume() }
+
+  #[inline]
+  fn _transform_vec(&self, v: &V) -> V
+  { self.transform_vec(v) }
+
+  #[inline]
+  fn _inv_transform(&self, v: &V) -> V
+  { self.inv_transform(v) }
 }
 
 pub fn new_implicit<
@@ -91,8 +101,8 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
   { self._volume() }
 
   #[inline]
-  fn inertia(&self) -> II
-  { self._inertia() }
+  fn inertia(&self, mass: &N) -> II
+  { self._inertia(mass) }
 }
 
 impl<V, N, M, II, BV> Transformation<M>
@@ -110,6 +120,16 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
   #[inline]
   fn transform_by(&mut self, m: &M)
   { self._transform_by(m) }
+}
+
+impl<V, N, M, II, BV> Transform<V>
+for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
+{
+  fn transform_vec(&self, v: &V) -> V
+  { self._transform_vec(v) }
+
+  fn inv_transform(&self, v: &V) -> V
+  { self._inv_transform(v) }
 }
 
 impl<V, N, M, II, BV> HasBoundingVolume<BV>

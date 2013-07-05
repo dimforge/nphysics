@@ -16,7 +16,7 @@ use body::can_move::CanMove;
 use body::material::Material;
 use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
-#[deriving(ToStr)]
+#[deriving(ToStr, Eq, Clone)]
 pub enum RigidBodyState {
   Static,
   Dynamic,
@@ -24,7 +24,7 @@ pub enum RigidBodyState {
 }
 
 
-#[deriving(ToStr)]
+#[deriving(ToStr, Clone, Eq)]
 pub struct RigidBody<S, N, M, LV, AV, II, BPP>
 {
   priv state:            RigidBodyState,
@@ -49,7 +49,7 @@ impl<S: Transformation<M>,
      M/*FIXME: : DeltaTransform<II>*/,
      LV,
      AV,
-     II: Mul<II, II> + Copy,
+     II: Mul<II, II> + Clone,
      BPP>
 RigidBody<S, N, M, LV, AV, II, BPP>
 {
@@ -59,7 +59,7 @@ RigidBody<S, N, M, LV, AV, II, BPP>
 
     // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
     self.inv_inertia = // FIXME: self.local_to_world.delta_transform() *
-                       copy self.ls_inv_inertia // FIXME:                  *
+                       self.ls_inv_inertia.clone() // FIXME:                  *
                        // FIXME: self.world_to_local.delta_transform()
   }
 }
@@ -69,7 +69,7 @@ impl<S:   Transformation<M> + Volumetric<N, II>,
      M:   One, // FIXME: + DeltaTransform<II>,
      LV:  Zero,
      AV:  Zero,
-     II:  One + Zero + Inv + Mul<II, II> + Copy,
+     II:  One + Zero + Inv + Mul<II, II> + Clone,
      BPP: Default>
 RigidBody<S, N, M, LV, AV, II, BPP>
 {
@@ -85,11 +85,20 @@ RigidBody<S, N, M, LV, AV, II, BPP>
         Static    => (Zero::zero(), Zero::zero()),
         Dynamic   => {
           let volume = geom.volume();
+
           if volume.is_zero()
           { fail!("A dynamic body cannot have a zero volume.") }
+
           if density.is_zero()
           { fail!("A dynamic body cannot have a zero density.") }
-          (One::one::<N>() / (density * volume), geom.inertia().inverse())
+
+          let mass = density * volume;
+
+          match geom.inertia(&mass).inverse()
+          {
+            Some(ii) => (One::one::<N>() / mass, ii),
+            None     => fail!("A dynamic body cannot have a singular inertia tensor.")
+          }
         },
         Kinematic => {
           println("Warning: for now, kinematic object behave like static one.");
@@ -106,7 +115,7 @@ RigidBody<S, N, M, LV, AV, II, BPP>
         lin_vel:          Zero::zero(),
         ang_vel:          Zero::zero(),
         inv_mass:         inv_mass,
-        ls_inv_inertia:   copy inv_inertia,
+        ls_inv_inertia:   inv_inertia.clone(),
         inv_inertia:      inv_inertia,
         lin_force:        Zero::zero(),
         ang_force:        Zero::zero(),
@@ -122,77 +131,82 @@ RigidBody<S, N, M, LV, AV, II, BPP>
   }
 }
 
-impl<S, N: Copy, M: Copy, LV: Copy, AV: Copy, II: Copy, BPP>
+impl<S, N: Clone, M: Clone, LV: Clone, AV: Clone, II: Clone, BPP>
     Dynamic<N, LV, AV, II> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline]
   fn lin_vel(&self) -> LV
-  { copy self.lin_vel }
+  { self.lin_vel.clone() }
   #[inline]
   fn set_lin_vel(&mut self, lv: &LV)
-  { self.lin_vel = copy *lv }
+  { self.lin_vel = lv.clone() }
 
   #[inline]
   fn ang_vel(&self) -> AV
-  { copy self.ang_vel }
+  { self.ang_vel.clone() }
   #[inline]
   fn set_ang_vel(&mut self, av: &AV)
-  { self.ang_vel = copy *av }
+  { self.ang_vel = av.clone() }
 
   #[inline]
   fn inv_mass(&self) -> N
-  { copy self.inv_mass }
+  { self.inv_mass.clone() }
   #[inline]
   fn set_inv_mass(&mut self, m: &N)
-  { self.inv_mass = copy *m }
+  { self.inv_mass = m.clone() }
 
   #[inline]
   fn inv_inertia(&self) -> II
-  { copy self.inv_inertia }
+  { self.inv_inertia.clone() }
   #[inline]
   fn set_inv_inertia(&mut self, ii: &II)
-  { self.inv_inertia = copy *ii }
+  { self.inv_inertia = ii.clone() }
 
   // FIXME: create another trait for forces?
   #[inline]
   fn ext_lin_force(&self) -> LV
-  { copy self.lin_force }
+  { self.lin_force.clone() }
   #[inline]
   fn set_ext_lin_force(&mut self, lf: &LV)
-  { self.lin_force = copy *lf }
+  { self.lin_force = lf.clone() }
 
   #[inline]
   fn ext_ang_force(&self) -> AV
-  { copy self.ang_force }
+  { self.ang_force.clone() }
   #[inline]
   fn set_ext_ang_force(&mut self, af: &AV)
-  { self.ang_force = copy *af }
+  { self.ang_force = af.clone() }
 }
 
 impl<S: Transformation<M>,
      N,
-     M: Copy + Inv + Mul<M, M>, // FIXME: + DeltaTransform<II>,
+     M: Clone + Inv + Mul<M, M>, // FIXME: + DeltaTransform<II>,
      LV,
      AV,
-     II: Mul<II, II> + Copy,
+     II: Mul<II, II> + Clone,
      BPP>
 Transformation<M> for
     RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline]
   fn transformation(&self) -> M
-  { copy self.local_to_world }
+  { self.local_to_world.clone() }
 
   #[inline]
   fn inv_transformation(&self) -> M
-  { copy self.world_to_local }
+  { self.world_to_local.clone() }
 
 
   #[inline]
   fn transform_by(&mut self, to_append: &M)
   {
     self.local_to_world = *to_append * self.local_to_world;
-    self.world_to_local = self.local_to_world.inverse();
+
+    match self.local_to_world.inverse()
+    {
+      Some(l2w) => self.world_to_local = l2w,
+      None      => fail!("Internal error: rigid body has a singular local_to_world transform.")
+    }
     self.moved(to_append);
   }
 }
@@ -204,7 +218,7 @@ impl<S: Transformation<M>,
      M: Translation<LV> + One, // FIXME: + DeltaTransform<II>,
      LV,
      AV,
-     II: Mul<II, II> + Copy,
+     II: Mul<II, II> + Clone,
      BPP>
     Translation<LV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
@@ -228,19 +242,19 @@ impl<S: Transformation<M>,
   }
 }
 
-impl<S: Copy + Transformation<M>,
-     N: Copy,
-     M: Copy + Translation<LV> + One, // FIXME: + DeltaTransform<II>,
-     LV: Copy,
-     AV: Copy,
-     II: Copy + Mul<II, II>,
-     BPP: Copy>
+impl<S: Clone + Transformation<M>,
+     N: Clone,
+     M: Clone + Translation<LV> + One, // FIXME: + DeltaTransform<II>,
+     LV: Clone,
+     AV: Clone,
+     II: Clone + Mul<II, II>,
+     BPP: Clone>
     Translatable<LV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline]
   fn translated(&self, trans: &LV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
-    let mut cpy = copy *self;
+    let mut cpy = self.clone();
 
     cpy.translate_by(trans);
 
@@ -253,7 +267,7 @@ impl<S: Transformation<M>,
      M: Rotation<AV> + One,
      LV,
      AV,
-     II: Mul<II, II> + Copy,
+     II: Mul<II, II> + Clone,
      BPP>
     Rotation<AV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
@@ -276,19 +290,19 @@ impl<S: Transformation<M>,
   }
 }
 
-impl<S:   Copy + Transformation<M>,
-     N:   Copy,
-     M:   Copy + Rotation<AV> + One,
-     LV:  Copy,
-     AV:  Copy,
-     II:  Copy + Mul<II, II>,
-     BPP: Copy>
+impl<S:   Clone + Transformation<M>,
+     N:   Clone,
+     M:   Clone + Rotation<AV> + One,
+     LV:  Clone,
+     AV:  Clone,
+     II:  Clone + Mul<II, II>,
+     BPP: Clone>
     Rotatable<AV, RigidBody<S, N, M, LV, AV, II, BPP>> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline]
   fn rotated(&self, rot: &AV) -> RigidBody<S, N, M, LV, AV, II, BPP>
   {
-    let mut cpy = copy *self;
+    let mut cpy = self.clone();
 
     cpy.rotate_by(rot);
 
@@ -352,14 +366,14 @@ impl<S, N, M, LV, AV, II, BPP: Exact<BoundingVolumeProxy<BV>>, BV>
   { self.bp_proxy.exact_mut() }
 }
 
-impl<S, N: Copy, M, LV, AV, II, BPP>
+impl<S, N: Clone, M, LV, AV, II, BPP>
     Material<N> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   #[inline]
   pub fn restitution_coefficient(&self) -> N
-  { copy self.restitution }
+  { self.restitution.clone() }
 
   #[inline]
   pub fn friction_coefficient(&self) -> N
-  { copy self.friction }
+  { self.friction.clone() }
 }

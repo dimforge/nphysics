@@ -7,8 +7,10 @@ use ncollide::broad::brute_force_bounding_volume_broad_phase::BoundingVolumeProx
 use ncollide::narrow::default_default::DefaultDefaultCollisionDetector;
 use ncollide::narrow::has_geom_has_geom::HasGeomHasGeomCollisionDetector;
 use ncollide::narrow::algorithm::johnson_simplex::JohnsonSimplex;
+// use ncollide::narrow::algorithm::brute_force_simplex::BruteForceSimplex;
 use ncollide::geom::default_geom::DefaultGeom;
 use ncollide::geom::ball::Ball;
+use ncollide::geom::box::Box;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::bounding_volume::aabb::AABB;
@@ -47,7 +49,7 @@ pub type Integrator2d<N> = BodyGravityIntegrator<LinearVelocity2d<N>,
                                                  RigidBody2d<N>,
                                                  InertiaTensor2d<N>,
                                                  Transform2d<N>>;
-pub type JohnsonSimplex2d<N> = JohnsonSimplex<AnnotatedPoint<LinearVelocity2d<N>>, N>;
+pub type JohnsonSimplex2d<N> = JohnsonSimplex<AnnotatedPoint<LinearVelocity2d<N>>, N>; // BruteForceSimplex<AnnotatedPoint<LinearVelocity2d<N>>, N>;
 pub type CollisionDetector2d<N> = DefaultDefaultCollisionDetector<Contact2d<N>,
                                                                   N,
                                                                   LinearVelocity2d<N>,
@@ -81,7 +83,8 @@ pub type DefaultWorld2d<N> = World<RigidBody2d<N>,
                                    Contact2d<N>,
                                    N>;
 
-pub type Ball2d<N> = Ball<N, Vec2<N>>;
+pub type Ball2d<N>  = Ball<N, Vec2<N>>;
+pub type Box2d<N>   = Box<N, Vec2<N>>;
 pub type Plane2d<N> = Plane<Vec2<N>>;
 
 pub type IslandAccumulator2d<N> = IslandAccumulator<RigidBody2d<N>,

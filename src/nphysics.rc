@@ -37,7 +37,6 @@ pub mod integrator
   pub mod euler;
   pub mod body_gravity_integrator;
   pub mod damping_integrator;
-  pub mod composite_integrator;
 }
 
 pub mod constraint

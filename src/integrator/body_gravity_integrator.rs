@@ -7,13 +7,14 @@ use body::dynamic::Dynamic;
 use integrator::integrator::Integrator;
 use integrator::euler;
 
+#[deriving(ToStr, Clone, Eq)]
 struct BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
   linear_gravity:  LV,
   angular_gravity: AV
 }
 
-impl<LV: Copy, AV: Copy, N, RB, II, M>
+impl<LV: Clone, AV: Clone, N, RB, II, M>
 BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
   pub fn new(&lin_g: &LV, &ang_g: &AV) ->
@@ -25,7 +26,7 @@ impl<RB: Dynamic<N, LV, AV, II> + Transformation<M>,
      M:  Translation<LV> + Rotation<AV> + Translatable<LV, M> + One,
      LV: Add<LV, LV> + ScalarMul<N> + Neg<LV>,
      AV: Add<AV, AV> + ScalarMul<N>,
-     N:  Zero + Copy,
+     N:  Zero + Clone,
      II>
     Integrator<N, RB> for BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
@@ -35,7 +36,7 @@ impl<RB: Dynamic<N, LV, AV, II> + Transformation<M>,
     {
       b.set_ext_lin_force(&self.linear_gravity);
       b.set_ext_ang_force(&self.angular_gravity);
-      euler::integrate_body_velocity(copy dt, b);
+      euler::integrate_body_velocity(dt.clone(), b);
       euler::integrate_body_position(dt, b);
     }
   }

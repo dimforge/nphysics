@@ -29,13 +29,13 @@ fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
 }
 
 pub fn integrate_body_velocity<RB: Dynamic<N, LV, AV, II>,
-                               N:  Copy,
+                               N:  Clone,
                                LV: Add<LV, LV> + ScalarMul<N>,
                                AV: Add<AV, AV> + ScalarMul<N>,
                                II>
        (dt: N, body: &mut RB)
 {
-  let lv = integrate_force(copy dt, &body.ext_lin_force(), &body.lin_vel());
+  let lv = integrate_force(dt.clone(), &body.ext_lin_force(), &body.lin_vel());
   body.set_lin_vel(&lv);
 
   let av = integrate_force(dt, &body.ext_ang_force(), &body.ang_vel());

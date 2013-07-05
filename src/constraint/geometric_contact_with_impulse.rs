@@ -2,17 +2,30 @@ use std::num::Zero;
 use std::vec;
 use nalgebra::traits::dim::Dim;
 use ncollide::contact::contact::Contact;
+use ncollide::contact::contact::UpdatableContact;
 use ncollide::contact::geometric_contact::GeometricContact;
 use constraint::contact_with_impulses::ContactWithImpulses;
 
-#[deriving(ToStr)]
+#[deriving(ToStr, Clone, Eq)]
 pub struct GeometricContactWithImpulse<V, N>
 {
   priv contact:  GeometricContact<V, N>,
   priv impulses: ~[N]
 }
 
-impl<V: Copy + Neg<V> + Dim, N: Zero + Copy> Contact<V, N> for
+// FIXME: the compiler does not infer correctly the DeepClone impl.
+impl<V: DeepClone, N: DeepClone> DeepClone for GeometricContactWithImpulse<V, N>
+{
+  fn deep_clone(&self) -> GeometricContactWithImpulse<V, N>
+  {
+    GeometricContactWithImpulse {
+      contact: self.contact.deep_clone(),
+      impulses: self.impulses.map(|e| e.deep_clone())
+    }
+  }
+}
+
+impl<V: Clone + Neg<V> + Zero + Dim, N: Zero + Clone + Copy> Contact<V, N> for
 GeometricContactWithImpulse<V, N>
 {
   #[inline]
@@ -68,10 +81,29 @@ GeometricContactWithImpulse<V, N>
   #[inline]
   fn world2(&self) -> V
   { self.contact.world2() }
-
 }
 
-impl<V, N: Copy> ContactWithImpulses<V, N> for GeometricContactWithImpulse<V, N>
+impl<V: Clone + Neg<V> + Dim, N: Zero + Clone> UpdatableContact<V, N> for
+GeometricContactWithImpulse<V, N>
+{
+  #[inline]
+  fn set_local1(&mut self, local1: V)
+  { self.contact.set_local1(local1) }
+
+  #[inline]
+  fn local1(&self) -> V
+  { self.contact.local1() }
+
+  #[inline]
+  fn set_local2(&mut self, local2: V)
+  { self.contact.set_local2(local2) }
+
+  #[inline]
+  fn local2(&self) -> V
+  { self.contact.local2() }
+}
+
+impl<V, N: Clone> ContactWithImpulses<V, N> for GeometricContactWithImpulse<V, N>
 {
   #[inline]
   fn impulses_mut<'r>(&'r mut self) -> &'r mut ~[N]

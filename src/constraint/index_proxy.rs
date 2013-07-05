@@ -5,7 +5,7 @@ pub trait HasIndexProxy
   fn proxy_mut<'r>(&'r mut self) -> &'r mut IndexProxy;
 }
 
-#[deriving(ToStr)]
+#[deriving(ToStr, Eq, Clone)]
 pub struct IndexProxy
 { index: int }
 

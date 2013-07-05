@@ -22,7 +22,7 @@ impl<RB: CanMove,
      BP: BroadPhase<RB>,
      CS: ConstraintSolver<N, RB, C>,
      C,
-     N: Copy + ToStr>
+     N: Clone + ToStr>
 World<RB, I, NF, BP, CS, C, N>
 {
   pub fn new(integrator:   ~I,
@@ -39,7 +39,7 @@ World<RB, I, NF, BP, CS, C, N>
   pub fn step(&mut self, dt: N)
   {
     for self.bodies.iter().advance |&b|
-    { self.integrator.integrate(copy dt, b) }
+    { self.integrator.integrate(dt.clone(), b) }
 
     let pairs = self.broad_phase.collision_pairs(self.bodies);
 
@@ -60,7 +60,7 @@ World<RB, I, NF, BP, CS, C, N>
     let mut islands = self.coll_graph.accumulate(self.bodies, acc);
 
     for islands.mut_iter().advance |island|
-    { self.solver.solve(copy dt, *island, self.bodies); }
+    { self.solver.solve(dt.clone(), *island, self.bodies); }
   }
 
   pub fn add(&mut self, body: @mut RB)

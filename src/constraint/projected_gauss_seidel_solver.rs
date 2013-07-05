@@ -2,23 +2,26 @@ use std::num::{Zero, Orderable};
 use std::vec;
 use nalgebra::traits::division_ring::DivisionRing;
 
-pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
-       (J:              &mut [N],
-        MJ:             &mut [N],
-        b:              &mut [N],
+pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + ToStr + Copy>
+       (J:              &[N],
+        MJ:             &[N],
+        b:              &[N],
         lambda:         &mut [N],
-        bounds:         &mut [N],
-        idx:            &mut [int],
+        bounds:         &[N],
+        idx:            &[int],
         sparcity:       uint,
         num_equations:  uint,
         num_bodies:     uint,
         num_iterations: uint,
         is_lambda_zero: bool) -> ~[N]
 {
-  // JMJ matrix’s diagonal.
+  // JMJ
   let mut d        = vec::from_elem(num_equations, Zero::zero::<N>());
   // MJLambda = MJ * lambda
   let mut MJLambda = vec::from_elem(sparcity * num_bodies, Zero::zero::<N>());
+
+  println("Starting with: ");
+  println(lambda.to_str());
 
   /*
    * compute MJLambda = MJ * lambda
@@ -105,6 +108,7 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
   let mut time = 0;
   while(time != num_iterations)
   {
+    println("loop");
     let mut i = 0;
     while(i != num_equations)
     {
@@ -194,9 +198,11 @@ pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + Copy>
 
       i = i + 1;
     }
+    println(lambda.to_str());
 
     time = time + 1;
   }
+  println("finished");
 
   MJLambda
 }

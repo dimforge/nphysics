@@ -2,6 +2,7 @@ use nalgebra::traits::scalar_op::ScalarMul;
 use body::dynamic::Dynamic;
 use integrator::integrator::Integrator;
 
+#[deriving(ToStr, Clone, Eq)]
 struct DampingIntegrator<T>
 {
   damping: T,
