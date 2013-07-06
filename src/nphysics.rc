@@ -41,6 +41,7 @@ pub mod integrator
 
 pub mod constraint
 {
+  pub mod velocity_constraint;
   pub mod index_proxy;
   pub mod constraint_solver;
   pub mod projected_gauss_seidel_solver;

@@ -5,7 +5,6 @@ use std::num::{Zero, One, Orderable, Bounded};
 use nalgebra::traits::dim::Dim;
 use nalgebra::traits::vector_space::VectorSpace;
 use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::iterable::{Iterable, FromAnyIterator};
 use nalgebra::traits::translation::{Translation, Translatable};
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
@@ -16,25 +15,27 @@ use nalgebra::traits::basis::Basis;
 use body::material::Material;
 use body::dynamic::Dynamic;
 use body::can_move::CanMove;
+use constraint::velocity_constraint::VelocityConstraint;
 use constraint::index_proxy::HasIndexProxy;
 use constraint::contact_with_impulses::ContactWithImpulses;
 use constraint::contact_equation;
-use constraint::contact_equation::{CorrectionParameters, ConstraintsSystemParameters};
+use constraint::contact_equation::CorrectionParameters;
 use constraint::constraint_solver::ConstraintSolver;
 use pgs = constraint::projected_gauss_seidel_solver;
 
 
 pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 {
-  priv rng:        rand::IsaacRng,
-  priv correction: CorrectionParameters<N>,
-  priv system:     ConstraintsSystemParameters<N>
+  priv rng:                   rand::IsaacRng,
+  priv correction:            CorrectionParameters<N>,
+  priv num_first_order_iter:  uint,
+  priv num_second_order_iter: uint,
+  priv constraints:           ~[VelocityConstraint<LV, AV, N>]
 }
 
-impl<C:  ContactWithImpulses<LV, N>,
-     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> +
-         Dot<N> + Dim + Basis + Clone,
-     AV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Dot<N> + Dim,
+impl<C:  ContactWithImpulses<LV, N> + ToStr,
+     LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Basis + Copy + Clone + ToStr,
+     AV: VectorSpace<N> + Dot<N> + Dim + Copy + ToStr,
      N:  DivisionRing + Orderable + Bounded + Clone + ToStr + Copy, // FIXME: need Copy for grow_set
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M> + Material<N>,
@@ -51,41 +52,34 @@ impl<C:  ContactWithImpulses<LV, N>,
     AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
   {
     AccumulatedImpulseSolver {
-      rng:         rand::IsaacRng::new_seeded([42]),
+      rng:                   rand::IsaacRng::new_seeded([42]),
+      num_first_order_iter:  num_first_order_iter,
+      num_second_order_iter: num_second_order_iter,
+      constraints:           ~[],
+
       correction: CorrectionParameters {
         depth_limit: depth_limit,
         corr_factor: corr_factor,
         depth_eps:   depth_eps,
         rest_eps:    rest_eps
-      },
-      system: ConstraintsSystemParameters {
-        dt: Zero::zero(),
-        num_first_order_iter:  num_first_order_iter,
-        num_second_order_iter: num_second_order_iter,
-        J:           ~[],
-        MJ:          ~[],
-        b:           ~[],
-        lambda:      ~[],
-        bounds:      ~[],
-        idx:         ~[]
       }
     }
   }
 
   fn resize_buffers(&mut self, num_equations: uint)
   {
-    let _0      = Zero::zero::<N>();
-    let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
-
-    self.system.J.grow_set(num_equations * 2 * max_dim, &_0, _0.clone());
-    self.system.MJ.grow_set(num_equations * 2 * max_dim, &_0, _0.clone());
-    self.system.b.grow_set(num_equations, &_0, _0.clone());
-    self.system.lambda.grow_set(num_equations, &_0, _0.clone());
-    self.system.bounds.grow_set(num_equations * 2, &_0, _0.clone());
-    self.system.idx.grow_set(num_equations * 2, &0, 0);
+    if self.constraints.len() < num_equations
+    {
+      self.constraints.grow_set(num_equations - 1,
+                                &VelocityConstraint::new(),
+                                VelocityConstraint::new());
+    }
+    else
+    { self.constraints.truncate(num_equations) }
   }
 
   fn first_order_solve(&mut self,
+                       dt:     N,
                        island: &[(@mut RB, @mut RB, @mut C)],
                        bodies: &[@mut RB])
   {
@@ -96,59 +90,39 @@ impl<C:  ContactWithImpulses<LV, N>,
     {
       self.resize_buffers(num_equations);
 
-      let _0      = Zero::zero::<N>();
-      let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
+      let _0 = Zero::zero::<N>();
 
-      let mut ididx    = 0;
-      let mut idJ      = 0;
-      let mut idb      = 0;
-      let mut idbounds = 0;
-
-      for island.iter().advance |&(rb1, rb2, c)|
+      for island.iter().enumerate().advance |(i, &(rb1, rb2, c))|
       {
         contact_equation::fill_first_order_contact_equation(
+          dt.clone(),
           c,
           rb1, rb2,
-          &mut self.system,
-          &mut ididx, &mut idJ, &mut idb, &mut idbounds,
+          &mut self.constraints[i],
           &self.correction
         );
       }
 
       // FIXME: parametrize by the resolution algorithm?
-      let MJLambda = pgs::projected_gauss_seidel_solve(
-        self.system.J,
-        self.system.MJ,
-        self.system.b,
-        self.system.lambda,
-        self.system.bounds,
-        self.system.idx,
-        max_dim,
-        num_equations,
+      let mut MJLambda = pgs::projected_gauss_seidel_solve(
+        self.constraints,
         bodies.len(),
-        self.system.num_first_order_iter,
+        self.num_first_order_iter,
         true
       );
 
-      let mut MJLambda_iter = MJLambda.iter();
-
-      for bodies.iter().advance |&b|
+      for bodies.iter().enumerate().advance |(i, &b)|
       {
         if b.proxy().index >= 0
         {
-          let mut dp : LV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
-          let mut da : AV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
-
-          dp.scalar_mul_inplace(&self.system.dt);
-          da.scalar_mul_inplace(&self.system.dt);
-
-          da = Zero::zero();
+          MJLambda[i].lv.scalar_mul_inplace(&dt);
+          MJLambda[i].av.scalar_mul_inplace(&dt);
 
           let center = &b.translation();
 
           b.transform_by(
-            &rotation::rotated_wrt_point(&One::one::<M>(), &da, center)
-            .translated(&dp)
+            &rotation::rotated_wrt_point(&One::one::<M>(), &MJLambda[i].av, center)
+            .translated(&MJLambda[i].lv)
           );
         }
       }
@@ -156,6 +130,7 @@ impl<C:  ContactWithImpulses<LV, N>,
   }
 
   fn second_order_solve(&mut self,
+                        dt:     N,
                         island: &[(@mut RB, @mut RB, @mut C)],
                         bodies: &[@mut RB])
   {
@@ -165,68 +140,50 @@ impl<C:  ContactWithImpulses<LV, N>,
     self.resize_buffers(num_equations);
 
     let _0      = Zero::zero::<N>();
-    let max_dim = Dim::dim::<LV>() + Dim::dim::<AV>();
 
-    let mut ididx    = 0;
-    let mut idJ      = 0;
-    let mut idb      = 0;
-    let mut idbounds = 0;
-
-    for island.iter().advance |&(rb1, rb2, c)|
+    for island.iter().enumerate().advance |(i, &(rb1, rb2, c))|
     {
       contact_equation::fill_second_order_contact_equation(
+        dt.clone(),
         c,
         rb1, rb2,
-        &mut self.system,
-        &mut ididx, &mut idJ, &mut idb, &mut idbounds,
+        self.constraints,
+        i * equations_per_contact,
         &self.correction
       );
     }
 
     // FIXME: parametrize by the resolution algorithm?
     let MJLambda = pgs::projected_gauss_seidel_solve(
-      self.system.J,
-      self.system.MJ,
-      self.system.b,
-      self.system.lambda,
-      self.system.bounds,
-      self.system.idx,
-      max_dim,
-      num_equations,
+      self.constraints,
       bodies.len(),
-      self.system.num_second_order_iter,
+      self.num_second_order_iter,
       false
     );
 
-    let mut MJLambda_iter = MJLambda.iter();
-
-    for bodies.iter().advance |&b|
+    for bodies.iter().enumerate().advance |(i, &b)|
     {
       if b.proxy().index >= 0
       {
-        let dlv: LV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
-        let dav: AV = FromAnyIterator::from_iterator(&mut MJLambda_iter);
-
         let curr_lin_vel = b.lin_vel();
         let curr_ang_vel = b.ang_vel();
 
-        b.set_lin_vel(&(curr_lin_vel + dlv));
-        b.set_ang_vel(&(curr_ang_vel + dav));
+        b.set_lin_vel(&(curr_lin_vel + MJLambda[i].lv));
+        b.set_ang_vel(&(curr_ang_vel + MJLambda[i].av));
       }
     }
 
     for island.iter().enumerate().advance |(i, &(_, _, c))|
     {
       for uint::iterate(0, equations_per_contact) |j|
-      { c.impulses_mut()[j] = self.system.lambda[i * equations_per_contact + j].clone() };
+      { c.impulses_mut()[j] = self.constraints[i * equations_per_contact + j].impulse.clone() };
     }
   }
 }
 
-impl<C:  ContactWithImpulses<LV, N>,
-     LV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Cross<AV> +
-         Basis + Dot<N> + Dim + Clone,
-     AV: Iterable<N> + FromAnyIterator<N> + VectorSpace<N> + Dot<N> + Dim,
+impl<C:  ContactWithImpulses<LV, N> + ToStr,
+     LV: VectorSpace<N> + Cross<AV> + Basis + Dot<N> + Dim + Copy + Clone + ToStr,
+     AV: VectorSpace<N> + Dot<N> + Copy + Dim + ToStr,
      N:  DivisionRing + Orderable + Bounded + Clone + ToStr + Copy,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M> + Material<N>,
@@ -255,10 +212,9 @@ impl<C:  ContactWithImpulses<LV, N>,
         }
       }
 
-      self.system.dt = dt;
       // self.rng.shuffle_mut(island);
-      self.second_order_solve(island, bodies);
-      self.first_order_solve(island, bodies);
+      self.second_order_solve(dt.clone(), island, bodies);
+      self.first_order_solve(dt, island, bodies);
     }
   }
 }

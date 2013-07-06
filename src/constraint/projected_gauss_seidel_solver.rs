@@ -1,208 +1,107 @@
 use std::num::{Zero, Orderable};
 use std::vec;
+use nalgebra::traits::dot::Dot;
+use nalgebra::traits::vector_space::VectorSpace;
 use nalgebra::traits::division_ring::DivisionRing;
+use constraint::velocity_constraint::VelocityConstraint;
 
-pub fn projected_gauss_seidel_solve<N: DivisionRing + Orderable + ToStr + Copy>
-       (J:              &[N],
-        MJ:             &[N],
-        b:              &[N],
-        lambda:         &mut [N],
-        bounds:         &[N],
-        idx:            &[int],
-        sparcity:       uint,
-        num_equations:  uint,
-        num_bodies:     uint,
-        num_iterations: uint,
-        is_lambda_zero: bool) -> ~[N]
+#[deriving(Eq, ToStr, Clone)]
+pub struct Velocities<LV, AV>
 {
-  // JMJ
-  let mut d        = vec::from_elem(num_equations, Zero::zero::<N>());
-  // MJLambda = MJ * lambda
-  let mut MJLambda = vec::from_elem(sparcity * num_bodies, Zero::zero::<N>());
+  lv: LV,
+  av: AV
+}
 
-  println("Starting with: ");
-  println(lambda.to_str());
-
-  /*
-   * compute MJLambda = MJ * lambda
-   */
-  // warm start
-  if !is_lambda_zero
+impl<LV: Zero, AV: Zero> Velocities<LV, AV>
+{
+  fn new() -> Velocities<LV, AV>
   {
-    let mut i = 0;
-    while(i != num_equations)
-    {
-      let b1 = unsafe { idx.unsafe_get(i * 2)     } * (sparcity as int);
-      let b2 = unsafe { idx.unsafe_get(i * 2 + 1) } * (sparcity as int);
-
-      if b1 >= 0
-      {
-        let mut j = 0;
-        while(j != sparcity)
-        {
-          unsafe {
-            *MJLambda.unsafe_mut_ref(b1 as uint + j) =
-              *MJLambda.unsafe_mut_ref(b1 as uint + j) +
-              MJ.unsafe_get(i * sparcity * 2 + j) * lambda.unsafe_get(i);
-          }
-
-          j = j + 1;
-        }
-      }
-
-      if b2 >= 0
-      {
-        let mut j = 0;
-        while(j != sparcity)
-        {
-          unsafe {
-            *MJLambda.unsafe_mut_ref(b2 as uint + j) =
-              *MJLambda.unsafe_mut_ref(b2 as uint + j) +
-              MJ.unsafe_get(i * sparcity * 2 + sparcity + j) *
-              lambda.unsafe_get(i);
-          }
-
-          j = j + 1;
-        }
-      }
-
-      i = i + 1;
+    Velocities {
+      lv: Zero::zero(),
+      av: Zero::zero()
     }
   }
+}
 
-  /*
-   * init JB's diagonal
-   */
-  let mut i = 0;
-  while (i != num_equations)
+pub fn projected_gauss_seidel_solve<LV: VectorSpace<N> + Dot<N> + Copy + ToStr,
+                                    AV: VectorSpace<N> + Dot<N> + Copy + ToStr,
+                                    N:  DivisionRing + Orderable + ToStr + Clone + Copy>
+       (constraints:    &mut [VelocityConstraint<LV, AV, N>],
+        num_bodies:     uint,
+        num_iterations: uint,
+        is_lambda_zero: bool) -> ~[Velocities<LV, AV>]
+{
+  // initialize the solution with zeros...
+  let mut MJLambda = vec::from_elem(num_bodies, Velocities::new::<LV, AV>());
+
+  // ... and warm start if possible
+  if !is_lambda_zero
   {
-    /*
-     * J and MJ^t have the same sparcity
-     */
-    unsafe {
-      d.unsafe_set(i, Zero::zero());
-    }
-
-    let mut j = 0;
-    while(j != sparcity)
+    for constraints.iter().advance |c|
     {
-      unsafe {
-        *d.unsafe_mut_ref(i) =
-          *d.unsafe_mut_ref(i) +
-          J.unsafe_get(i * sparcity * 2 + j) *
-          MJ.unsafe_get(i * sparcity * 2 + j)
-          + J.unsafe_get(i * sparcity * 2 + j + sparcity) *
-            MJ.unsafe_get(sparcity + i * sparcity * 2 + j);
+      if c.id1 >= 0
+      {
+        MJLambda[c.id1].lv = MJLambda[c.id1].lv - c.weighted_normal1.scalar_mul(&c.impulse);
+        MJLambda[c.id1].av = MJLambda[c.id1].av + c.weighted_rot_axis1.scalar_mul(&c.impulse);
       }
 
-      j = j + 1;
+      if c.id2 >= 0
+      {
+        MJLambda[c.id2].lv = MJLambda[c.id2].lv + c.weighted_normal2.scalar_mul(&c.impulse);
+        MJLambda[c.id2].av = MJLambda[c.id2].av + c.weighted_rot_axis2.scalar_mul(&c.impulse);
+      }
     }
-
-    i = i + 1;
   }
 
   /*
    * solve the system
    */
-
-  let mut time = 0;
-  while(time != num_iterations)
+  for num_iterations.times
   {
-    println("loop");
-    let mut i = 0;
-    while(i != num_equations)
+    for constraints.mut_iter().advance |c|
     {
-      let b1 = unsafe { idx.unsafe_get(i * 2 + 0) } * (sparcity as int);
-      let b2 = unsafe { idx.unsafe_get(i * 2 + 1) } * (sparcity as int);
+      let mut d_lambda_i = c.objective.clone();
 
-      let mut d_lambda_i = unsafe { b.unsafe_get(i) };
-
-      if b1 >= 0
+      if c.id1 >= 0
       {
-        let mut j = 0;
-        while(j != sparcity)
-        {
-          unsafe {
-            d_lambda_i = d_lambda_i - J.unsafe_get(2 * sparcity * i + j) *
-                          MJLambda.unsafe_get(b1 as uint + j)
-          }
-
-          j = j + 1;
-        }
+        d_lambda_i = d_lambda_i + c.normal.dot(&MJLambda[c.id1].lv)
+                                - c.rot_axis1.dot(&MJLambda[c.id1].av);
       }
 
-      if b2 >= 0
+      if c.id2 >= 0
       {
-        let mut j = 0;
-        while(j != sparcity)
-        {
-          unsafe {
-            d_lambda_i = d_lambda_i - J.unsafe_get(2 * sparcity * i + sparcity + j) *
-                         MJLambda.unsafe_get(b2 as uint + j)
-          }
-
-          j = j + 1;
-        }
+        d_lambda_i = d_lambda_i - c.normal.dot(&MJLambda[c.id2].lv)
+                                - c.rot_axis2.dot(&MJLambda[c.id2].av);
       }
 
-      d_lambda_i = d_lambda_i / unsafe { d.unsafe_get(i) };
+      d_lambda_i = d_lambda_i / c.projected_mass;
 
       /*
        * clamp the value such that: lambda- <= lambda <= lambda+
        * (this is the ``projected'' flavour of Gauss-Seidel
        */
-      let lambda_i_0 = unsafe { lambda.unsafe_get(i) };
+      let lambda_i_0 = c.impulse.clone();
 
       // FIXME: clamp takes pointers as arguments… would it be faster if it did
       // not?
-      unsafe {
-        lambda.unsafe_set(
-          i,
-          (lambda_i_0 + d_lambda_i).clamp(&bounds.unsafe_get(i * 2),
-                                          &bounds.unsafe_get(i * 2 + 1))
-        );
-      }
+      c.impulse = (lambda_i_0 + d_lambda_i).clamp(&c.lobound, &c.hibound);
 
-      d_lambda_i = unsafe { lambda.unsafe_get(i) } - lambda_i_0;
+      d_lambda_i = c.impulse - lambda_i_0;
 
 
-      if b1 >= 0
+      if c.id1 >= 0
       {
-        let mut j = 0;
-        while(j != sparcity)
-        {
-          unsafe {
-            *MJLambda.unsafe_mut_ref(b1 as uint + j) =
-              *MJLambda.unsafe_mut_ref(b1 as uint + j) +
-              d_lambda_i * MJ.unsafe_get(i * sparcity * 2 + j)
-          }
-
-          j = j + 1;
-        }
+        MJLambda[c.id1].lv = MJLambda[c.id1].lv - c.weighted_normal1.scalar_mul(&d_lambda_i);
+        MJLambda[c.id1].av = MJLambda[c.id1].av + c.weighted_rot_axis1.scalar_mul(&d_lambda_i);
       }
 
-      if b2 >= 0
+      if c.id2 >= 0
       {
-        let mut j = 0;
-        while(j != sparcity)
-        {
-          unsafe {
-            *MJLambda.unsafe_mut_ref(b2 as uint + j) =
-              *MJLambda.unsafe_mut_ref(b2 as uint + j) +
-              d_lambda_i * MJ.unsafe_get(i * sparcity * 2 + sparcity + j)
-          }
-
-          j = j + 1;
-        }
+        MJLambda[c.id2].lv = MJLambda[c.id2].lv + c.weighted_normal2.scalar_mul(&d_lambda_i);
+        MJLambda[c.id2].av = MJLambda[c.id2].av + c.weighted_rot_axis2.scalar_mul(&d_lambda_i);
       }
-
-      i = i + 1;
     }
-    println(lambda.to_str());
-
-    time = time + 1;
   }
-  println("finished");
 
   MJLambda
 }
