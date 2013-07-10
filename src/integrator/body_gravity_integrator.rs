@@ -17,8 +17,7 @@ struct BodyGravityIntegrator<LV, AV, N, RB, II, M>
 impl<LV: Clone, AV: Clone, N, RB, II, M>
 BodyGravityIntegrator<LV, AV, N, RB, II, M>
 {
-  pub fn new(&lin_g: &LV, &ang_g: &AV) ->
-         BodyGravityIntegrator<LV, AV, N, RB, II, M>
+  pub fn new(lin_g: LV, ang_g: AV) -> BodyGravityIntegrator<LV, AV, N, RB, II, M>
   { BodyGravityIntegrator { linear_gravity: lin_g, angular_gravity: ang_g } }
 }
 

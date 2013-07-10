@@ -1,4 +1,4 @@
-use std::num::{One, Zero, Orderable, Bounded, abs};
+use std::num::{One, Zero, Orderable, Bounded};
 use nalgebra::traits::basis::Basis;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::division_ring::DivisionRing;
@@ -72,7 +72,7 @@ pub fn fill_second_order_contact_equation
        <C:  ContactWithImpulses<LV, N>,
         LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Clone,
         AV: VectorSpace<N> + Dot<N>,
-        N:  DivisionRing + Orderable + Bounded + Clone + ToStr,
+        N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr,
         RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy +
             CanMove + Material<N>,
         II: Transform<AV>>
@@ -108,7 +108,7 @@ pub fn fill_second_order_contact_equation
   // In that case, we estimate the impulse by the derired normal correction.
   let friction_limit = mean_friction *
     if coll.impulses()[0].is_zero()
-    { abs(constraints[idc].objective.clone()) }
+    { constraints[idc].objective.abs() }
     else
     { coll.impulses()[0].clone() };
 

@@ -36,7 +36,7 @@ pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 impl<C:  ContactWithImpulses<LV, N> + ToStr,
      LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Basis + Copy + Clone + ToStr,
      AV: VectorSpace<N> + Dot<N> + Dim + Copy + ToStr,
-     N:  DivisionRing + Orderable + Bounded + Clone + ToStr + Copy, // FIXME: need Copy for grow_set
+     N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr + Copy, // FIXME: need Copy for grow_set
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M> + Material<N>,
      II: Transform<AV>,
@@ -86,7 +86,7 @@ impl<C:  ContactWithImpulses<LV, N> + ToStr,
     let equations_per_contact = 1;
     let num_equations         = equations_per_contact * island.len();
 
-    if island.iter().any_(|&(_, _, c)| contact_equation::needs_first_order_resolution(c, &self.correction.depth_limit))
+    if island.iter().any(|&(_, _, c)| contact_equation::needs_first_order_resolution(c, &self.correction.depth_limit))
     {
       self.resize_buffers(num_equations);
 
@@ -184,7 +184,7 @@ impl<C:  ContactWithImpulses<LV, N> + ToStr,
 impl<C:  ContactWithImpulses<LV, N> + ToStr,
      LV: VectorSpace<N> + Cross<AV> + Basis + Dot<N> + Dim + Copy + Clone + ToStr,
      AV: VectorSpace<N> + Dot<N> + Copy + Dim + ToStr,
-     N:  DivisionRing + Orderable + Bounded + Clone + ToStr + Copy,
+     N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr + Copy,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M> + Material<N>,
      II: Transform<AV>,
