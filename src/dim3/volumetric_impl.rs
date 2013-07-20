@@ -47,9 +47,9 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Ball3d<N>
                self.radius()                        *
                self.radius();
 
-    Mat3::new( [ diag.clone(), _0.clone()  , _0.clone(),
-                 _0.clone()  , diag.clone(), _0.clone(),
-                 _0.clone()  , _0          , diag ])
+    Mat3::new(diag.clone(), _0.clone()  , _0.clone(),
+              _0.clone()  , diag.clone(), _0.clone(),
+              _0.clone()  , _0          , diag)
   }
 }
 
@@ -72,9 +72,9 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Box3d<N>
   fn volume(&self) -> N
   {
     NumCast::from::<N, float>(8.0) *
-    self.half_extents().at[0]      *
-    self.half_extents().at[1]      *
-    self.half_extents().at[2]
+    self.half_extents().x          *
+    self.half_extents().y          *
+    self.half_extents().z
   }
 
   #[inline]
@@ -84,12 +84,12 @@ Volumetric<N, aliases::InertiaTensor3d<N>> for aliases::Box3d<N>
     let _2   = NumCast::from::<N, float>(2.0);
     let _i12 = NumCast::from::<N, float>(1.0 / 12.0);
     let w    = _i12 * *mass * _2 * _2;
-    let ix   = w * self.half_extents().at[0] * self.half_extents().at[0];
-    let iy   = w * self.half_extents().at[1] * self.half_extents().at[1];
-    let iz   = w * self.half_extents().at[2] * self.half_extents().at[2];
+    let ix   = w * self.half_extents().x * self.half_extents().x;
+    let iy   = w * self.half_extents().y * self.half_extents().y;
+    let iz   = w * self.half_extents().z * self.half_extents().z;
 
-    Mat3::new([iy + iz,    _0.clone(), _0.clone(),
-               _0.clone(), ix + iz   , _0.clone(),
-               _0.clone(), _0        , ix + iy])
+    Mat3::new(iy + iz,    _0.clone(), _0.clone(),
+              _0.clone(), ix + iz   , _0.clone(),
+              _0.clone(), _0        , ix + iy)
   }
 }

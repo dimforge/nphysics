@@ -34,9 +34,9 @@ pub struct AccumulatedImpulseSolver<N, C, LV, AV, RB, II, M>
 }
 
 impl<C:  ContactWithImpulses<LV, N> + ToStr,
-     LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Basis + Copy + Clone + ToStr,
-     AV: VectorSpace<N> + Dot<N> + Dim + Copy + ToStr,
-     N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr + Copy, // FIXME: need Copy for grow_set
+     LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Basis + Clone + ToStr,
+     AV: VectorSpace<N> + Dot<N> + Dim + Clone + ToStr,
+     N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M> + Material<N>,
      II: Transform<AV>,
@@ -173,6 +173,7 @@ impl<C:  ContactWithImpulses<LV, N> + ToStr,
       }
     }
 
+    // copy back the impulse cache
     for island.iter().enumerate().advance |(i, &(_, _, c))|
     {
       for uint::iterate(0, equations_per_contact) |j|
@@ -182,9 +183,9 @@ impl<C:  ContactWithImpulses<LV, N> + ToStr,
 }
 
 impl<C:  ContactWithImpulses<LV, N> + ToStr,
-     LV: VectorSpace<N> + Cross<AV> + Basis + Dot<N> + Dim + Copy + Clone + ToStr,
-     AV: VectorSpace<N> + Dot<N> + Copy + Dim + ToStr,
-     N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr + Copy,
+     LV: VectorSpace<N> + Cross<AV> + Basis + Dot<N> + Dim + Clone + ToStr,
+     AV: VectorSpace<N> + Dot<N> + Dim + Clone + ToStr,
+     N:  DivisionRing + Orderable + Bounded + Signed + Clone + ToStr,
      RB: Dynamic<N, LV, AV, II> + Translation<LV> + HasIndexProxy + CanMove +
          Transformation<M> + Material<N>,
      II: Transform<AV>,

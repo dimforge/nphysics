@@ -42,7 +42,7 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Ball2d<N>
   #[inline]
   fn inertia(&self, mass: &N) -> aliases::InertiaTensor2d<N>
     // FIXME: remove the inverse
-  { Mat1::new( [ self.radius() * self.radius() * *mass / NumCast::from::<N, float>(2.0) ] ) }
+  { Mat1::new(self.radius() * self.radius() * *mass / NumCast::from::<N, float>(2.0)) }
 }
 
 impl<N: NumCast + Ring + Clone>
@@ -51,9 +51,7 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Box2d<N>
   #[inline]
   fn volume(&self)  -> N
   {
-    NumCast::from::<N, float>(4.0) *
-    self.half_extents().at[0] *
-    self.half_extents().at[1]
+    NumCast::from::<N, float>(4.0) * self.half_extents().x * self.half_extents().y
   }
 
   #[inline]
@@ -63,10 +61,10 @@ Volumetric<N, aliases::InertiaTensor2d<N>> for aliases::Box2d<N>
     let _2   = NumCast::from::<N, float>(2.0);
     let _i12 = NumCast::from::<N, float>(1.0 / 12.0);
     let w    = _i12 * *mass * _2 * _2;
-    let ix   = w * self.half_extents().at[0] * self.half_extents().at[0];
-    let iy   = w * self.half_extents().at[1] * self.half_extents().at[1];
+    let ix   = w * self.half_extents().x * self.half_extents().x;
+    let iy   = w * self.half_extents().y * self.half_extents().y;
 
-    Mat1::new([ix + iy])
+    Mat1::new(ix + iy)
   }
 }
 

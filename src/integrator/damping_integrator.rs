@@ -8,7 +8,7 @@ struct DampingIntegrator<T>
   damping: T,
 }
 
-impl<T: Copy> DampingIntegrator<T>
+impl<T> DampingIntegrator<T>
 {
   fn new(damping_factor: T) -> DampingIntegrator<T>
   { DampingIntegrator { damping: damping_factor } }

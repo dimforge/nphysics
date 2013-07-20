@@ -25,7 +25,7 @@ impl<V: DeepClone, N: DeepClone> DeepClone for GeometricContactWithImpulse<V, N>
   }
 }
 
-impl<V: Clone + Neg<V> + Zero + Dim, N: Zero + Clone + Copy> Contact<V, N> for
+impl<V: Clone + Neg<V> + Zero + Dim, N: Zero + Clone> Contact<V, N> for
 GeometricContactWithImpulse<V, N>
 {
   #[inline]

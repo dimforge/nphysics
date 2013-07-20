@@ -23,9 +23,9 @@ impl<LV: Zero, AV: Zero> Velocities<LV, AV>
   }
 }
 
-pub fn projected_gauss_seidel_solve<LV: VectorSpace<N> + Dot<N> + Copy + ToStr,
-                                    AV: VectorSpace<N> + Dot<N> + Copy + ToStr,
-                                    N:  DivisionRing + Orderable + ToStr + Clone + Copy>
+pub fn projected_gauss_seidel_solve<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
+                                    AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
+                                    N:  DivisionRing + Orderable + Clone + ToStr>
        (constraints:    &mut [VelocityConstraint<LV, AV, N>],
         num_bodies:     uint,
         num_iterations: uint,
