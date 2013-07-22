@@ -160,7 +160,7 @@ impl<N, E> Node<N, E>
   }
 }
 // 
-impl<N, E> Graph<N, E>
+impl<N: 'static, E: 'static> Graph<N, E>
 {
   pub fn new() -> Graph<N, E>
   {

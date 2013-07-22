@@ -16,13 +16,13 @@ pub struct World<RB, I, NF, BP, CS, C, N>
 }
 
 // FIXME: is it good to force CanMove? (no loss of genericity?)
-impl<RB: CanMove,
+impl<RB: 'static + CanMove,
      I : Integrator<N, RB>,
-     NF: CollisionDetector<C, RB, RB>,
+     NF: 'static + CollisionDetector<C, RB, RB>,
      BP: BroadPhase<RB>,
      CS: ConstraintSolver<N, RB, C>,
      C,
-     N: Clone + ToStr>
+     N: 'static + Clone + ToStr>
 World<RB, I, NF, BP, CS, C, N>
 {
   pub fn new(integrator:   ~I,
