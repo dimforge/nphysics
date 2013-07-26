@@ -1,6 +1,7 @@
 use std::num::One;
 use nalgebra::traits::transformation::{Transformation, Transformable, Transform};
 use ncollide::bounding_volume::has_bounding_volume::HasBoundingVolume;
+use ncollide::bounding_volume::bounding_volume::BoundingVolume;
 use ncollide::geom::default_geom::{DefaultGeom, Implicit};
 use ncollide::geom::implicit::Implicit;
 use body::volumetric::Volumetric;
@@ -26,7 +27,7 @@ impl<T: Implicit<V> + Volumetric<N, II> + Transformation<M> + Transform<V> + Has
      N,
      M,
      II,
-     BV>
+     BV: BoundingVolume>
 ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV> for T
 {
   // FIXME: those methods are workarounds: why dont trait objects of this
@@ -122,7 +123,7 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
   { self._transform_by(m) }
 }
 
-impl<V, N, M, II, BV> Transform<V>
+impl<V, N, M, II, BV: BoundingVolume> Transform<V>
 for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 {
   fn transform_vec(&self, v: &V) -> V
@@ -132,7 +133,7 @@ for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
   { self._inv_transform(v) }
 }
 
-impl<V, N, M, II, BV> HasBoundingVolume<BV>
+impl<V, N, M, II, BV: BoundingVolume> HasBoundingVolume<BV>
 for ~ImplicitVolumetricTransformationBoundingVolume<V, N, M, II, BV>
 {
   #[inline]

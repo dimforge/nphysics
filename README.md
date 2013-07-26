@@ -24,8 +24,7 @@ bindings and has several advantages:
 
 ## Compilation
 You will need the last rust compiler from the master branch.
-I pull the compiler and fix my code almost every day. If you encounter
-problems, make sure you have the last version.
+If you encounter problems, make sure you have the last version before creating an issue.
 
 The simplest way to build **nphysics** and all its dependencies is to do a
 recursive clone:
@@ -38,14 +37,14 @@ recursive clone:
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
-become a grown up.  Most missing features are because of missing features on
+become a grown up. Most missing features are because of missing features on
 **ncollide**. Features missing from **nphysics** itself include:
 
 - island based sleeping
 - kinematic bodies
 - efficient signaling system
 - joints
-- soft-bodies
+- soft-bodies (see https://github.com/natal/roft for a draft)
 - parallel pipeline
 - GPU-based pipeline
 - an efficient way to handle generically continious collision detection

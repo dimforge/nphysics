@@ -7,6 +7,7 @@ use nalgebra::traits::transformation::Transformation;
 use ncollide::broad::brute_force_bounding_volume_broad_phase::BoundingVolumeProxy;
 use ncollide::broad::brute_force_bounding_volume_broad_phase::HasBoundingVolumeProxy;
 use ncollide::bounding_volume::has_bounding_volume::HasBoundingVolume;
+use ncollide::bounding_volume::bounding_volume::BoundingVolume;
 use ncollide::geom::has_geom::HasGeom;
 use ncollide::utils::exact::Exact;
 use ncollide::utils::default::Default;
@@ -334,7 +335,7 @@ impl<S, N, M, LV, AV, II, BPP> CanMove for RigidBody<S, N, M, LV, AV, II, BPP>
   }
 }
 
-impl<S: HasBoundingVolume<BV>, N, M, LV, AV, II, BPP, BV>
+impl<S: HasBoundingVolume<BV>, N, M, LV, AV, II, BPP, BV: BoundingVolume>
     HasBoundingVolume<BV> for RigidBody<S, N, M, LV, AV, II, BPP>
 {
   fn bounding_volume(&self) -> BV

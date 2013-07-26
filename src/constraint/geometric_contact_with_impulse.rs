@@ -83,7 +83,7 @@ GeometricContactWithImpulse<V, N>
   { self.contact.world2() }
 }
 
-impl<V: Clone + Neg<V> + Dim, N: Zero + Clone> UpdatableContact<V, N> for
+impl<V: Clone + Zero + Neg<V> + Dim, N: Zero + Clone> UpdatableContact<V, N> for
 GeometricContactWithImpulse<V, N>
 {
   #[inline]
@@ -103,7 +103,8 @@ GeometricContactWithImpulse<V, N>
   { self.contact.local2() }
 }
 
-impl<V, N: Clone> ContactWithImpulses<V, N> for GeometricContactWithImpulse<V, N>
+impl<V: Clone + Zero + Neg<V> + Dim, N: Clone + Zero> ContactWithImpulses<V, N> for
+GeometricContactWithImpulse<V, N>
 {
   #[inline]
   fn impulses_mut<'r>(&'r mut self) -> &'r mut ~[N]
