@@ -1,78 +1,87 @@
-use ncollide::broad::broad_phase::BroadPhase;
-use ncollide::narrow::collision_detector::CollisionDetector;
-use graph::collision_graph::Graph;
-use graph::island_accumulator::IslandAccumulator;
-use integrator::integrator::Integrator;
-use constraint::constraint_solver::ConstraintSolver;
-use body::can_move::CanMove;
+use resolution::solver::Solver;
+use integration::integrator::Integrator;
+use detection::detector::Detector;
 
-pub struct World<RB, I, NF, BP, CS, C, N>
+pub struct World<N, O, C>
 {
-  priv bodies      : ~[@mut RB],
-  priv integrator  : ~I,
-  priv coll_graph  : ~Graph<RB, NF>,
-  priv broad_phase : ~BP,
-  priv solver      : ~CS
+  objects:     ~[@mut O],
+  integrators: ~[@mut Integrator<N, O>],
+  detectors:   ~[@mut Detector<N, O, C>],
+  solvers:     ~[@mut Solver<N, C>]
 }
 
-// FIXME: is it good to force CanMove? (no loss of genericity?)
-impl<RB: 'static + CanMove,
-     I : Integrator<N, RB>,
-     NF: 'static + CollisionDetector<C, RB, RB>,
-     BP: BroadPhase<RB>,
-     CS: ConstraintSolver<N, RB, C>,
-     C,
-     N: 'static + Clone + ToStr>
-World<RB, I, NF, BP, CS, C, N>
+impl<N, O, C> World<N, O, C>
 {
-  pub fn new(integrator:   ~I,
-             broad_phase:  ~BP,
-             solver:       ~CS) -> World<RB, I, NF, BP, CS, C, N>
+  pub fn new() -> World<N, O, C>
   {
-    World { bodies:       ~[],
-            integrator:   integrator,
-            coll_graph:   ~Graph::new(),
-            broad_phase:  broad_phase,
-            solver:       solver }
+    World {
+      objects:     ~[],
+      integrators: ~[],
+      detectors:   ~[],
+      solvers:     ~[]
+    }
   }
+}
 
+impl<N: Clone, O, C> World<N, O, C>
+{
   pub fn step(&mut self, dt: N)
   {
-    for self.bodies.iter().advance |&b|
-    { self.integrator.integrate(dt.clone(), b) }
+    //
+    // Integration
+    //
+    for i in self.integrators.mut_iter()
+    { i.update(dt.clone()) }
 
-    let pairs = self.broad_phase.collision_pairs(self.bodies);
+    //
+    // Interference detection
+    //
+    let mut interferences = ~[];
 
-    for pairs.iter().advance |&(b1, b2)|
+    for d in self.detectors.mut_iter()
     {
-      if b1.can_move() || b2.can_move()
-      {
-        if !self.coll_graph.prepare_insersion(b1, b2)
-        { self.coll_graph.add_edge(@mut CollisionDetector::new(b1, b2), b1, b2) }
-      }
+      d.update();
+      d.interferences(&mut interferences);
     }
 
-    self.coll_graph.cleanup();
-
-    let acc = &mut IslandAccumulator::new::<RB, NF, C>();
-
-    // FIXME: do not pass the whole bodies vector: pass only active bodies
-    let mut islands = self.coll_graph.accumulate(self.bodies, acc);
-
-    for islands.mut_iter().advance |island|
-    { self.solver.solve(dt.clone(), *island, self.bodies); }
+    //
+    // Resolution
+    //
+    for s in self.solvers.mut_iter()
+    { s.solve(dt.clone(), interferences) }
   }
 
-  pub fn add(&mut self, body: @mut RB)
+  pub fn add_detector<D: 'static + Detector<N, O, C>>(&mut self, d: @mut D)
   {
-    self.bodies.push(body);
-    self.broad_phase.add(body);
-    self.coll_graph.add_node(body);
+    self.detectors.push(d as @mut Detector<N, O, C>);
+
+    for o in self.objects.iter()
+    { d.add(o.clone()) }
   }
 
-  pub fn coll_graph<'r>(&'r mut self) -> &'r mut ~Graph<RB, NF>
-  { &'r mut self.coll_graph }
+  pub fn add_integrator<I: 'static + Integrator<N, O>>(&mut self, i: @mut I)
+  {
+    self.integrators.push(i as @mut Integrator<N, O>);
 
-  pub fn bodies<'r>(&'r self) -> &'r ~[@mut RB]
-  { &'r self.bodies }
+    for o in self.objects.mut_iter()
+    { i.add(o.clone()) }
+  }
+
+  pub fn add_solver<S: 'static + Solver<N, C>>(&mut self, s: @mut S)
+  {
+      self.solvers.push(s as @mut Solver<N, C>);
+  }
+
+  pub fn add_object(&mut self, rb: @mut O)
+  {
+    self.objects.push(rb);
+
+    let rb = self.objects.last();
+
+    for d in self.integrators.mut_iter()
+    { d.add(rb.clone()) }
+
+    for d in self.detectors.mut_iter()
+    { d.add(rb.clone()) }
+  }
 }

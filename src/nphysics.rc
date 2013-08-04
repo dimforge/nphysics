@@ -9,56 +9,52 @@ extern mod std;
 extern mod nalgebra;
 extern mod ncollide;
 
+pub mod aliases
+{
+    pub mod dim2;
+    pub mod dim3;
+}
+
+pub mod resolution
+{
+    pub mod solver;
+
+    pub mod constraint
+    {
+        pub mod accumulated_impulse_solver;
+        pub mod projected_gauss_seidel_solver;
+        pub mod velocity_constraint;
+        pub mod contact_equation;
+    }
+}
+pub mod integration
+{
+    pub mod integrator;
+    pub mod rigid_body_integrator;
+    pub mod soft_body_integrator;
+    pub mod body_force_generator;
+    pub mod euler;
+}
+pub mod detection
+{
+    pub mod detector;
+
+    pub mod collision
+    {
+        pub mod bodies_bodies;
+        pub mod default_default;
+    }
+}
 pub mod world
 {
-  pub mod world;
+    pub mod world;
 }
 
-pub mod graph
+pub mod object
 {
-  pub mod accumulator;
-  pub mod collision_graph;
-  pub mod island_accumulator;
-}
-
-pub mod body
-{
-  pub mod material;
-  pub mod can_move;
-  pub mod volumetric;
-  pub mod dynamic;
-  pub mod rigid_body;
-  pub mod implicit_volumetric_transformation_bounding_volume;
-}
-
-pub mod integrator
-{
-  pub mod integrator;
-  pub mod euler;
-  pub mod body_gravity_integrator;
-  // pub mod damping_integrator;
-}
-
-pub mod constraint
-{
-  pub mod velocity_constraint;
-  pub mod index_proxy;
-  pub mod constraint_solver;
-  pub mod projected_gauss_seidel_solver;
-  pub mod contact_equation;
-  pub mod contact_with_impulses;
-  pub mod accumulated_impulse_solver;
-  pub mod geometric_contact_with_impulse;
-}
-
-pub mod dim2
-{
-  pub mod aliases;
-  pub mod volumetric_impl;
-}
-
-pub mod dim3
-{
-  pub mod aliases;
-  pub mod volumetric_impl;
+    pub mod rigid_body;
+    pub mod soft_body;
+    pub mod volumetric;
+    pub mod implicit_geom;
+    pub mod body;
 }
