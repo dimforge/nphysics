@@ -21,8 +21,7 @@ use resolution::solver::Solver;
 use pgs = resolution::constraint::projected_gauss_seidel_solver;
 
 
-pub struct AccumulatedImpulseSolver<N, LV, AV, M, II>
-{
+pub struct AccumulatedImpulseSolver<N, LV, AV, M, II> {
     priv rng:                   rand::IsaacRng,
     priv correction:            CorrectionParameters<N>,
     priv num_first_order_iter:  uint,
@@ -38,16 +37,14 @@ impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
          Rotation<AV> + One + Clone + Inv,
      II: Transform<AV> + Mul<II, II> + Clone>
-AccumulatedImpulseSolver<N, LV, AV, M, II>
-{
+AccumulatedImpulseSolver<N, LV, AV, M, II> {
     pub fn new(depth_limit:           N,
                corr_factor:           N,
                depth_eps:             N,
                rest_eps:              N,
                num_first_order_iter:  uint,
                num_second_order_iter: uint)
-               -> AccumulatedImpulseSolver<N, LV, AV, M, II>
-    {
+               -> AccumulatedImpulseSolver<N, LV, AV, M, II> {
         AccumulatedImpulseSolver {
             rng:                   rand::IsaacRng::new_seeded([42]),
             num_first_order_iter:  num_first_order_iter,
@@ -63,34 +60,30 @@ AccumulatedImpulseSolver<N, LV, AV, M, II>
         }
     }
 
-    fn resize_buffers(&mut self, num_equations: uint)
-    {
-        if self.constraints.len() < num_equations
-        {
+    fn resize_buffers(&mut self, num_equations: uint) {
+        if self.constraints.len() < num_equations {
             self.constraints.grow_set(num_equations - 1,
             &VelocityConstraint::new(),
             VelocityConstraint::new());
         }
-        else
-        { self.constraints.truncate(num_equations) }
+        else {
+            self.constraints.truncate(num_equations)
+        }
     }
 
     fn first_order_solve(&mut self,
                          dt:          N,
                          constraints: &[Constraint<N, LV, AV, M, II>],
-                         bodies:      &[@mut RigidBody<N, LV, AV, M, II>])
-    {
+                         bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
         let equations_per_contact = 1;
         let num_equations         = equations_per_contact * constraints.len();
 
-        if constraints.iter().any(|&RBRB(_, _, ref c)| c.depth > self.correction.depth_limit)
-        {
+        if constraints.iter().any(|&RBRB(_, _, ref c)| c.depth > self.correction.depth_limit) {
             self.resize_buffers(num_equations);
 
             let _0 = Zero::zero::<N>();
 
-            for (i, &RBRB(rb1, rb2, ref c)) in constraints.iter().enumerate()
-            {
+            for (i, &RBRB(rb1, rb2, ref c)) in constraints.iter().enumerate() {
                 contact_equation::fill_first_order_contact_equation(
                     dt.clone(),
                     c,
@@ -108,8 +101,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II>
                 true
                 );
 
-            for &b in bodies.iter()
-            {
+            for &b in bodies.iter() {
                 let i = b.index();
 
                 MJLambda[i].lv.scalar_mul_inplace(&dt);
@@ -128,8 +120,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II>
     fn second_order_solve(&mut self,
                           dt:          N,
                           constraints: &[Constraint<N, LV, AV, M, II>],
-                          bodies:      &[@mut RigidBody<N, LV, AV, M, II>])
-    {
+                          bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
         let equations_per_contact = Dim::dim::<LV>(); // normal + friction
         let num_equations         = equations_per_contact * constraints.len();
 
@@ -137,8 +128,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II>
 
         let _0      = Zero::zero::<N>();
 
-        for (i, &RBRB(rb1, rb2, ref c)) in constraints.iter().enumerate()
-        {
+        for (i, &RBRB(rb1, rb2, ref c)) in constraints.iter().enumerate() {
             contact_equation::fill_second_order_contact_equation(
                 dt.clone(),
                 c,
@@ -156,8 +146,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II>
             false
             );
 
-        for &b in bodies.iter()
-        {
+        for &b in bodies.iter() {
             let i = b.index();
 
             let curr_lin_vel = b.lin_vel();
@@ -180,22 +169,17 @@ impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
          Rotation<AV> + One + Clone + Inv,
      II: Transform<AV> + Mul<II, II> + Clone>
 Solver<N, Constraint<N, LV, AV, M, II>> for
-AccumulatedImpulseSolver<N, LV, AV, M, II>
-{
-    fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>])
-    {
+AccumulatedImpulseSolver<N, LV, AV, M, II> {
+    fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>]) {
         // XXX bodies index assignment is very uggly
         let mut bodies = ~[];
 
-        if constraints.len() != 0
-        {
+        if constraints.len() != 0 {
             // This is a two-passes assignation of index to the rigid bodies.
             // This is not very good, but seems to be the only way to do that without having a separate
             // list of all rigid bodies.
-            for c in constraints.iter()
-            {
-                match *c
-                {
+            for c in constraints.iter() {
+                match *c {
                     RBRB(a, b, _) => {
                         a.set_index(-2);
                         b.set_index(-2)
@@ -205,32 +189,28 @@ AccumulatedImpulseSolver<N, LV, AV, M, II>
 
             let mut id = 0;
 
-            for c in constraints.iter()
-            {
-                match *c
-                {
+            for c in constraints.iter() {
+                match *c {
                     RBRB(a, b, _) => {
-                        if a.index() == -2
-                        {
-                            if a.can_move()
-                            {
+                        if a.index() == -2 {
+                            if a.can_move() {
                                 a.set_index(id);
                                 bodies.push(a);
                                 id = id + 1;
                             }
-                            else
-                            { a.set_index(-1) }
+                            else {
+                                a.set_index(-1)
+                            }
                         }
-                        if b.index() == -2
-                        {
-                            if b.can_move()
-                            {
+                        if b.index() == -2 {
+                            if b.can_move() {
                                 b.set_index(id);
                                 bodies.push(b);
                                 id = id + 1;
                             }
-                            else
-                            { b.set_index(-1) }
+                            else {
+                                b.set_index(-1)
+                            }
                         }
                     }
                 }

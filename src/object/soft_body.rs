@@ -4,15 +4,13 @@ use nalgebra::traits::norm::Norm;
 use nalgebra::traits::dot::Dot;
 use nalgebra::traits::vector_space::VectorSpace;
 
-pub struct PointMass<N, V>
-{
+pub struct PointMass<N, V> {
     invmass:    N,
     velocity:   V,
     position:   V,
 }
 
-pub struct ConstraintsGeometry<N>
-{
+pub struct ConstraintsGeometry<N> {
     stiffness:   N,
     rest_length: N,
     impulse:     N,
@@ -20,8 +18,7 @@ pub struct ConstraintsGeometry<N>
     rb2:         uint
 }
 
-pub struct SoftBody<N, V>
-{
+pub struct SoftBody<N, V> {
     acc:         V,
     points:      ~[PointMass<N, V>],
     constraints: ~[ConstraintsGeometry<N>]
@@ -29,22 +26,19 @@ pub struct SoftBody<N, V>
 
 impl<N: DivisionRing + NumCast + Signed + Bounded + Eq + Ord + Clone,
      V: VectorSpace<N> + Norm<N> + Dot<N> + Clone>
-     SoftBody<N, V>
-{
+     SoftBody<N, V> {
     pub fn new_from_mesh(vbuf:      ~[V],
                          ids1:      ~[i32],
                          ids2:      ~[i32],
                          invmasses: ~[N],
-                         stiffness: ~[N]) -> SoftBody<N, V>
-    {
+                         stiffness: ~[N]) -> SoftBody<N, V> {
         assert!(vbuf.len() == invmasses.len(),
         "Vertex buffer and mass informations must have the same size.");
 
         // create points mass
         let mut points = ~[];
 
-        for (v, m) in vbuf.iter().zip(invmasses.iter())
-        {
+        for (v, m) in vbuf.iter().zip(invmasses.iter()) {
             points.push(PointMass {
                 invmass:    m.clone(),
                 velocity:   Zero::zero(),
@@ -55,8 +49,7 @@ impl<N: DivisionRing + NumCast + Signed + Bounded + Eq + Ord + Clone,
         // create constraints
         let mut constraints = ~[];
 
-        for i in range(0u, ids2.len())
-        {
+        for i in range(0u, ids2.len()) {
             let v1 = ids1[i];
             let v2 = ids2[i];
             let s  = stiffness[i].clone();
@@ -77,6 +70,7 @@ impl<N: DivisionRing + NumCast + Signed + Bounded + Eq + Ord + Clone,
         }
     }
 
-    pub fn points<'r>(&'r mut self) -> &'r mut ~[PointMass<N, V>]
-    { &'r mut self.points }
+    pub fn points<'r>(&'r mut self) -> &'r mut ~[PointMass<N, V>] {
+        &'r mut self.points
+    }
 }

@@ -19,8 +19,7 @@ use I = object::implicit_geom::DynamicImplicit;
 
 type S<N, V> = JohnsonSimplex<N, AnnotatedPoint<V>>;
 
-enum DefaultDefault<N, V, M, II>
-{
+enum DefaultDefault<N, V, M, II> {
     BallBall        (BallBall<N, V>),
     BallPlane       (ImplicitPlane<N, V, Ball<N, V>>),
     PlaneBall       (PlaneImplicit<N, V, Ball<N, V>>),
@@ -31,16 +30,13 @@ enum DefaultDefault<N, V, M, II>
     ImplicitImplicit(ICMG<ImplicitImplicit<S<N, V>, ~I<N, V, M, II>, ~I<N, V, M, II>, N, V>, N, V>)
 }
 
-impl<N: Clone, V: Clone, M, II> DefaultDefault<N, V, M, II>
-{
+impl<N: Clone, V: Clone, M, II> DefaultDefault<N, V, M, II> {
     pub fn new(g1:     &DefaultGeom<N, V, M, II>,
                g2:     &DefaultGeom<N, V, M, II>,
                s:      &JohnsonSimplex<N, AnnotatedPoint<V>>,
                margin: N)
-               -> DefaultDefault<N, V, M, II>
-    {
-        match (g1, g2)
-        {
+               -> DefaultDefault<N, V, M, II> {
+        match (g1, g2) {
             (&Ball(_), &Ball(_))         => BallBall(BallBall::new()),
             (&Ball(_), &Plane(_))        => BallPlane(ImplicitPlane::new()),
             (&Plane(_), &Ball(_))        => PlaneBall(PlaneImplicit::new()),
@@ -73,13 +69,10 @@ impl<N: ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
      II>
 CollisionDetector<N, V, DefaultGeom<N, V, M, II>, DefaultGeom<N, V, M, II>>
 for DefaultDefault<N, V, M, II>
-
-{
+ {
     #[inline]
-    fn update(&mut self, g1: &DefaultGeom<N, V, M, II>, g2: &DefaultGeom<N, V, M, II>)
-    {
-        match *self
-        {
+    fn update(&mut self, g1: &DefaultGeom<N, V, M, II>, g2: &DefaultGeom<N, V, M, II>) {
+        match *self {
             BallBall        (ref mut cd) => cd.update(g1.ball(),     g2.ball()),
             BallPlane       (ref mut cd) => cd.update(g1.ball(),     g2.plane()),
             PlaneBall       (ref mut cd) => cd.update(g1.plane(),    g2.ball()),
@@ -92,10 +85,8 @@ for DefaultDefault<N, V, M, II>
     }
 
     #[inline]
-    fn num_coll(&self) -> uint
-    {
-        match *self
-        {
+    fn num_coll(&self) -> uint {
+        match *self {
             BallBall        (ref cd) => cd.num_coll(),
             BallPlane       (ref cd) => cd.num_coll(),
             PlaneBall       (ref cd) => cd.num_coll(),
@@ -108,10 +99,8 @@ for DefaultDefault<N, V, M, II>
     }
 
     #[inline]
-    fn colls(&mut self, out_colls: &mut ~[Contact<N, V>])
-    {
-        match *self
-        {
+    fn colls(&mut self, out_colls: &mut ~[Contact<N, V>]) {
+        match *self {
             BallBall        (ref mut cd) => cd.colls(out_colls),
             BallPlane       (ref mut cd) => cd.colls(out_colls),
             PlaneBall       (ref mut cd) => cd.colls(out_colls),

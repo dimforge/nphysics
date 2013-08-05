@@ -15,8 +15,7 @@ pub fn explicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                           av: &AV,
                           lf: &LV,
                           af: &AV)
-                          -> (M2, LV, AV)
-{
+                          -> (M2, LV, AV) {
     (
         displacement(dt.clone(), p, lv, av), 
         integrate(dt.clone(), lv, lf),
@@ -30,8 +29,7 @@ pub fn explicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
                                       p:  &V,
                                       lv: &V,
                                       lf: &V)
-                                      -> (V, V)
-{
+                                      -> (V, V) {
     (
         integrate(dt.clone(), p, lv), 
         integrate(dt, lv, lf)
@@ -49,8 +47,7 @@ pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                                av: &AV,
                                lf: &LV,
                                af: &AV)
-                               -> (M2, LV, AV)
-{
+                               -> (M2, LV, AV) {
     let nlv = integrate(dt.clone(), lv, lf);
     let nav = integrate(dt.clone(), av, af);
 
@@ -67,8 +64,7 @@ pub fn semi_implicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
                                            p:  &V,
                                            lv: &V,
                                            lf: &V)
-                                           -> (V, V)
-{
+                                           -> (V, V) {
     let nlv = integrate(dt.clone(), lv, lf);
 
     (
@@ -91,8 +87,7 @@ fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                 orig:    &M,
                 lin_vel: &LV,
                 ang_vel: &AV)
-                -> M2
-{
+                -> M2 {
     let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
                                               &ang_vel.scalar_mul(&dt),
                                               &orig.translation());
@@ -107,5 +102,6 @@ fn integrate<N,
              dt: N,
              v:  &V,
              f:  &V)
-             -> V
-{ v + f.scalar_mul(&dt) }
+             -> V {
+    v + f.scalar_mul(&dt)
+}

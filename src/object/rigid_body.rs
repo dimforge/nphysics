@@ -20,8 +20,7 @@ pub enum RigidBodyState {
 }
 
 // FIXME: #[deriving(Clone)]
-pub struct RigidBody<N, LV, AV, M, II>
-{
+pub struct RigidBody<N, LV, AV, M, II> {
     priv state:          RigidBodyState,
     priv geom:           DefaultGeom<N, LV, M, II>,
     priv local_to_world: M,
@@ -43,10 +42,8 @@ impl<N,
      AV,
      M: One + Translation<LV> + Transform<LV> + Rotate<LV>,
      II: Clone>
-RigidBody<N, LV, AV, M, II>
-{
-    fn moved(&mut self, delta: &M)
-    {
+RigidBody<N, LV, AV, M, II> {
+    fn moved(&mut self, delta: &M) {
         self.geom.transform_by(delta);
 
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
@@ -56,22 +53,26 @@ RigidBody<N, LV, AV, M, II>
     }
 }
 
-impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II>
-{
-    pub fn geom<'r>(&'r self) -> &'r DefaultGeom<N, LV, M, II>
-    { &'r self.geom }
+impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
+    pub fn geom<'r>(&'r self) -> &'r DefaultGeom<N, LV, M, II> {
+        &'r self.geom
+    }
 
-    pub fn index(&self) -> int
-    { self.index }
+    pub fn index(&self) -> int {
+        self.index
+    }
 
-    pub fn set_index(&mut self, id: int)
-    { self.index = id }
+    pub fn set_index(&mut self, id: int) {
+        self.index = id
+    }
 
-    pub fn restitution(&self) -> N
-    { self.restitution.clone() }
+    pub fn restitution(&self) -> N {
+        self.restitution.clone()
+    }
 
-    pub fn friction(&self) -> N
-    { self.friction.clone() }
+    pub fn friction(&self) -> N {
+        self.friction.clone()
+    }
 }
 
 impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
@@ -79,31 +80,29 @@ impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
      LV:  Clone + Zero + Add<LV, LV> + Neg<LV> + Iterable<N> + Dim,
      AV:  Zero,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + Clone>
-RigidBody<N, LV, AV, M, II>
-{
+RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        DefaultGeom<N, LV, M, II>,
                density:     N,
                state:       RigidBodyState,
                restitution: N,
-               friction:    N) -> RigidBody<N, LV, AV, M, II>
-    {
+               friction:    N) -> RigidBody<N, LV, AV, M, II> {
         let (inv_mass, inv_inertia) =
-            match state
-            {
+            match state {
                 Static    => (Zero::zero(), Zero::zero()),
                 Dynamic   => {
                     let volume = geom.volume();
 
-                    if volume.is_zero()
-                    { fail!("A dynamic body cannot have a zero volume.") }
+                    if volume.is_zero() {
+                        fail!("A dynamic body cannot have a zero volume.")
+                    }
 
-                    if density.is_zero()
-                    { fail!("A dynamic body cannot have a zero density.") }
+                    if density.is_zero() {
+                        fail!("A dynamic body cannot have a zero density.")
+                    }
 
                     let mass = density * volume;
 
-                    match geom.inertia(&mass).inverse()
-                    {
+                    match geom.inertia(&mass).inverse() {
                         Some(ii) => (One::one::<N>() / mass, ii),
                         None     => fail!("A dynamic body cannot have a singular inertia tensor.")
                     }
@@ -134,73 +133,78 @@ RigidBody<N, LV, AV, M, II>
     }
 }
 
-impl<N, LV, AV, M, II> RigidBody<N, LV, AV, M, II>
-{
+impl<N, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
-    pub fn can_move(&self) -> bool
-    {
-        match self.state
-        {
+    pub fn can_move(&self) -> bool {
+        match self.state {
             Dynamic => true,
             _       => false
         }
     }
 }
 
-impl<N, M, LV: Clone, AV, II> RigidBody<N, LV, AV, M, II>
-{
+impl<N, M, LV: Clone, AV, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
-    pub fn lin_vel(&self) -> LV
-    { self.lin_vel.clone() }
+    pub fn lin_vel(&self) -> LV {
+        self.lin_vel.clone()
+    }
 
     #[inline]
-    pub fn set_lin_vel(&mut self, lv: LV)
-    { self.lin_vel = lv }
+    pub fn set_lin_vel(&mut self, lv: LV) {
+        self.lin_vel = lv
+    }
 
     #[inline]
-    pub fn lin_acc(&self) -> LV
-    { self.lin_acc.clone() }
+    pub fn lin_acc(&self) -> LV {
+        self.lin_acc.clone()
+    }
 
     #[inline]
-    pub fn set_lin_acc(&mut self, lf: LV)
-    { self.lin_acc = lf }
+    pub fn set_lin_acc(&mut self, lf: LV) {
+        self.lin_acc = lf
+    }
 }
 
-impl<N, M, LV, AV: Clone, II> RigidBody<N, LV, AV, M, II>
-{
+impl<N, M, LV, AV: Clone, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
-    pub fn ang_vel(&self) -> AV
-    { self.ang_vel.clone() }
+    pub fn ang_vel(&self) -> AV {
+        self.ang_vel.clone()
+    }
     #[inline]
-    pub fn set_ang_vel(&mut self, av: AV)
-    { self.ang_vel = av }
+    pub fn set_ang_vel(&mut self, av: AV) {
+        self.ang_vel = av
+    }
 
     #[inline]
-    pub fn ang_acc(&self) -> AV
-    { self.ang_acc.clone() }
+    pub fn ang_acc(&self) -> AV {
+        self.ang_acc.clone()
+    }
     #[inline]
-    pub fn set_ang_acc(&mut self, af: AV)
-    { self.ang_acc = af }
+    pub fn set_ang_acc(&mut self, af: AV) {
+        self.ang_acc = af
+    }
 }
 
-impl<N: Clone, M, LV, AV, II> RigidBody<N, LV, AV, M, II>
-{
+impl<N: Clone, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
-    pub fn inv_mass(&self) -> N
-    { self.inv_mass.clone() }
+    pub fn inv_mass(&self) -> N {
+        self.inv_mass.clone()
+    }
     #[inline]
-    pub fn set_inv_mass(&mut self, m: N)
-    { self.inv_mass = m }
+    pub fn set_inv_mass(&mut self, m: N) {
+        self.inv_mass = m
+    }
 }
 
-impl<N, M, LV, AV, II: Clone> RigidBody<N, LV, AV, M, II>
-{
+impl<N, M, LV, AV, II: Clone> RigidBody<N, LV, AV, M, II> {
     #[inline]
-    pub fn inv_inertia(&self) -> II
-    { self.inv_inertia.clone() }
+    pub fn inv_inertia(&self) -> II {
+        self.inv_inertia.clone()
+    }
     #[inline]
-    pub fn set_inv_inertia(&mut self, ii: II)
-    { self.inv_inertia = ii }
+    pub fn set_inv_inertia(&mut self, ii: II) {
+        self.inv_inertia = ii
+    }
 }
 
 impl<N,
@@ -208,24 +212,23 @@ impl<N,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
      II: Mul<II, II> + Clone>
-Transformation<M> for RigidBody<N, LV, AV, M, II>
-{
+Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
-    fn transformation(&self) -> M
-    { self.local_to_world.clone() }
+    fn transformation(&self) -> M {
+        self.local_to_world.clone()
+    }
 
     #[inline]
-    fn inv_transformation(&self) -> M
-    { self.world_to_local.clone() }
+    fn inv_transformation(&self) -> M {
+        self.world_to_local.clone()
+    }
 
 
     #[inline]
-    fn transform_by(&mut self, to_append: &M)
-    {
+    fn transform_by(&mut self, to_append: &M) {
         self.local_to_world = *to_append * self.local_to_world;
 
-        match self.local_to_world.inverse()
-        {
+        match self.local_to_world.inverse() {
             Some(l2w) => self.world_to_local = l2w,
             None      => fail!("Internal error: rigid body has a singular local_to_world transform.")
         }
@@ -240,20 +243,20 @@ impl<N,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
      II: Mul<II, II> + Clone>
-Translation<LV> for RigidBody<N, LV, AV, M, II>
-{
+Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
-    fn translation(&self) -> LV
-    { self.local_to_world.translation() }
+    fn translation(&self) -> LV {
+        self.local_to_world.translation()
+    }
 
     #[inline]
-    fn inv_translation(&self) -> LV
-    { self.local_to_world.inv_translation() }
+    fn inv_translation(&self) -> LV {
+        self.local_to_world.inv_translation()
+    }
 
 
     #[inline]
-    fn translate_by(&mut self, trans: &LV)
-    {
+    fn translate_by(&mut self, trans: &LV) {
         self.local_to_world.translate_by(trans);
 
         let mut delta = One::one::<M>();
@@ -285,19 +288,19 @@ impl<N,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
      II: Mul<II, II> + Clone>
-Rotation<AV> for RigidBody<N, LV, AV, M, II>
-{
+Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
-    fn rotation(&self) -> AV
-    { self.local_to_world.rotation() }
+    fn rotation(&self) -> AV {
+        self.local_to_world.rotation()
+    }
 
     #[inline]
-    fn inv_rotation(&self) -> AV
-    { self.local_to_world.inv_rotation() }
+    fn inv_rotation(&self) -> AV {
+        self.local_to_world.inv_rotation()
+    }
 
     #[inline]
-    fn rotate_by(&mut self, rot: &AV)
-    {
+    fn rotate_by(&mut self, rot: &AV) {
         self.local_to_world.rotate_by(rot);
 
         let mut delta = One::one::<M>();
@@ -329,8 +332,8 @@ impl<N,
      AV,
      M,
      II>
-HasBoundingVolume<AABB<LV>> for RigidBody<N, LV, AV, M, II>
-{
-    fn bounding_volume(&self) -> AABB<LV>
-    { self.geom.aabb() }
+HasBoundingVolume<AABB<LV>> for RigidBody<N, LV, AV, M, II> {
+    fn bounding_volume(&self) -> AABB<LV> {
+        self.geom.aabb()
+    }
 }

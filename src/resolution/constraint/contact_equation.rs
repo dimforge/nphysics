@@ -12,8 +12,7 @@ use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::rigid_body::RigidBody;
 
-pub struct CorrectionParameters<N>
-{
+pub struct CorrectionParameters<N> {
     depth_limit: N,
     corr_factor: N,
     depth_eps:   N,
@@ -30,8 +29,7 @@ pub fn fill_first_order_contact_equation<LV: VectorSpace<N> + Cross<AV> + Dot<N>
                                          rb1:         &RigidBody<N, LV, AV, M, II>,
                                          rb2:         &RigidBody<N, LV, AV, M, II>,
                                          constraint:  &mut VelocityConstraint<LV, AV, N>,
-                                         correction:  &CorrectionParameters<N>)
-{
+                                         correction:  &CorrectionParameters<N>) {
     let center = (coll.world1 + coll.world2).scalar_div(&NumCast::from(2.0f64));
 
     fill_constraint_geometry(coll.normal.clone(), center, rb1, rb2, constraint);
@@ -74,8 +72,7 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
                                           rb2:         &RigidBody<N, LV, AV, M, II>,
                                           constraints: &mut [VelocityConstraint<LV, AV, N>],
                                           idc:         uint,
-                                          correction:  &CorrectionParameters<N>)
-{
+                                          correction:  &CorrectionParameters<N>) {
     let err         = correction.corr_factor *
         (coll.depth.min(&correction.depth_limit) - correction.depth_eps).max(&Zero::zero()) / dt;
     let restitution = (rb1.restitution() + rb2.restitution()) / NumCast::from(2.0f64);
@@ -108,8 +105,7 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
 
     let mut i = 1;
 
-    do coll.normal.orthonormal_subspace_basis() |friction_axis|
-    {
+    do coll.normal.orthonormal_subspace_basis() |friction_axis| {
         fill_velocity_constraint(dt.clone(),
                                  friction_axis,
                                  center.clone(),
@@ -133,13 +129,11 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
                             center:     LV,
                             rb1:        &RigidBody<N, LV, AV, M, II>,
                             rb2:        &RigidBody<N, LV, AV, M, II>,
-                            constraint: &mut VelocityConstraint<LV, AV, N>)
-{
+                            constraint: &mut VelocityConstraint<LV, AV, N>) {
     constraint.normal         = normal;
     constraint.projected_mass = Zero::zero();
 
-    if rb1.can_move()
-    {
+    if rb1.can_move() {
         // rotation axis
         constraint.weighted_normal1   = constraint.normal.scalar_mul(&rb1.inv_mass());
         constraint.rot_axis1          = (center - rb1.translation()).cross(&-constraint.normal);
@@ -152,8 +146,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
             constraint.rot_axis1.dot(&constraint.weighted_rot_axis1);
     }
 
-    if rb2.can_move()
-    {
+    if rb2.can_move() {
         // rotation axis
         constraint.weighted_normal2   = constraint.normal.scalar_mul(&rb2.inv_mass());
         constraint.rot_axis2          = (center - rb2.translation()).cross(&constraint.normal);
@@ -183,8 +176,7 @@ fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + D
                             rest_eps:        N,
                             rb1:             &RigidBody<N, LV, AV, M, II>,
                             rb2:             &RigidBody<N, LV, AV, M, II>,
-                            constraint:      &mut VelocityConstraint<LV, AV, N>)
-{
+                            constraint:      &mut VelocityConstraint<LV, AV, N>) {
     fill_constraint_geometry(normal, center, rb1, rb2, constraint);
 
     /*
@@ -198,22 +190,21 @@ fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + D
      */
     constraint.objective = Zero::zero();
 
-    if rb1.can_move()
-    {
+    if rb1.can_move() {
         constraint.objective = constraint.objective +
             - (rb1.lin_vel() + rb1.lin_acc().scalar_mul(&dt)).dot(&constraint.normal)
             + (rb1.ang_vel() + rb1.ang_acc().scalar_mul(&dt)).dot(&constraint.rot_axis1);
     }
 
-    if rb2.can_move()
-    {
+    if rb2.can_move() {
         constraint.objective = constraint.objective +
             (rb2.lin_vel() + rb2.lin_acc().scalar_mul(&dt)).dot(&constraint.normal)
             + (rb2.ang_vel() + rb2.ang_acc().scalar_mul(&dt)).dot(&constraint.rot_axis2);
     }
 
-    if constraint.objective > rest_eps
-    { constraint.objective = constraint.objective + restitution * constraint.objective }
+    if constraint.objective > rest_eps {
+        constraint.objective = constraint.objective + restitution * constraint.objective
+    }
 
     constraint.objective = error - constraint.objective;
 

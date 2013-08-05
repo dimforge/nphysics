@@ -1,8 +1,7 @@
 use std::num::Zero;
 
 #[deriving(Eq, ToStr, Clone)]
-pub struct VelocityConstraint<LV, AV, N>
-{
+pub struct VelocityConstraint<LV, AV, N> {
     normal:             LV,
 
     weighted_normal1:   LV,
@@ -25,10 +24,8 @@ pub struct VelocityConstraint<LV, AV, N>
     id2:                int
 }
 
-impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N>
-{
-    pub fn new() -> VelocityConstraint<LV, AV, N>
-    {
+impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N> {
+    pub fn new() -> VelocityConstraint<LV, AV, N> {
         VelocityConstraint {
             normal:             Zero::zero(),
 

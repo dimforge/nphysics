@@ -1,4 +1,3 @@
-pub trait Solver<N, I>
-{
+pub trait Solver<N, I> {
     fn solve(&mut self, N, &[I]);
 }
