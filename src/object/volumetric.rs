@@ -6,6 +6,8 @@ use nalgebra::traits::dim::Dim;
 use ncollide::geom::transformed::Transformed;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::box::Box;
+use ncollide::geom::cylinder::Cylinder;
+use ncollide::geom::cone::Cone;
 use ncollide::geom::plane::Plane;
 use object::implicit_geom::{DefaultGeom, Plane, Ball, Implicit};
 
@@ -63,7 +65,6 @@ Volumetric<N, II> for Ball<N, V> {
         ball_volume(self.radius(), Dim::dim::<V>())
     }
 
-    #[inline]
     fn inertia(&self, mass: &N) -> II {
         let dim = Dim::dim::<V>();
 
@@ -101,7 +102,6 @@ impl<N:  Zero + One + NumCast + DivisionRing + Clone,
      V:  Clone + Iterable<N> + Indexable<uint, N> + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, II> for Box<N, V> {
-    #[inline]
     fn volume(&self) -> N {
         let mut res  = One::one::<N>();
 
@@ -114,7 +114,6 @@ Volumetric<N, II> for Box<N, V> {
         res
     }
 
-    #[inline]
     fn inertia(&self, mass: &N) -> II {
         let dim = Dim::dim::<V>();
 
@@ -150,6 +149,120 @@ Volumetric<N, II> for Box<N, V> {
         }
         else {
             fail!("Inertia tensor for n-dimensional boxes, n > 3, is not implemented.")
+        }
+    }
+}
+
+impl<N:  Zero + One + NumCast + DivisionRing + Real + Clone,
+     II: Zero + Dim + Indexable<(uint, uint), N>>
+Volumetric<N, II> for Cylinder<N> {
+    fn volume(&self) -> N {
+        let dim = Dim::dim::<II>();
+
+        if dim == 2 {
+            // same as a rectangle
+            self.half_height() * self.radius() * NumCast::from(4.0f64)
+        }
+        else if dim == 3 {
+            self.half_height() * self.radius() * self.radius() * Real::pi() * NumCast::from(2.0f64)
+        }
+        else {
+            fail!("Volume for n-dimensional cylinders, n > 3, is not implemented.")
+        }
+    }
+
+    fn inertia(&self, mass: &N) -> II {
+        let dim = Dim::dim::<II>();
+
+        if dim == 2 {
+            // same as the box
+            let _2:   N = NumCast::from(2.0f64);
+            let _i12: N = NumCast::from(1.0f64 / 12.0);
+            let w       = _i12 * *mass * _2 * _2;
+            let ix      = w * self.half_height() * self.half_height();
+            let iy      = w * self.radius() * self.radius();
+
+            let mut res = Zero::zero::<II>();
+
+            res.set((0, 0), ix + iy);
+
+            res
+        }
+        else if dim == 3 {
+            let sq_radius = self.radius() * self.radius();
+            let sq_height = self.half_height() * self.half_height() * NumCast::from(4.0f64);
+            let off_principal = mass * (NumCast::from::<N, f64>(3.0) * sq_radius + sq_height)
+                                / NumCast::from::<N, f64>(12.0);
+
+            let mut res = Zero::zero::<II>();
+
+            res.set((0, 0), mass * sq_radius / NumCast::from(2.0f64));
+            res.set((1, 1), off_principal.clone());
+            res.set((2, 2), off_principal);
+
+            res
+        }
+        else {
+            fail!("Inertia tensor for n-dimensional cylinder, n > 3, is not implemented.")
+        }
+    }
+}
+
+impl<N:  Zero + One + NumCast + DivisionRing + Real + Clone,
+     II: Zero + Dim + Indexable<(uint, uint), N>>
+Volumetric<N, II> for Cone<N> {
+    fn volume(&self) -> N {
+        let dim = Dim::dim::<II>();
+
+        if dim == 2 {
+            // same as a isosceles triangle
+            self.radius() * self.half_height() * NumCast::from(2.0f64)
+        }
+        else if dim == 3 {
+            self.radius() * self.radius()      *
+            Real::pi()    * self.half_height() *
+            NumCast::from(2.0f64 / 3.0)
+        }
+        else {
+            fail!("Volume for n-dimensional cone, n > 3, is not implemented.")
+        }
+    }
+
+    fn inertia(&self, mass: &N) -> II {
+        let dim = Dim::dim::<II>();
+
+        if dim == 2 {
+            // FIXME: not sure about that…
+            let mut res = Zero::zero::<II>();
+
+            res.set(
+                (0, 0),
+                self.radius() * self.half_height() * self.half_height() * self.half_height()
+                              / NumCast::from(3.0f64)
+            );
+
+            res
+        }
+        else if dim == 3 {
+            let m_sq_radius = mass * self.radius() * self.radius();
+            let m_sq_height = mass * self.half_height() * self.half_height() *
+                                     NumCast::from(4.0f64);
+            let off_principal = NumCast::from::<N, f64>(3.0 / 20.0) * m_sq_radius +
+                                NumCast::from::<N, f64>(3.0 / 5.0)  * m_sq_height;
+
+            let principal = NumCast::from::<N, f64>(3.0 / 10.0) * m_sq_radius;
+
+            let mut res = Zero::zero::<II>();
+
+            res.set((0, 0), principal);
+            res.set((1, 1), off_principal.clone());
+            res.set((2, 2), off_principal);
+
+            res
+        }
+
+        else {
+            fail!("Inertia tensor for n-dimensional cone, n > 3, is not implemented.")
         }
     }
 }
