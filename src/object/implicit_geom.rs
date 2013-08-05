@@ -1,5 +1,5 @@
 use std::num::One;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub};
+use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::transformation::{Transform, Transformable, Transformation};
@@ -112,11 +112,11 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
 }
 
 impl<N,
-     V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + Ord + Clone,
+     V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Ord + Clone,
      M,
      II>
 DefaultGeom<N, V, M, II> {
-    fn aabb(&self) -> AABB<V> {
+    fn aabb(&self) -> AABB<N, V> {
         match *self {
             Plane(ref p)    => p.aabb(),
             Ball(ref b)     => b.aabb(),
@@ -162,7 +162,7 @@ pub trait DynamicImplicit<N, V, M, II>
   Transformation<M> +
   Transform<V>      +
   Translation<V>    +
-  HasAABB<V> {
+  HasAABB<N, V> {
     // FIXME: those methods are workarounds: why dont trait objects of this
     // traits dont inherit from all the parent traits?
     fn _support_point(&self, dir: &V) -> V;
@@ -171,7 +171,7 @@ pub trait DynamicImplicit<N, V, M, II>
     fn _transformation(&self)         -> M;
     fn _inv_transformation(&self)     -> M;
     fn _transform_by(&mut self, &M);
-    fn _aabb(&self)                   -> AABB<V>;
+    fn _aabb(&self)                   -> AABB<N, V>;
     fn _transform_vec(&self, &V)      -> V;
     fn _inv_transform(&self, &V)      -> V;
     fn _translation(&self)            -> V;
@@ -179,7 +179,7 @@ pub trait DynamicImplicit<N, V, M, II>
     fn _translate_by(&mut self, &V);
 }
 
-impl<T: Implicit<V> + Volumetric<N, II> + Transformation<M> + Transform<V> + Translation<V> + HasAABB<V>,
+impl<T: Implicit<V> + Volumetric<N, II> + Transformation<M> + Transform<V> + Translation<V> + HasAABB<N, V>,
      V,
      N,
      M,
@@ -216,7 +216,7 @@ DynamicImplicit<N, V, M, II> for T {
     }
 
     #[inline]
-    fn _aabb(&self) -> AABB<V> {
+    fn _aabb(&self) -> AABB<N, V> {
         self.aabb()
     }
 
@@ -315,8 +315,8 @@ impl<N, V, M, II> Translation<V> for ~DynamicImplicit<N, V, M, II> {
     }
 }
 
-impl<N, V, M, II> HasAABB<V> for ~DynamicImplicit<N, V, M, II> {
-    fn aabb(&self) -> AABB<V> {
+impl<N, V, M, II> HasAABB<N, V> for ~DynamicImplicit<N, V, M, II> {
+    fn aabb(&self) -> AABB<N, V> {
         self._aabb()
     }
 }

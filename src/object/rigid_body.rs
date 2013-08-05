@@ -1,7 +1,7 @@
 use std::num::{Zero, One};
 use nalgebra::traits::inv::Inv;
 use nalgebra::traits::dim::Dim;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub};
+use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::{Rotation, Rotate};
 use nalgebra::traits::transformation::{Transform, Transformation};
@@ -328,12 +328,12 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 // FIXME: }
 
 impl<N,
-     LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + Clone,
+     LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + ScalarDiv<N> + Clone,
      AV,
      M,
      II>
-HasBoundingVolume<AABB<LV>> for RigidBody<N, LV, AV, M, II> {
-    fn bounding_volume(&self) -> AABB<LV> {
+HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
+    fn bounding_volume(&self) -> AABB<N, LV> {
         self.geom.aabb()
     }
 }

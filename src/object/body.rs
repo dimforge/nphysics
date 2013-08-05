@@ -1,5 +1,5 @@
 use std::managed;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub};
+use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::AABB;
 use object::rigid_body::RigidBody;
@@ -32,13 +32,13 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
 }
 
 impl<N,
-     LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + Clone,
+     LV: Bounded + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Neg<LV> + Ord + Orderable + Clone,
      AV,
      M,
      II>
-HasBoundingVolume<AABB<LV>> for Body<N, LV, AV, M, II> {
+HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]
-    fn bounding_volume(&self) -> AABB<LV> {
+    fn bounding_volume(&self) -> AABB<N, LV> {
         match *self {
             RigidBody(rb) => rb.bounding_volume(),
             SoftBody(_)   => fail!("Not yet implemented."),

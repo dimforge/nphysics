@@ -1,7 +1,7 @@
 use std::num::Zero;
-use std::managed;
+use std::borrow;
 use nalgebra::traits::vector_space::VectorSpace;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub};
+use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::norm::Norm;
 use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::dot::Dot;
@@ -11,7 +11,7 @@ use nalgebra::traits::sample::UniformSphereSample;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::contact::Contact;
 use ncollide::broad::dispatcher;
-use ncollide::broad::brute_force_bounding_volume_broad_phase::BruteForceBoundingVolumeBroadPhase;
+use ncollide::broad::dbvt_broad_phase::DBVTBroadPhase;
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
 use ncollide::narrow::collision_detector::CollisionDetector;
 use ncollide::bounding_volume::aabb::AABB;
@@ -32,11 +32,12 @@ pub enum Constraint<N, LV, AV, M, II> {
          Contact<N, LV>)
 }
 
-type BF<N, LV, AV, M, II> = BruteForceBoundingVolumeBroadPhase<N,
-                                                               Body<N, LV, AV, M, II>,
-                                                               AABB<LV>,
-                                                               Dispatcher<N, LV, AV, M, II>,
-                                                               PairwiseDetector<N, LV, M, II>>;
+type BF<N, LV, AV, M, II> = DBVTBroadPhase<N,
+                                           LV,
+                                           Body<N, LV, AV, M, II>,
+                                           AABB<N, LV>,
+                                           Dispatcher<N, LV, AV, M, II>,
+                                           PairwiseDetector<N, LV, M, II>>;
 
 struct Dispatcher<N, LV, AV, M, II> {
     margin:  N,
@@ -63,8 +64,8 @@ impl<N:  Clone,
      dispatcher::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self,
-                a: @mut Body<N, LV, AV, M, II>,
-                b: @mut Body<N, LV, AV, M, II>)
+                a: &Body<N, LV, AV, M, II>,
+                b: &Body<N, LV, AV, M, II>)
                 -> PairwiseDetector<N, LV, M, II> {
         match (*a, *b) {
             (RigidBody(rb1), RigidBody(rb2)) => {
@@ -75,10 +76,10 @@ for Dispatcher<N, LV, AV, M, II> {
     }
 
     fn is_valid(&self,
-                a: @mut Body<N, LV, AV, M, II>,
-                b: @mut Body<N, LV, AV, M, II>)
+                a: &Body<N, LV, AV, M, II>,
+                b: &Body<N, LV, AV, M, II>)
                 -> bool {
-        if managed::mut_ptr_eq(a, b) {
+        if borrow::ref_eq(a, b) {
             return false
         }
 
@@ -94,9 +95,9 @@ pub struct LBVBodiesBodies<N, LV, AV, M, II> {
     broad_phase: BF<N, LV, AV, M, II>,
 }
 
-impl<N:  'static + Clone + Zero,
+impl<N:  'static + Clone + Zero + Ord + NumCast,
      LV: 'static + Zero + Dim + Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> +
-         Ord + Orderable + Clone,
+         Ord + Orderable + Add<LV, LV> + ScalarDiv<N> + Clone + Sub<LV, LV> + Norm<N>,
      AV: 'static,
      M:  'static,
      II: 'static>
@@ -105,7 +106,7 @@ LBVBodiesBodies<N, LV, AV, M, II> {
         let dispatcher = Dispatcher::new(margin.clone());
 
         LBVBodiesBodies {
-            broad_phase: BruteForceBoundingVolumeBroadPhase::new(dispatcher, margin)
+            broad_phase: DBVTBroadPhase::new(dispatcher, margin)
         }
     }
 }
@@ -133,8 +134,8 @@ for LBVBodiesBodies<N, LV, AV, M, II> {
 
         for p in pairs.mut_iter() {
             match p.value {
-                RB(ref mut d) => d.update(p.key.first.body.to_rigid_body_or_fail().geom(),
-                                          p.key.second.body.to_rigid_body_or_fail().geom()),
+                RB(ref mut d) => d.update(p.key.first.object.to_rigid_body_or_fail().geom(),
+                                          p.key.second.object.to_rigid_body_or_fail().geom()),
                 _ => { }
             }
         }
@@ -150,8 +151,8 @@ for LBVBodiesBodies<N, LV, AV, M, II> {
                     d.colls(&mut collector);
 
                     for c in collector.iter() {
-                        let rb1 = p.key.first.body.to_rigid_body_or_fail();
-                        let rb2 = p.key.second.body.to_rigid_body_or_fail();
+                        let rb1 = p.key.first.object.to_rigid_body_or_fail();
+                        let rb2 = p.key.second.object.to_rigid_body_or_fail();
                         out.push(RBRB(rb1, rb2, c.clone()))
                     }
 
