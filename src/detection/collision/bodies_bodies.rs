@@ -1,13 +1,18 @@
-use std::num::Zero;
+use std::num::{Zero, One};
 use std::borrow;
-use nalgebra::traits::vector_space::VectorSpace;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
-use nalgebra::traits::norm::Norm;
+use nalgebra::traits::basis::Basis;
+use nalgebra::traits::dim::Dim;
 use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::dot::Dot;
-use nalgebra::traits::sub_dot::SubDot;
-use nalgebra::traits::dim::Dim;
+use nalgebra::traits::cross::Cross;
+use nalgebra::traits::norm::Norm;
+use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::sample::UniformSphereSample;
+use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv, ScalarMul};
+use nalgebra::traits::sub_dot::SubDot;
+use nalgebra::traits::transformation::Transform;
+use nalgebra::traits::vector_space::VectorSpace;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::contact::Contact;
 use ncollide::broad::dispatcher;
@@ -20,8 +25,8 @@ use rb = object::rigid_body;
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
 
-enum PairwiseDetector<N, V, M, II> {
-    RB(DefaultDefault<N, V, M, II>),
+enum PairwiseDetector<N, LV, AV, M, II> {
+    RB(DefaultDefault<N, LV, AV, M, II>),
     Unsuported
 }
 
@@ -37,7 +42,7 @@ type BF<N, LV, AV, M, II> = DBVTBroadPhase<N,
                                            Body<N, LV, AV, M, II>,
                                            AABB<N, LV>,
                                            Dispatcher<N, LV, AV, M, II>,
-                                           PairwiseDetector<N, LV, M, II>>;
+                                           PairwiseDetector<N, LV, AV, M, II>>;
 
 struct Dispatcher<N, LV, AV, M, II> {
     margin:  N,
@@ -61,12 +66,12 @@ impl<N:  Clone,
      AV,
      M,
      II>
-     dispatcher::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, M, II>>
+     dispatcher::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self,
                 a: &Body<N, LV, AV, M, II>,
                 b: &Body<N, LV, AV, M, II>)
-                -> PairwiseDetector<N, LV, M, II> {
+                -> PairwiseDetector<N, LV, AV, M, II> {
         match (*a, *b) {
             (RigidBody(rb1), RigidBody(rb2)) => {
                 RB(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex, self.margin.clone()))
@@ -113,9 +118,11 @@ LBVBodiesBodies<N, LV, AV, M, II> {
 
 impl<N:  'static + ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
      LV: 'static + VectorSpace<N> + Dim + Dot<N> + Norm<N> + UniformSphereSample + ApproxEq<N> +
-         SubDot<N> + ScalarAdd<N> + ScalarSub<N> + Ord + Orderable + Bounded + Eq + Clone,
-     AV: 'static,
-     M:  'static,
+         SubDot<N> + ScalarAdd<N> + ScalarSub<N> + Cross<AV> + Ord + Orderable + Bounded + Basis +
+         Eq + Clone,
+     AV: 'static + ScalarMul<N> + Neg<AV>,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> +
+         Transform<LV> + One,
      II: 'static>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
 for LBVBodiesBodies<N, LV, AV, M, II> {
