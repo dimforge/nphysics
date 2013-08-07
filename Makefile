@@ -9,6 +9,10 @@ deps:
 	make deps -C ncollide
 	make -C ncollide
 
+bench:
+	mkdir -p $(ncollide_lib_path)
+	rustc -L$(nalgebra_lib_path) --test -L$(ncollide_lib_path) src/nphysics.rc --opt-level 3 -o bench~ && ./bench~ --bench
+
 doc:
 	rust doc src/nphysics.rc --output-dir doc
 

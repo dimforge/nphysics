@@ -130,8 +130,8 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
                             rb1:        &RigidBody<N, LV, AV, M, II>,
                             rb2:        &RigidBody<N, LV, AV, M, II>,
                             constraint: &mut VelocityConstraint<LV, AV, N>) {
-    constraint.normal         = normal;
-    constraint.projected_mass = Zero::zero();
+    constraint.normal             = normal;
+    constraint.inv_projected_mass = Zero::zero();
 
     if rb1.can_move() {
         // rotation axis
@@ -141,7 +141,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
         // FIXME: is inv_inerta copied?
         constraint.weighted_rot_axis1 = rb1.inv_inertia().transform_vec(&constraint.rot_axis1);
 
-        constraint.projected_mass     = constraint.projected_mass +
+        constraint.inv_projected_mass     = constraint.inv_projected_mass +
             constraint.normal.dot(&constraint.weighted_normal1) +
             constraint.rot_axis1.dot(&constraint.weighted_rot_axis1);
     }
@@ -154,10 +154,12 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
         // FIXME: is inv_inerta copied?
         constraint.weighted_rot_axis2 = rb2.inv_inertia().transform_vec(&constraint.rot_axis2);
 
-        constraint.projected_mass     = constraint.projected_mass +
+        constraint.inv_projected_mass     = constraint.inv_projected_mass +
             constraint.normal.dot(&constraint.weighted_normal2) +
             constraint.rot_axis2.dot(&constraint.weighted_rot_axis2);
     }
+
+    constraint.inv_projected_mass = One::one::<N>() / constraint.inv_projected_mass;
 }
 
 fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim + Clone,
@@ -202,7 +204,7 @@ fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + D
             + (rb2.ang_vel() + rb2.ang_acc().scalar_mul(&dt)).dot(&constraint.rot_axis2);
     }
 
-    if constraint.objective > rest_eps {
+    if false { // constraint.objective < -rest_eps {
         constraint.objective = constraint.objective + restitution * constraint.objective
     }
 

@@ -6,6 +6,7 @@
 #[warn(non_camel_case_types)]
 
 extern mod std;
+extern mod extra;
 extern mod nalgebra;
 extern mod ncollide;
 

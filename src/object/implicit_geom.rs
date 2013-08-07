@@ -4,6 +4,7 @@ use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::transformation::{Transform, Transformable, Transformation};
 use ncollide::bounding_volume::aabb::{HasAABB, AABB};
+use ncollide::bounding_volume::bounding_volume::LooseBoundingVolume;
 use ncollide::geom::implicit::Implicit;
 use ncollide::geom::ball;
 use ncollide::geom::plane;
@@ -111,16 +112,16 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
     }
 }
 
-impl<N,
-     V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Ord + Clone,
+impl<N: NumCast,
+     V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Orderable + Ord + Clone,
      M,
      II>
 DefaultGeom<N, V, M, II> {
     fn aabb(&self) -> AABB<N, V> {
         match *self {
-            Plane(ref p)    => p.aabb(),
-            Ball(ref b)     => b.aabb(),
-            Implicit(ref i) => i.aabb()
+            Plane(ref p)    => p.aabb().loosened(NumCast::from(0.08f64)),
+            Ball(ref b)     => b.aabb().loosened(NumCast::from(0.08f64)),
+            Implicit(ref i) => i.aabb().loosened(NumCast::from(0.08f64))
         }
     }
 }

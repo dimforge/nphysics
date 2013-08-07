@@ -13,7 +13,7 @@ pub struct VelocityConstraint<LV, AV, N> {
     rot_axis2:          AV,
     weighted_rot_axis2: AV,
 
-    projected_mass:     N,
+    inv_projected_mass: N,
 
     impulse:            N,
     unit_impulse:       N,
@@ -38,7 +38,7 @@ impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N> {
             rot_axis2:          Zero::zero(),
             weighted_rot_axis2: Zero::zero(),
 
-            projected_mass:     Zero::zero(),
+            inv_projected_mass: Zero::zero(),
 
             impulse:            Zero::zero(),
             unit_impulse:       Zero::zero(),

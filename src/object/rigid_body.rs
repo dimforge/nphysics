@@ -327,7 +327,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 // FIXME:     }
 // FIXME: }
 
-impl<N,
+impl<N:  NumCast,
      LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + ScalarDiv<N> + Clone,
      AV,
      M,
