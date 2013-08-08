@@ -7,7 +7,7 @@ use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
 use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
-use detection::collision::bodies_bodies::{LBVBodiesBodies, Constraint};
+use detection::collision::bodies_bodies::{DBVTBodiesBodies, Constraint};
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use object::implicit_geom::DefaultGeom;
 use object::rigid_body::RigidBody;
@@ -33,7 +33,7 @@ pub type Geom3d<N>  = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator3d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 
-pub type CollisionDetector3d<N> = LBVBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type CollisionDetector3d<N> = DBVTBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 pub type ContactSolver3d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>>;
 

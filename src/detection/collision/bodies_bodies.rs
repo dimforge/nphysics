@@ -96,7 +96,7 @@ for Dispatcher<N, LV, AV, M, II> {
 }
 
 
-pub struct LBVBodiesBodies<N, LV, AV, M, II> {
+pub struct DBVTBodiesBodies<N, LV, AV, M, II> {
     broad_phase: BF<N, LV, AV, M, II>,
 }
 
@@ -106,11 +106,11 @@ impl<N:  'static + Clone + Zero + Ord + NumCast,
      AV: 'static,
      M:  'static,
      II: 'static>
-LBVBodiesBodies<N, LV, AV, M, II> {
-    pub fn new(margin: N) -> LBVBodiesBodies<N, LV, AV, M, II> {
+DBVTBodiesBodies<N, LV, AV, M, II> {
+    pub fn new(margin: N) -> DBVTBodiesBodies<N, LV, AV, M, II> {
         let dispatcher = Dispatcher::new(margin.clone());
 
-        LBVBodiesBodies {
+        DBVTBodiesBodies {
             broad_phase: DBVTBroadPhase::new(dispatcher, margin)
         }
     }
@@ -125,7 +125,7 @@ impl<N:  'static + ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
          Transform<LV> + One,
      II: 'static>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
-for LBVBodiesBodies<N, LV, AV, M, II> {
+for DBVTBodiesBodies<N, LV, AV, M, II> {
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
         self.broad_phase.add(o);
     }
