@@ -80,4 +80,28 @@ impl<N: Clone, O, C> World<N, O, C> {
             d.add(rb.clone())
         }
     }
+
+    pub fn objects<'r>(&'r self) -> &'r [@mut O] {
+        let res: &'r [@mut O] = self.objects;
+
+        res
+    }
+
+    pub fn integrators<'r>(&'r self) -> &'r [@mut Integrator<N, O>] {
+        let res: &'r [@mut Integrator<N, O>] = self.integrators;
+
+        res
+    }
+
+    pub fn detectors<'r>(&'r self) -> &'r [@mut Detector<N, O, C>] {
+        let res: &'r [@mut Detector<N, O, C>] = self.detectors;
+
+        res
+    }
+
+    pub fn solvers<'r>(&'r self) -> &'r [@mut Solver<N, C>] {
+        let res: &'r [@mut Solver<N, C>] = self.solvers;
+
+        res
+    }
 }
