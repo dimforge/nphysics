@@ -108,24 +108,24 @@ for DefaultDefault<N, LV, AV, M, II>
     }
 
     #[inline]
-    fn colls(&mut self, out_colls: &mut ~[Contact<N, LV>]) {
+    fn colls(&self, out_colls: &mut ~[Contact<N, LV>]) {
         match *self {
-            BallBall        (ref mut cd) => cd.colls(out_colls),
-            BallPlane       (ref mut cd) => cd.colls(out_colls),
-            PlaneBall       (ref mut cd) => {
+            BallBall        (ref cd) => cd.colls(out_colls),
+            BallPlane       (ref cd) => cd.colls(out_colls),
+            PlaneBall       (ref cd) => {
                 let begin = out_colls.len();
                 cd.colls(out_colls);
                 flip_colls(out_colls.mut_slice_from(begin));
             },
-            BallImplicit    (ref mut cd) => cd.colls(out_colls),
-            ImplicitBall    (ref mut cd) => cd.colls(out_colls),
-            PlaneImplicit   (ref mut cd) => {
+            BallImplicit    (ref cd) => cd.colls(out_colls),
+            ImplicitBall    (ref cd) => cd.colls(out_colls),
+            PlaneImplicit   (ref cd) => {
                 let begin = out_colls.len();
                 cd.colls(out_colls);
                 flip_colls(out_colls.mut_slice_from(begin));
             }
-            ImplicitPlane   (ref mut cd) => cd.colls(out_colls),
-            ImplicitImplicit(ref mut cd) => cd.colls(out_colls)
+            ImplicitPlane   (ref cd) => cd.colls(out_colls),
+            ImplicitImplicit(ref cd) => cd.colls(out_colls)
         }
     }
 }
