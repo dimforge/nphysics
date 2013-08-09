@@ -13,6 +13,7 @@ use object::implicit_geom::DefaultGeom;
 use object::rigid_body::RigidBody;
 use object::body::Body;
 use world::world::World;
+use object::volumetric::InertiaTensor;
 
 type LV<N> = Vec2<N>;
 type AV<N> = Vec1<N>;
@@ -41,3 +42,10 @@ pub type Constraint2d<N> = Constraint<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBody2d<N> = RigidBody<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type Body2d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type World2d<N> = World<N, Body2d<N>, Constraint2d<N>>;
+
+/// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
+impl<N: Clone, Any> InertiaTensor<Any> for InertiaTensor2d<N> {
+    fn to_world_space(&self, _: &Any) -> InertiaTensor2d<N> {
+        self.clone()
+    }
+}

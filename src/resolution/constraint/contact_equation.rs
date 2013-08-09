@@ -11,6 +11,7 @@ use nalgebra::traits::vector_space::VectorSpace;
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::rigid_body::RigidBody;
+use object::volumetric::InertiaTensor;
 
 pub struct CorrectionParameters<N> {
     depth_limit: N,
@@ -23,7 +24,7 @@ pub fn fill_first_order_contact_equation<LV: VectorSpace<N> + Cross<AV> + Dot<N>
                                          AV: VectorSpace<N> + Dot<N>,
                                          N:  DivisionRing + Orderable + Bounded + NumCast + Clone,
                                          M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                                         II: Transform<AV> + Mul<II, II> + Clone>(
+                                         II: Transform<AV> + Mul<II, II> + InertiaTensor<M> + Clone>(
                                          dt:          N,
                                          coll:        &Contact<N, LV>,
                                          rb1:         &RigidBody<N, LV, AV, M, II>,
@@ -65,7 +66,8 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
                                           N:  DivisionRing + Orderable + Bounded + Signed + Clone +
                                               NumCast + ToStr,
                                           M:  Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                                          II: Transform<AV> + Mul<II, II> + Clone>(
+                                          II: Transform<AV> + Mul<II, II> + InertiaTensor<M> +
+                                              Clone>(
                                           dt:          N,
                                           coll:        &Contact<N, LV>,
                                           rb1:         &RigidBody<N, LV, AV, M, II>,
@@ -124,7 +126,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
                             AV: VectorSpace<N> + Dot<N>,
                             N:  DivisionRing + Clone,
                             M:  Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                            II: Transform<AV> + Mul<II, II> + Clone>(
+                            II: Transform<AV> + Mul<II, II> + InertiaTensor<M> + Clone>(
                             normal:     LV,
                             center:     LV,
                             rb1:        &RigidBody<N, LV, AV, M, II>,
@@ -166,7 +168,7 @@ fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + D
                             AV: VectorSpace<N> + Dot<N> + Clone,
                             N:  DivisionRing + Orderable + Bounded + Clone,
                             M:  Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                            II: Transform<AV> + Mul<II, II> + Clone>(
+                            II: Transform<AV> + Mul<II, II> + Clone + InertiaTensor<M>>(
                             dt:              N,
                             normal:          LV,
                             center:          LV,

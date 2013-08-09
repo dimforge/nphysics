@@ -2,6 +2,8 @@ use nalgebra::mat::Mat3;
 use nalgebra::vec::Vec3;
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
+use nalgebra::traits::division_ring::DivisionRing;
+use nalgebra::traits::inv::Inv;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
@@ -14,6 +16,7 @@ use object::implicit_geom::DefaultGeom;
 use object::rigid_body::RigidBody;
 use object::body::Body;
 use world::world::World;
+use object::volumetric::InertiaTensor;
 
 type LV<N> = Vec3<N>;
 type AV<N> = Vec3<N>;
@@ -43,3 +46,10 @@ pub type Constraint3d<N> = Constraint<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBody3d<N> = RigidBody<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type Body3d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type World3d<N> = World<N, Body3d<N>, Constraint3d<N>>;
+
+/// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
+impl<N: DivisionRing + Clone> InertiaTensor<Transform3d<N>> for InertiaTensor3d<N> {
+    fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
+        t.submat().submat() * *self * t.submat().inverse().unwrap().submat()
+    }
+}

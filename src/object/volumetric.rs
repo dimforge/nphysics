@@ -10,6 +10,10 @@ use ncollide::geom::cone::Cone;
 use ncollide::geom::plane::Plane;
 use object::implicit_geom::{DefaultGeom, Plane, Ball, Implicit};
 
+pub trait InertiaTensor<M> {
+    fn to_world_space(&self, &M) -> Self;
+}
+
 pub trait Volumetric<N, II> {
     fn volume(&self)      -> N;
     fn inertia(&self, &N) -> II;
@@ -23,9 +27,8 @@ Volumetric<N, II> for DefaultGeom<N, V, M, II> {
     #[inline]
     fn volume(&self) -> N {
         match *self {
-            // FIXME: dont know why the compiler is not happy calling volume() on Plane and Ball
-            Plane(_)        => Zero::zero(), // p.volume(),
-            Ball(ref b)     => ball_volume(b.radius(), Dim::dim::<V>()), // b.volume(),
+            Plane(_)        => Zero::zero(),
+            Ball(ref b)     => ball_volume(b.radius(), Dim::dim::<V>()),
             Implicit(ref i) => i.volume()
         }
     }
@@ -49,11 +52,11 @@ impl<N: Real + DivisionRing + NumCast + Clone,
 Volumetric<N, II> for Ball<N> {
     #[inline]
     fn volume(&self)  -> N {
-        ball_volume(self.radius(), Dim::dim::<II>())
+        ball_volume(self.radius(), Dim::dim::<II>().max(&2))
     }
 
     fn inertia(&self, mass: &N) -> II {
-        let dim = Dim::dim::<II>();
+        let dim = Dim::dim::<II>().max(&2);
 
         if dim == 2 {
             let diag = self.radius() * self.radius() * *mass / NumCast::from::<N, float>(2.0);
@@ -80,7 +83,7 @@ Volumetric<N, II> for Ball<N> {
             res
         }
         else {
-            fail!("Inertia tensor for n-dimensional boxes, n > 3, is not implemented.")
+            fail!("Inertia tensor for n-dimensional balls, n > 3, is not implemented.")
         }
     }
 }
@@ -144,7 +147,7 @@ impl<N:  Zero + One + NumCast + DivisionRing + Real + Clone,
      II: Zero + Dim + Indexable<(uint, uint), N>>
 Volumetric<N, II> for Cylinder<N> {
     fn volume(&self) -> N {
-        let dim = Dim::dim::<II>();
+        let dim = Dim::dim::<II>().max(&2);
 
         if dim == 2 {
             // same as a rectangle
@@ -159,7 +162,7 @@ Volumetric<N, II> for Cylinder<N> {
     }
 
     fn inertia(&self, mass: &N) -> II {
-        let dim = Dim::dim::<II>();
+        let dim = Dim::dim::<II>().max(&2);
 
         if dim == 2 {
             // same as the box
@@ -199,7 +202,7 @@ impl<N:  Zero + One + NumCast + DivisionRing + Real + Clone,
      II: Zero + Dim + Indexable<(uint, uint), N>>
 Volumetric<N, II> for Cone<N> {
     fn volume(&self) -> N {
-        let dim = Dim::dim::<II>();
+        let dim = Dim::dim::<II>().max(&2);
 
         if dim == 2 {
             // same as a isosceles triangle
@@ -216,7 +219,7 @@ Volumetric<N, II> for Cone<N> {
     }
 
     fn inertia(&self, mass: &N) -> II {
-        let dim = Dim::dim::<II>();
+        let dim = Dim::dim::<II>().max(&2);
 
         if dim == 2 {
             // FIXME: not sure about that…

@@ -7,6 +7,7 @@ use nalgebra::traits::dim::Dim;
 use nalgebra::traits::inv::Inv;
 use object::body::ToRigidBody;
 use object::rigid_body::RigidBody;
+use object::volumetric::InertiaTensor;
 use integration::integrator::Integrator;
 use integration::euler;
 
@@ -27,7 +28,7 @@ impl<N:  Clone,
      Translatable<LV, M> + Transform<LV> + One,
      LV: Clone + Add<LV, LV> + ScalarMul<N> + Neg<LV> + Dim,
      AV: Clone + Add<AV, AV> + ScalarMul<N>,
-     II: Clone + Mul<II, II>,
+     II: Clone + Mul<II, II> + InertiaTensor<M> + Inv,
      B: ToRigidBody<N, LV, AV, M, II>>
 Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
     fn add(&mut self, o: @mut B) {
@@ -79,7 +80,7 @@ impl<N:  Clone,
      Translation<LV> + Translatable<LV, M> + Rotate<LV> + One,
      LV: Clone + Add<LV, LV> + ScalarMul<N> + Neg<LV> + Dim,
      AV: Clone + Add<AV, AV> + ScalarMul<N>,
-     II: Clone + Mul<II, II>,
+     II: Clone + Mul<II, II> + Inv + InertiaTensor<M>,
      B: ToRigidBody<N, LV, AV, M, II>>
 Integrator<N, B>
 for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {

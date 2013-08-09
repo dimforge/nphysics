@@ -9,7 +9,7 @@ use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::indexable::Indexable;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::AABB;
-use object::volumetric::Volumetric;
+use object::volumetric::{InertiaTensor, Volumetric};
 use object::implicit_geom::DefaultGeom;
 // use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
@@ -25,7 +25,6 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv geom:           DefaultGeom<N, LV, M, II>,
     priv local_to_world_cache: M,
     priv local_to_world:       M,
-    priv world_to_local:       M, // FIXME: useless in fact…
     priv lin_vel:              LV,
     priv ang_vel:              AV,
     priv inv_mass:             N,
@@ -38,17 +37,11 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv index:                int
 }
 
-impl<N,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
-     AV,
-     M: One + Translation<LV> + Transform<LV> + Rotate<LV>,
-     II: Clone>
+impl<N, LV, AV, M, II: InertiaTensor<M>>
 RigidBody<N, LV, AV, M, II> {
-    fn moved(&mut self, _: &M) {
+    fn moved(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
-        self.inv_inertia = // FIXME: self.local_to_world.delta_transform() *
-            self.ls_inv_inertia.clone() // FIXME:           *
-            // FIXME: self.world_to_local.delta_transform()
+        self.inv_inertia = self.ls_inv_inertia.to_world_space(&self.local_to_world);
     }
 }
 
@@ -82,7 +75,8 @@ impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>, // FIXME: + DeltaTransform<II>,
      LV:  Clone + Zero + Add<LV, LV> + Neg<LV> + Iterable<N> + Dim,
      AV:  Zero,
-     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + Dim + Clone>
+     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<M> +
+          Dim + Clone>
 RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        DefaultGeom<N, LV, M, II>,
                density:     N,
@@ -118,7 +112,6 @@ RigidBody<N, LV, AV, M, II> {
                 geom:                 geom,
                 local_to_world_cache: One::one(),
                 local_to_world:       One::one(),
-                world_to_local:       One::one(),
                 lin_vel:              Zero::zero(),
                 ang_vel:              Zero::zero(),
                 inv_mass:             inv_mass,
@@ -131,7 +124,7 @@ RigidBody<N, LV, AV, M, II> {
                 index:                0
             };
 
-        res.moved(&One::one());
+        res.moved();
 
         res
     }
@@ -215,7 +208,7 @@ impl<N,
      M: Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + Clone>
+     II: Mul<II, II> + Inv + InertiaTensor<M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn transformation(&self) -> M {
@@ -224,7 +217,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
     #[inline]
     fn inv_transformation(&self) -> M {
-        self.world_to_local.clone()
+        self.local_to_world.inverse().unwrap()
     }
 
 
@@ -232,11 +225,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
     fn transform_by(&mut self, to_append: &M) {
         self.local_to_world = *to_append * self.local_to_world;
 
-        match self.local_to_world.inverse() {
-            Some(l2w) => self.world_to_local = l2w,
-            None      => fail!("Internal error: rigid body has a singular local_to_world transform.")
-        }
-        self.moved(to_append);
+        self.moved();
     }
 }
 
@@ -246,7 +235,7 @@ impl<N,
      M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + Clone>
+     II: Mul<II, II> + Clone + InertiaTensor<M>>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translation(&self) -> LV {
@@ -265,7 +254,7 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
 
         let mut delta = One::one::<M>();
         delta.translate_by(trans);
-        self.moved(&delta);
+        self.moved();
     }
 }
 
@@ -291,7 +280,7 @@ impl<N,
      M: Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + Clone>
+     II: Mul<II, II> + InertiaTensor<M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotation(&self) -> AV {
@@ -309,7 +298,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 
         let mut delta = One::one::<M>();
         delta.rotate_by(rot);
-        self.moved(&delta);
+        self.moved();
     }
 }
 

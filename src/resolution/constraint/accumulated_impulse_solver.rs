@@ -14,6 +14,7 @@ use nalgebra::traits::dot::Dot;
 use nalgebra::traits::basis::Basis;
 use detection::collision::bodies_bodies::{Constraint, RBRB};
 use object::rigid_body::RigidBody;
+use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
 use resolution::constraint::contact_equation::CorrectionParameters;
@@ -36,7 +37,7 @@ impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
          NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
          Rotation<AV> + One + Clone + Inv,
-     II: Transform<AV> + Mul<II, II> + Clone>
+     II: Transform<AV> + Mul<II, II> + Inv + InertiaTensor<M> + Clone>
 AccumulatedImpulseSolver<N, LV, AV, M, II> {
     pub fn new(depth_limit:           N,
                corr_factor:           N,
@@ -167,7 +168,7 @@ impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
          NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
          Rotation<AV> + One + Clone + Inv,
-     II: Transform<AV> + Mul<II, II> + Clone>
+     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<M>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II> {
     fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>]) {
