@@ -20,7 +20,6 @@ use ncollide::narrow::collision_detector::CollisionDetector;
 use ncollide::narrow::implicit_implicit::ImplicitImplicit;
 use ncollide::narrow::ball_ball::BallBall;
 use OSCMG = ncollide::narrow::one_shot_contact_manifold_generator::OneShotContactManifoldGenerator;
-use UTF = ncollide::narrow::one_shot_contact_manifold_generator::UnsafeTransformedRef;
 use ncollide::narrow::plane_implicit::{PlaneImplicit, ImplicitPlane};
 use object::implicit_geom::{DefaultGeom, Plane, Ball, Implicit};
 use I = object::implicit_geom::DynamicImplicit;
@@ -28,14 +27,14 @@ use I = object::implicit_geom::DynamicImplicit;
 type S<N, LV> = JohnsonSimplex<N, AnnotatedPoint<LV>>;
 
 enum DefaultDefault<N, LV, AV, M, II> {
-    BallBall        (BallBall<N, LV>),
-    BallPlane       (ImplicitPlane<N, LV, Ball<N, LV>>),
-    PlaneBall       (PlaneImplicit<N, LV, Ball<N, LV>>),
-    BallImplicit    (ImplicitImplicit<S<N, LV>, Ball<N, LV>, ~I<N, LV, M, II>, N, LV>),
-    ImplicitBall    (ImplicitImplicit<S<N, LV>, ~I<N, LV, M, II>, Ball<N, LV>, N, LV>),
-    PlaneImplicit   (OSCMG<PlaneImplicit<N, LV, UTF<N, M, ~I<N, LV, M, II>>>, N, LV, AV, M>),
-    ImplicitPlane   (OSCMG<ImplicitPlane<N, LV, UTF<N, M, ~I<N, LV, M, II>>>, N, LV, AV, M>),
-    ImplicitImplicit(OSCMG<ImplicitImplicit<S<N, LV>, UTF<N, M, ~I<N, LV, M, II>>, ~I<N, LV, M, II>, N, LV>, N, LV, AV, M>)
+    BallBall        (BallBall<N, LV, M>),
+    BallPlane       (ImplicitPlane<N, LV, M, Ball<N>>),
+    PlaneBall       (PlaneImplicit<N, LV, M, Ball<N>>),
+    BallImplicit    (ImplicitImplicit<S<N, LV>, Ball<N>, ~I<N, LV, M, II>, N, LV>),
+    ImplicitBall    (ImplicitImplicit<S<N, LV>, ~I<N, LV, M, II>, Ball<N>, N, LV>),
+    PlaneImplicit   (OSCMG<PlaneImplicit<N, LV, M, ~I<N, LV, M, II>>, N, LV, AV, M>),
+    ImplicitPlane   (OSCMG<ImplicitPlane<N, LV, M, ~I<N, LV, M, II>>, N, LV, AV, M>),
+    ImplicitImplicit(OSCMG<ImplicitImplicit<S<N, LV>, ~I<N, LV, M, II>, ~I<N, LV, M, II>, N, LV>, N, LV, AV, M>)
 }
 
 impl<N: Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
@@ -76,20 +75,24 @@ impl<N: ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
      AV: ScalarMul<N> + Neg<AV>,
      M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> + Transform<LV> + One,
      II>
-CollisionDetector<N, LV, DefaultGeom<N, LV, M, II>, DefaultGeom<N, LV, M, II>>
+CollisionDetector<N, LV, M, DefaultGeom<N, LV, M, II>, DefaultGeom<N, LV, M, II>>
 for DefaultDefault<N, LV, AV, M, II>
  {
     #[inline]
-    fn update(&mut self, g1: &DefaultGeom<N, LV, M, II>, g2: &DefaultGeom<N, LV, M, II>) {
+    fn update(&mut self,
+              m1: &M,
+              g1: &DefaultGeom<N, LV, M, II>,
+              m2: &M,
+              g2: &DefaultGeom<N, LV, M, II>) {
         match *self {
-            BallBall        (ref mut cd) => cd.update(g1.ball(),     g2.ball()),
-            BallPlane       (ref mut cd) => cd.update(g1.ball(),     g2.plane()),
-            PlaneBall       (ref mut cd) => cd.update(g2.ball(),     g1.plane()),
-            BallImplicit    (ref mut cd) => cd.update(g1.ball(),     g2.implicit()),
-            ImplicitBall    (ref mut cd) => cd.update(g1.implicit(), g2.ball()),
-            PlaneImplicit   (ref mut cd) => cd.update(g2.implicit(), g1.plane()),
-            ImplicitPlane   (ref mut cd) => cd.update(g1.implicit(), g2.plane()),
-            ImplicitImplicit(ref mut cd) => cd.update(g1.implicit(), g2.implicit())
+            BallBall        (ref mut cd) => cd.update(m1, g1.ball(),     m2, g2.ball()),
+            BallPlane       (ref mut cd) => cd.update(m1, g1.ball(),     m2, g2.plane()),
+            PlaneBall       (ref mut cd) => cd.update(m2, g2.ball(),     m1, g1.plane()),
+            BallImplicit    (ref mut cd) => cd.update(m1, g1.ball(),     m2, g2.implicit()),
+            ImplicitBall    (ref mut cd) => cd.update(m1, g1.implicit(), m2, g2.ball()),
+            PlaneImplicit   (ref mut cd) => cd.update(m2, g2.implicit(), m1, g1.plane()),
+            ImplicitPlane   (ref mut cd) => cd.update(m1, g1.implicit(), m2, g2.plane()),
+            ImplicitImplicit(ref mut cd) => cd.update(m1, g1.implicit(), m2, g2.implicit())
         }
     }
 

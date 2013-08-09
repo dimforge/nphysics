@@ -1,8 +1,5 @@
-use std::num::One;
 use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::Rotate;
-use nalgebra::traits::transformation::{Transform, Transformable, Transformation};
 use ncollide::bounding_volume::aabb::{HasAABB, AABB};
 use ncollide::bounding_volume::bounding_volume::LooseBoundingVolume;
 use ncollide::geom::implicit::Implicit;
@@ -15,33 +12,26 @@ use object::volumetric::Volumetric;
 // FIXME: #[deriving(Clone)]
 pub enum DefaultGeom<N, V, M, II> { // FIXME: rename that
     Plane(plane::Plane<V>),
-    Ball(ball::Ball<N, V>),
+    Ball(ball::Ball<N>),
     Implicit(~DynamicImplicit<N, V, M, II>)
 }
 
-impl<N, V, M: One + Transform<V> + Rotate<V>, II> DefaultGeom<N, V, M, II> {
-    pub fn new_plane<G: Transformable<M, plane::Plane<V>>>(geom: &G) -> DefaultGeom<N, V, M, II> {
-        Plane(geom.transformed(&One::one()))
+impl<N, V, M, II> DefaultGeom<N, V, M, II> {
+    #[inline]
+    pub fn new_ball(b: ball::Ball<N>) -> DefaultGeom<N, V, M, II> {
+        Ball(b)
     }
-}
 
-impl<N, V: Clone + Add<V, V> + Neg<V>, M: One + Translation<V> + Transform<V>, II>
-DefaultGeom<N, V, M, II> {
-    pub fn new_ball<G: Transformable<M, ball::Ball<N, V>>>(geom: &G) -> DefaultGeom<N, V, M, II> {
-        Ball(geom.transformed(&One::one()))
+    #[inline]
+    pub fn new_plane(p: plane::Plane<V>) -> DefaultGeom<N, V, M, II> {
+        Plane(p)
     }
-}
 
-impl<N, V, M: One, II> DefaultGeom<N, V, M, II> {
-    pub fn new_implicit<G:  Transformable<M, G2>,
-                        G2: Send + DynamicImplicit<N, V, M, II>>(
-                        geom: &G)
-                        -> DefaultGeom<N, V, M, II> {
-            Implicit(
-                ~geom.transformed(&One::one())
-                as ~DynamicImplicit<N, V, M, II>
-                )
-        }
+    #[inline]
+    pub fn new_implicit<I: 'static + Send + DynamicImplicit<N, V, M, II>>(i: ~I)
+        -> DefaultGeom<N, V, M, II> {
+        Implicit(i as ~DynamicImplicit<N, V, M, II>)
+    }
 }
 
 impl<N, V, M, II> DefaultGeom<N, V, M, II> {
@@ -50,7 +40,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Ball` is not matched.
      */
     #[inline]
-    pub fn ball<'r>(&'r self) -> &'r ball::Ball<N, V> {
+    pub fn ball<'r>(&'r self) -> &'r ball::Ball<N> {
         match *self {
             Ball(ref b) => b,
             _ => fail!("Unexpected geometry: this is not a ball.")
@@ -61,7 +51,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * Mutable version of `ball`.
      */
     #[inline]
-    pub fn ball_mut<'r>(&'r mut self) -> &'r mut ball::Ball<N, V> {
+    pub fn ball_mut<'r>(&'r mut self) -> &'r mut ball::Ball<N> {
         match *self {
             Ball(ref mut b) => b,
             _ => fail!("Unexpected geometry: this is not a ball.")
@@ -114,81 +104,39 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
 
 impl<N: NumCast,
      V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Orderable + Ord + Clone,
-     M,
+     M: Translation<V>,
      II>
 DefaultGeom<N, V, M, II> {
-    fn aabb(&self) -> AABB<N, V> {
+    fn aabb(&self, m: &M) -> AABB<N, V> {
         match *self {
-            Plane(ref p)    => p.aabb().loosened(NumCast::from(0.08f64)),
-            Ball(ref b)     => b.aabb().loosened(NumCast::from(0.08f64)),
-            Implicit(ref i) => i.aabb().loosened(NumCast::from(0.08f64))
-        }
-    }
-}
-
-impl<N,
-     V: Clone + Add<V, V> + Neg<V>,
-     M: One + Translation<V> + Transform<V> + Rotate<V>,
-     II>
-Transformation<M> for DefaultGeom<N, V, M, II> {
-    fn transformation(&self) -> M {
-        match *self {
-            Plane(ref p)    => p.transformation(),
-            Ball(ref b)     => b.transformation(),
-            Implicit(ref i) => i.transformation(),
-        }
-    }
-
-    fn inv_transformation(&self) -> M {
-        match *self {
-            Plane(ref p)    => p.inv_transformation(),
-            Ball(ref b)     => b.inv_transformation(),
-            Implicit(ref i) => i.inv_transformation(),
-        }
-    }
-
-
-    fn transform_by(&mut self, m: &M) {
-        match *self {
-            Plane(ref mut p)    => p.transform_by(m),
-            Ball(ref mut b)     => b.transform_by(m),
-            Implicit(ref mut i) => i.transform_by(m),
+            Plane(ref p)    => p.aabb(m).loosened(NumCast::from(0.08f64)),
+            Ball(ref b)     => b.aabb(m).loosened(NumCast::from(0.08f64)),
+            Implicit(ref i) => i.aabb(m).loosened(NumCast::from(0.08f64))
         }
     }
 }
 
 pub trait DynamicImplicit<N, V, M, II>
-: Implicit<V>       +
+: Implicit<V, M>    +
   Volumetric<N, II> +
-  Transformation<M> +
-  Transform<V>      +
-  Translation<V>    +
-  HasAABB<N, V> {
+  HasAABB<N, V, M> {
     // FIXME: those methods are workarounds: why dont trait objects of this
     // traits dont inherit from all the parent traits?
-    fn _support_point(&self, dir: &V) -> V;
-    fn _volume(&self)                 -> N;
-    fn _inertia(&self, &N)            -> II;
-    fn _transformation(&self)         -> M;
-    fn _inv_transformation(&self)     -> M;
-    fn _transform_by(&mut self, &M);
-    fn _aabb(&self)                   -> AABB<N, V>;
-    fn _transform_vec(&self, &V)      -> V;
-    fn _inv_transform(&self, &V)      -> V;
-    fn _translation(&self)            -> V;
-    fn _inv_translation(&self)        -> V;
-    fn _translate_by(&mut self, &V);
+    fn _support_point(&self, m: &M, dir: &V) -> V;
+    fn _volume(&self)                        -> N;
+    fn _inertia(&self, &N)                   -> II;
+    fn _aabb(&self, &M)                      -> AABB<N, V>;
 }
 
-impl<T: Implicit<V> + Volumetric<N, II> + Transformation<M> + Transform<V> + Translation<V> + HasAABB<N, V>,
+impl<T: Implicit<V, M> + Volumetric<N, II> + HasAABB<N, V, M>,
      V,
      N,
      M,
      II>
 DynamicImplicit<N, V, M, II> for T {
     #[inline]
-    fn _support_point(&self, dir: &V) -> V {
-        self.support_point(dir)
+    fn _support_point(&self, m: &M, dir: &V) -> V {
+        self.support_point(m, dir)
     }
 
     #[inline]
@@ -202,59 +150,18 @@ DynamicImplicit<N, V, M, II> for T {
     }
 
     #[inline]
-    fn _transformation(&self) -> M {
-        self.transformation()
-    }
-
-    #[inline]
-    fn _inv_transformation(&self) -> M {
-        self.inv_transformation()
-    }
-
-    #[inline]
-    fn _transform_by(&mut self, m: &M) {
-        self.transform_by(m)
-    }
-
-    #[inline]
-    fn _aabb(&self) -> AABB<N, V> {
-        self.aabb()
-    }
-
-    #[inline]
-    fn _transform_vec(&self, v: &V) -> V {
-        self.transform_vec(v)
-    }
-
-    #[inline]
-    fn _inv_transform(&self, v: &V) -> V {
-        self.inv_transform(v)
-    }
-
-    #[inline]
-    fn _translation(&self) -> V {
-        self.translation()
-    }
-
-    #[inline]
-    fn _inv_translation(&self) -> V {
-        self.inv_translation()
-    }
-
-
-    #[inline]
-    fn _translate_by(&mut self, t: &V) {
-        self.translate_by(t)
+    fn _aabb(&self, m: &M) -> AABB<N, V> {
+        self.aabb(m)
     }
 }
 
 // FIXME: all the following are workarounds to make
 // ~ImplicitVolumetricTransformationBoundingVolume implement all the traits it
 // inherits from. This is a compiler issue.
-impl<N, V, M, II> Implicit<V> for ~DynamicImplicit<N, V, M, II> {
+impl<N, V, M, II> Implicit<V, M> for ~DynamicImplicit<N, V, M, II> {
     #[inline]
-    fn support_point(&self, dir: &V) -> V {
-        self._support_point(dir)
+    fn support_point(&self, m: &M, dir: &V) -> V {
+        self._support_point(m, dir)
     }
 }
 
@@ -270,54 +177,8 @@ impl<N, V, M, II> Volumetric<N, II> for ~DynamicImplicit<N, V, M, II> {
     }
 }
 
-impl<N, V, M, II> Transformation<M> for ~DynamicImplicit<N, V, M, II> {
-    #[inline]
-    fn transformation(&self) -> M {
-        self._transformation()
-    }
-
-    #[inline]
-    fn inv_transformation(&self) -> M {
-        self._inv_transformation()
-    }
-
-
-    #[inline]
-    fn transform_by(&mut self, m: &M) {
-        self._transform_by(m)
-    }
-}
-
-impl<N, V, M, II> Transform<V> for ~DynamicImplicit<N, V, M, II> {
-    fn transform_vec(&self, v: &V) -> V {
-        self._transform_vec(v)
-    }
-
-    fn inv_transform(&self, v: &V) -> V {
-        self._inv_transform(v)
-    }
-}
-
-impl<N, V, M, II> Translation<V> for ~DynamicImplicit<N, V, M, II> {
-    #[inline]
-    fn translation(&self) -> V {
-        self._translation()
-    }
-
-    #[inline]
-    fn inv_translation(&self) -> V {
-        self._inv_translation()
-    }
-
-
-    #[inline]
-    fn translate_by(&mut self, t: &V) {
-        self._translate_by(t)
-    }
-}
-
-impl<N, V, M, II> HasAABB<N, V> for ~DynamicImplicit<N, V, M, II> {
-    fn aabb(&self) -> AABB<N, V> {
-        self._aabb()
+impl<N, V, M, II> HasAABB<N, V, M> for ~DynamicImplicit<N, V, M, II> {
+    fn aabb(&self, m: &M) -> AABB<N, V> {
+        self._aabb(m)
     }
 }

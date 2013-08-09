@@ -217,7 +217,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             }
 
             self.second_order_solve(dt.clone(), constraints, bodies);
-            self.first_order_solve(dt, constraints, bodies);
+            // self.first_order_solve(dt, constraints, bodies);
         }
     }
 }

@@ -1,5 +1,6 @@
 use std::managed;
 use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
+use nalgebra::traits::translation::Translation;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::AABB;
 use object::rigid_body::RigidBody;
@@ -34,7 +35,7 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
 impl<N:  NumCast,
      LV: Bounded + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Neg<LV> + Ord + Orderable + Clone,
      AV,
-     M,
+     M:  Translation<LV>,
      II>
 HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]

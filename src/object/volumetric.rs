@@ -3,7 +3,6 @@ use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::indexable::Indexable;
 use nalgebra::traits::dim::Dim;
-use ncollide::geom::transformed::Transformed;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::box::Box;
 use ncollide::geom::cylinder::Cylinder;
@@ -16,21 +15,10 @@ pub trait Volumetric<N, II> {
     fn inertia(&self, &N) -> II;
 }
 
-impl<G: Volumetric<N, II>, M, N, II> Volumetric<N, II> for Transformed<G, M, N> {
-    fn volume(&self) -> N {
-        self.geom().volume()
-    }
-
-    fn inertia(&self, mass: &N) -> II {
-        // FIXME: take in account the transform
-        self.geom().inertia(mass)
-    }
-}
-
 impl<N: Real + DivisionRing + NumCast + Clone,
      V: Clone + Iterable<N> + Dim,
      M,
-     II: Zero + Indexable<(uint, uint), N>>
+     II: Zero + Indexable<(uint, uint), N> + Dim>
 Volumetric<N, II> for DefaultGeom<N, V, M, II> {
     #[inline]
     fn volume(&self) -> N {
@@ -57,16 +45,15 @@ fn ball_volume<N: Real + DivisionRing + NumCast>(radius: N, dim: uint) -> N {
 }
 
 impl<N: Real + DivisionRing + NumCast + Clone,
-     V: Clone + Dim,
-     II: Zero + Indexable<(uint, uint), N>>
-Volumetric<N, II> for Ball<N, V> {
+     II: Zero + Indexable<(uint, uint), N> + Dim>
+Volumetric<N, II> for Ball<N> {
     #[inline]
     fn volume(&self)  -> N {
-        ball_volume(self.radius(), Dim::dim::<V>())
+        ball_volume(self.radius(), Dim::dim::<II>())
     }
 
     fn inertia(&self, mass: &N) -> II {
-        let dim = Dim::dim::<V>();
+        let dim = Dim::dim::<II>();
 
         if dim == 2 {
             let diag = self.radius() * self.radius() * *mass / NumCast::from::<N, float>(2.0);

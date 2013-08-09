@@ -104,7 +104,7 @@ impl<N:  'static + Clone + Zero + Ord + NumCast,
      LV: 'static + Zero + Dim + Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> +
          Ord + Orderable + Add<LV, LV> + ScalarDiv<N> + Clone + Sub<LV, LV> + Norm<N>,
      AV: 'static,
-     M:  'static,
+     M:  'static + Translation<LV>,
      II: 'static>
 DBVTBodiesBodies<N, LV, AV, M, II> {
     pub fn new(margin: N) -> DBVTBodiesBodies<N, LV, AV, M, II> {
@@ -141,8 +141,12 @@ for DBVTBodiesBodies<N, LV, AV, M, II> {
 
         for p in pairs.mut_iter() {
             match p.value {
-                RB(ref mut d) => d.update(p.key.first.object.to_rigid_body_or_fail().geom(),
-                                          p.key.second.object.to_rigid_body_or_fail().geom()),
+                RB(ref mut d) => {
+                    let rb1 = p.key.first.object.to_rigid_body_or_fail();
+                    let rb2 = p.key.second.object.to_rigid_body_or_fail();
+
+                    d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom())
+                },
                 _ => { }
             }
         }

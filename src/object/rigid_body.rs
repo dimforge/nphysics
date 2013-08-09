@@ -23,18 +23,19 @@ pub enum RigidBodyState {
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:          RigidBodyState,
     priv geom:           DefaultGeom<N, LV, M, II>,
-    priv local_to_world: M,
-    priv world_to_local: M, // FIXME: useless in fact…
-    priv lin_vel:        LV,
-    priv ang_vel:        AV,
-    priv inv_mass:       N,
-    priv ls_inv_inertia: II, // NOTE: 'ls' means 'local space'
-    priv inv_inertia:    II,
-    priv lin_acc:        LV,
-    priv ang_acc:        AV,
-    priv restitution:    N,
-    priv friction:       N,
-    priv index:          int
+    priv local_to_world_cache: M,
+    priv local_to_world:       M,
+    priv world_to_local:       M, // FIXME: useless in fact…
+    priv lin_vel:              LV,
+    priv ang_vel:              AV,
+    priv inv_mass:             N,
+    priv ls_inv_inertia:       II, // NOTE: 'ls' means 'local space'
+    priv inv_inertia:          II,
+    priv lin_acc:              LV,
+    priv ang_acc:              AV,
+    priv restitution:          N,
+    priv friction:             N,
+    priv index:                int
 }
 
 impl<N,
@@ -43,9 +44,7 @@ impl<N,
      M: One + Translation<LV> + Transform<LV> + Rotate<LV>,
      II: Clone>
 RigidBody<N, LV, AV, M, II> {
-    fn moved(&mut self, delta: &M) {
-        self.geom.transform_by(delta);
-
+    fn moved(&mut self, _: &M) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
         self.inv_inertia = // FIXME: self.local_to_world.delta_transform() *
             self.ls_inv_inertia.clone() // FIXME:           *
@@ -54,6 +53,10 @@ RigidBody<N, LV, AV, M, II> {
 }
 
 impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
+    pub fn transform_ref<'r>(&'r self) -> &'r M {
+        &'r self.local_to_world
+    }
+
     pub fn geom<'r>(&'r self) -> &'r DefaultGeom<N, LV, M, II> {
         &'r self.geom
     }
@@ -79,7 +82,7 @@ impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>, // FIXME: + DeltaTransform<II>,
      LV:  Clone + Zero + Add<LV, LV> + Neg<LV> + Iterable<N> + Dim,
      AV:  Zero,
-     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + Clone>
+     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + Dim + Clone>
 RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        DefaultGeom<N, LV, M, II>,
                density:     N,
@@ -111,20 +114,21 @@ RigidBody<N, LV, AV, M, II> {
 
         let mut res =
             RigidBody {
-                state:          state,
-                geom:           geom,
-                local_to_world: One::one(),
-                world_to_local: One::one(),
-                lin_vel:        Zero::zero(),
-                ang_vel:        Zero::zero(),
-                inv_mass:       inv_mass,
-                ls_inv_inertia: inv_inertia.clone(),
-                inv_inertia:    inv_inertia,
-                lin_acc:        Zero::zero(),
-                ang_acc:        Zero::zero(),
-                friction:       friction,
-                restitution:    restitution,
-                index:          0
+                state:                state,
+                geom:                 geom,
+                local_to_world_cache: One::one(),
+                local_to_world:       One::one(),
+                world_to_local:       One::one(),
+                lin_vel:              Zero::zero(),
+                ang_vel:              Zero::zero(),
+                inv_mass:             inv_mass,
+                ls_inv_inertia:       inv_inertia.clone(),
+                inv_inertia:          inv_inertia,
+                lin_acc:              Zero::zero(),
+                ang_acc:              Zero::zero(),
+                friction:             friction,
+                restitution:          restitution,
+                index:                0
             };
 
         res.moved(&One::one());
@@ -330,10 +334,10 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 impl<N:  NumCast,
      LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + ScalarDiv<N> + Clone,
      AV,
-     M,
+     M: Translation<LV>,
      II>
 HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {
-        self.geom.aabb()
+        self.geom.aabb(&self.local_to_world)
     }
 }

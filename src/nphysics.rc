@@ -16,6 +16,27 @@ pub mod aliases
     pub mod dim3;
 }
 
+pub mod integration
+{
+    pub mod integrator;
+    pub mod rigid_body_integrator;
+    pub mod soft_body_integrator;
+    pub mod body_force_generator;
+    pub mod euler;
+    pub mod body_damping;
+}
+
+pub mod detection
+{
+    pub mod detector;
+
+    pub mod collision
+    {
+        pub mod bodies_bodies;
+        pub mod default_default;
+    }
+}
+
 pub mod resolution
 {
     pub mod solver;
@@ -26,24 +47,6 @@ pub mod resolution
         pub mod projected_gauss_seidel_solver;
         pub mod velocity_constraint;
         pub mod contact_equation;
-    }
-}
-pub mod integration
-{
-    pub mod integrator;
-    pub mod rigid_body_integrator;
-    pub mod soft_body_integrator;
-    pub mod body_force_generator;
-    pub mod euler;
-}
-pub mod detection
-{
-    pub mod detector;
-
-    pub mod collision
-    {
-        pub mod bodies_bodies;
-        pub mod default_default;
     }
 }
 pub mod world

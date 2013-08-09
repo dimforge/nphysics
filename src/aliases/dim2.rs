@@ -25,7 +25,7 @@ pub type LinearVelocity2d<N>  = LV<N>;
 pub type AngularVelocity2d<N> = AV<N>;
 pub type InertiaTensor2d<N>   = II<N>;
 
-pub type Ball2d<N>  = Ball<N, Vec2<N>>;
+pub type Ball2d<N>  = Ball<N>;
 pub type Box2d<N>   = Box<N, Vec2<N>>;
 pub type Plane2d<N> = Plane<Vec2<N>>;
 pub type Geom2d<N>  = DefaultGeom<N, LV<N>, M<N>, II<N>>;
