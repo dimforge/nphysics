@@ -8,8 +8,8 @@ dimension. That means you can use it for both 2-dimensional multiphysics and
 3-dimensional multiphysics. Hight dimensions could be possible, but **nphysics**
 has not be written/tested with those in thought.
 
-See the **ndemo** project (https://github.com/sebcrozet/ndemo) for
-demonstrations.
+See the [ndemo](https://github.com/sebcrozet/ndemo) project for demonstrations.
+There is also a short video available [here](http://youtu.be/CANjXZ5rocI)
 
 ## Why another multiphysics engine?
 There are a lot of multiphysics engine out there.
@@ -55,5 +55,5 @@ become a grown up. Many missing features are because of missing features on
 All dependencies are automatically cloned with a recursive clone.
 If you want to grab them yourself you will need:
 
-* **ncollide**: the collision detection library (https://github.com/sebcrozet/ncollide)
-* **nalgebra**: the linear algebra library (https://github.com/sebcrozet/nalgebra)
+* [ncollide](https://github.com/sebcrozet/ncollide): the collision detection library.
+* [nalgebra](https://github.com/sebcrozet/nalgebra): the linear algebra library.
