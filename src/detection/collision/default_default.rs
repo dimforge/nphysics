@@ -45,15 +45,15 @@ impl<N: Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
                -> DefaultDefault<N, LV, AV, M, II> {
         match (g1, g2) {
             (&Ball(_), &Ball(_))         => BallBall(BallBall::new()),
-            (&Ball(_), &Plane(_))        => BallPlane(ImplicitPlane::new()),
-            (&Plane(_), &Ball(_))        => PlaneBall(PlaneImplicit::new()),
+            (&Ball(_), &Plane(_))        => BallPlane(ImplicitPlane::new(margin)),
+            (&Plane(_), &Ball(_))        => PlaneBall(PlaneImplicit::new(margin)),
             (&Implicit(_), &Ball(_))     => ImplicitBall(ImplicitImplicit::new(margin, s.clone())),
             (&Ball(_), &Implicit(_))     => BallImplicit(ImplicitImplicit::new(margin, s.clone())),
             (&Implicit(_), &Plane(_))    => ImplicitPlane(
-                OSCMG::new(ImplicitPlane::new())
+                OSCMG::new(ImplicitPlane::new(margin))
             ),
             (&Plane(_), &Implicit(_))    => PlaneImplicit(
-                OSCMG::new(PlaneImplicit::new())
+                OSCMG::new(PlaneImplicit::new(margin))
             ),
             (&Implicit(_), &Implicit(_)) => ImplicitImplicit(
                 OSCMG::new(ImplicitImplicit::new(margin, s.clone()))

@@ -21,8 +21,8 @@ pub enum RigidBodyState {
 
 // FIXME: #[deriving(Clone)]
 pub struct RigidBody<N, LV, AV, M, II> {
-    priv state:          RigidBodyState,
-    priv geom:           DefaultGeom<N, LV, M, II>,
+    priv state:                RigidBodyState,
+    priv geom:                 DefaultGeom<N, LV, M, II>,
     priv local_to_world_cache: M,
     priv local_to_world:       M,
     priv lin_vel:              LV,
@@ -45,9 +45,24 @@ RigidBody<N, LV, AV, M, II> {
     }
 }
 
+impl<N, LV, AV, M: Clone, II: InertiaTensor<M>> RigidBody<N, LV, AV, M, II> {
+    pub fn save_transform(&mut self) {
+        self.local_to_world_cache = self.local_to_world.clone()
+    }
+
+    pub fn restore_transform(&mut self) {
+        self.local_to_world = self.local_to_world_cache.clone();
+        self.moved();
+    }
+}
+
 impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     pub fn transform_ref<'r>(&'r self) -> &'r M {
         &'r self.local_to_world
+    }
+
+    pub fn transform_cache_ref<'r>(&'r self) -> &'r M {
+        &'r self.local_to_world_cache
     }
 
     pub fn geom<'r>(&'r self) -> &'r DefaultGeom<N, LV, M, II> {
@@ -193,11 +208,12 @@ impl<N: Clone, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N, M, LV, AV, II: Clone> RigidBody<N, LV, AV, M, II> {
+impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
-    pub fn inv_inertia(&self) -> II {
-        self.inv_inertia.clone()
+    pub fn inv_inertia<'r>(&'r self) -> &'r II {
+        &'r self.inv_inertia
     }
+
     #[inline]
     pub fn set_inv_inertia(&mut self, ii: II) {
         self.inv_inertia = ii

@@ -1,6 +1,6 @@
 use std::rand;
 // use std::rand::RngUtil;
-use std::num::{Zero, One, Orderable, Bounded};
+use std::num::{One, Orderable, Bounded};
 use nalgebra::traits::dim::Dim;
 use nalgebra::traits::inv::Inv;
 use nalgebra::traits::vector_space::VectorSpace;
@@ -23,11 +23,12 @@ use pgs = resolution::constraint::projected_gauss_seidel_solver;
 
 
 pub struct AccumulatedImpulseSolver<N, LV, AV, M, II> {
-    priv rng:                   rand::IsaacRng,
-    priv correction:            CorrectionParameters<N>,
-    priv num_first_order_iter:  uint,
-    priv num_second_order_iter: uint,
-    priv constraints:           ~[VelocityConstraint<LV, AV, N>]
+    priv rng:                     rand::IsaacRng,
+    priv correction:              CorrectionParameters<N>,
+    priv num_first_order_iter:    uint,
+    priv num_second_order_iter:   uint,
+    priv restitution_constraints: ~[VelocityConstraint<LV, AV, N>],
+    priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
 }
 
 impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
@@ -47,10 +48,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                num_second_order_iter: uint)
                -> AccumulatedImpulseSolver<N, LV, AV, M, II> {
         AccumulatedImpulseSolver {
-            rng:                   rand::IsaacRng::new_seeded([42]),
-            num_first_order_iter:  num_first_order_iter,
-            num_second_order_iter: num_second_order_iter,
-            constraints:           ~[],
+            rng:                     rand::IsaacRng::new_seeded([42]),
+            num_first_order_iter:    num_first_order_iter,
+            num_second_order_iter:   num_second_order_iter,
+            restitution_constraints: ~[],
+            friction_constraints:    ~[],
 
             correction: CorrectionParameters {
                 depth_limit: depth_limit,
@@ -61,42 +63,39 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
         }
     }
 
-    fn resize_buffers(&mut self, num_equations: uint) {
-        if self.constraints.len() < num_equations {
-            self.constraints.grow_set(num_equations - 1,
-            &VelocityConstraint::new(),
-            VelocityConstraint::new());
-        }
-        else {
-            self.constraints.truncate(num_equations)
-        }
+    fn resize_buffers(&mut self, num_restitution_equations: uint, num_friction_equations: uint) {
+        resize_buffer(&mut self.restitution_constraints,
+                      num_restitution_equations,
+                      VelocityConstraint::new());
+
+        resize_buffer(&mut self.friction_constraints,
+                      num_friction_equations,
+                      VelocityConstraint::new());
     }
 
     fn first_order_solve(&mut self,
                          dt:          N,
                          constraints: &[Constraint<N, LV, AV, M, II>],
                          bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
-        let equations_per_contact = 1;
-        let num_equations         = equations_per_contact * constraints.len();
+        let num_friction_equations    = 0;
+        let num_restitution_equations = constraints.len();
 
         if constraints.iter().any(|&RBRB(_, _, ref c)| c.depth > self.correction.depth_limit) {
-            self.resize_buffers(num_equations);
-
-            let _0 = Zero::zero::<N>();
+            self.resize_buffers(num_restitution_equations, num_friction_equations);
 
             for (i, &RBRB(rb1, rb2, ref c)) in constraints.iter().enumerate() {
                 contact_equation::fill_first_order_contact_equation(
                     dt.clone(),
                     c,
                     rb1, rb2,
-                    &mut self.constraints[i],
-                    &self.correction
-                    );
+                    &mut self.restitution_constraints[i],
+                    &self.correction);
             }
 
             // FIXME: parametrize by the resolution algorithm?
             let mut MJLambda = pgs::projected_gauss_seidel_solve(
-                self.constraints,
+                self.restitution_constraints,
+                self.friction_constraints,
                 bodies.len(),
                 self.num_first_order_iter,
                 true
@@ -122,30 +121,30 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                           dt:          N,
                           constraints: &[Constraint<N, LV, AV, M, II>],
                           bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
-        let equations_per_contact = Dim::dim::<LV>(); // normal + friction
-        let num_equations         = equations_per_contact * constraints.len();
+        let num_friction_equations    = (Dim::dim::<LV>() - 1) * constraints.len();
+        let num_restitution_equations = constraints.len();
 
-        self.resize_buffers(num_equations);
-
-        let _0      = Zero::zero::<N>();
+        self.resize_buffers(num_restitution_equations, num_friction_equations);
 
         for (i, &RBRB(rb1, rb2, ref c)) in constraints.iter().enumerate() {
             contact_equation::fill_second_order_contact_equation(
                 dt.clone(),
                 c,
                 rb1, rb2,
-                self.constraints,
-                i * equations_per_contact,
+                &mut self.restitution_constraints[i],
+                i,
+                self.friction_constraints,
+                i * (Dim::dim::<LV>() - 1),
                 &self.correction);
         }
 
         // FIXME: parametrize by the resolution algorithm?
         let MJLambda = pgs::projected_gauss_seidel_solve(
-            self.constraints,
+            self.restitution_constraints,
+            self.friction_constraints,
             bodies.len(),
             self.num_second_order_iter,
-            false
-            );
+            false);
 
         for &b in bodies.iter() {
             let i = b.index();
@@ -218,7 +217,16 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             }
 
             self.second_order_solve(dt.clone(), constraints, bodies);
-            // self.first_order_solve(dt, constraints, bodies);
+            self.first_order_solve(dt, constraints, bodies);
         }
+    }
+}
+
+fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {
+    if buff.len() < size {
+        buff.grow_set(size - 1, &val, val.clone());
+    }
+    else {
+        buff.truncate(size)
     }
 }

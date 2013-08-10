@@ -26,7 +26,7 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
         fail!("Not yet implemented.");
     }
 
-    fn update(&mut self, _: N) {
+    fn pre_update(&mut self, _: N) {
         for &o in self.objects.iter() {
             match *o {
                 RigidBody(rb) => {
@@ -40,5 +40,8 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
                 }
             }
         }
+    }
+
+    fn post_update(&mut self, _: N) {
     }
 }

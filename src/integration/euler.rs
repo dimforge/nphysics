@@ -78,16 +78,16 @@ pub fn semi_implicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
 //    FIXME
 // }
 
-fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
-                M2: Rotation<AV> + Translation<LV>,
-                LV: ScalarMul<N> + Neg<LV>,
-                AV: ScalarMul<N>,
-                N>(
-                dt:      N,
-                orig:    &M,
-                lin_vel: &LV,
-                ang_vel: &AV)
-                -> M2 {
+pub fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
+                    M2: Rotation<AV> + Translation<LV>,
+                    LV: ScalarMul<N> + Neg<LV>,
+                    AV: ScalarMul<N>,
+                    N>(
+                    dt:      N,
+                    orig:    &M,
+                    lin_vel: &LV,
+                    ang_vel: &AV)
+                    -> M2 {
     let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
                                               &ang_vel.scalar_mul(&dt),
                                               &orig.translation());

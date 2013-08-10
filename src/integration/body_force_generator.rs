@@ -68,5 +68,6 @@ for BodyForceGenerator<N, LV, AV, M, II> {
         fail!("Not yet implemented.");
     }
 
-    fn update(&mut self, _: N) { }
+    fn pre_update(&mut self, _: N) { }
+    fn post_update(&mut self, _: N) { }
 }

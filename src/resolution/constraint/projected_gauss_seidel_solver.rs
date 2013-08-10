@@ -23,81 +23,118 @@ impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
 pub fn projected_gauss_seidel_solve<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
                                     AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
                                     N:  DivisionRing + Orderable + Clone + ToStr>(
-                                    constraints:    &mut [VelocityConstraint<LV, AV, N>],
+                                    restitution:    &mut [VelocityConstraint<LV, AV, N>],
+                                    friction:       &mut [VelocityConstraint<LV, AV, N>],
                                     num_bodies:     uint,
                                     num_iterations: uint,
                                     is_lambda_zero: bool)
                                     -> ~[Velocities<LV, AV>] {
+    // initialize the solution with zeros...
+    // FIXME: avoid allocation at each update?
+    let mut MJLambda = vec::from_elem(num_bodies, Velocities::new::<LV, AV>());
+
+    // ... and warm start if possible
+    if !is_lambda_zero {
+        for c in restitution.iter() {
+            setup_warmstart_for_constraint(c, MJLambda);
+        }
+
+        for c in friction.iter() {
+            setup_warmstart_for_constraint(c, MJLambda);
+        }
+    }
+
+    /*
+     * solve the system
+     */
+    do num_iterations.times {
+        for c in restitution.mut_iter() {
+            solve_velocity_constraint(c, MJLambda);
+        }
+
+        for c in friction.mut_iter() {
+            let impulse = restitution[c.friction_limit_id].impulse.clone();
+
+            if impulse > Zero::zero() {
+                let bound = c.friction_coeff * impulse;
+                c.lobound = -bound;
+                c.hibound = bound;
+
+                solve_velocity_constraint(c, MJLambda);
+            }
+        }
+    }
+
+    MJLambda
+}
+
+#[inline(always)]
+pub fn setup_warmstart_for_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
+                                      AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
+                                      N:  DivisionRing + Orderable + Clone + ToStr>(
+                                      c:        &VelocityConstraint<LV, AV, N>,
+                                      MJLambda: &mut [Velocities<LV, AV>]) {
     unsafe {
-        // initialize the solution with zeros...
-        // FIXME: avoid allocation at each update?
-        let mut MJLambda = vec::from_elem(num_bodies, Velocities::new::<LV, AV>());
+        let id1 = c.id1;
+        let id2 = c.id2;
 
-        // ... and warm start if possible
-        if !is_lambda_zero {
-            for c in constraints.iter() {
-                let id1 = c.id1;
-                let id2 = c.id2;
-
-                if id1 >= 0 {
-                    let mjl1 = MJLambda.unsafe_mut_ref(id1 as uint);
-                    (*mjl1).lv = (*mjl1).lv - c.weighted_normal1.scalar_mul(&c.impulse);
-                    (*mjl1).av = (*mjl1).av + c.weighted_rot_axis1.scalar_mul(&c.impulse);
-                }
-
-                if id2 >= 0 {
-                    let mjl2 = MJLambda.unsafe_mut_ref(id1 as uint);
-                    (*mjl2).lv = (*mjl2).lv + c.weighted_normal2.scalar_mul(&c.impulse);
-                    (*mjl2).av = (*mjl2).av + c.weighted_rot_axis2.scalar_mul(&c.impulse);
-                }
-            }
+        if id1 >= 0 {
+            let mjl1 = MJLambda.unsafe_mut_ref(id1 as uint);
+            (*mjl1).lv = (*mjl1).lv - c.weighted_normal1.scalar_mul(&c.impulse);
+            (*mjl1).av = (*mjl1).av + c.weighted_rot_axis1.scalar_mul(&c.impulse);
         }
 
-        /*
-         * solve the system
-         */
-        do num_iterations.times {
-            for c in constraints.mut_iter() {
-                let id1 = c.id1;
-                let id2 = c.id2;
+        if id2 >= 0 {
+            let mjl2 = MJLambda.unsafe_mut_ref(id1 as uint);
+            (*mjl2).lv = (*mjl2).lv + c.weighted_normal2.scalar_mul(&c.impulse);
+            (*mjl2).av = (*mjl2).av + c.weighted_rot_axis2.scalar_mul(&c.impulse);
+        }
+    }
+}
 
-                let mjl1 = MJLambda.unsafe_mut_ref(id1 as uint);
-                let mjl2 = MJLambda.unsafe_mut_ref(id2 as uint);
+#[inline(always)]
+pub fn solve_velocity_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
+                                 AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
+                                 N:  DivisionRing + Orderable + Clone + ToStr>(
+                                 c:        &mut VelocityConstraint<LV, AV, N>,
+                                 MJLambda: &mut [Velocities<LV, AV>]) {
+    unsafe {
+        let id1 = c.id1;
+        let id2 = c.id2;
 
-                let mut d_lambda_i = c.objective.clone();
+        let mjl1 = MJLambda.unsafe_mut_ref(id1 as uint);
+        let mjl2 = MJLambda.unsafe_mut_ref(id2 as uint);
 
-                if id1 >= 0 {
-                    d_lambda_i = d_lambda_i + c.normal.dot(&(*mjl1).lv) - c.rot_axis1.dot(&(*mjl1).av);
-                }
+        let mut d_lambda_i = c.objective.clone();
 
-                if id2 >= 0 {
-                    d_lambda_i = d_lambda_i - c.normal.dot(&(*mjl2).lv) - c.rot_axis2.dot(&(*mjl2).av);
-                }
-
-                d_lambda_i = d_lambda_i * c.inv_projected_mass;
-
-                // clamp the value such that: lambda- <= lambda <= lambda+
-                // (this is the ``projected'' flavour of Gauss-Seidel
-                let lambda_i_0 = c.impulse.clone();
-
-                c.impulse = (lambda_i_0 + d_lambda_i).clamp(&c.lobound, &c.hibound);
-
-                d_lambda_i = c.impulse - lambda_i_0;
-
-
-                if id1 >= 0 {
-                    (*mjl1).lv = (*mjl1).lv - c.weighted_normal1.scalar_mul(&d_lambda_i);
-                    (*mjl1).av = (*mjl1).av + c.weighted_rot_axis1.scalar_mul(&d_lambda_i);
-                }
-
-                if id2 >= 0 {
-                    (*mjl2).lv = (*mjl2).lv + c.weighted_normal2.scalar_mul(&d_lambda_i);
-                    (*mjl2).av = (*mjl2).av + c.weighted_rot_axis2.scalar_mul(&d_lambda_i);
-                }
-            }
+        if id1 >= 0 {
+            d_lambda_i = d_lambda_i + c.normal.dot(&(*mjl1).lv) - c.rot_axis1.dot(&(*mjl1).av);
         }
 
-        MJLambda
+        if id2 >= 0 {
+            d_lambda_i = d_lambda_i - c.normal.dot(&(*mjl2).lv) - c.rot_axis2.dot(&(*mjl2).av);
+        }
+
+        d_lambda_i = d_lambda_i * c.inv_projected_mass;
+
+        // clamp the value such that: lambda- <= lambda <= lambda+
+        // (this is the ``projected'' flavour of Gauss-Seidel
+        let lambda_i_0 = c.impulse.clone();
+
+        c.impulse = (lambda_i_0 + d_lambda_i).clamp(&c.lobound, &c.hibound);
+
+        d_lambda_i = c.impulse - lambda_i_0;
+
+
+        if id1 >= 0 {
+            (*mjl1).lv = (*mjl1).lv - c.weighted_normal1.scalar_mul(&d_lambda_i);
+            (*mjl1).av = (*mjl1).av + c.weighted_rot_axis1.scalar_mul(&d_lambda_i);
+        }
+
+        if id2 >= 0 {
+            (*mjl2).lv = (*mjl2).lv + c.weighted_normal2.scalar_mul(&d_lambda_i);
+            (*mjl2).av = (*mjl2).av + c.weighted_rot_axis2.scalar_mul(&d_lambda_i);
+        }
     }
 }
 

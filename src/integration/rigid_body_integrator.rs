@@ -43,12 +43,12 @@ Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
         fail!("Not yet implemented.");
     }
 
-    fn update(&mut self, dt: N) {
+    fn pre_update(&mut self, dt: N) {
         for o in self.objects.iter() {
             if o.can_move() {
                 let (t, lv, av) = euler::explicit_integrate(
                     dt.clone(),
-                    &o.transformation(),
+                    o.transform_ref(),
                     &o.lin_vel(),
                     &o.ang_vel(),
                     &o.lin_acc(),
@@ -60,6 +60,9 @@ Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
                 o.set_ang_vel(av);
             }
         }
+    }
+
+    fn post_update(&mut self, _: N) {
     }
 }
 
@@ -96,17 +99,21 @@ for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
         fail!("Not yet implemented.");
     }
 
-    fn update(&mut self, dt: N) {
+    fn pre_update(&mut self, _: N) {
+    }
+
+    fn post_update(&mut self, dt: N) {
         for o in self.objects.iter() {
             if o.can_move() {
+                // o.restore_transform();
+
                 let (t, lv, av) = euler::semi_implicit_integrate(
                     dt.clone(),
-                    &o.transformation(),
+                    o.transform_ref(),
                     &o.lin_vel(),
                     &o.ang_vel(),
                     &o.lin_acc(),
-                    &o.ang_acc()
-                    );
+                    &o.ang_acc());
 
                 o.transform_by(&t);
                 o.set_lin_vel(lv);

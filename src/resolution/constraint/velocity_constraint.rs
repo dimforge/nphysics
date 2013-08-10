@@ -21,7 +21,9 @@ pub struct VelocityConstraint<LV, AV, N> {
     hibound:            N,
     objective:          N,
     id1:                int,
-    id2:                int
+    id2:                int,
+    friction_limit_id:  uint,
+    friction_coeff:     N
 }
 
 impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N> {
@@ -46,7 +48,9 @@ impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N> {
             lobound:            Zero::zero(),
             objective:          Zero::zero(),
             id1:                -1,
-            id2:                -1
+            id2:                -1,
+            friction_limit_id:  0,
+            friction_coeff:     Zero::zero()
         }
     }
 }
