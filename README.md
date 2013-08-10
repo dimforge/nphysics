@@ -9,7 +9,7 @@ dimension. That means you can use it for both 2-dimensional multiphysics and
 has not be written/tested with those in thought.
 
 See the [ndemo](https://github.com/sebcrozet/ndemo) project for demonstrations.
-There is also a short video available [here](http://youtu.be/CANjXZ5rocI)
+There is also a short video available [here](http://youtu.be/CANjXZ5rocI).
 
 ## Why another multiphysics engine?
 There are a lot of multiphysics engine out there.
