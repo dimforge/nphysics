@@ -8,7 +8,7 @@ use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::indexable::Indexable;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
-use ncollide::bounding_volume::aabb::AABB;
+use ncollide::bounding_volume::aabb::{AABB, HasAABB};
 use object::volumetric::{InertiaTensor, Volumetric};
 use object::implicit_geom::DefaultGeom;
 // use constraint::index_proxy::{HasIndexProxy, IndexProxy};

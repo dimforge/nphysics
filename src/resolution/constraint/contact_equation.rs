@@ -144,7 +144,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
         constraint.weighted_normal1   = constraint.normal.scalar_mul(&rb1.inv_mass());
         constraint.rot_axis1          = (center - rb1.transform_ref().translation()).cross(&-constraint.normal);
 
-        constraint.weighted_rot_axis1 = rb1.inv_inertia().transform_vec(&constraint.rot_axis1);
+        constraint.weighted_rot_axis1 = rb1.inv_inertia().transform(&constraint.rot_axis1);
 
         constraint.inv_projected_mass = constraint.inv_projected_mass +
             constraint.normal.dot(&constraint.weighted_normal1) +
@@ -156,7 +156,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
         constraint.weighted_normal2   = constraint.normal.scalar_mul(&rb2.inv_mass());
         constraint.rot_axis2          = (center - rb2.transform_ref().translation()).cross(&constraint.normal);
 
-        constraint.weighted_rot_axis2 = rb2.inv_inertia().transform_vec(&constraint.rot_axis2);
+        constraint.weighted_rot_axis2 = rb2.inv_inertia().transform(&constraint.rot_axis2);
 
         constraint.inv_projected_mass = constraint.inv_projected_mass +
             constraint.normal.dot(&constraint.weighted_normal2) +

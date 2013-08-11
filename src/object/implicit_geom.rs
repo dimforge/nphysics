@@ -106,7 +106,7 @@ impl<N: NumCast,
      V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Orderable + Ord + Clone,
      M: Translation<V>,
      II>
-DefaultGeom<N, V, M, II> {
+HasAABB<N, V, M> for DefaultGeom<N, V, M, II> {
     fn aabb(&self, m: &M) -> AABB<N, V> {
         match *self {
             Plane(ref p)    => p.aabb(m).loosened(NumCast::from(0.08f64)),
