@@ -7,6 +7,7 @@ use nalgebra::traits::rotation::{Rotation, Rotate};
 use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::indexable::Indexable;
+use nalgebra::traits::vector_space::VectorSpace;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::{AABB, HasAABB};
 use object::volumetric::{InertiaTensor, Volumetric};
@@ -28,8 +29,10 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv lin_vel:              LV,
     priv ang_vel:              AV,
     priv inv_mass:             N,
-    priv ls_inv_inertia:       II, // NOTE: 'ls' means 'local space'
+    priv ls_inv_inertia:       II,
     priv inv_inertia:          II,
+    priv ls_center_of_mass:    LV,
+    priv center_of_mass:       LV,
     priv lin_acc:              LV,
     priv ang_acc:              AV,
     priv restitution:          N,
@@ -37,15 +40,16 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv index:                int
 }
 
-impl<N, LV, AV, M, II: InertiaTensor<M>>
+impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, M>>
 RigidBody<N, LV, AV, M, II> {
     fn moved(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
-        self.inv_inertia = self.ls_inv_inertia.to_world_space(&self.local_to_world);
+        self.inv_inertia    = self.ls_inv_inertia.to_world_space(&self.local_to_world);
+        self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
     }
 }
 
-impl<N, LV, AV, M: Clone, II: InertiaTensor<M>> RigidBody<N, LV, AV, M, II> {
+impl<N, LV, AV, M: Clone + Transform<LV>, II: InertiaTensor<N, LV, M>> RigidBody<N, LV, AV, M, II> {
     pub fn save_transform(&mut self) {
         self.local_to_world_cache = self.local_to_world.clone()
     }
@@ -77,6 +81,10 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
         self.index = id
     }
 
+    pub fn center_of_mass<'r>(&'r self) -> &'r LV {
+        &'r self.center_of_mass
+    }
+
     pub fn restitution(&self) -> N {
         self.restitution.clone()
     }
@@ -88,36 +96,41 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
 
 impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>, // FIXME: + DeltaTransform<II>,
-     LV:  Clone + Zero + Add<LV, LV> + Neg<LV> + Iterable<N> + Dim,
+     LV:  Clone + VectorSpace<N> + Iterable<N> + Dim,
      AV:  Zero,
-     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<M> +
-          Dim + Clone>
+     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, M> +
+          Add<II, II> + Dim + Clone>
 RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        DefaultGeom<N, LV, M, II>,
                density:     N,
                state:       RigidBodyState,
                restitution: N,
                friction:    N) -> RigidBody<N, LV, AV, M, II> {
-        let (inv_mass, inv_inertia) =
+        let (inv_mass, center_of_mass, inv_inertia) =
             match state {
-                Static    => (Zero::zero(), Zero::zero()),
+                Static    => (Zero::zero(), Zero::zero(), Zero::zero()),
                 Dynamic   => {
-                    let volume = geom.volume();
-
-                    if volume.is_zero() {
-                        fail!("A dynamic body cannot have a zero volume.")
-                    }
-
                     if density.is_zero() {
-                        fail!("A dynamic body cannot have a zero density.")
+                        fail!("A dynamic body must not have a zero density.")
                     }
 
-                    let mass = density * volume;
+                    // XXX: handle the center of mass
+                    let (m, c, ii) = geom.mass_properties(&density);
 
-                    match geom.inertia(&mass).inverse() {
-                        Some(ii) => (One::one::<N>() / mass, ii),
-                        None     => fail!("A dynamic body cannot have a singular inertia tensor.")
+                    if m.is_zero() {
+                        fail!("A dynamic body must not have a zero volume.")
                     }
+
+                    let ii_wrt_com = 
+                        ii.to_relative_wrt_point(&m, &c)
+                          .inverse()
+                          .expect("A dynamic body must not have a singular inertia tensor.");
+
+                    (
+                        One::one::<N>() / m,
+                        c,
+                        ii_wrt_com
+                    )
                 },
             };
 
@@ -132,6 +145,8 @@ RigidBody<N, LV, AV, M, II> {
                 inv_mass:             inv_mass,
                 ls_inv_inertia:       inv_inertia.clone(),
                 inv_inertia:          inv_inertia,
+                ls_center_of_mass:    center_of_mass,
+                center_of_mass:       Zero::zero(),
                 lin_acc:              Zero::zero(),
                 ang_acc:              Zero::zero(),
                 friction:             friction,
@@ -224,7 +239,7 @@ impl<N,
      M: Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + Inv + InertiaTensor<M> + Clone>
+     II: Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn transformation(&self) -> M {
@@ -251,7 +266,7 @@ impl<N,
      M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + Clone + InertiaTensor<M>>
+     II: Mul<II, II> + Clone + InertiaTensor<N, LV, M>>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translation(&self) -> LV {
@@ -296,7 +311,7 @@ impl<N,
      M: Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + InertiaTensor<M> + Clone>
+     II: Mul<II, II> + InertiaTensor<N, LV, M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotation(&self) -> AV {
@@ -339,7 +354,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 impl<N:  NumCast,
      LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + ScalarDiv<N> + Clone,
      AV,
-     M: Translation<LV>,
+     M: Translation<LV> + Mul<M, M>,
      II>
 HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {

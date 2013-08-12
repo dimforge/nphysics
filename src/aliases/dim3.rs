@@ -1,9 +1,13 @@
+use std::num::Zero;
 use nalgebra::mat::Mat3;
 use nalgebra::vec::Vec3;
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
-use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::inv::Inv;
+use nalgebra::traits::outer::Outer;
+use nalgebra::traits::norm::Norm;
+use nalgebra::traits::division_ring::DivisionRing;
+use nalgebra::traits::scalar_op::ScalarMul;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
@@ -48,8 +52,20 @@ pub type Body3d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type World3d<N> = World<N, Body3d<N>, Constraint3d<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
-impl<N: DivisionRing + Clone> InertiaTensor<Transform3d<N>> for InertiaTensor3d<N> {
+impl<N: DivisionRing + Algebraic + Clone>
+InertiaTensor<N, LV<N>, Transform3d<N>> for InertiaTensor3d<N> {
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
         t.submat().submat() * *self * t.submat().inverse().unwrap().submat()
+    }
+
+    fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor3d<N> {
+        let diag  = pt.sqnorm();
+        let diagm = Mat3::new(
+            diag.clone(), Zero::zero(), Zero::zero(),
+            Zero::zero(), diag.clone(), Zero::zero(),
+            Zero::zero(), Zero::zero(), diag
+        );
+
+        *self + (diagm - pt.outer(pt)).scalar_mul(mass)
     }
 }

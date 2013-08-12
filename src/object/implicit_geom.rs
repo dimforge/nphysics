@@ -5,6 +5,7 @@ use ncollide::bounding_volume::bounding_volume::LooseBoundingVolume;
 use ncollide::geom::implicit::Implicit;
 use ncollide::geom::ball;
 use ncollide::geom::plane;
+use ncollide::geom::compound::CompoundAABB;
 use object::volumetric::Volumetric;
 
 /// Enumeration grouping all common shapes. Used to simplify collision detection
@@ -13,6 +14,7 @@ use object::volumetric::Volumetric;
 pub enum DefaultGeom<N, V, M, II> { // FIXME: rename that
     Plane(plane::Plane<V>),
     Ball(ball::Ball<N>),
+    Compound(@CompoundAABB<N, V, M, DefaultGeom<N, V, M, II>>),
     Implicit(~DynamicImplicit<N, V, M, II>)
 }
 
@@ -32,6 +34,12 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
         -> DefaultGeom<N, V, M, II> {
         Implicit(i as ~DynamicImplicit<N, V, M, II>)
     }
+
+    #[inline]
+    pub fn new_compound(c: @CompoundAABB<N, V, M, DefaultGeom<N, V, M, II>>)
+        -> DefaultGeom<N, V, M, II> {
+        Compound(c)
+    }
 }
 
 impl<N, V, M, II> DefaultGeom<N, V, M, II> {
@@ -48,17 +56,6 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
     }
 
     /**
-     * Mutable version of `ball`.
-     */
-    #[inline]
-    pub fn ball_mut<'r>(&'r mut self) -> &'r mut ball::Ball<N> {
-        match *self {
-            Ball(ref mut b) => b,
-            _ => fail!("Unexpected geometry: this is not a ball.")
-        }
-    }
-
-    /**
      * Convenience method to extract a plane from the enumation. Fails if the
      * pattern `Plane` is not matched.
      */
@@ -66,17 +63,6 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
     pub fn plane<'r>(&'r self) -> &'r plane::Plane<V> {
         match *self {
             Plane(ref p) => p,
-            _ => fail!("Unexpected geometry: this is not a plane.")
-        }
-    }
-
-    /**
-     * Mutable version of `plane`.
-     */
-    #[inline]
-    pub fn plane_mut<'r>(&'r mut self) -> &'r mut plane::Plane<V> {
-        match *self {
-            Plane(ref mut p) => p,
             _ => fail!("Unexpected geometry: this is not a plane.")
         }
     }
@@ -89,46 +75,40 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
         }
     }
 
-    /**
-     * Mutable version of `implicit`.
-     */
     #[inline]
-    pub fn implicit_mut<'r>(&'r mut self)
-                            -> &'r mut ~DynamicImplicit<N, V, M, II> {
+    pub fn compound(&self) -> @CompoundAABB<N, V, M, DefaultGeom<N, V, M, II>> {
         match *self {
-            Implicit(ref mut i) => i,
-            _ => fail!("Unexpected geometry: this is not an implicit.")
+            Compound(c) => c,
+            _ => fail!("Unexpected geometry: this is not a compound.")
         }
     }
 }
 
 impl<N: NumCast,
      V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Orderable + Ord + Clone,
-     M: Translation<V>,
+     M: Translation<V> + Mul<M, M>,
      II>
 HasAABB<N, V, M> for DefaultGeom<N, V, M, II> {
     fn aabb(&self, m: &M) -> AABB<N, V> {
         match *self {
             Plane(ref p)    => p.aabb(m).loosened(NumCast::from(0.08f64)),
             Ball(ref b)     => b.aabb(m).loosened(NumCast::from(0.08f64)),
+            Compound(ref c) => c.aabb(m).loosened(NumCast::from(0.08f64)),
             Implicit(ref i) => i.aabb(m).loosened(NumCast::from(0.08f64))
         }
     }
 }
 
-pub trait DynamicImplicit<N, V, M, II>
-: Implicit<V, M>    +
-  Volumetric<N, II> +
-  HasAABB<N, V, M> {
+pub trait DynamicImplicit<N, V, M, II> : Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> {
     // FIXME: those methods are workarounds: why dont trait objects of this
     // traits dont inherit from all the parent traits?
     fn _support_point(&self, m: &M, dir: &V) -> V;
     fn _volume(&self)                        -> N;
-    fn _inertia(&self, &N)                   -> II;
+    fn _mass_properties(&self, &N)           -> (N, V, II);
     fn _aabb(&self, &M)                      -> AABB<N, V>;
 }
 
-impl<T: Implicit<V, M> + Volumetric<N, II> + HasAABB<N, V, M>,
+impl<T: Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M>,
      V,
      N,
      M,
@@ -145,8 +125,8 @@ DynamicImplicit<N, V, M, II> for T {
     }
 
     #[inline]
-    fn _inertia(&self, mass: &N) -> II {
-        self.inertia(mass)
+    fn _mass_properties(&self, mass: &N) -> (N, V, II) {
+        self.mass_properties(mass)
     }
 
     #[inline]
@@ -165,15 +145,15 @@ impl<N, V, M, II> Implicit<V, M> for ~DynamicImplicit<N, V, M, II> {
     }
 }
 
-impl<N, V, M, II> Volumetric<N, II> for ~DynamicImplicit<N, V, M, II> {
+impl<N, V, M, II> Volumetric<N, V, II> for ~DynamicImplicit<N, V, M, II> {
     #[inline]
     fn volume(&self) -> N {
         self._volume()
     }
 
     #[inline]
-    fn inertia(&self, mass: &N) -> II {
-        self._inertia(mass)
+    fn mass_properties(&self, density: &N) -> (N, V, II) {
+        self._mass_properties(density)
     }
 }
 

@@ -1,5 +1,6 @@
 use std::num::{Zero, One};
 use std::borrow;
+use nalgebra::traits::inv::Inv;
 use nalgebra::traits::basis::Basis;
 use nalgebra::traits::dim::Dim;
 use nalgebra::traits::division_ring::DivisionRing;
@@ -32,9 +33,7 @@ enum PairwiseDetector<N, LV, AV, M, II> {
 
 // XXX: move this on its own file
 pub enum Constraint<N, LV, AV, M, II> {
-    RBRB(@mut rb::RigidBody<N, LV, AV, M, II>,
-         @mut rb::RigidBody<N, LV, AV, M, II>,
-         Contact<N, LV>)
+    RBRB(@mut rb::RigidBody<N, LV, AV, M, II>, @mut rb::RigidBody<N, LV, AV, M, II>, Contact<N, LV>)
 }
 
 type BF<N, LV, AV, M, II> = DBVTBroadPhase<N,
@@ -61,17 +60,11 @@ Dispatcher<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone,
-     LV: Clone,
-     AV,
-     M,
-     II>
+impl<N: Clone, LV: Clone, AV, M, II>
      dispatcher::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
-    fn dispatch(&self,
-                a: &Body<N, LV, AV, M, II>,
-                b: &Body<N, LV, AV, M, II>)
-                -> PairwiseDetector<N, LV, AV, M, II> {
+    fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)
+        -> PairwiseDetector<N, LV, AV, M, II> {
         match (*a, *b) {
             (RigidBody(rb1), RigidBody(rb2)) => {
                 RB(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex, self.margin.clone()))
@@ -104,7 +97,7 @@ impl<N:  'static + Clone + Zero + Ord + NumCast,
      LV: 'static + Zero + Dim + Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> +
          Ord + Orderable + Add<LV, LV> + ScalarDiv<N> + Clone + Sub<LV, LV> + Norm<N>,
      AV: 'static,
-     M:  'static + Translation<LV>,
+     M:  'static + Translation<LV> + Mul<M, M>,
      II: 'static>
 DBVTBodiesBodies<N, LV, AV, M, II> {
     pub fn new(margin: N) -> DBVTBodiesBodies<N, LV, AV, M, II> {
@@ -122,7 +115,7 @@ impl<N:  'static + ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
          Eq + Clone,
      AV: 'static + ScalarMul<N> + Neg<AV>,
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> +
-         Transform<LV> + One,
+         Transform<LV> + One + Mul<M, M> + Inv,
      II: 'static>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
 for DBVTBodiesBodies<N, LV, AV, M, II> {

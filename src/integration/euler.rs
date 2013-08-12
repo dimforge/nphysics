@@ -11,13 +11,14 @@ pub fn explicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                           N:  Clone>(
                           dt: N,
                           p:  &M,
+                          c:  &LV,
                           lv: &LV,
                           av: &AV,
                           lf: &LV,
                           af: &AV)
                           -> (M2, LV, AV) {
     (
-        displacement(dt.clone(), p, lv, av), 
+        displacement(dt.clone(), p, c, lv, av), 
         integrate(dt.clone(), lv, lf),
         integrate(dt, av, af)
     )
@@ -43,6 +44,7 @@ pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                                N:  Clone>(
                                dt: N,
                                p:  &M,
+                               c:  &LV,
                                lv: &LV,
                                av: &AV,
                                lf: &LV,
@@ -52,7 +54,7 @@ pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
     let nav = integrate(dt.clone(), av, af);
 
     (
-        displacement(dt.clone(), p, &nlv, &nav),
+        displacement(dt.clone(), p, c, &nlv, &nav),
         nlv,
         nav
     )
@@ -83,14 +85,15 @@ pub fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                     LV: ScalarMul<N> + Neg<LV>,
                     AV: ScalarMul<N>,
                     N>(
-                    dt:      N,
-                    orig:    &M,
-                    lin_vel: &LV,
-                    ang_vel: &AV)
+                    dt:             N,
+                    _:              &M,
+                    center_of_mass: &LV,
+                    lin_vel:        &LV,
+                    ang_vel:        &AV)
                     -> M2 {
     let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
                                               &ang_vel.scalar_mul(&dt),
-                                              &orig.translation());
+                                              center_of_mass);
 
     res.translate_by(&lin_vel.scalar_mul(&dt));
 

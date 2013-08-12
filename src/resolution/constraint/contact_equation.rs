@@ -5,7 +5,6 @@ use nalgebra::traits::cross::Cross;
 use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::dot::Dot;
 use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::vector_space::VectorSpace;
 use ncollide::contact::Contact;
@@ -23,8 +22,8 @@ pub struct CorrectionParameters<N> {
 pub fn fill_first_order_contact_equation<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clone,
                                          AV: VectorSpace<N> + Dot<N>,
                                          N:  DivisionRing + Orderable + Bounded + NumCast + Clone,
-                                         M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                                         II: Transform<AV> + Mul<II, II> + InertiaTensor<M> + Clone>(
+                                         M:  Transform<LV> + Rotate<LV> + One,
+                                         II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
                                          dt:          N,
                                          coll:        &Contact<N, LV>,
                                          rb1:         &RigidBody<N, LV, AV, M, II>,
@@ -65,8 +64,8 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
                                           AV: VectorSpace<N> + Dot<N> + Clone,
                                           N:  DivisionRing + Orderable + Bounded + Signed + Clone +
                                               NumCast + ToStr,
-                                          M:  Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                                          II: Transform<AV> + Mul<II, II> + InertiaTensor<M> +
+                                          M:  Transform<LV> + Rotate<LV> + One,
+                                          II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> +
                                               Clone>(
                                           dt:           N,
                                           coll:         &Contact<N, LV>,
@@ -129,8 +128,8 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
 fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clone,
                             AV: VectorSpace<N> + Dot<N>,
                             N:  DivisionRing + Clone,
-                            M:  Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                            II: Transform<AV> + Mul<II, II> + InertiaTensor<M> + Clone>(
+                            M:  Transform<LV> + Rotate<LV> + One,
+                            II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
                             normal:     LV,
                             center:     LV,
                             rb1:        &RigidBody<N, LV, AV, M, II>,
@@ -142,7 +141,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
     if rb1.can_move() {
         // rotation axis
         constraint.weighted_normal1   = constraint.normal.scalar_mul(&rb1.inv_mass());
-        constraint.rot_axis1          = (center - rb1.transform_ref().translation()).cross(&-constraint.normal);
+        constraint.rot_axis1          = (center - *rb1.center_of_mass()).cross(&-constraint.normal);
 
         constraint.weighted_rot_axis1 = rb1.inv_inertia().transform(&constraint.rot_axis1);
 
@@ -154,7 +153,7 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
     if rb2.can_move() {
         // rotation axis
         constraint.weighted_normal2   = constraint.normal.scalar_mul(&rb2.inv_mass());
-        constraint.rot_axis2          = (center - rb2.transform_ref().translation()).cross(&constraint.normal);
+        constraint.rot_axis2          = (center - *rb2.center_of_mass()).cross(&constraint.normal);
 
         constraint.weighted_rot_axis2 = rb2.inv_inertia().transform(&constraint.rot_axis2);
 
@@ -169,8 +168,8 @@ fn fill_constraint_geometry<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clon
 fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim + Clone,
                             AV: VectorSpace<N> + Dot<N> + Clone,
                             N:  DivisionRing + Orderable + Bounded + Clone,
-                            M:  Translation<LV> + Transform<LV> + Rotate<LV> + One,
-                            II: Transform<AV> + Mul<II, II> + Clone + InertiaTensor<M>>(
+                            M:  Transform<LV> + Rotate<LV> + One,
+                            II: Transform<AV> + Mul<II, II> + Clone + InertiaTensor<N, LV, M>>(
                             dt:              N,
                             normal:          LV,
                             center:          LV,

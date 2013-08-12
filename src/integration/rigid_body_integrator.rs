@@ -28,7 +28,7 @@ impl<N:  Clone,
      Translatable<LV, M> + Transform<LV> + One,
      LV: Clone + Add<LV, LV> + ScalarMul<N> + Neg<LV> + Dim,
      AV: Clone + Add<AV, AV> + ScalarMul<N>,
-     II: Clone + Mul<II, II> + InertiaTensor<M> + Inv,
+     II: Clone + Mul<II, II> + InertiaTensor<N, LV, M> + Inv,
      B: ToRigidBody<N, LV, AV, M, II>>
 Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
     fn add(&mut self, o: @mut B) {
@@ -49,6 +49,7 @@ Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
                 let (t, lv, av) = euler::explicit_integrate(
                     dt.clone(),
                     o.transform_ref(),
+                    o.center_of_mass(),
                     &o.lin_vel(),
                     &o.ang_vel(),
                     &o.lin_acc(),
@@ -83,7 +84,7 @@ impl<N:  Clone,
      Translation<LV> + Translatable<LV, M> + Rotate<LV> + One,
      LV: Clone + Add<LV, LV> + ScalarMul<N> + Neg<LV> + Dim,
      AV: Clone + Add<AV, AV> + ScalarMul<N>,
-     II: Clone + Mul<II, II> + Inv + InertiaTensor<M>,
+     II: Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M>,
      B: ToRigidBody<N, LV, AV, M, II>>
 Integrator<N, B>
 for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
@@ -110,6 +111,7 @@ for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
                 let (t, lv, av) = euler::semi_implicit_integrate(
                     dt.clone(),
                     o.transform_ref(),
+                    o.center_of_mass(),
                     &o.lin_vel(),
                     &o.ang_vel(),
                     &o.lin_acc(),

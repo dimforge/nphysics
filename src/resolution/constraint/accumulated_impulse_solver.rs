@@ -38,7 +38,7 @@ impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
          NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
          Rotation<AV> + One + Clone + Inv,
-     II: Transform<AV> + Mul<II, II> + Inv + InertiaTensor<M> + Clone>
+     II: Transform<AV> + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
 AccumulatedImpulseSolver<N, LV, AV, M, II> {
     pub fn new(depth_limit:           N,
                corr_factor:           N,
@@ -107,7 +107,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                 MJLambda[i].lv.scalar_mul_inplace(&dt);
                 MJLambda[i].av.scalar_mul_inplace(&dt);
 
-                let center = &b.translation();
+                let center = &b.center_of_mass().clone();
 
                 b.transform_by(
                     &rotation::rotated_wrt_point(&One::one::<M>(), &MJLambda[i].av, center)
@@ -167,7 +167,7 @@ impl<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
          NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
          Rotation<AV> + One + Clone + Inv,
-     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<M>>
+     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II> {
     fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>]) {

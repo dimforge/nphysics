@@ -35,7 +35,7 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
 impl<N:  NumCast,
      LV: Bounded + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Neg<LV> + Ord + Orderable + Clone,
      AV,
-     M:  Translation<LV>,
+     M:  Translation<LV> + Mul<M, M>,
      II>
 HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]
