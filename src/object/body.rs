@@ -1,4 +1,5 @@
 use std::managed;
+use std::num::Zero;
 use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::translation::Translation;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
@@ -11,6 +12,52 @@ pub enum Body<N, LV, AV, M, II> {
     RigidBody(@mut RigidBody<N, LV, AV, M, II>),
     SoftBody(@mut SoftBody<N, LV>) // FIXME
 
+}
+
+impl<N: Clone, LV, AV, M, II> Body<N, LV, AV, M, II> {
+    pub fn is_active(&self) -> bool {
+        match *self {
+            RigidBody(rb) => rb.is_active(),
+            SoftBody(sb)  => sb.is_active()
+        }
+    }
+
+    pub fn can_move(&self) -> bool {
+        match *self {
+            RigidBody(rb) => rb.can_move(),
+            SoftBody(_)   => true
+        }
+    }
+
+    pub fn index(&self) -> int {
+        match *self {
+            RigidBody(rb) => rb.index(),
+            SoftBody(sb)  => sb.index()
+        }
+    }
+
+    pub fn set_index(&mut self, index: int) {
+        match *self {
+            RigidBody(rb) => rb.set_index(index),
+            SoftBody(sb)  => sb.set_index(index)
+        }
+    }
+
+    pub fn activate(&mut self) {
+        match *self {
+            RigidBody(rb) => rb.activate(),
+            SoftBody(sb)  => sb.activate()
+        }
+    }
+}
+
+impl<N, LV: Zero, AV: Zero, M, II> Body<N, LV, AV, M, II> {
+    pub fn deactivate(&mut self) {
+        match *self {
+            RigidBody(rb) => rb.deactivate(),
+            SoftBody(sb)  => sb.deactivate()
+        }
+    }
 }
 
 impl<N, LV, AV, M, II> Clone for Body<N, LV, AV, M, II> {

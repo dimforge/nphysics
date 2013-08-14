@@ -15,6 +15,7 @@ use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
 use integration::body_damping::BodyDamping;
 use detection::collision::bodies_bodies::{DBVTBodiesBodies, Constraint};
+use detection::island_activation_manager::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use object::implicit_geom::DefaultGeom;
 use object::rigid_body::RigidBody;
@@ -43,6 +44,7 @@ pub type RigidBodyIntegrator3d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>,
 pub type BodyDamping3d<N> = BodyDamping<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 pub type CollisionDetector3d<N> = DBVTBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type IslandActivationManager3d<N> = IslandActivationManager<N, LV<N>, AV<N>, M<N>, II<N>>; 
 
 pub type ContactSolver3d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>>;
 

@@ -37,7 +37,17 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv ang_acc:              AV,
     priv restitution:          N,
     priv friction:             N,
-    priv index:                int
+    priv index:                int,
+    priv active:               bool
+}
+
+
+impl<N, LV: Zero, AV: Zero, M, II> RigidBody<N, LV, AV, M, II> {
+    pub fn deactivate(&mut self) {
+        self.lin_vel = Zero::zero();
+        self.ang_vel = Zero::zero();
+        self.active  = false;
+    }
 }
 
 impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, M>>
@@ -91,6 +101,14 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
 
     pub fn friction(&self) -> N {
         self.friction.clone()
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.active
+    }
+
+    pub fn activate(&mut self) {
+        self.active = true;
     }
 }
 
@@ -151,7 +169,8 @@ RigidBody<N, LV, AV, M, II> {
                 ang_acc:              Zero::zero(),
                 friction:             friction,
                 restitution:          restitution,
-                index:                0
+                index:                0,
+                active:               true
             };
 
         res.moved();

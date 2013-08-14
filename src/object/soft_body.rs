@@ -21,7 +21,9 @@ pub struct ConstraintsGeometry<N> {
 pub struct SoftBody<N, V> {
     acc:         V,
     points:      ~[PointMass<N, V>],
-    constraints: ~[ConstraintsGeometry<N>]
+    constraints: ~[ConstraintsGeometry<N>],
+    active:      bool,
+    index:       int
 }
 
 impl<N: DivisionRing + NumCast + Signed + Bounded + Eq + Ord + Clone,
@@ -66,11 +68,42 @@ impl<N: DivisionRing + NumCast + Signed + Bounded + Eq + Ord + Clone,
         SoftBody {
             points:      points,
             constraints: constraints,
-            acc:         Zero::zero()
+            acc:         Zero::zero(),
+            index:       0,
+            active:      true
+
         }
     }
 
     pub fn points<'r>(&'r mut self) -> &'r mut ~[PointMass<N, V>] {
         &'r mut self.points
+    }
+}
+
+impl<N, V> SoftBody<N, V> {
+    pub fn is_active(&self) -> bool {
+        self.active
+    }
+
+    pub fn activate(&mut self) {
+        self.active = true;
+    }
+
+    pub fn index(&self) -> int {
+        self.index
+    }
+
+    pub fn set_index(&mut self, index: int) {
+        self.index = index
+    }
+}
+
+impl<N, V: Zero> SoftBody<N, V> {
+    pub fn deactivate(&mut self) {
+        for pt in self.points.mut_iter() {
+            pt.velocity = Zero::zero()
+        }
+
+        self.active = false;
     }
 }

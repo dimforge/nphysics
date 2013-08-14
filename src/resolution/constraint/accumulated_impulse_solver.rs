@@ -14,6 +14,7 @@ use nalgebra::traits::dot::Dot;
 use nalgebra::traits::basis::Basis;
 use detection::collision::bodies_bodies::{Constraint, RBRB};
 use object::rigid_body::RigidBody;
+use object::body::ToRigidBody;
 use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
@@ -87,7 +88,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                 contact_equation::fill_first_order_contact_equation(
                     dt.clone(),
                     c,
-                    rb1, rb2,
+                    rb1.to_rigid_body_or_fail(), rb2.to_rigid_body_or_fail(),
                     &mut self.restitution_constraints[i],
                     &self.correction);
             }
@@ -130,7 +131,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             contact_equation::fill_second_order_contact_equation(
                 dt.clone(),
                 c,
-                rb1, rb2,
+                rb1.to_rigid_body_or_fail(), rb2.to_rigid_body_or_fail(),
                 &mut self.restitution_constraints[i],
                 i,
                 self.friction_constraints,
@@ -195,7 +196,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                         if a.index() == -2 {
                             if a.can_move() {
                                 a.set_index(id);
-                                bodies.push(a);
+                                bodies.push(a.to_rigid_body_or_fail());
                                 id = id + 1;
                             }
                             else {
@@ -205,7 +206,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                         if b.index() == -2 {
                             if b.can_move() {
                                 b.set_index(id);
-                                bodies.push(b);
+                                bodies.push(b.to_rigid_body_or_fail());
                                 id = id + 1;
                             }
                             else {

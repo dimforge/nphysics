@@ -22,7 +22,6 @@ use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSim
 use ncollide::narrow::collision_detector::CollisionDetector;
 use ncollide::bounding_volume::aabb::AABB;
 use object::body::{Body, ToRigidBody, RigidBody};
-use rb = object::rigid_body;
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
 
@@ -33,7 +32,7 @@ enum PairwiseDetector<N, LV, AV, M, II> {
 
 // XXX: move this on its own file
 pub enum Constraint<N, LV, AV, M, II> {
-    RBRB(@mut rb::RigidBody<N, LV, AV, M, II>, @mut rb::RigidBody<N, LV, AV, M, II>, Contact<N, LV>)
+    RBRB(@mut Body<N, LV, AV, M, II>, @mut Body<N, LV, AV, M, II>, Contact<N, LV>)
 }
 
 type BF<N, LV, AV, M, II> = DBVTBroadPhase<N,
@@ -140,7 +139,7 @@ for DBVTBodiesBodies<N, LV, AV, M, II> {
 
                     d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom())
                 },
-                _ => { }
+                Unsuported => { }
             }
         }
     }
@@ -155,15 +154,50 @@ for DBVTBodiesBodies<N, LV, AV, M, II> {
                     d.colls(&mut collector);
 
                     for c in collector.iter() {
-                        let rb1 = p.key.first.object.to_rigid_body_or_fail();
-                        let rb2 = p.key.second.object.to_rigid_body_or_fail();
-                        out.push(RBRB(rb1, rb2, c.clone()))
+                        out.push(RBRB(p.key.first.object, p.key.second.object, c.clone()))
                     }
 
                     collector.clear()
                 },
-                _ => { }
+                Unsuported => { }
             }
         }
+    }
+
+    fn activate(&mut self,
+                body: @mut Body<N, LV, AV, M, II>,
+                out:  &mut ~[Constraint<N, LV, AV, M, II>]) {
+        let mut collector = ~[];
+        let mut out_ids = ~[];
+
+        self.broad_phase.activate(body, &mut out_ids);
+
+        for i in out_ids.iter() {
+            let e = &mut self.broad_phase.pairs_mut().elements_mut()[*i];
+
+            match e.value {
+                RB(ref mut d) => {
+                    let rb1 = e.key.first.object.to_rigid_body_or_fail();
+                    let rb2 = e.key.second.object.to_rigid_body_or_fail();
+
+                    // FIXME: is the update needed? Or do we have enough guarantees to avoid it?
+                    d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
+
+                    d.colls(&mut collector);
+
+                    for c in collector.iter() {
+                        out.push(RBRB(e.key.first.object, e.key.second.object, c.clone()))
+                    }
+
+                    collector.clear()
+                },
+                Unsuported => { }
+            }
+            
+        }
+    }
+
+    fn deactivate(&mut self, body: @mut Body<N, LV, AV, M, II>) {
+        self.broad_phase.deactivate(body)
     }
 }

@@ -29,6 +29,7 @@ pub mod integration
 pub mod detection
 {
     pub mod detector;
+    pub mod island_activation_manager;
 
     pub mod collision
     {
