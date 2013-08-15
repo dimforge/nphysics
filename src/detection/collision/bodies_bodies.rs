@@ -108,11 +108,11 @@ DBVTBodiesBodies<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  'static + ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
+impl<N:  'static + ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone + ToStr,
      LV: 'static + VectorSpace<N> + Dim + Dot<N> + Norm<N> + UniformSphereSample + ApproxEq<N> +
          SubDot<N> + ScalarAdd<N> + ScalarSub<N> + Cross<AV> + Ord + Orderable + Bounded + Basis +
-         Eq + Clone,
-     AV: 'static + ScalarMul<N> + Neg<AV>,
+         Eq + Clone + ToStr,
+     AV: 'static + ScalarMul<N> + Neg<AV> + ToStr,
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> +
          Transform<LV> + One + Mul<M, M> + Inv,
      II: 'static>

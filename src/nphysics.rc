@@ -44,6 +44,7 @@ pub mod resolution
 
     pub mod constraint
     {
+        pub mod impulse_cache;
         pub mod accumulated_impulse_solver;
         pub mod projected_gauss_seidel_solver;
         pub mod velocity_constraint;

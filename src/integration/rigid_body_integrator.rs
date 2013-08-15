@@ -141,8 +141,6 @@ Integrator<N, B> for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
     fn post_update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
             if o.value.can_move() {
-                // o.restore_transform();
-
                 let (t, lv, av) = euler::semi_implicit_integrate(
                     dt.clone(),
                     o.value.transform_ref(),

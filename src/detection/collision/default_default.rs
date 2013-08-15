@@ -96,11 +96,11 @@ impl<N: Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
  * Collision detector between two `DefaultGeometry`. Note that this is only a
  * wrapper on the collision detector specific to each geometry.
  */
-impl<N: ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone,
+impl<N: ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone + ToStr,
      LV: 'static + VectorSpace<N> + Dim + Dot<N> + Norm<N> + UniformSphereSample + ApproxEq<N> +
          SubDot<N> + Cross<AV> + ScalarAdd<N> + ScalarSub<N> + Orderable + Bounded + Basis + Eq +
-         Clone,
-     AV: ScalarMul<N> + Neg<AV>,
+         Clone + ToStr,
+     AV: ScalarMul<N> + Neg<AV> + ToStr,
      M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> + Transform<LV> +
          Mul<M, M> + Inv + One,
      II>

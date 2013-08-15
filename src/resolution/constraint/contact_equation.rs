@@ -12,16 +12,58 @@ use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::rigid_body::RigidBody;
 use object::volumetric::InertiaTensor;
 
+pub enum CorrectionMode<N> {
+    Velocity(N),
+    VelocityAndPosition(N, N, N),
+    VelocityAndPositionThresold(N, N, N)
+}
+
+impl<N: Zero + Bounded + Clone> CorrectionMode<N> {
+    #[inline]
+    pub fn vel_corr_factor(&self) -> N {
+        match *self {
+            Velocity(ref v)                          => v.clone(),
+            VelocityAndPosition(ref v, _, _)         => v.clone(),
+            VelocityAndPositionThresold(ref v, _, _) => v.clone()
+        }
+    }
+
+    #[inline]
+    pub fn pos_corr_factor(&self) -> N {
+        match *self {
+            VelocityAndPosition(_, ref p, _)         => p.clone(),
+            VelocityAndPositionThresold(_, ref p, _) => p.clone(),
+            Velocity(_)                              => Zero::zero()
+        }
+    }
+
+    #[inline]
+    pub fn min_depth_for_pos_corr(&self) -> N {
+        match *self {
+            VelocityAndPosition(_, _, ref t)         => t.clone(),
+            VelocityAndPositionThresold(_, _, ref t) => t.clone(),
+            Velocity(_)                              => Bounded::max_value()
+        }
+    }
+
+    #[inline]
+    pub fn max_depth_for_vel_corr(&self) -> N {
+        match *self {
+            VelocityAndPosition(_, _, _)             => Bounded::max_value(),
+            VelocityAndPositionThresold(_, _, ref t) => t.clone(),
+            Velocity(_)                              => Bounded::max_value()
+        }
+    }
+}
+
 pub struct CorrectionParameters<N> {
-    depth_limit: N,
-    corr_factor: N,
-    depth_eps:   N,
-    rest_eps:    N
+    corr_mode:       CorrectionMode<N>,
+    rest_eps:        N
 }
 
 pub fn fill_first_order_contact_equation<LV: VectorSpace<N> + Cross<AV> + Dot<N> + Dim + Clone,
                                          AV: VectorSpace<N> + Dot<N>,
-                                         N:  DivisionRing + Orderable + Bounded + NumCast + Clone,
+                                         N:  DivisionRing + Orderable + Bounded + NumCast + Clone + ToStr,
                                          M:  Transform<LV> + Rotate<LV> + One,
                                          II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
                                          dt:          N,
@@ -43,8 +85,9 @@ pub fn fill_first_order_contact_equation<LV: VectorSpace<N> + Cross<AV> + Dot<N>
     /*
      * Fill b
      */
-    constraint.objective = correction.corr_factor *
-        (coll.depth - correction.depth_limit).max(&Zero::zero()) / dt;
+    if coll.depth >= correction.corr_mode.min_depth_for_pos_corr() {
+        constraint.objective = correction.corr_mode.pos_corr_factor() * coll.depth.max(&Zero::zero()) / dt;
+    }
 
     /*
      * Reset forces
@@ -75,9 +118,8 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
                                           idr:          uint,
                                           fconstraints: &mut [VelocityConstraint<LV, AV, N>],
                                           idf:          uint,
+                                          cache:        &[N],
                                           correction:   &CorrectionParameters<N>) {
-    let err = correction.corr_factor *
-        (coll.depth.min(&correction.depth_limit) - correction.depth_eps).max(&Zero::zero()) / dt;
     let restitution = rb1.restitution() * rb2.restitution();
 
     let center = (coll.world1 + coll.world2).scalar_div(&NumCast::from(2.0f64));
@@ -86,14 +128,14 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
                              coll.normal.clone(),
                              center.clone(),
                              restitution,
-                             err,
-                             Zero::zero(), // coll.impulses[0].clone(),
+                             coll.depth.clone(),
+                             cache[0].clone(), // coll.impulses[0].clone(),
                              Zero::zero(),
                              Bounded::max_value(),
-                             correction.rest_eps.clone(),
                              rb1,
                              rb2,
-                             rconstraint);
+                             rconstraint,
+                             correction);
 
 
     let friction  = rb1.friction() * rb2.friction();
@@ -111,17 +153,19 @@ pub fn fill_second_order_contact_equation<LV: VectorSpace<N> + Cross<AV>  + Dot<
                                  center.clone(),
                                  Zero::zero(),
                                  Zero::zero(),
-                                 Zero::zero(), // coll.impulses[i].clone(),
+                                 cache[i + 1].clone(), // coll.impulses[i].clone(),
                                  Zero::zero(), // dont setup the limit now
                                  Zero::zero(), // dont setup the limit now
-                                 correction.rest_eps.clone(),
                                  rb1,
                                  rb2,
-                                 constraint);
+                                 constraint,
+                                 correction);
 
         constraint.friction_coeff    = friction.clone();
         constraint.friction_limit_id = idr;
         i = i + 1;
+
+        true
     }
 }
 
@@ -174,14 +218,14 @@ fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + D
                             normal:          LV,
                             center:          LV,
                             restitution:     N,
-                            error:           N,
+                            depth:           N,
                             initial_impulse: N,
                             lobound:         N,
                             hibound:         N,
-                            rest_eps:        N,
                             rb1:             &RigidBody<N, LV, AV, M, II>,
                             rb2:             &RigidBody<N, LV, AV, M, II>,
-                            constraint:      &mut VelocityConstraint<LV, AV, N>) {
+                            constraint:      &mut VelocityConstraint<LV, AV, N>,
+                            correction:      &CorrectionParameters<N>) {
     fill_constraint_geometry(normal, center.clone(), rb1, rb2, constraint);
 
     /*
@@ -207,11 +251,18 @@ fn fill_velocity_constraint<LV: VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + D
             + (rb2.ang_vel() + rb2.ang_acc().scalar_mul(&dt)).dot(&constraint.rot_axis2);
     }
 
-    if constraint.objective < -rest_eps {
+    if constraint.objective < -correction.rest_eps {
         constraint.objective = constraint.objective + restitution * constraint.objective
     }
 
-    constraint.objective = error - constraint.objective;
+    constraint.objective = -constraint.objective;
+
+    if depth < Zero::zero() {
+        constraint.objective =  constraint.objective + depth / dt
+    }
+    else if depth < correction.corr_mode.max_depth_for_vel_corr() {
+        constraint.objective = constraint.objective + depth * correction.corr_mode.vel_corr_factor() / dt
+    }
 
     // for warm-starting
     constraint.impulse = initial_impulse;

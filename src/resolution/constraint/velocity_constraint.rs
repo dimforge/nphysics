@@ -16,7 +16,6 @@ pub struct VelocityConstraint<LV, AV, N> {
     inv_projected_mass: N,
 
     impulse:            N,
-    unit_impulse:       N,
     lobound:            N,
     hibound:            N,
     objective:          N,
@@ -43,7 +42,6 @@ impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N> {
             inv_projected_mass: Zero::zero(),
 
             impulse:            Zero::zero(),
-            unit_impulse:       Zero::zero(),
             hibound:            Zero::zero(),
             lobound:            Zero::zero(),
             objective:          Zero::zero(),

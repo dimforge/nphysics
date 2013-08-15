@@ -74,21 +74,17 @@ pub fn setup_warmstart_for_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToSt
                                       N:  DivisionRing + Orderable + Clone + ToStr>(
                                       c:        &VelocityConstraint<LV, AV, N>,
                                       MJLambda: &mut [Velocities<LV, AV>]) {
-    unsafe {
-        let id1 = c.id1;
-        let id2 = c.id2;
+    let id1 = c.id1;
+    let id2 = c.id2;
 
-        if id1 >= 0 {
-            let mjl1 = MJLambda.unsafe_mut_ref(id1 as uint);
-            (*mjl1).lv = (*mjl1).lv - c.weighted_normal1.scalar_mul(&c.impulse);
-            (*mjl1).av = (*mjl1).av + c.weighted_rot_axis1.scalar_mul(&c.impulse);
-        }
+    if id1 >= 0 {
+        MJLambda[id1 as uint].lv = MJLambda[id1 as uint].lv - c.weighted_normal1.scalar_mul(&c.impulse);
+        MJLambda[id1 as uint].av = MJLambda[id1 as uint].av + c.weighted_rot_axis1.scalar_mul(&c.impulse);
+    }
 
-        if id2 >= 0 {
-            let mjl2 = MJLambda.unsafe_mut_ref(id1 as uint);
-            (*mjl2).lv = (*mjl2).lv + c.weighted_normal2.scalar_mul(&c.impulse);
-            (*mjl2).av = (*mjl2).av + c.weighted_rot_axis2.scalar_mul(&c.impulse);
-        }
+    if id2 >= 0 {
+        MJLambda[id2 as uint].lv = MJLambda[id2 as uint].lv + c.weighted_normal2.scalar_mul(&c.impulse);
+        MJLambda[id2 as uint].av = MJLambda[id2 as uint].av + c.weighted_rot_axis2.scalar_mul(&c.impulse);
     }
 }
 
@@ -98,43 +94,40 @@ pub fn solve_velocity_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
                                  N:  DivisionRing + Orderable + Clone + ToStr>(
                                  c:        &mut VelocityConstraint<LV, AV, N>,
                                  MJLambda: &mut [Velocities<LV, AV>]) {
-    unsafe {
-        let id1 = c.id1;
-        let id2 = c.id2;
+    let id1 = c.id1;
+    let id2 = c.id2;
 
-        let mjl1 = MJLambda.unsafe_mut_ref(id1 as uint);
-        let mjl2 = MJLambda.unsafe_mut_ref(id2 as uint);
+    let mut d_lambda_i = c.objective.clone();
 
-        let mut d_lambda_i = c.objective.clone();
+    if id1 >= 0 {
+        d_lambda_i = d_lambda_i + c.normal.dot(&MJLambda[id1 as uint].lv)
+                                - c.rot_axis1.dot(&MJLambda[id1 as uint].av);
+    }
 
-        if id1 >= 0 {
-            d_lambda_i = d_lambda_i + c.normal.dot(&(*mjl1).lv) - c.rot_axis1.dot(&(*mjl1).av);
-        }
+    if id2 >= 0 {
+        d_lambda_i = d_lambda_i - c.normal.dot(&MJLambda[id2 as uint].lv)
+                                - c.rot_axis2.dot(&MJLambda[id2 as uint].av);
+    }
 
-        if id2 >= 0 {
-            d_lambda_i = d_lambda_i - c.normal.dot(&(*mjl2).lv) - c.rot_axis2.dot(&(*mjl2).av);
-        }
+    d_lambda_i = d_lambda_i * c.inv_projected_mass;
 
-        d_lambda_i = d_lambda_i * c.inv_projected_mass;
+    // clamp the value such that: lambda- <= lambda <= lambda+
+    // (this is the ``projected'' flavour of Gauss-Seidel
+    let lambda_i_0 = c.impulse.clone();
 
-        // clamp the value such that: lambda- <= lambda <= lambda+
-        // (this is the ``projected'' flavour of Gauss-Seidel
-        let lambda_i_0 = c.impulse.clone();
+    c.impulse = (lambda_i_0 + d_lambda_i).clamp(&c.lobound, &c.hibound);
 
-        c.impulse = (lambda_i_0 + d_lambda_i).clamp(&c.lobound, &c.hibound);
-
-        d_lambda_i = c.impulse - lambda_i_0;
+    d_lambda_i = c.impulse - lambda_i_0;
 
 
-        if id1 >= 0 {
-            (*mjl1).lv = (*mjl1).lv - c.weighted_normal1.scalar_mul(&d_lambda_i);
-            (*mjl1).av = (*mjl1).av + c.weighted_rot_axis1.scalar_mul(&d_lambda_i);
-        }
+    if id1 >= 0 {
+        MJLambda[id1 as uint].lv = MJLambda[id1 as uint].lv - c.weighted_normal1.scalar_mul(&d_lambda_i);
+        MJLambda[id1 as uint].av = MJLambda[id1 as uint].av + c.weighted_rot_axis1.scalar_mul(&d_lambda_i);
+    }
 
-        if id2 >= 0 {
-            (*mjl2).lv = (*mjl2).lv + c.weighted_normal2.scalar_mul(&d_lambda_i);
-            (*mjl2).av = (*mjl2).av + c.weighted_rot_axis2.scalar_mul(&d_lambda_i);
-        }
+    if id2 >= 0 {
+        MJLambda[id2 as uint].lv = MJLambda[id2 as uint].lv + c.weighted_normal2.scalar_mul(&d_lambda_i);
+        MJLambda[id2 as uint].av = MJLambda[id2 as uint].av + c.weighted_rot_axis2.scalar_mul(&d_lambda_i);
     }
 }
 
