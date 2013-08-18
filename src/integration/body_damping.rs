@@ -1,5 +1,5 @@
 use std::ptr;
-use nalgebra::traits::scalar_op::ScalarMul;
+use nalgebra::traits::vector::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::body::{Body, RigidBody, SoftBody};
@@ -20,7 +20,7 @@ impl<N, LV, AV, M, II> BodyDamping<N, LV, AV, M, II> {
     }
 }
 
-impl<N: Clone, LV: Clone + ScalarMul<N>, AV: Clone + ScalarMul<N>, M: Clone, II: Clone>
+impl<N: Clone, LV: Clone + Vec<N>, AV: Clone + Vec<N>, M: Clone, II: Clone>
 Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
@@ -46,9 +46,9 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
         for o in self.objects.elements().iter() {
             match *o.value {
                 RigidBody(rb) => {
-                    let new_lin = rb.lin_vel().scalar_mul(&self.damping_factor);
+                    let new_lin = rb.lin_vel() * self.damping_factor;
                     rb.set_lin_vel(new_lin);
-                    let new_ang = rb.ang_vel().scalar_mul(&self.damping_factor);
+                    let new_ang = rb.ang_vel() * self.damping_factor;
                     rb.set_ang_vel(new_ang);
                 },
                 SoftBody(_) => {

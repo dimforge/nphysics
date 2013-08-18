@@ -3,15 +3,12 @@ use std::ptr;
 use std::num::{One, Orderable, Bounded};
 use nalgebra::traits::dim::Dim;
 use nalgebra::traits::inv::Inv;
-use nalgebra::traits::vector_space::VectorSpace;
-use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::translation::{Translation, Translatable};
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::cross::Cross;
-use nalgebra::traits::dot::Dot;
-use nalgebra::traits::basis::Basis;
+use nalgebra::traits::vector::{Vec, VecExt};
 use detection::collision::bodies_bodies::{Constraint, RBRB};
 use object::rigid_body::RigidBody;
 use object::body::ToRigidBody;
@@ -33,11 +30,9 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II> {
     priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
 }
 
-impl<LV:  VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
-          Eq + Round + IterBytes + Clone + ToStr,
-     AV:  VectorSpace<N> + Dot<N> + ToStr + Clone,
-     N:   DivisionRing + Orderable + Bounded + Signed + Clone +
-          NumCast + ToStr,
+impl<LV:  VecExt<N> + Cross<AV> + IterBytes + Clone + ToStr,
+     AV:  Vec<N> + ToStr + Clone,
+     N:   Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
      II:  Transform<AV> + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
@@ -110,8 +105,8 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             for &b in bodies.iter() {
                 let i = b.index();
 
-                MJLambda[i].lv.scalar_mul_inplace(&dt);
-                MJLambda[i].av.scalar_mul_inplace(&dt);
+                MJLambda[i].lv = MJLambda[i].lv * dt;
+                MJLambda[i].av = MJLambda[i].av * dt;
 
                 let center = &b.center_of_mass().clone();
 
@@ -183,14 +178,12 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
     }
 }
 
-impl<LV:  VectorSpace<N> + Cross<AV>  + Dot<N> + Basis + Dim +
-          Eq + Round + IterBytes + Clone + ToStr,
-     AV:  VectorSpace<N> + Dot<N> + ToStr + Clone,
-     N:   DivisionRing + Orderable + Bounded + Signed + Clone +
-          NumCast + ToStr,
-     M:   Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
-          Rotation<AV> + One + Clone + Inv,
-     II:  Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>>
+impl<LV: VecExt<N> + Cross<AV> + IterBytes + Clone + ToStr,
+     AV: Vec<N> + ToStr + Clone,
+     N:  Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
+     M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
+         Rotation<AV> + One + Clone + Inv,
+     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II> {
     fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>]) {
@@ -207,7 +200,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                         self.cache.insert(i,
                                           ptr::to_mut_unsafe_ptr(a) as uint,
                                           ptr::to_mut_unsafe_ptr(b) as uint,
-                                          (c.world1 + c.world2).scalar_div(&NumCast::from(2.0)));
+                                          (c.world1 + c.world2) / NumCast::from(2.0));
                     }
                 }
             }

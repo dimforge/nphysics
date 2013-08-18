@@ -2,8 +2,7 @@ use nalgebra::mat::{Mat2, Mat1};
 use nalgebra::vec::{Vec2, Vec1};
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
-use nalgebra::traits::norm::Norm;
-use nalgebra::traits::division_ring::DivisionRing;
+use nalgebra::traits::vector::AlgebraicVec;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
@@ -31,7 +30,7 @@ pub type InertiaTensor2d<N>   = II<N>;
 
 pub type Ball2d<N>  = Ball<N>;
 pub type Box2d<N>   = Box<N, Vec2<N>>;
-pub type Plane2d<N> = Plane<Vec2<N>>;
+pub type Plane2d<N> = Plane<N, Vec2<N>>;
 pub type Geom2d<N>  = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
@@ -48,8 +47,7 @@ pub type Body2d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type World2d<N> = World<N, Body2d<N>, Constraint2d<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
-impl<N: Clone + DivisionRing + Algebraic,
-     Any>
+impl<N: Clone + Num + Algebraic, Any>
 InertiaTensor<N, LV<N>, Any> for InertiaTensor2d<N> {
     fn to_world_space(&self, _: &Any) -> InertiaTensor2d<N> {
         self.clone()

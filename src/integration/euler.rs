@@ -1,13 +1,13 @@
 use std::num::One;
-use nalgebra::traits::scalar_op::ScalarMul;
+use nalgebra::traits::vector::Vec;
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::translation::{Translation, Translatable};
 
 pub fn explicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                           M2: Rotation<AV> + Translation<LV>,
-                          LV: Add<LV, LV> + ScalarMul<N> + Neg<LV>,
-                          AV: Add<AV, AV> + ScalarMul<N>,
+                          LV: Vec<N>,
+                          AV: Vec<N>,
                           N:  Clone>(
                           dt: N,
                           p:  &M,
@@ -24,7 +24,7 @@ pub fn explicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
     )
 }
 
-pub fn explicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
+pub fn explicit_integrate_wo_rotation<V: Vec<N>,
                                       N: Clone>(
                                       dt: N,
                                       p:  &V,
@@ -39,8 +39,8 @@ pub fn explicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
 
 pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                                M2: Rotation<AV> + Translation<LV>,
-                               LV: Add<LV, LV> + ScalarMul<N> + Neg<LV>,
-                               AV: Add<AV, AV> + ScalarMul<N>,
+                               LV: Vec<N>,
+                               AV: Vec<N>,
                                N:  Clone>(
                                dt: N,
                                p:  &M,
@@ -60,7 +60,7 @@ pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
     )
 }
 
-pub fn semi_implicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
+pub fn semi_implicit_integrate_wo_rotation<V: Vec<N>,
                                            N: Clone>(
                                            dt: N,
                                            p:  &V,
@@ -82,8 +82,8 @@ pub fn semi_implicit_integrate_wo_rotation<V: Add<V, V> + ScalarMul<N>,
 
 pub fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                     M2: Rotation<AV> + Translation<LV>,
-                    LV: ScalarMul<N> + Neg<LV>,
-                    AV: ScalarMul<N>,
+                    LV: Vec<N>,
+                    AV: Vec<N>,
                     N>(
                     dt:             N,
                     _:              &M,
@@ -92,19 +92,15 @@ pub fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                     ang_vel:        &AV)
                     -> M2 {
     let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
-                                              &ang_vel.scalar_mul(&dt),
+                                              &(ang_vel * dt),
                                               center_of_mass);
 
-    res.translate_by(&lin_vel.scalar_mul(&dt));
+    res.translate_by(&(lin_vel * dt));
 
     res
 }
 
-fn integrate<N,
-             V: Add<V, V> + ScalarMul<N>>(
-             dt: N,
-             v:  &V,
-             f:  &V)
-             -> V {
-    v + f.scalar_mul(&dt)
+#[inline]
+fn integrate<N, V: Vec<N>>(dt: N, v: &V, f: &V) -> V {
+    v + f * dt
 }

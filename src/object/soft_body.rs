@@ -1,8 +1,5 @@
 use std::num::Zero;
-use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::norm::Norm;
-use nalgebra::traits::dot::Dot;
-use nalgebra::traits::vector_space::VectorSpace;
+use nalgebra::traits::vector::AlgebraicVec;
 
 pub struct PointMass<N, V> {
     invmass:    N,
@@ -26,8 +23,8 @@ pub struct SoftBody<N, V> {
     index:       int
 }
 
-impl<N: DivisionRing + NumCast + Signed + Bounded + Eq + Ord + Clone,
-     V: VectorSpace<N> + Norm<N> + Dot<N> + Clone>
+impl<N: Num + NumCast + Signed + Bounded + Algebraic + Eq + Ord + Clone,
+     V: AlgebraicVec<N> + Clone>
      SoftBody<N, V> {
     pub fn new_from_mesh(vbuf:      ~[V],
                          ids1:      ~[i32],

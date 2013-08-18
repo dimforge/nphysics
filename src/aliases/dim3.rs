@@ -5,9 +5,7 @@ use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::traits::inv::Inv;
 use nalgebra::traits::outer::Outer;
-use nalgebra::traits::norm::Norm;
-use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::scalar_op::ScalarMul;
+use nalgebra::traits::vector::AlgebraicVec;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
@@ -36,7 +34,7 @@ pub type InertiaTensor3d<N>   = II<N>;
 
 pub type Ball3d<N>  = Ball<N>;
 pub type Box3d<N>   = Box<N, Vec3<N>>;
-pub type Plane3d<N> = Plane<Vec3<N>>;
+pub type Plane3d<N> = Plane<N, Vec3<N>>;
 pub type Geom3d<N>  = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
@@ -54,7 +52,7 @@ pub type Body3d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type World3d<N> = World<N, Body3d<N>, Constraint3d<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
-impl<N: DivisionRing + Algebraic + Clone>
+impl<N: Num + Algebraic + Clone>
 InertiaTensor<N, LV<N>, Transform3d<N>> for InertiaTensor3d<N> {
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
         t.submat().submat() * *self * t.submat().inverse().unwrap().submat()

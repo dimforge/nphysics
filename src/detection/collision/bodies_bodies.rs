@@ -1,19 +1,12 @@
 use std::num::{Zero, One};
 use std::borrow;
 use nalgebra::traits::inv::Inv;
-use nalgebra::traits::basis::Basis;
 use nalgebra::traits::dim::Dim;
-use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::dot::Dot;
+use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
 use nalgebra::traits::cross::Cross;
-use nalgebra::traits::norm::Norm;
 use nalgebra::traits::translation::{Translation, Translatable};
 use nalgebra::traits::rotation::{Rotate, Rotation};
-use nalgebra::traits::sample::UniformSphereSample;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv, ScalarMul};
-use nalgebra::traits::sub_dot::SubDot;
 use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::vector_space::VectorSpace;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::contact::Contact;
 use ncollide::broad::dispatcher;
@@ -21,7 +14,8 @@ use ncollide::broad::dbvt_broad_phase::DBVTBroadPhase;
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
 use ncollide::narrow::collision_detector::CollisionDetector;
 use ncollide::bounding_volume::aabb::AABB;
-use object::body::{Body, ToRigidBody, RigidBody};
+use ncollide::ray::ray::{Ray, RayCast};
+use object::body::{Body, ToRigidBody, RigidBody, SoftBody};
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
 
@@ -92,11 +86,10 @@ pub struct DBVTBodiesBodies<N, LV, AV, M, II> {
     broad_phase: BF<N, LV, AV, M, II>,
 }
 
-impl<N:  'static + Clone + Zero + Ord + NumCast,
-     LV: 'static + Zero + Dim + Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> +
-         Ord + Orderable + Add<LV, LV> + ScalarDiv<N> + Clone + Sub<LV, LV> + Norm<N>,
+impl<N:  'static + Clone + Zero + Orderable + NumCast + Algebraic + Primitive + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Clone + ToStr,
      AV: 'static,
-     M:  'static + Translation<LV> + Mul<M, M>,
+     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Transform<LV>,
      II: 'static>
 DBVTBodiesBodies<N, LV, AV, M, II> {
     pub fn new(margin: N) -> DBVTBodiesBodies<N, LV, AV, M, II> {
@@ -106,13 +99,31 @@ DBVTBodiesBodies<N, LV, AV, M, II> {
             broad_phase: DBVTBroadPhase::new(dispatcher, margin)
         }
     }
+
+    pub fn interferences_with_ray(&mut self,
+                                  ray: &Ray<LV>,
+                                  out: &mut ~[(@mut Body<N, LV, AV, M, II>, N)]) {
+        let mut bodies = ~[];
+
+        self.broad_phase.interferences_with_ray(ray, &mut bodies);
+
+        for b in bodies.iter() {
+            match **b {
+                RigidBody(rb) => {
+                    match rb.geom().toi_with_ray(rb.transform_ref(), ray) {
+                        None    => { },
+                        Some(t) => out.push((*b, t))
+                    }
+                },
+                SoftBody(_) => fail!("Not yet implemented.")
+            }
+        }
+    }
 }
 
-impl<N:  'static + ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone + ToStr,
-     LV: 'static + VectorSpace<N> + Dim + Dot<N> + Norm<N> + UniformSphereSample + ApproxEq<N> +
-         SubDot<N> + ScalarAdd<N> + ScalarSub<N> + Cross<AV> + Ord + Orderable + Bounded + Basis +
-         Eq + Clone + ToStr,
-     AV: 'static + ScalarMul<N> + Neg<AV> + ToStr,
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Clone + ToStr,
+     AV: 'static + Vec<N> + ToStr,
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> +
          Transform<LV> + One + Mul<M, M> + Inv,
      II: 'static>

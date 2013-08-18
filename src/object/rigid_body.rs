@@ -1,13 +1,11 @@
 use std::num::{Zero, One};
 use nalgebra::traits::inv::Inv;
 use nalgebra::traits::dim::Dim;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::{Rotation, Rotate};
 use nalgebra::traits::transformation::{Transform, Transformation};
-use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::indexable::Indexable;
-use nalgebra::traits::vector_space::VectorSpace;
+use nalgebra::traits::vector::{VecExt, AlgebraicVecExt};
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::{AABB, HasAABB};
 use object::volumetric::{InertiaTensor, Volumetric};
@@ -98,7 +96,7 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
 
 impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>, // FIXME: + DeltaTransform<II>,
-     LV:  Clone + VectorSpace<N> + Iterable<N> + Dim,
+     LV:  Clone + VecExt<N>,
      AV:  Zero,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, M> +
           Add<II, II> + Dim + Clone>
@@ -353,12 +351,12 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 // FIXME:     }
 // FIXME: }
 
-impl<N:  NumCast,
-     LV: Bounded + ScalarAdd<N> + ScalarSub<N> + Neg<LV> + Ord + Orderable + ScalarDiv<N> + Clone,
+impl<N:  NumCast + Primitive + Orderable + ToStr,
+     LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
      M: Translation<LV> + Mul<M, M>,
      II>
-HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
+HasBoundingVolume<LV, AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {
         self.geom.aabb(&self.local_to_world)
     }

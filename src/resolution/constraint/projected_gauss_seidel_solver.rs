@@ -1,8 +1,6 @@
 use std::num::{Zero, Orderable};
 use std::vec;
-use nalgebra::traits::dot::Dot;
-use nalgebra::traits::vector_space::VectorSpace;
-use nalgebra::traits::division_ring::DivisionRing;
+use nalgebra::traits::vector::Vec;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 #[deriving(Eq, ToStr, Clone)]
@@ -20,9 +18,9 @@ impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
     }
 }
 
-pub fn projected_gauss_seidel_solve<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
-                                    AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
-                                    N:  DivisionRing + Orderable + Clone + ToStr>(
+pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone + ToStr,
+                                    AV: Vec<N> + Clone + ToStr,
+                                    N:  Num + Orderable + Clone + ToStr>(
                                     restitution:    &mut [VelocityConstraint<LV, AV, N>],
                                     friction:       &mut [VelocityConstraint<LV, AV, N>],
                                     num_bodies:     uint,
@@ -69,29 +67,29 @@ pub fn projected_gauss_seidel_solve<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
 }
 
 #[inline(always)]
-pub fn setup_warmstart_for_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
-                                      AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
-                                      N:  DivisionRing + Orderable + Clone + ToStr>(
+pub fn setup_warmstart_for_constraint<LV: Vec<N> + Clone + ToStr,
+                                      AV: Vec<N> + Clone + ToStr,
+                                      N:  Num + Orderable + Clone + ToStr>(
                                       c:        &VelocityConstraint<LV, AV, N>,
                                       MJLambda: &mut [Velocities<LV, AV>]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
     if id1 >= 0 {
-        MJLambda[id1 as uint].lv = MJLambda[id1 as uint].lv - c.weighted_normal1.scalar_mul(&c.impulse);
-        MJLambda[id1 as uint].av = MJLambda[id1 as uint].av + c.weighted_rot_axis1.scalar_mul(&c.impulse);
+        MJLambda[id1 as uint].lv = MJLambda[id1 as uint].lv - c.weighted_normal1 * c.impulse;
+        MJLambda[id1 as uint].av = MJLambda[id1 as uint].av + c.weighted_rot_axis1 * c.impulse;
     }
 
     if id2 >= 0 {
-        MJLambda[id2 as uint].lv = MJLambda[id2 as uint].lv + c.weighted_normal2.scalar_mul(&c.impulse);
-        MJLambda[id2 as uint].av = MJLambda[id2 as uint].av + c.weighted_rot_axis2.scalar_mul(&c.impulse);
+        MJLambda[id2 as uint].lv = MJLambda[id2 as uint].lv + c.weighted_normal2 * c.impulse;
+        MJLambda[id2 as uint].av = MJLambda[id2 as uint].av + c.weighted_rot_axis2 * c.impulse;
     }
 }
 
 #[inline(always)]
-pub fn solve_velocity_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
-                                 AV: VectorSpace<N> + Dot<N> + Clone + ToStr,
-                                 N:  DivisionRing + Orderable + Clone + ToStr>(
+pub fn solve_velocity_constraint<LV: Vec<N> + Clone + ToStr,
+                                 AV: Vec<N> + Clone + ToStr,
+                                 N:  Num + Orderable + Clone + ToStr>(
                                  c:        &mut VelocityConstraint<LV, AV, N>,
                                  MJLambda: &mut [Velocities<LV, AV>]) {
     let id1 = c.id1;
@@ -121,13 +119,13 @@ pub fn solve_velocity_constraint<LV: VectorSpace<N> + Dot<N> + Clone + ToStr,
 
 
     if id1 >= 0 {
-        MJLambda[id1 as uint].lv = MJLambda[id1 as uint].lv - c.weighted_normal1.scalar_mul(&d_lambda_i);
-        MJLambda[id1 as uint].av = MJLambda[id1 as uint].av + c.weighted_rot_axis1.scalar_mul(&d_lambda_i);
+        MJLambda[id1 as uint].lv = MJLambda[id1 as uint].lv - c.weighted_normal1 * d_lambda_i;
+        MJLambda[id1 as uint].av = MJLambda[id1 as uint].av + c.weighted_rot_axis1 * d_lambda_i;
     }
 
     if id2 >= 0 {
-        MJLambda[id2 as uint].lv = MJLambda[id2 as uint].lv + c.weighted_normal2.scalar_mul(&d_lambda_i);
-        MJLambda[id2 as uint].av = MJLambda[id2 as uint].av + c.weighted_rot_axis2.scalar_mul(&d_lambda_i);
+        MJLambda[id2 as uint].lv = MJLambda[id2 as uint].lv + c.weighted_normal2 * d_lambda_i;
+        MJLambda[id2 as uint].av = MJLambda[id2 as uint].av + c.weighted_rot_axis2 * d_lambda_i;
     }
 }
 
@@ -136,7 +134,7 @@ mod test {
     use super::*;
     use extra::test::BenchHarness;
     use nalgebra::vec::Vec3;
-    use nalgebra::traits::norm::Norm;
+    use nalgebra::traits::vector::AlgebraicVec;
     use resolution::constraint::velocity_constraint::VelocityConstraint;
 
     #[bench]
@@ -158,7 +156,7 @@ mod test {
 
             constraint.inv_projected_mass = 42.0;
 
-            constraint.hibound  = Bounded::max_value::<f64>();
+            constraint.hibound = Bounded::max_value::<f64>();
             constraint.lobound = 0.0;
 
             constraint.objective = 2.0 * (i as f64);
@@ -169,8 +167,10 @@ mod test {
             constraints.push(constraint);
         }
 
+        let mut empty = ~[];
+
         do bh.iter {
-            projected_gauss_seidel_solve(constraints, 1000, 40, false);
+            projected_gauss_seidel_solve(constraints, empty, 1000, 40, false);
         }
     }
 }

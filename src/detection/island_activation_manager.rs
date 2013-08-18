@@ -1,7 +1,6 @@
 use std::ptr;
 use std::num::{Zero, One};
-use nalgebra::traits::ring::Ring;
-use nalgebra::traits::norm::Norm;
+use nalgebra::traits::vector::AlgebraicVec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::integrator::Integrator;
@@ -56,9 +55,9 @@ impl<N: One + Zero + Ord + Clone, LV, AV, M, II> IslandActivationManager<N, LV, 
     }
 }
 
-impl<N:  Ring + One + Ord,
-     LV: Norm<N> + Clone,
-     AV: Norm<N> + Clone,
+impl<N:  Num + Ord + Algebraic,
+     LV: AlgebraicVec<N> + Clone,
+     AV: AlgebraicVec<N> + Clone,
      M,
      II>
 IslandActivationManager<N, LV, AV, M, II> {
@@ -68,9 +67,9 @@ IslandActivationManager<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Ring + Zero + Ord + Clone + NumCast + Orderable,
-     LV: Zero + Norm<N> + Clone,
-     AV: Zero + Norm<N> + Clone,
+impl<N:  Num + Clone + NumCast + Orderable + Algebraic,
+     LV: AlgebraicVec<N> + Clone,
+     AV: AlgebraicVec<N> + Clone,
      M,
      II>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>

@@ -1,5 +1,5 @@
 use std::ptr;
-use nalgebra::traits::scalar_op::ScalarMul;
+use nalgebra::traits::vector::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::body::ToSoftBody;
@@ -11,7 +11,7 @@ pub struct SoftBodyExpEulerIntegrator<N, V> {
     priv objects:  HashMap<uint, @mut SoftBody<N, V>, UintTWHash>,
 }
 
-impl<N: Clone, V: Add<V, V> + ScalarMul<N>, B: ToSoftBody<N, V>> Integrator<N, B>
+impl<N: Clone, V: Vec<N>, B: ToSoftBody<N, V>> Integrator<N, B>
 for SoftBodyExpEulerIntegrator<N, V> {
     fn add(&mut self, o: @mut B) {
         match o.to_soft_body() {
@@ -58,7 +58,7 @@ pub struct SoftBodySmpEulerIntegrator<N, V> {
     priv objects:  HashMap<uint, @mut SoftBody<N, V>, UintTWHash>,
 }
 
-impl<N: Clone, V: Add<V, V> + ScalarMul<N>, B: ToSoftBody<N, V>> Integrator<N, B>
+impl<N: Clone, V: Vec<N>, B: ToSoftBody<N, V>> Integrator<N, B>
 for SoftBodySmpEulerIntegrator<N, V> {
     fn add(&mut self, o: @mut B) {
         match o.to_soft_body() {

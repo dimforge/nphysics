@@ -1,19 +1,10 @@
 use std::num::One;
 use nalgebra::traits::inv::Inv;
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub};
-use nalgebra::traits::basis::Basis;
 use nalgebra::traits::cross::Cross;
-use nalgebra::traits::dim::Dim;
-use nalgebra::traits::division_ring::DivisionRing;
-use nalgebra::traits::dot::Dot;
-use nalgebra::traits::norm::Norm;
 use nalgebra::traits::rotation::{Rotate, Rotation};
-use nalgebra::traits::sample::UniformSphereSample;
-use nalgebra::traits::scalar_op::ScalarMul;
-use nalgebra::traits::sub_dot::SubDot;
 use nalgebra::traits::transformation::Transform;
 use nalgebra::traits::translation::{Translation, Translatable};
-use nalgebra::traits::vector_space::VectorSpace;
+use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
 use ncollide::geom::ball::Ball;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::geom::compound::CompoundAABB;
@@ -96,11 +87,9 @@ impl<N: Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
  * Collision detector between two `DefaultGeometry`. Note that this is only a
  * wrapper on the collision detector specific to each geometry.
  */
-impl<N: ApproxEq<N> + DivisionRing + Real + Float + Ord + Clone + ToStr,
-     LV: 'static + VectorSpace<N> + Dim + Dot<N> + Norm<N> + UniformSphereSample + ApproxEq<N> +
-         SubDot<N> + Cross<AV> + ScalarAdd<N> + ScalarSub<N> + Orderable + Bounded + Basis + Eq +
-         Clone + ToStr,
-     AV: ScalarMul<N> + Neg<AV> + ToStr,
+impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Clone + ToStr,
+     AV: Vec<N> + ToStr,
      M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> + Transform<LV> +
          Mul<M, M> + Inv + One,
      II>

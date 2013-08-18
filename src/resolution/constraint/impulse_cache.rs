@@ -4,7 +4,7 @@ use std::rand::RngUtil;
 use std::num::Zero;
 use std::vec;
 use std::hashmap::HashMap;
-use nalgebra::traits::scalar_op::ScalarDiv;
+use nalgebra::traits::vector::Vec;
 
 // This is a seed generated some day by the seed() function.
 // It is a good seed for the IsaacRng generator we use to initialize the HashMap.
@@ -76,12 +76,12 @@ impl<V: IterBytes> IterBytes for ContactIdentifier<V> {
     }
 }
 
-impl<V: Round + ScalarDiv<N>, N> ContactIdentifier<V> {
+impl<V: Round + Vec<N>, N> ContactIdentifier<V> {
     pub fn new(obj1: uint, obj2: uint, center: V, step: &N) -> ContactIdentifier<V> {
         ContactIdentifier {
             obj1:    obj1,
             obj2:    obj2,
-            ccenter: center.scalar_div(step).trunc()
+            ccenter: (center / *step).trunc()
         }
     }
 }
@@ -97,7 +97,7 @@ pub struct ImpulseCache<N, V> {
 }
 
 impl<N: Zero + Clone,
-     V: Eq + ScalarDiv<N> + Round + IterBytes>
+     V: Vec<N> + Round + IterBytes>
 ImpulseCache<N, V> {
     pub fn new(step: N, impulse_per_contact: uint) -> ImpulseCache<N, V> {
         let mut rng = IsaacRng::new_seeded(seed);

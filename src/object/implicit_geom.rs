@@ -1,18 +1,21 @@
-use nalgebra::traits::scalar_op::{ScalarAdd, ScalarSub, ScalarDiv};
 use nalgebra::traits::translation::Translation;
+use nalgebra::traits::rotation::Rotate;
+use nalgebra::traits::transformation::Transform;
+use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
 use ncollide::bounding_volume::aabb::{HasAABB, AABB};
 use ncollide::bounding_volume::bounding_volume::LooseBoundingVolume;
 use ncollide::geom::implicit::Implicit;
 use ncollide::geom::ball;
 use ncollide::geom::plane;
 use ncollide::geom::compound::CompoundAABB;
+use ncollide::ray::ray::{Ray, RayCast};
 use object::volumetric::Volumetric;
 
 /// Enumeration grouping all common shapes. Used to simplify collision detection
 /// dispatch.
 // FIXME: #[deriving(Clone)]
 pub enum DefaultGeom<N, V, M, II> { // FIXME: rename that
-    Plane(plane::Plane<V>),
+    Plane(plane::Plane<N, V>),
     Ball(ball::Ball<N>),
     Compound(@CompoundAABB<N, V, M, DefaultGeom<N, V, M, II>>),
     Implicit(~DynamicImplicit<N, V, M, II>)
@@ -25,7 +28,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
     }
 
     #[inline]
-    pub fn new_plane(p: plane::Plane<V>) -> DefaultGeom<N, V, M, II> {
+    pub fn new_plane(p: plane::Plane<N, V>) -> DefaultGeom<N, V, M, II> {
         Plane(p)
     }
 
@@ -60,7 +63,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Plane` is not matched.
      */
     #[inline]
-    pub fn plane<'r>(&'r self) -> &'r plane::Plane<V> {
+    pub fn plane<'r>(&'r self) -> &'r plane::Plane<N, V> {
         match *self {
             Plane(ref p) => p,
             _ => fail!("Unexpected geometry: this is not a plane.")
@@ -84,8 +87,8 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
     }
 }
 
-impl<N: NumCast,
-     V: Bounded + Neg<V> + ScalarAdd<N> + ScalarSub<N> + ScalarDiv<N> + Orderable + Ord + Clone,
+impl<N: NumCast + Primitive + Orderable + ToStr,
+     V: AlgebraicVecExt<N> + Clone + ToStr,
      M: Translation<V> + Mul<M, M>,
      II>
 HasAABB<N, V, M> for DefaultGeom<N, V, M, II> {
@@ -99,17 +102,34 @@ HasAABB<N, V, M> for DefaultGeom<N, V, M, II> {
     }
 }
 
-pub trait DynamicImplicit<N, V, M, II> : Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> {
+impl<N: Algebraic + Bounded + Orderable + Primitive + Clone + ToStr,
+     V: 'static + AlgebraicVecExt<N> + Clone + ToStr,
+     M: Rotate<V> + Transform<V> + Translation<V>,
+     II>
+RayCast<N, V, M> for DefaultGeom<N, V, M, II> {
+    fn toi_with_ray(&self, m: &M, ray: &Ray<V>) -> Option<N> {
+        match *self {
+            Plane(ref p)    => p.toi_with_ray(m, ray),
+            Ball(ref b)     => b.toi_with_ray(m, ray),
+            Compound(ref c) => c.toi_with_ray(m, ray),
+            Implicit(ref i) => i.toi_with_ray(m, ray)
+        }
+    }
+}
+
+pub trait DynamicImplicit<N, V, M, II>
+: Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> + RayCast<N, V, M> {
     // FIXME: those methods are workarounds: why dont trait objects of this
     // traits dont inherit from all the parent traits?
     fn _support_point(&self, m: &M, dir: &V) -> V;
     fn _volume(&self)                        -> N;
     fn _mass_properties(&self, &N)           -> (N, V, II);
     fn _aabb(&self, &M)                      -> AABB<N, V>;
+    fn _toi_with_ray(&self, &M, &Ray<V>)     -> Option<N>;
 }
 
-impl<T: Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M>,
-     V,
+impl<T: Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> + RayCast<N, V, M>,
+     V: Vec<N>,
      N,
      M,
      II>
@@ -132,6 +152,11 @@ DynamicImplicit<N, V, M, II> for T {
     #[inline]
     fn _aabb(&self, m: &M) -> AABB<N, V> {
         self.aabb(m)
+    }
+
+    #[inline]
+    fn _toi_with_ray(&self, m: &M, ray: &Ray<V>) -> Option<N> {
+        self.toi_with_ray(m, ray)
     }
 }
 
@@ -160,5 +185,12 @@ impl<N, V, M, II> Volumetric<N, V, II> for ~DynamicImplicit<N, V, M, II> {
 impl<N, V, M, II> HasAABB<N, V, M> for ~DynamicImplicit<N, V, M, II> {
     fn aabb(&self, m: &M) -> AABB<N, V> {
         self._aabb(m)
+    }
+}
+
+impl<N, V: Vec<N>, M, II> RayCast<N, V, M> for ~DynamicImplicit<N, V, M, II> {
+    #[inline]
+    fn toi_with_ray(&self, m: &M, ray: &Ray<V>) -> Option<N> {
+        self._toi_with_ray(m, ray)
     }
 }

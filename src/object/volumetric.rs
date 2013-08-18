@@ -1,10 +1,9 @@
 use std::num::{Zero, One, Real, NumCast};
-use nalgebra::traits::division_ring::DivisionRing;
 use nalgebra::traits::iterable::Iterable;
 use nalgebra::traits::indexable::Indexable;
 use nalgebra::traits::dim::Dim;
 use nalgebra::traits::translation::Translation;
-use nalgebra::traits::vector_space::VectorSpace;
+use nalgebra::traits::vector::VecExt;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::box::Box;
 use ncollide::geom::cylinder::Cylinder;
@@ -22,8 +21,8 @@ pub trait Volumetric<N, V, II> {
     fn mass_properties(&self, &N) -> (N, V, II);
 }
 
-impl<N: Real + DivisionRing + NumCast + Clone,
-     V: Clone + VectorSpace<N> + Iterable<N> + Dim,
+impl<N: Real + Num + NumCast + Clone,
+     V: Clone + VecExt<N>,
      M: Translation<V>,
      II: Zero + Indexable<(uint, uint), N> + Add<II, II> + InertiaTensor<N, V, M> + Dim>
 Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
@@ -59,10 +58,10 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
                     let (mpart, cpart, ipart) = s.mass_properties(density);
                     mtot = mtot + mpart;
                     itot = itot + ipart.to_world_space(m).to_relative_wrt_point(&mpart, &m.translation());
-                    ctot = ctot + cpart.scalar_mul(&mpart);
+                    ctot = ctot + cpart * mpart;
                 }
 
-                ctot.scalar_div_inplace(&mtot);
+                ctot = ctot / mtot;
 
                 (mtot, ctot, itot)
             },
@@ -72,11 +71,11 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
 }
 
 #[inline]
-fn ball_volume<N: Real + DivisionRing + NumCast>(radius: N, dim: uint) -> N {
+fn ball_volume<N: Real + Num + NumCast>(radius: N, dim: uint) -> N {
     Real::pi::<N>() * radius.pow(&NumCast::from::<N, uint>(dim))
 }
 
-impl<N:  Real + DivisionRing + NumCast + Clone,
+impl<N:  Real + Num + NumCast + Clone,
      V:  Zero,
      II: Zero + Indexable<(uint, uint), N> + Dim>
 Volumetric<N, V, II> for Ball<N> {
@@ -121,8 +120,8 @@ Volumetric<N, V, II> for Ball<N> {
     }
 }
 
-impl<N:  Zero + One + NumCast + DivisionRing + Clone,
-     V:  Clone + Iterable<N> + Indexable<uint, N> + Zero + Dim,
+impl<N:  Zero + One + NumCast + Num + Clone,
+     V:  Clone + VecExt<N>,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Box<N, V> {
     fn volume(&self) -> N {
@@ -170,8 +169,8 @@ Volumetric<N, V, II> for Box<N, V> {
 }
 
 #[inline]
-fn box_volume<N:  Zero + One + NumCast + DivisionRing + Clone,
-              V:  Clone + Iterable<N> + Indexable<uint, N> + Dim>(
+fn box_volume<N:  Zero + One + NumCast + Num + Clone,
+              V:  Clone + VecExt<N>>(
               half_extents: &V)
               -> N {
     let mut res  = One::one::<N>();
@@ -183,7 +182,7 @@ fn box_volume<N:  Zero + One + NumCast + DivisionRing + Clone,
     res
 }
 
-impl<N:  Zero + One + NumCast + DivisionRing + Real + Clone,
+impl<N:  Zero + One + NumCast + Num + Real + Clone,
      V:  Zero,
      II: Zero + Dim + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cylinder<N> {
@@ -231,7 +230,7 @@ Volumetric<N, V, II> for Cylinder<N> {
 }
 
 #[inline]
-fn cylinder_volume<N: Zero + One + NumCast + DivisionRing + Real + Clone>(
+fn cylinder_volume<N: Zero + One + NumCast + Num + Real + Clone>(
                    half_height: &N,
                    radius:      &N,
                    dim:         uint)
@@ -248,7 +247,7 @@ fn cylinder_volume<N: Zero + One + NumCast + DivisionRing + Real + Clone>(
     }
 }
 
-impl<N:  Zero + One + NumCast + DivisionRing + Real + Clone,
+impl<N:  Zero + One + NumCast + Num + Real + Clone,
      V,
      II: Zero + Dim + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cone<N> {
@@ -301,7 +300,7 @@ Volumetric<N, V, II> for Cone<N> {
 }
 
 #[inline]
-fn cone_volume<N:  Zero + One + NumCast + DivisionRing + Real + Clone>(
+fn cone_volume<N:  Zero + One + NumCast + Num + Real + Clone>(
                half_height: &N,
                radius:      &N,
                dim:         uint)
@@ -318,7 +317,7 @@ fn cone_volume<N:  Zero + One + NumCast + DivisionRing + Real + Clone>(
     }
 }
 
-impl<N: Zero, V: Zero, II: Zero> Volumetric<N, V, II> for Plane<V> {
+impl<N: Zero, V: Zero, II: Zero> Volumetric<N, V, II> for Plane<N, V> {
     #[inline]
     fn volume(&self) -> N {
         Zero::zero()
