@@ -9,6 +9,8 @@ use nalgebra::traits::vector::AlgebraicVec;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
+use ncollide::geom::cylinder::Cylinder;
+use ncollide::geom::cone::Cone;
 use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
 use integration::body_damping::BodyDamping;
@@ -32,10 +34,12 @@ pub type LinearVelocity3d<N>  = LV<N>;
 pub type AngularVelocity3d<N> = AV<N>;
 pub type InertiaTensor3d<N>   = II<N>;
 
-pub type Ball3d<N>  = Ball<N>;
-pub type Box3d<N>   = Box<N, Vec3<N>>;
-pub type Plane3d<N> = Plane<N, Vec3<N>>;
-pub type Geom3d<N>  = DefaultGeom<N, LV<N>, M<N>, II<N>>;
+pub type Ball3d<N>     = Ball<N>;
+pub type Box3d<N>      = Box<N, Vec3<N>>;
+pub type Cylinder3d<N> = Cylinder<N>;
+pub type Cone3d<N>     = Cone<N>;
+pub type Plane3d<N>    = Plane<N, Vec3<N>>;
+pub type Geom3d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator3d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;

@@ -248,7 +248,7 @@ fn cylinder_volume<N: Zero + One + NumCast + Num + Real + Clone>(
 }
 
 impl<N:  Zero + One + NumCast + Num + Real + Clone,
-     V,
+     V:  Zero + Indexable<uint, N>,
      II: Zero + Dim + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cone<N> {
     fn volume(&self) -> N {
@@ -271,8 +271,10 @@ Volumetric<N, V, II> for Cone<N> {
                               / NumCast::from(3.0f64)
             );
 
-            fail!("Fix the center of mass for the cone.")
-            // (mass, Zero::zero(), res)
+            let mut center = Zero::zero::<V>();
+            center.set(0, -self.half_height() / NumCast::from(2.0f64));
+
+            (mass, center, res)
         }
         else if dim == 3 {
             let m_sq_radius = mass * self.radius() * self.radius();
@@ -289,8 +291,10 @@ Volumetric<N, V, II> for Cone<N> {
             res.set((1, 1), off_principal.clone());
             res.set((2, 2), off_principal);
 
-            fail!("Fix the center of mass for the cone.")
-            // (mass, Zero::zero(), res)
+            let mut center = Zero::zero::<V>();
+            center.set(0, -self.half_height() / NumCast::from(2.0f64));
+
+            (mass, center, res)
         }
 
         else {

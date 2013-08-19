@@ -44,8 +44,8 @@ struct Dispatcher<N, LV, AV, M, II> {
 impl<N: Clone + Zero, LV: Clone + Zero + Dim, AV, M, II>
 Dispatcher<N, LV, AV, M, II> {
     pub fn new(margin: N) -> Dispatcher<N, LV, AV, M, II> {
-        let template = RecursionTemplate::new::<AnnotatedPoint<LV>>();
-        let simplex  = JohnsonSimplex::new(template, Zero::zero());
+        let template = RecursionTemplate::new(Dim::dim::<LV>());
+        let simplex  = JohnsonSimplex::new(template);
         Dispatcher {
             margin:  margin,
             simplex: simplex

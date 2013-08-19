@@ -6,6 +6,8 @@ use nalgebra::traits::vector::AlgebraicVec;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
+use ncollide::geom::cylinder::Cylinder;
+use ncollide::geom::cone::Cone;
 use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
 use detection::collision::bodies_bodies::{DBVTBodiesBodies, Constraint};
@@ -28,10 +30,12 @@ pub type LinearVelocity2d<N>  = LV<N>;
 pub type AngularVelocity2d<N> = AV<N>;
 pub type InertiaTensor2d<N>   = II<N>;
 
-pub type Ball2d<N>  = Ball<N>;
-pub type Box2d<N>   = Box<N, Vec2<N>>;
-pub type Plane2d<N> = Plane<N, Vec2<N>>;
-pub type Geom2d<N>  = DefaultGeom<N, LV<N>, M<N>, II<N>>;
+pub type Ball2d<N>     = Ball<N>;
+pub type Box2d<N>      = Box<N, Vec2<N>>;
+pub type Cylinder2d<N> = Cylinder<N>;
+pub type Cone2d<N>     = Cone<N>;
+pub type Plane2d<N>    = Plane<N, Vec2<N>>;
+pub type Geom2d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator2d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
