@@ -53,7 +53,7 @@ Dispatcher<N, LV, AV, M, II> {
     }
 }
 
-impl<N: Clone, LV: Clone, AV, M, II>
+impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
      dispatcher::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)

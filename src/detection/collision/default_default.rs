@@ -1,4 +1,4 @@
-use std::num::One;
+use std::num::{Zero, One};
 use nalgebra::traits::inv::Inv;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::rotation::{Rotate, Rotation};
@@ -47,26 +47,26 @@ enum DefaultDefault<N, LV, AV, M, II> {
                                 DefaultDefault<N, LV, AV, M, II>>)
 }
 
-impl<N: Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
+impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
     pub fn new(g1:     &DefaultGeom<N, LV, M, II>,
                g2:     &DefaultGeom<N, LV, M, II>,
                s:      &JohnsonSimplex<N, AnnotatedPoint<LV>>,
                margin: N)
                -> DefaultDefault<N, LV, AV, M, II> {
         match (g1, g2) {
-            (&Ball(_), &Ball(_)) => BallBall(BallBall::new()),
-            (&Ball(_), &Plane(_)) => BallPlane(ImplicitPlane::new(margin)),
-            (&Plane(_), &Ball(_)) => PlaneBall(PlaneImplicit::new(margin)),
-            (&Implicit(_), &Ball(_)) => ImplicitBall(ImplicitImplicit::new(margin, s.clone())),
-            (&Ball(_), &Implicit(_)) => BallImplicit(ImplicitImplicit::new(margin, s.clone())),
+            (&Ball(_), &Ball(_)) => BallBall(BallBall::new(NumCast::from(0.1))),
+            (&Ball(_), &Plane(_)) => BallPlane(ImplicitPlane::new(margin, NumCast::from(0.1))),
+            (&Plane(_), &Ball(_)) => PlaneBall(PlaneImplicit::new(margin, NumCast::from(0.1))),
+            (&Implicit(_), &Ball(_)) => ImplicitBall(ImplicitImplicit::new(margin, NumCast::from(0.1), s.clone())),
+            (&Ball(_), &Implicit(_)) => BallImplicit(ImplicitImplicit::new(margin, NumCast::from(0.1), s.clone())),
             (&Implicit(_), &Plane(_)) => ImplicitPlane(
-                OSCMG::new(ImplicitPlane::new(margin))
+                OSCMG::new(NumCast::from(0.1), ImplicitPlane::new(margin, Zero::zero()))
             ),
             (&Plane(_), &Implicit(_))    => PlaneImplicit(
-                OSCMG::new(PlaneImplicit::new(margin))
+                OSCMG::new(NumCast::from(0.1), PlaneImplicit::new(margin, Zero::zero()))
             ),
             (&Implicit(_), &Implicit(_)) => ImplicitImplicit(
-                OSCMG::new(ImplicitImplicit::new(margin, s.clone()))
+                OSCMG::new(NumCast::from(0.1), ImplicitImplicit::new(margin, Zero::zero(), s.clone()))
             ),
             (&Compound(c1), &Compound(c2)) => CompoundCompound(
                 CompoundAABBCompoundAABB::new(Dispatcher::new(margin.clone(), s.clone()), c1, c2)
@@ -168,7 +168,7 @@ Dispatcher<N, LV, AV, M, II> {
     }
 }
 
-impl<N: Clone, LV: Clone, AV, M, II>
+impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
      dispatcher::Dispatcher<DefaultGeom<N, LV, M, II>, DefaultDefault<N, LV, AV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, g1: &DefaultGeom<N, LV, M, II>, g2: &DefaultGeom<N, LV, M, II>)
