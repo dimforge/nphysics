@@ -42,7 +42,7 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
         self.remove(o)
     }
 
-    fn pre_update(&mut self, _: N) {
+    fn update(&mut self, _: N) {
         for o in self.objects.elements().iter() {
             match *o.value {
                 RigidBody(rb) => {
@@ -56,9 +56,5 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
                 }
             }
         }
-    }
-
-    #[inline]
-    fn post_update(&mut self, _: N) {
     }
 }

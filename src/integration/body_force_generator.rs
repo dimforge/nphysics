@@ -87,8 +87,5 @@ for BodyForceGenerator<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn pre_update(&mut self, _: N) { }
-
-    #[inline]
-    fn post_update(&mut self, _: N) { }
+    fn update(&mut self, _: N) { }
 }

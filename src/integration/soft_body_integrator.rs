@@ -35,7 +35,7 @@ for SoftBodyExpEulerIntegrator<N, V> {
         self.remove(o)
     }
 
-    fn pre_update(&mut self, dt: N) {
+    fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
             for pt in o.value.points.mut_iter() {
                 let (p, v) = euler::explicit_integrate_wo_rotation(
@@ -48,9 +48,6 @@ for SoftBodyExpEulerIntegrator<N, V> {
                 pt.velocity = v;
             }
         }
-    }
-
-    fn post_update(&mut self, _: N) {
     }
 }
 
@@ -82,7 +79,7 @@ for SoftBodySmpEulerIntegrator<N, V> {
         self.remove(o)
     }
 
-    fn pre_update(&mut self, dt: N) {
+    fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
             for pt in o.value.points.mut_iter() {
                 let (p, v) = euler::semi_implicit_integrate_wo_rotation(
@@ -96,8 +93,5 @@ for SoftBodySmpEulerIntegrator<N, V> {
                 pt.velocity = v;
             }
         }
-    }
-
-    fn post_update(&mut self, _: N) {
     }
 }

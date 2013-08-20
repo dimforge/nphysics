@@ -61,7 +61,7 @@ Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn pre_update(&mut self, dt: N) {
+    fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
             if o.value.can_move() {
                 let (t, lv, av) = euler::explicit_integrate(
@@ -78,10 +78,6 @@ Integrator<N, B> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
                 o.value.set_ang_vel(av);
             }
         }
-    }
-
-    #[inline]
-    fn post_update(&mut self, _: N) {
     }
 }
 
@@ -133,11 +129,7 @@ Integrator<N, B> for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn pre_update(&mut self, _: N) {
-    }
-
-    #[inline]
-    fn post_update(&mut self, dt: N) {
+    fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
             if o.value.can_move() {
                 let (t, lv, av) = euler::semi_implicit_integrate(

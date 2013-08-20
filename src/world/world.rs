@@ -23,10 +23,10 @@ impl<N, O, C> World<N, O, C> {
 impl<N: Clone, O, C> World<N, O, C> {
     pub fn step(&mut self, dt: N) {
         //
-        // Integration (1)
+        // Integration
         //
         for i in self.integrators.mut_iter() {
-            i.pre_update(dt.clone())
+            i.update(dt.clone())
         }
 
         //
@@ -44,13 +44,6 @@ impl<N: Clone, O, C> World<N, O, C> {
         //
         for s in self.solvers.mut_iter() {
             s.solve(dt.clone(), interferences)
-        }
-
-        //
-        // Integration (2)
-        //
-        for i in self.integrators.mut_iter() {
-            i.post_update(dt.clone())
         }
     }
 
