@@ -26,6 +26,14 @@ use I = object::implicit_geom::DynamicImplicit;
 
 type S<N, LV> = JohnsonSimplex<N, AnnotatedPoint<LV>>;
 type C<N, LV, M, II> = CompoundAABB<N, LV, M, DefaultGeom<N, LV, M, II>>;
+type CA<N, LV, AV, M, II> = CompoundAABBAny<N, LV, M,
+                                            DefaultGeom<N, LV, M, II>,
+                                            Dispatcher<N, LV, AV, M, II>,
+                                            DefaultDefault<N, LV, AV, M, II>>;
+type AC<N, LV, AV, M, II> = AnyCompoundAABB<N, LV, M,
+                                            DefaultGeom<N, LV, M, II>,
+                                            Dispatcher<N, LV, AV, M, II>,
+                                            DefaultDefault<N, LV, AV, M, II>>;
 
 enum DefaultDefault<N, LV, AV, M, II> {
     BallBall(BallBall<N, LV, M>),
@@ -40,45 +48,38 @@ enum DefaultDefault<N, LV, AV, M, II> {
                                               DefaultGeom<N, LV, M, II>,
                                               Dispatcher<N, LV, AV, M, II>,
                                               DefaultDefault<N, LV, AV, M, II>>),
-    CompoundAny(CompoundAABBAny<N, LV, M,
-                                DefaultGeom<N, LV, M, II>,
-                                Dispatcher<N, LV, AV, M, II>,
-                                DefaultDefault<N, LV, AV, M, II>>),
-    AnyCompound(AnyCompoundAABB<N, LV, M,
-                                DefaultGeom<N, LV, M, II>,
-                                Dispatcher<N, LV, AV, M, II>,
-                                DefaultDefault<N, LV, AV, M, II>>)
+    CompoundAny(CA<N, LV, AV, M, II>),
+    AnyCompound(AC<N, LV, AV, M, II>)
 }
 
 impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, M, II> {
     pub fn new(g1:     &DefaultGeom<N, LV, M, II>,
                g2:     &DefaultGeom<N, LV, M, II>,
-               s:      &JohnsonSimplex<N, AnnotatedPoint<LV>>,
-               margin: N)
+               s:      &JohnsonSimplex<N, AnnotatedPoint<LV>>)
                -> DefaultDefault<N, LV, AV, M, II> {
         match (g1, g2) {
             (&Ball(_), &Ball(_)) => BallBall(BallBall::new(NumCast::from(0.1))),
-            (&Ball(_), &Plane(_)) => BallPlane(ImplicitPlane::new(margin, NumCast::from(0.1))),
-            (&Plane(_), &Ball(_)) => PlaneBall(PlaneImplicit::new(margin, NumCast::from(0.1))),
-            (&Implicit(_), &Ball(_)) => ImplicitBall(ImplicitImplicit::new(margin, NumCast::from(0.1), s.clone())),
-            (&Ball(_), &Implicit(_)) => BallImplicit(ImplicitImplicit::new(margin, NumCast::from(0.1), s.clone())),
+            (&Ball(_), &Plane(_)) => BallPlane(ImplicitPlane::new(NumCast::from(0.1))),
+            (&Plane(_), &Ball(_)) => PlaneBall(PlaneImplicit::new(NumCast::from(0.1))),
+            (&Implicit(_), &Ball(_)) => ImplicitBall(ImplicitImplicit::new(NumCast::from(0.1), s.clone())),
+            (&Ball(_), &Implicit(_)) => BallImplicit(ImplicitImplicit::new(NumCast::from(0.1), s.clone())),
             (&Implicit(_), &Plane(_)) => ImplicitPlane(
-                OSCMG::new(NumCast::from(0.1), ImplicitPlane::new(margin, Zero::zero()))
+                OSCMG::new(NumCast::from(0.1), ImplicitPlane::new(Zero::zero()))
             ),
             (&Plane(_), &Implicit(_))    => PlaneImplicit(
-                OSCMG::new(NumCast::from(0.1), PlaneImplicit::new(margin, Zero::zero()))
+                OSCMG::new(NumCast::from(0.1), PlaneImplicit::new(Zero::zero()))
             ),
             (&Implicit(_), &Implicit(_)) => ImplicitImplicit(
-                OSCMG::new(NumCast::from(0.1), ImplicitImplicit::new(margin, Zero::zero(), s.clone()))
+                OSCMG::new(NumCast::from(0.1), ImplicitImplicit::new(Zero::zero(), s.clone()))
             ),
             (&Compound(c1), &Compound(c2)) => CompoundCompound(
-                CompoundAABBCompoundAABB::new(Dispatcher::new(margin.clone(), s.clone()), c1, c2)
+                CompoundAABBCompoundAABB::new(Dispatcher::new(s.clone()), c1, c2)
             ),
             (&Compound(c), _) => CompoundAny(
-                CompoundAABBAny::new(Dispatcher::new(margin.clone(), s.clone()), c)
+                CompoundAABBAny::new(Dispatcher::new(s.clone()), c)
             ),
             (_, &Compound(c)) => AnyCompound(
-                AnyCompoundAABB::new(Dispatcher::new(margin.clone(), s.clone()), c)
+                AnyCompoundAABB::new(Dispatcher::new(s.clone()), c)
             ),
             _ => fail!("Dont know how to dispatch that.")
         }
@@ -152,13 +153,14 @@ for DefaultDefault<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn toi(m1:  &M,
-           dir: &LV,
-           g1:  &DefaultGeom<N, LV, M, II>,
-           m2:  &M,
-           g2:  &DefaultGeom<N, LV, M, II>)
+    fn toi(m1:   &M,
+           dir:  &LV,
+           dist: &N,
+           g1:   &DefaultGeom<N, LV, M, II>,
+           m2:   &M,
+           g2:   &DefaultGeom<N, LV, M, II>)
            -> Option<N> {
-        toi(m1, dir, g1, m2, g2)
+        toi(m1, dir, dist, g1, m2, g2)
     }
 }
 
@@ -168,11 +170,12 @@ pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebrai
            AV: Vec<N> + ToStr,
            M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
            II>(
-           m1:  &M,
-           dir: &LV,
-           g1:  &DefaultGeom<N, LV, M, II>,
-           m2:  &M,
-           g2:  &DefaultGeom<N, LV, M, II>)
+           m1:   &M,
+           dir:  &LV,
+           dist: &N,
+           g1:   &DefaultGeom<N, LV, M, II>,
+           m2:   &M,
+           g2:   &DefaultGeom<N, LV, M, II>)
            -> Option<N> {
     match (g1, g2) {
         (&Ball(ref b1), &Ball(ref b2))         => ball_ball::toi(m1, dir, b1, m2, b2),
@@ -184,23 +187,29 @@ pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebrai
         (&Plane(ref p), &Implicit(ref i))      => plane_implicit::toi(m1, p, m2, &-dir, i),
         (&Implicit(ref i1), &Implicit(ref i2)) => implicit_implicit::toi(m1, dir, i1, m2, i2),
         (&Compound(_), &Compound(_))   => fail!("Not yet implemented."), // CompoundCompound(),
-        (&Compound(_), _)              => fail!("Not yet implemented."), // CompoundAny(),
-        (_, &Compound(_))              => fail!("Not yet implemented."), // AnyCompound(),
+        (&Compound(c), b) =>
+            CollisionDetector::toi
+            ::<N, LV, M, C<N, LV, M, II>, DefaultGeom<N, LV, M, II>, CA<N, LV, AV, M, II>>(
+                m1, dir, dist, c, m2, b
+            ),
+        (a, &Compound(c)) =>
+            CollisionDetector::toi
+            ::<N, LV, M, DefaultGeom<N, LV, M, II>, C<N, LV, M, II>, AC<N, LV, AV, M, II>>(
+                m1, dir, dist, a, m2, c
+            ),
         _ => fail!("Cannot compute the toi of those two geometries.")
     }
 }
 
 struct Dispatcher<N, LV, AV, M, II> {
-    margin:  N,
     simplex: JohnsonSimplex<N, AnnotatedPoint<LV>>
 }
 
 impl<N: Clone, LV: Clone, AV, M, II>
 Dispatcher<N, LV, AV, M, II> {
-    pub fn new(margin: N, simplex: JohnsonSimplex<N, AnnotatedPoint<LV>>)
+    pub fn new(simplex: JohnsonSimplex<N, AnnotatedPoint<LV>>)
         -> Dispatcher<N, LV, AV, M, II> {
         Dispatcher {
-            margin:  margin,
             simplex: simplex
         }
     }
@@ -211,7 +220,7 @@ impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, g1: &DefaultGeom<N, LV, M, II>, g2: &DefaultGeom<N, LV, M, II>)
                 -> DefaultDefault<N, LV, AV, M, II> {
-        DefaultDefault::new(g1, g2, &self.simplex, self.margin.clone())
+        DefaultDefault::new(g1, g2, &self.simplex)
     }
 
     fn is_valid(&self, _: &DefaultGeom<N, LV, M, II>, _: &DefaultGeom<N, LV, M, II>) -> bool {
@@ -221,6 +230,6 @@ for Dispatcher<N, LV, AV, M, II> {
 
 impl<N: Clone, LV: Clone, AV, M, II> Clone for Dispatcher<N, LV, AV, M, II> {
     fn clone(&self) -> Dispatcher<N, LV, AV, M, II> {
-        Dispatcher::new(self.margin.clone(), self.simplex.clone())
+        Dispatcher::new(self.simplex.clone())
     }
 }

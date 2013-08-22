@@ -1,9 +1,8 @@
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
+use nalgebra::traits::vector::{Vec, AlgebraicVec, AlgebraicVecExt};
 use ncollide::bounding_volume::aabb::{HasAABB, AABB};
-use ncollide::bounding_volume::bounding_volume::LooseBoundingVolume;
 use ncollide::geom::implicit::Implicit;
 use ncollide::geom::ball;
 use ncollide::geom::plane;
@@ -94,10 +93,10 @@ impl<N: NumCast + Primitive + Orderable + ToStr,
 HasAABB<N, V, M> for DefaultGeom<N, V, M, II> {
     fn aabb(&self, m: &M) -> AABB<N, V> {
         match *self {
-            Plane(ref p)    => p.aabb(m).loosened(NumCast::from(0.08f64)),
-            Ball(ref b)     => b.aabb(m).loosened(NumCast::from(0.08f64)),
-            Compound(ref c) => c.aabb(m).loosened(NumCast::from(0.08f64)),
-            Implicit(ref i) => i.aabb(m).loosened(NumCast::from(0.08f64))
+            Plane(ref p)    => p.aabb(m),
+            Ball(ref b)     => b.aabb(m),
+            Compound(ref c) => c.aabb(m),
+            Implicit(ref i) => i.aabb(m)
         }
     }
 }
@@ -118,25 +117,37 @@ RayCast<N, V, M> for DefaultGeom<N, V, M, II> {
 }
 
 pub trait DynamicImplicit<N, V, M, II>
-: Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> + RayCast<N, V, M> {
+: Implicit<N, V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> + RayCast<N, V, M> {
     // FIXME: those methods are workarounds: why dont trait objects of this
     // traits dont inherit from all the parent traits?
-    fn _support_point(&self, m: &M, dir: &V) -> V;
-    fn _volume(&self)                        -> N;
-    fn _mass_properties(&self, &N)           -> (N, V, II);
-    fn _aabb(&self, &M)                      -> AABB<N, V>;
-    fn _toi_with_ray(&self, &M, &Ray<V>)     -> Option<N>;
+    fn _margin(&self)                                       -> N;
+    fn _support_point_without_margin(&self, m: &M, dir: &V) -> V;
+    fn _support_point(&self, m: &M, dir: &V)                -> V;
+    fn _volume(&self)                                       -> N;
+    fn _mass_properties(&self, &N)                          -> (N, V, II);
+    fn _aabb(&self, &M)                                     -> AABB<N, V>;
+    fn _toi_with_ray(&self, &M, &Ray<V>)                    -> Option<N>;
 }
 
-impl<T: Implicit<V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> + RayCast<N, V, M>,
-     V: Vec<N>,
-     N,
+impl<T: Implicit<N, V, M> + Volumetric<N, V, II> + HasAABB<N, V, M> + RayCast<N, V, M>,
+     V: AlgebraicVec<N>,
+     N: Algebraic,
      M,
      II>
 DynamicImplicit<N, V, M, II> for T {
+    #[inlene]
+    fn _margin(&self) -> N {
+        self.margin()
+    }
+
     #[inline]
     fn _support_point(&self, m: &M, dir: &V) -> V {
         self.support_point(m, dir)
+    }
+
+    #[inline]
+    fn _support_point_without_margin(&self, m: &M, dir: &V) -> V {
+        self.support_point_without_margin(m, dir)
     }
 
     #[inline]
@@ -163,10 +174,20 @@ DynamicImplicit<N, V, M, II> for T {
 // FIXME: all the following are workarounds to make
 // ~ImplicitVolumetricTransformationBoundingVolume implement all the traits it
 // inherits from. This is a compiler issue.
-impl<N, V, M, II> Implicit<V, M> for ~DynamicImplicit<N, V, M, II> {
+impl<N: Algebraic, V: AlgebraicVec<N>, M, II> Implicit<N, V, M> for ~DynamicImplicit<N, V, M, II> {
+    #[inline]
+    fn margin(&self) -> N {
+        self._margin()
+    }
+
     #[inline]
     fn support_point(&self, m: &M, dir: &V) -> V {
         self._support_point(m, dir)
+    }
+
+    #[inline]
+    fn support_point_without_margin(&self, m: &M, dir: &V) -> V {
+        self._support_point_without_margin(m, dir)
     }
 }
 

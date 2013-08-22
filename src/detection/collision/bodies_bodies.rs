@@ -29,7 +29,6 @@ pub enum Constraint<N, LV, AV, M, II> {
 }
 
 struct Dispatcher<N, LV, AV, M, II> {
-    margin:  N,
     simplex: JohnsonSimplex<N, AnnotatedPoint<LV>>
 }
 
@@ -39,11 +38,10 @@ impl<N:  Clone + Zero,
      M,
      II>
 Dispatcher<N, LV, AV, M, II> {
-    pub fn new(margin: N) -> Dispatcher<N, LV, AV, M, II> {
+    pub fn new() -> Dispatcher<N, LV, AV, M, II> {
         let template = RecursionTemplate::new(Dim::dim::<LV>());
         let simplex  = JohnsonSimplex::new(template);
         Dispatcher {
-            margin:  margin,
             simplex: simplex
         }
     }
@@ -55,7 +53,7 @@ for Dispatcher<N, LV, AV, M, II> {
         -> PairwiseDetector<N, LV, AV, M, II> {
         match (*a, *b) {
             (RigidBody(rb1), RigidBody(rb2)) => {
-                RB(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex, self.margin.clone()))
+                RB(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex))
             },
             _ => Unsuported
         }

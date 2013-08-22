@@ -186,6 +186,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                                             default_default::toi(
                                                 &old_transform,
                                                 &dir,
+                                                &distance,
                                                 &dball,
                                                 rb.transform_ref(),
                                                 rb.geom());
