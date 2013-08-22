@@ -11,10 +11,13 @@ use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;
 use ncollide::geom::cylinder::Cylinder;
 use ncollide::geom::cone::Cone;
+use ncollide::bounding_volume::aabb::AABB;
+use ncollide::broad::dbvt_broad_phase::DBVTBroadPhase;
 use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
 use integration::body_damping::BodyDamping;
-use detection::collision::bodies_bodies::{DBVTBodiesBodies, Constraint};
+use integration::swept_ball_motion_clamping::SweptBallMotionClamping;
+use detection::collision::bodies_bodies::{Constraint, Dispatcher, PairwiseDetector, BodiesBodies};
 use detection::island_activation_manager::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use object::implicit_geom::DefaultGeom;
@@ -40,12 +43,17 @@ pub type Cylinder3d<N> = Cylinder<N>;
 pub type Cone3d<N>     = Cone<N>;
 pub type Plane3d<N>    = Plane<N, Vec3<N>>;
 pub type Geom3d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
+pub type AABB3d<N>     = AABB<N, LV<N>>;
 
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator3d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type BodyDamping3d<N> = BodyDamping<N, LV<N>, AV<N>, M<N>, II<N>>;
 
-pub type CollisionDetector3d<N> = DBVTBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type Dispatcher3d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type DBVTBroadPhase3d<N> = DBVTBroadPhase<N, LV<N>, Body3d<N>, AABB3d<N>, Dispatcher3d<N>, PairwiseDetector3d<N>>;
+pub type PairwiseDetector3d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type DBVTCollisionDetector3d<N> = BodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>, DBVTBroadPhase3d<N>>;
+pub type DBVTSweptBallMotionClamping3d<N> = SweptBallMotionClamping<N, LV<N>, AV<N>, M<N>, II<N>, DBVTBroadPhase3d<N>>;
 pub type IslandActivationManager3d<N> = IslandActivationManager<N, LV<N>, AV<N>, M<N>, II<N>>; 
 
 pub type ContactSolver3d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>>;
@@ -58,10 +66,12 @@ pub type World3d<N> = World<N, Body3d<N>, Constraint3d<N>>;
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Num + Algebraic + Clone>
 InertiaTensor<N, LV<N>, Transform3d<N>> for InertiaTensor3d<N> {
+    #[inline]
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
         t.submat().submat() * *self * t.submat().inverse().unwrap().submat()
     }
 
+    #[inline]
     fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor3d<N> {
         let diag  = pt.sqnorm();
         let diagm = Mat3::new(

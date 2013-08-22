@@ -2,10 +2,9 @@ use std::num::One;
 use nalgebra::traits::vector::Vec;
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
-use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::translation::Translation;
 
-pub fn explicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
-                          M2: Rotation<AV> + Translation<LV>,
+pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
                           LV: Vec<N>,
                           AV: Vec<N>,
                           N:  Clone>(
@@ -16,7 +15,7 @@ pub fn explicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                           av: &AV,
                           lf: &LV,
                           af: &AV)
-                          -> (M2, LV, AV) {
+                          -> (M, LV, AV) {
     (
         displacement(dt.clone(), p, c, lv, av), 
         integrate(dt.clone(), lv, lf),
@@ -37,8 +36,7 @@ pub fn explicit_integrate_wo_rotation<V: Vec<N>,
     )
 }
 
-pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
-                               M2: Rotation<AV> + Translation<LV>,
+pub fn semi_implicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
                                LV: Vec<N>,
                                AV: Vec<N>,
                                N:  Clone>(
@@ -49,7 +47,7 @@ pub fn semi_implicit_integrate<M:  Translation<LV> + Translatable<LV, M2> + One,
                                av: &AV,
                                lf: &LV,
                                af: &AV)
-                               -> (M2, LV, AV) {
+                               -> (M, LV, AV) {
     let nlv = integrate(dt.clone(), lv, lf);
     let nav = integrate(dt.clone(), av, af);
 
@@ -80,8 +78,7 @@ pub fn semi_implicit_integrate_wo_rotation<V: Vec<N>,
 //    FIXME
 // }
 
-pub fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
-                    M2: Rotation<AV> + Translation<LV>,
+pub fn displacement<M: Translation<LV> + Rotation<AV> + One,
                     LV: Vec<N>,
                     AV: Vec<N>,
                     N>(
@@ -90,7 +87,7 @@ pub fn displacement<M: Translation<LV> + Translatable<LV, M2> + One,
                     center_of_mass: &LV,
                     lin_vel:        &LV,
                     ang_vel:        &AV)
-                    -> M2 {
+                    -> M {
     let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
                                               &(ang_vel * dt),
                                               center_of_mass);

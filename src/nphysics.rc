@@ -24,6 +24,7 @@ pub mod integration
     pub mod body_force_generator;
     pub mod euler;
     pub mod body_damping;
+    pub mod swept_ball_motion_clamping;
 }
 
 pub mod detection
@@ -51,6 +52,7 @@ pub mod resolution
         pub mod contact_equation;
     }
 }
+
 pub mod world
 {
     pub mod world;

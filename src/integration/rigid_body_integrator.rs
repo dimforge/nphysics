@@ -2,7 +2,7 @@ use std::ptr;
 use std::num::One;
 use nalgebra::traits::transformation::{Transformation, Transform};
 use nalgebra::traits::rotation::{Rotation, Rotate};
-use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::translation::Translation;
 use nalgebra::traits::inv::Inv;
 use nalgebra::traits::vector::Vec;
 use ncollide::util::hash_map::HashMap;
@@ -27,8 +27,7 @@ impl<N, LV, AV, M, II> RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
 }
 
 impl<N:  Clone,
-     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Translatable<LV, M> + Transform<LV> + One,
+     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One,
      LV: Clone + Vec<N>,
      AV: Clone + Vec<N>,
      II: Clone + Mul<II, II> + InertiaTensor<N, LV, M> + Inv,
@@ -95,8 +94,7 @@ impl<N, LV, AV, M, II> RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
 }
 
 impl<N:  Clone,
-     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Transform<LV> +
-     Translation<LV> + Translatable<LV, M> + Rotate<LV> + One,
+     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Transform<LV> + Translation<LV> + Rotate<LV> + One,
      LV: Clone + Vec<N>,
      AV: Clone + Vec<N>,
      II: Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M>,

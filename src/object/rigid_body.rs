@@ -49,9 +49,15 @@ impl<N, LV: Zero, AV: Zero, M, II> RigidBody<N, LV, AV, M, II> {
 
 impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, M>>
 RigidBody<N, LV, AV, M, II> {
-    fn moved(&mut self) {
+    fn update_inertia_tensor(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
         self.inv_inertia    = self.ls_inv_inertia.to_world_space(&self.local_to_world);
+    }
+}
+
+impl<N, LV, AV, M: Transform<LV>, II>
+RigidBody<N, LV, AV, M, II> {
+    fn update_center_of_mass(&mut self) {
         self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
     }
 }
@@ -154,7 +160,8 @@ RigidBody<N, LV, AV, M, II> {
                 active:               true
             };
 
-        res.moved();
+        res.update_center_of_mass();
+        res.update_inertia_tensor();
 
         res
     }
@@ -235,8 +242,8 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N,
-     M: Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
+impl<N:  Clone,
+     M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
      II: Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
@@ -251,12 +258,17 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
         self.local_to_world.inverse().unwrap()
     }
 
-
     #[inline]
     fn transform_by(&mut self, to_append: &M) {
         self.local_to_world = *to_append * self.local_to_world;
 
-        self.moved();
+        self.update_center_of_mass();
+        self.update_inertia_tensor();
+    }
+
+    #[inline]
+    fn transformed(&self, _: &M) -> RigidBody<N, LV, AV, M, II> {
+        fail!("`transformed` is not yet implemented for RigidBodies.")
     }
 }
 
@@ -266,7 +278,7 @@ impl<N,
      M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV,
-     II: Mul<II, II> + Clone + InertiaTensor<N, LV, M>>
+     II>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translation(&self) -> LV {
@@ -282,30 +294,14 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translate_by(&mut self, trans: &LV) {
         self.local_to_world.translate_by(trans);
+        self.update_center_of_mass();
+    }
 
-        let mut delta = One::one::<M>();
-        delta.translate_by(trans);
-        self.moved();
+    #[inline]
+    fn translated(&self, _: &LV) -> RigidBody<N, LV, AV, M, II> {
+        fail!("`translated` is not yet implemented for RigidBodies.")
     }
 }
-
-// FIXME: impl<N: Clone,
-// FIXME:      M: Clone + Translation<LV> + Transform<LV> + Rotate<LV> + One,
-// FIXME:      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
-// FIXME:      AV: Clone,
-// FIXME:      II: Clone + Mul<II, II>>
-// FIXME: Translatable<LV, RigidBody<N, LV, AV, M, II>> for RigidBody<N, LV, AV, M, II>
-// FIXME: {
-// FIXME:     #[inline]
-// FIXME:     fn translated(&self, trans: &LV) -> RigidBody<N, LV, AV, M, II>
-// FIXME:     {
-// FIXME:         let mut cpy = self.clone();
-// FIXME: 
-// FIXME:         cpy.translate_by(trans);
-// FIXME: 
-// FIXME:         cpy
-// FIXME:     }
-// FIXME: }
 
 impl<N,
      M: Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
@@ -326,30 +322,15 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotate_by(&mut self, rot: &AV) {
         self.local_to_world.rotate_by(rot);
+        self.update_center_of_mass();
+        self.update_inertia_tensor();
+    }
 
-        let mut delta = One::one::<M>();
-        delta.rotate_by(rot);
-        self.moved();
+    #[inline]
+    fn rotated(&self, _: &AV) -> RigidBody<N, LV, AV, M, II> {
+        fail!("`rotated` is not yet implemented for RigidBodies.")
     }
 }
-
-// FIXME: impl<N:  Clone,
-// FIXME:      M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
-// FIXME:      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
-// FIXME:      AV: Clone,
-// FIXME:      II: Clone + Mul<II, II>>
-// FIXME: Rotatable<AV, RigidBody<N, LV, AV, M, II>> for RigidBody<N, LV, AV, M, II>
-// FIXME: {
-// FIXME:     #[inline]
-// FIXME:     fn rotated(&self, rot: &AV) -> RigidBody<N, LV, AV, M, II>
-// FIXME:     {
-// FIXME:         let mut cpy = self.clone();
-// FIXME: 
-// FIXME:         cpy.rotate_by(rot);
-// FIXME: 
-// FIXME:         cpy
-// FIXME:     }
-// FIXME: }
 
 impl<N:  NumCast + Primitive + Orderable + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,

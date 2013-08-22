@@ -85,6 +85,9 @@ pub fn fill_first_order_contact_equation<LV: Vec<N> + Cross<AV> + Clone,
     if coll.depth >= correction.corr_mode.min_depth_for_pos_corr() {
         constraint.objective = correction.corr_mode.pos_corr_factor() * coll.depth.max(&Zero::zero()) / dt;
     }
+    else {
+        constraint.objective = Zero::zero();
+    }
 
     /*
      * Reset forces

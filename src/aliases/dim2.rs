@@ -10,7 +10,7 @@ use ncollide::geom::cylinder::Cylinder;
 use ncollide::geom::cone::Cone;
 use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
-use detection::collision::bodies_bodies::{DBVTBodiesBodies, Constraint};
+use detection::collision::bodies_bodies::{Constraint, Dispatcher, PairwiseDetector};
 use detection::island_activation_manager::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use object::implicit_geom::DefaultGeom;
@@ -40,7 +40,9 @@ pub type Geom2d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator2d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 
-pub type CollisionDetector2d<N> = DBVTBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
+// pub type CollisionDetector2d<N> = DBVTBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type Dispatcher2d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type PairwiseDetector2d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type IslandActivationManager2d<N> = IslandActivationManager<N, LV<N>, AV<N>, M<N>, II<N>>; 
 
 pub type ContactSolver2d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>>;
@@ -53,10 +55,12 @@ pub type World2d<N> = World<N, Body2d<N>, Constraint2d<N>>;
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Clone + Num + Algebraic, Any>
 InertiaTensor<N, LV<N>, Any> for InertiaTensor2d<N> {
+    #[inline]
     fn to_world_space(&self, _: &Any) -> InertiaTensor2d<N> {
         self.clone()
     }
 
+    #[inline]
     fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor2d<N> {
         *self + Mat1::new(mass * pt.sqnorm())
     }

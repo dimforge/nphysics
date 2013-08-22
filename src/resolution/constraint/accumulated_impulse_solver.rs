@@ -3,7 +3,7 @@ use std::ptr;
 use std::num::{One, Orderable, Bounded};
 use nalgebra::traits::dim::Dim;
 use nalgebra::traits::inv::Inv;
-use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::{Transform, Transformation};
@@ -33,7 +33,7 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II> {
 impl<LV:  VecExt<N> + Cross<AV> + IterBytes + Clone + ToStr,
      AV:  Vec<N> + ToStr + Clone,
      N:   Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
-     M:   Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
+     M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
      II:  Transform<AV> + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
 AccumulatedImpulseSolver<N, LV, AV, M, II> {
@@ -97,7 +97,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             // FIXME: parametrize by the resolution algorithm?
             let mut MJLambda = pgs::projected_gauss_seidel_solve(
                 self.restitution_constraints,
-                self.friction_constraints,
+                [],
                 bodies.len(),
                 self.num_first_order_iter,
                 true);
@@ -181,8 +181,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
 impl<LV: VecExt<N> + Cross<AV> + IterBytes + Clone + ToStr,
      AV: Vec<N> + ToStr + Clone,
      N:  Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
-     M:  Translation<LV> + Transform<LV> + Rotate<LV> + Translatable<LV, M> + Mul<M, M> +
-         Rotation<AV> + One + Clone + Inv,
+     M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
      II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II> {

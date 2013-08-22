@@ -3,7 +3,7 @@ use nalgebra::traits::inv::Inv;
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::translation::{Translation, Translatable};
+use nalgebra::traits::translation::Translation;
 use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
 use ncollide::geom::ball::Ball;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
@@ -12,11 +12,14 @@ use ncollide::contact::Contact;
 use ncollide::broad::dispatcher;
 use ncollide::narrow::algorithm::johnson_simplex::JohnsonSimplex;
 use ncollide::narrow::collision_detector::CollisionDetector;
+use ncollide::narrow::implicit_implicit;
 use ncollide::narrow::implicit_implicit::ImplicitImplicit;
+use ncollide::narrow::ball_ball;
 use ncollide::narrow::ball_ball::BallBall;
 use ncollide::narrow::compound_any::{AnyCompoundAABB, CompoundAABBAny};
 use ncollide::narrow::compound_compound::CompoundAABBCompoundAABB;
 use OSCMG = ncollide::narrow::one_shot_contact_manifold_generator::OneShotContactManifoldGenerator;
+use ncollide::narrow::plane_implicit;
 use ncollide::narrow::plane_implicit::{PlaneImplicit, ImplicitPlane};
 use object::implicit_geom::{DefaultGeom, Plane, Ball, Implicit, Compound};
 use I = object::implicit_geom::DynamicImplicit;
@@ -80,7 +83,6 @@ impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, 
             _ => fail!("Dont know how to dispatch that.")
         }
     }
-
 }
 
 /**
@@ -88,14 +90,12 @@ impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, 
  * wrapper on the collision detector specific to each geometry.
  */
 impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Clone + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr,
      AV: Vec<N> + ToStr,
-     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Translatable<LV, M> + Transform<LV> +
-         Mul<M, M> + Inv + One,
+     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
      II>
 CollisionDetector<N, LV, M, DefaultGeom<N, LV, M, II>, DefaultGeom<N, LV, M, II>>
-for DefaultDefault<N, LV, AV, M, II>
- {
+for DefaultDefault<N, LV, AV, M, II> {
     #[inline]
     fn update(&mut self,
               m1: &M,
@@ -149,6 +149,44 @@ for DefaultDefault<N, LV, AV, M, II>
             CompoundAny(ref cd)      => cd.colls(out_colls),
             AnyCompound(ref cd)      => cd.colls(out_colls)
         }
+    }
+
+    #[inline]
+    fn toi(m1:  &M,
+           dir: &LV,
+           g1:  &DefaultGeom<N, LV, M, II>,
+           m2:  &M,
+           g2:  &DefaultGeom<N, LV, M, II>)
+           -> Option<N> {
+        toi(m1, dir, g1, m2, g2)
+    }
+}
+
+#[inline]
+pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+           LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr,
+           AV: Vec<N> + ToStr,
+           M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
+           II>(
+           m1:  &M,
+           dir: &LV,
+           g1:  &DefaultGeom<N, LV, M, II>,
+           m2:  &M,
+           g2:  &DefaultGeom<N, LV, M, II>)
+           -> Option<N> {
+    match (g1, g2) {
+        (&Ball(ref b1), &Ball(ref b2))         => ball_ball::toi(m1, dir, b1, m2, b2),
+        (&Ball(ref b), &Plane(ref p))          => plane_implicit::toi(m2, p, m1, dir, b),
+        (&Plane(ref p), &Ball(ref b))          => plane_implicit::toi(m1, p, m2, &-dir, b),
+        (&Implicit(ref i), &Ball(ref b))       => implicit_implicit::toi(m1, dir, i, m2, b),
+        (&Ball(ref b), &Implicit(ref i))       => implicit_implicit::toi(m1, dir, b, m2, i),
+        (&Implicit(ref i), &Plane(ref p))      => plane_implicit::toi(m2, p, m1, dir, i),
+        (&Plane(ref p), &Implicit(ref i))      => plane_implicit::toi(m1, p, m2, &-dir, i),
+        (&Implicit(ref i1), &Implicit(ref i2)) => implicit_implicit::toi(m1, dir, i1, m2, i2),
+        (&Compound(_), &Compound(_))   => fail!("Not yet implemented."), // CompoundCompound(),
+        (&Compound(_), _)              => fail!("Not yet implemented."), // CompoundAny(),
+        (_, &Compound(_))              => fail!("Not yet implemented."), // AnyCompound(),
+        _ => fail!("Cannot compute the toi of those two geometries.")
     }
 }
 
