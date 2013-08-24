@@ -13,7 +13,7 @@ use ncollide::broad::dispatcher;
 use ncollide::broad::broad_phase::{InterferencesBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
 use ncollide::narrow::collision_detector::CollisionDetector;
-use ncollide::ray::ray::{Ray, RayCast};
+use ncollide::ray::ray::{Ray, RayCastWithTransform};
 use object::body::{Body, ToRigidBody, RigidBody, SoftBody};
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
@@ -95,7 +95,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  'static + Clone + Zero + Orderable + NumCast + Algebraic + Primitive + ToStr,
+impl<N:  'static + Clone + Zero + Orderable + NumCast + Algebraic + Primitive + Float + ToStr,
      LV: 'static + AlgebraicVecExt<N> + Clone + ToStr,
      AV: 'static,
      M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Transform<LV>,
@@ -112,7 +112,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
         for b in bodies.iter() {
             match **b {
                 RigidBody(rb) => {
-                    match rb.geom().toi_with_ray(rb.transform_ref(), ray) {
+                    match rb.geom().toi_with_transform_and_ray(rb.transform_ref(), ray) {
                         None    => { },
                         Some(t) => out.push((*b, t))
                     }
@@ -124,7 +124,8 @@ BodiesBodies<N, LV, AV, M, II, BF> {
 }
 
 impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + ToStr,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+         Rotate<LV> + Transform<LV>,
      AV: 'static + Vec<N> + ToStr,
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One + Mul<M, M> + Inv,
      II: 'static,

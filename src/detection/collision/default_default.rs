@@ -22,7 +22,7 @@ use OSCMG = ncollide::narrow::one_shot_contact_manifold_generator::OneShotContac
 use ncollide::narrow::plane_implicit;
 use ncollide::narrow::plane_implicit::{PlaneImplicit, ImplicitPlane};
 use object::implicit_geom::{DefaultGeom, Plane, Ball, Implicit, Compound};
-use I = object::implicit_geom::DynamicImplicit;
+use object::implicit_geom::ImplicitGeom;
 
 type S<N, LV> = JohnsonSimplex<N, AnnotatedPoint<LV>>;
 type C<N, LV, M, II> = CompoundAABB<N, LV, M, DefaultGeom<N, LV, M, II>>;
@@ -39,11 +39,11 @@ enum DefaultDefault<N, LV, AV, M, II> {
     BallBall(BallBall<N, LV, M>),
     BallPlane(ImplicitPlane<N, LV, M, Ball<N>>),
     PlaneBall(PlaneImplicit<N, LV, M, Ball<N>>),
-    BallImplicit(ImplicitImplicit<S<N, LV>, Ball<N>, ~I<N, LV, M, II>, N, LV>),
-    ImplicitBall(ImplicitImplicit<S<N, LV>, ~I<N, LV, M, II>, Ball<N>, N, LV>),
-    PlaneImplicit(OSCMG<PlaneImplicit<N, LV, M, ~I<N, LV, M, II>>, N, LV, AV, M>),
-    ImplicitPlane(OSCMG<ImplicitPlane<N, LV, M, ~I<N, LV, M, II>>, N, LV, AV, M>),
-    ImplicitImplicit(OSCMG<ImplicitImplicit<S<N, LV>, ~I<N, LV, M, II>, ~I<N, LV, M, II>, N, LV>, N, LV, AV, M>),
+    BallImplicit(ImplicitImplicit<S<N, LV>, Ball<N>, ImplicitGeom<N, LV, M>, N, LV>),
+    ImplicitBall(ImplicitImplicit<S<N, LV>, ImplicitGeom<N, LV, M>, Ball<N>, N, LV>),
+    PlaneImplicit(OSCMG<PlaneImplicit<N, LV, M, ImplicitGeom<N, LV, M>>, N, LV, AV, M>),
+    ImplicitPlane(OSCMG<ImplicitPlane<N, LV, M, ImplicitGeom<N, LV, M>>, N, LV, AV, M>),
+    ImplicitImplicit(OSCMG<ImplicitImplicit<S<N, LV>, ImplicitGeom<N, LV, M>, ImplicitGeom<N, LV, M>, N, LV>, N, LV, AV, M>),
     CompoundCompound(CompoundAABBCompoundAABB<N, LV, M,
                                               DefaultGeom<N, LV, M, II>,
                                               Dispatcher<N, LV, AV, M, II>,
@@ -58,29 +58,40 @@ impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, 
                s:      &JohnsonSimplex<N, AnnotatedPoint<LV>>)
                -> DefaultDefault<N, LV, AV, M, II> {
         match (g1, g2) {
-            (&Ball(_), &Ball(_)) => BallBall(BallBall::new(NumCast::from(0.1))),
-            (&Ball(_), &Plane(_)) => BallPlane(ImplicitPlane::new(NumCast::from(0.1))),
-            (&Plane(_), &Ball(_)) => PlaneBall(PlaneImplicit::new(NumCast::from(0.1))),
-            (&Implicit(_), &Ball(_)) => ImplicitBall(ImplicitImplicit::new(NumCast::from(0.1), s.clone())),
-            (&Ball(_), &Implicit(_)) => BallImplicit(ImplicitImplicit::new(NumCast::from(0.1), s.clone())),
-            (&Implicit(_), &Plane(_)) => ImplicitPlane(
-                OSCMG::new(NumCast::from(0.1), ImplicitPlane::new(Zero::zero()))
-            ),
-            (&Plane(_), &Implicit(_))    => PlaneImplicit(
-                OSCMG::new(NumCast::from(0.1), PlaneImplicit::new(Zero::zero()))
-            ),
-            (&Implicit(_), &Implicit(_)) => ImplicitImplicit(
-                OSCMG::new(NumCast::from(0.1), ImplicitImplicit::new(Zero::zero(), s.clone()))
-            ),
-            (&Compound(c1), &Compound(c2)) => CompoundCompound(
-                CompoundAABBCompoundAABB::new(Dispatcher::new(s.clone()), c1, c2)
-            ),
-            (&Compound(c), _) => CompoundAny(
-                CompoundAABBAny::new(Dispatcher::new(s.clone()), c)
-            ),
-            (_, &Compound(c)) => AnyCompound(
-                AnyCompoundAABB::new(Dispatcher::new(s.clone()), c)
-            ),
+            (&Implicit(Ball(_)), &Implicit(Ball(_))) => {
+                BallBall(BallBall::new(NumCast::from(0.1)))
+            },
+            (&Implicit(Ball(_)), &Plane(_))           => {
+                BallPlane(ImplicitPlane::new(NumCast::from(0.1)))
+            },
+            (&Plane(_), &Implicit(Ball(_)))           => {
+                PlaneBall(PlaneImplicit::new(NumCast::from(0.1)))
+            },
+            (&Implicit(_), &Implicit(Ball(_)))        => {
+                ImplicitBall(ImplicitImplicit::new(NumCast::from(0.1), s.clone()))
+            },
+            (&Implicit(Ball(_)), &Implicit(_))        => {
+                BallImplicit(ImplicitImplicit::new(NumCast::from(0.1), s.clone()))
+            },
+            (&Implicit(_), &Plane(_))       => {
+                ImplicitPlane(OSCMG::new(NumCast::from(0.1), ImplicitPlane::new(Zero::zero())))
+            },
+            (&Plane(_), &Implicit(_))       => {
+                PlaneImplicit(OSCMG::new(NumCast::from(0.1), PlaneImplicit::new(Zero::zero())))
+            },
+            (&Implicit(_), &Implicit(_))    => {
+                ImplicitImplicit(
+                OSCMG::new(NumCast::from(0.1), ImplicitImplicit::new(Zero::zero(), s.clone())))
+            },
+            (&Compound(c1), &Compound(c2))  => {
+                CompoundCompound(CompoundAABBCompoundAABB::new(Dispatcher::new(s.clone()), c1, c2))
+            },
+            (&Compound(c), _)               => {
+                CompoundAny(CompoundAABBAny::new(Dispatcher::new(s.clone()), c))
+            },
+            (_, &Compound(c))               => {
+                AnyCompound(AnyCompoundAABB::new(Dispatcher::new(s.clone()), c))
+            },
             _ => fail!("Dont know how to dispatch that.")
         }
     }
@@ -91,7 +102,8 @@ impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II> DefaultDefault<N, LV, AV, 
  * wrapper on the collision detector specific to each geometry.
  */
 impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+         Rotate<LV> + Transform<LV>,
      AV: Vec<N> + ToStr,
      M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
      II>
@@ -166,7 +178,8 @@ for DefaultDefault<N, LV, AV, M, II> {
 
 #[inline]
 pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
-           LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr,
+           LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
+               Rotate<LV> + Transform<LV> + ToStr,
            AV: Vec<N> + ToStr,
            M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
            II>(
@@ -178,11 +191,7 @@ pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebrai
            g2:   &DefaultGeom<N, LV, M, II>)
            -> Option<N> {
     match (g1, g2) {
-        (&Ball(ref b1), &Ball(ref b2))         => ball_ball::toi(m1, dir, b1, m2, b2),
-        (&Ball(ref b), &Plane(ref p))          => plane_implicit::toi(m2, p, m1, dir, b),
-        (&Plane(ref p), &Ball(ref b))          => plane_implicit::toi(m1, p, m2, &-dir, b),
-        (&Implicit(ref i), &Ball(ref b))       => implicit_implicit::toi(m1, dir, i, m2, b),
-        (&Ball(ref b), &Implicit(ref i))       => implicit_implicit::toi(m1, dir, b, m2, i),
+        (&Implicit(Ball(ref b1)), &Implicit(Ball(ref b2))) => ball_ball::toi(m1, dir, b1, m2, b2),
         (&Implicit(ref i), &Plane(ref p))      => plane_implicit::toi(m2, p, m1, dir, i),
         (&Plane(ref p), &Implicit(ref i))      => plane_implicit::toi(m1, p, m2, &-dir, i),
         (&Implicit(ref i1), &Implicit(ref i2)) => implicit_implicit::toi(m1, dir, i1, m2, i2),

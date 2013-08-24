@@ -4,9 +4,9 @@ use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::Rotation;
 use nalgebra::traits::translation::Translation;
 
-pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
-                          LV: Vec<N>,
-                          AV: Vec<N>,
+pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One + ToStr,
+                          LV: Vec<N> + ToStr,
+                          AV: Vec<N> + ToStr,
                           N:  Clone>(
                           dt: N,
                           p:  &M,
@@ -36,9 +36,9 @@ pub fn explicit_integrate_wo_rotation<V: Vec<N>,
     )
 }
 
-pub fn semi_implicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
-                               LV: Vec<N>,
-                               AV: Vec<N>,
+pub fn semi_implicit_integrate<M:  Translation<LV> + Rotation<AV> + One + ToStr,
+                               LV: Vec<N> + ToStr,
+                               AV: Vec<N> + ToStr,
                                N:  Clone>(
                                dt: N,
                                p:  &M,
@@ -78,9 +78,9 @@ pub fn semi_implicit_integrate_wo_rotation<V: Vec<N>,
 //    FIXME
 // }
 
-pub fn displacement<M: Translation<LV> + Rotation<AV> + One,
-                    LV: Vec<N>,
-                    AV: Vec<N>,
+pub fn displacement<M: Translation<LV> + Rotation<AV> + One + ToStr,
+                    LV: Vec<N> + ToStr,
+                    AV: Vec<N> + ToStr,
                     N>(
                     dt:             N,
                     _:              &M,

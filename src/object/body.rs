@@ -1,6 +1,8 @@
 use std::managed;
 use std::num::Zero;
 use nalgebra::traits::translation::Translation;
+use nalgebra::traits::rotation::Rotate;
+use nalgebra::traits::transformation::Transform;
 use nalgebra::traits::vector::AlgebraicVecExt;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::AABB;
@@ -79,12 +81,12 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  NumCast + Primitive + Orderable + ToStr,
+impl<N:  NumCast + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
-     M:  Translation<LV> + Mul<M, M>,
+     M:  Translation<LV> + Rotate<LV> + Transform<LV> + Mul<M, M>,
      II>
-HasBoundingVolume<LV, AABB<N, LV>> for Body<N, LV, AV, M, II> {
+HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]
     fn bounding_volume(&self) -> AABB<N, LV> {
         match *self {

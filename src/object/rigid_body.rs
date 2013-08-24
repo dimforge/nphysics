@@ -55,7 +55,7 @@ RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N, LV, AV, M: Transform<LV>, II>
+impl<N, LV: ToStr, AV, M: Transform<LV>, II>
 RigidBody<N, LV, AV, M, II> {
     fn update_center_of_mass(&mut self) {
         self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
@@ -100,12 +100,12 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast,
+impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast + ToStr,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>, // FIXME: + DeltaTransform<II>,
-     LV:  Clone + VecExt<N>,
+     LV:  Clone + VecExt<N> + ToStr,
      AV:  Zero,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, M> +
-          Add<II, II> + Dim + Clone>
+          Add<II, II> + Dim + Clone + ToStr>
 RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        DefaultGeom<N, LV, M, II>,
                density:     N,
@@ -120,7 +120,6 @@ RigidBody<N, LV, AV, M, II> {
                         fail!("A dynamic body must not have a zero density.")
                     }
 
-                    // XXX: handle the center of mass
                     let (m, c, ii) = geom.mass_properties(&density);
 
                     if m.is_zero() {
@@ -244,7 +243,7 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
 
 impl<N:  Clone,
      M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
+     LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
      AV,
      II: Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
@@ -276,7 +275,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
 impl<N,
      M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
+     LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
      AV,
      II>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
@@ -305,7 +304,7 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
 
 impl<N,
      M: Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
+     LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
      AV,
      II: Mul<II, II> + InertiaTensor<N, LV, M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
@@ -332,12 +331,12 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  NumCast + Primitive + Orderable + ToStr,
+impl<N:  NumCast + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
-     M: Translation<LV> + Mul<M, M>,
+     M: Translation<LV> + Rotate<LV> + Transform<LV> + Mul<M, M>,
      II>
-HasBoundingVolume<LV, AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
+HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {
         self.geom.aabb(&self.local_to_world)
     }

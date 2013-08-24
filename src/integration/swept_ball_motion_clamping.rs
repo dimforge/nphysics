@@ -88,10 +88,11 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 }
 
 impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
+         Rotate<LV> + Transform<LV> + ToStr,
      AV: Vec<N> + ToStr,
-     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
-     II,
+     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
+     II: ToStr, // FIXME: remove those bounds
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Integrator<N, Body<N, LV, AV, M, II>>

@@ -9,7 +9,7 @@ dimension. That means you can use it for both 2-dimensional multiphysics and
 has not be written/tested with those in thought.
 
 See the [ndemo](https://github.com/sebcrozet/ndemo) project for demonstrations.
-There is also a short video available [here](http://youtu.be/CANjXZ5rocI).
+There is also a short [demonstration video](http://youtu.be/CANjXZ5rocI).
 
 ## Why another multiphysics engine?
 There are a lot of multiphysics engine out there.
@@ -42,14 +42,12 @@ recursive clone:
 become a grown up. Many missing features are because of missing features on
 **ncollide**. Features missing from **nphysics** itself include:
 
-- island based sleeping
 - kinematic bodies
 - efficient signaling system
 - joints
 - soft-bodies (see https://github.com/natal/roft for a draft)
 - parallel pipeline
 - GPU-based pipeline
-- an efficient way to handle generically continious collision detection
 
 ## Dependencies
 All dependencies are automatically cloned with a recursive clone.
