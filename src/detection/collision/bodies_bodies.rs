@@ -8,24 +8,19 @@ use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::Transform;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
-use ncollide::contact::Contact;
 use ncollide::broad::dispatcher;
 use ncollide::broad::broad_phase::{InterferencesBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
 use ncollide::narrow::collision_detector::CollisionDetector;
 use ncollide::ray::ray::{Ray, RayCastWithTransform};
 use object::body::{Body, ToRigidBody, RigidBody, SoftBody};
+use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
 
 pub enum PairwiseDetector<N, LV, AV, M, II> {
     RB(DefaultDefault<N, LV, AV, M, II>),
     Unsuported
-}
-
-// XXX: move this on its own file
-pub enum Constraint<N, LV, AV, M, II> {
-    RBRB(@mut Body<N, LV, AV, M, II>, @mut Body<N, LV, AV, M, II>, Contact<N, LV>)
 }
 
 struct Dispatcher<N, LV, AV, M, II> {

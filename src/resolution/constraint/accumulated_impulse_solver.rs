@@ -9,7 +9,7 @@ use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::vector::{Vec, VecExt};
-use detection::collision::bodies_bodies::{Constraint, RBRB};
+use detection::constraint::{Constraint, RBRB};
 use object::rigid_body::RigidBody;
 use object::body::ToRigidBody;
 use object::volumetric::InertiaTensor;

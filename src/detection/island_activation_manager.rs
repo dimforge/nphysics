@@ -5,7 +5,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::integrator::Integrator;
 use detection::detector::Detector;
-use detection::collision::bodies_bodies::{Constraint, RBRB};
+use detection::constraint::{Constraint, RBRB};
 use object::body::{Body, RigidBody, SoftBody};
 use world::world::World;
 
