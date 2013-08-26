@@ -43,6 +43,7 @@ examples_deps:
 	make -C examples deps
 
 examples:
+	mkdir -p bin
 	make -C examples
 
 distcheck:

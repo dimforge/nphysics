@@ -8,7 +8,7 @@ dimension. That means you can use it for both 2-dimensional multiphysics and
 3-dimensional multiphysics. Hight dimensions could be possible, but **nphysics**
 has not be written/tested with those in thought.
 
-See the [ndemo](https://github.com/sebcrozet/ndemo) project for demonstrations.
+Examples are available on the `examples` directory.
 There is also a short [demonstration video](http://youtu.be/CANjXZ5rocI).
 
 ## Why another multiphysics engine?
@@ -36,6 +36,13 @@ recursive clone:
     cd nphysics
     make deps
     make
+
+To build the examples to the `bin` folder:
+
+
+    make examples_deps
+    make examples
+
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
