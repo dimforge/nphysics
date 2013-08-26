@@ -43,6 +43,14 @@ To build the examples to the `bin` folder:
     make examples_deps
     make examples
 
+## Features
+- static and dynamic rigid bodies
+- common convex primitives: cone, box, ball, cylinder
+- concave geometries build from convex primitives (aka. compound geometries)
+- stable stacking
+- island based sleeping (objects deactivation)
+- ray casting
+- swept sphere based continuous collision detection
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
