@@ -2,3 +2,9 @@
 *.swo
 *.html
 lib
+examples/lib
+examples/bin
+*~
+BENCH
+DESIGN.md
+STYLE.md
