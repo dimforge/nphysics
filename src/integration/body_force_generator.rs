@@ -3,6 +3,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::body::{Body, RigidBody, SoftBody};
 use integration::integrator::Integrator;
+use signal::signal::SignalEmiter;
 
 // FIXME: split this on `RigidBodyForceGenerator` and `SoftBodyForceGenerator` ?
 pub struct BodyForceGenerator<N, LV, AV, M, II> {
@@ -11,17 +12,31 @@ pub struct BodyForceGenerator<N, LV, AV, M, II> {
     priv ang_acc: AV
 }
 
-impl<N, LV, AV, M, II> BodyForceGenerator<N, LV, AV, M, II> {
-    pub fn new(lin_acc: LV, ang_acc: AV) -> BodyForceGenerator<N, LV, AV, M, II> {
-        BodyForceGenerator {
+impl<N:  'static + Clone,
+     LV: 'static + Clone,
+     AV: 'static + Clone,
+     M:  'static + Clone,
+     II: 'static + Clone>
+BodyForceGenerator<N, LV, AV, M, II> {
+    pub fn new<C>(events:  &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
+                  lin_acc: LV,
+                  ang_acc: AV)
+                  -> @mut BodyForceGenerator<N, LV, AV, M, II> {
+        let res = @mut BodyForceGenerator {
             objects: HashMap::new(UintTWHash),
             lin_acc: lin_acc,
             ang_acc: ang_acc
-        }
+        };
+
+        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));
+        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o| res.remove(o));
+
+        res
     }
 }
 
-impl<N, M, LV: Clone, AV: Clone, II> BodyForceGenerator<N, LV, AV, M, II> {
+impl<N: Clone, M: Clone, LV: Clone, AV: Clone, II: Clone>
+BodyForceGenerator<N, LV, AV, M, II> {
     #[inline]
     pub fn lin_acc(&self) -> LV {
         self.lin_acc.clone()
@@ -77,15 +92,8 @@ for BodyForceGenerator<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn activate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        self.add(o);
-    }
-
-    #[inline]
-    fn deactivate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        self.remove(o)
-    }
-
-    #[inline]
     fn update(&mut self, _: N) { }
+
+    #[inline]
+    fn priority(&self) -> f64 { 0.0 }
 }

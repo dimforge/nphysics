@@ -1,3 +1,4 @@
+use std::ptr;
 use std::num::{Zero, One};
 use std::borrow;
 use nalgebra::traits::inv::Inv;
@@ -17,6 +18,7 @@ use object::body::{Body, ToRigidBody, RigidBody, SoftBody};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
+use signal::signal::SignalEmiter;
 
 pub enum PairwiseDetector<N, LV, AV, M, II> {
     RB(DefaultDefault<N, LV, AV, M, II>),
@@ -75,19 +77,61 @@ pub struct BodiesBodies<N, LV, AV, M, II, BF> {
     update_bf:   bool
 }
 
-impl<N:  'static + Clone + Zero + Orderable + NumCast + Algebraic + Primitive + ToStr,
-     LV: 'static + AlgebraicVecExt<N> + Clone + ToStr,
-     AV: 'static,
-     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Transform<LV>,
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+         Rotate<LV> + Transform<LV>,
+     AV: 'static + Vec<N> + ToStr,
+     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + Inv + Transform<LV> + One,
      II: 'static,
-     BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
+     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
 BodiesBodies<N, LV, AV, M, II, BF> {
-    pub fn new(bf: @mut BF, update_bf: bool) -> BodiesBodies<N, LV, AV, M, II, BF> {
-        BodiesBodies {
+    pub fn new(events:    @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
+               bf:        @mut BF,
+               update_bf: bool) -> @mut BodiesBodies<N, LV, AV, M, II, BF> {
+        let res = @mut BodiesBodies {
             broad_phase: bf,
             update_bf:   update_bf
+        };
+
+        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b, out| res.activate(b, out));
+        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b| res.deactivate(b));
+
+        res
+    }
+
+    fn activate(&mut self,
+                body: @mut Body<N, LV, AV, M, II>,
+                out:  &mut ~[Constraint<N, LV, AV, M, II>]) {
+        let mut collector = ~[];
+
+        do self.broad_phase.activate(body) |b1, b2, cd| {
+            match *cd {
+                RB(ref mut d) => {
+                    let rb1 = b1.to_rigid_body_or_fail();
+                    let rb2 = b2.to_rigid_body_or_fail();
+
+                    // FIXME: is the update needed? Or do we have enough guarantees to avoid it?
+                    d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
+
+                    d.colls(&mut collector);
+
+                    for c in collector.iter() {
+                        out.push(RBRB(b1, b2, c.clone()))
+                    }
+
+                    collector.clear()
+                },
+                Unsuported => { }
+            }
+            
         }
     }
+
+    fn deactivate(&mut self, body: @mut Body<N, LV, AV, M, II>) {
+        self.broad_phase.deactivate(body)
+    }
+
+
 }
 
 impl<N:  'static + Clone + Zero + Orderable + NumCast + Algebraic + Primitive + Float + ToStr,
@@ -176,35 +220,6 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
         }
     }
 
-    fn activate(&mut self,
-                body: @mut Body<N, LV, AV, M, II>,
-                out:  &mut ~[Constraint<N, LV, AV, M, II>]) {
-        let mut collector = ~[];
-
-        do self.broad_phase.activate(body) |b1, b2, cd| {
-            match *cd {
-                RB(ref mut d) => {
-                    let rb1 = b1.to_rigid_body_or_fail();
-                    let rb2 = b2.to_rigid_body_or_fail();
-
-                    // FIXME: is the update needed? Or do we have enough guarantees to avoid it?
-                    d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
-
-                    d.colls(&mut collector);
-
-                    for c in collector.iter() {
-                        out.push(RBRB(b1, b2, c.clone()))
-                    }
-
-                    collector.clear()
-                },
-                Unsuported => { }
-            }
-            
-        }
-    }
-
-    fn deactivate(&mut self, body: @mut Body<N, LV, AV, M, II>) {
-        self.broad_phase.deactivate(body)
-    }
+    #[inline]
+    fn priority(&self) -> f64 { 50.0 }
 }

@@ -7,7 +7,7 @@ use integration::integrator::Integrator;
 use detection::detector::Detector;
 use detection::constraint::{Constraint, RBRB};
 use object::body::{Body, RigidBody, SoftBody};
-use world::world::World;
+use signal::signal::SignalEmiter;
 
 struct BodyWithEnergy<N, LV, AV, M, II> {
     // NOTE: that is the place to put a `can_be_deactivated` flag if needed…
@@ -27,32 +27,66 @@ impl<N, LV, AV, M, II> BodyWithEnergy<N, LV, AV, M, II> {
 
 // NOTE: this could easily be made generic wrt the Body<...> and wrt Constraint<...>
 pub struct IslandActivationManager<N, LV, AV, M, II> {
+    events:         @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
     threshold:      N,
     mix_factor:     N,
     bodies:         HashMap<uint, BodyWithEnergy<N, LV, AV, M, II>, UintTWHash>,
     ufind:          ~[UFindSet],
-    can_deactivate: ~[bool],
-    integrators:    ~[@mut Integrator<N, Body<N, LV, AV, M, II>>],
-    detectors:      ~[@mut Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>]
+    can_deactivate: ~[bool]
 }
 
-impl<N: One + Zero + Ord + Clone, LV, AV, M, II> IslandActivationManager<N, LV, AV, M, II> {
-    pub fn new(threshold:  N,
-               mix_factor: N,
-               world:      &mut World<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>)
-               -> IslandActivationManager<N, LV, AV, M, II> {
+impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
+     LV: 'static + AlgebraicVec<N> + Clone,
+     AV: 'static + AlgebraicVec<N> + Clone,
+     M:  'static,
+     II: 'static>
+IslandActivationManager<N, LV, AV, M, II> {
+    pub fn new(events:     @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
+               threshold:  N,
+               mix_factor: N)
+               -> @mut IslandActivationManager<N, LV, AV, M, II> {
         assert!(mix_factor >= Zero::zero::<N>() && threshold <= One::one::<N>(),
                 "The energy mixing factor must be comprised between 0.0 and 1.0.");
-        IslandActivationManager {
+
+        let res = @mut IslandActivationManager {
+            events:         events,
             threshold:      threshold,
             mix_factor:     mix_factor,
             bodies:         HashMap::new(UintTWHash),
             ufind:          ~[],
-            can_deactivate: ~[],
-            integrators:    world.integrators().iter().map(|i| *i).collect(),
-            detectors:      world.detectors().iter().map(|d| *d).collect()
+            can_deactivate: ~[]
+        };
+
+        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b, out| res.activate(b, out));
+        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b| res.deactivate(b));
+
+        res
+    }
+
+    pub fn doit(&mut self) {
+        self.mix_factor = self.threshold.clone();
+    }
+
+    fn activate(&mut self,
+                b:   @mut Body<N, LV, AV, M, II>,
+                out: &mut ~[Constraint<N, LV, AV, M, II>]) {
+        if b.can_move() && !b.is_active() {
+            b.activate();
+            self.add(b);
+
+            self.events.emit_body_activated(b, out);
         }
     }
+
+    fn deactivate(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        if b.is_active() {
+            b.deactivate();
+
+            self.remove(b);
+            self.events.emit_body_deactivated(b);
+        }
+    }
+
 }
 
 impl<N:  Num + Ord + Algebraic,
@@ -61,17 +95,16 @@ impl<N:  Num + Ord + Algebraic,
      M,
      II>
 IslandActivationManager<N, LV, AV, M, II> {
-
     fn can_deactivate(&mut self, body: uint) -> bool {
         self.bodies.elements()[body].value.energy < self.threshold
     }
 }
 
-impl<N:  Num + Clone + NumCast + Orderable + Algebraic,
-     LV: AlgebraicVec<N> + Clone,
-     AV: AlgebraicVec<N> + Clone,
-     M,
-     II>
+impl<N:  'static + Num + Clone + NumCast + Orderable + Algebraic,
+     LV: 'static + AlgebraicVec<N> + Clone,
+     AV: 'static + AlgebraicVec<N> + Clone,
+     M:  'static,
+     II: 'static>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
 for IslandActivationManager<N, LV, AV, M, II> {
     fn add(&mut self, body: @mut Body<N, LV, AV, M, II>) {
@@ -83,7 +116,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
             }
         }
         if !body.can_move() && body.is_active() {
-            self.deactivate(body)
+            self.deactivate(body);
         }
     }
 
@@ -91,36 +124,6 @@ for IslandActivationManager<N, LV, AV, M, II> {
         if self.bodies.remove(&(ptr::to_mut_unsafe_ptr(b) as uint)) {
             self.ufind.pop();
             self.can_deactivate.pop();
-        }
-    }
-
-    fn activate(&mut self,
-                b:   @mut Body<N, LV, AV, M, II>,
-                out: &mut ~[Constraint<N, LV, AV, M, II>]) {
-        if b.can_move() {
-            b.activate();
-            self.add(b);
-
-            for i in self.integrators.iter() {
-                i.activate(b)
-            }
-
-            for i in self.detectors.iter() {
-                i.activate(b, out)
-            }
-        }
-    }
-
-    fn deactivate(&mut self, b: @mut Body<N, LV, AV, M, II>) {
-        b.deactivate();
-        self.remove(b);
-
-        for i in self.integrators.iter() {
-            i.deactivate(b)
-        }
-
-        for i in self.detectors.iter() {
-            i.deactivate(b)
         }
     }
 
@@ -238,6 +241,9 @@ for IslandActivationManager<N, LV, AV, M, II> {
             i = i + 1;
         }
     }
+
+    #[inline]
+    fn priority(&self) -> f64 { 100.0 }
 }
 
 /*

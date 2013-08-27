@@ -38,6 +38,10 @@ bench:
 	mkdir -p $(ncollide_lib_path)
 	rustc -L$(nalgebra_lib_path) --test -L$(ncollide_lib_path) src/nphysics.rc --opt-level 3 -o bench~ && ./bench~ --bench
 
+test:
+	mkdir -p bin
+	make -C examples
+
 # examples dependencies
 examples_deps:
 	make -C examples deps

@@ -18,6 +18,7 @@ use detection::collision::default_default;
 use integration::integrator::Integrator;
 use object::body::{Body, RigidBody, SoftBody};
 use object::implicit_geom::DefaultGeom;
+use signal::signal::SignalEmiter;
 
 struct CCDBody<N, LV, AV, M, II> {
     body:        @mut Body<N, LV, AV, M, II>,
@@ -42,30 +43,38 @@ impl<N, LV, AV, M, II> CCDBody<N, LV, AV, M, II> {
 }
 
 pub struct SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    objects:       HashMap<uint, CCDBody<N, LV, AV, M, II>, UintTWHash>,
-    iobjects:      HashMap<uint, CCDBody<N, LV, AV, M, II>, UintTWHash>,
-    broad_phase:   @mut BF,
-    update_bf:     bool,
-    interferences: ~[@mut Body<N, LV, AV, M, II>]
+    priv objects:       HashMap<uint, CCDBody<N, LV, AV, M, II>, UintTWHash>,
+    priv iobjects:      HashMap<uint, CCDBody<N, LV, AV, M, II>, UintTWHash>,
+    priv broad_phase:   @mut BF,
+    priv update_bf:     bool,
+    priv interferences: ~[@mut Body<N, LV, AV, M, II>]
 }
 
-impl<N:  Num + Clone,
-     LV,
-     AV,
-     M:  Translation<LV>,
-     II,
-     BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>>>
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
+         Rotate<LV> + Transform<LV> + ToStr,
+     AV: 'static + Vec<N> + ToStr,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
+     II: 'static + ToStr,
+     BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
+         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    pub fn new(bf:        @mut BF,
-               update_bf: bool)
-               -> SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-        SweptBallMotionClamping {
+    pub fn new<C>(events:    &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
+                  bf:        @mut BF,
+                  update_bf: bool)
+                  -> @mut SweptBallMotionClamping<N, LV, AV, M, II, BF> {
+        let res = @mut SweptBallMotionClamping {
             objects:       HashMap::new(UintTWHash),
             iobjects:      HashMap::new(UintTWHash),
             broad_phase:   bf,
             update_bf:     update_bf,
             interferences: ~[]
-        }
+        };
+
+        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.activate(o));
+        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o| res.deactivate(o));
+
+        res
     }
 
     pub fn add_ccd_to(&mut self,
@@ -84,31 +93,6 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
             },
             SoftBody(_) => fail!("Soft bodies ccd is not yet implemented."),
         }
-    }
-}
-
-impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV> + ToStr,
-     AV: Vec<N> + ToStr,
-     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
-     II: ToStr, // FIXME: remove those bounds
-     BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
-         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
-Integrator<N, Body<N, LV, AV, M, II>>
-for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        if self.update_bf {
-            self.broad_phase.add(o);
-        }
-    }
-
-    fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        if self.update_bf {
-            self.broad_phase.remove(o);
-        }
-
-        self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
     }
 
     fn activate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
@@ -138,6 +122,31 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
             },
             None => { }
         }
+    }
+}
+
+impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
+         Rotate<LV> + Transform<LV> + ToStr,
+     AV: Vec<N> + ToStr,
+     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
+     II: ToStr, // FIXME: remove those bounds
+     BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
+         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
+Integrator<N, Body<N, LV, AV, M, II>>
+for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
+    fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+        if self.update_bf {
+            self.broad_phase.add(o);
+        }
+    }
+
+    fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+        if self.update_bf {
+            self.broad_phase.remove(o);
+        }
+
+        self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
     }
 
     fn update(&mut self, _: N) {
@@ -227,4 +236,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
             }
         }
     }
+
+    #[inline]
+    fn priority(&self) -> f64 { 100.0 }
 }

@@ -28,10 +28,12 @@ use nphysics::world::world::World;
 use nphysics::aliases::dim2;
 use nphysics::integration::body_force_generator::BodyForceGenerator;
 use nphysics::integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
+use nphysics::integration::swept_ball_motion_clamping::SweptBallMotionClamping;
 use nphysics::detection::collision::bodies_bodies::{BodiesBodies, Dispatcher};
 use nphysics::detection::island_activation_manager::IslandActivationManager;
 use nphysics::resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
+use nphysics::signal::signal::SignalEmiter;
 use graphics2d::engine::GraphicsManager;
 
 
@@ -46,22 +48,29 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64>
      */
     let mut world = World::new();
 
-    // For the intergration
-    let gravity = Vec2::new(0.0, 9.81);
-    let tornado = Vec1::new(0.0);
+    // events handler
+    let events = @mut SignalEmiter::new();
 
-    let forces: @mut dim2::ForceGenerator2d<f64> = @mut BodyForceGenerator::new(gravity, tornado);
-    let integrator: @mut dim2::RigidBodyIntegrator2d<f64> = @mut RigidBodySmpEulerIntegrator::new();
+    // For the intergration
+    let gravity = Vec2::new(0.0f64, 9.81);
+    let tornado = Vec1::new(0.0f64);
+
+    let forces: @mut dim2::ForceGenerator2d<f64> = BodyForceGenerator::new(events, gravity, tornado);
+    let integrator: @mut dim2::RigidBodyIntegrator2d<f64> = RigidBodySmpEulerIntegrator::new(events);
 
     /*
      * For the collision detection
      */
     // Collision Dispatcher
-    let dispatcher: dim2::Dispatcher2d<f64> = Dispatcher::new();
+    let dispatcher: dim2::Dispatcher2d<f64>  = Dispatcher::new();
     // Broad phase
     let broad_phase = @mut DBVTBroadPhase::new(dispatcher, 0.08f64);
+    // CCD handler
+    let ccd = SweptBallMotionClamping::new(events, broad_phase, true);
     // Collision detector
-    let detector = @mut BodiesBodies::new(broad_phase, true);
+    let detector = BodiesBodies::new(events, broad_phase, false);
+    // Deactivation
+    let sleep = IslandActivationManager::new(events, 1.0, 0.01);
 
     /*
      * For constraints resolution
@@ -74,13 +83,10 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64>
      */
     world.add_integrator(forces);
     world.add_integrator(integrator);
+    world.add_integrator(ccd);
     world.add_detector(detector);
-    world.add_solver(solver);
-
-    // NOTE: this must be done _after_ the addition of every other controllers
-    let sleep: @mut dim2::IslandActivationManager2d<f64> =
-        @mut IslandActivationManager::new(1.0, 0.01, &mut world);
     world.add_detector(sleep);
+    world.add_solver(solver);
 
     /*
      * First plane

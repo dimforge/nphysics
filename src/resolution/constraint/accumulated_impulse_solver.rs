@@ -255,6 +255,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             self.cache.swap();
         }
     }
+
+    #[inline]
+    fn priority(&self) -> f64 { 0.0 }
 }
 
 fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {

@@ -8,3 +8,16 @@ examples/bin
 BENCH
 DESIGN.md
 STYLE.md
+balls_vee2d
+balls_vee3d
+boxes_vee2d
+boxes_vee3d
+compound2d
+compound3d
+cross2d
+cross3d
+primitives3d
+pyramid2d
+pyramid3d
+wall2d
+wall3d

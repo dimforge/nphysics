@@ -4,19 +4,32 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::body::{Body, RigidBody, SoftBody};
 use integration::integrator::Integrator;
+use signal::signal::SignalEmiter;
 
 pub struct BodyDamping<N, LV, AV, M, II> {
     priv damping_factor: N,
     priv objects:        HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>
 }
 
-impl<N, LV, AV, M, II> BodyDamping<N, LV, AV, M, II> {
+impl<N:  'static + Clone,
+     LV: 'static + Clone + Vec<N>,
+     AV: 'static + Clone + Vec<N>,
+     M:  'static + Clone,
+     II: 'static + Clone>
+BodyDamping<N, LV, AV, M, II> {
     #[inline]
-    pub fn new(damping_factor: N) -> BodyDamping<N, LV, AV, M, II> {
-        BodyDamping {
+    pub fn new<C>(events:         &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
+                  damping_factor: N)
+                  -> @mut BodyDamping<N, LV, AV, M, II> {
+        let res = @mut BodyDamping {
             damping_factor: damping_factor,
             objects:        HashMap::new(UintTWHash)
-        }
+        };
+
+        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));
+        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o| res.remove(o));
+
+        res
     }
 }
 
@@ -30,16 +43,6 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     #[inline]
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
         self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
-    }
-
-    #[inline]
-    fn activate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        self.add(o);
-    }
-
-    #[inline]
-    fn deactivate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        self.remove(o)
     }
 
     fn update(&mut self, _: N) {
@@ -57,4 +60,7 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
             }
         }
     }
+
+    #[inline]
+    fn priority(&self) -> f64 { 100.0 }
 }

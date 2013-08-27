@@ -31,6 +31,7 @@ use nphysics::detection::collision::bodies_bodies::{BodiesBodies, Dispatcher};
 use nphysics::detection::island_activation_manager::IslandActivationManager;
 use nphysics::resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
+use nphysics::signal::signal::SignalEmiter;
 use graphics3d::engine::GraphicsManager;
 
 
@@ -48,29 +49,29 @@ pub fn balls_vee_3d(graphics: &mut GraphicsManager)
      */
     let mut world = World::new();
 
-    /*
-     * For the intergration
-     */
-    let gravity = Vec3::new(0.0, -9.81, 0.0);
-    let tornado = Vec3::new(0.0, 0.0, 0.0);
+    // events handler
+    let events = @mut SignalEmiter::new();
 
-    let forces: @mut dim3::ForceGenerator3d<f64> = @mut BodyForceGenerator::new(gravity, tornado);
-    let integrator: @mut dim3::RigidBodyIntegrator3d<f64> = @mut RigidBodySmpEulerIntegrator::new();
+    // For the intergration
+    let gravity = Vec3::new(0.0f64, -9.81, 0.0);
+    let tornado = Vec3::new(0.0f64, 0.0, 0.0);
+
+    let forces = BodyForceGenerator::new(events, gravity, tornado);
+    let integrator = RigidBodySmpEulerIntegrator::new(events);
 
     /*
      * For the collision detection
      */
     // Collision Dispatcher
-    let dispatcher: dim3::Dispatcher3d<f64> = Dispatcher::new();
-
+    let dispatcher = Dispatcher::new();
     // Broad phase
     let broad_phase = @mut DBVTBroadPhase::new(dispatcher, 0.08f64);
-
     // CCD handler
-    let ccd = @mut SweptBallMotionClamping::new(broad_phase, true);
-
+    let ccd = SweptBallMotionClamping::new(events, broad_phase, true);
     // Collision detector
-    let detector = @mut BodiesBodies::new(broad_phase, false);
+    let detector = BodiesBodies::new(events, broad_phase, false);
+    // Deactivation
+    let sleep = IslandActivationManager::new(events, 1.0, 0.01);
 
     /*
      * For constraints resolution
@@ -78,17 +79,15 @@ pub fn balls_vee_3d(graphics: &mut GraphicsManager)
     let solver: @mut dim3::ContactSolver3d<f64> =
         @mut AccumulatedImpulseSolver::new(0.1f64, VelocityAndPosition(0.2, 0.2, 0.08), 1.0, 10, 10);
 
-    // Add everything to the world
+    /*
+     * Add everything to the world
+     */
     world.add_integrator(forces);
     world.add_integrator(integrator);
     world.add_integrator(ccd);
     world.add_detector(detector);
-    world.add_solver(solver);
-
-    // NOTE: this must be done _after_ the addition of every other controllers
-    let sleep: @mut dim3::IslandActivationManager3d<f64> =
-        @mut IslandActivationManager::new(1.0, 0.01, &mut world);
     world.add_detector(sleep);
+    world.add_solver(solver);
 
     let normals = [
         Vec3::new(-1.0f64, 1.0, -1.0 ).normalized(),

@@ -27,13 +27,13 @@ for SoftBodyExpEulerIntegrator<N, V> {
         }
     }
 
-    fn activate(&mut self, o: @mut B) {
-        self.add(o);
-    }
+    // fn activate(&mut self, o: @mut B) {
+    //     self.add(o);
+    // }
 
-    fn deactivate(&mut self, o: @mut B) {
-        self.remove(o)
-    }
+    // fn deactivate(&mut self, o: @mut B) {
+    //     self.remove(o)
+    // }
 
     fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
@@ -49,6 +49,9 @@ for SoftBodyExpEulerIntegrator<N, V> {
             }
         }
     }
+
+    #[inline]
+    fn priority(&self) -> f64 { 50.0 }
 }
 
 pub struct SoftBodySmpEulerIntegrator<N, V> {
@@ -71,13 +74,13 @@ for SoftBodySmpEulerIntegrator<N, V> {
         }
     }
 
-    fn activate(&mut self, o: @mut B) {
-        self.add(o);
-    }
+    // fn activate(&mut self, o: @mut B) {
+    //     self.add(o);
+    // }
 
-    fn deactivate(&mut self, o: @mut B) {
-        self.remove(o)
-    }
+    // fn deactivate(&mut self, o: @mut B) {
+    //     self.remove(o)
+    // }
 
     fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
@@ -94,4 +97,7 @@ for SoftBodySmpEulerIntegrator<N, V> {
             }
         }
     }
+
+    #[inline]
+    fn priority(&self) -> f64 { 50.0 }
 }

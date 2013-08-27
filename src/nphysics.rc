@@ -10,14 +10,16 @@ extern mod extra;
 extern mod nalgebra;
 extern mod ncollide;
 
-pub mod aliases
-{
+pub mod aliases {
     pub mod dim2;
     pub mod dim3;
 }
 
-pub mod integration
-{
+pub mod signal {
+    pub mod signal;
+}
+
+pub mod integration {
     pub mod integrator;
     pub mod rigid_body_integrator;
     pub mod soft_body_integrator;
@@ -27,25 +29,21 @@ pub mod integration
     pub mod swept_ball_motion_clamping;
 }
 
-pub mod detection
-{
+pub mod detection {
     pub mod constraint;
     pub mod detector;
     pub mod island_activation_manager;
 
-    pub mod collision
-    {
+    pub mod collision {
         pub mod bodies_bodies;
         pub mod default_default;
     }
 }
 
-pub mod resolution
-{
+pub mod resolution {
     pub mod solver;
 
-    pub mod constraint
-    {
+    pub mod constraint {
         pub mod impulse_cache;
         pub mod accumulated_impulse_solver;
         pub mod projected_gauss_seidel_solver;
@@ -54,13 +52,11 @@ pub mod resolution
     }
 }
 
-pub mod world
-{
+pub mod world {
     pub mod world;
 }
 
-pub mod object
-{
+pub mod object {
     pub mod rigid_body;
     pub mod soft_body;
     pub mod volumetric;

@@ -48,7 +48,7 @@ impl<N: Clone, O, C> World<N, O, C> {
     }
 
     pub fn add_detector<D: 'static + Detector<N, O, C>>(&mut self, d: @mut D) {
-        self.detectors.push(d as @mut Detector<N, O, C>);
+        sorted_insert(&mut self.detectors, d as @mut Detector<N, O, C>, |a, b| a.priority() < b.priority());
 
         for o in self.objects.iter() {
             d.add(o.clone())
@@ -56,7 +56,7 @@ impl<N: Clone, O, C> World<N, O, C> {
     }
 
     pub fn add_integrator<I: 'static + Integrator<N, O>>(&mut self, i: @mut I) {
-        self.integrators.push(i as @mut Integrator<N, O>);
+        sorted_insert(&mut self.integrators, i as @mut Integrator<N, O>, |a, b| a.priority() < b.priority());
 
         for o in self.objects.mut_iter() {
             i.add(o.clone())
@@ -64,7 +64,7 @@ impl<N: Clone, O, C> World<N, O, C> {
     }
 
     pub fn add_solver<S: 'static + Solver<N, C>>(&mut self, s: @mut S) {
-        self.solvers.push(s as @mut Solver<N, C>);
+        sorted_insert(&mut self.solvers, s as @mut Solver<N, C>, |a, b| a.priority() < b.priority());
     }
 
     pub fn add_object(&mut self, rb: @mut O) {
@@ -104,4 +104,18 @@ impl<N: Clone, O, C> World<N, O, C> {
 
         res
     }
+}
+
+#[inline(always)]
+fn sorted_insert<T>(vec: &mut ~[T], t: T, lt: &fn(&T, &T) -> bool) {
+    let mut iinsert = vec.len();
+
+    for (i, e) in vec.iter().enumerate() {
+        if lt(&t, e) {
+            iinsert = i;
+            break;
+        }
+    }
+
+    vec.insert(iinsert, t)
 }
