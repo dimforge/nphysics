@@ -66,7 +66,12 @@ become a grown up. Many missing features are because of missing features on
 
 ## Dependencies
 All dependencies are automatically cloned with a recursive clone.
-If you want to grab them yourself you will need:
+The libraries needed to compile the physics engine are:
 
 * [ncollide](https://github.com/sebcrozet/ncollide): the collision detection library.
 * [nalgebra](https://github.com/sebcrozet/nalgebra): the linear algebra library.
+
+The libraries needed to compile the examples are:
+
+* [kiss3d](https://github.com/sebcrozet/ncollide): the 3d graphics engine.
+* [rust-sfml](https://github.com/JeremyLetang/rust-sfml): the 2d graphics engine.
