@@ -36,7 +36,8 @@ impl<N:  Clone + Zero,
      II>
 Dispatcher<N, LV, AV, M, II> {
     pub fn new() -> Dispatcher<N, LV, AV, M, II> {
-        let template = RecursionTemplate::new(Dim::dim::<LV>());
+        let _dim: Option<LV> = None;
+        let template = RecursionTemplate::new(Dim::dim(_dim));
         let simplex  = JohnsonSimplex::new(template);
         Dispatcher {
             simplex: simplex

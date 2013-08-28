@@ -69,9 +69,11 @@ pub fn fill_first_order_contact_equation<LV: Vec<N> + Cross<AV> + Clone,
                                          rb2:         &RigidBody<N, LV, AV, M, II>,
                                          constraint:  &mut VelocityConstraint<LV, AV, N>,
                                          correction:  &CorrectionParameters<N>) {
-    let center = (coll.world1 + coll.world2) / NumCast::from(2.0f64);
+    let center    = (coll.world1 + coll.world2) / NumCast::from(2.0f64);
+    let rot_axis1 = (center - *rb1.center_of_mass()).cross(&-coll.normal);
+    let rot_axis2 = (center - *rb2.center_of_mass()).cross(&coll.normal);
 
-    fill_constraint_geometry(coll.normal.clone(), center, rb1, rb2, constraint);
+    fill_constraint_geometry(coll.normal.clone(), rot_axis1, rot_axis2, rb1, rb2, constraint);
 
     /*
      * Fill indice
@@ -174,7 +176,8 @@ fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
                             M:  Transform<LV> + Rotate<LV> + One,
                             II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
                             normal:     LV,
-                            center:     LV,
+                            rot_axis1:  AV,
+                            rot_axis2:  AV,
                             rb1:        &RigidBody<N, LV, AV, M, II>,
                             rb2:        &RigidBody<N, LV, AV, M, II>,
                             constraint: &mut VelocityConstraint<LV, AV, N>) {
@@ -184,7 +187,7 @@ fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
     if rb1.can_move() {
         // rotation axis
         constraint.weighted_normal1   = constraint.normal * rb1.inv_mass();
-        constraint.rot_axis1          = (center - *rb1.center_of_mass()).cross(&-constraint.normal);
+        constraint.rot_axis1          = rot_axis1;
 
         constraint.weighted_rot_axis1 = rb1.inv_inertia().transform(&constraint.rot_axis1);
 
@@ -196,7 +199,7 @@ fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
     if rb2.can_move() {
         // rotation axis
         constraint.weighted_normal2   = constraint.normal * rb2.inv_mass();
-        constraint.rot_axis2          = (center - *rb2.center_of_mass()).cross(&constraint.normal);
+        constraint.rot_axis2          = rot_axis2;
 
         constraint.weighted_rot_axis2 = rb2.inv_inertia().transform(&constraint.rot_axis2);
 
@@ -205,7 +208,8 @@ fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
             constraint.rot_axis2.dot(&constraint.weighted_rot_axis2);
     }
 
-    constraint.inv_projected_mass = One::one::<N>() / constraint.inv_projected_mass;
+    let _1: N = One::one();
+    constraint.inv_projected_mass = _1 / constraint.inv_projected_mass;
 }
 
 fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
@@ -225,7 +229,10 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
                             rb2:             &RigidBody<N, LV, AV, M, II>,
                             constraint:      &mut VelocityConstraint<LV, AV, N>,
                             correction:      &CorrectionParameters<N>) {
-    fill_constraint_geometry(normal, center.clone(), rb1, rb2, constraint);
+    let rot_axis1 = (center - *rb1.center_of_mass()).cross(&-normal);
+    let rot_axis2 = (center - *rb2.center_of_mass()).cross(&normal);
+
+    fill_constraint_geometry(normal, rot_axis1, rot_axis2, rb1, rb2, constraint);
 
     /*
      * Fill indice

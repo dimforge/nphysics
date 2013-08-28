@@ -9,7 +9,7 @@ dimension. That means you can use it for both 2-dimensional multiphysics and
 has not be written/tested with those in thought.
 
 Examples are available on the `examples` directory.
-There is also a short [demonstration video](http://youtu.be/CANjXZ5rocI).
+There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
 
 ## Why another multiphysics engine?
 There are a lot of multiphysics engine out there.

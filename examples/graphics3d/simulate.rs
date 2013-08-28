@@ -11,7 +11,7 @@ use ncollide::geom::box::Box;
 use ncollide::ray::ray::Ray;
 use nphysics::aliases::dim3;
 use nphysics::object::body;
-use nphysics::detection::constraint::RBRB;
+use nphysics::detection::constraint::{RBRB, BallInSocket};
 use nphysics::object::implicit_geom::DefaultGeom;
 use nphysics::object::rigid_body::{RigidBody, Dynamic};
 use nphysics::object::body::RigidBody;
@@ -25,6 +25,7 @@ fn usage(exe_name: &str) {
     println("    r      - show/hide a ray centered on the camera, directed toward the camera front axis.");
     println("    1      - launch a ball.");
     println("    2      - launch a cube.");
+    println("    3      - launch a fast cube using continuous collision detection.");
     println("    TAB    - switch camera mode (first-person or arc-ball).");
     println("    arrows - move around when in first-person mode.");
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
@@ -222,8 +223,8 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                 },
                 // KEY_3
                 event::KeyPressed(51) => {
-                    let ball  = Ball::new(0.5f64);
-                    let geom  = DefaultGeom::new_ball(ball);
+                    let box   = Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64));
+                    let geom  = DefaultGeom::new_box(box);
                     let rbody = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transfom = window.camera().transformation();
@@ -236,7 +237,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                     let body = @mut body::RigidBody(rbody);
                     physics.add_object(body);
                     ccd_manager.add_ccd_to(body, 0.4, 1.0);
-                    graphics.add_ball(rbody, One::one(), &ball);
+                    graphics.add_cube(rbody, One::one(), &box);
                 },
                 // KEY_R
                 event::KeyPressed(82) => {
@@ -284,6 +285,9 @@ fn draw_collisions(window: @mut window::Window, physics: &mut dim3::World3d<f64>
                 let center = (c.world1 + c.world2) / 2.0;
                 let end    = center + c.normal * 0.4;
                 window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
+            },
+            BallInSocket(bis) => {
+                window.draw_line(&bis.anchor1_pos(), &bis.anchor2_pos(), &Vec3::y());
             }
         }
     }

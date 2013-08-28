@@ -38,6 +38,12 @@ pub mod detection {
         pub mod bodies_bodies;
         pub mod default_default;
     }
+
+    pub mod joint {
+        pub mod anchor;
+        pub mod joint_manager;
+        pub mod ball_in_socket;
+    }
 }
 
 pub mod resolution {

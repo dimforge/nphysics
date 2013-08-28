@@ -23,7 +23,7 @@ BodyForceGenerator<N, LV, AV, M, II> {
                   ang_acc: AV)
                   -> @mut BodyForceGenerator<N, LV, AV, M, II> {
         let res = @mut BodyForceGenerator {
-            objects: HashMap::new(UintTWHash),
+            objects: HashMap::new(UintTWHash::new()),
             lin_acc: lin_acc,
             ang_acc: ang_acc
         };

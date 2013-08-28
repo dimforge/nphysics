@@ -9,9 +9,9 @@ use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::{Transform, Transformation};
 use nalgebra::traits::cross::Cross;
 use nalgebra::traits::vector::{Vec, VecExt};
-use detection::constraint::{Constraint, RBRB};
+use detection::constraint::{Constraint, RBRB, BallInSocket};
 use object::rigid_body::RigidBody;
-use object::body::ToRigidBody;
+use object::body::{Body, ToRigidBody};
 use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
@@ -43,12 +43,13 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                num_first_order_iter:  uint,
                num_second_order_iter: uint)
                -> AccumulatedImpulseSolver<N, LV, AV, M, II> {
+        let _dim: Option<LV> = None;
         AccumulatedImpulseSolver {
             num_first_order_iter:    num_first_order_iter,
             num_second_order_iter:   num_second_order_iter,
             restitution_constraints: ~[],
             friction_constraints:    ~[],
-            cache:                   ImpulseCache::new(step, Dim::dim::<LV>()),
+            cache:                   ImpulseCache::new(step, Dim::dim(_dim)),
 
             correction: CorrectionParameters {
                 corr_mode:   correction_mode,
@@ -74,8 +75,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
         let num_friction_equations    = 0;
         let num_restitution_equations = constraints.len();
 
-        let needs_correction = do constraints.iter().any |&RBRB(_, _, ref c)| {
-            c.depth >= self.correction.corr_mode.min_depth_for_pos_corr()
+        let needs_correction = do constraints.iter().any |constraint| {
+            match *constraint {
+                RBRB(_, _, ref c) => c.depth >= self.correction.corr_mode.min_depth_for_pos_corr(),
+                _ => false // no first order resolution for joints
+            }
         };
 
         if needs_correction {
@@ -90,7 +94,8 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                             rb1.to_rigid_body_or_fail(), rb2.to_rigid_body_or_fail(),
                             &mut self.restitution_constraints[i],
                             &self.correction);
-                    }
+                    },
+                    _ => { }
                 }
             }
 
@@ -108,11 +113,10 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                 MJLambda[i].lv = MJLambda[i].lv * dt;
                 MJLambda[i].av = MJLambda[i].av * dt;
 
-                let center = &b.center_of_mass().clone();
-
-                b.transform_by(
-                    &rotation::rotated_wrt_point(&One::one::<M>(), &MJLambda[i].av, center)
-                    .translated(&MJLambda[i].lv));
+                let center   = &b.center_of_mass().clone();
+                let _1: M    = One::one();
+                let delta: M = rotation::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
+                b.transform_by(&delta);
             }
         }
     }
@@ -120,11 +124,15 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
     fn second_order_solve(&mut self,
                           dt:          N,
                           constraints: &[Constraint<N, LV, AV, M, II>],
+                          joints:      &[uint],
                           bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
-        let num_friction_equations    = (Dim::dim::<LV>() - 1) * self.cache.len();
+        let _dim: Option<LV> = None;
+        let num_friction_equations    = (Dim::dim(_dim) - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
 
         self.resize_buffers(num_restitution_equations, num_friction_equations);
+
+        let mut offset = 0;
 
         for (i, (_, &(ci, imp))) in self.cache.hash().iter().enumerate() {
             match constraints[ci] {
@@ -136,10 +144,30 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                         &mut self.restitution_constraints[i],
                         i,
                         self.friction_constraints,
-                        i * (Dim::dim::<LV>() - 1),
+                        offset,
                         self.cache.impulsions_at(imp),
                         &self.correction);
-                }
+                },
+                _ => { }
+            }
+
+            let _dim: Option<LV> = None;
+            offset = offset + Dim::dim(_dim) - 1;
+        }
+
+        for i in joints.iter() {
+            match constraints[*i] {
+                BallInSocket(_) =>
+                    fail!("Not yet implemented."),
+                    // ball_in_socket_equation::fill_second_order_contact_equation(
+                    //     dt.clone(),
+                    //     bis,
+                    //     &mut self.restitution_constraints[i], // XXX
+                    //     i,
+                    //     offset,
+                    //     self.correction
+                    // ),
+                _ => fail!("Trying to resolve an unknown joint.")
             }
         }
 
@@ -165,15 +193,18 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * NumCast::from(0.85);
 
-            for j in range(0u, Dim::dim::<LV>() - 1) {
-                let fc = &self.friction_constraints[i * (Dim::dim::<LV>() - 1) + j];
+            let _dim: Option<LV> = None;
+            for j in range(0u, Dim::dim(_dim) - 1) {
+                let _dim: Option<LV> = None;
+                let fc = &self.friction_constraints[i * (Dim::dim(_dim) - 1) + j];
                 imps[1 + j] = fc.impulse * NumCast::from(0.85);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().mut_iter().enumerate() {
-            *kv = (kv.first(), offset + i * Dim::dim::<LV>());
+            let _dim: Option<LV> = None;
+            *kv = (kv.first(), offset + i * Dim::dim(_dim));
         }
     }
 }
@@ -200,6 +231,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                                           ptr::to_mut_unsafe_ptr(a) as uint,
                                           ptr::to_mut_unsafe_ptr(b) as uint,
                                           (c.world1 + c.world2) / NumCast::from(2.0));
+                    },
+                    BallInSocket(_) => {
+                        // XXX: cache for ball in socket?
                     }
                 }
             }
@@ -215,40 +249,65 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                     RBRB(a, b, _) => {
                         a.set_index(-2);
                         b.set_index(-2)
+                    },
+                    BallInSocket(bis) => {
+                        match bis.anchor1().body {
+                            Some(b) => b.set_index(-2),
+                            None    => { }
+                        };
+
+                        match bis.anchor2().body {
+                            Some(b) => b.set_index(-2),
+                            None    => { }
+                        }
                     }
                 }
             }
 
             let mut id = 0;
 
+            fn set_body_index<N: Clone,
+                              LV,
+                              AV,
+                              M,
+                              II>(
+                              a:      @mut Body<N, LV, AV, M, II>,
+                              bodies: &mut ~[@mut RigidBody<N, LV, AV, M, II>],
+                              id:     &mut int) {
+                if a.index() == -2 {
+                    if a.can_move() {
+                        a.set_index(*id);
+                        bodies.push(a.to_rigid_body_or_fail());
+                        *id = *id + 1;
+                    }
+                    else {
+                        a.set_index(-1)
+                    }
+                }
+            }
+
             for c in constraints.iter() {
                 match *c {
                     RBRB(a, b, _) => {
-                        if a.index() == -2 {
-                            if a.can_move() {
-                                a.set_index(id);
-                                bodies.push(a.to_rigid_body_or_fail());
-                                id = id + 1;
-                            }
-                            else {
-                                a.set_index(-1)
-                            }
+                        set_body_index(a, &mut bodies, &mut id);
+                        set_body_index(b, &mut bodies, &mut id);
+                    },
+                    BallInSocket(bis) => {
+                        match bis.anchor1().body {
+                            Some(b) => set_body_index(b, &mut bodies, &mut id),
+                            None => { }
                         }
-                        if b.index() == -2 {
-                            if b.can_move() {
-                                b.set_index(id);
-                                bodies.push(b.to_rigid_body_or_fail());
-                                id = id + 1;
-                            }
-                            else {
-                                b.set_index(-1)
-                            }
+
+                        match bis.anchor2().body {
+                            Some(b) => set_body_index(b, &mut bodies, &mut id),
+                            None => { }
                         }
                     }
                 }
             }
 
-            self.second_order_solve(dt.clone(), constraints, bodies);
+            // FIXME []
+            self.second_order_solve(dt.clone(), constraints, [], bodies);
             if !self.correction.corr_mode.pos_corr_factor().is_zero() {
                 self.first_order_solve(dt, constraints, bodies)
             }

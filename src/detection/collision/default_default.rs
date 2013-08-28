@@ -165,7 +165,8 @@ for DefaultDefault<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn toi(m1:   &M,
+    fn toi(_:    Option<DefaultDefault<N, LV, AV, M, II>>,
+           m1:   &M,
            dir:  &LV,
            dist: &N,
            g1:   &DefaultGeom<N, LV, M, II>,
@@ -196,16 +197,14 @@ pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebrai
         (&Plane(ref p), &Implicit(ref i))      => plane_implicit::toi(m1, p, m2, &-dir, i),
         (&Implicit(ref i1), &Implicit(ref i2)) => implicit_implicit::toi(m1, dir, i1, m2, i2),
         (&Compound(_), &Compound(_))   => fail!("Not yet implemented."), // CompoundCompound(),
-        (&Compound(c), b) =>
-            CollisionDetector::toi
-            ::<N, LV, M, C<N, LV, M, II>, DefaultGeom<N, LV, M, II>, CA<N, LV, AV, M, II>>(
-                m1, dir, dist, c, m2, b
-            ),
-        (a, &Compound(c)) =>
-            CollisionDetector::toi
-            ::<N, LV, M, DefaultGeom<N, LV, M, II>, C<N, LV, M, II>, AC<N, LV, AV, M, II>>(
-                m1, dir, dist, a, m2, c
-            ),
+        (&Compound(c), b) => {
+            let _self: Option<CA<N, LV, AV, M, II>> = None;
+            CollisionDetector::toi(_self, m1, dir, dist, c, m2, b)
+        },
+        (a, &Compound(c)) => {
+            let _self: Option<AC<N, LV, AV, M, II>> = None;
+            CollisionDetector::toi(_self, m1, dir, dist, a, m2, c)
+        },
         _ => fail!("Cannot compute the toi of those two geometries.")
     }
 }

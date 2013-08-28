@@ -29,7 +29,7 @@ RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
     pub fn new<C>(events: &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>)
                   -> @mut RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
         let res = @mut RigidBodyExpEulerIntegrator {
-            objects: HashMap::new(UintTWHash)
+            objects: HashMap::new(UintTWHash::new())
         };
 
         events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));
@@ -100,7 +100,7 @@ RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
     pub fn new<C>(events: &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>)
                   -> @mut RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
         let res = @mut RigidBodySmpEulerIntegrator {
-            objects: HashMap::new(UintTWHash)
+            objects: HashMap::new(UintTWHash::new())
         };
 
         events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));

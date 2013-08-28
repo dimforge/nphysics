@@ -5,7 +5,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::integrator::Integrator;
 use detection::detector::Detector;
-use detection::constraint::{Constraint, RBRB};
+use detection::constraint::{Constraint, RBRB, BallInSocket};
 use object::body::{Body, RigidBody, SoftBody};
 use signal::signal::SignalEmiter;
 
@@ -45,14 +45,14 @@ IslandActivationManager<N, LV, AV, M, II> {
                threshold:  N,
                mix_factor: N)
                -> @mut IslandActivationManager<N, LV, AV, M, II> {
-        assert!(mix_factor >= Zero::zero::<N>() && threshold <= One::one::<N>(),
+        assert!(mix_factor >= Zero::zero() && threshold <= One::one(),
                 "The energy mixing factor must be comprised between 0.0 and 1.0.");
 
         let res = @mut IslandActivationManager {
             events:         events,
             threshold:      threshold,
             mix_factor:     mix_factor,
-            bodies:         HashMap::new(UintTWHash),
+            bodies:         HashMap::new(UintTWHash::new()),
             ufind:          ~[],
             can_deactivate: ~[]
         };
@@ -134,8 +134,9 @@ for IslandActivationManager<N, LV, AV, M, II> {
                 RigidBody(rb) => {
                     // NOTE: this is not the kinetic energy, just a hacky value to detect stabilization
                     // FIXME: take the time in account (to make a true RWA)
+                    let _1: N = One::one();
                     b.value.energy = 
-                        (One::one::<N>() - self.mix_factor) * b.value.energy +
+                        (_1 - self.mix_factor) * b.value.energy +
                         self.mix_factor * (rb.lin_vel().sqnorm() + rb.ang_vel().sqnorm());
 
                     b.value.energy = b.value.energy.min(&(self.threshold * NumCast::from(4.0)));
@@ -171,7 +172,24 @@ for IslandActivationManager<N, LV, AV, M, II> {
                     // we compute islands on awaken objects only
                     if obj1.is_active() && obj2.is_active() { // FIXME: add a `propagates_forces` function?
                         union(obj1.index() as uint, obj2.index() as uint, self.ufind)
+                    },
+                BallInSocket(bis) => {
+                    match bis.anchor1().body {
+                        Some(b1) => {
+                            if b1.is_active() {
+                                match bis.anchor2().body {
+                                    Some(b2) => {
+                                        if b2.is_active() {
+                                            union(b1.index() as uint, b2.index() as uint, self.ufind)
+                                        }
+                                    },
+                                    None => { }
+                                }
+                            }
+                        },
+                        None => { }
                     }
+                }
             }
         }
 
@@ -208,7 +226,18 @@ for IslandActivationManager<N, LV, AV, M, II> {
         // remove every collision between pair of deactivated bodies
         do out.retain |o| {
             match *o {
-                RBRB(obj1, obj2, _) => obj1.is_active() || obj2.is_active()
+                RBRB(obj1, obj2, _) => obj1.is_active() || obj2.is_active(),
+                BallInSocket(bis)   => {
+                    let good = match bis.anchor1().body {
+                        None    => false,
+                        Some(b) => b.is_active()
+                    };
+
+                    good || match bis.anchor2().body {
+                            None    => false,
+                            Some(b) => b.is_active()
+                        }
+                }
             }
         }
 
@@ -217,24 +246,34 @@ for IslandActivationManager<N, LV, AV, M, II> {
          */
         let mut i = 0u;
         while i != out.len() { // we use a `while` loop because `out.len()` might change
+            let mut to_activate = None;
+
             match out[i] {
                 RBRB(obj1, obj2, _) => {
-                    let mut to_activate = None;
-
                     if !obj1.is_active() && obj1.can_move() { // FIXME: ? && obj1.is_activable() {
                         to_activate = Some(obj1);
                     }
                     else if !obj2.is_active() && obj2.can_move() { // FIXME: ? && obj2.is_activable() {
                         to_activate = Some(obj2);
                     }
-
-                    match to_activate {
+                },
+                BallInSocket(bis) => {
+                    match bis.anchor1().body {
                         None    => { },
-                        Some(o) => {
-                            // that is OK because we dont depend on indices any more
-                            self.activate(o, out);
-                        }
+                        Some(b) => if !b.is_active() && b.can_move() { to_activate = Some(b) }
                     }
+
+                    match bis.anchor2().body {
+                        None    => { },
+                        Some(b) => if !b.is_active() && b.can_move() { to_activate = Some(b) }
+                    }
+                }
+            }
+
+            match to_activate {
+                None    => { },
+                Some(o) => {
+                    self.activate(o, out);
                 }
             }
 

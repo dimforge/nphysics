@@ -29,7 +29,7 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone + ToStr,
                                     -> ~[Velocities<LV, AV>] {
     // initialize the solution with zeros...
     // FIXME: avoid allocation at each update?
-    let mut MJLambda = vec::from_elem(num_bodies, Velocities::new::<LV, AV>());
+    let mut MJLambda = vec::from_elem(num_bodies, Velocities::<LV, AV>::new());
 
     // ... and warm start if possible
     if !is_lambda_zero {
@@ -156,7 +156,7 @@ mod test {
 
             constraint.inv_projected_mass = 42.0;
 
-            constraint.hibound = Bounded::max_value::<f64>();
+            constraint.hibound = Bounded::max_value();
             constraint.lobound = 0.0;
 
             constraint.objective = 2.0 * (i as f64);

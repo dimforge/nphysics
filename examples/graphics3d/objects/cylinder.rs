@@ -23,7 +23,8 @@ impl Cylinder {
                color:  Vec3<f32>,
                window: @mut window::Window) -> Cylinder {
         let mut realign: dim3::Transform3d<f64> = One::one();
-        realign.rotate_by(&Vec3::new(0.0, 0.0, -Real::frac_pi_2::<f64>()));
+        let _frac_pi_2: f64 = Real::frac_pi_2();
+        realign.rotate_by(&Vec3::new(0.0f64, 0.0, -_frac_pi_2));
 
         let mut res = Cylinder {
             color:      color,

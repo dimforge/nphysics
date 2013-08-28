@@ -64,8 +64,8 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                   update_bf: bool)
                   -> @mut SweptBallMotionClamping<N, LV, AV, M, II, BF> {
         let res = @mut SweptBallMotionClamping {
-            objects:       HashMap::new(UintTWHash),
-            iobjects:      HashMap::new(UintTWHash),
+            objects:       HashMap::new(UintTWHash::new()),
+            iobjects:      HashMap::new(UintTWHash::new()),
             broad_phase:   bf,
             update_bf:     update_bf,
             interferences: ~[]
@@ -187,7 +187,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                         let mut dir        = movement.clone();
                         let distance       = dir.normalize();
 
-                        let _eps = Float::epsilon::<N>();
+                        let _eps: N = Float::epsilon();
                         for b in self.interferences.iter() {
                             if !managed::mut_ptr_eq(*b, o.value.body) {
                                 match **b {

@@ -28,10 +28,12 @@ impl<N: Real + Num + NumCast + Clone + ToStr,
 Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
     #[inline]
     fn volume(&self) -> N {
+        let _dim: Option<V> = None;
+
         match *self {
             Plane(_)        => Zero::zero(),
             Compound(c)     => {
-                let mut res = Zero::zero::<N>();
+                let mut res: N = Zero::zero();
 
                 for &(_, ref s) in c.shapes().iter() {
                     res = res + s.volume()
@@ -41,10 +43,10 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
             },
             Implicit(ref i) => {
                 match *i {
-                    Ball(ref b)     => ball_volume(b.radius(), Dim::dim::<V>().max(&2)),
+                    Ball(ref b)     => ball_volume(b.radius(), Dim::dim(_dim)),
                     Box(ref b)      => box_volume(&b.half_extents()),
-                    Cone(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim::<V>().max(&2)),
-                    Cylinder(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim::<V>().max(&2)),
+                    Cone(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(_dim)),
+                    Cylinder(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(_dim)),
                 }
             }
         }
@@ -55,9 +57,9 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
         match *self {
             Plane(ref p) => p.mass_properties(density),
             Compound(c)  => {
-                let mut mtot = Zero::zero::<N>();
-                let mut itot = Zero::zero::<II>();
-                let mut ctot = Zero::zero::<V>();
+                let mut mtot: N  = Zero::zero();
+                let mut itot: II = Zero::zero();
+                let mut ctot: V  = Zero::zero();
 
                 for &(ref m, ref s) in c.shapes().iter() {
                     let (mpart, cpart, ipart) = s.mass_properties(density);
@@ -84,41 +86,45 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
 
 #[inline]
 fn ball_volume<N: Real + Num + NumCast>(radius: N, dim: uint) -> N {
-    Real::pi::<N>() * radius.pow(&NumCast::from::<N, uint>(dim))
+    let _pi: N = Real::pi();
+    _pi * radius.pow(&NumCast::from(dim))
 }
 
 impl<N:  Real + Num + NumCast + Clone,
-     V:  Zero,
-     II: Zero + Indexable<(uint, uint), N> + Dim>
+     V:  Zero + Dim,
+     II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Ball<N> {
     #[inline]
     fn volume(&self) -> N {
-        ball_volume(self.radius(), Dim::dim::<II>().max(&2))
+        let _dim: Option<V> = None;
+        ball_volume(self.radius(), Dim::dim(_dim))
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let volume = ball_volume(self.radius(), Dim::dim::<II>().max(&2));
+        let _dim: Option<V> = None;
+        let volume = ball_volume(self.radius(), Dim::dim(_dim));
         let mass   = volume * *density;
 
-        let dim = Dim::dim::<II>().max(&2);
+        let _dim: Option<V> = None;
+        let dim = Dim::dim(_dim);
 
         if dim == 2 {
-            let diag = self.radius() * self.radius() * mass / NumCast::from::<N, float>(2.0);
+            let diag = self.radius() * self.radius() * mass / NumCast::from(2.0);
 
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), diag);
 
             (mass, Zero::zero(), res)
         }
         else if dim == 3 {
-            let _0   = Zero::zero::<N>();
-            let diag = NumCast::from::<N, float>(2.0 / 5.0) *
-                       mass                                 *
-                       self.radius()                        *
-                       self.radius();
+            let _0: N  = Zero::zero();
+            let diag: N = mass                              *
+                          NumCast::from(2.0 / 5.0)          *
+                          self.radius()                     *
+                          self.radius();
 
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), diag.clone());
             res.set((1, 1), diag.clone());
@@ -142,31 +148,32 @@ Volumetric<N, V, II> for Box<N, V> {
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let mass = box_volume(&self.half_extents()) * *density;
-        let dim  = Dim::dim::<V>();
+        let _dim: Option<V> = None;
+        let dim  = Dim::dim(_dim);
 
         if dim == 2 {
-            let _2   = NumCast::from::<N, float>(2.0);
-            let _i12 = NumCast::from::<N, float>(1.0 / 12.0);
-            let w    = _i12 * mass * _2 * _2;
-            let ix   = w * self.half_extents().at(0) * self.half_extents().at(0);
-            let iy   = w * self.half_extents().at(1) * self.half_extents().at(1);
+            let _2: N   = NumCast::from(2.0);
+            let _i12: N = NumCast::from(1.0 / 12.0);
+            let w       = _i12 * mass * _2 * _2;
+            let ix      = w * self.half_extents().at(0) * self.half_extents().at(0);
+            let iy      = w * self.half_extents().at(1) * self.half_extents().at(1);
 
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), ix + iy);
 
             (mass, Zero::zero(), res)
         }
         else if dim == 3 {
-            let _0   = Zero::zero::<N>();
-            let _2   = NumCast::from::<N, float>(2.0);
-            let _i12 = NumCast::from::<N, float>(1.0 / 12.0);
-            let w    = _i12 * mass * _2 * _2;
-            let ix   = w * self.half_extents().at(0) * self.half_extents().at(0);
-            let iy   = w * self.half_extents().at(1) * self.half_extents().at(1);
-            let iz   = w * self.half_extents().at(2) * self.half_extents().at(2);
+            let _0: N   = Zero::zero();
+            let _2: N   = NumCast::from(2.0);
+            let _i12: N = NumCast::from(1.0 / 12.0);
+            let w       = _i12 * mass * _2 * _2;
+            let ix      = w * self.half_extents().at(0) * self.half_extents().at(0);
+            let iy      = w * self.half_extents().at(1) * self.half_extents().at(1);
+            let iz      = w * self.half_extents().at(2) * self.half_extents().at(2);
 
-            let mut res  = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), iy + iz);
             res.set((1, 1), ix + iz);
@@ -185,26 +192,28 @@ fn box_volume<N:  Zero + One + NumCast + Num + Clone,
               V:  Clone + VecExt<N>>(
               half_extents: &V)
               -> N {
-    let mut res  = One::one::<N>();
+    let mut res: N = One::one();
 
     for half_extent in half_extents.iter() {
-        res = res * *half_extent * NumCast::from::<N, float>(2.0)
+        res = res * *half_extent * NumCast::from(2.0)
     }
 
     res
 }
 
 impl<N:  Zero + One + NumCast + Num + Real + Clone,
-     V:  Zero,
-     II: Zero + Dim + Indexable<(uint, uint), N>>
+     V:  Zero + Dim,
+     II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cylinder<N> {
     fn volume(&self) -> N {
-        let dim = Dim::dim::<II>().max(&2);
+        let _dim: Option<V> = None;
+        let dim = Dim::dim(_dim);
         cylinder_volume(&self.half_height(), &self.radius(), dim)
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let dim  = Dim::dim::<II>().max(&2);
+        let _dim: Option<V> = None;
+        let dim  = Dim::dim(_dim);
         let mass = cylinder_volume(&self.half_height(), &self.radius(), dim) * *density;
 
         if dim == 2 {
@@ -215,7 +224,7 @@ Volumetric<N, V, II> for Cylinder<N> {
             let ix      = w * self.half_height() * self.half_height();
             let iy      = w * self.radius() * self.radius();
 
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), ix + iy);
 
@@ -224,10 +233,9 @@ Volumetric<N, V, II> for Cylinder<N> {
         else if dim == 3 {
             let sq_radius = self.radius() * self.radius();
             let sq_height = self.half_height() * self.half_height() * NumCast::from(4.0f64);
-            let off_principal = mass * (NumCast::from::<N, f64>(3.0) * sq_radius + sq_height)
-                                / NumCast::from::<N, f64>(12.0);
+            let off_principal = mass * (sq_radius * NumCast::from(3.0) + sq_height) / NumCast::from(12.0);
 
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), mass * sq_radius / NumCast::from(2.0f64));
             res.set((1, 1), off_principal.clone());
@@ -260,22 +268,24 @@ fn cylinder_volume<N: Zero + One + NumCast + Num + Real + Clone>(
 }
 
 impl<N:  Zero + One + NumCast + Num + Real + Clone,
-     V:  Zero + Indexable<uint, N>,
-     II: Zero + Dim + Indexable<(uint, uint), N>>
+     V:  Zero + Indexable<uint, N> + Dim,
+     II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cone<N> {
     fn volume(&self) -> N {
-        let dim = Dim::dim::<II>().max(&2);
+        let _dim: Option<V> = None;
+        let dim = Dim::dim(_dim);
 
         cone_volume(&self.half_height(), &self.radius(), dim)
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let dim  = Dim::dim::<II>().max(&2);
+        let _dim: Option<V> = None;
+        let dim  = Dim::dim(_dim);
         let mass = cone_volume(&self.half_height(), &self.radius(), dim) * *density;
 
         if dim == 2 {
             // FIXME: not sure about that…
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set(
                 (0, 0),
@@ -283,7 +293,7 @@ Volumetric<N, V, II> for Cone<N> {
                               / NumCast::from(3.0f64)
             );
 
-            let mut center = Zero::zero::<V>();
+            let mut center: V = Zero::zero();
             center.set(0, -self.half_height() / NumCast::from(2.0f64));
 
             (mass, center, res)
@@ -292,18 +302,18 @@ Volumetric<N, V, II> for Cone<N> {
             let m_sq_radius = mass * self.radius() * self.radius();
             let m_sq_height = mass * self.half_height() * self.half_height() *
                                      NumCast::from(4.0f64);
-            let off_principal = NumCast::from::<N, f64>(3.0 / 20.0) * m_sq_radius +
-                                NumCast::from::<N, f64>(3.0 / 5.0)  * m_sq_height;
+            let off_principal = m_sq_radius * NumCast::from(3.0 / 20.0) +
+                                m_sq_height * NumCast::from(3.0 / 5.0);
 
-            let principal = NumCast::from::<N, f64>(3.0 / 10.0) * m_sq_radius;
+            let principal = m_sq_radius * NumCast::from(3.0 / 10.0);
 
-            let mut res = Zero::zero::<II>();
+            let mut res: II = Zero::zero();
 
             res.set((0, 0), principal);
             res.set((1, 1), off_principal.clone());
             res.set((2, 2), off_principal);
 
-            let mut center = Zero::zero::<V>();
+            let mut center: V = Zero::zero();
             center.set(0, -self.half_height() / NumCast::from(2.0f64));
 
             (mass, center, res)

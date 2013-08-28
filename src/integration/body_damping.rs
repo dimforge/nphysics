@@ -7,8 +7,9 @@ use integration::integrator::Integrator;
 use signal::signal::SignalEmiter;
 
 pub struct BodyDamping<N, LV, AV, M, II> {
-    priv damping_factor: N,
-    priv objects:        HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>
+    priv linear_damping:  N,
+    priv angular_damping: N,
+    priv objects:         HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>
 }
 
 impl<N:  'static + Clone,
@@ -18,12 +19,14 @@ impl<N:  'static + Clone,
      II: 'static + Clone>
 BodyDamping<N, LV, AV, M, II> {
     #[inline]
-    pub fn new<C>(events:         &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
-                  damping_factor: N)
+    pub fn new<C>(events:          &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
+                  linear_damping:  N,
+                  angular_damping: N)
                   -> @mut BodyDamping<N, LV, AV, M, II> {
         let res = @mut BodyDamping {
-            damping_factor: damping_factor,
-            objects:        HashMap::new(UintTWHash)
+            linear_damping:  linear_damping,
+            angular_damping: angular_damping,
+            objects:         HashMap::new(UintTWHash::new())
         };
 
         events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));
@@ -49,9 +52,9 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
         for o in self.objects.elements().iter() {
             match *o.value {
                 RigidBody(rb) => {
-                    let new_lin = rb.lin_vel() * self.damping_factor;
+                    let new_lin = rb.lin_vel() * self.linear_damping;
                     rb.set_lin_vel(new_lin);
-                    let new_ang = rb.ang_vel() * self.damping_factor;
+                    let new_ang = rb.ang_vel() * self.angular_damping;
                     rb.set_ang_vel(new_ang);
                 },
                 SoftBody(_) => {

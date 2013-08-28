@@ -117,9 +117,10 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64
     let box1 = Box::new(Vec2::new(5.0f64, 0.75));
     let box2 = Box::new(Vec2::new(0.75f64, 5.0));
 
-    let delta1 = One::one::<dim2::Transform2d<f64>>().translated(&Vec2::new(0.0, -5.0));
-    let delta2 = One::one::<dim2::Transform2d<f64>>().translated(&Vec2::new(-5.0, 0.0));
-    let delta3 = One::one::<dim2::Transform2d<f64>>().translated(&Vec2::new(5.0,  0.0));
+    let _1: dim2::Transform2d<f64> = One::one();
+    let delta1 = _1.translated(&Vec2::new(0.0, -5.0));
+    let delta2 = _1.translated(&Vec2::new(-5.0, 0.0));
+    let delta3 = _1.translated(&Vec2::new(5.0,  0.0));
 
     let mut cross_geoms = ~[];
     cross_geoms.push((delta1, DefaultGeom::new_box(box1)));

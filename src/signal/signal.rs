@@ -10,8 +10,8 @@ pub struct SignalEmiter<N, O, C> {
 impl<N, O, C> SignalEmiter<N, O, C> {
     pub fn new() -> SignalEmiter<N, O, C> {
         SignalEmiter {
-            body_activated_handlers:   HashMap::new(UintTWHash),
-            body_deactivated_handlers: HashMap::new(UintTWHash)
+            body_activated_handlers:   HashMap::new(UintTWHash::new()),
+            body_deactivated_handlers: HashMap::new(UintTWHash::new())
         }
     }
 }

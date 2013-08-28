@@ -88,9 +88,7 @@ pub fn displacement<M: Translation<LV> + Rotation<AV> + One + ToStr,
                     lin_vel:        &LV,
                     ang_vel:        &AV)
                     -> M {
-    let mut res = rotation::rotated_wrt_point(&One::one::<M>(),
-                                              &(ang_vel * dt),
-                                              center_of_mass);
+    let mut res: M = rotation::rotated_wrt_point(&One::one(), &(ang_vel * dt), center_of_mass);
 
     res.translate_by(&(lin_vel * dt));
 

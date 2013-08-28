@@ -131,8 +131,9 @@ RigidBody<N, LV, AV, M, II> {
                           .inverse()
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
+                    let _1: N = One::one();
                     (
-                        One::one::<N>() / m,
+                        _1 / m,
                         c,
                         ii_wrt_com
                     )
