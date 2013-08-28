@@ -73,5 +73,5 @@ The libraries needed to compile the physics engine are:
 
 The libraries needed to compile the examples are:
 
-* [kiss3d](https://github.com/sebcrozet/ncollide): the 3d graphics engine.
+* [kiss3d](https://github.com/sebcrozet/kiss3d): the 3d graphics engine.
 * [rust-sfml](https://github.com/JeremyLetang/rust-sfml): the 2d graphics engine.
