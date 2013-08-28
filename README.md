@@ -1,7 +1,8 @@
 nphysics
 ========
-**nphysics** is a 2 and 3-dimensional multiphysics engine for games and
-animations.
+**nphysics** is a 2 and 3-dimensional multiphysics engine for games and animations. It uses
+[ncollide](https://github.com/sebcrozet/ncollide) for collision detection, and
+[nalgebra](https://github.com/sebcrozet/nalgebra) for vector/matrix math.
 
 Its most distinctive feature is its genericity wrt the simulation
 dimension. That means you can use it for both 2-dimensional multiphysics and
