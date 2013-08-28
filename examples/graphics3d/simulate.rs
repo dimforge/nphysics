@@ -1,17 +1,21 @@
 use std::os;
-use std::num::One;
+use std::num::{Zero, One};
 use extra::time;
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotate;
+use nalgebra::traits::transformation::Transform;
 use nalgebra::vec::{Vec2, Vec3};
 use kiss3d::window;
 use kiss3d::event;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::box::Box;
 use ncollide::ray::ray::Ray;
+use ncollide::ray::ray_plane;
 use nphysics::aliases::dim3;
 use nphysics::object::body;
 use nphysics::detection::constraint::{RBRB, BallInSocket};
+use nphysics::detection::joint::ball_in_socket::BallInSocket;
+use nphysics::detection::joint::anchor::Anchor;
 use nphysics::object::implicit_geom::DefaultGeom;
 use nphysics::object::rigid_body::{RigidBody, Dynamic};
 use nphysics::object::body::RigidBody;
@@ -27,6 +31,7 @@ fn usage(exe_name: &str) {
     println("    2      - launch a cube.");
     println("    3      - launch a fast cube using continuous collision detection.");
     println("    TAB    - switch camera mode (first-person or arc-ball).");
+    println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
     println("    arrows - move around when in first-person mode.");
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
@@ -34,7 +39,8 @@ fn usage(exe_name: &str) {
 pub fn simulate(builder: ~fn(&mut GraphicsManager)
                 -> (dim3::World3d<f64>,
                     @mut dim3::DBVTCollisionDetector3d<f64>,
-                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>)) {
+                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>,
+                    @mut dim3::JointManager3d<f64>)) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -49,11 +55,10 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
         let graphics = @mut GraphicsManager::new(window);
 
-        let (p, ray_caster, ccd_manager) = builder(graphics);
+        let (p, ray_caster, ccd_manager, joints) = builder(graphics);
         let physics = @mut p;
 
         let ray_to_draw    = @mut None;
-        // let grabbed_object = @mut SceneNode;
 
         do window.set_loop_callback {
             let before = time::precise_time_s();
@@ -99,10 +104,22 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
         let cursor_pos = @mut Vec2::new(0.0f64, 0.0);
         let grabbed_object: @mut Option<@mut dim3::RigidBody3d<f64>> = @mut None;
+        let grabbed_object_joint: @mut Option<@mut dim3::BallInSocket3d<f64>> = @mut None;
+        let grabbed_object_plane: @mut (Vec3<f64>, Vec3<f64>) = @mut (Zero::zero(), Zero::zero());
+
         do window.set_mouse_callback |event| {
             match *event {
                 event::ButtonPressed(_, modifier) => {
                     if modifier == 2 { // CTRL
+                        match *grabbed_object {
+                            Some(rb) => {
+                                for sn in graphics.rigid_body_to_scene_node(rb).unwrap().iter() {
+                                    sn.unselect()
+                                }
+                            },
+                            None => { }
+                        }
+
                         let (pos, dir) = window.unproject(&*cursor_pos);
                         let ray = Ray::new(pos, dir);
 
@@ -134,6 +151,20 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                         match *grabbed_object {
                             Some(rb) => {
                                 for sn in graphics.rigid_body_to_scene_node(rb).unwrap().iter() {
+                                    match *grabbed_object_joint {
+                                        Some(j) => joints.remove_ball_in_socket(j),
+                                        None    => { }
+                                    }
+
+                                    let attach2 = ray.orig + ray.dir * mintoi;
+                                    let attach1 = rb.transform_ref().inv_transform(&attach2);
+                                    let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
+                                    let anchor2 = Anchor::new(None, attach2);
+                                    let joint   = @mut BallInSocket::new(anchor1, anchor2);
+                                    *grabbed_object_joint = Some(joint);
+                                    *grabbed_object_plane = (attach2, -ray.dir);
+                                    joints.add_ball_in_socket(joint);
+                                    // add a joint
                                     sn.select()
                                 }
                             },
@@ -156,13 +187,35 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                         None => { }
                     }
 
-                    *grabbed_object = None;
+                    match *grabbed_object_joint {
+                        Some(j) => joints.remove_ball_in_socket(j),
+                        None    => { }
+                    }
+
+                    *grabbed_object       = None;
+                    *grabbed_object_joint = None;
 
                     true
                 },
                 event::CursorPos(x, y) => {
                     cursor_pos.x = x as f64;
                     cursor_pos.y = y as f64;
+
+                    // update the joint
+                    match *grabbed_object_joint {
+                        Some(j) => {
+                            let (pos, dir) = window.unproject(&*cursor_pos);
+                            let (ref ppos, ref pdir) = *grabbed_object_plane;
+
+                            match ray_plane::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
+                                Some(inter) =>
+                                    j.set_local2(pos + dir * inter),
+                                None => { }
+                            }
+
+                        },
+                        None => { }
+                    }
 
                     true
                 },

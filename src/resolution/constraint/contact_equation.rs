@@ -58,29 +58,13 @@ pub struct CorrectionParameters<N> {
     rest_eps:        N
 }
 
-pub fn fill_first_order_contact_equation<LV: Vec<N> + Cross<AV> + Clone,
-                                         AV: Vec<N>,
-                                         N:  Num + Orderable + Bounded + NumCast + Clone + ToStr,
-                                         M:  Transform<LV> + Rotate<LV> + One,
-                                         II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
-                                         dt:          N,
-                                         coll:        &Contact<N, LV>,
-                                         rb1:         &RigidBody<N, LV, AV, M, II>,
-                                         rb2:         &RigidBody<N, LV, AV, M, II>,
-                                         constraint:  &mut VelocityConstraint<LV, AV, N>,
-                                         correction:  &CorrectionParameters<N>) {
-    let center    = (coll.world1 + coll.world2) / NumCast::from(2.0f64);
-    let rot_axis1 = (center - *rb1.center_of_mass()).cross(&-coll.normal);
-    let rot_axis2 = (center - *rb2.center_of_mass()).cross(&coll.normal);
-
-    fill_constraint_geometry(coll.normal.clone(), rot_axis1, rot_axis2, rb1, rb2, constraint);
-
-    /*
-     * Fill indice
-     */
-    constraint.id1 = rb1.index();
-    constraint.id2 = rb2.index();
-
+pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
+                                      AV: Vec<N>,
+                                      N:  Num + Orderable + Bounded + NumCast + Clone + ToStr>(
+                                      dt:          N,
+                                      coll:        &Contact<N, LV>,
+                                      constraint:  &mut VelocityConstraint<LV, AV, N>,
+                                      correction:  &CorrectionParameters<N>) {
     /*
      * Fill b
      */
@@ -95,32 +79,26 @@ pub fn fill_first_order_contact_equation<LV: Vec<N> + Cross<AV> + Clone,
      * Reset forces
      */
     constraint.impulse = Zero::zero();
-
-    /*
-     * Fill bounds
-     */
-    constraint.lobound = Zero::zero();
-    constraint.hibound = Bounded::max_value();
 }
 
 // FIXME: note that removing the Clone constraint on N leads to an ICE
-pub fn fill_second_order_contact_equation<LV: VecExt<N> + Cross<AV> + Clone,
-                                          AV: Vec<N> + Clone,
-                                          N:  Num + Orderable + Bounded + Signed + Clone +
-                                              NumCast + ToStr,
-                                          M:  Transform<LV> + Rotate<LV> + One,
-                                          II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> +
-                                              Clone>(
-                                          dt:           N,
-                                          coll:         &Contact<N, LV>,
-                                          rb1:          &RigidBody<N, LV, AV, M, II>,
-                                          rb2:          &RigidBody<N, LV, AV, M, II>,
-                                          rconstraint:  &mut VelocityConstraint<LV, AV, N>,
-                                          idr:          uint,
-                                          fconstraints: &mut [VelocityConstraint<LV, AV, N>],
-                                          idf:          uint,
-                                          cache:        &[N],
-                                          correction:   &CorrectionParameters<N>) {
+pub fn fill_second_order_equation<LV: VecExt<N> + Cross<AV> + Clone,
+                                  AV: Vec<N> + Clone,
+                                  N:  Num + Orderable + Bounded + Signed + Clone +
+                                      NumCast + ToStr,
+                                  M:  Transform<LV> + Rotate<LV> + One,
+                                  II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> +
+                                      Clone>(
+                                  dt:           N,
+                                  coll:         &Contact<N, LV>,
+                                  rb1:          &RigidBody<N, LV, AV, M, II>,
+                                  rb2:          &RigidBody<N, LV, AV, M, II>,
+                                  rconstraint:  &mut VelocityConstraint<LV, AV, N>,
+                                  idr:          uint,
+                                  fconstraints: &mut [VelocityConstraint<LV, AV, N>],
+                                  idf:          uint,
+                                  cache:        &[N],
+                                  correction:   &CorrectionParameters<N>) {
     let restitution = rb1.restitution() * rb2.restitution();
 
     let center = (coll.world1 + coll.world2) / NumCast::from(2.0f64);
@@ -170,42 +148,48 @@ pub fn fill_second_order_contact_equation<LV: VecExt<N> + Cross<AV> + Clone,
     }
 }
 
-fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
-                            AV: Vec<N>,
-                            N:  Num + Clone,
-                            M:  Transform<LV> + Rotate<LV> + One,
-                            II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
-                            normal:     LV,
-                            rot_axis1:  AV,
-                            rot_axis2:  AV,
-                            rb1:        &RigidBody<N, LV, AV, M, II>,
-                            rb2:        &RigidBody<N, LV, AV, M, II>,
-                            constraint: &mut VelocityConstraint<LV, AV, N>) {
+pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
+                                AV: Vec<N>,
+                                N:  Num + Clone,
+                                M:  Transform<LV> + Rotate<LV> + One,
+                                II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
+                                normal:     LV,
+                                rot_axis1:  AV,
+                                rot_axis2:  AV,
+                                rb1:        Option<&RigidBody<N, LV, AV, M, II>>,
+                                rb2:        Option<&RigidBody<N, LV, AV, M, II>>,
+                                constraint: &mut VelocityConstraint<LV, AV, N>) {
     constraint.normal             = normal;
     constraint.inv_projected_mass = Zero::zero();
 
-    if rb1.can_move() {
-        // rotation axis
-        constraint.weighted_normal1   = constraint.normal * rb1.inv_mass();
-        constraint.rot_axis1          = rot_axis1;
+    match rb1 {
+        Some(rb) => {
+            // rotation axis
+            constraint.weighted_normal1   = constraint.normal * rb.inv_mass();
+            constraint.rot_axis1          = rot_axis1;
 
-        constraint.weighted_rot_axis1 = rb1.inv_inertia().transform(&constraint.rot_axis1);
+            constraint.weighted_rot_axis1 = rb.inv_inertia().transform(&constraint.rot_axis1);
 
-        constraint.inv_projected_mass = constraint.inv_projected_mass +
-            constraint.normal.dot(&constraint.weighted_normal1) +
-            constraint.rot_axis1.dot(&constraint.weighted_rot_axis1);
+            constraint.inv_projected_mass = constraint.inv_projected_mass +
+                constraint.normal.dot(&constraint.weighted_normal1) +
+                constraint.rot_axis1.dot(&constraint.weighted_rot_axis1);
+        },
+        None => { }
     }
 
-    if rb2.can_move() {
-        // rotation axis
-        constraint.weighted_normal2   = constraint.normal * rb2.inv_mass();
-        constraint.rot_axis2          = rot_axis2;
+    match rb2 {
+        Some(rb) => {
+            // rotation axis
+            constraint.weighted_normal2   = constraint.normal * rb.inv_mass();
+            constraint.rot_axis2          = rot_axis2;
 
-        constraint.weighted_rot_axis2 = rb2.inv_inertia().transform(&constraint.rot_axis2);
+            constraint.weighted_rot_axis2 = rb.inv_inertia().transform(&constraint.rot_axis2);
 
-        constraint.inv_projected_mass = constraint.inv_projected_mass +
-            constraint.normal.dot(&constraint.weighted_normal2) +
-            constraint.rot_axis2.dot(&constraint.weighted_rot_axis2);
+            constraint.inv_projected_mass = constraint.inv_projected_mass +
+                constraint.normal.dot(&constraint.weighted_normal2) +
+                constraint.rot_axis2.dot(&constraint.weighted_rot_axis2);
+        },
+        None => { }
     }
 
     let _1: N = One::one();
@@ -232,7 +216,9 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
     let rot_axis1 = (center - *rb1.center_of_mass()).cross(&-normal);
     let rot_axis2 = (center - *rb2.center_of_mass()).cross(&normal);
 
-    fill_constraint_geometry(normal, rot_axis1, rot_axis2, rb1, rb2, constraint);
+    let opt_rb1 = if rb1.can_move() { Some(rb1) } else { None };
+    let opt_rb2 = if rb2.can_move() { Some(rb2) } else { None };
+    fill_constraint_geometry(normal, rot_axis1, rot_axis2, opt_rb1, opt_rb2, constraint);
 
     /*
      * Fill indice
@@ -243,19 +229,13 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
     /*
      * correction amount
      */
-    constraint.objective = Zero::zero();
-
-    if rb1.can_move() {
-        constraint.objective = constraint.objective +
-            - (rb1.lin_vel() + rb1.lin_acc() * dt).dot(&constraint.normal)
-            + (rb1.ang_vel() + rb1.ang_acc() * dt).dot(&constraint.rot_axis1);
-    }
-
-    if rb2.can_move() {
-        constraint.objective = constraint.objective +
-            (rb2.lin_vel() + rb2.lin_acc() * dt).dot(&constraint.normal)
-            + (rb2.ang_vel() + rb2.ang_acc() * dt).dot(&constraint.rot_axis2);
-    }
+    constraint.objective = relative_velocity(
+        opt_rb1,
+        opt_rb2,
+        &constraint.normal,
+        &constraint.rot_axis1,
+        &constraint.rot_axis2,
+        &dt);
 
     if constraint.objective < -correction.rest_eps {
         constraint.objective = constraint.objective + restitution * constraint.objective
@@ -278,4 +258,37 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
      */
     constraint.lobound = lobound;
     constraint.hibound = hibound;
+}
+
+pub fn relative_velocity<N:  Num,
+                         LV: Vec<N> + Clone,
+                         AV: Vec<N> + Clone,
+                         M,
+                         II>(
+                         rb1:       Option<&RigidBody<N, LV, AV, M, II>>,
+                         rb2:       Option<&RigidBody<N, LV, AV, M, II>>,
+                         normal:    &LV,
+                         rot_axis1: &AV,
+                         rot_axis2: &AV,
+                         dt:        &N)
+                         -> N {
+    let mut dvel: N = Zero::zero();
+
+    match rb1 {
+        Some(rb) => {
+            dvel = dvel - (rb.lin_vel() + rb.lin_acc() * *dt).dot(normal)
+                        + (rb.ang_vel() + rb.ang_acc() * *dt).dot(rot_axis1);
+        },
+        None => { }
+    }
+
+    match rb2 {
+        Some(rb) => {
+            dvel = dvel + (rb.lin_vel() + rb.lin_acc() * *dt).dot(normal)
+                        + (rb.ang_vel() + rb.ang_acc() * *dt).dot(rot_axis2);
+        },
+        None => { }
+    }
+
+    dvel
 }

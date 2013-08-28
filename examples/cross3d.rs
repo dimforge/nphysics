@@ -27,8 +27,9 @@ use nphysics::world::world::World;
 use nphysics::aliases::dim3;
 use nphysics::integration::body_force_generator::BodyForceGenerator;
 use nphysics::integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
-use nphysics::detection::island_activation_manager::IslandActivationManager;
 use nphysics::integration::swept_ball_motion_clamping::SweptBallMotionClamping;
+use nphysics::detection::island_activation_manager::IslandActivationManager;
+use nphysics::detection::joint::joint_manager::JointManager;
 use nphysics::detection::collision::bodies_bodies::{BodiesBodies, Dispatcher};
 use nphysics::resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
@@ -43,7 +44,8 @@ fn main() {
 pub fn cross3d(graphics: &mut GraphicsManager)
                 -> (dim3::World3d<f64>,
                     @mut dim3::DBVTCollisionDetector3d<f64>,
-                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>) {
+                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>,
+                    @mut dim3::JointManager3d<f64>) {
     /*
      * Setup the physics world
      */
@@ -72,6 +74,8 @@ pub fn cross3d(graphics: &mut GraphicsManager)
     let detector = BodiesBodies::new(events, broad_phase, false);
     // Deactivation
     let sleep = IslandActivationManager::new(events, 1.0, 0.01);
+    // Joints
+    let joints = JointManager::new(events);
 
     /*
      * For constraints resolution
@@ -86,6 +90,7 @@ pub fn cross3d(graphics: &mut GraphicsManager)
     world.add_integrator(integrator);
     world.add_integrator(ccd);
     world.add_detector(detector);
+    world.add_detector(joints);
     world.add_detector(sleep);
     world.add_solver(solver);
 
@@ -161,5 +166,5 @@ pub fn cross3d(graphics: &mut GraphicsManager)
      */
     graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
 
-    (world, detector, ccd)
+    (world, detector, ccd, joints)
 }

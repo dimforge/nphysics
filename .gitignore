@@ -1,6 +1,7 @@
 *.swp
 *.swo
 *.html
+*.so
 lib
 examples/lib
 examples/bin

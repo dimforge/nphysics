@@ -19,6 +19,8 @@ use integration::body_damping::BodyDamping;
 use integration::swept_ball_motion_clamping::SweptBallMotionClamping;
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector, BodiesBodies};
 use detection::constraint::Constraint;
+use detection::joint::joint_manager::JointManager;
+use detection::joint::ball_in_socket::BallInSocket;
 use detection::island_activation_manager::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use object::implicit_geom::DefaultGeom;
@@ -55,14 +57,20 @@ pub type DBVTBroadPhase3d<N> = DBVTBroadPhase<N, LV<N>, Body3d<N>, AABB3d<N>, Di
 pub type PairwiseDetector3d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type DBVTCollisionDetector3d<N> = BodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>, DBVTBroadPhase3d<N>>;
 pub type DBVTSweptBallMotionClamping3d<N> = SweptBallMotionClamping<N, LV<N>, AV<N>, M<N>, II<N>, DBVTBroadPhase3d<N>>;
+pub type JointManager3d<N> = JointManager<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type IslandActivationManager3d<N> = IslandActivationManager<N, LV<N>, AV<N>, M<N>, II<N>>; 
 
-pub type ContactSolver3d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type ContactSolver3d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>, Mat3<N>>;
 
 pub type Constraint3d<N> = Constraint<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBody3d<N> = RigidBody<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type Body3d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type World3d<N> = World<N, Body3d<N>, Constraint3d<N>>;
+
+/*
+ * Joints
+ */
+pub type BallInSocket3d<N> = BallInSocket<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Num + Algebraic + Clone>

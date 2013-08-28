@@ -7,7 +7,8 @@ use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation;
 use nalgebra::traits::rotation::{Rotate, Rotation};
 use nalgebra::traits::transformation::{Transform, Transformation};
-use nalgebra::traits::cross::Cross;
+use nalgebra::traits::cross::{Cross, CrossMatrix};
+use nalgebra::traits::row::Row;
 use nalgebra::traits::vector::{Vec, VecExt};
 use detection::constraint::{Constraint, RBRB, BallInSocket};
 use object::rigid_body::RigidBody;
@@ -16,12 +17,13 @@ use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
 use resolution::constraint::contact_equation::{CorrectionMode, CorrectionParameters};
+use resolution::constraint::ball_in_socket_equation;
 use resolution::solver::Solver;
 use pgs = resolution::constraint::projected_gauss_seidel_solver;
 use resolution::constraint::impulse_cache::ImpulseCache;
 
 
-pub struct AccumulatedImpulseSolver<N, LV, AV, M, II> {
+pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     priv correction:              CorrectionParameters<N>,
     priv cache:                   ImpulseCache<N, LV>,
     priv num_first_order_iter:    uint,
@@ -30,19 +32,20 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II> {
     priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
 }
 
-impl<LV:  VecExt<N> + Cross<AV> + IterBytes + Clone + ToStr,
+impl<LV:  VecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
      AV:  Vec<N> + ToStr + Clone,
      N:   Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
-     II:  Transform<AV> + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
-AccumulatedImpulseSolver<N, LV, AV, M, II> {
+     II:  Transform<AV> + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone,
+     M2:  Row<AV>>
+AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     pub fn new(step:                  N,
                correction_mode:       CorrectionMode<N>,
                rest_eps:              N,
                num_first_order_iter:  uint,
                num_second_order_iter: uint)
-               -> AccumulatedImpulseSolver<N, LV, AV, M, II> {
+               -> AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
         let _dim: Option<LV> = None;
         AccumulatedImpulseSolver {
             num_first_order_iter:    num_first_order_iter,
@@ -59,6 +62,15 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
     }
 
     fn resize_buffers(&mut self, num_restitution_equations: uint, num_friction_equations: uint) {
+        fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {
+            if buff.len() < size {
+                buff.grow_set(size - 1, &val, val.clone());
+            }
+            else {
+                buff.truncate(size)
+            }
+        }
+
         resize_buffer(&mut self.restitution_constraints,
                       num_restitution_equations,
                       VelocityConstraint::new());
@@ -68,83 +80,41 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                       VelocityConstraint::new());
     }
 
-    fn first_order_solve(&mut self,
-                         dt:          N,
-                         constraints: &[Constraint<N, LV, AV, M, II>],
-                         bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
-        let num_friction_equations    = 0;
-        let num_restitution_equations = constraints.len();
-
-        let needs_correction = do constraints.iter().any |constraint| {
-            match *constraint {
-                RBRB(_, _, ref c) => c.depth >= self.correction.corr_mode.min_depth_for_pos_corr(),
-                _ => false // no first order resolution for joints
-            }
-        };
-
-        if needs_correction {
-            self.resize_buffers(num_restitution_equations, num_friction_equations);
-
-            for (i, (_, &(ci, _))) in self.cache.hash().iter().enumerate() {
-                match constraints[ci] {
-                    RBRB(rb1, rb2, ref c) => {
-                        contact_equation::fill_first_order_contact_equation(
-                            dt.clone(),
-                            c,
-                            rb1.to_rigid_body_or_fail(), rb2.to_rigid_body_or_fail(),
-                            &mut self.restitution_constraints[i],
-                            &self.correction);
-                    },
-                    _ => { }
-                }
-            }
-
-            // FIXME: parametrize by the resolution algorithm?
-            let mut MJLambda = pgs::projected_gauss_seidel_solve(
-                self.restitution_constraints,
-                [],
-                bodies.len(),
-                self.num_first_order_iter,
-                true);
-
-            for &b in bodies.iter() {
-                let i = b.index();
-
-                MJLambda[i].lv = MJLambda[i].lv * dt;
-                MJLambda[i].av = MJLambda[i].av * dt;
-
-                let center   = &b.center_of_mass().clone();
-                let _1: M    = One::one();
-                let delta: M = rotation::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
-                b.transform_by(&delta);
-            }
-        }
-    }
-
-    fn second_order_solve(&mut self,
-                          dt:          N,
-                          constraints: &[Constraint<N, LV, AV, M, II>],
-                          joints:      &[uint],
-                          bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
+    fn do_solve(&mut self,
+                dt:          N,
+                constraints: &[Constraint<N, LV, AV, M, II>],
+                joints:      &[uint],
+                bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
         let _dim: Option<LV> = None;
         let num_friction_equations    = (Dim::dim(_dim) - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
+        let mut num_joint_equations = 0;
 
-        self.resize_buffers(num_restitution_equations, num_friction_equations);
+        for i in joints.iter() {
+            match constraints[*i] {
+                BallInSocket(_) => {
+                    let _dim: Option<LV> = None;
+                    num_joint_equations = num_joint_equations + Dim::dim(_dim)
+                },
+                _ => { }
+            }
+        }
 
-        let mut offset = 0;
+        self.resize_buffers(num_restitution_equations + num_joint_equations, num_friction_equations);
+
+        let mut friction_offset = 0;
 
         for (i, (_, &(ci, imp))) in self.cache.hash().iter().enumerate() {
             match constraints[ci] {
                 RBRB(rb1, rb2, ref c) => {
-                    contact_equation::fill_second_order_contact_equation(
+                    contact_equation::fill_second_order_equation(
                         dt.clone(),
                         c,
                         rb1.to_rigid_body_or_fail(), rb2.to_rigid_body_or_fail(),
                         &mut self.restitution_constraints[i],
                         i,
                         self.friction_constraints,
-                        offset,
+                        friction_offset,
                         self.cache.impulsions_at(imp),
                         &self.correction);
                 },
@@ -152,21 +122,23 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             }
 
             let _dim: Option<LV> = None;
-            offset = offset + Dim::dim(_dim) - 1;
+            friction_offset = friction_offset + Dim::dim(_dim) - 1;
         }
 
+        let mut joint_offset = num_restitution_equations;
         for i in joints.iter() {
             match constraints[*i] {
-                BallInSocket(_) =>
-                    fail!("Not yet implemented."),
-                    // ball_in_socket_equation::fill_second_order_contact_equation(
-                    //     dt.clone(),
-                    //     bis,
-                    //     &mut self.restitution_constraints[i], // XXX
-                    //     i,
-                    //     offset,
-                    //     self.correction
-                    // ),
+                BallInSocket(bis) => {
+                    ball_in_socket_equation::fill_second_order_equation(
+                        dt.clone(),
+                        bis,
+                        self.restitution_constraints.mut_slice_from(joint_offset), // XXX
+                        &self.correction.corr_mode
+                    );
+
+                    let _dim: Option<LV> = None;
+                    joint_offset = joint_offset + Dim::dim(_dim);
+                },
                 _ => fail!("Trying to resolve an unknown joint.")
             }
         }
@@ -178,6 +150,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             bodies.len(),
             self.num_second_order_iter,
             false);
+
+        // FIXME: this is _so_ uggly!
+        self.resize_buffers(num_restitution_equations, num_friction_equations);
 
         for &b in bodies.iter() {
             let i = b.index();
@@ -206,16 +181,65 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
             let _dim: Option<LV> = None;
             *kv = (kv.first(), offset + i * Dim::dim(_dim));
         }
+
+        /*
+         * first order resolution
+         */
+        let needs_correction = !self.correction.corr_mode.pos_corr_factor().is_zero() &&
+            do constraints.iter().any |constraint| {
+            match *constraint {
+                RBRB(_, _, ref c) => c.depth >= self.correction.corr_mode.min_depth_for_pos_corr(),
+                _ => false // no first order resolution for joints
+            }
+        };
+
+        if needs_correction {
+            self.resize_buffers(num_restitution_equations, num_friction_equations);
+
+            for (i, (_, &(ci, _))) in self.cache.hash().iter().enumerate() {
+                match constraints[ci] {
+                    RBRB(_, _, ref c) => {
+                        contact_equation::reinit_to_first_order_equation(
+                            dt.clone(),
+                            c,
+                            &mut self.restitution_constraints[i],
+                            &self.correction);
+                    },
+                    _ => { }
+                }
+            }
+
+            // FIXME: parametrize by the resolution algorithm?
+            let mut MJLambda = pgs::projected_gauss_seidel_solve(
+                self.restitution_constraints,
+                [],
+                bodies.len(),
+                self.num_first_order_iter,
+                true);
+
+            for &b in bodies.iter() {
+                let i = b.index();
+
+                MJLambda[i].lv = MJLambda[i].lv * dt;
+                MJLambda[i].av = MJLambda[i].av * dt;
+
+                let center   = &b.center_of_mass().clone();
+                let _1: M    = One::one();
+                let delta: M = rotation::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
+                b.transform_by(&delta);
+            }
+        }
     }
 }
 
-impl<LV: VecExt<N> + Cross<AV> + IterBytes + Clone + ToStr,
+impl<LV: VecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
      AV: Vec<N> + ToStr + Clone,
      N:  Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
-     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>>
+     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>,
+     M2: Row<AV>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
-AccumulatedImpulseSolver<N, LV, AV, M, II> {
+AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>]) {
         // FIXME: bodies index assignment is very uggly
         let mut bodies = ~[];
@@ -286,13 +310,16 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                 }
             }
 
-            for c in constraints.iter() {
+            // FIXME: avoid allocation
+            let mut joints = ~[];
+            for (i, c) in constraints.iter().enumerate() {
                 match *c {
                     RBRB(a, b, _) => {
                         set_body_index(a, &mut bodies, &mut id);
                         set_body_index(b, &mut bodies, &mut id);
                     },
                     BallInSocket(bis) => {
+                        joints.push(i);
                         match bis.anchor1().body {
                             Some(b) => set_body_index(b, &mut bodies, &mut id),
                             None => { }
@@ -306,24 +333,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II> {
                 }
             }
 
-            // FIXME []
-            self.second_order_solve(dt.clone(), constraints, [], bodies);
-            if !self.correction.corr_mode.pos_corr_factor().is_zero() {
-                self.first_order_solve(dt, constraints, bodies)
-            }
+            self.do_solve(dt.clone(), constraints, joints, bodies);
             self.cache.swap();
         }
     }
 
     #[inline]
     fn priority(&self) -> f64 { 0.0 }
-}
-
-fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {
-    if buff.len() < size {
-        buff.grow_set(size - 1, &val, val.clone());
-    }
-    else {
-        buff.truncate(size)
-    }
 }

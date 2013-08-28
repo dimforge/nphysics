@@ -43,6 +43,9 @@ To build the examples to the `bin` folder:
     make examples_deps
     make examples
 
+
+Use `./your_favorite_example_here --help` to see all the cool stuffs you can do.
+
 ## Features
 - static and dynamic rigid bodies
 - common convex primitives: cone, box, ball, cylinder
@@ -51,6 +54,7 @@ To build the examples to the `bin` folder:
 - island based sleeping (objects deactivation)
 - ray casting
 - swept sphere based continuous collision detection
+- ball-in-socket joint
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
@@ -59,7 +63,7 @@ become a grown up. Many missing features are because of missing features on
 
 - kinematic bodies
 - efficient signaling system
-- joints
+- more joints
 - soft-bodies (see https://github.com/natal/roft for a draft)
 - parallel pipeline
 - GPU-based pipeline

@@ -11,6 +11,8 @@ use ncollide::geom::cone::Cone;
 use integration::body_force_generator::BodyForceGenerator;
 use integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector};
+use detection::joint::joint_manager::JointManager;
+use detection::joint::ball_in_socket::BallInSocket;
 use detection::constraint::Constraint;
 use detection::island_activation_manager::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
@@ -41,17 +43,22 @@ pub type Geom2d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator2d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 
-// pub type CollisionDetector2d<N> = DBVTBodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type Dispatcher2d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type PairwiseDetector2d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type JointManager2d<N> = JointManager<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type IslandActivationManager2d<N> = IslandActivationManager<N, LV<N>, AV<N>, M<N>, II<N>>; 
 
-pub type ContactSolver2d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type ContactSolver2d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II<N>, Vec2<N>>;
 
 pub type Constraint2d<N> = Constraint<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBody2d<N> = RigidBody<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type Body2d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type World2d<N> = World<N, Body2d<N>, Constraint2d<N>>;
+
+/*
+ * Joints
+ */
+pub type BallInSocket2d<N> = BallInSocket<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Clone + Num + Algebraic, Any>

@@ -29,6 +29,7 @@ use nphysics::integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
 use nphysics::integration::swept_ball_motion_clamping::SweptBallMotionClamping;
 use nphysics::detection::collision::bodies_bodies::{BodiesBodies, Dispatcher};
 use nphysics::detection::island_activation_manager::IslandActivationManager;
+use nphysics::detection::joint::joint_manager::JointManager;
 use nphysics::resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
 use nphysics::signal::signal::SignalEmiter;
@@ -43,7 +44,8 @@ fn main() {
 pub fn wall_3d(graphics: &mut GraphicsManager)
                 -> (dim3::World3d<f64>,
                     @mut dim3::DBVTCollisionDetector3d<f64>,
-                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>) {
+                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>,
+                    @mut dim3::JointManager3d<f64>) {
     /*
      * Setup the physics world
      */
@@ -72,6 +74,8 @@ pub fn wall_3d(graphics: &mut GraphicsManager)
     let detector = BodiesBodies::new(events, broad_phase, false);
     // Deactivation
     let sleep = IslandActivationManager::new(events, 1.0, 0.01);
+    // Joints
+    let joints = JointManager::new(events);
 
     /*
      * For constraints resolution
@@ -86,6 +90,7 @@ pub fn wall_3d(graphics: &mut GraphicsManager)
     world.add_integrator(integrator);
     world.add_integrator(ccd);
     world.add_detector(detector);
+    world.add_detector(joints);
     world.add_detector(sleep);
     world.add_solver(solver);
 
@@ -139,5 +144,5 @@ pub fn wall_3d(graphics: &mut GraphicsManager)
      */
     graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
 
-    (world, detector, ccd)
+    (world, detector, ccd, joints)
 }
