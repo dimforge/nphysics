@@ -38,6 +38,10 @@ use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
 use nphysics::signal::signal::SignalEmiter;
 use graphics3d::engine::GraphicsManager;
 
+#[start]
+fn start(argc: int, argv: **u8, crate_map: *u8) -> int {
+    std::rt::start_on_main_thread(argc, argv, crate_map, main)
+}
 
 fn main() {
     GraphicsManager::simulate(primitives_3d)

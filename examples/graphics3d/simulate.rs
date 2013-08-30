@@ -58,7 +58,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
         let (p, ray_caster, ccd_manager, joints) = builder(graphics);
         let physics = @mut p;
 
-        let ray_to_draw    = @mut None;
+        let ray_to_draw = @mut None;
 
         do window.set_loop_callback {
             let before = time::precise_time_s();
