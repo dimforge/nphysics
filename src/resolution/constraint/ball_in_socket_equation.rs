@@ -28,8 +28,7 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone,
     let rot_axis1  = (global1 - joint.center_of_mass1()).cross_matrix();
     let rot_axis2  = (global2 - joint.center_of_mass2()).cross_matrix();
 
-    let _dim: Option<LV> = None;
-    for i in range(0u, Dim::dim(_dim)) {
+    for i in range(0u, Dim::dim(None::<LV>)) {
         let mut lin_axis: LV = Zero::zero();
         let constraint = &mut constraints[i];
 

@@ -28,8 +28,6 @@ impl<N: Real + Num + NumCast + Clone + ToStr,
 Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
     #[inline]
     fn volume(&self) -> N {
-        let _dim: Option<V> = None;
-
         match *self {
             Plane(_)        => Zero::zero(),
             Compound(c)     => {
@@ -43,10 +41,10 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
             },
             Implicit(ref i) => {
                 match *i {
-                    Ball(ref b)     => ball_volume(b.radius(), Dim::dim(_dim)),
+                    Ball(ref b)     => ball_volume(b.radius(), Dim::dim(None::<V>)),
                     Box(ref b)      => box_volume(&b.half_extents()),
-                    Cone(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(_dim)),
-                    Cylinder(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(_dim)),
+                    Cone(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
+                    Cylinder(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
                 }
             }
         }
@@ -96,17 +94,14 @@ impl<N:  Real + Num + NumCast + Clone,
 Volumetric<N, V, II> for Ball<N> {
     #[inline]
     fn volume(&self) -> N {
-        let _dim: Option<V> = None;
-        ball_volume(self.radius(), Dim::dim(_dim))
+        ball_volume(self.radius(), Dim::dim(None::<V>))
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let _dim: Option<V> = None;
-        let volume = ball_volume(self.radius(), Dim::dim(_dim));
+        let volume = ball_volume(self.radius(), Dim::dim(None::<V>));
         let mass   = volume * *density;
 
-        let _dim: Option<V> = None;
-        let dim = Dim::dim(_dim);
+        let dim = Dim::dim(None::<V>);
 
         if dim == 2 {
             let diag = self.radius() * self.radius() * mass / NumCast::from(2.0);
@@ -148,8 +143,7 @@ Volumetric<N, V, II> for Box<N, V> {
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let mass = box_volume(&self.half_extents()) * *density;
-        let _dim: Option<V> = None;
-        let dim  = Dim::dim(_dim);
+        let dim  = Dim::dim(None::<V>);
 
         if dim == 2 {
             let _2: N   = NumCast::from(2.0);
@@ -206,14 +200,12 @@ impl<N:  Zero + One + NumCast + Num + Real + Clone,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cylinder<N> {
     fn volume(&self) -> N {
-        let _dim: Option<V> = None;
-        let dim = Dim::dim(_dim);
+        let dim = Dim::dim(None::<V>);
         cylinder_volume(&self.half_height(), &self.radius(), dim)
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let _dim: Option<V> = None;
-        let dim  = Dim::dim(_dim);
+        let dim  = Dim::dim(None::<V>);
         let mass = cylinder_volume(&self.half_height(), &self.radius(), dim) * *density;
 
         if dim == 2 {
@@ -272,15 +264,13 @@ impl<N:  Zero + One + NumCast + Num + Real + Clone,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cone<N> {
     fn volume(&self) -> N {
-        let _dim: Option<V> = None;
-        let dim = Dim::dim(_dim);
+        let dim = Dim::dim(None::<V>);
 
         cone_volume(&self.half_height(), &self.radius(), dim)
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let _dim: Option<V> = None;
-        let dim  = Dim::dim(_dim);
+        let dim  = Dim::dim(None::<V>);
         let mass = cone_volume(&self.half_height(), &self.radius(), dim) * *density;
 
         if dim == 2 {

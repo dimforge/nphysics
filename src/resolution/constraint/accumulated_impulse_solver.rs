@@ -46,13 +46,12 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                num_first_order_iter:  uint,
                num_second_order_iter: uint)
                -> AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
-        let _dim: Option<LV> = None;
         AccumulatedImpulseSolver {
             num_first_order_iter:    num_first_order_iter,
             num_second_order_iter:   num_second_order_iter,
             restitution_constraints: ~[],
             friction_constraints:    ~[],
-            cache:                   ImpulseCache::new(step, Dim::dim(_dim)),
+            cache:                   ImpulseCache::new(step, Dim::dim(None::<LV>)),
 
             correction: CorrectionParameters {
                 corr_mode:   correction_mode,
@@ -85,16 +84,14 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 constraints: &[Constraint<N, LV, AV, M, II>],
                 joints:      &[uint],
                 bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
-        let _dim: Option<LV> = None;
-        let num_friction_equations    = (Dim::dim(_dim) - 1) * self.cache.len();
+        let num_friction_equations    = (Dim::dim(None::<LV>) - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
 
         for i in joints.iter() {
             match constraints[*i] {
                 BallInSocket(_) => {
-                    let _dim: Option<LV> = None;
-                    num_joint_equations = num_joint_equations + Dim::dim(_dim)
+                    num_joint_equations = num_joint_equations + Dim::dim(None::<LV>)
                 },
                 _ => { }
             }
@@ -121,8 +118,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 _ => { }
             }
 
-            let _dim: Option<LV> = None;
-            friction_offset = friction_offset + Dim::dim(_dim) - 1;
+            friction_offset = friction_offset + Dim::dim(None::<LV>) - 1;
         }
 
         let mut joint_offset = num_restitution_equations;
@@ -136,8 +132,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         &self.correction.corr_mode
                     );
 
-                    let _dim: Option<LV> = None;
-                    joint_offset = joint_offset + Dim::dim(_dim);
+                    joint_offset = joint_offset + Dim::dim(None::<LV>);
                 },
                 _ => fail!("Trying to resolve an unknown joint.")
             }
@@ -168,18 +163,15 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * NumCast::from(0.85);
 
-            let _dim: Option<LV> = None;
-            for j in range(0u, Dim::dim(_dim) - 1) {
-                let _dim: Option<LV> = None;
-                let fc = &self.friction_constraints[i * (Dim::dim(_dim) - 1) + j];
+            for j in range(0u, Dim::dim(None::<LV>) - 1) {
+                let fc = &self.friction_constraints[i * (Dim::dim(None::<LV>) - 1) + j];
                 imps[1 + j] = fc.impulse * NumCast::from(0.85);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().mut_iter().enumerate() {
-            let _dim: Option<LV> = None;
-            *kv = (kv.first(), offset + i * Dim::dim(_dim));
+            *kv = (kv.first(), offset + i * Dim::dim(None::<LV>));
         }
 
         /*

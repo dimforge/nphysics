@@ -198,12 +198,10 @@ pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebrai
         (&Implicit(ref i1), &Implicit(ref i2)) => implicit_implicit::toi(m1, dir, i1, m2, i2),
         (&Compound(_), &Compound(_))   => fail!("Not yet implemented."), // CompoundCompound(),
         (&Compound(c), b) => {
-            let _self: Option<CA<N, LV, AV, M, II>> = None;
-            CollisionDetector::toi(_self, m1, dir, dist, c, m2, b)
+            CollisionDetector::toi(None::<CA<N, LV, AV, M, II>>, m1, dir, dist, c, m2, b)
         },
         (a, &Compound(c)) => {
-            let _self: Option<AC<N, LV, AV, M, II>> = None;
-            CollisionDetector::toi(_self, m1, dir, dist, a, m2, c)
+            CollisionDetector::toi(None::<AC<N, LV, AV, M, II>>, m1, dir, dist, a, m2, c)
         },
         _ => fail!("Cannot compute the toi of those two geometries.")
     }
