@@ -19,7 +19,7 @@ fn usage(exe_name: &str) {
     println("    space - display/hide contacts.");
 }
 
-pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::World2d<f64>) {
+pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
     let args = os::args();
 
     if args.len() > 1 {

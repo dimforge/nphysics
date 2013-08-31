@@ -36,10 +36,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn simulate(builder: ~fn(&mut GraphicsManager) -> (dim3::World3d<f64>,
-                                                           @mut dim3::DBVTCollisionDetector3d<f64>,
-                                                           @mut dim3::DBVTSweptBallMotionClamping3d<f64>,
-                                                           @mut dim3::JointManager3d<f64>)) {
+    pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
         simulate::simulate(builder)
     }
 

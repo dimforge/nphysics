@@ -12,11 +12,11 @@ use nphysics::detection::constraint::{RBRB, BallInSocket};
 pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window:  &render_window::RenderWindow,
-                  physics: &mut dim2::World2d<f64>) {
+                  physics: &mut dim2::BodyWorld2d<f64>) {
 
     let mut collisions = ~[];
 
-    for c in physics.detectors().iter() {
+    for c in physics.world().detectors().iter() {
         c.interferences(&mut collisions);
     }
 

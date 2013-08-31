@@ -15,16 +15,11 @@ extern mod graphics2d;
 
 use std::num::One;
 use nalgebra::mat::Translation;
-use nalgebra::vec::{Vec1, Vec2, AlgebraicVec};
+use nalgebra::vec::Vec2;
 use ncollide::geom::{Geom, Box, Plane};
-use ncollide::broad::DBVTBroadPhase;
-use nphysics::world::World;
+use nphysics::world::BodyWorld;
 use nphysics::aliases::dim2;
-use nphysics::integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
-use nphysics::detection::{BodiesBodies, BodiesBodiesDispatcher, IslandActivationManager};
-use nphysics::resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
-use nphysics::signal::signal::SignalEmiter;
 use graphics2d::engine::GraphicsManager;
 
 #[start]
@@ -36,73 +31,33 @@ fn main() {
     GraphicsManager::simulate(boxes_vee_2d)
 }
 
-
-pub fn boxes_vee_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
+pub fn boxes_vee_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
-     * Setup the physics world
+     * World
      */
-    let mut world = World::new();
-
-    // events handler
-    let events = @mut SignalEmiter::new();
-
-    // For the intergration
-    let gravity = Vec2::new(0.0f64, 9.81);
-    let tornado = Vec1::new(0.0f64);
-
-    let forces: @mut dim2::ForceGenerator2d<f64> = BodyForceGenerator::new(events, gravity, tornado);
-    let integrator: @mut dim2::RigidBodyIntegrator2d<f64> = RigidBodySmpEulerIntegrator::new(events);
-
-    /*
-     * For the collision detection
-     */
-    // Collision Dispatcher
-    let dispatcher: dim2::Dispatcher2d<f64>  = BodiesBodiesDispatcher::new();
-    // Broad phase
-    let broad_phase = @mut DBVTBroadPhase::new(dispatcher, 0.08f64);
-    // CCD handler
-    let ccd = SweptBallMotionClamping::new(events, broad_phase, true);
-    // Collision detector
-    let detector = BodiesBodies::new(events, broad_phase, false);
-    // Deactivation
-    let sleep = IslandActivationManager::new(events, 1.0, 0.01);
-
-    /*
-     * For constraints resolution
-     */
-    let solver: @mut dim2::ContactSolver2d<f64> =
-        @mut AccumulatedImpulseSolver::new(0.1f64, VelocityAndPosition(0.2, 0.2, 0.08), 1.0, 10, 10);
-
-    /*
-     * Add everything to the world
-     */
-    world.add_integrator(forces);
-    world.add_integrator(integrator);
-    world.add_integrator(ccd);
-    world.add_detector(detector);
-    world.add_detector(sleep);
-    world.add_solver(solver);
+    let mut world = BodyWorld::new();
+    world.set_gravity(Vec2::new(0.0f64, 9.81));
 
     /*
      * First plane
      */
-    let geom = Plane::new(Vec2::new(-1.0f64, -1.0).normalized());
+    let geom = Plane::new(Vec2::new(-1.0f64, -1.0));
     let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
     body.translate_by(&Vec2::new(0.0, 10.0));
 
-    world.add_object(@mut RB(body));
+    world.add_body(@mut RB(body));
     graphics.add_plane(body, &geom);
 
     /*
      * Second plane
      */
-    let geom = Plane::new(Vec2::new(1.0f64, -1.0).normalized());
+    let geom = Plane::new(Vec2::new(1.0f64, -1.0));
     let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
     body.translate_by(&Vec2::new(0.0, 10.0));
 
-    world.add_object(@mut RB(body));
+    world.add_body(@mut RB(body));
     graphics.add_plane(body, &geom);
 
     /*
@@ -125,7 +80,7 @@ pub fn boxes_vee_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
 
             body.translate_by(&Vec2::new(x, y));
 
-            world.add_object(@mut RB(body));
+            world.add_body(@mut RB(body));
             graphics.add_cube(body, One::one(), &box);
         }
     }

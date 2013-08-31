@@ -2,6 +2,7 @@
 *.swo
 *.html
 *.so
+*.dSYM
 lib
 examples/lib
 examples/bin

@@ -32,11 +32,7 @@ fn usage(exe_name: &str) {
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
-pub fn simulate(builder: ~fn(&mut GraphicsManager)
-                -> (dim3::World3d<f64>,
-                    @mut dim3::DBVTCollisionDetector3d<f64>,
-                    @mut dim3::DBVTSweptBallMotionClamping3d<f64>,
-                    @mut dim3::JointManager3d<f64>)) {
+pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -48,11 +44,8 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
     do window::Window::spawn("nphysics: 3d demo") |window| {
         let running    = @mut Running;
         let draw_colls = @mut false;
-
-        let graphics = @mut GraphicsManager::new(window);
-
-        let (p, ray_caster, ccd_manager, joints) = builder(graphics);
-        let physics = @mut p;
+        let graphics   = @mut GraphicsManager::new(window);
+        let physics    = @mut builder(graphics);
 
         let ray_to_draw = @mut None;
 
@@ -77,7 +70,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                 Some(ref ray) => {
                     // cast a ray
                     let mut interferences = ~[];
-                    ray_caster.interferences_with_ray(ray, &mut interferences);
+                    physics.cast_ray(ray, &mut interferences);
 
                     let mut mintoi = Bounded::max_value();
 
@@ -121,7 +114,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                         // cast the ray
                         let mut interferences = ~[];
-                        ray_caster.interferences_with_ray(&ray, &mut interferences);
+                        physics.cast_ray(&ray, &mut interferences);
 
                         let mut mintoi = Bounded::max_value();
                         let mut minb   = None;
@@ -148,7 +141,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                             Some(rb) => {
                                 for sn in graphics.rigid_body_to_scene_node(rb).unwrap().iter() {
                                     match *grabbed_object_joint {
-                                        Some(j) => joints.remove_ball_in_socket(j),
+                                        Some(j) => physics.remove_ball_in_socket(j),
                                         None    => { }
                                     }
 
@@ -159,7 +152,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                                     let joint   = @mut BallInSocket::new(anchor1, anchor2);
                                     *grabbed_object_joint = Some(joint);
                                     *grabbed_object_plane = (attach2, -ray.dir);
-                                    joints.add_ball_in_socket(joint);
+                                    physics.add_ball_in_socket(joint);
                                     // add a joint
                                     sn.select()
                                 }
@@ -184,7 +177,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                     }
 
                     match *grabbed_object_joint {
-                        Some(j) => joints.remove_ball_in_socket(j),
+                        Some(j) => physics.remove_ball_in_socket(j),
                         None    => { }
                     }
 
@@ -251,7 +244,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                     body.set_lin_vel(front * 40.0);
 
-                    physics.add_object(@mut RB(body));
+                    physics.add_body(@mut RB(body));
                     graphics.add_ball(body, One::one(), &ball);
                 },
                 // KEY_2
@@ -267,7 +260,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                     body.set_lin_vel(front * 40.0);
 
-                    physics.add_object(@mut RB(body));
+                    physics.add_body(@mut RB(body));
                     graphics.add_cube(body, One::one(), &box);
                 },
                 // KEY_3
@@ -284,8 +277,8 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                     rbody.set_lin_vel(front * 400.0);
 
                     let body = @mut RB(rbody);
-                    physics.add_object(body);
-                    ccd_manager.add_ccd_to(body, 0.4, 1.0);
+                    physics.add_body(body);
+                    physics.add_ccd_to(body, 0.4, 1.0);
                     graphics.add_cube(rbody, One::one(), &box);
                 },
                 // KEY_R
@@ -319,10 +312,10 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(window: @mut window::Window, physics: &mut dim3::World3d<f64>) {
+fn draw_collisions(window: @mut window::Window, physics: &mut dim3::BodyWorld3d<f64>) {
     let mut collisions = ~[];
 
-    for c in physics.detectors().iter() {
+    for c in physics.world().detectors().iter() {
         c.interferences(&mut collisions);
     }
 

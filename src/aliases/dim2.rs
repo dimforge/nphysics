@@ -12,7 +12,7 @@ use detection::constraint::Constraint;
 use detection::IslandActivationManager;
 use resolution::AccumulatedImpulseSolver;
 use object::{RigidBody, Body};
-use world::World;
+use world::{World, BodyWorld};
 use object::volumetric::InertiaTensor;
 
 type LV<N> = Vec2<N>;
@@ -46,7 +46,9 @@ pub type ContactSolver2d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II
 pub type Constraint2d<N> = Constraint<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBody2d<N> = RigidBody<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type Body2d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>; 
+
 pub type World2d<N> = World<N, Body2d<N>, Constraint2d<N>>;
+pub type BodyWorld2d<N> = BodyWorld<N, LV<N>, AV<N>, M<N>, II<N>, Vec2<N>>;
 
 /*
  * Joints

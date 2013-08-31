@@ -15,7 +15,7 @@ use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
-use world::World;
+use world::{World, BodyWorld};
 use object::volumetric::InertiaTensor;
 use object::{RigidBody, Body};
 
@@ -55,7 +55,9 @@ pub type ContactSolver3d<N> = AccumulatedImpulseSolver<N, LV<N>, AV<N>, M<N>, II
 pub type Constraint3d<N> = Constraint<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBody3d<N> = RigidBody<N, LV<N>, AV<N>, M<N>, II<N>>; 
 pub type Body3d<N> = Body<N, LV<N>, AV<N>, M<N>, II<N>>; 
+
 pub type World3d<N> = World<N, Body3d<N>, Constraint3d<N>>;
+pub type BodyWorld3d<N> = BodyWorld<N, LV<N>, AV<N>, M<N>, II<N>, Mat3<N>>;
 
 /*
  * Joints

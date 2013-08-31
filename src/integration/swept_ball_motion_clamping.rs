@@ -70,6 +70,8 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
         res
     }
 
+    // FIXME: implement remove_ccd_from
+
     pub fn add_ccd_to(&mut self,
                       body:                @mut Body<N, LV, AV, M, II>,
                       swept_sphere_radius: N,

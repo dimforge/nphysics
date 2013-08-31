@@ -124,8 +124,6 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     fn deactivate(&mut self, body: @mut Body<N, LV, AV, M, II>) {
         self.broad_phase.deactivate(body)
     }
-
-
 }
 
 impl<N:  'static + Clone + Zero + Orderable + NumCast + Algebraic + Primitive + Float + ToStr,
