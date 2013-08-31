@@ -6,11 +6,11 @@ use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
 use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use ncollide::geom::Ball;
+use ncollide::geom::{Geom, Ball};
 use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
-use detection::collision::default_default;
+use ncollide::narrow::toi;
 use integration::Integrator;
-use object::{Body, DefaultGeom, RB, SB};
+use object::{Body, RB, SB};
 use signal::signal::SignalEmiter;
 
 struct CCDBody<N, LV, AV, M, II> {
@@ -162,7 +162,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                         let ball       = Ball::new(o.value.radius.clone());
                         let begin      = ball.aabb(&o.value.last_pos);
                         let end        = ball.aabb(&curr_pos);
-                        let dball      = DefaultGeom::new_ball(ball);
+                        let dball      = Geom::new_ball(ball);
                         let swept_aabb = begin.merged(&end);
 
                         /*
@@ -186,7 +186,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                                 match **b {
                                     RB(rb) => {
                                         let toi =
-                                            default_default::toi(
+                                            toi::geom_geom(
                                                 &old_transform,
                                                 &dir,
                                                 &distance,

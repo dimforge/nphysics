@@ -5,7 +5,7 @@ use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::mat::Inv;
 use nalgebra::vec::{AlgebraicVec, Outer};
-use ncollide::geom::{Ball, Plane, Box, Cylinder, Cone};
+use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, BodyDamping, SweptBallMotionClamping};
@@ -17,7 +17,7 @@ use detection::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use world::World;
 use object::volumetric::InertiaTensor;
-use object::{DefaultGeom, RigidBody, Body};
+use object::{RigidBody, Body};
 
 type LV<N> = Vec3<N>;
 type AV<N> = Vec3<N>;
@@ -35,7 +35,7 @@ pub type Box3d<N>      = Box<N, Vec3<N>>;
 pub type Cylinder3d<N> = Cylinder<N>;
 pub type Cone3d<N>     = Cone<N>;
 pub type Plane3d<N>    = Plane<N, Vec3<N>>;
-pub type Geom3d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
+pub type Geom3d<N>     = Geom<N, LV<N>, M<N>, II<N>>;
 pub type AABB3d<N>     = AABB<N, LV<N>>;
 
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;

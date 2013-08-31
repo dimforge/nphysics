@@ -3,7 +3,7 @@ use nalgebra::vec::{Vec2, Vec1};
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::vec::AlgebraicVec;
-use ncollide::geom::{Ball, Plane, Box, Cylinder, Cone};
+use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector};
 use detection::joint::joint_manager::JointManager;
@@ -11,7 +11,7 @@ use detection::joint::ball_in_socket::BallInSocket;
 use detection::constraint::Constraint;
 use detection::IslandActivationManager;
 use resolution::AccumulatedImpulseSolver;
-use object::{DefaultGeom, RigidBody, Body};
+use object::{RigidBody, Body};
 use world::World;
 use object::volumetric::InertiaTensor;
 
@@ -31,7 +31,7 @@ pub type Box2d<N>      = Box<N, Vec2<N>>;
 pub type Cylinder2d<N> = Cylinder<N>;
 pub type Cone2d<N>     = Cone<N>;
 pub type Plane2d<N>    = Plane<N, Vec2<N>>;
-pub type Geom2d<N>     = DefaultGeom<N, LV<N>, M<N>, II<N>>;
+pub type Geom2d<N>     = Geom<N, LV<N>, M<N>, II<N>>;
 
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type RigidBodyIntegrator2d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;

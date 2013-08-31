@@ -7,16 +7,15 @@ use ncollide::geom::AnnotatedPoint;
 use ncollide::broad;
 use ncollide::broad::{InterferencesBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
-use ncollide::narrow::CollisionDetector;
+use ncollide::narrow::{CollisionDetector, GeomGeom};
 use ncollide::ray::{Ray, RayCastWithTransform};
 use object::{Body, ToRigidBody, RB, SB};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
-use detection::collision::default_default::DefaultDefault;
 use signal::signal::SignalEmiter;
 
 pub enum PairwiseDetector<N, LV, AV, M, II> {
-    Default(DefaultDefault<N, LV, AV, M, II>),
+    GG(GeomGeom<N, LV, AV, M, II>),
     Unsuported
 }
 
@@ -45,7 +44,7 @@ for Dispatcher<N, LV, AV, M, II> {
         -> PairwiseDetector<N, LV, AV, M, II> {
         match (*a, *b) {
             (RB(rb1), RB(rb2)) => {
-                Default(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex))
+                GG(GeomGeom::new(rb1.geom(), rb2.geom(), &self.simplex))
             },
             _ => Unsuported
         }
@@ -101,7 +100,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
 
         do self.broad_phase.activate(body) |b1, b2, cd| {
             match *cd {
-                Default(ref mut d) => {
+                GG(ref mut d) => {
                     let rb1 = b1.to_rigid_body_or_fail();
                     let rb2 = b2.to_rigid_body_or_fail();
 
@@ -185,7 +184,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
         do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
             match *cd {
-                Default(ref mut d) => {
+                GG(ref mut d) => {
                     let rb1 = b1.to_rigid_body_or_fail();
                     let rb2 = b2.to_rigid_body_or_fail();
 
@@ -201,7 +200,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
         do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
             match *cd {
-                Default(ref mut d) => {
+                GG(ref mut d) => {
                     d.colls(&mut collector);
 
                     for c in collector.iter() {

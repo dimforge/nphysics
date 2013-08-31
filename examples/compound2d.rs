@@ -16,14 +16,14 @@ extern mod graphics2d;
 use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::{Vec1, Vec2, AlgebraicVec};
-use ncollide::geom::{Box, Plane, CompoundAABB};
+use ncollide::geom::{Geom, Box, Plane, CompoundAABB};
 use ncollide::broad::DBVTBroadPhase;
 use nphysics::world::World;
 use nphysics::aliases::dim2;
 use nphysics::integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
 use nphysics::detection::{BodiesBodies, BodiesBodiesDispatcher, IslandActivationManager};
 use nphysics::resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
-use nphysics::object::{RigidBody, Static, Dynamic, DefaultGeom, RB};
+use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use nphysics::signal::signal::SignalEmiter;
 use graphics2d::engine::GraphicsManager;
 
@@ -83,7 +83,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
      * First plane
      */
     let geom = Plane::new(Vec2::new(-1.0f64, -1.0).normalized());
-    let body = @mut RigidBody::new(DefaultGeom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
     body.translate_by(&Vec2::new(0.0, 10.0));
 
@@ -94,7 +94,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
      * Second plane
      */
     let geom = Plane::new(Vec2::new(1.0f64, -1.0).normalized());
-    let body = @mut RigidBody::new(DefaultGeom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
     body.translate_by(&Vec2::new(0.0, 10.0));
 
@@ -113,9 +113,9 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
     let delta3 = _1.translated(&Vec2::new(5.0,  0.0));
 
     let mut cross_geoms = ~[];
-    cross_geoms.push((delta1, DefaultGeom::new_box(box1)));
-    cross_geoms.push((delta2, DefaultGeom::new_box(box2)));
-    cross_geoms.push((delta3, DefaultGeom::new_box(box2)));
+    cross_geoms.push((delta1, Geom::new_box(box1)));
+    cross_geoms.push((delta2, Geom::new_box(box2)));
+    cross_geoms.push((delta3, Geom::new_box(box2)));
 
     let cross = @CompoundAABB::new(cross_geoms);
 
@@ -133,7 +133,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
             let x = i as f64 * 2.5 * rad - centerx;
             let y = j as f64 * 2.5 * rad - centery * 2.0 - 250.0;
 
-            let geom = DefaultGeom::new_compound(cross);
+            let geom = Geom::new_compound(cross);
             let body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.6);
 
             body.translate_by(&Vec2::new(x, y));

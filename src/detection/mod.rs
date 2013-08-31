@@ -9,7 +9,6 @@ pub mod detector;
 
 pub mod collision {
     mod bodies_bodies;
-    pub mod default_default;
 }
 
 pub mod joint {

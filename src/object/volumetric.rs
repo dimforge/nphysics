@@ -2,7 +2,7 @@ use std::num::{Zero, One, Real, NumCast};
 use nalgebra::vec::{VecExt, Dim, Iterable};
 use nalgebra::mat::{Translation, Indexable};
 use ncollide::geom::{Ball, Box, Cylinder, Cone, Plane};
-use object::{DefaultGeom, Plane, Ball, Box, Cone, Cylinder, Compound, Implicit};
+use ncollide::geom::{Geom, PlaneGeom, BallGeom, BoxGeom, ConeGeom, CylinderGeom, CompoundGeom, ImplicitGeom};
 
 pub trait InertiaTensor<N, V, M> {
     fn to_world_space(&self, &M) -> Self;
@@ -18,12 +18,12 @@ impl<N: Real + Num + NumCast + Clone + ToStr,
      V: Clone + VecExt<N> + ToStr,
      M: Translation<V>,
      II: Zero + Indexable<(uint, uint), N> + Add<II, II> + InertiaTensor<N, V, M> + Dim + ToStr>
-Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
+Volumetric<N, V, II> for Geom<N, V, M, II> {
     #[inline]
     fn volume(&self) -> N {
         match *self {
-            Plane(_)        => Zero::zero(),
-            Compound(c)     => {
+            PlaneGeom(_)        => Zero::zero(),
+            CompoundGeom(c)     => {
                 let mut res: N = Zero::zero();
 
                 for &(_, ref s) in c.shapes().iter() {
@@ -32,12 +32,12 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
 
                 res
             },
-            Implicit(ref i) => {
+            ImplicitGeom(ref i) => {
                 match *i {
-                    Ball(ref b)     => ball_volume(b.radius(), Dim::dim(None::<V>)),
-                    Box(ref b)      => box_volume(&b.half_extents()),
-                    Cone(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
-                    Cylinder(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
+                    BallGeom(ref b)     => ball_volume(b.radius(), Dim::dim(None::<V>)),
+                    BoxGeom(ref b)      => box_volume(&b.half_extents()),
+                    ConeGeom(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
+                    CylinderGeom(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
                 }
             }
         }
@@ -46,8 +46,8 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
     #[inline]
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         match *self {
-            Plane(ref p) => p.mass_properties(density),
-            Compound(c)  => {
+            PlaneGeom(ref p) => p.mass_properties(density),
+            CompoundGeom(c)  => {
                 let mut mtot: N  = Zero::zero();
                 let mut itot: II = Zero::zero();
                 let mut ctot: V  = Zero::zero();
@@ -63,12 +63,12 @@ Volumetric<N, V, II> for DefaultGeom<N, V, M, II> {
 
                 (mtot, ctot, itot)
             },
-            Implicit(ref i) => {
+            ImplicitGeom(ref i) => {
                 match *i {
-                    Ball(ref b)     => b.mass_properties(density),
-                    Box(ref b)      => b.mass_properties(density),
-                    Cone(ref c)     => c.mass_properties(density),
-                    Cylinder(ref c) => c.mass_properties(density),
+                    BallGeom(ref b)     => b.mass_properties(density),
+                    BoxGeom(ref b)      => b.mass_properties(density),
+                    ConeGeom(ref c)     => c.mass_properties(density),
+                    CylinderGeom(ref c) => c.mass_properties(density),
                 }
             }
         }

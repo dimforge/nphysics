@@ -7,14 +7,14 @@ use nalgebra::traits::transformation::Transform;
 use nalgebra::vec::{Vec2, Vec3};
 use kiss3d::window;
 use kiss3d::event;
-use ncollide::geom::{Ball, Box};
+use ncollide::geom::{Geom, Ball, Box};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::aliases::dim3;
 use nphysics::detection::constraint::{RBRB, BallInSocket};
 use nphysics::detection::joint::ball_in_socket::BallInSocket;
 use nphysics::detection::joint::anchor::Anchor;
-use nphysics::object::{DefaultGeom, RigidBody, Dynamic, RB};
+use nphysics::object::{RigidBody, Dynamic, RB};
 use engine::{SceneNode, GraphicsManager};
 
 fn usage(exe_name: &str) {
@@ -241,7 +241,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                 // KEY_1
                 event::KeyPressed(49) => {
                     let ball = Ball::new(0.5f64);
-                    let geom = DefaultGeom::new_ball(ball);
+                    let geom = Geom::new_ball(ball);
                     let body = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transfom = window.camera().transformation();
@@ -257,7 +257,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                 // KEY_2
                 event::KeyPressed(50) => {
                     let box  = Box::new(Vec3::new(0.5f64, 0.5, 0.5));
-                    let geom = DefaultGeom::new_box(box);
+                    let geom = Geom::new_box(box);
                     let body = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transform = window.camera().transformation();
@@ -273,7 +273,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                 // KEY_3
                 event::KeyPressed(51) => {
                     let box   = Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64));
-                    let geom  = DefaultGeom::new_box(box);
+                    let geom  = Geom::new_box(box);
                     let rbody = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transfom = window.camera().transformation();

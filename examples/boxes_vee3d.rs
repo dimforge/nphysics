@@ -15,14 +15,14 @@ extern mod graphics3d;
 use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::Vec3;
-use ncollide::geom::{Box, Plane};
+use ncollide::geom::{Geom, Box, Plane};
 use ncollide::broad::DBVTBroadPhase;
 use nphysics::world::World;
 use nphysics::aliases::dim3;
 use nphysics::integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
 use nphysics::detection::{BodiesBodies, BodiesBodiesDispatcher, IslandActivationManager, JointManager};
 use nphysics::resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
-use nphysics::object::{RigidBody, Static, Dynamic, DefaultGeom, RB};
+use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use nphysics::signal::signal::SignalEmiter;
 use graphics3d::engine::GraphicsManager;
 
@@ -92,7 +92,7 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager)
      * Plane
      */
     let geom = Plane::new(Vec3::y());
-    let body = @mut RigidBody::new(DefaultGeom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
     world.add_object(@mut RB(body));
     graphics.add_plane(body, &geom);
@@ -115,7 +115,7 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager)
                 let z = k as f64 * shift - centerz;
 
                 let box  = Box::new(Vec3::new(rad, rad, rad));
-                let geom = DefaultGeom::new_box(box);
+                let geom = Geom::new_box(box);
                 let body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
 
                 body.translate_by(&Vec3::new(x, y, z));

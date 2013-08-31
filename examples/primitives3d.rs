@@ -17,7 +17,7 @@ use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::{Vec3, AlgebraicVec};
 
-use ncollide::geom::{Ball, Box, Cone, Cylinder, Plane};
+use ncollide::geom::{Geom, Ball, Box, Cone, Cylinder, Plane};
 use ncollide::broad::DBVTBroadPhase;
 
 use nphysics::world::World;
@@ -25,7 +25,7 @@ use nphysics::aliases::dim3;
 use nphysics::integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
 use nphysics::detection::{BodiesBodies, BodiesBodiesDispatcher, IslandActivationManager, JointManager};
 use nphysics::resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
-use nphysics::object::{RigidBody, Static, Dynamic, DefaultGeom, RB};
+use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use nphysics::signal::signal::SignalEmiter;
 
 use graphics3d::engine::GraphicsManager;
@@ -106,7 +106,7 @@ pub fn primitives_3d(graphics: &mut GraphicsManager)
      */
     for n in normals.iter() {
         let geom = Plane::new(*n);
-        let body = @mut RigidBody::new(DefaultGeom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+        let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
         world.add_object(@mut RB(body));
         graphics.add_plane(body, &geom);
@@ -133,25 +133,25 @@ pub fn primitives_3d(graphics: &mut GraphicsManager)
 
                 if j % 4 == 0 {
                     let box  = Box::new(Vec3::new(rad, rad, rad));
-                    let geom = DefaultGeom::new_box(box);
+                    let geom = Geom::new_box(box);
                     body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
                     graphics.add_cube(body, One::one(), &box);
                 }
                 else if j % 3 == 0 {
                     let ball = Ball::new(rad);
-                    let geom = DefaultGeom::new_ball(ball);
+                    let geom = Geom::new_ball(ball);
                     body     = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
                     graphics.add_ball(body, One::one(), &ball);
                 }
                 else if j % 2 == 0 {
                     let cylinder = Cylinder::new(rad, rad);
-                    let geom     = DefaultGeom::new_cylinder(cylinder);
+                    let geom     = Geom::new_cylinder(cylinder);
                     body         = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
                     graphics.add_cylinder(body, One::one(), &cylinder);
                 }
                 else {
                  let cone = Cone::new(rad, rad);
-                 let geom = DefaultGeom::new_cone(cone);
+                 let geom = Geom::new_cone(cone);
                  body     = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
                  graphics.add_cone(body, One::one(), &cone);
                 }

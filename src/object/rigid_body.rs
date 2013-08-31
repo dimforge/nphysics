@@ -2,8 +2,8 @@ use std::num::{Zero, One};
 use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Indexable};
 use nalgebra::vec::{VecExt, AlgebraicVecExt, Dim};
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
+use ncollide::geom::Geom;
 use object::volumetric::{InertiaTensor, Volumetric};
-use object::DefaultGeom;
 // use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
 #[deriving(ToStr, Eq, Clone)]
@@ -15,7 +15,7 @@ pub enum RigidBodyState {
 // FIXME: #[deriving(Clone)]
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:                RigidBodyState,
-    priv geom:                 DefaultGeom<N, LV, M, II>,
+    priv geom:                 Geom<N, LV, M, II>,
     priv local_to_world:       M,
     priv lin_vel:              LV,
     priv ang_vel:              AV,
@@ -61,7 +61,7 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
         &'r self.local_to_world
     }
 
-    pub fn geom<'r>(&'r self) -> &'r DefaultGeom<N, LV, M, II> {
+    pub fn geom<'r>(&'r self) -> &'r Geom<N, LV, M, II> {
         &'r self.geom
     }
 
@@ -101,7 +101,7 @@ impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast + ToStr,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, M> +
           Add<II, II> + Dim + Clone + ToStr>
 RigidBody<N, LV, AV, M, II> {
-    pub fn new(geom:        DefaultGeom<N, LV, M, II>,
+    pub fn new(geom:        Geom<N, LV, M, II>,
                density:     N,
                state:       RigidBodyState,
                restitution: N,
