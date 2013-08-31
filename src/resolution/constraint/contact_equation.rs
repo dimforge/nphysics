@@ -1,9 +1,6 @@
 use std::num::{One, Zero, Orderable, Bounded};
-use nalgebra::traits::basis::Basis;
-use nalgebra::traits::cross::Cross;
-use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::rotation::Rotate;
-use nalgebra::traits::vector::{Vec, VecExt};
+use nalgebra::vec::{Vec, VecExt, Cross, Basis};
+use nalgebra::mat::{Rotate, Transform};
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::rigid_body::RigidBody;

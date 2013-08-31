@@ -1,15 +1,9 @@
 use std::ptr;
 // use std::rand::RngUtil;
 use std::num::{One, Orderable, Bounded};
-use nalgebra::traits::dim::Dim;
-use nalgebra::traits::inv::Inv;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation;
-use nalgebra::traits::rotation::{Rotate, Rotation};
-use nalgebra::traits::transformation::{Transform, Transformation};
-use nalgebra::traits::cross::{Cross, CrossMatrix};
-use nalgebra::traits::row::Row;
-use nalgebra::traits::vector::{Vec, VecExt};
+use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
+use nalgebra::mat;
+use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
 use detection::constraint::{Constraint, RBRB, BallInSocket};
 use object::rigid_body::RigidBody;
 use object::body::{Body, ToRigidBody};
@@ -217,7 +211,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
                 let center   = &b.center_of_mass().clone();
                 let _1: M    = One::one();
-                let delta: M = rotation::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
+                let delta: M = mat::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
                 b.transform_by(&delta);
             }
         }

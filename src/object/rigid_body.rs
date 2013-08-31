@@ -1,11 +1,6 @@
 use std::num::{Zero, One};
-use nalgebra::traits::inv::Inv;
-use nalgebra::traits::dim::Dim;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::{Rotation, Rotate};
-use nalgebra::traits::transformation::{Transform, Transformation};
-use nalgebra::traits::indexable::Indexable;
-use nalgebra::traits::vector::{VecExt, AlgebraicVecExt};
+use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Indexable};
+use nalgebra::vec::{VecExt, AlgebraicVecExt, Dim};
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::{AABB, HasAABB};
 use object::volumetric::{InertiaTensor, Volumetric};

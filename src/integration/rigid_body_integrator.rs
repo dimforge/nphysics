@@ -1,10 +1,7 @@
 use std::ptr;
 use std::num::One;
-use nalgebra::traits::transformation::{Transformation, Transform};
-use nalgebra::traits::rotation::{Rotation, Rotate};
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::inv::Inv;
-use nalgebra::traits::vector::Vec;
+use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv};
+use nalgebra::vec::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::body::{Body, RigidBody, SoftBody};

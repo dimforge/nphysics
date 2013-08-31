@@ -1,5 +1,5 @@
 use std::num::Zero;
-use nalgebra::traits::transformation::Transform;
+use nalgebra::mat::Transform;
 use detection::joint::anchor::Anchor;
 use object::body::{RigidBody, SoftBody};
 

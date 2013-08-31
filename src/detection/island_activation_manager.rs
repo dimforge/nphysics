@@ -1,6 +1,6 @@
 use std::ptr;
 use std::num::{Zero, One};
-use nalgebra::traits::vector::AlgebraicVec;
+use nalgebra::vec::AlgebraicVec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::integrator::Integrator;

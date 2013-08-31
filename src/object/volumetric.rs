@@ -1,9 +1,6 @@
 use std::num::{Zero, One, Real, NumCast};
-use nalgebra::traits::iterable::Iterable;
-use nalgebra::traits::indexable::Indexable;
-use nalgebra::traits::dim::Dim;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::vector::VecExt;
+use nalgebra::vec::{VecExt, Dim, Iterable};
+use nalgebra::mat::{Translation, Indexable};
 use ncollide::geom::ball::Ball;
 use ncollide::geom::box::Box;
 use ncollide::geom::cylinder::Cylinder;

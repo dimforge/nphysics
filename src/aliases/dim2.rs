@@ -2,7 +2,7 @@ use nalgebra::mat::{Mat2, Mat1};
 use nalgebra::vec::{Vec2, Vec1};
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
-use nalgebra::traits::vector::AlgebraicVec;
+use nalgebra::vec::AlgebraicVec;
 use ncollide::geom::ball::Ball;
 use ncollide::geom::plane::Plane;
 use ncollide::geom::box::Box;

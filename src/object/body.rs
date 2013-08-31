@@ -1,9 +1,7 @@
 use std::managed;
 use std::num::Zero;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::Rotate;
-use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::vector::AlgebraicVecExt;
+use nalgebra::mat::{Translation, Rotate, Transform};
+use nalgebra::vec::AlgebraicVecExt;
 use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
 use ncollide::bounding_volume::aabb::AABB;
 use object::rigid_body::RigidBody;

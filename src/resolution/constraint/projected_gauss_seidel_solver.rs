@@ -1,6 +1,6 @@
 use std::num::{Zero, Orderable};
 use std::vec;
-use nalgebra::traits::vector::Vec;
+use nalgebra::vec::Vec;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 #[deriving(Eq, ToStr, Clone)]
@@ -133,8 +133,7 @@ pub fn solve_velocity_constraint<LV: Vec<N> + Clone + ToStr,
 mod test {
     use super::*;
     use extra::test::BenchHarness;
-    use nalgebra::vec::Vec3;
-    use nalgebra::traits::vector::AlgebraicVec;
+    use nalgebra::vec::{Vec3, AlgebraicVec};
     use resolution::constraint::velocity_constraint::VelocityConstraint;
 
     #[bench]

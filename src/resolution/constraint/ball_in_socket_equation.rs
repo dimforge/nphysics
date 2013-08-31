@@ -1,10 +1,6 @@
 use std::num::{Zero, One};
-use nalgebra::traits::dim::Dim;
-use nalgebra::traits::vector::{Vec, VecExt};
-use nalgebra::traits::cross::{Cross, CrossMatrix};
-use nalgebra::traits::row::Row;
-use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::rotation::Rotate;
+use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
+use nalgebra::mat::{Rotate, Transform, Row};
 use object::body::ToRigidBody;
 use object::volumetric::InertiaTensor;
 use detection::joint::ball_in_socket::BallInSocket;

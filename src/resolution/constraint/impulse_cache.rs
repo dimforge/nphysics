@@ -3,8 +3,8 @@ use std::rand::IsaacRng;
 use std::rand::RngUtil;
 use std::num::Zero;
 use std::vec;
+use nalgebra::vec::Vec;
 use std::hashmap::HashMap;
-use nalgebra::traits::vector::Vec;
 
 // This is a seed generated some day by the seed() function.
 // It is a good seed for the IsaacRng generator we use to initialize the HashMap.

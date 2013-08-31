@@ -1,5 +1,5 @@
 use std::num::Zero;
-use nalgebra::traits::vector::AlgebraicVec;
+use nalgebra::vec::AlgebraicVec;
 
 pub struct PointMass<N, V> {
     invmass:    N,

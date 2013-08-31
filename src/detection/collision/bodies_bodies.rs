@@ -1,13 +1,8 @@
 use std::ptr;
 use std::num::{Zero, One};
 use std::borrow;
-use nalgebra::traits::inv::Inv;
-use nalgebra::traits::dim::Dim;
-use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
-use nalgebra::traits::cross::Cross;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::{Rotate, Rotation};
-use nalgebra::traits::transformation::Transform;
+use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
+use nalgebra::vec::{Vec, AlgebraicVecExt, Cross, Dim};
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::broad::dispatcher;
 use ncollide::broad::broad_phase::{InterferencesBroadPhase, RayCastBroadPhase};

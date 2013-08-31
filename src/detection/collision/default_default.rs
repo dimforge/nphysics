@@ -1,10 +1,6 @@
 use std::num::{Zero, One};
-use nalgebra::traits::inv::Inv;
-use nalgebra::traits::cross::Cross;
-use nalgebra::traits::rotation::{Rotate, Rotation};
-use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
+use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
+use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
 use ncollide::geom::ball::Ball;
 use ncollide::geom::minkowski_sum::AnnotatedPoint;
 use ncollide::geom::compound::CompoundAABB;

@@ -1,8 +1,6 @@
 use std::num::One;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::Rotate;
-use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::vector::AlgebraicVecExt;
+use nalgebra::mat::{Translation, Rotate, Transform};
+use nalgebra::vec::AlgebraicVecExt;
 use ncollide::bounding_volume::aabb::{HasAABB, AABB};
 use ncollide::geom::implicit::{Implicit, HasMargin};
 use ncollide::geom::ball;

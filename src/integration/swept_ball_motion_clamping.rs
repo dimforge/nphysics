@@ -1,12 +1,8 @@
 use std::num::One;
 use std::ptr;
 use std::managed;
-use nalgebra::traits::inv::Inv;
-use nalgebra::traits::cross::Cross;
-use nalgebra::traits::rotation::{Rotate, Rotation};
-use nalgebra::traits::transformation::Transform;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::vector::{Vec, AlgebraicVecExt};
+use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
+use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
 use ncollide::bounding_volume::aabb::AABB;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
