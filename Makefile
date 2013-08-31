@@ -28,7 +28,7 @@ lib_build_opt=rust build -L$(nphysics_lib_path)  \
 
 all:
 	mkdir -p lib
-	rust build -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/nphysics.rc --out-dir lib --opt-level 3
+	rust build -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib.rs --out-dir lib --opt-level 3
 
 deps:
 	make deps -C ncollide
@@ -36,7 +36,7 @@ deps:
 
 bench:
 	mkdir -p $(ncollide_lib_path)
-	rustc -L$(nalgebra_lib_path) --test -L$(ncollide_lib_path) src/nphysics.rc --opt-level 3 -o bench~ && ./bench~ --bench
+	rustc -L$(nalgebra_lib_path) --test -L$(ncollide_lib_path) src/lib.rs --opt-level 3 -o bench~ && ./bench~ --bench
 
 test:
 	mkdir -p bin
@@ -60,7 +60,7 @@ distcheck:
 	rm -rf $(tmp)
 
 doc:
-	rust doc src/nphysics.rc --output-dir doc
+	rust doc src/lib.rs --output-dir doc
 
 .PHONY:doc
 # FIXME: uggly!
