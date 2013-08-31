@@ -1,5 +1,5 @@
 use ncollide::contact::Contact;
-use object::body::Body;
+use object::Body;
 use detection::joint::ball_in_socket::BallInSocket;
 
 pub enum Constraint<N, LV, AV, M, II> {

@@ -14,25 +14,16 @@ extern mod ncollide;
 extern mod graphics2d;
 
 use std::num::One;
-use nalgebra::vec::{Vec2, Vec1};
-use nalgebra::traits::vector::AlgebraicVec;
-use nalgebra::traits::translation::Translation;
-use ncollide::geom::plane::Plane;
-use ncollide::geom::box::Box;
-use ncollide::broad::dbvt_broad_phase::DBVTBroadPhase;
-use nphysics::aliases;
-use nphysics::object::body;
-use nphysics::object::rigid_body::{RigidBody, Static, Dynamic};
-use nphysics::object::implicit_geom::DefaultGeom;
-use nphysics::world::world::World;
+use nalgebra::mat::Translation;
+use nalgebra::vec::{Vec1, Vec2, AlgebraicVec};
+use ncollide::geom::{Box, Plane};
+use ncollide::broad::DBVTBroadPhase;
+use nphysics::world::World;
 use nphysics::aliases::dim2;
-use nphysics::integration::body_force_generator::BodyForceGenerator;
-use nphysics::integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
-use nphysics::integration::swept_ball_motion_clamping::SweptBallMotionClamping;
-use nphysics::detection::collision::bodies_bodies::{BodiesBodies, Dispatcher};
-use nphysics::detection::island_activation_manager::IslandActivationManager;
-use nphysics::resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
-use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
+use nphysics::integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
+use nphysics::detection::{BodiesBodies, BodiesBodiesDispatcher, IslandActivationManager};
+use nphysics::resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
+use nphysics::object::{RigidBody, Static, Dynamic, DefaultGeom, RB};
 use nphysics::signal::signal::SignalEmiter;
 use graphics2d::engine::GraphicsManager;
 
@@ -42,7 +33,7 @@ fn main() {
 }
 
 
-pub fn pyramid_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64> {
+pub fn pyramid_2d(graphics: &mut GraphicsManager) -> dim2::World2d<f64> {
     /*
      * Setup the physics world
      */
@@ -62,7 +53,7 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64>
      * For the collision detection
      */
     // Collision Dispatcher
-    let dispatcher: dim2::Dispatcher2d<f64>  = Dispatcher::new();
+    let dispatcher: dim2::Dispatcher2d<f64>  = BodiesBodiesDispatcher::new();
     // Broad phase
     let broad_phase = @mut DBVTBroadPhase::new(dispatcher, 0.08f64);
     // CCD handler
@@ -94,7 +85,7 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64>
     let geom = Plane::new(Vec2::new(0.0f64, -1.0).normalized());
     let body = @mut RigidBody::new(DefaultGeom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
-    world.add_object(@mut body::RigidBody(body));
+    world.add_object(@mut RB(body));
     graphics.add_plane(body, &geom);
 
     /*
@@ -118,7 +109,7 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> aliases::dim2::World2d<f64>
 
             body.translate_by(&Vec2::new(x, y));
 
-            world.add_object(@mut body::RigidBody(body));
+            world.add_object(@mut RB(body));
             graphics.add_cube(body, One::one(), &box);
         }
     }

@@ -3,17 +3,14 @@ use std::ptr;
 use std::managed;
 use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
 use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
-use ncollide::bounding_volume::aabb::AABB;
+use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use ncollide::geom::ball::Ball;
-use ncollide::broad::broad_phase::{RayCastBroadPhase, BoundingVolumeBroadPhase};
-use ncollide::bounding_volume::bounding_volume::BoundingVolume;
-use ncollide::bounding_volume::aabb::HasAABB;
+use ncollide::geom::Ball;
+use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
 use detection::collision::default_default;
-use integration::integrator::Integrator;
-use object::body::{Body, RigidBody, SoftBody};
-use object::implicit_geom::DefaultGeom;
+use integration::Integrator;
+use object::{Body, DefaultGeom, RB, SB};
 use signal::signal::SignalEmiter;
 
 struct CCDBody<N, LV, AV, M, II> {
@@ -78,7 +75,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                       swept_sphere_radius: N,
                       motion_thresold:     N) {
         match *body {
-            RigidBody(rb) => {
+            RB(rb) => {
                 self.objects.insert(
                     ptr::to_mut_unsafe_ptr(body) as uint,
                     CCDBody::new(
@@ -87,7 +84,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                         motion_thresold * motion_thresold,
                         rb.transform_ref().translation()));
             },
-            SoftBody(_) => fail!("Soft bodies ccd is not yet implemented."),
+            SB(_) => fail!("Soft bodies ccd is not yet implemented."),
         }
     }
 
@@ -99,8 +96,8 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                 let mut ccdo = entry.value;
 
                 match *o {
-                    RigidBody(rb) => ccdo.last_pos = rb.translation(),
-                    SoftBody(_)   => fail!("Not yet implemented.")
+                    RB(rb) => ccdo.last_pos = rb.translation(),
+                    SB(_)   => fail!("Not yet implemented.")
                 }
 
                 self.objects.insert(key, ccdo);
@@ -152,7 +149,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 
         for o in self.objects.elements_mut().mut_iter() {
             match *o.value.body {
-                RigidBody(rb) => {
+                RB(rb) => {
                     // FIXME: we dont put the sphere on the center of mass ?
                     let curr_pos = rb.translation();
                     let movement = curr_pos - o.value.last_pos;
@@ -187,7 +184,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                         for b in self.interferences.iter() {
                             if !managed::mut_ptr_eq(*b, o.value.body) {
                                 match **b {
-                                    RigidBody(rb) => {
+                                    RB(rb) => {
                                         let toi =
                                             default_default::toi(
                                                 &old_transform,
@@ -206,7 +203,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                                             None        => { }
                                         }
                                     },
-                                    SoftBody(_) => fail!("Soft bodies are not yet supported.")
+                                    SB(_) => fail!("Soft bodies are not yet supported.")
                                 }
                             }
                         }

@@ -7,18 +7,14 @@ use nalgebra::traits::transformation::Transform;
 use nalgebra::vec::{Vec2, Vec3};
 use kiss3d::window;
 use kiss3d::event;
-use ncollide::geom::ball::Ball;
-use ncollide::geom::box::Box;
-use ncollide::ray::ray::Ray;
-use ncollide::ray::ray_plane;
+use ncollide::geom::{Ball, Box};
+use ncollide::ray;
+use ncollide::ray::Ray;
 use nphysics::aliases::dim3;
-use nphysics::object::body;
 use nphysics::detection::constraint::{RBRB, BallInSocket};
 use nphysics::detection::joint::ball_in_socket::BallInSocket;
 use nphysics::detection::joint::anchor::Anchor;
-use nphysics::object::implicit_geom::DefaultGeom;
-use nphysics::object::rigid_body::{RigidBody, Dynamic};
-use nphysics::object::body::RigidBody;
+use nphysics::object::{DefaultGeom, RigidBody, Dynamic, RB};
 use engine::{SceneNode, GraphicsManager};
 
 fn usage(exe_name: &str) {
@@ -139,7 +135,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                         if minb.is_some() {
                             match *minb.unwrap() {
-                                RigidBody(rb) => {
+                                RB(rb) => {
                                     if rb.can_move() {
                                         *grabbed_object = Some(rb);
                                     }
@@ -207,7 +203,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
                             let (pos, dir) = window.unproject(&*cursor_pos);
                             let (ref ppos, ref pdir) = *grabbed_object_plane;
 
-                            match ray_plane::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
+                            match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                 Some(inter) =>
                                     j.set_local2(pos + dir * inter),
                                 None => { }
@@ -255,7 +251,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                     body.set_lin_vel(front * 40.0);
 
-                    physics.add_object(@mut body::RigidBody(body));
+                    physics.add_object(@mut RB(body));
                     graphics.add_ball(body, One::one(), &ball);
                 },
                 // KEY_2
@@ -271,7 +267,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                     body.set_lin_vel(front * 40.0);
 
-                    physics.add_object(@mut body::RigidBody(body));
+                    physics.add_object(@mut RB(body));
                     graphics.add_cube(body, One::one(), &box);
                 },
                 // KEY_3
@@ -287,7 +283,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager)
 
                     rbody.set_lin_vel(front * 400.0);
 
-                    let body = @mut body::RigidBody(rbody);
+                    let body = @mut RB(rbody);
                     physics.add_object(body);
                     ccd_manager.add_ccd_to(body, 0.4, 1.0);
                     graphics.add_cube(rbody, One::one(), &box);

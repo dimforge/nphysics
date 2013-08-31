@@ -1,24 +1,15 @@
 use std::num::{Zero, One};
 use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
 use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
-use ncollide::geom::ball::Ball;
-use ncollide::geom::minkowski_sum::AnnotatedPoint;
-use ncollide::geom::compound::CompoundAABB;
+use ncollide::geom::{Ball, AnnotatedPoint, CompoundAABB};
 use ncollide::contact::Contact;
-use ncollide::broad::dispatcher;
+use ncollide::broad;
 use ncollide::narrow::algorithm::johnson_simplex::JohnsonSimplex;
-use ncollide::narrow::collision_detector::CollisionDetector;
-use ncollide::narrow::implicit_implicit;
-use ncollide::narrow::implicit_implicit::ImplicitImplicit;
-use ncollide::narrow::ball_ball;
-use ncollide::narrow::ball_ball::BallBall;
-use ncollide::narrow::compound_any::{AnyCompoundAABB, CompoundAABBAny};
-use ncollide::narrow::compound_compound::CompoundAABBCompoundAABB;
-use OSCMG = ncollide::narrow::one_shot_contact_manifold_generator::OneShotContactManifoldGenerator;
-use ncollide::narrow::plane_implicit;
-use ncollide::narrow::plane_implicit::{PlaneImplicit, ImplicitPlane};
-use object::implicit_geom::{DefaultGeom, Plane, Ball, Implicit, Compound};
-use object::implicit_geom::ImplicitGeom;
+use ncollide::narrow::toi;
+use ncollide::narrow::{CollisionDetector, ImplicitImplicit, BallBall, AnyCompoundAABB,
+                       ImplicitPlane, PlaneImplicit, CompoundAABBAny, CompoundAABBCompoundAABB};
+use OSCMG = ncollide::narrow::OneShotContactManifoldGenerator;
+use object::{DefaultGeom, Plane, Ball, Implicit, Compound, ImplicitGeom};
 
 type S<N, LV> = JohnsonSimplex<N, AnnotatedPoint<LV>>;
 type C<N, LV, M, II> = CompoundAABB<N, LV, M, DefaultGeom<N, LV, M, II>>;
@@ -188,10 +179,10 @@ pub fn toi<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebrai
            g2:   &DefaultGeom<N, LV, M, II>)
            -> Option<N> {
     match (g1, g2) {
-        (&Implicit(Ball(ref b1)), &Implicit(Ball(ref b2))) => ball_ball::toi(m1, dir, b1, m2, b2),
-        (&Implicit(ref i), &Plane(ref p))      => plane_implicit::toi(m2, p, m1, dir, i),
-        (&Plane(ref p), &Implicit(ref i))      => plane_implicit::toi(m1, p, m2, &-dir, i),
-        (&Implicit(ref i1), &Implicit(ref i2)) => implicit_implicit::toi(m1, dir, i1, m2, i2),
+        (&Implicit(Ball(ref b1)), &Implicit(Ball(ref b2))) => toi::ball_ball(m1, dir, b1, m2, b2),
+        (&Implicit(ref i), &Plane(ref p))      => toi::plane_implicit(m2, p, m1, dir, i),
+        (&Plane(ref p), &Implicit(ref i))      => toi::plane_implicit(m1, p, m2, &-dir, i),
+        (&Implicit(ref i1), &Implicit(ref i2)) => toi::implicit_implicit(m1, dir, i1, m2, i2),
         (&Compound(_), &Compound(_))   => fail!("Not yet implemented."), // CompoundCompound(),
         (&Compound(c), b) => {
             CollisionDetector::toi(None::<CA<N, LV, AV, M, II>>, m1, dir, dist, c, m2, b)
@@ -218,7 +209,7 @@ Dispatcher<N, LV, AV, M, II> {
 }
 
 impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
-     dispatcher::Dispatcher<DefaultGeom<N, LV, M, II>, DefaultDefault<N, LV, AV, M, II>>
+     broad::Dispatcher<DefaultGeom<N, LV, M, II>, DefaultDefault<N, LV, AV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, g1: &DefaultGeom<N, LV, M, II>, g2: &DefaultGeom<N, LV, M, II>)
                 -> DefaultDefault<N, LV, AV, M, II> {

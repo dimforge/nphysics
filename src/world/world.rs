@@ -1,5 +1,5 @@
 use resolution::solver::Solver;
-use integration::integrator::Integrator;
+use integration::Integrator;
 use detection::detector::Detector;
 
 pub struct World<N, O, C> {

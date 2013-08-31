@@ -2,8 +2,8 @@ use std::ptr;
 use nalgebra::vec::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use object::body::{Body, RigidBody, SoftBody};
-use integration::integrator::Integrator;
+use object::{Body, RB, SB};
+use integration::Integrator;
 use signal::signal::SignalEmiter;
 
 pub struct BodyDamping<N, LV, AV, M, II> {
@@ -51,13 +51,13 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     fn update(&mut self, _: N) {
         for o in self.objects.elements().iter() {
             match *o.value {
-                RigidBody(rb) => {
+                RB(rb) => {
                     let new_lin = rb.lin_vel() * self.linear_damping;
                     rb.set_lin_vel(new_lin);
                     let new_ang = rb.ang_vel() * self.angular_damping;
                     rb.set_ang_vel(new_ang);
                 },
-                SoftBody(_) => {
+                SB(_) => {
                     fail!("Not yet implemented.")
                 }
             }

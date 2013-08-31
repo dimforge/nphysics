@@ -4,10 +4,10 @@ use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, In
 use nalgebra::vec::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use object::body::{Body, RigidBody, SoftBody};
-use object::rigid_body::RigidBody;
+use object::{Body, RB, SB};
+use object::RigidBody;
 use object::volumetric::InertiaTensor;
-use integration::integrator::Integrator;
+use integration::Integrator;
 use integration::euler;
 use signal::signal::SignalEmiter;
 
@@ -45,16 +45,16 @@ Integrator<N, Body<N, LV, AV, M, II>> for RigidBodyExpEulerIntegrator<N, LV, AV,
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
         match *o {
-            RigidBody(rb) => { self.objects.insert(ptr::to_mut_unsafe_ptr(rb) as uint, rb); },
-            SoftBody(_)   => { }
+            RB(rb) => { self.objects.insert(ptr::to_mut_unsafe_ptr(rb) as uint, rb); },
+            SB(_)   => { }
         }
     }
 
     #[inline]
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
         match *o {
-            RigidBody(rb) => { self.objects.remove(&(ptr::to_mut_unsafe_ptr(rb) as uint)); },
-            SoftBody(_)   => { }
+            RB(rb) => { self.objects.remove(&(ptr::to_mut_unsafe_ptr(rb) as uint)); },
+            SB(_)   => { }
         }
     }
 
@@ -117,16 +117,16 @@ Integrator<N, Body<N, LV, AV, M, II>> for RigidBodySmpEulerIntegrator<N, LV, AV,
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
         match *o {
-            RigidBody(rb) => { self.objects.insert(ptr::to_mut_unsafe_ptr(rb) as uint, rb); },
-            SoftBody(_)   => { }
+            RB(rb) => { self.objects.insert(ptr::to_mut_unsafe_ptr(rb) as uint, rb); },
+            SB(_)   => { }
         }
     }
 
     #[inline]
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
         match *o {
-            RigidBody(rb) => { self.objects.remove(&(ptr::to_mut_unsafe_ptr(rb) as uint)); },
-            SoftBody(_)   => { }
+            RB(rb) => { self.objects.remove(&(ptr::to_mut_unsafe_ptr(rb) as uint)); },
+            SB(_)   => { }
         }
     }
 

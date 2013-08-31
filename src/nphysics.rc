@@ -19,54 +19,10 @@ pub mod signal {
     pub mod signal;
 }
 
-pub mod integration {
-    pub mod integrator;
-    pub mod rigid_body_integrator;
-    pub mod soft_body_integrator;
-    pub mod body_force_generator;
-    pub mod euler;
-    pub mod body_damping;
-    pub mod swept_ball_motion_clamping;
-}
+pub mod integration;
+pub mod detection;
+pub mod resolution;
 
-pub mod detection {
-    pub mod constraint;
-    pub mod detector;
-    pub mod island_activation_manager;
+pub mod world;
 
-    pub mod collision {
-        pub mod bodies_bodies;
-        pub mod default_default;
-    }
-
-    pub mod joint {
-        pub mod anchor;
-        pub mod joint_manager;
-        pub mod ball_in_socket;
-    }
-}
-
-pub mod resolution {
-    pub mod solver;
-
-    pub mod constraint {
-        pub mod impulse_cache;
-        pub mod accumulated_impulse_solver;
-        pub mod projected_gauss_seidel_solver;
-        pub mod velocity_constraint;
-        pub mod contact_equation;
-        pub mod ball_in_socket_equation;
-    }
-}
-
-pub mod world {
-    pub mod world;
-}
-
-pub mod object {
-    pub mod rigid_body;
-    pub mod soft_body;
-    pub mod volumetric;
-    pub mod implicit_geom;
-    pub mod body;
-}
+pub mod object;

@@ -1,34 +1,29 @@
 use std::num::One;
 use nalgebra::mat::{Translation, Rotate, Transform};
 use nalgebra::vec::AlgebraicVecExt;
-use ncollide::bounding_volume::aabb::{HasAABB, AABB};
-use ncollide::geom::implicit::{Implicit, HasMargin};
-use ncollide::geom::ball;
-use ncollide::geom::box;
-use ncollide::geom::cone;
-use ncollide::geom::cylinder;
-use ncollide::geom::plane;
-use ncollide::geom::compound::CompoundAABB;
-use ncollide::ray::ray::{Ray, RayCast, RayCastWithTransform};
+use ncollide::bounding_volume::{HasAABB, AABB};
+use ncollide::geom;
+use ncollide::geom::{Implicit, HasMargin, CompoundAABB};
+use ncollide::ray::{Ray, RayCast, RayCastWithTransform};
 
 /// Enumeration grouping all common shapes. Used to simplify collision detection
 /// dispatch.
 pub enum DefaultGeom<N, V, M, II> { // FIXME: rename that
-    Plane(plane::Plane<N, V>),
+    Plane(geom::Plane<N, V>),
     Compound(@CompoundAABB<N, V, M, DefaultGeom<N, V, M, II>>),
     Implicit(ImplicitGeom<N, V, M>)
 }
 
 pub enum ImplicitGeom<N, V, M> {
-    Ball(ball::Ball<N>),
-    Box(box::Box<N, V>),
-    Cone(cone::Cone<N>),
-    Cylinder(cylinder::Cylinder<N>),
+    Ball(geom::Ball<N>),
+    Box(geom::Box<N, V>),
+    Cone(geom::Cone<N>),
+    Cylinder(geom::Cylinder<N>),
 }
 
 impl<N: One + ToStr, V: ToStr, M, II: ToStr> DefaultGeom<N, V, M, II> {
     #[inline]
-    pub fn new_plane(p: plane::Plane<N, V>) -> DefaultGeom<N, V, M, II> {
+    pub fn new_plane(p: geom::Plane<N, V>) -> DefaultGeom<N, V, M, II> {
         Plane(p)
     }
 
@@ -39,22 +34,22 @@ impl<N: One + ToStr, V: ToStr, M, II: ToStr> DefaultGeom<N, V, M, II> {
     }
 
     #[inline]
-    pub fn new_ball(b: ball::Ball<N>) -> DefaultGeom<N, V, M, II> {
+    pub fn new_ball(b: geom::Ball<N>) -> DefaultGeom<N, V, M, II> {
         Implicit(Ball(b))
     }
 
     #[inline]
-    pub fn new_cylinder(b: cylinder::Cylinder<N>) -> DefaultGeom<N, V, M, II> {
+    pub fn new_cylinder(b: geom::Cylinder<N>) -> DefaultGeom<N, V, M, II> {
         Implicit(Cylinder(b))
     }
 
     #[inline]
-    pub fn new_box(b: box::Box<N, V>) -> DefaultGeom<N, V, M, II> {
+    pub fn new_box(b: geom::Box<N, V>) -> DefaultGeom<N, V, M, II> {
         Implicit(Box(b))
     }
 
     #[inline]
-    pub fn new_cone(b: cone::Cone<N>) -> DefaultGeom<N, V, M, II> {
+    pub fn new_cone(b: geom::Cone<N>) -> DefaultGeom<N, V, M, II> {
         Implicit(Cone(b))
     }
 
@@ -66,7 +61,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Plane(_)` is not matched.
      */
     #[inline]
-    pub fn plane<'r>(&'r self) -> &'r plane::Plane<N, V> {
+    pub fn plane<'r>(&'r self) -> &'r geom::Plane<N, V> {
         match *self {
             Plane(ref p) => p,
             _ => fail!("Unexpected geometry: this is not a plane.")
@@ -102,7 +97,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Implicit(Ball(_))` is not matched.
      */
     #[inline]
-    pub fn ball<'r>(&'r self) -> &'r ball::Ball<N> {
+    pub fn ball<'r>(&'r self) -> &'r geom::Ball<N> {
         match *self {
             Implicit(Ball(ref b)) => b,
             _ => fail!("Unexpected geometry: this is not a ball.")
@@ -114,7 +109,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Implicit(Cone(_))` is not matched.
      */
     #[inline]
-    pub fn cone<'r>(&'r self) -> &'r cone::Cone<N> {
+    pub fn cone<'r>(&'r self) -> &'r geom::Cone<N> {
         match *self {
             Implicit(Cone(ref c)) => c,
             _ => fail!("Unexpected geometry: this is not a ball.")
@@ -126,7 +121,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Implicit(Cylinder(_))` is not matched.
      */
     #[inline]
-    pub fn cylinder<'r>(&'r self) -> &'r cylinder::Cylinder<N> {
+    pub fn cylinder<'r>(&'r self) -> &'r geom::Cylinder<N> {
         match *self {
             Implicit(Cylinder(ref c)) => c,
             _ => fail!("Unexpected geometry: this is not a ball.")
@@ -138,7 +133,7 @@ impl<N, V, M, II> DefaultGeom<N, V, M, II> {
      * pattern `Implicit(Box(_))` is not matched.
      */
     #[inline]
-    pub fn box<'r>(&'r self) -> &'r box::Box<N, V> {
+    pub fn box<'r>(&'r self) -> &'r geom::Box<N, V> {
         match *self {
             Implicit(Box(ref b)) => b,
             _ => fail!("Unexpected geometry: this is not a ball.")

@@ -1,7 +1,7 @@
 use std::num::{Zero, One};
 use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
 use nalgebra::mat::{Rotate, Transform, Row};
-use object::body::ToRigidBody;
+use object::ToRigidBody;
 use object::volumetric::InertiaTensor;
 use detection::joint::ball_in_socket::BallInSocket;
 use resolution::constraint::velocity_constraint::VelocityConstraint;

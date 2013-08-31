@@ -3,10 +3,10 @@ use std::num::{Zero, One};
 use nalgebra::vec::AlgebraicVec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use integration::integrator::Integrator;
+use integration::Integrator;
 use detection::detector::Detector;
 use detection::constraint::{Constraint, RBRB, BallInSocket};
-use object::body::{Body, RigidBody, SoftBody};
+use object::{Body, RB, SB};
 use signal::signal::SignalEmiter;
 
 struct BodyWithEnergy<N, LV, AV, M, II> {
@@ -131,7 +131,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
         // Update bodies energy
         for b in self.bodies.elements_mut().mut_iter() {
             match *b.value.body {
-                RigidBody(rb) => {
+                RB(rb) => {
                     // NOTE: this is not the kinetic energy, just a hacky value to detect stabilization
                     // FIXME: take the time in account (to make a true RWA)
                     let _1: N = One::one();
@@ -141,7 +141,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
 
                     b.value.energy = b.value.energy.min(&(self.threshold * NumCast::from(4.0)));
                 },
-                SoftBody(_) => {
+                SB(_) => {
                     fail!("Sorry. Energy computation for soft bodies is not implemented yet.")
                 }
             }

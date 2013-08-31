@@ -1,7 +1,7 @@
 use std::num::Zero;
 use nalgebra::mat::Transform;
 use detection::joint::anchor::Anchor;
-use object::body::{RigidBody, SoftBody};
+use object::{RB, SB};
 
 pub struct BallInSocket<N, LV, AV, M, II> {
     priv up_to_date: bool,
@@ -58,8 +58,8 @@ impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, I
         match self.anchor1.body {
             Some(b) => {
                 match *b {
-                    RigidBody(rb) => rb.transform_ref().transform(&self.anchor1.position),
-                    SoftBody(_)   => fail!("Not yet implemented.")
+                    RB(rb) => rb.transform_ref().transform(&self.anchor1.position),
+                    SB(_)   => fail!("Not yet implemented.")
                 }
             },
             None => self.anchor1.position.clone()
@@ -70,8 +70,8 @@ impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, I
         match self.anchor2.body {
             Some(b) => {
                 match *b {
-                    RigidBody(rb) => rb.transform_ref().transform(&self.anchor2.position),
-                    SoftBody(_)   => fail!("Not yet implemented.")
+                    RB(rb) => rb.transform_ref().transform(&self.anchor2.position),
+                    SB(_)   => fail!("Not yet implemented.")
                 }
             },
             None => self.anchor2.position.clone()
@@ -84,8 +84,8 @@ impl<N: Clone, LV: Clone + Zero, AV, M, II> BallInSocket<N, LV, AV, M, II> {
         match self.anchor1.body {
             Some(b) => {
                 match *b {
-                    RigidBody(rb) => rb.center_of_mass().clone(),
-                    SoftBody(_)   => fail!("Not yet implemented.")
+                    RB(rb) => rb.center_of_mass().clone(),
+                    SB(_)   => fail!("Not yet implemented.")
                 }
             },
             None => Zero::zero()
@@ -96,8 +96,8 @@ impl<N: Clone, LV: Clone + Zero, AV, M, II> BallInSocket<N, LV, AV, M, II> {
         match self.anchor2.body {
             Some(b) => {
                 match *b {
-                    RigidBody(rb) => rb.center_of_mass().clone(),
-                    SoftBody(_)   => fail!("Not yet implemented.")
+                    RB(rb) => rb.center_of_mass().clone(),
+                    SB(_)   => fail!("Not yet implemented.")
                 }
             },
             None => Zero::zero()

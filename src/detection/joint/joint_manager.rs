@@ -4,7 +4,7 @@ use ncollide::util::hash::UintTWHash;
 use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::constraint::{Constraint, BallInSocket, RBRB};
-use object::body::Body;
+use object::Body;
 use signal::signal::SignalEmiter;
 
 pub struct JointManager<N, LV, AV, M, II> {

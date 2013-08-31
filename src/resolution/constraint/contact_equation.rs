@@ -3,7 +3,7 @@ use nalgebra::vec::{Vec, VecExt, Cross, Basis};
 use nalgebra::mat::{Rotate, Transform};
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
-use object::rigid_body::RigidBody;
+use object::RigidBody;
 use object::volumetric::InertiaTensor;
 
 pub enum CorrectionMode<N> {

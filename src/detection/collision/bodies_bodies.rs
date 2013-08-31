@@ -3,20 +3,20 @@ use std::num::{Zero, One};
 use std::borrow;
 use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
 use nalgebra::vec::{Vec, AlgebraicVecExt, Cross, Dim};
-use ncollide::geom::minkowski_sum::AnnotatedPoint;
-use ncollide::broad::dispatcher;
-use ncollide::broad::broad_phase::{InterferencesBroadPhase, RayCastBroadPhase};
+use ncollide::geom::AnnotatedPoint;
+use ncollide::broad;
+use ncollide::broad::{InterferencesBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
-use ncollide::narrow::collision_detector::CollisionDetector;
-use ncollide::ray::ray::{Ray, RayCastWithTransform};
-use object::body::{Body, ToRigidBody, RigidBody, SoftBody};
+use ncollide::narrow::CollisionDetector;
+use ncollide::ray::{Ray, RayCastWithTransform};
+use object::{Body, ToRigidBody, RB, SB};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use detection::collision::default_default::DefaultDefault;
 use signal::signal::SignalEmiter;
 
 pub enum PairwiseDetector<N, LV, AV, M, II> {
-    RB(DefaultDefault<N, LV, AV, M, II>),
+    Default(DefaultDefault<N, LV, AV, M, II>),
     Unsuported
 }
 
@@ -39,13 +39,13 @@ Dispatcher<N, LV, AV, M, II> {
     }
 }
 impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
-     dispatcher::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>
+     broad::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)
         -> PairwiseDetector<N, LV, AV, M, II> {
         match (*a, *b) {
-            (RigidBody(rb1), RigidBody(rb2)) => {
-                RB(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex))
+            (RB(rb1), RB(rb2)) => {
+                Default(DefaultDefault::new(rb1.geom(), rb2.geom(), &self.simplex))
             },
             _ => Unsuported
         }
@@ -60,7 +60,7 @@ for Dispatcher<N, LV, AV, M, II> {
         }
 
         match (*a, *b) {
-            (RigidBody(a), RigidBody(b)) => a.can_move() || b.can_move(),
+            (RB(a), RB(b)) => a.can_move() || b.can_move(),
             _ => true
         }
     }
@@ -101,7 +101,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
 
         do self.broad_phase.activate(body) |b1, b2, cd| {
             match *cd {
-                RB(ref mut d) => {
+                Default(ref mut d) => {
                     let rb1 = b1.to_rigid_body_or_fail();
                     let rb2 = b2.to_rigid_body_or_fail();
 
@@ -145,13 +145,13 @@ BodiesBodies<N, LV, AV, M, II, BF> {
 
         for b in bodies.iter() {
             match **b {
-                RigidBody(rb) => {
+                RB(rb) => {
                     match rb.geom().toi_with_transform_and_ray(rb.transform_ref(), ray) {
                         None    => { },
                         Some(t) => out.push((*b, t))
                     }
                 },
-                SoftBody(_) => fail!("Not yet implemented.")
+                SB(_) => fail!("Not yet implemented.")
             }
         }
     }
@@ -185,7 +185,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
         do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
             match *cd {
-                RB(ref mut d) => {
+                Default(ref mut d) => {
                     let rb1 = b1.to_rigid_body_or_fail();
                     let rb2 = b2.to_rigid_body_or_fail();
 
@@ -201,7 +201,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
         do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
             match *cd {
-                RB(ref mut d) => {
+                Default(ref mut d) => {
                     d.colls(&mut collector);
 
                     for c in collector.iter() {

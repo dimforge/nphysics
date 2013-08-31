@@ -1,12 +1,8 @@
 use std::num::{Zero, One, Real, NumCast};
 use nalgebra::vec::{VecExt, Dim, Iterable};
 use nalgebra::mat::{Translation, Indexable};
-use ncollide::geom::ball::Ball;
-use ncollide::geom::box::Box;
-use ncollide::geom::cylinder::Cylinder;
-use ncollide::geom::cone::Cone;
-use ncollide::geom::plane::Plane;
-use object::implicit_geom::{DefaultGeom, Plane, Ball, Box, Cone, Cylinder, Compound, Implicit};
+use ncollide::geom::{Ball, Box, Cylinder, Cone, Plane};
+use object::{DefaultGeom, Plane, Ball, Box, Cone, Cylinder, Compound, Implicit};
 
 pub trait InertiaTensor<N, V, M> {
     fn to_world_space(&self, &M) -> Self;

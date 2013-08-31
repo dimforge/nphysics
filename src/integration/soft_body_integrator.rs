@@ -2,9 +2,8 @@ use std::ptr;
 use nalgebra::vec::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use object::body::ToSoftBody;
-use object::soft_body::SoftBody;
-use integration::integrator::Integrator;
+use object::{ToSoftBody, SoftBody};
+use integration::Integrator;
 use integration::euler;
 
 pub struct SoftBodyExpEulerIntegrator<N, V> {

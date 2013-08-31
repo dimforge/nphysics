@@ -1,8 +1,8 @@
 use std::ptr;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use object::body::{Body, RigidBody, SoftBody};
-use integration::integrator::Integrator;
+use object::{Body, RB, SB};
+use integration::Integrator;
 use signal::signal::SignalEmiter;
 
 // FIXME: split this on `RigidBodyForceGenerator` and `SoftBodyForceGenerator` ?
@@ -68,11 +68,11 @@ BodyForceGenerator<N, LV, AV, M, II> {
     #[inline]
     fn write_accs_to(&self, o: &mut Body<N, LV, AV, M, II>) {
         match *o {
-            RigidBody(rb) => {
+            RB(rb) => {
                 rb.set_lin_acc(self.lin_acc.clone());
                 rb.set_ang_acc(self.ang_acc.clone());
             },
-            SoftBody(sb) => sb.acc = self.lin_acc.clone()
+            SB(sb) => sb.acc = self.lin_acc.clone()
         }
     }
 }

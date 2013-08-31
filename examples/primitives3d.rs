@@ -13,29 +13,21 @@ extern mod ncollide;
 extern mod graphics3d;
 
 use std::num::One;
-use nalgebra::vec::Vec3;
-use nalgebra::traits::vector::AlgebraicVec;
-use nalgebra::traits::translation::Translation;
-use ncollide::geom::box::Box;
-use ncollide::geom::ball::Ball;
-use ncollide::geom::cone::Cone;
-use ncollide::geom::cylinder::Cylinder;
-use ncollide::geom::plane::Plane;
-use ncollide::broad::dbvt_broad_phase::DBVTBroadPhase;
-use nphysics::object::body;
-use nphysics::object::rigid_body::{RigidBody, Static, Dynamic};
-use nphysics::object::implicit_geom::DefaultGeom;
-use nphysics::world::world::World;
+
+use nalgebra::mat::Translation;
+use nalgebra::vec::{Vec3, AlgebraicVec};
+
+use ncollide::geom::{Ball, Box, Cone, Cylinder, Plane};
+use ncollide::broad::DBVTBroadPhase;
+
+use nphysics::world::World;
 use nphysics::aliases::dim3;
-use nphysics::integration::body_force_generator::BodyForceGenerator;
-use nphysics::integration::rigid_body_integrator::RigidBodySmpEulerIntegrator;
-use nphysics::integration::swept_ball_motion_clamping::SweptBallMotionClamping;
-use nphysics::detection::collision::bodies_bodies::{BodiesBodies, Dispatcher};
-use nphysics::detection::island_activation_manager::IslandActivationManager;
-use nphysics::detection::joint::joint_manager::JointManager;
-use nphysics::resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
-use nphysics::resolution::constraint::contact_equation::VelocityAndPosition;
+use nphysics::integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
+use nphysics::detection::{BodiesBodies, BodiesBodiesDispatcher, IslandActivationManager, JointManager};
+use nphysics::resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
+use nphysics::object::{RigidBody, Static, Dynamic, DefaultGeom, RB};
 use nphysics::signal::signal::SignalEmiter;
+
 use graphics3d::engine::GraphicsManager;
 
 #[start]
@@ -72,7 +64,7 @@ pub fn primitives_3d(graphics: &mut GraphicsManager)
      * For the collision detection
      */
     // Collision Dispatcher
-    let dispatcher = Dispatcher::new();
+    let dispatcher = BodiesBodiesDispatcher::new();
     // Broad phase
     let broad_phase = @mut DBVTBroadPhase::new(dispatcher, 0.08f64);
     // CCD handler
@@ -116,7 +108,7 @@ pub fn primitives_3d(graphics: &mut GraphicsManager)
         let geom = Plane::new(*n);
         let body = @mut RigidBody::new(DefaultGeom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
-        world.add_object(@mut body::RigidBody(body));
+        world.add_object(@mut RB(body));
         graphics.add_plane(body, &geom);
     }
 
@@ -165,7 +157,7 @@ pub fn primitives_3d(graphics: &mut GraphicsManager)
                 }
 
                 body.translate_by(&Vec3::new(x, y, z));
-                world.add_object(@mut body::RigidBody(body));
+                world.add_object(@mut RB(body));
             }
         }
     }

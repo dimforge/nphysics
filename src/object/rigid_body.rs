@@ -1,10 +1,9 @@
 use std::num::{Zero, One};
 use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Indexable};
 use nalgebra::vec::{VecExt, AlgebraicVecExt, Dim};
-use ncollide::bounding_volume::bounding_volume::HasBoundingVolume;
-use ncollide::bounding_volume::aabb::{AABB, HasAABB};
+use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use object::volumetric::{InertiaTensor, Volumetric};
-use object::implicit_geom::DefaultGeom;
+use object::DefaultGeom;
 // use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
 #[deriving(ToStr, Eq, Clone)]
