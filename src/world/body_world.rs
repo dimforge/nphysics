@@ -4,7 +4,7 @@ use nalgebra::vec::{AlgebraicVec, AlgebraicVecExt, Cross, CrossMatrix};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use ncollide::ray::Ray;
-use integration::{Integrator, BodyForceGenerator, RigidBodySmpEulerIntegrator, SweptBallMotionClamping};
+use integration::{Integrator, BodyForceGenerator, BodySmpEulerIntegrator, SweptBallMotionClamping};
 use detection::collision::bodies_bodies::PairwiseDetector;
 use detection::{BodiesBodies, BodiesBodiesDispatcher};
 use detection::detector::Detector;
@@ -32,7 +32,7 @@ type BF<N, LV, AV, M, II> =
 pub struct BodyWorld<N, LV, AV, M, II, CM> {
     world:      World<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
     forces:     @mut BodyForceGenerator<N, LV, AV, M, II>,
-    integrator: @mut RigidBodySmpEulerIntegrator<N, LV, AV, M, II>,
+    integrator: @mut BodySmpEulerIntegrator<N, LV, AV, M, II>,
     detector:   @mut BodiesBodies<N, LV, AV, M, II, BF<N, LV, AV, M, II>>,
     sleep:      @mut IslandActivationManager<N, LV, AV, M, II>,
     ccd:        @mut SweptBallMotionClamping<N, LV, AV, M, II, BF<N, LV, AV, M, II>>,
@@ -61,7 +61,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
 
         // For the intergration
         let forces     = BodyForceGenerator::new(events, Zero::zero(), Zero::zero());
-        let integrator = RigidBodySmpEulerIntegrator::new(events);
+        let integrator = BodySmpEulerIntegrator::new(events);
 
         /*
          * For the collision detection
@@ -134,7 +134,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         self.forces
     }
 
-    pub fn integrator(&self) -> @mut RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
+    pub fn integrator(&self) -> @mut BodySmpEulerIntegrator<N, LV, AV, M, II> {
         self.integrator
     }
 

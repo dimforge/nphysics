@@ -76,10 +76,11 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                       body:                @mut Body<N, LV, AV, M, II>,
                       swept_sphere_radius: N,
                       motion_thresold:     N) {
+        let key = ptr::to_mut_unsafe_ptr(body) as uint;
         match *body {
-            RB(rb) => {
+            RB(ref mut rb) => {
                 self.objects.insert(
-                    ptr::to_mut_unsafe_ptr(body) as uint,
+                    key,
                     CCDBody::new(
                         body,
                         swept_sphere_radius,
@@ -98,7 +99,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                 let mut ccdo = entry.value;
 
                 match *o {
-                    RB(rb) => ccdo.last_pos = rb.translation(),
+                    RB(ref rb) => ccdo.last_pos = rb.translation(),
                     SB(_)   => fail!("Not yet implemented.")
                 }
 
@@ -151,7 +152,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 
         for o in self.objects.elements_mut().mut_iter() {
             match *o.value.body {
-                RB(rb) => {
+                RB(ref mut rb) => {
                     // FIXME: we dont put the sphere on the center of mass ?
                     let curr_pos = rb.translation();
                     let movement = curr_pos - o.value.last_pos;
@@ -186,7 +187,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                         for b in self.interferences.iter() {
                             if !managed::mut_ptr_eq(*b, o.value.body) {
                                 match **b {
-                                    RB(rb) => {
+                                    RB(ref rb) => {
                                         let toi =
                                             toi::geom_geom(
                                                 &old_transform,

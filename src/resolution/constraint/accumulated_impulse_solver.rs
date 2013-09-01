@@ -5,8 +5,7 @@ use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
 use nalgebra::mat;
 use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
 use detection::constraint::{Constraint, RBRB, BallInSocket};
-use object::RigidBody;
-use object::{Body, ToRigidBody};
+use object::Body;
 use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
@@ -77,7 +76,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 dt:          N,
                 constraints: &[Constraint<N, LV, AV, M, II>],
                 joints:      &[uint],
-                bodies:      &[@mut RigidBody<N, LV, AV, M, II>]) {
+                bodies:      &[@mut Body<N, LV, AV, M, II>]) {
         let num_friction_equations    = (Dim::dim(None::<LV>) - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
@@ -143,14 +142,15 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
         // FIXME: this is _so_ uggly!
         self.resize_buffers(num_restitution_equations, num_friction_equations);
 
-        for &b in bodies.iter() {
-            let i = b.index();
+        for b in bodies.iter() {
+            let rb = b.to_mut_rigid_body_or_fail();
+            let i  = rb.index();
 
-            let curr_lin_vel = b.lin_vel();
-            let curr_ang_vel = b.ang_vel();
+            let curr_lin_vel = rb.lin_vel();
+            let curr_ang_vel = rb.ang_vel();
 
-            b.set_lin_vel(curr_lin_vel + MJLambda[i].lv);
-            b.set_ang_vel(curr_ang_vel + MJLambda[i].av);
+            rb.set_lin_vel(curr_lin_vel + MJLambda[i].lv);
+            rb.set_ang_vel(curr_ang_vel + MJLambda[i].av);
         }
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
@@ -203,16 +203,17 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 self.num_first_order_iter,
                 true);
 
-            for &b in bodies.iter() {
-                let i = b.index();
+            for b in bodies.iter() {
+                let rb = b.to_mut_rigid_body_or_fail();
+                let i  = rb.index();
 
                 MJLambda[i].lv = MJLambda[i].lv * dt;
                 MJLambda[i].av = MJLambda[i].av * dt;
 
-                let center   = &b.center_of_mass().clone();
+                let center   = &rb.center_of_mass().clone();
                 let _1: M    = One::one();
                 let delta: M = mat::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
-                b.transform_by(&delta);
+                rb.transform_by(&delta);
             }
         }
     }
@@ -282,12 +283,12 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                               M,
                               II>(
                               a:      @mut Body<N, LV, AV, M, II>,
-                              bodies: &mut ~[@mut RigidBody<N, LV, AV, M, II>],
+                              bodies: &mut ~[@mut Body<N, LV, AV, M, II>],
                               id:     &mut int) {
                 if a.index() == -2 {
                     if a.can_move() {
                         a.set_index(*id);
-                        bodies.push(a.to_rigid_body_or_fail());
+                        bodies.push(a);
                         *id = *id + 1;
                     }
                     else {

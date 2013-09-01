@@ -10,11 +10,11 @@ struct Ball {
     priv base_color: Vec3<f32>,
     priv delta:      dim3::Transform3d<f64>,
     priv gfx:        @mut object::Object,
-    priv body:       @mut dim3::RigidBody3d<f64>
+    priv body:       @mut dim3::Body3d<f64>
 }
 
 impl Ball {
-    pub fn new(body:   @mut dim3::RigidBody3d<f64>,
+    pub fn new(body:   @mut dim3::Body3d<f64>,
                delta:  dim3::Transform3d<f64>,
                radius: f64,
                color:  Vec3<f32>,
@@ -43,10 +43,11 @@ impl SceneNode for Ball {
     }
 
     fn update(&mut self) {
-        if self.body.is_active() {
+        let rb = self.body.to_rigid_body_or_fail();
+        if rb.is_active() {
             {
                 let gfx_transform = self.gfx.transformation();
-                *gfx_transform    = self.body.transformation() * self.delta;
+                *gfx_transform    = rb.transformation() * self.delta;
             }
 
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);

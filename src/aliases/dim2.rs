@@ -4,7 +4,7 @@ use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::vec::AlgebraicVec;
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
-use integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator};
+use integration::{BodyForceGenerator, BodySmpEulerIntegrator};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector};
 use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
@@ -34,7 +34,7 @@ pub type Plane2d<N>    = Plane<N, Vec2<N>>;
 pub type Geom2d<N>     = Geom<N, LV<N>, M<N>, II<N>>;
 
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
-pub type RigidBodyIntegrator2d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type BodyIntegrator2d<N> = BodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 pub type Dispatcher2d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type PairwiseDetector2d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;

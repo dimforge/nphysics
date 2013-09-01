@@ -12,7 +12,6 @@ extern mod nalgebra;
 extern mod ncollide;
 extern mod graphics3d;
 
-use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::Vec3;
 use ncollide::geom::{Geom, Ball, Box, Cone, Cylinder, Plane};
@@ -41,11 +40,11 @@ pub fn primitives_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
     /*
      * Planes
      */
-    let geom = Plane::new(Vec3::y());
-    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::y())), 0.0f64, Static, 0.3, 0.6);
+    let body = @mut RB(rb);
 
-    world.add_body(@mut RB(body));
-    graphics.add_plane(body, &geom);
+    world.add_body(body);
+    graphics.add(body);
 
     /*
      * Create the boxes
@@ -63,36 +62,30 @@ pub fn primitives_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
                 let x = i as f64 * shift - centerx;
                 let y = j as f64 * shift + centery;
                 let z = k as f64 * shift - centerz;
-                let body;
+                let geom;
 
 
                 if j % 4 == 0 {
-                    let box  = Box::new(Vec3::new(rad, rad, rad));
-                    let geom = Geom::new_box(box);
-                    body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
-                    graphics.add_cube(body, One::one(), &box);
+                    geom = Geom::new_box(Box::new(Vec3::new(rad, rad, rad)));
                 }
                 else if j % 3 == 0 {
-                    let ball = Ball::new(rad);
-                    let geom = Geom::new_ball(ball);
-                    body     = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
-                    graphics.add_ball(body, One::one(), &ball);
+                    geom = Geom::new_ball(Ball::new(rad));
                 }
                 else if j % 2 == 0 {
-                    let cylinder = Cylinder::new(rad, rad);
-                    let geom     = Geom::new_cylinder(cylinder);
-                    body         = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
-                    graphics.add_cylinder(body, One::one(), &cylinder);
+                    geom = Geom::new_cylinder(Cylinder::new(rad, rad));
                 }
                 else {
-                 let cone = Cone::new(rad, rad);
-                 let geom = Geom::new_cone(cone);
-                 body     = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
-                 graphics.add_cone(body, One::one(), &cone);
+                    geom = Geom::new_cone(Cone::new(rad, rad));
                 }
 
-                body.translate_by(&Vec3::new(x, y, z));
-                world.add_body(@mut RB(body));
+                let mut rb = RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
+
+                rb.translate_by(&Vec3::new(x, y, z));
+
+                let body = @mut RB(rb);
+
+                world.add_body(body);
+                graphics.add(body);
             }
         }
     }

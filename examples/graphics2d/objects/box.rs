@@ -12,12 +12,12 @@ use engine::SceneNode;
 struct Box {
     priv color: Vec3<u8>,
     priv delta: dim2::Transform2d<f64>,
-    priv body: @mut dim2::RigidBody2d<f64>,
-    priv gfx:  RectangleShape
+    priv body:  @mut dim2::Body2d<f64>,
+    priv gfx:   RectangleShape
 }
 
 impl Box {
-    pub fn new(body:  @mut dim2::RigidBody2d<f64>,
+    pub fn new(body:  @mut dim2::Body2d<f64>,
                delta: dim2::Transform2d<f64>,
                rx:    f64,
                ry:    f64,
@@ -42,7 +42,8 @@ impl Box {
 
 impl SceneNode for Box {
     fn update(&mut self) {
-        let transform = self.body.transform_ref() * self.delta;
+        let body = self.body.to_rigid_body_or_fail();
+        let transform = body.transform_ref() * self.delta;
         let pos = transform.translation();
         let rot = transform.rotation();
 
@@ -52,7 +53,7 @@ impl SceneNode for Box {
         });
         self.gfx.set_rotation(rot.x.to_degrees() as float);
 
-        if self.body.is_active() {
+        if body.is_active() {
             self.gfx.set_fill_color(
                 &color::Color::new_from_RGB(self.color.x, self.color.y, self.color.z));
         }

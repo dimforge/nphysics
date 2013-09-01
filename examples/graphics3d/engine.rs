@@ -1,9 +1,11 @@
+use std::num::One;
 use std::ptr;
 use std::rand::{XorShiftRng, RngUtil};
 use std::hashmap::HashMap;
 use nalgebra::vec::Vec3;
 use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::translation::Translation;
+use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, ConeGeom};
 use kiss3d::window::Window;
 use nphysics::aliases::dim3;
 use objects::ball::Ball;
@@ -31,7 +33,7 @@ impl GraphicsManager {
         GraphicsManager {
             window:    window,
             rand:      XorShiftRng::new_seeded(0, 1, 2, 3),
-            rb2sn:   HashMap::new(),
+            rb2sn:     HashMap::new(),
             obj2color: HashMap::new()
         }
     }
@@ -40,67 +42,101 @@ impl GraphicsManager {
         simulate::simulate(builder)
     }
 
-    pub fn add_plane(&mut self,
-                     body:  @mut dim3::RigidBody3d<f64>,
-                     geom:  &dim3::Plane3d<f64>) {
-        let obj = @mut Plane::new(body,
-                                  &body.transform_ref().translation(),
-                                  &body.transform_ref().rotate(&geom.normal()),
-                                  self.color_for_object(body),
-                                  self.window);
-        do self.rb2sn.insert_or_update_with(ptr::to_mut_unsafe_ptr(body) as uint, ~[obj as @mut SceneNode]) |_, v| {
-            v.push(obj as @mut SceneNode)
+    pub fn add(&mut self, body: @mut dim3::Body3d<f64>) {
+
+        let nodes = {
+            let rb = body.to_rigid_body_or_fail();
+            let mut nodes = ~[];
+
+            self.add_geom(body, One::one(), rb.geom(), &mut nodes);
+
+            nodes
         };
+
+        self.rb2sn.insert(ptr::to_mut_unsafe_ptr(body) as uint, nodes);
     }
 
-    pub fn add_ball(&mut self,
-                    body:  @mut dim3::RigidBody3d<f64>,
-                    delta: dim3::Transform3d<f64>,
-                    geom:  &dim3::Ball3d<f64>) {
-        let obj = @mut Ball::new(body, delta, geom.radius(), self.color_for_object(body), self.window);
-        do self.rb2sn.insert_or_update_with(ptr::to_mut_unsafe_ptr(body) as uint, ~[obj as @mut SceneNode]) |_, v| {
-            v.push(obj as @mut SceneNode)
-        };
+    fn add_geom(&mut self,
+                body:  @mut dim3::Body3d<f64>,
+                delta: dim3::Transform3d<f64>,
+                geom:  &dim3::Geom3d<f64>,
+                out:   &mut ~[@mut SceneNode]) {
+        match *geom {
+            PlaneGeom(ref p)    => self.add_plane(body, p, out),
+            CompoundGeom(ref c) => {
+                for &(t, ref s) in c.shapes().iter() {
+                    self.add_geom(body, delta * t, s, out)
+                }
+            },
+            ImplicitGeom(ref i) => {
+                match *i {
+                    BallGeom(ref b)     => self.add_ball(body, delta, b, out),
+                    BoxGeom(ref b)      => self.add_box(body, delta, b, out),
+                    CylinderGeom(ref c) => self.add_cylinder(body, delta, c, out),
+                    ConeGeom(ref c)     => self.add_cone(body, delta, c, out),
+                }
+            },
+        }
     }
 
-    pub fn add_cube(&mut self,
-                    body:  @mut dim3::RigidBody3d<f64>,
-                    delta: dim3::Transform3d<f64>,
-                    geom:  &dim3::Box3d<f64>) {
+    fn add_plane(&mut self,
+                 body: @mut dim3::Body3d<f64>,
+                 geom: &dim3::Plane3d<f64>,
+                 out:  &mut ~[@mut SceneNode]) {
+        let position = body.to_rigid_body_or_fail().translation();
+        let normal   = body.to_rigid_body_or_fail().transform_ref().rotate(&geom.normal());
+        let color    = self.color_for_object(body);
+
+        out.push(@mut Plane::new(body, &position, &normal, color, self.window) as @mut SceneNode)
+    }
+
+    fn add_ball(&mut self,
+                body:  @mut dim3::Body3d<f64>,
+                delta: dim3::Transform3d<f64>,
+                geom:  &dim3::Ball3d<f64>,
+                out:   &mut ~[@mut SceneNode]) {
+        let color = self.color_for_object(body);
+        out.push(@mut Ball::new(body, delta, geom.radius(), color, self.window) as @mut SceneNode)
+    }
+
+    fn add_box(&mut self,
+               body:  @mut dim3::Body3d<f64>,
+               delta: dim3::Transform3d<f64>,
+               geom:  &dim3::Box3d<f64>,
+               out:   &mut ~[@mut SceneNode]) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
         let rz = geom.half_extents().z;
 
-        let obj = @mut Box::new(body, delta, rx, ry, rz, self.color_for_object(body), self.window);
-        do self.rb2sn.insert_or_update_with(ptr::to_mut_unsafe_ptr(body) as uint, ~[obj as @mut SceneNode]) |_, v| {
-            v.push(obj as @mut SceneNode)
-        };
+        let color = self.color_for_object(body);
+
+        out.push(@mut Box::new(body, delta, rx, ry, rz, color, self.window) as @mut SceneNode)
     }
 
-    pub fn add_cylinder(&mut self,
-                        body:  @mut dim3::RigidBody3d<f64>,
-                        delta: dim3::Transform3d<f64>,
-                        geom:  &dim3::Cylinder3d<f64>) {
-        let r = geom.radius();
-        let h = geom.half_height() * 2.0;
-
-        let obj = @mut Cylinder::new(body, delta, r, h, self.color_for_object(body), self.window);
-        do self.rb2sn.insert_or_update_with(ptr::to_mut_unsafe_ptr(body) as uint, ~[obj as @mut SceneNode]) |_, v| {
-            v.push(obj as @mut SceneNode)
-        };
-    }
-
-    pub fn add_cone(&mut self,
-                    body:  @mut dim3::RigidBody3d<f64>,
+    fn add_cylinder(&mut self,
+                    body:  @mut dim3::Body3d<f64>,
                     delta: dim3::Transform3d<f64>,
-                    geom:  &dim3::Cone3d<f64>) {
+                    geom:  &dim3::Cylinder3d<f64>,
+                    out:   &mut ~[@mut SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
-        let obj = @mut Cone::new(body, delta, r, h, self.color_for_object(body), self.window);
-        do self.rb2sn.insert_or_update_with(ptr::to_mut_unsafe_ptr(body) as uint, ~[obj as @mut SceneNode]) |_, v| {
-            v.push(obj as @mut SceneNode)
-        };
+        let color = self.color_for_object(body);
+
+        out.push(@mut Cylinder::new(body, delta, r, h, color, self.window) as @mut SceneNode)
+    }
+
+    fn add_cone(&mut self,
+                body:  @mut dim3::Body3d<f64>,
+                delta: dim3::Transform3d<f64>,
+                geom:  &dim3::Cone3d<f64>,
+                out:   &mut ~[@mut SceneNode]) {
+        let r = geom.radius();
+        let h = geom.half_height() * 2.0;
+
+        let color = self.color_for_object(body);
+
+        out.push(@mut Cone::new(body, delta, r, h, color, self.window) as @mut SceneNode)
     }
 
     pub fn draw(&mut self) {
@@ -115,12 +151,12 @@ impl GraphicsManager {
         self.window.camera().look_at_z(eye, at);
     }
 
-    pub fn rigid_body_to_scene_node<'r>(&'r self, rb: @mut dim3::RigidBody3d<f64>) -> Option<&'r ~[@mut SceneNode]> {
+    pub fn body_to_scene_node<'r>(&'r self, rb: @mut dim3::Body3d<f64>) -> Option<&'r ~[@mut SceneNode]> {
         self.rb2sn.find(&(ptr::to_mut_unsafe_ptr(rb) as uint))
     }
 
-    pub fn color_for_object(&mut self, body: @mut dim3::RigidBody3d<f64>) -> Vec3<f32> {
-        let key = ptr::to_mut_unsafe_ptr(body) as uint;
+    pub fn color_for_object(&mut self, body: &dim3::Body3d<f64>) -> Vec3<f32> {
+        let key = ptr::to_unsafe_ptr(body) as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }

@@ -68,11 +68,11 @@ BodyForceGenerator<N, LV, AV, M, II> {
     #[inline]
     fn write_accs_to(&self, o: &mut Body<N, LV, AV, M, II>) {
         match *o {
-            RB(rb) => {
+            RB(ref mut rb) => {
                 rb.set_lin_acc(self.lin_acc.clone());
                 rb.set_ang_acc(self.ang_acc.clone());
             },
-            SB(sb) => sb.acc = self.lin_acc.clone()
+            SB(ref mut sb) => sb.acc = self.lin_acc.clone()
         }
     }
 }

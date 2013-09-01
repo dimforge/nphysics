@@ -9,7 +9,7 @@ use ncollide::broad::{InterferencesBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
 use ncollide::narrow::{CollisionDetector, GeomGeom};
 use ncollide::ray::{Ray, RayCastWithTransform};
-use object::{Body, ToRigidBody, RB, SB};
+use object::{Body, RB, SB};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use signal::signal::SignalEmiter;
@@ -42,8 +42,8 @@ impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)
         -> PairwiseDetector<N, LV, AV, M, II> {
-        match (*a, *b) {
-            (RB(rb1), RB(rb2)) => {
+        match (a, b) {
+            (&RB(ref rb1), &RB(ref rb2)) => {
                 GG(GeomGeom::new(rb1.geom(), rb2.geom(), &self.simplex))
             },
             _ => Unsuported
@@ -58,8 +58,8 @@ for Dispatcher<N, LV, AV, M, II> {
             return false
         }
 
-        match (*a, *b) {
-            (RB(a), RB(b)) => a.can_move() || b.can_move(),
+        match (a, b) {
+            (&RB(ref a), &RB(ref b)) => a.can_move() || b.can_move(),
             _ => true
         }
     }
@@ -142,7 +142,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
 
         for b in bodies.iter() {
             match **b {
-                RB(rb) => {
+                RB(ref rb) => {
                     match rb.geom().toi_with_transform_and_ray(rb.transform_ref(), ray) {
                         None    => { },
                         Some(t) => out.push((*b, t))

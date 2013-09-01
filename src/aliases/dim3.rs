@@ -8,7 +8,7 @@ use nalgebra::vec::{AlgebraicVec, Outer};
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
-use integration::{BodyForceGenerator, RigidBodySmpEulerIntegrator, BodyDamping, SweptBallMotionClamping};
+use integration::{BodyForceGenerator, BodySmpEulerIntegrator, BodyDamping, SweptBallMotionClamping};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector, BodiesBodies};
 use detection::constraint::Constraint;
 use detection::joint::joint_manager::JointManager;
@@ -39,7 +39,7 @@ pub type Geom3d<N>     = Geom<N, LV<N>, M<N>, II<N>>;
 pub type AABB3d<N>     = AABB<N, LV<N>>;
 
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
-pub type RigidBodyIntegrator3d<N> = RigidBodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type BodyIntegrator3d<N> = BodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type BodyDamping3d<N> = BodyDamping<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 pub type Dispatcher3d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;

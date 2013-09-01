@@ -40,11 +40,11 @@ pub fn cross3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
     /*
      * Planes
      */
-    let geom = Plane::new(Vec3::y());
-    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::y())), 0.0f64, Static, 0.3, 0.6);
+    let body = @mut RB(rb);
 
-    world.add_body(@mut RB(body));
-    graphics.add_plane(body, &geom);
+    world.add_body(body);
+    graphics.add(body);
 
     /*
      * Cross shaped geometry
@@ -77,15 +77,14 @@ pub fn cross3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
                 let y = j as f64 * shift + centery;
                 let z = k as f64 * shift - centerz;
 
-                let geom = Geom::new_compound(cross);
-                let body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f64, Dynamic, 0.3, 0.5);
 
-                body.translate_by(&Vec3::new(x, y, z));
+                rb.translate_by(&Vec3::new(x, y, z));
 
-                world.add_body(@mut RB(body));
-                graphics.add_cube(body, One::one(), &box1);
-                graphics.add_cube(body, One::one(), &box2);
-                graphics.add_cube(body, One::one(), &box3);
+                let body = @mut RB(rb);
+
+                world.add_body(body);
+                graphics.add(body);
             }
         }
     }

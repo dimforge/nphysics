@@ -51,7 +51,7 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     fn update(&mut self, _: N) {
         for o in self.objects.elements().iter() {
             match *o.value {
-                RB(rb) => {
+                RB(ref mut rb) => {
                     let new_lin = rb.lin_vel() * self.linear_damping;
                     rb.set_lin_vel(new_lin);
                     let new_ang = rb.ang_vel() * self.angular_damping;

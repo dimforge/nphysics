@@ -13,7 +13,6 @@ extern mod nalgebra;
 extern mod ncollide;
 extern mod graphics2d;
 
-use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::Vec2;
 use ncollide::geom::{Geom, Box, Plane};
@@ -41,11 +40,11 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
      * First plane
      */
-    let geom = Plane::new(Vec2::new(0.0f64, -1.0));
-    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(-Vec2::y())), 0.0f64, Static, 0.3, 0.6);
+    let body = @mut RB(rb);
 
-    world.add_body(@mut RB(body));
-    graphics.add_plane(body, &geom);
+    world.add_body(body);
+    graphics.add(body);
 
     /*
      * Create the boxes
@@ -62,14 +61,15 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
             let x = (fi * shift / 2.0) + (fj - fi) * 2.5 * rad - centerx;
             let y = -fi * 2.5 * rad;
 
-            let box  = Box::new(Vec2::new(rad, rad));
-            let geom = Geom::new_box(box);
-            let body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.6);
+            let box    = Box::new(Vec2::new(rad, rad));
+            let mut rb = RigidBody::new(Geom::new_box(box), 1.0f64, Dynamic, 0.3, 0.6);
 
-            body.translate_by(&Vec2::new(x, y));
+            rb.translate_by(&Vec2::new(x, y));
 
-            world.add_body(@mut RB(body));
-            graphics.add_cube(body, One::one(), &box);
+            let body = @mut RB(rb);
+
+            world.add_body(body);
+            graphics.add(body);
         }
     }
 

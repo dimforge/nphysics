@@ -58,8 +58,8 @@ impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, I
         match self.anchor1.body {
             Some(b) => {
                 match *b {
-                    RB(rb) => rb.transform_ref().transform(&self.anchor1.position),
-                    SB(_)   => fail!("Not yet implemented.")
+                    RB(ref rb) => rb.transform_ref().transform(&self.anchor1.position),
+                    SB(_)      => fail!("Not yet implemented.")
                 }
             },
             None => self.anchor1.position.clone()
@@ -70,8 +70,8 @@ impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, I
         match self.anchor2.body {
             Some(b) => {
                 match *b {
-                    RB(rb) => rb.transform_ref().transform(&self.anchor2.position),
-                    SB(_)   => fail!("Not yet implemented.")
+                    RB(ref rb) => rb.transform_ref().transform(&self.anchor2.position),
+                    SB(_)      => fail!("Not yet implemented.")
                 }
             },
             None => self.anchor2.position.clone()
@@ -84,8 +84,8 @@ impl<N: Clone, LV: Clone + Zero, AV, M, II> BallInSocket<N, LV, AV, M, II> {
         match self.anchor1.body {
             Some(b) => {
                 match *b {
-                    RB(rb) => rb.center_of_mass().clone(),
-                    SB(_)   => fail!("Not yet implemented.")
+                    RB(ref rb) => rb.center_of_mass().clone(),
+                    SB(_)      => fail!("Not yet implemented.")
                 }
             },
             None => Zero::zero()
@@ -96,8 +96,8 @@ impl<N: Clone, LV: Clone + Zero, AV, M, II> BallInSocket<N, LV, AV, M, II> {
         match self.anchor2.body {
             Some(b) => {
                 match *b {
-                    RB(rb) => rb.center_of_mass().clone(),
-                    SB(_)   => fail!("Not yet implemented.")
+                    RB(ref rb) => rb.center_of_mass().clone(),
+                    SB(_)      => fail!("Not yet implemented.")
                 }
             },
             None => Zero::zero()

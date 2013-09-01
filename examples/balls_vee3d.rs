@@ -12,7 +12,6 @@ extern mod nalgebra;
 extern mod ncollide;
 extern mod graphics3d;
 
-use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::Vec3;
 use ncollide::geom::{Geom, Ball, Plane};
@@ -48,11 +47,11 @@ pub fn balls_vee_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
         Vec3::new(1.0f64, 1.0, 1.0 )
     ];
     for n in normals.iter() {
-        let geom = Plane::new(*n);
-        let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+        let rb   = RigidBody::new(Geom::new_plane(Plane::new(*n)), 0.0f64, Static, 0.3, 0.6);
+        let body = @mut RB(rb);
 
-        world.add_body(@mut RB(body));
-        graphics.add_plane(body, &geom);
+        world.add_body(body);
+        graphics.add(body);
     }
 
     /*
@@ -71,14 +70,14 @@ pub fn balls_vee_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
                 let y = 10.0 + j as f64 * 2.5 * rad + centery * 2.0;
                 let z = k as f64 * 2.5 * rad - centerx;
 
-                let ball = Ball::new(rad);
-                let geom = Geom::new_ball(ball);
-                let body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.6);
+                let mut rb = RigidBody::new(Geom::new_ball(Ball::new(rad)), 1.0f64, Dynamic, 0.3, 0.6);
 
-                body.translate_by(&Vec3::new(x, y, z));
+                rb.translate_by(&Vec3::new(x, y, z));
 
-                world.add_body(@mut RB(body));
-                graphics.add_ball(body, One::one(), &ball);
+                let body = @mut RB(rb);
+
+                world.add_body(body);
+                graphics.add(body);
             }
         }
     }

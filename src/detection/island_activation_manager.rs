@@ -131,7 +131,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
         // Update bodies energy
         for b in self.bodies.elements_mut().mut_iter() {
             match *b.value.body {
-                RB(rb) => {
+                RB(ref rb) => {
                     // NOTE: this is not the kinetic energy, just a hacky value to detect stabilization
                     // FIXME: take the time in account (to make a true RWA)
                     let _1: N = One::one();

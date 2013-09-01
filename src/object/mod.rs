@@ -1,6 +1,6 @@
 pub use object::private::rigid_body::{RigidBody, Static, Dynamic}; // FIXME: rename to StaticBody, DynamicBody ?
 pub use object::private::soft_body::SoftBody;
-pub use object::private::body::{Body, RB, SB, ToRigidBody, ToSoftBody};
+pub use object::private::body::{Body, RB, SB};
 
 mod private {
     #[path = "../rigid_body.rs"]

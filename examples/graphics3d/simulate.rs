@@ -1,5 +1,5 @@
 use std::os;
-use std::num::{Zero, One};
+use std::num::Zero;
 use extra::time;
 use nalgebra::traits::translation::Translation;
 use nalgebra::traits::rotation::Rotate;
@@ -92,7 +92,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
         }
 
         let cursor_pos = @mut Vec2::new(0.0f64, 0.0);
-        let grabbed_object: @mut Option<@mut dim3::RigidBody3d<f64>> = @mut None;
+        let grabbed_object: @mut Option<@mut dim3::Body3d<f64>> = @mut None;
         let grabbed_object_joint: @mut Option<@mut dim3::BallInSocket3d<f64>> = @mut None;
         let grabbed_object_plane: @mut (Vec3<f64>, Vec3<f64>) = @mut (Zero::zero(), Zero::zero());
 
@@ -102,7 +102,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
                     if modifier == 2 { // CTRL
                         match *grabbed_object {
                             Some(rb) => {
-                                for sn in graphics.rigid_body_to_scene_node(rb).unwrap().iter() {
+                                for sn in graphics.body_to_scene_node(rb).unwrap().iter() {
                                     sn.unselect()
                                 }
                             },
@@ -127,24 +127,21 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
                         }
 
                         if minb.is_some() {
-                            match *minb.unwrap() {
-                                RB(rb) => {
-                                    if rb.can_move() {
-                                        *grabbed_object = Some(rb);
-                                    }
-                                },
-                                _ => fail!("Not yet implemented.")
+                            let b = minb.unwrap();
+                            if b.can_move() {
+                                *grabbed_object = Some(b)
                             }
                         }
 
                         match *grabbed_object {
-                            Some(rb) => {
-                                for sn in graphics.rigid_body_to_scene_node(rb).unwrap().iter() {
+                            Some(b) => {
+                                for sn in graphics.body_to_scene_node(b).unwrap().iter() {
                                     match *grabbed_object_joint {
                                         Some(j) => physics.remove_ball_in_socket(j),
                                         None    => { }
                                     }
 
+                                    let rb      = b.to_rigid_body_or_fail();
                                     let attach2 = ray.orig + ray.dir * mintoi;
                                     let attach1 = rb.transform_ref().inv_transform(&attach2);
                                     let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
@@ -168,8 +165,8 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
                 },
                 event::ButtonReleased(_, _) => {
                     match *grabbed_object {
-                        Some(rb) => {
-                            for sn in graphics.rigid_body_to_scene_node(rb).unwrap().iter() {
+                        Some(b) => {
+                            for sn in graphics.body_to_scene_node(b).unwrap().iter() {
                                 sn.unselect()
                             }
                         },
@@ -233,53 +230,52 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
                 },
                 // KEY_1
                 event::KeyPressed(49) => {
-                    let ball = Ball::new(0.5f64);
-                    let geom = Geom::new_ball(ball);
-                    let body = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                    let geom   = Geom::new_ball(Ball::new(0.5f64));
+                    let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transfom = window.camera().transformation();
-                    body.translate_by(&cam_transfom.translation());
+                    rb.translate_by(&cam_transfom.translation());
 
                     let front = cam_transfom.rotate(&Vec3::z());
 
-                    body.set_lin_vel(front * 40.0);
+                    rb.set_lin_vel(front * 40.0);
 
-                    physics.add_body(@mut RB(body));
-                    graphics.add_ball(body, One::one(), &ball);
+                    let body = @mut RB(rb);
+                    physics.add_body(body);
+                    graphics.add(body);
                 },
                 // KEY_2
                 event::KeyPressed(50) => {
-                    let box  = Box::new(Vec3::new(0.5f64, 0.5, 0.5));
-                    let geom = Geom::new_box(box);
-                    let body = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                    let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5, 0.5)));
+                    let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transform = window.camera().transformation();
-                    body.translate_by(&cam_transform.translation());
+                    rb.translate_by(&cam_transform.translation());
 
                     let front = cam_transform.rotate(&Vec3::z());
 
-                    body.set_lin_vel(front * 40.0);
+                    rb.set_lin_vel(front * 40.0);
 
-                    physics.add_body(@mut RB(body));
-                    graphics.add_cube(body, One::one(), &box);
+                    let body = @mut RB(rb);
+                    physics.add_body(body);
+                    graphics.add(body);
                 },
                 // KEY_3
                 event::KeyPressed(51) => {
-                    let box   = Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64));
-                    let geom  = Geom::new_box(box);
-                    let rbody = @mut RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                    let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64)));
+                    let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                     let cam_transfom = window.camera().transformation();
-                    rbody.translate_by(&cam_transfom.translation());
+                    rb.translate_by(&cam_transfom.translation());
 
                     let front = cam_transfom.rotate(&Vec3::z());
 
-                    rbody.set_lin_vel(front * 400.0);
+                    rb.set_lin_vel(front * 400.0);
 
-                    let body = @mut RB(rbody);
+                    let body = @mut RB(rb);
                     physics.add_body(body);
                     physics.add_ccd_to(body, 0.4, 1.0);
-                    graphics.add_cube(rbody, One::one(), &box);
+                    graphics.add(body);
                 },
                 // KEY_R
                 event::KeyPressed(82) => {

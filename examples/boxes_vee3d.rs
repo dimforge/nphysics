@@ -12,7 +12,6 @@ extern mod nalgebra;
 extern mod ncollide;
 extern mod graphics3d;
 
-use std::num::One;
 use nalgebra::mat::Translation;
 use nalgebra::vec::Vec3;
 use ncollide::geom::{Geom, Box, Plane};
@@ -40,11 +39,11 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
     /*
      * Plane
      */
-    let geom = Plane::new(Vec3::y());
-    let body = @mut RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let geom = Geom::new_plane(Plane::new(Vec3::y()));
+    let body = @mut RB(RigidBody::new(geom, 0.0f64, Static, 0.3, 0.6));
 
-    world.add_body(@mut RB(body));
-    graphics.add_plane(body, &geom);
+    world.add_body(body);
+    graphics.add(body);
 
     /*
      * Create the boxes
@@ -63,14 +62,15 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
                 let y = j as f64 * shift + centery;
                 let z = k as f64 * shift - centerz;
 
-                let box  = Box::new(Vec3::new(rad, rad, rad));
-                let geom = Geom::new_box(box);
-                let body = @mut RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
+                let geom   = Geom::new_box(Box::new(Vec3::new(rad, rad, rad)));
+                let mut rb = RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
 
-                body.translate_by(&Vec3::new(x, y, z));
+                rb.translate_by(&Vec3::new(x, y, z));
 
-                world.add_body(@mut RB(body));
-                graphics.add_cube(body, One::one(), &box);
+                let body = @mut RB(rb);
+
+                world.add_body(body);
+                graphics.add(body);
             }
         }
     }

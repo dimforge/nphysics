@@ -4,15 +4,15 @@ use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, In
 use nalgebra::vec::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use object::{Body, RB, SB};
-use object::RigidBody;
+use object::{RB, SB};
+use object::Body;
 use object::volumetric::InertiaTensor;
 use integration::Integrator;
 use integration::euler;
 use signal::signal::SignalEmiter;
 
-pub struct RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
-    priv objects: HashMap<uint, @mut RigidBody<N, LV, AV, M, II>, UintTWHash>,
+pub struct BodyExpEulerIntegrator<N, LV, AV, M, II> {
+    priv objects: HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>,
 }
 
 impl<N:  'static + Clone,
@@ -21,11 +21,11 @@ impl<N:  'static + Clone,
      LV: 'static + Clone + Vec<N> + ToStr,
      AV: 'static + Clone + Vec<N> + ToStr,
      II: 'static + Clone + Mul<II, II> + InertiaTensor<N, LV, M> + Inv>
-RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
+BodyExpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     pub fn new<C>(events: &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>)
-                  -> @mut RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
-        let res = @mut RigidBodyExpEulerIntegrator {
+                  -> @mut BodyExpEulerIntegrator<N, LV, AV, M, II> {
+        let res = @mut BodyExpEulerIntegrator {
             objects: HashMap::new(UintTWHash::new())
         };
 
@@ -41,39 +41,40 @@ impl<N:  Clone,
      LV: Clone + Vec<N> + ToStr,
      AV: Clone + Vec<N> + ToStr,
      II: Clone + Mul<II, II> + InertiaTensor<N, LV, M> + Inv>
-Integrator<N, Body<N, LV, AV, M, II>> for RigidBodyExpEulerIntegrator<N, LV, AV, M, II> {
+Integrator<N, Body<N, LV, AV, M, II>> for BodyExpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        match *o {
-            RB(rb) => { self.objects.insert(ptr::to_mut_unsafe_ptr(rb) as uint, rb); },
-            SB(_)   => { }
-        }
+        self.objects.insert(ptr::to_mut_unsafe_ptr(o) as uint, o);
     }
 
     #[inline]
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        match *o {
-            RB(rb) => { self.objects.remove(&(ptr::to_mut_unsafe_ptr(rb) as uint)); },
-            SB(_)   => { }
-        }
+        self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
     }
 
     #[inline]
     fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
-            if o.value.can_move() {
-                let (t, lv, av) = euler::explicit_integrate(
-                    dt.clone(),
-                    o.value.transform_ref(),
-                    o.value.center_of_mass(),
-                    &o.value.lin_vel(),
-                    &o.value.ang_vel(),
-                    &o.value.lin_acc(),
-                    &o.value.ang_acc());
+            match *o.value {
+                RB(ref mut rb) => {
+                    if rb.can_move() {
+                        let (t, lv, av) = euler::explicit_integrate(
+                            dt.clone(),
+                            rb.transform_ref(),
+                            rb.center_of_mass(),
+                            &rb.lin_vel(),
+                            &rb.ang_vel(),
+                            &rb.lin_acc(),
+                            &rb.ang_acc());
 
-                o.value.transform_by(&t);
-                o.value.set_lin_vel(lv);
-                o.value.set_ang_vel(av);
+                        rb.transform_by(&t);
+                        rb.set_lin_vel(lv);
+                        rb.set_ang_vel(av);
+                    }
+                },
+                SB(_) => {
+                    fail!("Not yet implemented.")
+                }
             }
         }
     }
@@ -82,8 +83,8 @@ Integrator<N, Body<N, LV, AV, M, II>> for RigidBodyExpEulerIntegrator<N, LV, AV,
     fn priority(&self) -> f64 { 50.0 }
 }
 
-pub struct RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
-    priv objects: HashMap<uint, @mut RigidBody<N, LV, AV, M, II>, UintTWHash>,
+pub struct BodySmpEulerIntegrator<N, LV, AV, M, II> {
+    priv objects: HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>,
 }
 
 impl<N:  'static + Clone,
@@ -92,11 +93,11 @@ impl<N:  'static + Clone,
      LV: 'static + Clone + Vec<N> + ToStr,
      AV: 'static + Clone + Vec<N> + ToStr,
      II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M>>
-RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
+BodySmpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     pub fn new<C>(events: &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>)
-                  -> @mut RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
-        let res = @mut RigidBodySmpEulerIntegrator {
+                  -> @mut BodySmpEulerIntegrator<N, LV, AV, M, II> {
+        let res = @mut BodySmpEulerIntegrator {
             objects: HashMap::new(UintTWHash::new())
         };
 
@@ -113,39 +114,38 @@ impl<N:  Clone,
      LV: Clone + Vec<N> + ToStr,
      AV: Clone + Vec<N> + ToStr,
      II: Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M>>
-Integrator<N, Body<N, LV, AV, M, II>> for RigidBodySmpEulerIntegrator<N, LV, AV, M, II> {
+Integrator<N, Body<N, LV, AV, M, II>> for BodySmpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        match *o {
-            RB(rb) => { self.objects.insert(ptr::to_mut_unsafe_ptr(rb) as uint, rb); },
-            SB(_)   => { }
-        }
+        self.objects.insert(ptr::to_mut_unsafe_ptr(o) as uint, o);
     }
 
     #[inline]
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        match *o {
-            RB(rb) => { self.objects.remove(&(ptr::to_mut_unsafe_ptr(rb) as uint)); },
-            SB(_)   => { }
-        }
+        self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
     }
 
     #[inline]
     fn update(&mut self, dt: N) {
         for o in self.objects.elements().iter() {
-            if o.value.can_move() {
-                let (t, lv, av) = euler::semi_implicit_integrate(
-                    dt.clone(),
-                    o.value.transform_ref(),
-                    o.value.center_of_mass(),
-                    &o.value.lin_vel(),
-                    &o.value.ang_vel(),
-                    &o.value.lin_acc(),
-                    &o.value.ang_acc());
+            match *o.value {
+                RB(ref mut rb) => {
+                    if rb.can_move() {
+                        let (t, lv, av) = euler::semi_implicit_integrate(
+                            dt.clone(),
+                            rb.transform_ref(),
+                            rb.center_of_mass(),
+                            &rb.lin_vel(),
+                            &rb.ang_vel(),
+                            &rb.lin_acc(),
+                            &rb.ang_acc());
 
-                o.value.transform_by(&t);
-                o.value.set_lin_vel(lv);
-                o.value.set_ang_vel(av);
+                        rb.transform_by(&t);
+                        rb.set_lin_vel(lv);
+                        rb.set_ang_vel(av);
+                    }
+                },
+                SB(_) => fail!("Not yet implemented.")
             }
         }
     }
