@@ -1,12 +1,12 @@
 use kiss3d::window;
-use kiss3d::object;
+use kiss3d::object::Object;
 use nalgebra::traits::transformation::Transformation;
 use nalgebra::vec::Vec3;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
 
 struct Plane {
-    priv gfx:  @mut object::Object,
+    priv gfx:  @mut Object,
     priv body: @mut dim3::Body3d<f64>,
 }
 
@@ -39,5 +39,9 @@ impl SceneNode for Plane {
 
     fn update(&mut self) {
         // FIXME: atm we assume the plane does not move
+    }
+
+    fn object(&self) -> @mut Object {
+        self.gfx
     }
 }

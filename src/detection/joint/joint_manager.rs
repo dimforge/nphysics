@@ -48,8 +48,24 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
     }
 
     fn remove(&mut self, _: @mut Body<N, LV, AV, M, II>) {
-        // XXX Remove every joint involving this body
-        fail!("Not yet implemented.")
+        let mut keys_to_remove = ~[];
+
+        // Remove any joint attached to this body
+        // NOTE: this could be improved keeping track of the list of bodies having a joint. This
+        // would avoid traversing the joint list to find that a body does not have any joint.
+        for elts in self.joints.elements().iter() {
+            match elts.value {
+                BallInSocket(bis) => {
+                    bis.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
+                    bis.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
+                },
+                RBRB(_, _, _)     => fail!("Internal error: a contact RBRB should not be here.")
+            }
+        }
+
+        for k in keys_to_remove.iter() {
+            self.joints.remove(k);
+        }
     }
 
     fn update(&mut self) {

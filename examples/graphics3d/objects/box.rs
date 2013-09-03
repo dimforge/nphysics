@@ -1,5 +1,5 @@
 use kiss3d::window;
-use kiss3d::object;
+use kiss3d::object::Object;
 use nalgebra::traits::transformation::Transformation;
 use nalgebra::vec::Vec3;
 use nphysics::aliases::dim3;
@@ -9,7 +9,7 @@ struct Box {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
     priv delta:      dim3::Transform3d<f64>,
-    priv gfx:        @mut object::Object,
+    priv gfx:        @mut Object,
     priv body:       @mut dim3::Body3d<f64>,
 }
 
@@ -62,5 +62,9 @@ impl SceneNode for Box {
         else {
             self.gfx.set_color(self.color.x * 0.25, self.color.y * 0.25, self.color.z * 0.25);
         }
+    }
+
+    fn object(&self) -> @mut Object {
+        self.gfx
     }
 }

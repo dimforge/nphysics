@@ -122,6 +122,10 @@ BodyWorld<N, LV, AV, M, II, CM> {
         self.world.add_object(b)
     }
 
+    pub fn remove_body(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        self.world.remove_object(b)
+    }
+
     pub fn world<'r>(&'r self) -> &'r World<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> {
         &'r self.world
     }

@@ -1,3 +1,4 @@
+use std::managed;
 use resolution::solver::Solver;
 use integration::Integrator;
 use detection::detector::Detector;
@@ -51,7 +52,7 @@ impl<N: Clone, O, C> World<N, O, C> {
         sorted_insert(&mut self.detectors, d as @mut Detector<N, O, C>, |a, b| a.priority() < b.priority());
 
         for o in self.objects.iter() {
-            d.add(o.clone())
+            d.add(*o)
         }
     }
 
@@ -59,7 +60,7 @@ impl<N: Clone, O, C> World<N, O, C> {
         sorted_insert(&mut self.integrators, i as @mut Integrator<N, O>, |a, b| a.priority() < b.priority());
 
         for o in self.objects.mut_iter() {
-            i.add(o.clone())
+            i.add(*o)
         }
     }
 
@@ -67,17 +68,34 @@ impl<N: Clone, O, C> World<N, O, C> {
         sorted_insert(&mut self.solvers, s as @mut Solver<N, C>, |a, b| a.priority() < b.priority());
     }
 
-    pub fn add_object(&mut self, rb: @mut O) {
-        self.objects.push(rb);
+    pub fn add_object(&mut self, b: @mut O) {
+        self.objects.push(b);
 
-        let rb = self.objects.last();
+        let b = self.objects.last();
 
         for d in self.integrators.mut_iter() {
-            d.add(rb.clone())
+            d.add(*b)
         }
 
         for d in self.detectors.mut_iter() {
-            d.add(rb.clone())
+            d.add(*b)
+        }
+    }
+
+    pub fn remove_object(&mut self, b: @mut O) {
+        match self.objects.rposition(|o| managed::mut_ptr_eq(b, *o)) {
+            Some(i) => {
+                self.objects.swap_remove(i);
+
+                for d in self.integrators.mut_iter() {
+                    d.remove(b)
+                }
+
+                for d in self.detectors.mut_iter() {
+                    d.remove(b)
+                }
+            },
+            None => { }
         }
     }
 

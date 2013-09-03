@@ -28,6 +28,7 @@ fn usage(exe_name: &str) {
     println("    3      - launch a fast cube using continuous collision detection.");
     println("    TAB    - switch camera mode (first-person or arc-ball).");
     println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
+    println("    SHIFT + click - remove an object.");
     println("    arrows - move around when in first-person mode.");
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
@@ -99,7 +100,36 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
         do window.set_mouse_callback |event| {
             match *event {
                 event::ButtonPressed(_, modifier) => {
-                    if modifier == 2 { // CTRL
+                    if modifier == 1 { // SHIFT
+                        // XXX: huge and uggly code duplication
+                        let (pos, dir) = window.unproject(&*cursor_pos);
+                        let ray = Ray::new(pos, dir);
+
+                        // cast the ray
+                        let mut interferences = ~[];
+                        physics.cast_ray(&ray, &mut interferences);
+
+                        let mut mintoi = Bounded::max_value();
+                        let mut minb   = None;
+
+                        for (b, toi) in interferences.move_iter() {
+                            if toi < mintoi {
+                                mintoi = toi;
+                                minb   = Some(b);
+                            }
+                        }
+
+                        if minb.is_some() {
+                            let b = minb.unwrap();
+                            if b.can_move() {
+                                physics.remove_body(b);
+                                graphics.remove(b);
+                            }
+                        }
+
+                        false
+                    }
+                    else if modifier == 2 { // CTRL
                         match *grabbed_object {
                             Some(rb) => {
                                 for sn in graphics.body_to_scene_node(rb).unwrap().iter() {
@@ -109,6 +139,7 @@ pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
                             None => { }
                         }
 
+                        // XXX: huge and uggly code duplication
                         let (pos, dir) = window.unproject(&*cursor_pos);
                         let ray = Ray::new(pos, dir);
 

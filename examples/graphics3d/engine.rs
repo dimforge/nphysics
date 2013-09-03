@@ -7,6 +7,7 @@ use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::translation::Translation;
 use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, ConeGeom};
 use kiss3d::window::Window;
+use kiss3d::object::Object;
 use nphysics::aliases::dim3;
 use objects::ball::Ball;
 use objects::box::Box;
@@ -19,6 +20,7 @@ pub trait SceneNode {
     fn select(&mut self);
     fn unselect(&mut self);
     fn update(&mut self);
+    fn object(&self) -> @mut Object;
 }
 
 pub struct GraphicsManager {
@@ -40,6 +42,22 @@ impl GraphicsManager {
 
     pub fn simulate(builder: ~fn(&mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
         simulate::simulate(builder)
+    }
+
+    pub fn remove(&mut self, body: @mut dim3::Body3d<f64>) {
+        let key = ptr::to_mut_unsafe_ptr(body) as uint;
+
+        match self.rb2sn.find(&key) {
+            Some(sns) => {
+                for sn in sns.iter() {
+                    self.window.remove(sn.object());
+                }
+            }
+            None => { }
+        }
+
+        self.rb2sn.remove(&key);
+        self.obj2color.remove(&key);
     }
 
     pub fn add(&mut self, body: @mut dim3::Body3d<f64>) {
