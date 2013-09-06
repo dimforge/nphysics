@@ -1,12 +1,14 @@
 use std::num::Zero;
 use nalgebra::vec::AlgebraicVec;
 
+#[deriving(Clone)]
 pub struct PointMass<N, V> {
     invmass:    N,
     velocity:   V,
     position:   V,
 }
 
+#[deriving(Clone)]
 pub struct ConstraintsGeometry<N> {
     stiffness:   N,
     rest_length: N,
@@ -15,6 +17,7 @@ pub struct ConstraintsGeometry<N> {
     rb2:         uint
 }
 
+#[deriving(Clone)]
 pub struct SoftBody<N, V> {
     acc:         V,
     points:      ~[PointMass<N, V>],

@@ -12,7 +12,7 @@ pub enum RigidBodyState {
     Dynamic
 }
 
-// FIXME: #[deriving(Clone)]
+#[deriving(Clone)]
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:                RigidBodyState,
     priv geom:                 Geom<N, LV, M, II>,
@@ -239,7 +239,7 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
 impl<N:  Clone,
      M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
-     AV,
+     AV: Clone,
      II: Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
@@ -261,8 +261,12 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn transformed(&self, _: &M) -> RigidBody<N, LV, AV, M, II> {
-        fail!("`transformed` is not yet implemented for RigidBodies.")
+    fn transformed(&self, m: &M) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = self.clone();
+
+        res.transform_by(m);
+
+        res
     }
 
     #[inline]
@@ -276,11 +280,11 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
 // FIXME: implement Transfomable too
 
-impl<N,
-     M: Translation<LV> + Transform<LV> + Rotate<LV> + One,
+impl<N:  Clone,
+     M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
-     AV,
-     II>
+     AV: Clone,
+     II: Clone>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translation(&self) -> LV {
@@ -293,14 +297,18 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn translate_by(&mut self, trans: &LV) {
-        self.local_to_world.translate_by(trans);
+    fn translate_by(&mut self, t: &LV) {
+        self.local_to_world.translate_by(t);
         self.update_center_of_mass();
     }
 
     #[inline]
-    fn translated(&self, _: &LV) -> RigidBody<N, LV, AV, M, II> {
-        fail!("`translated` is not yet implemented for RigidBodies.")
+    fn translated(&self, t: &LV) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = self.clone();
+
+        res.translate_by(t);
+
+        res
     }
 
     #[inline]
@@ -311,10 +319,10 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N,
-     M: Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
+impl<N:  Clone,
+     M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
-     AV,
+     AV: Clone,
      II: Mul<II, II> + InertiaTensor<N, LV, M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
@@ -336,8 +344,12 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn rotated(&self, _: &AV) -> RigidBody<N, LV, AV, M, II> {
-        fail!("`rotated` is not yet implemented for RigidBodies.")
+    fn rotated(&self, rot: &AV) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = self.clone();
+
+        res.rotate_by(rot);
+
+        res
     }
 
     #[inline]

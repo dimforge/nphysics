@@ -46,9 +46,9 @@ pub struct SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV> + ToStr,
-     AV: 'static + Vec<N> + ToStr,
-     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
-     II: 'static + ToStr,
+     AV: 'static + Vec<N> + ToStr + Clone,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr + Clone,
+     II: 'static + ToStr + Clone,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 SweptBallMotionClamping<N, LV, AV, M, II, BF> {
@@ -124,9 +124,9 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV> + ToStr,
-     AV: Vec<N> + ToStr,
-     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
-     II: ToStr, // FIXME: remove those bounds
+     AV: Clone + Vec<N> + ToStr,
+     M:  Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
+     II: Clone + ToStr, // FIXME: remove those bounds
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Integrator<N, Body<N, LV, AV, M, II>>
