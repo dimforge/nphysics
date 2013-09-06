@@ -22,7 +22,7 @@ use object::{RigidBody, Body};
 type LV<N> = Vec3<N>;
 type AV<N> = Vec3<N>;
 type II<N> = Mat3<N>;
-type M<N>  = Transform<Rotmat<Mat3<N>>, Vec3<N>>;
+type M<N>  = Transform<Vec3<N>, Rotmat<Mat3<N>>>;
 
 // fancier names
 pub type Transform3d<N>       = M<N>;

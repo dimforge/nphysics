@@ -18,7 +18,7 @@ use object::volumetric::InertiaTensor;
 type LV<N> = Vec2<N>;
 type AV<N> = Vec1<N>;
 type II<N> = Mat1<N>;
-type M<N>  = Transform<Rotmat<Mat2<N>>, Vec2<N>>;
+type M<N>  = Transform<Vec2<N>, Rotmat<Mat2<N>>>;
 
 // fancier names
 pub type Transform2d<N>       = M<N>;
