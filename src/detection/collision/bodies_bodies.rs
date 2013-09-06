@@ -1,13 +1,16 @@
 use std::ptr;
 use std::num::{Zero, One};
 use std::borrow;
+use std::managed;
 use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
 use nalgebra::vec::{Vec, AlgebraicVecExt, Cross, Dim};
 use ncollide::geom::AnnotatedPoint;
 use ncollide::broad;
-use ncollide::broad::{InterferencesBroadPhase, RayCastBroadPhase};
+use ncollide::bounding_volume::{HasBoundingVolume, AABB};
+use ncollide::broad::{InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::algorithm::johnson_simplex::{RecursionTemplate, JohnsonSimplex};
 use ncollide::narrow::{CollisionDetector, GeomGeom};
+use ncollide::contact::Contact;
 use ncollide::ray::{Ray, RayCastWithTransform};
 use object::{Body, RB, SB};
 use detection::constraint::{Constraint, RBRB};
@@ -17,6 +20,22 @@ use signal::signal::SignalEmiter;
 pub enum PairwiseDetector<N, LV, AV, M, II> {
     GG(GeomGeom<N, LV, AV, M, II>),
     Unsuported
+}
+
+// FIXME: implement CollisionDetector for PairwiseDetector ?
+impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+         Rotate<LV> + Transform<LV>,
+     AV: Vec<N> + ToStr,
+     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
+     II>
+PairwiseDetector<N, LV, AV, M, II> {
+    fn num_colls(&self) -> uint {
+        match *self {
+            GG(ref gg) => gg.num_colls(),
+            Unsuported => 0
+        }
+    }
 }
 
 struct Dispatcher<N, LV, AV, M, II> {
@@ -67,6 +86,12 @@ for Dispatcher<N, LV, AV, M, II> {
 
 
 pub struct BodiesBodies<N, LV, AV, M, II, BF> {
+    contacts_collector:    ~[Contact<N, LV>],
+    // FIXME: this is an useless buffer which accumulate the result of bodies activation.
+    // This must exist since there is no way to send an activation message without an accumulation
+    // list…
+    constraints_collector: ~[Constraint<N, LV, AV, M, II>],
+    signals:     @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
     broad_phase: @mut BF,
     update_bf:   bool
 }
@@ -83,8 +108,11 @@ BodiesBodies<N, LV, AV, M, II, BF> {
                bf:        @mut BF,
                update_bf: bool) -> @mut BodiesBodies<N, LV, AV, M, II, BF> {
         let res = @mut BodiesBodies {
-            broad_phase: bf,
-            update_bf:   update_bf
+            contacts_collector:    ~[],
+            constraints_collector: ~[],
+            signals:               events,
+            broad_phase:           bf,
+            update_bf:             update_bf
         };
 
         events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b, out| res.activate(b, out));
@@ -96,8 +124,6 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     fn activate(&mut self,
                 body: @mut Body<N, LV, AV, M, II>,
                 out:  &mut ~[Constraint<N, LV, AV, M, II>]) {
-        let mut collector = ~[];
-
         do self.broad_phase.activate(body) |b1, b2, cd| {
             match *cd {
                 GG(ref mut d) => {
@@ -107,13 +133,13 @@ BodiesBodies<N, LV, AV, M, II, BF> {
                     // FIXME: is the update needed? Or do we have enough guarantees to avoid it?
                     d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
 
-                    d.colls(&mut collector);
+                    d.colls(&mut self.contacts_collector);
 
-                    for c in collector.iter() {
+                    for c in self.contacts_collector.iter() {
                         out.push(RBRB(b1, b2, c.clone()))
                     }
 
-                    collector.clear()
+                    self.contacts_collector.clear()
                 },
                 Unsuported => { }
             }
@@ -160,7 +186,8 @@ impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + 
      AV: 'static + Vec<N> + ToStr,
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One + Mul<M, M> + Inv,
      II: 'static,
-     BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
+     BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>> +
+         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
 for BodiesBodies<N, LV, AV, M, II, BF> {
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
@@ -170,6 +197,47 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
     }
 
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+        // activate every body in contact with the deleted body
+        /*
+        if !o.is_active() {
+            self.signals.emit_body_activated(o, &mut self.constraints_collector);
+
+            println(self.constraints_collector.len().to_str());
+
+            self.constraints_collector.clear();
+        }
+
+        do self.broad_phase.for_each_pair |b1, b2, cd| {
+            if b1 == o && !b2.is_active() && b2.can_move() && cd.num_colls() != 0 {
+                self.signals.emit_body_activated(b2, &mut self.constraints_collector);
+            }
+
+            self.constraints_collector.clear();
+
+            if b2 == o &&  !b1.is_active() && b1.can_move() && cd.num_colls() != 0 {
+                self.signals.emit_body_activated(b1, &mut self.constraints_collector);
+            }
+
+            self.constraints_collector.clear();
+        }
+        */
+
+        if !o.is_active() {
+            // wake up everybody in contact
+            let aabb              = o.bounding_volume();
+            let mut interferences = ~[];
+
+            self.broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
+
+            for i in interferences.iter() {
+                if !managed::mut_ptr_eq(o, *i) && !i.is_active() && i.can_move() {
+                    self.signals.emit_body_activated(*i, &mut self.constraints_collector);
+                    self.constraints_collector.clear();
+                }
+            }
+        }
+
+        // remove
         if self.update_bf {
             self.broad_phase.remove(o);
         }
@@ -186,7 +254,23 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
                     let rb1 = b1.to_rigid_body_or_fail();
                     let rb2 = b2.to_rigid_body_or_fail();
 
-                    d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom())
+                    let n = d.num_colls();
+
+                    d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
+
+                    if n == 0 && d.num_colls() != 0 {
+                        // collision lost broad cast a wake up message
+                        if rb1.can_move() && !rb1.is_active() {
+                            self.signals.emit_body_activated(b1, &mut self.constraints_collector);
+                        }
+
+                        if rb2.can_move() && !rb2.is_active() {
+                            self.signals.emit_body_activated(b2, &mut self.constraints_collector);
+                        }
+
+
+                        self.constraints_collector.clear();
+                    }
                 },
                 Unsuported => { }
             }
@@ -194,18 +278,16 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
     }
 
     fn interferences(&mut self, out: &mut ~[Constraint<N, LV, AV, M, II>]) {
-        let mut collector = ~[];
-
         do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
             match *cd {
                 GG(ref mut d) => {
-                    d.colls(&mut collector);
+                    d.colls(&mut self.contacts_collector);
 
-                    for c in collector.iter() {
+                    for c in self.contacts_collector.iter() {
                         out.push(RBRB(b1, b2, c.clone()))
                     }
 
-                    collector.clear()
+                    self.contacts_collector.clear()
                 },
                 Unsuported => { }
             }

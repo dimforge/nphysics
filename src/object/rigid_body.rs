@@ -264,6 +264,14 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
     fn transformed(&self, _: &M) -> RigidBody<N, LV, AV, M, II> {
         fail!("`transformed` is not yet implemented for RigidBodies.")
     }
+
+    #[inline]
+    fn set_transformation(&mut self, m: M) {
+        self.local_to_world = m;
+
+        self.update_center_of_mass();
+        self.update_inertia_tensor();
+    }
 }
 
 // FIXME: implement Transfomable too
@@ -284,7 +292,6 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
         self.local_to_world.inv_translation()
     }
 
-
     #[inline]
     fn translate_by(&mut self, trans: &LV) {
         self.local_to_world.translate_by(trans);
@@ -294,6 +301,13 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translated(&self, _: &LV) -> RigidBody<N, LV, AV, M, II> {
         fail!("`translated` is not yet implemented for RigidBodies.")
+    }
+
+    #[inline]
+    fn set_translation(&mut self, t: LV) {
+        self.local_to_world.set_translation(t);
+
+        self.update_center_of_mass();
     }
 }
 
@@ -316,6 +330,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotate_by(&mut self, rot: &AV) {
         self.local_to_world.rotate_by(rot);
+
         self.update_center_of_mass();
         self.update_inertia_tensor();
     }
@@ -323,6 +338,14 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotated(&self, _: &AV) -> RigidBody<N, LV, AV, M, II> {
         fail!("`rotated` is not yet implemented for RigidBodies.")
+    }
+
+    #[inline]
+    fn set_rotation(&mut self, r: AV) {
+        self.local_to_world.set_rotation(r);
+
+        self.update_center_of_mass();
+        self.update_inertia_tensor();
     }
 }
 

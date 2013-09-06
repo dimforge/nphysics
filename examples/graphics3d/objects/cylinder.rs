@@ -11,7 +11,7 @@ struct Cylinder {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
     priv delta:      dim3::Transform3d<f64>,
-    priv gfx:        @mut Object,
+    priv gfx:        Object,
     priv body:       @mut dim3::Body3d<f64>,
 }
 
@@ -21,7 +21,7 @@ impl Cylinder {
                r:     f64,
                h:     f64,
                color:  Vec3<f32>,
-               window: @mut window::Window) -> Cylinder {
+               window: &mut window::Window) -> Cylinder {
         let mut realign: dim3::Transform3d<f64> = One::one();
         let _frac_pi_2: f64 = Real::frac_pi_2();
         realign.rotate_by(&Vec3::new(0.0f64, 0.0, -_frac_pi_2));
@@ -30,10 +30,10 @@ impl Cylinder {
             color:      color,
             base_color: color,
             delta: delta * realign,
-            gfx:   window.add_cylinder(h as f32, r as f32).set_color(color.x, color.y, color.z),
+            gfx:   window.add_cylinder(h as f32, r as f32),
             body:  body
         };
-
+        res.gfx.set_color(color.x, color.y, color.z);
         res.update();
 
         res
@@ -52,11 +52,7 @@ impl SceneNode for Cylinder {
     fn update(&mut self) {
         let rb = self.body.to_rigid_body_or_fail();
         if rb.is_active() {
-            {
-                let gfx_transform = self.gfx.transformation();
-                *gfx_transform    = rb.transformation() * self.delta;
-            }
-
+            self.gfx.set_transformation(rb.transformation() * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {
@@ -64,7 +60,7 @@ impl SceneNode for Cylinder {
         }
     }
 
-    fn object(&self) -> @mut Object {
-        self.gfx
+    fn object<'r>(&'r self) -> &'r Object {
+        &self.gfx
     }
 }

@@ -7,11 +7,13 @@
 
 extern mod std;
 extern mod extra;
+extern mod kiss3d;
+extern mod graphics3d;
 extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;
-extern mod graphics3d;
 
+use kiss3d::window::Window;
 use nalgebra::mat::Translation;
 use nalgebra::vec::Vec3;
 use ncollide::geom::{Geom, Ball, Box, Cone, Cylinder, Plane};
@@ -30,7 +32,7 @@ fn main() {
 }
 
 
-pub fn primitives_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
+pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
     /*
      * World
      */
@@ -44,7 +46,7 @@ pub fn primitives_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
     let body = @mut RB(rb);
 
     world.add_body(body);
-    graphics.add(body);
+    graphics.add(window, body);
 
     /*
      * Create the boxes
@@ -85,7 +87,7 @@ pub fn primitives_3d(graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
                 let body = @mut RB(rb);
 
                 world.add_body(body);
-                graphics.add(body);
+                graphics.add(window, body);
             }
         }
     }

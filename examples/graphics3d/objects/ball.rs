@@ -9,7 +9,7 @@ struct Ball {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
     priv delta:      dim3::Transform3d<f64>,
-    priv gfx:        @mut Object,
+    priv gfx:        Object,
     priv body:       @mut dim3::Body3d<f64>
 }
 
@@ -18,15 +18,16 @@ impl Ball {
                delta:  dim3::Transform3d<f64>,
                radius: f64,
                color:  Vec3<f32>,
-               window: @mut Window) -> Ball {
+               window: &mut Window) -> Ball {
         let mut res = Ball {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_sphere(radius as f32).set_color(color.x, color.y, color.z),
+            gfx:        window.add_sphere(radius as f32),
             body:       body
         };
 
+        res.gfx.set_color(color.x, color.y, color.z);
         res.update();
 
         res
@@ -46,8 +47,7 @@ impl SceneNode for Ball {
         let rb = self.body.to_rigid_body_or_fail();
         if rb.is_active() {
             {
-                let gfx_transform = self.gfx.transformation();
-                *gfx_transform    = rb.transformation() * self.delta;
+                self.gfx.set_transformation(rb.transformation() * self.delta);
             }
 
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
@@ -57,7 +57,7 @@ impl SceneNode for Ball {
         }
     }
 
-    fn object(&self) -> @mut Object {
-        self.gfx
+    fn object<'r>(&'r self) -> &'r Object {
+        &'r self.gfx
     }
 }

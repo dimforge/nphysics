@@ -1,7 +1,7 @@
 tmp=_git_distcheck
-rust_sfml_rc=./lib/rust-sfml/src/rsfml.rc
+rust_sfml_rc=./lib/rust-sfml/src/rsfml/lib.rs
 kiss3d_lib_path=./lib/kiss3d/lib
-glfw_lib_path=./lib/kiss3d/lib/glfw-rs/lib
+glfw_lib_path=./lib/kiss3d/lib/glfw-rs
 gl_lib_path=./lib/kiss3d/lib/gl-rs
 stb_image_lib_path=./lib/kiss3d/lib/rust-stb-image/
 nphysics_lib_path=../lib

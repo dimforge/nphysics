@@ -83,7 +83,7 @@ impl<N: Clone, O, C> World<N, O, C> {
     }
 
     pub fn remove_object(&mut self, b: @mut O) {
-        match self.objects.rposition(|o| managed::mut_ptr_eq(b, *o)) {
+        match self.objects.iter().position(|o| managed::mut_ptr_eq(b, *o)) {
             Some(i) => {
                 self.objects.swap_remove(i);
 

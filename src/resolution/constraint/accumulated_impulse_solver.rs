@@ -2,8 +2,7 @@ use std::ptr;
 // use std::rand::RngUtil;
 use std::num::{One, Orderable, Bounded};
 use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
-use nalgebra::mat;
-use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
+use nalgebra::mat::{RotationWithTranslation, Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
 use detection::constraint::{Constraint, RBRB, BallInSocket};
 use object::Body;
 use object::volumetric::InertiaTensor;
@@ -212,7 +211,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
                 let center   = &rb.center_of_mass().clone();
                 let _1: M    = One::one();
-                let delta: M = mat::rotated_wrt_point(&_1, &MJLambda[i].av, center).translated(&MJLambda[i].lv);
+                let delta: M = _1.rotated_wrt_point(&MJLambda[i].av, center).translated(&MJLambda[i].lv);
                 rb.transform_by(&delta);
             }
         }

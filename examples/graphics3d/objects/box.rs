@@ -9,7 +9,7 @@ struct Box {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
     priv delta:      dim3::Transform3d<f64>,
-    priv gfx:        @mut Object,
+    priv gfx:        Object,
     priv body:       @mut dim3::Body3d<f64>,
 }
 
@@ -20,7 +20,7 @@ impl Box {
                ry:     f64,
                rz:     f64,
                color:  Vec3<f32>,
-                       window: @mut window::Window) -> Box {
+                       window: &mut window::Window) -> Box {
         let gx = rx as f32 * 2.0;
         let gy = ry as f32 * 2.0;
         let gz = rz as f32 * 2.0;
@@ -29,10 +29,11 @@ impl Box {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_cube(gx, gy, gz).set_color(color.x, color.y, color.z),
+            gfx:        window.add_cube(gx, gy, gz),
             body:       body
         };
 
+        res.gfx.set_color(color.x, color.y, color.z);
         res.update();
 
         res
@@ -52,11 +53,7 @@ impl SceneNode for Box {
         let rb = self.body.to_rigid_body_or_fail();
 
         if rb.is_active() {
-            {
-                let gfx_transform = self.gfx.transformation();
-                *gfx_transform    = rb.transformation() * self.delta;
-            }
-
+            self.gfx.set_transformation(rb.transformation() * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {
@@ -64,7 +61,7 @@ impl SceneNode for Box {
         }
     }
 
-    fn object(&self) -> @mut Object {
-        self.gfx
+    fn object<'r>(&'r self) -> &'r Object {
+        &self.gfx
     }
 }

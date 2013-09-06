@@ -74,6 +74,7 @@ IslandActivationManager<N, LV, AV, M, II> {
             b.activate();
             self.add(b);
 
+            // XXX: this should really not be here!
             self.events.emit_body_activated(b, out);
         }
     }
@@ -83,6 +84,8 @@ IslandActivationManager<N, LV, AV, M, II> {
             b.deactivate();
 
             self.remove(b);
+
+            // XXX: this should really not be here!
             self.events.emit_body_deactivated(b);
         }
     }
