@@ -5,6 +5,7 @@ use rsfml::window::context_settings::*;
 use rsfml::window::event;
 use rsfml::window::keyboard;
 use rsfml::graphics::color::*;
+use nalgebra::vec::Vec2;
 use nphysics::aliases::dim2;
 use camera::Camera;
 use fps::Fps;
@@ -17,6 +18,7 @@ fn usage(exe_name: &str) {
     println("    t     - pause/continue the simulation.");
     println("    s     - pause then execute only one simulation step.");
     println("    space - display/hide contacts.");
+    println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
 }
 
 pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
@@ -53,6 +55,9 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
     let mut graphics = GraphicsManager::new();
     let mut physics  = builder(&mut graphics);
     let mut fps      = Fps::new();
+    let mut cursor_pos;
+    let grabbed_object: Option<@mut dim2::Body2d<f64>> = None;
+    let grabbed_object_joint: Option<@mut dim2::BallInSocket2d<f64>> = None;
 
     while rwindow.is_open() {
         loop {
@@ -72,7 +77,17 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
                         },
                         _                => { }
                     }
-                }
+                },
+                ev @ event::MouseMoved(x, y) => {
+                    cursor_pos = Vec2::new(x as f64, y as f64);
+                    match grabbed_object {
+                        Some(_) => {
+                            let joint = grabbed_object_joint.unwrap();
+                            joint.set_local2(cursor_pos);
+                        },
+                        None => camera.handle_event(&ev)
+                    };
+                },
                 event::Closed  => rwindow.close(),
                 event::NoEvent => break,
                 e              => camera.handle_event(&e)

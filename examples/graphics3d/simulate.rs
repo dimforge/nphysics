@@ -31,7 +31,7 @@ fn usage(exe_name: &str) {
     println("    TAB    - switch camera mode (first-person or arc-ball).");
     println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
     println("    SHIFT + click - remove an object.");
-    println("    arrows - move around when in first-person mode.");
+    println("    arrows - move around when in first-person camera mode.");
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
