@@ -56,6 +56,7 @@ Use `./your_favorite_example_here --help` to see all the cool stuffs you can do.
 - ray casting
 - swept sphere based continuous collision detection
 - ball-in-socket joint
+- fixed joint
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
@@ -64,7 +65,7 @@ become a grown up. Many missing features are because of missing features on
 
 - kinematic bodies
 - efficient signaling system
-- more joints
+- more joints, joint limits, joint motors and breakable joints.
 - soft-bodies (see https://github.com/natal/roft for a draft)
 - parallel pipeline
 - GPU-based pipeline

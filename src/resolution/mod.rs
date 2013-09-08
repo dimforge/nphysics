@@ -12,4 +12,5 @@ pub mod constraint {
     pub mod velocity_constraint;
     pub mod contact_equation;
     pub mod ball_in_socket_equation;
+    pub mod fixed_equation;
 }

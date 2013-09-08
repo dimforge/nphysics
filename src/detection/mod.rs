@@ -15,6 +15,7 @@ pub mod joint {
     mod joint_manager;
     pub mod anchor;
     pub mod ball_in_socket;
+    pub mod fixed;
 }
 
 mod private {

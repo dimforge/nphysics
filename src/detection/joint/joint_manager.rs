@@ -3,7 +3,8 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;
-use detection::constraint::{Constraint, BallInSocket, RBRB};
+use detection::joint::fixed::Fixed;
+use detection::constraint::{Constraint, BallInSocket, Fixed, RBRB};
 use object::Body;
 use signal::signal::SignalEmiter;
 
@@ -36,6 +37,14 @@ impl<N: 'static, LV: 'static, AV: 'static, M: 'static, II: 'static> JointManager
     pub fn remove_ball_in_socket(&mut self, joint: @mut BallInSocket<N, LV, AV, M, II>) {
         self.joints.remove(&(ptr::to_mut_unsafe_ptr(joint) as uint));
     }
+
+    pub fn add_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+        self.joints.insert(ptr::to_mut_unsafe_ptr(joint) as uint, Fixed(joint));
+    }
+
+    pub fn remove_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+        self.joints.remove(&(ptr::to_mut_unsafe_ptr(joint) as uint));
+    }
 }
 
 impl<N:  Clone,
@@ -59,7 +68,11 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
                     bis.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
                     bis.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
                 },
-                RBRB(_, _, _)     => fail!("Internal error: a contact RBRB should not be here.")
+                Fixed(f) => {
+                    f.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
+                    f.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
+                }
+                RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
             }
         }
 
@@ -75,6 +88,19 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
         for joint in self.joints.elements().iter() {
             match joint.value {
                 BallInSocket(bis) =>
+                    if !bis.up_to_date() {
+                        // the joint has been invalidated by the user: wake up the attached bodies
+                        bis.update();
+                        match bis.anchor1().body {
+                            Some(b) => self.events.emit_body_activated(b, constraint),
+                            None    => { }
+                        }
+                        match bis.anchor2().body {
+                            Some(b) => self.events.emit_body_activated(b, constraint),
+                            None    => { }
+                        }
+                },
+                Fixed(bis) => // FIXME: code duplication from BallInSocket
                     if !bis.up_to_date() {
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bis.update();

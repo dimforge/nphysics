@@ -1,18 +1,17 @@
-use nalgebra::mat::Transform;
 use detection::joint::anchor::Anchor;
 use object::{RB, SB};
 
-pub struct BallInSocket<N, LV, AV, M, II> {
+pub struct Fixed<N, LV, AV, M, II> {
     priv up_to_date: bool,
-    priv anchor1:    Anchor<N, LV, AV, M, II, LV>,
-    priv anchor2:    Anchor<N, LV, AV, M, II, LV>,
+    priv anchor1:    Anchor<N, LV, AV, M, II, M>,
+    priv anchor2:    Anchor<N, LV, AV, M, II, M>,
 }
 
-impl<N, LV, AV, M, II> BallInSocket<N, LV, AV, M, II> {
-    pub fn new(anchor1: Anchor<N, LV, AV, M, II, LV>,
-               anchor2: Anchor<N, LV, AV, M, II, LV>)
-               -> BallInSocket<N, LV, AV, M, II> {
-        BallInSocket {
+impl<N, LV, AV, M, II> Fixed<N, LV, AV, M, II> {
+    pub fn new(anchor1: Anchor<N, LV, AV, M, II, M>,
+               anchor2: Anchor<N, LV, AV, M, II, M>)
+               -> Fixed<N, LV, AV, M, II> {
+        Fixed {
             up_to_date: false,
             anchor1:    anchor1,
             anchor2:    anchor2
@@ -27,24 +26,24 @@ impl<N, LV, AV, M, II> BallInSocket<N, LV, AV, M, II> {
         self.up_to_date = true
     }
 
-    pub fn anchor1<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, LV> {
+    pub fn anchor1<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, M> {
         &self.anchor1
     }
 
-    pub fn anchor2<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, LV> {
+    pub fn anchor2<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, M> {
         &self.anchor2
     }
 }
 
-impl<N, LV: Eq, AV, M, II> BallInSocket<N, LV, AV, M, II> {
-    pub fn set_local1(&mut self, local1: LV) {
+impl<N, LV, AV, M: Eq, II> Fixed<N, LV, AV, M, II> {
+    pub fn set_local1(&mut self, local1: M) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
             self.anchor1.position = local1
         }
     }
 
-    pub fn set_local2(&mut self, local2: LV) {
+    pub fn set_local2(&mut self, local2: M) {
         if local2 != self.anchor2.position {
             self.up_to_date = false;
             self.anchor2.position = local2
@@ -52,12 +51,12 @@ impl<N, LV: Eq, AV, M, II> BallInSocket<N, LV, AV, M, II> {
     }
 }
 
-impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, II> {
-    pub fn anchor1_pos(&self) -> LV {
+impl<N: Clone, LV, AV, M: Mul<M, M> + Clone, II> Fixed<N, LV, AV, M, II> {
+    pub fn anchor1_pos(&self) -> M {
         match self.anchor1.body {
             Some(b) => {
                 match *b {
-                    RB(ref rb) => rb.transform_ref().transform(&self.anchor1.position),
+                    RB(ref rb) => rb.transform_ref() * self.anchor1.position,
                     SB(_)      => fail!("Not yet implemented.")
                 }
             },
@@ -65,11 +64,11 @@ impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, I
         }
     }
 
-    pub fn anchor2_pos(&self) -> LV {
+    pub fn anchor2_pos(&self) -> M {
         match self.anchor2.body {
             Some(b) => {
                 match *b {
-                    RB(ref rb) => rb.transform_ref().transform(&self.anchor2.position),
+                    RB(ref rb) => rb.transform_ref() * self.anchor2.position,
                     SB(_)      => fail!("Not yet implemented.")
                 }
             },

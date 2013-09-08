@@ -1,10 +1,8 @@
 use std::os;
-use std::num::Zero;
+use std::num::{Zero, One};
 use extra::time;
 use glfw;
-use nalgebra::traits::translation::Translation;
-use nalgebra::traits::rotation::Rotate;
-use nalgebra::traits::transformation::Transform;
+use nalgebra::mat::{Translation, Rotate, Transformation, Inv};
 use nalgebra::vec::{Vec2, Vec3};
 use kiss3d::window::Window;
 use kiss3d::window;
@@ -13,8 +11,8 @@ use ncollide::geom::{Geom, Ball, Box};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::aliases::dim3;
-use nphysics::detection::constraint::{RBRB, BallInSocket};
-use nphysics::detection::joint::ball_in_socket::BallInSocket;
+use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
+use nphysics::detection::joint::fixed::Fixed;
 use nphysics::detection::joint::anchor::Anchor;
 use nphysics::object::{RigidBody, Dynamic, RB};
 use engine::{SceneNode, GraphicsManager};
@@ -54,7 +52,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
         let cursor_pos = @mut Vec2::new(0.0f64, 0.0);
         let grabbed_object: @mut Option<@mut dim3::Body3d<f64>> = @mut None;
-        let grabbed_object_joint: @mut Option<@mut dim3::BallInSocket3d<f64>> = @mut None;
+        let grabbed_object_joint: @mut Option<@mut dim3::Fixed3d<f64>> = @mut None;
         let grabbed_object_plane: @mut (Vec3<f64>, Vec3<f64>) = @mut (Zero::zero(), Zero::zero());
 
         do window.set_mouse_callback |w, event| {
@@ -128,19 +126,20 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                             Some(b) => {
                                 for sn in graphics.body_to_scene_node(b).unwrap().iter() {
                                     match *grabbed_object_joint {
-                                        Some(j) => physics.remove_ball_in_socket(j),
+                                        Some(j) => physics.remove_fixed(j),
                                         None    => { }
                                     }
 
                                     let rb      = b.to_rigid_body_or_fail();
-                                    let attach2 = ray.orig + ray.dir * mintoi;
-                                    let attach1 = rb.transform_ref().inv_transform(&attach2);
+                                    let _1: dim3::Transform3d<f64> = One::one();
+                                    let attach2 = _1.translated(&(ray.orig + ray.dir * mintoi));
+                                    let attach1 = rb.transform_ref().transformation().inverse().unwrap() * attach2;
                                     let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
                                     let anchor2 = Anchor::new(None, attach2);
-                                    let joint   = @mut BallInSocket::new(anchor1, anchor2);
+                                    let joint   = @mut Fixed::new(anchor1, anchor2);
                                     *grabbed_object_joint = Some(joint);
-                                    *grabbed_object_plane = (attach2, -ray.dir);
-                                    physics.add_ball_in_socket(joint);
+                                    *grabbed_object_plane = (attach2.translation(), -ray.dir);
+                                    physics.add_fixed(joint);
                                     // add a joint
                                     sn.select()
                                 }
@@ -165,7 +164,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                     }
 
                     match *grabbed_object_joint {
-                        Some(j) => physics.remove_ball_in_socket(j),
+                        Some(j) => physics.remove_fixed(j),
                         None    => { }
                     }
 
@@ -185,8 +184,10 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                             let (ref ppos, ref pdir) = *grabbed_object_plane;
 
                             match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
-                                Some(inter) =>
-                                    j.set_local2(pos + dir * inter),
+                                Some(inter) => {
+                                    let _1: dim3::Transform3d<f64> = One::one();
+                                    j.set_local2(_1.translated(&(pos + dir * inter)))
+                                },
                                 None => { }
                             }
 
@@ -321,7 +322,6 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         }
                     }
 
-                    let mintoi = 100.0;
                     w.draw_line(&ray.orig, &(ray.orig + ray.dir * mintoi), &Vec3::x())
                 }
             }
@@ -359,6 +359,10 @@ fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<
             },
             BallInSocket(bis) => {
                 window.draw_line(&bis.anchor1_pos(), &bis.anchor2_pos(), &Vec3::y());
+            },
+            Fixed(f) => {
+                // FIXME: draw the rotation too
+                window.draw_line(&f.anchor1_pos().translation(), &f.anchor2_pos().translation(), &Vec3::y());
             }
         }
     }

@@ -1,4 +1,5 @@
 use std::num::NumCast;
+use nalgebra::mat::Translation;
 use rsfml::graphics::render_window;
 use rsfml::graphics::vertex::Vertex;
 use rsfml::graphics::vertex_array::VertexArray;
@@ -7,7 +8,7 @@ use rsfml::graphics::primitive_type;
 use rsfml::system::vector2::Vector2f;
 use nalgebra::vec::Vec2;
 use nphysics::aliases::dim2;
-use nphysics::detection::constraint::{RBRB, BallInSocket};
+use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 
 pub static DRAW_SCALE: f32 = 20.0;
 
@@ -34,6 +35,13 @@ pub fn draw_colls(window:  &render_window::RenderWindow,
                     window,
                     &bis.anchor1_pos(),
                     &bis.anchor2_pos(),
+                    &Color::new_from_RGB(255, 0, 0))
+            },
+            Fixed(bis) => {
+                draw_line(
+                    window,
+                    &bis.anchor1_pos().translation(),
+                    &bis.anchor2_pos().translation(),
                     &Color::new_from_RGB(255, 0, 0))
             }
         }

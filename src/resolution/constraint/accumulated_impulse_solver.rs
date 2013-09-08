@@ -1,15 +1,16 @@
 use std::ptr;
 // use std::rand::RngUtil;
 use std::num::{One, Orderable, Bounded};
-use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
+use nalgebra::vec::{VecExt, Cross, CrossMatrix, Dim};
 use nalgebra::mat::{RotationWithTranslation, Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
-use detection::constraint::{Constraint, RBRB, BallInSocket};
+use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::Body;
 use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
 use resolution::constraint::contact_equation::{CorrectionMode, CorrectionParameters};
 use resolution::constraint::ball_in_socket_equation;
+use resolution::constraint::fixed_equation;
 use resolution::solver::Solver;
 use pgs = resolution::constraint::projected_gauss_seidel_solver;
 use resolution::constraint::impulse_cache::ImpulseCache;
@@ -25,7 +26,7 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 }
 
 impl<LV:  VecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
-     AV:  Vec<N> + ToStr + Clone,
+     AV:  VecExt<N> + ToStr + Clone,
      N:   Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
@@ -85,7 +86,10 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 BallInSocket(_) => {
                     num_joint_equations = num_joint_equations + Dim::dim(None::<LV>)
                 },
-                _ => { }
+                Fixed(_) => {
+                    num_joint_equations = num_joint_equations + Dim::dim(None::<LV>) + Dim::dim(None::<AV>)
+                },
+                RBRB(_, _, _) => { }
             }
         }
 
@@ -126,7 +130,17 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
                     joint_offset = joint_offset + Dim::dim(None::<LV>);
                 },
-                _ => fail!("Trying to resolve an unknown joint.")
+                Fixed(f) => {
+                    fixed_equation::fill_second_order_equation(
+                        dt.clone(),
+                        f,
+                        self.restitution_constraints.mut_slice_from(joint_offset), // XXX
+                        &self.correction.corr_mode
+                    );
+
+                    joint_offset = joint_offset + Dim::dim(None::<LV>) + Dim::dim(None::<AV>);
+                },
+                RBRB(_, _, _) => { }
             }
         }
 
@@ -219,7 +233,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 }
 
 impl<LV: VecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
-     AV: Vec<N> + ToStr + Clone,
+     AV: VecExt<N> + ToStr + Clone,
      N:  Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
      II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>,
@@ -244,6 +258,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                     },
                     BallInSocket(_) => {
                         // XXX: cache for ball in socket?
+                    },
+                    Fixed(_) => {
+                        // XXX: cache for fixed?
                     }
                 }
             }
@@ -267,6 +284,17 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         };
 
                         match bis.anchor2().body {
+                            Some(b) => b.set_index(-2),
+                            None    => { }
+                        }
+                    }
+                    Fixed(f) => { // FIXME: code duplication from BallInSocket
+                        match f.anchor1().body {
+                            Some(b) => b.set_index(-2),
+                            None    => { }
+                        };
+
+                        match f.anchor2().body {
                             Some(b) => b.set_index(-2),
                             None    => { }
                         }
@@ -312,6 +340,18 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         }
 
                         match bis.anchor2().body {
+                            Some(b) => set_body_index(b, &mut bodies, &mut id),
+                            None => { }
+                        }
+                    },
+                    Fixed(f) => { // FIXME: code duplication from BallInSocket
+                        joints.push(i);
+                        match f.anchor1().body {
+                            Some(b) => set_body_index(b, &mut bodies, &mut id),
+                            None => { }
+                        }
+
+                        match f.anchor2().body {
                             Some(b) => set_body_index(b, &mut bodies, &mut id),
                             None => { }
                         }

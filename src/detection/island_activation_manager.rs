@@ -5,7 +5,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::Integrator;
 use detection::detector::Detector;
-use detection::constraint::{Constraint, RBRB, BallInSocket};
+use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::{Body, RB, SB};
 use signal::signal::SignalEmiter;
 
@@ -192,6 +192,23 @@ for IslandActivationManager<N, LV, AV, M, II> {
                         },
                         None => { }
                     }
+                },
+                Fixed(f) => { // FIXME: code duplication from the BallInSocket variant
+                    match f.anchor1().body {
+                        Some(b1) => {
+                            if b1.is_active() {
+                                match f.anchor2().body {
+                                    Some(b2) => {
+                                        if b2.is_active() {
+                                            union(b1.index() as uint, b2.index() as uint, self.ufind)
+                                        }
+                                    },
+                                    None => { }
+                                }
+                            }
+                        },
+                        None => { }
+                    }
                 }
             }
         }
@@ -241,6 +258,17 @@ for IslandActivationManager<N, LV, AV, M, II> {
                             Some(b) => b.is_active()
                         }
                 }
+                Fixed(f) => { // FIXME: code duplication from the BallInSocket varient
+                    let good = match f.anchor1().body {
+                        None    => false,
+                        Some(b) => b.is_active()
+                    };
+
+                    good || match f.anchor2().body {
+                            None    => false,
+                            Some(b) => b.is_active()
+                        }
+                }
             }
         }
 
@@ -267,6 +295,17 @@ for IslandActivationManager<N, LV, AV, M, II> {
                     }
 
                     match bis.anchor2().body {
+                        None    => { },
+                        Some(b) => if !b.is_active() && b.can_move() { to_activate = Some(b) }
+                    }
+                },
+                Fixed(f) => { // FIXME: code duplication from BallInSocket
+                    match f.anchor1().body {
+                        None    => { },
+                        Some(b) => if !b.is_active() && b.can_move() { to_activate = Some(b) }
+                    }
+
+                    match f.anchor2().body {
                         None    => { },
                         Some(b) => if !b.is_active() && b.can_move() { to_activate = Some(b) }
                     }

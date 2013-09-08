@@ -1,6 +1,6 @@
 use std::num::{Zero, One};
 use nalgebra::mat::{Row, Inv, Rotation, Rotate, Translation, Transform};
-use nalgebra::vec::{AlgebraicVec, AlgebraicVecExt, Cross, CrossMatrix};
+use nalgebra::vec::{AlgebraicVecExt, Cross, CrossMatrix};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use ncollide::ray::Ray;
@@ -11,6 +11,7 @@ use detection::detector::Detector;
 use detection::constraint::Constraint;
 use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
+use detection::joint::fixed::Fixed;
 use detection::IslandActivationManager;
 use resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
 use resolution::solver::Solver;
@@ -44,7 +45,7 @@ impl<N:  'static + ToStr + Clone + Zero + NumCast + Primitive + Num + Algebraic 
          Signed + Real + ApproxEq<N> + Float,
      LV: 'static + ToStr + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<CM> +
          ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
-     AV: 'static + ToStr + Clone + Zero + AlgebraicVec<N>,
+     AV: 'static + ToStr + Clone + Zero + AlgebraicVecExt<N>,
      M:  'static + ToStr + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
          Transform<LV> + Mul<M, M> + One,
      II: 'static + ToStr + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Transform<AV>,
@@ -195,6 +196,14 @@ BodyWorld<N, LV, AV, M, II, CM> {
 
     pub fn remove_ball_in_socket(&mut self, joint: @mut BallInSocket<N, LV, AV, M, II>) {
         self.joints.remove_ball_in_socket(joint)
+    }
+
+    pub fn add_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+        self.joints.add_fixed(joint)
+    }
+
+    pub fn remove_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+        self.joints.remove_fixed(joint)
     }
 
     pub fn add_detector<D: 'static + Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>>(

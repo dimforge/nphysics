@@ -8,6 +8,7 @@ use integration::{BodyForceGenerator, BodySmpEulerIntegrator};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector};
 use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
+use detection::joint::fixed::Fixed;
 use detection::constraint::Constraint;
 use detection::IslandActivationManager;
 use resolution::AccumulatedImpulseSolver;
@@ -54,6 +55,7 @@ pub type BodyWorld2d<N> = BodyWorld<N, LV<N>, AV<N>, M<N>, II<N>, Vec2<N>>;
  * Joints
  */
 pub type BallInSocket2d<N> = BallInSocket<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type Fixed2d<N> = Fixed<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Clone + Num + Algebraic, Any>

@@ -13,6 +13,7 @@ use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector, BodiesBo
 use detection::constraint::Constraint;
 use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
+use detection::joint::fixed::Fixed;
 use detection::IslandActivationManager;
 use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 use world::{World, BodyWorld};
@@ -63,6 +64,7 @@ pub type BodyWorld3d<N> = BodyWorld<N, LV<N>, AV<N>, M<N>, II<N>, Mat3<N>>;
  * Joints
  */
 pub type BallInSocket3d<N> = BallInSocket<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type Fixed3d<N> = Fixed<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Num + Algebraic + Clone>
