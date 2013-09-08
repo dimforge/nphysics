@@ -6,13 +6,13 @@ use ncollide::geom::Geom;
 use object::volumetric::{InertiaTensor, Volumetric};
 // use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
-#[deriving(ToStr, Eq, Clone)]
+#[deriving(ToStr, Eq, Clone, Encodable, Decodable)]
 pub enum RigidBodyState {
     Static,
     Dynamic
 }
 
-#[deriving(Clone)]
+#[deriving(Clone, Encodable, Decodable)]
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:                RigidBodyState,
     priv geom:                 Geom<N, LV, M, II>,

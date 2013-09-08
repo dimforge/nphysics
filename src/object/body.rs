@@ -5,7 +5,7 @@ use nalgebra::vec::AlgebraicVecExt;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use object::{RigidBody, SoftBody};
 
-#[deriving(Clone)]
+#[deriving(Clone, Encodable, Decodable)]
 pub enum Body<N, LV, AV, M, II> {
     RB(RigidBody<N, LV, AV, M, II>),
     SB(SoftBody<N, LV>) // FIXME

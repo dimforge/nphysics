@@ -1,5 +1,5 @@
 use std::num::{Zero, One};
-use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim, Basis};
+use nalgebra::vec::{VecExt, Cross, CrossMatrix, Dim, Basis};
 use nalgebra::mat::{Rotate, Transform, Translation, Rotation, Row, Inv};
 use object::volumetric::InertiaTensor;
 use detection::joint::fixed::Fixed;

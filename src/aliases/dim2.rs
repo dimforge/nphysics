@@ -1,8 +1,7 @@
 use nalgebra::mat::{Mat2, Mat1};
-use nalgebra::vec::{Vec2, Vec1};
+use nalgebra::vec::{Norm, Vec2, Vec1};
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
-use nalgebra::vec::AlgebraicVec;
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use integration::{BodyForceGenerator, BodySmpEulerIntegrator};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector};

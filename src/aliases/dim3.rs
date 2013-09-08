@@ -1,10 +1,10 @@
 use std::num::Zero;
 use nalgebra::mat::Mat3;
-use nalgebra::vec::Vec3;
+use nalgebra::vec::{Norm, Vec3};
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
 use nalgebra::mat::Inv;
-use nalgebra::vec::{AlgebraicVec, Outer};
+use nalgebra::vec::Outer;
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
