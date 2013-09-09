@@ -24,7 +24,6 @@ impl<N, LV, AV, M, II> BodyWithEnergy<N, LV, AV, M, II> {
     }
 }
 
-
 // NOTE: this could easily be made generic wrt the Body<...> and wrt Constraint<...>
 pub struct IslandActivationManager<N, LV, AV, M, II> {
     events:         @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
@@ -32,7 +31,8 @@ pub struct IslandActivationManager<N, LV, AV, M, II> {
     mix_factor:     N,
     bodies:         HashMap<uint, BodyWithEnergy<N, LV, AV, M, II>, UintTWHash>,
     ufind:          ~[UFindSet],
-    can_deactivate: ~[bool]
+    can_deactivate: ~[bool],
+    collector:      ~[Constraint<N, LV, AV, M, II>]
 }
 
 impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
@@ -54,11 +54,30 @@ IslandActivationManager<N, LV, AV, M, II> {
             mix_factor:     mix_factor,
             bodies:         HashMap::new(UintTWHash::new()),
             ufind:          ~[],
-            can_deactivate: ~[]
+            can_deactivate: ~[],
+            collector:      ~[]
         };
 
-        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b, out| res.activate(b, out));
-        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b| res.deactivate(b));
+        let key = ptr::to_mut_unsafe_ptr(res) as uint;
+        events.add_body_activated_handler(key, |b, out| res.activate(b, out));
+        events.add_body_deactivated_handler(key, |b| res.deactivate(b));
+
+        // FIXME: instead of sending the activation message right away, maybe it could be more
+        // performant to store a list of objects to activate, and perform the activation during the
+        // next call to `interferences` ?
+        do events.add_collision_started_handler(key) |a, b| {
+            res.activate(a, &mut res.collector);
+            res.collector.clear();
+            res.activate(b, &mut res.collector);
+            res.collector.clear();
+        }
+
+        do events.add_collision_ended_handler(key) |a, b| {
+            res.activate(a, &mut res.collector);
+            res.collector.clear();
+            res.activate(b, &mut res.collector);
+            res.collector.clear();
+        }
 
         res
     }
@@ -76,6 +95,16 @@ IslandActivationManager<N, LV, AV, M, II> {
 
             // XXX: this should really not be here!
             self.events.emit_body_activated(b, out);
+        }
+        else {
+            // add some virtual energy to the body
+            // to ensure it wont fall asleep right after the activation message
+            match self.bodies.find_mut(&(ptr::to_mut_unsafe_ptr(b) as uint)) {
+                Some(ref mut b) => {
+                    b.energy = self.threshold * NumCast::from(2.0);
+                },
+                None => { }
+            }
         }
     }
 

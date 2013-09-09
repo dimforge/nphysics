@@ -258,18 +258,15 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
                     d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
 
-                    if n == 0 && d.num_colls() != 0 {
-                        // collision lost broad cast a wake up message
-                        if rb1.can_move() && !rb1.is_active() {
-                            self.signals.emit_body_activated(b1, &mut self.constraints_collector);
-                        }
+                    let new_n = d.num_colls();
 
-                        if rb2.can_move() && !rb2.is_active() {
-                            self.signals.emit_body_activated(b2, &mut self.constraints_collector);
-                        }
-
-
-                        self.constraints_collector.clear();
+                    if n == 0 && new_n != 0 {
+                        // collision lost
+                        self.signals.emit_collision_ended(b1, b2);
+                    }
+                    else if n != 0 && new_n == 0 {
+                        // collision created
+                        self.signals.emit_collision_started(b1, b2);
                     }
                 },
                 Unsuported => { }
