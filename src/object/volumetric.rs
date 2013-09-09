@@ -1,8 +1,9 @@
 use std::num::{Zero, One, Real, NumCast};
 use nalgebra::vec::{VecExt, Dim, Iterable};
 use nalgebra::mat::{Translation, Indexable};
-use ncollide::geom::{Ball, Box, Cylinder, Cone, Plane};
-use ncollide::geom::{Geom, PlaneGeom, BallGeom, BoxGeom, ConeGeom, CylinderGeom, CompoundGeom, ImplicitGeom};
+use ncollide::geom::{Ball, Box, Cylinder, Capsule, Cone, Plane};
+use ncollide::geom::{Geom, PlaneGeom, BallGeom, BoxGeom, ConeGeom, CylinderGeom, CapsuleGeom,
+                     CompoundGeom, ImplicitGeom};
 
 pub trait InertiaTensor<N, V, M> {
     fn to_world_space(&self, &M) -> Self;
@@ -34,10 +35,11 @@ Volumetric<N, V, II> for Geom<N, V, M, II> {
             },
             ImplicitGeom(ref i) => {
                 match *i {
-                    BallGeom(ref b)     => ball_volume(b.radius(), Dim::dim(None::<V>)),
+                    BallGeom(ref b)     => ball_volume(&b.radius(), Dim::dim(None::<V>)),
                     BoxGeom(ref b)      => box_volume(&b.half_extents()),
                     ConeGeom(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
                     CylinderGeom(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
+                    CapsuleGeom(ref c)  => capsule_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
                 }
             }
         }
@@ -69,6 +71,7 @@ Volumetric<N, V, II> for Geom<N, V, M, II> {
                     BoxGeom(ref b)      => b.mass_properties(density),
                     ConeGeom(ref c)     => c.mass_properties(density),
                     CylinderGeom(ref c) => c.mass_properties(density),
+                    CapsuleGeom(ref c)  => c.mass_properties(density),
                 }
             }
         }
@@ -76,7 +79,7 @@ Volumetric<N, V, II> for Geom<N, V, M, II> {
 }
 
 #[inline]
-fn ball_volume<N: Real + Num + NumCast>(radius: N, dim: uint) -> N {
+fn ball_volume<N: Real + Num + NumCast>(radius: &N, dim: uint) -> N {
     let _pi: N = Real::pi();
     _pi * radius.pow(&NumCast::from(dim))
 }
@@ -87,11 +90,11 @@ impl<N:  Real + Num + NumCast + Clone,
 Volumetric<N, V, II> for Ball<N> {
     #[inline]
     fn volume(&self) -> N {
-        ball_volume(self.radius(), Dim::dim(None::<V>))
+        ball_volume(&self.radius(), Dim::dim(None::<V>))
     }
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let volume = ball_volume(self.radius(), Dim::dim(None::<V>));
+        let volume = ball_volume(&self.radius(), Dim::dim(None::<V>));
         let mass   = volume * *density;
 
         let dim = Dim::dim(None::<V>);
@@ -250,6 +253,29 @@ fn cylinder_volume<N: Zero + One + NumCast + Num + Real + Clone>(
     else {
         fail!("Volume for n-dimensional cylinders, n > 3, is not implemented.")
     }
+}
+
+impl<N:  Zero + One + NumCast + Num + Real + Clone,
+     V:  Zero + Dim,
+     II: Zero + Indexable<(uint, uint), N>>
+Volumetric<N, V, II> for Capsule<N> {
+    fn volume(&self) -> N {
+        let dim = Dim::dim(None::<V>);
+        capsule_volume(&self.half_height(), &self.radius(), dim)
+    }
+
+    fn mass_properties(&self, _: &N) -> (N, V, II) {
+        fail!("Not yet implemented.")
+    }
+}
+
+#[inline]
+fn capsule_volume<N: Zero + One + NumCast + Num + Real + Clone>(
+                  half_height: &N,
+                  radius:      &N,
+                  dim:         uint)
+                  -> N {
+    cylinder_volume(half_height, radius, dim) + ball_volume(radius, dim)
 }
 
 impl<N:  Zero + One + NumCast + Num + Real + Clone,

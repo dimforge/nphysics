@@ -4,7 +4,7 @@ use std::rand::{XorShiftRng, RngUtil};
 use std::hashmap::HashMap;
 use rsfml::graphics::render_window::RenderWindow;
 use nalgebra::vec::Vec3;
-use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, ConeGeom};
+use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, CapsuleGeom, ConeGeom};
 use nphysics::aliases::dim2;
 use camera::Camera;
 use objects::ball::Ball;
@@ -66,7 +66,8 @@ impl GraphicsManager {
                     BallGeom(ref b) => self.add_ball(body, delta, b, out),
                     BoxGeom(ref b)  => self.add_box(body, delta, b, out),
                     CylinderGeom(_) => fail!("not yet implemented."), // self.add_cylinder(body, delta, c, out),
-                    ConeGeom(_)     => fail!("not yet implemented.")  // self.add_cone(body, delta, c, out),
+                    ConeGeom(_)     => fail!("not yet implemented."), // self.add_cone(body, delta, c, out),
+                    CapsuleGeom(_)  => fail!("not yet implemented.")
                 }
             },
         }

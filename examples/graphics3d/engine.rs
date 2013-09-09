@@ -5,7 +5,7 @@ use std::hashmap::HashMap;
 use nalgebra::vec::Vec3;
 use nalgebra::traits::rotation::Rotate;
 use nalgebra::traits::translation::Translation;
-use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, ConeGeom};
+use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, CapsuleGeom, ConeGeom};
 use kiss3d::window::Window;
 use kiss3d::object::Object;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
@@ -104,6 +104,7 @@ impl GraphicsManager {
                     BoxGeom(ref b)      => self.add_box(window, body, delta, b, out),
                     CylinderGeom(ref c) => self.add_cylinder(window, body, delta, c, out),
                     ConeGeom(ref c)     => self.add_cone(window, body, delta, c, out),
+                    CapsuleGeom(_)      => fail!("Not yet implemented.")
                 }
             },
         }
