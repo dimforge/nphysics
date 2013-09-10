@@ -43,271 +43,280 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
     }
 
     do Window::spawn("nphysics: 3d demo") |window| {
-        let running    = @mut Running;
-        let draw_colls = @mut false;
-        let graphics   = @mut GraphicsManager::new(window);
-        let physics    = @mut builder(window, graphics);
+        let mut running    = Running;
+        let mut draw_colls = false;
+        let mut graphics   = GraphicsManager::new(window);
+        let mut physics    = builder(window, &mut graphics);
 
-        let ray_to_draw = @mut None;
+        let mut ray_to_draw = None;
 
-        let cursor_pos = @mut Vec2::new(0.0f64, 0.0);
-        let grabbed_object: @mut Option<@mut dim3::Body3d<f64>> = @mut None;
-        let grabbed_object_joint: @mut Option<@mut dim3::Fixed3d<f64>> = @mut None;
-        let grabbed_object_plane: @mut (Vec3<f64>, Vec3<f64>) = @mut (Zero::zero(), Zero::zero());
+        let mut cursor_pos = Vec2::new(0.0f64, 0.0);
+        let mut grabbed_object: Option<@mut dim3::Body3d<f64>> = None;
+        let mut grabbed_object_joint: Option<@mut dim3::Fixed3d<f64>> = None;
+        let mut grabbed_object_plane: (Vec3<f64>, Vec3<f64>) = (Zero::zero(), Zero::zero());
 
-        do window.set_mouse_callback |w, event| {
-            match *event {
-                event::ButtonPressed(_, modifier) => {
-                    if modifier.contains(glfw::Shift) {
-                        // XXX: huge and uggly code duplication
-                        let (pos, dir) = w.unproject(&*cursor_pos);
-                        let ray = Ray::new(pos, dir);
 
-                        // cast the ray
-                        let mut interferences = ~[];
-                        physics.cast_ray(&ray, &mut interferences);
+        window.set_framerate_limit(Some(60));
+        window.set_light(window::StickToCamera);
 
-                        let mut mintoi = Bounded::max_value();
-                        let mut minb   = None;
+        do window.render_loop |w| {
+            do w.poll_events |w, event| {
+                match *event {
+                    event::ButtonPressed(_, modifier) => {
+                        if modifier.contains(glfw::Shift) {
+                            // XXX: huge and uggly code duplication
+                            let (pos, dir) = w.unproject(&cursor_pos);
+                            let ray = Ray::new(pos, dir);
 
-                        for (b, toi) in interferences.move_iter() {
-                            if toi < mintoi {
-                                mintoi = toi;
-                                minb   = Some(b);
+                            // cast the ray
+                            let mut interferences = ~[];
+                            physics.cast_ray(&ray, &mut interferences);
+
+                            let mut mintoi = Bounded::max_value();
+                            let mut minb   = None;
+
+                            for (b, toi) in interferences.move_iter() {
+                                if toi < mintoi {
+                                    mintoi = toi;
+                                    minb   = Some(b);
+                                }
                             }
-                        }
 
-                        if minb.is_some() {
-                            let b = minb.unwrap();
-                            if b.can_move() {
-                                physics.remove_body(b);
-                                graphics.remove(w, b);
+                            if minb.is_some() {
+                                let b = minb.unwrap();
+                                if b.can_move() {
+                                    physics.remove_body(b);
+                                    graphics.remove(w, b);
+                                }
                             }
-                        }
 
-                        false
-                    }
-                    else if modifier.contains(glfw::Control) {
-                        match *grabbed_object {
-                            Some(rb) => {
-                                for sn in graphics.body_to_scene_node(rb).unwrap().iter() {
+                            false
+                        }
+                        else if modifier.contains(glfw::Control) {
+                            match grabbed_object {
+                                Some(rb) => {
+                                    for sn in graphics.body_to_scene_node(rb).unwrap().iter() {
+                                        sn.unselect()
+                                    }
+                                },
+                                None => { }
+                            }
+
+                            // XXX: huge and uggly code duplication
+                            let (pos, dir) = w.unproject(&cursor_pos);
+                            let ray = Ray::new(pos, dir);
+
+                            // cast the ray
+                            let mut interferences = ~[];
+                            physics.cast_ray(&ray, &mut interferences);
+
+                            let mut mintoi = Bounded::max_value();
+                            let mut minb   = None;
+
+                            for (b, toi) in interferences.move_iter() {
+                                if toi < mintoi {
+                                    mintoi = toi;
+                                    minb   = Some(b);
+                                }
+                            }
+
+                            if minb.is_some() {
+                                let b = minb.unwrap();
+                                if b.can_move() {
+                                    grabbed_object = Some(b)
+                                }
+                            }
+
+                            match grabbed_object {
+                                Some(b) => {
+                                    for sn in graphics.body_to_scene_node(b).unwrap().iter() {
+                                        match grabbed_object_joint {
+                                            Some(j) => physics.remove_fixed(j),
+                                            None    => { }
+                                        }
+
+                                        let rb      = b.to_rigid_body_or_fail();
+                                        let _1: dim3::Transform3d<f64> = One::one();
+                                        let attach2 = _1.translated(&(ray.orig + ray.dir * mintoi));
+                                        let attach1 = rb.transform_ref().transformation().inverse().unwrap() * attach2;
+                                        let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
+                                        let anchor2 = Anchor::new(None, attach2);
+                                        let joint   = @mut Fixed::new(anchor1, anchor2);
+                                        grabbed_object_joint = Some(joint);
+                                        grabbed_object_plane = (attach2.translation(), -ray.dir);
+                                        physics.add_fixed(joint);
+                                        // add a joint
+                                        sn.select()
+                                    }
+                                },
+                                None => { }
+                            }
+
+                            false
+                        }
+                        else {
+                            true
+                        }
+                    },
+                    event::ButtonReleased(_, _) => {
+                        match grabbed_object {
+                            Some(b) => {
+                                for sn in graphics.body_to_scene_node(b).unwrap().iter() {
                                     sn.unselect()
                                 }
                             },
                             None => { }
                         }
 
-                        // XXX: huge and uggly code duplication
-                        let (pos, dir) = w.unproject(&*cursor_pos);
-                        let ray = Ray::new(pos, dir);
-
-                        // cast the ray
-                        let mut interferences = ~[];
-                        physics.cast_ray(&ray, &mut interferences);
-
-                        let mut mintoi = Bounded::max_value();
-                        let mut minb   = None;
-
-                        for (b, toi) in interferences.move_iter() {
-                            if toi < mintoi {
-                                mintoi = toi;
-                                minb   = Some(b);
-                            }
+                        match grabbed_object_joint {
+                            Some(j) => physics.remove_fixed(j),
+                            None    => { }
                         }
 
-                        if minb.is_some() {
-                            let b = minb.unwrap();
-                            if b.can_move() {
-                                *grabbed_object = Some(b)
-                            }
-                        }
+                        grabbed_object       = None;
+                        grabbed_object_joint = None;
 
-                        match *grabbed_object {
-                            Some(b) => {
-                                for sn in graphics.body_to_scene_node(b).unwrap().iter() {
-                                    match *grabbed_object_joint {
-                                        Some(j) => physics.remove_fixed(j),
-                                        None    => { }
-                                    }
+                        true
+                    },
+                    event::CursorPos(x, y) => {
+                        cursor_pos.x = x as f64;
+                        cursor_pos.y = y as f64;
 
-                                    let rb      = b.to_rigid_body_or_fail();
-                                    let _1: dim3::Transform3d<f64> = One::one();
-                                    let attach2 = _1.translated(&(ray.orig + ray.dir * mintoi));
-                                    let attach1 = rb.transform_ref().transformation().inverse().unwrap() * attach2;
-                                    let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
-                                    let anchor2 = Anchor::new(None, attach2);
-                                    let joint   = @mut Fixed::new(anchor1, anchor2);
-                                    *grabbed_object_joint = Some(joint);
-                                    *grabbed_object_plane = (attach2.translation(), -ray.dir);
-                                    physics.add_fixed(joint);
-                                    // add a joint
-                                    sn.select()
+                        // update the joint
+                        match grabbed_object_joint {
+                            Some(j) => {
+                                let (pos, dir) = w.unproject(&cursor_pos);
+                                let (ref ppos, ref pdir) = grabbed_object_plane;
+
+                                match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
+                                    Some(inter) => {
+                                        let _1: dim3::Transform3d<f64> = One::one();
+                                        j.set_local2(_1.translated(&(pos + dir * inter)))
+                                    },
+                                    None => { }
                                 }
+
                             },
                             None => { }
                         }
 
-                        false
-                    }
-                    else {
+                        w.glfw_window().get_key(glfw::KEY_RIGHT_SHIFT)   == glfw::FALSE &&
+                            w.glfw_window().get_key(glfw::KEY_LEFT_SHIFT)    == glfw::FALSE &&
+                            w.glfw_window().get_key(glfw::KEY_RIGHT_CONTROL) == glfw::FALSE &&
+                            w.glfw_window().get_key(glfw::KEY_LEFT_CONTROL)  == glfw::FALSE
+                    },
+                    event::KeyReleased(glfw::KEY_TAB) => {
+                        graphics.switch_cameras(w);
+
                         true
-                    }
-                },
-                event::ButtonReleased(_, _) => {
-                    match *grabbed_object {
-                        Some(b) => {
-                            for sn in graphics.body_to_scene_node(b).unwrap().iter() {
-                                sn.unselect()
-                            }
-                        },
-                        None => { }
-                    }
+                    },
+                    event::KeyReleased(glfw::KEY_T) => {
+                        if running == Stop {
+                            running = Running;
+                        }
+                        else {
+                            running = Stop;
+                        }
 
-                    match *grabbed_object_joint {
-                        Some(j) => physics.remove_fixed(j),
-                        None    => { }
-                    }
+                        true
+                    },
+                    event::KeyReleased(glfw::KEY_S) => {
+                        running = Step;
 
-                    *grabbed_object       = None;
-                    *grabbed_object_joint = None;
+                        true
+                    },
+                    event::KeyReleased(glfw::KEY_SPACE) => {
+                        draw_colls = !draw_colls;
+                        w.set_wireframe_mode(draw_colls);
 
-                    true
-                },
-                event::CursorPos(x, y) => {
-                    cursor_pos.x = x as f64;
-                    cursor_pos.y = y as f64;
+                        true
+                    },
+                    event::KeyPressed(glfw::KEY_1) => {
+                        let geom   = Geom::new_ball(Ball::new(0.5f64));
+                        let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
-                    // update the joint
-                    match *grabbed_object_joint {
-                        Some(j) => {
-                            let (pos, dir) = w.unproject(&*cursor_pos);
-                            let (ref ppos, ref pdir) = *grabbed_object_plane;
+                        let cam_transfom = w.camera().view_transform();
+                        rb.translate_by(&cam_transfom.translation());
 
-                            match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
-                                Some(inter) => {
-                                    let _1: dim3::Transform3d<f64> = One::one();
-                                    j.set_local2(_1.translated(&(pos + dir * inter)))
-                                },
-                                None => { }
-                            }
+                        let front = cam_transfom.rotate(&Vec3::z());
 
-                        },
-                        None => { }
-                    }
+                        rb.set_lin_vel(front * 40.0);
 
-                    w.glfw_window().get_key(glfw::KEY_RIGHT_SHIFT)   == glfw::FALSE &&
-                    w.glfw_window().get_key(glfw::KEY_LEFT_SHIFT)    == glfw::FALSE &&
-                    w.glfw_window().get_key(glfw::KEY_RIGHT_CONTROL) == glfw::FALSE &&
-                    w.glfw_window().get_key(glfw::KEY_LEFT_CONTROL)  == glfw::FALSE
-                },
-                _ => true
-            }
-        }
+                        let body = @mut RB(rb);
+                        physics.add_body(body);
+                        graphics.add(w, body);
 
-        do window.set_keyboard_callback |w, event| {
-            match *event {
-                event::KeyReleased(glfw::KEY_TAB) => {
-                    graphics.switch_cameras(w)
-                },
-                event::KeyReleased(glfw::KEY_T) => {
-                    if *running == Stop {
-                        *running = Running;
-                    }
-                    else {
-                        *running = Stop;
-                    }
-                },
-                event::KeyReleased(glfw::KEY_S) => {
-                    *running = Step
-                },
-                event::KeyReleased(glfw::KEY_SPACE) => {
-                    *draw_colls = !*draw_colls;
-                    w.set_wireframe_mode(*draw_colls);
-                },
-                event::KeyPressed(glfw::KEY_1) => {
-                    let geom   = Geom::new_ball(Ball::new(0.5f64));
-                    let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                        true
+                    },
+                    event::KeyPressed(glfw::KEY_2) => {
+                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5, 0.5)));
+                        let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
-                    let cam_transfom = w.camera().view_transform();
-                    rb.translate_by(&cam_transfom.translation());
-
-                    let front = cam_transfom.rotate(&Vec3::z());
-
-                    rb.set_lin_vel(front * 40.0);
-
-                    let body = @mut RB(rb);
-                    physics.add_body(body);
-                    graphics.add(w, body);
-                },
-                event::KeyPressed(glfw::KEY_2) => {
-                    let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5, 0.5)));
-                    let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
-
-                    let cam_transform = w.camera().view_transform();
-                    rb.translate_by(&cam_transform.translation());
-
-                    let front = cam_transform.rotate(&Vec3::z());
-
-                    rb.set_lin_vel(front * 40.0);
-
-                    let body = @mut RB(rb);
-                    physics.add_body(body);
-                    graphics.add(w, body);
-                },
-                event::KeyPressed(glfw::KEY_3) => {
-                    let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64)));
-                    let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
-
-                    let cam_transfom = w.camera().view_transform();
-                    rb.translate_by(&cam_transfom.translation());
-
-                    let front = cam_transfom.rotate(&Vec3::z());
-
-                    rb.set_lin_vel(front * 400.0);
-
-                    let body = @mut RB(rb);
-                    physics.add_body(body);
-                    physics.add_ccd_to(body, 0.4, 1.0);
-                    graphics.add(w, body);
-                },
-                event::KeyPressed(glfw::KEY_R) => {
-                    if ray_to_draw.is_some() {
-                        *ray_to_draw = None;
-                    }
-                    else {
                         let cam_transform = w.camera().view_transform();
-                        let pos           = cam_transform.translation();
-                        let front         = cam_transform.rotate(&Vec3::z());
+                        rb.translate_by(&cam_transform.translation());
 
-                        *ray_to_draw = Some(Ray::new(pos, front));
-                    }
-                },
-                _ => { }
-            };
+                        let front = cam_transform.rotate(&Vec3::z());
 
-            true
-        }
+                        rb.set_lin_vel(front * 40.0);
 
-        window.set_framerate_limit(Some(60));
-        window.set_light(window::StickToCamera);
+                        let body = @mut RB(rb);
+                        physics.add_body(body);
+                        graphics.add(w, body);
 
-        do window.render_loop |w| {
+                        true
+                    },
+                    event::KeyPressed(glfw::KEY_3) => {
+                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64)));
+                        let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+
+                        let cam_transfom = w.camera().view_transform();
+                        rb.translate_by(&cam_transfom.translation());
+
+                        let front = cam_transfom.rotate(&Vec3::z());
+
+                        rb.set_lin_vel(front * 400.0);
+
+                        let body = @mut RB(rb);
+                        physics.add_body(body);
+                        physics.add_ccd_to(body, 0.4, 1.0);
+                        graphics.add(w, body);
+
+                        true
+                    },
+                    event::KeyPressed(glfw::KEY_R) => {
+                        if ray_to_draw.is_some() {
+                            ray_to_draw = None;
+                        }
+                        else {
+                            let cam_transform = w.camera().view_transform();
+                            let pos           = cam_transform.translation();
+                            let front         = cam_transform.rotate(&Vec3::z());
+
+                            ray_to_draw = Some(Ray::new(pos, front));
+                        }
+
+                        true
+                    },
+                    _ => true
+                }
+            }
+
             let before = time::precise_time_s();
 
-            if *running != Stop {
+            if running != Stop {
                 physics.step(0.016);
                 graphics.draw();
             }
 
-            if *running == Step {
-                *running = Stop;
+            if running == Step {
+                running = Stop;
             }
 
-            if *draw_colls {
-                draw_collisions(w, physics);
+            if draw_colls {
+                draw_collisions(w, &mut physics);
             }
 
-            match *ray_to_draw {
+            match ray_to_draw {
                 None          => { },
                 Some(ref ray) => {
                     // cast a ray
@@ -326,7 +335,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                 }
             }
 
-            if *running != Stop {
+            if running != Stop {
                 let dt = (time::precise_time_s() - before);
                 println(dt.to_str() + "sec (" + (1.0 / dt).to_str() + " fps)");
             }
