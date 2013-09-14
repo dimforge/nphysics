@@ -1,6 +1,6 @@
 use std::borrow;
 use std::num::Zero;
-use nalgebra::mat::{Translation, Rotate, Transform};
+use nalgebra::mat::{Translation, Rotate, AbsoluteRotate, Transform};
 use nalgebra::vec::AlgebraicVecExt;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use object::{RigidBody, SoftBody};
@@ -90,7 +90,7 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
 impl<N:  NumCast + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
-     M:  Translation<LV> + Rotate<LV> + Transform<LV> + Mul<M, M>,
+     M:  Translation<LV> + Rotate<LV> + AbsoluteRotate<LV> + Transform<LV> + Mul<M, M>,
      II>
 HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]

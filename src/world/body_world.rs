@@ -1,5 +1,5 @@
 use std::num::{Zero, One};
-use nalgebra::mat::{Row, Inv, Rotation, Rotate, Translation, Transform};
+use nalgebra::mat::{Row, Inv, Rotation, Rotate, Translation, Transform, AbsoluteRotate};
 use nalgebra::vec::{AlgebraicVecExt, Cross, CrossMatrix};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
@@ -47,7 +47,7 @@ impl<N:  'static + ToStr + Clone + Zero + NumCast + Primitive + Num + Algebraic 
          ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
      AV: 'static + ToStr + Clone + Zero + AlgebraicVecExt<N>,
      M:  'static + ToStr + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Transform<LV> + Mul<M, M> + One,
+         Transform<LV> + AbsoluteRotate<LV> + Mul<M, M> + One,
      II: 'static + ToStr + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Transform<AV>,
      CM: Row<AV>>
 BodyWorld<N, LV, AV, M, II, CM> {

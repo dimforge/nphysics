@@ -22,6 +22,7 @@ build_cmd_opt=rust build -L$(nphysics_lib_path)   \
 						 -L$(glfw_lib_path)       \
 						 -L$(gl_lib_path)     	  \
 						 -L$(stb_image_lib_path)  \
+						 -Llib			  		  \
 						 --out-dir ../bin --opt-level 3
 
 lib_build_opt=rust build -L$(nphysics_lib_path)  \
@@ -31,6 +32,7 @@ lib_build_opt=rust build -L$(nphysics_lib_path)  \
 						 -L$(glfw_lib_path)      \
 						 -L$(gl_lib_path)    	 \
 						 -L$(stb_image_lib_path) \
+						 -Llib					 \
 						 --out-dir lib --opt-level 3
 
 examples:

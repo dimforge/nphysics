@@ -62,7 +62,7 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
     while rwindow.is_open() {
         loop {
             match rwindow.poll_event() {
-                event::KeyPressed(code, _, _, _, _) => {
+                event::KeyPressed{code, _} => {
                     match code {
                         keyboard::Escape => rwindow.close(),
                         keyboard::S      => *running = Step,
@@ -78,7 +78,7 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
                         _                => { }
                     }
                 },
-                ev @ event::MouseMoved(x, y) => {
+                ev @ event::MouseMoved{x, y} => {
                     cursor_pos = Vec2::new(x as f64, y as f64);
                     match grabbed_object {
                         Some(_) => {

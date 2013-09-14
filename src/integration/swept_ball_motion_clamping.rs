@@ -1,7 +1,7 @@
 use std::num::One;
 use std::ptr;
 use std::managed;
-use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
+use nalgebra::mat::{Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv};
 use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
 use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
 use ncollide::util::hash_map::HashMap;
@@ -125,7 +125,8 @@ impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV> + ToStr,
      AV: Clone + Vec<N> + ToStr,
-     M:  Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr,
+     M:  Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + AbsoluteRotate<LV> +
+         Mul<M, M> + Inv + One + ToStr,
      II: Clone + ToStr, // FIXME: remove those bounds
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>

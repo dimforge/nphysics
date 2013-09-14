@@ -2,7 +2,7 @@ use std::ptr;
 use std::num::{Zero, One};
 use std::borrow;
 use std::managed;
-use nalgebra::mat::{Translation, Rotate, Rotation, Transform, Inv};
+use nalgebra::mat::{Translation, Rotate, Rotation, Transform, AbsoluteRotate, Inv};
 use nalgebra::vec::{Vec, AlgebraicVecExt, Cross, Dim};
 use ncollide::geom::AnnotatedPoint;
 use ncollide::broad;
@@ -27,7 +27,8 @@ impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
          Rotate<LV> + Transform<LV>,
      AV: Vec<N> + ToStr,
-     M:  Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One,
+     M:  Rotation<AV> + Rotate<LV> + AbsoluteRotate<LV> + Translation<LV> + Transform<LV> +
+         Mul<M, M> + Inv + One,
      II>
 PairwiseDetector<N, LV, AV, M, II> {
     fn num_colls(&self) -> uint {
@@ -100,7 +101,8 @@ impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + 
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
          Rotate<LV> + Transform<LV>,
      AV: 'static + Vec<N> + ToStr,
-     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + Inv + Transform<LV> + One,
+     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + AbsoluteRotate<LV> +
+         Inv + Transform<LV> + One,
      II: 'static,
      BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
 BodiesBodies<N, LV, AV, M, II, BF> {
@@ -184,7 +186,8 @@ impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + 
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
          Rotate<LV> + Transform<LV>,
      AV: 'static + Vec<N> + ToStr,
-     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One + Mul<M, M> + Inv,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + AbsoluteRotate<LV> +
+         One + Mul<M, M> + Inv,
      II: 'static,
      BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
@@ -197,36 +200,12 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
     }
 
     fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
-        // activate every body in contact with the deleted body
-        /*
-        if !o.is_active() {
-            self.signals.emit_body_activated(o, &mut self.constraints_collector);
-
-            println(self.constraints_collector.len().to_str());
-
-            self.constraints_collector.clear();
-        }
-
-        do self.broad_phase.for_each_pair |b1, b2, cd| {
-            if b1 == o && !b2.is_active() && b2.can_move() && cd.num_colls() != 0 {
-                self.signals.emit_body_activated(b2, &mut self.constraints_collector);
-            }
-
-            self.constraints_collector.clear();
-
-            if b2 == o &&  !b1.is_active() && b1.can_move() && cd.num_colls() != 0 {
-                self.signals.emit_body_activated(b1, &mut self.constraints_collector);
-            }
-
-            self.constraints_collector.clear();
-        }
-        */
-
         if !o.is_active() {
             // wake up everybody in contact
             let aabb              = o.bounding_volume();
             let mut interferences = ~[];
 
+            // FIXME: change that to a collision lost event
             self.broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
 
             for i in interferences.iter() {

@@ -1,5 +1,5 @@
 use std::num::{Zero, One};
-use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Indexable};
+use nalgebra::mat::{Translation, Rotation, Rotate, AbsoluteRotate, Transformation, Transform, Inv, Indexable};
 use nalgebra::vec::{VecExt, AlgebraicVecExt, Dim};
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
@@ -364,7 +364,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
 impl<N:  NumCast + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
-     M: Translation<LV> + Rotate<LV> + Transform<LV> + Mul<M, M>,
+     M: Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> + Mul<M, M>,
      II>
 HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {
