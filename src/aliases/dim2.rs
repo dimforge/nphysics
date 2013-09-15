@@ -57,10 +57,10 @@ pub type BallInSocket2d<N> = BallInSocket<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type Fixed2d<N> = Fixed<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
-impl<N: Clone + Num + Algebraic, Any>
-InertiaTensor<N, LV<N>, Any> for InertiaTensor2d<N> {
+impl<N: Clone + Num + Algebraic>
+InertiaTensor<N, LV<N>, Transform2d<N>> for InertiaTensor2d<N> {
     #[inline]
-    fn to_world_space(&self, _: &Any) -> InertiaTensor2d<N> {
+    fn to_world_space(&self, _: &Transform2d<N>) -> InertiaTensor2d<N> {
         self.clone()
     }
 

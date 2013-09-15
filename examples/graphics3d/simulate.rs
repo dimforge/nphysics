@@ -240,7 +240,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         let front = cam_transfom.rotate(&Vec3::z());
 
-                        rb.set_lin_vel(front * 40.0);
+                        rb.set_lin_vel(front * 40.0f64);
 
                         let body = @mut RB(rb);
                         physics.add_body(body);
@@ -257,7 +257,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         let front = cam_transform.rotate(&Vec3::z());
 
-                        rb.set_lin_vel(front * 40.0);
+                        rb.set_lin_vel(front * 40.0f64);
 
                         let body = @mut RB(rb);
                         physics.add_body(body);
@@ -274,7 +274,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         let front = cam_transfom.rotate(&Vec3::z());
 
-                        rb.set_lin_vel(front * 400.0);
+                        rb.set_lin_vel(front * 400.0f64);
 
                         let body = @mut RB(rb);
                         physics.add_body(body);
@@ -362,8 +362,8 @@ fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<
             RBRB(_, _, c) => {
                 window.draw_line(&c.world1, &c.world2, &Vec3::x());
 
-                let center = (c.world1 + c.world2) / 2.0;
-                let end    = center + c.normal * 0.4;
+                let center = (c.world1 + c.world2) / 2.0f64;
+                let end    = center + c.normal * 0.4f64;
                 window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
             },
             BallInSocket(bis) => {

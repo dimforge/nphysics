@@ -3,7 +3,7 @@ use nalgebra::mat::Mat3;
 use nalgebra::vec::{Norm, Vec3};
 use nalgebra::adaptors::transform::Transform;
 use nalgebra::adaptors::rotmat::Rotmat;
-use nalgebra::mat::Inv;
+use nalgebra::mat::{Inv, Mat3MulRhs};
 use nalgebra::vec::Outer;
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use ncollide::bounding_volume::AABB;
@@ -67,7 +67,7 @@ pub type BallInSocket3d<N> = BallInSocket<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type Fixed3d<N> = Fixed<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
-impl<N: Num + Algebraic + Clone>
+impl<N: Num + Algebraic + Clone + Mat3MulRhs<N, Mat3<N>>>
 InertiaTensor<N, LV<N>, Transform3d<N>> for InertiaTensor3d<N> {
     #[inline]
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
@@ -83,6 +83,6 @@ InertiaTensor<N, LV<N>, Transform3d<N>> for InertiaTensor3d<N> {
             Zero::zero(), Zero::zero(), diag
         );
 
-        *self + (diagm - pt.outer(pt)).scalar_mul(mass)
+        *self + (diagm - pt.outer(pt)) * *mass
     }
 }
