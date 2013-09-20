@@ -28,21 +28,21 @@ pub fn draw_colls(window:  &render_window::RenderWindow,
                     window,
                     &c.world1,
                     &c.world2,
-                    &Color::new_from_RGB(255, 255, 255));
+                    &Color::new_RGB(255, 255, 255));
             },
             BallInSocket(bis) => {
                 draw_line(
                     window,
                     &bis.anchor1_pos(),
                     &bis.anchor2_pos(),
-                    &Color::new_from_RGB(255, 0, 0))
+                    &Color::new_RGB(255, 0, 0))
             },
             Fixed(bis) => {
                 draw_line(
                     window,
                     &bis.anchor1_pos().translation(),
                     &bis.anchor2_pos().translation(),
-                    &Color::new_from_RGB(255, 0, 0))
+                    &Color::new_RGB(255, 0, 0))
             }
         }
     }

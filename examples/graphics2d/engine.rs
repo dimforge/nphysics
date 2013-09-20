@@ -11,18 +11,18 @@ use objects::ball::Ball;
 use objects::box::Box;
 use simulate;
 
-pub trait SceneNode {
-    fn update(&mut self);
-    fn draw(&self, &mut RenderWindow);
+enum SceneNode<'self> {
+    BallNode(Ball<'self>),
+    BoxNode(Box<'self>)
 }
 
-pub struct GraphicsManager {
+pub struct GraphicsManager<'self> {
     rand:      XorShiftRng,
-    rb2sn:     HashMap<uint, ~[@mut SceneNode]>,
+    rb2sn:     HashMap<uint, ~[SceneNode<'self>]>,
     obj2color: HashMap<uint, Vec3<u8>>
 }
 
-impl GraphicsManager {
+impl<'self> GraphicsManager<'self> {
     pub fn new() -> GraphicsManager {
         GraphicsManager {
             rand:      XorShiftRng::new_seeded(0, 1, 2, 3),
@@ -53,7 +53,7 @@ impl GraphicsManager {
                 body:  @mut dim2::Body2d<f64>,
                 delta: dim2::Transform2d<f64>,
                 geom:  &dim2::Geom2d<f64>,
-                out:   &mut ~[@mut SceneNode]) {
+                out:   &mut ~[SceneNode<'self>]) {
         match *geom {
             PlaneGeom(ref p)    => self.add_plane(body, p, out),
             CompoundGeom(ref c) => {
@@ -76,43 +76,49 @@ impl GraphicsManager {
     fn add_plane(&mut self,
                  _: @mut dim2::Body2d<f64>,
                  _: &dim2::Plane2d<f64>,
-                 _:  &mut ~[@mut SceneNode]) {
+                 _:  &mut ~[SceneNode]) {
     }
 
     fn add_ball(&mut self,
                 body:  @mut dim2::Body2d<f64>,
                 delta: dim2::Transform2d<f64>,
                 geom:  &dim2::Ball2d<f64>,
-                out:   &mut ~[@mut SceneNode]) {
+                out:   &mut ~[SceneNode]) {
         let color = self.color_for_object(body);
-        out.push(@mut Ball::new(body, delta, geom.radius(), color) as @mut SceneNode)
+        out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
     }
 
     fn add_box(&mut self,
                body:  @mut dim2::Body2d<f64>,
                delta: dim2::Transform2d<f64>,
                geom:  &dim2::Box2d<f64>,
-               out:   &mut ~[@mut SceneNode]) {
+               out:   &mut ~[SceneNode]) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
 
         let color = self.color_for_object(body);
 
-        out.push(@mut Box::new(body, delta, rx, ry, color) as @mut SceneNode)
+        out.push(BoxNode(Box::new(body, delta, rx, ry, color)))
     }
 
     pub fn draw(&mut self, rw: &mut RenderWindow, c: &Camera) {
         c.activate_scene(rw);
 
         for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.iter() {
-                n.update();
+            for n in ns.mut_iter() {
+                match *n {
+                    BoxNode(ref mut b)  => b.update(),
+                    BallNode(ref mut b) => b.update(),
+                }
             }
         }
 
         for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.iter() {
-                n.draw(rw);
+            for n in ns.mut_iter() {
+                match *n {
+                    BoxNode(ref b)  => b.draw(rw),
+                    BallNode(ref b) => b.draw(rw),
+                }
             }
         }
 

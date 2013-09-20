@@ -1,4 +1,5 @@
 use std::os;
+use rsfml::graphics::font::Font;
 use rsfml::graphics::render_window::*;
 use rsfml::window::video_mode::*;
 use rsfml::window::context_settings::*;
@@ -35,11 +36,11 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
 
     let mode    = VideoMode::new_init(800, 600, 32);
     let setting = ContextSettings{
-        depthBits:         10,
-        stencilBits:       10,
-        antialiasingLevel: 2,
-        majorVersion:      0,
-        minorVersion:      1
+        depth_bits:         10,
+        stencil_bits:       10,
+        antialiasing_level: 2,
+        major_version:      0,
+        minor_version:      1
     };
     let mut rwindow =
         match RenderWindow::new(mode, ~"nphysics demo", sfDefaultStyle, &setting) {
@@ -54,7 +55,8 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
 
     let mut graphics = GraphicsManager::new();
     let mut physics  = builder(&mut graphics);
-    let mut fps      = Fps::new();
+    let     fnt      = Font::new_from_file(~"Inconsolata.otf").unwrap();
+    let mut fps      = Fps::new(&fnt);
     let mut cursor_pos;
     let grabbed_object: Option<@mut dim2::Body2d<f64>> = None;
     let grabbed_object_joint: Option<@mut dim2::BallInSocket2d<f64>> = None;

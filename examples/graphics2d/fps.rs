@@ -3,28 +3,25 @@ use rsfml::traits::drawable::Drawable;
 use rsfml::graphics::font::Font;
 use rsfml::graphics::render_window;
 use rsfml::graphics::text::Text;
-use rsfml::graphics::color;
+use rsfml::graphics::Color;
 use extra::time;
 
-pub struct Fps {
+pub struct Fps<'self> {
     priv delta:     float,
     priv last_time: float,
-    priv fnt:       @Font,
-    priv fps:       ~Text
+    priv fps:       Text<'self>
 }
 
-impl Fps {
-    pub fn new() -> Fps {
-        let mut txt = ~Text::new().unwrap();
-        let     fnt = @Font::new_from_file(~"Inconsolata.otf").unwrap();
-        txt.set_font(fnt);
+impl<'self> Fps<'self> {
+    pub fn new(font: &'self Font) -> Fps<'self> {
+        let mut txt = Text::new().unwrap();
+        txt.set_font(font);
         txt.set_position(&vector2::Vector2f { x: 0.0, y: 0.0 });
-        txt.set_color(&color::Color::new_from_RGB(255, 255, 255));
+        txt.set_color(&Color::new_RGB(255, 255, 255));
 
         Fps {
             delta:     0.0,
             last_time: 0.0,
-            fnt:       fnt,
             fps:       txt
         }
     }
