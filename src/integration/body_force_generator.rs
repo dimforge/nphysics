@@ -3,7 +3,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::{Body, RB, SB};
 use integration::Integrator;
-use signal::signal::SignalEmiter;
+use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 // FIXME: split this on `RigidBodyForceGenerator` and `SoftBodyForceGenerator` ?
 pub struct BodyForceGenerator<N, LV, AV, M, II> {
@@ -28,8 +28,10 @@ BodyForceGenerator<N, LV, AV, M, II> {
             ang_acc: ang_acc
         };
 
-        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));
-        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o| res.remove(o));
+        events.add_body_activation_handler(
+            ptr::to_mut_unsafe_ptr(res) as uint,
+            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C>
+        );
 
         res
     }
@@ -96,4 +98,15 @@ for BodyForceGenerator<N, LV, AV, M, II> {
 
     #[inline]
     fn priority(&self) -> f64 { 0.0 }
+}
+
+impl<N: Clone, LV: Clone, AV: Clone, M: Clone, II: Clone, C>
+BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodyForceGenerator<N, LV, AV, M, II> {
+    fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {
+        self.add(b)
+    }
+
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        self.remove(b)
+    }
 }

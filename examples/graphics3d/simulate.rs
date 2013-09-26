@@ -200,17 +200,17 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                             None => { }
                         }
 
-                        w.glfw_window().get_key(glfw::KEY_RIGHT_SHIFT)   == glfw::FALSE &&
-                            w.glfw_window().get_key(glfw::KEY_LEFT_SHIFT)    == glfw::FALSE &&
-                            w.glfw_window().get_key(glfw::KEY_RIGHT_CONTROL) == glfw::FALSE &&
-                            w.glfw_window().get_key(glfw::KEY_LEFT_CONTROL)  == glfw::FALSE
+                        w.glfw_window().get_key(glfw::KeyRightShift)       == glfw::Release &&
+                            w.glfw_window().get_key(glfw::KeyLeftShift)    == glfw::Release &&
+                            w.glfw_window().get_key(glfw::KeyRightControl) == glfw::Release &&
+                            w.glfw_window().get_key(glfw::KeyLeftControl)  == glfw::Release
                     },
-                    event::KeyReleased(glfw::KEY_TAB) => {
+                    event::KeyReleased(glfw::KeyTab) => {
                         graphics.switch_cameras(w);
 
                         true
                     },
-                    event::KeyReleased(glfw::KEY_T) => {
+                    event::KeyReleased(glfw::KeyT) => {
                         if running == Stop {
                             running = Running;
                         }
@@ -220,18 +220,18 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         true
                     },
-                    event::KeyReleased(glfw::KEY_S) => {
+                    event::KeyReleased(glfw::KeyS) => {
                         running = Step;
 
                         true
                     },
-                    event::KeyReleased(glfw::KEY_SPACE) => {
+                    event::KeyReleased(glfw::KeySpace) => {
                         draw_colls = !draw_colls;
                         w.set_wireframe_mode(draw_colls);
 
                         true
                     },
-                    event::KeyPressed(glfw::KEY_1) => {
+                    event::KeyPressed(glfw::Key1) => {
                         let geom   = Geom::new_ball(Ball::new(0.5f64));
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
@@ -248,7 +248,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         true
                     },
-                    event::KeyPressed(glfw::KEY_2) => {
+                    event::KeyPressed(glfw::Key2) => {
                         let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5, 0.5)));
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
@@ -265,7 +265,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         true
                     },
-                    event::KeyPressed(glfw::KEY_3) => {
+                    event::KeyPressed(glfw::Key3) => {
                         let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64)));
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
@@ -283,7 +283,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                         true
                     },
-                    event::KeyPressed(glfw::KEY_R) => {
+                    event::KeyPressed(glfw::KeyR) => {
                         if ray_to_draw.is_some() {
                             ray_to_draw = None;
                         }

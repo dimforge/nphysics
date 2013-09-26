@@ -11,7 +11,7 @@ use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
 use ncollide::narrow::toi;
 use integration::Integrator;
 use object::{Body, RB, SB};
-use signal::signal::SignalEmiter;
+use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 struct CCDBody<N, LV, AV, M, II> {
     body:        @mut Body<N, LV, AV, M, II>,
@@ -64,8 +64,10 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
             interferences: ~[]
         };
 
-        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.activate(o));
-        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o| res.deactivate(o));
+        events.add_body_activation_handler(
+            ptr::to_mut_unsafe_ptr(res) as uint,
+            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C>
+        );
 
         res
     }
@@ -236,4 +238,23 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 
     #[inline]
     fn priority(&self) -> f64 { 100.0 }
+}
+
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
+         Rotate<LV> + Transform<LV> + ToStr,
+     AV: 'static + Vec<N> + ToStr + Clone,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr + Clone,
+     II: 'static + ToStr + Clone,
+     BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
+         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>,
+     C>
+BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
+    fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {
+        self.activate(b)
+    }
+
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        self.deactivate(b)
+    }
 }

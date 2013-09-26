@@ -1,6 +1,5 @@
 use std::util;
-use std::rand::IsaacRng;
-use std::rand::RngUtil;
+use std::rand::{IsaacRng, Rng};
 use std::num::Zero;
 use std::vec;
 use nalgebra::vec::Vec;

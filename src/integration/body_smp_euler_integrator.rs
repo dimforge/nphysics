@@ -9,7 +9,7 @@ use object::Body;
 use object::volumetric::InertiaTensor;
 use integration::Integrator;
 use integration::euler;
-use signal::signal::SignalEmiter;
+use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 pub struct BodySmpEulerIntegrator<N, LV, AV, M, II> {
     priv objects: HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>,
@@ -29,8 +29,10 @@ BodySmpEulerIntegrator<N, LV, AV, M, II> {
             objects: HashMap::new(UintTWHash::new())
         };
 
-        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o, _| res.add(o));
-        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |o| res.remove(o));
+        events.add_body_activation_handler(
+            ptr::to_mut_unsafe_ptr(res) as uint,
+            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C>
+        );
 
         res
     }
@@ -80,4 +82,20 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodySmpEulerIntegrator<N, LV, AV, M, I
 
     #[inline]
     fn priority(&self) -> f64 { 50.0 }
+}
+
+impl<N:  Clone,
+     LV: Clone + Vec<N> + ToStr,
+     AV: Clone + Vec<N> + ToStr,
+     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One + ToStr,
+     II: Clone + Mul<II, II> + InertiaTensor<N, LV, M> + Inv,
+     C>
+BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodySmpEulerIntegrator<N, LV, AV, M, II> {
+    fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {
+        self.add(b)
+    }
+
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        self.remove(b)
+    }
 }

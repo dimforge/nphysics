@@ -1,8 +1,7 @@
 use std::num::One;
 use kiss3d::window;
 use kiss3d::object::Object;
-use nalgebra::traits::transformation::Transformation;
-use nalgebra::traits::rotation::Rotation;
+use nalgebra::mat::{Transformation, Rotation};
 use nalgebra::vec::Vec3;
 use nphysics::aliases::dim3;
 use engine::SceneNode;

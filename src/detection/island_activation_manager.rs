@@ -7,7 +7,7 @@ use integration::Integrator;
 use detection::detector::Detector;
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::{Body, RB, SB};
-use signal::signal::SignalEmiter;
+use signal::signal::{SignalEmiter, BodyActivationSignalHandler, CollisionSignalHandler};
 
 struct BodyWithEnergy<N, LV, AV, M, II> {
     // NOTE: that is the place to put a `can_be_deactivated` flag if needed…
@@ -59,25 +59,16 @@ IslandActivationManager<N, LV, AV, M, II> {
         };
 
         let key = ptr::to_mut_unsafe_ptr(res) as uint;
-        events.add_body_activated_handler(key, |b, out| res.activate(b, out));
-        events.add_body_deactivated_handler(key, |b| res.deactivate(b));
+
+        events.add_body_activation_handler(
+            key,
+            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
+        );
 
         // FIXME: instead of sending the activation message right away, maybe it could be more
         // performant to store a list of objects to activate, and perform the activation during the
         // next call to `interferences` ?
-        do events.add_collision_started_handler(key) |a, b| {
-            res.activate(a, &mut res.collector);
-            res.collector.clear();
-            res.activate(b, &mut res.collector);
-            res.collector.clear();
-        }
-
-        do events.add_collision_ended_handler(key) |a, b| {
-            res.activate(a, &mut res.collector);
-            res.collector.clear();
-            res.activate(b, &mut res.collector);
-            res.collector.clear();
-        }
+        events.add_collision_handler(key, res as @mut CollisionSignalHandler<Body<N, LV, AV, M, II>>);
 
         res
     }
@@ -86,15 +77,13 @@ IslandActivationManager<N, LV, AV, M, II> {
         self.mix_factor = self.threshold.clone();
     }
 
-    fn activate(&mut self,
-                b:   @mut Body<N, LV, AV, M, II>,
-                out: &mut ~[Constraint<N, LV, AV, M, II>]) {
+    fn activate(&mut self, b: @mut Body<N, LV, AV, M, II>) {
         if b.can_move() && !b.is_active() {
             b.activate();
             self.add(b);
 
             // XXX: this should really not be here!
-            self.events.emit_body_activated(b, out);
+            // self.events.emit_body_activated(b, out);
         }
         else {
             // add some virtual energy to the body
@@ -344,7 +333,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
             match to_activate {
                 None    => { },
                 Some(o) => {
-                    self.activate(o, out);
+                    self.activate(o/* FIXME: , out */);
                 }
             }
 
@@ -409,4 +398,47 @@ fn union(x: uint, y: uint, sets: &mut [UFindSet]) {
          sets[y_root].parent = x_root;
          sets[x_root].rank   = rankx + 1
      }
+}
+
+impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
+     LV: 'static + AlgebraicVec<N> + Clone,
+     AV: 'static + AlgebraicVec<N> + Clone,
+     M:  'static,
+     II: 'static>
+BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
+for IslandActivationManager<N, LV, AV, M, II> {
+    fn handle_body_activated_signal(&mut self,
+                                    b: @mut Body<N, LV, AV, M, II>,
+                                    _: &mut ~[Constraint<N, LV, AV, M, II>]) {
+        self.activate(b /* FIXME: , out */)
+    }
+
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        self.deactivate(b)
+    }
+}
+
+impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
+     LV: 'static + AlgebraicVec<N> + Clone,
+     AV: 'static + AlgebraicVec<N> + Clone,
+     M:  'static,
+     II: 'static>
+CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV, AV, M, II> {
+    fn handle_collision_started_signal(&mut self,
+                                       a: @mut Body<N, LV, AV, M, II>,
+                                       b: @mut Body<N, LV, AV, M, II>) {
+        self.activate(a);
+        self.collector.clear();
+        self.activate(b);
+        self.collector.clear();
+    }
+
+    fn handle_collision_ended_signal(&mut self,
+                                     a: @mut Body<N, LV, AV, M, II>,
+                                     b: @mut Body<N, LV, AV, M, II>) {
+        self.activate(a);
+        self.collector.clear();
+        self.activate(b);
+        self.collector.clear();
+    }
 }

@@ -1,10 +1,9 @@
 use std::num::One;
 use std::ptr;
-use std::rand::{XorShiftRng, RngUtil};
+use std::rand::{XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use nalgebra::vec::Vec3;
-use nalgebra::traits::rotation::Rotate;
-use nalgebra::traits::translation::Translation;
+use nalgebra::mat::{Rotate, Translation};
 use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, CapsuleGeom, ConeGeom};
 use kiss3d::window::Window;
 use kiss3d::object::Object;

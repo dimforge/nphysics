@@ -15,7 +15,7 @@ use ncollide::ray::{Ray, RayCastWithTransform};
 use object::{Body, RB, SB};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
-use signal::signal::SignalEmiter;
+use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 pub enum PairwiseDetector<N, LV, AV, M, II> {
     GG(GeomGeom<N, LV, AV, M, II>),
@@ -117,8 +117,10 @@ BodiesBodies<N, LV, AV, M, II, BF> {
             update_bf:             update_bf
         };
 
-        events.add_body_activated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b, out| res.activate(b, out));
-        events.add_body_deactivated_handler(ptr::to_mut_unsafe_ptr(res) as uint, |b| res.deactivate(b));
+        events.add_body_activation_handler(
+            ptr::to_mut_unsafe_ptr(res) as uint,
+            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
+        );
 
         res
     }
@@ -272,4 +274,24 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
     #[inline]
     fn priority(&self) -> f64 { 50.0 }
+}
+
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + ToStr,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+         Rotate<LV> + Transform<LV>,
+     AV: 'static + Vec<N> + ToStr,
+     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + AbsoluteRotate<LV> +
+         Inv + Transform<LV> + One,
+     II: 'static,
+     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
+BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for BodiesBodies<N, LV, AV, M, II, BF> {
+    fn handle_body_activated_signal(&mut self,
+                                    b:   @mut Body<N, LV, AV, M, II>,
+                                    out: &mut ~[Constraint<N, LV, AV, M, II>]) {
+        self.activate(b, out)
+    }
+
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+        self.deactivate(b)
+    }
 }

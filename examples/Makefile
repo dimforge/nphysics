@@ -39,10 +39,10 @@ examples:
 	mkdir -p ../bin
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
 	$(build_cmd_opt) ./boxes_vee3d.rs
-	$(build_cmd_opt) ./cross3d.rs
-	$(build_cmd_opt) ./balls_vee3d.rs
 	$(build_cmd_opt) ./pyramid3d.rs
 	$(build_cmd_opt) ./primitives3d.rs
+	$(build_cmd_opt) ./cross3d.rs
+	$(build_cmd_opt) ./balls_vee3d.rs
 	$(build_cmd_opt) ./wall3d.rs
 	$(build_cmd_opt) ./compound3d.rs
 	$(lib_build_opt) ./graphics2d/graphics2d.rs
