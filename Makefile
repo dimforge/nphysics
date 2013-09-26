@@ -1,4 +1,5 @@
 tmp=_git_distcheck
+nphysics_doc_path=doc
 nalgebra_lib_path=./ncollide/nalgebra/lib
 ncollide_lib_path=./ncollide/lib
 
@@ -60,7 +61,8 @@ distcheck:
 	rm -rf $(tmp)
 
 doc:
-	rust doc src/lib.rs --output-dir doc
+	mkdir -p $(nphysics_doc_path)
+	rustdoc html src/lib.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
 
 .PHONY:doc
 # FIXME: uggly!
