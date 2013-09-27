@@ -212,8 +212,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
 
             for i in interferences.iter() {
                 if !managed::mut_ptr_eq(o, *i) && !i.is_active() && i.can_move() {
-                    self.signals.emit_body_activated(*i, &mut self.constraints_collector);
-                    self.constraints_collector.clear();
+                    self.signals.request_body_activation(*i);
                 }
             }
         }

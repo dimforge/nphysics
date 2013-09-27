@@ -92,11 +92,11 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bis.update();
                         match bis.anchor1().body {
-                            Some(b) => self.events.emit_body_activated(b, constraint),
+                            Some(b) => self.events.request_body_activation(b),
                             None    => { }
                         }
                         match bis.anchor2().body {
-                            Some(b) => self.events.emit_body_activated(b, constraint),
+                            Some(b) => self.events.request_body_activation(b),
                             None    => { }
                         }
                 },
@@ -105,11 +105,11 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bis.update();
                         match bis.anchor1().body {
-                            Some(b) => self.events.emit_body_activated(b, constraint),
+                            Some(b) => self.events.request_body_activation(b),
                             None    => { }
                         }
                         match bis.anchor2().body {
-                            Some(b) => self.events.emit_body_activated(b, constraint),
+                            Some(b) => self.events.request_body_activation(b),
                             None    => { }
                         }
                 },
@@ -120,5 +120,5 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
         }
     }
 
-    fn priority(&self) -> f64 { 50.0 }
+    fn priority(&self) -> f64 { 49.0 }
 }

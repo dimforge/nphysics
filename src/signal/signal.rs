@@ -1,6 +1,12 @@
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 
+pub trait BodyActivationRequestHandler<O> {
+    fn handle_body_activation_request(&mut self, @mut O);
+    fn handle_body_deactivation_request(&mut self, @mut O);
+}
+
+// FIXME: rename "Signal" to "Notify" to make it explicit that the thing already happened.
 pub trait BodyActivationSignalHandler<O, C> {
     fn handle_body_activated_signal(&mut self, @mut O, &mut ~[C]);
     fn handle_body_deactivated_signal(&mut self, @mut O);
@@ -13,25 +19,28 @@ pub trait CollisionSignalHandler<O> {
 
 // FIXME: add other signals
 pub struct SignalEmiter<N, O, C> {
-    body_activation_handlers: HashMap<uint, @mut BodyActivationSignalHandler<O, C>, UintTWHash>,
-    collision_handler:        HashMap<uint, @mut CollisionSignalHandler<O>, UintTWHash>,
+    body_activation_request_handlers: HashMap<uint, @mut BodyActivationRequestHandler<O>, UintTWHash>,
+    body_activation_handlers:         HashMap<uint, @mut BodyActivationSignalHandler<O, C>, UintTWHash>,
+    collision_handler:                HashMap<uint, @mut CollisionSignalHandler<O>, UintTWHash>,
 }
 
 impl<N, O, C> SignalEmiter<N, O, C> {
     pub fn new() -> SignalEmiter<N, O, C> {
         SignalEmiter {
-            body_activation_handlers: HashMap::new(UintTWHash::new()),
-            collision_handler:        HashMap::new(UintTWHash::new())
+            body_activation_request_handlers: HashMap::new(UintTWHash::new()),
+            body_activation_handlers:         HashMap::new(UintTWHash::new()),
+            collision_handler:                HashMap::new(UintTWHash::new())
         }
     }
 }
-
 
 /*
  * Implement handler add/remove
  */
 impl<N, O, C> SignalEmiter<N, O, C> {
-    pub fn add_body_activation_handler(&mut self, id: uint, handler: @mut BodyActivationSignalHandler<O, C>) {
+    pub fn add_body_activation_handler(&mut self,
+                                       id:      uint,
+                                       handler: @mut BodyActivationSignalHandler<O, C>) {
         self.body_activation_handlers.insert(id, handler);
     }
 
@@ -47,12 +56,33 @@ impl<N, O, C> SignalEmiter<N, O, C> {
         self.collision_handler.remove(&id);
     }
 
+    pub fn add_body_activation_request_handler(&mut self,
+                                               id:      uint,
+                                               handler: @mut BodyActivationRequestHandler<O>) {
+        self.body_activation_request_handlers.insert(id, handler);
+    }
+
+    pub fn remove_body_activation_request_handler(&mut self, id: uint) {
+        self.body_activation_request_handlers.remove(&id);
+    }
 }
 
 /*
  * Implement signal emition
  */
 impl<N, O, C> SignalEmiter<N, O, C> {
+    pub fn request_body_activation(&self, o: @mut O) {
+        for h in self.body_activation_request_handlers.elements().iter() {
+            h.value.handle_body_activation_request(o)
+        }
+    }
+
+    pub fn request_body_deactivation(&self, o: @mut O) {
+        for h in self.body_activation_request_handlers.elements().iter() {
+            h.value.handle_body_deactivation_request(o)
+        }
+    }
+
     pub fn emit_body_deactivated(&self, o: @mut O) {
         for h in self.body_activation_handlers.elements().iter() {
             h.value.handle_body_deactivated_signal(o)
