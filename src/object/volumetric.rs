@@ -11,7 +11,7 @@ pub trait InertiaTensor<N, V, M> {
 }
 
 pub trait Volumetric<N, V, II> {
-    fn volume(&self) -> N;
+    // fn volume(&self) -> N;
     fn mass_properties(&self, &N) -> (N, V, II);
 }
 
@@ -19,7 +19,8 @@ impl<N: Real + Num + NumCast + Clone + ToStr,
      V: Clone + VecExt<N> + ToStr,
      M: Translation<V>,
      II: Zero + Indexable<(uint, uint), N> + Add<II, II> + InertiaTensor<N, V, M> + Dim + ToStr>
-Volumetric<N, V, II> for Geom<N, V, M, II> {
+Volumetric<N, V, II> for Geom<N, V, M> {
+    /*
     #[inline]
     fn volume(&self) -> N {
         match *self {
@@ -44,6 +45,7 @@ Volumetric<N, V, II> for Geom<N, V, M, II> {
             }
         }
     }
+    */
 
     #[inline]
     fn mass_properties(&self, density: &N) -> (N, V, II) {
@@ -55,7 +57,7 @@ Volumetric<N, V, II> for Geom<N, V, M, II> {
                 let mut ctot: V  = Zero::zero();
 
                 for &(ref m, ref s) in c.shapes().iter() {
-                    let (mpart, cpart, ipart) = s.mass_properties(density);
+                    let (mpart, cpart, ipart): (N, V, II) = s.mass_properties(density);
                     mtot = mtot + mpart;
                     itot = itot + ipart.to_world_space(m).to_relative_wrt_point(&mpart, &m.translation());
                     ctot = ctot + cpart * mpart;
@@ -88,10 +90,12 @@ impl<N:  Real + Num + NumCast + Clone,
      V:  Zero + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Ball<N> {
+    /*
     #[inline]
     fn volume(&self) -> N {
         ball_volume(&self.radius(), Dim::dim(None::<V>))
     }
+    */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let volume = ball_volume(&self.radius(), Dim::dim(None::<V>));
@@ -133,9 +137,11 @@ impl<N:  Zero + One + NumCast + Num + Clone + ToStr,
      V:  Clone + VecExt<N> + ToStr,
      II: Zero + Indexable<(uint, uint), N> + ToStr>
 Volumetric<N, V, II> for Box<N, V> {
+    /*
     fn volume(&self) -> N {
         box_volume(&self.half_extents())
     }
+    */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let mass = box_volume(&self.half_extents()) * *density;
@@ -195,10 +201,12 @@ impl<N:  Zero + One + NumCast + Num + Real + Clone,
      V:  Zero + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cylinder<N> {
+    /*
     fn volume(&self) -> N {
         let dim = Dim::dim(None::<V>);
         cylinder_volume(&self.half_height(), &self.radius(), dim)
     }
+    */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let dim  = Dim::dim(None::<V>);
@@ -259,10 +267,12 @@ impl<N:  Zero + One + NumCast + Num + Real + Clone,
      V:  Zero + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Capsule<N> {
+    /*
     fn volume(&self) -> N {
         let dim = Dim::dim(None::<V>);
         capsule_volume(&self.half_height(), &self.radius(), dim)
     }
+    */
 
     fn mass_properties(&self, _: &N) -> (N, V, II) {
         fail!("Not yet implemented.")
@@ -282,11 +292,13 @@ impl<N:  Zero + One + NumCast + Num + Real + Clone,
      V:  Zero + Indexable<uint, N> + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cone<N> {
+    /*
     fn volume(&self) -> N {
         let dim = Dim::dim(None::<V>);
 
         cone_volume(&self.half_height(), &self.radius(), dim)
     }
+    */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let dim  = Dim::dim(None::<V>);
@@ -353,10 +365,12 @@ fn cone_volume<N:  Zero + One + NumCast + Num + Real + Clone>(
 }
 
 impl<N: Zero, V: Zero, II: Zero> Volumetric<N, V, II> for Plane<N, V> {
+    /*
     #[inline]
     fn volume(&self) -> N {
         Zero::zero()
     }
+    */
 
     #[inline]
     fn mass_properties(&self, _: &N) -> (N, V, II) {

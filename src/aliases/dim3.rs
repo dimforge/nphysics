@@ -36,7 +36,7 @@ pub type Box3d<N>      = Box<N, Vec3<N>>;
 pub type Cylinder3d<N> = Cylinder<N>;
 pub type Cone3d<N>     = Cone<N>;
 pub type Plane3d<N>    = Plane<N, Vec3<N>>;
-pub type Geom3d<N>     = Geom<N, LV<N>, M<N>, II<N>>;
+pub type Geom3d<N>     = Geom<N, LV<N>, M<N>>;
 pub type AABB3d<N>     = AABB<N, LV<N>>;
 
 pub type ForceGenerator3d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
@@ -45,7 +45,7 @@ pub type BodyDamping3d<N> = BodyDamping<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 pub type Dispatcher3d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type DBVTBroadPhase3d<N> = DBVTBroadPhase<N, LV<N>, Body3d<N>, AABB3d<N>, Dispatcher3d<N>, PairwiseDetector3d<N>>;
-pub type PairwiseDetector3d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type PairwiseDetector3d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>>;
 pub type DBVTCollisionDetector3d<N> = BodiesBodies<N, LV<N>, AV<N>, M<N>, II<N>, DBVTBroadPhase3d<N>>;
 pub type DBVTSweptBallMotionClamping3d<N> = SweptBallMotionClamping<N, LV<N>, AV<N>, M<N>, II<N>, DBVTBroadPhase3d<N>>;
 pub type JointManager3d<N> = JointManager<N, LV<N>, AV<N>, M<N>, II<N>>;

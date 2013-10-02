@@ -17,8 +17,8 @@ use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
-pub enum PairwiseDetector<N, LV, AV, M, II> {
-    GG(GeomGeom<N, LV, AV, M, II>),
+pub enum PairwiseDetector<N, LV, AV, M> {
+    GG(GeomGeom<N, LV, AV, M>),
     Unsuported
 }
 
@@ -30,7 +30,7 @@ impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
      M:  Rotation<AV> + Rotate<LV> + AbsoluteRotate<LV> + Translation<LV> + Transform<LV> +
          Mul<M, M> + Inv + One,
      II>
-PairwiseDetector<N, LV, AV, M, II> {
+PairwiseDetector<N, LV, AV, M> {
     fn num_colls(&self) -> uint {
         match *self {
             GG(ref gg) => gg.num_colls(),
@@ -58,10 +58,10 @@ Dispatcher<N, LV, AV, M, II> {
     }
 }
 impl<N: NumCast + Zero + Clone, LV: Clone, AV, M, II>
-     broad::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>
+     broad::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)
-        -> PairwiseDetector<N, LV, AV, M, II> {
+        -> PairwiseDetector<N, LV, AV, M> {
         match (a, b) {
             (&RB(ref rb1), &RB(ref rb2)) => {
                 GG(GeomGeom::new(rb1.geom(), rb2.geom(), &self.simplex))
@@ -104,7 +104,7 @@ impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + 
      M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + AbsoluteRotate<LV> +
          Inv + Transform<LV> + One,
      II: 'static,
-     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
+     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>>>
 BodiesBodies<N, LV, AV, M, II, BF> {
     pub fn new(events:    @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
                bf:        @mut BF,
@@ -191,7 +191,7 @@ impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + 
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + AbsoluteRotate<LV> +
          One + Mul<M, M> + Inv,
      II: 'static,
-     BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>> +
+     BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
 for BodiesBodies<N, LV, AV, M, II, BF> {
@@ -282,7 +282,7 @@ impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + 
      M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + AbsoluteRotate<LV> +
          Inv + Transform<LV> + One,
      II: 'static,
-     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M, II>>>
+     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>>>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for BodiesBodies<N, LV, AV, M, II, BF> {
     fn handle_body_activated_signal(&mut self,
                                     b:   @mut Body<N, LV, AV, M, II>,

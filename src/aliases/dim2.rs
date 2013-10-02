@@ -31,13 +31,13 @@ pub type Box2d<N>      = Box<N, Vec2<N>>;
 pub type Cylinder2d<N> = Cylinder<N>;
 pub type Cone2d<N>     = Cone<N>;
 pub type Plane2d<N>    = Plane<N, Vec2<N>>;
-pub type Geom2d<N>     = Geom<N, LV<N>, M<N>, II<N>>;
+pub type Geom2d<N>     = Geom<N, LV<N>, M<N>>;
 
 pub type ForceGenerator2d<N> = BodyForceGenerator<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type BodyIntegrator2d<N> = BodySmpEulerIntegrator<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 pub type Dispatcher2d<N> = Dispatcher<N, LV<N>, AV<N>, M<N>, II<N>>;
-pub type PairwiseDetector2d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>, II<N>>;
+pub type PairwiseDetector2d<N> = PairwiseDetector<N, LV<N>, AV<N>, M<N>>;
 pub type JointManager2d<N> = JointManager<N, LV<N>, AV<N>, M<N>, II<N>>;
 pub type IslandActivationManager2d<N> = IslandActivationManager<N, LV<N>, AV<N>, M<N>, II<N>>; 
 

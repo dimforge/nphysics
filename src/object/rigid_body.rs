@@ -15,7 +15,7 @@ pub enum RigidBodyState {
 #[deriving(Clone, Encodable, Decodable)]
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:                RigidBodyState,
-    priv geom:                 Geom<N, LV, M, II>,
+    priv geom:                 Geom<N, LV, M>,
     priv local_to_world:       M,
     priv lin_vel:              LV,
     priv ang_vel:              AV,
@@ -61,7 +61,7 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
         &'r self.local_to_world
     }
 
-    pub fn geom<'r>(&'r self) -> &'r Geom<N, LV, M, II> {
+    pub fn geom<'r>(&'r self) -> &'r Geom<N, LV, M> {
         &'r self.geom
     }
 
@@ -101,7 +101,7 @@ impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast + ToStr,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, M> +
           Add<II, II> + Dim + Clone + ToStr>
 RigidBody<N, LV, AV, M, II> {
-    pub fn new(geom:        Geom<N, LV, M, II>,
+    pub fn new(geom:        Geom<N, LV, M>,
                density:     N,
                state:       RigidBodyState,
                restitution: N,
@@ -114,15 +114,16 @@ RigidBody<N, LV, AV, M, II> {
                         fail!("A dynamic body must not have a zero density.")
                     }
 
-                    let (m, c, ii) = geom.mass_properties(&density);
+                    let mprops: (N, LV, II) = geom.mass_properties(&density);
+                    let (m, c, ii) = mprops;
 
                     if m.is_zero() {
                         fail!("A dynamic body must not have a zero volume.")
                     }
 
-                    let ii_wrt_com = 
-                        ii.to_relative_wrt_point(&m, &c)
-                          .inverse()
+                    let i_wrt_com: II = ii.to_relative_wrt_point(&m, &c);
+                    let ii_wrt_com: II = 
+                          i_wrt_com.inverse()
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
                     let _1: N = One::one();

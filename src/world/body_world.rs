@@ -27,7 +27,7 @@ type BF<N, LV, AV, M, II> =
         Body<N, LV, AV, M, II>,
         AABB<N, LV>,
         BodiesBodiesDispatcher<N, LV, AV, M, II>,
-        PairwiseDetector<N, LV, AV, M, II>
+        PairwiseDetector<N, LV, AV, M>
     >;
 
 pub struct BodyWorld<N, LV, AV, M, II, CM> {
