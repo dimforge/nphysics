@@ -29,7 +29,7 @@ impl<'self> Ball<'self> {
         };
 
         res.gfx.set_fill_color(&Color::new_RGB(color.x, color.y, color.z));
-        res.gfx.set_radius(dradius as float);
+        res.gfx.set_radius(dradius);
         res.gfx.set_origin(&vector2::Vector2f { x: dradius, y: dradius }); 
 
         res
@@ -47,7 +47,7 @@ impl<'self> Ball<'self> {
             x: pos.x as f32 * DRAW_SCALE,
             y: pos.y as f32 * DRAW_SCALE
         });
-        self.gfx.set_rotation(rot.x.to_degrees() as float);
+        self.gfx.set_rotation(rot.x.to_degrees() as f32);
 
         if body.is_active() {
             self.gfx.set_fill_color(

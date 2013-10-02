@@ -49,7 +49,7 @@ impl<'self> Box<'self> {
             x: pos.x as f32 * DRAW_SCALE,
             y: pos.y as f32 * DRAW_SCALE
         });
-        self.gfx.set_rotation(rot.x.to_degrees() as float);
+        self.gfx.set_rotation(rot.x.to_degrees() as f32);
 
         if body.is_active() {
             self.gfx.set_fill_color(

@@ -7,8 +7,8 @@ use rsfml::graphics::Color;
 use extra::time;
 
 pub struct Fps<'self> {
-    priv delta:     float,
-    priv last_time: float,
+    priv delta:     f64,
+    priv last_time: f64,
     priv fps:       Text<'self>
 }
 
@@ -34,11 +34,11 @@ impl<'self> Fps<'self> {
         self.delta = self.elapsed_seconds()
     }
 
-    pub fn registred_delta(&self) -> float {
+    pub fn registred_delta(&self) -> f64 {
         self.delta
     }
 
-    pub fn elapsed_seconds(&self) -> float {
+    pub fn elapsed_seconds(&self) -> f64 {
         time::precise_time_s() - self.last_time
     }
 
