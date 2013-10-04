@@ -1,5 +1,5 @@
 use std::num::{Zero, One};
-use nalgebra::vec::{VecExt, Cross, CrossMatrix, Dim, Basis};
+use nalgebra::vec::{AlgebraicVecExt, VecExt, Cross, CrossMatrix, Dim, Basis};
 use nalgebra::mat::{Rotate, Transform, Translation, Rotation, Row, Inv};
 use object::volumetric::InertiaTensor;
 use detection::joint::fixed::Fixed;
@@ -11,7 +11,7 @@ use resolution::constraint::contact_equation;
 
 pub fn fill_second_order_equation<N:  Num + Bounded + Clone + ToStr,
                                   LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
-                                  AV: VecExt<N> + Clone,
+                                  AV: AlgebraicVecExt<N> + Clone,
                                   M:  Transform<LV> + Rotate<LV> + Mul<M, M> + Clone +
                                       Translation<LV> + Rotation<AV> + Inv + One,
                                   II: Mul<II, II> + Transform<AV> + InertiaTensor<N, LV, M> + Clone,
@@ -44,7 +44,7 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone + ToStr,
 
 pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone + ToStr,
                                      LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
-                                     AV: VecExt<N> + Clone,
+                                     AV: AlgebraicVecExt<N> + Clone,
                                      M:  Transform<LV> + Rotate<LV> + Rotation<AV> + Inv + Mul<M, M> + One,
                                      II: Mul<II, II> + Transform<AV> + InertiaTensor<N, LV, M> + Clone,
                                      CM: Row<AV>,

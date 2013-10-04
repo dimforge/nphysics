@@ -1,7 +1,7 @@
 use std::ptr;
 // use std::rand::RngUtil;
 use std::num::{One, Orderable, Bounded};
-use nalgebra::vec::{VecExt, Cross, CrossMatrix, Dim};
+use nalgebra::vec::{AlgebraicVecExt, Cross, CrossMatrix, Dim};
 use nalgebra::mat::{RotationWithTranslation, Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::Body;
@@ -25,8 +25,8 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
 }
 
-impl<LV:  VecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
-     AV:  VecExt<N> + ToStr + Clone,
+impl<LV:  AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
+     AV:  AlgebraicVecExt<N> + ToStr + Clone,
      N:   Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
@@ -232,8 +232,8 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     }
 }
 
-impl<LV: VecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
-     AV: VecExt<N> + ToStr + Clone,
+impl<LV: AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
+     AV: AlgebraicVecExt<N> + ToStr + Clone,
      N:  Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
      II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>,

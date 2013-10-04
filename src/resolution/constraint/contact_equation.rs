@@ -1,5 +1,5 @@
 use std::num::{One, Zero, Orderable, Bounded};
-use nalgebra::vec::{Vec, VecExt, Cross, Basis};
+use nalgebra::vec::{Vec, VecExt, AlgebraicVecExt, Cross, Basis};
 use nalgebra::mat::{Rotate, Transform};
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -79,7 +79,7 @@ pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
 }
 
 // FIXME: note that removing the Clone constraint on N leads to an ICE
-pub fn fill_second_order_equation<LV: VecExt<N> + Cross<AV> + Clone,
+pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   AV: Vec<N> + Clone,
                                   N:  Num + Orderable + Bounded + Signed + Clone +
                                       NumCast + ToStr,
