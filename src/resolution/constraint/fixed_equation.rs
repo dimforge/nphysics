@@ -1,6 +1,8 @@
 use std::num::{Zero, One};
-use nalgebra::vec::{AlgebraicVecExt, VecExt, Cross, CrossMatrix, Dim, Basis};
-use nalgebra::mat::{Rotate, Transform, Translation, Rotation, Row, Inv};
+use nalgebra::na::{
+    AlgebraicVecExt, VecExt, Cross, CrossMatrix, Dim, Basis,
+    Rotate, Transform, Translation, Rotation, Row, Inv
+};
 use object::volumetric::InertiaTensor;
 use detection::joint::fixed::Fixed;
 use detection::joint::anchor::Anchor;
@@ -14,7 +16,7 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone + ToStr,
                                   AV: AlgebraicVecExt<N> + Clone,
                                   M:  Transform<LV> + Rotate<LV> + Mul<M, M> + Clone +
                                       Translation<LV> + Rotation<AV> + Inv + One,
-                                  II: Mul<II, II> + Transform<AV> + InertiaTensor<N, LV, M> + Clone,
+                                  II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone,
                                   CM: Row<AV>>(
                                   dt:          N,
                                   joint:       &Fixed<N, LV, AV, M, II>,
@@ -46,7 +48,7 @@ pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone + ToStr,
                                      LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
                                      AV: AlgebraicVecExt<N> + Clone,
                                      M:  Transform<LV> + Rotate<LV> + Rotation<AV> + Inv + Mul<M, M> + One,
-                                     II: Mul<II, II> + Transform<AV> + InertiaTensor<N, LV, M> + Clone,
+                                     II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone,
                                      CM: Row<AV>,
                                      P>(
                                      dt:          N,
@@ -56,7 +58,7 @@ pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone + ToStr,
                                      anchor2:     &Anchor<N, LV, AV, M, II, P>,
                                      constraints: &mut [VelocityConstraint<LV, AV, N>],
                                      correction:  &CorrectionMode<N>) {
-    let delta     = ref2.inverse().expect("ref2 must be inversible.") * *ref1;
+    let delta     = ref2.inverted().expect("ref2 must be inversible.") * *ref1;
     let delta_rot = delta.rotation();
 
     let mut i = 0;

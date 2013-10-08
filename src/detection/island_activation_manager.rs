@@ -1,6 +1,6 @@
 use std::ptr;
-use std::num::{Zero, One};
-use nalgebra::vec::AlgebraicVec;
+use std::num::{Zero, One, from_f32};
+use nalgebra::na::AlgebraicVec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::Integrator;
@@ -36,7 +36,7 @@ pub struct IslandActivationManager<N, LV, AV, M, II> {
     collector:      ~[Constraint<N, LV, AV, M, II>]
 }
 
-impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
+impl<N:  'static + One + Zero + Num + FromPrimitive + Orderable + Algebraic + Clone,
      LV: 'static + AlgebraicVec<N> + Clone,
      AV: 'static + AlgebraicVec<N> + Clone,
      M:  'static,
@@ -90,7 +90,7 @@ IslandActivationManager<N, LV, AV, M, II> {
             // to ensure it wont fall asleep right after the activation message
             match self.bodies.find_mut(&(ptr::to_mut_unsafe_ptr(b) as uint)) {
                 Some(ref mut b) => {
-                    b.energy = self.threshold * NumCast::from(2.0);
+                    b.energy = self.threshold * from_f32(2.0).unwrap();
                 },
                 None => { }
             }
@@ -123,7 +123,7 @@ IslandActivationManager<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  'static + Num + Clone + NumCast + Orderable + Algebraic,
+impl<N:  'static + Num + Clone + FromPrimitive + Orderable + Algebraic,
      LV: 'static + AlgebraicVec<N> + Clone,
      AV: 'static + AlgebraicVec<N> + Clone,
      M:  'static,
@@ -133,7 +133,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
     fn add(&mut self, body: @mut Body<N, LV, AV, M, II>) {
         if body.can_move() && body.is_active() {
             if self.bodies.insert(ptr::to_mut_unsafe_ptr(body) as uint,
-                                  BodyWithEnergy::new(body, self.threshold * NumCast::from(2.0))) {
+                                  BodyWithEnergy::new(body, self.threshold * from_f32(2.0).unwrap())) {
                 self.ufind.push(UFindSet::new(0));
                 self.can_deactivate.push(false);
             }
@@ -162,7 +162,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
                         (_1 - self.mix_factor) * b.value.energy +
                         self.mix_factor * (rb.lin_vel().sqnorm() + rb.ang_vel().sqnorm());
 
-                    b.value.energy = b.value.energy.min(&(self.threshold * NumCast::from(4.0)));
+                    b.value.energy = b.value.energy.min(&(self.threshold * from_f32(4.0).unwrap()));
                 },
                 SB(_) => {
                     fail!("Sorry. Energy computation for soft bodies is not implemented yet.")
@@ -406,7 +406,7 @@ fn union(x: uint, y: uint, sets: &mut [UFindSet]) {
      }
 }
 
-impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
+impl<N:  'static + One + Zero + Num + FromPrimitive + Orderable + Algebraic + Clone,
      LV: 'static + AlgebraicVec<N> + Clone,
      AV: 'static + AlgebraicVec<N> + Clone,
      M:  'static,
@@ -439,7 +439,7 @@ CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV
     }
 }
 
-impl<N:  'static + One + Zero + Num + NumCast + Orderable + Algebraic + Clone,
+impl<N:  'static + One + Zero + Num + FromPrimitive + Orderable + Algebraic + Clone,
      LV: 'static + AlgebraicVec<N> + Clone,
      AV: 'static + AlgebraicVec<N> + Clone,
      M:  'static,

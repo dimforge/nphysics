@@ -1,12 +1,11 @@
-use std::num::NumCast;
-use nalgebra::mat::Translation;
 use rsfml::graphics::render_window;
 use rsfml::graphics::vertex::Vertex;
 use rsfml::graphics::vertex_array::VertexArray;
 use rsfml::graphics::color::Color;
 use rsfml::graphics::primitive_type;
 use rsfml::system::vector2::Vector2f;
-use nalgebra::vec::Vec2;
+use nalgebra::na::Vec2;
+use nalgebra::na;
 use nphysics::aliases::dim2;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 
@@ -40,8 +39,8 @@ pub fn draw_colls(window:  &render_window::RenderWindow,
             Fixed(bis) => {
                 draw_line(
                     window,
-                    &bis.anchor1_pos().translation(),
-                    &bis.anchor2_pos().translation(),
+                    &na::translation(&bis.anchor1_pos()),
+                    &na::translation(&bis.anchor2_pos()),
                     &Color::new_RGB(255, 0, 0))
             }
         }
@@ -52,12 +51,12 @@ pub fn draw_line(window: &render_window::RenderWindow, v1: &Vec2<f64>, v2: &Vec2
     let mut vertices = VertexArray::new().unwrap();
 
     vertices.append(&Vertex::new(
-            &Vector2f::new(v1.x.to_f32() * DRAW_SCALE, v1.y.to_f32() * DRAW_SCALE),
+            &Vector2f::new(v1.x.to_f32().unwrap() * DRAW_SCALE, v1.y.to_f32().unwrap() * DRAW_SCALE),
             color,
             &Vector2f::new(0.0, 0.0)));
 
     vertices.append(&Vertex::new(
-            &Vector2f::new(v2.x.to_f32() * DRAW_SCALE, v2.y.to_f32() * DRAW_SCALE),
+            &Vector2f::new(v2.x.to_f32().unwrap() * DRAW_SCALE, v2.y.to_f32().unwrap() * DRAW_SCALE),
             color,
             &Vector2f::new(0.0, 0.0)));
 

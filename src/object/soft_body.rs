@@ -1,5 +1,5 @@
 use std::num::Zero;
-use nalgebra::vec::AlgebraicVec;
+use nalgebra::na::AlgebraicVec;
 
 #[deriving(Clone, Encodable, Decodable)]
 pub struct PointMass<N, V> {

@@ -19,10 +19,10 @@ pub mod engine;
 
 // mod draw_helper;
 
-mod objects {
-    mod ball;
-    mod box;
-    mod plane;
-    mod cylinder;
-    mod cone;
+pub mod objects {
+    pub mod ball;
+    pub mod box;
+    pub mod plane;
+    pub mod cylinder;
+    pub mod cone;
 }

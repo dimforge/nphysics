@@ -1,6 +1,5 @@
 use std::num::One;
-use nalgebra::vec::Vec;
-use nalgebra::mat::{Translation, Rotation, RotationWithTranslation};
+use nalgebra::na::{Vec, Translation, Rotation, RotationWithTranslation};
 
 pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One + ToStr,
                           LV: Vec<N> + ToStr,

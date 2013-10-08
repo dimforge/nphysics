@@ -2,8 +2,8 @@ use std::os;
 use std::num::{Zero, One};
 use extra::time;
 use glfw;
-use nalgebra::mat::{Translation, Rotate, Transformation, Inv};
-use nalgebra::vec::{Vec2, Vec3};
+use nalgebra::na::{Vec2, Vec3};
+use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
 use kiss3d::event;
@@ -137,13 +137,13 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                                         let rb      = b.to_rigid_body_or_fail();
                                         let _1: dim3::Transform3d<f64> = One::one();
-                                        let attach2 = _1.translated(&(ray.orig + ray.dir * mintoi));
-                                        let attach1 = rb.transform_ref().transformation().inverse().unwrap() * attach2;
+                                        let attach2 = na::translated(&_1, &(ray.orig + ray.dir * mintoi));
+                                        let attach1 = na::inverted(&na::transformation(rb.transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = @mut Fixed::new(anchor1, anchor2);
                                         grabbed_object_joint = Some(joint);
-                                        grabbed_object_plane = (attach2.translation(), -ray.dir);
+                                        grabbed_object_plane = (na::translation(&attach2), -ray.dir);
                                         physics.add_fixed(joint);
                                         // add a joint
                                         sn.select()
@@ -191,7 +191,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
                                         let _1: dim3::Transform3d<f64> = One::one();
-                                        j.set_local2(_1.translated(&(pos + dir * inter)))
+                                        j.set_local2(na::translated(&_1, &(pos + dir * inter)))
                                     },
                                     None => { }
                                 }
@@ -236,9 +236,9 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
-                        rb.translate_by(&cam_transfom.translation());
+                        na::translate_by(&mut rb, &na::translation(&cam_transfom));
 
-                        let front = cam_transfom.rotate(&Vec3::z());
+                        let front = na::rotate(&cam_transfom, &Vec3::z());
 
                         rb.set_lin_vel(front * 40.0f64);
 
@@ -253,9 +253,9 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                         let cam_transform = w.camera().view_transform();
-                        rb.translate_by(&cam_transform.translation());
+                        na::translate_by(&mut rb, &na::translation(&cam_transform));
 
-                        let front = cam_transform.rotate(&Vec3::z());
+                        let front = na::rotate(&cam_transform, &Vec3::z());
 
                         rb.set_lin_vel(front * 40.0f64);
 
@@ -270,9 +270,9 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
-                        rb.translate_by(&cam_transfom.translation());
+                        na::translate_by(&mut rb, &na::translation(&cam_transfom));
 
-                        let front = cam_transfom.rotate(&Vec3::z());
+                        let front = na::rotate(&cam_transfom, &Vec3::z());
 
                         rb.set_lin_vel(front * 400.0f64);
 
@@ -289,8 +289,8 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         }
                         else {
                             let cam_transform = w.camera().view_transform();
-                            let pos           = cam_transform.translation();
-                            let front         = cam_transform.rotate(&Vec3::z());
+                            let pos           = na::translation(&cam_transform);
+                            let front         = na::rotate(&cam_transform, &Vec3::z());
 
                             ray_to_draw = Some(Ray::new(pos, front));
                         }
@@ -371,7 +371,7 @@ fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<
             },
             Fixed(f) => {
                 // FIXME: draw the rotation too
-                window.draw_line(&f.anchor1_pos().translation(), &f.anchor2_pos().translation(), &Vec3::y());
+                window.draw_line(&na::translation(&f.anchor1_pos()), &na::translation(&f.anchor2_pos()), &Vec3::y());
             }
         }
     }

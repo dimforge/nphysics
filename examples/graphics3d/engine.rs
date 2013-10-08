@@ -2,8 +2,8 @@ use std::num::One;
 use std::ptr;
 use std::rand::{XorShiftRng, Rng};
 use std::hashmap::HashMap;
-use nalgebra::vec::Vec3;
-use nalgebra::mat::{Rotate, Translation};
+use nalgebra::na::Vec3;
+use nalgebra::na;
 use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, CapsuleGeom, ConeGeom};
 use kiss3d::window::Window;
 use kiss3d::object::Object;
@@ -114,8 +114,8 @@ impl GraphicsManager {
                  body:   @mut dim3::Body3d<f64>,
                  geom:   &dim3::Plane3d<f64>,
                  out:    &mut ~[@mut SceneNode]) {
-        let position = body.to_rigid_body_or_fail().translation();
-        let normal   = body.to_rigid_body_or_fail().transform_ref().rotate(&geom.normal());
+        let position = na::translation(body.to_rigid_body_or_fail());
+        let normal   = na::rotate(body.to_rigid_body_or_fail().transform_ref(), &geom.normal());
         let color    = self.color_for_object(body);
 
         out.push(@mut Plane::new(body, &position, &normal, color, window) as @mut SceneNode)

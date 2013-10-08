@@ -16,11 +16,11 @@ extern mod ncollide;
 pub mod simulate;
 pub mod engine;
 
-mod camera;
-mod fps;
+pub mod camera;
+pub mod fps;
 pub mod draw_helper;
 
-mod objects {
-    mod ball;
-    mod box;
+pub mod objects {
+    pub mod ball;
+    pub mod box;
 }

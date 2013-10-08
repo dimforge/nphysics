@@ -1,8 +1,11 @@
 use std::ptr;
 // use std::rand::RngUtil;
-use std::num::{One, Orderable, Bounded};
-use nalgebra::vec::{AlgebraicVecExt, Cross, CrossMatrix, Dim};
-use nalgebra::mat::{RotationWithTranslation, Translation, Rotation, Rotate, Transformation, Transform, Inv, Row};
+use std::num::{One, Orderable, Bounded, from_f32};
+use nalgebra::na::{
+    AlgebraicVecExt, Cross, CrossMatrix, Dim,
+    RotationWithTranslation, Translation, Rotation,
+    Rotate, Transformation, Transform, Inv, Row
+};
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::Body;
 use object::volumetric::InertiaTensor;
@@ -27,10 +30,10 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
 impl<LV:  AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
      AV:  AlgebraicVecExt<N> + ToStr + Clone,
-     N:   Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
+     N:   Num + Orderable + Bounded + Signed + Clone + FromPrimitive + ToStr,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
-     II:  Transform<AV> + Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone,
+     II:  Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone,
      M2:  Row<AV>>
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     pub fn new(step:                  N,
@@ -168,11 +171,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * NumCast::from(0.85);
+            imps[0]  = dv.impulse * from_f32(0.85).unwrap();
 
             for j in range(0u, Dim::dim(None::<LV>) - 1) {
                 let fc = &self.friction_constraints[i * (Dim::dim(None::<LV>) - 1) + j];
-                imps[1 + j] = fc.impulse * NumCast::from(0.85);
+                imps[1 + j] = fc.impulse * from_f32(0.85).unwrap();
             }
         }
 
@@ -234,9 +237,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
 impl<LV: AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
      AV: AlgebraicVecExt<N> + ToStr + Clone,
-     N:  Num + Orderable + Bounded + Signed + Clone + NumCast + ToStr,
+     N:  Num + Orderable + Bounded + Signed + Clone + FromPrimitive + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
-     II: Transform<AV> + Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, M>,
+     II: Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, AV, M>,
      M2: Row<AV>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
@@ -254,7 +257,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         self.cache.insert(i,
                                           ptr::to_mut_unsafe_ptr(a) as uint,
                                           ptr::to_mut_unsafe_ptr(b) as uint,
-                                          (c.world1 + c.world2) / NumCast::from(2.0));
+                                          (c.world1 + c.world2) / from_f32(2.0).unwrap());
                     },
                     BallInSocket(_) => {
                         // XXX: cache for ball in socket?

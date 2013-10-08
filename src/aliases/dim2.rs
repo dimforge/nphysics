@@ -1,11 +1,9 @@
-use nalgebra::mat::{Mat2, Mat1};
-use nalgebra::vec::{Norm, Vec2, Vec1};
-use nalgebra::adaptors::transform::Transform;
-use nalgebra::adaptors::rotmat::Rotmat;
+use nalgebra::na;
+use nalgebra::na::{Mat1, Vec2, Vec1, Iso2};
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use integration::{BodyForceGenerator, BodySmpEulerIntegrator};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector};
-use detection::joint::joint_manager::JointManager;
+use detection::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 use detection::constraint::Constraint;
@@ -18,7 +16,7 @@ use object::volumetric::InertiaTensor;
 type LV<N> = Vec2<N>;
 type AV<N> = Vec1<N>;
 type II<N> = Mat1<N>;
-type M<N>  = Transform<Vec2<N>, Rotmat<Mat2<N>>>;
+type M<N>  = Iso2<N>;
 
 // fancier names
 pub type Transform2d<N>       = M<N>;
@@ -58,7 +56,12 @@ pub type Fixed2d<N> = Fixed<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Clone + Num + Algebraic>
-InertiaTensor<N, LV<N>, Transform2d<N>> for InertiaTensor2d<N> {
+InertiaTensor<N, LV<N>, AV<N>, Transform2d<N>> for InertiaTensor2d<N> {
+    #[inline]
+    fn apply(&self, av: &AV<N>) -> AV<N> {
+        *self * *av
+    }
+
     #[inline]
     fn to_world_space(&self, _: &Transform2d<N>) -> InertiaTensor2d<N> {
         self.clone()
@@ -66,6 +69,6 @@ InertiaTensor<N, LV<N>, Transform2d<N>> for InertiaTensor2d<N> {
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor2d<N> {
-        *self + Mat1::new(mass * pt.sqnorm())
+        *self + na::mat1(mass * na::sqnorm(pt))
     }
 }

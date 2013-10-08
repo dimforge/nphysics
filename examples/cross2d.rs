@@ -14,8 +14,7 @@ extern mod ncollide;
 extern mod graphics2d;
 
 use std::num::One;
-use nalgebra::mat::Translation;
-use nalgebra::vec::Vec2;
+use nalgebra::na;
 use ncollide::geom::{Geom, Box, Plane, CompoundAABB};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim2;
@@ -36,15 +35,15 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec2::new(0.0f64, 9.81));
+    world.set_gravity(na::vec2(0.0f64, 9.81));
 
     /*
      * First plane
      */
-    let geom   = Plane::new(Vec2::new(-1.0f64, -1.0));
+    let geom   = Plane::new(na::vec2(-1.0f64, -1.0));
     let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
-    rb.translate_by(&Vec2::new(0.0, 10.0));
+    na::translate_by(&mut rb, &na::vec2(0.0, 10.0));
 
     let body = @mut RB(rb);
 
@@ -54,10 +53,10 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
      * Second plane
      */
-    let geom   = Plane::new(Vec2::new(1.0f64, -1.0));
+    let geom   = Plane::new(na::vec2(1.0f64, -1.0));
     let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
 
-    rb.translate_by(&Vec2::new(0.0, 10.0));
+    na::translate_by(&mut rb, &na::vec2(0.0, 10.0));
 
     let body = @mut RB(rb);
 
@@ -67,8 +66,8 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
      * Cross shaped geometry
      */
-    let box1 = Box::new(Vec2::new(5.0f64, 0.25));
-    let box2 = Box::new(Vec2::new(0.25f64, 5.0));
+    let box1 = Box::new(na::vec2(5.0f64, 0.25));
+    let box2 = Box::new(na::vec2(0.25f64, 5.0));
 
     let mut cross_geoms = ~[];
     cross_geoms.push((One::one(), Geom::new_box(box1)));
@@ -93,7 +92,7 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
             let geom   = Geom::new_compound(cross);
             let mut rb = RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.6);
 
-            rb.translate_by(&Vec2::new(x, y));
+            na::translate_by(&mut rb, &na::vec2(x, y));
 
             let body = @mut RB(rb);
 

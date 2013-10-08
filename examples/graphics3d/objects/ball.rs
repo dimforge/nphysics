@@ -1,7 +1,7 @@
 use kiss3d::window::Window;
 use kiss3d::object::Object;
-use nalgebra::mat::Transformation;
-use nalgebra::vec::Vec3;
+use nalgebra::na::Vec3;
+use nalgebra::na;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
 
@@ -47,7 +47,7 @@ impl SceneNode for Ball {
         let rb = self.body.to_rigid_body_or_fail();
         if rb.is_active() {
             {
-                self.gfx.set_transformation(rb.transformation() * self.delta);
+                na::set_transformation(&mut self.gfx, na::transformation(rb) * self.delta);
             }
 
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);

@@ -1,7 +1,6 @@
 use std::ptr;
 use std::num::One;
-use nalgebra::mat::{Translation, Rotation, Rotate, Transformation, Transform, Inv};
-use nalgebra::vec::Vec;
+use nalgebra::na::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Vec};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::{RB, SB};
@@ -20,7 +19,7 @@ impl<N:  'static + Clone,
          Rotate<LV> + One + ToStr,
      LV: 'static + Clone + Vec<N> + ToStr,
      AV: 'static + Clone + Vec<N> + ToStr,
-     II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M>>
+     II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>>
 BodySmpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     pub fn new<C>(events: &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>)
@@ -43,7 +42,7 @@ impl<N:  Clone,
          ToStr,
      LV: Clone + Vec<N> + ToStr,
      AV: Clone + Vec<N> + ToStr,
-     II: Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, M>>
+     II: Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>>
 Integrator<N, Body<N, LV, AV, M, II>> for BodySmpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
@@ -88,7 +87,7 @@ impl<N:  Clone,
      LV: Clone + Vec<N> + ToStr,
      AV: Clone + Vec<N> + ToStr,
      M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One + ToStr,
-     II: Clone + Mul<II, II> + InertiaTensor<N, LV, M> + Inv,
+     II: Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv,
      C>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodySmpEulerIntegrator<N, LV, AV, M, II> {
     fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {

@@ -1,8 +1,10 @@
 use std::num::One;
 use std::ptr;
 use std::managed;
-use nalgebra::mat::{Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv};
-use nalgebra::vec::{Vec, AlgebraicVecExt, Cross};
+use nalgebra::na::{
+    Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv,
+    Vec, AlgebraicVecExt, Cross
+};
 use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
@@ -123,7 +125,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic + FromPrimitive,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV> + ToStr,
      AV: Clone + Vec<N> + ToStr,

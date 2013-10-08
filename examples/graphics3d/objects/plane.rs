@@ -1,6 +1,6 @@
 use kiss3d::window;
 use kiss3d::object::Object;
-use nalgebra::vec::Vec3;
+use nalgebra::na::Vec3;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
 

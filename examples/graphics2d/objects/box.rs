@@ -2,8 +2,8 @@ use rsfml::graphics::render_window;
 use rsfml::graphics::rectangle_shape::RectangleShape;
 use rsfml::graphics::Color;
 use rsfml::system::vector2;
-use nalgebra::mat::{Translation, Rotation};
-use nalgebra::vec::Vec3;
+use nalgebra::na::Vec3;
+use nalgebra::na;
 use nphysics::aliases::dim2;
 use draw_helper::DRAW_SCALE;
 
@@ -42,8 +42,8 @@ impl<'self> Box<'self> {
     pub fn update(&mut self) {
         let body = self.body.to_rigid_body_or_fail();
         let transform = body.transform_ref() * self.delta;
-        let pos = transform.translation();
-        let rot = transform.rotation();
+        let pos = na::translation(&transform);
+        let rot = na::rotation(&transform);
 
         self.gfx.set_position(&vector2::Vector2f {
             x: pos.x as f32 * DRAW_SCALE,

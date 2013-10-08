@@ -2,7 +2,7 @@ use std::util;
 use std::rand::{IsaacRng, Rng};
 use std::num::Zero;
 use std::vec;
-use nalgebra::vec::Vec;
+use nalgebra::na::Vec;
 use std::hashmap::HashMap;
 
 // This is a seed generated some day by the seed() function.

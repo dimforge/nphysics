@@ -14,8 +14,7 @@ extern mod nalgebra;
 extern mod ncollide;
 
 use kiss3d::window::Window;
-use nalgebra::mat::Translation;
-use nalgebra::vec::Vec3;
+use nalgebra::na;
 use ncollide::geom::{Geom, Ball, Plane};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
@@ -37,16 +36,16 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec3::new(0.0f64, -9.81, 0.0));
+    world.set_gravity(na::vec3(0.0f64, -9.81, 0.0));
 
     /*
      * Planes
      */
     let normals = [
-        Vec3::new(-1.0f64, 1.0, -1.0 ),
-        Vec3::new(1.0f64, 1.0, -1.0 ),
-        Vec3::new(-1.0f64, 1.0, 1.0 ),
-        Vec3::new(1.0f64, 1.0, 1.0 )
+        na::vec3(-1.0f64, 1.0, -1.0 ),
+        na::vec3(1.0f64, 1.0, -1.0 ),
+        na::vec3(-1.0f64, 1.0, 1.0 ),
+        na::vec3(1.0f64, 1.0, 1.0 )
     ];
     for n in normals.iter() {
         let rb   = RigidBody::new(Geom::new_plane(Plane::new(*n)), 0.0f64, Static, 0.3, 0.6);
@@ -74,7 +73,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
 
                 let mut rb = RigidBody::new(Geom::new_ball(Ball::new(rad)), 1.0f64, Dynamic, 0.3, 0.6);
 
-                rb.translate_by(&Vec3::new(x, y, z));
+                na::translate_by(&mut rb, &na::vec3(x, y, z));
 
                 let body = @mut RB(rb);
 
@@ -87,7 +86,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     /*
      * Set up the camera and that is it!
      */
-    graphics.look_at(Vec3::new(-10.0, 50.0, -10.0), Vec3::new(0.0, 0.0, 0.0));
+    graphics.look_at(na::vec3(-10.0, 50.0, -10.0), na::vec3(0.0, 0.0, 0.0));
 
     world
 }

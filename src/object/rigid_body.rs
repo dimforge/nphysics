@@ -1,6 +1,10 @@
 use std::num::{Zero, One};
-use nalgebra::mat::{Translation, Rotation, Rotate, AbsoluteRotate, Transformation, Transform, Inv, Indexable};
-use nalgebra::vec::{VecExt, AlgebraicVecExt, Dim};
+use nalgebra::na::{
+    Translation, Rotation, Rotate, AbsoluteRotate,
+    Transformation, Transform,
+    Inv, Indexable,
+    VecExt, AlgebraicVecExt, Dim
+};
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use object::volumetric::{InertiaTensor, Volumetric};
@@ -41,7 +45,7 @@ impl<N, LV: Zero, AV: Zero, M, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, M>>
+impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, AV, M>>
 RigidBody<N, LV, AV, M, II> {
     fn update_inertia_tensor(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
@@ -94,11 +98,11 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + NumCast + ToStr,
-     M:   One + Translation<LV> + Transform<LV> + Rotate<LV>, // FIXME: + DeltaTransform<II>,
+impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + FromPrimitive + ToStr,
+     M:   One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV:  Clone + VecExt<N> + ToStr,
      AV:  Zero,
-     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, M> +
+     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, AV, M> +
           Add<II, II> + Dim + Clone + ToStr>
 RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        Geom<N, LV, M>,
@@ -123,7 +127,7 @@ RigidBody<N, LV, AV, M, II> {
 
                     let i_wrt_com: II = ii.to_relative_wrt_point(&m, &c);
                     let ii_wrt_com: II = 
-                          i_wrt_com.inverse()
+                          i_wrt_com.inverted()
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
                     let _1: N = One::one();
@@ -241,7 +245,7 @@ impl<N:  Clone,
      M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
      AV: Clone,
-     II: Mul<II, II> + Inv + InertiaTensor<N, LV, M> + Clone>
+     II: Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn transformation(&self) -> M {
@@ -250,7 +254,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
     #[inline]
     fn inv_transformation(&self) -> M {
-        self.local_to_world.inverse().unwrap()
+        self.local_to_world.inverted().unwrap()
     }
 
     #[inline]
@@ -324,7 +328,7 @@ impl<N:  Clone,
      M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
      AV: Clone,
-     II: Mul<II, II> + InertiaTensor<N, LV, M> + Clone>
+     II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotation(&self) -> AV {
@@ -362,7 +366,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  NumCast + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
+impl<N:  FromPrimitive + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
      M: Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> + Mul<M, M>,

@@ -3,7 +3,7 @@ use std::ptr;
 use std::rand::{XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use rsfml::graphics::render_window::RenderWindow;
-use nalgebra::vec::Vec3;
+use nalgebra::na::Vec3;
 use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, CapsuleGeom, ConeGeom};
 use nphysics::aliases::dim2;
 use camera::Camera;

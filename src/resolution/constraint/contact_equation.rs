@@ -1,6 +1,5 @@
-use std::num::{One, Zero, Orderable, Bounded};
-use nalgebra::vec::{Vec, VecExt, AlgebraicVecExt, Cross, Basis};
-use nalgebra::mat::{Rotate, Transform};
+use std::num::{One, Zero, Orderable, Bounded, from_f32};
+use nalgebra::na::{Vec, VecExt, AlgebraicVecExt, Cross, Basis, Rotate, Transform};
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
@@ -57,7 +56,7 @@ pub struct CorrectionParameters<N> {
 
 pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
                                       AV: Vec<N>,
-                                      N:  Num + Orderable + Bounded + NumCast + Clone + ToStr>(
+                                      N:  Num + Orderable + Bounded + FromPrimitive + Clone + ToStr>(
                                       dt:          N,
                                       coll:        &Contact<N, LV>,
                                       constraint:  &mut VelocityConstraint<LV, AV, N>,
@@ -82,9 +81,9 @@ pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
 pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   AV: Vec<N> + Clone,
                                   N:  Num + Orderable + Bounded + Signed + Clone +
-                                      NumCast + ToStr,
+                                      FromPrimitive + ToStr,
                                   M:  Transform<LV> + Rotate<LV> + One,
-                                  II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> +
+                                  II: Mul<II, II> + InertiaTensor<N, LV, AV, M> +
                                       Clone>(
                                   dt:           N,
                                   coll:         &Contact<N, LV>,
@@ -98,7 +97,7 @@ pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   correction:   &CorrectionParameters<N>) {
     let restitution = rb1.restitution() * rb2.restitution();
 
-    let center = (coll.world1 + coll.world2) / NumCast::from(2.0f64);
+    let center = (coll.world1 + coll.world2) / from_f32(2.0).unwrap();
 
     fill_velocity_constraint(dt.clone(),
                              coll.normal.clone(),
@@ -149,7 +148,7 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
                                 AV: Vec<N>,
                                 N:  Num + Clone,
                                 M:  Transform<LV> + Rotate<LV> + One,
-                                II: Transform<AV> + Mul<II, II> + InertiaTensor<N, LV, M> + Clone>(
+                                II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone>(
                                 normal:     LV,
                                 rot_axis1:  AV,
                                 rot_axis2:  AV,
@@ -165,7 +164,7 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
             constraint.weighted_normal1   = constraint.normal * rb.inv_mass();
             constraint.rot_axis1          = rot_axis1;
 
-            constraint.weighted_rot_axis1 = rb.inv_inertia().transform(&constraint.rot_axis1);
+            constraint.weighted_rot_axis1 = rb.inv_inertia().apply(&constraint.rot_axis1);
 
             constraint.inv_projected_mass = constraint.inv_projected_mass +
                 constraint.normal.dot(&constraint.weighted_normal1) +
@@ -180,7 +179,7 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
             constraint.weighted_normal2   = constraint.normal * rb.inv_mass();
             constraint.rot_axis2          = rot_axis2;
 
-            constraint.weighted_rot_axis2 = rb.inv_inertia().transform(&constraint.rot_axis2);
+            constraint.weighted_rot_axis2 = rb.inv_inertia().apply(&constraint.rot_axis2);
 
             constraint.inv_projected_mass = constraint.inv_projected_mass +
                 constraint.normal.dot(&constraint.weighted_normal2) +
@@ -197,7 +196,7 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
                             AV: Vec<N> + Clone,
                             N:  Num + Orderable + Bounded + Clone,
                             M:  Transform<LV> + Rotate<LV> + One,
-                            II: Transform<AV> + Mul<II, II> + Clone + InertiaTensor<N, LV, M>>(
+                            II: Mul<II, II> + Clone + InertiaTensor<N, LV, AV, M>>(
                             dt:              N,
                             normal:          LV,
                             center:          LV,

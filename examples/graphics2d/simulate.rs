@@ -1,12 +1,12 @@
 use std::os;
 use rsfml::graphics::font::Font;
-use rsfml::graphics::render_window::*;
-use rsfml::window::video_mode::*;
-use rsfml::window::context_settings::*;
+use rsfml::graphics::render_window::{RenderWindow, sfDefaultStyle};
+use rsfml::window::video_mode::VideoMode;
+use rsfml::window::context_settings::ContextSettings;
 use rsfml::window::event;
 use rsfml::window::keyboard;
-use rsfml::graphics::color::*;
-use nalgebra::vec::Vec2;
+use rsfml::graphics::color::Color;
+use nalgebra::na::Vec2;
 use nphysics::aliases::dim2;
 use camera::Camera;
 use fps::Fps;
@@ -35,7 +35,7 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
     let draw_colls = @mut false;
 
     let mode    = VideoMode::new_init(800, 600, 32);
-    let setting = ContextSettings{
+    let setting = ContextSettings {
         depth_bits:         10,
         stencil_bits:       10,
         antialiasing_level: 2,

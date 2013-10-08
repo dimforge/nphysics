@@ -14,8 +14,7 @@ extern mod nalgebra;
 extern mod ncollide;
 
 use kiss3d::window::Window;
-use nalgebra::mat::Translation;
-use nalgebra::vec::Vec3;
+use nalgebra::na;
 use ncollide::geom::{Geom, Box, Plane};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
@@ -36,12 +35,12 @@ pub fn pyramid3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::B
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec3::new(0.0f64, -9.81, 0.0));
+    world.set_gravity(na::vec3(0.0f64, -9.81, 0.0));
 
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::y())), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(na::vec3(0.0, 1.0, 0.0))), 0.0f64, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
 
@@ -64,10 +63,10 @@ pub fn pyramid3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::B
             let x = (fi * shift / 2.0) + fj * shift - centerx;
             let y = fi * shift + centery;
 
-            let box    = Box::new(Vec3::new(rad, rad, rad));
+            let box    = Box::new(na::vec3(rad, rad, rad));
             let mut rb = RigidBody::new(Geom::new_box(box), 1.0f64, Dynamic, 0.3, 0.6);
 
-            rb.translate_by(&Vec3::new(x, y, 0.0));
+            na::translate_by(&mut rb, &na::vec3(x, y, 0.0));
 
             let body = @mut RB(rb);
 
@@ -79,7 +78,7 @@ pub fn pyramid3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::B
     /*
      * Set up the camera and that is it!
      */
-    graphics.look_at(Vec3::new(0.0, 60.0, -60.0), Vec3::new(0.0, 0.0, 0.0));
+    graphics.look_at(na::vec3(0.0, 60.0, -60.0), na::vec3(0.0, 0.0, 0.0));
 
     world
 }

@@ -1,5 +1,5 @@
 use std::ptr;
-use nalgebra::vec::Vec;
+use nalgebra::na::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::{Body, RB, SB};

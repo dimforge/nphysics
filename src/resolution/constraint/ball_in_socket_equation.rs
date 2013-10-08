@@ -1,6 +1,5 @@
 use std::num::{Zero, One};
-use nalgebra::vec::{Vec, VecExt, Cross, CrossMatrix, Dim};
-use nalgebra::mat::{Rotate, Transform, Row};
+use nalgebra::na::{Vec, VecExt, Cross, CrossMatrix, Dim, Rotate, Transform, Row};
 use object::volumetric::InertiaTensor;
 use object::Body;
 use detection::joint::anchor::Anchor;
@@ -13,7 +12,7 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone,
                                   LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
                                   AV: Vec<N> + Clone,
                                   M:  Transform<LV> + Rotate<LV> + One,
-                                  II: Mul<II, II> + Transform<AV> + InertiaTensor<N, LV, M> + Clone,
+                                  II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone,
                                   CM: Row<AV>>(
                                   dt:          N,
                                   joint:       &BallInSocket<N, LV, AV, M, II>,
@@ -34,7 +33,7 @@ pub fn cancel_relative_linear_motion<N:  Num + Bounded + Clone,
                                      LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
                                      AV: Vec<N> + Clone,
                                      M:  Transform<LV> + Rotate<LV> + One,
-                                     II: Mul<II, II> + Transform<AV> + InertiaTensor<N, LV, M> + Clone,
+                                     II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone,
                                      CM: Row<AV>,
                                      P>(
                                      dt:          N,

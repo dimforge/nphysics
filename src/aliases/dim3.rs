@@ -1,17 +1,13 @@
-use std::num::Zero;
-use nalgebra::mat::Mat3;
-use nalgebra::vec::{Norm, Vec3};
-use nalgebra::adaptors::transform::Transform;
-use nalgebra::adaptors::rotmat::Rotmat;
-use nalgebra::mat::{Inv, Mat3MulRhs};
-use nalgebra::vec::Outer;
+use nalgebra::na;
+use nalgebra::structs::mat::Mat3MulRhs;
+use nalgebra::na::{Norm, Vec3, Mat3, Iso3, Outer};
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use integration::{BodyForceGenerator, BodySmpEulerIntegrator, BodyDamping, SweptBallMotionClamping};
 use detection::collision::bodies_bodies::{Dispatcher, PairwiseDetector, BodiesBodies};
 use detection::constraint::Constraint;
-use detection::joint::joint_manager::JointManager;
+use detection::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 use detection::IslandActivationManager;
@@ -23,7 +19,7 @@ use object::{RigidBody, Body};
 type LV<N> = Vec3<N>;
 type AV<N> = Vec3<N>;
 type II<N> = Mat3<N>;
-type M<N>  = Transform<Vec3<N>, Rotmat<Mat3<N>>>;
+type M<N>  = Iso3<N>;
 
 // fancier names
 pub type Transform3d<N>       = M<N>;
@@ -68,19 +64,24 @@ pub type Fixed3d<N> = Fixed<N, LV<N>, AV<N>, M<N>, II<N>>;
 
 /// NOTE: it is a bit unfortunate to have to specialize that for the raw types.
 impl<N: Num + Algebraic + Clone + Mat3MulRhs<N, Mat3<N>>>
-InertiaTensor<N, LV<N>, Transform3d<N>> for InertiaTensor3d<N> {
+InertiaTensor<N, LV<N>, AV<N>, Transform3d<N>> for InertiaTensor3d<N> {
+    #[inline]
+    fn apply(&self, av: &AV<N>) -> AV<N> {
+        *self * *av
+    }
     #[inline]
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
-        t.submat().submat() * *self * t.submat().inverse().unwrap().submat()
+        let inv = na::inverted(&t.rotation).unwrap();
+        *t.rotation.submat() * *self * *inv.submat()
     }
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor3d<N> {
         let diag  = pt.sqnorm();
-        let diagm = Mat3::new(
-            diag.clone(), Zero::zero(), Zero::zero(),
-            Zero::zero(), diag.clone(), Zero::zero(),
-            Zero::zero(), Zero::zero(), diag
+        let diagm = na::mat3(
+            diag.clone(), na::zero(),   na::zero(),
+            na::zero(),   diag.clone(), na::zero(),
+            na::zero(),   na::zero(),   diag
         );
 
         *self + (diagm - pt.outer(pt)) * *mass
