@@ -1,3 +1,6 @@
+**NOTE: there is currently a bug on the rust std lib, preventing nphysics from working properly.
+See mozilla/rust#9774 for mor information. A workaround is being worked on nalgebra.**
+
 nphysics
 ========
 **nphysics** is a 2 and 3-dimensional physics engine for games and animations. It uses
