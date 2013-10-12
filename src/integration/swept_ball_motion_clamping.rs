@@ -45,12 +45,12 @@ pub struct SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     priv interferences: ~[@mut Body<N, LV, AV, M, II>]
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV> + ToStr,
-     AV: 'static + Vec<N> + ToStr + Clone,
-     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr + Clone,
-     II: 'static + ToStr + Clone,
+         Rotate<LV> + Transform<LV>,
+     AV: 'static + Vec<N> + Clone,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + Clone,
+     II: 'static + Clone,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 SweptBallMotionClamping<N, LV, AV, M, II, BF> {
@@ -125,13 +125,13 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic + Cast<f32>,
+impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV> + ToStr,
-     AV: Clone + Vec<N> + ToStr,
+         Rotate<LV> + Transform<LV>,
+     AV: Clone + Vec<N>,
      M:  Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + AbsoluteRotate<LV> +
-         Mul<M, M> + Inv + One + ToStr,
-     II: Clone + ToStr, // FIXME: remove those bounds
+         Mul<M, M> + Inv + One,
+     II: Clone, // FIXME: remove those bounds
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Integrator<N, Body<N, LV, AV, M, II>>
@@ -242,12 +242,12 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic,
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV> + ToStr,
-     AV: 'static + Vec<N> + ToStr + Clone,
-     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + ToStr + Clone,
-     II: 'static + ToStr + Clone,
+         Rotate<LV> + Transform<LV>,
+     AV: 'static + Vec<N> + Clone,
+     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + Clone,
+     II: 'static + Clone,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>,
      C>

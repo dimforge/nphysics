@@ -18,9 +18,9 @@ impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
     }
 }
 
-pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone + ToStr,
-                                    AV: Vec<N> + Clone + ToStr,
-                                    N:  Num + Orderable + Clone + ToStr>(
+pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
+                                    AV: Vec<N> + Clone,
+                                    N:  Num + Orderable + Clone>(
                                     restitution:    &mut [VelocityConstraint<LV, AV, N>],
                                     friction:       &mut [VelocityConstraint<LV, AV, N>],
                                     num_bodies:     uint,
@@ -67,9 +67,9 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone + ToStr,
 }
 
 #[inline(always)]
-pub fn setup_warmstart_for_constraint<LV: Vec<N> + Clone + ToStr,
-                                      AV: Vec<N> + Clone + ToStr,
-                                      N:  Num + Orderable + Clone + ToStr>(
+pub fn setup_warmstart_for_constraint<LV: Vec<N> + Clone,
+                                      AV: Vec<N> + Clone,
+                                      N:  Num + Orderable + Clone>(
                                       c:        &VelocityConstraint<LV, AV, N>,
                                       MJLambda: &mut [Velocities<LV, AV>]) {
     let id1 = c.id1;
@@ -87,9 +87,9 @@ pub fn setup_warmstart_for_constraint<LV: Vec<N> + Clone + ToStr,
 }
 
 #[inline(always)]
-pub fn solve_velocity_constraint<LV: Vec<N> + Clone + ToStr,
-                                 AV: Vec<N> + Clone + ToStr,
-                                 N:  Num + Orderable + Clone + ToStr>(
+pub fn solve_velocity_constraint<LV: Vec<N> + Clone,
+                                 AV: Vec<N> + Clone,
+                                 N:  Num + Orderable + Clone>(
                                  c:        &mut VelocityConstraint<LV, AV, N>,
                                  MJLambda: &mut [Velocities<LV, AV>]) {
     let id1 = c.id1;

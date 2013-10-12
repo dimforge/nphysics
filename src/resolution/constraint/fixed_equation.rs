@@ -11,7 +11,7 @@ use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionMode;
 use resolution::constraint::contact_equation;
 
-pub fn fill_second_order_equation<N:  Num + Bounded + Clone + ToStr,
+pub fn fill_second_order_equation<N:  Num + Bounded + Clone,
                                   LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
                                   AV: AlgebraicVecExt<N> + Clone,
                                   M:  Transform<LV> + Rotate<LV> + Mul<M, M> + Clone +
@@ -44,7 +44,7 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone + ToStr,
         correction);
 }
 
-pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone + ToStr,
+pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone,
                                      LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
                                      AV: AlgebraicVecExt<N> + Clone,
                                      M:  Transform<LV> + Rotate<LV> + Rotation<AV> + Inv + Mul<M, M> + One,

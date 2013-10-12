@@ -86,8 +86,8 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
-     LV: AlgebraicVecExt<N> + Clone + ToStr,
+impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
+     LV: AlgebraicVecExt<N> + Clone,
      AV,
      M:  Translation<LV> + Rotate<LV> + AbsoluteRotate<LV> + Transform<LV> + Mul<M, M>,
      II>

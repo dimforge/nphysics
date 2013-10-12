@@ -15,11 +15,11 @@ pub trait Volumetric<N, V, II> {
     fn mass_properties(&self, &N) -> (N, V, II);
 }
 
-impl<N: Real + Num + Cast<f32> + Clone + ToStr,
-     V: Clone + VecExt<N> + ToStr,
+impl<N: Real + Num + Cast<f32> + Clone,
+     V: Clone + VecExt<N>,
      AV,
      M: Translation<V>,
-     II: Zero + Indexable<(uint, uint), N> + Add<II, II> + InertiaTensor<N, V, AV, M> + Dim + ToStr>
+     II: Zero + Indexable<(uint, uint), N> + Add<II, II> + InertiaTensor<N, V, AV, M> + Dim>
 Volumetric<N, V, II> for Geom<N, V, M> {
     /*
     #[inline]
@@ -134,9 +134,9 @@ Volumetric<N, V, II> for Ball<N> {
     }
 }
 
-impl<N:  Zero + One + Cast<f32> + Num + Clone + ToStr,
-     V:  Clone + VecExt<N> + ToStr,
-     II: Zero + Indexable<(uint, uint), N> + ToStr>
+impl<N:  Zero + One + Cast<f32> + Num + Clone,
+     V:  Clone + VecExt<N>,
+     II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Box<N, V> {
     /*
     fn volume(&self) -> N {

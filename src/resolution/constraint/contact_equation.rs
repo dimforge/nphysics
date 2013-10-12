@@ -56,7 +56,7 @@ pub struct CorrectionParameters<N> {
 
 pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
                                       AV: Vec<N>,
-                                      N:  Num + Orderable + Bounded + Cast<f32> + Clone + ToStr>(
+                                      N:  Num + Orderable + Bounded + Cast<f32> + Clone>(
                                       dt:          N,
                                       coll:        &Contact<N, LV>,
                                       constraint:  &mut VelocityConstraint<LV, AV, N>,
@@ -81,7 +81,7 @@ pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
 pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   AV: Vec<N> + Clone,
                                   N:  Num + Orderable + Bounded + Signed + Clone +
-                                      Cast<f32> + ToStr,
+                                      Cast<f32>,
                                   M:  Transform<LV> + Rotate<LV> + One,
                                   II: Mul<II, II> + InertiaTensor<N, LV, AV, M> +
                                       Clone>(

@@ -1,9 +1,9 @@
 use std::num::One;
 use nalgebra::na::{Vec, Translation, Rotation, RotationWithTranslation};
 
-pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One + ToStr,
-                          LV: Vec<N> + ToStr,
-                          AV: Vec<N> + ToStr,
+pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
+                          LV: Vec<N>,
+                          AV: Vec<N>,
                           N:  Clone>(
                           dt: N,
                           p:  &M,
@@ -33,9 +33,9 @@ pub fn explicit_integrate_wo_rotation<V: Vec<N>,
     )
 }
 
-pub fn semi_implicit_integrate<M:  Translation<LV> + Rotation<AV> + One + ToStr,
-                               LV: Vec<N> + ToStr,
-                               AV: Vec<N> + ToStr,
+pub fn semi_implicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
+                               LV: Vec<N>,
+                               AV: Vec<N>,
                                N:  Clone>(
                                dt: N,
                                p:  &M,
@@ -75,9 +75,9 @@ pub fn semi_implicit_integrate_wo_rotation<V: Vec<N>,
 //    FIXME
 // }
 
-pub fn displacement<M: RotationWithTranslation<LV, AV> + One + ToStr,
-                    LV: Vec<N> + ToStr,
-                    AV: Vec<N> + ToStr,
+pub fn displacement<M: RotationWithTranslation<LV, AV> + One,
+                    LV: Vec<N>,
+                    AV: Vec<N>,
                     N>(
                     dt:             N,
                     _:              &M,

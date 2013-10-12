@@ -25,10 +25,10 @@ pub enum PairwiseDetector<N, LV, AV, M> {
 }
 
 // FIXME: implement CollisionDetector for PairwiseDetector ?
-impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic + Cast<f32>,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+impl<N: ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV>,
-     AV: Vec<N> + ToStr,
+     AV: Vec<N>,
      M:  Rotation<AV> + Rotate<LV> + AbsoluteRotate<LV> + Translation<LV> + Transform<LV> +
          Mul<M, M> + Inv + One,
      II>
@@ -99,10 +99,10 @@ pub struct BodiesBodies<N, LV, AV, M, II, BF> {
     update_bf:   bool
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32> + ToStr,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N> + ToStr,
+     AV: 'static + Vec<N>,
      M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + AbsoluteRotate<LV> +
          Inv + Transform<LV> + One,
      II: 'static,
@@ -158,8 +158,8 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  'static + Clone + Zero + Orderable + Cast<f32> + Algebraic + Primitive + Float + ToStr,
-     LV: 'static + AlgebraicVecExt<N> + Clone + ToStr,
+impl<N:  'static + Clone + Zero + Orderable + Cast<f32> + Algebraic + Primitive + Float,
+     LV: 'static + AlgebraicVecExt<N> + Clone,
      AV: 'static,
      M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Transform<LV>,
      II: 'static,
@@ -186,10 +186,10 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32> + ToStr,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N> + ToStr,
+     AV: 'static + Vec<N>,
      M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + AbsoluteRotate<LV> +
          One + Mul<M, M> + Inv,
      II: 'static,
@@ -277,10 +277,10 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 50.0 }
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32> + ToStr,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone + ToStr +
+impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
+     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N> + ToStr,
+     AV: 'static + Vec<N>,
      M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> + AbsoluteRotate<LV> +
          Inv + Transform<LV> + One,
      II: 'static,

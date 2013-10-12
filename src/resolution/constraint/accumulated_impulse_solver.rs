@@ -28,9 +28,9 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
 }
 
-impl<LV:  AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
-     AV:  AlgebraicVecExt<N> + ToStr + Clone,
-     N:   Num + Orderable + Bounded + Signed + Clone + Cast<f32> + ToStr,
+impl<LV:  AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone,
+     AV:  AlgebraicVecExt<N> + Clone,
+     N:   Num + Orderable + Bounded + Signed + Clone + Cast<f32>,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
      II:  Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone,
@@ -235,9 +235,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     }
 }
 
-impl<LV: AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
-     AV: AlgebraicVecExt<N> + ToStr + Clone,
-     N:  Num + Orderable + Bounded + Signed + Clone + Cast<f32> + ToStr,
+impl<LV: AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone,
+     AV: AlgebraicVecExt<N> + Clone,
+     N:  Num + Orderable + Bounded + Signed + Clone + Cast<f32>,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
      II: Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, AV, M>,
      M2: Row<AV>>

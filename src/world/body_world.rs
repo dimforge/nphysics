@@ -45,14 +45,14 @@ pub struct BodyWorld<N, LV, AV, M, II, CM> {
     solver:     @mut AccumulatedImpulseSolver<N, LV, AV, M, II, CM>
 }
 
-impl<N:  'static + ToStr + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic + Orderable +
+impl<N:  'static + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic + Orderable +
          Signed + Real + ApproxEq<N> + Float,
-     LV: 'static + ToStr + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<CM> +
+     LV: 'static + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<CM> +
          ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
-     AV: 'static + ToStr + Clone + Zero + AlgebraicVecExt<N>,
-     M:  'static + ToStr + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
+     AV: 'static + Clone + Zero + AlgebraicVecExt<N>,
+     M:  'static + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
          Transform<LV> + AbsoluteRotate<LV> + Mul<M, M> + One,
-     II: 'static + ToStr + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>,
+     II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>,
      CM: Row<AV>>
 BodyWorld<N, LV, AV, M, II, CM> {
     pub fn new() -> BodyWorld<N, LV, AV, M, II, CM> {

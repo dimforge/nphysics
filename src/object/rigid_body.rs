@@ -53,7 +53,7 @@ RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N, LV: ToStr, AV, M: Transform<LV>, II>
+impl<N, LV, AV, M: Transform<LV>, II>
 RigidBody<N, LV, AV, M, II> {
     fn update_center_of_mass(&mut self) {
         self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
@@ -98,12 +98,12 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + Cast<f32> + ToStr,
+impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + Cast<f32>,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>,
-     LV:  Clone + VecExt<N> + ToStr,
+     LV:  Clone + VecExt<N>,
      AV:  Zero,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, AV, M> +
-          Add<II, II> + Dim + Clone + ToStr>
+          Add<II, II> + Dim + Clone>
 RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        Geom<N, LV, M>,
                density:     N,
@@ -243,7 +243,7 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
 
 impl<N:  Clone,
      M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
+     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
      II: Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
@@ -287,7 +287,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
 impl<N:  Clone,
      M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + One,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
+     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
      II: Clone>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
@@ -326,7 +326,7 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
 
 impl<N:  Clone,
      M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim + ToStr,
+     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
      II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
@@ -366,8 +366,8 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
-     LV: AlgebraicVecExt<N> + Clone + ToStr,
+impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
+     LV: AlgebraicVecExt<N> + Clone,
      AV,
      M: Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> + Mul<M, M>,
      II>
