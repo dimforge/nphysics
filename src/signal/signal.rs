@@ -1,3 +1,4 @@
+use std::container::MutableMap;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 

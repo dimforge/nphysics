@@ -1,5 +1,5 @@
-use std::num::{One, Zero, Orderable, Bounded, from_f32};
-use nalgebra::na::{Vec, VecExt, AlgebraicVecExt, Cross, Basis, Rotate, Transform};
+use std::num::{One, Zero, Orderable, Bounded};
+use nalgebra::na::{Vec, VecExt, AlgebraicVecExt, Cross, Cast, Basis, Rotate, Transform};
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
@@ -56,7 +56,7 @@ pub struct CorrectionParameters<N> {
 
 pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
                                       AV: Vec<N>,
-                                      N:  Num + Orderable + Bounded + FromPrimitive + Clone + ToStr>(
+                                      N:  Num + Orderable + Bounded + Cast<f32> + Clone + ToStr>(
                                       dt:          N,
                                       coll:        &Contact<N, LV>,
                                       constraint:  &mut VelocityConstraint<LV, AV, N>,
@@ -81,7 +81,7 @@ pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
 pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   AV: Vec<N> + Clone,
                                   N:  Num + Orderable + Bounded + Signed + Clone +
-                                      FromPrimitive + ToStr,
+                                      Cast<f32> + ToStr,
                                   M:  Transform<LV> + Rotate<LV> + One,
                                   II: Mul<II, II> + InertiaTensor<N, LV, AV, M> +
                                       Clone>(
@@ -97,7 +97,7 @@ pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   correction:   &CorrectionParameters<N>) {
     let restitution = rb1.restitution() * rb2.restitution();
 
-    let center = (coll.world1 + coll.world2) / from_f32(2.0).unwrap();
+    let center = (coll.world1 + coll.world2) / Cast::from(2.0);
 
     fill_velocity_constraint(dt.clone(),
                              coll.normal.clone(),

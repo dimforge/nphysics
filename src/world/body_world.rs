@@ -1,9 +1,9 @@
-use std::num::{Zero, One, from_f32};
+use std::num::{Zero, One};
 use nalgebra::na::{
     Row, Inv,
     Rotation, Rotate, AbsoluteRotate,
     Translation, Transform,
-    AlgebraicVecExt, Cross, CrossMatrix
+    AlgebraicVecExt, Cast, Cross, CrossMatrix
 };
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
@@ -45,7 +45,7 @@ pub struct BodyWorld<N, LV, AV, M, II, CM> {
     solver:     @mut AccumulatedImpulseSolver<N, LV, AV, M, II, CM>
 }
 
-impl<N:  'static + ToStr + Clone + Zero + FromPrimitive + Primitive + Num + Algebraic + Orderable +
+impl<N:  'static + ToStr + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic + Orderable +
          Signed + Real + ApproxEq<N> + Float,
      LV: 'static + ToStr + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<CM> +
          ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
@@ -74,13 +74,13 @@ BodyWorld<N, LV, AV, M, II, CM> {
         // Collision Dispatcher
         let dispatcher = BodiesBodiesDispatcher::new();
         // Broad phase
-        let broad_phase = @mut DBVTBroadPhase::new(dispatcher, from_f32(0.08).unwrap());
+        let broad_phase = @mut DBVTBroadPhase::new(dispatcher, Cast::from(0.08));
         // CCD handler
         let ccd = SweptBallMotionClamping::new(events, broad_phase, true);
         // Collision detector
         let detector = BodiesBodies::new(events, broad_phase, false);
         // Deactivation
-        let sleep = IslandActivationManager::new(events, from_f32(1.0).unwrap(), from_f32(0.01).unwrap());
+        let sleep = IslandActivationManager::new(events, Cast::from(1.0), Cast::from(0.01));
         // Joints
         let joints = JointManager::new(events);
 
@@ -88,11 +88,11 @@ BodyWorld<N, LV, AV, M, II, CM> {
          * For constraints resolution
          */
         let solver = @mut AccumulatedImpulseSolver::new(
-            from_f32(0.1).unwrap(),
-            VelocityAndPosition(from_f32(0.2).unwrap(),
-                                from_f32(0.2).unwrap(),
-                                from_f32(0.08).unwrap()),
-            from_f32(1.0).unwrap(),
+            Cast::from(0.1),
+            VelocityAndPosition(Cast::from(0.2),
+                                Cast::from(0.2),
+                                Cast::from(0.08)),
+            Cast::from(1.0),
             10,
             10);
 

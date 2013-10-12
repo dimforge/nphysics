@@ -1,6 +1,6 @@
 use std::num::One;
 use std::ptr;
-use std::rand::{XorShiftRng, Rng};
+use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use rsfml::graphics::render_window::RenderWindow;
 use nalgebra::na::Vec3;
@@ -25,7 +25,7 @@ pub struct GraphicsManager<'self> {
 impl<'self> GraphicsManager<'self> {
     pub fn new() -> GraphicsManager {
         GraphicsManager {
-            rand:      XorShiftRng::new_seeded(0, 1, 2, 3),
+            rand:      SeedableRng::from_seed([0, 1, 2, 3]),
             rb2sn:     HashMap::new(),
             obj2color: HashMap::new()
         }

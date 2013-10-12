@@ -65,12 +65,12 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
         for elts in self.joints.elements().iter() {
             match elts.value {
                 BallInSocket(bis) => {
-                    bis.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
-                    bis.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
+                    bis.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(b) as uint));
+                    bis.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(b) as uint));
                 },
                 Fixed(f) => {
-                    f.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
-                    f.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(*b) as uint));
+                    f.anchor2().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(b) as uint));
+                    f.anchor1().body.map(|b| keys_to_remove.push(ptr::to_mut_unsafe_ptr(b) as uint));
                 }
                 RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
             }

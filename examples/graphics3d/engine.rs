@@ -1,6 +1,6 @@
 use std::num::One;
 use std::ptr;
-use std::rand::{XorShiftRng, Rng};
+use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use nalgebra::na::Vec3;
 use nalgebra::na;
@@ -44,7 +44,7 @@ impl GraphicsManager {
             arc_ball:         arc_ball,
             first_person:     first_person,
             curr_is_arc_ball: true,
-            rand:             XorShiftRng::new_seeded(0, 1, 2, 3),
+            rand:             SeedableRng::from_seed([0, 1, 2, 3]),
             rb2sn:            HashMap::new(),
             obj2color:        HashMap::new()
         }

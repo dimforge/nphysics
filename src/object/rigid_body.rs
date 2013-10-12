@@ -2,7 +2,7 @@ use std::num::{Zero, One};
 use nalgebra::na::{
     Translation, Rotation, Rotate, AbsoluteRotate,
     Transformation, Transform,
-    Inv, Indexable,
+    Cast, Inv, Indexable,
     VecExt, AlgebraicVecExt, Dim
 };
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
@@ -98,7 +98,7 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + FromPrimitive + ToStr,
+impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + Cast<f32> + ToStr,
      M:   One + Translation<LV> + Transform<LV> + Rotate<LV>,
      LV:  Clone + VecExt<N> + ToStr,
      AV:  Zero,
@@ -366,7 +366,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  FromPrimitive + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
+impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
      M: Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> + Mul<M, M>,

@@ -11,14 +11,14 @@ kiss3d_lib_path=lib/kiss3d/lib
 glfw_lib_path=lib/kiss3d/lib/glfw-rs/lib
 gl_lib_path=lib/kiss3d/lib/gl-rs
 stb_image_lib_path=lib/kiss3d/lib/rust-stb-image/
-build_cmd_opt=rust build -L$(ncollide_lib_path)   \
-						 -L$(nalgebra_lib_path)   \
-						 -L$(kiss3d_lib_path)     \
-						 -L$(glfw_lib_path)       \
-						 -L$(gl_lib_path)     	  \
-						 -L$(stb_image_lib_path)  \
-						 --out-dir bin --opt-level 3
-lib_build_opt=rust build -L$(nphysics_lib_path)  \
+build_cmd_opt=rustc -L$(ncollide_lib_path)   \
+					-L$(nalgebra_lib_path)   \
+					-L$(kiss3d_lib_path)     \
+					-L$(glfw_lib_path)       \
+					-L$(gl_lib_path)     	  \
+					-L$(stb_image_lib_path)  \
+					--out-dir bin --opt-level 3
+lib_build_opt=rustc -L$(nphysics_lib_path)  \
 						 -L$(ncollide_lib_path)  \
 						 -L$(nalgebra_lib_path)  \
 						 -L$(kiss3d_lib_path)    \
@@ -29,7 +29,7 @@ lib_build_opt=rust build -L$(nphysics_lib_path)  \
 
 all:
 	mkdir -p lib
-	rust build -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib.rs --out-dir lib --opt-level 3
+	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib.rs --out-dir lib --opt-level 3
 
 deps:
 	make deps -C ncollide

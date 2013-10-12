@@ -1,8 +1,8 @@
 use std::ptr;
 // use std::rand::RngUtil;
-use std::num::{One, Orderable, Bounded, from_f32};
+use std::num::{One, Orderable, Bounded};
 use nalgebra::na::{
-    AlgebraicVecExt, Cross, CrossMatrix, Dim,
+    AlgebraicVecExt, Cast, Cross, CrossMatrix, Dim,
     RotationWithTranslation, Translation, Rotation,
     Rotate, Transformation, Transform, Inv, Row
 };
@@ -30,7 +30,7 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
 impl<LV:  AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
      AV:  AlgebraicVecExt<N> + ToStr + Clone,
-     N:   Num + Orderable + Bounded + Signed + Clone + FromPrimitive + ToStr,
+     N:   Num + Orderable + Bounded + Signed + Clone + Cast<f32> + ToStr,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
           Rotation<AV> + One + Clone + Inv,
      II:  Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone,
@@ -171,11 +171,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * from_f32(0.85).unwrap();
+            imps[0]  = dv.impulse * Cast::from(0.85);
 
             for j in range(0u, Dim::dim(None::<LV>) - 1) {
                 let fc = &self.friction_constraints[i * (Dim::dim(None::<LV>) - 1) + j];
-                imps[1 + j] = fc.impulse * from_f32(0.85).unwrap();
+                imps[1 + j] = fc.impulse * Cast::from(0.85);
             }
         }
 
@@ -237,7 +237,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
 impl<LV: AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone + ToStr,
      AV: AlgebraicVecExt<N> + ToStr + Clone,
-     N:  Num + Orderable + Bounded + Signed + Clone + FromPrimitive + ToStr,
+     N:  Num + Orderable + Bounded + Signed + Clone + Cast<f32> + ToStr,
      M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
      II: Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, AV, M>,
      M2: Row<AV>>
@@ -257,7 +257,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         self.cache.insert(i,
                                           ptr::to_mut_unsafe_ptr(a) as uint,
                                           ptr::to_mut_unsafe_ptr(b) as uint,
-                                          (c.world1 + c.world2) / from_f32(2.0).unwrap());
+                                          (c.world1 + c.world2) / Cast::from(2.0));
                     },
                     BallInSocket(_) => {
                         // XXX: cache for ball in socket?

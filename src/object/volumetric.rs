@@ -1,5 +1,5 @@
-use std::num::{Zero, One, Real, from_uint, from_f32};
-use nalgebra::na::{VecExt, Dim, Iterable, Translation, Indexable};
+use std::num::{Zero, One, Real};
+use nalgebra::na::{Cast, VecExt, Dim, Iterable, Translation, Indexable};
 use ncollide::geom::{Ball, Box, Cylinder, Capsule, Cone, Plane};
 use ncollide::geom::{Geom, PlaneGeom, BallGeom, BoxGeom, ConeGeom, CylinderGeom, CapsuleGeom,
                      CompoundGeom, ImplicitGeom};
@@ -15,7 +15,7 @@ pub trait Volumetric<N, V, II> {
     fn mass_properties(&self, &N) -> (N, V, II);
 }
 
-impl<N: Real + Num + FromPrimitive + Clone + ToStr,
+impl<N: Real + Num + Cast<f32> + Clone + ToStr,
      V: Clone + VecExt<N> + ToStr,
      AV,
      M: Translation<V>,
@@ -82,12 +82,12 @@ Volumetric<N, V, II> for Geom<N, V, M> {
 }
 
 #[inline]
-fn ball_volume<N: Real + Num + FromPrimitive>(radius: &N, dim: uint) -> N {
+fn ball_volume<N: Real + Num + Cast<f32>>(radius: &N, dim: uint) -> N {
     let _pi: N = Real::pi();
-    _pi * radius.pow(&from_uint(dim).unwrap())
+    _pi * radius.pow(&Cast::from(dim as f32))
 }
 
-impl<N:  Real + Num + FromPrimitive + Clone,
+impl<N:  Real + Num + Cast<f32> + Clone,
      V:  Zero + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Ball<N> {
@@ -105,7 +105,7 @@ Volumetric<N, V, II> for Ball<N> {
         let dim = Dim::dim(None::<V>);
 
         if dim == 2 {
-            let diag = self.radius() * self.radius() * mass / from_f32(2.0).unwrap();
+            let diag = self.radius() * self.radius() * mass / Cast::from(2.0);
 
             let mut res: II = Zero::zero();
 
@@ -115,9 +115,9 @@ Volumetric<N, V, II> for Ball<N> {
         }
         else if dim == 3 {
             let _0: N  = Zero::zero();
-            let diag: N = mass                *
-                          from_f32(2.0 / 5.0).unwrap() *
-                          self.radius()       *
+            let diag: N = mass                  *
+                          Cast::from(2.0 / 5.0) *
+                          self.radius()         *
                           self.radius();
 
             let mut res: II = Zero::zero();
@@ -134,7 +134,7 @@ Volumetric<N, V, II> for Ball<N> {
     }
 }
 
-impl<N:  Zero + One + FromPrimitive + Num + Clone + ToStr,
+impl<N:  Zero + One + Cast<f32> + Num + Clone + ToStr,
      V:  Clone + VecExt<N> + ToStr,
      II: Zero + Indexable<(uint, uint), N> + ToStr>
 Volumetric<N, V, II> for Box<N, V> {
@@ -149,8 +149,8 @@ Volumetric<N, V, II> for Box<N, V> {
         let dim  = Dim::dim(None::<V>);
 
         if dim == 2 {
-            let _2: N   = from_f32(2.0).unwrap();
-            let _i12: N = from_f32(1.0 / 12.0).unwrap();
+            let _2: N   = Cast::from(2.0);
+            let _i12: N = Cast::from(1.0 / 12.0);
             let w       = _i12 * mass * _2 * _2;
             let ix      = w * self.half_extents().at(0) * self.half_extents().at(0);
             let iy      = w * self.half_extents().at(1) * self.half_extents().at(1);
@@ -163,8 +163,8 @@ Volumetric<N, V, II> for Box<N, V> {
         }
         else if dim == 3 {
             let _0: N   = Zero::zero();
-            let _2: N   = from_f32(2.0).unwrap();
-            let _i12: N = from_f32(1.0 / 12.0).unwrap();
+            let _2: N   = Cast::from(2.0);
+            let _i12: N = Cast::from(1.0 / 12.0);
             let w       = _i12 * mass * _2 * _2;
             let ix      = w * self.half_extents().at(0) * self.half_extents().at(0);
             let iy      = w * self.half_extents().at(1) * self.half_extents().at(1);
@@ -185,20 +185,20 @@ Volumetric<N, V, II> for Box<N, V> {
 }
 
 #[inline]
-fn box_volume<N:  Zero + One + FromPrimitive + Num + Clone,
+fn box_volume<N:  Zero + One + Cast<f32> + Num + Clone,
               V:  Clone + VecExt<N>>(
               half_extents: &V)
               -> N {
     let mut res: N = One::one();
 
     for half_extent in half_extents.iter() {
-        res = res * *half_extent * from_f32(2.0).unwrap()
+        res = res * *half_extent * Cast::from(2.0)
     }
 
     res
 }
 
-impl<N:  Zero + One + FromPrimitive + Num + Real + Clone,
+impl<N:  Zero + One + Cast<f32> + Num + Real + Clone,
      V:  Zero + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cylinder<N> {
@@ -215,8 +215,8 @@ Volumetric<N, V, II> for Cylinder<N> {
 
         if dim == 2 {
             // same as the box
-            let _2:   N = from_f32(2.0).unwrap();
-            let _i12: N = from_f32(1.0 / 12.0).unwrap();
+            let _2:   N = Cast::from(2.0);
+            let _i12: N = Cast::from(1.0 / 12.0);
             let w       = _i12 * mass * _2 * _2;
             let ix      = w * self.half_height() * self.half_height();
             let iy      = w * self.radius() * self.radius();
@@ -229,12 +229,12 @@ Volumetric<N, V, II> for Cylinder<N> {
         }
         else if dim == 3 {
             let sq_radius = self.radius() * self.radius();
-            let sq_height = self.half_height() * self.half_height() * from_f32(4.0).unwrap();
-            let off_principal = mass * (sq_radius * from_f32(3.0).unwrap() + sq_height) / from_f32(12.0).unwrap();
+            let sq_height = self.half_height() * self.half_height() * Cast::from(4.0);
+            let off_principal = mass * (sq_radius * Cast::from(3.0) + sq_height) / Cast::from(12.0);
 
             let mut res: II = Zero::zero();
 
-            res.set((0, 0), mass * sq_radius / from_f32(2.0).unwrap());
+            res.set((0, 0), mass * sq_radius / Cast::from(2.0));
             res.set((1, 1), off_principal.clone());
             res.set((2, 2), off_principal);
 
@@ -247,24 +247,24 @@ Volumetric<N, V, II> for Cylinder<N> {
 }
 
 #[inline]
-fn cylinder_volume<N: Zero + One + FromPrimitive + Num + Real + Clone>(
+fn cylinder_volume<N: Zero + One + Cast<f32> + Num + Real + Clone>(
                    half_height: &N,
                    radius:      &N,
                    dim:         uint)
                    -> N {
     if dim == 2 {
         // same as a rectangle
-        half_height * *radius * from_f32(4.0).unwrap()
+        half_height * *radius * Cast::from(4.0)
     }
     else if dim == 3 {
-        half_height * *radius * *radius * Real::pi() * from_f32(2.0).unwrap()
+        half_height * *radius * *radius * Real::pi() * Cast::from(2.0)
     }
     else {
         fail!("Volume for n-dimensional cylinders, n > 3, is not implemented.")
     }
 }
 
-impl<N:  Zero + One + FromPrimitive + Num + Real + Clone,
+impl<N:  Zero + One + Cast<f32> + Num + Real + Clone,
      V:  Zero + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Capsule<N> {
@@ -281,7 +281,7 @@ Volumetric<N, V, II> for Capsule<N> {
 }
 
 #[inline]
-fn capsule_volume<N: Zero + One + FromPrimitive + Num + Real + Clone>(
+fn capsule_volume<N: Zero + One + Cast<f32> + Num + Real + Clone>(
                   half_height: &N,
                   radius:      &N,
                   dim:         uint)
@@ -289,7 +289,7 @@ fn capsule_volume<N: Zero + One + FromPrimitive + Num + Real + Clone>(
     cylinder_volume(half_height, radius, dim) + ball_volume(radius, dim)
 }
 
-impl<N:  Zero + One + FromPrimitive + Num + Real + Clone,
+impl<N:  Zero + One + Cast<f32> + Num + Real + Clone,
      V:  Zero + Indexable<uint, N> + Dim,
      II: Zero + Indexable<(uint, uint), N>>
 Volumetric<N, V, II> for Cone<N> {
@@ -312,22 +312,22 @@ Volumetric<N, V, II> for Cone<N> {
             res.set(
                 (0, 0),
                 self.radius() * self.half_height() * self.half_height() * self.half_height()
-                              / from_f32(3.0).unwrap()
+                              / Cast::from(3.0)
             );
 
             let mut center: V = Zero::zero();
-            center.set(0, -self.half_height() / from_f32(2.0).unwrap());
+            center.set(0, -self.half_height() / Cast::from(2.0));
 
             (mass, center, res)
         }
         else if dim == 3 {
             let m_sq_radius = mass * self.radius() * self.radius();
             let m_sq_height = mass * self.half_height() * self.half_height() *
-                                     from_f32(4.0).unwrap();
-            let off_principal = m_sq_radius * from_f32(3.0 / 20.0).unwrap() +
-                                m_sq_height * from_f32(3.0 / 5.0).unwrap();
+                                     Cast::from(4.0);
+            let off_principal = m_sq_radius * Cast::from(3.0 / 20.0) +
+                                m_sq_height * Cast::from(3.0 / 5.0);
 
-            let principal = m_sq_radius * from_f32(3.0 / 10.0).unwrap();
+            let principal = m_sq_radius * Cast::from(3.0 / 10.0);
 
             let mut res: II = Zero::zero();
 
@@ -336,7 +336,7 @@ Volumetric<N, V, II> for Cone<N> {
             res.set((2, 2), off_principal);
 
             let mut center: V = Zero::zero();
-            center.set(0, -self.half_height() / from_f32(2.0).unwrap());
+            center.set(0, -self.half_height() / Cast::from(2.0));
 
             (mass, center, res)
         }
@@ -348,17 +348,17 @@ Volumetric<N, V, II> for Cone<N> {
 }
 
 #[inline]
-fn cone_volume<N:  Zero + One + FromPrimitive + Num + Real + Clone>(
+fn cone_volume<N:  Zero + One + Cast<f32> + Num + Real + Clone>(
                half_height: &N,
                radius:      &N,
                dim:         uint)
                -> N {
     if dim == 2 {
         // same as a isosceles triangle
-        *radius * *half_height * from_f32(2.0).unwrap()
+        *radius * *half_height * Cast::from(2.0)
     }
     else if dim == 3 {
-        *radius * *radius * Real::pi() * *half_height * from_f32(2.0 / 3.0).unwrap()
+        *radius * *radius * Real::pi() * *half_height * Cast::from(2.0 / 3.0)
     }
     else {
         fail!("Volume for n-dimensional cone, n > 3, is not implemented.")

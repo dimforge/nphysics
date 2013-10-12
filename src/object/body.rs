@@ -1,6 +1,6 @@
 use std::borrow;
 use std::num::Zero;
-use nalgebra::na::{Translation, Rotate, AbsoluteRotate, Transform, AlgebraicVecExt};
+use nalgebra::na::{Cast, Translation, Rotate, AbsoluteRotate, Transform, AlgebraicVecExt};
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use object::{RigidBody, SoftBody};
 
@@ -86,7 +86,7 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  FromPrimitive + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
+impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone + ToStr,
      LV: AlgebraicVecExt<N> + Clone + ToStr,
      AV,
      M:  Translation<LV> + Rotate<LV> + AbsoluteRotate<LV> + Transform<LV> + Mul<M, M>,

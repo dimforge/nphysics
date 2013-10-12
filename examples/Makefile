@@ -7,33 +7,33 @@ stb_image_lib_path=./lib/kiss3d/lib/rust-stb-image/
 nphysics_lib_path=../lib
 ncollide_lib_path=../ncollide/lib
 nalgebra_lib_path=../ncollide/nalgebra/lib
-build_cmd=rust build -L$(nphysics_lib_path)  \
-					 -L$(ncollide_lib_path)  \
-					 -L$(nalgebra_lib_path)  \
-					 -L$(kiss3d_lib_path)    \
-					 -L$(glfw_lib_path)      \
-					 -L$(gl_lib_path)        \
-					 -L$(stb_image_lib_path) \
-					 --out-dir ../bin
-build_cmd_opt=rust build -L$(nphysics_lib_path)   \
-						 -L$(ncollide_lib_path)   \
-						 -L$(nalgebra_lib_path)   \
-						 -L$(kiss3d_lib_path)     \
-						 -L$(glfw_lib_path)       \
-						 -L$(gl_lib_path)     	  \
-						 -L$(stb_image_lib_path)  \
-						 -Llib			  		  \
-						 --out-dir ../bin --opt-level 3
+build_cmd=rustc -L$(nphysics_lib_path)  \
+				-L$(ncollide_lib_path)  \
+				-L$(nalgebra_lib_path)  \
+				-L$(kiss3d_lib_path)    \
+				-L$(glfw_lib_path)      \
+				-L$(gl_lib_path)        \
+				-L$(stb_image_lib_path) \
+				--out-dir ../bin
+build_cmd_opt=rustc -L$(nphysics_lib_path)   \
+					-L$(ncollide_lib_path)   \
+					-L$(nalgebra_lib_path)   \
+					-L$(kiss3d_lib_path)     \
+					-L$(glfw_lib_path)       \
+					-L$(gl_lib_path)     	  \
+					-L$(stb_image_lib_path)  \
+					-Llib			  		  \
+					--out-dir ../bin --opt-level 3
 
-lib_build_opt=rust build -L$(nphysics_lib_path)  \
-						 -L$(ncollide_lib_path)  \
-						 -L$(nalgebra_lib_path)  \
-						 -L$(kiss3d_lib_path)    \
-						 -L$(glfw_lib_path)      \
-						 -L$(gl_lib_path)    	 \
-						 -L$(stb_image_lib_path) \
-						 -Llib					 \
-						 --out-dir lib --opt-level 3
+lib_build_opt=rustc -L$(nphysics_lib_path)  \
+					-L$(ncollide_lib_path)  \
+					-L$(nalgebra_lib_path)  \
+					-L$(kiss3d_lib_path)    \
+					-L$(glfw_lib_path)      \
+					-L$(gl_lib_path)    	 \
+					-L$(stb_image_lib_path) \
+					-Llib					 \
+					--out-dir lib --opt-level 3
 
 examples:
 	mkdir -p ../bin
@@ -55,7 +55,7 @@ examples:
 
 deps:
 	mkdir -p lib
-	rust build $(rust_sfml_rc) --opt-level 3 --out-dir lib
+	rustc $(rust_sfml_rc) --opt-level 3 --out-dir lib
 	make deps -C ..
 	make deps -C lib/kiss3d
 	make -C lib/kiss3d

@@ -2,7 +2,7 @@ use std::num::One;
 use std::ptr;
 use std::managed;
 use nalgebra::na::{
-    Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv,
+    Cast, Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv,
     Vec, AlgebraicVecExt, Cross
 };
 use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
@@ -125,7 +125,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic + FromPrimitive,
+impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + ToStr + Algebraic + Cast<f32>,
      LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV> + ToStr,
      AV: Clone + Vec<N> + ToStr,
