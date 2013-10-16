@@ -1,6 +1,6 @@
 use kiss3d::window;
 use kiss3d::object::Object;
-use nalgebra::na::Vec3;
+use nalgebra::na::{Vec3, Transformation};
 use nalgebra::na;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
@@ -53,7 +53,7 @@ impl SceneNode for Box {
         let rb = self.body.to_rigid_body_or_fail();
 
         if rb.is_active() {
-                na::set_transformation(&mut self.gfx, na::transformation(rb) * self.delta);
+                self.gfx.set_transformation(na::transformation(rb) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

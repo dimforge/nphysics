@@ -2,7 +2,7 @@ use std::os;
 use std::num::{Zero, One};
 use extra::time;
 use glfw;
-use nalgebra::na::{Vec2, Vec3};
+use nalgebra::na::{Vec2, Vec3, Translation};
 use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
@@ -137,8 +137,8 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                                         let rb      = b.to_rigid_body_or_fail();
                                         let _1: dim3::Transform3d<f64> = One::one();
-                                        let attach2 = na::translated(&_1, &(ray.orig + ray.dir * mintoi));
-                                        let attach1 = na::inverted(&na::transformation(rb.transform_ref())).unwrap() * attach2;
+                                        let attach2 = na::append_translation(&_1, &(ray.orig + ray.dir * mintoi));
+                                        let attach1 = na::inv(&na::transformation(rb.transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = @mut Fixed::new(anchor1, anchor2);
@@ -191,7 +191,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
                                         let _1: dim3::Transform3d<f64> = One::one();
-                                        j.set_local2(na::translated(&_1, &(pos + dir * inter)))
+                                        j.set_local2(na::append_translation(&_1, &(pos + dir * inter)))
                                     },
                                     None => { }
                                 }
@@ -236,7 +236,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
-                        na::translate_by(&mut rb, &na::translation(&cam_transfom));
+                        rb.append_translation(&na::translation(&cam_transfom));
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 
@@ -253,7 +253,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                         let cam_transform = w.camera().view_transform();
-                        na::translate_by(&mut rb, &na::translation(&cam_transform));
+                        rb.append_translation(&na::translation(&cam_transform));
 
                         let front = na::rotate(&cam_transform, &Vec3::z());
 
@@ -270,7 +270,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
-                        na::translate_by(&mut rb, &na::translation(&cam_transfom));
+                        rb.append_translation(&na::translation(&cam_transfom));
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 

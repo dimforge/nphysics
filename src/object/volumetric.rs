@@ -1,5 +1,6 @@
 use std::num::{Zero, One, Real};
 use nalgebra::na::{Cast, VecExt, Dim, Iterable, Translation, Indexable};
+use nalgebra::na;
 use ncollide::geom::{Ball, Box, Cylinder, Capsule, Cone, Plane};
 use ncollide::geom::{Geom, PlaneGeom, BallGeom, BoxGeom, ConeGeom, CylinderGeom, CapsuleGeom,
                      CompoundGeom, ImplicitGeom};
@@ -25,9 +26,9 @@ Volumetric<N, V, II> for Geom<N, V, M> {
     #[inline]
     fn volume(&self) -> N {
         match *self {
-            PlaneGeom(_)        => Zero::zero(),
+            PlaneGeom(_)        => na::zero(),
             CompoundGeom(c)     => {
-                let mut res: N = Zero::zero();
+                let mut res: N = na::zero();
 
                 for &(_, ref s) in c.shapes().iter() {
                     res = res + s.volume()
@@ -37,11 +38,11 @@ Volumetric<N, V, II> for Geom<N, V, M> {
             },
             ImplicitGeom(ref i) => {
                 match *i {
-                    BallGeom(ref b)     => ball_volume(&b.radius(), Dim::dim(None::<V>)),
+                    BallGeom(ref b)     => ball_volume(&b.radius(), na::dim::<V>()),
                     BoxGeom(ref b)      => box_volume(&b.half_extents()),
-                    ConeGeom(ref c)     => cone_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
-                    CylinderGeom(ref c) => cylinder_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
-                    CapsuleGeom(ref c)  => capsule_volume(&c.half_height(), &c.radius(), Dim::dim(None::<V>)),
+                    ConeGeom(ref c)     => cone_volume(&c.half_height(), &c.radius(), na::dim::<V>()),
+                    CylinderGeom(ref c) => cylinder_volume(&c.half_height(), &c.radius(), na::dim::<V>()),
+                    CapsuleGeom(ref c)  => capsule_volume(&c.half_height(), &c.radius(), na::dim::<V>()),
                 }
             }
         }
@@ -53,9 +54,9 @@ Volumetric<N, V, II> for Geom<N, V, M> {
         match *self {
             PlaneGeom(ref p) => p.mass_properties(density),
             CompoundGeom(c)  => {
-                let mut mtot: N  = Zero::zero();
-                let mut itot: II = Zero::zero();
-                let mut ctot: V  = Zero::zero();
+                let mut mtot: N  = na::zero();
+                let mut itot: II = na::zero();
+                let mut ctot: V  = na::zero();
 
                 for &(ref m, ref s) in c.shapes().iter() {
                     let (mpart, cpart, ipart): (N, V, II) = s.mass_properties(density);
@@ -94,39 +95,39 @@ Volumetric<N, V, II> for Ball<N> {
     /*
     #[inline]
     fn volume(&self) -> N {
-        ball_volume(&self.radius(), Dim::dim(None::<V>))
+        ball_volume(&self.radius(), na::dim::<V>())
     }
     */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let volume = ball_volume(&self.radius(), Dim::dim(None::<V>));
+        let volume = ball_volume(&self.radius(), na::dim::<V>());
         let mass   = volume * *density;
 
-        let dim = Dim::dim(None::<V>);
+        let dim = na::dim::<V>();
 
         if dim == 2 {
             let diag = self.radius() * self.radius() * mass / Cast::from(2.0);
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), diag);
 
-            (mass, Zero::zero(), res)
+            (mass, na::zero(), res)
         }
         else if dim == 3 {
-            let _0: N  = Zero::zero();
+            let _0: N  = na::zero();
             let diag: N = mass                  *
                           Cast::from(2.0 / 5.0) *
                           self.radius()         *
                           self.radius();
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), diag.clone());
             res.set((1, 1), diag.clone());
             res.set((2, 2), diag.clone());
 
-            (mass, Zero::zero(), res)
+            (mass, na::zero(), res)
         }
         else {
             fail!("Inertia tensor for n-dimensional balls, n > 3, is not implemented.")
@@ -146,7 +147,7 @@ Volumetric<N, V, II> for Box<N, V> {
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         let mass = box_volume(&self.half_extents()) * *density;
-        let dim  = Dim::dim(None::<V>);
+        let dim  = na::dim::<V>();
 
         if dim == 2 {
             let _2: N   = Cast::from(2.0);
@@ -155,14 +156,14 @@ Volumetric<N, V, II> for Box<N, V> {
             let ix      = w * self.half_extents().at(0) * self.half_extents().at(0);
             let iy      = w * self.half_extents().at(1) * self.half_extents().at(1);
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), ix + iy);
 
-            (mass, Zero::zero(), res)
+            (mass, na::zero(), res)
         }
         else if dim == 3 {
-            let _0: N   = Zero::zero();
+            let _0: N   = na::zero();
             let _2: N   = Cast::from(2.0);
             let _i12: N = Cast::from(1.0 / 12.0);
             let w       = _i12 * mass * _2 * _2;
@@ -170,13 +171,13 @@ Volumetric<N, V, II> for Box<N, V> {
             let iy      = w * self.half_extents().at(1) * self.half_extents().at(1);
             let iz      = w * self.half_extents().at(2) * self.half_extents().at(2);
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), iy + iz);
             res.set((1, 1), ix + iz);
             res.set((2, 2), ix + iy);
 
-            (mass, Zero::zero(), res)
+            (mass, na::zero(), res)
         }
         else {
             fail!("Inertia tensor for n-dimensional boxes, n > 3, is not implemented.")
@@ -189,7 +190,7 @@ fn box_volume<N:  Zero + One + Cast<f32> + Num + Clone,
               V:  Clone + VecExt<N>>(
               half_extents: &V)
               -> N {
-    let mut res: N = One::one();
+    let mut res: N = na::one();
 
     for half_extent in half_extents.iter() {
         res = res * *half_extent * Cast::from(2.0)
@@ -204,13 +205,13 @@ impl<N:  Zero + One + Cast<f32> + Num + Real + Clone,
 Volumetric<N, V, II> for Cylinder<N> {
     /*
     fn volume(&self) -> N {
-        let dim = Dim::dim(None::<V>);
+        let dim = na::dim::<V>();
         cylinder_volume(&self.half_height(), &self.radius(), dim)
     }
     */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let dim  = Dim::dim(None::<V>);
+        let dim  = na::dim::<V>();
         let mass = cylinder_volume(&self.half_height(), &self.radius(), dim) * *density;
 
         if dim == 2 {
@@ -221,24 +222,24 @@ Volumetric<N, V, II> for Cylinder<N> {
             let ix      = w * self.half_height() * self.half_height();
             let iy      = w * self.radius() * self.radius();
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), ix + iy);
 
-            (mass, Zero::zero(), res)
+            (mass, na::zero(), res)
         }
         else if dim == 3 {
             let sq_radius = self.radius() * self.radius();
             let sq_height = self.half_height() * self.half_height() * Cast::from(4.0);
             let off_principal = mass * (sq_radius * Cast::from(3.0) + sq_height) / Cast::from(12.0);
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), mass * sq_radius / Cast::from(2.0));
             res.set((1, 1), off_principal.clone());
             res.set((2, 2), off_principal);
 
-            (mass, Zero::zero(), res)
+            (mass, na::zero(), res)
         }
         else {
             fail!("Inertia tensor for n-dimensional cylinder, n > 3, is not implemented.")
@@ -270,7 +271,7 @@ impl<N:  Zero + One + Cast<f32> + Num + Real + Clone,
 Volumetric<N, V, II> for Capsule<N> {
     /*
     fn volume(&self) -> N {
-        let dim = Dim::dim(None::<V>);
+        let dim = na::dim::<V>();
         capsule_volume(&self.half_height(), &self.radius(), dim)
     }
     */
@@ -295,19 +296,19 @@ impl<N:  Zero + One + Cast<f32> + Num + Real + Clone,
 Volumetric<N, V, II> for Cone<N> {
     /*
     fn volume(&self) -> N {
-        let dim = Dim::dim(None::<V>);
+        let dim = na::dim::<V>();
 
         cone_volume(&self.half_height(), &self.radius(), dim)
     }
     */
 
     fn mass_properties(&self, density: &N) -> (N, V, II) {
-        let dim  = Dim::dim(None::<V>);
+        let dim  = na::dim::<V>();
         let mass = cone_volume(&self.half_height(), &self.radius(), dim) * *density;
 
         if dim == 2 {
             // FIXME: not sure about that…
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set(
                 (0, 0),
@@ -315,7 +316,7 @@ Volumetric<N, V, II> for Cone<N> {
                               / Cast::from(3.0)
             );
 
-            let mut center: V = Zero::zero();
+            let mut center: V = na::zero();
             center.set(0, -self.half_height() / Cast::from(2.0));
 
             (mass, center, res)
@@ -329,13 +330,13 @@ Volumetric<N, V, II> for Cone<N> {
 
             let principal = m_sq_radius * Cast::from(3.0 / 10.0);
 
-            let mut res: II = Zero::zero();
+            let mut res: II = na::zero();
 
             res.set((0, 0), principal);
             res.set((1, 1), off_principal.clone());
             res.set((2, 2), off_principal);
 
-            let mut center: V = Zero::zero();
+            let mut center: V = na::zero();
             center.set(0, -self.half_height() / Cast::from(2.0));
 
             (mass, center, res)
@@ -369,12 +370,12 @@ impl<N: Zero, V: Zero, II: Zero> Volumetric<N, V, II> for Plane<N, V> {
     /*
     #[inline]
     fn volume(&self) -> N {
-        Zero::zero()
+        na::zero()
     }
     */
 
     #[inline]
     fn mass_properties(&self, _: &N) -> (N, V, II) {
-        (Zero::zero(), Zero::zero(), Zero::zero())
+        (na::zero(), na::zero(), na::zero())
     }
 }

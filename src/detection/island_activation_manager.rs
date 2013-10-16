@@ -1,6 +1,7 @@
 use std::ptr;
 use std::num::{Zero, One};
 use nalgebra::na::{Cast, AlgebraicVec};
+use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::Integrator;
@@ -46,7 +47,7 @@ IslandActivationManager<N, LV, AV, M, II> {
                threshold:  N,
                mix_factor: N)
                -> @mut IslandActivationManager<N, LV, AV, M, II> {
-        assert!(mix_factor >= Zero::zero() && threshold <= One::one(),
+        assert!(mix_factor >= na::zero() && threshold <= na::one(),
                 "The energy mixing factor must be comprised between 0.0 and 1.0.");
 
         let res = @mut IslandActivationManager {
@@ -157,12 +158,12 @@ for IslandActivationManager<N, LV, AV, M, II> {
                 RB(ref rb) => {
                     // NOTE: this is not the kinetic energy, just a hacky value to detect stabilization
                     // FIXME: take the time in account (to make a true RWA)
-                    let _1: N = One::one();
+                    let _1: N = na::one();
                     b.value.energy = 
                         (_1 - self.mix_factor) * b.value.energy +
-                        self.mix_factor * (rb.lin_vel().sqnorm() + rb.ang_vel().sqnorm());
+                        self.mix_factor * (na::sqnorm(&rb.lin_vel()) + na::sqnorm(&rb.ang_vel()));
 
-                    b.value.energy = b.value.energy.min(&(self.threshold * Cast::from(4.0)));
+                    b.value.energy = b.value.energy.min(&(self.threshold * na::cast(4.0)));
                 },
                 SB(_) => {
                     fail!("Sorry. Energy computation for soft bodies is not implemented yet.")

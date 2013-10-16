@@ -5,6 +5,7 @@ use nalgebra::na::{
     Cast, Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv,
     Vec, AlgebraicVecExt, Cross
 };
+use nalgebra::na;
 use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
@@ -162,7 +163,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                     let curr_pos = rb.translation();
                     let movement = curr_pos - o.value.last_pos;
 
-                    if movement.sqnorm() > o.value.sqthreshold {
+                    if na::sqnorm(&movement) > o.value.sqthreshold {
                         // activate CCD
                         /*
                          * Compute a bounding box enclosing the object motion
@@ -184,7 +185,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                          * Find the minimum toi
                          */
                         let mut min_toi: N = Bounded::max_value();
-                        let old_transform  = rb.transform_ref().translated(&-movement);
+                        let old_transform  = na::append_translation(rb.transform_ref(), &-movement);
                         let mut dir        = movement.clone();
                         let distance       = dir.normalize();
 
@@ -222,7 +223,7 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                          * Revert the object translation at the toi
                          */
                         if min_toi < distance {
-                            rb.translate_by(&(-dir * (distance - min_toi)));
+                            rb.append_translation(&(-dir * (distance - min_toi)));
 
                             /*
                              * We moved the object: ensure the broad phase notices that the object

@@ -1,5 +1,6 @@
-use std::num::{Zero, One};
-use nalgebra::na::{Vec, VecExt, Cross, CrossMatrix, Dim, Rotate, Transform, Row};
+use std::num::One;
+use nalgebra::na::{Vec, VecExt, Cross, CrossMatrix, Rotate, Transform, Row};
+use nalgebra::na;
 use object::volumetric::InertiaTensor;
 use object::Body;
 use detection::joint::anchor::Anchor;
@@ -44,14 +45,14 @@ pub fn cancel_relative_linear_motion<N:  Num + Bounded + Clone,
                                      constraints: &mut [VelocityConstraint<LV, AV, N>],
                                      correction:  &CorrectionMode<N>) {
     let error      = (global2 - *global1) * correction.vel_corr_factor();
-    let rot_axis1  = (global1 - anchor1.center_of_mass()).cross_matrix();
-    let rot_axis2  = (global2 - anchor2.center_of_mass()).cross_matrix();
+    let rot_axis1  = na::cross_matrix(&(global1 - anchor1.center_of_mass()));
+    let rot_axis2  = na::cross_matrix(&(global2 - anchor2.center_of_mass()));
 
-    for i in range(0u, Dim::dim(None::<LV>)) {
-        let mut lin_axis: LV = Zero::zero();
+    for i in range(0u, na::dim::<LV>()) {
+        let mut lin_axis: LV = na::zero();
         let constraint = &mut constraints[i];
 
-        lin_axis.set(i, One::one());
+        lin_axis.set(i, na::one());
 
         let opt_b1 = write_anchor_id(anchor1, &mut constraint.id1);
         let opt_b2 = write_anchor_id(anchor2, &mut constraint.id2);
@@ -82,7 +83,7 @@ pub fn cancel_relative_linear_motion<N:  Num + Bounded + Clone,
         constraint.lobound   = -_M;
         constraint.hibound   = _M;
         constraint.objective = -dvel - error.at(i) / dt;
-        constraint.impulse   = Zero::zero(); // FIXME: cache
+        constraint.impulse   = na::zero(); // FIXME: cache
     }
 }
 

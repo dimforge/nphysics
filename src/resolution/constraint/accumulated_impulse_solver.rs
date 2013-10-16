@@ -2,10 +2,11 @@ use std::ptr;
 // use std::rand::RngUtil;
 use std::num::{One, Orderable, Bounded};
 use nalgebra::na::{
-    AlgebraicVecExt, Cast, Cross, CrossMatrix, Dim,
+    AlgebraicVecExt, Cast, Cross, CrossMatrix,
     RotationWithTranslation, Translation, Rotation,
     Rotate, Transformation, Transform, Inv, Row
 };
+use nalgebra::na;
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::Body;
 use object::volumetric::InertiaTensor;
@@ -32,7 +33,7 @@ impl<LV:  AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone,
      AV:  AlgebraicVecExt<N> + Clone,
      N:   Num + Orderable + Bounded + Signed + Clone + Cast<f32>,
      M:   Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
-          Rotation<AV> + One + Clone + Inv,
+          Rotation<AV> + One + Transformation<M> + Clone + Inv,
      II:  Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone,
      M2:  Row<AV>>
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
@@ -47,7 +48,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             num_second_order_iter:   num_second_order_iter,
             restitution_constraints: ~[],
             friction_constraints:    ~[],
-            cache:                   ImpulseCache::new(step, Dim::dim(None::<LV>)),
+            cache:                   ImpulseCache::new(step, na::dim::<LV>()),
 
             correction: CorrectionParameters {
                 corr_mode:   correction_mode,
@@ -80,17 +81,17 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 constraints: &[Constraint<N, LV, AV, M, II>],
                 joints:      &[uint],
                 bodies:      &[@mut Body<N, LV, AV, M, II>]) {
-        let num_friction_equations    = (Dim::dim(None::<LV>) - 1) * self.cache.len();
+        let num_friction_equations    = (na::dim::<LV>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
 
         for i in joints.iter() {
             match constraints[*i] {
                 BallInSocket(_) => {
-                    num_joint_equations = num_joint_equations + Dim::dim(None::<LV>)
+                    num_joint_equations = num_joint_equations + na::dim::<LV>()
                 },
                 Fixed(_) => {
-                    num_joint_equations = num_joint_equations + Dim::dim(None::<LV>) + Dim::dim(None::<AV>)
+                    num_joint_equations = num_joint_equations + na::dim::<LV>() + na::dim::<AV>()
                 },
                 RBRB(_, _, _) => { }
             }
@@ -117,7 +118,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 _ => { }
             }
 
-            friction_offset = friction_offset + Dim::dim(None::<LV>) - 1;
+            friction_offset = friction_offset + na::dim::<LV>() - 1;
         }
 
         let mut joint_offset = num_restitution_equations;
@@ -131,7 +132,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         &self.correction.corr_mode
                     );
 
-                    joint_offset = joint_offset + Dim::dim(None::<LV>);
+                    joint_offset = joint_offset + na::dim::<LV>();
                 },
                 Fixed(f) => {
                     fixed_equation::fill_second_order_equation(
@@ -141,7 +142,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         &self.correction.corr_mode
                     );
 
-                    joint_offset = joint_offset + Dim::dim(None::<LV>) + Dim::dim(None::<AV>);
+                    joint_offset = joint_offset + na::dim::<LV>() + na::dim::<AV>();
                 },
                 RBRB(_, _, _) => { }
             }
@@ -173,15 +174,15 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * Cast::from(0.85);
 
-            for j in range(0u, Dim::dim(None::<LV>) - 1) {
-                let fc = &self.friction_constraints[i * (Dim::dim(None::<LV>) - 1) + j];
+            for j in range(0u, na::dim::<LV>() - 1) {
+                let fc = &self.friction_constraints[i * (na::dim::<LV>() - 1) + j];
                 imps[1 + j] = fc.impulse * Cast::from(0.85);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().mut_iter().enumerate() {
-            *kv = (kv.first(), offset + i * Dim::dim(None::<LV>));
+            *kv = (kv.first(), offset + i * na::dim::<LV>());
         }
 
         /*
@@ -226,10 +227,13 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 MJLambda[i].lv = MJLambda[i].lv * dt;
                 MJLambda[i].av = MJLambda[i].av * dt;
 
-                let center   = &rb.center_of_mass().clone();
-                let _1: M    = One::one();
-                let delta: M = _1.rotated_wrt_point(&MJLambda[i].av, center).translated(&MJLambda[i].lv);
-                rb.transform_by(&delta);
+                let center = &rb.center_of_mass().clone();
+
+                let mut delta: M = na::one();
+                delta.append_rotation_wrt_point(&MJLambda[i].av, center);
+                delta.append_translation(&MJLambda[i].lv);
+
+                rb.append_transformation(&delta);
             }
         }
     }
@@ -238,7 +242,8 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 impl<LV: AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone,
      AV: AlgebraicVecExt<N> + Clone,
      N:  Num + Orderable + Bounded + Signed + Clone + Cast<f32>,
-     M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone + Inv,
+     M:  Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> + One + Clone +
+         Transformation<M> + Inv,
      II: Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, AV, M>,
      M2: Row<AV>>
 Solver<N, Constraint<N, LV, AV, M, II>> for

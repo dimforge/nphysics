@@ -1,5 +1,6 @@
 use std::num::Zero;
 use nalgebra::na::AlgebraicVec;
+use nalgebra::na;
 
 #[deriving(Clone, Encodable, Decodable)]
 pub struct PointMass<N, V> {
@@ -43,7 +44,7 @@ impl<N: Num + NumCast + Signed + Bounded + Algebraic + Eq + Ord + Clone,
         for (v, m) in vbuf.iter().zip(invmasses.iter()) {
             points.push(PointMass {
                 invmass:    m.clone(),
-                velocity:   Zero::zero(),
+                velocity:   na::zero(),
                 position:   v.clone(),
             });
         }
@@ -58,8 +59,8 @@ impl<N: Num + NumCast + Signed + Bounded + Algebraic + Eq + Ord + Clone,
 
             constraints.push(ConstraintsGeometry {
                 stiffness:   s.clone(),
-                rest_length: (vbuf[v1] - vbuf[v2]).norm(),
-                impulse:     Zero::zero(),
+                rest_length: na::norm(&(vbuf[v1] - vbuf[v2])),
+                impulse:     na::zero(),
                 rb1:         v1 as uint,
                 rb2:         v2 as uint
             });
@@ -68,7 +69,7 @@ impl<N: Num + NumCast + Signed + Bounded + Algebraic + Eq + Ord + Clone,
         SoftBody {
             points:      points,
             constraints: constraints,
-            acc:         Zero::zero(),
+            acc:         na::zero(),
             index:       0,
             active:      true
 
@@ -101,7 +102,7 @@ impl<N, V> SoftBody<N, V> {
 impl<N, V: Zero> SoftBody<N, V> {
     pub fn deactivate(&mut self) {
         for pt in self.points.mut_iter() {
-            pt.velocity = Zero::zero()
+            pt.velocity = na::zero()
         }
 
         self.active = false;

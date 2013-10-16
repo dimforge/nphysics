@@ -1,5 +1,6 @@
 use std::num::Zero;
 use object::{Body, RB, SB};
+use nalgebra::na;
 
 pub struct Anchor<N, LV, AV, M, II, P> {
     body:     Option<@mut Body<N, LV, AV, M, II>>,
@@ -24,7 +25,7 @@ impl<N: Clone, LV: Clone + Zero, AV, M, II, P> Anchor<N, LV, AV, M, II, P> {
                     SB(_)      => fail!("Not yet implemented.")
                 }
             },
-            None => Zero::zero()
+            None => na::zero()
         }
     }
 }

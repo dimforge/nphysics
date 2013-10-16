@@ -16,7 +16,7 @@ pub struct BodySmpEulerIntegrator<N, LV, AV, M, II> {
 
 impl<N:  'static + Clone,
      M:  'static + Clone + Inv + Mul<M, M> + Rotation<AV> + Transform<LV> + Translation<LV> +
-         Rotate<LV> + One,
+         Rotate<LV> + Transformation<M> + One,
      LV: 'static + Clone + Vec<N>,
      AV: 'static + Clone + Vec<N>,
      II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>>
@@ -38,7 +38,8 @@ BodySmpEulerIntegrator<N, LV, AV, M, II> {
 }
 
 impl<N:  Clone,
-     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Transform<LV> + Translation<LV> + Rotate<LV> + One,
+     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Transform<LV> + Translation<LV> + Rotate<LV> +
+         Transformation<M> + One,
      LV: Clone + Vec<N>,
      AV: Clone + Vec<N>,
      II: Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>>
@@ -68,7 +69,7 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodySmpEulerIntegrator<N, LV, AV, M, I
                             &rb.lin_acc(),
                             &rb.ang_acc());
 
-                        rb.transform_by(&t);
+                        rb.append_transformation(&t);
                         rb.set_lin_vel(lv);
                         rb.set_ang_vel(av);
                     }
@@ -85,7 +86,8 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodySmpEulerIntegrator<N, LV, AV, M, I
 impl<N:  Clone,
      LV: Clone + Vec<N>,
      AV: Clone + Vec<N>,
-     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + One,
+     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
+         Transformation<M> + One,
      II: Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv,
      C>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodySmpEulerIntegrator<N, LV, AV, M, II> {

@@ -1,8 +1,9 @@
-use std::num::{Zero, One};
+use std::num::One;
 use nalgebra::na::{
-    AlgebraicVecExt, VecExt, Cross, CrossMatrix, Dim, Basis,
+    AlgebraicVecExt, VecExt, Cross, CrossMatrix,
     Rotate, Transform, Translation, Rotation, Row, Inv
 };
+use nalgebra::na;
 use object::volumetric::InertiaTensor;
 use detection::joint::fixed::Fixed;
 use detection::joint::anchor::Anchor;
@@ -40,7 +41,7 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone,
         &ref2,
         joint.anchor1(),
         joint.anchor2(),
-        constraints.mut_slice_from(Dim::dim(None::<LV>)),
+        constraints.mut_slice_from(na::dim::<LV>()),
         correction);
 }
 
@@ -58,11 +59,11 @@ pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone,
                                      anchor2:     &Anchor<N, LV, AV, M, II, P>,
                                      constraints: &mut [VelocityConstraint<LV, AV, N>],
                                      correction:  &CorrectionMode<N>) {
-    let delta     = ref2.inverted().expect("ref2 must be inversible.") * *ref1;
+    let delta     = na::inv(ref2).expect("ref2 must be inversible.") * *ref1;
     let delta_rot = delta.rotation();
 
     let mut i = 0;
-    do Basis::canonical_basis |rot_axis: AV| {
+    do na::canonical_basis |rot_axis: AV| {
         let constraint = &mut constraints[i];
 
         let opt_b1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
@@ -71,7 +72,7 @@ pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone,
         let opt_rb2 = match opt_b2 { Some(b) => Some(b.to_rigid_body_or_fail()), None => None };
 
         contact_equation::fill_constraint_geometry(
-            Zero::zero(),
+            na::zero(),
             rot_axis.clone(),
             -rot_axis,
             opt_rb1,
@@ -79,16 +80,16 @@ pub fn cancel_relative_angular_motion<N:  Num + Bounded + Clone,
             constraint
         );
 
-        let ang_vel1 = match opt_rb1 { Some(rb) => rb.ang_vel(), None => Zero::zero() };
-        let ang_vel2 = match opt_rb2 { Some(rb) => rb.ang_vel(), None => Zero::zero() };
+        let ang_vel1 = match opt_rb1 { Some(rb) => rb.ang_vel(), None => na::zero() };
+        let ang_vel2 = match opt_rb2 { Some(rb) => rb.ang_vel(), None => na::zero() };
 
         let _M: N = Bounded::max_value();
         constraint.lobound   = -_M;
         constraint.hibound   = _M;
         // FIXME: dont compute the difference at each iteration
-        let error = delta_rot.dot(&rot_axis) * correction.vel_corr_factor() / dt;
-        constraint.objective = (ang_vel2 - ang_vel1).dot(&rot_axis) - error;
-        constraint.impulse   = Zero::zero(); // FIXME: cache
+        let error = na::dot(&delta_rot, &rot_axis) * correction.vel_corr_factor() / dt;
+        constraint.objective = na::dot(&(ang_vel2 - ang_vel1), &rot_axis) - error;
+        constraint.impulse   = na::zero(); // FIXME: cache
 
         i = i + 1;
 

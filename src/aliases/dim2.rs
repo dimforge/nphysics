@@ -69,6 +69,6 @@ InertiaTensor<N, LV<N>, AV<N>, Transform2d<N>> for InertiaTensor2d<N> {
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor2d<N> {
-        *self + na::mat1(mass * na::sqnorm(pt))
+        *self + Mat1::new(mass * na::sqnorm(pt))
     }
 }

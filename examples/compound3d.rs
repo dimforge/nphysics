@@ -13,8 +13,8 @@ extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;
 
-use std::num::One;
 use kiss3d::window::Window;
+use nalgebra::na::{Vec3, Iso3, Translation};
 use nalgebra::na;
 use ncollide::geom::{Geom, Box, Plane, CompoundAABB};
 use nphysics::world::BodyWorld;
@@ -36,12 +36,12 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(na::vec3(0.0f64, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0f64, -9.81, 0.0));
 
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Plane::new(na::vec3(0.0, 1.0, 0.0))), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::new(0.0, 1.0, 0.0))), 0.0f64, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -50,13 +50,12 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     /*
      * Cross shaped geometry
      */
-    let box1 = Box::new(na::vec3(5.0f64, 0.25, 0.25));
-    let box2 = Box::new(na::vec3(0.25f64, 5.0, 0.25));
+    let box1 = Box::new(Vec3::new(5.0f64, 0.25, 0.25));
+    let box2 = Box::new(Vec3::new(0.25f64, 5.0, 0.25));
 
-    let _1: dim3::Transform3d<f64> = One::one();
-    let delta1 = na::translated(&_1, &na::vec3(0.0, -5.0, 0.0));
-    let delta2 = na::translated(&_1, &na::vec3(-5.0, 0.0, 0.0));
-    let delta3 = na::translated(&_1, &na::vec3(5.0, 0.0, 0.0));
+    let delta1 = Iso3::new(Vec3::new(0.0f64, -5.0, 0.0), na::zero());
+    let delta2 = Iso3::new(Vec3::new(-5.0f64, 0.0, 0.0), na::zero());
+    let delta3 = Iso3::new(Vec3::new(5.0f64, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = ~[];
     cross_geoms.push((delta1, Geom::new_box(box1)));
@@ -84,7 +83,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
 
                 let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f64, Dynamic, 0.3, 0.5);
 
-                na::translate_by(&mut rb, &na::vec3(x, y, z));
+                rb.append_translation(&Vec3::new(x, y, z));
 
                 let body = @mut RB(rb);
 
@@ -97,7 +96,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     /*
      * Set up the camera and that is it!
      */
-    graphics.look_at(na::vec3(-30.0, 30.0, -30.0), na::vec3(0.0, 0.0, 0.0));
+    graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
 
     world
 }

@@ -1,6 +1,7 @@
 use std::num::{Zero, Orderable};
 use std::vec;
 use nalgebra::na::Vec;
+use nalgebra::na;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 #[deriving(Eq, ToStr, Clone)]
@@ -12,8 +13,8 @@ pub struct Velocities<LV, AV> {
 impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
     fn new() -> Velocities<LV, AV> {
         Velocities {
-            lv: Zero::zero(),
-            av: Zero::zero()
+            lv: na::zero(),
+            av: na::zero()
         }
     }
 }
@@ -53,7 +54,7 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
         for c in friction.mut_iter() {
             let impulse = restitution[c.friction_limit_id].impulse.clone();
 
-            if impulse > Zero::zero() {
+            if impulse > na::zero() {
                 let bound = c.friction_coeff * impulse;
                 c.lobound = -bound;
                 c.hibound = bound;
@@ -98,13 +99,13 @@ pub fn solve_velocity_constraint<LV: Vec<N> + Clone,
     let mut d_lambda_i = c.objective.clone();
 
     if id1 >= 0 {
-        d_lambda_i = d_lambda_i + c.normal.dot(&MJLambda[id1 as uint].lv)
-                                - c.rot_axis1.dot(&MJLambda[id1 as uint].av);
+        d_lambda_i = d_lambda_i + na::dot(&c.normal, &MJLambda[id1 as uint].lv)
+                                - na::dot(&c.rot_axis1, &MJLambda[id1 as uint].av);
     }
 
     if id2 >= 0 {
-        d_lambda_i = d_lambda_i - c.normal.dot(&MJLambda[id2 as uint].lv)
-                                - c.rot_axis2.dot(&MJLambda[id2 as uint].av);
+        d_lambda_i = d_lambda_i - na::dot(&c.normal, &MJLambda[id2 as uint].lv)
+                                - na::dot(&c.rot_axis2, &MJLambda[id2 as uint].av);
     }
 
     d_lambda_i = d_lambda_i * c.inv_projected_mass;

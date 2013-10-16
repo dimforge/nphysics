@@ -6,6 +6,7 @@ use nalgebra::na::{
     Translation, Rotate, Rotation, Transform, AbsoluteRotate, Inv,
     Cast, Vec, AlgebraicVecExt, Cross, Dim
 };
+use nalgebra::na;
 use ncollide::geom::AnnotatedPoint;
 use ncollide::broad;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
@@ -52,7 +53,7 @@ impl<N:  Clone + Zero + Cast<f32>,
      II>
 Dispatcher<N, LV, AV, M, II> {
     pub fn new() -> Dispatcher<N, LV, AV, M, II> {
-        let template = RecursionTemplate::new(Dim::dim(None::<LV>));
+        let template = RecursionTemplate::new(na::dim::<LV>());
         let simplex  = JohnsonSimplex::new(template);
         Dispatcher {
             simplex: simplex

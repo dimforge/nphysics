@@ -1,5 +1,6 @@
 use std::num::One;
 use nalgebra::na::{Vec, Translation, Rotation, RotationWithTranslation};
+use nalgebra::na;
 
 pub fn explicit_integrate<M:  Translation<LV> + Rotation<AV> + One,
                           LV: Vec<N>,
@@ -85,10 +86,10 @@ pub fn displacement<M: RotationWithTranslation<LV, AV> + One,
                     lin_vel:        &LV,
                     ang_vel:        &AV)
                     -> M {
-    let _1: M = One::one();
-    let mut res: M = _1.rotated_wrt_point(&(ang_vel * dt), center_of_mass);
+    let mut res: M = na::one();
+    res.append_rotation_wrt_point(&(ang_vel * dt), center_of_mass);
 
-    res.translate_by(&(lin_vel * dt));
+    res.append_translation(&(lin_vel * dt));
 
     res
 }

@@ -1,6 +1,6 @@
 use nalgebra::na;
 use nalgebra::structs::mat::Mat3MulRhs;
-use nalgebra::na::{Norm, Vec3, Mat3, Iso3, Outer};
+use nalgebra::na::{Vec3, Mat3, Iso3};
 use ncollide::geom::{Geom, Ball, Plane, Box, Cylinder, Cone};
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
@@ -71,19 +71,19 @@ InertiaTensor<N, LV<N>, AV<N>, Transform3d<N>> for InertiaTensor3d<N> {
     }
     #[inline]
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
-        let inv = na::inverted(&t.rotation).unwrap();
+        let inv = na::inv(&t.rotation).unwrap();
         *t.rotation.submat() * *self * *inv.submat()
     }
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: &N, pt: &LV<N>) -> InertiaTensor3d<N> {
-        let diag  = pt.sqnorm();
-        let diagm = na::mat3(
+        let diag  = na::sqnorm(pt);
+        let diagm = Mat3::new(
             diag.clone(), na::zero(),   na::zero(),
             na::zero(),   diag.clone(), na::zero(),
             na::zero(),   na::zero(),   diag
         );
 
-        *self + (diagm - pt.outer(pt)) * *mass
+        *self + (diagm - na::outer(pt, pt)) * *mass
     }
 }

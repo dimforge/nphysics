@@ -5,6 +5,7 @@ use nalgebra::na::{
     Cast, Inv, Indexable,
     VecExt, AlgebraicVecExt, Dim
 };
+use nalgebra::na;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use object::volumetric::{InertiaTensor, Volumetric};
@@ -39,8 +40,8 @@ pub struct RigidBody<N, LV, AV, M, II> {
 
 impl<N, LV: Zero, AV: Zero, M, II> RigidBody<N, LV, AV, M, II> {
     pub fn deactivate(&mut self) {
-        self.lin_vel = Zero::zero();
-        self.ang_vel = Zero::zero();
+        self.lin_vel = na::zero();
+        self.ang_vel = na::zero();
         self.active  = false;
     }
 }
@@ -112,7 +113,7 @@ RigidBody<N, LV, AV, M, II> {
                friction:    N) -> RigidBody<N, LV, AV, M, II> {
         let (inv_mass, center_of_mass, inv_inertia) =
             match state {
-                Static    => (Zero::zero(), Zero::zero(), Zero::zero()),
+                Static    => (na::zero(), na::zero(), na::zero()),
                 Dynamic   => {
                     if density.is_zero() {
                         fail!("A dynamic body must not have a zero density.")
@@ -127,10 +128,10 @@ RigidBody<N, LV, AV, M, II> {
 
                     let i_wrt_com: II = ii.to_relative_wrt_point(&m, &c);
                     let ii_wrt_com: II = 
-                          i_wrt_com.inverted()
+                          na::inv(&i_wrt_com)
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
-                    let _1: N = One::one();
+                    let _1: N = na::one();
                     (
                         _1 / m,
                         c,
@@ -143,16 +144,16 @@ RigidBody<N, LV, AV, M, II> {
             RigidBody {
                 state:                state,
                 geom:                 geom,
-                local_to_world:       One::one(),
-                lin_vel:              Zero::zero(),
-                ang_vel:              Zero::zero(),
+                local_to_world:       na::one(),
+                lin_vel:              na::zero(),
+                ang_vel:              na::zero(),
                 inv_mass:             inv_mass,
                 ls_inv_inertia:       inv_inertia.clone(),
                 inv_inertia:          inv_inertia,
                 ls_center_of_mass:    center_of_mass,
-                center_of_mass:       Zero::zero(),
-                lin_acc:              Zero::zero(),
-                ang_acc:              Zero::zero(),
+                center_of_mass:       na::zero(),
+                lin_acc:              na::zero(),
+                ang_acc:              na::zero(),
                 friction:             friction,
                 restitution:          restitution,
                 index:                0,
@@ -242,7 +243,8 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
 }
 
 impl<N:  Clone,
-     M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Rotate<LV>,
+     M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Transformation<M> +
+         Rotate<LV>,
      LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
      II: Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone>
@@ -254,22 +256,39 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
     #[inline]
     fn inv_transformation(&self) -> M {
-        self.local_to_world.inverted().unwrap()
+        na::inv(&self.local_to_world).unwrap()
     }
 
     #[inline]
-    fn transform_by(&mut self, to_append: &M) {
-        self.local_to_world = *to_append * self.local_to_world;
+    fn append_transformation(&mut self, to_append: &M) {
+        self.local_to_world.append_transformation(to_append);
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
     }
 
     #[inline]
-    fn transformed(&self, m: &M) -> RigidBody<N, LV, AV, M, II> {
-        let mut res = self.clone();
+    fn append_transformation_cpy(rb: &RigidBody<N, LV, AV, M, II>, m: &M) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = rb.clone();
 
-        res.transform_by(m);
+        res.append_transformation(m);
+
+        res
+    }
+
+    #[inline]
+    fn prepend_transformation(&mut self, to_prepend: &M) {
+        self.local_to_world.prepend_transformation(to_prepend);
+
+        self.update_center_of_mass();
+        self.update_inertia_tensor();
+    }
+
+    #[inline]
+    fn prepend_transformation_cpy(rb: &RigidBody<N, LV, AV, M, II>, m: &M) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = rb.clone();
+
+        res.prepend_transformation(m);
 
         res
     }
@@ -302,16 +321,31 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn translate_by(&mut self, t: &LV) {
-        self.local_to_world.translate_by(t);
+    fn append_translation(&mut self, t: &LV) {
+        self.local_to_world.append_translation(t);
         self.update_center_of_mass();
     }
 
     #[inline]
-    fn translated(&self, t: &LV) -> RigidBody<N, LV, AV, M, II> {
-        let mut res = self.clone();
+    fn append_translation_cpy(rb: &RigidBody<N, LV, AV, M, II>, t: &LV) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = rb.clone();
 
-        res.translate_by(t);
+        res.append_translation(t);
+
+        res
+    }
+
+    #[inline]
+    fn prepend_translation(&mut self, t: &LV) {
+        self.local_to_world.prepend_translation(t);
+        self.update_center_of_mass();
+    }
+
+    #[inline]
+    fn prepend_translation_cpy(rb: &RigidBody<N, LV, AV, M, II>, t: &LV) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = rb.clone();
+
+        res.prepend_translation(t);
 
         res
     }
@@ -341,18 +375,35 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn rotate_by(&mut self, rot: &AV) {
-        self.local_to_world.rotate_by(rot);
+    fn append_rotation(&mut self, rot: &AV) {
+        self.local_to_world.append_rotation(rot);
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
     }
 
     #[inline]
-    fn rotated(&self, rot: &AV) -> RigidBody<N, LV, AV, M, II> {
-        let mut res = self.clone();
+    fn append_rotation_cpy(rb: &RigidBody<N, LV, AV, M, II>, rot: &AV) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = rb.clone();
 
-        res.rotate_by(rot);
+        res.append_rotation(rot);
+
+        res
+    }
+
+    #[inline]
+    fn prepend_rotation(&mut self, rot: &AV) {
+        self.local_to_world.prepend_rotation(rot);
+
+        self.update_center_of_mass();
+        self.update_inertia_tensor();
+    }
+
+    #[inline]
+    fn prepend_rotation_cpy(rb: &RigidBody<N, LV, AV, M, II>, rot: &AV) -> RigidBody<N, LV, AV, M, II> {
+        let mut res = rb.clone();
+
+        res.prepend_rotation(rot);
 
         res
     }

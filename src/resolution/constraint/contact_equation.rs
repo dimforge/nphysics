@@ -1,5 +1,6 @@
 use std::num::{One, Zero, Orderable, Bounded};
-use nalgebra::na::{Vec, VecExt, AlgebraicVecExt, Cross, Cast, Basis, Rotate, Transform};
+use nalgebra::na::{Vec, VecExt, AlgebraicVecExt, Cross, Cast, Rotate, Transform};
+use nalgebra::na;
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
@@ -26,7 +27,7 @@ impl<N: Zero + Bounded + Clone> CorrectionMode<N> {
         match *self {
             VelocityAndPosition(_, ref p, _)         => p.clone(),
             VelocityAndPositionThresold(_, ref p, _) => p.clone(),
-            Velocity(_)                              => Zero::zero()
+            Velocity(_)                              => na::zero()
         }
     }
 
@@ -65,16 +66,16 @@ pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
      * Fill b
      */
     if coll.depth >= correction.corr_mode.min_depth_for_pos_corr() {
-        constraint.objective = correction.corr_mode.pos_corr_factor() * coll.depth.max(&Zero::zero()) / dt;
+        constraint.objective = correction.corr_mode.pos_corr_factor() * coll.depth.max(&na::zero()) / dt;
     }
     else {
-        constraint.objective = Zero::zero();
+        constraint.objective = na::zero();
     }
 
     /*
      * Reset forces
      */
-    constraint.impulse = Zero::zero();
+    constraint.impulse = na::zero();
 }
 
 // FIXME: note that removing the Clone constraint on N leads to an ICE
@@ -105,7 +106,7 @@ pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                              restitution,
                              coll.depth.clone(),
                              cache[0].clone(), // coll.impulses[0].clone(),
-                             Zero::zero(),
+                             na::zero(),
                              Bounded::max_value(),
                              rb1,
                              rb2,
@@ -120,17 +121,17 @@ pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
 
     let mut i = 0;
 
-    do coll.normal.orthonormal_subspace_basis() |friction_axis| {
+    do na::orthonormal_subspace_basis(&coll.normal) |friction_axis| {
         let constraint = &mut fconstraints[idf + i];
 
         fill_velocity_constraint(dt.clone(),
                                  friction_axis,
                                  center.clone(),
-                                 Zero::zero(),
-                                 Zero::zero(),
+                                 na::zero(),
+                                 na::zero(),
                                  cache[i + 1].clone(), // coll.impulses[i].clone(),
-                                 Zero::zero(), // dont setup the limit now
-                                 Zero::zero(), // dont setup the limit now
+                                 na::zero(), // dont setup the limit now
+                                 na::zero(), // dont setup the limit now
                                  rb1,
                                  rb2,
                                  constraint,
@@ -156,7 +157,7 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
                                 rb2:        Option<&RigidBody<N, LV, AV, M, II>>,
                                 constraint: &mut VelocityConstraint<LV, AV, N>) {
     constraint.normal             = normal;
-    constraint.inv_projected_mass = Zero::zero();
+    constraint.inv_projected_mass = na::zero();
 
     match rb1 {
         Some(rb) => {
@@ -167,8 +168,8 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
             constraint.weighted_rot_axis1 = rb.inv_inertia().apply(&constraint.rot_axis1);
 
             constraint.inv_projected_mass = constraint.inv_projected_mass +
-                constraint.normal.dot(&constraint.weighted_normal1) +
-                constraint.rot_axis1.dot(&constraint.weighted_rot_axis1);
+                na::dot(&constraint.normal, &constraint.weighted_normal1) +
+                na::dot(&constraint.rot_axis1, &constraint.weighted_rot_axis1);
         },
         None => { }
     }
@@ -182,13 +183,13 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
             constraint.weighted_rot_axis2 = rb.inv_inertia().apply(&constraint.rot_axis2);
 
             constraint.inv_projected_mass = constraint.inv_projected_mass +
-                constraint.normal.dot(&constraint.weighted_normal2) +
-                constraint.rot_axis2.dot(&constraint.weighted_rot_axis2);
+                na::dot(&constraint.normal, &constraint.weighted_normal2) +
+                na::dot(&constraint.rot_axis2, &constraint.weighted_rot_axis2);
         },
         None => { }
     }
 
-    let _1: N = One::one();
+    let _1: N = na::one();
     constraint.inv_projected_mass = _1 / constraint.inv_projected_mass;
 }
 
@@ -209,8 +210,8 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
                             rb2:             &RigidBody<N, LV, AV, M, II>,
                             constraint:      &mut VelocityConstraint<LV, AV, N>,
                             correction:      &CorrectionParameters<N>) {
-    let rot_axis1 = (center - *rb1.center_of_mass()).cross(&-normal);
-    let rot_axis2 = (center - *rb2.center_of_mass()).cross(&normal);
+    let rot_axis1 = na::cross(&(center - *rb1.center_of_mass()), &-normal);
+    let rot_axis2 = na::cross(&(center - *rb2.center_of_mass()), &normal);
 
     let opt_rb1 = if rb1.can_move() { Some(rb1) } else { None };
     let opt_rb2 = if rb2.can_move() { Some(rb2) } else { None };
@@ -239,7 +240,7 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
 
     constraint.objective = -constraint.objective;
 
-    if depth < Zero::zero() {
+    if depth < na::zero() {
         constraint.objective =  constraint.objective + depth / dt
     }
     else if depth < correction.corr_mode.max_depth_for_vel_corr() {
@@ -268,20 +269,20 @@ pub fn relative_velocity<N:  Num,
                          rot_axis2: &AV,
                          dt:        &N)
                          -> N {
-    let mut dvel: N = Zero::zero();
+    let mut dvel: N = na::zero();
 
     match rb1 {
         Some(rb) => {
-            dvel = dvel - (rb.lin_vel() + rb.lin_acc() * *dt).dot(normal)
-                        + (rb.ang_vel() + rb.ang_acc() * *dt).dot(rot_axis1);
+            dvel = dvel - na::dot(&(rb.lin_vel() + rb.lin_acc() * *dt), normal)
+                        + na::dot(&(rb.ang_vel() + rb.ang_acc() * *dt), rot_axis1);
         },
         None => { }
     }
 
     match rb2 {
         Some(rb) => {
-            dvel = dvel + (rb.lin_vel() + rb.lin_acc() * *dt).dot(normal)
-                        + (rb.ang_vel() + rb.ang_acc() * *dt).dot(rot_axis2);
+            dvel = dvel + na::dot(&(rb.lin_vel() + rb.lin_acc() * *dt), normal)
+                        + na::dot(&(rb.ang_vel() + rb.ang_acc() * *dt), rot_axis2);
         },
         None => { }
     }

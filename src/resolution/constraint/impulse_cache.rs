@@ -3,6 +3,7 @@ use std::rand::{IsaacRng, Rng};
 use std::num::Zero;
 use std::vec;
 use nalgebra::na::Vec;
+use nalgebra::na;
 use std::hashmap::HashMap;
 
 #[deriving(Eq)]
@@ -50,8 +51,8 @@ ImpulseCache<N, V> {
         ImpulseCache {
             hash_prev:           HashMap::with_capacity_and_keys(rng.gen(), rng.gen(), 32),
             hash_next:           HashMap::with_capacity_and_keys(rng.gen(), rng.gen(), 32),
-            cache_prev:          vec::from_elem(impulse_per_contact, Zero::zero()),
-            cache_next:          vec::from_elem(impulse_per_contact, Zero::zero()),
+            cache_prev:          vec::from_elem(impulse_per_contact, na::zero()),
+            cache_next:          vec::from_elem(impulse_per_contact, na::zero()),
             step:                step,
             impulse_per_contact: impulse_per_contact
         }
@@ -80,7 +81,7 @@ ImpulseCache<N, V> {
         let begin = self.cache_next.len();
 
         do self.impulse_per_contact.times {
-            self.cache_next.push(Zero::zero());
+            self.cache_next.push(na::zero());
         }
 
         let end = self.cache_next.len();

@@ -2,9 +2,10 @@ use std::num::{Zero, One};
 use nalgebra::na::{
     Row, Inv,
     Rotation, Rotate, AbsoluteRotate,
-    Translation, Transform,
+    Translation, Transform, Transformation,
     AlgebraicVecExt, Cast, Cross, CrossMatrix
 };
+use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use ncollide::ray::Ray;
@@ -51,7 +52,7 @@ impl<N:  'static + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic + Orde
          ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
      AV: 'static + Clone + Zero + AlgebraicVecExt<N>,
      M:  'static + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Transform<LV> + AbsoluteRotate<LV> + Mul<M, M> + One,
+         Transform<LV> + Transformation<M> + AbsoluteRotate<LV> + Mul<M, M> + One,
      II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>,
      CM: Row<AV>>
 BodyWorld<N, LV, AV, M, II, CM> {
@@ -65,7 +66,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         let events = @mut SignalEmiter::new();
 
         // For the intergration
-        let forces     = BodyForceGenerator::new(events, Zero::zero(), Zero::zero());
+        let forces     = BodyForceGenerator::new(events, na::zero(), na::zero());
         let integrator = BodySmpEulerIntegrator::new(events);
 
         /*

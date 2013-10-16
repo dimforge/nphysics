@@ -1,7 +1,7 @@
 use std::num::One;
 use kiss3d::window;
 use kiss3d::object::Object;
-use nalgebra::na::Vec3;
+use nalgebra::na::{Vec3, Transformation, Rotation};
 use nalgebra::na;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
@@ -23,7 +23,7 @@ impl Cylinder {
                window: &mut window::Window) -> Cylinder {
         let mut realign: dim3::Transform3d<f64> = One::one();
         let _frac_pi_2: f64 = Real::frac_pi_2();
-        na::rotate_by(&mut realign, &na::vec3(0.0f64, 0.0, -_frac_pi_2));
+        realign.append_rotation(&Vec3::new(0.0f64, 0.0, -_frac_pi_2));
 
         let mut res = Cylinder {
             color:      color,
@@ -51,7 +51,7 @@ impl SceneNode for Cylinder {
     fn update(&mut self) {
         let rb = self.body.to_rigid_body_or_fail();
         if rb.is_active() {
-            na::set_transformation(&mut self.gfx, na::transformation(rb) * self.delta);
+            self.gfx.set_transformation(na::transformation(rb) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

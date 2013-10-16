@@ -1,4 +1,5 @@
 use std::num::Zero;
+use nalgebra::na;
 
 #[deriving(Eq, ToStr, Clone)]
 pub struct VelocityConstraint<LV, AV, N> {
@@ -28,27 +29,27 @@ pub struct VelocityConstraint<LV, AV, N> {
 impl<LV: Zero, AV: Zero, N: Zero> VelocityConstraint<LV, AV, N> {
     pub fn new() -> VelocityConstraint<LV, AV, N> {
         VelocityConstraint {
-            normal:             Zero::zero(),
+            normal:             na::zero(),
 
-            weighted_normal1:   Zero::zero(),
-            weighted_normal2:   Zero::zero(),
+            weighted_normal1:   na::zero(),
+            weighted_normal2:   na::zero(),
 
-            rot_axis1:          Zero::zero(),
-            weighted_rot_axis1: Zero::zero(),
+            rot_axis1:          na::zero(),
+            weighted_rot_axis1: na::zero(),
 
-            rot_axis2:          Zero::zero(),
-            weighted_rot_axis2: Zero::zero(),
+            rot_axis2:          na::zero(),
+            weighted_rot_axis2: na::zero(),
 
-            inv_projected_mass: Zero::zero(),
+            inv_projected_mass: na::zero(),
 
-            impulse:            Zero::zero(),
-            hibound:            Zero::zero(),
-            lobound:            Zero::zero(),
-            objective:          Zero::zero(),
+            impulse:            na::zero(),
+            hibound:            na::zero(),
+            lobound:            na::zero(),
+            objective:          na::zero(),
             id1:                -1,
             id2:                -1,
             friction_limit_id:  0,
-            friction_coeff:     Zero::zero()
+            friction_coeff:     na::zero()
         }
     }
 }
