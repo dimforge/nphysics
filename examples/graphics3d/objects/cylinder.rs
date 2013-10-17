@@ -9,21 +9,21 @@ use engine::SceneNode;
 struct Cylinder {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
-    priv delta:      dim3::Transform3d<f64>,
+    priv delta:      dim3::Transform3d<f32>,
     priv gfx:        Object,
-    priv body:       @mut dim3::Body3d<f64>,
+    priv body:       @mut dim3::Body3d<f32>,
 }
 
 impl Cylinder {
-    pub fn new(body:   @mut dim3::Body3d<f64>,
-               delta:  dim3::Transform3d<f64>,
-               r:     f64,
-               h:     f64,
+    pub fn new(body:   @mut dim3::Body3d<f32>,
+               delta:  dim3::Transform3d<f32>,
+               r:     f32,
+               h:     f32,
                color:  Vec3<f32>,
                window: &mut window::Window) -> Cylinder {
-        let mut realign: dim3::Transform3d<f64> = One::one();
-        let _frac_pi_2: f64 = Real::frac_pi_2();
-        realign.append_rotation(&Vec3::new(0.0f64, 0.0, -_frac_pi_2));
+        let mut realign: dim3::Transform3d<f32> = One::one();
+        let _frac_pi_2: f32 = Real::frac_pi_2();
+        realign.append_rotation(&Vec3::new(0.0f32, 0.0, -_frac_pi_2));
 
         let mut res = Cylinder {
             color:      color,

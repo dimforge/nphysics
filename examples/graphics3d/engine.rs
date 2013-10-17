@@ -50,11 +50,11 @@ impl GraphicsManager {
         }
     }
 
-    pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
+    pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
         simulate::simulate(builder)
     }
 
-    pub fn remove(&mut self, window: &mut Window, body: @mut dim3::Body3d<f64>) {
+    pub fn remove(&mut self, window: &mut Window, body: @mut dim3::Body3d<f32>) {
         let key = ptr::to_mut_unsafe_ptr(body) as uint;
 
         match self.rb2sn.find(&key) {
@@ -70,7 +70,7 @@ impl GraphicsManager {
         self.obj2color.remove(&key);
     }
 
-    pub fn add(&mut self, window: &mut Window, body: @mut dim3::Body3d<f64>) {
+    pub fn add(&mut self, window: &mut Window, body: @mut dim3::Body3d<f32>) {
 
         let nodes = {
             let rb = body.to_rigid_body_or_fail();
@@ -86,9 +86,9 @@ impl GraphicsManager {
 
     fn add_geom(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f64>,
-                delta:  dim3::Transform3d<f64>,
-                geom:   &dim3::Geom3d<f64>,
+                body:   @mut dim3::Body3d<f32>,
+                delta:  dim3::Transform3d<f32>,
+                geom:   &dim3::Geom3d<f32>,
                 out:    &mut ~[@mut SceneNode]) {
         match *geom {
             PlaneGeom(ref p)    => self.add_plane(window, body, p, out),
@@ -111,8 +111,8 @@ impl GraphicsManager {
 
     fn add_plane(&mut self,
                  window: &mut Window,
-                 body:   @mut dim3::Body3d<f64>,
-                 geom:   &dim3::Plane3d<f64>,
+                 body:   @mut dim3::Body3d<f32>,
+                 geom:   &dim3::Plane3d<f32>,
                  out:    &mut ~[@mut SceneNode]) {
         let position = na::translation(body.to_rigid_body_or_fail());
         let normal   = na::rotate(body.to_rigid_body_or_fail().transform_ref(), &geom.normal());
@@ -123,9 +123,9 @@ impl GraphicsManager {
 
     fn add_ball(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f64>,
-                delta:  dim3::Transform3d<f64>,
-                geom:   &dim3::Ball3d<f64>,
+                body:   @mut dim3::Body3d<f32>,
+                delta:  dim3::Transform3d<f32>,
+                geom:   &dim3::Ball3d<f32>,
                 out:    &mut ~[@mut SceneNode]) {
         let color = self.color_for_object(body);
         out.push(@mut Ball::new(body, delta, geom.radius(), color, window) as @mut SceneNode)
@@ -133,9 +133,9 @@ impl GraphicsManager {
 
     fn add_box(&mut self,
                window: &mut Window,
-               body:   @mut dim3::Body3d<f64>,
-               delta:  dim3::Transform3d<f64>,
-               geom:   &dim3::Box3d<f64>,
+               body:   @mut dim3::Body3d<f32>,
+               delta:  dim3::Transform3d<f32>,
+               geom:   &dim3::Box3d<f32>,
                out:    &mut ~[@mut SceneNode]) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
@@ -148,9 +148,9 @@ impl GraphicsManager {
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
-                    body:   @mut dim3::Body3d<f64>,
-                    delta:  dim3::Transform3d<f64>,
-                    geom:   &dim3::Cylinder3d<f64>,
+                    body:   @mut dim3::Body3d<f32>,
+                    delta:  dim3::Transform3d<f32>,
+                    geom:   &dim3::Cylinder3d<f32>,
                     out:    &mut ~[@mut SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
@@ -162,9 +162,9 @@ impl GraphicsManager {
 
     fn add_cone(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f64>,
-                delta:  dim3::Transform3d<f64>,
-                geom:   &dim3::Cone3d<f64>,
+                body:   @mut dim3::Body3d<f32>,
+                delta:  dim3::Transform3d<f32>,
+                geom:   &dim3::Cone3d<f32>,
                 out:    &mut ~[@mut SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
@@ -195,16 +195,16 @@ impl GraphicsManager {
         self.curr_is_arc_ball = !self.curr_is_arc_ball;
     }
 
-    pub fn look_at(&mut self, eye: Vec3<f64>, at: Vec3<f64>) {
+    pub fn look_at(&mut self, eye: Vec3<f32>, at: Vec3<f32>) {
         self.arc_ball.look_at_z(eye, at);
         self.first_person.look_at_z(eye, at);
     }
 
-    pub fn body_to_scene_node<'r>(&'r self, rb: @mut dim3::Body3d<f64>) -> Option<&'r ~[@mut SceneNode]> {
+    pub fn body_to_scene_node<'r>(&'r self, rb: @mut dim3::Body3d<f32>) -> Option<&'r ~[@mut SceneNode]> {
         self.rb2sn.find(&(ptr::to_mut_unsafe_ptr(rb) as uint))
     }
 
-    pub fn color_for_object(&mut self, body: &dim3::Body3d<f64>) -> Vec3<f32> {
+    pub fn color_for_object(&mut self, body: &dim3::Body3d<f32>) -> Vec3<f32> {
         let key = ptr::to_unsafe_ptr(body) as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,

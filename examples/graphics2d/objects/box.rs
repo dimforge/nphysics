@@ -9,16 +9,16 @@ use draw_helper::DRAW_SCALE;
 
 struct Box<'self> {
     priv color: Vec3<u8>,
-    priv delta: dim2::Transform2d<f64>,
-    priv body:  @mut dim2::Body2d<f64>,
+    priv delta: dim2::Transform2d<f32>,
+    priv body:  @mut dim2::Body2d<f32>,
     priv gfx:   RectangleShape<'self>
 }
 
 impl<'self> Box<'self> {
-    pub fn new(body:  @mut dim2::Body2d<f64>,
-               delta: dim2::Transform2d<f64>,
-               rx:    f64,
-               ry:    f64,
+    pub fn new(body:  @mut dim2::Body2d<f32>,
+               delta: dim2::Transform2d<f32>,
+               rx:    f32,
+               ry:    f32,
                color: Vec3<u8>) -> Box {
         let mut res = Box {
             color: color,

@@ -31,17 +31,17 @@ fn main() {
     GraphicsManager::simulate(compound_3d)
 }
 
-pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
+pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f32> {
     /*
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec3::new(0.0f64, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
 
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::new(0.0, 1.0, 0.0))), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::new(0.0f32, 1.0, 0.0))), 0.0, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -50,12 +50,12 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     /*
      * Cross shaped geometry
      */
-    let box1 = Box::new(Vec3::new(5.0f64, 0.25, 0.25));
-    let box2 = Box::new(Vec3::new(0.25f64, 5.0, 0.25));
+    let box1 = Box::new(Vec3::new(5.0f32, 0.25, 0.25));
+    let box2 = Box::new(Vec3::new(0.25f32, 5.0, 0.25));
 
-    let delta1 = Iso3::new(Vec3::new(0.0f64, -5.0, 0.0), na::zero());
-    let delta2 = Iso3::new(Vec3::new(-5.0f64, 0.0, 0.0), na::zero());
-    let delta3 = Iso3::new(Vec3::new(5.0f64, 0.0, 0.0), na::zero());
+    let delta1 = Iso3::new(Vec3::new(0.0f32, -5.0, 0.0), na::zero());
+    let delta2 = Iso3::new(Vec3::new(-5.0f32, 0.0, 0.0), na::zero());
+    let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = ~[];
     cross_geoms.push((delta1, Geom::new_box(box1)));
@@ -70,18 +70,18 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     let num     = 6;
     let rad     = 5.0;
     let shift   = rad * 2.0;
-    let centerx = shift * (num as f64) / 2.0;
+    let centerx = shift * (num as f32) / 2.0;
     let centery = 30.0 + shift / 2.0;
-    let centerz = shift * (num as f64) / 2.0;
+    let centerz = shift * (num as f32) / 2.0;
 
     for i in range(0u, num) {
         for j in range(0u, num) {
             for k in range(0u, num) {
-                let x = i as f64 * shift - centerx;
-                let y = j as f64 * shift + centery;
-                let z = k as f64 * shift - centerz;
+                let x = i as f32 * shift - centerx;
+                let y = j as f32 * shift + centery;
+                let z = k as f32 * shift - centerz;
 
-                let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f64, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f32, Dynamic, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

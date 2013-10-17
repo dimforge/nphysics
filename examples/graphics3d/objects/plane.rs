@@ -6,13 +6,13 @@ use engine::SceneNode;
 
 struct Plane {
     priv gfx:  Object,
-    priv body: @mut dim3::Body3d<f64>,
+    priv body: @mut dim3::Body3d<f32>,
 }
 
 impl Plane {
-    pub fn new(body:   @mut dim3::Body3d<f64>,
-               pos:    &Vec3<f64>,
-               normal: &Vec3<f64>,
+    pub fn new(body:   @mut dim3::Body3d<f32>,
+               pos:    &Vec3<f32>,
+               normal: &Vec3<f32>,
                color:  Vec3<f32>,
                window: &mut window::Window) -> Plane {
 

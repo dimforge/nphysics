@@ -31,11 +31,11 @@ impl<'self> GraphicsManager<'self> {
         }
     }
 
-    pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
+    pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f32>) {
         simulate::simulate(builder)
     }
 
-    pub fn add(&mut self, body: @mut dim2::Body2d<f64>) {
+    pub fn add(&mut self, body: @mut dim2::Body2d<f32>) {
 
         let nodes = {
             let rb = body.to_rigid_body_or_fail();
@@ -50,9 +50,9 @@ impl<'self> GraphicsManager<'self> {
     }
 
     fn add_geom(&mut self,
-                body:  @mut dim2::Body2d<f64>,
-                delta: dim2::Transform2d<f64>,
-                geom:  &dim2::Geom2d<f64>,
+                body:  @mut dim2::Body2d<f32>,
+                delta: dim2::Transform2d<f32>,
+                geom:  &dim2::Geom2d<f32>,
                 out:   &mut ~[SceneNode<'self>]) {
         match *geom {
             PlaneGeom(ref p)    => self.add_plane(body, p, out),
@@ -74,24 +74,24 @@ impl<'self> GraphicsManager<'self> {
     }
 
     fn add_plane(&mut self,
-                 _: @mut dim2::Body2d<f64>,
-                 _: &dim2::Plane2d<f64>,
+                 _: @mut dim2::Body2d<f32>,
+                 _: &dim2::Plane2d<f32>,
                  _:  &mut ~[SceneNode]) {
     }
 
     fn add_ball(&mut self,
-                body:  @mut dim2::Body2d<f64>,
-                delta: dim2::Transform2d<f64>,
-                geom:  &dim2::Ball2d<f64>,
+                body:  @mut dim2::Body2d<f32>,
+                delta: dim2::Transform2d<f32>,
+                geom:  &dim2::Ball2d<f32>,
                 out:   &mut ~[SceneNode]) {
         let color = self.color_for_object(body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
     }
 
     fn add_box(&mut self,
-               body:  @mut dim2::Body2d<f64>,
-               delta: dim2::Transform2d<f64>,
-               geom:  &dim2::Box2d<f64>,
+               body:  @mut dim2::Body2d<f32>,
+               delta: dim2::Transform2d<f32>,
+               geom:  &dim2::Box2d<f32>,
                out:   &mut ~[SceneNode]) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
@@ -126,7 +126,7 @@ impl<'self> GraphicsManager<'self> {
     }
 
 
-    pub fn color_for_object(&mut self, body: &dim2::Body2d<f64>) -> Vec3<u8> {
+    pub fn color_for_object(&mut self, body: &dim2::Body2d<f32>) -> Vec3<u8> {
         let key = ptr::to_unsafe_ptr(body) as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,

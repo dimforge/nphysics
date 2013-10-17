@@ -30,18 +30,18 @@ fn main() {
     GraphicsManager::simulate(boxes_vee_3d)
 }
 
-pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
+pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f32> {
     /*
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec3::new(0.0f64, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
 
     /*
      * Plane
      */
-    let geom = Geom::new_plane(Plane::new(Vec3::new(0.0, 1.0, 0.0)));
-    let body = @mut RB(RigidBody::new(geom, 0.0f64, Static, 0.3, 0.6));
+    let geom = Geom::new_plane(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)));
+    let body = @mut RB(RigidBody::new(geom, 0.0f32, Static, 0.3, 0.6));
 
     world.add_body(body);
     graphics.add(window, body);
@@ -52,19 +52,19 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     let num     = 8;
     let rad     = 1.0;
     let shift   = rad * 2.0;
-    let centerx = shift * (num as f64) / 2.0;
+    let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
-    let centerz = shift * (num as f64) / 2.0;
+    let centerz = shift * (num as f32) / 2.0;
 
     for i in range(0u, num) {
         for j in range(0u, num) {
             for k in range(0u, num) {
-                let x = i as f64 * shift - centerx;
-                let y = j as f64 * shift + centery;
-                let z = k as f64 * shift - centerz;
+                let x = i as f32 * shift - centerx;
+                let y = j as f32 * shift + centery;
+                let z = k as f32 * shift - centerz;
 
                 let geom   = Geom::new_box(Box::new(Vec3::new(rad, rad, rad)));
-                let mut rb = RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

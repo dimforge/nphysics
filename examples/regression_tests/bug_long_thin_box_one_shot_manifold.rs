@@ -53,18 +53,18 @@ fn main() {
     GraphicsManager::simulate(boxes_vee_3d)
 }
 
-pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f64> {
+pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f32> {
     /*
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec3::new(0.0f64, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
 
     /*
      * Plane
      */
-    let geom = Geom::new_plane(Plane::new(Vec3::new(0.0, 1.0, 0.0)));
-    let body = @mut RB(RigidBody::new(geom, 0.0f64, Static, 0.3, 0.6));
+    let geom = Geom::new_plane(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)));
+    let body = @mut RB(RigidBody::new(geom, 0.0f32, Static, 0.3, 0.6));
 
     world.add_body(body);
     graphics.add(window, body);
@@ -72,13 +72,13 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     /*
      * Create the boxes
      */
-    let rad = 1.0;
+    let rad = 1.0f32;
     let x   = rad;
     let y   = rad + 10.0;
     let z   = rad;
 
     let geom   = Geom::new_box(Box::new(Vec3::new(rad, rad * 10.0, rad)));
-    let mut rb = RigidBody::new(geom, 1.0f64, Dynamic, 0.3, 0.5);
+    let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
 
     rb.append_translation(&Vec3::new(x, y, z));
 
@@ -90,7 +90,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     /*
      * Set up the camera and that is it!
      */
-    graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    graphics.look_at(Vec3::new(-30.0f32, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
 
     world
 }

@@ -9,15 +9,15 @@ use nphysics::aliases::dim2;
 
 struct Ball<'self> {
     priv color: Vec3<u8>,
-    priv delta: dim2::Transform2d<f64>,
-    priv body:  @mut dim2::Body2d<f64>,
+    priv delta: dim2::Transform2d<f32>,
+    priv body:  @mut dim2::Body2d<f32>,
     priv gfx:   CircleShape<'self>
 }
 
 impl<'self> Ball<'self> {
-    pub fn new(body:   @mut dim2::Body2d<f64>,
-               delta:  dim2::Transform2d<f64>,
-               radius: f64,
+    pub fn new(body:   @mut dim2::Body2d<f32>,
+               delta:  dim2::Transform2d<f32>,
+               radius: f32,
                color:  Vec3<u8>) -> Ball {
         let dradius = radius as f32 * DRAW_SCALE;
 

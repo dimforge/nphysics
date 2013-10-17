@@ -12,7 +12,7 @@ use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window:  &render_window::RenderWindow,
-                  physics: &mut dim2::BodyWorld2d<f64>) {
+                  physics: &mut dim2::BodyWorld2d<f32>) {
 
     let mut collisions = ~[];
 
@@ -47,7 +47,7 @@ pub fn draw_colls(window:  &render_window::RenderWindow,
     }
 }
 
-pub fn draw_line(window: &render_window::RenderWindow, v1: &Vec2<f64>, v2: &Vec2<f64>, color: &Color) {
+pub fn draw_line(window: &render_window::RenderWindow, v1: &Vec2<f32>, v2: &Vec2<f32>, color: &Color) {
     let mut vertices = VertexArray::new().unwrap();
 
     vertices.append(&Vertex::new(

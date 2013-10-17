@@ -8,17 +8,17 @@ use engine::SceneNode;
 struct Box {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
-    priv delta:      dim3::Transform3d<f64>,
+    priv delta:      dim3::Transform3d<f32>,
     priv gfx:        Object,
-    priv body:       @mut dim3::Body3d<f64>,
+    priv body:       @mut dim3::Body3d<f32>,
 }
 
 impl Box {
-    pub fn new(body:   @mut dim3::Body3d<f64>,
-               delta:  dim3::Transform3d<f64>,
-               rx:     f64,
-               ry:     f64,
-               rz:     f64,
+    pub fn new(body:   @mut dim3::Body3d<f32>,
+               delta:  dim3::Transform3d<f32>,
+               rx:     f32,
+               ry:     f32,
+               rz:     f32,
                color:  Vec3<f32>,
                        window: &mut window::Window) -> Box {
         let gx = rx as f32 * 2.0;

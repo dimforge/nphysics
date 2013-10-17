@@ -8,15 +8,15 @@ use engine::SceneNode;
 struct Ball {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
-    priv delta:      dim3::Transform3d<f64>,
+    priv delta:      dim3::Transform3d<f32>,
     priv gfx:        Object,
-    priv body:       @mut dim3::Body3d<f64>
+    priv body:       @mut dim3::Body3d<f32>
 }
 
 impl Ball {
-    pub fn new(body:   @mut dim3::Body3d<f64>,
-               delta:  dim3::Transform3d<f64>,
-               radius: f64,
+    pub fn new(body:   @mut dim3::Body3d<f32>,
+               delta:  dim3::Transform3d<f32>,
+               radius: f32,
                color:  Vec3<f32>,
                window: &mut Window) -> Ball {
         let mut res = Ball {

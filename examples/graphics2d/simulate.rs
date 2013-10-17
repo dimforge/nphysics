@@ -22,7 +22,7 @@ fn usage(exe_name: &str) {
     println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
 }
 
-pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
+pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f32>) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -58,8 +58,8 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
     let     fnt      = Font::new_from_file(~"Inconsolata.otf").unwrap();
     let mut fps      = Fps::new(&fnt);
     let mut cursor_pos;
-    let grabbed_object: Option<@mut dim2::Body2d<f64>> = None;
-    let grabbed_object_joint: Option<@mut dim2::BallInSocket2d<f64>> = None;
+    let grabbed_object: Option<@mut dim2::Body2d<f32>> = None;
+    let grabbed_object_joint: Option<@mut dim2::BallInSocket2d<f32>> = None;
 
     while rwindow.is_open() {
         loop {
@@ -81,7 +81,7 @@ pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f64>) {
                     }
                 },
                 ev @ event::MouseMoved{x, y} => {
-                    cursor_pos = Vec2::new(x as f64, y as f64);
+                    cursor_pos = Vec2::new(x as f32, y as f32);
                     match grabbed_object {
                         Some(_) => {
                             let joint = grabbed_object_joint.unwrap();

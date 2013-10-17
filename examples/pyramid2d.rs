@@ -29,17 +29,17 @@ fn main() {
     GraphicsManager::simulate(pyramid_2d)
 }
 
-pub fn pyramid_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
+pub fn pyramid_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec2::new(0.0f64, 9.81));
+    world.set_gravity(Vec2::new(0.0f32, 9.81));
 
     /*
      * First plane
      */
-    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec2::new(0.0, -1.0))), 0.0f64, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec2::new(0.0f32, -1.0))), 0.0, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -51,17 +51,17 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     let num = 25;
     let rad = 0.5;
     let shift   = 2.5 * rad;
-    let centerx = shift * (num as f64) / 2.0;
+    let centerx = shift * (num as f32) / 2.0;
 
     for i in range(0u, num) {
         for j in range(i, num) {
-            let fj = j as f64;
-            let fi = i as f64;
+            let fj = j as f32;
+            let fi = i as f32;
             let x = (fi * shift / 2.0) + (fj - fi) * 2.5 * rad - centerx;
             let y = -fi * 2.5 * rad;
 
             let box    = Box::new(Vec2::new(rad, rad));
-            let mut rb = RigidBody::new(Geom::new_box(box), 1.0f64, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(Geom::new_box(box), 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

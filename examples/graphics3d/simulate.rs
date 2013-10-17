@@ -33,7 +33,7 @@ fn usage(exe_name: &str) {
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
-pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f64>) {
+pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -50,10 +50,10 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
         let mut ray_to_draw = None;
 
-        let mut cursor_pos = Vec2::new(0.0f64, 0.0);
-        let mut grabbed_object: Option<@mut dim3::Body3d<f64>> = None;
-        let mut grabbed_object_joint: Option<@mut dim3::Fixed3d<f64>> = None;
-        let mut grabbed_object_plane: (Vec3<f64>, Vec3<f64>) = (Zero::zero(), Zero::zero());
+        let mut cursor_pos = Vec2::new(0.0f32, 0.0);
+        let mut grabbed_object: Option<@mut dim3::Body3d<f32>> = None;
+        let mut grabbed_object_joint: Option<@mut dim3::Fixed3d<f32>> = None;
+        let mut grabbed_object_plane: (Vec3<f32>, Vec3<f32>) = (Zero::zero(), Zero::zero());
 
 
         window.set_framerate_limit(Some(60));
@@ -136,7 +136,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                                         }
 
                                         let rb      = b.to_rigid_body_or_fail();
-                                        let _1: dim3::Transform3d<f64> = One::one();
+                                        let _1: dim3::Transform3d<f32> = One::one();
                                         let attach2 = na::append_translation(&_1, &(ray.orig + ray.dir * mintoi));
                                         let attach1 = na::inv(&na::transformation(rb.transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
@@ -179,8 +179,8 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::CursorPos(x, y) => {
-                        cursor_pos.x = x as f64;
-                        cursor_pos.y = y as f64;
+                        cursor_pos.x = x as f32;
+                        cursor_pos.y = y as f32;
 
                         // update the joint
                         match grabbed_object_joint {
@@ -190,7 +190,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
 
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
-                                        let _1: dim3::Transform3d<f64> = One::one();
+                                        let _1: dim3::Transform3d<f32> = One::one();
                                         j.set_local2(na::append_translation(&_1, &(pos + dir * inter)))
                                     },
                                     None => { }
@@ -232,15 +232,15 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::KeyPressed(glfw::Key1) => {
-                        let geom   = Geom::new_ball(Ball::new(0.5f64));
-                        let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                        let geom   = Geom::new_ball(Ball::new(0.5f32));
+                        let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
                         rb.append_translation(&na::translation(&cam_transfom));
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 
-                        rb.set_lin_vel(front * 40.0f64);
+                        rb.set_lin_vel(front * 40.0f32);
 
                         let body = @mut RB(rb);
                         physics.add_body(body);
@@ -249,15 +249,15 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::KeyPressed(glfw::Key2) => {
-                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5, 0.5)));
-                        let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f32, 0.5, 0.5)));
+                        let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transform = w.camera().view_transform();
                         rb.append_translation(&na::translation(&cam_transform));
 
                         let front = na::rotate(&cam_transform, &Vec3::z());
 
-                        rb.set_lin_vel(front * 40.0f64);
+                        rb.set_lin_vel(front * 40.0f32);
 
                         let body = @mut RB(rb);
                         physics.add_body(body);
@@ -266,15 +266,15 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::KeyPressed(glfw::Key3) => {
-                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f64, 0.5f64, 0.5f64)));
-                        let mut rb = RigidBody::new(geom, 4.0f64, Dynamic, 0.3, 0.6);
+                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f32, 0.5f32, 0.5f32)));
+                        let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
                         rb.append_translation(&na::translation(&cam_transfom));
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 
-                        rb.set_lin_vel(front * 400.0f64);
+                        rb.set_lin_vel(front * 400.0f32);
 
                         let body = @mut RB(rb);
                         physics.add_body(body);
@@ -350,7 +350,7 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<f64>) {
+fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<f32>) {
     let mut collisions = ~[];
 
     for c in physics.world().detectors().iter() {
@@ -362,8 +362,8 @@ fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<
             RBRB(_, _, c) => {
                 window.draw_line(&c.world1, &c.world2, &Vec3::x());
 
-                let center = (c.world1 + c.world2) / 2.0f64;
-                let end    = center + c.normal * 0.4f64;
+                let center = (c.world1 + c.world2) / 2.0f32;
+                let end    = center + c.normal * 0.4f32;
                 window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
             },
             BallInSocket(bis) => {

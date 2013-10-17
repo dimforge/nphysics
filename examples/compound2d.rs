@@ -30,18 +30,18 @@ fn main() {
     GraphicsManager::simulate(compound_2d)
 }
 
-pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
+pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * World
      */
     let mut world = BodyWorld::new();
-    world.set_gravity(Vec2::new(0.0f64, 9.81));
+    world.set_gravity(Vec2::new(0.0f32, 9.81));
 
     /*
      * First plane
      */
-    let geom   = Plane::new(Vec2::new(-1.0f64, -1.0));
-    let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let geom   = Plane::new(Vec2::new(-1.0f32, -1.0));
+    let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f32, Static, 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -53,8 +53,8 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
      * Second plane
      */
-    let geom   = Plane::new(Vec2::new(1.0f64, -1.0));
-    let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f64, Static, 0.3, 0.6);
+    let geom   = Plane::new(Vec2::new(1.0f32, -1.0));
+    let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f32, Static, 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -66,12 +66,12 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
      * Cross shaped geometry
      */
-    let box1 = Box::new(Vec2::new(5.0f64, 0.75));
-    let box2 = Box::new(Vec2::new(0.75f64, 5.0));
+    let box1 = Box::new(Vec2::new(5.0f32, 0.75));
+    let box2 = Box::new(Vec2::new(0.75f32, 5.0));
 
-    let delta1 = Iso2::new(Vec2::new(0.0, -5.0), na::zero());
-    let delta2 = Iso2::new(Vec2::new(-5.0, 0.0), na::zero());
-    let delta3 = Iso2::new(Vec2::new(5.0,  0.0), na::zero());
+    let delta1 = Iso2::new(Vec2::new(0.0f32, -5.0), na::zero());
+    let delta2 = Iso2::new(Vec2::new(-5.0f32, 0.0), na::zero());
+    let delta3 = Iso2::new(Vec2::new(5.0f32,  0.0), na::zero());
 
     let mut cross_geoms = ~[];
     cross_geoms.push((delta1, Geom::new_box(box1)));
@@ -83,18 +83,18 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f64> {
     /*
      * Create the boxes
      */
-    let num     = (750.0f64.sqrt()) as uint;
+    let num     = (750.0f32.sqrt()) as uint;
     let rad     = 5.0;
     let shift   = 2.5 * rad;
-    let centerx = shift * (num as f64) / 2.0;
-    let centery = shift * (num as f64) / 2.0;
+    let centerx = shift * (num as f32) / 2.0;
+    let centery = shift * (num as f32) / 2.0;
 
     for i in range(0u, num) {
         for j in range(0u, num) {
-            let x = i as f64 * 2.5 * rad - centerx;
-            let y = j as f64 * 2.5 * rad - centery * 2.0 - 250.0;
+            let x = i as f32 * 2.5 * rad - centerx;
+            let y = j as f32 * 2.5 * rad - centery * 2.0 - 250.0;
 
-            let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f64, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 
