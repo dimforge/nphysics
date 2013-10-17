@@ -69,6 +69,7 @@ InertiaTensor<N, LV<N>, AV<N>, Transform3d<N>> for InertiaTensor3d<N> {
     fn apply(&self, av: &AV<N>) -> AV<N> {
         *self * *av
     }
+
     #[inline]
     fn to_world_space(&self, t: &Transform3d<N>) -> InertiaTensor3d<N> {
         let inv = na::inv(&t.rotation).unwrap();

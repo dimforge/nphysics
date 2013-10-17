@@ -44,7 +44,7 @@ impl<N: Clone, O, C> World<N, O, C> {
         // Resolution
         //
         for s in self.solvers.mut_iter() {
-            s.solve(dt.clone(), interferences)
+            s.solve(dt.clone(), interferences);
         }
     }
 

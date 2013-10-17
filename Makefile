@@ -43,6 +43,9 @@ test:
 	mkdir -p bin
 	make -C examples
 
+bugs:
+	make -C examples bugs
+
 # examples dependencies
 examples_deps:
 	make -C examples deps
@@ -58,6 +61,7 @@ distcheck:
 	make -C $(tmp)
 	make examples_deps -C $(tmp)
 	make examples -C $(tmp)
+	make bugs -C $(tmp)
 	rm -rf $(tmp)
 
 doc:
@@ -67,3 +71,4 @@ doc:
 .PHONY:doc
 # FIXME: uggly!
 .PHONY:examples
+.PHONY:bugs

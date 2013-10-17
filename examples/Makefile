@@ -15,14 +15,14 @@ build_cmd=rustc -L$(nphysics_lib_path)  \
 				-L$(gl_lib_path)        \
 				-L$(stb_image_lib_path) \
 				--out-dir ../bin
-build_cmd_opt=rustc -L$(nphysics_lib_path)   \
-					-L$(ncollide_lib_path)   \
-					-L$(nalgebra_lib_path)   \
-					-L$(kiss3d_lib_path)     \
-					-L$(glfw_lib_path)       \
-					-L$(gl_lib_path)     	  \
-					-L$(stb_image_lib_path)  \
-					-Llib			  		  \
+build_cmd_opt=rustc -L$(nphysics_lib_path)  \
+					-L$(ncollide_lib_path)  \
+					-L$(nalgebra_lib_path)  \
+					-L$(kiss3d_lib_path)    \
+					-L$(glfw_lib_path)      \
+					-L$(gl_lib_path)     	\
+					-L$(stb_image_lib_path) \
+					-Llib			  		\
 					--out-dir ../bin --opt-level 3
 
 lib_build_opt=rustc -L$(nphysics_lib_path)  \
@@ -30,17 +30,17 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(nalgebra_lib_path)  \
 					-L$(kiss3d_lib_path)    \
 					-L$(glfw_lib_path)      \
-					-L$(gl_lib_path)    	 \
+					-L$(gl_lib_path)    	\
 					-L$(stb_image_lib_path) \
-					-Llib					 \
+					-Llib					\
 					--out-dir lib --opt-level 3
 
 examples:
 	mkdir -p ../bin
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
+	$(build_cmd_opt) ./boxes_vee3d.rs
 	$(build_cmd_opt) ./pyramid3d.rs
 	$(build_cmd_opt) ./balls_vee3d.rs
-	$(build_cmd_opt) ./boxes_vee3d.rs
 	$(build_cmd_opt) ./primitives3d.rs
 	$(build_cmd_opt) ./cross3d.rs
 	$(build_cmd_opt) ./wall3d.rs
@@ -52,6 +52,11 @@ examples:
 	$(build_cmd_opt) ./compound2d.rs
 	$(build_cmd_opt) ./balls_vee2d.rs
 	$(build_cmd_opt) ./wall2d.rs
+
+bugs:
+	mkdir -p ../bin
+	$(lib_build_opt) ./graphics3d/graphics3d.rs
+	$(build_cmd_opt) ./regression_tests/bug_long_thin_box_one_shot_manifold.rs
 
 deps:
 	mkdir -p lib
@@ -70,4 +75,4 @@ distcheck:
 	rm -rf $(tmp)
 
 .PHONY:doc
-
+.PHONY:bugs

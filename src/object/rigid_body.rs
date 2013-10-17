@@ -50,7 +50,7 @@ impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, AV, M>>
 RigidBody<N, LV, AV, M, II> {
     fn update_inertia_tensor(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
-        self.inv_inertia    = self.ls_inv_inertia.to_world_space(&self.local_to_world);
+        self.inv_inertia = self.ls_inv_inertia.to_world_space(&self.local_to_world);
     }
 }
 
@@ -132,6 +132,7 @@ RigidBody<N, LV, AV, M, II> {
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
                     let _1: N = na::one();
+
                     (
                         _1 / m,
                         c,
