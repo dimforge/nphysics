@@ -1,0 +1,31 @@
+before_install:
+  - yes | sudo add-apt-repository ppa:hansjorg/rust
+  - sudo apt-get update
+install:
+  - sudo apt-get install rust-nightly
+  - sudo apt-get install libXxf86vm-dev
+  - sudo apt-get install libsfml-dev
+  - sudo apt-get install libjpeg62
+script:
+  - git clone https://github.com/glfw/glfw.git
+  - cd glfw
+  - git checkout 3.0.3
+  - cmake -DBUILD_SHARED_LIBS=ON
+  - make
+  - sudo make install
+  - cd ..
+  - wget http://www.sfml-dev.org/download/sfml/2.1/SFML-2.1-linux-gcc-64bits.tar.bz2
+  - tar xf SFML-2.1-linux-gcc-64bits.tar.bz2
+  - sudo cp -r SFML-2.1/lib/* /usr/local/lib/.
+  - wget http://www.sfml-dev.org/download/csfml/CSFML-2.1-linux-gcc-64bits.tar.bz2
+  - tar xf CSFML-2.1-linux-gcc-64bits.tar.bz2
+  - sudo cp -r CSFML-2.1/lib/* /usr/local/lib/.
+  - git submodule init
+  - git submodule update
+  - git submodule foreach --recursive git submodule init
+  - git submodule foreach --recursive git submodule update
+  - make deps
+  - make
+  - make examples_deps
+  - make examples
+  - make bugs
