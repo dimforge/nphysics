@@ -105,7 +105,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         world.add_integrator(ccd);
         world.add_detector(detector);
         world.add_detector(joints);
-        // world.add_detector(sleep);
+        world.add_detector(sleep);
         world.add_solver(solver);
 
         BodyWorld {
