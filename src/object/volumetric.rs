@@ -16,10 +16,10 @@ pub trait Volumetric<N, V, II> {
     fn mass_properties(&self, &N) -> (N, V, II);
 }
 
-impl<N: Real + Num + Cast<f32> + Clone,
-     V: Clone + VecExt<N>,
+impl<N:  Send + Freeze + Real + Num + Cast<f32> + Clone,
+     V:  Send + Freeze + Clone + VecExt<N>,
      AV,
-     M: Translation<V>,
+     M:  Send + Freeze + Translation<V>,
      II: Zero + Indexable<(uint, uint), N> + Add<II, II> + InertiaTensor<N, V, AV, M> + Dim>
 Volumetric<N, V, II> for Geom<N, V, M> {
     /*
@@ -52,13 +52,13 @@ Volumetric<N, V, II> for Geom<N, V, M> {
     #[inline]
     fn mass_properties(&self, density: &N) -> (N, V, II) {
         match *self {
-            PlaneGeom(ref p) => p.mass_properties(density),
-            CompoundGeom(c)  => {
+            PlaneGeom(ref p)    => p.mass_properties(density),
+            CompoundGeom(ref c) => {
                 let mut mtot: N  = na::zero();
                 let mut itot: II = na::zero();
                 let mut ctot: V  = na::zero();
 
-                for &(ref m, ref s) in c.shapes().iter() {
+                for &(ref m, ref s) in c.get().shapes().iter() {
                     let (mpart, cpart, ipart): (N, V, II) = s.mass_properties(density);
                     mtot = mtot + mpart;
                     itot = itot + ipart.to_world_space(m).to_relative_wrt_point(&mpart, &m.translation());

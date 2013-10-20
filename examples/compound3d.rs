@@ -13,6 +13,7 @@ extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;
 
+use extra::arc::Arc;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Iso3, Translation};
 use nalgebra::na;
@@ -62,7 +63,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     cross_geoms.push((delta2, Geom::new_box(box2)));
     cross_geoms.push((delta3, Geom::new_box(box2)));
 
-    let cross = @CompoundAABB::new(cross_geoms);
+    let cross = Arc::new(CompoundAABB::new(cross_geoms));
 
     /*
      * Create the crosses 
@@ -81,7 +82,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let mut rb = RigidBody::new(Geom::new_compound(cross), 1.0f32, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new(Geom::new_compound(cross.clone()), 1.0f32, Dynamic, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

@@ -37,11 +37,11 @@ BodyExpEulerIntegrator<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone,
-     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
-         Transformation<M> + One,
-     LV: Clone + Vec<N>,
+impl<N:  Send + Freeze + Clone,
+     LV: Send + Freeze + Clone + Vec<N>,
      AV: Clone + Vec<N>,
+     M:  Send + Freeze + Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> +
+         Transform<LV> + Transformation<M> + One,
      II: Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv>
 Integrator<N, Body<N, LV, AV, M, II>> for BodyExpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
@@ -85,11 +85,11 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyExpEulerIntegrator<N, LV, AV, M, I
     fn priority(&self) -> f64 { 50.0 }
 }
 
-impl<N:  Clone,
-     LV: Clone + Vec<N>,
+impl<N:  Send + Freeze + Clone,
+     LV: Send + Freeze + Clone + Vec<N>,
      AV: Clone + Vec<N>,
-     M:  Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
-         Transformation<M> + One,
+     M:  Send + Freeze + Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> +
+         Transform<LV> + Transformation<M> + One,
      II: Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv,
      C>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodyExpEulerIntegrator<N, LV, AV, M, II> {

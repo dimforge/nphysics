@@ -93,7 +93,7 @@ impl GraphicsManager {
         match *geom {
             PlaneGeom(ref p)    => self.add_plane(window, body, p, out),
             CompoundGeom(ref c) => {
-                for &(t, ref s) in c.shapes().iter() {
+                for &(t, ref s) in c.get().shapes().iter() {
                     self.add_geom(window, body, delta * t, s, out)
                 }
             },

@@ -17,7 +17,6 @@ pub enum RigidBodyState {
     Dynamic
 }
 
-#[deriving(Clone, Encodable, Decodable)]
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:                RigidBodyState,
     priv geom:                 Geom<N, LV, M>,
@@ -35,6 +34,34 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv friction:             N,
     priv index:                int,
     priv active:               bool
+}
+
+impl<N:  Send + Freeze + Clone,
+     LV: Send + Freeze + Clone,
+     AV: Clone,
+     M:  Send + Freeze + Clone,
+     II: Clone>
+Clone for RigidBody<N, LV, AV, M, II> {
+    fn clone(&self) -> RigidBody<N, LV, AV, M, II> {
+        RigidBody {
+            state:             self.state.clone(),
+            geom:              self.geom.clone(),
+            local_to_world:    self.local_to_world.clone(),
+            lin_vel:           self.lin_vel.clone(),
+            ang_vel:           self.ang_vel.clone(),
+            inv_mass:          self.inv_mass.clone(),
+            ls_inv_inertia:    self.ls_inv_inertia.clone(),
+            inv_inertia:       self.inv_inertia.clone(),
+            ls_center_of_mass: self.ls_center_of_mass.clone(),
+            center_of_mass:    self.center_of_mass.clone(),
+            lin_acc:           self.lin_acc.clone(),
+            ang_acc:           self.ang_acc.clone(),
+            restitution:       self.restitution.clone(),
+            friction:          self.friction.clone(),
+            index:             self.index.clone(),
+            active:            self.active.clone()
+        }
+    }
 }
 
 
@@ -99,10 +126,10 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:   Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + Cast<f32>,
-     M:   One + Translation<LV> + Transform<LV> + Rotate<LV>,
-     LV:  Clone + VecExt<N>,
+impl<N:   Send + Freeze + Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + Cast<f32>,
+     LV:  Send + Freeze + Clone + VecExt<N>,
      AV:  Zero,
+     M:   Send + Freeze + One + Translation<LV> + Transform<LV> + Rotate<LV>,
      II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, AV, M> +
           Add<II, II> + Dim + Clone>
 RigidBody<N, LV, AV, M, II> {
@@ -243,11 +270,11 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone,
-     M:  Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> + Transformation<M> +
-         Rotate<LV>,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
+impl<N:  Send + Freeze + Clone,
+     LV: Send + Freeze + Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
+     M:  Send + Freeze + Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> +
+         Transformation<M> + Rotate<LV>,
      II: Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
@@ -305,10 +332,10 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
 // FIXME: implement Transfomable too
 
-impl<N:  Clone,
-     M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + One,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
+impl<N:  Send + Freeze + Clone,
+     LV: Send + Freeze + Clone + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
+     M:  Send + Freeze + Clone + Translation<LV> + Transform<LV> + Rotate<LV> + One,
      II: Clone>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
@@ -359,10 +386,10 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone,
-     M:  Clone + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
-     LV: Clone + Add<LV, LV> + Neg<LV> + Dim,
+impl<N:  Clone + Send + Freeze,
+     LV: Clone + Send + Freeze + Add<LV, LV> + Neg<LV> + Dim,
      AV: Clone,
+     M:  Clone + Send + Freeze + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
      II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
@@ -418,10 +445,11 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
-     LV: AlgebraicVecExt<N> + Clone,
+impl<N:  Send + Freeze + Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
+     LV: Send + Freeze + AlgebraicVecExt<N> + Clone,
      AV,
-     M: Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> + Mul<M, M>,
+     M:  Send + Freeze + Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> +
+         Mul<M, M>,
      II>
 HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {

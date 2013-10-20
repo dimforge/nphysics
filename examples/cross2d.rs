@@ -13,6 +13,7 @@ extern mod nalgebra;
 extern mod ncollide;
 extern mod graphics2d;
 
+use extra::arc::Arc;
 use nalgebra::na::{Vec2, Translation};
 use nalgebra::na;
 use ncollide::geom::{Geom, Box, Plane, CompoundAABB};
@@ -73,7 +74,7 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     cross_geoms.push((na::one(), Geom::new_box(box1)));
     cross_geoms.push((na::one(), Geom::new_box(box2)));
 
-    let cross = @CompoundAABB::new(cross_geoms);
+    let cross = Arc::new(CompoundAABB::new(cross_geoms));
 
     /*
      * Create the boxes
@@ -89,7 +90,7 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 250.0;
 
-            let geom   = Geom::new_compound(cross);
+            let geom   = Geom::new_compound(cross.clone());
             let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));

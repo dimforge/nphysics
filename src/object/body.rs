@@ -4,11 +4,24 @@ use nalgebra::na::{Cast, Translation, Rotate, AbsoluteRotate, Transform, Algebra
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use object::{RigidBody, SoftBody};
 
-#[deriving(Clone, Encodable, Decodable)]
 pub enum Body<N, LV, AV, M, II> {
     RB(RigidBody<N, LV, AV, M, II>),
     SB(SoftBody<N, LV>) // FIXME
 
+}
+
+impl<N:  Send + Freeze + Clone,
+     LV: Send + Freeze + Clone,
+     AV: Clone,
+     M:  Send + Freeze + Clone,
+     II: Clone>
+Clone for Body<N, LV, AV, M, II> {
+    fn clone(&self) -> Body<N, LV, AV, M, II> {
+        match *self {
+            RB(ref rb) => RB(rb.clone()),
+            SB(ref sb) => SB(sb.clone())
+        }
+    }
 }
 
 impl<N: Clone, LV, AV, M, II> Body<N, LV, AV, M, II> {
@@ -86,10 +99,11 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
-     LV: AlgebraicVecExt<N> + Clone,
+impl<N:  Send + Freeze + Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
+     LV: Send + Freeze + AlgebraicVecExt<N> + Clone,
      AV,
-     M:  Translation<LV> + Rotate<LV> + AbsoluteRotate<LV> + Transform<LV> + Mul<M, M>,
+     M:  Send + Freeze + Translation<LV> + Rotate<LV> + AbsoluteRotate<LV> + Transform<LV> +
+         Mul<M, M>,
      II>
 HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]

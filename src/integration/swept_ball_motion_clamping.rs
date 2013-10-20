@@ -46,11 +46,12 @@ pub struct SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     priv interferences: ~[@mut Body<N, LV, AV, M, II>]
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
+impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
+     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
          Rotate<LV> + Transform<LV>,
      AV: 'static + Vec<N> + Clone,
-     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + Clone,
+     M:  'static + Send + Freeze + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
+         Mul<M, M> + Inv + One + Clone,
      II: 'static + Clone,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
@@ -126,12 +127,12 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV>,
+impl<N:  Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
+     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
+         Clone + Rotate<LV> + Transform<LV>,
      AV: Clone + Vec<N>,
-     M:  Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + AbsoluteRotate<LV> +
-         Mul<M, M> + Inv + One,
+     M:  Send + Freeze + Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
+         AbsoluteRotate<LV> + Mul<M, M> + Inv + One,
      II: Clone, // FIXME: remove those bounds
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
@@ -243,11 +244,12 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<N:  'static + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
-     LV: 'static + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV>,
+impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
+     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
+         Clone + Rotate<LV> + Transform<LV>,
      AV: 'static + Vec<N> + Clone,
-     M:  'static + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> + Mul<M, M> + Inv + One + Clone,
+     M:  'static + Send + Freeze + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
+         Mul<M, M> + Inv + One + Clone,
      II: 'static + Clone,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>,

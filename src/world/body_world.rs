@@ -46,12 +46,12 @@ pub struct BodyWorld<N, LV, AV, M, II, CM> {
     solver:     @mut AccumulatedImpulseSolver<N, LV, AV, M, II, CM>
 }
 
-impl<N:  'static + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic + Orderable +
-         Signed + Real + ApproxEq<N> + Float,
-     LV: 'static + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<CM> +
-         ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
+impl<N:  'static + Send + Freeze + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic +
+         Orderable + Signed + Real + ApproxEq<N> + Float,
+     LV: 'static + Send + Freeze + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> +
+         CrossMatrix<CM> + ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
      AV: 'static + Clone + Zero + AlgebraicVecExt<N>,
-     M:  'static + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
+     M:  'static + Send + Freeze + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
          Transform<LV> + Transformation<M> + AbsoluteRotate<LV> + Mul<M, M> + One,
      II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>,
      CM: Row<AV>>
@@ -105,7 +105,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         world.add_integrator(ccd);
         world.add_detector(detector);
         world.add_detector(joints);
-        world.add_detector(sleep);
+        // world.add_detector(sleep);
         world.add_solver(solver);
 
         BodyWorld {
