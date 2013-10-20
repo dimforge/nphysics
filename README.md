@@ -1,4 +1,4 @@
-nphysics
+nphysics  [![Build Status](https://travis-ci.org/sebcrozet/nphysics.png?branch=master)](https://travis-ci.org/sebcrozet/nphysics)
 ========
 **nphysics** is a 2 and 3-dimensional physics engine for games and animations. It uses
 [ncollide](https://github.com/sebcrozet/ncollide) for collision detection, and
