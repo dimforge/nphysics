@@ -134,9 +134,9 @@ impl<'self> GraphicsManager<'self> {
         }
 
         let color = Vec3::new(
-            self.rand.gen_integer_range(0, 256) as u8,
-            self.rand.gen_integer_range(0, 256) as u8,
-            self.rand.gen_integer_range(0, 256) as u8);
+            self.rand.gen_range(0, 256) as u8,
+            self.rand.gen_range(0, 256) as u8,
+            self.rand.gen_range(0, 256) as u8);
 
 
         self.obj2color.insert(key, color);

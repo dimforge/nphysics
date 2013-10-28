@@ -1,5 +1,7 @@
 pub use detection::collision::bodies_bodies::BodiesBodies;
+// pub use detection::collision::bodies_bodies_parallel::BodiesBodiesParallel;
 pub use BodiesBodiesDispatcher = detection::collision::bodies_bodies::Dispatcher;
+// pub use BodiesBodiesDispatcherParallel = detection::collision::bodies_bodies_parallel::DispatcherParallel;
 pub use detection::joint::joint_manager::JointManager;
 pub use detection::island_activation_manager::IslandActivationManager;
 
@@ -9,6 +11,7 @@ pub mod detector;
 
 pub mod collision {
     pub mod bodies_bodies;
+    // pub mod bodies_bodies_parallel;
 }
 
 pub mod joint {

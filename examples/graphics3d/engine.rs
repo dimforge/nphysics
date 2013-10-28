@@ -44,7 +44,7 @@ impl GraphicsManager {
             arc_ball:         arc_ball,
             first_person:     first_person,
             curr_is_arc_ball: true,
-            rand:             SeedableRng::from_seed([0, 1, 2, 3]),
+            rand:             SeedableRng::from_seed([0, 2, 4, 8]),
             rb2sn:            HashMap::new(),
             obj2color:        HashMap::new()
         }

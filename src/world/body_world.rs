@@ -18,7 +18,7 @@ use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 use detection::IslandActivationManager;
-use resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
+use resolution::{AccumulatedImpulseSolver, Velocity};
 use resolution::solver::Solver;
 use world::World;
 use object::volumetric::InertiaTensor;
@@ -90,9 +90,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
          */
         let solver = @mut AccumulatedImpulseSolver::new(
             Cast::from(0.1),
-            VelocityAndPosition(Cast::from(0.2),
-                                Cast::from(0.2),
-                                Cast::from(0.08)),
+            Velocity(Cast::from(0.2)),
             Cast::from(1.0),
             10,
             10);
@@ -105,7 +103,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         world.add_integrator(ccd);
         world.add_detector(detector);
         world.add_detector(joints);
-        world.add_detector(sleep);
+        // world.add_detector(sleep);
         world.add_solver(solver);
 
         BodyWorld {

@@ -28,6 +28,19 @@ pub fn draw_colls(window:  &render_window::RenderWindow,
                     &c.world1,
                     &c.world2,
                     &Color::new_RGB(255, 255, 255));
+
+                let center = (c.world1 + c.world2) / 2.0f32;
+                draw_line(
+                    window,
+                    &center,
+                    &(center + c.normal * c.depth),
+                    &Color::new_RGB(255, 0, 0));
+
+                draw_line(
+                    window,
+                    &center,
+                    &(center + c.normal),
+                    &Color::new_RGB(0, 0, 255));
             },
             BallInSocket(bis) => {
                 draw_line(
