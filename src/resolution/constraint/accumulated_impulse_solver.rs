@@ -1,15 +1,9 @@
 use std::ptr;
 // use std::rand::RngUtil;
-use std::num::{One, Orderable, Bounded};
-use nalgebra::na::{
-    AlgebraicVecExt, Cast, Cross, CrossMatrix,
-    RotationWithTranslation, Translation, Rotation,
-    Rotate, Transformation, Transform, Inv, Row
-};
+use nalgebra::na::{Transformation, RotationWithTranslation, CrossMatrix, Row};
 use nalgebra::na;
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::Body;
-use object::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
 use resolution::constraint::contact_equation::{CorrectionMode, CorrectionParameters};
@@ -18,6 +12,8 @@ use resolution::constraint::fixed_equation;
 use resolution::solver::Solver;
 use pgs = resolution::constraint::projected_gauss_seidel_solver;
 use resolution::constraint::impulse_cache::ImpulseCache;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 
 pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
@@ -29,12 +25,11 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
 }
 
-impl<N:   Send + Freeze + Num + Orderable + Bounded + Signed + Clone + Cast<f32>,
-     LV:  Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone,
-     AV:  AlgebraicVecExt<N> + Clone,
-     M:   Send + Freeze + Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> +
-          Rotation<AV> + One + Transformation<M> + Clone + Inv,
-     II:  Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV> + CrossMatrix<M2>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      M2:  Row<AV>>
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     pub fn new(step:                  N,
@@ -172,11 +167,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * Cast::from(0.85);
+            imps[0]  = dv.impulse * na::cast(0.85);
 
             for j in range(0u, na::dim::<LV>() - 1) {
                 let fc = &self.friction_constraints[i * (na::dim::<LV>() - 1) + j];
-                imps[1 + j] = fc.impulse * Cast::from(0.85);
+                imps[1 + j] = fc.impulse * na::cast(0.85);
             }
         }
 
@@ -239,12 +234,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     }
 }
 
-impl<N:  Send + Freeze + Num + Orderable + Bounded + Signed + Clone + Cast<f32>,
-     LV: Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + CrossMatrix<M2> + IterBytes + Clone,
-     AV: AlgebraicVecExt<N> + Clone,
-     M:  Send + Freeze + Translation<LV> + Transform<LV> + Rotate<LV> + Mul<M, M> + Rotation<AV> +
-         One + Clone + Transformation<M> + Inv,
-     II: Mul<II, II> + Inv + Clone + InertiaTensor<N, LV, AV, M>,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV> + CrossMatrix<M2>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      M2: Row<AV>>
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
@@ -262,7 +256,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         self.cache.insert(i,
                                           ptr::to_mut_unsafe_ptr(a) as uint,
                                           ptr::to_mut_unsafe_ptr(b) as uint,
-                                          (c.world1 + c.world2) / Cast::from(2.0));
+                                          (c.world1 + c.world2) / na::cast(2.0));
                     },
                     BallInSocket(_) => {
                         // XXX: cache for ball in socket?
@@ -312,11 +306,11 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
             let mut id = 0;
 
-            fn set_body_index<N: Clone,
-                              LV,
-                              AV,
-                              M,
-                              II>(
+            fn set_body_index<N:  Clone + NPhysicsScalar,
+                              LV: Clone + NPhysicsDirection<N, AV>,
+                              AV: Clone + NPhysicsOrientation<N>,
+                              M:  NPhysicsTransform<LV, AV>,
+                              II: Clone + NPhysicsInertia<N, LV, AV, M>>(
                               a:      @mut Body<N, LV, AV, M, II>,
                               bodies: &mut ~[@mut Body<N, LV, AV, M, II>],
                               id:     &mut int) {

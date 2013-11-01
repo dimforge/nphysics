@@ -14,6 +14,7 @@ extern mod ncollide;
 pub mod aliases {
     pub mod dim2;
     pub mod dim3;
+    pub mod traits;
 }
 
 pub mod signal {

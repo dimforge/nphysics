@@ -1,25 +1,23 @@
 use std::ptr;
-use std::num::One;
-use nalgebra::na::{Translation, Rotation, Rotate, Transformation, Transform, Inv, Vec};
+use nalgebra::na::Transformation;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::{RB, SB};
 use object::Body;
-use object::volumetric::InertiaTensor;
 use integration::Integrator;
 use integration::euler;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 pub struct BodyExpEulerIntegrator<N, LV, AV, M, II> {
     priv objects: HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>,
 }
 
-impl<N:  'static + Clone,
-     M:  'static + Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Transform<LV> + Transformation<M> + One,
-     LV: 'static + Clone + Vec<N>,
-     AV: 'static + Clone + Vec<N>,
-     II: 'static + Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv>
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
 BodyExpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     pub fn new<C>(events: &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>)
@@ -37,12 +35,11 @@ BodyExpEulerIntegrator<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Send + Freeze + Clone,
-     LV: Send + Freeze + Clone + Vec<N>,
-     AV: Clone + Vec<N>,
-     M:  Send + Freeze + Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Transform<LV> + Transformation<M> + One,
-     II: Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
 Integrator<N, Body<N, LV, AV, M, II>> for BodyExpEulerIntegrator<N, LV, AV, M, II> {
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
@@ -85,12 +82,11 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyExpEulerIntegrator<N, LV, AV, M, I
     fn priority(&self) -> f64 { 50.0 }
 }
 
-impl<N:  Send + Freeze + Clone,
-     LV: Send + Freeze + Clone + Vec<N>,
-     AV: Clone + Vec<N>,
-     M:  Send + Freeze + Clone + Inv + Mul<M, M> + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Transform<LV> + Transformation<M> + One,
-     II: Clone + Mul<II, II> + InertiaTensor<N, LV, AV, M> + Inv,
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>,
      C>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodyExpEulerIntegrator<N, LV, AV, M, II> {
     fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {

@@ -19,6 +19,7 @@ use object::{Body, RB, SB};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 
 pub enum PairwiseDetector<N, LV, AV, M> {
     GG(GeomGeom<N, LV, AV, M>),
@@ -60,11 +61,11 @@ Dispatcher<N, LV, AV, M, II> {
         }
     }
 }
-impl<N:  Send + Freeze + Cast<f32> + Zero + Clone,
-     LV: Send + Freeze + Clone,
-     AV,
-     M: Send + Freeze,
-     II>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
      broad::Dispatcher<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>>
 for Dispatcher<N, LV, AV, M, II> {
     fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)
@@ -104,14 +105,11 @@ pub struct BodiesBodies<N, LV, AV, M, II, BF> {
     update_bf:   bool
 }
 
-impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic +
-         Cast<f32>,
-     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
-         Clone + Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N>,
-     M:  'static + Send + Freeze + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> +
-         AbsoluteRotate<LV> + Inv + Transform<LV> + One,
-     II: 'static,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>>>
 BodiesBodies<N, LV, AV, M, II, BF> {
     pub fn new(events:    @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
@@ -164,11 +162,11 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  'static + Clone + Zero + Orderable + Cast<f32> + Algebraic + Primitive + Float,
-     LV: 'static + AlgebraicVecExt<N> + Clone,
-     AV: 'static,
-     M:  'static + Translation<LV> + Mul<M, M> + Rotate<LV> + Transform<LV>,
-     II: 'static,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>>>
 BodiesBodies<N, LV, AV, M, II, BF> {
     pub fn interferences_with_ray(&mut self,
@@ -192,14 +190,11 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic +
-         Cast<f32>,
-     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
-         Clone + Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N>,
-     M:  'static + Send + Freeze + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
-         AbsoluteRotate<LV> + One + Mul<M, M> + Inv,
-     II: 'static,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
@@ -284,14 +279,11 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 50.0 }
 }
 
-impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic +
-         Cast<f32>,
-     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
-         Clone + Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N>,
-     M:  'static + Send + Freeze + Translation<LV> + Mul<M, M> + Rotate<LV> + Rotation<AV> +
-         AbsoluteRotate<LV> + Inv + Transform<LV> + One,
-     II: 'static,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, PairwiseDetector<N, LV, AV, M>>>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for BodiesBodies<N, LV, AV, M, II, BF> {
     fn handle_body_activated_signal(&mut self,

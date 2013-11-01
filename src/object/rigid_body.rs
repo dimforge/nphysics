@@ -1,13 +1,10 @@
-use std::num::{Zero, One};
-use nalgebra::na::{
-    Translation, Rotation, Rotate, AbsoluteRotate,
-    Transformation, Transform,
-    Cast, Inv, Indexable,
-    VecExt, AlgebraicVecExt, Dim
-};
+use std::num::Zero;
+use nalgebra::na::{Transformation, Translation, Rotation};
 use nalgebra::na;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 use object::volumetric::{InertiaTensor, Volumetric};
 // use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
@@ -65,30 +62,27 @@ Clone for RigidBody<N, LV, AV, M, II> {
 }
 
 
-impl<N, LV: Zero, AV: Zero, M, II> RigidBody<N, LV, AV, M, II> {
+impl<N:   Clone + NPhysicsScalar,
+     LV:  Clone + NPhysicsDirection<N, AV>,
+     AV:  Clone + NPhysicsOrientation<N>,
+     M:   NPhysicsTransform<LV, AV>,
+     II:  Clone + NPhysicsInertia<N, LV, AV, M>>
+RigidBody<N, LV, AV, M, II> {
     pub fn deactivate(&mut self) {
         self.lin_vel = na::zero();
         self.ang_vel = na::zero();
         self.active  = false;
     }
-}
 
-impl<N, LV, AV, M: Transform<LV>, II: InertiaTensor<N, LV, AV, M>>
-RigidBody<N, LV, AV, M, II> {
     fn update_inertia_tensor(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
         self.inv_inertia = self.ls_inv_inertia.to_world_space(&self.local_to_world);
     }
-}
 
-impl<N, LV, AV, M: Transform<LV>, II>
-RigidBody<N, LV, AV, M, II> {
     fn update_center_of_mass(&mut self) {
         self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
     }
-}
 
-impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     pub fn transform_ref<'r>(&'r self) -> &'r M {
         &'r self.local_to_world
     }
@@ -124,15 +118,7 @@ impl<N: Clone, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     pub fn activate(&mut self) {
         self.active = true;
     }
-}
 
-impl<N:   Send + Freeze + Clone + One + Zero + Div<N, N> + Mul<N, N> + Real + Cast<f32>,
-     LV:  Send + Freeze + Clone + VecExt<N>,
-     AV:  Zero,
-     M:   Send + Freeze + One + Translation<LV> + Transform<LV> + Rotate<LV>,
-     II:  One + Zero + Inv + Mul<II, II> + Indexable<(uint, uint), N> + InertiaTensor<N, LV, AV, M> +
-          Add<II, II> + Dim + Clone>
-RigidBody<N, LV, AV, M, II> {
     pub fn new(geom:        Geom<N, LV, M>,
                density:     N,
                state:       RigidBodyState,
@@ -193,9 +179,7 @@ RigidBody<N, LV, AV, M, II> {
 
         res
     }
-}
 
-impl<N, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
     pub fn can_move(&self) -> bool {
         match self.state {
@@ -203,9 +187,7 @@ impl<N, LV, AV, M, II> RigidBody<N, LV, AV, M, II> {
             _       => false
         }
     }
-}
 
-impl<N, M, LV: Clone, AV, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
     pub fn lin_vel(&self) -> LV {
         self.lin_vel.clone()
@@ -225,9 +207,7 @@ impl<N, M, LV: Clone, AV, II> RigidBody<N, LV, AV, M, II> {
     pub fn set_lin_acc(&mut self, lf: LV) {
         self.lin_acc = lf
     }
-}
 
-impl<N, M, LV, AV: Clone, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
     pub fn ang_vel(&self) -> AV {
         self.ang_vel.clone()
@@ -245,9 +225,7 @@ impl<N, M, LV, AV: Clone, II> RigidBody<N, LV, AV, M, II> {
     pub fn set_ang_acc(&mut self, af: AV) {
         self.ang_acc = af
     }
-}
 
-impl<N: Clone, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
     pub fn inv_mass(&self) -> N {
         self.inv_mass.clone()
@@ -256,9 +234,7 @@ impl<N: Clone, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     pub fn set_inv_mass(&mut self, m: N) {
         self.inv_mass = m
     }
-}
 
-impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     #[inline]
     pub fn inv_inertia<'r>(&'r self) -> &'r II {
         &'r self.inv_inertia
@@ -270,12 +246,11 @@ impl<N, M, LV, AV, II> RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Send + Freeze + Clone,
-     LV: Send + Freeze + Clone + Add<LV, LV> + Neg<LV> + Dim,
-     AV: Clone,
-     M:  Send + Freeze + Clone + Inv + Mul<M, M> + One + Translation<LV> + Transform<LV> +
-         Transformation<M> + Rotate<LV>,
-     II: Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M> + Clone>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
 Transformation<M> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn transformation(&self) -> M {
@@ -332,11 +307,11 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
 // FIXME: implement Transfomable too
 
-impl<N:  Send + Freeze + Clone,
-     LV: Send + Freeze + Clone + Add<LV, LV> + Neg<LV> + Dim,
-     AV: Clone,
-     M:  Send + Freeze + Clone + Translation<LV> + Transform<LV> + Rotate<LV> + One,
-     II: Clone>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
 Translation<LV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn translation(&self) -> LV {
@@ -386,11 +361,11 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone + Send + Freeze,
-     LV: Clone + Send + Freeze + Add<LV, LV> + Neg<LV> + Dim,
-     AV: Clone,
-     M:  Clone + Send + Freeze + Translation<LV> + Transform<LV> + Rotate<LV> + Rotation<AV> + One,
-     II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
 Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     #[inline]
     fn rotation(&self) -> AV {
@@ -445,12 +420,11 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Send + Freeze + Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
-     LV: Send + Freeze + AlgebraicVecExt<N> + Clone,
-     AV,
-     M:  Send + Freeze + Translation<LV> + Rotate<LV> + Transform<LV> + AbsoluteRotate<LV> +
-         Mul<M, M>,
-     II>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: NPhysicsOrientation<N>,
+     M:  NPhysicsTransform<LV, AV>,
+     II: NPhysicsInertia<N, LV, AV, M>>
 HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {
         self.geom.aabb(&self.local_to_world)

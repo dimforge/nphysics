@@ -1,19 +1,19 @@
-use std::num::One;
-use nalgebra::na::{Vec, VecExt, Cross, CrossMatrix, Rotate, Transform, Row};
+use nalgebra::na::{CrossMatrix, Row};
 use nalgebra::na;
-use object::volumetric::InertiaTensor;
 use object::Body;
 use detection::joint::anchor::Anchor;
 use detection::joint::ball_in_socket::BallInSocket;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionMode;
 use resolution::constraint::contact_equation;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
-pub fn fill_second_order_equation<N:  Num + Bounded + Clone,
-                                  LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
-                                  AV: Vec<N> + Clone,
-                                  M:  Transform<LV> + Rotate<LV> + One,
-                                  II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone,
+pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
+                                  LV: Clone + NPhysicsDirection<N, AV> + CrossMatrix<CM>,
+                                  AV: Clone + NPhysicsOrientation<N>,
+                                  M:  Clone + NPhysicsTransform<LV, AV>,
+                                  II: Clone + NPhysicsInertia<N, LV, AV, M>,
                                   CM: Row<AV>>(
                                   dt:          N,
                                   joint:       &BallInSocket<N, LV, AV, M, II>,
@@ -30,11 +30,11 @@ pub fn fill_second_order_equation<N:  Num + Bounded + Clone,
 }
 
 // FIXME: move this on another file. Something like "joint_equation_helper.rs"
-pub fn cancel_relative_linear_motion<N:  Num + Bounded + Clone,
-                                     LV: VecExt<N> + CrossMatrix<CM> + Cross<AV> + Clone,
-                                     AV: Vec<N> + Clone,
-                                     M:  Transform<LV> + Rotate<LV> + One,
-                                     II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone,
+pub fn cancel_relative_linear_motion<N:  Clone + NPhysicsScalar,
+                                     LV: Clone + NPhysicsDirection<N, AV> + CrossMatrix<CM>,
+                                     AV: Clone + NPhysicsOrientation<N>,
+                                     M:  Clone + NPhysicsTransform<LV, AV>,
+                                     II: Clone + NPhysicsInertia<N, LV, AV, M>,
                                      CM: Row<AV>,
                                      P>(
                                      dt:          N,
@@ -88,10 +88,16 @@ pub fn cancel_relative_linear_motion<N:  Num + Bounded + Clone,
 }
 
 #[inline]
-pub fn write_anchor_id<'r, N: Clone, LV, AV, M, II, P>(
-                   anchor: &'r Anchor<N, LV, AV, M, II, P>,
-                   id:     &mut int)
-                   -> Option<@mut Body<N, LV, AV, M, II>> {
+pub fn write_anchor_id<'r,
+                       N:  Clone + NPhysicsScalar,
+                       LV: Clone + NPhysicsDirection<N, AV>,
+                       AV: Clone + NPhysicsOrientation<N>,
+                       M:  NPhysicsTransform<LV, AV>,
+                       II: Clone + NPhysicsInertia<N, LV, AV, M>,
+                       P>(
+                       anchor: &'r Anchor<N, LV, AV, M, II, P>,
+                       id:     &mut int)
+                       -> Option<@mut Body<N, LV, AV, M, II>> {
     match anchor.body {
         Some(b) => {
             if b.can_move() {

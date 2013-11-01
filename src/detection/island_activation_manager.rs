@@ -1,5 +1,4 @@
 use std::ptr;
-use std::num::{Zero, One};
 use nalgebra::na::{Cast, AlgebraicVec};
 use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
@@ -10,6 +9,8 @@ use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::{Body, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationRequestHandler,
                      CollisionSignalHandler};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 struct BodyWithEnergy<N, LV, AV, M, II> {
     // NOTE: that is the place to put a `can_be_deactivated` flag if needed…
@@ -37,11 +38,11 @@ pub struct IslandActivationManager<N, LV, AV, M, II> {
     collector:      ~[Constraint<N, LV, AV, M, II>]
 }
 
-impl<N:  'static + One + Zero + Num + Cast<f32> + Orderable + Algebraic + Clone,
-     LV: 'static + AlgebraicVec<N> + Clone,
-     AV: 'static + AlgebraicVec<N> + Clone,
-     M:  'static,
-     II: 'static>
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
 IslandActivationManager<N, LV, AV, M, II> {
     pub fn new(events:     @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
                threshold:  N,
@@ -124,11 +125,11 @@ IslandActivationManager<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  'static + Num + Clone + Cast<f32> + Orderable + Algebraic,
-     LV: 'static + AlgebraicVec<N> + Clone,
-     AV: 'static + AlgebraicVec<N> + Clone,
-     M:  'static,
-     II: 'static>
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
 for IslandActivationManager<N, LV, AV, M, II> {
     fn add(&mut self, body: @mut Body<N, LV, AV, M, II>) {
@@ -407,11 +408,11 @@ fn union(x: uint, y: uint, sets: &mut [UFindSet]) {
      }
 }
 
-impl<N:  'static + One + Zero + Num + Cast<f32> + Orderable + Algebraic + Clone,
-     LV: 'static + AlgebraicVec<N> + Clone,
-     AV: 'static + AlgebraicVec<N> + Clone,
-     M:  'static,
-     II: 'static>
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
 CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV, AV, M, II> {
     fn handle_collision_started_signal(&mut self,
                                        a: @mut Body<N, LV, AV, M, II>,
@@ -440,11 +441,11 @@ CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV
     }
 }
 
-impl<N:  'static + One + Zero + Num + Cast<f32> + Orderable + Algebraic + Clone,
-     LV: 'static + AlgebraicVec<N> + Clone,
-     AV: 'static + AlgebraicVec<N> + Clone,
-     M:  'static,
-     II: 'static>
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
 BodyActivationRequestHandler<Body<N, LV, AV, M, II>>
 for IslandActivationManager<N, LV, AV, M, II> {
     fn handle_body_activation_request(&mut self, b: @mut Body<N, LV, AV, M, II>) {

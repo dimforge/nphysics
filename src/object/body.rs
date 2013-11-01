@@ -1,8 +1,8 @@
 use std::borrow;
-use std::num::Zero;
-use nalgebra::na::{Cast, Translation, Rotate, AbsoluteRotate, Transform, AlgebraicVecExt};
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use object::{RigidBody, SoftBody};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 pub enum Body<N, LV, AV, M, II> {
     RB(RigidBody<N, LV, AV, M, II>),
@@ -24,7 +24,12 @@ Clone for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N: Clone, LV, AV, M, II> Body<N, LV, AV, M, II> {
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
+Body<N, LV, AV, M, II> {
     #[inline]
     pub fn to_rigid_body_or_fail<'r>(&'r self) -> &'r RigidBody<N, LV, AV, M, II> {
         match *self {
@@ -45,7 +50,7 @@ impl<N: Clone, LV, AV, M, II> Body<N, LV, AV, M, II> {
     pub fn is_active(&self) -> bool {
         match *self {
             RB(ref rb) => rb.is_active(),
-            SB(ref sb)  => sb.is_active()
+            SB(ref sb) => sb.is_active()
         }
     }
 
@@ -80,9 +85,7 @@ impl<N: Clone, LV, AV, M, II> Body<N, LV, AV, M, II> {
             SB(ref mut sb)  => sb.activate()
         }
     }
-}
 
-impl<N, LV: Zero, AV: Zero, M, II> Body<N, LV, AV, M, II> {
     #[inline]
     pub fn deactivate(&mut self) {
         match *self {
@@ -99,12 +102,11 @@ impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Send + Freeze + Cast<f32> + Primitive + Orderable + Algebraic + Signed + Clone,
-     LV: Send + Freeze + AlgebraicVecExt<N> + Clone,
-     AV,
-     M:  Send + Freeze + Translation<LV> + Rotate<LV> + AbsoluteRotate<LV> + Transform<LV> +
-         Mul<M, M>,
-     II>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: NPhysicsOrientation<N>,
+     M:  NPhysicsTransform<LV, AV>,
+     II: NPhysicsInertia<N, LV, AV, M>>
 HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
     #[inline]
     fn bounding_volume(&self) -> AABB<N, LV> {

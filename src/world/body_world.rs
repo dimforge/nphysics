@@ -1,10 +1,4 @@
-use std::num::{Zero, One};
-use nalgebra::na::{
-    Row, Inv,
-    Rotation, Rotate, AbsoluteRotate,
-    Translation, Transform, Transformation,
-    AlgebraicVecExt, Cast, Cross, CrossMatrix
-};
+use nalgebra::na::{CrossMatrix, Row};
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
@@ -21,7 +15,7 @@ use detection::IslandActivationManager;
 use resolution::{AccumulatedImpulseSolver, Velocity};
 use resolution::solver::Solver;
 use world::World;
-use object::volumetric::InertiaTensor;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 use object::Body;
 use signal::signal::SignalEmiter;
 
@@ -46,14 +40,11 @@ pub struct BodyWorld<N, LV, AV, M, II, CM> {
     solver:     @mut AccumulatedImpulseSolver<N, LV, AV, M, II, CM>
 }
 
-impl<N:  'static + Send + Freeze + Clone + Zero + Cast<f32> + Primitive + Num + Algebraic +
-         Orderable + Signed + Real + ApproxEq<N> + Float,
-     LV: 'static + Send + Freeze + Clone + Zero + AlgebraicVecExt<N> + Cross<AV> +
-         CrossMatrix<CM> + ApproxEq<N> + Translation<LV> + Rotate<LV> + Transform<LV> + IterBytes,
-     AV: 'static + Clone + Zero + AlgebraicVecExt<N>,
-     M:  'static + Send + Freeze + Clone + Inv + Rotation<AV> + Rotate<LV> + Translation<LV> +
-         Transform<LV> + Transformation<M> + AbsoluteRotate<LV> + Mul<M, M> + One,
-     II: 'static + Clone + Mul<II, II> + Inv + InertiaTensor<N, LV, AV, M>,
+impl<N:  'static + NPhysicsScalar,
+     LV: 'static + Clone + CrossMatrix<CM> + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      CM: Row<AV>>
 BodyWorld<N, LV, AV, M, II, CM> {
     pub fn new() -> BodyWorld<N, LV, AV, M, II, CM> {
@@ -75,13 +66,13 @@ BodyWorld<N, LV, AV, M, II, CM> {
         // Collision Dispatcher
         let dispatcher = BodiesBodiesDispatcher::new();
         // Broad phase
-        let broad_phase = @mut DBVTBroadPhase::new(dispatcher, Cast::from(0.08));
+        let broad_phase = @mut DBVTBroadPhase::new(dispatcher, na::cast(0.08));
         // CCD handler
         let ccd = SweptBallMotionClamping::new(events, broad_phase, true);
         // Collision detector
         let detector = BodiesBodies::new(events, broad_phase, false);
         // Deactivation
-        let sleep = IslandActivationManager::new(events, Cast::from(1.0), Cast::from(0.01));
+        let sleep = IslandActivationManager::new(events, na::cast(1.0), na::cast(0.01));
         // Joints
         let joints = JointManager::new(events);
 
@@ -89,9 +80,9 @@ BodyWorld<N, LV, AV, M, II, CM> {
          * For constraints resolution
          */
         let solver = @mut AccumulatedImpulseSolver::new(
-            Cast::from(0.1),
-            Velocity(Cast::from(0.2)),
-            Cast::from(1.0),
+            na::cast(0.1),
+            Velocity(na::cast(0.2)),
+            na::cast(1.0),
             10,
             10);
 
@@ -103,7 +94,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         world.add_integrator(ccd);
         world.add_detector(detector);
         world.add_detector(joints);
-        // world.add_detector(sleep);
+        world.add_detector(sleep);
         world.add_solver(solver);
 
         BodyWorld {

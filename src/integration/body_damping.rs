@@ -1,10 +1,10 @@
 use std::ptr;
-use nalgebra::na::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use object::{Body, RB, SB};
 use integration::Integrator;
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 
 pub struct BodyDamping<N, LV, AV, M, II> {
     priv linear_damping:  N,
@@ -12,11 +12,11 @@ pub struct BodyDamping<N, LV, AV, M, II> {
     priv objects:         HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>
 }
 
-impl<N:  'static + Clone,
-     LV: 'static + Clone + Vec<N>,
-     AV: 'static + Clone + Vec<N>,
-     M:  'static + Clone,
-     II: 'static + Clone>
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
 BodyDamping<N, LV, AV, M, II> {
     #[inline]
     pub fn new<C>(events:          &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
@@ -38,7 +38,11 @@ BodyDamping<N, LV, AV, M, II> {
     }
 }
 
-impl<N: Clone, LV: Clone + Vec<N>, AV: Clone + Vec<N>, M: Clone, II: Clone>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
 Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     #[inline]
     fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
@@ -70,7 +74,12 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<N: Clone, LV: Clone + Vec<N>, AV: Clone + Vec<N>, M: Clone, II: Clone, C>
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>,
+     C>
 BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodyDamping<N, LV, AV, M, II> {
     fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {
         self.add(b)

@@ -1,6 +1,8 @@
 use nalgebra::na::Transform;
 use detection::joint::anchor::Anchor;
 use object::{RB, SB};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 pub struct BallInSocket<N, LV, AV, M, II> {
     priv up_to_date: bool,
@@ -36,7 +38,12 @@ impl<N, LV, AV, M, II> BallInSocket<N, LV, AV, M, II> {
     }
 }
 
-impl<N, LV: Eq, AV, M, II> BallInSocket<N, LV, AV, M, II> {
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
+BallInSocket<N, LV, AV, M, II> {
     pub fn set_local1(&mut self, local1: LV) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
@@ -50,9 +57,7 @@ impl<N, LV: Eq, AV, M, II> BallInSocket<N, LV, AV, M, II> {
             self.anchor2.position = local2
         }
     }
-}
 
-impl<N: Clone, LV: Clone, AV, M: Transform<LV>, II> BallInSocket<N, LV, AV, M, II> {
     pub fn anchor1_pos(&self) -> LV {
         match self.anchor1.body {
             Some(b) => {

@@ -1,5 +1,7 @@
 use detection::joint::anchor::Anchor;
 use object::{RB, SB};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 pub struct Fixed<N, LV, AV, M, II> {
     priv up_to_date: bool,
@@ -7,7 +9,12 @@ pub struct Fixed<N, LV, AV, M, II> {
     priv anchor2:    Anchor<N, LV, AV, M, II, M>,
 }
 
-impl<N, LV, AV, M, II> Fixed<N, LV, AV, M, II> {
+impl<N:  NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
+Fixed<N, LV, AV, M, II> {
     pub fn new(anchor1: Anchor<N, LV, AV, M, II, M>,
                anchor2: Anchor<N, LV, AV, M, II, M>)
                -> Fixed<N, LV, AV, M, II> {
@@ -33,9 +40,7 @@ impl<N, LV, AV, M, II> Fixed<N, LV, AV, M, II> {
     pub fn anchor2<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, M> {
         &self.anchor2
     }
-}
 
-impl<N, LV, AV, M: Eq, II> Fixed<N, LV, AV, M, II> {
     pub fn set_local1(&mut self, local1: M) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
@@ -49,9 +54,7 @@ impl<N, LV, AV, M: Eq, II> Fixed<N, LV, AV, M, II> {
             self.anchor2.position = local2
         }
     }
-}
 
-impl<N: Clone, LV, AV, M: Mul<M, M> + Clone, II> Fixed<N, LV, AV, M, II> {
     pub fn anchor1_pos(&self) -> M {
         match self.anchor1.body {
             Some(b) => {

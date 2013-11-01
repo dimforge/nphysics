@@ -1,10 +1,6 @@
-use std::num::One;
 use std::ptr;
 use std::managed;
-use nalgebra::na::{
-    Cast, Translation, Rotate, Rotation, AbsoluteRotate, Transform, Inv,
-    Vec, AlgebraicVecExt, Cross
-};
+use nalgebra::na::Translation;
 use nalgebra::na;
 use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
 use ncollide::util::hash_map::HashMap;
@@ -15,6 +11,7 @@ use ncollide::narrow::toi;
 use integration::Integrator;
 use object::{Body, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 
 struct CCDBody<N, LV, AV, M, II> {
     body:        @mut Body<N, LV, AV, M, II>,
@@ -46,13 +43,11 @@ pub struct SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     priv interferences: ~[@mut Body<N, LV, AV, M, II>]
 }
 
-impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
-     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> + Clone +
-         Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N> + Clone,
-     M:  'static + Send + Freeze + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
-         Mul<M, M> + Inv + One + Clone,
-     II: 'static + Clone,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 SweptBallMotionClamping<N, LV, AV, M, II, BF> {
@@ -127,13 +122,11 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic + Cast<f32>,
-     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
-         Clone + Rotate<LV> + Transform<LV>,
-     AV: Clone + Vec<N>,
-     M:  Send + Freeze + Clone + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
-         AbsoluteRotate<LV> + Mul<M, M> + Inv + One,
-     II: Clone, // FIXME: remove those bounds
+impl<N:  Clone + NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
 Integrator<N, Body<N, LV, AV, M, II>>
@@ -244,13 +237,11 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<N:  'static + Send + Freeze + ApproxEq<N> + Num + Real + Float + Ord + Clone + Algebraic,
-     LV: 'static + Send + Freeze + AlgebraicVecExt<N> + Cross<AV> + ApproxEq<N> + Translation<LV> +
-         Clone + Rotate<LV> + Transform<LV>,
-     AV: 'static + Vec<N> + Clone,
-     M:  'static + Send + Freeze + Rotation<AV> + Rotate<LV> + Translation<LV> + Transform<LV> +
-         Mul<M, M> + Inv + One + Clone,
-     II: 'static + Clone,
+impl<N:  'static + Clone + NPhysicsScalar,
+     LV: 'static + Clone + NPhysicsDirection<N, AV>,
+     AV: 'static + Clone + NPhysicsOrientation<N>,
+     M:  'static + Clone + NPhysicsTransform<LV, AV>,
+     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
      BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
          BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>,
      C>

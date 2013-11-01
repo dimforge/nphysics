@@ -1,10 +1,11 @@
-use std::num::{One, Zero, Orderable, Bounded};
-use nalgebra::na::{Vec, VecExt, AlgebraicVecExt, Cross, Cast, Rotate, Transform};
+use std::num::{Zero, Bounded};
 use nalgebra::na;
 use ncollide::contact::Contact;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
 use object::volumetric::InertiaTensor;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 pub enum CorrectionMode<N> {
     Velocity(N),
@@ -55,9 +56,9 @@ pub struct CorrectionParameters<N> {
     rest_eps:        N
 }
 
-pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
-                                      AV: Vec<N>,
-                                      N:  Num + Orderable + Bounded + Cast<f32> + Clone>(
+pub fn reinit_to_first_order_equation<N:  Clone + NPhysicsScalar,
+                                      LV: Clone + NPhysicsDirection<N, AV>,
+                                      AV: NPhysicsOrientation<N>>(
                                       dt:          N,
                                       coll:        &Contact<N, LV>,
                                       constraint:  &mut VelocityConstraint<LV, AV, N>,
@@ -79,13 +80,11 @@ pub fn reinit_to_first_order_equation<LV: Vec<N> + Cross<AV> + Clone,
 }
 
 // FIXME: note that removing the Clone constraint on N leads to an ICE
-pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
-                                  AV: Vec<N> + Clone,
-                                  N:  Num + Orderable + Bounded + Signed + Clone +
-                                      Cast<f32>,
-                                  M:  Transform<LV> + Rotate<LV> + One,
-                                  II: Mul<II, II> + InertiaTensor<N, LV, AV, M> +
-                                      Clone>(
+pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
+                                  LV: Clone + NPhysicsDirection<N, AV>,
+                                  AV: Clone + NPhysicsOrientation<N>,
+                                  M:  Clone + NPhysicsTransform<LV, AV>,
+                                  II: Clone + NPhysicsInertia<N, LV, AV, M>>(
                                   dt:           N,
                                   coll:         &Contact<N, LV>,
                                   rb1:          &RigidBody<N, LV, AV, M, II>,
@@ -98,7 +97,7 @@ pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
                                   correction:   &CorrectionParameters<N>) {
     let restitution = rb1.restitution() * rb2.restitution();
 
-    let center = (coll.world1 + coll.world2) / Cast::from(2.0);
+    let center = (coll.world1 + coll.world2) / na::cast(2.0);
 
     fill_velocity_constraint(dt.clone(),
                              coll.normal.clone(),
@@ -145,11 +144,11 @@ pub fn fill_second_order_equation<LV: AlgebraicVecExt<N> + Cross<AV> + Clone,
     }
 }
 
-pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
-                                AV: Vec<N>,
-                                N:  Num + Clone,
-                                M:  Transform<LV> + Rotate<LV> + One,
-                                II: Mul<II, II> + InertiaTensor<N, LV, AV, M> + Clone>(
+pub fn fill_constraint_geometry<N:  Clone + NPhysicsScalar,
+                                LV: Clone + NPhysicsDirection<N, AV>,
+                                AV: Clone + NPhysicsOrientation<N>,
+                                M:  NPhysicsTransform<LV, AV>,
+                                II: Clone + NPhysicsInertia<N, LV, AV, M>>(
                                 normal:     LV,
                                 rot_axis1:  AV,
                                 rot_axis2:  AV,
@@ -193,11 +192,11 @@ pub fn fill_constraint_geometry<LV: Vec<N> + Cross<AV> + Clone,
     constraint.inv_projected_mass = _1 / constraint.inv_projected_mass;
 }
 
-fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
-                            AV: Vec<N> + Clone,
-                            N:  Num + Orderable + Bounded + Clone,
-                            M:  Transform<LV> + Rotate<LV> + One,
-                            II: Mul<II, II> + Clone + InertiaTensor<N, LV, AV, M>>(
+fn fill_velocity_constraint<N:  Clone + NPhysicsScalar,
+                            LV: Clone + NPhysicsDirection<N, AV>,
+                            AV: Clone + NPhysicsOrientation<N>,
+                            M:  Clone + NPhysicsTransform<LV, AV>,
+                            II: Clone + NPhysicsInertia<N, LV, AV, M>>(
                             dt:              N,
                             normal:          LV,
                             center:          LV,
@@ -257,11 +256,11 @@ fn fill_velocity_constraint<LV: VecExt<N> + Cross<AV> + Clone,
     constraint.hibound = hibound;
 }
 
-pub fn relative_velocity<N:  Num,
-                         LV: Vec<N> + Clone,
-                         AV: Vec<N> + Clone,
-                         M,
-                         II>(
+pub fn relative_velocity<N:  Clone + NPhysicsScalar,
+                         LV: Clone + NPhysicsDirection<N, AV>,
+                         AV: Clone + NPhysicsOrientation<N>,
+                         M:  Clone + NPhysicsTransform<LV, AV>,
+                         II: Clone + NPhysicsInertia<N, LV, AV, M>>(
                          rb1:       Option<&RigidBody<N, LV, AV, M, II>>,
                          rb2:       Option<&RigidBody<N, LV, AV, M, II>>,
                          normal:    &LV,

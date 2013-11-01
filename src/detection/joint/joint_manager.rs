@@ -7,6 +7,8 @@ use detection::joint::fixed::Fixed;
 use detection::constraint::{Constraint, BallInSocket, Fixed, RBRB};
 use object::Body;
 use signal::signal::SignalEmiter;
+use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
+                      NPhysicsInertia};
 
 pub struct JointManager<N, LV, AV, M, II> {
     events: @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
@@ -47,11 +49,11 @@ impl<N: 'static, LV: 'static, AV: 'static, M: 'static, II: 'static> JointManager
     }
 }
 
-impl<N:  Clone,
-     LV: Clone,
-     AV,
-     M,
-     II>
+impl<N:  NPhysicsScalar,
+     LV: Clone + NPhysicsDirection<N, AV>,
+     AV: Clone + NPhysicsOrientation<N>,
+     M:  Clone + NPhysicsTransform<LV, AV>,
+     II: Clone + NPhysicsInertia<N, LV, AV, M>>
 Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManager<N, LV, AV, M, II> {
     fn add(&mut self, _: @mut Body<N, LV, AV, M, II>) {
     }
