@@ -12,7 +12,7 @@ use detection::joint::joint_manager::JointManager;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 use detection::IslandActivationManager;
-use resolution::{AccumulatedImpulseSolver, Velocity};
+use resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
 use resolution::solver::Solver;
 use world::World;
 use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
@@ -81,10 +81,11 @@ BodyWorld<N, LV, AV, M, II, CM> {
          */
         let solver = @mut AccumulatedImpulseSolver::new(
             na::cast(0.1),
-            Velocity(na::cast(0.2)),
+            VelocityAndPosition(na::cast(0.2), na::cast(0.2), na::cast(0.08)),
+            na::cast(0.4),
             na::cast(1.0),
-            10,
-            10);
+            3,
+            8);
 
         /*
          * Add everything to the world

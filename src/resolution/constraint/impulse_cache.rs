@@ -106,6 +106,9 @@ ImpulseCache<N, V> {
         self.hash_prev.clear();
         self.cache_next.clear();
         self.hash_next.clear();
+
+        self.cache_prev.grow_set(self.impulse_per_contact, &na::zero(), na::zero());
+        self.cache_next.grow_set(self.impulse_per_contact, &na::zero(), na::zero());
     }
 
     pub fn swap(&mut self) {

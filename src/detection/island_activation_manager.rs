@@ -49,7 +49,7 @@ IslandActivationManager<N, LV, AV, M, II> {
                mix_factor: N)
                -> @mut IslandActivationManager<N, LV, AV, M, II> {
         assert!(mix_factor >= na::zero() && threshold <= na::one(),
-                "The energy mixing factor must be comprised between 0.0 and 1.0.");
+                "The energy mixing factor must be between 0.0 and 1.0.");
 
         let res = @mut IslandActivationManager {
             events:         events,

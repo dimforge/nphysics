@@ -4,7 +4,7 @@ use object::Body;
 use detection::joint::anchor::Anchor;
 use detection::joint::ball_in_socket::BallInSocket;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
-use resolution::constraint::contact_equation::CorrectionMode;
+use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
 use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
                       NPhysicsInertia};
@@ -18,7 +18,7 @@ pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
                                   dt:          N,
                                   joint:       &BallInSocket<N, LV, AV, M, II>,
                                   constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                  correction:  &CorrectionMode<N>) {
+                                  correction:  &CorrectionParameters<N>) {
     cancel_relative_linear_motion(
         dt,
         &joint.anchor1_pos(),
@@ -43,8 +43,8 @@ pub fn cancel_relative_linear_motion<N:  Clone + NPhysicsScalar,
                                      anchor1:     &Anchor<N, LV, AV, M, II, P>,
                                      anchor2:     &Anchor<N, LV, AV, M, II, P>,
                                      constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                     correction:  &CorrectionMode<N>) {
-    let error      = (global2 - *global1) * correction.vel_corr_factor();
+                                     correction:  &CorrectionParameters<N>) {
+    let error      = (global2 - *global1) * correction.joint_corr;
     let rot_axis1  = na::cross_matrix(&(global1 - anchor1.center_of_mass()));
     let rot_axis2  = na::cross_matrix(&(global2 - anchor2.center_of_mass()));
 

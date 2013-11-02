@@ -4,7 +4,7 @@ use detection::joint::fixed::Fixed;
 use detection::joint::anchor::Anchor;
 use resolution::constraint::ball_in_socket_equation;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
-use resolution::constraint::contact_equation::CorrectionMode;
+use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
 use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
                       NPhysicsInertia};
@@ -18,7 +18,7 @@ pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
                                   dt:          N,
                                   joint:       &Fixed<N, LV, AV, M, II>,
                                   constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                  correction:  &CorrectionMode<N>) {
+                                  correction:  &CorrectionParameters<N>) {
     let ref1 = joint.anchor1_pos();
     let ref2 = joint.anchor2_pos();
 
@@ -54,7 +54,7 @@ pub fn cancel_relative_angular_motion<N:  Clone + NPhysicsScalar,
                                       anchor1:     &Anchor<N, LV, AV, M, II, P>,
                                       anchor2:     &Anchor<N, LV, AV, M, II, P>,
                                       constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                      correction:  &CorrectionMode<N>) {
+                                      correction:  &CorrectionParameters<N>) {
     let delta     = na::inv(ref2).expect("ref2 must be inversible.") * *ref1;
     let delta_rot = delta.rotation();
 
@@ -83,7 +83,7 @@ pub fn cancel_relative_angular_motion<N:  Clone + NPhysicsScalar,
         constraint.lobound   = -_M;
         constraint.hibound   = _M;
         // FIXME: dont compute the difference at each iteration
-        let error = na::dot(&delta_rot, &rot_axis) * correction.vel_corr_factor() / dt;
+        let error = na::dot(&delta_rot, &rot_axis) * correction.joint_corr / dt;
         constraint.objective = na::dot(&(ang_vel2 - ang_vel1), &rot_axis) - error;
         constraint.impulse   = na::zero(); // FIXME: cache
 

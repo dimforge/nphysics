@@ -238,19 +238,19 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
                     let rb1 = b1.to_rigid_body_or_fail();
                     let rb2 = b2.to_rigid_body_or_fail();
 
-                    let n = d.num_colls();
+                    let ncols = d.num_colls();
 
                     d.update(rb1.transform_ref(), rb1.geom(), rb2.transform_ref(), rb2.geom());
 
-                    let new_n = d.num_colls();
+                    let new_ncols = d.num_colls();
 
-                    if n == 0 && new_n != 0 {
+                    if ncols == 0 && new_ncols != 0 {
                         // collision lost
-                        self.signals.emit_collision_ended(b1, b2);
-                    }
-                    else if n != 0 && new_n == 0 {
-                        // collision created
                         self.signals.emit_collision_started(b1, b2);
+                    }
+                    else if ncols != 0 && new_ncols == 0 {
+                        // collision created
+                        self.signals.emit_collision_ended(b1, b2);
                     }
                 },
                 Unsuported => { }

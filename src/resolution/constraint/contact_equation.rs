@@ -53,6 +53,7 @@ impl<N: Zero + Bounded + Clone> CorrectionMode<N> {
 
 pub struct CorrectionParameters<N> {
     corr_mode:       CorrectionMode<N>,
+    joint_corr:      N,
     rest_eps:        N
 }
 
@@ -79,8 +80,7 @@ pub fn reinit_to_first_order_equation<N:  Clone + NPhysicsScalar,
     constraint.impulse = na::zero();
 }
 
-// FIXME: note that removing the Clone constraint on N leads to an ICE
-pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
+pub fn fill_second_order_equation<N:  NPhysicsScalar,
                                   LV: Clone + NPhysicsDirection<N, AV>,
                                   AV: Clone + NPhysicsOrientation<N>,
                                   M:  Clone + NPhysicsTransform<LV, AV>,
@@ -240,14 +240,14 @@ fn fill_velocity_constraint<N:  Clone + NPhysicsScalar,
     constraint.objective = -constraint.objective;
 
     if depth < na::zero() {
-        constraint.objective =  constraint.objective + depth / dt
+        constraint.objective = constraint.objective + depth / dt
     }
     else if depth < correction.corr_mode.max_depth_for_vel_corr() {
         constraint.objective = constraint.objective + depth * correction.corr_mode.vel_corr_factor() / dt
     }
 
     // for warm-starting
-    constraint.impulse = initial_impulse;
+    constraint.impulse = if depth < na::zero() { na::zero() } else { initial_impulse };
 
     /*
      * constraint bounds

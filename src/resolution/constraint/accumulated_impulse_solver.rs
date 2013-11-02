@@ -34,6 +34,7 @@ impl<N:  'static + Clone + NPhysicsScalar,
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     pub fn new(step:                  N,
                correction_mode:       CorrectionMode<N>,
+               joint_corr_factor:     N,
                rest_eps:              N,
                num_first_order_iter:  uint,
                num_second_order_iter: uint)
@@ -46,8 +47,9 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             cache:                   ImpulseCache::new(step, na::dim::<LV>()),
 
             correction: CorrectionParameters {
-                corr_mode:   correction_mode,
-                rest_eps:    rest_eps
+                corr_mode:  correction_mode,
+                joint_corr: joint_corr_factor,
+                rest_eps:   rest_eps
             }
         }
     }
@@ -124,7 +126,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         dt.clone(),
                         bis,
                         self.restitution_constraints.mut_slice_from(joint_offset), // XXX
-                        &self.correction.corr_mode
+                        &self.correction
                     );
 
                     joint_offset = joint_offset + na::dim::<LV>();
@@ -134,7 +136,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                         dt.clone(),
                         f,
                         self.restitution_constraints.mut_slice_from(joint_offset), // XXX
-                        &self.correction.corr_mode
+                        &self.correction
                     );
 
                     joint_offset = joint_offset + na::dim::<LV>() + na::dim::<AV>();
@@ -243,7 +245,7 @@ impl<N:  'static + Clone + NPhysicsScalar,
 Solver<N, Constraint<N, LV, AV, M, II>> for
 AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     fn solve(&mut self, dt: N, constraints: &[Constraint<N, LV, AV, M, II>]) {
-        // FIXME: bodies index assignment is very uggly
+        // FIXME: bodies index assignment is very ugly
         let mut bodies = ~[];
 
         if constraints.len() != 0 {
