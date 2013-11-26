@@ -16,7 +16,7 @@ extern mod graphics2d;
 use extra::arc::Arc;
 use nalgebra::na::{Vec2, Iso2, Translation};
 use nalgebra::na;
-use ncollide::geom::{Geom, Box, Plane, CompoundAABB};
+use ncollide::geom::{Geom, CompoundAABB};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -41,8 +41,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * First plane
      */
-    let geom   = Plane::new(Vec2::new(-1.0f32, -1.0));
-    let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f32, Static, 0.3, 0.6);
+    let mut rb = RigidBody::new(Geom::new_plane(Vec2::new(-1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -54,8 +53,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * Second plane
      */
-    let geom   = Plane::new(Vec2::new(1.0f32, -1.0));
-    let mut rb = RigidBody::new(Geom::new_plane(geom), 0.0f32, Static, 0.3, 0.6);
+    let mut rb = RigidBody::new(Geom::new_plane(Vec2::new(1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -67,17 +65,14 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * Cross shaped geometry
      */
-    let box1 = Box::new(Vec2::new(5.0f32, 0.75));
-    let box2 = Box::new(Vec2::new(0.75f32, 5.0));
-
     let delta1 = Iso2::new(Vec2::new(0.0f32, -5.0), na::zero());
     let delta2 = Iso2::new(Vec2::new(-5.0f32, 0.0), na::zero());
     let delta3 = Iso2::new(Vec2::new(5.0f32,  0.0), na::zero());
 
     let mut cross_geoms = ~[];
-    cross_geoms.push((delta1, Geom::new_box(box1)));
-    cross_geoms.push((delta2, Geom::new_box(box2)));
-    cross_geoms.push((delta3, Geom::new_box(box2)));
+    cross_geoms.push((delta1, Geom::new_box(Vec2::new(5.0f32, 0.75))));
+    cross_geoms.push((delta2, Geom::new_box(Vec2::new(0.75f32, 5.0))));
+    cross_geoms.push((delta3, Geom::new_box(Vec2::new(0.75f32, 5.0))));
 
     let cross = Arc::new(CompoundAABB::new(cross_geoms));
 

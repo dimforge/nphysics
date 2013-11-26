@@ -15,7 +15,7 @@ extern mod ncollide;
 
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
-use ncollide::geom::{Geom, Box, Plane};
+use ncollide::geom::Geom;
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -41,7 +41,7 @@ pub fn wall_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::Bod
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::new(0.0f32, 1.0, 0.0))), 0.0, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -62,8 +62,7 @@ pub fn wall_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::Bod
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
-            let box    = Box::new(Vec3::new(rad, rad, rad));
-            let mut rb = RigidBody::new(Geom::new_box(box), 1.0f32, Dynamic, 0.3, 0.5);
+            let mut rb = RigidBody::new(Geom::new_box(Vec3::new(rad, rad, rad)), 1.0f32, Dynamic, 0.3, 0.5);
 
             rb.append_translation(&Vec3::new(x, y, 0.0));
 

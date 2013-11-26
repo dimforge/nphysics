@@ -50,7 +50,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
+    pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
         simulate::simulate(builder)
     }
 

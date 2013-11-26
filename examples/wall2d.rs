@@ -14,7 +14,7 @@ extern mod ncollide;
 extern mod graphics2d;
 
 use nalgebra::na::{Vec2, Translation};
-use ncollide::geom::{Geom, Box, Plane};
+use ncollide::geom::Geom;
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -39,8 +39,7 @@ pub fn wall_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * First plane
      */
-    let geom = Plane::new(Vec2::new(0.0f32, -1.0));
-    let rb   = RigidBody::new(Geom::new_plane(geom), 0.0f32, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Vec2::new(0.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -62,8 +61,7 @@ pub fn wall_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
             let x = fj * 2.0 * rad - centerx;
             let y = -fi * 2.0 * rad;
 
-            let box    = Box::new(Vec2::new(rad, rad));
-            let mut rb = RigidBody::new(Geom::new_box(box), 1.0f32, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(Geom::new_box(Vec2::new(rad, rad)), 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

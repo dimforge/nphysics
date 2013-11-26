@@ -17,7 +17,7 @@ use extra::arc::Arc;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Iso3, Translation};
 use nalgebra::na;
-use ncollide::geom::{Geom, Box, Plane, CompoundAABB};
+use ncollide::geom::{Geom, CompoundAABB};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -42,7 +42,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Plane::new(Vec3::new(0.0f32, 1.0, 0.0))), 0.0, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Geom::new_plane(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -51,17 +51,15 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     /*
      * Cross shaped geometry
      */
-    let box1 = Box::new(Vec3::new(5.0f32, 0.25, 0.25));
-    let box2 = Box::new(Vec3::new(0.25f32, 5.0, 0.25));
 
     let delta1 = Iso3::new(Vec3::new(0.0f32, -5.0, 0.0), na::zero());
     let delta2 = Iso3::new(Vec3::new(-5.0f32, 0.0, 0.0), na::zero());
     let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = ~[];
-    cross_geoms.push((delta1, Geom::new_box(box1)));
-    cross_geoms.push((delta2, Geom::new_box(box2)));
-    cross_geoms.push((delta3, Geom::new_box(box2)));
+    cross_geoms.push((delta1, Geom::new_box(Vec3::new(5.0f32, 0.25, 0.25))));
+    cross_geoms.push((delta2, Geom::new_box(Vec3::new(0.25f32, 5.0, 0.25))));
+    cross_geoms.push((delta3, Geom::new_box(Vec3::new(0.25f32, 5.0, 0.25))));
 
     let cross = Arc::new(CompoundAABB::new(cross_geoms));
 

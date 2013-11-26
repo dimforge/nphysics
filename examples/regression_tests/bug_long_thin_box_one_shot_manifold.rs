@@ -38,7 +38,7 @@ extern mod ncollide;
 
 use nalgebra::na::{Vec3, Translation};
 use kiss3d::window::Window;
-use ncollide::geom::{Geom, Box, Plane};
+use ncollide::geom::Geom;
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -63,7 +63,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     /*
      * Plane
      */
-    let geom = Geom::new_plane(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)));
+    let geom = Geom::new_plane(Vec3::new(0.0f32, 1.0, 0.0));
     let body = @mut RB(RigidBody::new(geom, 0.0f32, Static, 0.3, 0.6));
 
     world.add_body(body);
@@ -77,7 +77,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     let y   = rad + 10.0;
     let z   = rad;
 
-    let geom   = Geom::new_box(Box::new(Vec3::new(rad, rad * 10.0, rad)));
+    let geom   = Geom::new_box(Vec3::new(rad, rad * 10.0, rad));
     let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
 
     rb.append_translation(&Vec3::new(x, y, z));

@@ -7,7 +7,7 @@ use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
 use kiss3d::event;
-use ncollide::geom::{Geom, Ball, Box};
+use ncollide::geom::Geom;
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::aliases::dim3;
@@ -33,7 +33,7 @@ fn usage(exe_name: &str) {
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
-pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
+pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -232,7 +232,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::KeyPressed(glfw::Key1) => {
-                        let geom   = Geom::new_ball(Ball::new(0.5f32));
+                        let geom   = Geom::new_ball(0.5f32);
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
@@ -249,7 +249,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::KeyPressed(glfw::Key2) => {
-                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f32, 0.5, 0.5)));
+                        let geom   = Geom::new_box(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transform = w.camera().view_transform();
@@ -266,7 +266,7 @@ pub fn simulate(builder: ~fn(&mut Window, &mut GraphicsManager) -> dim3::BodyWor
                         true
                     },
                     event::KeyPressed(glfw::Key3) => {
-                        let geom   = Geom::new_box(Box::new(Vec3::new(0.5f32, 0.5f32, 0.5f32)));
+                        let geom   = Geom::new_box(Vec3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();

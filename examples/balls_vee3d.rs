@@ -15,7 +15,7 @@ extern mod ncollide;
 
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
-use ncollide::geom::{Geom, Ball, Plane};
+use ncollide::geom::Geom;
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -48,7 +48,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
         Vec3::new(1.0f32, 1.0, 1.0 )
     ];
     for n in normals.iter() {
-        let rb   = RigidBody::new(Geom::new_plane(Plane::new(*n)), 0.0f32, Static, 0.3, 0.6);
+        let rb   = RigidBody::new(Geom::new_plane(*n), 0.0f32, Static, 0.3, 0.6);
         let body = @mut RB(rb);
 
         world.add_body(body);
@@ -71,7 +71,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
                 let y = 10.0 + j as f32 * 2.5 * rad + centery * 2.0;
                 let z = k as f32 * 2.5 * rad - centerx;
 
-                let mut rb = RigidBody::new(Geom::new_ball(Ball::new(rad)), 1.0f32, Dynamic, 0.3, 0.6);
+                let mut rb = RigidBody::new(Geom::new_ball(rad), 1.0f32, Dynamic, 0.3, 0.6);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
