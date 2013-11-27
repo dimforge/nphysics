@@ -59,7 +59,7 @@ pub fn cancel_relative_angular_motion<N:  Clone + NPhysicsScalar,
     let delta_rot = delta.rotation();
 
     let mut i = 0;
-    do na::canonical_basis |rot_axis: AV| {
+    na::canonical_basis(|rot_axis: AV| {
         let constraint = &mut constraints[i];
 
         let opt_b1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
@@ -90,5 +90,5 @@ pub fn cancel_relative_angular_motion<N:  Clone + NPhysicsScalar,
         i = i + 1;
 
         true
-    }
+    })
 }

@@ -134,7 +134,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     fn activate(&mut self,
                 body: @mut Body<N, LV, AV, M, II>,
                 out:  &mut ~[Constraint<N, LV, AV, M, II>]) {
-        do self.broad_phase.activate(body) |b1, b2, cd| {
+        self.broad_phase.activate(body, |b1, b2, cd| {
             match *cd {
                 GG(ref mut d) => {
                     let rb1 = b1.to_rigid_body_or_fail();
@@ -153,8 +153,7 @@ BodiesBodies<N, LV, AV, M, II, BF> {
                 },
                 Unsuported => { }
             }
-            
-        }
+        })
     }
 
     fn deactivate(&mut self, body: @mut Body<N, LV, AV, M, II>) {
@@ -232,7 +231,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
             self.broad_phase.update();
         }
 
-        do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
+        self.broad_phase.for_each_pair_mut(|b1, b2, cd| {
             match *cd {
                 GG(ref mut d) => {
                     let rb1 = b1.to_rigid_body_or_fail();
@@ -255,11 +254,11 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
                 },
                 Unsuported => { }
             }
-        }
+        })
     }
 
     fn interferences(&mut self, out: &mut ~[Constraint<N, LV, AV, M, II>]) {
-        do self.broad_phase.for_each_pair_mut |b1, b2, cd| {
+        self.broad_phase.for_each_pair_mut(|b1, b2, cd| {
             match *cd {
                 GG(ref mut d) => {
                     d.colls(&mut self.contacts_collector);
@@ -272,7 +271,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
                 },
                 Unsuported => { }
             }
-        }
+        })
     }
 
     #[inline]

@@ -46,7 +46,7 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
     /*
      * solve the system
      */
-    do num_iterations.times {
+    num_iterations.times(|| {
         for c in restitution.mut_iter() {
             solve_velocity_constraint(c, MJLambda);
         }
@@ -62,7 +62,7 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
                 solve_velocity_constraint(c, MJLambda);
             }
         }
-    }
+    });
 
     MJLambda
 }

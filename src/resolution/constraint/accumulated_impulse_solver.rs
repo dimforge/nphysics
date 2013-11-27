@@ -186,12 +186,12 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
          * first order resolution
          */
         let needs_correction = !self.correction.corr_mode.pos_corr_factor().is_zero() &&
-            do constraints.iter().any |constraint| {
+            constraints.iter().any(|constraint| {
             match *constraint {
                 RBRB(_, _, ref c) => c.depth >= self.correction.corr_mode.min_depth_for_pos_corr(),
                 _ => false // no first order resolution for joints
             }
-        };
+        });
 
         if needs_correction {
             self.resize_buffers(num_restitution_equations, num_friction_equations);

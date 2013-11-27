@@ -125,7 +125,7 @@ impl<N: Clone, O, C> World<N, O, C> {
 }
 
 #[inline(always)]
-fn sorted_insert<T>(vec: &mut ~[T], t: T, lt: &fn(&T, &T) -> bool) {
+fn sorted_insert<T>(vec: &mut ~[T], t: T, lt: |&T, &T| -> bool) {
     let mut iinsert = vec.len();
 
     for (i, e) in vec.iter().enumerate() {

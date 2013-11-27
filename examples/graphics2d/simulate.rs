@@ -22,7 +22,7 @@ fn usage(exe_name: &str) {
     println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
 }
 
-pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f32>) {
+pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
     let args = os::args();
 
     if args.len() > 1 {

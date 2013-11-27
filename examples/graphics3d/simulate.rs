@@ -59,8 +59,8 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
         window.set_framerate_limit(Some(60));
         window.set_light(window::StickToCamera);
 
-        do window.render_loop |w| {
-            do w.poll_events |w, event| {
+        window.render_loop(|w| {
+            w.poll_events(|w, event| {
                 match *event {
                     event::ButtonPressed(_, modifier) => {
                         if modifier.contains(glfw::Shift) {
@@ -299,7 +299,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
                     },
                     _ => true
                 }
-            }
+            });
 
             let before = time::precise_time_s();
 
@@ -339,7 +339,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
                 let dt = (time::precise_time_s() - before);
                 println(dt.to_str() + "sec (" + (1.0 / dt).to_str() + " fps)");
             }
-        }
+        })
     }
 }
 

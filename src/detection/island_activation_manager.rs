@@ -266,7 +266,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
         }
 
         // remove every collision between pair of deactivated bodies
-        do out.retain |o| {
+        out.retain(|o| {
             match *o {
                 RBRB(obj1, obj2, _) => obj1.is_active() || obj2.is_active(),
                 BallInSocket(bis)   => {
@@ -292,7 +292,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
                         }
                 }
             }
-        }
+        });
 
         /*
          * Activate any deactivated object interfering with an active object

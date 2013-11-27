@@ -31,7 +31,7 @@ impl<'self> GraphicsManager<'self> {
         }
     }
 
-    pub fn simulate(builder: &fn(&mut GraphicsManager) -> dim2::BodyWorld2d<f32>) {
+    pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
         simulate::simulate(builder)
     }
 

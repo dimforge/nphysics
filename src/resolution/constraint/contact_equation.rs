@@ -120,7 +120,7 @@ pub fn fill_second_order_equation<N:  NPhysicsScalar,
 
     let mut i = 0;
 
-    do na::orthonormal_subspace_basis(&coll.normal) |friction_axis| {
+    na::orthonormal_subspace_basis(&coll.normal, |friction_axis| {
         let constraint = &mut fconstraints[idf + i];
 
         fill_velocity_constraint(dt.clone(),
@@ -141,7 +141,7 @@ pub fn fill_second_order_equation<N:  NPhysicsScalar,
         i = i + 1;
 
         true
-    }
+    })
 }
 
 pub fn fill_constraint_geometry<N:  Clone + NPhysicsScalar,

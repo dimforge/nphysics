@@ -13,7 +13,7 @@ struct ContactIdentifier<V> {
     ccenter: V
 }
 
-pub type Cb<'self> = &'self fn(buf: &[u8]) -> bool;
+pub type Cb<'self> = 'self |buf: &[u8]| -> bool;
 
 impl<V: IterBytes> IterBytes for ContactIdentifier<V> {
     #[inline]
@@ -80,9 +80,9 @@ ImpulseCache<N, V> {
     pub fn push_impulsions<'a>(&'a mut self) -> &'a mut [N] {
         let begin = self.cache_next.len();
 
-        do self.impulse_per_contact.times {
+        self.impulse_per_contact.times(|| {
             self.cache_next.push(na::zero());
-        }
+        });
 
         let end = self.cache_next.len();
 
