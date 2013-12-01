@@ -11,6 +11,7 @@ use resolution::constraint::ball_in_socket_equation;
 use resolution::constraint::fixed_equation;
 use resolution::solver::Solver;
 use pgs = resolution::constraint::projected_gauss_seidel_solver;
+use resolution::constraint::projected_gauss_seidel_solver::Velocities;
 use resolution::constraint::impulse_cache::ImpulseCache;
 use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
                       NPhysicsInertia};
@@ -22,7 +23,8 @@ pub struct AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     priv num_first_order_iter:    uint,
     priv num_second_order_iter:   uint,
     priv restitution_constraints: ~[VelocityConstraint<LV, AV, N>],
-    priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>]
+    priv friction_constraints:    ~[VelocityConstraint<LV, AV, N>],
+    priv MJLambda:                ~[Velocities<LV, AV>]
 }
 
 impl<N:  'static + Clone + NPhysicsScalar,
@@ -44,6 +46,7 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             num_second_order_iter:   num_second_order_iter,
             restitution_constraints: ~[],
             friction_constraints:    ~[],
+            MJLambda:                ~[],
             cache:                   ImpulseCache::new(step, na::dim::<LV>()),
 
             correction: CorrectionParameters {
@@ -55,15 +58,6 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
     }
 
     fn resize_buffers(&mut self, num_restitution_equations: uint, num_friction_equations: uint) {
-        fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {
-            if buff.len() < size {
-                buff.grow_set(size - 1, &val, val.clone());
-            }
-            else {
-                buff.truncate(size)
-            }
-        }
-
         resize_buffer(&mut self.restitution_constraints,
                       num_restitution_equations,
                       VelocityConstraint::new());
@@ -145,15 +139,18 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             }
         }
 
+        resize_buffer(&mut self.MJLambda, bodies.len(), Velocities::new());
+
         // FIXME: parametrize by the resolution algorithm?
-        let MJLambda = pgs::projected_gauss_seidel_solve(
+        pgs::projected_gauss_seidel_solve(
             self.restitution_constraints,
             self.friction_constraints,
+            self.MJLambda,
             bodies.len(),
             self.num_second_order_iter,
             false);
 
-        // FIXME: this is _so_ uggly!
+        // FIXME: this is _so_ ugly!
         self.resize_buffers(num_restitution_equations, num_friction_equations);
 
         for b in bodies.iter() {
@@ -163,8 +160,8 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             let curr_lin_vel = rb.lin_vel();
             let curr_ang_vel = rb.ang_vel();
 
-            rb.set_lin_vel(curr_lin_vel + MJLambda[i].lv);
-            rb.set_ang_vel(curr_ang_vel + MJLambda[i].av);
+            rb.set_lin_vel(curr_lin_vel + self.MJLambda[i].lv);
+            rb.set_ang_vel(curr_ang_vel + self.MJLambda[i].av);
         }
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
@@ -210,9 +207,10 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
             }
 
             // FIXME: parametrize by the resolution algorithm?
-            let mut MJLambda = pgs::projected_gauss_seidel_solve(
+            pgs::projected_gauss_seidel_solve(
                 self.restitution_constraints,
                 [],
+                self.MJLambda,
                 bodies.len(),
                 self.num_first_order_iter,
                 true);
@@ -221,14 +219,14 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
                 let rb = b.to_mut_rigid_body_or_fail();
                 let i  = rb.index();
 
-                MJLambda[i].lv = MJLambda[i].lv * dt;
-                MJLambda[i].av = MJLambda[i].av * dt;
+                let translation = self.MJLambda[i].lv * dt;
+                let rotation    = self.MJLambda[i].av * dt;
 
                 let center = &rb.center_of_mass().clone();
 
                 let mut delta: M = na::one();
-                delta.append_rotation_wrt_point(&MJLambda[i].av, center);
-                delta.append_translation(&MJLambda[i].lv);
+                delta.append_rotation_wrt_point(&rotation, center);
+                delta.append_translation(&translation);
 
                 rb.append_transformation(&delta);
             }
@@ -370,4 +368,13 @@ AccumulatedImpulseSolver<N, LV, AV, M, II, M2> {
 
     #[inline]
     fn priority(&self) -> f64 { 0.0 }
+}
+
+fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {
+    if buff.len() < size {
+        buff.grow_set(size - 1, &val, val.clone());
+    }
+    else {
+        buff.truncate(size)
+    }
 }

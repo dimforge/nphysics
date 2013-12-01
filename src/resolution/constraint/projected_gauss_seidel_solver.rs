@@ -1,5 +1,4 @@
 use std::num::{Zero, Orderable};
-use std::vec;
 use nalgebra::na::Vec;
 use nalgebra::na;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -11,11 +10,16 @@ pub struct Velocities<LV, AV> {
 }
 
 impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
-    fn new() -> Velocities<LV, AV> {
+    pub fn new() -> Velocities<LV, AV> {
         Velocities {
             lv: na::zero(),
             av: na::zero()
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.lv = na::zero();
+        self.av = na::zero();
     }
 }
 
@@ -24,22 +28,26 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
                                     N:  Num + Orderable + Clone>(
                                     restitution:    &mut [VelocityConstraint<LV, AV, N>],
                                     friction:       &mut [VelocityConstraint<LV, AV, N>],
+                                    result:         &mut [Velocities<LV, AV>],
                                     num_bodies:     uint,
                                     num_iterations: uint,
-                                    is_lambda_zero: bool)
-                                    -> ~[Velocities<LV, AV>] {
+                                    is_lambda_zero: bool) {
     // initialize the solution with zeros...
-    // FIXME: avoid allocation at each update?
-    let mut MJLambda = vec::from_elem(num_bodies, Velocities::<LV, AV>::new());
+    // MJLambda is result
+    assert!(result.len() == num_bodies);
+
+    for v in result.mut_iter() {
+        v.reset();
+    }
 
     // ... and warm start if possible
     if !is_lambda_zero {
         for c in restitution.iter() {
-            setup_warmstart_for_constraint(c, MJLambda);
+            setup_warmstart_for_constraint(c, result);
         }
 
         for c in friction.iter() {
-            setup_warmstart_for_constraint(c, MJLambda);
+            setup_warmstart_for_constraint(c, result);
         }
     }
 
@@ -48,7 +56,7 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
      */
     num_iterations.times(|| {
         for c in restitution.mut_iter() {
-            solve_velocity_constraint(c, MJLambda);
+            solve_velocity_constraint(c, result);
         }
 
         for c in friction.mut_iter() {
@@ -59,12 +67,10 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
                 c.lobound = -bound;
                 c.hibound = bound;
 
-                solve_velocity_constraint(c, MJLambda);
+                solve_velocity_constraint(c, result);
             }
         }
     });
-
-    MJLambda
 }
 
 #[inline(always)]
