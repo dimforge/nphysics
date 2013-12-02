@@ -23,6 +23,7 @@ build_cmd_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(gl_lib_path)     	\
 					-L$(stb_image_lib_path) \
 					-Llib			  		\
+					--link-args -lm		    \
 					--out-dir ../bin --opt-level 3
 
 lib_build_opt=rustc -L$(nphysics_lib_path)  \

@@ -40,18 +40,18 @@ impl Camera {
 
     pub fn handle_event(&mut self, event: &event::Event) {
         match *event {
-            event::MouseWheelMoved{delta, _} => {
+            event::MouseWheelMoved{delta, ..} => {
                 let ndelta = delta as f32; // between -1.0 and 1.0
 
                 self.curr_zoom *= (1.0 + ndelta * ZOOM_FACTOR);
                 self.scene.zoom(1.0 + ndelta * ZOOM_FACTOR);
             }
-            event::MouseButtonPressed{x, y, _}  => {
+            event::MouseButtonPressed{x, y, ..}  => {
                 self.lastx    = x;
                 self.lasty    = y;
                 self.pressing = true;
             }
-            event::MouseButtonReleased{_}  => {
+            event::MouseButtonReleased{..}  => {
                 self.pressing = false;
             }
             event::MouseMoved{x, y}             => {

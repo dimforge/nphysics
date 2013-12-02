@@ -64,7 +64,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
     while rwindow.is_open() {
         loop {
             match rwindow.poll_event() {
-                event::KeyPressed{code, _} => {
+                event::KeyPressed{code, ..} => {
                     match code {
                         keyboard::Escape => rwindow.close(),
                         keyboard::S      => *running = Step,

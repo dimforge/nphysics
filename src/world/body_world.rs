@@ -84,8 +84,8 @@ BodyWorld<N, LV, AV, M, II, CM> {
             VelocityAndPosition(na::cast(0.2), na::cast(0.2), na::cast(0.08)),
             na::cast(0.4),
             na::cast(1.0),
-            3,
-            8);
+            10,
+            10);
 
         /*
          * Add everything to the world

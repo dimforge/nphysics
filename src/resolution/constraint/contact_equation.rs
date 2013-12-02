@@ -97,7 +97,7 @@ pub fn fill_second_order_equation<N:  NPhysicsScalar,
                                   correction:   &CorrectionParameters<N>) {
     let restitution = rb1.restitution() * rb2.restitution();
 
-    let center = (coll.world1 + coll.world2) / na::cast(2.0);
+    let center = (coll.world1 + coll.world2) * na::cast(0.5);
 
     fill_velocity_constraint(dt.clone(),
                              coll.normal.clone(),
