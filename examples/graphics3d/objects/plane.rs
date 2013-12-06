@@ -17,7 +17,7 @@ impl Plane {
                window: &mut window::Window) -> Plane {
 
         let mut res = Plane {
-            gfx:  window.add_quad(100.0, 100.0, 10, 10),
+            gfx:  window.add_quad(100.0, 100.0, 10, 10, false),
             body: body
         };
 
