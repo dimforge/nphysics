@@ -11,18 +11,18 @@ use objects::ball::Ball;
 use objects::box::Box;
 use simulate;
 
-enum SceneNode<'self> {
-    BallNode(Ball<'self>),
-    BoxNode(Box<'self>)
+enum SceneNode<'a> {
+    BallNode(Ball<'a>),
+    BoxNode(Box<'a>)
 }
 
-pub struct GraphicsManager<'self> {
+pub struct GraphicsManager<'a> {
     rand:      XorShiftRng,
-    rb2sn:     HashMap<uint, ~[SceneNode<'self>]>,
+    rb2sn:     HashMap<uint, ~[SceneNode<'a>]>,
     obj2color: HashMap<uint, Vec3<u8>>
 }
 
-impl<'self> GraphicsManager<'self> {
+impl<'a> GraphicsManager<'a> {
     pub fn new() -> GraphicsManager {
         GraphicsManager {
             rand:      SeedableRng::from_seed([0, 1, 2, 3]),
@@ -53,7 +53,7 @@ impl<'self> GraphicsManager<'self> {
                 body:  @mut dim2::Body2d<f32>,
                 delta: dim2::Transform2d<f32>,
                 geom:  &dim2::Geom2d<f32>,
-                out:   &mut ~[SceneNode<'self>]) {
+                out:   &mut ~[SceneNode<'a>]) {
         match *geom {
             PlaneGeom(ref p)    => self.add_plane(body, p, out),
             CompoundGeom(ref c) => {

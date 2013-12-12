@@ -8,7 +8,7 @@
 
 extern mod std;
 extern mod extra;
-extern mod rsfml;
+extern mod rsfml = "rust-sfml";
 extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;

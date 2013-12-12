@@ -6,14 +6,14 @@ use rsfml::graphics::text::Text;
 use rsfml::graphics::Color;
 use extra::time;
 
-pub struct Fps<'self> {
+pub struct Fps<'a> {
     priv delta:     f64,
     priv last_time: f64,
-    priv fps:       Text<'self>
+    priv fps:       Text<'a>
 }
 
-impl<'self> Fps<'self> {
-    pub fn new(font: &'self Font) -> Fps<'self> {
+impl<'a> Fps<'a> {
+    pub fn new(font: &'a Font) -> Fps<'a> {
         let mut txt = Text::new().unwrap();
         txt.set_font(font);
         txt.set_position(&vector2::Vector2f { x: 0.0, y: 0.0 });

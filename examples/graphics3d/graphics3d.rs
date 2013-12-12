@@ -8,7 +8,7 @@
 
 extern mod std;
 extern mod extra;
-extern mod glfw;
+extern mod glfw = "glfw-rs";
 extern mod kiss3d;
 extern mod nphysics;
 extern mod nalgebra;

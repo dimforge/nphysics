@@ -7,14 +7,14 @@ use nalgebra::na;
 use nphysics::aliases::dim2;
 use draw_helper::DRAW_SCALE;
 
-struct Box<'self> {
+struct Box<'a> {
     priv color: Vec3<u8>,
     priv delta: dim2::Transform2d<f32>,
     priv body:  @mut dim2::Body2d<f32>,
-    priv gfx:   RectangleShape<'self>
+    priv gfx:   RectangleShape<'a>
 }
 
-impl<'self> Box<'self> {
+impl<'a> Box<'a> {
     pub fn new(body:  @mut dim2::Body2d<f32>,
                delta: dim2::Transform2d<f32>,
                rx:    f32,
@@ -38,7 +38,7 @@ impl<'self> Box<'self> {
     }
 }
 
-impl<'self> Box<'self> {
+impl<'a> Box<'a> {
     pub fn update(&mut self) {
         let body = self.body.to_rigid_body_or_fail();
         let transform = body.transform_ref() * self.delta;

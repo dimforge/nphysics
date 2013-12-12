@@ -43,7 +43,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
         minor_version:      1
     };
     let mut rwindow =
-        match RenderWindow::new(mode, ~"nphysics demo", sfDefaultStyle, &setting) {
+        match RenderWindow::new(mode, "nphysics demo", sfDefaultStyle, &setting) {
             Some(rwindow) => rwindow,
             None => fail!(~"Error on creating window")
         };
@@ -55,7 +55,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
 
     let mut graphics = GraphicsManager::new();
     let mut physics  = builder(&mut graphics);
-    let     fnt      = Font::new_from_file(~"Inconsolata.otf").unwrap();
+    let     fnt      = Font::new_from_file("Inconsolata.otf").unwrap();
     let mut fps      = Fps::new(&fnt);
     let mut cursor_pos;
     let grabbed_object: Option<@mut dim2::Body2d<f32>> = None;
@@ -96,7 +96,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
             }
         }
 
-        rwindow.clear(~Color::black());
+        rwindow.clear(&Color::black());
 
         fps.reset();
 

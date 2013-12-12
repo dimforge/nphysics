@@ -7,14 +7,14 @@ use nalgebra::na;
 use draw_helper::DRAW_SCALE;
 use nphysics::aliases::dim2;
 
-struct Ball<'self> {
+struct Ball<'a> {
     priv color: Vec3<u8>,
     priv delta: dim2::Transform2d<f32>,
     priv body:  @mut dim2::Body2d<f32>,
-    priv gfx:   CircleShape<'self>
+    priv gfx:   CircleShape<'a>
 }
 
-impl<'self> Ball<'self> {
+impl<'a> Ball<'a> {
     pub fn new(body:   @mut dim2::Body2d<f32>,
                delta:  dim2::Transform2d<f32>,
                radius: f32,
@@ -36,7 +36,7 @@ impl<'self> Ball<'self> {
     }
 }
 
-impl<'self> Ball<'self> {
+impl<'a> Ball<'a> {
     pub fn update(&mut self) {
         let body = self.body.to_rigid_body_or_fail();
         let transform = body.transform_ref() * self.delta;

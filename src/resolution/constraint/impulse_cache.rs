@@ -13,7 +13,7 @@ struct ContactIdentifier<V> {
     ccenter: V
 }
 
-pub type Cb<'self> = 'self |buf: &[u8]| -> bool;
+pub type Cb<'a> = 'a |buf: &[u8]| -> bool;
 
 impl<V: IterBytes> IterBytes for ContactIdentifier<V> {
     #[inline]
