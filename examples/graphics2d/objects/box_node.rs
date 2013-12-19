@@ -7,7 +7,7 @@ use nalgebra::na;
 use nphysics::aliases::dim2;
 use draw_helper::DRAW_SCALE;
 
-struct Box<'a> {
+pub struct Box<'a> {
     priv color: Vec3<u8>,
     priv delta: dim2::Transform2d<f32>,
     priv body:  @mut dim2::Body2d<f32>,

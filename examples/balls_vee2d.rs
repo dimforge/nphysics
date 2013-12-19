@@ -3,11 +3,12 @@
        , author = "Sébastien Crozet"
        , uuid   = "d8d15542-6eda-4969-8bcf-ca3f666d1d58")];
 #[crate_type = "bin"];
-#[warn(non_camel_case_types)]
+#[warn(non_camel_case_types)];
+#[feature(managed_boxes)];
 
 extern mod std;
 extern mod extra;
-extern mod rsfml = "rust-sfml";
+extern mod rsfml;
 extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;

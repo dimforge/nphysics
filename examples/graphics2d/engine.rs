@@ -8,7 +8,7 @@ use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, C
 use nphysics::aliases::dim2;
 use camera::Camera;
 use objects::ball::Ball;
-use objects::box::Box;
+use objects::box_node::Box;
 use simulate;
 
 enum SceneNode<'a> {

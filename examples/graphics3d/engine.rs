@@ -10,7 +10,7 @@ use kiss3d::object::Object;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use nphysics::aliases::dim3;
 use objects::ball::Ball;
-use objects::box::Box;
+use objects::box_node::Box;
 use objects::cylinder::Cylinder;
 use objects::cone::Cone;
 use objects::plane::Plane;

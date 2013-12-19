@@ -8,7 +8,7 @@
 
 extern mod std;
 extern mod extra;
-extern mod glfw = "glfw-rs";
+extern mod glfw;
 extern mod kiss3d;
 extern mod nphysics;
 extern mod nalgebra;
@@ -22,7 +22,7 @@ pub mod engine;
 
 pub mod objects {
     pub mod ball;
-    pub mod box;
+    pub mod box_node;
     pub mod plane;
     pub mod cylinder;
     pub mod cone;

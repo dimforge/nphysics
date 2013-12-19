@@ -3,7 +3,8 @@
        , author = "Sébastien Crozet"
        , uuid   = "fa659fe7-9633-42e6-86bd-b3c462e0b2b2")];
 #[crate_type = "bin"];
-#[warn(non_camel_case_types)]
+#[warn(non_camel_case_types)];
+#[feature(managed_boxes)];
 
 extern mod std;
 extern mod extra;

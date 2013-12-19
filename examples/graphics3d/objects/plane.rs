@@ -4,7 +4,7 @@ use nalgebra::na::Vec3;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
 
-struct Plane {
+pub struct Plane {
     priv gfx:  Object,
     priv body: @mut dim3::Body3d<f32>,
 }

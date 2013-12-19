@@ -43,7 +43,7 @@ PairwiseDetector<N, LV, AV, M> {
     }
 }
 
-struct Dispatcher<N, LV, AV, M, II> {
+pub struct Dispatcher<N, LV, AV, M, II> {
     simplex: JohnsonSimplex<N, AnnotatedPoint<LV>>
 }
 

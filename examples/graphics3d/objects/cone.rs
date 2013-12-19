@@ -6,7 +6,7 @@ use nalgebra::na;
 use nphysics::aliases::dim3;
 use engine::SceneNode;
 
-struct Cone {
+pub struct Cone {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
     priv delta:      dim3::Transform3d<f32>,

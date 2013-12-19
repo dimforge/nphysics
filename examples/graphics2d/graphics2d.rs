@@ -8,7 +8,7 @@
 
 extern mod std;
 extern mod extra;
-extern mod rsfml = "rust-sfml";
+extern mod rsfml;
 extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;
@@ -23,5 +23,5 @@ pub mod draw_helper;
 
 pub mod objects {
     pub mod ball;
-    pub mod box;
+    pub mod box_node;
 }
