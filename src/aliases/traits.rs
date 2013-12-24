@@ -7,7 +7,7 @@ use nalgebra::na::{
     AlgebraicVecExt, Cast, Cross, Indexable,
     Dim
 };
-use object::volumetric::InertiaTensor;
+use ncollide::volumetric::InertiaTensor;
 
 pub trait NPhysicsScalar: Send           +
                           Freeze         +

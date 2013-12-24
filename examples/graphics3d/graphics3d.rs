@@ -1,7 +1,4 @@
-#[link(name     = "graphics3d"
-       , vers   = "0.0"
-       , author = "Sébastien Crozet"
-       , uuid   = "204cc370-78ff-4717-9de3-e2ebaea74d85")];
+#[crate_id = "graphics3d"];
 #[crate_type = "lib"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -26,4 +23,5 @@ pub mod objects {
     pub mod plane;
     pub mod cylinder;
     pub mod cone;
+    pub mod mesh;
 }

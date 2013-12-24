@@ -7,7 +7,7 @@ use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
 use kiss3d::event;
-use ncollide::geom::Geom;
+use ncollide::geom::{Box, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::aliases::dim3;
@@ -232,7 +232,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
                         true
                     },
                     event::KeyPressed(glfw::Key1) => {
-                        let geom   = Geom::new_ball(0.5f32);
+                        let geom   = Ball::new(0.5f32);
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();
@@ -249,7 +249,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
                         true
                     },
                     event::KeyPressed(glfw::Key2) => {
-                        let geom   = Geom::new_box(Vec3::new(0.5f32, 0.5, 0.5));
+                        let geom   = Box::new(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transform = w.camera().view_transform();
@@ -266,7 +266,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
                         true
                     },
                     event::KeyPressed(glfw::Key3) => {
-                        let geom   = Geom::new_box(Vec3::new(0.5f32, 0.5f32, 0.5f32));
+                        let geom   = Box::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom = w.camera().view_transform();

@@ -1,11 +1,12 @@
+use std::rc::Rc;
 use nalgebra::na::{CrossMatrix, Row};
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use ncollide::ray::Ray;
+use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
 use integration::{Integrator, BodyForceGenerator, BodySmpEulerIntegrator, SweptBallMotionClamping};
-use detection::collision::bodies_bodies::PairwiseDetector;
-use detection::{BodiesBodies, BodiesBodiesDispatcher};
+use detection::{BodiesBodies, BodyBodyDispatcher};
 use detection::detector::Detector;
 use detection::constraint::Constraint;
 use detection::joint::joint_manager::JointManager;
@@ -25,8 +26,8 @@ type BF<N, LV, AV, M, II> =
         LV,
         Body<N, LV, AV, M, II>,
         AABB<N, LV>,
-        BodiesBodiesDispatcher<N, LV, AV, M, II>,
-        PairwiseDetector<N, LV, AV, M>
+        BodyBodyDispatcher<N, LV, AV, M, II>,
+        ~GeomGeomCollisionDetector<N, LV, AV, M, II>
     >;
 
 pub struct BodyWorld<N, LV, AV, M, II, CM> {
@@ -64,13 +65,14 @@ BodyWorld<N, LV, AV, M, II, CM> {
          * For the collision detection
          */
         // Collision Dispatcher
-        let dispatcher = BodiesBodiesDispatcher::new();
+        let geom_dispatcher = Rc::from_send(GeomGeomDispatcher::new());
+        let dispatcher = BodyBodyDispatcher::new(geom_dispatcher.clone());
         // Broad phase
         let broad_phase = @mut DBVTBroadPhase::new(dispatcher, na::cast(0.08));
         // CCD handler
         let ccd = SweptBallMotionClamping::new(events, broad_phase, true);
         // Collision detector
-        let detector = BodiesBodies::new(events, broad_phase, false);
+        let detector = BodiesBodies::new(events, broad_phase, geom_dispatcher, false);
         // Deactivation
         let sleep = IslandActivationManager::new(events, na::cast(1.0), na::cast(0.01));
         // Joints

@@ -1,7 +1,3 @@
-#[link(name     = "primitives3d"
-       , vers   = "0.0"
-       , author = "Sébastien Crozet"
-       , uuid   = "34c528db-74e1-44a1-8b43-4cf69a170480")];
 #[crate_type = "bin"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -16,7 +12,7 @@ extern mod ncollide;
 
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
-use ncollide::geom::Geom;
+use ncollide::geom::{Plane, Box, Cone, Cylinder, Ball};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -42,7 +38,7 @@ pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -64,23 +60,25 @@ pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim
                 let x = i as f32 * shift - centerx;
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
-                let geom;
 
+                let mut rb;
 
                 if j % 4 == 0 {
-                    geom = Geom::new_box(Vec3::new(rad, rad, rad));
+                    let geom = Box::new(Vec3::new(rad, rad, rad));
+                    rb       = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
                 }
                 else if j % 3 == 0 {
-                    geom = Geom::new_ball(rad);
+                    let geom = Ball::new(rad);
+                    rb       = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
                 }
                 else if j % 2 == 0 {
-                    geom = Geom::new_cylinder(rad, rad);
+                    let geom = Cylinder::new(rad, rad);
+                    rb       = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
                 }
                 else {
-                    geom = Geom::new_cone(rad, rad);
+                    let geom = Cone::new(rad, rad);
+                    rb       = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
                 }
-
-                let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

@@ -1,12 +1,12 @@
 use std::num::Zero;
+use std::rc::Rc;
 use nalgebra::na::{Transformation, Translation, Rotation};
 use nalgebra::na;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
+use ncollide::volumetric::{InertiaTensor, Volumetric};
 use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
                       NPhysicsInertia};
-use object::volumetric::{InertiaTensor, Volumetric};
-// use constraint::index_proxy::{HasIndexProxy, IndexProxy};
 
 #[deriving(ToStr, Eq, Clone, Encodable, Decodable)]
 pub enum RigidBodyState {
@@ -16,7 +16,7 @@ pub enum RigidBodyState {
 
 pub struct RigidBody<N, LV, AV, M, II> {
     priv state:                RigidBodyState,
-    priv geom:                 Geom<N, LV, M>,
+    priv geom:                 Rc<~Geom<N, LV, M, II>>,
     priv local_to_world:       M,
     priv lin_vel:              LV,
     priv ang_vel:              AV,
@@ -87,8 +87,10 @@ RigidBody<N, LV, AV, M, II> {
         &'r self.local_to_world
     }
 
-    pub fn geom<'r>(&'r self) -> &'r Geom<N, LV, M> {
-        &'r self.geom
+    pub fn geom<'r>(&'r self) -> &'r Geom<N, LV, M, II> {
+        let res: &'r Geom<N, LV, M, II> = *self.geom.borrow();
+
+        res
     }
 
     pub fn index(&self) -> int {
@@ -119,11 +121,25 @@ RigidBody<N, LV, AV, M, II> {
         self.active = true;
     }
 
-    pub fn new(geom:        Geom<N, LV, M>,
-               density:     N,
-               state:       RigidBodyState,
-               restitution: N,
-               friction:    N) -> RigidBody<N, LV, AV, M, II> {
+    pub fn new<G: 'static + Send + Geom<N, LV, M, II>>(geom:        G,
+                                                       density:     N,
+                                                       state:       RigidBodyState,
+                                                       restitution: N,
+                                                       friction:    N)
+                                                       -> RigidBody<N, LV, AV, M, II> {
+        RigidBody::new_with_shared_geom(Rc::from_send(~geom as ~Geom<N, LV, M, II>),
+                                        density,
+                                        state,
+                                        restitution,
+                                        friction)
+    }
+
+    pub fn new_with_shared_geom(geom:        Rc<~Geom<N, LV, M, II>>,
+                                density:     N,
+                                state:       RigidBodyState,
+                                restitution: N,
+                                friction:    N)
+                                -> RigidBody<N, LV, AV, M, II> {
         let (inv_mass, center_of_mass, inv_inertia) =
             match state {
                 Static    => (na::zero(), na::zero(), na::zero()),
@@ -132,7 +148,7 @@ RigidBody<N, LV, AV, M, II> {
                         fail!("A dynamic body must not have a zero density.")
                     }
 
-                    let mprops: (N, LV, II) = geom.mass_properties(&density);
+                    let mprops: (N, LV, II) = geom.borrow().mass_properties(&density);
                     let (m, c, ii) = mprops;
 
                     if m.is_zero() {
@@ -140,7 +156,7 @@ RigidBody<N, LV, AV, M, II> {
                     }
 
                     let i_wrt_com: II = ii.to_relative_wrt_point(&m, &c);
-                    let ii_wrt_com: II = 
+                    let ii_wrt_com: II =
                           na::inv(&i_wrt_com)
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
@@ -427,6 +443,6 @@ impl<N:  Clone + NPhysicsScalar,
      II: NPhysicsInertia<N, LV, AV, M>>
 HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
     fn bounding_volume(&self) -> AABB<N, LV> {
-        self.geom.aabb(&self.local_to_world)
+        self.geom.borrow().aabb(&self.local_to_world)
     }
 }

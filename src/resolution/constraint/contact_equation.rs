@@ -1,9 +1,9 @@
 use std::num::{Zero, Bounded};
 use nalgebra::na;
 use ncollide::contact::Contact;
+use ncollide::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
-use object::volumetric::InertiaTensor;
 use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
                       NPhysicsInertia};
 

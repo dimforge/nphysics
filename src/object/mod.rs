@@ -5,4 +5,3 @@ pub use object::body::{Body, RB, SB};
 pub mod rigid_body;
 pub mod soft_body;
 pub mod body;
-pub mod volumetric;

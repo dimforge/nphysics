@@ -165,7 +165,6 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                         let ball       = Ball::new(o.value.radius.clone());
                         let begin      = ball.aabb(&o.value.last_pos);
                         let end        = ball.aabb(&curr_pos);
-                        let dball      = Geom::new_ball(ball.radius());
                         let swept_aabb = begin.merged(&end);
 
                         /*
@@ -188,12 +187,13 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                             if !managed::mut_ptr_eq(*b, o.value.body) {
                                 match **b {
                                     RB(ref rb) => {
+                                        /*
                                         let toi =
                                             toi::geom_geom(
                                                 &old_transform,
                                                 &dir,
                                                 &distance,
-                                                &dball,
+                                                &ball,
                                                 rb.transform_ref(),
                                                 rb.geom());
 
@@ -205,6 +205,8 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                                             },
                                             None        => { }
                                         }
+                                        */
+                                        fail!("Review toi computation dispatch.")
                                     },
                                     SB(_) => fail!("Soft bodies are not yet supported.")
                                 }

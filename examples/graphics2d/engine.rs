@@ -1,19 +1,21 @@
+use std::unstable::intrinsics::TypeId;
 use std::num::One;
 use std::ptr;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use rsfml::graphics::render_window::RenderWindow;
 use nalgebra::na::Vec3;
-use ncollide::geom::{PlaneGeom, ImplicitGeom, CompoundGeom, BallGeom, BoxGeom, CylinderGeom, CapsuleGeom, ConeGeom};
 use nphysics::aliases::dim2;
 use camera::Camera;
 use objects::ball::Ball;
 use objects::box_node::Box;
+use objects::lines::Lines;
 use simulate;
 
 enum SceneNode<'a> {
     BallNode(Ball<'a>),
-    BoxNode(Box<'a>)
+    BoxNode(Box<'a>),
+    LinesNode(Lines)
 }
 
 pub struct GraphicsManager<'a> {
@@ -52,25 +54,40 @@ impl<'a> GraphicsManager<'a> {
     fn add_geom(&mut self,
                 body:  @mut dim2::Body2d<f32>,
                 delta: dim2::Transform2d<f32>,
-                geom:  &dim2::Geom2d<f32>,
+                geom:  dim2::Geom2dRef<f32>,
                 out:   &mut ~[SceneNode<'a>]) {
-        match *geom {
-            PlaneGeom(ref p)    => self.add_plane(body, p, out),
-            CompoundGeom(ref c) => {
-                for &(t, ref s) in c.get().shapes().iter() {
-                    self.add_geom(body, delta * t, s, out)
-                }
-            },
-            ImplicitGeom(ref i) => {
-                match *i {
-                    BallGeom(ref b) => self.add_ball(body, delta, b, out),
-                    BoxGeom(ref b)  => self.add_box(body, delta, b, out),
-                    CylinderGeom(_) => fail!("not yet implemented."), // self.add_cylinder(body, delta, c, out),
-                    ConeGeom(_)     => fail!("not yet implemented."), // self.add_cone(body, delta, c, out),
-                    CapsuleGeom(_)  => fail!("not yet implemented.")
-                }
-            },
+        type Pl = dim2::Plane2d<f32>;
+        type Bl = dim2::Ball2d<f32>;
+        type Bo = dim2::Box2d<f32>;
+        type Cy = dim2::Cylinder2d<f32>;
+        type Co = dim2::Cone2d<f32>;
+        type Cm = dim2::Compound2d<f32>;
+        type Ls = dim2::LineStrip2d<f32>;
+
+        let id = geom.get_type_id();
+        if id == TypeId::of::<Pl>(){
+            self.add_plane(body, geom.as_ref::<Pl>().unwrap(), out)
         }
+        else if id == TypeId::of::<Bl>() {
+            self.add_ball(body, delta, geom.as_ref::<Bl>().unwrap(), out)
+        }
+        else if id == TypeId::of::<Bo>() {
+            self.add_box(body, delta, geom.as_ref::<Bo>().unwrap(), out)
+        }
+        else if id == TypeId::of::<Cm>() {
+            let c = geom.as_ref::<Cm>().unwrap();
+
+            for &(t, ref s) in c.shapes().iter() {
+                self.add_geom(body, delta * t, *s, out)
+            }
+        }
+        else if id == TypeId::of::<Ls>() {
+            self.add_lines(body, delta, geom.as_ref::<Ls>().unwrap(), out)
+        }
+        else {
+            fail!("Not yet implemented.")
+        }
+
     }
 
     fn add_plane(&mut self,
@@ -87,6 +104,21 @@ impl<'a> GraphicsManager<'a> {
         let color = self.color_for_object(body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
     }
+
+    fn add_lines(&mut self,
+               body:  @mut dim2::Body2d<f32>,
+               delta: dim2::Transform2d<f32>,
+               geom:  &dim2::LineStrip2d<f32>,
+               out:   &mut ~[SceneNode]) {
+
+        let color = self.color_for_object(body);
+
+        let vs = geom.vertices().clone();
+        let is = geom.indices().clone();
+
+        out.push(LinesNode(Lines::new(body, delta, vs, is, color)))
+    }
+
 
     fn add_box(&mut self,
                body:  @mut dim2::Body2d<f32>,
@@ -107,8 +139,9 @@ impl<'a> GraphicsManager<'a> {
         for (_, ns) in self.rb2sn.mut_iter() {
             for n in ns.mut_iter() {
                 match *n {
-                    BoxNode(ref mut b)  => b.update(),
-                    BallNode(ref mut b) => b.update(),
+                    BoxNode(ref mut b)   => b.update(),
+                    BallNode(ref mut b)  => b.update(),
+                    LinesNode(ref mut l) => l.update(),
                 }
             }
         }
@@ -116,8 +149,9 @@ impl<'a> GraphicsManager<'a> {
         for (_, ns) in self.rb2sn.mut_iter() {
             for n in ns.mut_iter() {
                 match *n {
-                    BoxNode(ref b)  => b.draw(rw),
-                    BallNode(ref b) => b.draw(rw),
+                    BoxNode(ref b)   => b.draw(rw),
+                    BallNode(ref b)  => b.draw(rw),
+                    LinesNode(ref l) => l.draw(rw),
                 }
             }
         }

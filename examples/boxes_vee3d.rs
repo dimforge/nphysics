@@ -1,7 +1,3 @@
-#[link(name     = "boxes_vee3d"
-       , vers   = "0.0"
-       , author = "Sébastien Crozet"
-       , uuid   = "4f1fb8c5-5f02-4d45-89f3-64acfd1718fa")];
 #[crate_type = "bin"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -16,7 +12,7 @@ extern mod ncollide;
 
 use nalgebra::na::{Vec3, Translation};
 use kiss3d::window::Window;
-use ncollide::geom::Geom;
+use ncollide::geom::{Plane, Box};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -41,7 +37,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
     /*
      * Plane
      */
-    let geom = Geom::new_plane(Vec3::new(0.0f32, 1.0, 0.0));
+    let geom = Plane::new(Vec3::new(0.0f32, 1.0, 0.0));
     let body = @mut RB(RigidBody::new(geom, 0.0f32, Static, 0.3, 0.6));
 
     world.add_body(body);
@@ -64,7 +60,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let geom   = Geom::new_box(Vec3::new(rad, rad, rad));
+                let geom   = Box::new(Vec3::new(rad, rad, rad));
                 let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));

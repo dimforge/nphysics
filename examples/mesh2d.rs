@@ -10,8 +10,11 @@ extern mod nalgebra;
 extern mod ncollide;
 extern mod graphics2d;
 
+use std::vec;
+use std::rand::{StdRng, SeedableRng, Rng};
+use extra::arc::Arc;
 use nalgebra::na::{Vec2, Translation};
-use ncollide::geom::{Plane, Box};
+use ncollide::geom::{Box, Mesh};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -36,8 +39,28 @@ pub fn wall_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * First plane
      */
-    let rb   = RigidBody::new(Plane::new(Vec2::new(0.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
-    let body = @mut RB(rb);
+    let num_split = 5;
+    let begin     = -75.0f32;
+    let max_h     = 15.0;
+    let begin_h   = 15.0;
+    let step      = (begin.abs() * 2.0) / (num_split as f32);
+    let mut vertices = vec::from_fn(num_split + 2, |i| Vec2::new(begin + (i as f32) * step, 0.0));
+    let mut indices  = ~[];
+    let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4]);
+
+    for i in range(0u, num_split) {
+        let h: f32 = rng.gen();
+        vertices[i + 1].y = begin_h - h * max_h;
+
+        indices.push(i);
+        indices.push(i + 1);
+    }
+    indices.push(num_split);
+    indices.push(num_split + 1);
+
+    let mesh: dim2::LineStrip2d<f32> = Mesh::new(Arc::new(vertices), Arc::new(indices), None);
+    let rb       = RigidBody::new(mesh, 0.0f32, Static, 0.3, 0.6);
+    let body     = @mut RB(rb);
 
     world.add_body(body);
     graphics.add(body);

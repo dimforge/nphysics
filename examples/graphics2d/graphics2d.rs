@@ -1,7 +1,4 @@
-#[link(name     = "graphics2d"
-       , vers   = "0.0"
-       , author = "Sébastien Crozet"
-       , uuid   = "313bf372-135c-46e1-8012-392061a1196")];
+#[crate_id = "graphics2d"];
 #[crate_type = "lib"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -24,4 +21,5 @@ pub mod draw_helper;
 pub mod objects {
     pub mod ball;
     pub mod box_node;
+    pub mod lines;
 }

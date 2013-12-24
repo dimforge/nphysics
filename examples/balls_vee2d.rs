@@ -1,7 +1,3 @@
-#[link(name     = "balls_vee2d"
-       , vers   = "0.0"
-       , author = "Sébastien Crozet"
-       , uuid   = "d8d15542-6eda-4969-8bcf-ca3f666d1d58")];
 #[crate_type = "bin"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -15,7 +11,7 @@ extern mod ncollide;
 extern mod graphics2d;
 
 use nalgebra::na::{Vec2, Translation};
-use ncollide::geom::Geom;
+use ncollide::geom::{Ball, Plane};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -40,7 +36,7 @@ pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * First plane
      */
-    let mut rb = RigidBody::new(Geom::new_plane(Vec2::new(-1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
+    let mut rb = RigidBody::new(Plane::new(Vec2::new(-1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -52,7 +48,7 @@ pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new(Geom::new_plane(Vec2::new(1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
+    let mut rb = RigidBody::new(Plane::new(Vec2::new(1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -75,7 +71,7 @@ pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 20.0;
 
-            let mut rb = RigidBody::new(Geom::new_ball(rad), 1.0f32, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(Ball::new(rad), 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

@@ -1,7 +1,3 @@
-#[link(name     = "compound3d"
-       , vers   = "0.0"
-       , author = "Sébastien Crozet"
-       , uuid   = "fa659fe7-9633-42e6-86bd-b3c462e0b2b2")];
 #[crate_type = "bin"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -14,11 +10,11 @@ extern mod nphysics;
 extern mod nalgebra;
 extern mod ncollide;
 
-use extra::arc::Arc;
+use std::rc::Rc;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Iso3, Translation};
 use nalgebra::na;
-use ncollide::geom::{Geom, CompoundAABB};
+use ncollide::geom::{Plane, Box, Compound};
 use nphysics::world::BodyWorld;
 use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
@@ -43,7 +39,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Geom::new_plane(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
+    let rb   = RigidBody::new(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
     let body = @mut RB(rb);
 
     world.add_body(body);
@@ -58,11 +54,11 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
     let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = ~[];
-    cross_geoms.push((delta1, Geom::new_box(Vec3::new(5.0f32, 0.25, 0.25))));
-    cross_geoms.push((delta2, Geom::new_box(Vec3::new(0.25f32, 5.0, 0.25))));
-    cross_geoms.push((delta3, Geom::new_box(Vec3::new(0.25f32, 5.0, 0.25))));
+    cross_geoms.push((delta1, ~Box::new(Vec3::new(5.0f32, 0.25, 0.25)) as dim3::Geom3d<f32>));
+    cross_geoms.push((delta2, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as dim3::Geom3d<f32>));
+    cross_geoms.push((delta3, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as dim3::Geom3d<f32>));
 
-    let cross = Arc::new(CompoundAABB::new(cross_geoms));
+    let cross = Rc::from_send(~Compound::new(cross_geoms) as dim3::Geom3d<f32>);
 
     /*
      * Create the crosses 
@@ -81,7 +77,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3:
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let mut rb = RigidBody::new(Geom::new_compound(cross.clone()), 1.0f32, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new_with_shared_geom(cross.clone(), 1.0f32, Dynamic, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

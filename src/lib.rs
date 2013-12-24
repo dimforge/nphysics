@@ -1,11 +1,8 @@
-#[link(name         = "nphysics"
-       , vers       = "0.0"
-       , author     = "Sébastien Crozet"
-       , uuid       = "b55cde38-0873-4861-bcb6-041fcb58d1bd")];
-#[crate_id = "github.com/sebcrozet/nphysics"];
+#[crate_id = "nphysics#0.1"];
 #[crate_type = "lib"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
+#[feature(globs)];
 
 extern mod std;
 extern mod extra;
