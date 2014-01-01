@@ -3,13 +3,16 @@ use std::num::One;
 use std::ptr;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
-use nalgebra::na::Vec3;
+use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use kiss3d::obj;
 use kiss3d::window::Window;
 use kiss3d::object::Object;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
-use nphysics::aliases::dim3;
+use ncollide::geom::Geom;
+use ncollide::geom;
+use nphysics::world::BodyWorld;
+use nphysics::object::Body;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -52,11 +55,11 @@ impl GraphicsManager {
         }
     }
 
-    pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
+    pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
         simulate::simulate(builder)
     }
 
-    pub fn remove(&mut self, window: &mut Window, body: @mut dim3::Body3d<f32>) {
+    pub fn remove(&mut self, window: &mut Window, body: @mut Body) {
         let key = ptr::to_mut_unsafe_ptr(body) as uint;
 
         match self.rb2sn.find(&key) {
@@ -72,7 +75,7 @@ impl GraphicsManager {
         self.obj2color.remove(&key);
     }
 
-    pub fn add(&mut self, window: &mut Window, body: @mut dim3::Body3d<f32>) {
+    pub fn add(&mut self, window: &mut Window, body: @mut Body) {
 
         let nodes = {
             let rb = body.to_rigid_body_or_fail();
@@ -86,28 +89,38 @@ impl GraphicsManager {
         self.rb2sn.insert(ptr::to_mut_unsafe_ptr(body) as uint, nodes);
     }
 
-    pub fn load_mesh(&mut self, path: &str) -> (~[Vec3<f32>], ~[uint]) {
-        let m = obj::parse_file(path, false);
+    pub fn load_mesh(&mut self, path: &str) -> ~[(~[Vec3<f32>], ~[uint])] {
+        let path    = Path::new(path);
+        let empty   = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
+        let objects = obj::parse_file(&path, &empty, "").expect("Unable to open the obj file.");
 
-        let vertices = m.coords();
-        let indices  = m.faces();
+        let mut res = ~[];
 
-        (vertices.to_owned(), indices.flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint]))
+        for (_, m, _) in objects.move_iter() {
+            let vertices = m.coords();
+            let indices  = m.faces();
+
+            let m = (vertices.to_owned(), indices.flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint]));
+
+            res.push(m);
+        }
+
+        res
     }
 
     fn add_geom(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f32>,
-                delta:  dim3::Transform3d<f32>,
-                geom:   dim3::Geom3dRef<f32>,
+                body:   @mut Body,
+                delta:  Iso3<f32>,
+                geom:   &Geom,
                 out:    &mut ~[@mut SceneNode]) {
-        type Pl = dim3::Plane3d<f32>;
-        type Bl = dim3::Ball3d<f32>;
-        type Bo = dim3::Box3d<f32>;
-        type Cy = dim3::Cylinder3d<f32>;
-        type Co = dim3::Cone3d<f32>;
-        type Cm = dim3::Compound3d<f32>;
-        type Tm = dim3::TriangleMesh3d<f32>;
+        type Pl = geom::Plane;
+        type Bl = geom::Ball;
+        type Bo = geom::Box;
+        type Cy = geom::Cylinder;
+        type Co = geom::Cone;
+        type Cm = geom::Compound;
+        type Tm = geom::Mesh;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -143,8 +156,8 @@ impl GraphicsManager {
 
     fn add_plane(&mut self,
                  window: &mut Window,
-                 body:   @mut dim3::Body3d<f32>,
-                 geom:   &dim3::Plane3d<f32>,
+                 body:   @mut Body,
+                 geom:   &geom::Plane,
                  out:    &mut ~[@mut SceneNode]) {
         let position = na::translation(body.to_rigid_body_or_fail());
         let normal   = na::rotate(body.to_rigid_body_or_fail().transform_ref(), &geom.normal());
@@ -155,9 +168,9 @@ impl GraphicsManager {
 
     fn add_mesh(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f32>,
-                delta:  dim3::Transform3d<f32>,
-                geom:   &dim3::TriangleMesh3d<f32>,
+                body:   @mut Body,
+                delta:  Iso3<f32>,
+                geom:   &geom::Mesh,
                 out:    &mut ~[@mut SceneNode]) {
         let color    = self.color_for_object(body);
         let vertices = geom.vertices().get();
@@ -175,9 +188,9 @@ impl GraphicsManager {
 
     fn add_ball(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f32>,
-                delta:  dim3::Transform3d<f32>,
-                geom:   &dim3::Ball3d<f32>,
+                body:   @mut Body,
+                delta:  Iso3<f32>,
+                geom:   &geom::Ball,
                 out:    &mut ~[@mut SceneNode]) {
         let color = self.color_for_object(body);
         out.push(@mut Ball::new(body, delta, geom.radius(), color, window) as @mut SceneNode)
@@ -185,9 +198,9 @@ impl GraphicsManager {
 
     fn add_box(&mut self,
                window: &mut Window,
-               body:   @mut dim3::Body3d<f32>,
-               delta:  dim3::Transform3d<f32>,
-               geom:   &dim3::Box3d<f32>,
+               body:   @mut Body,
+               delta:  Iso3<f32>,
+               geom:   &geom::Box,
                out:    &mut ~[@mut SceneNode]) {
         let rx = geom.half_extents().x + geom.margin();
         let ry = geom.half_extents().y + geom.margin();
@@ -200,9 +213,9 @@ impl GraphicsManager {
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
-                    body:   @mut dim3::Body3d<f32>,
-                    delta:  dim3::Transform3d<f32>,
-                    geom:   &dim3::Cylinder3d<f32>,
+                    body:   @mut Body,
+                    delta:  Iso3<f32>,
+                    geom:   &geom::Cylinder,
                     out:    &mut ~[@mut SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
@@ -214,9 +227,9 @@ impl GraphicsManager {
 
     fn add_cone(&mut self,
                 window: &mut Window,
-                body:   @mut dim3::Body3d<f32>,
-                delta:  dim3::Transform3d<f32>,
-                geom:   &dim3::Cone3d<f32>,
+                body:   @mut Body,
+                delta:  Iso3<f32>,
+                geom:   &geom::Cone,
                 out:    &mut ~[@mut SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
@@ -252,11 +265,11 @@ impl GraphicsManager {
         self.first_person.look_at_z(eye, at);
     }
 
-    pub fn body_to_scene_node<'r>(&'r self, rb: @mut dim3::Body3d<f32>) -> Option<&'r ~[@mut SceneNode]> {
+    pub fn body_to_scene_node<'r>(&'r self, rb: @mut Body) -> Option<&'r ~[@mut SceneNode]> {
         self.rb2sn.find(&(ptr::to_mut_unsafe_ptr(rb) as uint))
     }
 
-    pub fn color_for_object(&mut self, body: &dim3::Body3d<f32>) -> Vec3<f32> {
+    pub fn color_for_object(&mut self, body: &Body) -> Vec3<f32> {
         let key = ptr::to_unsafe_ptr(body) as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,

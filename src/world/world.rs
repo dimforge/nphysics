@@ -1,17 +1,18 @@
 use std::managed;
+use ncollide::math::N;
 use resolution::solver::Solver;
 use integration::Integrator;
 use detection::detector::Detector;
 
-pub struct World<N, O, C> {
+pub struct World<O, C> {
     objects:     ~[@mut O],
-    integrators: ~[@mut Integrator<N, O>],
-    detectors:   ~[@mut Detector<N, O, C>],
-    solvers:     ~[@mut Solver<N, C>]
+    integrators: ~[@mut Integrator<O>],
+    detectors:   ~[@mut Detector<O, C>],
+    solvers:     ~[@mut Solver<C>]
 }
 
-impl<N, O, C> World<N, O, C> {
-    pub fn new() -> World<N, O, C> {
+impl<O, C> World<O, C> {
+    pub fn new() -> World<O, C> {
         World {
             objects:     ~[],
             integrators: ~[],
@@ -21,7 +22,7 @@ impl<N, O, C> World<N, O, C> {
     }
 }
 
-impl<N: Clone, O, C> World<N, O, C> {
+impl<O, C> World<O, C> {
     pub fn step(&mut self, dt: N) {
         //
         // Integration
@@ -48,24 +49,24 @@ impl<N: Clone, O, C> World<N, O, C> {
         }
     }
 
-    pub fn add_detector<D: 'static + Detector<N, O, C>>(&mut self, d: @mut D) {
-        sorted_insert(&mut self.detectors, d as @mut Detector<N, O, C>, |a, b| a.priority() < b.priority());
+    pub fn add_detector<D: 'static + Detector<O, C>>(&mut self, d: @mut D) {
+        sorted_insert(&mut self.detectors, d as @mut Detector<O, C>, |a, b| a.priority() < b.priority());
 
         for o in self.objects.iter() {
             d.add(*o)
         }
     }
 
-    pub fn add_integrator<I: 'static + Integrator<N, O>>(&mut self, i: @mut I) {
-        sorted_insert(&mut self.integrators, i as @mut Integrator<N, O>, |a, b| a.priority() < b.priority());
+    pub fn add_integrator<I: 'static + Integrator<O>>(&mut self, i: @mut I) {
+        sorted_insert(&mut self.integrators, i as @mut Integrator<O>, |a, b| a.priority() < b.priority());
 
         for o in self.objects.mut_iter() {
             i.add(*o)
         }
     }
 
-    pub fn add_solver<S: 'static + Solver<N, C>>(&mut self, s: @mut S) {
-        sorted_insert(&mut self.solvers, s as @mut Solver<N, C>, |a, b| a.priority() < b.priority());
+    pub fn add_solver<S: 'static + Solver<C>>(&mut self, s: @mut S) {
+        sorted_insert(&mut self.solvers, s as @mut Solver<C>, |a, b| a.priority() < b.priority());
     }
 
     pub fn add_object(&mut self, b: @mut O) {
@@ -105,20 +106,20 @@ impl<N: Clone, O, C> World<N, O, C> {
         res
     }
 
-    pub fn integrators<'r>(&'r self) -> &'r [@mut Integrator<N, O>] {
-        let res: &'r [@mut Integrator<N, O>] = self.integrators;
+    pub fn integrators<'r>(&'r self) -> &'r [@mut Integrator<O>] {
+        let res: &'r [@mut Integrator<O>] = self.integrators;
 
         res
     }
 
-    pub fn detectors<'r>(&'r self) -> &'r [@mut Detector<N, O, C>] {
-        let res: &'r [@mut Detector<N, O, C>] = self.detectors;
+    pub fn detectors<'r>(&'r self) -> &'r [@mut Detector<O, C>] {
+        let res: &'r [@mut Detector<O, C>] = self.detectors;
 
         res
     }
 
-    pub fn solvers<'r>(&'r self) -> &'r [@mut Solver<N, C>] {
-        let res: &'r [@mut Solver<N, C>] = self.solvers;
+    pub fn solvers<'r>(&'r self) -> &'r [@mut Solver<C>] {
+        let res: &'r [@mut Solver<C>] = self.solvers;
 
         res
     }

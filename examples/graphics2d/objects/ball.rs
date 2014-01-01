@@ -2,21 +2,21 @@ use rsfml::graphics::render_window;
 use rsfml::graphics::circle_shape::CircleShape;
 use rsfml::graphics::Color;
 use rsfml::system::vector2;
-use nalgebra::na::Vec3;
+use nalgebra::na::{Vec3, Iso2};
 use nalgebra::na;
+use nphysics::object::Body;
 use draw_helper::DRAW_SCALE;
-use nphysics::aliases::dim2;
 
 pub struct Ball<'a> {
     priv color: Vec3<u8>,
-    priv delta: dim2::Transform2d<f32>,
-    priv body:  @mut dim2::Body2d<f32>,
+    priv delta: Iso2<f32>,
+    priv body:  @mut Body,
     priv gfx:   CircleShape<'a>
 }
 
 impl<'a> Ball<'a> {
-    pub fn new(body:   @mut dim2::Body2d<f32>,
-               delta:  dim2::Transform2d<f32>,
+    pub fn new(body:   @mut Body,
+               delta:  Iso2<f32>,
                radius: f32,
                color:  Vec3<u8>) -> Ball {
         let dradius = radius as f32 * DRAW_SCALE;

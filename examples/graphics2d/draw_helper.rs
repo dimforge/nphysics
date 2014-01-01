@@ -6,13 +6,13 @@ use rsfml::graphics::primitive_type;
 use rsfml::system::vector2::Vector2f;
 use nalgebra::na::Vec2;
 use nalgebra::na;
-use nphysics::aliases::dim2;
+use nphysics::world::BodyWorld;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 
 pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window:  &render_window::RenderWindow,
-                  physics: &mut dim2::BodyWorld2d<f32>) {
+                  physics: &mut BodyWorld) {
 
     let mut collisions = ~[];
 

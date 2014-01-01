@@ -1,19 +1,16 @@
 use nalgebra::na::Transform;
+use ncollide::math::LV;
 use detection::joint::anchor::Anchor;
 use object::{RB, SB};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub struct BallInSocket<N, LV, AV, M, II> {
+pub struct BallInSocket {
     priv up_to_date: bool,
-    priv anchor1:    Anchor<N, LV, AV, M, II, LV>,
-    priv anchor2:    Anchor<N, LV, AV, M, II, LV>,
+    priv anchor1:    Anchor<LV>,
+    priv anchor2:    Anchor<LV>,
 }
 
-impl<N, LV, AV, M, II> BallInSocket<N, LV, AV, M, II> {
-    pub fn new(anchor1: Anchor<N, LV, AV, M, II, LV>,
-               anchor2: Anchor<N, LV, AV, M, II, LV>)
-               -> BallInSocket<N, LV, AV, M, II> {
+impl BallInSocket {
+    pub fn new(anchor1: Anchor<LV>, anchor2: Anchor<LV>) -> BallInSocket {
         BallInSocket {
             up_to_date: false,
             anchor1:    anchor1,
@@ -29,21 +26,16 @@ impl<N, LV, AV, M, II> BallInSocket<N, LV, AV, M, II> {
         self.up_to_date = true
     }
 
-    pub fn anchor1<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, LV> {
+    pub fn anchor1<'r>(&'r self) -> &'r Anchor<LV> {
         &self.anchor1
     }
 
-    pub fn anchor2<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, LV> {
+    pub fn anchor2<'r>(&'r self) -> &'r Anchor<LV> {
         &self.anchor2
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-BallInSocket<N, LV, AV, M, II> {
+impl BallInSocket {
     pub fn set_local1(&mut self, local1: LV) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;

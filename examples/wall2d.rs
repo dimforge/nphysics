@@ -5,28 +5,22 @@
 extern mod std;
 extern mod extra;
 extern mod rsfml;
-extern mod nphysics;
+extern mod nphysics = "nphysics2df32";
 extern mod nalgebra;
-extern mod ncollide;
+extern mod ncollide = "ncollide2df32";
 extern mod graphics2d;
 
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Plane, Box};
 use nphysics::world::BodyWorld;
-use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use graphics2d::engine::GraphicsManager;
-
-#[start]
-fn start(argc: int, argv: **u8) -> int {
-    std::rt::start_on_main_thread(argc, argv, main)
-}
 
 fn main() {
     GraphicsManager::simulate(wall_2d)
 }
 
-pub fn wall_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
+pub fn wall_2d(graphics: &mut GraphicsManager) -> BodyWorld {
     /*
      * World
      */

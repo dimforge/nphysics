@@ -1,19 +1,18 @@
-use std::num::{Zero, Bounded};
+use std::num::Bounded;
 use nalgebra::na;
 use ncollide::contact::Contact;
 use ncollide::volumetric::InertiaTensor;
+use ncollide::math::{N, LV, AV};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub enum CorrectionMode<N> {
+pub enum CorrectionMode {
     Velocity(N),
     VelocityAndPosition(N, N, N),
     VelocityAndPositionThresold(N, N, N)
 }
 
-impl<N: Zero + Bounded + Clone> CorrectionMode<N> {
+impl CorrectionMode {
     #[inline]
     pub fn vel_corr_factor(&self) -> N {
         match *self {
@@ -51,19 +50,16 @@ impl<N: Zero + Bounded + Clone> CorrectionMode<N> {
     }
 }
 
-pub struct CorrectionParameters<N> {
-    corr_mode:       CorrectionMode<N>,
+pub struct CorrectionParameters {
+    corr_mode:       CorrectionMode,
     joint_corr:      N,
     rest_eps:        N
 }
 
-pub fn reinit_to_first_order_equation<N:  Clone + NPhysicsScalar,
-                                      LV: Clone + NPhysicsDirection<N, AV>,
-                                      AV: NPhysicsOrientation<N>>(
-                                      dt:          N,
-                                      coll:        &Contact<N, LV>,
-                                      constraint:  &mut VelocityConstraint<LV, AV, N>,
-                                      correction:  &CorrectionParameters<N>) {
+pub fn reinit_to_first_order_equation(dt:         N,
+                                      coll:       &Contact,
+                                      constraint: &mut VelocityConstraint,
+                                      correction: &CorrectionParameters) {
     /*
      * Fill b
      */
@@ -80,24 +76,19 @@ pub fn reinit_to_first_order_equation<N:  Clone + NPhysicsScalar,
     constraint.impulse = na::zero();
 }
 
-pub fn fill_second_order_equation<N:  NPhysicsScalar,
-                                  LV: Clone + NPhysicsDirection<N, AV>,
-                                  AV: Clone + NPhysicsOrientation<N>,
-                                  M:  Clone + NPhysicsTransform<LV, AV>,
-                                  II: Clone + NPhysicsInertia<N, LV, AV, M>>(
-                                  dt:           N,
-                                  coll:         &Contact<N, LV>,
-                                  rb1:          &RigidBody<N, LV, AV, M, II>,
-                                  rb2:          &RigidBody<N, LV, AV, M, II>,
-                                  rconstraint:  &mut VelocityConstraint<LV, AV, N>,
+pub fn fill_second_order_equation(dt:           N,
+                                  coll:         &Contact,
+                                  rb1:          &RigidBody,
+                                  rb2:          &RigidBody,
+                                  rconstraint:  &mut VelocityConstraint,
                                   idr:          uint,
-                                  fconstraints: &mut [VelocityConstraint<LV, AV, N>],
+                                  fconstraints: &mut [VelocityConstraint],
                                   idf:          uint,
                                   cache:        &[N],
-                                  correction:   &CorrectionParameters<N>) {
+                                  correction:   &CorrectionParameters) {
     let restitution = rb1.restitution() * rb2.restitution();
 
-    let center = (coll.world1 + coll.world2) * na::cast(0.5);
+    let center = (coll.world1 + coll.world2) * na::cast::<f32, N>(0.5);
 
     fill_velocity_constraint(dt.clone(),
                              coll.normal.clone(),
@@ -144,17 +135,12 @@ pub fn fill_second_order_equation<N:  NPhysicsScalar,
     })
 }
 
-pub fn fill_constraint_geometry<N:  Clone + NPhysicsScalar,
-                                LV: Clone + NPhysicsDirection<N, AV>,
-                                AV: Clone + NPhysicsOrientation<N>,
-                                M:  NPhysicsTransform<LV, AV>,
-                                II: Clone + NPhysicsInertia<N, LV, AV, M>>(
-                                normal:     LV,
+pub fn fill_constraint_geometry(normal:     LV,
                                 rot_axis1:  AV,
                                 rot_axis2:  AV,
-                                rb1:        Option<&RigidBody<N, LV, AV, M, II>>,
-                                rb2:        Option<&RigidBody<N, LV, AV, M, II>>,
-                                constraint: &mut VelocityConstraint<LV, AV, N>) {
+                                rb1:        Option<&RigidBody>,
+                                rb2:        Option<&RigidBody>,
+                                constraint: &mut VelocityConstraint) {
     constraint.normal             = normal;
     constraint.inv_projected_mass = na::zero();
 
@@ -192,12 +178,7 @@ pub fn fill_constraint_geometry<N:  Clone + NPhysicsScalar,
     constraint.inv_projected_mass = _1 / constraint.inv_projected_mass;
 }
 
-fn fill_velocity_constraint<N:  Clone + NPhysicsScalar,
-                            LV: Clone + NPhysicsDirection<N, AV>,
-                            AV: Clone + NPhysicsOrientation<N>,
-                            M:  Clone + NPhysicsTransform<LV, AV>,
-                            II: Clone + NPhysicsInertia<N, LV, AV, M>>(
-                            dt:              N,
+fn fill_velocity_constraint(dt:              N,
                             normal:          LV,
                             center:          LV,
                             restitution:     N,
@@ -205,10 +186,10 @@ fn fill_velocity_constraint<N:  Clone + NPhysicsScalar,
                             initial_impulse: N,
                             lobound:         N,
                             hibound:         N,
-                            rb1:             &RigidBody<N, LV, AV, M, II>,
-                            rb2:             &RigidBody<N, LV, AV, M, II>,
-                            constraint:      &mut VelocityConstraint<LV, AV, N>,
-                            correction:      &CorrectionParameters<N>) {
+                            rb1:             &RigidBody,
+                            rb2:             &RigidBody,
+                            constraint:      &mut VelocityConstraint,
+                            correction:      &CorrectionParameters) {
     let rot_axis1 = na::cross(&(center - *rb1.center_of_mass()), &-normal);
     let rot_axis2 = na::cross(&(center - *rb2.center_of_mass()), &normal);
 
@@ -256,13 +237,8 @@ fn fill_velocity_constraint<N:  Clone + NPhysicsScalar,
     constraint.hibound = hibound;
 }
 
-pub fn relative_velocity<N:  Clone + NPhysicsScalar,
-                         LV: Clone + NPhysicsDirection<N, AV>,
-                         AV: Clone + NPhysicsOrientation<N>,
-                         M:  Clone + NPhysicsTransform<LV, AV>,
-                         II: Clone + NPhysicsInertia<N, LV, AV, M>>(
-                         rb1:       Option<&RigidBody<N, LV, AV, M, II>>,
-                         rb2:       Option<&RigidBody<N, LV, AV, M, II>>,
+pub fn relative_velocity(rb1:       Option<&RigidBody>,
+                         rb2:       Option<&RigidBody>,
                          normal:    &LV,
                          rot_axis1: &AV,
                          rot_axis2: &AV,

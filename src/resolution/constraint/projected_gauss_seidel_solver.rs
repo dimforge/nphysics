@@ -1,16 +1,16 @@
-use std::num::{Zero, Orderable};
-use nalgebra::na::Vec;
+use std::num::Orderable;
 use nalgebra::na;
+use ncollide::math::{LV, AV};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 #[deriving(Eq, ToStr, Clone)]
-pub struct Velocities<LV, AV> {
+pub struct Velocities {
     lv: LV,
     av: AV
 }
 
-impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
-    pub fn new() -> Velocities<LV, AV> {
+impl Velocities {
+    pub fn new() -> Velocities {
         Velocities {
             lv: na::zero(),
             av: na::zero()
@@ -23,12 +23,9 @@ impl<LV: Zero, AV: Zero> Velocities<LV, AV> {
     }
 }
 
-pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
-                                    AV: Vec<N> + Clone,
-                                    N:  Num + Orderable + Clone>(
-                                    restitution:    &mut [VelocityConstraint<LV, AV, N>],
-                                    friction:       &mut [VelocityConstraint<LV, AV, N>],
-                                    result:         &mut [Velocities<LV, AV>],
+pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
+                                    friction:       &mut [VelocityConstraint],
+                                    result:         &mut [Velocities],
                                     num_bodies:     uint,
                                     num_iterations: uint,
                                     is_lambda_zero: bool) {
@@ -74,11 +71,7 @@ pub fn projected_gauss_seidel_solve<LV: Vec<N> + Clone,
 }
 
 #[inline(always)]
-pub fn setup_warmstart_for_constraint<LV: Vec<N> + Clone,
-                                      AV: Vec<N> + Clone,
-                                      N:  Num + Orderable + Clone>(
-                                      c:        &VelocityConstraint<LV, AV, N>,
-                                      MJLambda: &mut [Velocities<LV, AV>]) {
+pub fn setup_warmstart_for_constraint(c: &VelocityConstraint, MJLambda: &mut [Velocities]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
@@ -94,11 +87,7 @@ pub fn setup_warmstart_for_constraint<LV: Vec<N> + Clone,
 }
 
 #[inline(always)]
-pub fn solve_velocity_constraint<LV: Vec<N> + Clone,
-                                 AV: Vec<N> + Clone,
-                                 N:  Num + Orderable + Clone>(
-                                 c:        &mut VelocityConstraint<LV, AV, N>,
-                                 MJLambda: &mut [Velocities<LV, AV>]) {
+pub fn solve_velocity_constraint(c: &mut VelocityConstraint, MJLambda: &mut [Velocities]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
@@ -136,47 +125,50 @@ pub fn solve_velocity_constraint<LV: Vec<N> + Clone,
     }
 }
 
-#[cfg(test)]
+#[cfg(test, dim3, f32)]
 mod test {
-    use super::projected_gauss_seidel_solve;
+    use super::{Velocities, projected_gauss_seidel_solve};
     use extra::test::BenchHarness;
-    use nalgebra::vec::{Vec3, AlgebraicVec};
+    use nalgebra::na::Vec3;
+    use nalgebra::na;
     use resolution::constraint::velocity_constraint::VelocityConstraint;
 
     #[bench]
     fn bench_pgs(bh: &mut BenchHarness) {
         let mut constraints = ~[];
+        let mut res   = ~[];
 
         // initialize the constraints
         for i in range(0, 1000) {
             let mut constraint = VelocityConstraint::new();
 
-            constraint.normal = Vec3::new(i as f64 * 1.0, 3.0f64, i as f64).normalized();
-            constraint.weighted_normal1 = Vec3::new(4.0, 3.0f64, i as f64);
-            constraint.weighted_normal2 = Vec3::new(4.0, 3.0f64, i as f64);
+            constraint.normal = na::normalize(&Vec3::new(i as f32 * 1.0, 3.0f32, i as f32));
+            constraint.weighted_normal1 = na::normalize(&Vec3::new(4.0, 3.0f32, i as f32));
+            constraint.weighted_normal2 = na::normalize(&Vec3::new(4.0, 3.0f32, i as f32));
 
-            constraint.rot_axis1 = Vec3::new(i as f64 * 1.0, 3.0f64, i as f64).normalized();
-            constraint.rot_axis2 = Vec3::new(-i as f64 * -1.0, 3.0f64, i as f64).normalized();
-            constraint.weighted_rot_axis1 = Vec3::new(4.0, 3.0f64, i as f64);
-            constraint.weighted_rot_axis2 = Vec3::new(4.0, 3.0f64, i as f64);
+            constraint.rot_axis1 = na::normalize(&Vec3::new(i as f32 * 1.0, 3.0f32, i as f32));
+            constraint.rot_axis2 = na::normalize(&Vec3::new(-i as f32 * -1.0, 3.0f32, i as f32));
+            constraint.weighted_rot_axis1 = Vec3::new(4.0, 3.0f32, i as f32);
+            constraint.weighted_rot_axis2 = Vec3::new(4.0, 3.0f32, i as f32);
 
             constraint.inv_projected_mass = 42.0;
 
             constraint.hibound = Bounded::max_value();
             constraint.lobound = 0.0;
 
-            constraint.objective = 2.0 * (i as f64);
+            constraint.objective = 2.0 * (i as f32);
 
             constraint.id1 = i;
             constraint.id2 = 1000 - 1 - i;
 
             constraints.push(constraint);
+            res.push(Velocities::new());
         }
 
         let mut empty = ~[];
 
-        do bh.iter {
-            projected_gauss_seidel_solve(constraints, empty, 1000, 40, false);
-        }
+        bh.iter(|| {
+            projected_gauss_seidel_solve(constraints, empty, res, 1000, 40, false);
+        });
     }
 }

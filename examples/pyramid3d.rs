@@ -6,28 +6,22 @@ extern mod std;
 extern mod extra;
 extern mod kiss3d;
 extern mod graphics3d;
-extern mod nphysics;
+extern mod nphysics = "nphysics3df32";
+extern mod ncollide = "ncollide3df32";
 extern mod nalgebra;
-extern mod ncollide;
 
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Plane, Box};
 use nphysics::world::BodyWorld;
-use nphysics::aliases::dim3;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use graphics3d::engine::GraphicsManager;
-
-#[start]
-fn start(argc: int, argv: **u8) -> int {
-    std::rt::start_on_main_thread(argc, argv, main)
-}
 
 fn main() {
     GraphicsManager::simulate(pyramid3d)
 }
 
-pub fn pyramid3d(window: &mut Window, graphics: &mut GraphicsManager) -> dim3::BodyWorld3d<f32> {
+pub fn pyramid3d(window: &mut Window, graphics: &mut GraphicsManager) -> BodyWorld {
     /*
      * World
      */

@@ -2,7 +2,7 @@ use std::os;
 use std::num::{Zero, One};
 use extra::time;
 use glfw;
-use nalgebra::na::{Vec2, Vec3, Translation};
+use nalgebra::na::{Vec2, Vec3, Translation, Iso3};
 use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
@@ -10,11 +10,11 @@ use kiss3d::event;
 use ncollide::geom::{Box, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
-use nphysics::aliases::dim3;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 use nphysics::detection::joint::fixed::Fixed;
 use nphysics::detection::joint::anchor::Anchor;
-use nphysics::object::{RigidBody, Dynamic, RB};
+use nphysics::object::{RigidBody, Dynamic, RB, Body};
+use nphysics::world::BodyWorld;
 use engine::{SceneNode, GraphicsManager};
 
 fn usage(exe_name: &str) {
@@ -33,7 +33,7 @@ fn usage(exe_name: &str) {
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
-pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWorld3d<f32>) {
+pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -51,8 +51,8 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
         let mut ray_to_draw = None;
 
         let mut cursor_pos = Vec2::new(0.0f32, 0.0);
-        let mut grabbed_object: Option<@mut dim3::Body3d<f32>> = None;
-        let mut grabbed_object_joint: Option<@mut dim3::Fixed3d<f32>> = None;
+        let mut grabbed_object: Option<@mut Body> = None;
+        let mut grabbed_object_joint: Option<@mut Fixed> = None;
         let mut grabbed_object_plane: (Vec3<f32>, Vec3<f32>) = (Zero::zero(), Zero::zero());
 
 
@@ -136,7 +136,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
                                         }
 
                                         let rb      = b.to_rigid_body_or_fail();
-                                        let _1: dim3::Transform3d<f32> = One::one();
+                                        let _1: Iso3<f32> = One::one();
                                         let attach2 = na::append_translation(&_1, &(ray.orig + ray.dir * mintoi));
                                         let attach1 = na::inv(&na::transformation(rb.transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
@@ -190,7 +190,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> dim3::BodyWo
 
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
-                                        let _1: dim3::Transform3d<f32> = One::one();
+                                        let _1: Iso3<f32> = One::one();
                                         j.set_local2(na::append_translation(&_1, &(pos + dir * inter)))
                                     },
                                     None => { }
@@ -350,7 +350,7 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(window: &mut window::Window, physics: &mut dim3::BodyWorld3d<f32>) {
+fn draw_collisions(window: &mut window::Window, physics: &mut BodyWorld) {
     let mut collisions = ~[];
 
     for c in physics.world().detectors().iter() {

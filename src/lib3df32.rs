@@ -1,4 +1,4 @@
-#[crate_id = "nphysics#0.1"];
+#[crate_id = "nphysics3df32#0.1"];
 #[crate_type = "lib"];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
@@ -7,13 +7,9 @@
 extern mod std;
 extern mod extra;
 extern mod nalgebra;
-extern mod ncollide;
+extern mod ncollide = "ncollide3df32";
 
-pub mod aliases {
-    pub mod dim2;
-    pub mod dim3;
-    pub mod traits;
-}
+pub mod aliases;
 
 pub mod signal {
     pub mod signal;

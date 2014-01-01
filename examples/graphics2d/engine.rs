@@ -4,8 +4,11 @@ use std::ptr;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use rsfml::graphics::render_window::RenderWindow;
-use nalgebra::na::Vec3;
-use nphysics::aliases::dim2;
+use nalgebra::na::{Vec3, Iso2};
+use nphysics::world::BodyWorld;
+use nphysics::object::Body;
+use ncollide::geom::Geom;
+use ncollide::geom;
 use camera::Camera;
 use objects::ball::Ball;
 use objects::box_node::Box;
@@ -33,11 +36,11 @@ impl<'a> GraphicsManager<'a> {
         }
     }
 
-    pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
+    pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
         simulate::simulate(builder)
     }
 
-    pub fn add(&mut self, body: @mut dim2::Body2d<f32>) {
+    pub fn add(&mut self, body: @mut Body) {
 
         let nodes = {
             let rb = body.to_rigid_body_or_fail();
@@ -52,17 +55,17 @@ impl<'a> GraphicsManager<'a> {
     }
 
     fn add_geom(&mut self,
-                body:  @mut dim2::Body2d<f32>,
-                delta: dim2::Transform2d<f32>,
-                geom:  dim2::Geom2dRef<f32>,
+                body:  @mut Body,
+                delta: Iso2<f32>,
+                geom:  &Geom,
                 out:   &mut ~[SceneNode<'a>]) {
-        type Pl = dim2::Plane2d<f32>;
-        type Bl = dim2::Ball2d<f32>;
-        type Bo = dim2::Box2d<f32>;
-        type Cy = dim2::Cylinder2d<f32>;
-        type Co = dim2::Cone2d<f32>;
-        type Cm = dim2::Compound2d<f32>;
-        type Ls = dim2::LineStrip2d<f32>;
+        type Pl = geom::Plane;
+        type Bl = geom::Ball;
+        type Bo = geom::Box;
+        type Cy = geom::Cylinder;
+        type Co = geom::Cone;
+        type Cm = geom::Compound;
+        type Ls = geom::Mesh;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -91,24 +94,24 @@ impl<'a> GraphicsManager<'a> {
     }
 
     fn add_plane(&mut self,
-                 _: @mut dim2::Body2d<f32>,
-                 _: &dim2::Plane2d<f32>,
-                 _:  &mut ~[SceneNode]) {
+                 _: @mut Body,
+                 _: &geom::Plane,
+                 _: &mut ~[SceneNode]) {
     }
 
     fn add_ball(&mut self,
-                body:  @mut dim2::Body2d<f32>,
-                delta: dim2::Transform2d<f32>,
-                geom:  &dim2::Ball2d<f32>,
+                body:  @mut Body,
+                delta: Iso2<f32>,
+                geom:  &geom::Ball,
                 out:   &mut ~[SceneNode]) {
         let color = self.color_for_object(body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
     }
 
     fn add_lines(&mut self,
-               body:  @mut dim2::Body2d<f32>,
-               delta: dim2::Transform2d<f32>,
-               geom:  &dim2::LineStrip2d<f32>,
+               body:  @mut Body,
+               delta: Iso2<f32>,
+               geom:  &geom::Mesh,
                out:   &mut ~[SceneNode]) {
 
         let color = self.color_for_object(body);
@@ -121,9 +124,9 @@ impl<'a> GraphicsManager<'a> {
 
 
     fn add_box(&mut self,
-               body:  @mut dim2::Body2d<f32>,
-               delta: dim2::Transform2d<f32>,
-               geom:  &dim2::Box2d<f32>,
+               body:  @mut Body,
+               delta: Iso2<f32>,
+               geom:  &geom::Box,
                out:   &mut ~[SceneNode]) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
@@ -160,7 +163,7 @@ impl<'a> GraphicsManager<'a> {
     }
 
 
-    pub fn color_for_object(&mut self, body: &dim2::Body2d<f32>) -> Vec3<u8> {
+    pub fn color_for_object(&mut self, body: &Body) -> Vec3<u8> {
         let key = ptr::to_unsafe_ptr(body) as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,

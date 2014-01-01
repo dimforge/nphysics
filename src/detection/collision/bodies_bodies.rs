@@ -7,40 +7,29 @@ use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPh
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
 use ncollide::contact::Contact;
 use ncollide::ray::{Ray, RayCastWithTransform};
+use ncollide::math::N;
 use object::{Body, RB, SB};
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 
-pub struct BodyBodyDispatcher<N, LV, AV, M, II> {
+pub struct BodyBodyDispatcher {
     // XXX: we use a MutexArc here since because of https://github.com/mozilla/rust/issues/9265
     // it is not possible to make the GeomGeomDispatcher Freeze.
-    geom_dispatcher: Rc<GeomGeomDispatcher<N, LV, AV, M, II>>
+    geom_dispatcher: Rc<GeomGeomDispatcher>
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-BodyBodyDispatcher<N, LV, AV, M, II> {
-    pub fn new(d: Rc<GeomGeomDispatcher<N, LV, AV, M, II>>) -> BodyBodyDispatcher<N, LV, AV, M, II> {
+impl BodyBodyDispatcher {
+    pub fn new(d: Rc<GeomGeomDispatcher>) -> BodyBodyDispatcher {
         BodyBodyDispatcher {
             geom_dispatcher: d
         }
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Dispatcher<Body<N, LV, AV, M, II>, Body<N, LV, AV, M, II>, ~GeomGeomCollisionDetector<N, LV, AV, M, II>>
-for BodyBodyDispatcher<N, LV, AV, M, II> {
-    fn dispatch(&self, a: &Body<N, LV, AV, M, II>, b: &Body<N, LV, AV, M, II>)
-        -> ~GeomGeomCollisionDetector<N, LV, AV, M, II> {
+impl Dispatcher<Body, Body, ~GeomGeomCollisionDetector> for BodyBodyDispatcher {
+    fn dispatch(&self, a: &Body, b: &Body)
+        -> ~GeomGeomCollisionDetector {
         match (a, b) {
             (&RB(ref rb1), &RB(ref rb2)) => {
                 self.geom_dispatcher.borrow().dispatch(rb1.geom(), rb2.geom())
@@ -50,8 +39,8 @@ for BodyBodyDispatcher<N, LV, AV, M, II> {
     }
 
     fn is_valid(&self,
-                a: &Body<N, LV, AV, M, II>,
-                b: &Body<N, LV, AV, M, II>)
+                a: &Body,
+                b: &Body)
                 -> bool {
         if borrow::ref_eq(a, b) {
             return false
@@ -65,29 +54,23 @@ for BodyBodyDispatcher<N, LV, AV, M, II> {
 }
 
 
-pub struct BodiesBodies<N, LV, AV, M, II, BF> {
-    geom_geom_dispatcher:  Rc<GeomGeomDispatcher<N, LV, AV, M, II>>,
-    contacts_collector:    ~[Contact<N, LV>],
+pub struct BodiesBodies<BF> {
+    geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
+    contacts_collector:    ~[Contact],
     // FIXME: this is an useless buffer which accumulate the result of bodies activation.
     // This must exist since there is no way to send an activation message without an accumulation
     // list…
-    constraints_collector: ~[Constraint<N, LV, AV, M, II>],
-    signals:     @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
+    constraints_collector: ~[Constraint],
+    signals:     @mut SignalEmiter<Body, Constraint>,
     broad_phase: @mut BF,
     update_bf:   bool
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, ~GeomGeomCollisionDetector<N, LV, AV, M, II>>>
-BodiesBodies<N, LV, AV, M, II, BF> {
-    pub fn new(events:     @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
+impl<BF: 'static + InterferencesBroadPhase<Body, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {
+    pub fn new(events:     @mut SignalEmiter<Body, Constraint>,
                bf:         @mut BF,
-               dispatcher: Rc<GeomGeomDispatcher<N, LV, AV, M, II>>,
-               update_bf:  bool) -> @mut BodiesBodies<N, LV, AV, M, II, BF> {
+               dispatcher: Rc<GeomGeomDispatcher>,
+               update_bf:  bool) -> @mut BodiesBodies<BF> {
         let res = @mut BodiesBodies {
             geom_geom_dispatcher:  dispatcher,
             contacts_collector:    ~[],
@@ -99,15 +82,15 @@ BodiesBodies<N, LV, AV, M, II, BF> {
 
         events.add_body_activation_handler(
             ptr::to_mut_unsafe_ptr(res) as uint,
-            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
+            res as @mut BodyActivationSignalHandler<Body, Constraint>
         );
 
         res
     }
 
     fn activate(&mut self,
-                body: @mut Body<N, LV, AV, M, II>,
-                out:  &mut ~[Constraint<N, LV, AV, M, II>]) {
+                body: @mut Body,
+                out:  &mut ~[Constraint]) {
         self.broad_phase.activate(body, |b1, b2, cd| {
             let rb1 = b1.to_rigid_body_or_fail();
             let rb2 = b2.to_rigid_body_or_fail();
@@ -129,21 +112,16 @@ BodiesBodies<N, LV, AV, M, II, BF> {
         })
     }
 
-    fn deactivate(&mut self, body: @mut Body<N, LV, AV, M, II>) {
+    fn deactivate(&mut self, body: @mut Body) {
         self.broad_phase.deactivate(body)
     }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>>>
-BodiesBodies<N, LV, AV, M, II, BF> {
+impl<BF: RayCastBroadPhase<Body>>
+BodiesBodies<BF> {
     pub fn interferences_with_ray(&mut self,
-                                  ray: &Ray<LV>,
-                                  out: &mut ~[(@mut Body<N, LV, AV, M, II>, N)]) {
+                                  ray: &Ray,
+                                  out: &mut ~[(@mut Body, N)]) {
         let mut bodies = ~[];
 
         self.broad_phase.interferences_with_ray(ray, &mut bodies);
@@ -162,22 +140,17 @@ BodiesBodies<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: InterferencesBroadPhase<Body<N, LV, AV, M, II>, ~GeomGeomCollisionDetector<N, LV, AV, M, II>> +
-         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
-Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
-for BodiesBodies<N, LV, AV, M, II, BF> {
-    fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+impl<BF: InterferencesBroadPhase<Body, ~GeomGeomCollisionDetector> +
+         BoundingVolumeBroadPhase<Body, AABB>>
+Detector<Body, Constraint>
+for BodiesBodies<BF> {
+    fn add(&mut self, o: @mut Body) {
         if self.update_bf {
             self.broad_phase.add(o);
         }
     }
 
-    fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+    fn remove(&mut self, o: @mut Body) {
         if !o.is_active() {
             // wake up everybody in contact
             let aabb              = o.bounding_volume();
@@ -229,7 +202,7 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
         })
     }
 
-    fn interferences(&mut self, out: &mut ~[Constraint<N, LV, AV, M, II>]) {
+    fn interferences(&mut self, out: &mut ~[Constraint]) {
         self.broad_phase.for_each_pair_mut(|b1, b2, cd| {
             cd.colls(&mut self.contacts_collector);
 
@@ -245,20 +218,13 @@ for BodiesBodies<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 50.0 }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: 'static + InterferencesBroadPhase<Body<N, LV, AV, M, II>, ~GeomGeomCollisionDetector<N, LV, AV, M, II>>>
-BodyActivationSignalHandler<Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for BodiesBodies<N, LV, AV, M, II, BF> {
-    fn handle_body_activated_signal(&mut self,
-                                    b:   @mut Body<N, LV, AV, M, II>,
-                                    out: &mut ~[Constraint<N, LV, AV, M, II>]) {
+impl<BF: 'static + InterferencesBroadPhase<Body, ~GeomGeomCollisionDetector>>
+BodyActivationSignalHandler<Body, Constraint> for BodiesBodies<BF> {
+    fn handle_body_activated_signal(&mut self, b: @mut Body, out: &mut ~[Constraint]) {
         self.activate(b, out)
     }
 
-    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body) {
         self.deactivate(b)
     }
 }

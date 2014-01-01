@@ -1,21 +1,21 @@
 use extra::arc::Arc;
 use rsfml::graphics::render_window;
 use rsfml::graphics::Color;
-use nalgebra::na::{Vec2, Vec3};
-use nphysics::aliases::dim2;
+use nalgebra::na::{Vec2, Vec3, Iso2};
+use nphysics::object::Body;
 use draw_helper::draw_line;
 
 pub struct Lines {
     priv color:    Vec3<u8>,
-    priv delta:    dim2::Transform2d<f32>,
-    priv body:     @mut dim2::Body2d<f32>,
+    priv delta:    Iso2<f32>,
+    priv body:     @mut Body,
     priv indices:  Arc<~[uint]>,
     priv vertices: Arc<~[Vec2<f32>]>
 }
 
 impl Lines {
-    pub fn new(body:     @mut dim2::Body2d<f32>,
-               delta:    dim2::Transform2d<f32>,
+    pub fn new(body:     @mut Body,
+               delta:    Iso2<f32>,
                vertices: Arc<~[Vec2<f32>]>,
                indices:  Arc<~[uint]>,
                color:    Vec3<u8>) -> Lines {

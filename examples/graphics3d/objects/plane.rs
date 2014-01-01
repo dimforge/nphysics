@@ -1,16 +1,16 @@
 use kiss3d::window;
 use kiss3d::object::Object;
 use nalgebra::na::Vec3;
-use nphysics::aliases::dim3;
+use nphysics::object::Body;
 use engine::SceneNode;
 
 pub struct Plane {
     priv gfx:  Object,
-    priv body: @mut dim3::Body3d<f32>,
+    priv body: @mut Body,
 }
 
 impl Plane {
-    pub fn new(body:   @mut dim3::Body3d<f32>,
+    pub fn new(body:   @mut Body,
                pos:    &Vec3<f32>,
                normal: &Vec3<f32>,
                color:  Vec3<f32>,

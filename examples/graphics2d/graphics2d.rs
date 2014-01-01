@@ -6,9 +6,9 @@
 extern mod std;
 extern mod extra;
 extern mod rsfml;
-extern mod nphysics;
+extern mod nphysics = "nphysics2df32";
 extern mod nalgebra;
-extern mod ncollide;
+extern mod ncollide = "ncollide2df32";
 
 
 pub mod simulate;

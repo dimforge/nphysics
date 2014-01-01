@@ -1,13 +1,12 @@
 use std::util;
 use std::rand::{IsaacRng, Rng};
-use std::num::Zero;
 use std::vec;
-use nalgebra::na::Vec;
 use nalgebra::na;
+use ncollide::math::{N, V};
 use std::hashmap::HashMap;
 
 #[deriving(Eq)]
-struct ContactIdentifier<V> {
+struct ContactIdentifier {
     obj1:    uint,
     obj2:    uint,
     ccenter: V
@@ -15,15 +14,15 @@ struct ContactIdentifier<V> {
 
 pub type Cb<'a> = 'a |buf: &[u8]| -> bool;
 
-impl<V: IterBytes> IterBytes for ContactIdentifier<V> {
+impl IterBytes for ContactIdentifier {
     #[inline]
     fn iter_bytes(&self, _lsb0: bool, f: Cb) -> bool {
         self.ccenter.iter_bytes(_lsb0, f)
     }
 }
 
-impl<V: Round + Vec<N>, N> ContactIdentifier<V> {
-    pub fn new(obj1: uint, obj2: uint, center: V, step: &N) -> ContactIdentifier<V> {
+impl ContactIdentifier {
+    pub fn new(obj1: uint, obj2: uint, center: V, step: &N) -> ContactIdentifier {
         ContactIdentifier {
             obj1:    obj1,
             obj2:    obj2,
@@ -33,19 +32,17 @@ impl<V: Round + Vec<N>, N> ContactIdentifier<V> {
 }
 
 // FIXME: make the fields priv
-pub struct ImpulseCache<N, V> {
-    priv hash_prev:           HashMap<ContactIdentifier<V>, (uint, uint)>,
+pub struct ImpulseCache {
+    priv hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
     priv cache_prev:          ~[N],
-    priv hash_next:           HashMap<ContactIdentifier<V>, (uint, uint)>,
+    priv hash_next:           HashMap<ContactIdentifier, (uint, uint)>,
     priv cache_next:          ~[N],
     priv step:                N,
     priv impulse_per_contact: uint
 }
 
-impl<N: Zero + Clone,
-     V: Vec<N> + Round + IterBytes>
-ImpulseCache<N, V> {
-    pub fn new(step: N, impulse_per_contact: uint) -> ImpulseCache<N, V> {
+impl ImpulseCache {
+    pub fn new(step: N, impulse_per_contact: uint) -> ImpulseCache {
         let mut rng = IsaacRng::new_unseeded();
 
         ImpulseCache {
@@ -69,11 +66,11 @@ ImpulseCache<N, V> {
         self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash<'a>(&'a self) -> &'a HashMap<ContactIdentifier<V>, (uint, uint)> {
+    pub fn hash<'a>(&'a self) -> &'a HashMap<ContactIdentifier, (uint, uint)> {
         &'a self.hash_next
     }
 
-    pub fn hash_mut<'a>(&'a mut self) -> &'a mut HashMap<ContactIdentifier<V>, (uint, uint)> {
+    pub fn hash_mut<'a>(&'a mut self) -> &'a mut HashMap<ContactIdentifier, (uint, uint)> {
         &'a mut self.hash_next
     }
 

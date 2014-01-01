@@ -7,17 +7,14 @@ use detection::joint::fixed::Fixed;
 use detection::constraint::{Constraint, BallInSocket, Fixed, RBRB};
 use object::Body;
 use signal::signal::SignalEmiter;
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub struct JointManager<N, LV, AV, M, II> {
-    events: @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
-    joints: HashMap<uint, Constraint<N, LV, AV, M, II>, UintTWHash>
+pub struct JointManager {
+    events: @mut SignalEmiter<Body, Constraint>,
+    joints: HashMap<uint, Constraint, UintTWHash>
 }
 
-impl<N: 'static, LV: 'static, AV: 'static, M: 'static, II: 'static> JointManager<N, LV, AV, M, II> {
-    pub fn new(events: @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>)
-               -> @mut JointManager<N, LV, AV, M, II> {
+impl JointManager {
+    pub fn new(events: @mut SignalEmiter<Body, Constraint>) -> @mut JointManager {
         /*
          * NOTE: we dont listen to `body_activated` and `body_deactivated` signals because this is
          * not worth it:
@@ -32,33 +29,28 @@ impl<N: 'static, LV: 'static, AV: 'static, M: 'static, II: 'static> JointManager
         }
     }
 
-    pub fn add_ball_in_socket(&mut self, joint: @mut BallInSocket<N, LV, AV, M, II>) {
+    pub fn add_ball_in_socket(&mut self, joint: @mut BallInSocket) {
         self.joints.insert(ptr::to_mut_unsafe_ptr(joint) as uint, BallInSocket(joint));
     }
 
-    pub fn remove_ball_in_socket(&mut self, joint: @mut BallInSocket<N, LV, AV, M, II>) {
+    pub fn remove_ball_in_socket(&mut self, joint: @mut BallInSocket) {
         self.joints.remove(&(ptr::to_mut_unsafe_ptr(joint) as uint));
     }
 
-    pub fn add_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+    pub fn add_fixed(&mut self, joint: @mut Fixed) {
         self.joints.insert(ptr::to_mut_unsafe_ptr(joint) as uint, Fixed(joint));
     }
 
-    pub fn remove_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+    pub fn remove_fixed(&mut self, joint: @mut Fixed) {
         self.joints.remove(&(ptr::to_mut_unsafe_ptr(joint) as uint));
     }
 }
 
-impl<N:  NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManager<N, LV, AV, M, II> {
-    fn add(&mut self, _: @mut Body<N, LV, AV, M, II>) {
+impl Detector<Body, Constraint> for JointManager {
+    fn add(&mut self, _: @mut Body) {
     }
 
-    fn remove(&mut self, _: @mut Body<N, LV, AV, M, II>) {
+    fn remove(&mut self, _: @mut Body) {
         let mut keys_to_remove = ~[];
 
         // Remove any joint attached to this body
@@ -86,7 +78,7 @@ Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> for JointManag
     fn update(&mut self) {
     }
 
-    fn interferences(&mut self, constraint: &mut ~[Constraint<N, LV, AV, M, II>]) {
+    fn interferences(&mut self, constraint: &mut ~[Constraint]) {
         for joint in self.joints.elements().iter() {
             match joint.value {
                 BallInSocket(bis) =>

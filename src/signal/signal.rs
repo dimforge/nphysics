@@ -19,14 +19,14 @@ pub trait CollisionSignalHandler<O> {
 }
 
 // FIXME: add other signals
-pub struct SignalEmiter<N, O, C> {
+pub struct SignalEmiter<O, C> {
     body_activation_request_handlers: HashMap<uint, @mut BodyActivationRequestHandler<O>, UintTWHash>,
     body_activation_handlers:         HashMap<uint, @mut BodyActivationSignalHandler<O, C>, UintTWHash>,
     collision_handler:                HashMap<uint, @mut CollisionSignalHandler<O>, UintTWHash>,
 }
 
-impl<N, O, C> SignalEmiter<N, O, C> {
-    pub fn new() -> SignalEmiter<N, O, C> {
+impl<O, C> SignalEmiter<O, C> {
+    pub fn new() -> SignalEmiter<O, C> {
         SignalEmiter {
             body_activation_request_handlers: HashMap::new(UintTWHash::new()),
             body_activation_handlers:         HashMap::new(UintTWHash::new()),
@@ -38,7 +38,7 @@ impl<N, O, C> SignalEmiter<N, O, C> {
 /*
  * Implement handler add/remove
  */
-impl<N, O, C> SignalEmiter<N, O, C> {
+impl<O, C> SignalEmiter<O, C> {
     pub fn add_body_activation_handler(&mut self,
                                        id:      uint,
                                        handler: @mut BodyActivationSignalHandler<O, C>) {
@@ -71,7 +71,7 @@ impl<N, O, C> SignalEmiter<N, O, C> {
 /*
  * Implement signal emition
  */
-impl<N, O, C> SignalEmiter<N, O, C> {
+impl<O, C> SignalEmiter<O, C> {
     pub fn request_body_activation(&self, o: @mut O) {
         for h in self.body_activation_request_handlers.elements().iter() {
             h.value.handle_body_activation_request(o)

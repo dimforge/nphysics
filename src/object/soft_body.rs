@@ -1,16 +1,15 @@
-use std::num::Zero;
-use nalgebra::na::AlgebraicVec;
 use nalgebra::na;
+use ncollide::math::{N, V};
 
 #[deriving(Clone, Encodable, Decodable)]
-pub struct PointMass<N, V> {
+pub struct PointMass {
     invmass:    N,
     velocity:   V,
     position:   V,
 }
 
 #[deriving(Clone, Encodable, Decodable)]
-pub struct ConstraintsGeometry<N> {
+pub struct ConstraintsGeometry {
     stiffness:   N,
     rest_length: N,
     impulse:     N,
@@ -19,22 +18,20 @@ pub struct ConstraintsGeometry<N> {
 }
 
 #[deriving(Clone, Encodable, Decodable)]
-pub struct SoftBody<N, V> {
+pub struct SoftBody {
     acc:         V,
-    points:      ~[PointMass<N, V>],
-    constraints: ~[ConstraintsGeometry<N>],
+    points:      ~[PointMass],
+    constraints: ~[ConstraintsGeometry],
     active:      bool,
     index:       int
 }
 
-impl<N: Num + NumCast + Signed + Bounded + Algebraic + Eq + Ord + Clone,
-     V: AlgebraicVec<N> + Clone>
-     SoftBody<N, V> {
+impl SoftBody {
     pub fn new_from_mesh(vbuf:      ~[V],
                          ids1:      ~[i32],
                          ids2:      ~[i32],
                          invmasses: ~[N],
-                         stiffness: ~[N]) -> SoftBody<N, V> {
+                         stiffness: ~[N]) -> SoftBody {
         assert!(vbuf.len() == invmasses.len(),
         "Vertex buffer and mass informations must have the same size.");
 
@@ -76,12 +73,12 @@ impl<N: Num + NumCast + Signed + Bounded + Algebraic + Eq + Ord + Clone,
         }
     }
 
-    pub fn points<'r>(&'r mut self) -> &'r mut ~[PointMass<N, V>] {
+    pub fn points<'r>(&'r mut self) -> &'r mut ~[PointMass] {
         &'r mut self.points
     }
 }
 
-impl<N, V> SoftBody<N, V> {
+impl SoftBody {
     pub fn is_active(&self) -> bool {
         self.active
     }
@@ -99,7 +96,7 @@ impl<N, V> SoftBody<N, V> {
     }
 }
 
-impl<N, V: Zero> SoftBody<N, V> {
+impl SoftBody {
     pub fn deactivate(&mut self) {
         for pt in self.points.mut_iter() {
             pt.velocity = na::zero()

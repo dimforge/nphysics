@@ -1,27 +1,27 @@
 use std::num::One;
 use kiss3d::window;
 use kiss3d::object::Object;
-use nalgebra::na::{Vec3, Transformation, Rotation};
+use nalgebra::na::{Vec3, Iso3, Transformation, Rotation};
 use nalgebra::na;
-use nphysics::aliases::dim3;
+use nphysics::object::Body;
 use engine::SceneNode;
 
 pub struct Cone {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
-    priv delta:      dim3::Transform3d<f32>,
+    priv delta:      Iso3<f32>,
     priv gfx:        Object,
-    priv body:       @mut dim3::Body3d<f32>,
+    priv body:       @mut Body,
 }
 
 impl Cone {
-    pub fn new(body:   @mut dim3::Body3d<f32>,
-               delta:  dim3::Transform3d<f32>,
+    pub fn new(body:   @mut Body,
+               delta:  Iso3<f32>,
                r:      f32,
                h:      f32,
                color:  Vec3<f32>,
                window: &mut window::Window) -> Cone {
-        let mut realign: dim3::Transform3d<f32> = One::one();
+        let mut realign: Iso3<f32> = One::one();
         let _frac_pi_2: f32 = Real::frac_pi_2();
         realign.append_rotation(&Vec3::new(0.0, 0.0, -_frac_pi_2));
 

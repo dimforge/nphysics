@@ -2,11 +2,11 @@ use std::num::Zero;
 use std::rc::Rc;
 use nalgebra::na::{Transformation, Translation, Rotation};
 use nalgebra::na;
+use nalgebra::na::Transform;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
+use ncollide::math::{N, LV, AV, M, II};
 
 #[deriving(ToStr, Eq, Clone, Encodable, Decodable)]
 pub enum RigidBodyState {
@@ -14,9 +14,9 @@ pub enum RigidBodyState {
     Dynamic
 }
 
-pub struct RigidBody<N, LV, AV, M, II> {
+pub struct RigidBody {
     priv state:                RigidBodyState,
-    priv geom:                 Rc<~Geom<N, LV, M, II>>,
+    priv geom:                 Rc<~Geom>,
     priv local_to_world:       M,
     priv lin_vel:              LV,
     priv ang_vel:              AV,
@@ -33,13 +33,8 @@ pub struct RigidBody<N, LV, AV, M, II> {
     priv active:               bool
 }
 
-impl<N:  Send + Freeze + Clone,
-     LV: Send + Freeze + Clone,
-     AV: Clone,
-     M:  Send + Freeze + Clone,
-     II: Clone>
-Clone for RigidBody<N, LV, AV, M, II> {
-    fn clone(&self) -> RigidBody<N, LV, AV, M, II> {
+impl Clone for RigidBody {
+    fn clone(&self) -> RigidBody {
         RigidBody {
             state:             self.state.clone(),
             geom:              self.geom.clone(),
@@ -62,12 +57,7 @@ Clone for RigidBody<N, LV, AV, M, II> {
 }
 
 
-impl<N:   Clone + NPhysicsScalar,
-     LV:  Clone + NPhysicsDirection<N, AV>,
-     AV:  Clone + NPhysicsOrientation<N>,
-     M:   NPhysicsTransform<LV, AV>,
-     II:  Clone + NPhysicsInertia<N, LV, AV, M>>
-RigidBody<N, LV, AV, M, II> {
+impl RigidBody {
     pub fn deactivate(&mut self) {
         self.lin_vel = na::zero();
         self.ang_vel = na::zero();
@@ -87,8 +77,8 @@ RigidBody<N, LV, AV, M, II> {
         &'r self.local_to_world
     }
 
-    pub fn geom<'r>(&'r self) -> &'r Geom<N, LV, M, II> {
-        let res: &'r Geom<N, LV, M, II> = *self.geom.borrow();
+    pub fn geom<'r>(&'r self) -> &'r Geom {
+        let res: &'r Geom = *self.geom.borrow();
 
         res
     }
@@ -121,25 +111,25 @@ RigidBody<N, LV, AV, M, II> {
         self.active = true;
     }
 
-    pub fn new<G: 'static + Send + Geom<N, LV, M, II>>(geom:        G,
+    pub fn new<G: 'static + Send + Geom>(geom:        G,
                                                        density:     N,
                                                        state:       RigidBodyState,
                                                        restitution: N,
                                                        friction:    N)
-                                                       -> RigidBody<N, LV, AV, M, II> {
-        RigidBody::new_with_shared_geom(Rc::from_send(~geom as ~Geom<N, LV, M, II>),
+                                                       -> RigidBody {
+        RigidBody::new_with_shared_geom(Rc::from_send(~geom as ~Geom),
                                         density,
                                         state,
                                         restitution,
                                         friction)
     }
 
-    pub fn new_with_shared_geom(geom:        Rc<~Geom<N, LV, M, II>>,
+    pub fn new_with_shared_geom(geom:        Rc<~Geom>,
                                 density:     N,
                                 state:       RigidBodyState,
                                 restitution: N,
                                 friction:    N)
-                                -> RigidBody<N, LV, AV, M, II> {
+                                -> RigidBody {
         let (inv_mass, center_of_mass, inv_inertia) =
             match state {
                 Static    => (na::zero(), na::zero(), na::zero()),
@@ -262,12 +252,7 @@ RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Transformation<M> for RigidBody<N, LV, AV, M, II> {
+impl Transformation<M> for RigidBody {
     #[inline]
     fn transformation(&self) -> M {
         self.local_to_world.clone()
@@ -287,7 +272,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn append_transformation_cpy(rb: &RigidBody<N, LV, AV, M, II>, m: &M) -> RigidBody<N, LV, AV, M, II> {
+    fn append_transformation_cpy(rb: &RigidBody, m: &M) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_transformation(m);
@@ -304,7 +289,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn prepend_transformation_cpy(rb: &RigidBody<N, LV, AV, M, II>, m: &M) -> RigidBody<N, LV, AV, M, II> {
+    fn prepend_transformation_cpy(rb: &RigidBody, m: &M) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_transformation(m);
@@ -323,12 +308,7 @@ Transformation<M> for RigidBody<N, LV, AV, M, II> {
 
 // FIXME: implement Transfomable too
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Translation<LV> for RigidBody<N, LV, AV, M, II> {
+impl Translation<LV> for RigidBody {
     #[inline]
     fn translation(&self) -> LV {
         self.local_to_world.translation()
@@ -346,7 +326,7 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn append_translation_cpy(rb: &RigidBody<N, LV, AV, M, II>, t: &LV) -> RigidBody<N, LV, AV, M, II> {
+    fn append_translation_cpy(rb: &RigidBody, t: &LV) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_translation(t);
@@ -361,7 +341,7 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn prepend_translation_cpy(rb: &RigidBody<N, LV, AV, M, II>, t: &LV) -> RigidBody<N, LV, AV, M, II> {
+    fn prepend_translation_cpy(rb: &RigidBody, t: &LV) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_translation(t);
@@ -377,12 +357,7 @@ Translation<LV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Rotation<AV> for RigidBody<N, LV, AV, M, II> {
+impl Rotation<AV> for RigidBody {
     #[inline]
     fn rotation(&self) -> AV {
         self.local_to_world.rotation()
@@ -402,7 +377,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn append_rotation_cpy(rb: &RigidBody<N, LV, AV, M, II>, rot: &AV) -> RigidBody<N, LV, AV, M, II> {
+    fn append_rotation_cpy(rb: &RigidBody, rot: &AV) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_rotation(rot);
@@ -419,7 +394,7 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 
     #[inline]
-    fn prepend_rotation_cpy(rb: &RigidBody<N, LV, AV, M, II>, rot: &AV) -> RigidBody<N, LV, AV, M, II> {
+    fn prepend_rotation_cpy(rb: &RigidBody, rot: &AV) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_rotation(rot);
@@ -436,13 +411,8 @@ Rotation<AV> for RigidBody<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: NPhysicsOrientation<N>,
-     M:  NPhysicsTransform<LV, AV>,
-     II: NPhysicsInertia<N, LV, AV, M>>
-HasBoundingVolume<AABB<N, LV>> for RigidBody<N, LV, AV, M, II> {
-    fn bounding_volume(&self) -> AABB<N, LV> {
+impl HasBoundingVolume<AABB> for RigidBody {
+    fn bounding_volume(&self) -> AABB {
         self.geom.borrow().aabb(&self.local_to_world)
     }
 }

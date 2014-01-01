@@ -1,10 +1,10 @@
 use std::rc::Rc;
-use nalgebra::na::{CrossMatrix, Row};
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::DBVTBroadPhase;
 use ncollide::ray::Ray;
 use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
+use ncollide::math::{N, LV, AV};
 use integration::{Integrator, BodyForceGenerator, BodySmpEulerIntegrator, SweptBallMotionClamping};
 use detection::{BodiesBodies, BodyBodyDispatcher};
 use detection::detector::Detector;
@@ -16,39 +16,24 @@ use detection::IslandActivationManager;
 use resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
 use resolution::solver::Solver;
 use world::World;
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 use object::Body;
 use signal::signal::SignalEmiter;
 
-type BF<N, LV, AV, M, II> =
-    DBVTBroadPhase<
-        N,
-        LV,
-        Body<N, LV, AV, M, II>,
-        AABB<N, LV>,
-        BodyBodyDispatcher<N, LV, AV, M, II>,
-        ~GeomGeomCollisionDetector<N, LV, AV, M, II>
-    >;
+type BF = DBVTBroadPhase<Body, AABB, BodyBodyDispatcher, ~GeomGeomCollisionDetector>;
 
-pub struct BodyWorld<N, LV, AV, M, II, CM> {
-    world:      World<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
-    forces:     @mut BodyForceGenerator<N, LV, AV, M, II>,
-    integrator: @mut BodySmpEulerIntegrator<N, LV, AV, M, II>,
-    detector:   @mut BodiesBodies<N, LV, AV, M, II, BF<N, LV, AV, M, II>>,
-    sleep:      @mut IslandActivationManager<N, LV, AV, M, II>,
-    ccd:        @mut SweptBallMotionClamping<N, LV, AV, M, II, BF<N, LV, AV, M, II>>,
-    joints:     @mut JointManager<N, LV, AV, M, II>,
-    solver:     @mut AccumulatedImpulseSolver<N, LV, AV, M, II, CM>
+pub struct BodyWorld {
+    world:      World<Body, Constraint>,
+    forces:     @mut BodyForceGenerator,
+    integrator: @mut BodySmpEulerIntegrator,
+    detector:   @mut BodiesBodies<BF>,
+    sleep:      @mut IslandActivationManager,
+    ccd:        @mut SweptBallMotionClamping<BF>,
+    joints:     @mut JointManager,
+    solver:     @mut AccumulatedImpulseSolver
 }
 
-impl<N:  'static + NPhysicsScalar,
-     LV: 'static + Clone + CrossMatrix<CM> + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     CM: Row<AV>>
-BodyWorld<N, LV, AV, M, II, CM> {
-    pub fn new() -> BodyWorld<N, LV, AV, M, II, CM> {
+impl BodyWorld {
+    pub fn new() -> BodyWorld {
         /*
          * Setup the physics world
          */
@@ -97,7 +82,7 @@ BodyWorld<N, LV, AV, M, II, CM> {
         world.add_integrator(ccd);
         world.add_detector(detector);
         world.add_detector(joints);
-        world.add_detector(sleep);
+        // world.add_detector(sleep);
         world.add_solver(solver);
 
         BodyWorld {
@@ -116,47 +101,47 @@ BodyWorld<N, LV, AV, M, II, CM> {
         self.world.step(dt)
     }
 
-    pub fn add_body(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    pub fn add_body(&mut self, b: @mut Body) {
         self.world.add_object(b)
     }
 
-    pub fn remove_body(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    pub fn remove_body(&mut self, b: @mut Body) {
         self.world.remove_object(b)
     }
 
-    pub fn world<'r>(&'r self) -> &'r World<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> {
+    pub fn world<'r>(&'r self) -> &'r World<Body, Constraint> {
         &'r self.world
     }
 
-    pub fn world_mut<'r>(&'r mut self) -> &'r mut World<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>> {
+    pub fn world_mut<'r>(&'r mut self) -> &'r mut World<Body, Constraint> {
         &'r mut self.world
     }
 
-    pub fn forces_generator(&self) -> @mut BodyForceGenerator<N, LV, AV, M, II> {
+    pub fn forces_generator(&self) -> @mut BodyForceGenerator {
         self.forces
     }
 
-    pub fn integrator(&self) -> @mut BodySmpEulerIntegrator<N, LV, AV, M, II> {
+    pub fn integrator(&self) -> @mut BodySmpEulerIntegrator {
         self.integrator
     }
 
-    pub fn collison_detector(&self) -> @mut BodiesBodies<N, LV, AV, M, II, BF<N, LV, AV, M, II>> {
+    pub fn collison_detector(&self) -> @mut BodiesBodies<BF> {
         self.detector
     }
 
-    pub fn sleep_manager(&self) -> @mut IslandActivationManager<N, LV, AV, M, II> {
+    pub fn sleep_manager(&self) -> @mut IslandActivationManager {
         self.sleep
     }
 
-    pub fn ccd_manager(&self) -> @mut SweptBallMotionClamping<N, LV, AV, M, II, BF<N, LV, AV, M, II>> {
+    pub fn ccd_manager(&self) -> @mut SweptBallMotionClamping<BF> {
         self.ccd
     }
 
-    pub fn joints_manager(&self) -> @mut JointManager<N, LV, AV, M, II> {
+    pub fn joints_manager(&self) -> @mut JointManager {
         self.joints
     }
 
-    pub fn constraints_solver(&self) -> @mut AccumulatedImpulseSolver<N, LV, AV, M, II, CM> {
+    pub fn constraints_solver(&self) -> @mut AccumulatedImpulseSolver {
         self.solver
     }
 
@@ -176,44 +161,44 @@ BodyWorld<N, LV, AV, M, II, CM> {
         self.forces.ang_acc()
     }
 
-    pub fn cast_ray(&self, ray: &Ray<LV>, out: &mut ~[(@mut Body<N, LV, AV, M, II>, N)]) {
+    pub fn cast_ray(&self, ray: &Ray, out: &mut ~[(@mut Body, N)]) {
         self.detector.interferences_with_ray(ray, out)
     }
 
     pub fn add_ccd_to(&mut self,
-                      body:                @mut Body<N, LV, AV, M, II>,
+                      body:                @mut Body,
                       swept_sphere_radius: N,
                       motion_thresold:     N) {
         self.ccd.add_ccd_to(body, swept_sphere_radius, motion_thresold)
     }
 
-    pub fn add_ball_in_socket(&mut self, joint: @mut BallInSocket<N, LV, AV, M, II>) {
+    pub fn add_ball_in_socket(&mut self, joint: @mut BallInSocket) {
         self.joints.add_ball_in_socket(joint)
     }
 
-    pub fn remove_ball_in_socket(&mut self, joint: @mut BallInSocket<N, LV, AV, M, II>) {
+    pub fn remove_ball_in_socket(&mut self, joint: @mut BallInSocket) {
         self.joints.remove_ball_in_socket(joint)
     }
 
-    pub fn add_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+    pub fn add_fixed(&mut self, joint: @mut Fixed) {
         self.joints.add_fixed(joint)
     }
 
-    pub fn remove_fixed(&mut self, joint: @mut Fixed<N, LV, AV, M, II>) {
+    pub fn remove_fixed(&mut self, joint: @mut Fixed) {
         self.joints.remove_fixed(joint)
     }
 
-    pub fn add_detector<D: 'static + Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>>(
+    pub fn add_detector<D: 'static + Detector<Body, Constraint>>(
                         &mut self,
                         d: @mut D) {
         self.world.add_detector(d)
     }
 
-    pub fn add_integrator<I: 'static + Integrator<N, Body<N, LV, AV, M, II>>>(&mut self, i: @mut I) {
+    pub fn add_integrator<I: 'static + Integrator<Body>>(&mut self, i: @mut I) {
         self.world.add_integrator(i)
     }
 
-    pub fn add_solver<S: 'static + Solver<N, Constraint<N, LV, AV, M, II>>>(&mut self, s: @mut S) {
+    pub fn add_solver<S: 'static + Solver<Constraint>>(&mut self, s: @mut S) {
         self.world.add_solver(s)
     }
 }

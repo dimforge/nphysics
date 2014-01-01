@@ -3,14 +3,14 @@ use object::Body;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 
-pub enum Constraint<N, LV, AV, M, II> {
-    RBRB(@mut Body<N, LV, AV, M, II>, @mut Body<N, LV, AV, M, II>, Contact<N, LV>),
-    BallInSocket(@mut BallInSocket<N, LV, AV, M, II>),
-    Fixed(@mut Fixed<N, LV, AV, M, II>),
+pub enum Constraint {
+    RBRB(@mut Body, @mut Body, Contact),
+    BallInSocket(@mut BallInSocket),
+    Fixed(@mut Fixed),
 }
 
-impl<N: Clone, LV: Clone, AV, M, II> Clone for Constraint<N, LV, AV, M, II> {
-    fn clone(&self) -> Constraint<N, LV, AV, M, II> {
+impl Clone for Constraint {
+    fn clone(&self) -> Constraint {
         match *self {
             RBRB(a, b, ref c) => RBRB(a, b, c.clone()),
             BallInSocket(bis) => BallInSocket(bis),

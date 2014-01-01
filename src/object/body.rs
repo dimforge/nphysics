@@ -1,22 +1,15 @@
 use std::borrow;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use object::{RigidBody, SoftBody};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub enum Body<N, LV, AV, M, II> {
-    RB(RigidBody<N, LV, AV, M, II>),
-    SB(SoftBody<N, LV>) // FIXME
+pub enum Body {
+    RB(RigidBody),
+    SB(SoftBody) // FIXME
 
 }
 
-impl<N:  Send + Freeze + Clone,
-     LV: Send + Freeze + Clone,
-     AV: Clone,
-     M:  Send + Freeze + Clone,
-     II: Clone>
-Clone for Body<N, LV, AV, M, II> {
-    fn clone(&self) -> Body<N, LV, AV, M, II> {
+impl Clone for Body {
+    fn clone(&self) -> Body {
         match *self {
             RB(ref rb) => RB(rb.clone()),
             SB(ref sb) => SB(sb.clone())
@@ -24,14 +17,9 @@ Clone for Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Body<N, LV, AV, M, II> {
+impl Body {
     #[inline]
-    pub fn to_rigid_body_or_fail<'r>(&'r self) -> &'r RigidBody<N, LV, AV, M, II> {
+    pub fn to_rigid_body_or_fail<'r>(&'r self) -> &'r RigidBody {
         match *self {
             RB(ref rb) => rb,
             SB(_) => fail!("This is a SoftBody, not a RigidBody.")
@@ -39,7 +27,7 @@ Body<N, LV, AV, M, II> {
     }
 
     #[inline]
-    pub fn to_mut_rigid_body_or_fail<'r>(&'r mut self) -> &'r mut RigidBody<N, LV, AV, M, II> {
+    pub fn to_mut_rigid_body_or_fail<'r>(&'r mut self) -> &'r mut RigidBody {
         match *self {
             RB(ref mut rb) => rb,
             SB(_) => fail!("This is a SoftBody, not a RigidBody.")
@@ -95,21 +83,16 @@ Body<N, LV, AV, M, II> {
     }
 }
 
-impl<N, LV, AV, M, II> Eq for Body<N, LV, AV, M, II> {
+impl Eq for Body {
     #[inline]
-    fn eq(&self, other: &Body<N, LV, AV, M, II>) -> bool {
+    fn eq(&self, other: &Body) -> bool {
         borrow::ref_eq(self, other)
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: NPhysicsOrientation<N>,
-     M:  NPhysicsTransform<LV, AV>,
-     II: NPhysicsInertia<N, LV, AV, M>>
-HasBoundingVolume<AABB<N, LV>> for Body<N, LV, AV, M, II> {
+impl HasBoundingVolume<AABB> for Body {
     #[inline]
-    fn bounding_volume(&self) -> AABB<N, LV> {
+    fn bounding_volume(&self) -> AABB {
         match *self {
             RB(ref rb) => rb.bounding_volume(),
             SB(_)   => fail!("Not yet implemented."),

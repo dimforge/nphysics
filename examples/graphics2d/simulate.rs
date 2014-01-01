@@ -7,7 +7,9 @@ use rsfml::window::event;
 use rsfml::window::keyboard;
 use rsfml::graphics::color::Color;
 use nalgebra::na::Vec2;
-use nphysics::aliases::dim2;
+use nphysics::world::BodyWorld;
+use nphysics::object::Body;
+use nphysics::detection::joint::ball_in_socket::BallInSocket;
 use camera::Camera;
 use fps::Fps;
 use engine::GraphicsManager;
@@ -22,7 +24,7 @@ fn usage(exe_name: &str) {
     println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
 }
 
-pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
+pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -58,8 +60,8 @@ pub fn simulate(builder: |&mut GraphicsManager| -> dim2::BodyWorld2d<f32>) {
     let     fnt      = Font::new_from_file("Inconsolata.otf").unwrap();
     let mut fps      = Fps::new(&fnt);
     let mut cursor_pos;
-    let grabbed_object: Option<@mut dim2::Body2d<f32>> = None;
-    let grabbed_object_joint: Option<@mut dim2::BallInSocket2d<f32>> = None;
+    let grabbed_object: Option<@mut Body> = None;
+    let grabbed_object_joint: Option<@mut BallInSocket> = None;
 
     while rwindow.is_open() {
         loop {

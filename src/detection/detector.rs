@@ -1,4 +1,4 @@
-pub trait Detector<N, O, I> {
+pub trait Detector<O, I> {
     fn add(&mut self, @mut O);
     fn remove(&mut self, @mut O);
     fn update(&mut self);

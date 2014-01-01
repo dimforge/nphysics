@@ -1,21 +1,21 @@
 use kiss3d::window::Window;
 use kiss3d::object::Object;
-use nalgebra::na::{Vec3, Transformation};
+use nalgebra::na::{Vec3, Iso3, Transformation};
 use nalgebra::na;
-use nphysics::aliases::dim3;
+use nphysics::object::Body;
 use engine::SceneNode;
 
 pub struct Ball {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
-    priv delta:      dim3::Transform3d<f32>,
+    priv delta:      Iso3<f32>,
     priv gfx:        Object,
-    priv body:       @mut dim3::Body3d<f32>
+    priv body:       @mut Body
 }
 
 impl Ball {
-    pub fn new(body:   @mut dim3::Body3d<f32>,
-               delta:  dim3::Transform3d<f32>,
+    pub fn new(body:   @mut Body,
+               delta:  Iso3<f32>,
                radius: f32,
                color:  Vec3<f32>,
                window: &mut Window) -> Ball {

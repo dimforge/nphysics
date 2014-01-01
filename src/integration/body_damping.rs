@@ -1,28 +1,23 @@
 use std::ptr;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
+use ncollide::math::N;
 use object::{Body, RB, SB};
 use integration::Integrator;
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 
-pub struct BodyDamping<N, LV, AV, M, II> {
+pub struct BodyDamping {
     priv linear_damping:  N,
     priv angular_damping: N,
-    priv objects:         HashMap<uint, @mut Body<N, LV, AV, M, II>, UintTWHash>
+    priv objects:         HashMap<uint, @mut Body, UintTWHash>
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
-BodyDamping<N, LV, AV, M, II> {
+impl BodyDamping {
     #[inline]
-    pub fn new<C>(events:          &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
+    pub fn new<C>(events:          &mut SignalEmiter<Body, C>,
                   linear_damping:  N,
                   angular_damping: N)
-                  -> @mut BodyDamping<N, LV, AV, M, II> {
+                  -> @mut BodyDamping {
         let res = @mut BodyDamping {
             linear_damping:  linear_damping,
             angular_damping: angular_damping,
@@ -31,26 +26,21 @@ BodyDamping<N, LV, AV, M, II> {
 
         events.add_body_activation_handler(
             ptr::to_mut_unsafe_ptr(res) as uint,
-            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C>
+            res as @mut BodyActivationSignalHandler<Body, C>
         );
 
         res
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
+impl Integrator<Body> for BodyDamping {
     #[inline]
-    fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+    fn add(&mut self, o: @mut Body) {
         self.objects.insert(ptr::to_mut_unsafe_ptr(o) as uint, o);
     }
 
     #[inline]
-    fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+    fn remove(&mut self, o: @mut Body) {
         self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
     }
 
@@ -74,18 +64,13 @@ Integrator<N, Body<N, LV, AV, M, II>> for BodyDamping<N, LV, AV, M, II> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>,
-     C>
-BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for BodyDamping<N, LV, AV, M, II> {
-    fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {
+impl<C>
+BodyActivationSignalHandler<Body, C> for BodyDamping {
+    fn handle_body_activated_signal(&mut self, b: @mut Body, _: &mut ~[C]) {
         self.add(b)
     }
 
-    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body) {
         self.remove(b)
     }
 }

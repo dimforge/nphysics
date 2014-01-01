@@ -1,24 +1,17 @@
-use nalgebra::na::{CrossMatrix, Row};
+use nalgebra::na::{Translation, Rotation};
 use nalgebra::na;
+use ncollide::math::{N, LV, AV, M};
 use detection::joint::fixed::Fixed;
 use detection::joint::anchor::Anchor;
 use resolution::constraint::ball_in_socket_equation;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
-                                  LV: Clone + NPhysicsDirection<N, AV> + CrossMatrix<CM>,
-                                  AV: Clone + NPhysicsOrientation<N>,
-                                  M:  Clone + NPhysicsTransform<LV, AV>,
-                                  II: Clone + NPhysicsInertia<N, LV, AV, M>,
-                                  CM: Row<AV>>(
-                                  dt:          N,
-                                  joint:       &Fixed<N, LV, AV, M, II>,
-                                  constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                  correction:  &CorrectionParameters<N>) {
+pub fn fill_second_order_equation(dt:          N,
+                                  joint:       &Fixed,
+                                  constraints: &mut [VelocityConstraint],
+                                  correction:  &CorrectionParameters) {
     let ref1 = joint.anchor1_pos();
     let ref2 = joint.anchor2_pos();
 
@@ -41,20 +34,13 @@ pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
         correction);
 }
 
-pub fn cancel_relative_angular_motion<N:  Clone + NPhysicsScalar,
-                                      LV: Clone + NPhysicsDirection<N, AV> + CrossMatrix<CM>,
-                                      AV: Clone + NPhysicsOrientation<N>,
-                                      M:  Clone + NPhysicsTransform<LV, AV>,
-                                      II: Clone + NPhysicsInertia<N, LV, AV, M>,
-                                      CM: Row<AV>,
-                                      P>(
-                                      dt:          N,
-                                      ref1:        &M,
-                                      ref2:        &M,
-                                      anchor1:     &Anchor<N, LV, AV, M, II, P>,
-                                      anchor2:     &Anchor<N, LV, AV, M, II, P>,
-                                      constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                      correction:  &CorrectionParameters<N>) {
+pub fn cancel_relative_angular_motion<P>(dt:          N,
+                                         ref1:        &M,
+                                         ref2:        &M,
+                                         anchor1:     &Anchor<P>,
+                                         anchor2:     &Anchor<P>,
+                                         constraints: &mut [VelocityConstraint],
+                                         correction:  &CorrectionParameters) {
     let delta     = na::inv(ref2).expect("ref2 must be inversible.") * *ref1;
     let delta_rot = delta.rotation();
 

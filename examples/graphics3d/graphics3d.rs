@@ -7,9 +7,9 @@ extern mod std;
 extern mod extra;
 extern mod glfw;
 extern mod kiss3d;
-extern mod nphysics;
+extern mod nphysics = "nphysics3df32";
 extern mod nalgebra;
-extern mod ncollide;
+extern mod ncollide = "ncollide3df32";
 
 
 pub mod simulate;

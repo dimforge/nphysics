@@ -1,23 +1,15 @@
+use ncollide::math::M;
 use detection::joint::anchor::Anchor;
 use object::{RB, SB};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub struct Fixed<N, LV, AV, M, II> {
+pub struct Fixed {
     priv up_to_date: bool,
-    priv anchor1:    Anchor<N, LV, AV, M, II, M>,
-    priv anchor2:    Anchor<N, LV, AV, M, II, M>,
+    priv anchor1:    Anchor<M>,
+    priv anchor2:    Anchor<M>,
 }
 
-impl<N:  NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>>
-Fixed<N, LV, AV, M, II> {
-    pub fn new(anchor1: Anchor<N, LV, AV, M, II, M>,
-               anchor2: Anchor<N, LV, AV, M, II, M>)
-               -> Fixed<N, LV, AV, M, II> {
+impl Fixed {
+    pub fn new(anchor1: Anchor<M>, anchor2: Anchor<M>) -> Fixed {
         Fixed {
             up_to_date: false,
             anchor1:    anchor1,
@@ -33,11 +25,11 @@ Fixed<N, LV, AV, M, II> {
         self.up_to_date = true
     }
 
-    pub fn anchor1<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, M> {
+    pub fn anchor1<'r>(&'r self) -> &'r Anchor<M> {
         &self.anchor1
     }
 
-    pub fn anchor2<'r>(&'r self) -> &'r Anchor<N, LV, AV, M, II, M> {
+    pub fn anchor2<'r>(&'r self) -> &'r Anchor<M> {
         &self.anchor2
     }
 

@@ -1,25 +1,24 @@
 use std::ptr;
-use nalgebra::na::{Cast, AlgebraicVec};
+use nalgebra::na::Cast;
 use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
+use ncollide::math::N;
 use integration::Integrator;
 use detection::detector::Detector;
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::{Body, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationRequestHandler,
                      CollisionSignalHandler};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-struct BodyWithEnergy<N, LV, AV, M, II> {
+struct BodyWithEnergy {
     // NOTE: that is the place to put a `can_be_deactivated` flag if needed…
-    body:   @mut Body<N, LV, AV, M, II>,
+    body:   @mut Body,
     energy: N
 }
 
-impl<N, LV, AV, M, II> BodyWithEnergy<N, LV, AV, M, II> {
-    pub fn new(body: @mut Body<N, LV, AV, M, II>, energy: N) -> BodyWithEnergy<N, LV, AV, M, II> {
+impl BodyWithEnergy {
+    pub fn new(body: @mut Body, energy: N) -> BodyWithEnergy {
         BodyWithEnergy {
             body:   body,
             energy: energy
@@ -28,26 +27,19 @@ impl<N, LV, AV, M, II> BodyWithEnergy<N, LV, AV, M, II> {
 }
 
 // NOTE: this could easily be made generic wrt the Body<...> and wrt Constraint<...>
-pub struct IslandActivationManager<N, LV, AV, M, II> {
-    events:         @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
+pub struct IslandActivationManager {
+    events:         @mut SignalEmiter<Body, Constraint>,
     threshold:      N,
     mix_factor:     N,
-    bodies:         HashMap<uint, BodyWithEnergy<N, LV, AV, M, II>, UintTWHash>,
+    bodies:         HashMap<uint, BodyWithEnergy, UintTWHash>,
     ufind:          ~[UFindSet],
     can_deactivate: ~[bool],
-    collector:      ~[Constraint<N, LV, AV, M, II>]
+    collector:      ~[Constraint]
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
-IslandActivationManager<N, LV, AV, M, II> {
-    pub fn new(events:     @mut SignalEmiter<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>,
-               threshold:  N,
-               mix_factor: N)
-               -> @mut IslandActivationManager<N, LV, AV, M, II> {
+impl IslandActivationManager {
+    pub fn new(events: @mut SignalEmiter<Body, Constraint>, threshold:  N, mix_factor: N)
+               -> @mut IslandActivationManager {
         assert!(mix_factor >= na::zero() && threshold <= na::one(),
                 "The energy mixing factor must be between 0.0 and 1.0.");
 
@@ -65,13 +57,13 @@ IslandActivationManager<N, LV, AV, M, II> {
 
         events.add_body_activation_request_handler(
             key,
-            res as @mut BodyActivationRequestHandler<Body<N, LV, AV, M, II>>
+            res as @mut BodyActivationRequestHandler<Body>
         );
 
         // FIXME: instead of sending the activation message right away, maybe it could be more
         // performant to store a list of objects to activate, and perform the activation during the
         // next call to `interferences` ?
-        events.add_collision_handler(key, res as @mut CollisionSignalHandler<Body<N, LV, AV, M, II>>);
+        events.add_collision_handler(key, res as @mut CollisionSignalHandler<Body>);
 
         res
     }
@@ -80,7 +72,7 @@ IslandActivationManager<N, LV, AV, M, II> {
         self.mix_factor = self.threshold.clone();
     }
 
-    fn activate(&mut self, b: @mut Body<N, LV, AV, M, II>) -> bool {
+    fn activate(&mut self, b: @mut Body) -> bool {
         if b.can_move() && !b.is_active() {
             b.activate();
             self.add(b);
@@ -101,7 +93,7 @@ IslandActivationManager<N, LV, AV, M, II> {
         }
     }
 
-    fn deactivate(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    fn deactivate(&mut self, b: @mut Body) {
         if b.is_active() {
             b.deactivate();
 
@@ -114,25 +106,15 @@ IslandActivationManager<N, LV, AV, M, II> {
 
 }
 
-impl<N:  Num + Ord + Algebraic,
-     LV: AlgebraicVec<N> + Clone,
-     AV: AlgebraicVec<N> + Clone,
-     M,
-     II>
-IslandActivationManager<N, LV, AV, M, II> {
+impl IslandActivationManager {
     fn can_deactivate(&mut self, body: uint) -> bool {
         self.bodies.elements()[body].value.energy < self.threshold
     }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
-Detector<N, Body<N, LV, AV, M, II>, Constraint<N, LV, AV, M, II>>
-for IslandActivationManager<N, LV, AV, M, II> {
-    fn add(&mut self, body: @mut Body<N, LV, AV, M, II>) {
+impl Detector<Body, Constraint>
+for IslandActivationManager {
+    fn add(&mut self, body: @mut Body) {
         if body.can_move() && body.is_active() {
             if self.bodies.insert(ptr::to_mut_unsafe_ptr(body) as uint,
                                   BodyWithEnergy::new(body, self.threshold * Cast::from(2.0))) {
@@ -145,7 +127,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
         }
     }
 
-    fn remove(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    fn remove(&mut self, b: @mut Body) {
         if self.bodies.remove(&(ptr::to_mut_unsafe_ptr(b) as uint)) {
             self.ufind.pop();
             self.can_deactivate.pop();
@@ -173,7 +155,7 @@ for IslandActivationManager<N, LV, AV, M, II> {
         }
     }
 
-    fn interferences(&mut self, out: &mut ~[Constraint<N, LV, AV, M, II>]) {
+    fn interferences(&mut self, out: &mut ~[Constraint]) {
         // here goes all the magic :p
         for d in self.can_deactivate.mut_iter() {
             *d = true
@@ -408,15 +390,8 @@ fn union(x: uint, y: uint, sets: &mut [UFindSet]) {
      }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
-CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV, AV, M, II> {
-    fn handle_collision_started_signal(&mut self,
-                                       a: @mut Body<N, LV, AV, M, II>,
-                                       b: @mut Body<N, LV, AV, M, II>) {
+impl CollisionSignalHandler<Body> for IslandActivationManager {
+    fn handle_collision_started_signal(&mut self, a: @mut Body, b: @mut Body) {
         if self.activate(a) {
             self.events.emit_body_activated(a, &mut self.collector);
             self.collector.clear();
@@ -427,9 +402,7 @@ CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV
         }
     }
 
-    fn handle_collision_ended_signal(&mut self,
-                                     a: @mut Body<N, LV, AV, M, II>,
-                                     b: @mut Body<N, LV, AV, M, II>) {
+    fn handle_collision_ended_signal(&mut self, a: @mut Body, b: @mut Body) {
         if self.activate(a) {
             self.events.emit_body_activated(a, &mut self.collector);
             self.collector.clear();
@@ -441,21 +414,16 @@ CollisionSignalHandler<Body<N, LV, AV, M, II>> for IslandActivationManager<N, LV
     }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>>
-BodyActivationRequestHandler<Body<N, LV, AV, M, II>>
-for IslandActivationManager<N, LV, AV, M, II> {
-    fn handle_body_activation_request(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+impl BodyActivationRequestHandler<Body>
+for IslandActivationManager {
+    fn handle_body_activation_request(&mut self, b: @mut Body) {
         if self.activate(b) {
             self.events.emit_body_activated(b, &mut self.collector);
             self.collector.clear();
         };
     }
 
-    fn handle_body_deactivation_request(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    fn handle_body_deactivation_request(&mut self, b: @mut Body) {
         self.deactivate(b)
     }
 }

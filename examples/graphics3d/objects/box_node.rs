@@ -1,21 +1,21 @@
 use kiss3d::window;
 use kiss3d::object::Object;
-use nalgebra::na::{Vec3, Transformation};
+use nalgebra::na::{Vec3, Iso3, Transformation};
 use nalgebra::na;
-use nphysics::aliases::dim3;
+use nphysics::object::Body;
 use engine::SceneNode;
 
 pub struct Box {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
-    priv delta:      dim3::Transform3d<f32>,
+    priv delta:      Iso3<f32>,
     priv gfx:        Object,
-    priv body:       @mut dim3::Body3d<f32>,
+    priv body:       @mut Body,
 }
 
 impl Box {
-    pub fn new(body:   @mut dim3::Body3d<f32>,
-               delta:  dim3::Transform3d<f32>,
+    pub fn new(body:   @mut Body,
+               delta:  Iso3<f32>,
                rx:     f32,
                ry:     f32,
                rz:     f32,

@@ -1,31 +1,30 @@
 use std::ptr;
 use std::managed;
-use nalgebra::na::Translation;
+use nalgebra::na::{Translation, Norm};
 use nalgebra::na;
-use ncollide::bounding_volume::{AABB, HasAABB, BoundingVolume};
+use ncollide::bounding_volume::{AABB, BoundingVolume, ball_aabb};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use ncollide::geom::{Geom, Ball};
+use ncollide::geom::Ball;
 use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
-use ncollide::narrow::toi;
+use ncollide::math::{N, LV};
 use integration::Integrator;
 use object::{Body, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform, NPhysicsInertia};
 
-struct CCDBody<N, LV, AV, M, II> {
-    body:        @mut Body<N, LV, AV, M, II>,
+struct CCDBody {
+    body:        @mut Body,
     radius:      N,
     sqthreshold: N,
     last_pos:    LV
 }
 
-impl<N, LV, AV, M, II> CCDBody<N, LV, AV, M, II> {
-    pub fn new(body:        @mut Body<N, LV, AV, M, II>,
+impl CCDBody {
+    pub fn new(body:        @mut Body,
                radius:      N,
                sqthreshold: N,
                last_pos:    LV)
-               -> CCDBody<N, LV, AV, M, II> {
+               -> CCDBody {
         CCDBody {
             body:        body,
             radius:      radius,
@@ -35,26 +34,20 @@ impl<N, LV, AV, M, II> CCDBody<N, LV, AV, M, II> {
     }
 }
 
-pub struct SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    priv objects:       HashMap<uint, CCDBody<N, LV, AV, M, II>, UintTWHash>,
-    priv iobjects:      HashMap<uint, CCDBody<N, LV, AV, M, II>, UintTWHash>,
+pub struct SweptBallMotionClamping<BF> {
+    priv objects:       HashMap<uint, CCDBody, UintTWHash>,
+    priv iobjects:      HashMap<uint, CCDBody, UintTWHash>,
     priv broad_phase:   @mut BF,
     priv update_bf:     bool,
-    priv interferences: ~[@mut Body<N, LV, AV, M, II>]
+    priv interferences: ~[@mut Body]
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
-         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
-SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    pub fn new<C>(events:    &mut SignalEmiter<N, Body<N, LV, AV, M, II>, C>,
+impl<BF: 'static + RayCastBroadPhase<Body> + BoundingVolumeBroadPhase<Body, AABB>>
+SweptBallMotionClamping<BF> {
+    pub fn new<C>(events:    &mut SignalEmiter<Body, C>,
                   bf:        @mut BF,
                   update_bf: bool)
-                  -> @mut SweptBallMotionClamping<N, LV, AV, M, II, BF> {
+                  -> @mut SweptBallMotionClamping<BF> {
         let res = @mut SweptBallMotionClamping {
             objects:       HashMap::new(UintTWHash::new()),
             iobjects:      HashMap::new(UintTWHash::new()),
@@ -65,7 +58,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
 
         events.add_body_activation_handler(
             ptr::to_mut_unsafe_ptr(res) as uint,
-            res as @mut BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C>
+            res as @mut BodyActivationSignalHandler<Body, C>
         );
 
         res
@@ -74,7 +67,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     // FIXME: implement remove_ccd_from
 
     pub fn add_ccd_to(&mut self,
-                      body:                @mut Body<N, LV, AV, M, II>,
+                      body:                @mut Body,
                       swept_sphere_radius: N,
                       motion_thresold:     N) {
         let key = ptr::to_mut_unsafe_ptr(body) as uint;
@@ -92,7 +85,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
         }
     }
 
-    fn activate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+    fn activate(&mut self, o: @mut Body) {
         let key = ptr::to_mut_unsafe_ptr(o) as uint;
 
         match self.iobjects.get_and_remove(&key) {
@@ -110,7 +103,7 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
         }
     }
 
-    fn deactivate(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+    fn deactivate(&mut self, o: @mut Body) {
         let key = ptr::to_mut_unsafe_ptr(o) as uint;
 
         match self.objects.get_and_remove(&key) {
@@ -122,22 +115,15 @@ SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     }
 }
 
-impl<N:  Clone + NPhysicsScalar,
-     LV: Clone + NPhysicsDirection<N, AV>,
-     AV: Clone + NPhysicsOrientation<N>,
-     M:  Clone + NPhysicsTransform<LV, AV>,
-     II: Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
-         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>>
-Integrator<N, Body<N, LV, AV, M, II>>
-for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    fn add(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+impl<BF: RayCastBroadPhase<Body> + BoundingVolumeBroadPhase<Body, AABB>> Integrator<Body>
+for SweptBallMotionClamping<BF> {
+    fn add(&mut self, o: @mut Body) {
         if self.update_bf {
             self.broad_phase.add(o);
         }
     }
 
-    fn remove(&mut self, o: @mut Body<N, LV, AV, M, II>) {
+    fn remove(&mut self, o: @mut Body) {
         if self.update_bf {
             self.broad_phase.remove(o);
         }
@@ -163,8 +149,8 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
                          * Compute a bounding box enclosing the object motion
                          */
                         let ball       = Ball::new(o.value.radius.clone());
-                        let begin      = ball.aabb(&o.value.last_pos);
-                        let end        = ball.aabb(&curr_pos);
+                        let begin      = ball_aabb(&o.value.last_pos, &ball.radius());
+                        let end        = ball_aabb(&curr_pos, &ball.radius());
                         let swept_aabb = begin.merged(&end);
 
                         /*
@@ -239,20 +225,13 @@ for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<N:  'static + Clone + NPhysicsScalar,
-     LV: 'static + Clone + NPhysicsDirection<N, AV>,
-     AV: 'static + Clone + NPhysicsOrientation<N>,
-     M:  'static + Clone + NPhysicsTransform<LV, AV>,
-     II: 'static + Clone + NPhysicsInertia<N, LV, AV, M>,
-     BF: 'static + RayCastBroadPhase<LV, Body<N, LV, AV, M, II>> +
-         BoundingVolumeBroadPhase<Body<N, LV, AV, M, II>, AABB<N, LV>>,
-     C>
-BodyActivationSignalHandler<Body<N, LV, AV, M, II>, C> for SweptBallMotionClamping<N, LV, AV, M, II, BF> {
-    fn handle_body_activated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>, _: &mut ~[C]) {
+impl<BF: 'static + RayCastBroadPhase<Body> + BoundingVolumeBroadPhase<Body, AABB>, C>
+BodyActivationSignalHandler<Body, C> for SweptBallMotionClamping<BF> {
+    fn handle_body_activated_signal(&mut self, b: @mut Body, _: &mut ~[C]) {
         self.activate(b)
     }
 
-    fn handle_body_deactivated_signal(&mut self, b: @mut Body<N, LV, AV, M, II>) {
+    fn handle_body_deactivated_signal(&mut self, b: @mut Body) {
         self.deactivate(b)
     }
 }

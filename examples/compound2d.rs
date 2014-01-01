@@ -5,30 +5,24 @@
 extern mod std;
 extern mod extra;
 extern mod rsfml;
-extern mod nphysics;
+extern mod nphysics = "nphysics2df32";
 extern mod nalgebra;
-extern mod ncollide;
+extern mod ncollide = "ncollide2df32";
 extern mod graphics2d;
 
 use std::rc::Rc;
 use nalgebra::na::{Vec2, Iso2, Translation};
 use nalgebra::na;
-use ncollide::geom::{Plane, Box, Compound};
+use ncollide::geom::{Plane, Box, Compound, Geom};
 use nphysics::world::BodyWorld;
-use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use graphics2d::engine::GraphicsManager;
-
-#[start]
-fn start(argc: int, argv: **u8) -> int {
-    std::rt::start_on_main_thread(argc, argv, main)
-}
 
 fn main() {
     GraphicsManager::simulate(compound_2d)
 }
 
-pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
+pub fn compound_2d(graphics: &mut GraphicsManager) -> BodyWorld {
     /*
      * World
      */
@@ -67,11 +61,11 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     let delta3 = Iso2::new(Vec2::new(5.0f32,  0.0), na::zero());
 
     let mut cross_geoms = ~[];
-    cross_geoms.push((delta1, ~Box::new(Vec2::new(5.0f32, 0.75)) as dim2::Geom2d<f32>));
-    cross_geoms.push((delta2, ~Box::new(Vec2::new(0.75f32, 5.0)) as dim2::Geom2d<f32>));
-    cross_geoms.push((delta3, ~Box::new(Vec2::new(0.75f32, 5.0)) as dim2::Geom2d<f32>));
+    cross_geoms.push((delta1, ~Box::new(Vec2::new(5.0f32, 0.75)) as ~Geom));
+    cross_geoms.push((delta2, ~Box::new(Vec2::new(0.75f32, 5.0)) as ~Geom));
+    cross_geoms.push((delta3, ~Box::new(Vec2::new(0.75f32, 5.0)) as ~Geom));
 
-    let cross = Rc::from_send(~Compound::new(cross_geoms) as dim2::Geom2d<f32>);
+    let cross = Rc::from_send(~Compound::new(cross_geoms) as ~Geom);
 
     /*
      * Create the boxes

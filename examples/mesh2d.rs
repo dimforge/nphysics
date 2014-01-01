@@ -5,9 +5,9 @@
 extern mod std;
 extern mod extra;
 extern mod rsfml;
-extern mod nphysics;
+extern mod nphysics = "nphysics2df32";
 extern mod nalgebra;
-extern mod ncollide;
+extern mod ncollide = "ncollide2df32";
 extern mod graphics2d;
 
 use std::vec;
@@ -16,20 +16,14 @@ use extra::arc::Arc;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Box, Mesh};
 use nphysics::world::BodyWorld;
-use nphysics::aliases::dim2;
 use nphysics::object::{RigidBody, Static, Dynamic, RB};
 use graphics2d::engine::GraphicsManager;
-
-#[start]
-fn start(argc: int, argv: **u8) -> int {
-    std::rt::start_on_main_thread(argc, argv, main)
-}
 
 fn main() {
     GraphicsManager::simulate(wall_2d)
 }
 
-pub fn wall_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
+pub fn wall_2d(graphics: &mut GraphicsManager) -> BodyWorld {
     /*
      * World
      */
@@ -58,9 +52,9 @@ pub fn wall_2d(graphics: &mut GraphicsManager) -> dim2::BodyWorld2d<f32> {
     indices.push(num_split);
     indices.push(num_split + 1);
 
-    let mesh: dim2::LineStrip2d<f32> = Mesh::new(Arc::new(vertices), Arc::new(indices), None);
-    let rb       = RigidBody::new(mesh, 0.0f32, Static, 0.3, 0.6);
-    let body     = @mut RB(rb);
+    let mesh = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
+    let rb   = RigidBody::new(mesh, 0.0f32, Static, 0.3, 0.6);
+    let body = @mut RB(rb);
 
     world.add_body(body);
     graphics.add(body);

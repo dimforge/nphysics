@@ -1,24 +1,17 @@
-use nalgebra::na::{CrossMatrix, Row};
+use nalgebra::na::{Row, Indexable};
 use nalgebra::na;
+use ncollide::math::{N, LV};
 use object::Body;
 use detection::joint::anchor::Anchor;
 use detection::joint::ball_in_socket::BallInSocket;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
-use aliases::traits::{NPhysicsScalar, NPhysicsDirection, NPhysicsOrientation, NPhysicsTransform,
-                      NPhysicsInertia};
 
-pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
-                                  LV: Clone + NPhysicsDirection<N, AV> + CrossMatrix<CM>,
-                                  AV: Clone + NPhysicsOrientation<N>,
-                                  M:  Clone + NPhysicsTransform<LV, AV>,
-                                  II: Clone + NPhysicsInertia<N, LV, AV, M>,
-                                  CM: Row<AV>>(
-                                  dt:          N,
-                                  joint:       &BallInSocket<N, LV, AV, M, II>,
-                                  constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                  correction:  &CorrectionParameters<N>) {
+pub fn fill_second_order_equation(dt:          N,
+                                  joint:       &BallInSocket,
+                                  constraints: &mut [VelocityConstraint],
+                                  correction:  &CorrectionParameters) {
     cancel_relative_linear_motion(
         dt,
         &joint.anchor1_pos(),
@@ -30,20 +23,14 @@ pub fn fill_second_order_equation<N:  Clone + NPhysicsScalar,
 }
 
 // FIXME: move this on another file. Something like "joint_equation_helper.rs"
-pub fn cancel_relative_linear_motion<N:  Clone + NPhysicsScalar,
-                                     LV: Clone + NPhysicsDirection<N, AV> + CrossMatrix<CM>,
-                                     AV: Clone + NPhysicsOrientation<N>,
-                                     M:  Clone + NPhysicsTransform<LV, AV>,
-                                     II: Clone + NPhysicsInertia<N, LV, AV, M>,
-                                     CM: Row<AV>,
-                                     P>(
+pub fn cancel_relative_linear_motion<P>(
                                      dt:          N,
                                      global1:     &LV,
                                      global2:     &LV,
-                                     anchor1:     &Anchor<N, LV, AV, M, II, P>,
-                                     anchor2:     &Anchor<N, LV, AV, M, II, P>,
-                                     constraints: &mut [VelocityConstraint<LV, AV, N>],
-                                     correction:  &CorrectionParameters<N>) {
+                                     anchor1:     &Anchor<P>,
+                                     anchor2:     &Anchor<P>,
+                                     constraints: &mut [VelocityConstraint],
+                                     correction:  &CorrectionParameters) {
     let error      = (global2 - *global1) * correction.joint_corr;
     let rot_axis1  = na::cross_matrix(&(global1 - anchor1.center_of_mass()));
     let rot_axis2  = na::cross_matrix(&(global2 - anchor2.center_of_mass()));
@@ -88,16 +75,7 @@ pub fn cancel_relative_linear_motion<N:  Clone + NPhysicsScalar,
 }
 
 #[inline]
-pub fn write_anchor_id<'r,
-                       N:  Clone + NPhysicsScalar,
-                       LV: Clone + NPhysicsDirection<N, AV>,
-                       AV: Clone + NPhysicsOrientation<N>,
-                       M:  NPhysicsTransform<LV, AV>,
-                       II: Clone + NPhysicsInertia<N, LV, AV, M>,
-                       P>(
-                       anchor: &'r Anchor<N, LV, AV, M, II, P>,
-                       id:     &mut int)
-                       -> Option<@mut Body<N, LV, AV, M, II>> {
+pub fn write_anchor_id<'r, P>(anchor: &'r Anchor<P>, id: &mut int) -> Option<@mut Body> {
     match anchor.body {
         Some(b) => {
             if b.can_move() {
