@@ -10,30 +10,32 @@ extern mod nalgebra;
 extern mod ncollide = "ncollide2df32";
 extern mod graphics2d;
 
+use std::rc::Rc;
+use std::cell::RefCell;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Plane, Box};
-use nphysics::world::BodyWorld;
-use nphysics::object::{RigidBody, Static, Dynamic, RB};
+use nphysics::world::World;
+use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics2d::engine::GraphicsManager;
 
 fn main() {
     GraphicsManager::simulate(wall_2d)
 }
 
-pub fn wall_2d(graphics: &mut GraphicsManager) -> BodyWorld {
+pub fn wall_2d(graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
-    let mut world = BodyWorld::new();
+    let mut world = World::new();
     world.set_gravity(Vec2::new(0.0f32, 9.81));
 
     /*
      * First plane
      */
     let rb   = RigidBody::new(Plane::new(Vec2::new(0.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
-    let body = @mut RB(rb);
+    let body = Rc::new(RefCell::new(rb));
 
-    world.add_body(body);
+    world.add_body(body.clone());
     graphics.add(body);
 
     /*
@@ -56,9 +58,9 @@ pub fn wall_2d(graphics: &mut GraphicsManager) -> BodyWorld {
 
             rb.append_translation(&Vec2::new(x, y));
 
-            let body = @mut RB(rb);
+            let body = Rc::new(RefCell::new(rb));
 
-            world.add_body(body);
+            world.add_body(body.clone());
             graphics.add(body);
         }
     }

@@ -1,7 +1,7 @@
 pub use detection::collision::bodies_bodies::BodiesBodies;
 pub use detection::collision::bodies_bodies::BodyBodyDispatcher;
 pub use detection::joint::joint_manager::JointManager;
-pub use detection::island_activation_manager::IslandActivationManager;
+// pub use detection::island_activation_manager::IslandActivationManager;
 
 pub mod constraint;
 pub mod detector;
@@ -17,4 +17,4 @@ pub mod joint {
     pub mod fixed;
 }
 
-pub mod island_activation_manager;
+// pub mod island_activation_manager;

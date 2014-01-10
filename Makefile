@@ -69,7 +69,7 @@ distcheck:
 
 doc:
 	mkdir -p $(nphysics_doc_path)
-	rustdoc src/lib.rs -w html -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
+	rustdoc src/lib3df32.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
 
 .PHONY:doc
 # FIXME: uggly!

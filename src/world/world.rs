@@ -1,140 +1,206 @@
-use std::managed;
-use ncollide::math::N;
-use resolution::solver::Solver;
-use integration::Integrator;
+use std::rc::Rc;
+use std::cell::RefCell;
+use std::borrow;
+use nalgebra::na;
+use ncollide::bounding_volume::AABB;
+use ncollide::broad::{BroadPhase, DBVTBroadPhase};
+use ncollide::ray::Ray;
+use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
+use ncollide::math::{N, LV, AV};
+use ncollide::util::hash_map::HashMap;
+use ncollide::util::hash::UintTWHash;
+use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
+use detection::{BodiesBodies, BodyBodyDispatcher};
 use detection::detector::Detector;
+use detection::constraint::Constraint;
+use detection::joint::joint_manager::JointManager;
+use detection::joint::ball_in_socket::BallInSocket;
+use detection::joint::fixed::Fixed;
+use resolution::{AccumulatedImpulseSolver, VelocityAndPosition};
+use resolution::solver::Solver;
+use object::RigidBody;
 
-pub struct World<O, C> {
-    objects:     ~[@mut O],
-    integrators: ~[@mut Integrator<O>],
-    detectors:   ~[@mut Detector<O, C>],
-    solvers:     ~[@mut Solver<C>]
+type BF = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, ~GeomGeomCollisionDetector>;
+
+pub struct World {
+    bodies:      HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>,
+    forces:      BodyForceGenerator,
+    broad_phase: BF,
+    integrator:  BodySmpEulerIntegrator,
+    detector:    BodiesBodies<BF>,
+    // sleep:      IslandActivationManager,
+    // ccd:        SweptBallMotionClamping<BF>,
+    joints:      JointManager,
+    solver:      AccumulatedImpulseSolver,
+    collector:   ~[Constraint]
 }
 
-impl<O, C> World<O, C> {
-    pub fn new() -> World<O, C> {
+impl World {
+    pub fn new() -> World {
+        /*
+         * Setup the physics world
+         */
+
+        // For the intergration
+        let forces     = BodyForceGenerator::new(na::zero(), na::zero());
+        let integrator = BodySmpEulerIntegrator::new();
+
+        /*
+         * For the collision detection
+         */
+        // Collision Dispatcher
+        let geom_dispatcher = Rc::new(GeomGeomDispatcher::new());
+        let dispatcher = BodyBodyDispatcher::new(geom_dispatcher.clone());
+
+        // Broad phase
+        let broad_phase = DBVTBroadPhase::new(dispatcher, na::cast(0.08));
+
+        // CCD handler
+        // XXX let ccd = SweptBallMotionClamping::new(broad_phase, true);
+        // Collision detector
+        let detector = BodiesBodies::new(geom_dispatcher);
+
+        // Deactivation
+        // XXX let sleep = IslandActivationManager::new(na::cast(1.0), na::cast(0.01));
+
+        // Joints
+        let joints = JointManager::new();
+
+        /*
+         * For constraints resolution
+         */
+        let solver = AccumulatedImpulseSolver::new(
+            na::cast(0.1),
+            VelocityAndPosition(na::cast(0.2), na::cast(0.2), na::cast(0.08)),
+            na::cast(0.4),
+            na::cast(1.0),
+            10,
+            10);
+
         World {
-            objects:     ~[],
-            integrators: ~[],
-            detectors:   ~[],
-            solvers:     ~[]
+            bodies:      HashMap::new(UintTWHash::new()),
+            broad_phase: broad_phase,
+            forces:      forces,
+            integrator:  integrator,
+            detector:    detector,
+            // sleep:    sleep,
+            // ccd:      ccd,
+            joints:      joints,
+            solver:      solver,
+            collector:   ~[]
         }
     }
-}
 
-impl<O, C> World<O, C> {
     pub fn step(&mut self, dt: N) {
-        //
-        // Integration
-        //
-        for i in self.integrators.mut_iter() {
-            i.update(dt.clone())
+        for e in self.bodies.elements_mut().mut_iter() {
+            let mut rb = e.value.borrow().borrow_mut();
+
+            self.forces.update(dt.clone(), rb.get());
+            self.integrator.update(dt.clone(), rb.get());
         }
 
-        //
-        // Interference detection
-        //
-        let mut interferences = ~[];
+        self.broad_phase.update();
 
-        for d in self.detectors.mut_iter() {
-            d.update();
-            d.interferences(&mut interferences);
-        }
+        self.detector.update(&mut self.broad_phase);
+        self.joints.update(&mut self.broad_phase);
 
-        //
-        // Resolution
-        //
-        for s in self.solvers.mut_iter() {
-            s.solve(dt.clone(), interferences);
-        }
+        self.detector.interferences(&mut self.collector, &mut self.broad_phase);
+        self.joints.interferences(&mut self.collector, &mut self.broad_phase);
+
+        self.solver.solve(dt, self.collector);
+
+        self.collector.clear();
     }
 
-    pub fn add_detector<D: 'static + Detector<O, C>>(&mut self, d: @mut D) {
-        sorted_insert(&mut self.detectors, d as @mut Detector<O, C>, |a, b| a.priority() < b.priority());
-
-        for o in self.objects.iter() {
-            d.add(*o)
-        }
+    pub fn add_body(&mut self, b: Rc<RefCell<RigidBody>>) {
+        self.bodies.insert(borrow::to_uint(b.borrow()), b.clone());
+        self.broad_phase.add(b);
     }
 
-    pub fn add_integrator<I: 'static + Integrator<O>>(&mut self, i: @mut I) {
-        sorted_insert(&mut self.integrators, i as @mut Integrator<O>, |a, b| a.priority() < b.priority());
-
-        for o in self.objects.mut_iter() {
-            i.add(*o)
-        }
+    pub fn remove_body(&mut self, b: &Rc<RefCell<RigidBody>>) {
+        self.bodies.remove(&borrow::to_uint(b.borrow()));
+        self.broad_phase.remove(b);
     }
 
-    pub fn add_solver<S: 'static + Solver<C>>(&mut self, s: @mut S) {
-        sorted_insert(&mut self.solvers, s as @mut Solver<C>, |a, b| a.priority() < b.priority());
+    pub fn forces_generator<'a>(&'a mut self) -> &'a mut BodyForceGenerator {
+        &'a mut self.forces
     }
 
-    pub fn add_object(&mut self, b: @mut O) {
-        self.objects.push(b);
-
-        let b = self.objects.last();
-
-        for d in self.integrators.mut_iter() {
-            d.add(*b)
-        }
-
-        for d in self.detectors.mut_iter() {
-            d.add(*b)
-        }
+    pub fn integrator<'a>(&'a mut self) -> &'a mut BodySmpEulerIntegrator {
+        &'a mut self.integrator
     }
 
-    pub fn remove_object(&mut self, b: @mut O) {
-        match self.objects.iter().position(|o| managed::mut_ptr_eq(b, *o)) {
-            Some(i) => {
-                self.objects.swap_remove(i);
-
-                for d in self.integrators.mut_iter() {
-                    d.remove(b)
-                }
-
-                for d in self.detectors.mut_iter() {
-                    d.remove(b)
-                }
-            },
-            None => { }
-        }
+    pub fn collision_detector<'a>(&'a mut self) -> &'a mut BodiesBodies<BF> {
+        &'a mut self.detector
     }
 
-    pub fn objects<'r>(&'r self) -> &'r [@mut O] {
-        let res: &'r [@mut O] = self.objects;
-
-        res
+    pub fn broad_phase<'a>(&'a mut self) -> &'a mut BF {
+        &'a mut self.broad_phase
     }
 
-    pub fn integrators<'r>(&'r self) -> &'r [@mut Integrator<O>] {
-        let res: &'r [@mut Integrator<O>] = self.integrators;
+    // pub fn sleep_manager<'a>(&'a mut self) -> &'a mut IslandActivationManager {
+    //     self.sleep
+    // }
 
-        res
+    // pub fn ccd_manager<'a>(&'a mut self) -> &'a mut SweptBallMotionClamping<BF> {
+    //     self.ccd
+    // }
+
+    pub fn joint_manager<'a>(&'a mut self) -> &'a mut JointManager {
+        &'a mut self.joints
     }
 
-    pub fn detectors<'r>(&'r self) -> &'r [@mut Detector<O, C>] {
-        let res: &'r [@mut Detector<O, C>] = self.detectors;
-
-        res
+    pub fn constraints_solver<'a>(&'a mut self) -> &'a mut AccumulatedImpulseSolver {
+        &'a mut self.solver
     }
 
-    pub fn solvers<'r>(&'r self) -> &'r [@mut Solver<C>] {
-        let res: &'r [@mut Solver<C>] = self.solvers;
-
-        res
-    }
-}
-
-#[inline(always)]
-fn sorted_insert<T>(vec: &mut ~[T], t: T, lt: |&T, &T| -> bool) {
-    let mut iinsert = vec.len();
-
-    for (i, e) in vec.iter().enumerate() {
-        if lt(&t, e) {
-            iinsert = i;
-            break;
-        }
+    pub fn set_gravity(&mut self, gravity: LV) {
+        self.forces.set_lin_acc(gravity)
     }
 
-    vec.insert(iinsert, t)
+    pub fn set_angular_acceleration(&mut self, accel: AV) {
+        self.forces.set_ang_acc(accel)
+    }
+
+    pub fn gravity(&self) -> LV {
+        self.forces.lin_acc()
+    }
+
+    pub fn angular_acceleration(&self) -> AV {
+        self.forces.ang_acc()
+    }
+
+    pub fn cast_ray(&mut self, ray: &Ray, out: &mut ~[(Rc<RefCell<RigidBody>>, N)]) {
+        self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
+    }
+
+    /*
+    pub fn add_ccd_to(&mut self,
+                      body:                Rc<RefCell<RigidBody>>,
+                      swept_sphere_radius: N,
+                      motion_thresold:     N) {
+        self.ccd.add_ccd_to(body, swept_sphere_radius, motion_thresold)
+    }
+    */
+
+    pub fn add_ball_in_socket(&mut self, joint: Rc<RefCell<BallInSocket>>) {
+        self.joints.add_ball_in_socket(joint)
+    }
+
+    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>) {
+        self.joints.remove_ball_in_socket(joint)
+    }
+
+    pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>) {
+        self.joints.add_fixed(joint)
+    }
+
+    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>) {
+        self.joints.remove_fixed(joint)
+    }
+
+    pub fn interferences(&mut self, out: &mut ~[Constraint]) {
+        self.detector.interferences(out, &mut self.broad_phase);
+        self.joints.interferences(out, &mut self.broad_phase);
+    }
 }

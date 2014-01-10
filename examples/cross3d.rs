@@ -11,32 +11,33 @@ extern mod ncollide = "ncollide3df32";
 extern mod nalgebra;
 
 use std::rc::Rc;
+use std::cell::RefCell;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use nalgebra::na;
 use ncollide::geom::{Plane, Box, Compound, Geom};
-use nphysics::world::BodyWorld;
-use nphysics::object::{RigidBody, Static, Dynamic, RB};
+use nphysics::world::World;
+use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics3d::engine::GraphicsManager;
 
 fn main() {
     GraphicsManager::simulate(cross3d)
 }
 
-pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> BodyWorld {
+pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
-    let mut world = BodyWorld::new();
+    let mut world = World::new();
     world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
 
     /*
      * Planes
      */
     let rb   = RigidBody::new(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
-    let body = @mut RB(rb);
+    let body = Rc::new(RefCell::new(rb));
 
-    world.add_body(body);
+    world.add_body(body.clone());
     graphics.add(window, body);
 
     /*
@@ -47,7 +48,7 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> BodyWorld
     cross_geoms.push((na::one(), ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom));
     cross_geoms.push((na::one(), ~Box::new(Vec3::new(0.25f32, 0.25, 5.0)) as ~Geom));
 
-    let cross = Rc::from_send(~Compound::new(cross_geoms) as ~Geom);
+    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom);
 
     /*
      * Create the crosses 
@@ -70,9 +71,9 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> BodyWorld
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
-                let body = @mut RB(rb);
+                let body = Rc::new(RefCell::new(rb));
 
-                world.add_body(body);
+                world.add_body(body.clone());
                 graphics.add(window, body);
             }
         }

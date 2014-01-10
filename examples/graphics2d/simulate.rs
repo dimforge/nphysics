@@ -1,14 +1,14 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::os;
-use rsfml::graphics::font::Font;
-use rsfml::graphics::render_window::{RenderWindow, sfDefaultStyle};
-use rsfml::window::video_mode::VideoMode;
-use rsfml::window::context_settings::ContextSettings;
+use rsfml::graphics::{RenderWindow, Font};
+use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
 use rsfml::window::keyboard;
 use rsfml::graphics::color::Color;
 use nalgebra::na::Vec2;
-use nphysics::world::BodyWorld;
-use nphysics::object::Body;
+use nphysics::world::World;
+use nphysics::object::RigidBody;
 use nphysics::detection::joint::ball_in_socket::BallInSocket;
 use camera::Camera;
 use fps::Fps;
@@ -24,7 +24,7 @@ fn usage(exe_name: &str) {
     println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
 }
 
-pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
+pub fn simulate(builder: |&mut GraphicsManager| -> World) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -33,8 +33,8 @@ pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
         return;
     }
 
-    let running    = @mut Running;
-    let draw_colls = @mut false;
+    let mut running    = Running;
+    let mut draw_colls = false;
 
     let mode    = VideoMode::new_init(800, 600, 32);
     let setting = ContextSettings {
@@ -45,7 +45,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
         minor_version:      1
     };
     let mut rwindow =
-        match RenderWindow::new(mode, "nphysics demo", sfDefaultStyle, &setting) {
+        match RenderWindow::new(mode, "nphysics demo", Close, &setting) {
             Some(rwindow) => rwindow,
             None => fail!(~"Error on creating window")
         };
@@ -60,8 +60,8 @@ pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
     let     fnt      = Font::new_from_file("Inconsolata.otf").unwrap();
     let mut fps      = Fps::new(&fnt);
     let mut cursor_pos;
-    let grabbed_object: Option<@mut Body> = None;
-    let grabbed_object_joint: Option<@mut BallInSocket> = None;
+    let grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
+    let grabbed_object_joint: Option<Rc<RefCell<BallInSocket>>> = None;
 
     while rwindow.is_open() {
         loop {
@@ -69,14 +69,14 @@ pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
                 event::KeyPressed{code, ..} => {
                     match code {
                         keyboard::Escape => rwindow.close(),
-                        keyboard::S      => *running = Step,
-                        keyboard::Space  => *draw_colls = !*draw_colls,
+                        keyboard::S      => running = Step,
+                        keyboard::Space  => draw_colls = !draw_colls,
                         keyboard::T      => {
-                            if *running == Stop {
-                                *running = Running;
+                            if running == Stop {
+                                running = Running;
                             }
                             else {
-                                *running = Stop;
+                                running = Stop;
                             }
                         },
                         _                => { }
@@ -86,8 +86,8 @@ pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
                     cursor_pos = Vec2::new(x as f32, y as f32);
                     match grabbed_object {
                         Some(_) => {
-                            let joint = grabbed_object_joint.unwrap();
-                            joint.set_local2(cursor_pos);
+                            let joint = grabbed_object_joint.as_ref().unwrap();
+                            joint.borrow().with_mut(|j| j.set_local2(cursor_pos));
                         },
                         None => camera.handle_event(&ev)
                     };
@@ -102,18 +102,18 @@ pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
 
         fps.reset();
 
-        if *running != Stop {
+        if running != Stop {
             physics.step(0.016);
         }
 
-        if *running == Step {
-            *running = Stop;
+        if running == Step {
+            running = Stop;
         }
         fps.register_delta();
         graphics.draw(&mut rwindow, &camera);
 
         camera.activate_scene(&mut rwindow);
-        if *draw_colls {
+        if draw_colls {
             draw_helper::draw_colls(&rwindow, &mut physics);
         }
 

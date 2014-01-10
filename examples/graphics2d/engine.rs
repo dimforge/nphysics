@@ -1,12 +1,14 @@
+use std::borrow;
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::unstable::intrinsics::TypeId;
 use std::num::One;
-use std::ptr;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
 use rsfml::graphics::render_window::RenderWindow;
 use nalgebra::na::{Vec3, Iso2};
-use nphysics::world::BodyWorld;
-use nphysics::object::Body;
+use nphysics::world::World;
+use nphysics::object::RigidBody;
 use ncollide::geom::Geom;
 use ncollide::geom;
 use camera::Camera;
@@ -36,26 +38,27 @@ impl<'a> GraphicsManager<'a> {
         }
     }
 
-    pub fn simulate(builder: |&mut GraphicsManager| -> BodyWorld) {
+    pub fn simulate(builder: |&mut GraphicsManager| -> World) {
         simulate::simulate(builder)
     }
 
-    pub fn add(&mut self, body: @mut Body) {
+    pub fn add(&mut self, body: Rc<RefCell<RigidBody>>) {
 
         let nodes = {
-            let rb = body.to_rigid_body_or_fail();
+            let bbody = body.borrow().borrow();
+            let rb    = bbody.get();
             let mut nodes = ~[];
 
-            self.add_geom(body, One::one(), rb.geom(), &mut nodes);
+            self.add_geom(body.clone(), One::one(), rb.geom(), &mut nodes);
 
             nodes
         };
 
-        self.rb2sn.insert(ptr::to_mut_unsafe_ptr(body) as uint, nodes);
+        self.rb2sn.insert(borrow::to_uint(body.borrow()), nodes);
     }
 
     fn add_geom(&mut self,
-                body:  @mut Body,
+                body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
                 geom:  &Geom,
                 out:   &mut ~[SceneNode<'a>]) {
@@ -81,7 +84,7 @@ impl<'a> GraphicsManager<'a> {
             let c = geom.as_ref::<Cm>().unwrap();
 
             for &(t, ref s) in c.shapes().iter() {
-                self.add_geom(body, delta * t, *s, out)
+                self.add_geom(body.clone(), delta * t, *s, out)
             }
         }
         else if id == TypeId::of::<Ls>() {
@@ -94,27 +97,27 @@ impl<'a> GraphicsManager<'a> {
     }
 
     fn add_plane(&mut self,
-                 _: @mut Body,
+                 _: Rc<RefCell<RigidBody>>,
                  _: &geom::Plane,
                  _: &mut ~[SceneNode]) {
     }
 
     fn add_ball(&mut self,
-                body:  @mut Body,
+                body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
                 geom:  &geom::Ball,
                 out:   &mut ~[SceneNode]) {
-        let color = self.color_for_object(body);
+        let color = self.color_for_object(&body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
     }
 
     fn add_lines(&mut self,
-               body:  @mut Body,
+               body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
                geom:  &geom::Mesh,
                out:   &mut ~[SceneNode]) {
 
-        let color = self.color_for_object(body);
+        let color = self.color_for_object(&body);
 
         let vs = geom.vertices().clone();
         let is = geom.indices().clone();
@@ -124,14 +127,14 @@ impl<'a> GraphicsManager<'a> {
 
 
     fn add_box(&mut self,
-               body:  @mut Body,
+               body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
                geom:  &geom::Box,
                out:   &mut ~[SceneNode]) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
 
-        let color = self.color_for_object(body);
+        let color = self.color_for_object(&body);
 
         out.push(BoxNode(Box::new(body, delta, rx, ry, color)))
     }
@@ -163,8 +166,8 @@ impl<'a> GraphicsManager<'a> {
     }
 
 
-    pub fn color_for_object(&mut self, body: &Body) -> Vec3<u8> {
-        let key = ptr::to_unsafe_ptr(body) as uint;
+    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<u8> {
+        let key = borrow::to_uint(body.borrow());
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }

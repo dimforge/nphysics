@@ -1,7 +1,8 @@
+use std::cell::Ref;
 use nalgebra::na::{Row, Indexable};
 use nalgebra::na;
 use ncollide::math::{N, LV};
-use object::Body;
+use object::RigidBody;
 use detection::joint::anchor::Anchor;
 use detection::joint::ball_in_socket::BallInSocket;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -41,17 +42,15 @@ pub fn cancel_relative_linear_motion<P>(
 
         lin_axis.set(i, na::one());
 
-        let opt_b1 = write_anchor_id(anchor1, &mut constraint.id1);
-        let opt_b2 = write_anchor_id(anchor2, &mut constraint.id2);
-        let opt_rb1 = match opt_b1 { Some(b) => Some(b.to_rigid_body_or_fail()), None => None };
-        let opt_rb2 = match opt_b2 { Some(b) => Some(b.to_rigid_body_or_fail()), None => None };
+        let opt_rb1 = write_anchor_id(anchor1, &mut constraint.id1);
+        let opt_rb2 = write_anchor_id(anchor2, &mut constraint.id2);
 
         let rot_axis1 = rot_axis1.row(i);
         let rot_axis2 = -rot_axis2.row(i);
 
         let dvel = contact_equation::relative_velocity(
-            opt_rb1,
-            opt_rb2,
+            &opt_rb1,
+            &opt_rb2,
             &lin_axis, 
             &rot_axis1,
             &rot_axis2,
@@ -61,8 +60,8 @@ pub fn cancel_relative_linear_motion<P>(
             lin_axis,
             rot_axis1,
             rot_axis2,
-            opt_rb1,
-            opt_rb2,
+            &opt_rb1,
+            &opt_rb2,
             constraint
         );
 
@@ -75,13 +74,23 @@ pub fn cancel_relative_linear_motion<P>(
 }
 
 #[inline]
-pub fn write_anchor_id<'r, P>(anchor: &'r Anchor<P>, id: &mut int) -> Option<@mut Body> {
+pub fn write_anchor_id<'a, P>(anchor: &'a Anchor<P>, id: &mut int) -> Option<Ref<'a, RigidBody>> {
     match anchor.body {
-        Some(b) => {
-            if b.can_move() {
-                *id = b.index();
+        Some(ref b) => {
+            let brb      = b.borrow().borrow();
+            let can_move;
+            let rid;
 
-                Some(b)
+            {
+                let rb   = brb.get();
+                can_move = rb.can_move();
+                rid      = rb.index();
+            }
+
+            if can_move {
+                *id = rid;
+
+                Some(brb)
             }
             else {
                 *id = -1;

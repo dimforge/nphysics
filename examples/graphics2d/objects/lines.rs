@@ -1,20 +1,22 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use extra::arc::Arc;
 use rsfml::graphics::render_window;
 use rsfml::graphics::Color;
 use nalgebra::na::{Vec2, Vec3, Iso2};
-use nphysics::object::Body;
+use nphysics::object::RigidBody;
 use draw_helper::draw_line;
 
 pub struct Lines {
     priv color:    Vec3<u8>,
     priv delta:    Iso2<f32>,
-    priv body:     @mut Body,
+    priv body:     Rc<RefCell<RigidBody>>,
     priv indices:  Arc<~[uint]>,
     priv vertices: Arc<~[Vec2<f32>]>
 }
 
 impl Lines {
-    pub fn new(body:     @mut Body,
+    pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso2<f32>,
                vertices: Arc<~[Vec2<f32>]>,
                indices:  Arc<~[uint]>,
@@ -34,7 +36,8 @@ impl Lines {
     }
 
     pub fn draw(&self, rw: &mut render_window::RenderWindow) {
-        let body      = self.body.to_rigid_body_or_fail();
+        let bbody     = self.body.borrow().borrow();
+        let body      = bbody.get();
         let transform = body.transform_ref() * self.delta;
 
         let vs = self.vertices.get();

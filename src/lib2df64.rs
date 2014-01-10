@@ -11,10 +11,6 @@ extern mod ncollide = "ncollide2df64";
 
 pub mod aliases;
 
-pub mod signal {
-    pub mod signal;
-}
-
 pub mod integration;
 pub mod detection;
 pub mod resolution;
@@ -22,3 +18,7 @@ pub mod resolution;
 pub mod world;
 
 pub mod object;
+
+pub mod utils {
+    pub mod ref_to;
+}

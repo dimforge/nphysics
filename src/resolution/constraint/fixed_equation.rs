@@ -48,22 +48,20 @@ pub fn cancel_relative_angular_motion<P>(dt:          N,
     na::canonical_basis(|rot_axis: AV| {
         let constraint = &mut constraints[i];
 
-        let opt_b1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
-        let opt_b2 = ball_in_socket_equation::write_anchor_id(anchor2, &mut constraint.id2);
-        let opt_rb1 = match opt_b1 { Some(b) => Some(b.to_rigid_body_or_fail()), None => None };
-        let opt_rb2 = match opt_b2 { Some(b) => Some(b.to_rigid_body_or_fail()), None => None };
+        let opt_rb1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
+        let opt_rb2 = ball_in_socket_equation::write_anchor_id(anchor2, &mut constraint.id2);
 
         contact_equation::fill_constraint_geometry(
             na::zero(),
             rot_axis.clone(),
             -rot_axis,
-            opt_rb1,
-            opt_rb2,
+            &opt_rb1,
+            &opt_rb2,
             constraint
         );
 
-        let ang_vel1 = match opt_rb1 { Some(rb) => rb.ang_vel(), None => na::zero() };
-        let ang_vel2 = match opt_rb2 { Some(rb) => rb.ang_vel(), None => na::zero() };
+        let ang_vel1 = match opt_rb1 { Some(rb) => rb.get().ang_vel(), None => na::zero() };
+        let ang_vel2 = match opt_rb2 { Some(rb) => rb.get().ang_vel(), None => na::zero() };
 
         let _M: N = Bounded::max_value();
         constraint.lobound   = -_M;

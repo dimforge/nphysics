@@ -1,21 +1,22 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::num::One;
 use kiss3d::window;
 use kiss3d::object::Object;
 use nalgebra::na::{Vec3, Iso3, Transformation, Rotation};
 use nalgebra::na;
-use nphysics::object::Body;
-use engine::SceneNode;
+use nphysics::object::RigidBody;
 
 pub struct Cylinder {
     priv color:      Vec3<f32>,
     priv base_color: Vec3<f32>,
     priv delta:      Iso3<f32>,
     priv gfx:        Object,
-    priv body:       @mut Body,
+    priv body:       Rc<RefCell<RigidBody>>,
 }
 
 impl Cylinder {
-    pub fn new(body:   @mut Body,
+    pub fn new(body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
                r:     f32,
                h:     f32,
@@ -37,21 +38,20 @@ impl Cylinder {
 
         res
     }
-}
 
-impl SceneNode for Cylinder {
-    fn select(&mut self) {
+    pub fn select(&mut self) {
         self.color = Vec3::x();
     }
 
-    fn unselect(&mut self) {
+    pub fn unselect(&mut self) {
         self.color = self.base_color;
     }
 
-    fn update(&mut self) {
-        let rb = self.body.to_rigid_body_or_fail();
-        if rb.is_active() {
-            self.gfx.set_transformation(na::transformation(rb) * self.delta);
+    pub fn update(&mut self) {
+        let rb = self.body.borrow().borrow();
+
+        if rb.get().is_active() {
+            self.gfx.set_transformation(na::transformation(rb.get()) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {
@@ -59,7 +59,7 @@ impl SceneNode for Cylinder {
         }
     }
 
-    fn object<'r>(&'r self) -> &'r Object {
+    pub fn object<'r>(&'r self) -> &'r Object {
         &self.gfx
     }
 }

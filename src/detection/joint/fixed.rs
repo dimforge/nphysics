@@ -1,6 +1,5 @@
 use ncollide::math::M;
 use detection::joint::anchor::Anchor;
-use object::{RB, SB};
 
 pub struct Fixed {
     priv up_to_date: bool,
@@ -49,11 +48,9 @@ impl Fixed {
 
     pub fn anchor1_pos(&self) -> M {
         match self.anchor1.body {
-            Some(b) => {
-                match *b {
-                    RB(ref rb) => rb.transform_ref() * self.anchor1.position,
-                    SB(_)      => fail!("Not yet implemented.")
-                }
+            Some(ref b) => {
+                let bb = b.borrow().borrow();
+                bb.get().transform_ref() * self.anchor1.position
             },
             None => self.anchor1.position.clone()
         }
@@ -61,11 +58,9 @@ impl Fixed {
 
     pub fn anchor2_pos(&self) -> M {
         match self.anchor2.body {
-            Some(b) => {
-                match *b {
-                    RB(ref rb) => rb.transform_ref() * self.anchor2.position,
-                    SB(_)      => fail!("Not yet implemented.")
-                }
+            Some(ref b) => {
+                let bb = b.borrow().borrow();
+                bb.get().transform_ref() * self.anchor2.position
             },
             None => self.anchor2.position.clone()
         }

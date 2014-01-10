@@ -1,21 +1,23 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use rsfml::graphics::render_window;
 use rsfml::graphics::circle_shape::CircleShape;
 use rsfml::graphics::Color;
 use rsfml::system::vector2;
 use nalgebra::na::{Vec3, Iso2};
 use nalgebra::na;
-use nphysics::object::Body;
+use nphysics::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 
 pub struct Ball<'a> {
     priv color: Vec3<u8>,
     priv delta: Iso2<f32>,
-    priv body:  @mut Body,
+    priv body:  Rc<RefCell<RigidBody>>,
     priv gfx:   CircleShape<'a>
 }
 
 impl<'a> Ball<'a> {
-    pub fn new(body:   @mut Body,
+    pub fn new(body:   Rc<RefCell<RigidBody>>,
                delta:  Iso2<f32>,
                radius: f32,
                color:  Vec3<u8>) -> Ball {
@@ -38,7 +40,8 @@ impl<'a> Ball<'a> {
 
 impl<'a> Ball<'a> {
     pub fn update(&mut self) {
-        let body = self.body.to_rigid_body_or_fail();
+        let bbody = self.body.borrow().borrow();
+        let body  = bbody.get();
         let transform = body.transform_ref() * self.delta;
         let pos = na::translation(&transform);
         let rot = na::rotation(&transform);

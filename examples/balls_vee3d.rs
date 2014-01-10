@@ -10,22 +10,24 @@ extern mod nphysics = "nphysics3df32";
 extern mod ncollide = "ncollide3df32";
 extern mod nalgebra;
 
+use std::rc::Rc;
+use std::cell::RefCell;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Ball, Plane};
-use nphysics::world::BodyWorld;
-use nphysics::object::{RigidBody, Static, Dynamic, RB};
+use nphysics::world::World;
+use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics3d::engine::GraphicsManager;
 
 fn main() {
     GraphicsManager::simulate(balls_vee_3d)
 }
 
-pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> BodyWorld {
+pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
-    let mut world = BodyWorld::new();
+    let mut world = World::new();
     world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
 
     /*
@@ -39,9 +41,9 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Body
     ];
     for n in normals.iter() {
         let rb   = RigidBody::new(Plane::new(*n), 0.0f32, Static, 0.3, 0.6);
-        let body = @mut RB(rb);
+        let body = Rc::new(RefCell::new(rb));
 
-        world.add_body(body);
+        world.add_body(body.clone());
         graphics.add(window, body);
     }
 
@@ -65,9 +67,9 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Body
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
-                let body = @mut RB(rb);
+                let body = Rc::new(RefCell::new(rb));
 
-                world.add_body(body);
+                world.add_body(body.clone());
                 graphics.add(window, body);
             }
         }

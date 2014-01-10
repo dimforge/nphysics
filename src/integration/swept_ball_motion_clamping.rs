@@ -9,18 +9,18 @@ use ncollide::geom::Ball;
 use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
 use ncollide::math::{N, LV};
 use integration::Integrator;
-use object::{Body, RB, SB};
+use object::{RigidBody, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 struct CCDBody {
-    body:        @mut Body,
+    body:        @mut RigidBody,
     radius:      N,
     sqthreshold: N,
     last_pos:    LV
 }
 
 impl CCDBody {
-    pub fn new(body:        @mut Body,
+    pub fn new(body:        @mut RigidBody,
                radius:      N,
                sqthreshold: N,
                last_pos:    LV)
@@ -39,12 +39,12 @@ pub struct SweptBallMotionClamping<BF> {
     priv iobjects:      HashMap<uint, CCDBody, UintTWHash>,
     priv broad_phase:   @mut BF,
     priv update_bf:     bool,
-    priv interferences: ~[@mut Body]
+    priv interferences: ~[@mut RigidBody]
 }
 
-impl<BF: 'static + RayCastBroadPhase<Body> + BoundingVolumeBroadPhase<Body, AABB>>
+impl<BF: 'static + RayCastBroadPhase<RigidBody> + BoundingVolumeBroadPhase<RigidBody, AABB>>
 SweptBallMotionClamping<BF> {
-    pub fn new<C>(events:    &mut SignalEmiter<Body, C>,
+    pub fn new<C>(events:    &mut SignalEmiter<RigidBody, C>,
                   bf:        @mut BF,
                   update_bf: bool)
                   -> @mut SweptBallMotionClamping<BF> {
@@ -57,8 +57,8 @@ SweptBallMotionClamping<BF> {
         };
 
         events.add_body_activation_handler(
-            ptr::to_mut_unsafe_ptr(res) as uint,
-            res as @mut BodyActivationSignalHandler<Body, C>
+            ptr::to_unsafe_ptr(res) as uint,
+            res as @mut BodyActivationSignalHandler<RigidBody, C>
         );
 
         res
@@ -67,10 +67,10 @@ SweptBallMotionClamping<BF> {
     // FIXME: implement remove_ccd_from
 
     pub fn add_ccd_to(&mut self,
-                      body:                @mut Body,
+                      body:                @mut RigidBody,
                       swept_sphere_radius: N,
                       motion_thresold:     N) {
-        let key = ptr::to_mut_unsafe_ptr(body) as uint;
+        let key = ptr::to_unsafe_ptr(body) as uint;
         match *body {
             RB(ref mut rb) => {
                 self.objects.insert(
@@ -85,8 +85,8 @@ SweptBallMotionClamping<BF> {
         }
     }
 
-    fn activate(&mut self, o: @mut Body) {
-        let key = ptr::to_mut_unsafe_ptr(o) as uint;
+    fn activate(&mut self, o: @mut RigidBody) {
+        let key = ptr::to_unsafe_ptr(o) as uint;
 
         match self.iobjects.get_and_remove(&key) {
             Some(entry) => {
@@ -103,8 +103,8 @@ SweptBallMotionClamping<BF> {
         }
     }
 
-    fn deactivate(&mut self, o: @mut Body) {
-        let key = ptr::to_mut_unsafe_ptr(o) as uint;
+    fn deactivate(&mut self, o: @mut RigidBody) {
+        let key = ptr::to_unsafe_ptr(o) as uint;
 
         match self.objects.get_and_remove(&key) {
             Some(o) => {
@@ -115,20 +115,20 @@ SweptBallMotionClamping<BF> {
     }
 }
 
-impl<BF: RayCastBroadPhase<Body> + BoundingVolumeBroadPhase<Body, AABB>> Integrator<Body>
+impl<BF: RayCastBroadPhase<RigidBody> + BoundingVolumeBroadPhase<RigidBody, AABB>> Integrator<RigidBody>
 for SweptBallMotionClamping<BF> {
-    fn add(&mut self, o: @mut Body) {
+    fn add(&mut self, o: @mut RigidBody) {
         if self.update_bf {
             self.broad_phase.add(o);
         }
     }
 
-    fn remove(&mut self, o: @mut Body) {
+    fn remove(&mut self, o: @mut RigidBody) {
         if self.update_bf {
             self.broad_phase.remove(o);
         }
 
-        self.objects.remove(&(ptr::to_mut_unsafe_ptr(o) as uint));
+        self.objects.remove(&(ptr::to_unsafe_ptr(o) as uint));
     }
 
     fn update(&mut self, _: N) {
@@ -225,13 +225,13 @@ for SweptBallMotionClamping<BF> {
     fn priority(&self) -> f64 { 100.0 }
 }
 
-impl<BF: 'static + RayCastBroadPhase<Body> + BoundingVolumeBroadPhase<Body, AABB>, C>
-BodyActivationSignalHandler<Body, C> for SweptBallMotionClamping<BF> {
-    fn handle_body_activated_signal(&mut self, b: @mut Body, _: &mut ~[C]) {
+impl<BF: 'static + RayCastBroadPhase<RigidBody> + BoundingVolumeBroadPhase<RigidBody, AABB>, C>
+BodyActivationSignalHandler<RigidBody, C> for SweptBallMotionClamping<BF> {
+    fn handle_body_activated_signal(&mut self, b: @mut RigidBody, _: &mut ~[C]) {
         self.activate(b)
     }
 
-    fn handle_body_deactivated_signal(&mut self, b: @mut Body) {
+    fn handle_body_deactivated_signal(&mut self, b: @mut RigidBody) {
         self.deactivate(b)
     }
 }

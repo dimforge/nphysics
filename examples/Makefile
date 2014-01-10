@@ -1,7 +1,7 @@
 tmp=_git_distcheck
 rust_sfml_rc=./lib/rust-sfml/src/rsfml/lib.rs
 kiss3d_lib_path=./lib/kiss3d/lib
-glfw_lib_path=./lib/kiss3d/lib/glfw-rs
+glfw_lib_path=./lib/kiss3d/lib/glfw-rs/lib
 gl_lib_path=./lib/kiss3d/lib/gl-rs/src/gl
 stb_image_lib_path=./lib/kiss3d/lib/rust-stb-image/
 nphysics_lib_path=../lib
@@ -38,9 +38,9 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 examples:
 	mkdir -p ../bin
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
+	$(build_cmd_opt) ./boxes_vee3d.rs
 	$(build_cmd_opt) ./mesh3d.rs
 	$(build_cmd_opt) ./primitives3d.rs
-	$(build_cmd_opt) ./boxes_vee3d.rs
 	$(build_cmd_opt) ./balls_vee3d.rs
 	$(build_cmd_opt) ./compound3d.rs
 	$(build_cmd_opt) ./cross3d.rs

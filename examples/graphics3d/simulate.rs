@@ -1,5 +1,7 @@
 use std::os;
 use std::num::{Zero, One};
+use std::rc::Rc;
+use std::cell::RefCell;
 use extra::time;
 use glfw;
 use nalgebra::na::{Vec2, Vec3, Translation, Iso3};
@@ -10,12 +12,13 @@ use kiss3d::event;
 use ncollide::geom::{Box, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
+use nphysics::detection::detector::Detector;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 use nphysics::detection::joint::fixed::Fixed;
 use nphysics::detection::joint::anchor::Anchor;
-use nphysics::object::{RigidBody, Dynamic, RB, Body};
-use nphysics::world::BodyWorld;
-use engine::{SceneNode, GraphicsManager};
+use nphysics::object::{RigidBody, Dynamic};
+use nphysics::world::World;
+use engine::GraphicsManager;
 
 fn usage(exe_name: &str) {
     println("Usage: " + exe_name);
@@ -33,7 +36,7 @@ fn usage(exe_name: &str) {
     println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
-pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
+pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -45,14 +48,15 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
     do Window::spawn("nphysics: 3d demo") |window| {
         let mut running    = Running;
         let mut draw_colls = false;
-        let mut graphics   = GraphicsManager::new(window);
+        let mut graphics   = GraphicsManager::new();
+        graphics.init_camera(window);
         let mut physics    = builder(window, &mut graphics);
 
         let mut ray_to_draw = None;
 
         let mut cursor_pos = Vec2::new(0.0f32, 0.0);
-        let mut grabbed_object: Option<@mut Body> = None;
-        let mut grabbed_object_joint: Option<@mut Fixed> = None;
+        let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
+        let mut grabbed_object_joint: Option<Rc<RefCell<Fixed>>> = None;
         let mut grabbed_object_plane: (Vec3<f32>, Vec3<f32>) = (Zero::zero(), Zero::zero());
 
 
@@ -83,8 +87,8 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                             }
 
                             if minb.is_some() {
-                                let b = minb.unwrap();
-                                if b.can_move() {
+                                let b = minb.as_ref().unwrap();
+                                if b.borrow().with(|b| b.can_move()) {
                                     physics.remove_body(b);
                                     graphics.remove(w, b);
                                 }
@@ -94,8 +98,8 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                         }
                         else if modifier.contains(glfw::Control) {
                             match grabbed_object {
-                                Some(rb) => {
-                                    for sn in graphics.body_to_scene_node(rb).unwrap().iter() {
+                                Some(ref rb) => {
+                                    for sn in graphics.body_to_scene_node(rb).unwrap().mut_iter() {
                                         sn.unselect()
                                     }
                                 },
@@ -121,28 +125,27 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                             }
 
                             if minb.is_some() {
-                                let b = minb.unwrap();
-                                if b.can_move() {
-                                    grabbed_object = Some(b)
+                                let b = minb.as_ref().unwrap();
+                                if b.borrow().with(|b| b.can_move()) {
+                                    grabbed_object = Some(b.clone())
                                 }
                             }
 
                             match grabbed_object {
-                                Some(b) => {
-                                    for sn in graphics.body_to_scene_node(b).unwrap().iter() {
+                                Some(ref b) => {
+                                    for sn in graphics.body_to_scene_node(b).unwrap().mut_iter() {
                                         match grabbed_object_joint {
-                                            Some(j) => physics.remove_fixed(j),
+                                            Some(ref j) => physics.remove_fixed(j),
                                             None    => { }
                                         }
 
-                                        let rb      = b.to_rigid_body_or_fail();
                                         let _1: Iso3<f32> = One::one();
                                         let attach2 = na::append_translation(&_1, &(ray.orig + ray.dir * mintoi));
-                                        let attach1 = na::inv(&na::transformation(rb.transform_ref())).unwrap() * attach2;
-                                        let anchor1 = Anchor::new(Some(minb.unwrap()), attach1);
+                                        let attach1 = b.borrow().with(|b| na::inv(&na::transformation(b.transform_ref())).unwrap() * attach2);
+                                        let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
-                                        let joint   = @mut Fixed::new(anchor1, anchor2);
-                                        grabbed_object_joint = Some(joint);
+                                        let joint   = Rc::new(RefCell::new(Fixed::new(anchor1, anchor2)));
+                                        grabbed_object_joint = Some(joint.clone());
                                         grabbed_object_plane = (na::translation(&attach2), -ray.dir);
                                         physics.add_fixed(joint);
                                         // add a joint
@@ -160,8 +163,8 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                     },
                     event::ButtonReleased(_, _) => {
                         match grabbed_object {
-                            Some(b) => {
-                                for sn in graphics.body_to_scene_node(b).unwrap().iter() {
+                            Some(ref b) => {
+                                for sn in graphics.body_to_scene_node(b).unwrap().mut_iter() {
                                     sn.unselect()
                                 }
                             },
@@ -169,7 +172,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                         }
 
                         match grabbed_object_joint {
-                            Some(j) => physics.remove_fixed(j),
+                            Some(ref j) => physics.remove_fixed(j),
                             None    => { }
                         }
 
@@ -184,14 +187,14 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
 
                         // update the joint
                         match grabbed_object_joint {
-                            Some(j) => {
+                            Some(ref j) => {
                                 let (pos, dir) = w.unproject(&cursor_pos);
                                 let (ref ppos, ref pdir) = grabbed_object_plane;
 
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
                                         let _1: Iso3<f32> = One::one();
-                                        j.set_local2(na::append_translation(&_1, &(pos + dir * inter)))
+                                        j.borrow().with_mut(|j| j.set_local2(na::append_translation(&_1, &(pos + dir * inter))))
                                     },
                                     None => { }
                                 }
@@ -235,15 +238,21 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                         let geom   = Ball::new(0.5f32);
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
-                        let cam_transfom = w.camera().view_transform();
+                        let cam_transfom;
+
+                        {
+                            let cam      = w.camera();
+                            cam_transfom = cam.view_transform();
+                        }
+
                         rb.append_translation(&na::translation(&cam_transfom));
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 
                         rb.set_lin_vel(front * 40.0f32);
 
-                        let body = @mut RB(rb);
-                        physics.add_body(body);
+                        let body = Rc::new(RefCell::new(rb));
+                        physics.add_body(body.clone());
                         graphics.add(w, body);
 
                         true
@@ -252,15 +261,21 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                         let geom   = Box::new(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
-                        let cam_transform = w.camera().view_transform();
+                        let cam_transform;
+                        
+                        {
+                            let cam = w.camera();
+                            cam_transform = cam.view_transform();
+                        }
+
                         rb.append_translation(&na::translation(&cam_transform));
 
                         let front = na::rotate(&cam_transform, &Vec3::z());
 
                         rb.set_lin_vel(front * 40.0f32);
 
-                        let body = @mut RB(rb);
-                        physics.add_body(body);
+                        let body = Rc::new(RefCell::new(rb));
+                        physics.add_body(body.clone());
                         graphics.add(w, body);
 
                         true
@@ -269,16 +284,23 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                         let geom   = Box::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
-                        let cam_transfom = w.camera().view_transform();
+                        let cam_transfom;
+                        
+                        {
+                            let cam = w.camera();
+                            cam_transfom = cam.view_transform();
+                        }
+
                         rb.append_translation(&na::translation(&cam_transfom));
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 
                         rb.set_lin_vel(front * 400.0f32);
 
-                        let body = @mut RB(rb);
+                        let body = Rc::new(RefCell::new(rb));
                         physics.add_body(body);
-                        physics.add_ccd_to(body, 0.4, 1.0);
+                        fail!("FIXME: review ccd");
+                        // physics.add_ccd_to(body, 0.4, 1.0);
                         graphics.add(w, body);
 
                         true
@@ -288,7 +310,13 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
                             ray_to_draw = None;
                         }
                         else {
-                            let cam_transform = w.camera().view_transform();
+                            let cam_transform;
+                            
+                            {
+                                let cam = w.camera();
+                                cam_transform = cam.view_transform();
+                            }
+
                             let pos           = na::translation(&cam_transform);
                             let front         = na::rotate(&cam_transform, &Vec3::z());
 
@@ -350,28 +378,28 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(window: &mut window::Window, physics: &mut BodyWorld) {
+fn draw_collisions(window: &mut window::Window, physics: &mut World) {
     let mut collisions = ~[];
 
-    for c in physics.world().detectors().iter() {
-        c.interferences(&mut collisions);
-    }
+    physics.interferences(&mut collisions);
 
     for c in collisions.iter() {
         match *c {
-            RBRB(_, _, c) => {
+            RBRB(_, _, ref c) => {
                 window.draw_line(&c.world1, &c.world2, &Vec3::x());
 
                 let center = (c.world1 + c.world2) / 2.0f32;
                 let end    = center + c.normal * 0.4f32;
                 window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
             },
-            BallInSocket(bis) => {
-                window.draw_line(&bis.anchor1_pos(), &bis.anchor2_pos(), &Vec3::y());
+            BallInSocket(ref bis) => {
+                bis.borrow().with(|bis|
+                    window.draw_line(&bis.anchor1_pos(), &bis.anchor2_pos(), &Vec3::y()));
             },
-            Fixed(f) => {
+            Fixed(ref f) => {
                 // FIXME: draw the rotation too
-                window.draw_line(&na::translation(&f.anchor1_pos()), &na::translation(&f.anchor2_pos()), &Vec3::y());
+                f.borrow().with(|f|
+                    window.draw_line(&na::translation(&f.anchor1_pos()), &na::translation(&f.anchor2_pos()), &Vec3::y()));
             }
         }
     }

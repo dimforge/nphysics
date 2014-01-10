@@ -1,8 +1,10 @@
 use std::unstable::intrinsics::TypeId;
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::num::One;
-use std::ptr;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
+use std::borrow;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use kiss3d::obj;
@@ -11,8 +13,8 @@ use kiss3d::object::Object;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use ncollide::geom::Geom;
 use ncollide::geom;
-use nphysics::world::BodyWorld;
-use nphysics::object::Body;
+use nphysics::world::World;
+use nphysics::object::RigidBody;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -21,29 +23,75 @@ use objects::mesh::Mesh;
 use objects::plane::Plane;
 use simulate;
 
-pub trait SceneNode {
-    fn select(&mut self);
-    fn unselect(&mut self);
-    fn update(&mut self);
-    fn object<'r>(&'r self) -> &'r Object;
+pub enum SceneNode {
+    BallNode(Ball),
+    BoxNode(Box),
+    CylinderNode(Cylinder),
+    ConeNode(Cone),
+    MeshNode(Mesh),
+    PlaneNode(Plane)
+}
+
+impl SceneNode {
+    pub fn select(&mut self) {
+        match *self {
+            PlaneNode(ref mut n)    => n.select(),
+            BallNode(ref mut n)     => n.select(),
+            BoxNode(ref mut n)      => n.select(),
+            CylinderNode(ref mut n) => n.select(),
+            ConeNode(ref mut n)     => n.select(),
+            MeshNode(ref mut n)     => n.select()
+        }
+    }
+
+    pub fn unselect(&mut self) {
+        match *self {
+            PlaneNode(ref mut n)    => n.unselect(),
+            BallNode(ref mut n)     => n.unselect(),
+            BoxNode(ref mut n)      => n.unselect(),
+            CylinderNode(ref mut n) => n.unselect(),
+            ConeNode(ref mut n)     => n.unselect(),
+            MeshNode(ref mut n)     => n.unselect()
+        }
+    }
+
+    pub fn update(&mut self) {
+        match *self {
+            PlaneNode(ref mut n)    => n.update(),
+            BallNode(ref mut n)     => n.update(),
+            BoxNode(ref mut n)      => n.update(),
+            CylinderNode(ref mut n) => n.update(),
+            ConeNode(ref mut n)     => n.update(),
+            MeshNode(ref mut n)     => n.update()
+        }
+    }
+
+    pub fn object<'r>(&'r self) -> &'r Object {
+        match *self {
+            PlaneNode(ref n)    => n.object(),
+            BallNode(ref n)     => n.object(),
+            BoxNode(ref n)      => n.object(),
+            CylinderNode(ref n) => n.object(),
+            ConeNode(ref n)     => n.object(),
+            MeshNode(ref n)     => n.object()
+        }
+    }
 }
 
 pub struct GraphicsManager {
     rand:             XorShiftRng,
-    rb2sn:            HashMap<uint, ~[@mut SceneNode]>,
+    rb2sn:            HashMap<uint, ~[SceneNode]>,
     obj2color:        HashMap<uint, Vec3<f32>>,
-    arc_ball:         @mut ArcBall,
-    first_person:     @mut FirstPerson,
+    arc_ball:         ArcBall,
+    first_person:     FirstPerson,
     curr_is_arc_ball: bool
 
 }
 
 impl GraphicsManager {
-    pub fn new(window: &mut Window) -> GraphicsManager {
-        let arc_ball     = @mut ArcBall::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
-        let first_person = @mut FirstPerson::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
-
-        window.set_camera(arc_ball as @mut Camera);
+    pub fn new() -> GraphicsManager {
+        let arc_ball     = ArcBall::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
+        let first_person = FirstPerson::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
 
         GraphicsManager {
             arc_ball:         arc_ball,
@@ -55,12 +103,16 @@ impl GraphicsManager {
         }
     }
 
-    pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> BodyWorld) {
+    pub fn init_camera<'a>(&'a mut self, window: &'a mut Window) {
+        window.set_camera(&'a mut self.arc_ball as &'a mut Camera);
+    }
+
+    pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
         simulate::simulate(builder)
     }
 
-    pub fn remove(&mut self, window: &mut Window, body: @mut Body) {
-        let key = ptr::to_mut_unsafe_ptr(body) as uint;
+    pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
+        let key = borrow::to_uint(body.borrow());
 
         match self.rb2sn.find(&key) {
             Some(sns) => {
@@ -75,18 +127,18 @@ impl GraphicsManager {
         self.obj2color.remove(&key);
     }
 
-    pub fn add(&mut self, window: &mut Window, body: @mut Body) {
+    pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
 
         let nodes = {
-            let rb = body.to_rigid_body_or_fail();
+            let rb        = body.borrow().borrow();
             let mut nodes = ~[];
 
-            self.add_geom(window, body, One::one(), rb.geom(), &mut nodes);
+            self.add_geom(window, body.clone(), One::one(), rb.get().geom(), &mut nodes);
 
             nodes
         };
 
-        self.rb2sn.insert(ptr::to_mut_unsafe_ptr(body) as uint, nodes);
+        self.rb2sn.insert(borrow::to_uint(body.borrow()), nodes);
     }
 
     pub fn load_mesh(&mut self, path: &str) -> ~[(~[Vec3<f32>], ~[uint])] {
@@ -110,10 +162,10 @@ impl GraphicsManager {
 
     fn add_geom(&mut self,
                 window: &mut Window,
-                body:   @mut Body,
+                body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &Geom,
-                out:    &mut ~[@mut SceneNode]) {
+                out:    &mut ~[SceneNode]) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
         type Bo = geom::Box;
@@ -142,7 +194,7 @@ impl GraphicsManager {
             let c = geom.as_ref::<Cm>().unwrap();
 
             for &(t, ref s) in c.shapes().iter() {
-                self.add_geom(window, body, delta * t, *s, out)
+                self.add_geom(window, body.clone(), delta * t, *s, out)
             }
         }
         else if id == TypeId::of::<Tm>() {
@@ -156,23 +208,23 @@ impl GraphicsManager {
 
     fn add_plane(&mut self,
                  window: &mut Window,
-                 body:   @mut Body,
+                 body:   Rc<RefCell<RigidBody>>,
                  geom:   &geom::Plane,
-                 out:    &mut ~[@mut SceneNode]) {
-        let position = na::translation(body.to_rigid_body_or_fail());
-        let normal   = na::rotate(body.to_rigid_body_or_fail().transform_ref(), &geom.normal());
-        let color    = self.color_for_object(body);
+                 out:    &mut ~[SceneNode]) {
+        let position = body.borrow().with(|body| na::translation(body));
+        let normal   = body.borrow().with(|body| na::rotate(body.transform_ref(), &geom.normal()));
+        let color    = self.color_for_object(&body);
 
-        out.push(@mut Plane::new(body, &position, &normal, color, window) as @mut SceneNode)
+        out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
     }
 
     fn add_mesh(&mut self,
                 window: &mut Window,
-                body:   @mut Body,
+                body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Mesh,
-                out:    &mut ~[@mut SceneNode]) {
-        let color    = self.color_for_object(body);
+                out:    &mut ~[SceneNode]) {
+        let color    = self.color_for_object(&body);
         let vertices = geom.vertices().get();
         let indices  = geom.indices().get();
 
@@ -183,78 +235,78 @@ impl GraphicsManager {
             is.push(Vec3::new(i[0] as u32, i[1] as u32, i[2] as u32))
         }
 
-        out.push(@mut Mesh::new(body, delta, vs, is, color, window) as @mut SceneNode)
+        out.push(MeshNode(Mesh::new(body, delta, vs, is, color, window)))
     }
 
     fn add_ball(&mut self,
                 window: &mut Window,
-                body:   @mut Body,
+                body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Ball,
-                out:    &mut ~[@mut SceneNode]) {
-        let color = self.color_for_object(body);
-        out.push(@mut Ball::new(body, delta, geom.radius(), color, window) as @mut SceneNode)
+                out:    &mut ~[SceneNode]) {
+        let color = self.color_for_object(&body);
+        out.push(BallNode(Ball::new(body, delta, geom.radius(), color, window)))
     }
 
     fn add_box(&mut self,
                window: &mut Window,
-               body:   @mut Body,
+               body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
                geom:   &geom::Box,
-               out:    &mut ~[@mut SceneNode]) {
+               out:    &mut ~[SceneNode]) {
         let rx = geom.half_extents().x + geom.margin();
         let ry = geom.half_extents().y + geom.margin();
         let rz = geom.half_extents().z + geom.margin();
 
-        let color = self.color_for_object(body);
+        let color = self.color_for_object(&body);
 
-        out.push(@mut Box::new(body, delta, rx, ry, rz, color, window) as @mut SceneNode)
+        out.push(BoxNode(Box::new(body, delta, rx, ry, rz, color, window)))
     }
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
-                    body:   @mut Body,
+                    body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
                     geom:   &geom::Cylinder,
-                    out:    &mut ~[@mut SceneNode]) {
+                    out:    &mut ~[SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
-        let color = self.color_for_object(body);
+        let color = self.color_for_object(&body);
 
-        out.push(@mut Cylinder::new(body, delta, r, h, color, window) as @mut SceneNode)
+        out.push(CylinderNode(Cylinder::new(body, delta, r, h, color, window)))
     }
 
     fn add_cone(&mut self,
                 window: &mut Window,
-                body:   @mut Body,
+                body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Cone,
-                out:    &mut ~[@mut SceneNode]) {
+                out:    &mut ~[SceneNode]) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
-        let color = self.color_for_object(body);
+        let color = self.color_for_object(&body);
 
-        out.push(@mut Cone::new(body, delta, r, h, color, window) as @mut SceneNode)
+        out.push(ConeNode(Cone::new(body, delta, r, h, color, window)))
     }
 
     pub fn draw(&mut self) {
         for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.iter() {
+            for n in ns.mut_iter() {
                 n.update()
             }
         }
     }
 
-    pub fn switch_cameras(&mut self, window: &mut Window) {
+    pub fn switch_cameras<'a>(&'a mut self, window: &'a mut Window) {
         if self.curr_is_arc_ball {
             self.first_person.look_at_z(self.arc_ball.eye(), self.arc_ball.at());
-            window.set_camera(self.first_person as @mut Camera);
+            window.set_camera(&'a mut self.first_person as &'a mut Camera);
         }
         else {
             self.arc_ball.look_at_z(self.first_person.eye(), self.first_person.at());
-            window.set_camera(self.arc_ball as @mut Camera);
+            window.set_camera(&'a mut self.arc_ball as &'a mut Camera);
         }
 
         self.curr_is_arc_ball = !self.curr_is_arc_ball;
@@ -265,12 +317,12 @@ impl GraphicsManager {
         self.first_person.look_at_z(eye, at);
     }
 
-    pub fn body_to_scene_node<'r>(&'r self, rb: @mut Body) -> Option<&'r ~[@mut SceneNode]> {
-        self.rb2sn.find(&(ptr::to_mut_unsafe_ptr(rb) as uint))
+    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut ~[SceneNode]> {
+        self.rb2sn.find_mut(&(borrow::to_uint(rb.borrow())))
     }
 
-    pub fn color_for_object(&mut self, body: &Body) -> Vec3<f32> {
-        let key = ptr::to_unsafe_ptr(body) as uint;
+    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<f32> {
+        let key = borrow::to_uint(body.borrow());
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }

@@ -1,11 +1,13 @@
 use std::num::Zero;
-use std::ptr;
+use std::borrow;
+use std::rc::Rc;
+use std::cell::RefCell;
 // use std::rand::RngUtil;
 use nalgebra::na::{Translation, Transformation, RotationWithTranslation};
 use nalgebra::na;
 use ncollide::math::{N, LV, AV, M};
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
-use object::Body;
+use object::RigidBody;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
 use resolution::constraint::contact_equation::{CorrectionMode, CorrectionParameters};
@@ -65,7 +67,7 @@ impl AccumulatedImpulseSolver {
                 dt:          N,
                 constraints: &[Constraint],
                 joints:      &[uint],
-                bodies:      &[@mut Body]) {
+                bodies:      &[Rc<RefCell<RigidBody>>]) {
         let num_friction_equations    = (na::dim::<LV>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
@@ -88,11 +90,11 @@ impl AccumulatedImpulseSolver {
 
         for (i, (_, &(ci, imp))) in self.cache.hash().iter().enumerate() {
             match constraints[ci] {
-                RBRB(rb1, rb2, ref c) => {
+                RBRB(ref rb1, ref rb2, ref c) => {
                     contact_equation::fill_second_order_equation(
                         dt.clone(),
                         c,
-                        rb1.to_rigid_body_or_fail(), rb2.to_rigid_body_or_fail(),
+                        &rb1.borrow().borrow(), &rb2.borrow().borrow(),
                         &mut self.restitution_constraints[i],
                         i,
                         self.friction_constraints,
@@ -109,20 +111,22 @@ impl AccumulatedImpulseSolver {
         let mut joint_offset = num_restitution_equations;
         for i in joints.iter() {
             match constraints[*i] {
-                BallInSocket(bis) => {
+                BallInSocket(ref bis) => {
+                    let bbis = bis.borrow().borrow();
                     ball_in_socket_equation::fill_second_order_equation(
                         dt.clone(),
-                        bis,
+                        bbis.get(),
                         self.restitution_constraints.mut_slice_from(joint_offset), // XXX
                         &self.correction
                     );
 
                     joint_offset = joint_offset + na::dim::<LV>();
                 },
-                Fixed(f) => {
+                Fixed(ref f) => {
+                    let bf = f.borrow().borrow();
                     fixed_equation::fill_second_order_equation(
                         dt.clone(),
-                        f,
+                        bf.get(),
                         self.restitution_constraints.mut_slice_from(joint_offset), // XXX
                         &self.correction
                     );
@@ -148,8 +152,9 @@ impl AccumulatedImpulseSolver {
         self.resize_buffers(num_restitution_equations, num_friction_equations);
 
         for b in bodies.iter() {
-            let rb = b.to_mut_rigid_body_or_fail();
-            let i  = rb.index();
+            let mut bb = b.borrow().borrow_mut();
+            let     rb = bb.get();
+            let     i  = rb.index();
 
             let curr_lin_vel = rb.lin_vel();
             let curr_ang_vel = rb.ang_vel();
@@ -210,8 +215,9 @@ impl AccumulatedImpulseSolver {
                 true);
 
             for b in bodies.iter() {
-                let rb = b.to_mut_rigid_body_or_fail();
-                let i  = rb.index();
+                let mut bb = b.borrow().borrow_mut();
+                let rb     = bb.get();
+                let i      = rb.index();
 
                 let translation = self.MJLambda[i].lv * dt;
                 let rotation    = self.MJLambda[i].av * dt;
@@ -239,10 +245,10 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
              */
             for (i, cstr) in constraints.iter().enumerate() {
                 match *cstr {
-                    RBRB(a, b, ref c) => {
+                    RBRB(ref a, ref b, ref c) => {
                         self.cache.insert(i,
-                                          ptr::to_mut_unsafe_ptr(a) as uint,
-                                          ptr::to_mut_unsafe_ptr(b) as uint,
+                                          borrow::to_uint(a.borrow()),
+                                          borrow::to_uint(b.borrow()),
                                           (c.world1 + c.world2) / na::cast::<f32, N>(2.0));
                     },
                     BallInSocket(_) => {
@@ -262,29 +268,45 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
             // of all rigid bodies.
             for c in constraints.iter() {
                 match *c {
-                    RBRB(a, b, _) => {
-                        a.set_index(-2);
-                        b.set_index(-2)
+                    RBRB(ref a, ref b, _) => {
+                        let mut ba = a.borrow().borrow_mut();
+                        let mut bb = b.borrow().borrow_mut();
+                        ba.get().set_index(-2);
+                        bb.get().set_index(-2)
                     },
-                    BallInSocket(bis) => {
-                        match bis.anchor1().body {
-                            Some(b) => b.set_index(-2),
+                    BallInSocket(ref bis) => {
+                        let bbis = bis.borrow().borrow();
+                        match bbis.get().anchor1().body {
+                            Some(ref b) => {
+                                let mut bb = b.borrow().borrow_mut();
+                                bb.get().set_index(-2)
+                            },
                             None    => { }
                         };
 
-                        match bis.anchor2().body {
-                            Some(b) => b.set_index(-2),
+                        match bbis.get().anchor2().body {
+                            Some(ref b) => {
+                                let mut bb = b.borrow().borrow_mut();
+                                bb.get().set_index(-2)
+                            },
                             None    => { }
                         }
                     }
-                    Fixed(f) => { // FIXME: code duplication from BallInSocket
-                        match f.anchor1().body {
-                            Some(b) => b.set_index(-2),
+                    Fixed(ref f) => { // FIXME: code duplication from BallInSocket
+                        let bf = f.borrow().borrow();
+                        match bf.get().anchor1().body {
+                            Some(ref b) => {
+                                let mut bb = b.borrow().borrow_mut();
+                                bb.get().set_index(-2)
+                            },
                             None    => { }
                         };
 
-                        match f.anchor2().body {
-                            Some(b) => b.set_index(-2),
+                        match bf.get().anchor2().body {
+                            Some(ref b) => {
+                                let mut bb = b.borrow().borrow_mut();
+                                bb.get().set_index(-2)
+                            },
                             None    => { }
                         }
                     }
@@ -293,15 +315,16 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
 
             let mut id = 0;
 
-            fn set_body_index(a: @mut Body, bodies: &mut ~[@mut Body], id: &mut int) {
-                if a.index() == -2 {
-                    if a.can_move() {
-                        a.set_index(*id);
-                        bodies.push(a);
+            fn set_body_index(a: &Rc<RefCell<RigidBody>>, bodies: &mut ~[Rc<RefCell<RigidBody>>], id: &mut int) {
+                let mut ba = a.borrow().borrow_mut();
+                if ba.get().index() == -2 {
+                    if ba.get().can_move() {
+                        ba.get().set_index(*id);
+                        bodies.push(a.clone());
                         *id = *id + 1;
                     }
                     else {
-                        a.set_index(-1)
+                        ba.get().set_index(-1)
                     }
                 }
             }
@@ -310,32 +333,34 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
             let mut joints = ~[];
             for (i, c) in constraints.iter().enumerate() {
                 match *c {
-                    RBRB(a, b, _) => {
+                    RBRB(ref a, ref b, _) => {
                         set_body_index(a, &mut bodies, &mut id);
                         set_body_index(b, &mut bodies, &mut id);
                     },
-                    BallInSocket(bis) => {
+                    BallInSocket(ref bis) => {
                         joints.push(i);
-                        match bis.anchor1().body {
-                            Some(b) => set_body_index(b, &mut bodies, &mut id),
-                            None => { }
+                        let bbis = bis.borrow().borrow();
+                        match bbis.get().anchor1().body {
+                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
+                            None        => { }
                         }
 
-                        match bis.anchor2().body {
-                            Some(b) => set_body_index(b, &mut bodies, &mut id),
-                            None => { }
+                        match bbis.get().anchor2().body {
+                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
+                            None        => { }
                         }
                     },
-                    Fixed(f) => { // FIXME: code duplication from BallInSocket
+                    Fixed(ref f) => { // FIXME: code duplication from BallInSocket
                         joints.push(i);
-                        match f.anchor1().body {
-                            Some(b) => set_body_index(b, &mut bodies, &mut id),
-                            None => { }
+                        let bf = f.borrow().borrow();
+                        match bf.get().anchor1().body {
+                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
+                            None        => { }
                         }
 
-                        match f.anchor2().body {
-                            Some(b) => set_body_index(b, &mut bodies, &mut id),
-                            None => { }
+                        match bf.get().anchor2().body {
+                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
+                            None        => { }
                         }
                     }
                 }

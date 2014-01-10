@@ -1,21 +1,23 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use rsfml::graphics::render_window;
 use rsfml::graphics::rectangle_shape::RectangleShape;
 use rsfml::graphics::Color;
 use rsfml::system::vector2;
 use nalgebra::na::{Vec3, Iso2};
 use nalgebra::na;
-use nphysics::object::Body;
+use nphysics::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 
 pub struct Box<'a> {
     priv color: Vec3<u8>,
     priv delta: Iso2<f32>,
-    priv body:  @mut Body,
+    priv body:  Rc<RefCell<RigidBody>>,
     priv gfx:   RectangleShape<'a>
 }
 
 impl<'a> Box<'a> {
-    pub fn new(body:  @mut Body,
+    pub fn new(body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
                rx:    f32,
                ry:    f32,
@@ -40,7 +42,8 @@ impl<'a> Box<'a> {
 
 impl<'a> Box<'a> {
     pub fn update(&mut self) {
-        let body = self.body.to_rigid_body_or_fail();
+        let bbody     = self.body.borrow().borrow();
+        let body      = bbody.get();
         let transform = body.transform_ref() * self.delta;
         let pos = na::translation(&transform);
         let rot = na::rotation(&transform);

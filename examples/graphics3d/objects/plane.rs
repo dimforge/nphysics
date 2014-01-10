@@ -1,16 +1,17 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use kiss3d::window;
 use kiss3d::object::Object;
 use nalgebra::na::Vec3;
-use nphysics::object::Body;
-use engine::SceneNode;
+use nphysics::object::RigidBody;
 
 pub struct Plane {
     priv gfx:  Object,
-    priv body: @mut Body,
+    priv body: Rc<RefCell<RigidBody>>,
 }
 
 impl Plane {
-    pub fn new(body:   @mut Body,
+    pub fn new(body:   Rc<RefCell<RigidBody>>,
                pos:    &Vec3<f32>,
                normal: &Vec3<f32>,
                color:  Vec3<f32>,
@@ -28,20 +29,18 @@ impl Plane {
 
         res
     }
-}
 
-impl SceneNode for Plane {
-    fn select(&mut self) {
+    pub fn select(&mut self) {
     }
 
-    fn unselect(&mut self) {
+    pub fn unselect(&mut self) {
     }
 
-    fn update(&mut self) {
+    pub fn update(&mut self) {
         // FIXME: atm we assume the plane does not move
     }
 
-    fn object<'r>(&'r self) -> &'r Object {
+    pub fn object<'r>(&'r self) -> &'r Object {
         &self.gfx
     }
 }

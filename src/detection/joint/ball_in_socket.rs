@@ -1,7 +1,6 @@
 use nalgebra::na::Transform;
 use ncollide::math::LV;
 use detection::joint::anchor::Anchor;
-use object::{RB, SB};
 
 pub struct BallInSocket {
     priv up_to_date: bool,
@@ -52,11 +51,9 @@ impl BallInSocket {
 
     pub fn anchor1_pos(&self) -> LV {
         match self.anchor1.body {
-            Some(b) => {
-                match *b {
-                    RB(ref rb) => rb.transform_ref().transform(&self.anchor1.position),
-                    SB(_)      => fail!("Not yet implemented.")
-                }
+            Some(ref b) => {
+                let bb = b.borrow().borrow();
+                bb.get().transform_ref().transform(&self.anchor1.position)
             },
             None => self.anchor1.position.clone()
         }
@@ -64,11 +61,9 @@ impl BallInSocket {
 
     pub fn anchor2_pos(&self) -> LV {
         match self.anchor2.body {
-            Some(b) => {
-                match *b {
-                    RB(ref rb) => rb.transform_ref().transform(&self.anchor2.position),
-                    SB(_)      => fail!("Not yet implemented.")
-                }
+            Some(ref b) => {
+                let bb = b.borrow().borrow();
+                bb.get().transform_ref().transform(&self.anchor2.position)
             },
             None => self.anchor2.position.clone()
         }

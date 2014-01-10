@@ -6,19 +6,17 @@ use rsfml::graphics::primitive_type;
 use rsfml::system::vector2::Vector2f;
 use nalgebra::na::Vec2;
 use nalgebra::na;
-use nphysics::world::BodyWorld;
+use nphysics::world::World;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 
 pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window:  &render_window::RenderWindow,
-                  physics: &mut BodyWorld) {
+                  physics: &mut World) {
 
     let mut collisions = ~[];
 
-    for c in physics.world().detectors().iter() {
-        c.interferences(&mut collisions);
-    }
+    physics.interferences(&mut collisions);
 
     for c in collisions.iter() {
         match *c {
@@ -42,19 +40,23 @@ pub fn draw_colls(window:  &render_window::RenderWindow,
                     &(center + c.normal),
                     &Color::new_RGB(0, 0, 255));
             },
-            BallInSocket(bis) => {
-                draw_line(
-                    window,
-                    &bis.anchor1_pos(),
-                    &bis.anchor2_pos(),
-                    &Color::new_RGB(255, 0, 0))
+            BallInSocket(ref bis) => {
+                bis.borrow().with(|bis|
+                    draw_line(
+                        window,
+                        &bis.anchor1_pos(),
+                        &bis.anchor2_pos(),
+                        &Color::new_RGB(255, 0, 0))
+                );
             },
-            Fixed(bis) => {
-                draw_line(
-                    window,
-                    &na::translation(&bis.anchor1_pos()),
-                    &na::translation(&bis.anchor2_pos()),
-                    &Color::new_RGB(255, 0, 0))
+            Fixed(ref bis) => {
+                bis.borrow().with(|bis|
+                    draw_line(
+                        window,
+                        &na::translation(&bis.anchor1_pos()),
+                        &na::translation(&bis.anchor2_pos()),
+                        &Color::new_RGB(255, 0, 0))
+                );
             }
         }
     }

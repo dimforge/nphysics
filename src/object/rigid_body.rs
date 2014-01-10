@@ -1,5 +1,6 @@
 use std::num::Zero;
 use std::rc::Rc;
+use std::cell::RefCell;
 use nalgebra::na::{Transformation, Translation, Rotation};
 use nalgebra::na;
 use nalgebra::na::Transform;
@@ -117,7 +118,7 @@ impl RigidBody {
                                                        restitution: N,
                                                        friction:    N)
                                                        -> RigidBody {
-        RigidBody::new_with_shared_geom(Rc::from_send(~geom as ~Geom),
+        RigidBody::new_with_shared_geom(Rc::new(~geom as ~Geom),
                                         density,
                                         state,
                                         restitution,
@@ -414,5 +415,12 @@ impl Rotation<AV> for RigidBody {
 impl HasBoundingVolume<AABB> for RigidBody {
     fn bounding_volume(&self) -> AABB {
         self.geom.borrow().aabb(&self.local_to_world)
+    }
+}
+
+impl HasBoundingVolume<AABB> for Rc<RefCell<RigidBody>> {
+    fn bounding_volume(&self) -> AABB {
+        let bself = self.borrow().borrow();
+        bself.get().geom().aabb(&bself.get().local_to_world)
     }
 }

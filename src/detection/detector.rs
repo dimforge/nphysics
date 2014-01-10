@@ -1,7 +1,4 @@
-pub trait Detector<O, I> {
-    fn add(&mut self, @mut O);
-    fn remove(&mut self, @mut O);
-    fn update(&mut self);
-    fn interferences(&mut self, &mut ~[I]);
-    fn priority(&self) -> f64;
+pub trait Detector<O, I, BF> {
+    fn update(&mut self, &mut BF);
+    fn interferences(&mut self, &mut ~[I], &mut BF);
 }

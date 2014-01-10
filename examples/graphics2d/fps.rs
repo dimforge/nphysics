@@ -52,11 +52,10 @@ impl<'a> Fps<'a> {
     pub fn draw_registered(&mut self, rw: &render_window::RenderWindow) {
         let elapsed = self.delta;
 
-        self.fps.set_position(
-            &rw.map_pixel_to_coords(
-                &vector2::Vector2i { x: 0, y : 0 },
-                rw.get_view()
-            )
+        let v = rw.get_view();
+
+        v.read(|v|
+            self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, v))
         );
         self.fps.set_string(elapsed.to_str());
         self.fps.draw_in_render_window(rw);

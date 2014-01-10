@@ -7,18 +7,18 @@ use ncollide::math::N;
 use integration::Integrator;
 use detection::detector::Detector;
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
-use object::{Body, RB, SB};
+use object::{RigidBody, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationRequestHandler,
                      CollisionSignalHandler};
 
 struct BodyWithEnergy {
     // NOTE: that is the place to put a `can_be_deactivated` flag if needed…
-    body:   @mut Body,
+    body:   @mut RigidBody,
     energy: N
 }
 
 impl BodyWithEnergy {
-    pub fn new(body: @mut Body, energy: N) -> BodyWithEnergy {
+    pub fn new(body: @mut RigidBody, energy: N) -> BodyWithEnergy {
         BodyWithEnergy {
             body:   body,
             energy: energy
@@ -26,9 +26,8 @@ impl BodyWithEnergy {
     }
 }
 
-// NOTE: this could easily be made generic wrt the Body<...> and wrt Constraint<...>
 pub struct IslandActivationManager {
-    events:         @mut SignalEmiter<Body, Constraint>,
+    events:         @mut SignalEmiter<RigidBody, Constraint>,
     threshold:      N,
     mix_factor:     N,
     bodies:         HashMap<uint, BodyWithEnergy, UintTWHash>,
@@ -38,7 +37,7 @@ pub struct IslandActivationManager {
 }
 
 impl IslandActivationManager {
-    pub fn new(events: @mut SignalEmiter<Body, Constraint>, threshold:  N, mix_factor: N)
+    pub fn new(events: @mut SignalEmiter<RigidBody, Constraint>, threshold:  N, mix_factor: N)
                -> @mut IslandActivationManager {
         assert!(mix_factor >= na::zero() && threshold <= na::one(),
                 "The energy mixing factor must be between 0.0 and 1.0.");
@@ -53,17 +52,17 @@ impl IslandActivationManager {
             collector:      ~[]
         };
 
-        let key = ptr::to_mut_unsafe_ptr(res) as uint;
+        let key = ptr::to_unsafe_ptr(res) as uint;
 
         events.add_body_activation_request_handler(
             key,
-            res as @mut BodyActivationRequestHandler<Body>
+            res as @mut BodyActivationRequestHandler<RigidBody>
         );
 
         // FIXME: instead of sending the activation message right away, maybe it could be more
         // performant to store a list of objects to activate, and perform the activation during the
         // next call to `interferences` ?
-        events.add_collision_handler(key, res as @mut CollisionSignalHandler<Body>);
+        events.add_collision_handler(key, res as @mut CollisionSignalHandler<RigidBody>);
 
         res
     }
@@ -72,28 +71,31 @@ impl IslandActivationManager {
         self.mix_factor = self.threshold.clone();
     }
 
-    fn activate(&mut self, b: @mut Body) -> bool {
+    fn activate(&mut self, b: @mut RigidBody) -> bool {
+        println!(">>> activate");
         if b.can_move() && !b.is_active() {
             b.activate();
             self.add(b);
+            println!("<<< activate (true)");
 
             true
         }
         else {
             // add some virtual energy to the body
             // to ensure it wont fall asleep right after the activation message
-            match self.bodies.find_mut(&(ptr::to_mut_unsafe_ptr(b) as uint)) {
+            match self.bodies.find_mut(&(ptr::to_unsafe_ptr(b) as uint)) {
                 Some(ref mut b) => {
                     b.energy = self.threshold * Cast::from(2.0);
                 },
                 None => { }
             }
+            println!("<<< activate (false)");
 
             false
         }
     }
 
-    fn deactivate(&mut self, b: @mut Body) {
+    fn deactivate(&mut self, b: @mut RigidBody) {
         if b.is_active() {
             b.deactivate();
 
@@ -112,11 +114,11 @@ impl IslandActivationManager {
     }
 }
 
-impl Detector<Body, Constraint>
+impl Detector<RigidBody, Constraint>
 for IslandActivationManager {
-    fn add(&mut self, body: @mut Body) {
+    fn add(&mut self, body: @mut RigidBody) {
         if body.can_move() && body.is_active() {
-            if self.bodies.insert(ptr::to_mut_unsafe_ptr(body) as uint,
+            if self.bodies.insert(ptr::to_unsafe_ptr(body) as uint,
                                   BodyWithEnergy::new(body, self.threshold * Cast::from(2.0))) {
                 self.ufind.push(UFindSet::new(0));
                 self.can_deactivate.push(false);
@@ -127,8 +129,8 @@ for IslandActivationManager {
         }
     }
 
-    fn remove(&mut self, b: @mut Body) {
-        if self.bodies.remove(&(ptr::to_mut_unsafe_ptr(b) as uint)) {
+    fn remove(&mut self, b: @mut RigidBody) {
+        if self.bodies.remove(&(ptr::to_unsafe_ptr(b) as uint)) {
             self.ufind.pop();
             self.can_deactivate.pop();
         }
@@ -390,8 +392,8 @@ fn union(x: uint, y: uint, sets: &mut [UFindSet]) {
      }
 }
 
-impl CollisionSignalHandler<Body> for IslandActivationManager {
-    fn handle_collision_started_signal(&mut self, a: @mut Body, b: @mut Body) {
+impl CollisionSignalHandler<RigidBody> for IslandActivationManager {
+    fn handle_collision_started_signal(&mut self, a: @mut RigidBody, b: @mut RigidBody) {
         if self.activate(a) {
             self.events.emit_body_activated(a, &mut self.collector);
             self.collector.clear();
@@ -402,7 +404,7 @@ impl CollisionSignalHandler<Body> for IslandActivationManager {
         }
     }
 
-    fn handle_collision_ended_signal(&mut self, a: @mut Body, b: @mut Body) {
+    fn handle_collision_ended_signal(&mut self, a: @mut RigidBody, b: @mut RigidBody) {
         if self.activate(a) {
             self.events.emit_body_activated(a, &mut self.collector);
             self.collector.clear();
@@ -414,16 +416,16 @@ impl CollisionSignalHandler<Body> for IslandActivationManager {
     }
 }
 
-impl BodyActivationRequestHandler<Body>
+impl BodyActivationRequestHandler<RigidBody>
 for IslandActivationManager {
-    fn handle_body_activation_request(&mut self, b: @mut Body) {
+    fn handle_body_activation_request(&mut self, b: @mut RigidBody) {
         if self.activate(b) {
             self.events.emit_body_activated(b, &mut self.collector);
             self.collector.clear();
-        };
+        }
     }
 
-    fn handle_body_deactivation_request(&mut self, b: @mut Body) {
-        self.deactivate(b)
+    fn handle_body_deactivation_request(&mut self, b: @mut RigidBody) {
+        self.deactivate(b);
     }
 }
