@@ -19,6 +19,4 @@ pub mod world;
 
 pub mod object;
 
-pub mod utils {
-    pub mod ref_to;
-}
+pub mod utils;

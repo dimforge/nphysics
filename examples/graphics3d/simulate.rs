@@ -21,19 +21,19 @@ use nphysics::world::World;
 use engine::GraphicsManager;
 
 fn usage(exe_name: &str) {
-    println("Usage: " + exe_name);
-    println("The following keyboard commands are supported:");
-    println("    t      - pause/continue the simulation.");
-    println("    s      - pause then execute only one simulation step.");
-    println("    r      - show/hide a ray centered on the camera, directed toward the camera front axis.");
-    println("    1      - launch a ball.");
-    println("    2      - launch a cube.");
-    println("    3      - launch a fast cube using continuous collision detection.");
-    println("    TAB    - switch camera mode (first-person or arc-ball).");
-    println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
-    println("    SHIFT + click - remove an object.");
-    println("    arrows - move around when in first-person camera mode.");
-    println("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
+    println!("Usage: {:s}", exe_name);
+    println!("The following keyboard commands are supported:");
+    println!("    t      - pause/continue the simulation.");
+    println!("    s      - pause then execute only one simulation step.");
+    println!("    r      - show/hide a ray centered on the camera, directed toward the camera front axis.");
+    println!("    1      - launch a ball.");
+    println!("    2      - launch a cube.");
+    println!("    3      - launch a fast cube using continuous collision detection.");
+    println!("    TAB    - switch camera mode (first-person or arc-ball).");
+    println!("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
+    println!("    SHIFT + click - remove an object.");
+    println!("    arrows - move around when in first-person camera mode.");
+    println!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
 pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
@@ -298,10 +298,10 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                         rb.set_lin_vel(front * 400.0f32);
 
                         let body = Rc::new(RefCell::new(rb));
-                        physics.add_body(body);
-                        fail!("FIXME: review ccd");
+                        physics.add_body(body.clone());
                         // physics.add_ccd_to(body, 0.4, 1.0);
                         graphics.add(w, body);
+                        fail!("FIXME: review ccd");
 
                         true
                     },
@@ -365,7 +365,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
             if running != Stop {
                 let dt = (time::precise_time_s() - before);
-                println(dt.to_str() + "sec (" + (1.0 / dt).to_str() + " fps)");
+                println!("{} sec ({} fps)", dt, (1.0 / dt));
             }
         })
     }

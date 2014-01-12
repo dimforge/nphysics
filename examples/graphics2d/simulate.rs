@@ -16,12 +16,12 @@ use engine::GraphicsManager;
 use draw_helper;
 
 fn usage(exe_name: &str) {
-    println("Usage: " + exe_name);
-    println("The following keyboard commands are supported:");
-    println("    t     - pause/continue the simulation.");
-    println("    s     - pause then execute only one simulation step.");
-    println("    space - display/hide contacts.");
-    println("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
+    println!("Usage: {:s}", exe_name);
+    println!("The following keyboard commands are supported:");
+    println!("    t     - pause/continue the simulation.");
+    println!("    s     - pause then execute only one simulation step.");
+    println!("    space - display/hide contacts.");
+    println!("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
 }
 
 pub fn simulate(builder: |&mut GraphicsManager| -> World) {

@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
+use detection::activation_manager::ActivationManager;
 use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
@@ -20,41 +21,71 @@ impl JointManager {
         }
     }
 
-    pub fn add_ball_in_socket(&mut self, joint: Rc<RefCell<BallInSocket>>) {
-        self.joints.insert(borrow::to_uint(joint.borrow()), BallInSocket(joint));
+    pub fn add_ball_in_socket(&mut self,
+                              joint:      Rc<RefCell<BallInSocket>>,
+                              activation: &mut ActivationManager) {
+        if self.joints.insert(borrow::to_uint(joint.borrow()), BallInSocket(joint.clone())) {
+            let bj = joint.borrow().borrow();
+            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+        }
     }
 
-    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>) {
-        self.joints.remove(&borrow::to_uint(joint.borrow()));
+    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>, activation: &mut ActivationManager) {
+        if self.joints.remove(&borrow::to_uint(joint.borrow())) {
+            let bj = joint.borrow().borrow();
+            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+        }
     }
 
-    pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>) {
-        self.joints.insert(borrow::to_uint(joint.borrow()), Fixed(joint));
+    pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
+        if self.joints.insert(borrow::to_uint(joint.borrow()), Fixed(joint.clone())) {
+            let bj = joint.borrow().borrow();
+            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+        }
     }
 
-    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>) {
-        self.joints.remove(&borrow::to_uint(joint.borrow()));
+    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
+        if self.joints.remove(&borrow::to_uint(joint.borrow())) {
+            let bj = joint.borrow().borrow();
+            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+        }
     }
-}
 
-impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
-
-    /* XXX: object removal related code
-    fn remove(&mut self, _: @mut RigidBody) {
+    pub fn remove(&mut self, b: &Rc<RefCell<RigidBody>>, activation: &mut ActivationManager) {
         let mut keys_to_remove = ~[];
 
         // Remove any joint attached to this body
         // NOTE: this could be improved keeping track of the list of bodies having a joint. This
         // would avoid traversing the joint list to find that a body does not have any joint.
         for elts in self.joints.elements().iter() {
+            fn try_remove(b:              &Rc<RefCell<RigidBody>>,
+                          ref_b:          &Rc<RefCell<RigidBody>>,
+                          keys_to_remove: &mut ~[uint],
+                          activation:     &mut ActivationManager) {
+                if borrow::ref_eq(b.borrow(), ref_b.borrow()) {
+                    keys_to_remove.push(borrow::to_uint(b.borrow()));
+                }
+                else {
+                    activation.will_activate(b);
+                }
+            }
+
             match elts.value {
-                BallInSocket(bis) => {
-                    bis.anchor2().body.map(|b| keys_to_remove.push(borrow::to_uint(b.borrow())));
-                    bis.anchor1().body.map(|b| keys_to_remove.push(borrow::to_uint(b.borrow())));
+                BallInSocket(ref bis) => {
+                    let bbis = bis.borrow().borrow();
+
+                    bbis.get().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
+                    bbis.get().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
                 },
-                Fixed(f) => {
-                    f.anchor2().body.map(|b| keys_to_remove.push(borrow::to_uint(b.borrow())));
-                    f.anchor1().body.map(|b| keys_to_remove.push(borrow::to_uint(b.borrow())));
+                Fixed(ref f) => {
+                    let bf = f.borrow().borrow();
+
+                    bf.get().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
+                    bf.get().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
                 }
                 RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
             }
@@ -64,12 +95,10 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
             self.joints.remove(k);
         }
     }
-    */
+}
 
-    fn update(&mut self, _: &mut BF) {
-    }
-
-    fn interferences(&mut self, constraint: &mut ~[Constraint], _: &mut BF) {
+impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
+    fn update(&mut self, _: &mut BF, activation: &mut ActivationManager) {
         for joint in self.joints.elements().iter() {
             match joint.value {
                 BallInSocket(ref bis) => {
@@ -78,11 +107,11 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bbis.get().update();
                         match bbis.get().anchor1().body {
-                            Some(ref b) => { }, // XXX: self.events.request_body_activation(b),
+                            Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
                         match bbis.get().anchor2().body {
-                            Some(ref b) => { }, // XXX: self.events.request_body_activation(b),
+                            Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
                     }
@@ -93,18 +122,23 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bf.get().update();
                         match bf.get().anchor1().body {
-                            Some(ref b) => { }, // XXX: self.events.request_body_activation(b),
+                            Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
                         match bf.get().anchor2().body {
-                            Some(ref b) => { }, // XXX: self.events.request_body_activation(b),
+                            Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
                     }
                 },
-                RBRB(_, _ , _) => { }
+                RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
+ 
             }
+        }
+    }
 
+    fn interferences(&mut self, constraint: &mut ~[Constraint], _: &mut BF) {
+        for joint in self.joints.elements().iter() {
             constraint.push(joint.value.clone())
         }
     }

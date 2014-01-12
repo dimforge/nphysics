@@ -10,7 +10,7 @@ use ncollide::math::{N, LV, AV};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
-use detection::{BodiesBodies, BodyBodyDispatcher};
+use detection::{BodiesBodies, BodyBodyDispatcher, ActivationManager};
 use detection::detector::Detector;
 use detection::constraint::Constraint;
 use detection::joint::joint_manager::JointManager;
@@ -28,7 +28,7 @@ pub struct World {
     broad_phase: BF,
     integrator:  BodySmpEulerIntegrator,
     detector:    BodiesBodies<BF>,
-    // sleep:      IslandActivationManager,
+    sleep:       ActivationManager,
     // ccd:        SweptBallMotionClamping<BF>,
     joints:      JointManager,
     solver:      AccumulatedImpulseSolver,
@@ -57,11 +57,12 @@ impl World {
 
         // CCD handler
         // XXX let ccd = SweptBallMotionClamping::new(broad_phase, true);
+
         // Collision detector
         let detector = BodiesBodies::new(geom_dispatcher);
 
         // Deactivation
-        // XXX let sleep = IslandActivationManager::new(na::cast(1.0), na::cast(0.01));
+        let sleep = ActivationManager::new(na::cast(1.0), na::cast(0.01));
 
         // Joints
         let joints = JointManager::new();
@@ -83,7 +84,7 @@ impl World {
             forces:      forces,
             integrator:  integrator,
             detector:    detector,
-            // sleep:    sleep,
+            sleep:       sleep,
             // ccd:      ccd,
             joints:      joints,
             solver:      solver,
@@ -101,8 +102,9 @@ impl World {
 
         self.broad_phase.update();
 
-        self.detector.update(&mut self.broad_phase);
-        self.joints.update(&mut self.broad_phase);
+        self.detector.update(&mut self.broad_phase, &mut self.sleep);
+        self.joints.update(&mut self.broad_phase, &mut self.sleep);
+        self.sleep.update(&mut self.broad_phase, &mut self.bodies);
 
         self.detector.interferences(&mut self.collector, &mut self.broad_phase);
         self.joints.interferences(&mut self.collector, &mut self.broad_phase);
@@ -120,6 +122,9 @@ impl World {
     pub fn remove_body(&mut self, b: &Rc<RefCell<RigidBody>>) {
         self.bodies.remove(&borrow::to_uint(b.borrow()));
         self.broad_phase.remove(b);
+        self.detector.remove(b, &mut self.broad_phase, &mut self.sleep);
+        self.joints.remove(b, &mut self.sleep);
+        b.borrow().with_mut(|b| b.delete());
     }
 
     pub fn forces_generator<'a>(&'a mut self) -> &'a mut BodyForceGenerator {
@@ -137,10 +142,6 @@ impl World {
     pub fn broad_phase<'a>(&'a mut self) -> &'a mut BF {
         &'a mut self.broad_phase
     }
-
-    // pub fn sleep_manager<'a>(&'a mut self) -> &'a mut IslandActivationManager {
-    //     self.sleep
-    // }
 
     // pub fn ccd_manager<'a>(&'a mut self) -> &'a mut SweptBallMotionClamping<BF> {
     //     self.ccd
@@ -184,19 +185,19 @@ impl World {
     */
 
     pub fn add_ball_in_socket(&mut self, joint: Rc<RefCell<BallInSocket>>) {
-        self.joints.add_ball_in_socket(joint)
+        self.joints.add_ball_in_socket(joint, &mut self.sleep)
     }
 
     pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>) {
-        self.joints.remove_ball_in_socket(joint)
+        self.joints.remove_ball_in_socket(joint, &mut self.sleep)
     }
 
     pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>) {
-        self.joints.add_fixed(joint)
+        self.joints.add_fixed(joint, &mut self.sleep)
     }
 
     pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>) {
-        self.joints.remove_fixed(joint)
+        self.joints.remove_fixed(joint, &mut self.sleep)
     }
 
     pub fn interferences(&mut self, out: &mut ~[Constraint]) {

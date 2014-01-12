@@ -15,6 +15,23 @@ pub enum RigidBodyState {
     Dynamic
 }
 
+#[deriving(ToStr, Eq, Clone, Encodable, Decodable)]
+pub enum ActivationState {
+    Active(N),
+    Inactive,
+    Deleted
+}
+
+impl ActivationState {
+    pub fn energy(&self) -> N {
+        match *self {
+            Active(n) => n.clone(),
+            Inactive  => na::zero(),
+            Deleted   => na::zero()
+        }
+    }
+}
+
 pub struct RigidBody {
     priv state:                RigidBodyState,
     priv geom:                 Rc<~Geom>,
@@ -31,7 +48,7 @@ pub struct RigidBody {
     priv restitution:          N,
     priv friction:             N,
     priv index:                int,
-    priv active:               bool
+    priv activation_state:     ActivationState
 }
 
 impl Clone for RigidBody {
@@ -52,64 +69,86 @@ impl Clone for RigidBody {
             restitution:       self.restitution.clone(),
             friction:          self.friction.clone(),
             index:             self.index.clone(),
-            active:            self.active.clone()
+            activation_state:  self.activation_state.clone()
         }
     }
 }
 
 
 impl RigidBody {
+    #[inline]
     pub fn deactivate(&mut self) {
-        self.lin_vel = na::zero();
-        self.ang_vel = na::zero();
-        self.active  = false;
+        self.lin_vel          = na::zero();
+        self.ang_vel          = na::zero();
+        self.activation_state = Inactive;
     }
 
+    #[inline]
+    pub fn delete(&mut self) {
+        self.activation_state = Deleted;
+    }
+
+    #[inline]
     fn update_inertia_tensor(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
         self.inv_inertia = self.ls_inv_inertia.to_world_space(&self.local_to_world);
     }
 
+    #[inline]
     fn update_center_of_mass(&mut self) {
         self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
     }
 
+    #[inline]
     pub fn transform_ref<'r>(&'r self) -> &'r M {
         &'r self.local_to_world
     }
 
+    #[inline]
     pub fn geom<'r>(&'r self) -> &'r Geom {
         let res: &'r Geom = *self.geom.borrow();
 
         res
     }
 
+    #[inline]
     pub fn index(&self) -> int {
         self.index
     }
 
+    #[inline]
     pub fn set_index(&mut self, id: int) {
         self.index = id
     }
 
+    #[inline]
     pub fn center_of_mass<'r>(&'r self) -> &'r LV {
         &'r self.center_of_mass
     }
 
+    #[inline]
     pub fn restitution(&self) -> N {
         self.restitution.clone()
     }
 
+    #[inline]
     pub fn friction(&self) -> N {
         self.friction.clone()
     }
 
+    #[inline]
     pub fn is_active(&self) -> bool {
-        self.active
+        self.activation_state != Inactive
     }
 
-    pub fn activate(&mut self) {
-        self.active = true;
+    #[inline]
+    pub fn activation_state<'a>(&'a self) -> &'a ActivationState {
+        &'a self.activation_state
+    }
+
+    #[inline]
+    pub fn activate(&mut self, energy: N) {
+        self.activation_state = Active(energy);
     }
 
     pub fn new<G: 'static + Send + Geom>(geom:        G,
@@ -131,9 +170,9 @@ impl RigidBody {
                                 restitution: N,
                                 friction:    N)
                                 -> RigidBody {
-        let (inv_mass, center_of_mass, inv_inertia) =
+        let (inv_mass, center_of_mass, inv_inertia, active) =
             match state {
-                Static    => (na::zero(), na::zero(), na::zero()),
+                Static    => (na::zero(), na::zero(), na::zero(), Inactive),
                 Dynamic   => {
                     if density.is_zero() {
                         fail!("A dynamic body must not have a zero density.")
@@ -156,7 +195,8 @@ impl RigidBody {
                     (
                         _1 / m,
                         c,
-                        ii_wrt_com
+                        ii_wrt_com,
+                        Active(Bounded::max_value())
                     )
                 },
             };
@@ -178,7 +218,7 @@ impl RigidBody {
                 friction:             friction,
                 restitution:          restitution,
                 index:                0,
-                active:               true
+                activation_state:     active
             };
 
         res.update_center_of_mass();

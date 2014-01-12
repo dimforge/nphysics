@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::borrow;
 use std::rc::Rc;
-use ncollide::bounding_volume::AABB;
+use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
 use ncollide::contact::Contact;
@@ -10,6 +10,7 @@ use ncollide::math::N;
 use object::RigidBody;
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
+use detection::activation_manager::ActivationManager;
 
 pub struct BodyBodyDispatcher {
     geom_dispatcher: Rc<GeomGeomDispatcher>
@@ -118,37 +119,33 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
     }
 }
 
-impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector> +
-         BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>>
-Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
-    // XXX: deactivation/removal
-    /*
-    fn remove(&mut self, o: @mut RigidBody) {
-        if !o.is_active() {
+impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF> {
+    pub fn remove(&mut self,
+                  o:           &Rc<RefCell<RigidBody>>,
+                  broad_phase: &mut BF,
+                  activation:  &mut ActivationManager) {
+        let bo = o.borrow().borrow();
+
+        if !bo.get().is_active() {
             // wake up everybody in contact
-            let aabb              = o.bounding_volume();
+            let aabb              = bo.get().bounding_volume();
             let mut interferences = ~[];
 
-            // FIXME: change that to a collision lost event
-            self.broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
+            broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
 
             for i in interferences.iter() {
-                if !managed::mut_ptr_eq(o, *i) && !i.is_active() && i.can_move() {
-                    println!(">>> request");
-                    self.signals.request_body_activation(*i);
-                    println!("<<< request");
+                if !borrow::ref_eq(i.borrow(), o.borrow()) && i.borrow().with(|i| !i.is_active() && i.can_move()) {
+                    activation.will_activate(i);
                 }
             }
         }
-
-        // remove
-        if self.update_bf {
-            self.broad_phase.remove(o);
-        }
     }
-    */
+}
 
-    fn update(&mut self, broad_phase: &mut BF) {
+impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector> +
+         BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>>
+Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
+    fn update(&mut self, broad_phase: &mut BF, activation: &mut ActivationManager) {
         broad_phase.for_each_pair_mut(|b1, b2, cd| {
             let ncols = cd.num_colls();
 
@@ -168,21 +165,17 @@ Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
             let new_ncols = cd.num_colls();
 
             if ncols == 0 && new_ncols != 0 {
-                // XXX: collision created
-                // fail!("emit collision started");
-                // self.signals.emit_collision_started(b1, b2);
+                activation.will_activate(b1);
+                activation.will_activate(b2);
             }
             else if ncols != 0 && new_ncols == 0 {
-                // XXX: collision lost
-                // fail!("emit collision ended");
-                // self.signals.emit_collision_ended(b1, b2);
+                activation.will_activate(b1);
+                activation.will_activate(b2);
             }
         })
     }
 
-    fn interferences(&mut self,
-                     out:         &mut ~[Constraint],
-                     broad_phase: &mut BF) {
+    fn interferences(&mut self, out: &mut ~[Constraint], broad_phase: &mut BF) {
         broad_phase.for_each_pair_mut(|b1, b2, cd| {
             cd.colls(&mut self.contacts_collector);
 
