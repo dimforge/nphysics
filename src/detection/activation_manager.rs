@@ -18,7 +18,8 @@ pub struct ActivationManager {
     ufind:          ~[UFindSet],
     can_deactivate: ~[bool],
     collector:      ~[Constraint],
-    to_activate:    ~[Rc<RefCell<RigidBody>>]
+    to_activate:    ~[Rc<RefCell<RigidBody>>],
+    to_deactivate:  ~[uint]
 }
 
 impl ActivationManager {
@@ -32,7 +33,8 @@ impl ActivationManager {
             ufind:          ~[],
             can_deactivate: ~[],
             collector:      ~[],
-            to_activate:    ~[]
+            to_activate:    ~[],
+            to_deactivate:  ~[]
         }
     }
 
@@ -117,28 +119,25 @@ impl ActivationManager {
             let root = union_find::find(i, self.ufind);
             self.can_deactivate[root] = self.can_deactivate[root] &&
                                         bodies.elements()[i].value.borrow().with(|b| b.activation_state().energy() < self.threshold)
- 
         }
 
         // deactivate islands having only deactivable objects
-        let mut to_deactivate = ~[]; // FIXME: avoid allocation at each update
-
         for i in range(0u, self.ufind.len()) {
             let root = union_find::find(i, self.ufind);
 
             if self.can_deactivate[root] { // everybody in this set can be deactivacted
-                let b = bodies.elements()[i].value.clone();
+                let b = &bodies.elements()[i].value;
                 b.borrow().with_mut(|b| b.deactivate());
-                to_deactivate.push(b.clone());
+                broad_phase.deactivate(b);
+                self.to_deactivate.push(borrow::to_uint(b.borrow()));
             }
         }
 
-        // … so we can really deactivate objects now
-        for o in to_deactivate.iter() {
-            o.borrow().with_mut(|o| o.deactivate());
-            broad_phase.deactivate(o);
-            bodies.remove(&borrow::to_uint(o.borrow()));
+        for b in self.to_deactivate.iter() {
+            bodies.remove(b);
         }
+
+        self.to_deactivate.clear();
 
         /*
          *
