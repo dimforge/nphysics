@@ -1,18 +1,25 @@
+//! The union find algorithm.
+
+/// An element used by the union-find algorithm.
 #[deriving(Clone)]
-pub struct UFindSet {
+pub struct UnionFindSet {
+    /// The parent of this union find element.
     parent: uint,
+    /// The rank of this union find element.
     rank:   uint
 }
 
-impl UFindSet {
+impl UnionFindSet {
+    /// Creates a new `UnionFindSet`.
     #[inline]
-    pub fn new(key: uint) -> UFindSet {
-        UFindSet {
+    pub fn new(key: uint) -> UnionFindSet {
+        UnionFindSet {
             parent: key,
             rank:   0
         }
     }
 
+    /// Reinitialize this set.
     #[inline]
     pub fn reinit(&mut self, key: uint) {
         self.parent = key;
@@ -20,7 +27,8 @@ impl UFindSet {
     }
 }
 
-pub fn find(x: uint, sets: &mut [UFindSet]) -> uint {
+/// Performs the `find` part of the union-find algorithm.
+pub fn find(x: uint, sets: &mut [UnionFindSet]) -> uint {
     if sets[x].parent != x {
         sets[x].parent = find(sets[x].parent, sets);
     }
@@ -28,7 +36,8 @@ pub fn find(x: uint, sets: &mut [UFindSet]) -> uint {
     sets[x].parent
 }
  
-pub fn union(x: uint, y: uint, sets: &mut [UFindSet]) {
+/// Performs the `union` part of the union-find algorithm.
+pub fn union(x: uint, y: uint, sets: &mut [UnionFindSet]) {
      let x_root = find(x, sets);
      let y_root = find(y, sets);
 

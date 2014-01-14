@@ -32,6 +32,9 @@ impl ActivationState {
     }
 }
 
+/// The rigid body structure.
+///
+/// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     priv state:                RigidBodyState,
     priv geom:                 Rc<~Geom>,
@@ -76,6 +79,7 @@ impl Clone for RigidBody {
 
 
 impl RigidBody {
+    #[doc(hidden)]
     #[inline]
     pub fn deactivate(&mut self) {
         self.lin_vel          = na::zero();
@@ -83,27 +87,32 @@ impl RigidBody {
         self.activation_state = Inactive;
     }
 
+    #[doc(hidden)]
     #[inline]
     pub fn delete(&mut self) {
         self.activation_state = Deleted;
     }
 
+    /// Updates the inertia tensor of this rigid body.
     #[inline]
     fn update_inertia_tensor(&mut self) {
         // FIXME: the inverse inertia should be computed lazily (use a @mut ?).
         self.inv_inertia = self.ls_inv_inertia.to_world_space(&self.local_to_world);
     }
 
+    /// Updates the center of mass of this rigid body.
     #[inline]
     fn update_center_of_mass(&mut self) {
         self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
     }
 
+    /// Gets a reference to this body's transform.
     #[inline]
     pub fn transform_ref<'r>(&'r self) -> &'r M {
         &'r self.local_to_world
     }
 
+    /// Gets a reference to this body's geometry.
     #[inline]
     pub fn geom<'r>(&'r self) -> &'r Geom {
         let res: &'r Geom = *self.geom.borrow();
@@ -111,52 +120,71 @@ impl RigidBody {
         res
     }
 
+    #[doc(hidden)]
     #[inline]
     pub fn index(&self) -> int {
         self.index
     }
 
+    #[doc(hidden)]
     #[inline]
     pub fn set_index(&mut self, id: int) {
         self.index = id
     }
 
+    /// Gets a reference to this body's center of mass.
     #[inline]
     pub fn center_of_mass<'r>(&'r self) -> &'r LV {
         &'r self.center_of_mass
     }
 
+    /// Gets this body's restitution coefficent.
+    ///
+    /// The actual restitution coefficient of a contact is computed averaging the two bodies
+    /// friction coefficient.
     #[inline]
     pub fn restitution(&self) -> N {
         self.restitution.clone()
     }
 
+    /// Gets this body's friction coefficient.
+    ///
+    /// The actual friction coefficient of a contact is computed averaging the two bodies friction
+    /// coefficient.
     #[inline]
     pub fn friction(&self) -> N {
         self.friction.clone()
     }
 
+    /// Indicates whether or not this rigid body is active.
+    ///
+    /// An inactive rigid body is a body that did not move for some time. It is not longer
+    /// simulated by the physics engine as long as no other object touches it. It is automatically
+    /// activated by the physics engine.
     #[inline]
     pub fn is_active(&self) -> bool {
         self.activation_state != Inactive
     }
 
+    #[doc(hidden)]
     #[inline]
     pub fn activation_state<'a>(&'a self) -> &'a ActivationState {
         &'a self.activation_state
     }
 
+    #[doc(hidden)]
     #[inline]
     pub fn activate(&mut self, energy: N) {
         self.activation_state = Active(energy);
     }
 
+    /// Creates a new rigid body.
     pub fn new<G: 'static + Send + Geom>(geom:        G,
-                                                       density:     N,
-                                                       state:       RigidBodyState,
-                                                       restitution: N,
-                                                       friction:    N)
-                                                       -> RigidBody {
+                                         density:     N,
+                                         state:       RigidBodyState,
+                                         restitution: N,
+                                         friction:    N)
+                                         -> RigidBody {
         RigidBody::new_with_shared_geom(Rc::new(~geom as ~Geom),
                                         density,
                                         state,
@@ -164,6 +192,9 @@ impl RigidBody {
                                         friction)
     }
 
+    /// Creates a new rigid body with a given geometry.
+    ///
+    /// Use this if the geometry is shared by multiple rigid bodies.
     pub fn new_with_shared_geom(geom:        Rc<~Geom>,
                                 density:     N,
                                 state:       RigidBodyState,
@@ -227,6 +258,7 @@ impl RigidBody {
         res
     }
 
+    /// Indicates whether this rigid body is static or dynamic.
     #[inline]
     pub fn can_move(&self) -> bool {
         match self.state {
@@ -235,58 +267,79 @@ impl RigidBody {
         }
     }
 
+    /// Get the linear velocity of this rigid body.
     #[inline]
     pub fn lin_vel(&self) -> LV {
         self.lin_vel.clone()
     }
 
+    /// Sets the linear velocity of this rigid body.
     #[inline]
     pub fn set_lin_vel(&mut self, lv: LV) {
         self.lin_vel = lv
     }
 
+    /// Gets the linear acceleration of this rigid body.
     #[inline]
     pub fn lin_acc(&self) -> LV {
         self.lin_acc.clone()
     }
 
+    /// Sets the linear acceleration of this rigid body.
+    ///
+    /// Note that this might be reset by the physics engine automatically.
     #[inline]
     pub fn set_lin_acc(&mut self, lf: LV) {
         self.lin_acc = lf
     }
 
+    /// Gets the angular velocity of this rigid body.
     #[inline]
     pub fn ang_vel(&self) -> AV {
         self.ang_vel.clone()
     }
+
+    /// Sets the angular velocity of this rigid body.
     #[inline]
     pub fn set_ang_vel(&mut self, av: AV) {
         self.ang_vel = av
     }
 
+    /// Gets the angular acceleration of this rigid body.
     #[inline]
     pub fn ang_acc(&self) -> AV {
         self.ang_acc.clone()
     }
+
+    /// Sets the angular acceleration of this rigid body.
+    ///
+    /// Note that this might be reset by the physics engine automatically.
     #[inline]
     pub fn set_ang_acc(&mut self, af: AV) {
         self.ang_acc = af
     }
 
+    /// Gets the inverse mass of this rigid body.
     #[inline]
     pub fn inv_mass(&self) -> N {
         self.inv_mass.clone()
     }
+
+    /// Sets the inverse mass of this rigid body.
     #[inline]
     pub fn set_inv_mass(&mut self, m: N) {
         self.inv_mass = m
     }
 
+    /// Gets the inverse inertia tensor of this rigid body.
     #[inline]
     pub fn inv_inertia<'r>(&'r self) -> &'r II {
         &'r self.inv_inertia
     }
 
+    /// Sets the inverse inertia tensor of this rigid body.
+    ///
+    /// Not that this is reset at every update by the physics engine.
     #[inline]
     pub fn set_inv_inertia(&mut self, ii: II) {
         self.inv_inertia = ii

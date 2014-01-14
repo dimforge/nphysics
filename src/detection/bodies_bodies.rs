@@ -1,3 +1,5 @@
+//! Collision detector between rigid bodies.
+
 use std::cell::RefCell;
 use std::borrow;
 use std::rc::Rc;
@@ -12,11 +14,15 @@ use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use detection::activation_manager::ActivationManager;
 
+/// Collision detector dispatcher for rigid bodies.
+///
+/// This is meat to be used as the broad phase collision dispatcher.
 pub struct BodyBodyDispatcher {
-    geom_dispatcher: Rc<GeomGeomDispatcher>
+    priv geom_dispatcher: Rc<GeomGeomDispatcher>
 }
 
 impl BodyBodyDispatcher {
+    /// Creates a new `BodyBodyDispatcher` given a dispatcher for pairs of rigid bodies' geometry.
     pub fn new(d: Rc<GeomGeomDispatcher>) -> BodyBodyDispatcher {
         BodyBodyDispatcher {
             geom_dispatcher: d
@@ -46,16 +52,18 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisi
 }
 
 
+/// Collision detector between rigid bodies.
 pub struct BodiesBodies<BF> {
-    geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
-    contacts_collector:    ~[Contact],
+    priv geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
+    priv contacts_collector:    ~[Contact],
     // FIXME: this is an useless buffer which accumulate the result of bodies activation.
     // This must exist since there is no way to send an activation message without an accumulation
     // list…
-    constraints_collector: ~[Constraint],
+    priv constraints_collector: ~[Constraint],
 }
 
 impl<BF: 'static + InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {
+    /// Creates a new `BodiesBodies` collision detector.
     pub fn new(dispatcher: Rc<GeomGeomDispatcher>) -> BodiesBodies<BF> {
         BodiesBodies {
             geom_geom_dispatcher:  dispatcher,
@@ -63,37 +71,10 @@ impl<BF: 'static + InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomColl
             constraints_collector: ~[],
         }
     }
-
-    /* XXX: activation/deactivation
-    fn activate(&mut self, body: @mut RigidBody, out:  &mut ~[Constraint]) {
-        self.broad_phase.activate(body, |b1, b2, cd| {
-            let rb1 = b1.to_rigid_body_or_fail();
-            let rb2 = b2.to_rigid_body_or_fail();
-
-            // FIXME: is the update needed? Or do we have enough guarantees to avoid it?
-            cd.update(self.geom_geom_dispatcher.borrow(),
-                      rb1.transform_ref(),
-                      rb1.geom(),
-                      rb2.transform_ref(),
-                      rb2.geom());
-
-            cd.colls(&mut self.contacts_collector);
-
-            for c in self.contacts_collector.iter() {
-                out.push(RBRB(b1, b2, c.clone()))
-            }
-
-            self.contacts_collector.clear()
-        })
-    }
-
-    fn deactivate(&mut self, body: @mut RigidBody) {
-        self.broad_phase.deactivate(body)
-    }
-    */
 }
 
 impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
+    /// Computes the interferences between every rigid bodies of a given broad phase, and a ray.
     pub fn interferences_with_ray(&mut self,
                                   ray:         &Ray,
                                   broad_phase: &mut BF,
@@ -120,6 +101,9 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
 }
 
 impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF> {
+    /// Removes a rigid body from this detector.
+    ///
+    /// This must be called whenever a rigid body is removed from the physics world.
     pub fn remove(&mut self,
                   o:           &Rc<RefCell<RigidBody>>,
                   broad_phase: &mut BF,

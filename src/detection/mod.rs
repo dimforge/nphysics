@@ -1,20 +1,25 @@
-pub use detection::collision::bodies_bodies::BodiesBodies;
-pub use detection::collision::bodies_bodies::BodyBodyDispatcher;
-pub use detection::joint::joint_manager::JointManager;
+//! Collision detection and joints.
+
+pub use detection::detector::Detector;
+pub use detection::bodies_bodies::{BodiesBodies, BodyBodyDispatcher};
 pub use detection::activation_manager::ActivationManager;
 
 pub mod constraint;
-pub mod detector;
 
-pub mod collision {
-    pub mod bodies_bodies;
-}
+mod detector;
+mod bodies_bodies;
 
+/// Joint handling.
 pub mod joint {
-    pub mod joint_manager;
-    pub mod anchor;
-    pub mod ball_in_socket;
-    pub mod fixed;
+    pub use detection::joint::anchor::Anchor;
+    pub use detection::joint::ball_in_socket::BallInSocket;
+    pub use detection::joint::fixed::Fixed;
+    pub use detection::joint::joint_manager::JointManager;
+
+    mod joint_manager;
+    mod anchor;
+    mod ball_in_socket;
+    mod fixed;
 }
 
-pub mod activation_manager;
+mod activation_manager;

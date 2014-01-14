@@ -1,3 +1,5 @@
+//! The physics world.
+
 pub use world::world::World;
 
-pub mod world;
+mod world;

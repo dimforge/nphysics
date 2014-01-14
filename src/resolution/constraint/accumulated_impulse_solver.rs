@@ -19,6 +19,7 @@ use resolution::constraint::projected_gauss_seidel_solver::Velocities;
 use resolution::constraint::impulse_cache::ImpulseCache;
 
 
+/// Constraint solver using the projected gauss seidel algorithm and warm-starting.
 pub struct AccumulatedImpulseSolver {
     priv correction:              CorrectionParameters,
     priv cache:                   ImpulseCache,
@@ -30,6 +31,7 @@ pub struct AccumulatedImpulseSolver {
 }
 
 impl AccumulatedImpulseSolver {
+    /// Creates a new `AccumulatedImpulseSolver`.
     pub fn new(step:                  N,
                correction_mode:       CorrectionMode,
                joint_corr_factor:     N,
@@ -370,9 +372,6 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
             self.cache.swap();
         }
     }
-
-    #[inline]
-    fn priority(&self) -> f64 { 0.0 }
 }
 
 fn resize_buffer<A: Clone>(buff: &mut ~[A], size: uint, val: A) {

@@ -1,11 +1,15 @@
-// NOTE: we re-export here only the things commonly used by the user
+//! Constraint resolution.
+
+pub use resolution::solver::Solver;
 pub use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
 pub use resolution::constraint::contact_equation::{VelocityAndPosition, Velocity, VelocityAndPositionThresold};
+pub use resolution::constraint::projected_gauss_seidel_solver::{Velocities, projected_gauss_seidel_solve};
+pub use resolution::constraint::impulse_cache::ImpulseCache;
 
 
-pub mod solver;
+mod solver;
 
-pub mod constraint {
+mod constraint {
     pub mod impulse_cache;
     pub mod accumulated_impulse_solver;
     pub mod projected_gauss_seidel_solver;

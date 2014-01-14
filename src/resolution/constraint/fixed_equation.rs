@@ -1,8 +1,8 @@
 use nalgebra::na::{Translation, Rotation};
 use nalgebra::na;
 use ncollide::math::{N, LV, AV, M};
-use detection::joint::fixed::Fixed;
-use detection::joint::anchor::Anchor;
+use detection::joint::Fixed;
+use detection::joint::Anchor;
 use resolution::constraint::ball_in_socket_equation;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;

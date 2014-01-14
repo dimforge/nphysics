@@ -1,12 +1,18 @@
+//! Explicit Euler integrator.
+
 use nalgebra::na::Transformation;
 use ncollide::math::N;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
 
+/// An explicit Euler integrator.
+///
+/// Do not use this, prefer the `BodySmpEulerIntegrator` instead.
 pub struct BodyExpEulerIntegrator;
 
 impl BodyExpEulerIntegrator {
+    /// Creates a new `BodyExpEulerIntegrator`.
     #[inline]
     pub fn new() -> BodyExpEulerIntegrator {
         BodyExpEulerIntegrator

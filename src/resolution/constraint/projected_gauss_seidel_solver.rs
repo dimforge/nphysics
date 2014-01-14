@@ -3,13 +3,17 @@ use nalgebra::na;
 use ncollide::math::{LV, AV};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
+/// Structure holding the result of the projected gauss seidel solver.
 #[deriving(Eq, ToStr, Clone)]
 pub struct Velocities {
+    /// Linear velocity.
     lv: LV,
+    /// Angular velocity.
     av: AV
 }
 
 impl Velocities {
+    /// Creates a new `Velocities`.
     pub fn new() -> Velocities {
         Velocities {
             lv: na::zero(),
@@ -17,12 +21,25 @@ impl Velocities {
         }
     }
 
+    /// Reset this structure to zero.
     pub fn reset(&mut self) {
         self.lv = na::zero();
         self.av = na::zero();
     }
 }
 
+/// Solve a set of velocity constraints using the projected gauss seidel solver.
+///
+/// # Arguments:
+/// * `restitution` - constraints to simulate the restitution.
+/// * `friction`    - constraints to simulate friction.
+/// * `result`      - vector which will contain the result afterward. Must have the size
+/// `num_bodies`.
+/// * `num_bodies`  - the size of `result`.
+/// * `num_iterations` - the number of iterations to perform.
+/// * `is_lambda_zero` - indicates whether or not the every element of `result` has been
+/// reinitialized. Set this to `false` if the `result` comes from a previous execution of
+/// `projected_gauss_seidel_solve`: this will perform warm-starting.
 pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
                                     friction:       &mut [VelocityConstraint],
                                     result:         &mut [Velocities],
@@ -71,7 +88,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
 }
 
 #[inline(always)]
-pub fn setup_warmstart_for_constraint(c: &VelocityConstraint, MJLambda: &mut [Velocities]) {
+fn setup_warmstart_for_constraint(c: &VelocityConstraint, MJLambda: &mut [Velocities]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
@@ -87,7 +104,7 @@ pub fn setup_warmstart_for_constraint(c: &VelocityConstraint, MJLambda: &mut [Ve
 }
 
 #[inline(always)]
-pub fn solve_velocity_constraint(c: &mut VelocityConstraint, MJLambda: &mut [Velocities]) {
+fn solve_velocity_constraint(c: &mut VelocityConstraint, MJLambda: &mut [Velocities]) {
     let id1 = c.id1;
     let id2 = c.id2;
 

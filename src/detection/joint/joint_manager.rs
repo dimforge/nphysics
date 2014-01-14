@@ -10,17 +10,22 @@ use detection::joint::fixed::Fixed;
 use detection::constraint::{Constraint, BallInSocket, Fixed, RBRB};
 use object::RigidBody;
 
+/// Structure that handles creation and removal of joints.
 pub struct JointManager {
-    joints: HashMap<uint, Constraint, UintTWHash>
+    priv joints: HashMap<uint, Constraint, UintTWHash>
 }
 
 impl JointManager {
+    /// Creates a new `JointManager`.
     pub fn new() -> JointManager {
         JointManager {
             joints: HashMap::new(UintTWHash::new())
         }
     }
 
+    /// Add a `BallInSocket` joint to this manager.
+    ///
+    /// This will force the activation of the two objects attached to the joint.
     pub fn add_ball_in_socket(&mut self,
                               joint:      Rc<RefCell<BallInSocket>>,
                               activation: &mut ActivationManager) {
@@ -31,6 +36,9 @@ impl JointManager {
         }
     }
 
+    /// Removes a `BallInSocket` joint from this manager.
+    ///
+    /// This will force the activation of the two objects attached to the joint.
     pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>, activation: &mut ActivationManager) {
         if self.joints.remove(&borrow::to_uint(joint.borrow())) {
             let bj = joint.borrow().borrow();
@@ -39,6 +47,9 @@ impl JointManager {
         }
     }
 
+    /// Add a `Fixed` joint to this manager.
+    ///
+    /// This will force the activation of the two objects attached to the joint.
     pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
         if self.joints.insert(borrow::to_uint(joint.borrow()), Fixed(joint.clone())) {
             let bj = joint.borrow().borrow();
@@ -47,6 +58,9 @@ impl JointManager {
         }
     }
 
+    /// Removes a `Fixed` joint from this manager.
+    ///
+    /// This will force the activation of the two objects attached to the joint.
     pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
         if self.joints.remove(&borrow::to_uint(joint.borrow())) {
             let bj = joint.borrow().borrow();
@@ -55,6 +69,9 @@ impl JointManager {
         }
     }
 
+    /// Removes every joint attached to a given rigid body.
+    ///
+    /// This will force the activation of every object attached to the deleted joints.
     pub fn remove(&mut self, b: &Rc<RefCell<RigidBody>>, activation: &mut ActivationManager) {
         let mut keys_to_remove = ~[];
 

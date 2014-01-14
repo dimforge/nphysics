@@ -1,13 +1,26 @@
+//! Linear and angular velocity damping.
+
 use ncollide::math::N;
 use integration::Integrator;
 use object::RigidBody;
 
+/// A linear and angular velocity damper.
+///
+/// This will remove a part of the linear and angular velocity of every rigid body at each frame.
+/// Do not use unless you are experiencing unrealistic vibrations or very unstable joints.
 pub struct BodyDamping {
     priv linear_damping:  N,
     priv angular_damping: N
 }
 
 impl BodyDamping {
+    /// Creates a new `BodyDamping`.
+    ///
+    /// # Arguments:
+    ///     * `linear_damping` - coefficient in [0, 1] the linear velocity of each rigid body is
+    ///     multiplied at each update.
+    ///     * `linear_damping` - coefficient in [0, 1] the angular velocity of each rigid body is
+    ///     multiplied at each update.
     #[inline]
     pub fn new(linear_damping: N, angular_damping: N) -> BodyDamping {
         BodyDamping {

@@ -9,20 +9,28 @@ use ncollide::broad::{InterferencesBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
 use detection::constraint::Constraint;
 use object::{RigidBody, Deleted};
-use utils::union_find::UFindSet;
+use utils::union_find::UnionFindSet;
 use utils::union_find;
 
+/// Structure that monitors island-based activation/deactivation of objects.
+///
+/// It is responsible for making objects sleep or wake up.
 pub struct ActivationManager {
-    threshold:      N,
-    mix_factor:     N,
-    ufind:          ~[UFindSet],
-    can_deactivate: ~[bool],
-    collector:      ~[Constraint],
-    to_activate:    ~[Rc<RefCell<RigidBody>>],
-    to_deactivate:  ~[uint]
+    priv threshold:      N,
+    priv mix_factor:     N,
+    priv ufind:          ~[UnionFindSet],
+    priv can_deactivate: ~[bool],
+    priv collector:      ~[Constraint],
+    priv to_activate:    ~[Rc<RefCell<RigidBody>>],
+    priv to_deactivate:  ~[uint]
 }
 
 impl ActivationManager {
+    /// Creates a new `ActivationManager`.
+    ///
+    /// # Arguments:
+    /// * `thresold`   - the minimum energy required to keep an object awake.
+    /// * `mix_factor` - the ratio of energy to keep between two frames.
     pub fn new(threshold:  N, mix_factor: N) -> ActivationManager {
         assert!(mix_factor >= na::zero() && threshold <= na::one(),
                 "The energy mixing factor must be between 0.0 and 1.0.");
@@ -38,6 +46,7 @@ impl ActivationManager {
         }
     }
 
+    /// Notify the `ActivationManager` that is has to activate an object at the next update.
     // FIXME: this is not a very good name
     pub fn will_activate(&mut self, b: &Rc<RefCell<RigidBody>>) {
         if b.borrow().with(|b| b.can_move() && !b.is_active()) {
@@ -54,6 +63,7 @@ impl ActivationManager {
         b.activate(new_energy.min(&(self.threshold * na::cast(4.0))));
     }
 
+    /// Update the activation manager, activating and deactivating objects when needed.
     pub fn update<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>>(
                   &mut self,
                   broad_phase: &mut BF,
@@ -79,7 +89,7 @@ impl ActivationManager {
         // resize buffers
         if bodies.len() > self.ufind.len() {
             let to_add = bodies.len() - self.ufind.len();
-            self.ufind.grow(to_add, &UFindSet::new(0));
+            self.ufind.grow(to_add, &UnionFindSet::new(0));
             self.can_deactivate.grow(to_add, &false);
         }
         else {

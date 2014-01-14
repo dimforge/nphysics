@@ -16,6 +16,7 @@ There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5ro
 There are a lot of physics engine out there.
 However having a physics engine written in rust is much more fun than
 writing bindings and has several advantages:
+
 - it shows that rust is suitable for soft real-time applications
 - it shows how well rust behaves with highly generic code
 - it shows that there is no need to write two separate engine for 2d and 3d:

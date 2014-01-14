@@ -2,6 +2,9 @@ use nalgebra::na::Transform;
 use ncollide::math::LV;
 use detection::joint::anchor::Anchor;
 
+/// A ball-in-socket joint.
+///
+/// This is usually used to create ragdolls.
 pub struct BallInSocket {
     priv up_to_date: bool,
     priv anchor1:    Anchor<LV>,
@@ -9,6 +12,7 @@ pub struct BallInSocket {
 }
 
 impl BallInSocket {
+    /// Creates a ball-in-socket joint.
     pub fn new(anchor1: Anchor<LV>, anchor2: Anchor<LV>) -> BallInSocket {
         BallInSocket {
             up_to_date: false,
@@ -17,24 +21,29 @@ impl BallInSocket {
         }
     }
 
+    /// Tells if this joint has been modified by the user.
     pub fn up_to_date(&self) -> bool {
         self.up_to_date
     }
 
+    #[doc(hidden)]
     pub fn update(&mut self) {
         self.up_to_date = true
     }
 
+    /// The first anchor affected by this joint.
     pub fn anchor1<'r>(&'r self) -> &'r Anchor<LV> {
         &self.anchor1
     }
 
+    /// The second anchor affected by this joint.
     pub fn anchor2<'r>(&'r self) -> &'r Anchor<LV> {
         &self.anchor2
     }
-}
 
-impl BallInSocket {
+    /// Sets the the second anchor position.
+    ///
+    /// The position is expressed in the second attached body’s local coordinates.
     pub fn set_local1(&mut self, local1: LV) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
@@ -42,6 +51,9 @@ impl BallInSocket {
         }
     }
 
+    /// Sets the the second anchor position.
+    ///
+    /// The position is expressed in the second attached body’s local coordinates.
     pub fn set_local2(&mut self, local2: LV) {
         if local2 != self.anchor2.position {
             self.up_to_date = false;
@@ -49,6 +61,7 @@ impl BallInSocket {
         }
     }
 
+    /// The first attach point in global coordinates.
     pub fn anchor1_pos(&self) -> LV {
         match self.anchor1.body {
             Some(ref b) => {
@@ -59,6 +72,7 @@ impl BallInSocket {
         }
     }
 
+    /// The second attach point in global coordinates.
     pub fn anchor2_pos(&self) -> LV {
         match self.anchor2.body {
             Some(ref b) => {

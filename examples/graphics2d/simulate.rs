@@ -9,7 +9,7 @@ use rsfml::graphics::color::Color;
 use nalgebra::na::Vec2;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics::detection::joint::ball_in_socket::BallInSocket;
+use nphysics::detection::joint::BallInSocket;
 use camera::Camera;
 use fps::Fps;
 use engine::GraphicsManager;

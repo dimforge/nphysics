@@ -1,12 +1,16 @@
+//! Semi-implicit Euler integrator.
+
 use nalgebra::na::Transformation;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
 use ncollide::math::N;
 
+/// A semi-implicit Euler integrator.
 pub struct BodySmpEulerIntegrator;
 
 impl BodySmpEulerIntegrator {
+    /// Creates a new `BodySmpEulerIntegrator`.
     #[inline]
     pub fn new() -> BodySmpEulerIntegrator {
         BodySmpEulerIntegrator

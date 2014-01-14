@@ -1,10 +1,16 @@
+//! Traits to borrow objects.
+
 use std::cell::{Ref, RefMut};
 
+/// Trait implemented by objects capable of yielding a reference to an element of type `T`.
 pub trait RefTo<T> {
+    /// Gets a reference to an object of type `T`.
     fn get<'a>(&'a self) -> &'a T;
 }
 
+/// Trait implemented by objects capable of yielding a mutable reference to an element of type `T`.
 pub trait MutRefTo<T> {
+    /// Gets a mutable reference to an object of type `T`.
     fn get<'a>(&'a mut self) -> &'a mut T;
 }
 

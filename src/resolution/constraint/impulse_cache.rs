@@ -1,3 +1,5 @@
+#[doc(hidden)];
+
 use std::util;
 use std::rand::{IsaacRng, Rng};
 use std::vec;
@@ -31,7 +33,6 @@ impl ContactIdentifier {
     }
 }
 
-// FIXME: make the fields priv
 pub struct ImpulseCache {
     priv hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
     priv cache_prev:          ~[N],

@@ -1,13 +1,19 @@
+//! Data structure to describe a constraint between two rigid bodies.
+
 use std::rc::Rc;
 use std::cell::RefCell;
 use ncollide::contact::Contact;
 use object::RigidBody;
-use detection::joint::ball_in_socket::BallInSocket;
-use detection::joint::fixed::Fixed;
+use detection::joint::BallInSocket;
+use detection::joint::Fixed;
 
+/// A constraint between two rigid bodies.
 pub enum Constraint {
+    /// A contact.
     RBRB(Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Contact),
+    /// A ball-in-socket joint.
     BallInSocket(Rc<RefCell<BallInSocket>>),
+    /// A fixed joint.
     Fixed(Rc<RefCell<Fixed>>),
 }
 
