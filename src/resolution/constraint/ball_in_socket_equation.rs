@@ -1,3 +1,4 @@
+use std::num::Bounded;
 use std::cell::Ref;
 use nalgebra::na::{Row, Indexable};
 use nalgebra::na;

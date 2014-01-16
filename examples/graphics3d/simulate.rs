@@ -1,5 +1,5 @@
 use std::os;
-use std::num::{Zero, One};
+use std::num::{Zero, One, Bounded};
 use std::rc::Rc;
 use std::cell::RefCell;
 use extra::time;

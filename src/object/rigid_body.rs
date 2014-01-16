@@ -1,4 +1,4 @@
-use std::num::Zero;
+use std::num::{Zero, Bounded};
 use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Transformation, Translation, Rotation};

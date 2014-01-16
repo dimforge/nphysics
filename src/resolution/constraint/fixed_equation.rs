@@ -1,3 +1,4 @@
+use std::num::Bounded;
 use nalgebra::na::{Translation, Rotation};
 use nalgebra::na;
 use ncollide::math::{N, LV, AV, M};
