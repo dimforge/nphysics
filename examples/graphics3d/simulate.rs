@@ -8,6 +8,7 @@ use nalgebra::na::{Vec2, Vec3, Translation, Iso3};
 use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
+use kiss3d::light;
 use kiss3d::event;
 use ncollide::geom::{Box, Ball};
 use ncollide::ray;
@@ -60,7 +61,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
 
         window.set_framerate_limit(Some(60));
-        window.set_light(window::StickToCamera);
+        window.set_light(light::StickToCamera);
 
         window.render_loop(|w| {
             w.poll_events(|w, event| {

@@ -149,10 +149,10 @@ impl GraphicsManager {
         let mut res = ~[];
 
         for (_, m, _) in objects.move_iter() {
-            let vertices = m.coords();
-            let indices  = m.faces();
+            let vertices = m.coords().read(|v| v.to_owned()).unwrap();
+            let indices  = m.faces().read(|v| v.to_owned()).unwrap();
 
-            let m = (vertices.to_owned(), indices.flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint]));
+            let m = (vertices, indices.flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint]));
 
             res.push(m);
         }

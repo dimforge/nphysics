@@ -2,7 +2,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::object::Object;
-use kiss3d::mesh::StorageLocation;
 use kiss3d::mesh;
 use nalgebra::na::{Vec3, Iso3, Transformation};
 use nalgebra::na;
@@ -23,8 +22,8 @@ impl Mesh {
                indices:  ~[Vec3<u32>],
                color:    Vec3<f32>,
                window:   &mut Window) -> Mesh {
-        let vs = StorageLocation::new(vertices, false);
-        let is = StorageLocation::new(indices, false);
+        let vs = vertices;
+        let is = indices;
 
         let mesh = mesh::Mesh::new(vs, is, None, None, false);
 

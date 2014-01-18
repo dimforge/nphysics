@@ -10,6 +10,7 @@ extern mod nphysics = "nphysics3df32";
 extern mod ncollide = "ncollide3df32";
 extern mod nalgebra;
 
+use std::num;
 use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
@@ -50,7 +51,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     /*
      * Create the balls
      */
-    let num     = (1500.0f32.pow(&(1.0f32 / 3.0))) as uint;
+    let num     = (num::powf(1500.0f32, 1.0f32 / 3.0)) as uint;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;

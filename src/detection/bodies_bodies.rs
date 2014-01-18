@@ -7,7 +7,7 @@ use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
 use ncollide::contact::Contact;
-use ncollide::ray::{Ray, RayCastWithTransform};
+use ncollide::ray::Ray;
 use ncollide::math::N;
 use object::RigidBody;
 use detection::constraint::{Constraint, RBRB};
