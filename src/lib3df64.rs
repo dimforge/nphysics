@@ -91,6 +91,7 @@ The libraries needed to compile the examples are:
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
 #[feature(globs)];
+#[doc(html_root_url = "http://crozet.re/nphysics/doc")];
 
 extern mod std;
 extern mod extra;

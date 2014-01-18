@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::object::Object;
-use kiss3d::mesh;
+use kiss3d::resource;
 use nalgebra::na::{Vec3, Iso3, Transformation};
 use nalgebra::na;
 use nphysics::object::RigidBody;
@@ -25,7 +25,7 @@ impl Mesh {
         let vs = vertices;
         let is = indices;
 
-        let mesh = mesh::Mesh::new(vs, is, None, None, false);
+        let mesh = resource::Mesh::new(vs, is, None, None, false);
 
         let mut res = Mesh {
             color:      color,

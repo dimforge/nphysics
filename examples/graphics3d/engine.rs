@@ -7,7 +7,7 @@ use std::hashmap::HashMap;
 use std::borrow;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
-use kiss3d::obj;
+use kiss3d::loader::obj;
 use kiss3d::window::Window;
 use kiss3d::object::Object;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
