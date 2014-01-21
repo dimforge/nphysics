@@ -12,6 +12,8 @@ has not be written/tested with those in thought.
 Examples are available on the `examples` directory.
 There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
 
+An on-line version of this documentation is available [here](http://www.rust-ci.org/sebcrozet/nphysics/doc/nphysics3df32/index.html).
+
 ## Why another physics engine?
 There are a lot of physics engine out there.
 However having a physics engine written in rust is much more fun than
