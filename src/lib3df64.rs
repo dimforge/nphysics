@@ -90,6 +90,7 @@ The libraries needed to compile the examples are:
 #[crate_id = "nphysics3df64#0.1"];
 #[crate_type = "lib"];
 #[deny(missing_doc)];
+#[deny(unnecessary_parens)];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
 #[feature(globs)];

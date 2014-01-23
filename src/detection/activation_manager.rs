@@ -155,7 +155,7 @@ impl ActivationManager {
          *
          */
         while !self.to_activate.is_empty() { // the len will change
-            let to_activate = self.to_activate.pop();
+            let to_activate = self.to_activate.pop().unwrap();
 
             {
                 let mut bto_activate = to_activate.borrow().borrow_mut();
