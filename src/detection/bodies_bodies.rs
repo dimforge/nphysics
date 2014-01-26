@@ -89,7 +89,7 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
             {
                 let brb = rb.borrow().borrow();
 
-                toi = brb.get().geom().toi_with_transform_and_ray(brb.get().transform_ref(), ray)
+                toi = brb.get().geom().toi_with_transform_and_ray(brb.get().transform_ref(), ray, true)
             }
 
             match toi {
