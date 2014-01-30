@@ -45,7 +45,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
         return;
     }
 
-    do Window::spawn("nphysics: 3d demo") |window| {
+    Window::spawn("nphysics: 3d demo", proc(window) {
         let mut running    = Running;
         let mut draw_colls = false;
         let mut graphics   = GraphicsManager::new();
@@ -368,7 +368,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                 println!("{} sec ({} fps)", dt, (1.0 / dt));
             }
         })
-    }
+    })
 }
 
 #[deriving(Eq)]

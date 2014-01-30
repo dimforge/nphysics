@@ -68,7 +68,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
     /*
      * solve the system
      */
-    num_iterations.times(|| {
+    for _ in range(0, num_iterations) {
         for c in restitution.mut_iter() {
             solve_velocity_constraint(c, result);
         }
@@ -84,7 +84,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
                 solve_velocity_constraint(c, result);
             }
         }
-    });
+    }
 }
 
 #[inline(always)]

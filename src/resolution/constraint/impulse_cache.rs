@@ -78,9 +78,9 @@ impl ImpulseCache {
     pub fn push_impulsions<'a>(&'a mut self) -> &'a mut [N] {
         let begin = self.cache_next.len();
 
-        self.impulse_per_contact.times(|| {
+        for _ in range(0, self.impulse_per_contact) {
             self.cache_next.push(na::zero());
-        });
+        }
 
         let end = self.cache_next.len();
 
