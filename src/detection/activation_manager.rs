@@ -1,6 +1,5 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::borrow;
 use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
@@ -139,7 +138,7 @@ impl ActivationManager {
                 let b = &bodies.elements()[i].value;
                 b.borrow().with_mut(|b| b.deactivate());
                 broad_phase.deactivate(b);
-                self.to_deactivate.push(borrow::to_uint(b.borrow()));
+                self.to_deactivate.push(b.borrow() as *RefCell<RigidBody> as uint);
             }
         }
 
@@ -166,7 +165,7 @@ impl ActivationManager {
                 }
                 else {
                     if !b.is_active() {
-                        bodies.insert(borrow::to_uint(to_activate.borrow()), to_activate.clone());
+                        bodies.insert(to_activate.borrow() as *RefCell<RigidBody> as uint, to_activate.clone());
                     }
 
                     b.activate(self.threshold * na::cast(2.0))

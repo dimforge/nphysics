@@ -1,4 +1,3 @@
-use std::borrow;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::unstable::intrinsics::TypeId;
@@ -54,7 +53,7 @@ impl<'a> GraphicsManager<'a> {
             nodes
         };
 
-        self.rb2sn.insert(borrow::to_uint(body.borrow()), nodes);
+        self.rb2sn.insert(body.borrow() as *RefCell<RigidBody> as uint, nodes);
     }
 
     fn add_geom(&mut self,
@@ -167,7 +166,7 @@ impl<'a> GraphicsManager<'a> {
 
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<u8> {
-        let key = borrow::to_uint(body.borrow());
+        let key = body.borrow() as *RefCell<RigidBody> as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }

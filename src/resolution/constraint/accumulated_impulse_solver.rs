@@ -1,5 +1,4 @@
 use std::num::Zero;
-use std::borrow;
 use std::rc::Rc;
 use std::cell::RefCell;
 // use std::rand::RngUtil;
@@ -249,8 +248,8 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                 match *cstr {
                     RBRB(ref a, ref b, ref c) => {
                         self.cache.insert(i,
-                                          borrow::to_uint(a.borrow()),
-                                          borrow::to_uint(b.borrow()),
+                                          a.borrow() as *RefCell<RigidBody> as uint,
+                                          b.borrow() as *RefCell<RigidBody> as uint,
                                           (c.world1 + c.world2) / na::cast::<f32, N>(2.0));
                     },
                     BallInSocket(_) => {

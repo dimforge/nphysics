@@ -1,6 +1,5 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::borrow;
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
@@ -118,13 +117,13 @@ impl World {
 
     /// Adds a rigid body to the physics world.
     pub fn add_body(&mut self, b: Rc<RefCell<RigidBody>>) {
-        self.bodies.insert(borrow::to_uint(b.borrow()), b.clone());
+        self.bodies.insert(b.borrow() as *RefCell<RigidBody> as uint, b.clone());
         self.broad_phase.add(b);
     }
 
     /// Remove a rigid body from the physics world.
     pub fn remove_body(&mut self, b: &Rc<RefCell<RigidBody>>) {
-        self.bodies.remove(&borrow::to_uint(b.borrow()));
+        self.bodies.remove(&(b.borrow() as *RefCell<RigidBody> as uint));
         self.broad_phase.remove(b);
         self.detector.remove(b, &mut self.broad_phase, &mut self.sleep);
         self.joints.remove(b, &mut self.sleep);

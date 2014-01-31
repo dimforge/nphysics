@@ -1,4 +1,3 @@
-use std::borrow;
 use std::cell::RefCell;
 use std::rc::Rc;
 use ncollide::util::hash_map::HashMap;
@@ -29,7 +28,7 @@ impl JointManager {
     pub fn add_ball_in_socket(&mut self,
                               joint:      Rc<RefCell<BallInSocket>>,
                               activation: &mut ActivationManager) {
-        if self.joints.insert(borrow::to_uint(joint.borrow()), BallInSocket(joint.clone())) {
+        if self.joints.insert(joint.borrow() as *RefCell<BallInSocket> as uint, BallInSocket(joint.clone())) {
             let bj = joint.borrow().borrow();
             bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
             bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
@@ -40,7 +39,7 @@ impl JointManager {
     ///
     /// This will force the activation of the two objects attached to the joint.
     pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>, activation: &mut ActivationManager) {
-        if self.joints.remove(&borrow::to_uint(joint.borrow())) {
+        if self.joints.remove(&(joint.borrow() as *RefCell<BallInSocket> as uint)) {
             let bj = joint.borrow().borrow();
             bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
             bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
@@ -51,7 +50,7 @@ impl JointManager {
     ///
     /// This will force the activation of the two objects attached to the joint.
     pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
-        if self.joints.insert(borrow::to_uint(joint.borrow()), Fixed(joint.clone())) {
+        if self.joints.insert(joint.borrow() as *RefCell<Fixed> as uint, Fixed(joint.clone())) {
             let bj = joint.borrow().borrow();
             bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
             bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
@@ -62,7 +61,7 @@ impl JointManager {
     ///
     /// This will force the activation of the two objects attached to the joint.
     pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
-        if self.joints.remove(&borrow::to_uint(joint.borrow())) {
+        if self.joints.remove(&(joint.borrow() as *RefCell<Fixed> as uint)) {
             let bj = joint.borrow().borrow();
             bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
             bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
@@ -83,8 +82,8 @@ impl JointManager {
                           ref_b:          &Rc<RefCell<RigidBody>>,
                           keys_to_remove: &mut ~[uint],
                           activation:     &mut ActivationManager) {
-                if borrow::ref_eq(b.borrow(), ref_b.borrow()) {
-                    keys_to_remove.push(borrow::to_uint(b.borrow()));
+                if b.borrow() as *RefCell<RigidBody> == ref_b.borrow() as *RefCell<RigidBody> {
+                    keys_to_remove.push(b.borrow() as *RefCell<RigidBody> as uint);
                 }
                 else {
                     activation.will_activate(b);

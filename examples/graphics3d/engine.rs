@@ -4,7 +4,6 @@ use std::cell::RefCell;
 use std::num::One;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
-use std::borrow;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use kiss3d::loader::obj;
@@ -112,7 +111,7 @@ impl GraphicsManager {
     }
 
     pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
-        let key = borrow::to_uint(body.borrow());
+        let key = body.borrow() as *RefCell<RigidBody> as uint;
 
         match self.rb2sn.find(&key) {
             Some(sns) => {
@@ -138,7 +137,7 @@ impl GraphicsManager {
             nodes
         };
 
-        self.rb2sn.insert(borrow::to_uint(body.borrow()), nodes);
+        self.rb2sn.insert(body.borrow() as *RefCell<RigidBody> as uint, nodes);
     }
 
     pub fn load_mesh(&mut self, path: &str) -> ~[(~[Vec3<f32>], ~[uint])] {
@@ -318,11 +317,11 @@ impl GraphicsManager {
     }
 
     pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut ~[SceneNode]> {
-        self.rb2sn.find_mut(&(borrow::to_uint(rb.borrow())))
+        self.rb2sn.find_mut(&(rb.borrow() as *RefCell<RigidBody> as uint))
     }
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<f32> {
-        let key = borrow::to_uint(body.borrow());
+        let key = body.borrow() as *RefCell<RigidBody> as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }

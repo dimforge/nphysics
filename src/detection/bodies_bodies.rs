@@ -1,7 +1,6 @@
 //! Collision detector between rigid bodies.
 
 use std::cell::RefCell;
-use std::borrow;
 use std::rc::Rc;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
@@ -39,7 +38,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisi
     }
 
     fn is_valid(&self, a: &Rc<RefCell<RigidBody>>, b: &Rc<RefCell<RigidBody>>) -> bool {
-        if borrow::ref_eq(a.borrow(), b.borrow()) {
+        if a.borrow() as *RefCell<RigidBody> == b.borrow() as *RefCell<RigidBody> {
             false
         }
         else {
@@ -118,7 +117,8 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
             broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
 
             for i in interferences.iter() {
-                if !borrow::ref_eq(i.borrow(), o.borrow()) && i.borrow().with(|i| !i.is_active() && i.can_move()) {
+                if i.borrow() as *RefCell<RigidBody> != o.borrow() as *RefCell<RigidBody> &&
+                   i.borrow().with(|i| !i.is_active() && i.can_move()) {
                     activation.will_activate(i);
                 }
             }
