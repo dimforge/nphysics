@@ -30,8 +30,8 @@ impl JointManager {
                               activation: &mut ActivationManager) {
         if self.joints.insert(joint.borrow() as *RefCell<BallInSocket> as uint, BallInSocket(joint.clone())) {
             let bj = joint.borrow().borrow();
-            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
         }
     }
 
@@ -41,8 +41,8 @@ impl JointManager {
     pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>, activation: &mut ActivationManager) {
         if self.joints.remove(&(joint.borrow() as *RefCell<BallInSocket> as uint)) {
             let bj = joint.borrow().borrow();
-            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
         }
     }
 
@@ -52,8 +52,8 @@ impl JointManager {
     pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
         if self.joints.insert(joint.borrow() as *RefCell<Fixed> as uint, Fixed(joint.clone())) {
             let bj = joint.borrow().borrow();
-            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
         }
     }
 
@@ -63,8 +63,8 @@ impl JointManager {
     pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
         if self.joints.remove(&(joint.borrow() as *RefCell<Fixed> as uint)) {
             let bj = joint.borrow().borrow();
-            bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor1().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = bj.get().anchor2().body.as_ref().map(|b| activation.will_activate(b));
         }
     }
 
@@ -94,14 +94,14 @@ impl JointManager {
                 BallInSocket(ref bis) => {
                     let bbis = bis.borrow().borrow();
 
-                    bbis.get().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
-                    bbis.get().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
+                    let _ = bbis.get().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
+                    let _ = bbis.get().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
                 },
                 Fixed(ref f) => {
                     let bf = f.borrow().borrow();
 
-                    bf.get().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
-                    bf.get().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
+                    let _ = bf.get().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
+                    let _ = bf.get().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
                 }
                 RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
             }

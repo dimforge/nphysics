@@ -89,8 +89,12 @@ The libraries needed to compile the examples are:
 
 #[crate_id = "nphysics2df32#0.1"];
 #[crate_type = "lib"];
-#[deny(missing_doc)];
+#[deny(non_camel_case_types)];
 #[deny(unnecessary_parens)];
+#[deny(non_uppercase_statics)];
+#[deny(unnecessary_qualification)];
+#[deny(missing_doc)];
+#[deny(unused_result)];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
 #[feature(globs)];
