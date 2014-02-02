@@ -10,6 +10,7 @@ use kiss3d::window::Window;
 use kiss3d::window;
 use kiss3d::light;
 use kiss3d::event;
+use kiss3d::text::Font;
 use ncollide::geom::{Box, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
@@ -46,6 +47,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
     }
 
     Window::spawn("nphysics: 3d demo", proc(window) {
+        let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
         let mut running    = Running;
         let mut draw_colls = false;
         let mut graphics   = GraphicsManager::new();
@@ -365,7 +367,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
             if running != Stop {
                 let dt = (time::precise_time_s() - before);
-                println!("{} sec ({} fps)", dt, (1.0 / dt));
+                w.draw_text(dt.to_str(), &na::zero(), &font, &Vec3::new(1.0, 1.0, 1.0));
             }
         })
     })

@@ -4,6 +4,7 @@ kiss3d_lib_path=./lib/kiss3d/lib
 glfw_lib_path=./lib/kiss3d/lib/glfw-rs/lib
 gl_lib_path=./lib/kiss3d/lib/gl-rs/src/gl
 stb_image_lib_path=./lib/kiss3d/lib/rust-stb-image/
+freetype_lib_path=./lib/kiss3d/lib/rust-freetype/
 nphysics_lib_path=../lib
 ncollide_lib_path=../ncollide/lib
 nalgebra_lib_path=../ncollide/nalgebra/lib
@@ -14,6 +15,7 @@ build_cmd=rustc -L$(nphysics_lib_path)  \
 				-L$(glfw_lib_path)      \
 				-L$(gl_lib_path)        \
 				-L$(stb_image_lib_path) \
+				-L$(freetype_lib_path)  \
 				--out-dir ../bin
 build_cmd_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(ncollide_lib_path)  \
@@ -22,6 +24,7 @@ build_cmd_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(glfw_lib_path)      \
 					-L$(gl_lib_path)     	\
 					-L$(stb_image_lib_path) \
+					-L$(freetype_lib_path)  \
 					-Llib			  		\
 					--link-args -lglfw		\
 					--out-dir ../bin --opt-level 3
@@ -33,6 +36,7 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(glfw_lib_path)      \
 					-L$(gl_lib_path)    	\
 					-L$(stb_image_lib_path) \
+					-L$(freetype_lib_path)  \
 					-Llib					\
 					--out-dir lib --opt-level 3
 
