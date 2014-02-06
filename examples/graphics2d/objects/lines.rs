@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use extra::arc::Arc;
-use rsfml::graphics::render_window;
+use sync::Arc;
+use rsfml::graphics;
 use rsfml::graphics::Color;
 use nalgebra::na::{Vec2, Vec3, Iso2};
 use nphysics::object::RigidBody;
@@ -35,7 +35,7 @@ impl Lines {
     pub fn update(&mut self) {
     }
 
-    pub fn draw(&self, rw: &mut render_window::RenderWindow) {
+    pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         let bbody     = self.body.borrow().borrow();
         let body      = bbody.get();
         let transform = body.transform_ref() * self.delta;

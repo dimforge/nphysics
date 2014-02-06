@@ -4,6 +4,7 @@
 
 extern mod std;
 extern mod extra;
+extern mod sync;
 extern mod rsfml;
 extern mod nphysics = "nphysics2df32";
 extern mod nalgebra;
@@ -14,7 +15,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::vec;
 use std::rand::{StdRng, SeedableRng, Rng};
-use extra::arc::Arc;
+use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Box, Mesh};
 use nphysics::world::World;
@@ -22,10 +23,10 @@ use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics2d::engine::GraphicsManager;
 
 fn main() {
-    GraphicsManager::simulate(wall_2d)
+    GraphicsManager::simulate(mesh2d)
 }
 
-pub fn wall_2d(graphics: &mut GraphicsManager) -> World {
+pub fn mesh2d(graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */

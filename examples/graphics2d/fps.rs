@@ -1,9 +1,7 @@
 use rsfml::system::vector2;
-use rsfml::traits::drawable::Drawable;
-use rsfml::graphics::font::Font;
-use rsfml::graphics::render_window;
-use rsfml::graphics::text::Text;
-use rsfml::graphics::Color;
+use rsfml::traits::Drawable;
+use rsfml::graphics::{Font, Text, Color};
+use rsfml::graphics;
 use extra::time;
 
 pub struct Fps<'a> {
@@ -42,21 +40,19 @@ impl<'a> Fps<'a> {
         time::precise_time_s() - self.last_time
     }
 
-    pub fn draw_elapsed(&mut self, rw: &render_window::RenderWindow) {
+    pub fn draw_elapsed(&mut self, rw: &graphics::RenderWindow) {
         let elapsed = self.elapsed_seconds();
 
         self.fps.set_string(elapsed.to_str());
         self.fps.draw_in_render_window(rw);
     }
 
-    pub fn draw_registered(&mut self, rw: &render_window::RenderWindow) {
+    pub fn draw_registered(&mut self, rw: &graphics::RenderWindow) {
         let elapsed = self.delta;
 
         let v = rw.get_view();
 
-        v.read(|v|
-            self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, v))
-        );
+        self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, v.borrow().borrow().get()));
         self.fps.set_string(elapsed.to_str());
         self.fps.draw_in_render_window(rw);
     }

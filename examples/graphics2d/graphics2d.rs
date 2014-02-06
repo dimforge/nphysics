@@ -5,6 +5,7 @@
 
 extern mod std;
 extern mod extra;
+extern mod sync;
 extern mod rsfml;
 extern mod nphysics = "nphysics2df32";
 extern mod nalgebra;

@@ -102,6 +102,7 @@ The libraries needed to compile the examples are:
 
 extern mod std;
 extern mod extra;
+extern mod serialize;
 extern mod nalgebra;
 extern mod ncollide = "ncollide3df32";
 

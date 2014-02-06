@@ -143,7 +143,7 @@ impl GraphicsManager {
     pub fn load_mesh(&mut self, path: &str) -> ~[(~[Vec3<f32>], ~[uint])] {
         let path    = Path::new(path);
         let empty   = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
-        let objects = obj::parse_file(&path, &empty, "").expect("Unable to open the obj file.");
+        let objects = obj::parse_file(&path, &empty, "").ok().expect("Unable to open the obj file.");
 
         let mut res = ~[];
 

@@ -5,7 +5,7 @@ use rsfml::graphics::{RenderWindow, Font};
 use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
 use rsfml::window::keyboard;
-use rsfml::graphics::color::Color;
+use rsfml::graphics::Color;
 use nalgebra::na::Vec2;
 use nphysics::world::World;
 use nphysics::object::RigidBody;

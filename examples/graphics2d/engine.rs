@@ -4,7 +4,7 @@ use std::unstable::intrinsics::TypeId;
 use std::num::One;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
 use std::hashmap::HashMap;
-use rsfml::graphics::render_window::RenderWindow;
+use rsfml::graphics::RenderWindow;
 use nalgebra::na::{Vec3, Iso2};
 use nphysics::world::World;
 use nphysics::object::RigidBody;

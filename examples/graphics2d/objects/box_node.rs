@@ -1,8 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use rsfml::graphics::render_window;
-use rsfml::graphics::rectangle_shape::RectangleShape;
-use rsfml::graphics::Color;
+use rsfml::graphics;
+use rsfml::graphics::{RectangleShape, Color};
 use rsfml::system::vector2;
 use nalgebra::na::{Vec3, Iso2};
 use nalgebra::na;
@@ -64,7 +63,7 @@ impl<'a> Box<'a> {
         }
     }
 
-    pub fn draw(&self, rw: &mut render_window::RenderWindow) {
+    pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         rw.draw(&self.gfx);
     }
 }
