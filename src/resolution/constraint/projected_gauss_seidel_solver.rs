@@ -1,4 +1,3 @@
-use std::num::Orderable;
 use nalgebra::na;
 use ncollide::math::{LV, AV};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -126,7 +125,7 @@ fn solve_velocity_constraint(c: &mut VelocityConstraint, MJLambda: &mut [Velocit
     // (this is the ``projected'' flavour of Gauss-Seidel
     let lambda_i_0 = c.impulse.clone();
 
-    c.impulse = (lambda_i_0 + d_lambda_i).clamp(&c.lobound, &c.hibound);
+    c.impulse = na::clamp(lambda_i_0 + d_lambda_i, c.lobound, c.hibound);
 
     d_lambda_i = c.impulse - lambda_i_0;
 

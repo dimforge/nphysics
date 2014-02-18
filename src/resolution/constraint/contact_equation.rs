@@ -66,7 +66,7 @@ pub fn reinit_to_first_order_equation(dt:         N,
      * Fill b
      */
     if coll.depth >= correction.corr_mode.min_depth_for_pos_corr() {
-        constraint.objective = correction.corr_mode.pos_corr_factor() * coll.depth.max(&na::zero()) / dt;
+        constraint.objective = correction.corr_mode.pos_corr_factor() * na::max(coll.depth, na::zero()) / dt;
     }
     else {
         constraint.objective = na::zero();

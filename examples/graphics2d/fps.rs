@@ -40,14 +40,14 @@ impl<'a> Fps<'a> {
         time::precise_time_s() - self.last_time
     }
 
-    pub fn draw_elapsed(&mut self, rw: &graphics::RenderWindow) {
+    pub fn draw_elapsed(&mut self, rw: &mut graphics::RenderWindow) {
         let elapsed = self.elapsed_seconds();
 
         self.fps.set_string(elapsed.to_str());
         self.fps.draw_in_render_window(rw);
     }
 
-    pub fn draw_registered(&mut self, rw: &graphics::RenderWindow) {
+    pub fn draw_registered(&mut self, rw: &mut graphics::RenderWindow) {
         let elapsed = self.delta;
 
         let v = rw.get_view();

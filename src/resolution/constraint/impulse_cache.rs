@@ -1,6 +1,6 @@
 #[doc(hidden)];
 
-use std::util;
+use std::mem;
 use std::rand::{IsaacRng, Rng};
 use std::vec;
 use nalgebra::na;
@@ -110,8 +110,8 @@ impl ImpulseCache {
     }
 
     pub fn swap(&mut self) {
-        util::swap(&mut self.hash_prev, &mut self.hash_next);
-        util::swap(&mut self.cache_prev,&mut self.cache_next);
+        mem::swap(&mut self.hash_prev, &mut self.hash_next);
+        mem::swap(&mut self.cache_prev,&mut self.cache_next);
         self.hash_next.clear();
         self.cache_next.truncate(self.impulse_per_contact);
     }

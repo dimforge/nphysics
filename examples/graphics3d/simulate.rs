@@ -9,7 +9,6 @@ use nalgebra::na;
 use kiss3d::window::Window;
 use kiss3d::window;
 use kiss3d::light;
-use kiss3d::event;
 use kiss3d::text::Font;
 use ncollide::geom::{Box, Ball};
 use ncollide::ray;
@@ -68,7 +67,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
         window.render_loop(|w| {
             w.poll_events(|w, event| {
                 match *event {
-                    event::ButtonPressed(_, modifier) => {
+                    glfw::MouseButtonEvent(_, glfw::Press, modifier) => {
                         if modifier.contains(glfw::Shift) {
                             // XXX: huge and uggly code duplication
                             let (pos, dir) = w.unproject(&cursor_pos);
@@ -163,7 +162,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                             true
                         }
                     },
-                    event::ButtonReleased(_, _) => {
+                    glfw::MouseButtonEvent(_, glfw::Release, _) => {
                         match grabbed_object {
                             Some(ref b) => {
                                 for sn in graphics.body_to_scene_node(b).unwrap().mut_iter() {
@@ -183,7 +182,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                         true
                     },
-                    event::CursorPos(x, y) => {
+                    glfw::CursorPosEvent(x, y) => {
                         cursor_pos.x = x as f32;
                         cursor_pos.y = y as f32;
 
@@ -210,12 +209,12 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                             w.glfw_window().get_key(glfw::KeyRightControl) == glfw::Release &&
                             w.glfw_window().get_key(glfw::KeyLeftControl)  == glfw::Release
                     },
-                    event::KeyReleased(glfw::KeyTab) => {
+                    glfw::KeyEvent(glfw::KeyTab, _, glfw::Release, _) => {
                         graphics.switch_cameras(w);
 
                         true
                     },
-                    event::KeyReleased(glfw::KeyT) => {
+                    glfw::KeyEvent(glfw::KeyT, _, glfw::Release, _) => {
                         if running == Stop {
                             running = Running;
                         }
@@ -225,18 +224,18 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                         true
                     },
-                    event::KeyReleased(glfw::KeyS) => {
+                    glfw::KeyEvent(glfw::KeyS, _, glfw::Release, _) => {
                         running = Step;
 
                         true
                     },
-                    event::KeyReleased(glfw::KeySpace) => {
+                    glfw::KeyEvent(glfw::KeySpace, _, glfw::Release, _) => {
                         draw_colls = !draw_colls;
                         w.set_wireframe_mode(draw_colls);
 
                         true
                     },
-                    event::KeyPressed(glfw::Key1) => {
+                    glfw::KeyEvent(glfw::Key1, _, glfw::Press, _) => {
                         let geom   = Ball::new(0.5f32);
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
@@ -259,7 +258,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                         true
                     },
-                    event::KeyPressed(glfw::Key2) => {
+                    glfw::KeyEvent(glfw::Key2, _, glfw::Press, _) => {
                         let geom   = Box::new(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
@@ -282,7 +281,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                         true
                     },
-                    event::KeyPressed(glfw::Key3) => {
+                    glfw::KeyEvent(glfw::Key3, _, glfw::Press, _) => {
                         let geom   = Box::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
@@ -307,7 +306,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                         true
                     },
-                    event::KeyPressed(glfw::KeyR) => {
+                    glfw::KeyEvent(glfw::KeyR, _, glfw::Press, _) => {
                         if ray_to_draw.is_some() {
                             ray_to_draw = None;
                         }

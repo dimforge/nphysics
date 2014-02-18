@@ -3,13 +3,13 @@
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
 
-extern mod std;
-extern mod extra;
-extern mod sync;
-extern mod rsfml;
-extern mod nphysics = "nphysics2df32";
-extern mod nalgebra;
-extern mod ncollide = "ncollide2df32";
+extern crate std;
+extern crate extra;
+extern crate sync;
+extern crate rsfml;
+extern crate nphysics = "nphysics2df32";
+extern crate nalgebra;
+extern crate ncollide = "ncollide2df32";
 
 
 pub mod simulate;

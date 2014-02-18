@@ -100,11 +100,11 @@ The libraries needed to compile the examples are:
 #[feature(globs)];
 #[doc(html_root_url = "http://www.rust-ci.org/sebcrozet/nphysics/doc")];
 
-extern mod std;
-extern mod extra;
-extern mod serialize;
-extern mod nalgebra;
-extern mod ncollide = "ncollide2df32";
+extern crate std;
+extern crate extra;
+extern crate serialize;
+extern crate nalgebra;
+extern crate ncollide = "ncollide2df32";
 
 pub mod aliases;
 

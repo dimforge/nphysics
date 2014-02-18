@@ -2,13 +2,13 @@
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
 
-extern mod std;
-extern mod extra;
-extern mod kiss3d;
-extern mod graphics3d;
-extern mod nphysics = "nphysics3df32";
-extern mod ncollide = "ncollide3df32";
-extern mod nalgebra;
+extern crate std;
+extern crate extra;
+extern crate kiss3d;
+extern crate graphics3d;
+extern crate nphysics = "nphysics3df32";
+extern crate ncollide = "ncollide3df32";
+extern crate nalgebra;
 
 use std::rc::Rc;
 use std::cell::RefCell;

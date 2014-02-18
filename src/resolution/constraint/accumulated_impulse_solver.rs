@@ -176,7 +176,7 @@ impl AccumulatedImpulseSolver {
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().mut_iter().enumerate() {
-            *kv = (kv.first(), offset + i * na::dim::<LV>());
+            *kv = (kv.val0(), offset + i * na::dim::<LV>());
         }
 
         /*
