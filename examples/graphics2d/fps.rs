@@ -2,7 +2,7 @@ use rsfml::system::vector2;
 use rsfml::traits::Drawable;
 use rsfml::graphics::{Font, Text, Color};
 use rsfml::graphics;
-use extra::time;
+use time;
 
 pub struct Fps<'a> {
     priv delta:     f64,

@@ -2,7 +2,7 @@ use std::os;
 use std::num::{Zero, One, Bounded};
 use std::rc::Rc;
 use std::cell::RefCell;
-use extra::time;
+use time;
 use glfw;
 use nalgebra::na::{Vec2, Vec3, Translation, Iso3};
 use nalgebra::na;

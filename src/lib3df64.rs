@@ -105,6 +105,8 @@ extern crate extra;
 extern crate serialize;
 extern crate nalgebra;
 extern crate ncollide = "ncollide3df64";
+#[cfg(test)]
+extern crate test;
 
 pub mod aliases;
 
