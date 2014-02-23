@@ -44,7 +44,7 @@ impl Camera {
             event::MouseWheelMoved{delta, ..} => {
                 let ndelta = delta as f32; // between -1.0 and 1.0
 
-                self.curr_zoom *= (1.0 + ndelta * ZOOM_FACTOR);
+                self.curr_zoom *= 1.0 + ndelta * ZOOM_FACTOR;
                 self.scene.borrow().borrow_mut().get().zoom(1.0 + ndelta * ZOOM_FACTOR);
             }
             event::MouseButtonPressed{x, y, ..}  => {

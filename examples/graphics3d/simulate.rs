@@ -365,7 +365,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
             }
 
             if running != Stop {
-                let dt = (time::precise_time_s() - before);
+                let dt = time::precise_time_s() - before;
                 w.draw_text(dt.to_str(), &na::zero(), &font, &Vec3::new(1.0, 1.0, 1.0));
             }
         })

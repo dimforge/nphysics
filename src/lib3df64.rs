@@ -95,6 +95,7 @@ The libraries needed to compile the examples are:
 #[deny(unnecessary_qualification)];
 #[deny(missing_doc)];
 #[deny(unused_result)];
+#[deny(unnecessary_typecast)];
 #[warn(non_camel_case_types)];
 #[feature(managed_boxes)];
 #[feature(globs)];
