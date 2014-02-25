@@ -1,7 +1,7 @@
 use nalgebra::na;
 use ncollide::math::{N, LV, AV};
 
-#[deriving(Eq, ToStr, Clone)]
+#[deriving(Eq, Show, Clone)]
 pub struct VelocityConstraint {
     normal:             LV,
 

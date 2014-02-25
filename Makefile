@@ -29,10 +29,10 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 
 all:
 	mkdir -p lib
-	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib3df32.rs --out-dir lib --opt-level 3
-	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib3df64.rs --out-dir lib --opt-level 3
-	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib2df32.rs --out-dir lib --opt-level 3
-	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib2df64.rs --out-dir lib --opt-level 3
+	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib3df32.rs --out-dir lib --opt-level 3 --cfg dim3 --cfg f32
+	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib3df64.rs --out-dir lib --opt-level 3 --cfg dim3 --cfg f64
+	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib2df32.rs --out-dir lib --opt-level 3 --cfg dim2 --cfg f32
+	rustc -L$(nalgebra_lib_path) -L$(ncollide_lib_path) src/lib2df64.rs --out-dir lib --opt-level 3 --cfg dim2 --cfg f64
 
 deps:
 	make deps -C ncollide

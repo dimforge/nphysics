@@ -3,7 +3,7 @@ use ncollide::math::{LV, AV};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.
-#[deriving(Eq, ToStr, Clone)]
+#[deriving(Eq, Show, Clone)]
 pub struct Velocities {
     /// Linear velocity.
     lv: LV,

@@ -4,6 +4,7 @@
 
 extern crate std;
 extern crate extra;
+extern crate native;
 extern crate rsfml;
 extern crate nphysics = "nphysics2df32";
 extern crate nalgebra;
@@ -17,6 +18,11 @@ use ncollide::geom::{Ball, Plane};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics2d::engine::GraphicsManager;
+
+#[start]
+fn start(argc: int, argv: **u8) -> int {
+    native::start(argc, argv, main)
+}
 
 fn main() {
     GraphicsManager::simulate(balls_vee_2d)

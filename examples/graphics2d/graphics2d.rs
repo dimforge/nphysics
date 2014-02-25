@@ -7,6 +7,7 @@ extern crate std;
 extern crate extra;
 extern crate sync;
 extern crate time;
+extern crate collections;
 extern crate rsfml;
 extern crate nphysics = "nphysics2df32";
 extern crate nalgebra;

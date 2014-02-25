@@ -6,6 +6,7 @@
 extern crate std;
 extern crate extra;
 extern crate time;
+extern crate collections;
 extern crate glfw = "glfw-rs";
 extern crate kiss3d;
 extern crate nphysics = "nphysics3df32";

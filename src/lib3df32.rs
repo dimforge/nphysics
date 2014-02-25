@@ -104,6 +104,7 @@ The libraries needed to compile the examples are:
 extern crate std;
 extern crate extra;
 extern crate serialize;
+extern crate collections;
 extern crate nalgebra;
 extern crate ncollide = "ncollide3df32";
 #[cfg(test)]

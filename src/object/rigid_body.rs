@@ -9,13 +9,13 @@ use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
 use ncollide::math::{N, LV, AV, M, II};
 
-#[deriving(ToStr, Eq, Clone, Encodable, Decodable)]
+#[deriving(Show, Eq, Clone, Encodable, Decodable)]
 pub enum RigidBodyState {
     Static,
     Dynamic
 }
 
-#[deriving(ToStr, Eq, Clone, Encodable, Decodable)]
+#[deriving(Show, Eq, Clone, Encodable, Decodable)]
 pub enum ActivationState {
     Active(N),
     Inactive,

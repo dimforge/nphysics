@@ -3,9 +3,12 @@
 use std::mem;
 use std::rand::{IsaacRng, Rng};
 use std::vec;
+use std::hash::Hash;
+use std::hash::sip::SipState;
+use collections::HashMap;
 use nalgebra::na;
+use nalgebra::na::Iterable;
 use ncollide::math::{N, V};
-use std::hashmap::HashMap;
 
 #[deriving(Eq)]
 struct ContactIdentifier {
@@ -14,12 +17,21 @@ struct ContactIdentifier {
     ccenter: V
 }
 
-pub type Cb<'a> = 'a |buf: &[u8]| -> bool;
-
-impl IterBytes for ContactIdentifier {
+impl Hash for ContactIdentifier {
     #[inline]
-    fn iter_bytes(&self, _lsb0: bool, f: Cb) -> bool {
-        self.ccenter.iter_bytes(_lsb0, f)
+    #[cfg(f32)]
+    fn hash(&self, state: &mut SipState) {
+        for e in self.ccenter.iter() {
+            let _ = state.write_le_f32(*e);
+        }
+    }
+
+    #[inline]
+    #[cfg(f64)]
+    fn hash(&self, state: &mut SipState) {
+        for e in self.ccenter.iter() {
+            let _ = state.write_le_f64(*e);
+        }
     }
 }
 

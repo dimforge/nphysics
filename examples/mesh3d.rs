@@ -4,6 +4,7 @@
 
 extern crate std;
 extern crate extra;
+extern crate native;
 extern crate sync;
 extern crate kiss3d;
 extern crate graphics3d;
@@ -20,6 +21,11 @@ use ncollide::geom::Mesh;
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static};
 use graphics3d::engine::GraphicsManager;
+
+#[start]
+fn start(argc: int, argv: **u8) -> int {
+    native::start(argc, argv, main)
+}
 
 fn main() {
     GraphicsManager::simulate(mesh3d)

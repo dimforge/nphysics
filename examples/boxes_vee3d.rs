@@ -4,6 +4,7 @@
 
 extern crate std;
 extern crate extra;
+extern crate native;
 extern crate kiss3d;
 extern crate graphics3d;
 extern crate nphysics = "nphysics3df32";
@@ -18,6 +19,11 @@ use ncollide::geom::{Plane, Box};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics3d::engine::GraphicsManager;
+
+#[start]
+fn start(argc: int, argv: **u8) -> int {
+    native::start(argc, argv, main)
+}
 
 fn main() {
     GraphicsManager::simulate(boxes_vee_3d)

@@ -1,9 +1,9 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::unstable::intrinsics::TypeId;
+use std::intrinsics::TypeId;
 use std::num::One;
 use std::rand::{SeedableRng, XorShiftRng, Rng};
-use std::hashmap::HashMap;
+use collections::HashMap;
 use rsfml::graphics::RenderWindow;
 use nalgebra::na::{Vec3, Iso2};
 use nphysics::world::World;
