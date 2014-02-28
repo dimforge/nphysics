@@ -4,7 +4,7 @@ use std::mem;
 use std::rand::{IsaacRng, Rng};
 use std::vec;
 use std::hash::Hash;
-use std::hash::sip::SipState;
+use std::hash::sip::{SipHasher, SipState};
 use collections::HashMap;
 use nalgebra::na;
 use nalgebra::na::Iterable;
@@ -59,8 +59,8 @@ impl ImpulseCache {
         let mut rng = IsaacRng::new_unseeded();
 
         ImpulseCache {
-            hash_prev:           HashMap::with_capacity_and_keys(rng.gen(), rng.gen(), 32),
-            hash_next:           HashMap::with_capacity_and_keys(rng.gen(), rng.gen(), 32),
+            hash_prev:           HashMap::with_capacity_and_hasher(SipHasher::new_with_keys(rng.gen(), rng.gen()), 32),
+            hash_next:           HashMap::with_capacity_and_hasher(SipHasher::new_with_keys(rng.gen(), rng.gen()), 32),
             cache_prev:          vec::from_elem(impulse_per_contact, na::zero()),
             cache_next:          vec::from_elem(impulse_per_contact, na::zero()),
             step:                step,
