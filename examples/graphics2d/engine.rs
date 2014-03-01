@@ -16,7 +16,7 @@ use objects::box_node::Box;
 use objects::lines::Lines;
 use simulate;
 
-enum SceneNode<'a> {
+pub enum SceneNode<'a> {
     BallNode(Ball<'a>),
     BoxNode(Box<'a>),
     LinesNode(Lines)

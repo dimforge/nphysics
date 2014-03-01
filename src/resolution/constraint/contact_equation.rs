@@ -8,14 +8,21 @@ use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
 use utils::ref_to::RefTo;
 
+/// The correction coefficient used by the constraint solver.
 pub enum CorrectionMode {
+    /// Penetration are solved by the penalty method.
     Velocity(N),
+    /// Penetration are solved by the penalty method together with a hard repositioning.
     VelocityAndPosition(N, N, N),
+    /// Penetration are solved by the penalty method together with a hard repositioning.
+    ///
+    /// The amount of velocity correction is bounded by threshold.
     VelocityAndPositionThresold(N, N, N)
 }
 
 impl CorrectionMode {
     #[inline]
+    /// The velocity correction coefficient.
     pub fn vel_corr_factor(&self) -> N {
         match *self {
             Velocity(ref v)                          => v.clone(),
@@ -25,6 +32,7 @@ impl CorrectionMode {
     }
 
     #[inline]
+    /// The position correction coefficient.
     pub fn pos_corr_factor(&self) -> N {
         match *self {
             VelocityAndPosition(_, ref p, _)         => p.clone(),
@@ -34,6 +42,7 @@ impl CorrectionMode {
     }
 
     #[inline]
+    /// The minimum penetration depth required to switch on the hard repositioning based method.
     pub fn min_depth_for_pos_corr(&self) -> N {
         match *self {
             VelocityAndPosition(_, _, ref t)         => t.clone(),
@@ -43,6 +52,7 @@ impl CorrectionMode {
     }
 
     #[inline]
+    /// The max penetration depth the velocity correction will attempt to correct.
     pub fn max_depth_for_vel_corr(&self) -> N {
         match *self {
             VelocityAndPosition(_, _, _)             => Bounded::max_value(),

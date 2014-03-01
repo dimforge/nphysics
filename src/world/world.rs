@@ -16,7 +16,8 @@ use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, VelocityAndPosition};
 use object::RigidBody;
 
-type BF = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, ~GeomGeomCollisionDetector>;
+/// The default broad phase.
+pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, ~GeomGeomCollisionDetector>;
 
 /// The physics world.
 ///
@@ -24,11 +25,11 @@ type BF = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, ~Geom
 pub struct World {
     priv bodies:      HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>,
     priv forces:      BodyForceGenerator,
-    priv broad_phase: BF,
+    priv broad_phase: WorldBroadPhase,
     priv integrator:  BodySmpEulerIntegrator,
-    priv detector:    BodiesBodies<BF>,
+    priv detector:    BodiesBodies<WorldBroadPhase>,
     priv sleep:       ActivationManager,
-    // ccd:        SweptBallMotionClamping<BF>,
+    // ccd:        SweptBallMotionClamping<WorldBroadPhase>,
     priv joints:      JointManager,
     priv solver:      AccumulatedImpulseSolver,
     priv collector:   ~[Constraint]
@@ -141,16 +142,16 @@ impl World {
     }
 
     /// Gets a mutable reference to the collision detector.
-    pub fn collision_detector<'a>(&'a mut self) -> &'a mut BodiesBodies<BF> {
+    pub fn collision_detector<'a>(&'a mut self) -> &'a mut BodiesBodies<WorldBroadPhase> {
         &'a mut self.detector
     }
 
     /// Gets a mutable reference to the broad phase.
-    pub fn broad_phase<'a>(&'a mut self) -> &'a mut BF {
+    pub fn broad_phase<'a>(&'a mut self) -> &'a mut WorldBroadPhase {
         &'a mut self.broad_phase
     }
 
-    // pub fn ccd_manager<'a>(&'a mut self) -> &'a mut SweptBallMotionClamping<BF> {
+    // pub fn ccd_manager<'a>(&'a mut self) -> &'a mut SweptBallMotionClamping<WorldBroadPhase> {
     //     self.ccd
     // }
 

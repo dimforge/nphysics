@@ -17,10 +17,10 @@ impl BodyDamping {
     /// Creates a new `BodyDamping`.
     ///
     /// # Arguments:
-    ///     * `linear_damping` - coefficient in [0, 1] the linear velocity of each rigid body is
-    ///     multiplied at each update.
-    ///     * `linear_damping` - coefficient in [0, 1] the angular velocity of each rigid body is
-    ///     multiplied at each update.
+    /// * `linear_damping` - coefficient in [0, 1] the linear velocity of each rigid body is
+    ///                      multiplied at each update.
+    /// * `linear_damping` - coefficient in [0, 1] the angular velocity of each rigid body is
+    ///                      multiplied at each update.
     #[inline]
     pub fn new(linear_damping: N, angular_damping: N) -> BodyDamping {
         BodyDamping {

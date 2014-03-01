@@ -10,19 +10,27 @@ use ncollide::volumetric::{InertiaTensor, Volumetric};
 use ncollide::math::{N, LV, AV, M, II};
 
 #[deriving(Show, Eq, Clone, Encodable, Decodable)]
+/// The movement state of a rigid body.
 pub enum RigidBodyState {
+    /// The rigid body cannot move.
     Static,
+    /// The rigid body can move.
     Dynamic
 }
 
 #[deriving(Show, Eq, Clone, Encodable, Decodable)]
+/// The activation state of a rigid body.
 pub enum ActivationState {
+    /// The rigid body is active with a not-zero energy.
     Active(N),
+    /// The rigid body is inactive.
     Inactive,
+    /// The rigid body has been removed from the physics engine.
     Deleted
 }
 
 impl ActivationState {
+    /// The energy accumulated other several frames.
     pub fn energy(&self) -> N {
         match *self {
             Active(n) => n.clone(),

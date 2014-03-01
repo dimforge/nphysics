@@ -2,9 +2,11 @@
 
 pub use resolution::solver::Solver;
 pub use resolution::constraint::accumulated_impulse_solver::AccumulatedImpulseSolver;
-pub use resolution::constraint::contact_equation::{VelocityAndPosition, Velocity, VelocityAndPositionThresold};
+pub use resolution::constraint::contact_equation::{VelocityAndPosition, Velocity,
+                                                   VelocityAndPositionThresold, CorrectionMode};
 pub use resolution::constraint::projected_gauss_seidel_solver::{Velocities, projected_gauss_seidel_solve};
-pub use resolution::constraint::impulse_cache::ImpulseCache;
+pub use resolution::constraint::impulse_cache::{ImpulseCache, ContactIdentifier};
+pub use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 
 mod solver;

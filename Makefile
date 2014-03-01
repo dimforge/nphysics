@@ -65,14 +65,15 @@ distcheck:
 	make examples_deps -C $(tmp)
 	make examples -C $(tmp)
 	make bugs -C $(tmp)
+	make doc
 	rm -rf $(tmp)
 
 doc:
 	mkdir -p $(nphysics_doc_path)
-	rustdoc src/lib2df32.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
-	rustdoc src/lib3df32.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
-	rustdoc src/lib2df64.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
-	rustdoc src/lib3df64.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path)
+	rustdoc src/lib3df32.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path) --cfg dim3 --cfg f32
+	rustdoc src/lib3df64.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path) --cfg dim3 --cfg f64
+	rustdoc src/lib2df32.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path) --cfg dim2 --cfg f32
+	rustdoc src/lib2df64.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path) --cfg dim2 --cfg f64
 
 .PHONY:doc
 # FIXME: uggly!

@@ -11,10 +11,11 @@ use nalgebra::na::Iterable;
 use ncollide::math::{N, V};
 
 #[deriving(Eq)]
-struct ContactIdentifier {
-    obj1:    uint,
-    obj2:    uint,
-    ccenter: V
+/// The identifier of a contact stored in the impulse cache.
+pub struct ContactIdentifier {
+    priv obj1:    uint,
+    priv obj2:    uint,
+    priv ccenter: V
 }
 
 impl Hash for ContactIdentifier {
