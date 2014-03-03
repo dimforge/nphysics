@@ -1,7 +1,7 @@
 use std::num::Bounded;
 use nalgebra::na::{Translation, Rotation};
 use nalgebra::na;
-use ncollide::math::{N, LV, AV, M};
+use ncollide::math::{Scalar, Vector, Orientation, Matrix};
 use detection::joint::Fixed;
 use detection::joint::Anchor;
 use resolution::constraint::ball_in_socket_equation;
@@ -9,7 +9,7 @@ use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
 
-pub fn fill_second_order_equation(dt:          N,
+pub fn fill_second_order_equation(dt:          Scalar,
                                   joint:       &Fixed,
                                   constraints: &mut [VelocityConstraint],
                                   correction:  &CorrectionParameters) {
@@ -31,13 +31,13 @@ pub fn fill_second_order_equation(dt:          N,
         &ref2,
         joint.anchor1(),
         joint.anchor2(),
-        constraints.mut_slice_from(na::dim::<LV>()),
+        constraints.mut_slice_from(na::dim::<Vector>()),
         correction);
 }
 
-pub fn cancel_relative_angular_motion<P>(dt:          N,
-                                         ref1:        &M,
-                                         ref2:        &M,
+pub fn cancel_relative_angular_motion<P>(dt:          Scalar,
+                                         ref1:        &Matrix,
+                                         ref2:        &Matrix,
                                          anchor1:     &Anchor<P>,
                                          anchor2:     &Anchor<P>,
                                          constraints: &mut [VelocityConstraint],
@@ -46,7 +46,7 @@ pub fn cancel_relative_angular_motion<P>(dt:          N,
     let delta_rot = delta.rotation();
 
     let mut i = 0;
-    na::canonical_basis(|rot_axis: AV| {
+    na::canonical_basis(|rot_axis: Orientation| {
         let constraint = &mut constraints[i];
 
         let opt_rb1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
@@ -64,7 +64,7 @@ pub fn cancel_relative_angular_motion<P>(dt:          N,
         let ang_vel1 = match opt_rb1 { Some(rb) => rb.get().ang_vel(), None => na::zero() };
         let ang_vel2 = match opt_rb2 { Some(rb) => rb.get().ang_vel(), None => na::zero() };
 
-        let _M: N = Bounded::max_value();
+        let _M: Scalar = Bounded::max_value();
         constraint.lobound   = -_M;
         constraint.hibound   = _M;
         // FIXME: dont compute the difference at each iteration

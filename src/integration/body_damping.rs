@@ -1,6 +1,6 @@
 //! Linear and angular velocity damping.
 
-use ncollide::math::N;
+use ncollide::math::Scalar;
 use integration::Integrator;
 use object::RigidBody;
 
@@ -9,8 +9,8 @@ use object::RigidBody;
 /// This will remove a part of the linear and angular velocity of every rigid body at each frame.
 /// Do not use unless you are experiencing unrealistic vibrations or very unstable joints.
 pub struct BodyDamping {
-    priv linear_damping:  N,
-    priv angular_damping: N
+    priv linear_damping:  Scalar,
+    priv angular_damping: Scalar
 }
 
 impl BodyDamping {
@@ -22,7 +22,7 @@ impl BodyDamping {
     /// * `linear_damping` - coefficient in [0, 1] the angular velocity of each rigid body is
     ///                      multiplied at each update.
     #[inline]
-    pub fn new(linear_damping: N, angular_damping: N) -> BodyDamping {
+    pub fn new(linear_damping: Scalar, angular_damping: Scalar) -> BodyDamping {
         BodyDamping {
             linear_damping:  linear_damping,
             angular_damping: angular_damping,
@@ -31,7 +31,7 @@ impl BodyDamping {
 }
 
 impl Integrator<RigidBody> for BodyDamping {
-    fn update(&mut self, _: N, rb: &mut RigidBody) {
+    fn update(&mut self, _: Scalar, rb: &mut RigidBody) {
         let new_lin = rb.lin_vel() * self.linear_damping;
 
         rb.set_lin_vel(new_lin);

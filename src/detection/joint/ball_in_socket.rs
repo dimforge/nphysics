@@ -1,5 +1,5 @@
 use nalgebra::na::Transform;
-use ncollide::math::LV;
+use ncollide::math::Vector;
 use detection::joint::anchor::Anchor;
 
 /// A ball-in-socket joint.
@@ -7,13 +7,13 @@ use detection::joint::anchor::Anchor;
 /// This is usually used to create ragdolls.
 pub struct BallInSocket {
     priv up_to_date: bool,
-    priv anchor1:    Anchor<LV>,
-    priv anchor2:    Anchor<LV>,
+    priv anchor1:    Anchor<Vector>,
+    priv anchor2:    Anchor<Vector>,
 }
 
 impl BallInSocket {
     /// Creates a ball-in-socket joint.
-    pub fn new(anchor1: Anchor<LV>, anchor2: Anchor<LV>) -> BallInSocket {
+    pub fn new(anchor1: Anchor<Vector>, anchor2: Anchor<Vector>) -> BallInSocket {
         BallInSocket {
             up_to_date: false,
             anchor1:    anchor1,
@@ -32,19 +32,19 @@ impl BallInSocket {
     }
 
     /// The first anchor affected by this joint.
-    pub fn anchor1<'r>(&'r self) -> &'r Anchor<LV> {
+    pub fn anchor1<'r>(&'r self) -> &'r Anchor<Vector> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
-    pub fn anchor2<'r>(&'r self) -> &'r Anchor<LV> {
+    pub fn anchor2<'r>(&'r self) -> &'r Anchor<Vector> {
         &self.anchor2
     }
 
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
-    pub fn set_local1(&mut self, local1: LV) {
+    pub fn set_local1(&mut self, local1: Vector) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
             self.anchor1.position = local1
@@ -54,7 +54,7 @@ impl BallInSocket {
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
-    pub fn set_local2(&mut self, local2: LV) {
+    pub fn set_local2(&mut self, local2: Vector) {
         if local2 != self.anchor2.position {
             self.up_to_date = false;
             self.anchor2.position = local2
@@ -62,7 +62,7 @@ impl BallInSocket {
     }
 
     /// The first attach point in global coordinates.
-    pub fn anchor1_pos(&self) -> LV {
+    pub fn anchor1_pos(&self) -> Vector {
         match self.anchor1.body {
             Some(ref b) => {
                 let bb = b.borrow().borrow();
@@ -73,7 +73,7 @@ impl BallInSocket {
     }
 
     /// The second attach point in global coordinates.
-    pub fn anchor2_pos(&self) -> LV {
+    pub fn anchor2_pos(&self) -> Vector {
         match self.anchor2.body {
             Some(ref b) => {
                 let bb = b.borrow().borrow();

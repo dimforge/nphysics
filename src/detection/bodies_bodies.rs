@@ -7,7 +7,7 @@ use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPh
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
 use ncollide::contact::Contact;
 use ncollide::ray::Ray;
-use ncollide::math::N;
+use ncollide::math::Scalar;
 use object::RigidBody;
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
@@ -77,7 +77,7 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
     pub fn interferences_with_ray(&mut self,
                                   ray:         &Ray,
                                   broad_phase: &mut BF,
-                                  out:         &mut ~[(Rc<RefCell<RigidBody>>, N)]) {
+                                  out:         &mut ~[(Rc<RefCell<RigidBody>>, Scalar)]) {
         let mut bodies = ~[];
 
         broad_phase.interferences_with_ray(ray, &mut bodies);

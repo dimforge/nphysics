@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use object::RigidBody;
 use nalgebra::na;
-use ncollide::math::LV;
+use ncollide::math::Vector;
 
 /// One of the two end points of a joint.
 pub struct Anchor<P> {
@@ -29,7 +29,7 @@ impl<P> Anchor<P> {
     /// The center of mass of the body attached to this anchor.
     ///
     /// Returns the zero vector if no body is attached.
-    pub fn center_of_mass(&self) -> LV {
+    pub fn center_of_mass(&self) -> Vector {
         match self.body {
             Some(ref b) => {
                 let bb = b.borrow().borrow();

@@ -1,14 +1,14 @@
 use nalgebra::na;
-use ncollide::math::{LV, AV};
+use ncollide::math::{Vector, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.
 #[deriving(Eq, Show, Clone)]
 pub struct Velocities {
     /// Linear velocity.
-    lv: LV,
+    lv: Vector,
     /// Angular velocity.
-    av: AV
+    av: Orientation
 }
 
 impl Velocities {

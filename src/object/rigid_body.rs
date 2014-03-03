@@ -7,7 +7,7 @@ use nalgebra::na::Transform;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
-use ncollide::math::{N, LV, AV, M, II};
+use ncollide::math::{Scalar, Vector, Orientation, Matrix, AngularInertia};
 
 #[deriving(Show, Eq, Clone, Encodable, Decodable)]
 /// The movement state of a rigid body.
@@ -22,7 +22,7 @@ pub enum RigidBodyState {
 /// The activation state of a rigid body.
 pub enum ActivationState {
     /// The rigid body is active with a not-zero energy.
-    Active(N),
+    Active(Scalar),
     /// The rigid body is inactive.
     Inactive,
     /// The rigid body has been removed from the physics engine.
@@ -31,7 +31,7 @@ pub enum ActivationState {
 
 impl ActivationState {
     /// The energy accumulated other several frames.
-    pub fn energy(&self) -> N {
+    pub fn energy(&self) -> Scalar {
         match *self {
             Active(n) => n.clone(),
             Inactive  => na::zero(),
@@ -46,18 +46,18 @@ impl ActivationState {
 pub struct RigidBody {
     priv state:                RigidBodyState,
     priv geom:                 Rc<~Geom>,
-    priv local_to_world:       M,
-    priv lin_vel:              LV,
-    priv ang_vel:              AV,
-    priv inv_mass:             N,
-    priv ls_inv_inertia:       II,
-    priv inv_inertia:          II,
-    priv ls_center_of_mass:    LV,
-    priv center_of_mass:       LV,
-    priv lin_acc:              LV,
-    priv ang_acc:              AV,
-    priv restitution:          N,
-    priv friction:             N,
+    priv local_to_world:       Matrix,
+    priv lin_vel:              Vector,
+    priv ang_vel:              Orientation,
+    priv inv_mass:             Scalar,
+    priv ls_inv_inertia:       AngularInertia,
+    priv inv_inertia:          AngularInertia,
+    priv ls_center_of_mass:    Vector,
+    priv center_of_mass:       Vector,
+    priv lin_acc:              Vector,
+    priv ang_acc:              Orientation,
+    priv restitution:          Scalar,
+    priv friction:             Scalar,
     priv index:                int,
     priv activation_state:     ActivationState
 }
@@ -116,7 +116,7 @@ impl RigidBody {
 
     /// Gets a reference to this body's transform.
     #[inline]
-    pub fn transform_ref<'r>(&'r self) -> &'r M {
+    pub fn transform_ref<'r>(&'r self) -> &'r Matrix {
         &'r self.local_to_world
     }
 
@@ -142,7 +142,7 @@ impl RigidBody {
 
     /// Gets a reference to this body's center of mass.
     #[inline]
-    pub fn center_of_mass<'r>(&'r self) -> &'r LV {
+    pub fn center_of_mass<'r>(&'r self) -> &'r Vector {
         &'r self.center_of_mass
     }
 
@@ -151,7 +151,7 @@ impl RigidBody {
     /// The actual restitution coefficient of a contact is computed averaging the two bodies
     /// friction coefficient.
     #[inline]
-    pub fn restitution(&self) -> N {
+    pub fn restitution(&self) -> Scalar {
         self.restitution.clone()
     }
 
@@ -160,7 +160,7 @@ impl RigidBody {
     /// The actual friction coefficient of a contact is computed averaging the two bodies friction
     /// coefficient.
     #[inline]
-    pub fn friction(&self) -> N {
+    pub fn friction(&self) -> Scalar {
         self.friction.clone()
     }
 
@@ -182,16 +182,16 @@ impl RigidBody {
 
     #[doc(hidden)]
     #[inline]
-    pub fn activate(&mut self, energy: N) {
+    pub fn activate(&mut self, energy: Scalar) {
         self.activation_state = Active(energy);
     }
 
     /// Creates a new rigid body.
     pub fn new<G: 'static + Send + Geom>(geom:        G,
-                                         density:     N,
+                                         density:     Scalar,
                                          state:       RigidBodyState,
-                                         restitution: N,
-                                         friction:    N)
+                                         restitution: Scalar,
+                                         friction:    Scalar)
                                          -> RigidBody {
         RigidBody::new_with_shared_geom(Rc::new(~geom as ~Geom),
                                         density,
@@ -204,10 +204,10 @@ impl RigidBody {
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
     pub fn new_with_shared_geom(geom:        Rc<~Geom>,
-                                density:     N,
+                                density:     Scalar,
                                 state:       RigidBodyState,
-                                restitution: N,
-                                friction:    N)
+                                restitution: Scalar,
+                                friction:    Scalar)
                                 -> RigidBody {
         let (inv_mass, center_of_mass, inv_inertia, active) =
             match state {
@@ -217,19 +217,19 @@ impl RigidBody {
                         fail!("A dynamic body must not have a zero density.")
                     }
 
-                    let mprops: (N, LV, II) = geom.borrow().mass_properties(&density);
+                    let mprops: (Scalar, Vector, AngularInertia) = geom.borrow().mass_properties(&density);
                     let (m, c, ii) = mprops;
 
                     if m.is_zero() {
                         fail!("A dynamic body must not have a zero volume.")
                     }
 
-                    let i_wrt_com: II = ii.to_relative_wrt_point(&m, &c);
-                    let ii_wrt_com: II =
+                    let i_wrt_com: AngularInertia = ii.to_relative_wrt_point(&m, &c);
+                    let ii_wrt_com: AngularInertia =
                           na::inv(&i_wrt_com)
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
-                    let _1: N = na::one();
+                    let _1: Scalar = na::one();
 
                     (
                         _1 / m,
@@ -277,19 +277,19 @@ impl RigidBody {
 
     /// Get the linear velocity of this rigid body.
     #[inline]
-    pub fn lin_vel(&self) -> LV {
+    pub fn lin_vel(&self) -> Vector {
         self.lin_vel.clone()
     }
 
     /// Sets the linear velocity of this rigid body.
     #[inline]
-    pub fn set_lin_vel(&mut self, lv: LV) {
+    pub fn set_lin_vel(&mut self, lv: Vector) {
         self.lin_vel = lv
     }
 
     /// Gets the linear acceleration of this rigid body.
     #[inline]
-    pub fn lin_acc(&self) -> LV {
+    pub fn lin_acc(&self) -> Vector {
         self.lin_acc.clone()
     }
 
@@ -297,25 +297,25 @@ impl RigidBody {
     ///
     /// Note that this might be reset by the physics engine automatically.
     #[inline]
-    pub fn set_lin_acc(&mut self, lf: LV) {
+    pub fn set_lin_acc(&mut self, lf: Vector) {
         self.lin_acc = lf
     }
 
     /// Gets the angular velocity of this rigid body.
     #[inline]
-    pub fn ang_vel(&self) -> AV {
+    pub fn ang_vel(&self) -> Orientation {
         self.ang_vel.clone()
     }
 
     /// Sets the angular velocity of this rigid body.
     #[inline]
-    pub fn set_ang_vel(&mut self, av: AV) {
+    pub fn set_ang_vel(&mut self, av: Orientation) {
         self.ang_vel = av
     }
 
     /// Gets the angular acceleration of this rigid body.
     #[inline]
-    pub fn ang_acc(&self) -> AV {
+    pub fn ang_acc(&self) -> Orientation {
         self.ang_acc.clone()
     }
 
@@ -323,25 +323,25 @@ impl RigidBody {
     ///
     /// Note that this might be reset by the physics engine automatically.
     #[inline]
-    pub fn set_ang_acc(&mut self, af: AV) {
+    pub fn set_ang_acc(&mut self, af: Orientation) {
         self.ang_acc = af
     }
 
     /// Gets the inverse mass of this rigid body.
     #[inline]
-    pub fn inv_mass(&self) -> N {
+    pub fn inv_mass(&self) -> Scalar {
         self.inv_mass.clone()
     }
 
     /// Sets the inverse mass of this rigid body.
     #[inline]
-    pub fn set_inv_mass(&mut self, m: N) {
+    pub fn set_inv_mass(&mut self, m: Scalar) {
         self.inv_mass = m
     }
 
     /// Gets the inverse inertia tensor of this rigid body.
     #[inline]
-    pub fn inv_inertia<'r>(&'r self) -> &'r II {
+    pub fn inv_inertia<'r>(&'r self) -> &'r AngularInertia {
         &'r self.inv_inertia
     }
 
@@ -349,24 +349,24 @@ impl RigidBody {
     ///
     /// Not that this is reset at every update by the physics engine.
     #[inline]
-    pub fn set_inv_inertia(&mut self, ii: II) {
+    pub fn set_inv_inertia(&mut self, ii: AngularInertia) {
         self.inv_inertia = ii
     }
 }
 
-impl Transformation<M> for RigidBody {
+impl Transformation<Matrix> for RigidBody {
     #[inline]
-    fn transformation(&self) -> M {
+    fn transformation(&self) -> Matrix {
         self.local_to_world.clone()
     }
 
     #[inline]
-    fn inv_transformation(&self) -> M {
+    fn inv_transformation(&self) -> Matrix {
         na::inv(&self.local_to_world).unwrap()
     }
 
     #[inline]
-    fn append_transformation(&mut self, to_append: &M) {
+    fn append_transformation(&mut self, to_append: &Matrix) {
         self.local_to_world.append_transformation(to_append);
 
         self.update_center_of_mass();
@@ -374,7 +374,7 @@ impl Transformation<M> for RigidBody {
     }
 
     #[inline]
-    fn append_transformation_cpy(rb: &RigidBody, m: &M) -> RigidBody {
+    fn append_transformation_cpy(rb: &RigidBody, m: &Matrix) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_transformation(m);
@@ -383,7 +383,7 @@ impl Transformation<M> for RigidBody {
     }
 
     #[inline]
-    fn prepend_transformation(&mut self, to_prepend: &M) {
+    fn prepend_transformation(&mut self, to_prepend: &Matrix) {
         self.local_to_world.prepend_transformation(to_prepend);
 
         self.update_center_of_mass();
@@ -391,7 +391,7 @@ impl Transformation<M> for RigidBody {
     }
 
     #[inline]
-    fn prepend_transformation_cpy(rb: &RigidBody, m: &M) -> RigidBody {
+    fn prepend_transformation_cpy(rb: &RigidBody, m: &Matrix) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_transformation(m);
@@ -400,7 +400,7 @@ impl Transformation<M> for RigidBody {
     }
 
     #[inline]
-    fn set_transformation(&mut self, m: M) {
+    fn set_transformation(&mut self, m: Matrix) {
         self.local_to_world = m;
 
         self.update_center_of_mass();
@@ -410,25 +410,25 @@ impl Transformation<M> for RigidBody {
 
 // FIXME: implement Transfomable too
 
-impl Translation<LV> for RigidBody {
+impl Translation<Vector> for RigidBody {
     #[inline]
-    fn translation(&self) -> LV {
+    fn translation(&self) -> Vector {
         self.local_to_world.translation()
     }
 
     #[inline]
-    fn inv_translation(&self) -> LV {
+    fn inv_translation(&self) -> Vector {
         self.local_to_world.inv_translation()
     }
 
     #[inline]
-    fn append_translation(&mut self, t: &LV) {
+    fn append_translation(&mut self, t: &Vector) {
         self.local_to_world.append_translation(t);
         self.update_center_of_mass();
     }
 
     #[inline]
-    fn append_translation_cpy(rb: &RigidBody, t: &LV) -> RigidBody {
+    fn append_translation_cpy(rb: &RigidBody, t: &Vector) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_translation(t);
@@ -437,13 +437,13 @@ impl Translation<LV> for RigidBody {
     }
 
     #[inline]
-    fn prepend_translation(&mut self, t: &LV) {
+    fn prepend_translation(&mut self, t: &Vector) {
         self.local_to_world.prepend_translation(t);
         self.update_center_of_mass();
     }
 
     #[inline]
-    fn prepend_translation_cpy(rb: &RigidBody, t: &LV) -> RigidBody {
+    fn prepend_translation_cpy(rb: &RigidBody, t: &Vector) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_translation(t);
@@ -452,26 +452,26 @@ impl Translation<LV> for RigidBody {
     }
 
     #[inline]
-    fn set_translation(&mut self, t: LV) {
+    fn set_translation(&mut self, t: Vector) {
         self.local_to_world.set_translation(t);
 
         self.update_center_of_mass();
     }
 }
 
-impl Rotation<AV> for RigidBody {
+impl Rotation<Orientation> for RigidBody {
     #[inline]
-    fn rotation(&self) -> AV {
+    fn rotation(&self) -> Orientation {
         self.local_to_world.rotation()
     }
 
     #[inline]
-    fn inv_rotation(&self) -> AV {
+    fn inv_rotation(&self) -> Orientation {
         self.local_to_world.inv_rotation()
     }
 
     #[inline]
-    fn append_rotation(&mut self, rot: &AV) {
+    fn append_rotation(&mut self, rot: &Orientation) {
         self.local_to_world.append_rotation(rot);
 
         self.update_center_of_mass();
@@ -479,7 +479,7 @@ impl Rotation<AV> for RigidBody {
     }
 
     #[inline]
-    fn append_rotation_cpy(rb: &RigidBody, rot: &AV) -> RigidBody {
+    fn append_rotation_cpy(rb: &RigidBody, rot: &Orientation) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_rotation(rot);
@@ -488,7 +488,7 @@ impl Rotation<AV> for RigidBody {
     }
 
     #[inline]
-    fn prepend_rotation(&mut self, rot: &AV) {
+    fn prepend_rotation(&mut self, rot: &Orientation) {
         self.local_to_world.prepend_rotation(rot);
 
         self.update_center_of_mass();
@@ -496,7 +496,7 @@ impl Rotation<AV> for RigidBody {
     }
 
     #[inline]
-    fn prepend_rotation_cpy(rb: &RigidBody, rot: &AV) -> RigidBody {
+    fn prepend_rotation_cpy(rb: &RigidBody, rot: &Orientation) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_rotation(rot);
@@ -505,7 +505,7 @@ impl Rotation<AV> for RigidBody {
     }
 
     #[inline]
-    fn set_rotation(&mut self, r: AV) {
+    fn set_rotation(&mut self, r: Orientation) {
         self.local_to_world.set_rotation(r);
 
         self.update_center_of_mass();

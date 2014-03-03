@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
-use ncollide::math::N;
+use ncollide::math::Scalar;
 use ncollide::broad::{InterferencesBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
 use detection::constraint::Constraint;
@@ -15,8 +15,8 @@ use utils::union_find;
 ///
 /// It is responsible for making objects sleep or wake up.
 pub struct ActivationManager {
-    priv threshold:      N,
-    priv mix_factor:     N,
+    priv threshold:      Scalar,
+    priv mix_factor:     Scalar,
     priv ufind:          ~[UnionFindSet],
     priv can_deactivate: ~[bool],
     priv collector:      ~[Constraint],
@@ -30,7 +30,7 @@ impl ActivationManager {
     /// # Arguments:
     /// * `thresold`   - the minimum energy required to keep an object awake.
     /// * `mix_factor` - the ratio of energy to keep between two frames.
-    pub fn new(threshold:  N, mix_factor: N) -> ActivationManager {
+    pub fn new(threshold:  Scalar, mix_factor: Scalar) -> ActivationManager {
         assert!(mix_factor >= na::zero() && threshold <= na::one(),
                 "The energy mixing factor must be between 0.0 and 1.0.");
 
@@ -55,7 +55,7 @@ impl ActivationManager {
 
     fn update_energy(&self, b: &mut RigidBody) {
         // FIXME: take the time in account (to make a true RWA)
-        let _1         = na::one::<N>();
+        let _1         = na::one::<Scalar>();
         let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
             self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
 

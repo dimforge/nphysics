@@ -4,7 +4,7 @@ use nalgebra::na::Transformation;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
-use ncollide::math::N;
+use ncollide::math::Scalar;
 
 /// A semi-implicit Euler integrator.
 pub struct BodySmpEulerIntegrator;
@@ -19,7 +19,7 @@ impl BodySmpEulerIntegrator {
 
 impl Integrator<RigidBody> for BodySmpEulerIntegrator {
     #[inline]
-    fn update(&mut self, dt: N, rb: &mut RigidBody) {
+    fn update(&mut self, dt: Scalar, rb: &mut RigidBody) {
         if rb.can_move() {
             let (t, lv, av) = euler::semi_implicit_integrate(
                 dt.clone(),

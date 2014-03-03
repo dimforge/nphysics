@@ -1,7 +1,7 @@
 //! Explicit Euler integrator.
 
 use nalgebra::na::Transformation;
-use ncollide::math::N;
+use ncollide::math::Scalar;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
@@ -21,7 +21,7 @@ impl BodyExpEulerIntegrator {
 
 impl Integrator<RigidBody> for BodyExpEulerIntegrator {
     #[inline]
-    fn update(&mut self, dt: N, rb: &mut RigidBody) {
+    fn update(&mut self, dt: Scalar, rb: &mut RigidBody) {
         if rb.can_move() {
             let (t, lv, av) = euler::explicit_integrate(
                 dt.clone(),

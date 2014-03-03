@@ -8,14 +8,14 @@ use std::hash::sip::{SipHasher, SipState};
 use collections::HashMap;
 use nalgebra::na;
 use nalgebra::na::Iterable;
-use ncollide::math::{N, V};
+use ncollide::math::{Scalar, Vector};
 
 #[deriving(Eq)]
 /// The identifier of a contact stored in the impulse cache.
 pub struct ContactIdentifier {
     priv obj1:    uint,
     priv obj2:    uint,
-    priv ccenter: V
+    priv ccenter: Vector
 }
 
 impl Hash for ContactIdentifier {
@@ -37,7 +37,7 @@ impl Hash for ContactIdentifier {
 }
 
 impl ContactIdentifier {
-    pub fn new(obj1: uint, obj2: uint, center: V, step: &N) -> ContactIdentifier {
+    pub fn new(obj1: uint, obj2: uint, center: Vector, step: &Scalar) -> ContactIdentifier {
         ContactIdentifier {
             obj1:    obj1,
             obj2:    obj2,
@@ -48,15 +48,15 @@ impl ContactIdentifier {
 
 pub struct ImpulseCache {
     priv hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
-    priv cache_prev:          ~[N],
+    priv cache_prev:          ~[Scalar],
     priv hash_next:           HashMap<ContactIdentifier, (uint, uint)>,
-    priv cache_next:          ~[N],
-    priv step:                N,
+    priv cache_next:          ~[Scalar],
+    priv step:                Scalar,
     priv impulse_per_contact: uint
 }
 
 impl ImpulseCache {
-    pub fn new(step: N, impulse_per_contact: uint) -> ImpulseCache {
+    pub fn new(step: Scalar, impulse_per_contact: uint) -> ImpulseCache {
         let mut rng = IsaacRng::new_unseeded();
 
         ImpulseCache {
@@ -69,7 +69,7 @@ impl ImpulseCache {
         }
     }
 
-    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: V) {
+    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: Vector) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
             match self.hash_prev.find_copy(&id) {
@@ -88,7 +88,7 @@ impl ImpulseCache {
         &'a mut self.hash_next
     }
 
-    pub fn push_impulsions<'a>(&'a mut self) -> &'a mut [N] {
+    pub fn push_impulsions<'a>(&'a mut self) -> &'a mut [Scalar] {
         let begin = self.cache_next.len();
 
         for _ in range(0, self.impulse_per_contact) {
@@ -104,7 +104,7 @@ impl ImpulseCache {
         self.impulse_per_contact
     }
 
-    pub fn impulsions_at<'a>(&'a self, at: uint) -> &'a [N] {
+    pub fn impulsions_at<'a>(&'a self, at: uint) -> &'a [Scalar] {
         self.cache_prev.slice(at, at + self.impulse_per_contact)
     }
 

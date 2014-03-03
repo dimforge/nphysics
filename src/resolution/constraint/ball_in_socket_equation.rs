@@ -2,14 +2,14 @@ use std::num::Bounded;
 use std::cell::Ref;
 use nalgebra::na::{Row, Indexable};
 use nalgebra::na;
-use ncollide::math::{N, LV};
+use ncollide::math::{Scalar, Vector};
 use object::RigidBody;
 use detection::joint::{Anchor, BallInSocket};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
 
-pub fn fill_second_order_equation(dt:          N,
+pub fn fill_second_order_equation(dt:          Scalar,
                                   joint:       &BallInSocket,
                                   constraints: &mut [VelocityConstraint],
                                   correction:  &CorrectionParameters) {
@@ -25,9 +25,9 @@ pub fn fill_second_order_equation(dt:          N,
 
 // FIXME: move this on another file. Something like "joint_equation_helper.rs"
 pub fn cancel_relative_linear_motion<P>(
-                                     dt:          N,
-                                     global1:     &LV,
-                                     global2:     &LV,
+                                     dt:          Scalar,
+                                     global1:     &Vector,
+                                     global2:     &Vector,
                                      anchor1:     &Anchor<P>,
                                      anchor2:     &Anchor<P>,
                                      constraints: &mut [VelocityConstraint],
@@ -36,8 +36,8 @@ pub fn cancel_relative_linear_motion<P>(
     let rot_axis1  = na::cross_matrix(&(global1 - anchor1.center_of_mass()));
     let rot_axis2  = na::cross_matrix(&(global2 - anchor2.center_of_mass()));
 
-    for i in range(0u, na::dim::<LV>()) {
-        let mut lin_axis: LV = na::zero();
+    for i in range(0u, na::dim::<Vector>()) {
+        let mut lin_axis: Vector = na::zero();
         let constraint = &mut constraints[i];
 
         lin_axis.set(i, na::one());
@@ -65,7 +65,7 @@ pub fn cancel_relative_linear_motion<P>(
             constraint
         );
 
-        let _M: N = Bounded::max_value();
+        let _M: Scalar = Bounded::max_value();
         constraint.lobound   = -_M;
         constraint.hibound   = _M;
         constraint.objective = -dvel - error.at(i) / dt;

@@ -4,7 +4,7 @@ use std::cell::RefCell;
 // use std::rand::RngUtil;
 use nalgebra::na::{Translation, Transformation, RotationWithTranslation};
 use nalgebra::na;
-use ncollide::math::{N, LV, AV, M};
+use ncollide::math::{Scalar, Vector, Orientation, Matrix};
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
 use object::RigidBody;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -31,10 +31,10 @@ pub struct AccumulatedImpulseSolver {
 
 impl AccumulatedImpulseSolver {
     /// Creates a new `AccumulatedImpulseSolver`.
-    pub fn new(step:                  N,
+    pub fn new(step:                  Scalar,
                correction_mode:       CorrectionMode,
-               joint_corr_factor:     N,
-               rest_eps:              N,
+               joint_corr_factor:     Scalar,
+               rest_eps:              Scalar,
                num_first_order_iter:  uint,
                num_second_order_iter: uint)
                -> AccumulatedImpulseSolver {
@@ -44,7 +44,7 @@ impl AccumulatedImpulseSolver {
             restitution_constraints: ~[],
             friction_constraints:    ~[],
             MJLambda:                ~[],
-            cache:                   ImpulseCache::new(step, na::dim::<LV>()),
+            cache:                   ImpulseCache::new(step, na::dim::<Vector>()),
 
             correction: CorrectionParameters {
                 corr_mode:  correction_mode,
@@ -65,21 +65,21 @@ impl AccumulatedImpulseSolver {
     }
 
     fn do_solve(&mut self,
-                dt:          N,
+                dt:          Scalar,
                 constraints: &[Constraint],
                 joints:      &[uint],
                 bodies:      &[Rc<RefCell<RigidBody>>]) {
-        let num_friction_equations    = (na::dim::<LV>() - 1) * self.cache.len();
+        let num_friction_equations    = (na::dim::<Vector>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
 
         for i in joints.iter() {
             match constraints[*i] {
                 BallInSocket(_) => {
-                    num_joint_equations = num_joint_equations + na::dim::<LV>()
+                    num_joint_equations = num_joint_equations + na::dim::<Vector>()
                 },
                 Fixed(_) => {
-                    num_joint_equations = num_joint_equations + na::dim::<LV>() + na::dim::<AV>()
+                    num_joint_equations = num_joint_equations + na::dim::<Vector>() + na::dim::<Orientation>()
                 },
                 RBRB(_, _, _) => { }
             }
@@ -106,7 +106,7 @@ impl AccumulatedImpulseSolver {
                 _ => { }
             }
 
-            friction_offset = friction_offset + na::dim::<LV>() - 1;
+            friction_offset = friction_offset + na::dim::<Vector>() - 1;
         }
 
         let mut joint_offset = num_restitution_equations;
@@ -121,7 +121,7 @@ impl AccumulatedImpulseSolver {
                         &self.correction
                     );
 
-                    joint_offset = joint_offset + na::dim::<LV>();
+                    joint_offset = joint_offset + na::dim::<Vector>();
                 },
                 Fixed(ref f) => {
                     let bf = f.borrow().borrow();
@@ -132,7 +132,7 @@ impl AccumulatedImpulseSolver {
                         &self.correction
                     );
 
-                    joint_offset = joint_offset + na::dim::<LV>() + na::dim::<AV>();
+                    joint_offset = joint_offset + na::dim::<Vector>() + na::dim::<Orientation>();
                 },
                 RBRB(_, _, _) => { }
             }
@@ -168,15 +168,15 @@ impl AccumulatedImpulseSolver {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * na::cast(0.85);
 
-            for j in range(0u, na::dim::<LV>() - 1) {
-                let fc = &self.friction_constraints[i * (na::dim::<LV>() - 1) + j];
+            for j in range(0u, na::dim::<Vector>() - 1) {
+                let fc = &self.friction_constraints[i * (na::dim::<Vector>() - 1) + j];
                 imps[1 + j] = fc.impulse * na::cast(0.85);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().mut_iter().enumerate() {
-            *kv = (kv.val0(), offset + i * na::dim::<LV>());
+            *kv = (kv.val0(), offset + i * na::dim::<Vector>());
         }
 
         /*
@@ -225,7 +225,7 @@ impl AccumulatedImpulseSolver {
 
                 let center = &rb.center_of_mass().clone();
 
-                let mut delta: M = na::one();
+                let mut delta: Matrix = na::one();
                 delta.append_rotation_wrt_point(&rotation, center);
                 delta.append_translation(&translation);
 
@@ -236,7 +236,7 @@ impl AccumulatedImpulseSolver {
 }
 
 impl Solver<Constraint> for AccumulatedImpulseSolver {
-    fn solve(&mut self, dt: N, constraints: &[Constraint]) {
+    fn solve(&mut self, dt: Scalar, constraints: &[Constraint]) {
         // FIXME: bodies index assignment is very ugly
         let mut bodies = ~[];
 
@@ -250,7 +250,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                         self.cache.insert(i,
                                           a.borrow() as *RefCell<RigidBody> as uint,
                                           b.borrow() as *RefCell<RigidBody> as uint,
-                                          (c.world1 + c.world2) / na::cast::<f32, N>(2.0));
+                                          (c.world1 + c.world2) / na::cast::<f32, Scalar>(2.0));
                     },
                     BallInSocket(_) => {
                         // XXX: cache for ball in socket?

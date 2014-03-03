@@ -7,23 +7,23 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use ncollide::geom::Ball;
 use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
-use ncollide::math::{N, LV};
+use ncollide::math::{Scalar, Vector};
 use integration::Integrator;
 use object::{RigidBody, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
 
 struct CCDBody {
     body:        @mut RigidBody,
-    radius:      N,
-    sqthreshold: N,
-    last_pos:    LV
+    radius:      Scalar,
+    sqthreshold: Scalar,
+    last_pos:    Vector
 }
 
 impl CCDBody {
     pub fn new(body:        @mut RigidBody,
-               radius:      N,
-               sqthreshold: N,
-               last_pos:    LV)
+               radius:      Scalar,
+               sqthreshold: Scalar,
+               last_pos:    Vector)
                -> CCDBody {
         CCDBody {
             body:        body,
@@ -68,8 +68,8 @@ SweptBallMotionClamping<BF> {
 
     pub fn add_ccd_to(&mut self,
                       body:                @mut RigidBody,
-                      swept_sphere_radius: N,
-                      motion_thresold:     N) {
+                      swept_sphere_radius: Scalar,
+                      motion_thresold:     Scalar) {
         let key = ptr::to_unsafe_ptr(body) as uint;
         match *body {
             RB(ref mut rb) => {
@@ -131,7 +131,7 @@ for SweptBallMotionClamping<BF> {
         self.objects.remove(&(ptr::to_unsafe_ptr(o) as uint));
     }
 
-    fn update(&mut self, _: N) {
+    fn update(&mut self, _: Scalar) {
         if self.update_bf {
             self.broad_phase.update();
         }
@@ -163,12 +163,12 @@ for SweptBallMotionClamping<BF> {
                         /*
                          * Find the minimum toi
                          */
-                        let mut min_toi: N = Bounded::max_value();
+                        let mut min_toi: Scalar = Bounded::max_value();
                         let old_transform  = na::append_translation(rb.transform_ref(), &-movement);
                         let mut dir        = movement.clone();
                         let distance       = dir.normalize();
 
-                        let _eps: N = Float::epsilon();
+                        let _eps: Scalar = Float::epsilon();
                         for b in self.interferences.iter() {
                             if !managed::mut_ptr_eq(*b, o.value.body) {
                                 match **b {

@@ -5,7 +5,7 @@ use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
 use ncollide::ray::Ray;
 use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
-use ncollide::math::{N, LV, AV};
+use ncollide::math::{Scalar, Vector, Orientation};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
@@ -94,7 +94,7 @@ impl World {
     }
 
     /// Updates the physics world.
-    pub fn step(&mut self, dt: N) {
+    pub fn step(&mut self, dt: Scalar) {
         for e in self.bodies.elements_mut().mut_iter() {
             let mut rb = e.value.borrow().borrow_mut();
 
@@ -166,35 +166,35 @@ impl World {
     }
 
     /// Sets the linear acceleration afecting every dynamic rigid body.
-    pub fn set_gravity(&mut self, gravity: LV) {
+    pub fn set_gravity(&mut self, gravity: Vector) {
         self.forces.set_lin_acc(gravity)
     }
 
     /// Sets the angular acceleration afecting every dynamic rigid body.
-    pub fn set_angular_acceleration(&mut self, accel: AV) {
+    pub fn set_angular_acceleration(&mut self, accel: Orientation) {
         self.forces.set_ang_acc(accel)
     }
 
     /// Gets the linear acceleration afecting every dynamic rigid body.
-    pub fn gravity(&self) -> LV {
+    pub fn gravity(&self) -> Vector {
         self.forces.lin_acc()
     }
 
     /// Gets the angular acceleration afecting every dynamic rigid body.
-    pub fn angular_acceleration(&self) -> AV {
+    pub fn angular_acceleration(&self) -> Orientation {
         self.forces.ang_acc()
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn cast_ray(&mut self, ray: &Ray, out: &mut ~[(Rc<RefCell<RigidBody>>, N)]) {
+    pub fn cast_ray(&mut self, ray: &Ray, out: &mut ~[(Rc<RefCell<RigidBody>>, Scalar)]) {
         self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
     }
 
     /*
     pub fn add_ccd_to(&mut self,
                       body:                Rc<RefCell<RigidBody>>,
-                      swept_sphere_radius: N,
-                      motion_thresold:     N) {
+                      swept_sphere_radius: Scalar,
+                      motion_thresold:     Scalar) {
         self.ccd.add_ccd_to(body, swept_sphere_radius, motion_thresold)
     }
     */

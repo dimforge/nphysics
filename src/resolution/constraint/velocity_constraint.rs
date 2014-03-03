@@ -1,38 +1,38 @@
 use nalgebra::na;
-use ncollide::math::{N, LV, AV};
+use ncollide::math::{Scalar, Vector, Orientation};
 
 #[deriving(Eq, Show, Clone)]
 /// A constraint of velocity at a point of contact.
 pub struct VelocityConstraint {
     /// The contact normal.
-    normal:             LV,
+    normal:             Vector,
 
     /// The contact normal multiplied by the first body's inverse mass.
-    weighted_normal1:   LV,
+    weighted_normal1:   Vector,
     /// The contact normal multiplied by the second body's inverse mass.
-    weighted_normal2:   LV,
+    weighted_normal2:   Vector,
 
     /// The first body rotation axis.
-    rot_axis1:          AV,
+    rot_axis1:          Orientation,
     /// The first body rotation axis multiplied by its inverse inertia.
-    weighted_rot_axis1: AV,
+    weighted_rot_axis1: Orientation,
 
     /// The second body rotation axis.
-    rot_axis2:          AV,
+    rot_axis2:          Orientation,
     /// The second body rotation axis multiplied by its inverse inertia.
-    weighted_rot_axis2: AV,
+    weighted_rot_axis2: Orientation,
 
     /// The inverse of the sum of linear and angular inertia of both bodies.
-    inv_projected_mass: N,
+    inv_projected_mass: Scalar,
 
     /// The total impulse applied.
-    impulse:            N,
+    impulse:            Scalar,
     /// The lower bound of the impulse.
-    lobound:            N,
+    lobound:            Scalar,
     /// The upper bound of the impulse.
-    hibound:            N,
+    hibound:            Scalar,
     /// The target delta velocity.
-    objective:          N,
+    objective:          Scalar,
     /// The id of the first body.
     id1:                int,
     /// The id of the second body.
@@ -40,7 +40,7 @@ pub struct VelocityConstraint {
     /// The id of the friction constraint.
     friction_limit_id:  uint,
     /// The friction coefficient on this contact.
-    friction_coeff:     N
+    friction_coeff:     Scalar
 }
 
 impl VelocityConstraint {
