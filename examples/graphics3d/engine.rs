@@ -1,4 +1,5 @@
 use std::intrinsics::TypeId;
+use std::any::AnyRefExt;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::num::One;

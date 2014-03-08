@@ -60,8 +60,8 @@ impl ImpulseCache {
         let mut rng = IsaacRng::new_unseeded();
 
         ImpulseCache {
-            hash_prev:           HashMap::with_capacity_and_hasher(SipHasher::new_with_keys(rng.gen(), rng.gen()), 32),
-            hash_next:           HashMap::with_capacity_and_hasher(SipHasher::new_with_keys(rng.gen(), rng.gen()), 32),
+            hash_prev:           HashMap::with_capacity_and_hasher(32, SipHasher::new_with_keys(rng.gen(), rng.gen())),
+            hash_next:           HashMap::with_capacity_and_hasher(32, SipHasher::new_with_keys(rng.gen(), rng.gen())),
             cache_prev:          vec::from_elem(impulse_per_contact, na::zero()),
             cache_next:          vec::from_elem(impulse_per_contact, na::zero()),
             step:                step,
