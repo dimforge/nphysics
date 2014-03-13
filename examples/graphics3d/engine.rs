@@ -3,7 +3,7 @@ use std::any::AnyRefExt;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::num::One;
-use std::rand::{SeedableRng, XorShiftRng, Rng};
+use rand::{SeedableRng, XorShiftRng, Rng};
 use collections::HashMap;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;

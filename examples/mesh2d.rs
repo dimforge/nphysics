@@ -3,6 +3,7 @@
 #[feature(managed_boxes)];
 
 extern crate std;
+extern crate rand;
 extern crate extra;
 extern crate native;
 extern crate sync;
@@ -15,7 +16,7 @@ extern crate graphics2d;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::vec;
-use std::rand::{StdRng, SeedableRng, Rng};
+use rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Box, Mesh};
