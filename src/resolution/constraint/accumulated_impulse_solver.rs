@@ -1,7 +1,7 @@
 use std::num::Zero;
 use std::rc::Rc;
 use std::cell::RefCell;
-// use std::rand::RngUtil;
+// use rand::RngUtil;
 use nalgebra::na::{Translation, Transformation, RotationWithTranslation};
 use nalgebra::na;
 use ncollide::math::{Scalar, Vector, Orientation, Matrix};

@@ -1,10 +1,10 @@
 #[doc(hidden)];
 
 use std::mem;
-use std::rand::{IsaacRng, Rng};
 use std::vec;
 use std::hash::Hash;
 use std::hash::sip::{SipHasher, SipState};
+use rand::{IsaacRng, Rng};
 use collections::HashMap;
 use nalgebra::na;
 use nalgebra::na::Iterable;

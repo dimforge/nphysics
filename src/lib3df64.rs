@@ -102,6 +102,7 @@ The libraries needed to compile the examples are:
 #[doc(html_root_url = "http://www.rust-ci.org/sebcrozet/nphysics/doc")];
 
 extern crate std;
+extern crate rand;
 extern crate extra;
 extern crate serialize;
 extern crate collections;

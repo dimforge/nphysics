@@ -4,6 +4,7 @@
 #[feature(managed_boxes)];
 
 extern crate std;
+extern crate rand;
 extern crate extra;
 extern crate sync;
 extern crate time;
