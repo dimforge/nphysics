@@ -2,6 +2,7 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::vec::Vec;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
@@ -31,19 +32,19 @@ impl BodyBodyDispatcher {
 
 impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector> for BodyBodyDispatcher {
     fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> ~GeomGeomCollisionDetector {
-        let brb1 = rb1.borrow().borrow();
-        let brb2 = rb2.borrow().borrow();
+        let brb1 = rb1.borrow();
+        let brb2 = rb2.borrow();
 
-        self.geom_dispatcher.borrow().dispatch(brb1.get().geom(), brb2.get().geom())
+        self.geom_dispatcher.dispatch(brb1.get().geom(), brb2.get().geom())
     }
 
     fn is_valid(&self, a: &Rc<RefCell<RigidBody>>, b: &Rc<RefCell<RigidBody>>) -> bool {
-        if a.borrow() as *RefCell<RigidBody> == b.borrow() as *RefCell<RigidBody> {
+        if &**a as *RefCell<RigidBody> == &**b as *RefCell<RigidBody> {
             false
         }
         else {
-            let ba = a.borrow().borrow();
-            let bb = b.borrow().borrow();
+            let ba = a.borrow();
+            let bb = b.borrow();
 
             ba.get().can_move() || bb.get().can_move()
         }
@@ -54,11 +55,11 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisi
 /// Collision detector between rigid bodies.
 pub struct BodiesBodies<BF> {
     priv geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
-    priv contacts_collector:    ~[Contact],
+    priv contacts_collector:    Vec<Contact>,
     // FIXME: this is an useless buffer which accumulate the result of bodies activation.
     // This must exist since there is no way to send an activation message without an accumulation
     // list…
-    priv constraints_collector: ~[Constraint],
+    priv constraints_collector: Vec<Constraint>,
 }
 
 impl<BF: 'static + InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {
@@ -66,8 +67,8 @@ impl<BF: 'static + InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomColl
     pub fn new(dispatcher: Rc<GeomGeomDispatcher>) -> BodiesBodies<BF> {
         BodiesBodies {
             geom_geom_dispatcher:  dispatcher,
-            contacts_collector:    ~[],
-            constraints_collector: ~[],
+            contacts_collector:    Vec::new(),
+            constraints_collector: Vec::new(),
         }
     }
 }
@@ -77,18 +78,16 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
     pub fn interferences_with_ray(&mut self,
                                   ray:         &Ray,
                                   broad_phase: &mut BF,
-                                  out:         &mut ~[(Rc<RefCell<RigidBody>>, Scalar)]) {
-        let mut bodies = ~[];
+                                  out:         &mut Vec<(Rc<RefCell<RigidBody>>, Scalar)>) {
+        let mut bodies = Vec::new();
 
         broad_phase.interferences_with_ray(ray, &mut bodies);
 
-        for rb in bodies.move_rev_iter() {
+        for rb in bodies.move_iter() { // FIXME: no move_rev_iter?
             let toi;
 
             {
-                let brb = rb.borrow().borrow();
-
-                toi = brb.get().geom().toi_with_transform_and_ray(brb.get().transform_ref(), ray, true)
+                toi = rb.get().geom().toi_with_transform_and_ray(rb.get().transform_ref(), ray, true)
             }
 
             match toi {
@@ -107,18 +106,16 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
                   o:           &Rc<RefCell<RigidBody>>,
                   broad_phase: &mut BF,
                   activation:  &mut ActivationManager) {
-        let bo = o.borrow().borrow();
-
-        if !bo.get().is_active() {
+        if !o.get().is_active() {
             // wake up everybody in contact
-            let aabb              = bo.get().bounding_volume();
-            let mut interferences = ~[];
+            let aabb              = o.get().bounding_volume();
+            let mut interferences = Vec::new();
 
             broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
 
             for i in interferences.iter() {
-                if i.borrow() as *RefCell<RigidBody> != o.borrow() as *RefCell<RigidBody> &&
-                   i.borrow().with(|i| !i.is_active() && i.can_move()) {
+                if &**i as *RefCell<RigidBody> != &**o as *RefCell<RigidBody> &&
+                   i.with(|i| !i.is_active() && i.can_move()) {
                     activation.will_activate(i);
                 }
             }
@@ -134,16 +131,11 @@ Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
             let ncols = cd.num_colls();
 
             {
-                let bb1 = b1.borrow().borrow();
-                let bb2 = b2.borrow().borrow();
-                let rb1 = bb1.get();
-                let rb2 = bb2.get();
-
-                cd.update(self.geom_geom_dispatcher.borrow(),
-                          rb1.transform_ref(),
-                          rb1.geom(),
-                          rb2.transform_ref(),
-                          rb2.geom());
+                cd.update(&*self.geom_geom_dispatcher,
+                          b1.get().transform_ref(),
+                          b1.get().geom(),
+                          b2.get().transform_ref(),
+                          b2.get().geom());
             }
 
             let new_ncols = cd.num_colls();
@@ -159,7 +151,7 @@ Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
         })
     }
 
-    fn interferences(&mut self, out: &mut ~[Constraint], broad_phase: &mut BF) {
+    fn interferences(&mut self, out: &mut Vec<Constraint>, broad_phase: &mut BF) {
         broad_phase.for_each_pair_mut(|b1, b2, cd| {
             cd.colls(&mut self.contacts_collector);
 

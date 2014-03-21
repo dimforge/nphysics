@@ -87,7 +87,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> World) {
                     match grabbed_object {
                         Some(_) => {
                             let joint = grabbed_object_joint.as_ref().unwrap();
-                            joint.borrow().with_mut(|j| j.set_local2(cursor_pos));
+                            joint.borrow_mut().set_local2(cursor_pos);
                         },
                         None => camera.handle_event(&ev)
                     };

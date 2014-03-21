@@ -45,7 +45,7 @@ impl Camera {
                 let ndelta = delta as f32; // between -1.0 and 1.0
 
                 self.curr_zoom *= 1.0 + ndelta * ZOOM_FACTOR;
-                self.scene.borrow().borrow_mut().get().zoom(1.0 + ndelta * ZOOM_FACTOR);
+                self.scene.borrow_mut().zoom(1.0 + ndelta * ZOOM_FACTOR);
             }
             event::MouseButtonPressed{x, y, ..}  => {
                 self.lastx    = x;
@@ -61,15 +61,15 @@ impl Camera {
                     let zx   = (self.lastx - x) as f32 * zoom;
                     let zy   = (self.lasty - y) as f32 * zoom;
 
-                    self.scene.borrow().borrow_mut().get().move(&Vector2f { x: zx, y: zy });
+                    self.scene.borrow_mut().move(&Vector2f { x: zx, y: zy });
 
                     self.lastx = x;
                     self.lasty = y;
                 }
             }
             event::Resized{width, height} => {
-                self.scene.borrow().borrow_mut().get().set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
-                self.ui.borrow().borrow_mut().get().set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
+                self.scene.borrow_mut().set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
+                self.ui.borrow_mut().set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
             }
             _ => {}
         }

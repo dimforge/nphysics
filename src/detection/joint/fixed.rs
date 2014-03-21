@@ -62,8 +62,7 @@ impl Fixed {
     pub fn anchor1_pos(&self) -> Matrix {
         match self.anchor1.body {
             Some(ref b) => {
-                let bb = b.borrow().borrow();
-                bb.get().transform_ref() * self.anchor1.position
+                b.borrow().transform_ref() * self.anchor1.position
             },
             None => self.anchor1.position.clone()
         }
@@ -73,8 +72,7 @@ impl Fixed {
     pub fn anchor2_pos(&self) -> Matrix {
         match self.anchor2.body {
             Some(ref b) => {
-                let bb = b.borrow().borrow();
-                bb.get().transform_ref() * self.anchor2.position
+                b.borrow().transform_ref() * self.anchor2.position
             },
             None => self.anchor2.position.clone()
         }

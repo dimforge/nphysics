@@ -4,7 +4,6 @@
 
 extern crate std;
 extern crate rand;
-extern crate extra;
 extern crate native;
 extern crate sync;
 extern crate rsfml;
@@ -15,7 +14,7 @@ extern crate graphics2d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::vec;
+use std::slice;
 use rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
@@ -48,13 +47,13 @@ pub fn mesh2d(graphics: &mut GraphicsManager) -> World {
     let max_h     = 15.0;
     let begin_h   = 15.0;
     let step      = (begin.abs() * 2.0) / (num_split as f32);
-    let mut vertices = vec::from_fn(num_split + 2, |i| Vec2::new(begin + (i as f32) * step, 0.0));
-    let mut indices  = ~[];
+    let mut vertices = Vec::from_slice(slice::from_fn(num_split + 2, |i| Vec2::new(begin + (i as f32) * step, 0.0)));
+    let mut indices  = Vec::new();
     let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4]);
 
     for i in range(0u, num_split) {
         let h: f32 = rng.gen();
-        vertices[i + 1].y = begin_h - h * max_h;
+        vertices.get_mut(i + 1).y = begin_h - h * max_h;
 
         indices.push(i);
         indices.push(i + 1);

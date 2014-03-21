@@ -49,7 +49,7 @@ impl Cone {
     }
 
     pub fn update(&mut self) {
-        let rb = self.body.borrow().borrow();
+        let rb = self.body.borrow();
 
         if rb.get().is_active() {
             self.gfx.set_transformation(na::transformation(rb.get()) * self.delta);

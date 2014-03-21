@@ -3,7 +3,6 @@
 #[feature(managed_boxes)];
 
 extern crate std;
-extern crate extra;
 extern crate native;
 extern crate rsfml;
 extern crate nphysics = "nphysics2df32";

@@ -3,7 +3,7 @@ use std::cell::Ref;
 use nalgebra::na;
 use ncollide::contact::Contact;
 use ncollide::volumetric::InertiaTensor;
-use ncollide::math::{Scalar, Vector, Orientation};
+use ncollide::math::{Scalar, Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
 use utils::ref_to::RefTo;
@@ -76,7 +76,7 @@ pub fn reinit_to_first_order_equation(dt:         Scalar,
      * Fill b
      */
     if coll.depth >= correction.corr_mode.min_depth_for_pos_corr() {
-        constraint.objective = correction.corr_mode.pos_corr_factor() * na::max(coll.depth, na::zero()) / dt;
+        constraint.objective = correction.corr_mode.pos_corr_factor() * coll.depth.max(na::zero()) / dt;
     }
     else {
         constraint.objective = na::zero();
@@ -148,7 +148,7 @@ pub fn fill_second_order_equation(dt:           Scalar,
 }
 
 pub fn fill_constraint_geometry<R: RefTo<RigidBody>>(
-                                normal:     Vector,
+                                normal:     Vect,
                                 rot_axis1:  Orientation,
                                 rot_axis2:  Orientation,
                                 rb1:        &Option<R>,
@@ -194,8 +194,8 @@ pub fn fill_constraint_geometry<R: RefTo<RigidBody>>(
 }
 
 fn fill_velocity_constraint(dt:              Scalar,
-                            normal:          Vector,
-                            center:          Vector,
+                            normal:          Vect,
+                            center:          Vect,
                             restitution:     Scalar,
                             depth:           Scalar,
                             initial_impulse: Scalar,
@@ -255,7 +255,7 @@ fn fill_velocity_constraint(dt:              Scalar,
 pub fn relative_velocity<R: RefTo<RigidBody>>(
                          rb1:       &Option<R>,
                          rb2:       &Option<R>,
-                         normal:    &Vector,
+                         normal:    &Vect,
                          rot_axis1: &Orientation,
                          rot_axis2: &Orientation,
                          dt:        &Scalar)

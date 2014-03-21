@@ -18,8 +18,8 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso3<f32>,
-               vertices: ~[Vec3<f32>],
-               indices:  ~[Vec3<u32>],
+               vertices: Vec<Vec3<f32>>,
+               indices:  Vec<Vec3<u32>>,
                color:    Vec3<f32>,
                window:   &mut Window) -> Mesh {
         let vs = vertices;
@@ -50,7 +50,7 @@ impl Mesh {
     }
 
     pub fn update(&mut self) {
-        let rb = self.body.borrow().borrow();
+        let rb = self.body.borrow();
 
         if rb.get().is_active() {
             {

@@ -1,11 +1,12 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::vec::Vec;
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
 use ncollide::ray::Ray;
 use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
-use ncollide::math::{Scalar, Vector, Orientation};
+use ncollide::math::{Scalar, Vect, Orientation};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
@@ -32,7 +33,7 @@ pub struct World {
     // ccd:        SweptBallMotionClamping<WorldBroadPhase>,
     priv joints:      JointManager,
     priv solver:      AccumulatedImpulseSolver,
-    priv collector:   ~[Constraint]
+    priv collector:   Vec<Constraint>
 }
 
 impl World {
@@ -89,14 +90,14 @@ impl World {
             // ccd:      ccd,
             joints:      joints,
             solver:      solver,
-            collector:   ~[]
+            collector:   Vec::new()
         }
     }
 
     /// Updates the physics world.
     pub fn step(&mut self, dt: Scalar) {
         for e in self.bodies.elements_mut().mut_iter() {
-            let mut rb = e.value.borrow().borrow_mut();
+            let mut rb = e.value.borrow_mut();
 
             self.forces.update(dt.clone(), rb.get());
             self.integrator.update(dt.clone(), rb.get());
@@ -111,24 +112,24 @@ impl World {
         self.detector.interferences(&mut self.collector, &mut self.broad_phase);
         self.joints.interferences(&mut self.collector, &mut self.broad_phase);
 
-        self.solver.solve(dt, self.collector);
+        self.solver.solve(dt, self.collector.as_slice());
 
         self.collector.clear();
     }
 
     /// Adds a rigid body to the physics world.
     pub fn add_body(&mut self, b: Rc<RefCell<RigidBody>>) {
-        self.bodies.insert(b.borrow() as *RefCell<RigidBody> as uint, b.clone());
+        self.bodies.insert(b.deref() as *RefCell<RigidBody> as uint, b.clone());
         self.broad_phase.add(b);
     }
 
     /// Remove a rigid body from the physics world.
     pub fn remove_body(&mut self, b: &Rc<RefCell<RigidBody>>) {
-        self.bodies.remove(&(b.borrow() as *RefCell<RigidBody> as uint));
+        self.bodies.remove(&(b.deref() as *RefCell<RigidBody> as uint));
         self.broad_phase.remove(b);
         self.detector.remove(b, &mut self.broad_phase, &mut self.sleep);
         self.joints.remove(b, &mut self.sleep);
-        b.borrow().with_mut(|b| b.delete());
+        b.borrow_mut().delete();
     }
 
     /// Gets a mutable reference to the force generator.
@@ -166,7 +167,7 @@ impl World {
     }
 
     /// Sets the linear acceleration afecting every dynamic rigid body.
-    pub fn set_gravity(&mut self, gravity: Vector) {
+    pub fn set_gravity(&mut self, gravity: Vect) {
         self.forces.set_lin_acc(gravity)
     }
 
@@ -176,7 +177,7 @@ impl World {
     }
 
     /// Gets the linear acceleration afecting every dynamic rigid body.
-    pub fn gravity(&self) -> Vector {
+    pub fn gravity(&self) -> Vect {
         self.forces.lin_acc()
     }
 
@@ -186,7 +187,7 @@ impl World {
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn cast_ray(&mut self, ray: &Ray, out: &mut ~[(Rc<RefCell<RigidBody>>, Scalar)]) {
+    pub fn cast_ray(&mut self, ray: &Ray, out: &mut Vec<(Rc<RefCell<RigidBody>>, Scalar)>) {
         self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
     }
 
@@ -220,7 +221,7 @@ impl World {
     }
 
     /// Collects every interferences detected since the last update.
-    pub fn interferences(&mut self, out: &mut ~[Constraint]) {
+    pub fn interferences(&mut self, out: &mut Vec<Constraint>) {
         self.detector.interferences(out, &mut self.broad_phase);
         self.joints.interferences(out, &mut self.broad_phase);
     }

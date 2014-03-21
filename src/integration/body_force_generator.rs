@@ -1,12 +1,12 @@
 //! Constant linear and angular force generator.
 
-use ncollide::math::{Scalar, Vector, Orientation};
+use ncollide::math::{Scalar, Vect, Orientation};
 use object::RigidBody;
 use integration::Integrator;
 
 /// A constant linear and angular force generator.
 pub struct BodyForceGenerator {
-    priv lin_acc: Vector,
+    priv lin_acc: Vect,
     priv ang_acc: Orientation
 }
 
@@ -17,7 +17,7 @@ impl BodyForceGenerator {
     ///
     /// * `lin_acc` - the linear acceleration to apply to every body on the scene.
     /// * `ang_acc` - the angular acceleration to apply to every body on the scene.
-    pub fn new(lin_acc: Vector, ang_acc: Orientation) -> BodyForceGenerator {
+    pub fn new(lin_acc: Vect, ang_acc: Orientation) -> BodyForceGenerator {
         BodyForceGenerator {
             lin_acc: lin_acc,
             ang_acc: ang_acc
@@ -28,13 +28,13 @@ impl BodyForceGenerator {
 impl BodyForceGenerator {
     /// The linear acceleration applied by this force generator.
     #[inline]
-    pub fn lin_acc(&self) -> Vector {
+    pub fn lin_acc(&self) -> Vect {
         self.lin_acc.clone()
     }
 
     /// Sets the linear acceleration applied by this force generator.
     #[inline]
-    pub fn set_lin_acc(&mut self, lin_acc: Vector) {
+    pub fn set_lin_acc(&mut self, lin_acc: Vect) {
         self.lin_acc = lin_acc;
     }
 

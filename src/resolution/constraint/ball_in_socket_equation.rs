@@ -2,7 +2,7 @@ use std::num::Bounded;
 use std::cell::Ref;
 use nalgebra::na::{Row, Indexable};
 use nalgebra::na;
-use ncollide::math::{Scalar, Vector};
+use ncollide::math::{Scalar, Vect};
 use object::RigidBody;
 use detection::joint::{Anchor, BallInSocket};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -26,8 +26,8 @@ pub fn fill_second_order_equation(dt:          Scalar,
 // FIXME: move this on another file. Something like "joint_equation_helper.rs"
 pub fn cancel_relative_linear_motion<P>(
                                      dt:          Scalar,
-                                     global1:     &Vector,
-                                     global2:     &Vector,
+                                     global1:     &Vect,
+                                     global2:     &Vect,
                                      anchor1:     &Anchor<P>,
                                      anchor2:     &Anchor<P>,
                                      constraints: &mut [VelocityConstraint],
@@ -36,8 +36,8 @@ pub fn cancel_relative_linear_motion<P>(
     let rot_axis1  = na::cross_matrix(&(global1 - anchor1.center_of_mass()));
     let rot_axis2  = na::cross_matrix(&(global2 - anchor2.center_of_mass()));
 
-    for i in range(0u, na::dim::<Vector>()) {
-        let mut lin_axis: Vector = na::zero();
+    for i in range(0u, na::dim::<Vect>()) {
+        let mut lin_axis: Vect = na::zero();
         let constraint = &mut constraints[i];
 
         lin_axis.set(i, na::one());
@@ -77,12 +77,11 @@ pub fn cancel_relative_linear_motion<P>(
 pub fn write_anchor_id<'a, P>(anchor: &'a Anchor<P>, id: &mut int) -> Option<Ref<'a, RigidBody>> {
     match anchor.body {
         Some(ref b) => {
-            let brb      = b.borrow().borrow();
+            let rb = b.borrow();
             let can_move;
             let rid;
 
             {
-                let rb   = brb.get();
                 can_move = rb.can_move();
                 rid      = rb.index();
             }
@@ -90,7 +89,7 @@ pub fn write_anchor_id<'a, P>(anchor: &'a Anchor<P>, id: &mut int) -> Option<Ref
             if can_move {
                 *id = rid;
 
-                Some(brb)
+                Some(rb)
             }
             else {
                 *id = -1;

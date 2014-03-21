@@ -1,7 +1,7 @@
 use std::num::Bounded;
 use nalgebra::na::{Translation, Rotation};
 use nalgebra::na;
-use ncollide::math::{Scalar, Vector, Orientation, Matrix};
+use ncollide::math::{Scalar, Vect, Orientation, Matrix};
 use detection::joint::Fixed;
 use detection::joint::Anchor;
 use resolution::constraint::ball_in_socket_equation;
@@ -31,7 +31,7 @@ pub fn fill_second_order_equation(dt:          Scalar,
         &ref2,
         joint.anchor1(),
         joint.anchor2(),
-        constraints.mut_slice_from(na::dim::<Vector>()),
+        constraints.mut_slice_from(na::dim::<Vect>()),
         correction);
 }
 

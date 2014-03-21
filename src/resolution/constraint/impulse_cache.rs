@@ -1,21 +1,21 @@
 #[doc(hidden)];
 
 use std::mem;
-use std::vec;
+use std::vec::Vec;
 use std::hash::Hash;
 use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
 use collections::HashMap;
 use nalgebra::na;
 use nalgebra::na::Iterable;
-use ncollide::math::{Scalar, Vector};
+use ncollide::math::{Scalar, Vect};
 
 #[deriving(Eq)]
 /// The identifier of a contact stored in the impulse cache.
 pub struct ContactIdentifier {
     priv obj1:    uint,
     priv obj2:    uint,
-    priv ccenter: Vector
+    priv ccenter: Vect
 }
 
 impl Hash for ContactIdentifier {
@@ -37,7 +37,7 @@ impl Hash for ContactIdentifier {
 }
 
 impl ContactIdentifier {
-    pub fn new(obj1: uint, obj2: uint, center: Vector, step: &Scalar) -> ContactIdentifier {
+    pub fn new(obj1: uint, obj2: uint, center: Vect, step: &Scalar) -> ContactIdentifier {
         ContactIdentifier {
             obj1:    obj1,
             obj2:    obj2,
@@ -48,9 +48,9 @@ impl ContactIdentifier {
 
 pub struct ImpulseCache {
     priv hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
-    priv cache_prev:          ~[Scalar],
+    priv cache_prev:          Vec<Scalar>,
     priv hash_next:           HashMap<ContactIdentifier, (uint, uint)>,
-    priv cache_next:          ~[Scalar],
+    priv cache_next:          Vec<Scalar>,
     priv step:                Scalar,
     priv impulse_per_contact: uint
 }
@@ -62,14 +62,14 @@ impl ImpulseCache {
         ImpulseCache {
             hash_prev:           HashMap::with_capacity_and_hasher(32, SipHasher::new_with_keys(rng.gen(), rng.gen())),
             hash_next:           HashMap::with_capacity_and_hasher(32, SipHasher::new_with_keys(rng.gen(), rng.gen())),
-            cache_prev:          vec::from_elem(impulse_per_contact, na::zero()),
-            cache_next:          vec::from_elem(impulse_per_contact, na::zero()),
+            cache_prev:          Vec::from_elem(impulse_per_contact, na::zero()),
+            cache_next:          Vec::from_elem(impulse_per_contact, na::zero()),
             step:                step,
             impulse_per_contact: impulse_per_contact
         }
     }
 
-    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: Vector) {
+    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: Vect) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
             match self.hash_prev.find_copy(&id) {

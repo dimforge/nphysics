@@ -52,7 +52,7 @@ impl<'a> Fps<'a> {
 
         let v = rw.get_view();
 
-        self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, v.borrow().borrow().get()));
+        self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, v.borrow().deref()));
         self.fps.set_string(elapsed.to_str());
         self.fps.draw_in_render_window(rw);
     }

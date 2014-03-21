@@ -1,16 +1,16 @@
 use nalgebra::na;
-use ncollide::math::{Scalar, Vector, Orientation};
+use ncollide::math::{Scalar, Vect, Orientation};
 
 #[deriving(Eq, Show, Clone)]
 /// A constraint of velocity at a point of contact.
 pub struct VelocityConstraint {
     /// The contact normal.
-    normal:             Vector,
+    normal:             Vect,
 
     /// The contact normal multiplied by the first body's inverse mass.
-    weighted_normal1:   Vector,
+    weighted_normal1:   Vect,
     /// The contact normal multiplied by the second body's inverse mass.
-    weighted_normal2:   Vector,
+    weighted_normal2:   Vect,
 
     /// The first body rotation axis.
     rot_axis1:          Orientation,

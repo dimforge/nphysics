@@ -7,7 +7,7 @@ use nalgebra::na::Transform;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
-use ncollide::math::{Scalar, Vector, Orientation, Matrix, AngularInertia};
+use ncollide::math::{Scalar, Vect, Orientation, Matrix, AngularInertia};
 
 #[deriving(Show, Eq, Clone, Encodable, Decodable)]
 /// The movement state of a rigid body.
@@ -47,14 +47,14 @@ pub struct RigidBody {
     priv state:                RigidBodyState,
     priv geom:                 Rc<~Geom>,
     priv local_to_world:       Matrix,
-    priv lin_vel:              Vector,
+    priv lin_vel:              Vect,
     priv ang_vel:              Orientation,
     priv inv_mass:             Scalar,
     priv ls_inv_inertia:       AngularInertia,
     priv inv_inertia:          AngularInertia,
-    priv ls_center_of_mass:    Vector,
-    priv center_of_mass:       Vector,
-    priv lin_acc:              Vector,
+    priv ls_center_of_mass:    Vect,
+    priv center_of_mass:       Vect,
+    priv lin_acc:              Vect,
     priv ang_acc:              Orientation,
     priv restitution:          Scalar,
     priv friction:             Scalar,
@@ -123,7 +123,7 @@ impl RigidBody {
     /// Gets a reference to this body's geometry.
     #[inline]
     pub fn geom<'r>(&'r self) -> &'r Geom {
-        let res: &'r Geom = *self.geom.borrow();
+        let res: &'r Geom = *self.geom;
 
         res
     }
@@ -142,7 +142,7 @@ impl RigidBody {
 
     /// Gets a reference to this body's center of mass.
     #[inline]
-    pub fn center_of_mass<'r>(&'r self) -> &'r Vector {
+    pub fn center_of_mass<'r>(&'r self) -> &'r Vect {
         &'r self.center_of_mass
     }
 
@@ -217,7 +217,7 @@ impl RigidBody {
                         fail!("A dynamic body must not have a zero density.")
                     }
 
-                    let mprops: (Scalar, Vector, AngularInertia) = geom.borrow().mass_properties(&density);
+                    let mprops: (Scalar, Vect, AngularInertia) = geom.mass_properties(&density);
                     let (m, c, ii) = mprops;
 
                     if m.is_zero() {
@@ -277,19 +277,19 @@ impl RigidBody {
 
     /// Get the linear velocity of this rigid body.
     #[inline]
-    pub fn lin_vel(&self) -> Vector {
+    pub fn lin_vel(&self) -> Vect {
         self.lin_vel.clone()
     }
 
     /// Sets the linear velocity of this rigid body.
     #[inline]
-    pub fn set_lin_vel(&mut self, lv: Vector) {
+    pub fn set_lin_vel(&mut self, lv: Vect) {
         self.lin_vel = lv
     }
 
     /// Gets the linear acceleration of this rigid body.
     #[inline]
-    pub fn lin_acc(&self) -> Vector {
+    pub fn lin_acc(&self) -> Vect {
         self.lin_acc.clone()
     }
 
@@ -297,7 +297,7 @@ impl RigidBody {
     ///
     /// Note that this might be reset by the physics engine automatically.
     #[inline]
-    pub fn set_lin_acc(&mut self, lf: Vector) {
+    pub fn set_lin_acc(&mut self, lf: Vect) {
         self.lin_acc = lf
     }
 
@@ -410,25 +410,25 @@ impl Transformation<Matrix> for RigidBody {
 
 // FIXME: implement Transfomable too
 
-impl Translation<Vector> for RigidBody {
+impl Translation<Vect> for RigidBody {
     #[inline]
-    fn translation(&self) -> Vector {
+    fn translation(&self) -> Vect {
         self.local_to_world.translation()
     }
 
     #[inline]
-    fn inv_translation(&self) -> Vector {
+    fn inv_translation(&self) -> Vect {
         self.local_to_world.inv_translation()
     }
 
     #[inline]
-    fn append_translation(&mut self, t: &Vector) {
+    fn append_translation(&mut self, t: &Vect) {
         self.local_to_world.append_translation(t);
         self.update_center_of_mass();
     }
 
     #[inline]
-    fn append_translation_cpy(rb: &RigidBody, t: &Vector) -> RigidBody {
+    fn append_translation_cpy(rb: &RigidBody, t: &Vect) -> RigidBody {
         let mut res = rb.clone();
 
         res.append_translation(t);
@@ -437,13 +437,13 @@ impl Translation<Vector> for RigidBody {
     }
 
     #[inline]
-    fn prepend_translation(&mut self, t: &Vector) {
+    fn prepend_translation(&mut self, t: &Vect) {
         self.local_to_world.prepend_translation(t);
         self.update_center_of_mass();
     }
 
     #[inline]
-    fn prepend_translation_cpy(rb: &RigidBody, t: &Vector) -> RigidBody {
+    fn prepend_translation_cpy(rb: &RigidBody, t: &Vect) -> RigidBody {
         let mut res = rb.clone();
 
         res.prepend_translation(t);
@@ -452,7 +452,7 @@ impl Translation<Vector> for RigidBody {
     }
 
     #[inline]
-    fn set_translation(&mut self, t: Vector) {
+    fn set_translation(&mut self, t: Vect) {
         self.local_to_world.set_translation(t);
 
         self.update_center_of_mass();
@@ -515,13 +515,13 @@ impl Rotation<Orientation> for RigidBody {
 
 impl HasBoundingVolume<AABB> for RigidBody {
     fn bounding_volume(&self) -> AABB {
-        self.geom.borrow().aabb(&self.local_to_world)
+        self.geom.aabb(&self.local_to_world)
     }
 }
 
 impl HasBoundingVolume<AABB> for Rc<RefCell<RigidBody>> {
     fn bounding_volume(&self) -> AABB {
-        let bself = self.borrow().borrow();
-        bself.get().geom().aabb(&bself.get().local_to_world)
+        let bself = self.borrow();
+        bself.geom().aabb(&bself.local_to_world)
     }
 }

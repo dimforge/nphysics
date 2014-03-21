@@ -25,7 +25,7 @@ pub enum SceneNode<'a> {
 
 pub struct GraphicsManager<'a> {
     rand:      XorShiftRng,
-    rb2sn:     HashMap<uint, ~[SceneNode<'a>]>,
+    rb2sn:     HashMap<uint, Vec<SceneNode<'a>>>,
     obj2color: HashMap<uint, Vec3<u8>>
 }
 
@@ -45,23 +45,22 @@ impl<'a> GraphicsManager<'a> {
     pub fn add(&mut self, body: Rc<RefCell<RigidBody>>) {
 
         let nodes = {
-            let bbody = body.borrow().borrow();
-            let rb    = bbody.get();
-            let mut nodes = ~[];
+            let rb    = body.borrow();
+            let mut nodes = Vec::new();
 
             self.add_geom(body.clone(), One::one(), rb.geom(), &mut nodes);
 
             nodes
         };
 
-        self.rb2sn.insert(body.borrow() as *RefCell<RigidBody> as uint, nodes);
+        self.rb2sn.insert(body.deref() as *RefCell<RigidBody> as uint, nodes);
     }
 
     fn add_geom(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
                 geom:  &Geom,
-                out:   &mut ~[SceneNode<'a>]) {
+                out:   &mut Vec<SceneNode<'a>>) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
         type Bo = geom::Box;
@@ -99,14 +98,14 @@ impl<'a> GraphicsManager<'a> {
     fn add_plane(&mut self,
                  _: Rc<RefCell<RigidBody>>,
                  _: &geom::Plane,
-                 _: &mut ~[SceneNode]) {
+                 _: &mut Vec<SceneNode>) {
     }
 
     fn add_ball(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
                 geom:  &geom::Ball,
-                out:   &mut ~[SceneNode]) {
+                out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
     }
@@ -115,7 +114,7 @@ impl<'a> GraphicsManager<'a> {
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
                geom:  &geom::Mesh,
-               out:   &mut ~[SceneNode]) {
+               out:   &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&body);
 
@@ -130,7 +129,7 @@ impl<'a> GraphicsManager<'a> {
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
                geom:  &geom::Box,
-               out:   &mut ~[SceneNode]) {
+               out:   &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
 
@@ -167,7 +166,7 @@ impl<'a> GraphicsManager<'a> {
 
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<u8> {
-        let key = body.borrow() as *RefCell<RigidBody> as uint;
+        let key = body.deref() as *RefCell<RigidBody> as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }

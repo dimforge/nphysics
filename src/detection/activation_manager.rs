@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::vec::Vec;
 use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
@@ -17,11 +18,11 @@ use utils::union_find;
 pub struct ActivationManager {
     priv threshold:      Scalar,
     priv mix_factor:     Scalar,
-    priv ufind:          ~[UnionFindSet],
-    priv can_deactivate: ~[bool],
-    priv collector:      ~[Constraint],
-    priv to_activate:    ~[Rc<RefCell<RigidBody>>],
-    priv to_deactivate:  ~[uint]
+    priv ufind:          Vec<UnionFindSet>,
+    priv can_deactivate: Vec<bool>,
+    priv collector:      Vec<Constraint>,
+    priv to_activate:    Vec<Rc<RefCell<RigidBody>>>,
+    priv to_deactivate:  Vec<uint>
 }
 
 impl ActivationManager {
@@ -37,18 +38,18 @@ impl ActivationManager {
         ActivationManager {
             threshold:      threshold,
             mix_factor:     mix_factor,
-            ufind:          ~[],
-            can_deactivate: ~[],
-            collector:      ~[],
-            to_activate:    ~[],
-            to_deactivate:  ~[]
+            ufind:          Vec::new(),
+            can_deactivate: Vec::new(),
+            collector:      Vec::new(),
+            to_activate:    Vec::new(),
+            to_deactivate:  Vec::new()
         }
     }
 
     /// Notify the `ActivationManager` that is has to activate an object at the next update.
     // FIXME: this is not a very good name
     pub fn will_activate(&mut self, b: &Rc<RefCell<RigidBody>>) {
-        if b.borrow().with(|b| b.can_move() && !b.is_active()) {
+        if b.borrow().can_move() && !b.borrow().is_active() {
             self.to_activate.push(b.clone());
         }
     }
@@ -59,7 +60,7 @@ impl ActivationManager {
         let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
             self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
 
-        b.activate(na::min(new_energy, self.threshold * na::cast(4.0)));
+        b.activate(new_energy.min(self.threshold * na::cast(4.0)));
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
@@ -73,10 +74,10 @@ impl ActivationManager {
          *
          */
         for (i, b) in bodies.elements().iter().enumerate() {
-            b.value.borrow().with_mut(|b| {
-                self.update_energy(b);
-                b.set_index(i as int);
-            });
+            let mut b = b.value.borrow_mut();
+
+            self.update_energy(&mut *b);
+            b.set_index(i as int);
         }
 
 
@@ -107,14 +108,11 @@ impl ActivationManager {
 
         // run the union-find
         broad_phase.for_each_pair(|b1, b2, cd| {
-            let bb1 = b1.borrow().borrow();
-            let bb2 = b2.borrow().borrow();
-
-            let rb1 = bb1.get();
-            let rb2 = bb2.get();
+            let rb1 = b1.borrow();
+            let rb2 = b2.borrow();
 
             if rb1.is_active() && rb2.is_active() && cd.num_colls() != 0 {
-                union_find::union(rb1.index() as uint, rb2.index() as uint, self.ufind)
+                union_find::union(rb1.index() as uint, rb2.index() as uint, self.ufind.as_mut_slice())
             }
         });
 
@@ -125,20 +123,21 @@ impl ActivationManager {
          */
         // find out whether islands can be deactivated
         for i in range(0u, self.ufind.len()) {
-            let root = union_find::find(i, self.ufind);
-            self.can_deactivate[root] = self.can_deactivate[root] &&
-                                        bodies.elements()[i].value.borrow().with(|b| b.activation_state().energy() < self.threshold)
+            let root = union_find::find(i, self.ufind.as_mut_slice());
+            *self.can_deactivate.get_mut(root) =
+                *self.can_deactivate.get(root) &&
+                bodies.elements()[i].value.borrow().activation_state().energy() < self.threshold
         }
 
         // deactivate islands having only deactivable objects
         for i in range(0u, self.ufind.len()) {
-            let root = union_find::find(i, self.ufind);
+            let root = union_find::find(i, self.ufind.as_mut_slice());
 
-            if self.can_deactivate[root] { // everybody in this set can be deactivacted
+            if *self.can_deactivate.get(root) { // everybody in this set can be deactivacted
                 let b = &bodies.elements()[i].value;
-                b.borrow().with_mut(|b| b.deactivate());
+                b.borrow_mut().deactivate();
                 broad_phase.deactivate(b);
-                self.to_deactivate.push(b.borrow() as *RefCell<RigidBody> as uint);
+                self.to_deactivate.push(b.deref() as *RefCell<RigidBody> as uint);
             }
         }
 
@@ -157,15 +156,14 @@ impl ActivationManager {
             let to_activate = self.to_activate.pop().unwrap();
 
             {
-                let mut bto_activate = to_activate.borrow().borrow_mut();
-                let     b            = bto_activate.get();
+                let mut b = to_activate.borrow_mut();
 
                 if *b.activation_state() == Deleted {
                     continue
                 }
                 else {
                     if !b.is_active() {
-                        bodies.insert(to_activate.borrow() as *RefCell<RigidBody> as uint, to_activate.clone());
+                        bodies.insert(to_activate.deref() as *RefCell<RigidBody> as uint, to_activate.clone());
                     }
 
                     b.activate(self.threshold * na::cast(2.0))
@@ -174,8 +172,8 @@ impl ActivationManager {
 
             broad_phase.activate(&to_activate, |b1, b2, cd| {
                 if cd.num_colls() > 0 {
-                    let mut bb1 = b1.borrow().borrow_mut();
-                    let mut bb2 = b2.borrow().borrow_mut();
+                    let mut bb1 = b1.borrow_mut();
+                    let mut bb2 = b2.borrow_mut();
 
                     let rb1 = bb1.get();
                     let rb2 = bb2.get();

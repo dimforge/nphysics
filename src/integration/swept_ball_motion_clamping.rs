@@ -7,7 +7,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use ncollide::geom::Ball;
 use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
-use ncollide::math::{Scalar, Vector};
+use ncollide::math::{Scalar, Vect};
 use integration::Integrator;
 use object::{RigidBody, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};
@@ -16,14 +16,14 @@ struct CCDBody {
     body:        @mut RigidBody,
     radius:      Scalar,
     sqthreshold: Scalar,
-    last_pos:    Vector
+    last_pos:    Vect
 }
 
 impl CCDBody {
     pub fn new(body:        @mut RigidBody,
                radius:      Scalar,
                sqthreshold: Scalar,
-               last_pos:    Vector)
+               last_pos:    Vect)
                -> CCDBody {
         CCDBody {
             body:        body,

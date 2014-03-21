@@ -74,7 +74,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                             let ray = Ray::new(pos, dir);
 
                             // cast the ray
-                            let mut interferences = ~[];
+                            let mut interferences = Vec::new();
                             physics.cast_ray(&ray, &mut interferences);
 
                             let mut mintoi = Bounded::max_value();
@@ -89,7 +89,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                             if minb.is_some() {
                                 let b = minb.as_ref().unwrap();
-                                if b.borrow().with(|b| b.can_move()) {
+                                if b.borrow().can_move() {
                                     physics.remove_body(b);
                                     graphics.remove(w, b);
                                 }
@@ -112,7 +112,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                             let ray = Ray::new(pos, dir);
 
                             // cast the ray
-                            let mut interferences = ~[];
+                            let mut interferences = Vec::new();
                             physics.cast_ray(&ray, &mut interferences);
 
                             let mut mintoi = Bounded::max_value();
@@ -127,7 +127,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                             if minb.is_some() {
                                 let b = minb.as_ref().unwrap();
-                                if b.borrow().with(|b| b.can_move()) {
+                                if b.borrow().can_move() {
                                     grabbed_object = Some(b.clone())
                                 }
                             }
@@ -142,7 +142,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
 
                                         let _1: Iso3<f32> = One::one();
                                         let attach2 = na::append_translation(&_1, &(ray.orig + ray.dir * mintoi));
-                                        let attach1 = b.borrow().with(|b| na::inv(&na::transformation(b.transform_ref())).unwrap() * attach2);
+                                        let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = Rc::new(RefCell::new(Fixed::new(anchor1, anchor2)));
@@ -195,7 +195,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
                                         let _1: Iso3<f32> = One::one();
-                                        j.borrow().with_mut(|j| j.set_local2(na::append_translation(&_1, &(pos + dir * inter))))
+                                        j.borrow_mut().set_local2(na::append_translation(&_1, &(pos + dir * inter)))
                                     },
                                     None => { }
                                 }
@@ -349,7 +349,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
                 None          => { },
                 Some(ref ray) => {
                     // cast a ray
-                    let mut interferences = ~[];
+                    let mut interferences = Vec::new();
                     physics.cast_ray(ray, &mut interferences);
 
                     let mut mintoi = Bounded::max_value();
@@ -380,7 +380,7 @@ enum RunMode {
 }
 
 fn draw_collisions(window: &mut window::Window, physics: &mut World) {
-    let mut collisions = ~[];
+    let mut collisions = Vec::new();
 
     physics.interferences(&mut collisions);
 
@@ -394,13 +394,12 @@ fn draw_collisions(window: &mut window::Window, physics: &mut World) {
                 window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
             },
             BallInSocket(ref bis) => {
-                bis.borrow().with(|bis|
-                    window.draw_line(&bis.anchor1_pos(), &bis.anchor2_pos(), &Vec3::y()));
+                let bbis = bis.borrow();
+                window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Vec3::y());
             },
             Fixed(ref f) => {
                 // FIXME: draw the rotation too
-                f.borrow().with(|f|
-                    window.draw_line(&na::translation(&f.anchor1_pos()), &na::translation(&f.anchor2_pos()), &Vec3::y()));
+                window.draw_line(&na::translation(&f.borrow().anchor1_pos()), &na::translation(&f.borrow().anchor2_pos()), &Vec3::y());
             }
         }
     }

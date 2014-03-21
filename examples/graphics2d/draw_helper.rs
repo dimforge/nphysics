@@ -11,7 +11,7 @@ pub static DRAW_SCALE: f32 = 20.0;
 pub fn draw_colls(window:  &graphics::RenderWindow,
                   physics: &mut World) {
 
-    let mut collisions = ~[];
+    let mut collisions = Vec::new();
 
     physics.interferences(&mut collisions);
 
@@ -38,21 +38,19 @@ pub fn draw_colls(window:  &graphics::RenderWindow,
                     &Color::new_RGB(0, 0, 255));
             },
             BallInSocket(ref bis) => {
-                bis.borrow().with(|bis|
-                    draw_line(
-                        window,
-                        &bis.anchor1_pos(),
-                        &bis.anchor2_pos(),
-                        &Color::new_RGB(255, 0, 0))
+                draw_line(
+                    window,
+                    &bis.borrow().anchor1_pos(),
+                    &bis.borrow().anchor2_pos(),
+                    &Color::new_RGB(255, 0, 0)
                 );
             },
             Fixed(ref bis) => {
-                bis.borrow().with(|bis|
-                    draw_line(
-                        window,
-                        &na::translation(&bis.anchor1_pos()),
-                        &na::translation(&bis.anchor2_pos()),
-                        &Color::new_RGB(255, 0, 0))
+                draw_line(
+                    window,
+                    &na::translation(&bis.borrow().anchor1_pos()),
+                    &na::translation(&bis.borrow().anchor2_pos()),
+                    &Color::new_RGB(255, 0, 0)
                 );
             }
         }

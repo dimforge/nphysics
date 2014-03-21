@@ -1,5 +1,6 @@
 //! Collision detector.
 
+use std::vec::Vec;
 use detection::activation_manager::ActivationManager;
 
 /// Trait implemented by collision detectors.
@@ -8,5 +9,5 @@ pub trait Detector<O, I, BF> {
     /// manager.
     fn update(&mut self, &mut BF, &mut ActivationManager);
     /// Collects every interferences detected by this collision detector.
-    fn interferences(&mut self, &mut ~[I], &mut BF);
+    fn interferences(&mut self, &mut Vec<I>, &mut BF);
 }

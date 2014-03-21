@@ -80,7 +80,7 @@ impl SceneNode {
 
 pub struct GraphicsManager {
     rand:             XorShiftRng,
-    rb2sn:            HashMap<uint, ~[SceneNode]>,
+    rb2sn:            HashMap<uint, Vec<SceneNode>>,
     obj2color:        HashMap<uint, Vec3<f32>>,
     arc_ball:         ArcBall,
     first_person:     FirstPerson,
@@ -112,7 +112,7 @@ impl GraphicsManager {
     }
 
     pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
-        let key = body.borrow() as *RefCell<RigidBody> as uint;
+        let key = body.deref() as *RefCell<RigidBody> as uint;
 
         match self.rb2sn.find(&key) {
             Some(sns) => {
@@ -130,29 +130,29 @@ impl GraphicsManager {
     pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
 
         let nodes = {
-            let rb        = body.borrow().borrow();
-            let mut nodes = ~[];
+            let rb        = body.borrow();
+            let mut nodes = Vec::new();
 
             self.add_geom(window, body.clone(), One::one(), rb.get().geom(), &mut nodes);
 
             nodes
         };
 
-        self.rb2sn.insert(body.borrow() as *RefCell<RigidBody> as uint, nodes);
+        self.rb2sn.insert(body.deref() as *RefCell<RigidBody> as uint, nodes);
     }
 
-    pub fn load_mesh(&mut self, path: &str) -> ~[(~[Vec3<f32>], ~[uint])] {
+    pub fn load_mesh(&mut self, path: &str) -> Vec<(Vec<Vec3<f32>>, Vec<uint>)> {
         let path    = Path::new(path);
         let empty   = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
         let objects = obj::parse_file(&path, &empty, "").ok().expect("Unable to open the obj file.");
 
-        let mut res = ~[];
+        let mut res = Vec::new();
 
         for (_, m, _) in objects.move_iter() {
             let vertices = m.coords().read(|v| v.to_owned()).unwrap();
             let indices  = m.faces().read(|v| v.to_owned()).unwrap();
 
-            let m = (vertices, indices.flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint]));
+            let m = (vertices, Vec::from_slice(indices.as_slice().flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint])));
 
             res.push(m);
         }
@@ -165,7 +165,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &Geom,
-                out:    &mut ~[SceneNode]) {
+                out:    &mut Vec<SceneNode>) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
         type Bo = geom::Box;
@@ -210,9 +210,9 @@ impl GraphicsManager {
                  window: &mut Window,
                  body:   Rc<RefCell<RigidBody>>,
                  geom:   &geom::Plane,
-                 out:    &mut ~[SceneNode]) {
-        let position = body.borrow().with(|body| na::translation(body));
-        let normal   = body.borrow().with(|body| na::rotate(body.transform_ref(), &geom.normal()));
+                 out:    &mut Vec<SceneNode>) {
+        let position = na::translation(body.borrow().deref());
+        let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
         let color    = self.color_for_object(&body);
 
         out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
@@ -223,15 +223,15 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Mesh,
-                out:    &mut ~[SceneNode]) {
+                out:    &mut Vec<SceneNode>) {
         let color    = self.color_for_object(&body);
         let vertices = geom.vertices().get();
         let indices  = geom.indices().get();
 
-        let vs     = vertices.to_owned();
-        let mut is = ~[];
+        let vs     = vertices.clone();
+        let mut is = Vec::new();
 
-        for i in indices.chunks(3) {
+        for i in indices.as_slice().chunks(3) {
             is.push(Vec3::new(i[0] as u32, i[1] as u32, i[2] as u32))
         }
 
@@ -243,7 +243,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Ball,
-                out:    &mut ~[SceneNode]) {
+                out:    &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color, window)))
     }
@@ -253,7 +253,7 @@ impl GraphicsManager {
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
                geom:   &geom::Box,
-               out:    &mut ~[SceneNode]) {
+               out:    &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x + geom.margin();
         let ry = geom.half_extents().y + geom.margin();
         let rz = geom.half_extents().z + geom.margin();
@@ -268,7 +268,7 @@ impl GraphicsManager {
                     body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
                     geom:   &geom::Cylinder,
-                    out:    &mut ~[SceneNode]) {
+                    out:    &mut Vec<SceneNode>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
@@ -282,7 +282,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Cone,
-                out:    &mut ~[SceneNode]) {
+                out:    &mut Vec<SceneNode>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
@@ -317,12 +317,12 @@ impl GraphicsManager {
         self.first_person.look_at_z(eye, at);
     }
 
-    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut ~[SceneNode]> {
-        self.rb2sn.find_mut(&(rb.borrow() as *RefCell<RigidBody> as uint))
+    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<SceneNode>> {
+        self.rb2sn.find_mut(&(rb.deref() as *RefCell<RigidBody> as uint))
     }
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<f32> {
-        let key = body.borrow() as *RefCell<RigidBody> as uint;
+        let key = body.deref() as *RefCell<RigidBody> as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }
