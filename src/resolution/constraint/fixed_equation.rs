@@ -61,8 +61,8 @@ pub fn cancel_relative_angular_motion<P>(dt:          Scalar,
             constraint
         );
 
-        let ang_vel1 = match opt_rb1 { Some(rb) => rb.get().ang_vel(), None => na::zero() };
-        let ang_vel2 = match opt_rb2 { Some(rb) => rb.get().ang_vel(), None => na::zero() };
+        let ang_vel1 = match opt_rb1 { Some(rb) => rb.ang_vel(), None => na::zero() };
+        let ang_vel2 = match opt_rb2 { Some(rb) => rb.ang_vel(), None => na::zero() };
 
         let _M: Scalar = Bounded::max_value();
         constraint.lobound   = -_M;

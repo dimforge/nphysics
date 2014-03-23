@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::vec::Vec;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use detection::activation_manager::ActivationManager;
@@ -112,14 +111,14 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
             match joint.value {
                 BallInSocket(ref bis) => {
                     let mut bbis = bis.borrow_mut();
-                    if !bbis.get().up_to_date() {
+                    if !bbis.up_to_date() {
                         // the joint has been invalidated by the user: wake up the attached bodies
-                        bbis.get().update();
-                        match bbis.get().anchor1().body {
+                        bbis.update();
+                        match bbis.anchor1().body {
                             Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
-                        match bbis.get().anchor2().body {
+                        match bbis.anchor2().body {
                             Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
@@ -127,14 +126,14 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
                 },
                 Fixed(ref f) => { // FIXME: code duplication from BallInSocket
                     let mut bf = f.borrow_mut();
-                    if !bf.get().up_to_date() {
+                    if !bf.up_to_date() {
                         // the joint has been invalidated by the user: wake up the attached bodies
-                        bf.get().update();
-                        match bf.get().anchor1().body {
+                        bf.update();
+                        match bf.anchor1().body {
                             Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }
-                        match bf.get().anchor2().body {
+                        match bf.anchor2().body {
                             Some(ref b) => activation.will_activate(b),
                             None        => { }
                         }

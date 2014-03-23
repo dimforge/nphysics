@@ -3,7 +3,6 @@
 #[feature(managed_boxes)];
 
 extern crate std;
-extern crate extra;
 extern crate native;
 extern crate kiss3d;
 extern crate graphics3d;
@@ -54,7 +53,7 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World
     let delta2 = Iso3::new(Vec3::new(-5.0f32, 0.0, 0.0), na::zero());
     let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
 
-    let mut cross_geoms = ~[];
+    let mut cross_geoms = Vec::new();
     cross_geoms.push((delta1, ~Box::new(Vec3::new(5.0f32, 0.25, 0.25)) as ~Geom));
     cross_geoms.push((delta2, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom));
     cross_geoms.push((delta3, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom));

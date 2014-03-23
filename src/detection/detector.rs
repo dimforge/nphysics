@@ -1,6 +1,5 @@
 //! Collision detector.
 
-use std::vec::Vec;
 use detection::activation_manager::ActivationManager;
 
 /// Trait implemented by collision detectors.

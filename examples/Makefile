@@ -45,14 +45,6 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 
 examples:
 	mkdir -p ../bin
-	$(lib_build_opt) ./graphics2d/graphics2d.rs
-	$(build_cmd_opt) ./mesh2d.rs
-	$(build_cmd_opt) ./boxes_vee2d.rs
-	$(build_cmd_opt) ./pyramid2d.rs
-	$(build_cmd_opt) ./wall2d.rs
-	$(build_cmd_opt) ./cross2d.rs
-	$(build_cmd_opt) ./compound2d.rs
-	$(build_cmd_opt) ./balls_vee2d.rs
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
 	$(build_cmd_opt) ./boxes_vee3d.rs
 	$(build_cmd_opt) ./mesh3d.rs
@@ -62,6 +54,14 @@ examples:
 	$(build_cmd_opt) ./cross3d.rs
 	$(build_cmd_opt) ./pyramid3d.rs
 	$(build_cmd_opt) ./wall3d.rs
+	$(lib_build_opt) ./graphics2d/graphics2d.rs
+	$(build_cmd_opt) ./mesh2d.rs
+	$(build_cmd_opt) ./boxes_vee2d.rs
+	$(build_cmd_opt) ./pyramid2d.rs
+	$(build_cmd_opt) ./wall2d.rs
+	$(build_cmd_opt) ./cross2d.rs
+	$(build_cmd_opt) ./compound2d.rs
+	$(build_cmd_opt) ./balls_vee2d.rs
 
 bugs:
 	mkdir -p ../bin

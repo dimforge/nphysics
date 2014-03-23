@@ -51,8 +51,8 @@ impl Box {
     pub fn update(&mut self) {
         let rb = self.body.borrow();
 
-        if rb.get().is_active() {
-                self.gfx.set_transformation(na::transformation(rb.get()) * self.delta);
+        if rb.is_active() {
+                self.gfx.set_transformation(na::transformation(rb.deref()) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

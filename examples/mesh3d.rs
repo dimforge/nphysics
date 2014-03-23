@@ -3,7 +3,6 @@
 #[feature(managed_boxes)];
 
 extern crate std;
-extern crate extra;
 extern crate native;
 extern crate sync;
 extern crate kiss3d;
@@ -41,7 +40,7 @@ pub fn mesh3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     let meshes = graphics.load_mesh("media/great_hall.obj");
 
     for (vertices, indices) in meshes.move_iter() {
-        let vertices = vertices.map(|v| v * 3.0f32);
+        let vertices = vertices.iter().map(|v| v * 3.0f32).collect();
         let mesh     = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
         let body     = Rc::new(RefCell::new(RigidBody::new(mesh, 0.0f32, Static, 0.3, 0.6)));
 

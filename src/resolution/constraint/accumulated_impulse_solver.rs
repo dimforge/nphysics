@@ -1,7 +1,6 @@
 use std::num::Zero;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::vec::Vec;
 // use rand::RngUtil;
 use nalgebra::na::{Translation, Transformation, RotationWithTranslation};
 use nalgebra::na;
@@ -96,7 +95,7 @@ impl AccumulatedImpulseSolver {
                     contact_equation::fill_second_order_equation(
                         dt.clone(),
                         c,
-                        &rb1.borrow(), &rb2.borrow(),
+                        rb1.borrow().deref(), rb2.borrow().deref(),
                         self.restitution_constraints.get_mut(i),
                         i,
                         self.friction_constraints.as_mut_slice(),

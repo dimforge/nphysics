@@ -3,7 +3,6 @@
 #[feature(managed_boxes)];
 
 extern crate std;
-extern crate extra;
 extern crate native;
 extern crate kiss3d;
 extern crate graphics3d;

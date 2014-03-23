@@ -133,7 +133,7 @@ impl GraphicsManager {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_geom(window, body.clone(), One::one(), rb.get().geom(), &mut nodes);
+            self.add_geom(window, body.clone(), One::one(), rb.geom(), &mut nodes);
 
             nodes
         };

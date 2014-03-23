@@ -2,7 +2,6 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::vec::Vec;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
 use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
@@ -35,7 +34,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisi
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 
-        self.geom_dispatcher.dispatch(brb1.get().geom(), brb2.get().geom())
+        self.geom_dispatcher.dispatch(brb1.geom(), brb2.geom())
     }
 
     fn is_valid(&self, a: &Rc<RefCell<RigidBody>>, b: &Rc<RefCell<RigidBody>>) -> bool {
@@ -46,7 +45,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisi
             let ba = a.borrow();
             let bb = b.borrow();
 
-            ba.get().can_move() || bb.get().can_move()
+            ba.can_move() || bb.can_move()
         }
     }
 }
@@ -114,9 +113,10 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
             broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
 
             for i in interferences.iter() {
+                let bi = i.borrow();
                 if &**i as *RefCell<RigidBody> != &**o as *RefCell<RigidBody> &&
-                   i.with(|i| !i.is_active() && i.can_move()) {
-                    activation.will_activate(i);
+                   !bi.is_active() && bi.can_move() {
+                        activation.will_activate(i);
                 }
             }
         }

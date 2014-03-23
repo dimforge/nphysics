@@ -1,6 +1,5 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::vec::Vec;
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
@@ -99,8 +98,8 @@ impl World {
         for e in self.bodies.elements_mut().mut_iter() {
             let mut rb = e.value.borrow_mut();
 
-            self.forces.update(dt.clone(), rb.get());
-            self.integrator.update(dt.clone(), rb.get());
+            self.forces.update(dt.clone(), rb.deref_mut());
+            self.integrator.update(dt.clone(), rb.deref_mut());
         }
 
         self.broad_phase.update();

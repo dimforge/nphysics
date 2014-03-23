@@ -1,6 +1,5 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::vec::Vec;
 use nalgebra::na;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
@@ -172,11 +171,8 @@ impl ActivationManager {
 
             broad_phase.activate(&to_activate, |b1, b2, cd| {
                 if cd.num_colls() > 0 {
-                    let mut bb1 = b1.borrow_mut();
-                    let mut bb2 = b2.borrow_mut();
-
-                    let rb1 = bb1.get();
-                    let rb2 = bb2.get();
+                    let mut rb1 = b1.borrow_mut();
+                    let mut rb2 = b2.borrow_mut();
 
                     if !rb1.is_active() && rb1.can_move() {
                         self.to_activate.push(b1.clone());

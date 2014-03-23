@@ -1,5 +1,4 @@
 use std::num::Bounded;
-use std::cell::Ref;
 use nalgebra::na;
 use ncollide::contact::Contact;
 use ncollide::volumetric::InertiaTensor;
@@ -90,8 +89,8 @@ pub fn reinit_to_first_order_equation(dt:         Scalar,
 
 pub fn fill_second_order_equation(dt:           Scalar,
                                   coll:         &Contact,
-                                  rb1:          &Ref<RigidBody>,
-                                  rb2:          &Ref<RigidBody>,
+                                  rb1:          &RigidBody,
+                                  rb2:          &RigidBody,
                                   rconstraint:  &mut VelocityConstraint,
                                   idr:          uint,
                                   fconstraints: &mut [VelocityConstraint],
@@ -201,8 +200,8 @@ fn fill_velocity_constraint(dt:              Scalar,
                             initial_impulse: Scalar,
                             lobound:         Scalar,
                             hibound:         Scalar,
-                            rb1:             &Ref<RigidBody>,
-                            rb2:             &Ref<RigidBody>,
+                            rb1:             &RigidBody,
+                            rb2:             &RigidBody,
                             constraint:      &mut VelocityConstraint,
                             correction:      &CorrectionParameters) {
     let rot_axis1 = na::cross(&(center - *rb1.get().center_of_mass()), &-normal);

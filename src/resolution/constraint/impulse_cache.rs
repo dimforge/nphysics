@@ -1,7 +1,6 @@
 #[doc(hidden)];
 
 use std::mem;
-use std::vec::Vec;
 use std::hash::Hash;
 use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
