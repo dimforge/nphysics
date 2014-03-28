@@ -17,6 +17,8 @@ pub struct ContactIdentifier {
     priv ccenter: Vect
 }
 
+impl TotalEq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
+
 impl Hash for ContactIdentifier {
     #[inline]
     #[cfg(f32)]

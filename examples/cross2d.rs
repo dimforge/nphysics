@@ -63,10 +63,10 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> World {
      * Cross shaped geometry
      */
     let mut cross_geoms = Vec::new();
-    cross_geoms.push((na::one(), ~Box::new(Vec2::new(5.0f32, 0.25)) as ~Geom));
-    cross_geoms.push((na::one(), ~Box::new(Vec2::new(0.25f32, 5.0)) as ~Geom));
+    cross_geoms.push((na::one(), ~Box::new(Vec2::new(5.0f32, 0.25)) as ~Geom:Send));
+    cross_geoms.push((na::one(), ~Box::new(Vec2::new(0.25f32, 5.0)) as ~Geom:Send));
 
-    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom);
+    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom:'static);
 
     /*
      * Create the boxes

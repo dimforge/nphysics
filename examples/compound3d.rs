@@ -54,11 +54,11 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World
     let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    cross_geoms.push((delta1, ~Box::new(Vec3::new(5.0f32, 0.25, 0.25)) as ~Geom));
-    cross_geoms.push((delta2, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom));
-    cross_geoms.push((delta3, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom));
+    cross_geoms.push((delta1, ~Box::new(Vec3::new(5.0f32, 0.25, 0.25)) as ~Geom:Send));
+    cross_geoms.push((delta2, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom:Send));
+    cross_geoms.push((delta3, ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom:Send));
 
-    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom);
+    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom:'static);
 
     /*
      * Create the crosses 

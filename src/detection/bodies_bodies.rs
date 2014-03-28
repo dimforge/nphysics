@@ -29,7 +29,7 @@ impl BodyBodyDispatcher {
     }
 }
 
-impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector> for BodyBodyDispatcher {
+impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector:> for BodyBodyDispatcher {
     fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> ~GeomGeomCollisionDetector {
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
@@ -61,7 +61,7 @@ pub struct BodiesBodies<BF> {
     priv constraints_collector: Vec<Constraint>,
 }
 
-impl<BF: 'static + InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {
+impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {
     /// Creates a new `BodiesBodies` collision detector.
     pub fn new(dispatcher: Rc<GeomGeomDispatcher>) -> BodiesBodies<BF> {
         BodiesBodies {

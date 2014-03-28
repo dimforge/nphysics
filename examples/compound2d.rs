@@ -67,11 +67,11 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> World {
     let delta3 = Iso2::new(Vec2::new(5.0f32,  0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    cross_geoms.push((delta1, ~Box::new(Vec2::new(5.0f32, 0.75)) as ~Geom));
-    cross_geoms.push((delta2, ~Box::new(Vec2::new(0.75f32, 5.0)) as ~Geom));
-    cross_geoms.push((delta3, ~Box::new(Vec2::new(0.75f32, 5.0)) as ~Geom));
+    cross_geoms.push((delta1, ~Box::new(Vec2::new(5.0f32, 0.75)) as ~Geom:Send));
+    cross_geoms.push((delta2, ~Box::new(Vec2::new(0.75f32, 5.0)) as ~Geom:Send));
+    cross_geoms.push((delta3, ~Box::new(Vec2::new(0.75f32, 5.0)) as ~Geom:Send));
 
-    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom);
+    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom:'static);
 
     /*
      * Create the boxes

@@ -149,8 +149,8 @@ impl GraphicsManager {
         let mut res = Vec::new();
 
         for (_, m, _) in objects.move_iter() {
-            let vertices = m.coords().read(|v| v.to_owned()).unwrap();
-            let indices  = m.faces().read(|v| v.to_owned()).unwrap();
+            let vertices = m.coords().read().to_owned().unwrap();
+            let indices  = m.faces().read().to_owned().unwrap();
 
             let m = (vertices, Vec::from_slice(indices.as_slice().flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint])));
 
@@ -225,8 +225,8 @@ impl GraphicsManager {
                 geom:   &geom::Mesh,
                 out:    &mut Vec<SceneNode>) {
         let color    = self.color_for_object(&body);
-        let vertices = geom.vertices().get();
-        let indices  = geom.indices().get();
+        let vertices = geom.vertices().deref();
+        let indices  = geom.indices().deref();
 
         let vs     = vertices.clone();
         let mut is = Vec::new();
