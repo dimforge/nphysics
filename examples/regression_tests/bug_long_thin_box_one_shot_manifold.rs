@@ -21,9 +21,9 @@
  */
 
 
-#[crate_type = "bin"];
-#[warn(non_camel_case_types)];
-#[feature(managed_boxes)];
+#![crate_type = "bin"]
+#![warn(non_camel_case_types)]
+#![feature(managed_boxes)]
 
 extern crate std;
 extern crate native;

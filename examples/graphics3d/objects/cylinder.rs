@@ -8,11 +8,11 @@ use nalgebra::na;
 use nphysics::object::RigidBody;
 
 pub struct Cylinder {
-    priv color:      Vec3<f32>,
-    priv base_color: Vec3<f32>,
-    priv delta:      Iso3<f32>,
-    priv gfx:        Object,
-    priv body:       Rc<RefCell<RigidBody>>,
+    color:      Vec3<f32>,
+    base_color: Vec3<f32>,
+    delta:      Iso3<f32>,
+    gfx:        Object,
+    body:       Rc<RefCell<RigidBody>>,
 }
 
 impl Cylinder {

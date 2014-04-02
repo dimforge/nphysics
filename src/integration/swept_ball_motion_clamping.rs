@@ -35,11 +35,11 @@ impl CCDBody {
 }
 
 pub struct SweptBallMotionClamping<BF> {
-    priv objects:       HashMap<uint, CCDBody, UintTWHash>,
-    priv iobjects:      HashMap<uint, CCDBody, UintTWHash>,
-    priv broad_phase:   @mut BF,
-    priv update_bf:     bool,
-    priv interferences: ~[@mut RigidBody]
+    objects:       HashMap<uint, CCDBody, UintTWHash>,
+    iobjects:      HashMap<uint, CCDBody, UintTWHash>,
+    broad_phase:   @mut BF,
+    update_bf:     bool,
+    interferences: ~[@mut RigidBody]
 }
 
 impl<BF: 'static + RayCastBroadPhase<RigidBody> + BoundingVolumeBroadPhase<RigidBody, AABB>>

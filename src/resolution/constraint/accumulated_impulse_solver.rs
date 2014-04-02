@@ -20,13 +20,13 @@ use resolution::constraint::impulse_cache::ImpulseCache;
 
 /// Constraint solver using the projected gauss seidel algorithm and warm-starting.
 pub struct AccumulatedImpulseSolver {
-    priv correction:              CorrectionParameters,
-    priv cache:                   ImpulseCache,
-    priv num_first_order_iter:    uint,
-    priv num_second_order_iter:   uint,
-    priv restitution_constraints: Vec<VelocityConstraint>,
-    priv friction_constraints:    Vec<VelocityConstraint>,
-    priv mjLambda:                Vec<Velocities>
+    correction:              CorrectionParameters,
+    cache:                   ImpulseCache,
+    num_first_order_iter:    uint,
+    num_second_order_iter:   uint,
+    restitution_constraints: Vec<VelocityConstraint>,
+    friction_constraints:    Vec<VelocityConstraint>,
+    mjLambda:                Vec<Velocities>
 }
 
 impl AccumulatedImpulseSolver {

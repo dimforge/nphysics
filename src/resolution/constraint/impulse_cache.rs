@@ -1,4 +1,4 @@
-#[doc(hidden)];
+#![doc(hidden)]
 
 use std::mem;
 use std::hash::Hash;
@@ -12,9 +12,9 @@ use ncollide::math::{Scalar, Vect};
 #[deriving(Eq)]
 /// The identifier of a contact stored in the impulse cache.
 pub struct ContactIdentifier {
-    priv obj1:    uint,
-    priv obj2:    uint,
-    priv ccenter: Vect
+    obj1:    uint,
+    obj2:    uint,
+    ccenter: Vect
 }
 
 impl TotalEq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
@@ -48,12 +48,12 @@ impl ContactIdentifier {
 }
 
 pub struct ImpulseCache {
-    priv hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
-    priv cache_prev:          Vec<Scalar>,
-    priv hash_next:           HashMap<ContactIdentifier, (uint, uint)>,
-    priv cache_next:          Vec<Scalar>,
-    priv step:                Scalar,
-    priv impulse_per_contact: uint
+    hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
+    cache_prev:          Vec<Scalar>,
+    hash_next:           HashMap<ContactIdentifier, (uint, uint)>,
+    cache_next:          Vec<Scalar>,
+    step:                Scalar,
+    impulse_per_contact: uint
 }
 
 impl ImpulseCache {

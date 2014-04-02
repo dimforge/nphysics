@@ -7,12 +7,12 @@ use rsfml::window::event;
 static ZOOM_FACTOR: f32 = 0.1;
 
 pub struct Camera {
-    priv pressing:  bool,
-    priv ui:        Rc<RefCell<graphics::View>>,
-    priv scene:     Rc<RefCell<graphics::View>>,
-    priv lastx:     int,
-    priv lasty:     int,
-    priv curr_zoom: f32
+    pressing:  bool,
+    ui:        Rc<RefCell<graphics::View>>,
+    scene:     Rc<RefCell<graphics::View>>,
+    lastx:     int,
+    lasty:     int,
+    curr_zoom: f32
 }
 
 impl Camera {

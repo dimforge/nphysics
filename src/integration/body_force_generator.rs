@@ -6,8 +6,8 @@ use integration::Integrator;
 
 /// A constant linear and angular force generator.
 pub struct BodyForceGenerator {
-    priv lin_acc: Vect,
-    priv ang_acc: Orientation
+    lin_acc: Vect,
+    ang_acc: Orientation
 }
 
 impl BodyForceGenerator {

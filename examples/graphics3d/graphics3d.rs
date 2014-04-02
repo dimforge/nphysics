@@ -1,7 +1,7 @@
-#[crate_id = "graphics3d"];
-#[crate_type = "lib"];
-#[warn(non_camel_case_types)];
-#[feature(managed_boxes)];
+#![crate_id = "graphics3d"]
+#![crate_type = "lib"]
+#![warn(non_camel_case_types)]
+#![feature(managed_boxes)]
 
 extern crate std;
 extern crate rand;
