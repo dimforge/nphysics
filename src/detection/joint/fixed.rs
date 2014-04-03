@@ -3,9 +3,9 @@ use detection::joint::anchor::Anchor;
 
 /// A joint that prevents any relative movement (linear and angular) between two objects.
 pub struct Fixed {
-    priv up_to_date: bool,
-    priv anchor1:    Anchor<Matrix>,
-    priv anchor2:    Anchor<Matrix>,
+    up_to_date: bool,
+    anchor1:    Anchor<Matrix>,
+    anchor2:    Anchor<Matrix>,
 }
 
 impl Fixed {

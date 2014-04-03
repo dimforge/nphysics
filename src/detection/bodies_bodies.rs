@@ -17,7 +17,7 @@ use detection::activation_manager::ActivationManager;
 ///
 /// This is meat to be used as the broad phase collision dispatcher.
 pub struct BodyBodyDispatcher {
-    priv geom_dispatcher: Rc<GeomGeomDispatcher>
+    geom_dispatcher: Rc<GeomGeomDispatcher>
 }
 
 impl BodyBodyDispatcher {
@@ -53,12 +53,12 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisi
 
 /// Collision detector between rigid bodies.
 pub struct BodiesBodies<BF> {
-    priv geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
-    priv contacts_collector:    Vec<Contact>,
+    geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
+    contacts_collector:    Vec<Contact>,
     // FIXME: this is an useless buffer which accumulate the result of bodies activation.
     // This must exist since there is no way to send an activation message without an accumulation
     // list…
-    priv constraints_collector: Vec<Constraint>,
+    constraints_collector: Vec<Constraint>,
 }
 
 impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {

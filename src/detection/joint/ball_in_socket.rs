@@ -6,9 +6,9 @@ use detection::joint::anchor::Anchor;
 ///
 /// This is usually used to create ragdolls.
 pub struct BallInSocket {
-    priv up_to_date: bool,
-    priv anchor1:    Anchor<Vect>,
-    priv anchor2:    Anchor<Vect>,
+    up_to_date: bool,
+    anchor1:    Anchor<Vect>,
+    anchor2:    Anchor<Vect>,
 }
 
 impl BallInSocket {

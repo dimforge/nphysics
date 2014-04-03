@@ -15,13 +15,13 @@ use utils::union_find;
 ///
 /// It is responsible for making objects sleep or wake up.
 pub struct ActivationManager {
-    priv threshold:      Scalar,
-    priv mix_factor:     Scalar,
-    priv ufind:          Vec<UnionFindSet>,
-    priv can_deactivate: Vec<bool>,
-    priv collector:      Vec<Constraint>,
-    priv to_activate:    Vec<Rc<RefCell<RigidBody>>>,
-    priv to_deactivate:  Vec<uint>
+    threshold:      Scalar,
+    mix_factor:     Scalar,
+    ufind:          Vec<UnionFindSet>,
+    can_deactivate: Vec<bool>,
+    collector:      Vec<Constraint>,
+    to_activate:    Vec<Rc<RefCell<RigidBody>>>,
+    to_deactivate:  Vec<uint>
 }
 
 impl ActivationManager {

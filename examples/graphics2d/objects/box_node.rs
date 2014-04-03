@@ -9,10 +9,10 @@ use nphysics::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 
 pub struct Box<'a> {
-    priv color: Vec3<u8>,
-    priv delta: Iso2<f32>,
-    priv body:  Rc<RefCell<RigidBody>>,
-    priv gfx:   RectangleShape<'a>
+    color: Vec3<u8>,
+    delta: Iso2<f32>,
+    body:  Rc<RefCell<RigidBody>>,
+    gfx:   RectangleShape<'a>
 }
 
 impl<'a> Box<'a> {

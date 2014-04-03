@@ -23,16 +23,16 @@ pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBody
 ///
 /// This is the main structure of the physics engine.
 pub struct World {
-    priv bodies:      HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>,
-    priv forces:      BodyForceGenerator,
-    priv broad_phase: WorldBroadPhase,
-    priv integrator:  BodySmpEulerIntegrator,
-    priv detector:    BodiesBodies<WorldBroadPhase>,
-    priv sleep:       ActivationManager,
+    bodies:      HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>,
+    forces:      BodyForceGenerator,
+    broad_phase: WorldBroadPhase,
+    integrator:  BodySmpEulerIntegrator,
+    detector:    BodiesBodies<WorldBroadPhase>,
+    sleep:       ActivationManager,
     // ccd:        SweptBallMotionClamping<WorldBroadPhase>,
-    priv joints:      JointManager,
-    priv solver:      AccumulatedImpulseSolver,
-    priv collector:   Vec<Constraint>
+    joints:      JointManager,
+    solver:      AccumulatedImpulseSolver,
+    collector:   Vec<Constraint>
 }
 
 impl World {

@@ -44,22 +44,22 @@ impl ActivationState {
 ///
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
-    priv state:                RigidBodyState,
-    priv geom:                 Rc<~Geom:'static>,
-    priv local_to_world:       Matrix,
-    priv lin_vel:              Vect,
-    priv ang_vel:              Orientation,
-    priv inv_mass:             Scalar,
-    priv ls_inv_inertia:       AngularInertia,
-    priv inv_inertia:          AngularInertia,
-    priv ls_center_of_mass:    Vect,
-    priv center_of_mass:       Vect,
-    priv lin_acc:              Vect,
-    priv ang_acc:              Orientation,
-    priv restitution:          Scalar,
-    priv friction:             Scalar,
-    priv index:                int,
-    priv activation_state:     ActivationState
+    state:                RigidBodyState,
+    geom:                 Rc<~Geom:'static>,
+    local_to_world:       Matrix,
+    lin_vel:              Vect,
+    ang_vel:              Orientation,
+    inv_mass:             Scalar,
+    ls_inv_inertia:       AngularInertia,
+    inv_inertia:          AngularInertia,
+    ls_center_of_mass:    Vect,
+    center_of_mass:       Vect,
+    lin_acc:              Vect,
+    ang_acc:              Orientation,
+    restitution:          Scalar,
+    friction:             Scalar,
+    index:                int,
+    activation_state:     ActivationState
 }
 
 impl Clone for RigidBody {

@@ -5,9 +5,9 @@ use rsfml::graphics;
 use time;
 
 pub struct Fps<'a> {
-    priv delta:     f64,
-    priv last_time: f64,
-    priv fps:       Text<'a>
+    delta:     f64,
+    last_time: f64,
+    fps:       Text<'a>
 }
 
 impl<'a> Fps<'a> {

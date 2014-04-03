@@ -11,7 +11,7 @@ use object::RigidBody;
 
 /// Structure that handles creation and removal of joints.
 pub struct JointManager {
-    priv joints: HashMap<uint, Constraint, UintTWHash>
+    joints: HashMap<uint, Constraint, UintTWHash>
 }
 
 impl JointManager {

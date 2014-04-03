@@ -6,8 +6,8 @@ use nalgebra::na::Vec3;
 use nphysics::object::RigidBody;
 
 pub struct Plane {
-    priv gfx:  Object,
-    priv body: Rc<RefCell<RigidBody>>,
+    gfx:  Object,
+    body: Rc<RefCell<RigidBody>>,
 }
 
 impl Plane {

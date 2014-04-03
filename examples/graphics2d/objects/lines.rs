@@ -8,11 +8,11 @@ use nphysics::object::RigidBody;
 use draw_helper::draw_line;
 
 pub struct Lines {
-    priv color:    Vec3<u8>,
-    priv delta:    Iso2<f32>,
-    priv body:     Rc<RefCell<RigidBody>>,
-    priv indices:  Arc<Vec<uint>>,
-    priv vertices: Arc<Vec<Vec2<f32>>>
+    color:    Vec3<u8>,
+    delta:    Iso2<f32>,
+    body:     Rc<RefCell<RigidBody>>,
+    indices:  Arc<Vec<uint>>,
+    vertices: Arc<Vec<Vec2<f32>>>
 }
 
 impl Lines {
