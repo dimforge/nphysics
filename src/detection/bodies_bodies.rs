@@ -86,7 +86,7 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
             let toi;
 
             {
-                toi = rb.get().geom().toi_with_transform_and_ray(rb.get().transform_ref(), ray, true)
+                toi = rb.borrow().geom().toi_with_transform_and_ray(rb.borrow().transform_ref(), ray, true)
             }
 
             match toi {
@@ -105,9 +105,9 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
                   o:           &Rc<RefCell<RigidBody>>,
                   broad_phase: &mut BF,
                   activation:  &mut ActivationManager) {
-        if !o.get().is_active() {
+        if !o.borrow().is_active() {
             // wake up everybody in contact
-            let aabb              = o.get().bounding_volume();
+            let aabb              = o.bounding_volume();
             let mut interferences = Vec::new();
 
             broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
@@ -132,10 +132,10 @@ Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
 
             {
                 cd.update(&*self.geom_geom_dispatcher,
-                          b1.get().transform_ref(),
-                          b1.get().geom(),
-                          b2.get().transform_ref(),
-                          b2.get().geom());
+                          b1.borrow().transform_ref(),
+                          b1.borrow().geom(),
+                          b2.borrow().transform_ref(),
+                          b2.borrow().geom());
             }
 
             let new_ncols = cd.num_colls();

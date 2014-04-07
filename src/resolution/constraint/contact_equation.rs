@@ -62,9 +62,9 @@ impl CorrectionMode {
 }
 
 pub struct CorrectionParameters {
-    corr_mode:       CorrectionMode,
-    joint_corr:      Scalar,
-    rest_eps:        Scalar
+    pub corr_mode:       CorrectionMode,
+    pub joint_corr:      Scalar,
+    pub rest_eps:        Scalar
 }
 
 pub fn reinit_to_first_order_equation(dt:         Scalar,

@@ -6,9 +6,9 @@ use resolution::constraint::velocity_constraint::VelocityConstraint;
 #[deriving(Eq, Show, Clone)]
 pub struct Velocities {
     /// Linear velocity.
-    lv: Vect,
+    pub lv: Vect,
     /// Angular velocity.
-    av: Orientation
+    pub av: Orientation
 }
 
 impl Velocities {

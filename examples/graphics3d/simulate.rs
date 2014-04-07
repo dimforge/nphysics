@@ -36,7 +36,7 @@ fn usage(exe_name: &str) {
     println!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
 }
 
-pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
+pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     let args = os::args();
 
     if args.len() > 1 {
@@ -45,7 +45,7 @@ pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
         return;
     }
 
-    Window::spawn("nphysics: 3d demo", proc(window) {
+    Window::spawn("nphysics: 3d demo", |window| {
         let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
         let mut running    = Running;
         let mut draw_colls = false;

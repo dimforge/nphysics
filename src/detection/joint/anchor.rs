@@ -7,9 +7,9 @@ use ncollide::math::Vect;
 /// One of the two end points of a joint.
 pub struct Anchor<P> {
     /// The body attached to this anchor.
-    body:     Option<Rc<RefCell<RigidBody>>>,
+    pub body:     Option<Rc<RefCell<RigidBody>>>,
     /// The attach position, in local coordinates of the attached body.
-    position: P
+    pub position: P
 }
 
 impl<P> Anchor<P> {

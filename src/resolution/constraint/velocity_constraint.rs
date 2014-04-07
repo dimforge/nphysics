@@ -5,42 +5,42 @@ use ncollide::math::{Scalar, Vect, Orientation};
 /// A constraint of velocity at a point of contact.
 pub struct VelocityConstraint {
     /// The contact normal.
-    normal:             Vect,
+    pub normal:             Vect,
 
     /// The contact normal multiplied by the first body's inverse mass.
-    weighted_normal1:   Vect,
+    pub weighted_normal1:   Vect,
     /// The contact normal multiplied by the second body's inverse mass.
-    weighted_normal2:   Vect,
+    pub weighted_normal2:   Vect,
 
     /// The first body rotation axis.
-    rot_axis1:          Orientation,
+    pub rot_axis1:          Orientation,
     /// The first body rotation axis multiplied by its inverse inertia.
-    weighted_rot_axis1: Orientation,
+    pub weighted_rot_axis1: Orientation,
 
     /// The second body rotation axis.
-    rot_axis2:          Orientation,
+    pub rot_axis2:          Orientation,
     /// The second body rotation axis multiplied by its inverse inertia.
-    weighted_rot_axis2: Orientation,
+    pub weighted_rot_axis2: Orientation,
 
     /// The inverse of the sum of linear and angular inertia of both bodies.
-    inv_projected_mass: Scalar,
+    pub inv_projected_mass: Scalar,
 
     /// The total impulse applied.
-    impulse:            Scalar,
+    pub impulse:            Scalar,
     /// The lower bound of the impulse.
-    lobound:            Scalar,
+    pub lobound:            Scalar,
     /// The upper bound of the impulse.
-    hibound:            Scalar,
+    pub hibound:            Scalar,
     /// The target delta velocity.
-    objective:          Scalar,
+    pub objective:          Scalar,
     /// The id of the first body.
-    id1:                int,
+    pub id1:                int,
     /// The id of the second body.
-    id2:                int,
+    pub id2:                int,
     /// The id of the friction constraint.
-    friction_limit_id:  uint,
+    pub friction_limit_id:  uint,
     /// The friction coefficient on this contact.
-    friction_coeff:     Scalar
+    pub friction_coeff:     Scalar
 }
 
 impl VelocityConstraint {

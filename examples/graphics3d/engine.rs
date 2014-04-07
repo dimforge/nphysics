@@ -107,7 +107,7 @@ impl GraphicsManager {
         window.set_camera(&'a mut self.arc_ball as &'a mut Camera);
     }
 
-    pub fn simulate(builder: proc(&mut Window, &mut GraphicsManager) -> World) {
+    pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
         simulate::simulate(builder)
     }
 
@@ -152,7 +152,15 @@ impl GraphicsManager {
             let vertices = m.coords().read().to_owned().unwrap();
             let indices  = m.faces().read().to_owned().unwrap();
 
-            let m = (vertices, Vec::from_slice(indices.as_slice().flat_map(|i| ~[i.x as uint, i.y as uint, i.z as uint])));
+            let mut flat_indices = Vec::new();
+
+            for i in indices.move_iter() {
+                flat_indices.push(i.x as uint);
+                flat_indices.push(i.y as uint);
+                flat_indices.push(i.z as uint);
+            }
+
+            let m = (vertices, flat_indices);
 
             res.push(m);
         }
