@@ -10,6 +10,7 @@ use kiss3d::window::Window;
 use kiss3d::window;
 use kiss3d::light;
 use kiss3d::text::Font;
+use kiss3d::utils::Recorder;
 use ncollide::geom::{Box, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
@@ -25,7 +26,7 @@ fn usage(exe_name: &str) {
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
-    println!("    r      - show/hide a ray centered on the camera, directed toward the camera front axis.");
+    println!("    r      - start/stop recording to the files {:s}_\\{1,2,3,...\\}.mpg.", exe_name);
     println!("    1      - launch a ball.");
     println!("    2      - launch a cube.");
     println!("    3      - launch a fast cube using continuous collision detection.");
@@ -46,14 +47,14 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     }
 
     Window::spawn("nphysics: 3d demo", |window| {
+        let mut recorder   = None;
+        let mut irec       = 1;
         let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
         let mut running    = Running;
         let mut draw_colls = false;
         let mut graphics   = GraphicsManager::new();
         graphics.init_camera(window);
         let mut physics    = builder(window, &mut graphics);
-
-        let mut ray_to_draw = None;
 
         let mut cursor_pos = Vec2::new(0.0f32, 0.0);
         let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
@@ -209,6 +210,20 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                             w.glfw_window().get_key(glfw::KeyRightControl) == glfw::Release &&
                             w.glfw_window().get_key(glfw::KeyLeftControl)  == glfw::Release
                     },
+                    glfw::KeyEvent(glfw::KeyR, _, glfw::Press, _) => {
+                        if recorder.is_some() {
+                            recorder = None;
+                        }
+                        else {
+                            let rec = Recorder::new(Path::new(format!("{:s}_{}.mpg", args[0], irec)),
+                                                              w.width()  as uint,
+                                                              w.height() as uint);
+                            recorder = Some(rec);
+                            irec = irec + 1;
+                        }
+
+                        true
+                    },
                     glfw::KeyEvent(glfw::KeyTab, _, glfw::Release, _) => {
                         graphics.switch_cameras(w);
 
@@ -306,26 +321,6 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
                         true
                     },
-                    glfw::KeyEvent(glfw::KeyR, _, glfw::Press, _) => {
-                        if ray_to_draw.is_some() {
-                            ray_to_draw = None;
-                        }
-                        else {
-                            let cam_transform;
-                            
-                            {
-                                let cam = w.camera();
-                                cam_transform = cam.view_transform();
-                            }
-
-                            let pos           = na::translation(&cam_transform);
-                            let front         = na::rotate(&cam_transform, &Vec3::z());
-
-                            ray_to_draw = Some(Ray::new(pos, front));
-                        }
-
-                        true
-                    },
                     _ => true
                 }
             });
@@ -345,28 +340,17 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                 draw_collisions(w, &mut physics);
             }
 
-            match ray_to_draw {
-                None          => { },
-                Some(ref ray) => {
-                    // cast a ray
-                    let mut interferences = Vec::new();
-                    physics.cast_ray(ray, &mut interferences);
+            let _ = recorder.as_mut().map(|r| r.snap(w));
 
-                    let mut mintoi = Bounded::max_value();
-
-                    for (_, toi) in interferences.move_iter() {
-                        if toi < mintoi {
-                            mintoi = toi;
-                        }
-                    }
-
-                    w.draw_line(&ray.orig, &(ray.orig + ray.dir * mintoi), &Vec3::x())
-                }
-            }
+            let color = if recorder.is_none() { Vec3::new(1.0, 1.0, 1.0) } else { Vec3::x() };
 
             if running != Stop {
-                let dt = time::precise_time_s() - before;
-                w.draw_text(dt.to_str(), &na::zero(), &font, &Vec3::new(1.0, 1.0, 1.0));
+                let dt    = time::precise_time_s() - before;
+
+                w.draw_text(dt.to_str(), &na::zero(), &font, &color);
+            }
+            else {
+                w.draw_text("Paused", &na::zero(), &font, &color);
             }
         })
     })

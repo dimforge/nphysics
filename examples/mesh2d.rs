@@ -14,7 +14,6 @@ extern crate graphics2d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::slice;
 use rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
