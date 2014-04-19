@@ -47,7 +47,7 @@ pub fn mesh2d(graphics: &mut GraphicsManager) -> World {
     let max_h     = 15.0;
     let begin_h   = 15.0;
     let step      = (begin.abs() * 2.0) / (num_split as f32);
-    let mut vertices = Vec::from_slice(slice::from_fn(num_split + 2, |i| Vec2::new(begin + (i as f32) * step, 0.0)));
+    let mut vertices = Vec::from_fn(num_split + 2, |i| Vec2::new(begin + (i as f32) * step, 0.0));
     let mut indices  = Vec::new();
     let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4]);
 
