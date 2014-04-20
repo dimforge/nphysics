@@ -5,7 +5,6 @@ use ncollide::volumetric::InertiaTensor;
 use ncollide::math::{Scalar, Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
-use utils::ref_to::RefTo;
 
 /// The correction coefficient used by the constraint solver.
 pub enum CorrectionMode {
@@ -97,7 +96,7 @@ pub fn fill_second_order_equation(dt:           Scalar,
                                   idf:          uint,
                                   cache:        &[Scalar],
                                   correction:   &CorrectionParameters) {
-    let restitution = rb1.get().restitution() * rb2.get().restitution();
+    let restitution = rb1.restitution() * rb2.restitution();
 
     let center = (coll.world1 + coll.world2) * na::cast::<f32, Scalar>(0.5);
 
@@ -115,7 +114,7 @@ pub fn fill_second_order_equation(dt:           Scalar,
                              correction);
 
 
-    let friction  = rb1.get().friction() * rb2.get().friction();
+    let friction  = rb1.friction() * rb2.friction();
     // To bound the friction we use the last frame normal impulse.
     // That means we have to make a special case for the first time the contact appears.
     // In that case, we estimate the impulse by the derired normal correction.
@@ -146,19 +145,17 @@ pub fn fill_second_order_equation(dt:           Scalar,
     })
 }
 
-pub fn fill_constraint_geometry<R: RefTo<RigidBody>>(
-                                normal:     Vect,
+pub fn fill_constraint_geometry(normal:     Vect,
                                 rot_axis1:  Orientation,
                                 rot_axis2:  Orientation,
-                                rb1:        &Option<R>,
-                                rb2:        &Option<R>,
+                                rb1:        &Option<&RigidBody>,
+                                rb2:        &Option<&RigidBody>,
                                 constraint: &mut VelocityConstraint) {
     constraint.normal             = normal;
     constraint.inv_projected_mass = na::zero();
 
     match *rb1 {
-        Some(ref b) => {
-            let rb = b.get();
+        Some(ref rb) => {
             // rotation axis
             constraint.weighted_normal1   = constraint.normal * rb.inv_mass();
             constraint.rot_axis1          = rot_axis1;
@@ -173,8 +170,7 @@ pub fn fill_constraint_geometry<R: RefTo<RigidBody>>(
     }
 
     match *rb2 {
-        Some(ref b) => {
-            let rb = b.get();
+        Some(ref rb) => {
             // rotation axis
             constraint.weighted_normal2   = constraint.normal * rb.inv_mass();
             constraint.rot_axis2          = rot_axis2;
@@ -204,18 +200,18 @@ fn fill_velocity_constraint(dt:              Scalar,
                             rb2:             &RigidBody,
                             constraint:      &mut VelocityConstraint,
                             correction:      &CorrectionParameters) {
-    let rot_axis1 = na::cross(&(center - *rb1.get().center_of_mass()), &-normal);
-    let rot_axis2 = na::cross(&(center - *rb2.get().center_of_mass()), &normal);
+    let rot_axis1 = na::cross(&(center - *rb1.center_of_mass()), &-normal);
+    let rot_axis2 = na::cross(&(center - *rb2.center_of_mass()), &normal);
 
-    let opt_rb1 = if rb1.get().can_move() { Some(rb1.get()) } else { None };
-    let opt_rb2 = if rb2.get().can_move() { Some(rb2.get()) } else { None };
+    let opt_rb1 = if rb1.can_move() { Some(rb1) } else { None };
+    let opt_rb2 = if rb2.can_move() { Some(rb2) } else { None };
     fill_constraint_geometry(normal, rot_axis1, rot_axis2, &opt_rb1, &opt_rb2, constraint);
 
     /*
      * Fill indice
      */
-    constraint.id1 = rb1.get().index();
-    constraint.id2 = rb2.get().index();
+    constraint.id1 = rb1.index();
+    constraint.id2 = rb2.index();
 
     /*
      * correction amount
@@ -251,9 +247,8 @@ fn fill_velocity_constraint(dt:              Scalar,
     constraint.hibound = hibound;
 }
 
-pub fn relative_velocity<R: RefTo<RigidBody>>(
-                         rb1:       &Option<R>,
-                         rb2:       &Option<R>,
+pub fn relative_velocity(rb1:       &Option<&RigidBody>,
+                         rb2:       &Option<&RigidBody>,
                          normal:    &Vect,
                          rot_axis1: &Orientation,
                          rot_axis2: &Orientation,
@@ -262,8 +257,7 @@ pub fn relative_velocity<R: RefTo<RigidBody>>(
     let mut dvel: Scalar = na::zero();
 
     match *rb1 {
-        Some(ref b) => {
-            let rb = b.get();
+        Some(ref rb) => {
             dvel = dvel - na::dot(&(rb.lin_vel() + rb.lin_acc() * *dt), normal)
                         + na::dot(&(rb.ang_vel() + rb.ang_acc() * *dt), rot_axis1);
         },
@@ -271,8 +265,7 @@ pub fn relative_velocity<R: RefTo<RigidBody>>(
     }
 
     match *rb2 {
-        Some(ref b) => {
-            let rb = b.get();
+        Some(ref rb) => {
             dvel = dvel + na::dot(&(rb.lin_vel() + rb.lin_acc() * *dt), normal)
                         + na::dot(&(rb.ang_vel() + rb.ang_acc() * *dt), rot_axis2);
         },

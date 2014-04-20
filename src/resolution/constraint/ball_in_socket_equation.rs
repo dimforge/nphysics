@@ -49,8 +49,8 @@ pub fn cancel_relative_linear_motion<P>(
         let rot_axis2 = -rot_axis2.row(i);
 
         let dvel = contact_equation::relative_velocity(
-            &opt_rb1,
-            &opt_rb2,
+            &opt_rb1.as_ref().map(|r| &**r),
+            &opt_rb2.as_ref().map(|r| &**r),
             &lin_axis, 
             &rot_axis1,
             &rot_axis2,
@@ -60,8 +60,8 @@ pub fn cancel_relative_linear_motion<P>(
             lin_axis,
             rot_axis1,
             rot_axis2,
-            &opt_rb1,
-            &opt_rb2,
+            &opt_rb1.as_ref().map(|r| &**r),
+            &opt_rb2.as_ref().map(|r| &**r),
             constraint
         );
 

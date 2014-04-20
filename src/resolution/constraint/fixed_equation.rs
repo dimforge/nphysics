@@ -56,8 +56,8 @@ pub fn cancel_relative_angular_motion<P>(dt:          Scalar,
             na::zero(),
             rot_axis.clone(),
             -rot_axis,
-            &opt_rb1,
-            &opt_rb2,
+            &opt_rb1.as_ref().map(|r| &**r),
+            &opt_rb2.as_ref().map(|r| &**r),
             constraint
         );
 
