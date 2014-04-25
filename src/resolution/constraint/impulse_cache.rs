@@ -6,7 +6,7 @@ use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
 use collections::HashMap;
 use nalgebra::na;
-use nalgebra::na::Iterable;
+use nalgebra::na::{Iterable, IterableMut};
 use ncollide::math::{Scalar, Vect};
 
 #[deriving(Eq)]
@@ -39,10 +39,16 @@ impl Hash for ContactIdentifier {
 
 impl ContactIdentifier {
     pub fn new(obj1: uint, obj2: uint, center: Vect, step: &Scalar) -> ContactIdentifier {
+        let mut cell = center / *step;
+
+        for x in cell.mut_iter() {
+            *x = x.trunc()
+        }
+
         ContactIdentifier {
             obj1:    obj1,
             obj2:    obj2,
-            ccenter: (center / *step).trunc()
+            ccenter: cell
         }
     }
 }

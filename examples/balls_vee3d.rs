@@ -55,7 +55,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     /*
      * Create the balls
      */
-    let num     = 1500.0f32.powf(&(1.0f32 / 3.0)) as uint;
+    let num     = 1500.0f32.powf(1.0f32 / 3.0) as uint;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
