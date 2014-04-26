@@ -81,7 +81,6 @@ impl SceneNode {
 pub struct GraphicsManager {
     rand:             XorShiftRng,
     rb2sn:            HashMap<uint, Vec<SceneNode>>,
-    obj2color:        HashMap<uint, Vec3<f32>>,
     arc_ball:         ArcBall,
     first_person:     FirstPerson,
     curr_is_arc_ball: bool
@@ -99,7 +98,6 @@ impl GraphicsManager {
             curr_is_arc_ball: true,
             rand:             SeedableRng::from_seed([0, 2, 4, 8]),
             rb2sn:            HashMap::new(),
-            obj2color:        HashMap::new()
         }
     }
 
@@ -124,16 +122,26 @@ impl GraphicsManager {
         }
 
         self.rb2sn.remove(&key);
-        self.obj2color.remove(&key);
+    }
+
+    pub fn gen_color(&mut self) -> Vec3<f32> {
+        self.rand.gen()
     }
 
     pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
+        let color = self.gen_color();
+        self.add_with_color(window, body, color)
+    }
 
+    pub fn add_with_color(&mut self,
+                          window: &mut Window,
+                          body:   Rc<RefCell<RigidBody>>,
+                          color:  Vec3<f32>) {
         let nodes = {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_geom(window, body.clone(), One::one(), rb.geom(), &mut nodes);
+            self.add_geom(window, body.clone(), One::one(), rb.geom(), color, &mut nodes);
 
             nodes
         };
@@ -173,6 +181,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &Geom,
+                color:  Vec3<f32>,
                 out:    &mut Vec<SceneNode>) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
@@ -184,29 +193,29 @@ impl GraphicsManager {
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
-            self.add_plane(window, body, geom.as_ref::<Pl>().unwrap(), out)
+            self.add_plane(window, body, geom.as_ref::<Pl>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Bl>() {
-            self.add_ball(window, body, delta, geom.as_ref::<Bl>().unwrap(), out)
+            self.add_ball(window, body, delta, geom.as_ref::<Bl>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Bo>() {
-            self.add_box(window, body, delta, geom.as_ref::<Bo>().unwrap(), out)
+            self.add_box(window, body, delta, geom.as_ref::<Bo>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cy>() {
-            self.add_cylinder(window, body, delta, geom.as_ref::<Cy>().unwrap(), out)
+            self.add_cylinder(window, body, delta, geom.as_ref::<Cy>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Co>() {
-            self.add_cone(window, body, delta, geom.as_ref::<Co>().unwrap(), out)
+            self.add_cone(window, body, delta, geom.as_ref::<Co>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cm>() {
             let c = geom.as_ref::<Cm>().unwrap();
 
             for &(t, ref s) in c.shapes().iter() {
-                self.add_geom(window, body.clone(), delta * t, *s, out)
+                self.add_geom(window, body.clone(), delta * t, *s, color, out)
             }
         }
         else if id == TypeId::of::<Tm>() {
-            self.add_mesh(window, body, delta, geom.as_ref::<Tm>().unwrap(), out);
+            self.add_mesh(window, body, delta, geom.as_ref::<Tm>().unwrap(), color, out);
         }
         else {
             fail!("Not yet implemented.")
@@ -218,10 +227,10 @@ impl GraphicsManager {
                  window: &mut Window,
                  body:   Rc<RefCell<RigidBody>>,
                  geom:   &geom::Plane,
+                 color:  Vec3<f32>,
                  out:    &mut Vec<SceneNode>) {
         let position = na::translation(body.borrow().deref());
         let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
-        let color    = self.color_for_object(&body);
 
         out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
     }
@@ -231,8 +240,8 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Mesh,
+                color:  Vec3<f32>,
                 out:    &mut Vec<SceneNode>) {
-        let color    = self.color_for_object(&body);
         let vertices = geom.vertices().deref();
         let indices  = geom.indices().deref();
 
@@ -251,8 +260,8 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Ball,
+                color:  Vec3<f32>,
                 out:    &mut Vec<SceneNode>) {
-        let color = self.color_for_object(&body);
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color, window)))
     }
 
@@ -261,12 +270,11 @@ impl GraphicsManager {
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
                geom:   &geom::Box,
+               color:  Vec3<f32>,
                out:    &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x + geom.margin();
         let ry = geom.half_extents().y + geom.margin();
         let rz = geom.half_extents().z + geom.margin();
-
-        let color = self.color_for_object(&body);
 
         out.push(BoxNode(Box::new(body, delta, rx, ry, rz, color, window)))
     }
@@ -276,11 +284,10 @@ impl GraphicsManager {
                     body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
                     geom:   &geom::Cylinder,
+                    color:  Vec3<f32>,
                     out:    &mut Vec<SceneNode>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
-
-        let color = self.color_for_object(&body);
 
         out.push(CylinderNode(Cylinder::new(body, delta, r, h, color, window)))
     }
@@ -290,11 +297,10 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Cone,
+                color:  Vec3<f32>,
                 out:    &mut Vec<SceneNode>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
-
-        let color = self.color_for_object(&body);
 
         out.push(ConeNode(Cone::new(body, delta, r, h, color, window)))
     }
@@ -327,19 +333,5 @@ impl GraphicsManager {
 
     pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<SceneNode>> {
         self.rb2sn.find_mut(&(rb.deref() as *RefCell<RigidBody> as uint))
-    }
-
-    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<f32> {
-        let key = body.deref() as *RefCell<RigidBody> as uint;
-        match self.obj2color.find(&key) {
-            Some(color) => return *color,
-            None => { }
-        }
-
-        let color = self.rand.gen();
-
-        self.obj2color.insert(key, color);
-
-        color
     }
 }

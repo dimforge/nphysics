@@ -1,5 +1,6 @@
 use ncollide::math::Matrix;
 use detection::joint::anchor::Anchor;
+use detection::joint::joint::Joint;
 
 /// A joint that prevents any relative movement (linear and angular) between two objects.
 pub struct Fixed {
@@ -28,16 +29,6 @@ impl Fixed {
         self.up_to_date = true
     }
 
-    /// The first anchor affected by this joint.
-    pub fn anchor1<'r>(&'r self) -> &'r Anchor<Matrix> {
-        &self.anchor1
-    }
-
-    /// The second anchor affected by this joint.
-    pub fn anchor2<'r>(&'r self) -> &'r Anchor<Matrix> {
-        &self.anchor2
-    }
-
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
@@ -57,9 +48,24 @@ impl Fixed {
             self.anchor2.position = local2
         }
     }
+}
+
+impl Joint<Matrix> for Fixed {
+    /// The first anchor affected by this joint.
+    #[inline]
+    fn anchor1<'r>(&'r self) -> &'r Anchor<Matrix> {
+        &self.anchor1
+    }
+
+    /// The second anchor affected by this joint.
+    #[inline]
+    fn anchor2<'r>(&'r self) -> &'r Anchor<Matrix> {
+        &self.anchor2
+    }
 
     /// The first attach point in global coordinates.
-    pub fn anchor1_pos(&self) -> Matrix {
+    #[inline]
+    fn anchor1_pos(&self) -> Matrix {
         match self.anchor1.body {
             Some(ref b) => {
                 b.borrow().transform_ref() * self.anchor1.position
@@ -69,7 +75,8 @@ impl Fixed {
     }
 
     /// The second attach point in global coordinates.
-    pub fn anchor2_pos(&self) -> Matrix {
+    #[inline]
+    fn anchor2_pos(&self) -> Matrix {
         match self.anchor2.body {
             Some(ref b) => {
                 b.borrow().transform_ref() * self.anchor2.position

@@ -1,6 +1,7 @@
 use nalgebra::na::Transform;
 use ncollide::math::Vect;
 use detection::joint::anchor::Anchor;
+use detection::joint::joint::Joint;
 
 /// A ball-in-socket joint.
 ///
@@ -31,16 +32,6 @@ impl BallInSocket {
         self.up_to_date = true
     }
 
-    /// The first anchor affected by this joint.
-    pub fn anchor1<'r>(&'r self) -> &'r Anchor<Vect> {
-        &self.anchor1
-    }
-
-    /// The second anchor affected by this joint.
-    pub fn anchor2<'r>(&'r self) -> &'r Anchor<Vect> {
-        &self.anchor2
-    }
-
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
@@ -60,9 +51,25 @@ impl BallInSocket {
             self.anchor2.position = local2
         }
     }
+}
+
+
+impl Joint<Vect> for BallInSocket {
+    /// The first anchor affected by this joint.
+    #[inline]
+    fn anchor1<'r>(&'r self) -> &'r Anchor<Vect> {
+        &self.anchor1
+    }
+
+    /// The second anchor affected by this joint.
+    #[inline]
+    fn anchor2<'r>(&'r self) -> &'r Anchor<Vect> {
+        &self.anchor2
+    }
 
     /// The first attach point in global coordinates.
-    pub fn anchor1_pos(&self) -> Vect {
+    #[inline]
+    fn anchor1_pos(&self) -> Vect {
         match self.anchor1.body {
             Some(ref b) => {
                 b.borrow().transform_ref().transform(&self.anchor1.position)
@@ -72,7 +79,8 @@ impl BallInSocket {
     }
 
     /// The second attach point in global coordinates.
-    pub fn anchor2_pos(&self) -> Vect {
+    #[inline]
+    fn anchor2_pos(&self) -> Vect {
         match self.anchor2.body {
             Some(ref b) => {
                 b.borrow().transform_ref().transform(&self.anchor2.position)

@@ -20,6 +20,8 @@ impl Ball {
                radius: f32,
                color:  Vec3<f32>,
                window: &mut Window) -> Ball {
+        let t  = na::transformation(body.borrow().deref());
+
         let mut res = Ball {
             color:      color,
             base_color: color,
@@ -29,6 +31,7 @@ impl Ball {
         };
 
         res.gfx.set_color(color.x, color.y, color.z);
+        res.gfx.set_transformation(t * res.delta);
         res.update();
 
         res
@@ -46,10 +49,7 @@ impl Ball {
         let rb = self.body.borrow();
 
         if rb.is_active() {
-            {
-                self.gfx.set_transformation(na::transformation(rb.deref()) * self.delta);
-            }
-
+            self.gfx.set_transformation(na::transformation(rb.deref()) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

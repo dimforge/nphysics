@@ -25,6 +25,7 @@ impl Box {
         let gx = rx as f32 * 2.0;
         let gy = ry as f32 * 2.0;
         let gz = rz as f32 * 2.0;
+        let t  = na::transformation(body.borrow().deref());
 
         let mut res = Box {
             color:      color,
@@ -35,6 +36,7 @@ impl Box {
         };
 
         res.gfx.set_color(color.x, color.y, color.z);
+        res.gfx.set_transformation(t * res.delta);
         res.update();
 
         res
@@ -52,7 +54,7 @@ impl Box {
         let rb = self.body.borrow();
 
         if rb.is_active() {
-                self.gfx.set_transformation(na::transformation(rb.deref()) * self.delta);
+            self.gfx.set_transformation(na::transformation(rb.deref()) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

@@ -24,6 +24,7 @@ impl Cone {
                window: &mut window::Window) -> Cone {
         let mut realign: Iso3<f32> = One::one();
         let _frac_pi_2: f32 = Float::frac_pi_2();
+        let t  = na::transformation(body.borrow().deref());
         realign.append_rotation(&Vec3::new(0.0, 0.0, -_frac_pi_2));
 
         let mut res = Cone {
@@ -35,6 +36,7 @@ impl Cone {
         };
 
         res.gfx.set_color(color.x, color.y, color.z);
+        res.gfx.set_transformation(t * res.delta);
         res.update();
 
         res

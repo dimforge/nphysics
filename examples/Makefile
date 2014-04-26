@@ -50,6 +50,7 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 examples:
 	mkdir -p ../bin
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
+	$(build_cmd_opt) ./ragdoll3d.rs
 	$(build_cmd_opt) ./boxes_vee3d.rs
 	$(build_cmd_opt) ./mesh3d.rs
 	$(build_cmd_opt) ./primitives3d.rs

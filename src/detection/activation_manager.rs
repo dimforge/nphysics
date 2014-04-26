@@ -6,7 +6,8 @@ use ncollide::util::hash::UintTWHash;
 use ncollide::math::Scalar;
 use ncollide::broad::{InterferencesBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
-use detection::constraint::Constraint;
+use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
+use detection::joint::{JointManager, Joint};
 use object::{RigidBody, Deleted};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
@@ -66,6 +67,7 @@ impl ActivationManager {
     pub fn update<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>>(
                   &mut self,
                   broad_phase: &mut BF,
+                  joints:      &JointManager,
                   bodies:      &mut HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>) {
         /*
          *
@@ -106,14 +108,38 @@ impl ActivationManager {
         }
 
         // run the union-find
-        broad_phase.for_each_pair(|b1, b2, cd| {
+        fn make_union(b1: &Rc<RefCell<RigidBody>>, b2: &Rc<RefCell<RigidBody>>, ufs: &mut [UnionFindSet]) {
             let rb1 = b1.borrow();
             let rb2 = b2.borrow();
 
-            if rb1.is_active() && rb2.is_active() && cd.num_colls() != 0 {
-                union_find::union(rb1.index() as uint, rb2.index() as uint, self.ufind.as_mut_slice())
+            if rb1.is_active() && rb2.is_active() {
+                union_find::union(rb1.index() as uint, rb2.index() as uint, ufs)
+            }
+        }
+
+        broad_phase.for_each_pair(|b1, b2, cd| {
+            if cd.num_colls() != 0 {
+                make_union(b1, b2, self.ufind.as_mut_slice())
             }
         });
+
+        for e in joints.joints().elements().iter() {
+            match e.value {
+                RBRB(ref b1, ref b2, _) => make_union(b1, b2, self.ufind.as_mut_slice()),
+                BallInSocket(ref bis)   => {
+                    match (bis.borrow().anchor1().body.as_ref(), bis.borrow().anchor2().body.as_ref()) {
+                        (Some(b1), Some(b2)) => make_union(b1, b2, self.ufind.as_mut_slice()),
+                        _ => { }
+                    }
+                },
+                Fixed(ref f)   => {
+                    match (f.borrow().anchor1().body.as_ref(), f.borrow().anchor2().body.as_ref()) {
+                        (Some(b1), Some(b2)) => make_union(b1, b2, self.ufind.as_mut_slice()),
+                        _ => { }
+                    }
+                }
+            }
+        }
 
         /*
          *
@@ -169,20 +195,40 @@ impl ActivationManager {
                 }
             }
 
+            fn add_to_activation_list(body: &Rc<RefCell<RigidBody>>, list: &mut Vec<Rc<RefCell<RigidBody>>>) {
+                let mut rb = body.borrow_mut();
+
+                if !rb.is_active() && rb.can_move() {
+                    list.push(body.clone());
+                }
+            }
+
             broad_phase.activate(&to_activate, |b1, b2, cd| {
                 if cd.num_colls() > 0 {
-                    let mut rb1 = b1.borrow_mut();
-                    let mut rb2 = b2.borrow_mut();
-
-                    if !rb1.is_active() && rb1.can_move() {
-                        self.to_activate.push(b1.clone());
-                    }
-
-                    if !rb2.is_active() && rb2.can_move() {
-                        self.to_activate.push(b2.clone());
-                    }
+                    add_to_activation_list(b1, &mut self.to_activate);
+                    add_to_activation_list(b2, &mut self.to_activate);
                 }
             });
+
+            // propagate through joints too
+            for joints in joints.joints_with_body(&to_activate).iter() {
+                for joint in joints.iter() {
+                    match *joint {
+                        RBRB(ref b1, ref b2, _) => {
+                            add_to_activation_list(b1, &mut self.to_activate);
+                            add_to_activation_list(b2, &mut self.to_activate);
+                        },
+                        BallInSocket(ref bis) => {
+                            let _ = bis.borrow().anchor1().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
+                            let _ = bis.borrow().anchor2().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
+                        }
+                        Fixed(ref f) => {
+                            let _ = f.borrow().anchor1().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
+                            let _ = f.borrow().anchor2().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
+                        }
+                    }
+                }
+            }
         }
     }
 }

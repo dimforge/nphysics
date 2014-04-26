@@ -5,6 +5,7 @@ use nalgebra::na::Vec2;
 use nalgebra::na;
 use nphysics::world::World;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
+use nphysics::detection::joint::Joint;
 
 pub static DRAW_SCALE: f32 = 20.0;
 

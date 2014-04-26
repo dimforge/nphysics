@@ -37,6 +37,7 @@ pub fn mesh3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
 
     let meshes = graphics.load_mesh("media/great_hall.obj");
+    let color  = graphics.gen_color();
 
     for (vertices, indices) in meshes.move_iter() {
         let vertices = vertices.iter().map(|v| v * 3.0f32).collect();
@@ -44,7 +45,7 @@ pub fn mesh3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
         let body     = Rc::new(RefCell::new(RigidBody::new(mesh, 0.0f32, Static, 0.3, 0.6)));
 
         world.add_body(body.clone());
-        graphics.add(window, body);
+        graphics.add_with_color(window, body, color);
     }
 
     world

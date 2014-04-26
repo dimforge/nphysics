@@ -4,7 +4,7 @@ use nalgebra::na::{Row, Indexable};
 use nalgebra::na;
 use ncollide::math::{Scalar, Vect};
 use object::RigidBody;
-use detection::joint::{Anchor, BallInSocket};
+use detection::joint::{Anchor, BallInSocket, Joint};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;

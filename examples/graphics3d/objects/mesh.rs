@@ -26,6 +26,7 @@ impl Mesh {
         let is = indices;
 
         let mesh = resource::Mesh::new(vs, is, None, None, false);
+        let t    = na::transformation(body.borrow().deref());
 
         let mut res = Mesh {
             color:      color,
@@ -36,6 +37,7 @@ impl Mesh {
         };
 
         res.gfx.set_color(color.x, color.y, color.z);
+        res.gfx.set_transformation(t * res.delta);
         res.update();
 
         res

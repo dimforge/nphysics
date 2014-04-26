@@ -1,25 +1,41 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::ptr;
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use detection::activation_manager::ActivationManager;
 use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
+use detection::joint::joint::Joint;
 use detection::constraint::{Constraint, BallInSocket, Fixed, RBRB};
 use object::RigidBody;
 
 /// Structure that handles creation and removal of joints.
 pub struct JointManager {
-    joints: HashMap<uint, Constraint, UintTWHash>
+    joints:      HashMap<uint, Constraint, UintTWHash>,
+    body2joints: HashMap<uint, Vec<Constraint>, UintTWHash>
 }
 
 impl JointManager {
     /// Creates a new `JointManager`.
     pub fn new() -> JointManager {
         JointManager {
-            joints: HashMap::new(UintTWHash::new())
+            joints:      HashMap::new(UintTWHash::new()),
+            body2joints: HashMap::new(UintTWHash::new())
         }
+    }
+
+    /// Joints handled by this manager.
+    #[inline]
+    pub fn joints<'a>(&'a self) -> &'a HashMap<uint, Constraint, UintTWHash> {
+        &'a self.joints
+    }
+
+    /// List of joints attached to a specific body.
+    #[inline]
+    pub fn joints_with_body<'a>(&'a self, body: &Rc<RefCell<RigidBody>>) -> Option<&'a [Constraint]> {
+        self.body2joints.find(&(body.deref() as *RefCell<RigidBody> as uint)).map(|v| v.as_slice())
     }
 
     /// Add a `BallInSocket` joint to this manager.
@@ -29,8 +45,25 @@ impl JointManager {
                               joint:      Rc<RefCell<BallInSocket>>,
                               activation: &mut ActivationManager) {
         if self.joints.insert(joint.deref() as *RefCell<BallInSocket> as uint, BallInSocket(joint.clone())) {
-            let _  = joint.borrow().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            let _  = joint.borrow().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            match joint.borrow().anchor1().body.as_ref() {
+                Some(b) => {
+                    activation.will_activate(b);
+                    let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
+                                                                  || Vec::new());
+                    js.push(BallInSocket(joint.clone()));
+                },
+                _ => { }
+            }
+
+            match joint.borrow().anchor2().body.as_ref() {
+                Some(b) => {
+                    activation.will_activate(b);
+                    let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
+                                                                  || Vec::new());
+                    js.push(BallInSocket(joint.clone()));
+                },
+                _ => { }
+            }
         }
     }
 
@@ -49,18 +82,67 @@ impl JointManager {
     /// This will force the activation of the two objects attached to the joint.
     pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
         if self.joints.insert(joint.deref() as *RefCell<Fixed> as uint, Fixed(joint.clone())) {
-            let _  = joint.borrow().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            let _  = joint.borrow().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            match joint.borrow().anchor1().body.as_ref() {
+                Some(b) => {
+                    activation.will_activate(b);
+                    let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
+                                                                  || Vec::new());
+                    js.push(Fixed(joint.clone()));
+                },
+                _ => { }
+            }
+
+            match joint.borrow().anchor2().body.as_ref() {
+                Some(b) => {
+                    activation.will_activate(b);
+                    let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
+                                                                  || Vec::new());
+                    js.push(Fixed(joint.clone()));
+                },
+                _ => { }
+            }
         }
     }
 
-    /// Removes a `Fixed` joint from this manager.
+    /// Removes a joint from this manager.
     ///
     /// This will force the activation of the two objects attached to the joint.
-    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
-        if self.joints.remove(&(joint.deref() as *RefCell<Fixed> as uint)) {
-            let _  = joint.borrow().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            let _  = joint.borrow().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+    pub fn remove_joint<T: Joint<M>, M>(&mut self,
+                                        joint:      &Rc<RefCell<T>>,
+                                        activation: &mut ActivationManager) {
+        if self.joints.remove(&(joint.deref() as *RefCell<T> as uint)) {
+            self.remove_joint_for_body(joint, joint.borrow().anchor1().body.as_ref(), activation);
+            self.remove_joint_for_body(joint, joint.borrow().anchor2().body.as_ref(), activation);
+        }
+    }
+
+    fn remove_joint_for_body<T: Joint<M>, M>(&mut self,
+                                             joint:      &Rc<RefCell<T>>,
+                                             body:       Option<&Rc<RefCell<RigidBody>>>,
+                                             activation: &mut ActivationManager) {
+        match body {
+            Some(b) => {
+                activation.will_activate(b);
+                let key = b.deref() as *RefCell<RigidBody> as uint;
+                match self.body2joints.find_mut(&key) {
+                    Some(ref mut js) => {
+                        let jkey = joint.deref() as *RefCell<T>;
+                        js.retain(|j| {
+                            // we do not know the type of the joint, so cast it to uint for
+                            // comparison.
+                            let id = match *j {
+                                RBRB(_, _, _)         => ptr::null::<uint>() as uint,
+                                BallInSocket(ref bis) => bis.deref() as *RefCell<BallInSocket> as uint,
+                                Fixed(ref f)          => f.deref() as *RefCell<Fixed> as uint
+                            };
+
+                            id != jkey as uint
+                        });
+                    }
+                    None => { }
+                }
+            }
+            None => { }
         }
     }
 
@@ -68,44 +150,38 @@ impl JointManager {
     ///
     /// This will force the activation of every object attached to the deleted joints.
     pub fn remove(&mut self, b: &Rc<RefCell<RigidBody>>, activation: &mut ActivationManager) {
-        let mut keys_to_remove = Vec::new();
+        for joints in self.body2joints.get_and_remove(&(b.deref() as *RefCell<RigidBody> as uint)).iter() {
+            for joint in joints.value.iter() {
+                fn do_remove<T: Joint<M>, M>(_self:      &mut JointManager,
+                                             joint:      &Rc<RefCell<T>>,
+                                             b:          &Rc<RefCell<RigidBody>>,
+                                             activation: &mut ActivationManager) {
+                    let bj    = joint.borrow();
+                    let body1 = bj.anchor1().body.as_ref();
+                    let body2 = bj.anchor2().body.as_ref();
 
-        // Remove any joint attached to this body
-        // NOTE: this could be improved keeping track of the list of bodies having a joint. This
-        // would avoid traversing the joint list to find that a body does not have any joint.
-        for elts in self.joints.elements().iter() {
-            fn try_remove(b:              &Rc<RefCell<RigidBody>>,
-                          ref_b:          &Rc<RefCell<RigidBody>>,
-                          keys_to_remove: &mut Vec<uint>,
-                          activation:     &mut ActivationManager) {
-                if b.deref() as *RefCell<RigidBody> == ref_b.deref() as *RefCell<RigidBody> {
-                    keys_to_remove.push(b.deref() as *RefCell<RigidBody> as uint);
+                    for body in bj.anchor1().body.as_ref().iter() {
+                        if body.deref() as *RefCell<RigidBody> == b.deref() as *RefCell<RigidBody> {
+                            _self.remove_joint_for_body(joint, body2, activation);
+                        }
+                        else {
+                            _self.remove_joint_for_body(joint, body1, activation);
+                        }
+                    }
                 }
-                else {
-                    activation.will_activate(b);
+
+                match *joint {
+                    BallInSocket(ref bis) => do_remove(self, bis, b, activation),
+                    Fixed(ref f)          => do_remove(self, f, b, activation),
+                    RBRB(_, _, _)         => fail!("Internal error: a contact RBRB should not be here.")
                 }
             }
-
-            match elts.value {
-                BallInSocket(ref bis) => {
-                    let _ = bis.borrow().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
-                    let _ = bis.borrow().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
-                },
-                Fixed(ref f) => {
-                    let _ = f.borrow().anchor2().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
-                    let _ = f.borrow().anchor1().body.as_ref().map(|r| try_remove(r, b, &mut keys_to_remove, activation));
-                }
-                RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
-            }
-        }
-
-        for k in keys_to_remove.iter() {
-            self.joints.remove(k);
         }
     }
 }
 
 impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
+    // FIXME: do we really want to handle this here instead of in the activation manager directly?
     fn update(&mut self, _: &mut BF, activation: &mut ActivationManager) {
         for joint in self.joints.elements().iter() {
             match joint.value {

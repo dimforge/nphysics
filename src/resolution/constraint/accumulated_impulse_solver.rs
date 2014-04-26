@@ -6,6 +6,7 @@ use nalgebra::na::{Translation, Transformation, RotationWithTranslation};
 use nalgebra::na;
 use ncollide::math::{Scalar, Vect, Orientation, Matrix};
 use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
+use detection::joint::Joint;
 use object::RigidBody;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;

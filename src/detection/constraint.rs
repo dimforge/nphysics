@@ -4,8 +4,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use ncollide::contact::Contact;
 use object::RigidBody;
-use detection::joint::BallInSocket;
-use detection::joint::Fixed;
+use detection::joint::{Fixed, BallInSocket};
 
 /// A constraint between two rigid bodies.
 pub enum Constraint {

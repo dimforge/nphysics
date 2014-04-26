@@ -106,7 +106,7 @@ impl World {
 
         self.detector.update(&mut self.broad_phase, &mut self.sleep);
         self.joints.update(&mut self.broad_phase, &mut self.sleep);
-        self.sleep.update(&mut self.broad_phase, &mut self.bodies);
+        self.sleep.update(&mut self.broad_phase, &self.joints, &mut self.bodies);
 
         self.detector.interferences(&mut self.collector, &mut self.broad_phase);
         self.joints.interferences(&mut self.collector, &mut self.broad_phase);
@@ -216,7 +216,7 @@ impl World {
 
     /// Removes a fixed joint from the world.
     pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>) {
-        self.joints.remove_fixed(joint, &mut self.sleep)
+        self.joints.remove_joint(joint, &mut self.sleep)
     }
 
     /// Collects every interferences detected since the last update.
