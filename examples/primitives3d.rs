@@ -13,7 +13,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
-use ncollide::geom::{Plane, Box, Cone, Cylinder, Ball};
+use ncollide::geom::{Plane, Cuboid, Cone, Cylinder, Ball};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics3d::engine::GraphicsManager;
@@ -64,7 +64,7 @@ pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Wor
                 let mut rb;
 
                 if j % 4 == 0 {
-                    let geom = Box::new(Vec3::new(rad, rad, rad));
+                    let geom = Cuboid::new(Vec3::new(rad, rad, rad));
                     rb       = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
                 }
                 else if j % 3 == 0 {

@@ -9,6 +9,7 @@ ffmpeg_lib_path=./lib/kiss3d/lib/rust-ffmpeg/lib
 nphysics_lib_path=../lib
 ncollide_lib_path=../ncollide/lib
 nalgebra_lib_path=../ncollide/nalgebra/lib
+nprocgen_lib_path=./lib/kiss3d/lib/nprocgen/lib
 build_cmd=rustc -L$(nphysics_lib_path)  \
 				-L$(ncollide_lib_path)  \
 				-L$(nalgebra_lib_path)  \
@@ -19,6 +20,7 @@ build_cmd=rustc -L$(nphysics_lib_path)  \
 				-L$(rsfml_lib_path)     \
 				-L$(freetype_lib_path)  \
 				-L$(ffmpeg_lib_path)    \
+				-L$(nprocgen_lib_path)  \
 				--out-dir ../bin
 build_cmd_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(ncollide_lib_path)  \
@@ -30,6 +32,7 @@ build_cmd_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(rsfml_lib_path)     \
 					-L$(freetype_lib_path)  \
 					-L$(ffmpeg_lib_path)    \
+					-L$(nprocgen_lib_path)  \
 					-Llib			  		\
 					-C link-args=-lglfw		\
 					--out-dir ../bin --opt-level 3
@@ -44,6 +47,7 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 					-L$(rsfml_lib_path)     \
 					-L$(freetype_lib_path)  \
 					-L$(ffmpeg_lib_path)    \
+					-L$(nprocgen_lib_path)  \
 					-Llib					\
 					--out-dir lib --opt-level 3
 
@@ -67,6 +71,7 @@ examples:
 	$(build_cmd_opt) ./cross2d.rs
 	$(build_cmd_opt) ./compound2d.rs
 	$(build_cmd_opt) ./balls_vee2d.rs
+	#$(build_cmd_opt) ./ragdoll2d.rs
 
 bugs:
 	mkdir -p ../bin

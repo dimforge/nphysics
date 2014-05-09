@@ -45,6 +45,9 @@ pub fn cancel_relative_linear_motion<P>(
         let opt_rb1 = write_anchor_id(anchor1, &mut constraint.id1);
         let opt_rb2 = write_anchor_id(anchor2, &mut constraint.id2);
 
+        // XXX: should be:
+        // let rot_axis1 = -rot_axis1.col(i);
+        // let rot_axis2 = rot_axis2.col(i);
         let rot_axis1 = rot_axis1.row(i);
         let rot_axis2 = -rot_axis2.row(i);
 

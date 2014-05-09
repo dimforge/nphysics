@@ -16,7 +16,7 @@ use std::cell::RefCell;
 use rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
-use ncollide::geom::{Box, Mesh};
+use ncollide::geom::{Cuboid, Mesh};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics2d::engine::GraphicsManager;
@@ -82,7 +82,7 @@ pub fn mesh2d(graphics: &mut GraphicsManager) -> World {
             let x = fj * 2.0 * rad - centerx;
             let y = -fi * 2.0 * rad;
 
-            let mut rb = RigidBody::new(Box::new(Vec2::new(rad, rad)), 1.0f32, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(Cuboid::new(Vec2::new(rad, rad)), 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

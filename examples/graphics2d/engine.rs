@@ -63,7 +63,7 @@ impl<'a> GraphicsManager<'a> {
                 out:   &mut Vec<SceneNode<'a>>) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
-        type Bo = geom::Box;
+        type Bo = geom::Cuboid;
         type Cy = geom::Cylinder;
         type Co = geom::Cone;
         type Cm = geom::Compound;
@@ -128,7 +128,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_box(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &geom::Box,
+               geom:  &geom::Cuboid,
                out:   &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;

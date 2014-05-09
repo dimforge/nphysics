@@ -17,7 +17,7 @@ use resolution::{Solver, AccumulatedImpulseSolver, VelocityAndPosition};
 use object::RigidBody;
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, ~GeomGeomCollisionDetector>;
+pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, Box<GeomGeomCollisionDetector>>;
 
 /// The physics world.
 ///

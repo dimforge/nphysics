@@ -2,8 +2,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::num::One;
 use kiss3d::window;
-use kiss3d::object::Object;
-use nalgebra::na::{Vec3, Iso3, Transformation, Rotation};
+use kiss3d::scene::SceneNode;
+use nalgebra::na::{Vec3, Iso3, Rotation};
 use nalgebra::na;
 use nphysics::object::RigidBody;
 
@@ -11,7 +11,7 @@ pub struct Cylinder {
     color:      Vec3<f32>,
     base_color: Vec3<f32>,
     delta:      Iso3<f32>,
-    gfx:        Object,
+    gfx:        SceneNode,
     body:       Rc<RefCell<RigidBody>>,
 }
 
@@ -31,11 +31,11 @@ impl Cylinder {
             color:      color,
             base_color: color,
             delta: delta * realign,
-            gfx:   window.add_cylinder(h as f32, r as f32),
+            gfx:   window.add_cylinder(r as f32, h as f32),
             body:  body
         };
         res.gfx.set_color(color.x, color.y, color.z);
-        res.gfx.set_transformation(t * res.delta);
+        res.gfx.set_local_transformation(t * res.delta);
         res.update();
 
         res
@@ -53,7 +53,7 @@ impl Cylinder {
         let rb = self.body.borrow();
 
         if rb.is_active() {
-            self.gfx.set_transformation(na::transformation(rb.deref()) * self.delta);
+            self.gfx.set_local_transformation(na::transformation(rb.deref()) * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {
@@ -61,7 +61,7 @@ impl Cylinder {
         }
     }
 
-    pub fn object<'r>(&'r self) -> &'r Object {
+    pub fn object<'r>(&'r self) -> &'r SceneNode {
         &self.gfx
     }
 }

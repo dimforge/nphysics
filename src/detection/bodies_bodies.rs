@@ -29,8 +29,8 @@ impl BodyBodyDispatcher {
     }
 }
 
-impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector:> for BodyBodyDispatcher {
-    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> ~GeomGeomCollisionDetector {
+impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector>> for BodyBodyDispatcher {
+    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Box<GeomGeomCollisionDetector> {
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 
@@ -61,7 +61,7 @@ pub struct BodiesBodies<BF> {
     constraints_collector: Vec<Constraint>,
 }
 
-impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector>> BodiesBodies<BF> {
+impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector>>> BodiesBodies<BF> {
     /// Creates a new `BodiesBodies` collision detector.
     pub fn new(dispatcher: Rc<GeomGeomDispatcher>) -> BodiesBodies<BF> {
         BodiesBodies {
@@ -123,7 +123,7 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
     }
 }
 
-impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, ~GeomGeomCollisionDetector> +
+impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector>> +
          BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>>
 Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
     fn update(&mut self, broad_phase: &mut BF, activation: &mut ActivationManager) {

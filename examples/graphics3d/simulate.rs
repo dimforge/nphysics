@@ -11,7 +11,7 @@ use kiss3d::window;
 use kiss3d::light;
 use kiss3d::text::Font;
 use kiss3d::utils::Recorder;
-use ncollide::geom::{Box, Ball};
+use ncollide::geom::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::detection::Detector;
@@ -256,7 +256,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     },
                     glfw::KeyEvent(glfw::KeySpace, _, glfw::Release, _) => {
                         draw_colls = !draw_colls;
-                        w.set_wireframe_mode(draw_colls);
+                        // XXX: w.set_wireframe_mode(draw_colls);
 
                         true
                     },
@@ -284,7 +284,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                         true
                     },
                     glfw::KeyEvent(glfw::Key2, _, glfw::Press, _) => {
-                        let geom   = Box::new(Vec3::new(0.5f32, 0.5, 0.5));
+                        let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transform;
@@ -307,7 +307,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                         true
                     },
                     glfw::KeyEvent(glfw::Key3, _, glfw::Press, _) => {
-                        let geom   = Box::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
+                        let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
 
                         let cam_transfom;

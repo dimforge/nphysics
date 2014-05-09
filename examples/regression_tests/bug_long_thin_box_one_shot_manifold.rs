@@ -37,7 +37,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use kiss3d::window::Window;
-use ncollide::geom::{Plane, Box};
+use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics3d::engine::GraphicsManager;
@@ -75,7 +75,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     let y   = rad + 10.0;
     let z   = rad;
 
-    let geom   = Box::new(Vec3::new(rad, rad * 10.0, rad));
+    let geom   = Cuboid::new(Vec3::new(rad, rad * 10.0, rad));
     let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
 
     rb.append_translation(&Vec3::new(x, y, z));

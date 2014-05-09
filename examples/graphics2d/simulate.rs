@@ -16,7 +16,12 @@ use engine::GraphicsManager;
 use draw_helper;
 
 fn usage(exe_name: &str) {
-    println!("Usage: {:s}", exe_name);
+    println!("Usage: {:s} [OPTION] ", exe_name);
+    println!("");
+    println!("Options:");
+    println!("    --help  - prints this help message and exits.");
+    println!("    --pause - do not start the simulation right away.");
+    println!("");
     println!("The following keyboard commands are supported:");
     println!("    t     - pause/continue the simulation.");
     println!("    s     - pause then execute only one simulation step.");
@@ -25,15 +30,20 @@ fn usage(exe_name: &str) {
 }
 
 pub fn simulate(builder: |&mut GraphicsManager| -> World) {
-    let args = os::args();
+    let args        = os::args();
+    let mut running = Running;
 
     if args.len() > 1 {
-        usage(args[0]);
-        os::set_exit_status(1);
-        return;
+        if args.len() > 2 || args[1].as_slice() != "--pause" {
+            usage(args[0]);
+            os::set_exit_status(1);
+            return;
+        }
+        else {
+            running = Stop;
+        }
     }
 
-    let mut running    = Running;
     let mut draw_colls = false;
 
     let mode    = VideoMode::new_init(800, 600, 32);
@@ -47,7 +57,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> World) {
     let mut rwindow =
         match RenderWindow::new(mode, "nphysics demo", Close, &setting) {
             Some(rwindow) => rwindow,
-            None => fail!(~"Error on creating window")
+            None => fail!("Error on creating window")
         };
 
     let mut camera = Camera::new();

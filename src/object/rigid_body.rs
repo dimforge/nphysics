@@ -45,7 +45,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    geom:                 Rc<~Geom:'static>,
+    geom:                 Rc<Box<Geom:'static>>,
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -193,7 +193,7 @@ impl RigidBody {
                                          restitution: Scalar,
                                          friction:    Scalar)
                                          -> RigidBody {
-        RigidBody::new_with_shared_geom(Rc::new(~geom as ~Geom:'static),
+        RigidBody::new_with_shared_geom(Rc::new(box geom as Box<Geom:'static>),
                                         density,
                                         state,
                                         restitution,
@@ -203,7 +203,7 @@ impl RigidBody {
     /// Creates a new rigid body with a given geometry.
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
-    pub fn new_with_shared_geom(geom:        Rc<~Geom:'static>,
+    pub fn new_with_shared_geom(geom:        Rc<Box<Geom:'static>>,
                                 density:     Scalar,
                                 state:       RigidBodyState,
                                 restitution: Scalar,

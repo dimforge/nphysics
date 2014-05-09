@@ -14,7 +14,7 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use nalgebra::na;
-use ncollide::geom::{Plane, Box, Compound, Geom};
+use ncollide::geom::{Plane, Cuboid, Compound, Geom};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics3d::engine::GraphicsManager;
@@ -48,11 +48,11 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
      * Cross shaped geometry
      */
     let mut cross_geoms = Vec::new();
-    cross_geoms.push((na::one(), ~Box::new(Vec3::new(5.0f32, 0.25, 0.25)) as ~Geom:Send));
-    cross_geoms.push((na::one(), ~Box::new(Vec3::new(0.25f32, 5.0, 0.25)) as ~Geom:Send));
-    cross_geoms.push((na::one(), ~Box::new(Vec3::new(0.25f32, 0.25, 5.0)) as ~Geom:Send));
+    cross_geoms.push((na::one(), box Cuboid::new(Vec3::new(5.0f32, 0.25, 0.25)) as Box<Geom:Send>));
+    cross_geoms.push((na::one(), box Cuboid::new(Vec3::new(0.25f32, 5.0, 0.25)) as Box<Geom:Send>));
+    cross_geoms.push((na::one(), box Cuboid::new(Vec3::new(0.25f32, 0.25, 5.0)) as Box<Geom:Send>));
 
-    let cross = Rc::new(~Compound::new(cross_geoms) as ~Geom:'static);
+    let cross = Rc::new(box Compound::new(cross_geoms) as Box<Geom:'static>);
 
     /*
      * Create the crosses 

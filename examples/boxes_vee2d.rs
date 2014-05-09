@@ -12,7 +12,7 @@ extern crate graphics2d;
 use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec2, Translation};
-use ncollide::geom::{Plane, Box};
+use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics2d::engine::GraphicsManager;
@@ -71,7 +71,7 @@ pub fn boxes_vee_2d(graphics: &mut GraphicsManager) -> World {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 10.0;
 
-            let geom   = Box::new(Vec2::new(rad, rad));
+            let geom   = Cuboid::new(Vec2::new(rad, rad));
             let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));

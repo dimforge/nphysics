@@ -12,7 +12,7 @@ extern crate graphics2d;
 use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec2, Translation};
-use ncollide::geom::{Plane, Box};
+use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
 use nphysics::object::{RigidBody, Static, Dynamic};
 use graphics2d::engine::GraphicsManager;
@@ -57,7 +57,7 @@ pub fn pyramid_2d(graphics: &mut GraphicsManager) -> World {
             let x = (fi * shift / 2.0) + (fj - fi) * 2.5 * rad - centerx;
             let y = -fi * 2.5 * rad;
 
-            let mut rb = RigidBody::new(Box::new(Vec2::new(rad, rad)), 1.0f32, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(Cuboid::new(Vec2::new(rad, rad)), 1.0f32, Dynamic, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

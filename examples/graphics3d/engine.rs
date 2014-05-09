@@ -9,7 +9,7 @@ use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use kiss3d::loader::obj;
 use kiss3d::window::Window;
-use kiss3d::object::Object;
+use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use ncollide::geom::Geom;
 use ncollide::geom;
@@ -23,7 +23,7 @@ use objects::mesh::Mesh;
 use objects::plane::Plane;
 use simulate;
 
-pub enum SceneNode {
+pub enum Node {
     BallNode(Ball),
     BoxNode(Box),
     CylinderNode(Cylinder),
@@ -32,7 +32,7 @@ pub enum SceneNode {
     PlaneNode(Plane)
 }
 
-impl SceneNode {
+impl Node {
     pub fn select(&mut self) {
         match *self {
             PlaneNode(ref mut n)    => n.select(),
@@ -66,7 +66,7 @@ impl SceneNode {
         }
     }
 
-    pub fn object<'r>(&'r self) -> &'r Object {
+    pub fn object<'r>(&'r self) -> &'r SceneNode {
         match *self {
             PlaneNode(ref n)    => n.object(),
             BallNode(ref n)     => n.object(),
@@ -80,7 +80,7 @@ impl SceneNode {
 
 pub struct GraphicsManager {
     rand:             XorShiftRng,
-    rb2sn:            HashMap<uint, Vec<SceneNode>>,
+    rb2sn:            HashMap<uint, Vec<Node>>,
     arc_ball:         ArcBall,
     first_person:     FirstPerson,
     curr_is_arc_ball: bool
@@ -115,7 +115,7 @@ impl GraphicsManager {
         match self.rb2sn.find(&key) {
             Some(sns) => {
                 for sn in sns.iter() {
-                    window.remove(sn.object().clone());
+                    window.remove(&mut sn.object().clone());
                 }
             }
             None => { }
@@ -182,10 +182,10 @@ impl GraphicsManager {
                 delta:  Iso3<f32>,
                 geom:   &Geom,
                 color:  Vec3<f32>,
-                out:    &mut Vec<SceneNode>) {
+                out:    &mut Vec<Node>) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
-        type Bo = geom::Box;
+        type Bo = geom::Cuboid;
         type Cy = geom::Cylinder;
         type Co = geom::Cone;
         type Cm = geom::Compound;
@@ -228,7 +228,7 @@ impl GraphicsManager {
                  body:   Rc<RefCell<RigidBody>>,
                  geom:   &geom::Plane,
                  color:  Vec3<f32>,
-                 out:    &mut Vec<SceneNode>) {
+                 out:    &mut Vec<Node>) {
         let position = na::translation(body.borrow().deref());
         let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
 
@@ -241,7 +241,7 @@ impl GraphicsManager {
                 delta:  Iso3<f32>,
                 geom:   &geom::Mesh,
                 color:  Vec3<f32>,
-                out:    &mut Vec<SceneNode>) {
+                out:    &mut Vec<Node>) {
         let vertices = geom.vertices().deref();
         let indices  = geom.indices().deref();
 
@@ -261,7 +261,7 @@ impl GraphicsManager {
                 delta:  Iso3<f32>,
                 geom:   &geom::Ball,
                 color:  Vec3<f32>,
-                out:    &mut Vec<SceneNode>) {
+                out:    &mut Vec<Node>) {
         out.push(BallNode(Ball::new(body, delta, geom.radius(), color, window)))
     }
 
@@ -269,9 +269,9 @@ impl GraphicsManager {
                window: &mut Window,
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
-               geom:   &geom::Box,
+               geom:   &geom::Cuboid,
                color:  Vec3<f32>,
-               out:    &mut Vec<SceneNode>) {
+               out:    &mut Vec<Node>) {
         let rx = geom.half_extents().x + geom.margin();
         let ry = geom.half_extents().y + geom.margin();
         let rz = geom.half_extents().z + geom.margin();
@@ -285,7 +285,7 @@ impl GraphicsManager {
                     delta:  Iso3<f32>,
                     geom:   &geom::Cylinder,
                     color:  Vec3<f32>,
-                    out:    &mut Vec<SceneNode>) {
+                    out:    &mut Vec<Node>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
@@ -298,7 +298,7 @@ impl GraphicsManager {
                 delta:  Iso3<f32>,
                 geom:   &geom::Cone,
                 color:  Vec3<f32>,
-                out:    &mut Vec<SceneNode>) {
+                out:    &mut Vec<Node>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
 
@@ -331,7 +331,7 @@ impl GraphicsManager {
         self.first_person.look_at_z(eye, at);
     }
 
-    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<SceneNode>> {
+    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<Node>> {
         self.rb2sn.find_mut(&(rb.deref() as *RefCell<RigidBody> as uint))
     }
 }

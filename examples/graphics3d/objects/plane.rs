@@ -1,13 +1,13 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window;
-use kiss3d::object::Object;
+use kiss3d::scene::SceneNode;
 use nalgebra::na;
 use nalgebra::na::{Vec3, Rotate};
 use nphysics::object::RigidBody;
 
 pub struct Plane {
-    gfx:  Object,
+    gfx:  SceneNode,
     body: Rc<RefCell<RigidBody>>,
 }
 
@@ -42,7 +42,7 @@ impl Plane {
         // FIXME: atm we assume the plane does not move
     }
 
-    pub fn object<'r>(&'r self) -> &'r Object {
+    pub fn object<'r>(&'r self) -> &'r SceneNode {
         &self.gfx
     }
 }
