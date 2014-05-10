@@ -256,7 +256,14 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     },
                     glfw::KeyEvent(glfw::KeySpace, _, glfw::Release, _) => {
                         draw_colls = !draw_colls;
-                        // XXX: w.set_wireframe_mode(draw_colls);
+                        if draw_colls {
+                            w.scene_mut().set_lines_width(1.0);
+                            w.scene_mut().set_surface_rendering_activation(false);
+                        }
+                        else {
+                            w.scene_mut().set_lines_width(0.0);
+                            w.scene_mut().set_surface_rendering_activation(true);
+                        }
 
                         true
                     },
