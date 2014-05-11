@@ -143,9 +143,9 @@ fn add_ragdoll(pos:      Vec3<f32>,
     let rfoot_anchor      = Anchor::new(Some(rfoot), Vec3::new(1.7, 0.0, 0.0));
     let lfoot_anchor      = Anchor::new(Some(lfoot), Vec3::new(1.7, 0.0, 0.0));
 
-    let head_joint = BallInSocket::new(body_anchor_head,   head_anchor);
-    let rarm_joint = BallInSocket::new(body_anchor_rarm,   rarm_anchor);
-    let larm_joint = BallInSocket::new(body_anchor_larm,   larm_anchor);
+    let head_joint  = BallInSocket::new(body_anchor_head,   head_anchor);
+    let rarm_joint  = BallInSocket::new(body_anchor_rarm,   rarm_anchor);
+    let larm_joint  = BallInSocket::new(body_anchor_larm,   larm_anchor);
     let rfoot_joint = BallInSocket::new(body_anchor_rfoot, rfoot_anchor);
     let lfoot_joint = BallInSocket::new(body_anchor_lfoot, lfoot_anchor);
 

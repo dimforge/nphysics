@@ -36,6 +36,7 @@ impl Mesh {
             body:       body
         };
 
+        res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx.set_local_transformation(t * res.delta);
         res.update();
