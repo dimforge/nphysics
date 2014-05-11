@@ -71,7 +71,7 @@ examples:
 	$(build_cmd_opt) ./cross2d.rs
 	$(build_cmd_opt) ./compound2d.rs
 	$(build_cmd_opt) ./balls_vee2d.rs
-	#$(build_cmd_opt) ./ragdoll2d.rs
+	$(build_cmd_opt) ./ragdoll2d.rs
 
 bugs:
 	mkdir -p ../bin
