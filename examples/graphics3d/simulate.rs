@@ -47,8 +47,8 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     let mut running = Running;
 
     if args.len() > 1 {
-        if args.len() > 2 || args[1].as_slice() != "--pause" {
-            usage(args[0]);
+        if args.len() > 2 || args.get(1).as_slice() != "--pause" {
+            usage(*args.get(0));
             os::set_exit_status(1);
             return;
         }
@@ -225,7 +225,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                             recorder = None;
                         }
                         else {
-                            let rec = Recorder::new(Path::new(format!("{:s}_{}.mpg", args[0], irec)),
+                            let rec = Recorder::new(Path::new(format!("{:s}_{}.mpg", *args.get(0), irec)),
                                                               w.width()  as uint,
                                                               w.height() as uint);
                             recorder = Some(rec);

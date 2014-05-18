@@ -1,7 +1,7 @@
 tmp=_git_distcheck
 kiss3d_lib_path=./lib/kiss3d/lib
 glfw_lib_path=./lib/kiss3d/lib/glfw-rs/lib
-gl_lib_path=./lib/kiss3d/lib/gl-rs
+gl_lib_path=./lib/kiss3d/lib/gl-rs/lib
 stb_image_lib_path=./lib/kiss3d/lib/rust-stb-image/
 rsfml_lib_path=./lib/rust-sfml/lib/
 freetype_lib_path=./lib/kiss3d/lib/rust-freetype/

@@ -34,8 +34,8 @@ pub fn simulate(builder: |&mut GraphicsManager| -> World) {
     let mut running = Running;
 
     if args.len() > 1 {
-        if args.len() > 2 || args[1].as_slice() != "--pause" {
-            usage(args[0]);
+        if args.len() > 2 || args.get(1).as_slice() != "--pause" {
+            usage(*args.get(0));
             os::set_exit_status(1);
             return;
         }
