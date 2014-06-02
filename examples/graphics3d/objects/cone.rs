@@ -65,4 +65,8 @@ impl Cone {
     pub fn object<'r>(&'r self) -> &'r SceneNode {
         &self.gfx
     }
+
+    pub fn object_mut<'r>(&'r mut self) -> &'r mut SceneNode {
+        &'r mut self.gfx
+    }
 }

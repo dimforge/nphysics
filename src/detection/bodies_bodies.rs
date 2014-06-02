@@ -30,7 +30,7 @@ impl BodyBodyDispatcher {
 }
 
 impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector>> for BodyBodyDispatcher {
-    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Box<GeomGeomCollisionDetector> {
+    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Option<Box<GeomGeomCollisionDetector>> {
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 

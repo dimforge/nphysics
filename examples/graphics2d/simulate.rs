@@ -35,7 +35,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> World) {
 
     if args.len() > 1 {
         if args.len() > 2 || args.get(1).as_slice() != "--pause" {
-            usage(*args.get(0));
+            usage(args.get(0).as_slice());
             os::set_exit_status(1);
             return;
         }
@@ -136,7 +136,7 @@ pub fn simulate(builder: |&mut GraphicsManager| -> World) {
     rwindow.close();
 }
 
-#[deriving(Eq)]
+#[deriving(PartialEq)]
 enum RunMode {
     Running,
     Stop,

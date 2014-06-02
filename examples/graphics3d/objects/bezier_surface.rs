@@ -1,42 +1,42 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use kiss3d::window;
+use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use nphysics::object::RigidBody;
+use nprocgen::mesh;
 
-pub struct Box {
+pub struct BezierSurface {
     color:      Vec3<f32>,
     base_color: Vec3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
-    body:       Rc<RefCell<RigidBody>>,
+    body:       Rc<RefCell<RigidBody>>
 }
 
-impl Box {
-    pub fn new(body:   Rc<RefCell<RigidBody>>,
-               delta:  Iso3<f32>,
-               rx:     f32,
-               ry:     f32,
-               rz:     f32,
-               color:  Vec3<f32>,
-                       window: &mut window::Window) -> Box {
-        let gx = rx as f32 * 2.0;
-        let gy = ry as f32 * 2.0;
-        let gz = rz as f32 * 2.0;
-        let t  = na::transformation(body.borrow().deref());
+impl BezierSurface {
+    pub fn new(body:           Rc<RefCell<RigidBody>>,
+               delta:          Iso3<f32>,
+               control_points: &[Vec3<f32>],
+               nupoints:       uint,
+               nvpoints:       uint,
+               color:          Vec3<f32>,
+               window:         &mut Window) -> BezierSurface {
+        let t      = na::transformation(body.borrow().deref());
+        let bezier = mesh::bezier_surface(control_points, nupoints, nvpoints, 100, 100);
 
-        let mut res = Box {
+        let mut res = BezierSurface {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_cube(gx, gy, gz),
+            gfx:        window.add_trimesh(bezier, na::one()),
             body:       body
         };
 
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx.set_local_transformation(t * res.delta);
+        res.gfx.enable_backface_culling(false);
         res.update();
 
         res
@@ -63,7 +63,7 @@ impl Box {
     }
 
     pub fn object<'r>(&'r self) -> &'r SceneNode {
-        &self.gfx
+        &'r self.gfx
     }
 
     pub fn object_mut<'r>(&'r mut self) -> &'r mut SceneNode {

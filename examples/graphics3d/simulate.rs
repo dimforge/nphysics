@@ -47,13 +47,15 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     let mut running = Running;
 
     if args.len() > 1 {
-        if args.len() > 2 || args.get(1).as_slice() != "--pause" {
-            usage(*args.get(0));
-            os::set_exit_status(1);
-            return;
-        }
-        else {
-            running = Stop;
+        for arg in args.iter() {
+            if arg.as_slice() == "--help" || arg.as_slice() == "-h" {
+                usage(args.get(0).as_slice());
+                os::set_exit_status(1);
+                return;
+            }
+            else if arg.as_slice() == "--pause" {
+                running = Stop;
+            }
         }
     }
 
@@ -286,7 +288,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
                         let body = Rc::new(RefCell::new(rb));
                         physics.add_body(body.clone());
-                        graphics.add(w, body);
+                        graphics.add(w, body.clone());
 
                         true
                     },
@@ -309,7 +311,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
                         let body = Rc::new(RefCell::new(rb));
                         physics.add_body(body.clone());
-                        graphics.add(w, body);
+                        graphics.add(w, body.clone());
 
                         true
                     },
@@ -364,7 +366,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
             if running != Stop {
                 let dt    = time::precise_time_s() - before;
 
-                w.draw_text(dt.to_str(), &na::zero(), &font, &color);
+                w.draw_text(dt.to_str().as_slice(), &na::zero(), &font, &color);
             }
             else {
                 w.draw_text("Paused", &na::zero(), &font, &color);
@@ -373,7 +375,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     })
 }
 
-#[deriving(Eq)]
+#[deriving(PartialEq)]
 enum RunMode {
     Running,
     Stop,

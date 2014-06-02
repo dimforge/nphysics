@@ -43,7 +43,7 @@ impl<'a> Fps<'a> {
     pub fn draw_elapsed(&mut self, rw: &mut graphics::RenderWindow) {
         let elapsed = self.elapsed_seconds();
 
-        self.fps.set_string(elapsed.to_str());
+        self.fps.set_string(elapsed.to_str().as_slice());
         self.fps.draw_in_render_window(rw);
     }
 
@@ -53,7 +53,7 @@ impl<'a> Fps<'a> {
         let v = rw.get_view();
 
         self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, v.borrow().deref()));
-        self.fps.set_string(elapsed.to_str());
+        self.fps.set_string(elapsed.to_str().as_slice());
         self.fps.draw_in_render_window(rw);
     }
 }

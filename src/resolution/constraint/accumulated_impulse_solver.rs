@@ -55,6 +55,30 @@ impl AccumulatedImpulseSolver {
         }
     }
 
+    /// Gets the number of iteration done by the penetration depth correction solver.
+    #[inline]
+    pub fn num_first_order_iter(&self) -> uint {
+        self.num_first_order_iter
+    }
+
+    /// Sets the number of iteration done by the penetration depth correction solver.
+    #[inline]
+    pub fn set_num_first_order_iter(&mut self, num: uint) {
+        self.num_first_order_iter = num
+    }
+
+    /// Gets the number of iteration done by the velocity constraint solver.
+    #[inline]
+    pub fn num_second_order_iter(&self) -> uint {
+        self.num_second_order_iter
+    }
+
+    /// Sets the number of iteration done by the velocity constraint solver.
+    #[inline]
+    pub fn set_num_second_order_iter(&mut self, num: uint) {
+        self.num_second_order_iter = num
+    }
+
     fn resize_buffers(&mut self, num_restitution_equations: uint, num_friction_equations: uint) {
         resize_buffer(&mut self.restitution_constraints,
                       num_restitution_equations,

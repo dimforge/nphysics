@@ -9,7 +9,7 @@ use nalgebra::na;
 use nalgebra::na::{Iterable, IterableMut};
 use ncollide::math::{Scalar, Vect};
 
-#[deriving(Eq)]
+#[deriving(PartialEq)]
 /// The identifier of a contact stored in the impulse cache.
 pub struct ContactIdentifier {
     obj1:    uint,

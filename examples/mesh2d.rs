@@ -13,7 +13,7 @@ extern crate graphics2d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use rand::{StdRng, SeedableRng, Rng};
+use std::rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Cuboid, Mesh};

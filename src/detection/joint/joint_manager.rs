@@ -49,8 +49,8 @@ impl JointManager {
                 Some(b) => {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
-                                                                  || Vec::new());
-                    js.push(BallInSocket(joint.clone()));
+                                                                  || Some(Vec::new()));
+                    js.unwrap().push(BallInSocket(joint.clone()));
                 },
                 _ => { }
             }
@@ -59,8 +59,8 @@ impl JointManager {
                 Some(b) => {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
-                                                                  || Vec::new());
-                    js.push(BallInSocket(joint.clone()));
+                                                                  || Some(Vec::new()));
+                    js.unwrap().push(BallInSocket(joint.clone()));
                 },
                 _ => { }
             }
@@ -86,8 +86,8 @@ impl JointManager {
                 Some(b) => {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
-                                                                  || Vec::new());
-                    js.push(Fixed(joint.clone()));
+                                                                  || Some(Vec::new()));
+                    js.unwrap().push(Fixed(joint.clone()));
                 },
                 _ => { }
             }
@@ -96,8 +96,8 @@ impl JointManager {
                 Some(b) => {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *RefCell<RigidBody> as uint,
-                                                                  || Vec::new());
-                    js.push(Fixed(joint.clone()));
+                                                                  || Some(Vec::new()));
+                    js.unwrap().push(Fixed(joint.clone()));
                 },
                 _ => { }
             }

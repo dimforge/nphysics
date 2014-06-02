@@ -9,7 +9,7 @@ use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
 use ncollide::math::{Scalar, Vect, Orientation, Matrix, AngularInertia};
 
-#[deriving(Show, Eq, Clone, Encodable, Decodable)]
+#[deriving(Show, PartialEq, Clone, Encodable, Decodable)]
 /// The movement state of a rigid body.
 pub enum RigidBodyState {
     /// The rigid body cannot move.
@@ -18,7 +18,7 @@ pub enum RigidBodyState {
     Dynamic
 }
 
-#[deriving(Show, Eq, Clone, Encodable, Decodable)]
+#[deriving(Show, PartialEq, Clone, Encodable, Decodable)]
 /// The activation state of a rigid body.
 pub enum ActivationState {
     /// The rigid body is active with a not-zero energy.

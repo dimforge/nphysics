@@ -1,7 +1,7 @@
 use nalgebra::na;
 use ncollide::math::{Scalar, Vect, Orientation};
 
-#[deriving(Eq, Show, Clone)]
+#[deriving(PartialEq, Show, Clone)]
 /// A constraint of velocity at a point of contact.
 pub struct VelocityConstraint {
     /// The contact normal.
