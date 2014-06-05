@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ptr;
-use ncollide::util::hash_map::HashMap;
-use ncollide::util::hash::UintTWHash;
+use ncollide::data::hash_map::HashMap;
+use ncollide::data::hash::UintTWHash;
 use detection::activation_manager::ActivationManager;
 use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;

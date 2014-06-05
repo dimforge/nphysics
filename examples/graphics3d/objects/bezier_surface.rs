@@ -5,7 +5,7 @@ use kiss3d::scene::SceneNode;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use nphysics::object::RigidBody;
-use nprocgen::mesh;
+use ncollide::procedural;
 
 pub struct BezierSurface {
     color:      Vec3<f32>,
@@ -24,7 +24,7 @@ impl BezierSurface {
                color:          Vec3<f32>,
                window:         &mut Window) -> BezierSurface {
         let t      = na::transformation(body.borrow().deref());
-        let bezier = mesh::bezier_surface(control_points, nupoints, nvpoints, 100, 100);
+        let bezier = procedural::bezier_surface(control_points, nupoints, nvpoints, 100, 100);
 
         let mut res = BezierSurface {
             color:      color,

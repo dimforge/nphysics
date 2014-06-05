@@ -12,7 +12,6 @@ extern crate kiss3d;
 extern crate nphysics = "nphysics3df32";
 extern crate nalgebra;
 extern crate ncollide = "ncollide3df32";
-extern crate nprocgen;
 
 
 pub mod simulate;
