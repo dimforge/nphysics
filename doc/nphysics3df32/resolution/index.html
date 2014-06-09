@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The nphysics3df32 library documentation.">
+
+    <title>nphysics3df32::resolution - Rust</title>
+
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,600'
+          rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+</head>
+<body>
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    <section class="sidebar">
+        
+
+        <p class='location'><a href='../index.html'>nphysics3df32</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><br/><a class='mod ' href='../detection/index.html'>detection</a><br/><a class='mod ' href='../integration/index.html'>integration</a><br/><a class='mod ' href='../object/index.html'>object</a><br/><a class='mod current' href='../resolution/index.html'>resolution</a><br/><a class='mod ' href='../utils/index.html'>utils</a><br/><a class='mod ' href='../world/index.html'>world</a><br/></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Search documentation..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'>Module <a href='../index.html'>nphysics3df32</a>::<a class='mod' href=''>resolution</a><a class='source' id='src-4256' href='../../src/nphysics3df32/src/resolution/mod.rs.html#1-22'>[src]</a></h1>
+<div class='docblock'><p>Constraint resolution.</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use resolution::constraint::contact_equation::{<a class='type' href='../../nphysics3df32/resolution/type.CorrectionMode.html' title='nphysics3df32::resolution::CorrectionMode'>VelocityAndPosition</a>, <a class='type' href='../../nphysics3df32/resolution/type.CorrectionMode.html' title='nphysics3df32::resolution::CorrectionMode'>Velocity</a>, <a class='type' href='../../nphysics3df32/resolution/type.CorrectionMode.html' title='nphysics3df32::resolution::CorrectionMode'>VelocityAndPositionThresold</a>};</code></td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr>
+                        <td><a class='struct' href='struct.AccumulatedImpulseSolver.html'
+                               title='nphysics3df32::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></td>
+                        <td class='docblock short'><p>Constraint solver using the projected gauss seidel algorithm and warm-starting.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='struct' href='struct.ContactIdentifier.html'
+                               title='nphysics3df32::resolution::ContactIdentifier'>ContactIdentifier</a></td>
+                        <td class='docblock short'><p>The identifier of a contact stored in the impulse cache.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='struct' href='struct.ImpulseCache.html'
+                               title='nphysics3df32::resolution::ImpulseCache'>ImpulseCache</a></td>
+                        <td class='docblock short'></td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='struct' href='struct.Velocities.html'
+                               title='nphysics3df32::resolution::Velocities'>Velocities</a></td>
+                        <td class='docblock short'><p>Structure holding the result of the projected gauss seidel solver.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='struct' href='struct.VelocityConstraint.html'
+                               title='nphysics3df32::resolution::VelocityConstraint'>VelocityConstraint</a></td>
+                        <td class='docblock short'><p>A constraint of velocity at a point of contact.</p>
+</td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr>
+                        <td><a class='type' href='type.CorrectionMode.html'
+                               title='nphysics3df32::resolution::CorrectionMode'>CorrectionMode</a></td>
+                        <td class='docblock short'><p>The correction coefficient used by the constraint solver.</p>
+</td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr>
+                        <td><a class='trait' href='trait.Solver.html'
+                               title='nphysics3df32::resolution::Solver'>Solver</a></td>
+                        <td class='docblock short'><p>Trait implemented by constraint solvers.</p>
+</td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr>
+                        <td><a class='fn' href='fn.projected_gauss_seidel_solve.html'
+                               title='nphysics3df32::resolution::projected_gauss_seidel_solve'>projected_gauss_seidel_solve</a></td>
+                        <td class='docblock short'><p>Solve a set of velocity constraints using the projected gauss seidel solver.</p>
+</td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&uarr;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&darr;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code> (or <code>str</code>), <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        var rootPath = "../../";
+        var currentCrate = "nphysics3df32";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

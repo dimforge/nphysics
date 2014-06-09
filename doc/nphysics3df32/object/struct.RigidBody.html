@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The nphysics3df32 library documentation.">
+
+    <title>nphysics3df32::object::RigidBody - Rust</title>
+
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,600'
+          rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+</head>
+<body>
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    <section class="sidebar">
+        
+
+        <p class='location'><a href='../index.html'>nphysics3df32</a>&#8203;::<a href='index.html'>object</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.RigidBody.html'>RigidBody</a><br/></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Search documentation..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'>Struct <a href='../index.html'>nphysics3df32</a>::<a href='index.html'>object</a>::<a class='struct' href=''>RigidBody</a><a class='source' id='src-11846' href='../../src/nphysics3df32/src/object/rigid_body.rs.html#46-63'>[src]</a></h1>
+<pre class='rust struct'>pub struct RigidBody {
+    // some fields omitted
+}</pre><div class='docblock'><p>The rigid body structure.</p>
+
+<p>This is the structure describing an object on the physics world.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h3><div class='methods'><h4 id='method.transform_ref' class='method'><code>fn <a href='#method.transform_ref' class='fnname'>transform_ref</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a></code></h4>
+<div class='docblock'><p>Gets a reference to this body&#39;s transform.</p>
+</div><h4 id='method.geom' class='method'><code>fn <a href='#method.geom' class='fnname'>geom</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='trait' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/geom/geom/trait.Geom.html' title='ncollide3df32::geom::geom::Geom'>Geom</a></code></h4>
+<div class='docblock'><p>Gets a reference to this body&#39;s geometry.</p>
+</div><h4 id='method.center_of_mass' class='method'><code>fn <a href='#method.center_of_mass' class='fnname'>center_of_mass</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
+<div class='docblock'><p>Gets a reference to this body&#39;s center of mass.</p>
+</div><h4 id='method.restitution' class='method'><code>fn <a href='#method.restitution' class='fnname'>restitution</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a></code></h4>
+<div class='docblock'><p>Gets this body&#39;s restitution coefficent.</p>
+
+<p>The actual restitution coefficient of a contact is computed averaging the two bodies
+friction coefficient.</p>
+</div><h4 id='method.friction' class='method'><code>fn <a href='#method.friction' class='fnname'>friction</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a></code></h4>
+<div class='docblock'><p>Gets this body&#39;s friction coefficient.</p>
+
+<p>The actual friction coefficient of a contact is computed averaging the two bodies friction
+coefficient.</p>
+</div><h4 id='method.is_active' class='method'><code>fn <a href='#method.is_active' class='fnname'>is_active</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Indicates whether or not this rigid body is active.</p>
+
+<p>An inactive rigid body is a body that did not move for some time. It is not longer
+simulated by the physics engine as long as no other object touches it. It is automatically
+activated by the physics engine.</p>
+</div><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>&lt;G: 'static + <a class='trait' href='http://doc.rust-lang.org/core/kinds/trait.Send.html' title='core::kinds::Send'>Send</a> + <a class='trait' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/geom/geom/trait.Geom.html' title='ncollide3df32::geom::geom::Geom'>Geom</a>&gt;(geom: G, density: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>, state: <a class='type' href='../../nphysics3df32/object/type.RigidBodyState.html' title='nphysics3df32::object::RigidBodyState'>RigidBodyState</a>, restitution: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>, friction: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<div class='docblock'><p>Creates a new rigid body.</p>
+</div><h4 id='method.new_with_shared_geom' class='method'><code>fn <a href='#method.new_with_shared_geom' class='fnname'>new_with_shared_geom</a>(geom: <a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/alloc/owned/struct.Box.html' title='alloc::owned::Box'>Box</a>&lt;<a class='trait' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/geom/geom/trait.Geom.html' title='ncollide3df32::geom::geom::Geom'>Geom</a>:'static&gt;&gt;, density: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>, state: <a class='type' href='../../nphysics3df32/object/type.RigidBodyState.html' title='nphysics3df32::object::RigidBodyState'>RigidBodyState</a>, restitution: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>, friction: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<div class='docblock'><p>Creates a new rigid body with a given geometry.</p>
+
+<p>Use this if the geometry is shared by multiple rigid bodies.</p>
+</div><h4 id='method.can_move' class='method'><code>fn <a href='#method.can_move' class='fnname'>can_move</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Indicates whether this rigid body is static or dynamic.</p>
+</div><h4 id='method.lin_vel' class='method'><code>fn <a href='#method.lin_vel' class='fnname'>lin_vel</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
+<div class='docblock'><p>Get the linear velocity of this rigid body.</p>
+</div><h4 id='method.set_lin_vel' class='method'><code>fn <a href='#method.set_lin_vel' class='fnname'>set_lin_vel</a>(&amp;mut self, lv: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
+<div class='docblock'><p>Sets the linear velocity of this rigid body.</p>
+</div><h4 id='method.lin_acc' class='method'><code>fn <a href='#method.lin_acc' class='fnname'>lin_acc</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
+<div class='docblock'><p>Gets the linear acceleration of this rigid body.</p>
+</div><h4 id='method.set_lin_acc' class='method'><code>fn <a href='#method.set_lin_acc' class='fnname'>set_lin_acc</a>(&amp;mut self, lf: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
+<div class='docblock'><p>Sets the linear acceleration of this rigid body.</p>
+
+<p>Note that this might be reset by the physics engine automatically.</p>
+</div><h4 id='method.ang_vel' class='method'><code>fn <a href='#method.ang_vel' class='fnname'>ang_vel</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a></code></h4>
+<div class='docblock'><p>Gets the angular velocity of this rigid body.</p>
+</div><h4 id='method.set_ang_vel' class='method'><code>fn <a href='#method.set_ang_vel' class='fnname'>set_ang_vel</a>(&amp;mut self, av: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
+<div class='docblock'><p>Sets the angular velocity of this rigid body.</p>
+</div><h4 id='method.ang_acc' class='method'><code>fn <a href='#method.ang_acc' class='fnname'>ang_acc</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a></code></h4>
+<div class='docblock'><p>Gets the angular acceleration of this rigid body.</p>
+</div><h4 id='method.set_ang_acc' class='method'><code>fn <a href='#method.set_ang_acc' class='fnname'>set_ang_acc</a>(&amp;mut self, af: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
+<div class='docblock'><p>Sets the angular acceleration of this rigid body.</p>
+
+<p>Note that this might be reset by the physics engine automatically.</p>
+</div><h4 id='method.inv_mass' class='method'><code>fn <a href='#method.inv_mass' class='fnname'>inv_mass</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a></code></h4>
+<div class='docblock'><p>Gets the inverse mass of this rigid body.</p>
+</div><h4 id='method.set_inv_mass' class='method'><code>fn <a href='#method.set_inv_mass' class='fnname'>set_inv_mass</a>(&amp;mut self, m: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>)</code></h4>
+<div class='docblock'><p>Sets the inverse mass of this rigid body.</p>
+</div><h4 id='method.inv_inertia' class='method'><code>fn <a href='#method.inv_inertia' class='fnname'>inv_inertia</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.AngularInertia.html' title='ncollide3df32::math::AngularInertia'>AngularInertia</a></code></h4>
+<div class='docblock'><p>Gets the inverse inertia tensor of this rigid body.</p>
+</div><h4 id='method.set_inv_inertia' class='method'><code>fn <a href='#method.set_inv_inertia' class='fnname'>set_inv_inertia</a>(&amp;mut self, ii: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.AngularInertia.html' title='ncollide3df32::math::AngularInertia'>AngularInertia</a>)</code></h4>
+<div class='docblock'><p>Sets the inverse inertia tensor of this rigid body.</p>
+
+<p>Not that this is reset at every update by the physics engine.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h3><div class='methods'><h4 id='method.clone' class='method'><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://www.rust-ci.org/sebcrozet/nalgebra/doc/nalgebra/traits/geometry/trait.Transformation.html' title='nalgebra::traits::geometry::Transformation'>Transformation</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a>&gt; for <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h3><div class='methods'><h4 id='method.transformation' class='method'><code>fn <a href='#method.transformation' class='fnname'>transformation</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a></code></h4>
+<h4 id='method.inv_transformation' class='method'><code>fn <a href='#method.inv_transformation' class='fnname'>inv_transformation</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a></code></h4>
+<h4 id='method.append_transformation' class='method'><code>fn <a href='#method.append_transformation' class='fnname'>append_transformation</a>(&amp;mut self, to_append: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a>)</code></h4>
+<h4 id='method.append_transformation_cpy' class='method'><code>fn <a href='#method.append_transformation_cpy' class='fnname'>append_transformation_cpy</a>(rb: &amp;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>, m: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.prepend_transformation' class='method'><code>fn <a href='#method.prepend_transformation' class='fnname'>prepend_transformation</a>(&amp;mut self, to_prepend: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a>)</code></h4>
+<h4 id='method.prepend_transformation_cpy' class='method'><code>fn <a href='#method.prepend_transformation_cpy' class='fnname'>prepend_transformation_cpy</a>(rb: &amp;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>, m: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.set_transformation' class='method'><code>fn <a href='#method.set_transformation' class='fnname'>set_transformation</a>(&amp;mut self, m: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Matrix.html' title='ncollide3df32::math::Matrix'>Matrix</a>)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://www.rust-ci.org/sebcrozet/nalgebra/doc/nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>&gt; for <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h3><div class='methods'><h4 id='method.translation' class='method'><code>fn <a href='#method.translation' class='fnname'>translation</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
+<h4 id='method.inv_translation' class='method'><code>fn <a href='#method.inv_translation' class='fnname'>inv_translation</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
+<h4 id='method.append_translation' class='method'><code>fn <a href='#method.append_translation' class='fnname'>append_translation</a>(&amp;mut self, t: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
+<h4 id='method.append_translation_cpy' class='method'><code>fn <a href='#method.append_translation_cpy' class='fnname'>append_translation_cpy</a>(rb: &amp;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>, t: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.prepend_translation' class='method'><code>fn <a href='#method.prepend_translation' class='fnname'>prepend_translation</a>(&amp;mut self, t: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
+<h4 id='method.prepend_translation_cpy' class='method'><code>fn <a href='#method.prepend_translation_cpy' class='fnname'>prepend_translation_cpy</a>(rb: &amp;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>, t: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.set_translation' class='method'><code>fn <a href='#method.set_translation' class='fnname'>set_translation</a>(&amp;mut self, t: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://www.rust-ci.org/sebcrozet/nalgebra/doc/nalgebra/traits/geometry/trait.Rotation.html' title='nalgebra::traits::geometry::Rotation'>Rotation</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>&gt; for <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h3><div class='methods'><h4 id='method.rotation' class='method'><code>fn <a href='#method.rotation' class='fnname'>rotation</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a></code></h4>
+<h4 id='method.inv_rotation' class='method'><code>fn <a href='#method.inv_rotation' class='fnname'>inv_rotation</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a></code></h4>
+<h4 id='method.append_rotation' class='method'><code>fn <a href='#method.append_rotation' class='fnname'>append_rotation</a>(&amp;mut self, rot: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
+<h4 id='method.append_rotation_cpy' class='method'><code>fn <a href='#method.append_rotation_cpy' class='fnname'>append_rotation_cpy</a>(rb: &amp;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>, rot: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.prepend_rotation' class='method'><code>fn <a href='#method.prepend_rotation' class='fnname'>prepend_rotation</a>(&amp;mut self, rot: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
+<h4 id='method.prepend_rotation_cpy' class='method'><code>fn <a href='#method.prepend_rotation_cpy' class='fnname'>prepend_rotation_cpy</a>(rb: &amp;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>, rot: &amp;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>) -&gt; <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h4>
+<h4 id='method.set_rotation' class='method'><code>fn <a href='#method.set_rotation' class='fnname'>set_rotation</a>(&amp;mut self, r: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/bounding_volume/bounding_volume/trait.HasBoundingVolume.html' title='ncollide3df32::bounding_volume::bounding_volume::HasBoundingVolume'>HasBoundingVolume</a>&lt;<a class='struct' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/bounding_volume/aabb/struct.AABB.html' title='ncollide3df32::bounding_volume::aabb::AABB'>AABB</a>&gt; for <a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a></code></h3><div class='methods'><h4 id='method.bounding_volume' class='method'><code>fn <a href='#method.bounding_volume' class='fnname'>bounding_volume</a>(&amp;self) -&gt; <a class='struct' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/bounding_volume/aabb/struct.AABB.html' title='ncollide3df32::bounding_volume::aabb::AABB'>AABB</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&uarr;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&darr;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code> (or <code>str</code>), <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        var rootPath = "../../";
+        var currentCrate = "nphysics3df32";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

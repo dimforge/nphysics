@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The nphysics2df64 library documentation.">
+
+    <title>nphysics2df64::resolution::VelocityConstraint - Rust</title>
+
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,600'
+          rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+</head>
+<body>
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    <section class="sidebar">
+        
+
+        <p class='location'><a href='../index.html'>nphysics2df64</a>&#8203;::<a href='index.html'>resolution</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.AccumulatedImpulseSolver.html'>AccumulatedImpulseSolver</a><br/><a class='struct ' href='struct.ContactIdentifier.html'>ContactIdentifier</a><br/><a class='struct ' href='struct.ImpulseCache.html'>ImpulseCache</a><br/><a class='struct ' href='struct.Velocities.html'>Velocities</a><br/><a class='struct current' href='struct.VelocityConstraint.html'>VelocityConstraint</a><br/></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Solver.html'>Solver</a><br/></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.projected_gauss_seidel_solve.html'>projected_gauss_seidel_solve</a><br/></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Search documentation..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'>Struct <a href='../index.html'>nphysics2df64</a>::<a href='index.html'>resolution</a>::<a class='struct' href=''>VelocityConstraint</a><a class='source' id='src-7430' href='../../src/nphysics2df64/src/resolution/constraint/velocity_constraint.rs.html#6-44'>[src]</a></h1>
+<pre class='rust struct'>pub struct VelocityConstraint {
+    pub normal: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Vect.html' title='ncollide2df64::math::Vect'>Vect</a>,
+    pub weighted_normal1: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Vect.html' title='ncollide2df64::math::Vect'>Vect</a>,
+    pub weighted_normal2: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Vect.html' title='ncollide2df64::math::Vect'>Vect</a>,
+    pub rot_axis1: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Orientation.html' title='ncollide2df64::math::Orientation'>Orientation</a>,
+    pub weighted_rot_axis1: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Orientation.html' title='ncollide2df64::math::Orientation'>Orientation</a>,
+    pub rot_axis2: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Orientation.html' title='ncollide2df64::math::Orientation'>Orientation</a>,
+    pub weighted_rot_axis2: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Orientation.html' title='ncollide2df64::math::Orientation'>Orientation</a>,
+    pub inv_projected_mass: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>,
+    pub impulse: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>,
+    pub lobound: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>,
+    pub hibound: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>,
+    pub objective: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>,
+    pub id1: <a href='http://doc.rust-lang.org/std/primitive.int.html'>int</a>,
+    pub id2: <a href='http://doc.rust-lang.org/std/primitive.int.html'>int</a>,
+    pub friction_limit_id: <a href='http://doc.rust-lang.org/std/primitive.uint.html'>uint</a>,
+    pub friction_coeff: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>,
+}</pre><div class='docblock'><p>A constraint of velocity at a point of contact.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr><td id='structfield.normal'><code>normal</code></td><td><div class='docblock'><p>The contact normal.</p>
+</div></td></tr><tr><td id='structfield.weighted_normal1'><code>weighted_normal1</code></td><td><div class='docblock'><p>The contact normal multiplied by the first body&#39;s inverse mass.</p>
+</div></td></tr><tr><td id='structfield.weighted_normal2'><code>weighted_normal2</code></td><td><div class='docblock'><p>The contact normal multiplied by the second body&#39;s inverse mass.</p>
+</div></td></tr><tr><td id='structfield.rot_axis1'><code>rot_axis1</code></td><td><div class='docblock'><p>The first body rotation axis.</p>
+</div></td></tr><tr><td id='structfield.weighted_rot_axis1'><code>weighted_rot_axis1</code></td><td><div class='docblock'><p>The first body rotation axis multiplied by its inverse inertia.</p>
+</div></td></tr><tr><td id='structfield.rot_axis2'><code>rot_axis2</code></td><td><div class='docblock'><p>The second body rotation axis.</p>
+</div></td></tr><tr><td id='structfield.weighted_rot_axis2'><code>weighted_rot_axis2</code></td><td><div class='docblock'><p>The second body rotation axis multiplied by its inverse inertia.</p>
+</div></td></tr><tr><td id='structfield.inv_projected_mass'><code>inv_projected_mass</code></td><td><div class='docblock'><p>The inverse of the sum of linear and angular inertia of both bodies.</p>
+</div></td></tr><tr><td id='structfield.impulse'><code>impulse</code></td><td><div class='docblock'><p>The total impulse applied.</p>
+</div></td></tr><tr><td id='structfield.lobound'><code>lobound</code></td><td><div class='docblock'><p>The lower bound of the impulse.</p>
+</div></td></tr><tr><td id='structfield.hibound'><code>hibound</code></td><td><div class='docblock'><p>The upper bound of the impulse.</p>
+</div></td></tr><tr><td id='structfield.objective'><code>objective</code></td><td><div class='docblock'><p>The target delta velocity.</p>
+</div></td></tr><tr><td id='structfield.id1'><code>id1</code></td><td><div class='docblock'><p>The id of the first body.</p>
+</div></td></tr><tr><td id='structfield.id2'><code>id2</code></td><td><div class='docblock'><p>The id of the second body.</p>
+</div></td></tr><tr><td id='structfield.friction_limit_id'><code>friction_limit_id</code></td><td><div class='docblock'><p>The id of the friction constraint.</p>
+</div></td></tr><tr><td id='structfield.friction_coeff'><code>friction_coeff</code></td><td><div class='docblock'><p>The friction coefficient on this contact.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a></code></h4>
+<div class='docblock'><p>Creates a new velocity constraint with all terms initialized to zero.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='methods'><h4 id='method.clone' class='method'><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/fmt/trait.Show.html' title='core::fmt::Show'>Show</a> for <a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='methods'><h4 id='method.fmt' class='method'><code>fn <a href='#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='methods'><h4 id='method.eq' class='method'><code>fn <a href='#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a>) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../nphysics2df64/resolution/struct.VelocityConstraint.html' title='nphysics2df64::resolution::VelocityConstraint'>VelocityConstraint</a>) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&uarr;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&darr;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code> (or <code>str</code>), <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        var rootPath = "../../";
+        var currentCrate = "nphysics2df64";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    <script async src="../../search-index.js"></script>
+</body>
+</html>
