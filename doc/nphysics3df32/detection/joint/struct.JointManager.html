@@ -45,7 +45,7 @@
 }</pre><div class='docblock'><p>Structure that handles creation and removal of joints.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../nphysics3df32/detection/joint/struct.JointManager.html' title='nphysics3df32::detection::joint::JointManager'>JointManager</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../nphysics3df32/detection/joint/struct.JointManager.html' title='nphysics3df32::detection::joint::JointManager'>JointManager</a></code></h4>
 <div class='docblock'><p>Creates a new <code>JointManager</code>.</p>
-</div><h4 id='method.joints' class='method'><code>fn <a href='#method.joints' class='fnname'>joints</a>&lt;'a&gt;(&amp;'a self) -&gt; &amp;'a <a class='struct' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/data/hash_map/struct.HashMap.html' title='ncollide3df32::data::hash_map::HashMap'>HashMap</a>&lt;<a href='http://doc.rust-lang.org/std/primitive.uint.html'>uint</a>, <a class='type' href='../../../nphysics3df32/detection/constraint/type.Constraint.html' title='nphysics3df32::detection::constraint::Constraint'>Constraint</a>, <a class='struct' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/data/hash/struct.UintTWHash.html' title='ncollide3df32::data::hash::UintTWHash'>UintTWHash</a>&gt;</code></h4>
+</div><h4 id='method.joints' class='method'><code>fn <a href='#method.joints' class='fnname'>joints</a>&lt;'a&gt;(&amp;'a self) -&gt; &amp;'a <a class='struct' href='http://ncollide.org/doc/ncollide3df32/data/hash_map/struct.HashMap.html' title='ncollide3df32::data::hash_map::HashMap'>HashMap</a>&lt;<a href='http://doc.rust-lang.org/std/primitive.uint.html'>uint</a>, <a class='type' href='../../../nphysics3df32/detection/constraint/type.Constraint.html' title='nphysics3df32::detection::constraint::Constraint'>Constraint</a>, <a class='struct' href='http://ncollide.org/doc/ncollide3df32/data/hash/struct.UintTWHash.html' title='ncollide3df32::data::hash::UintTWHash'>UintTWHash</a>&gt;</code></h4>
 <div class='docblock'><p>Joints handled by this manager.</p>
 </div><h4 id='method.joints_with_body' class='method'><code>fn <a href='#method.joints_with_body' class='fnname'>joints_with_body</a>&lt;'a&gt;(&amp;'a self, body: &amp;<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>&gt;&gt;) -&gt; <a class='type' href='http://doc.rust-lang.org/core/option/type.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a href='http://doc.rust-lang.org/std/primitive.slice.html'>[<a class='type' href='../../../nphysics3df32/detection/constraint/type.Constraint.html' title='nphysics3df32::detection::constraint::Constraint'>Constraint</a>]</a>&gt;</code></h4>
 <div class='docblock'><p>List of joints attached to a specific body.</p>
@@ -108,11 +108,13 @@
     </div>
 
     <script>
-        var rootPath = "../../../";
-        var currentCrate = "nphysics3df32";
+        window.rootPath = "../../../";
+        window.currentCrate = "nphysics3df32";
+        window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
+    
     <script async src="../../../search-index.js"></script>
 </body>
 </html>

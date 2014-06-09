@@ -47,7 +47,7 @@
 <p>This is the main structure of the physics engine.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics3df32/world/struct.World.html' title='nphysics3df32::world::World'>World</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics3df32/world/struct.World.html' title='nphysics3df32::world::World'>World</a></code></h4>
 <div class='docblock'><p>Creates a new physics world.</p>
-</div><h4 id='method.step' class='method'><code>fn <a href='#method.step' class='fnname'>step</a>(&amp;mut self, dt: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>)</code></h4>
+</div><h4 id='method.step' class='method'><code>fn <a href='#method.step' class='fnname'>step</a>(&amp;mut self, dt: <a class='type' href='http://ncollide.org/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>)</code></h4>
 <div class='docblock'><p>Updates the physics world.</p>
 </div><h4 id='method.add_body' class='method'><code>fn <a href='#method.add_body' class='fnname'>add_body</a>(&amp;mut self, b: <a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>&gt;&gt;)</code></h4>
 <div class='docblock'><p>Adds a rigid body to the physics world.</p>
@@ -65,15 +65,15 @@
 <div class='docblock'><p>Gets a mutable reference to the joint manager.</p>
 </div><h4 id='method.constraints_solver' class='method'><code>fn <a href='#method.constraints_solver' class='fnname'>constraints_solver</a>&lt;'a&gt;(&amp;'a mut self) -&gt; &amp;'a mut <a class='struct' href='../../nphysics3df32/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics3df32::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h4>
 <div class='docblock'><p>Gets a mutable reference to the constraint solver.</p>
-</div><h4 id='method.set_gravity' class='method'><code>fn <a href='#method.set_gravity' class='fnname'>set_gravity</a>(&amp;mut self, gravity: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
+</div><h4 id='method.set_gravity' class='method'><code>fn <a href='#method.set_gravity' class='fnname'>set_gravity</a>(&amp;mut self, gravity: <a class='type' href='http://ncollide.org/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a>)</code></h4>
 <div class='docblock'><p>Sets the linear acceleration afecting every dynamic rigid body.</p>
-</div><h4 id='method.set_angular_acceleration' class='method'><code>fn <a href='#method.set_angular_acceleration' class='fnname'>set_angular_acceleration</a>(&amp;mut self, accel: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
+</div><h4 id='method.set_angular_acceleration' class='method'><code>fn <a href='#method.set_angular_acceleration' class='fnname'>set_angular_acceleration</a>(&amp;mut self, accel: <a class='type' href='http://ncollide.org/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a>)</code></h4>
 <div class='docblock'><p>Sets the angular acceleration afecting every dynamic rigid body.</p>
-</div><h4 id='method.gravity' class='method'><code>fn <a href='#method.gravity' class='fnname'>gravity</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
+</div><h4 id='method.gravity' class='method'><code>fn <a href='#method.gravity' class='fnname'>gravity</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide3df32/math/type.Vect.html' title='ncollide3df32::math::Vect'>Vect</a></code></h4>
 <div class='docblock'><p>Gets the linear acceleration afecting every dynamic rigid body.</p>
-</div><h4 id='method.angular_acceleration' class='method'><code>fn <a href='#method.angular_acceleration' class='fnname'>angular_acceleration</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a></code></h4>
+</div><h4 id='method.angular_acceleration' class='method'><code>fn <a href='#method.angular_acceleration' class='fnname'>angular_acceleration</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide3df32/math/type.Orientation.html' title='ncollide3df32::math::Orientation'>Orientation</a></code></h4>
 <div class='docblock'><p>Gets the angular acceleration afecting every dynamic rigid body.</p>
-</div><h4 id='method.cast_ray' class='method'><code>fn <a href='#method.cast_ray' class='fnname'>cast_ray</a>(&amp;mut self, ray: &amp;<a class='struct' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/ray/ray/struct.Ray.html' title='ncollide3df32::ray::ray::Ray'>Ray</a>, out: &amp;mut <a class='struct' href='http://doc.rust-lang.org/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='http://doc.rust-lang.org/std/primitive.tuple.html'>(<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>&gt;&gt;, <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>)</a>&gt;)</code></h4>
+</div><h4 id='method.cast_ray' class='method'><code>fn <a href='#method.cast_ray' class='fnname'>cast_ray</a>(&amp;mut self, ray: &amp;<a class='struct' href='http://ncollide.org/doc/ncollide3df32/ray/ray/struct.Ray.html' title='ncollide3df32::ray::ray::Ray'>Ray</a>, out: &amp;mut <a class='struct' href='http://doc.rust-lang.org/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='http://doc.rust-lang.org/std/primitive.tuple.html'>(<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../nphysics3df32/object/struct.RigidBody.html' title='nphysics3df32::object::RigidBody'>RigidBody</a>&gt;&gt;, <a class='type' href='http://ncollide.org/doc/ncollide3df32/math/type.Scalar.html' title='ncollide3df32::math::Scalar'>Scalar</a>)</a>&gt;)</code></h4>
 <div class='docblock'><p>Gets every body intersected by a given ray.</p>
 </div><h4 id='method.add_ball_in_socket' class='method'><code>fn <a href='#method.add_ball_in_socket' class='fnname'>add_ball_in_socket</a>(&amp;mut self, joint: <a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../nphysics3df32/detection/joint/struct.BallInSocket.html' title='nphysics3df32::detection::joint::BallInSocket'>BallInSocket</a>&gt;&gt;)</code></h4>
 <div class='docblock'><p>Adds a ball-in-socket joint to the world.</p>
@@ -122,11 +122,13 @@
     </div>
 
     <script>
-        var rootPath = "../../";
-        var currentCrate = "nphysics3df32";
+        window.rootPath = "../../";
+        window.currentCrate = "nphysics3df32";
+        window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
+    
     <script async src="../../search-index.js"></script>
 </body>
 </html>

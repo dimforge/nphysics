@@ -41,7 +41,7 @@
     <section id='main' class="content type">
 <h1 class='fqn'>Enum <a href='../../index.html'>nphysics3df64</a>::<a href='../index.html'>detection</a>::<a href='index.html'>constraint</a>::<a class='type' href=''>Constraint</a><a class='source' id='src-723' href='../../../src/nphysics3df64/src/detection/constraint.rs.html#10-17'>[src]</a></h1>
 <pre class='rust enum'>pub enum Constraint {
-    RBRB(<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt;&gt;, <a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt;&gt;, <a class='struct' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df64/contact/struct.Contact.html' title='ncollide3df64::contact::Contact'>Contact</a>),
+    RBRB(<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt;&gt;, <a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt;&gt;, <a class='struct' href='http://ncollide.org/doc/ncollide3df64/contact/struct.Contact.html' title='ncollide3df64::contact::Contact'>Contact</a>),
     BallInSocket(<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/detection/joint/struct.BallInSocket.html' title='nphysics3df64::detection::joint::BallInSocket'>BallInSocket</a>&gt;&gt;),
     Fixed(<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/detection/joint/struct.Fixed.html' title='nphysics3df64::detection::joint::Fixed'>Fixed</a>&gt;&gt;),
 }</pre><div class='docblock'><p>A constraint between two rigid bodies.</p>
@@ -50,7 +50,7 @@
 </div></td></tr><tr><td id='variant.BallInSocket'><code>BallInSocket</code></td><td><div class='docblock'><p>A ball-in-socket joint.</p>
 </div></td></tr><tr><td id='variant.Fixed'><code>Fixed</code></td><td><div class='docblock'><p>A fixed joint.</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='type' href='../../../nphysics3df64/detection/constraint/type.Constraint.html' title='nphysics3df64::detection::constraint::Constraint'>Constraint</a></code></h3><div class='methods'><h4 id='method.clone' class='method'><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics3df64/detection/constraint/type.Constraint.html' title='nphysics3df64::detection::constraint::Constraint'>Constraint</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -88,11 +88,13 @@
     </div>
 
     <script>
-        var rootPath = "../../../";
-        var currentCrate = "nphysics3df64";
+        window.rootPath = "../../../";
+        window.currentCrate = "nphysics3df64";
+        window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
+    
     <script async src="../../../search-index.js"></script>
 </body>
 </html>

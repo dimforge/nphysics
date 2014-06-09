@@ -46,7 +46,7 @@
 
 <p>This will remove a part of the linear and angular velocity of every rigid body at each frame.
 Do not use unless you are experiencing unrealistic vibrations or very unstable joints.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics3df64/integration/struct.BodyDamping.html' title='nphysics3df64::integration::BodyDamping'>BodyDamping</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(linear_damping: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>, angular_damping: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>) -&gt; <a class='struct' href='../../nphysics3df64/integration/struct.BodyDamping.html' title='nphysics3df64::integration::BodyDamping'>BodyDamping</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics3df64/integration/struct.BodyDamping.html' title='nphysics3df64::integration::BodyDamping'>BodyDamping</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(linear_damping: <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>, angular_damping: <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>) -&gt; <a class='struct' href='../../nphysics3df64/integration/struct.BodyDamping.html' title='nphysics3df64::integration::BodyDamping'>BodyDamping</a></code></h4>
 <div class='docblock'><p>Creates a new <code>BodyDamping</code>.</p>
 
 <h1 id="arguments:" class='section-header'><a
@@ -57,7 +57,7 @@ Do not use unless you are experiencing unrealistic vibrations or very unstable j
 <li><code>linear_damping</code> - coefficient in [0, 1] the angular velocity of each rigid body is
                  multiplied at each update.</li>
 </ul>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../nphysics3df64/integration/trait.Integrator.html' title='nphysics3df64::integration::Integrator'>Integrator</a>&lt;<a class='struct' href='../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../nphysics3df64/integration/struct.BodyDamping.html' title='nphysics3df64::integration::BodyDamping'>BodyDamping</a></code></h3><div class='methods'><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, _: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>, rb: &amp;mut <a class='struct' href='../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../nphysics3df64/integration/trait.Integrator.html' title='nphysics3df64::integration::Integrator'>Integrator</a>&lt;<a class='struct' href='../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../nphysics3df64/integration/struct.BodyDamping.html' title='nphysics3df64::integration::BodyDamping'>BodyDamping</a></code></h3><div class='methods'><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, _: <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>, rb: &amp;mut <a class='struct' href='../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -95,11 +95,13 @@ Do not use unless you are experiencing unrealistic vibrations or very unstable j
     </div>
 
     <script>
-        var rootPath = "../../";
-        var currentCrate = "nphysics3df64";
+        window.rootPath = "../../";
+        window.currentCrate = "nphysics3df64";
+        window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
+    
     <script async src="../../search-index.js"></script>
 </body>
 </html>

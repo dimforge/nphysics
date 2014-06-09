@@ -43,25 +43,25 @@
 <pre class='rust struct'>pub struct Fixed {
     // some fields omitted
 }</pre><div class='docblock'><p>A joint that prevents any relative movement (linear and angular) between two objects.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Fixed.html' title='nphysics2df32::detection::joint::Fixed'>Fixed</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(anchor1: <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;, anchor2: <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;) -&gt; <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Fixed.html' title='nphysics2df32::detection::joint::Fixed'>Fixed</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Fixed.html' title='nphysics2df32::detection::joint::Fixed'>Fixed</a></code></h3><div class='methods'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(anchor1: <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;, anchor2: <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;) -&gt; <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Fixed.html' title='nphysics2df32::detection::joint::Fixed'>Fixed</a></code></h4>
 <div class='docblock'><p>Creates a new <code>Fixed</code> joint.</p>
 </div><h4 id='method.up_to_date' class='method'><code>fn <a href='#method.up_to_date' class='fnname'>up_to_date</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Tells if the joint has been modified by the user.</p>
-</div><h4 id='method.set_local1' class='method'><code>fn <a href='#method.set_local1' class='fnname'>set_local1</a>(&amp;mut self, local1: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>)</code></h4>
+</div><h4 id='method.set_local1' class='method'><code>fn <a href='#method.set_local1' class='fnname'>set_local1</a>(&amp;mut self, local1: <a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>)</code></h4>
 <div class='docblock'><p>Sets the the second anchor position.</p>
 
 <p>The position is expressed in the second attached body’s local coordinates.</p>
-</div><h4 id='method.set_local2' class='method'><code>fn <a href='#method.set_local2' class='fnname'>set_local2</a>(&amp;mut self, local2: <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>)</code></h4>
+</div><h4 id='method.set_local2' class='method'><code>fn <a href='#method.set_local2' class='fnname'>set_local2</a>(&amp;mut self, local2: <a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>)</code></h4>
 <div class='docblock'><p>Sets the the second anchor position.</p>
 
 <p>The position is expressed in the second attached body’s local coordinates.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../nphysics2df32/detection/joint/trait.Joint.html' title='nphysics2df32::detection::joint::Joint'>Joint</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt; for <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Fixed.html' title='nphysics2df32::detection::joint::Fixed'>Fixed</a></code></h3><div class='methods'><h4 id='method.anchor1' class='method'><code>fn <a href='#method.anchor1' class='fnname'>anchor1</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../nphysics2df32/detection/joint/trait.Joint.html' title='nphysics2df32::detection::joint::Joint'>Joint</a>&lt;<a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt; for <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Fixed.html' title='nphysics2df32::detection::joint::Fixed'>Fixed</a></code></h3><div class='methods'><h4 id='method.anchor1' class='method'><code>fn <a href='#method.anchor1' class='fnname'>anchor1</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;</code></h4>
 <div class='docblock'><p>The first anchor affected by this joint.</p>
-</div><h4 id='method.anchor2' class='method'><code>fn <a href='#method.anchor2' class='fnname'>anchor2</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;</code></h4>
+</div><h4 id='method.anchor2' class='method'><code>fn <a href='#method.anchor2' class='fnname'>anchor2</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a>&gt;</code></h4>
 <div class='docblock'><p>The second anchor affected by this joint.</p>
-</div><h4 id='method.anchor1_pos' class='method'><code>fn <a href='#method.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a></code></h4>
+</div><h4 id='method.anchor1_pos' class='method'><code>fn <a href='#method.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a></code></h4>
 <div class='docblock'><p>The first attach point in global coordinates.</p>
-</div><h4 id='method.anchor2_pos' class='method'><code>fn <a href='#method.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; <a class='type' href='http://www.rust-ci.org/sebcrozet/ncollide/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a></code></h4>
+</div><h4 id='method.anchor2_pos' class='method'><code>fn <a href='#method.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide2df32/math/type.Matrix.html' title='ncollide2df32::math::Matrix'>Matrix</a></code></h4>
 <div class='docblock'><p>The second attach point in global coordinates.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -100,11 +100,13 @@
     </div>
 
     <script>
-        var rootPath = "../../../";
-        var currentCrate = "nphysics2df32";
+        window.rootPath = "../../../";
+        window.currentCrate = "nphysics2df32";
+        window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
+    
     <script async src="../../../search-index.js"></script>
 </body>
 </html>
