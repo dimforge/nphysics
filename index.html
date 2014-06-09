@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>nphysics by sebcrozet</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">nphysics</h1>
+        <p class="header">2 and 3-dimensional rigid body physics engine for Rust.</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/sebcrozet/nphysics/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/sebcrozet/nphysics/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/sebcrozet/nphysics">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/sebcrozet">sebcrozet</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a name="nphysics" class="anchor" href="#nphysics"><span class="octicon octicon-link"></span></a>nphysics</h1>
+
+<p><strong>nphysics</strong> is a 2 and 3-dimensional physics engine for games and animations.</p>
+
+<p>Its most distinctive feature is its genericity wrt the simulation
+dimension. That means you can use it for both 2-dimensional physics and
+3-dimensional physics. Higher dimensions could be possible, but <strong>nphysics</strong>
+has not be written/tested with those in thought.</p>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>static and dynamic rigid bodies.</li>
+<li>common convex primitives: cone, box, ball, cylinder.</li>
+<li>concave geometries build from convex primitives (aka. compound geometries).</li>
+<li>stable stacking.</li>
+<li>island based sleeping (objects deactivation).</li>
+<li>ray casting.</li>
+<li>swept sphere based continuous collision detection.</li>
+<li>ball-in-socket joint.</li>
+<li>fixed joint.</li>
+</ul><h2>
+<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h2>
+
+<p>All dependencies are automatically cloned with a recursive clone.
+The libraries needed to compile the physics engine are:</p>
+
+<ul>
+<li>
+<a href="http://ncollide.org">ncollide</a>: the collision detection library.</li>
+<li>
+<a href="http://nalgebra.org">nalgebra</a>: the linear algebra library.</li>
+</ul><p>The libraries needed to compile the examples are:</p>
+
+<ul>
+<li>
+<a href="http://kiss3d.org">kiss3d</a>: the 3d graphics engine.</li>
+<li>
+<a href="https://github.com/JeremyLetang/rust-sfml">rust-sfml</a>: the 2d graphics engine.</li>
+</ul>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
