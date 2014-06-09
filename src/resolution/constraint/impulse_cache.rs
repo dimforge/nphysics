@@ -1,10 +1,10 @@
 #![doc(hidden)]
 
 use std::mem;
-use std::hash::Hash;
+use std::hash::{Hash, Writer};
 use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
-use collections::HashMap;
+use std::collections::HashMap;
 use nalgebra::na;
 use nalgebra::na::{Iterable, IterableMut};
 use ncollide::math::{Scalar, Vect};
@@ -24,7 +24,9 @@ impl Hash for ContactIdentifier {
     #[cfg(f32)]
     fn hash(&self, state: &mut SipState) {
         for e in self.ccenter.iter() {
-            let _ = state.write_le_f32(*e);
+            unsafe { // FIXME: could we do this without going unsafe?
+                let _ = state.write(mem::transmute::<f32, [u8, ..4]>(*e));
+            }
         }
     }
 
@@ -32,7 +34,9 @@ impl Hash for ContactIdentifier {
     #[cfg(f64)]
     fn hash(&self, state: &mut SipState) {
         for e in self.ccenter.iter() {
-            let _ = state.write_le_f64(*e);
+            unsafe { // FIXME: could we do this without going unsafe?
+                let _ = state.write(mem::transmute::<f64, [u8, ..8]>(*e));
+            }
         }
     }
 }
