@@ -1,9 +1,9 @@
 /*!
-nphysics  [![Build Status](https://travis-ci.org/sebcrozet/nphysics.png?branch=master)](https://travis-ci.org/sebcrozet/nphysics)
+nphysics
 ========
 **nphysics** is a 2 and 3-dimensional physics engine for games and animations. It uses
-[ncollide](https://github.com/sebcrozet/ncollide) for collision detection, and
-[nalgebra](https://github.com/sebcrozet/nalgebra) for vector/matrix math.
+[ncollide](http://ncollide.org) for collision detection, and
+[nalgebra](http://nalgebra.org) for vector/matrix math.
 
 Its most distinctive feature is its genericity wrt the simulation
 dimension. That means you can use it for both 2-dimensional physics and
@@ -12,8 +12,6 @@ has not be written/tested with those in thought.
 
 Examples are available on the `examples` directory.
 There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
-
-An on-line version of this documentation is available [here](http://www.rust-ci.org/sebcrozet/nphysics/doc/nphysics3df32/index.html).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
@@ -99,7 +97,7 @@ The libraries needed to compile the examples are:
 #![warn(non_camel_case_types)]
 #![feature(managed_boxes)]
 #![feature(globs)]
-#![doc(html_root_url = "http://www.rust-ci.org/sebcrozet/nphysics/doc")]
+#![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
 extern crate std;
 extern crate rand;

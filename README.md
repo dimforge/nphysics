@@ -1,8 +1,8 @@
-nphysics  [![Build Status](https://travis-ci.org/sebcrozet/nphysics.png?branch=master)](https://travis-ci.org/sebcrozet/nphysics)
+nphysics
 ========
 **nphysics** is a 2 and 3-dimensional physics engine for games and animations. It uses
-[ncollide](https://github.com/sebcrozet/ncollide) for collision detection, and
-[nalgebra](https://github.com/sebcrozet/nalgebra) for vector/matrix math.
+[ncollide](http://ncollide.org) for collision detection, and
+[nalgebra](http://nalgebra.org) for vector/matrix math.
 
 Its most distinctive feature is its genericity wrt the simulation
 dimension. That means you can use it for both 2-dimensional physics and
@@ -12,7 +12,7 @@ has not be written/tested with those in thought.
 Examples are available on the `examples` directory.
 There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
 
-An on-line version of this documentation is available [here](http://www.rust-ci.org/sebcrozet/nphysics/doc/nphysics3df32/index.html).
+An on-line version of this documentation is available [here](http://nphysics-dev.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
@@ -77,10 +77,10 @@ become a grown up. Many missing features are because of missing features on
 All dependencies are automatically cloned with a recursive clone.
 The libraries needed to compile the physics engine are:
 
-* [ncollide](https://github.com/sebcrozet/ncollide): the collision detection library.
-* [nalgebra](https://github.com/sebcrozet/nalgebra): the linear algebra library.
+* [ncollide](http://ncollide.org): the collision detection library.
+* [nalgebra](http://nalgebra.org): the linear algebra library.
 
 The libraries needed to compile the examples are:
 
-* [kiss3d](https://github.com/sebcrozet/kiss3d): the 3d graphics engine.
-* [rust-sfml](https://github.com/JeremyLetang/rust-sfml): the 2d graphics engine.
+* [kiss3d](http://kiss3d.org): the 3d graphics engine.
+* [rust-sfml](http://www.rust-sfml.org): the 2d graphics engine.
