@@ -254,7 +254,7 @@ impl GraphicsManager {
         let position = na::translation(body.borrow().deref());
         let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
 
-        out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
+        out.push(PlaneNode(Plane::new(&position, &normal, color, window)))
     }
 
     fn add_mesh(&mut self,

@@ -6,7 +6,7 @@ use ncollide::data::hash::UintTWHash;
 use ncollide::math::Scalar;
 use ncollide::broad::{InterferencesBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
-use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
+use detection::constraint::{RBRB, BallInSocket, Fixed};
 use detection::joint::{JointManager, Joint};
 use object::{RigidBody, Deleted};
 use utils::union_find::UnionFindSet;
@@ -20,7 +20,6 @@ pub struct ActivationManager {
     mix_factor:     Scalar,
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
-    collector:      Vec<Constraint>,
     to_activate:    Vec<Rc<RefCell<RigidBody>>>,
     to_deactivate:  Vec<uint>
 }
@@ -40,7 +39,6 @@ impl ActivationManager {
             mix_factor:     mix_factor,
             ufind:          Vec::new(),
             can_deactivate: Vec::new(),
-            collector:      Vec::new(),
             to_activate:    Vec::new(),
             to_deactivate:  Vec::new()
         }

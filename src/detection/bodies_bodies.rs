@@ -55,10 +55,6 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomColl
 pub struct BodiesBodies<BF> {
     geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
     contacts_collector:    Vec<Contact>,
-    // FIXME: this is an useless buffer which accumulate the result of bodies activation.
-    // This must exist since there is no way to send an activation message without an accumulation
-    // list…
-    constraints_collector: Vec<Constraint>,
 }
 
 impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector>>> BodiesBodies<BF> {
@@ -66,8 +62,7 @@ impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDe
     pub fn new(dispatcher: Rc<GeomGeomDispatcher>) -> BodiesBodies<BF> {
         BodiesBodies {
             geom_geom_dispatcher:  dispatcher,
-            contacts_collector:    Vec::new(),
-            constraints_collector: Vec::new(),
+            contacts_collector:    Vec::new()
         }
     }
 }

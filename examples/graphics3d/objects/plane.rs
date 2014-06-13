@@ -1,25 +1,19 @@
 use std::num::Zero;
-use std::rc::Rc;
-use std::cell::RefCell;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
 use nalgebra::na::Vec3;
-use nphysics::object::RigidBody;
 
 pub struct Plane {
-    gfx:  SceneNode,
-    body: Rc<RefCell<RigidBody>>,
+    gfx:  SceneNode
 }
 
 impl Plane {
-    pub fn new(body:         Rc<RefCell<RigidBody>>,
-               world_pos:    &Vec3<f32>,
+    pub fn new(world_pos:    &Vec3<f32>,
                world_normal: &Vec3<f32>,
                color:        Vec3<f32>,
                window:       &mut window::Window) -> Plane {
         let mut res = Plane {
             gfx:  window.add_quad(100.0, 100.0, 10, 10),
-            body: body
         };
 
         res.gfx.set_color(color.x, color.y, color.z);
