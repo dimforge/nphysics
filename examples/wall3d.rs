@@ -15,7 +15,7 @@ use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use graphics3d::engine::GraphicsManager;
 
 #[start]
@@ -38,7 +38,7 @@ pub fn wall_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
+    let rb   = RigidBody::new_static(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.3, 0.6);
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
@@ -59,7 +59,7 @@ pub fn wall_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
-            let mut rb = RigidBody::new(Cuboid::new(Vec3::new(rad, rad, rad)), 1.0f32, Dynamic, 0.3, 0.5);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(rad, rad, rad)), 1.0f32, 0.3, 0.5);
 
             rb.append_translation(&Vec3::new(x, y, 0.0));
 

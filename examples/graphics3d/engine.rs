@@ -159,7 +159,7 @@ impl GraphicsManager {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_geom(window, body.clone(), One::one(), rb.geom(), color, &mut nodes);
+            self.add_geom(window, body.clone(), One::one(), rb.geom_ref(), color, &mut nodes);
 
             nodes
         };
@@ -232,8 +232,8 @@ impl GraphicsManager {
         else if id == TypeId::of::<Cm>() {
             let c = geom.as_ref::<Cm>().unwrap();
 
-            for &(t, ref s) in c.shapes().iter() {
-                self.add_geom(window, body.clone(), delta * t, *s, color, out)
+            for &(t, ref s) in c.geoms().iter() {
+                self.add_geom(window, body.clone(), delta * t, **s, color, out)
             }
         }
         else if id == TypeId::of::<Tm>() {

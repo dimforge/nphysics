@@ -13,9 +13,10 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec2, Iso2, Translation};
 use nalgebra::na;
-use ncollide::geom::{Plane, Cuboid, Compound, Geom};
+use ncollide::volumetric::Volumetric;
+use ncollide::geom::{Plane, Cuboid, Compound, CompoundData, Geom};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use graphics2d::engine::GraphicsManager;
 
 #[start]
@@ -37,7 +38,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> World {
     /*
      * First plane
      */
-    let mut rb = RigidBody::new(Plane::new(Vec2::new(-1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0f32, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -49,7 +50,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> World {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new(Plane::new(Vec2::new(1.0f32, -1.0)), 0.0f32, Static, 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0f32, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -65,12 +66,14 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> World {
     let delta2 = Iso2::new(Vec2::new(-5.0f32, 0.0), na::zero());
     let delta3 = Iso2::new(Vec2::new(5.0f32,  0.0), na::zero());
 
-    let mut cross_geoms = Vec::new();
-    cross_geoms.push((delta1, box Cuboid::new(Vec2::new(5.0f32, 0.75)) as Box<Geom:Send>));
-    cross_geoms.push((delta2, box Cuboid::new(Vec2::new(0.75f32, 5.0)) as Box<Geom:Send>));
-    cross_geoms.push((delta3, box Cuboid::new(Vec2::new(0.75f32, 5.0)) as Box<Geom:Send>));
+    let mut cross_geoms = CompoundData::new();
+    cross_geoms.push_geom(delta1, Cuboid::new(Vec2::new(5.0f32, 0.75)), 1.0);
+    cross_geoms.push_geom(delta2, Cuboid::new(Vec2::new(0.75f32, 5.0)), 1.0);
+    cross_geoms.push_geom(delta3, Cuboid::new(Vec2::new(0.75f32, 5.0)), 1.0);
 
-    let cross = Rc::new(box Compound::new(cross_geoms) as Box<Geom:'static>);
+    let compound = Compound::new(cross_geoms);
+    let mass     = compound.mass_properties(&1.0);
+    let cross    = Rc::new(box compound as Box<Geom:'static>);
 
     /*
      * Create the boxes
@@ -86,7 +89,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> World {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 250.0;
 
-            let mut rb = RigidBody::new_with_shared_geom(cross.clone(), 1.0f32, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

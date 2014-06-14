@@ -34,7 +34,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomColl
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 
-        self.geom_dispatcher.dispatch(brb1.geom(), brb2.geom())
+        self.geom_dispatcher.dispatch(brb1.geom_ref(), brb2.geom_ref())
     }
 
     fn is_valid(&self, a: &Rc<RefCell<RigidBody>>, b: &Rc<RefCell<RigidBody>>) -> bool {
@@ -128,9 +128,9 @@ Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
             {
                 cd.update(&*self.geom_geom_dispatcher,
                           b1.borrow().transform_ref(),
-                          b1.borrow().geom(),
+                          b1.borrow().geom_ref(),
                           b2.borrow().transform_ref(),
-                          b2.borrow().geom());
+                          b2.borrow().geom_ref());
             }
 
             let new_ncols = cd.num_colls();

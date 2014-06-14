@@ -17,7 +17,7 @@ use ncollide::ray::Ray;
 use nphysics::detection::Detector;
 use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
 use nphysics::detection::joint::{Anchor, Fixed, Joint};
-use nphysics::object::{RigidBody, Dynamic};
+use nphysics::object::RigidBody;
 use nphysics::world::World;
 use engine::GraphicsManager;
 
@@ -271,7 +271,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     },
                     glfw::KeyEvent(glfw::Key1, _, glfw::Press, _) => {
                         let geom   = Ball::new(0.5f32);
-                        let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
                         let cam_transfom;
 
@@ -294,7 +294,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     },
                     glfw::KeyEvent(glfw::Key2, _, glfw::Press, _) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
-                        let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
                         let cam_transform;
                         
@@ -317,7 +317,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     },
                     glfw::KeyEvent(glfw::Key3, _, glfw::Press, _) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
-                        let mut rb = RigidBody::new(geom, 4.0f32, Dynamic, 0.3, 0.6);
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
                         let cam_transfom;
                         

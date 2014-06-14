@@ -14,9 +14,10 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use nalgebra::na;
-use ncollide::geom::{Plane, Cuboid, Compound, Geom};
+use ncollide::volumetric::Volumetric;
+use ncollide::geom::{Plane, Cuboid, Compound, CompoundData, Geom};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use graphics3d::engine::GraphicsManager;
 
 #[start]
@@ -38,7 +39,7 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * Planes
      */
-    let rb   = RigidBody::new(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.0, Static, 0.3, 0.6);
+    let rb   = RigidBody::new_static(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.3, 0.6);
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
@@ -47,12 +48,14 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * Cross shaped geometry
      */
-    let mut cross_geoms = Vec::new();
-    cross_geoms.push((na::one(), box Cuboid::new(Vec3::new(5.0f32, 0.25, 0.25)) as Box<Geom:Send>));
-    cross_geoms.push((na::one(), box Cuboid::new(Vec3::new(0.25f32, 5.0, 0.25)) as Box<Geom:Send>));
-    cross_geoms.push((na::one(), box Cuboid::new(Vec3::new(0.25f32, 0.25, 5.0)) as Box<Geom:Send>));
+    let mut cross_geoms = CompoundData::new();
+    cross_geoms.push_geom(na::one(), Cuboid::new(Vec3::new(5.0f32, 0.25, 0.25)), 1.0);
+    cross_geoms.push_geom(na::one(), Cuboid::new(Vec3::new(0.25f32, 5.0, 0.25)), 1.0);
+    cross_geoms.push_geom(na::one(), Cuboid::new(Vec3::new(0.25f32, 0.25, 5.0)), 1.0);
 
-    let cross = Rc::new(box Compound::new(cross_geoms) as Box<Geom:'static>);
+    let compound = Compound::new(cross_geoms);
+    let mass     = compound.mass_properties(&1.0);
+    let cross    = Rc::new(box compound as Box<Geom:'static>);
 
     /*
      * Create the crosses 
@@ -71,7 +74,7 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let mut rb = RigidBody::new_with_shared_geom(cross.clone(), 1.0f32, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

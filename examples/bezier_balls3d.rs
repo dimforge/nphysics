@@ -15,7 +15,7 @@ use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Ball, BezierSurface};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use graphics3d::engine::GraphicsManager;
 
 #[start]
@@ -54,7 +54,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     );
     */
 
-    let rb   = RigidBody::new(BezierSurface::new(control_points, 5, 5), 0.0f32, Static, 0.3, 0.6);
+    let rb   = RigidBody::new_static(BezierSurface::new(control_points, 5, 5), 0.3, 0.6);
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
@@ -63,7 +63,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     /*
      * Create the balls
      */
-    let num     = 300.0f32.powf(1.0f32 / 3.0) as uint;
+    let num     = 150.0f32.powf(1.0f32 / 3.0) as uint;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
@@ -76,7 +76,7 @@ pub fn balls_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
                 let y = j as f32 * 2.5 * rad + centery * 2.0;
                 let z = k as f32 * 2.5 * rad - centerx;
 
-                let mut rb = RigidBody::new(Ball::new(rad), 1.0f32, Dynamic, 0.3, 0.6);
+                let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0f32, 0.3, 0.6);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

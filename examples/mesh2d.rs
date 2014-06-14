@@ -18,7 +18,7 @@ use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Cuboid, Mesh};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use graphics2d::engine::GraphicsManager;
 
 #[start]
@@ -60,7 +60,7 @@ pub fn mesh2d(graphics: &mut GraphicsManager) -> World {
     indices.push(num_split + 1);
 
     let mesh = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
-    let rb   = RigidBody::new(mesh, 0.0f32, Static, 0.3, 0.6);
+    let rb   = RigidBody::new_static(mesh, 0.3, 0.6);
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
@@ -82,7 +82,7 @@ pub fn mesh2d(graphics: &mut GraphicsManager) -> World {
             let x = fj * 2.0 * rad - centerx;
             let y = -fi * 2.0 * rad;
 
-            let mut rb = RigidBody::new(Cuboid::new(Vec2::new(rad, rad)), 1.0f32, Dynamic, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad, rad)), 1.0f32, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

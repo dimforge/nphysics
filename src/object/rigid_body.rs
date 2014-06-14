@@ -9,6 +9,7 @@ use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
 use ncollide::math::{Scalar, Vect, Orientation, Matrix, AngularInertia};
 
+// FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?
 #[deriving(Show, PartialEq, Clone, Encodable, Decodable)]
 /// The movement state of a rigid body.
 pub enum RigidBodyState {
@@ -122,10 +123,16 @@ impl RigidBody {
 
     /// Gets a reference to this body's geometry.
     #[inline]
-    pub fn geom<'r>(&'r self) -> &'r Geom {
+    pub fn geom_ref<'r>(&'r self) -> &'r Geom {
         let res: &'r Geom = *self.geom;
 
         res
+    }
+
+    /// Gets a copy of this body's shared geometry.
+    #[inline]
+    pub fn geom<'r>(&'r self) -> Rc<Box<Geom:'static>> {
+        self.geom.clone()
     }
 
     #[doc(hidden)]
@@ -186,57 +193,59 @@ impl RigidBody {
         self.activation_state = Active(energy);
     }
 
-    /// Creates a new rigid body.
-    pub fn new<G: 'static + Send + Geom>(geom:        G,
-                                         density:     Scalar,
-                                         state:       RigidBodyState,
-                                         restitution: Scalar,
-                                         friction:    Scalar)
-                                         -> RigidBody {
-        RigidBody::new_with_shared_geom(Rc::new(box geom as Box<Geom:'static>),
-                                        density,
-                                        state,
-                                        restitution,
-                                        friction)
+    /// Creates a new rigid body that can move.
+    pub fn new_dynamic<G: 'static + Send + Geom + Volumetric>(
+                       geom:        G,
+                       density:     Scalar,
+                       restitution: Scalar,
+                       friction:    Scalar)
+                       -> RigidBody {
+        let props = geom.mass_properties(&density);
+
+        RigidBody::new(
+            Rc::new(box geom as Box<Geom:'static>),
+            Some(props),
+            restitution,
+            friction)
+    }
+
+    /// Creates a new rigid body that cannot move.
+    pub fn new_static<G: 'static + Send + Geom>(
+                      geom:        G,
+                      restitution: Scalar,
+                      friction:    Scalar)
+                      -> RigidBody {
+        RigidBody::new(
+            Rc::new(box geom as Box<Geom:'static>),
+            None,
+            restitution,
+            friction)
     }
 
     /// Creates a new rigid body with a given geometry.
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
-    pub fn new_with_shared_geom(geom:        Rc<Box<Geom:'static>>,
-                                density:     Scalar,
-                                state:       RigidBodyState,
-                                restitution: Scalar,
-                                friction:    Scalar)
-                                -> RigidBody {
-        let (inv_mass, center_of_mass, inv_inertia, active) =
-            match state {
-                Static    => (na::zero(), na::zero(), na::zero(), Inactive),
-                Dynamic   => {
-                    if density.is_zero() {
-                        fail!("A dynamic body must not have a zero density.")
-                    }
-
-                    let mprops: (Scalar, Vect, AngularInertia) = geom.mass_properties(&density);
-                    let (m, c, ii) = mprops;
-
-                    if m.is_zero() {
+    /// Set `mass_properties` to `None` if the rigid body is to be static.
+    pub fn new(geom:            Rc<Box<Geom:'static>>,
+               mass_properties: Option<(Scalar, Vect, AngularInertia)>,
+               restitution:     Scalar,
+               friction:        Scalar)
+               -> RigidBody {
+        let (inv_mass, center_of_mass, inv_inertia, active, state) =
+            match mass_properties {
+                None => (na::zero(), na::zero(), na::zero(), Inactive, Static),
+                Some((mass, com, inertia)) => {
+                    if mass.is_zero() {
                         fail!("A dynamic body must not have a zero volume.")
                     }
 
-                    let i_wrt_com: AngularInertia = ii.to_relative_wrt_point(&m, &c);
-                    let ii_wrt_com: AngularInertia =
-                          na::inv(&i_wrt_com)
+                    let ii: AngularInertia =
+                          na::inv(&inertia)
                           .expect("A dynamic body must not have a singular inertia tensor.");
 
                     let _1: Scalar = na::one();
 
-                    (
-                        _1 / m,
-                        c,
-                        ii_wrt_com,
-                        Active(Bounded::max_value())
-                    )
+                    (_1 / mass, com, ii, Active(Bounded::max_value()), Dynamic)
                 },
             };
 

@@ -14,7 +14,7 @@ use std::cell::RefCell;
 use nalgebra::na::{Vec1, Vec2, Translation, Rotation};
 use ncollide::geom::{Plane, Cuboid, Ball};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};
 use graphics2d::engine::GraphicsManager;
 
@@ -38,7 +38,7 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> World {
      * A plane for the ground
      */
     let ground_geom = Plane::new(Vec2::new(0.0f32, -1.0));
-    let ground      = Rc::new(RefCell::new(RigidBody::new(ground_geom, 0.0f32, Static, 0.3, 0.6)));
+    let ground      = Rc::new(RefCell::new(RigidBody::new_static(ground_geom, 0.3, 0.6)));
 
     world.add_body(ground.clone());
     graphics.add(ground);
@@ -68,18 +68,18 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> World {
 fn add_ragdoll(pos: Vec2<f32>, world: &mut World, graphics: &mut GraphicsManager) {
     // head
     let     head_geom = Ball::new(0.8);
-    let mut head      = RigidBody::new(head_geom, 1.0f32, Dynamic, 0.3, 0.5);
+    let mut head      = RigidBody::new_dynamic(head_geom, 1.0f32, 0.3, 0.5);
     head.append_translation(&(pos + Vec2::new(0.0f32, -2.4)));
 
     // body
     let     body_geom = Cuboid::new(Vec2::new(1.2, 0.5));
-    let mut body      = RigidBody::new(body_geom, 1.0f32, Dynamic, 0.3, 0.5);
+    let mut body      = RigidBody::new_dynamic(body_geom, 1.0f32, 0.3, 0.5);
     body.append_rotation(&-Vec1::new(Float::frac_pi_2()));
     body.append_translation(&pos);
 
     // right arm
     let     rarm_geom = Cuboid::new(Vec2::new(1.6, 0.2));
-    let mut rarm      = RigidBody::new(rarm_geom, 1.0f32, Dynamic, 0.3, 0.5);
+    let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0f32, 0.3, 0.5);
     rarm.append_translation(&(pos + Vec2::new(2.4f32, -1.0)));
 
     // left arm
@@ -88,7 +88,7 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World, graphics: &mut GraphicsManager
 
     // right foot
     let     rfoot_geom = Cuboid::new(Vec2::new(1.6, 0.2));
-    let mut rfoot      = RigidBody::new(rfoot_geom, 1.0f32, Dynamic, 0.3, 0.5);
+    let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0f32, 0.3, 0.5);
     rfoot.append_rotation(&-Vec1::new(Float::frac_pi_2()));
     rfoot.append_translation(&(pos + Vec2::new(0.4f32, 3.0)));
 

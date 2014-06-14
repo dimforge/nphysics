@@ -15,7 +15,7 @@ use nalgebra::na::{Vec3, Translation};
 use kiss3d::window::Window;
 use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
-use nphysics::object::{RigidBody, Static, Dynamic};
+use nphysics::object::RigidBody;
 use graphics3d::engine::GraphicsManager;
 
 #[start]
@@ -38,7 +38,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
      * Plane
      */
     let geom = Plane::new(Vec3::new(0.0f32, 1.0, 0.0));
-    let body = Rc::new(RefCell::new(RigidBody::new(geom, 0.0f32, Static, 0.3, 0.6)));
+    let body = Rc::new(RefCell::new(RigidBody::new_static(geom, 0.3, 0.6)));
 
     world.add_body(body.clone());
     graphics.add(window, body);
@@ -61,7 +61,7 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
                 let z = k as f32 * shift - centerz;
 
                 let geom   = Cuboid::new(Vec3::new(rad, rad, rad));
-                let mut rb = RigidBody::new(geom, 1.0f32, Dynamic, 0.3, 0.5);
+                let mut rb = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
