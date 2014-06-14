@@ -1,9 +1,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::num::One;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
-use nalgebra::na::{Vec3, Iso3, Rotation};
+use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use nphysics::object::RigidBody;
 
@@ -22,15 +21,13 @@ impl Cone {
                h:      f32,
                color:  Vec3<f32>,
                window: &mut window::Window) -> Cone {
-        let mut realign: Iso3<f32> = One::one();
         let _frac_pi_2: f32 = Float::frac_pi_2();
-        let t  = na::transformation(body.borrow().deref());
-        realign.append_rotation(&Vec3::new(0.0, 0.0, -_frac_pi_2));
+        let t = na::transformation(body.borrow().deref());
 
         let mut res = Cone {
             color:      color,
             base_color: color,
-            delta:      delta * realign,
+            delta:      delta,
             gfx:        window.add_cone(r as f32, h as f32),
             body:       body
         };

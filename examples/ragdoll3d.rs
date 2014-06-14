@@ -82,13 +82,12 @@ fn add_ragdoll(pos:      Vec3<f32>,
     // body
     let     body_geom = Cylinder::new(1.2, 0.5);
     let mut body      = RigidBody::new(body_geom, 1.0f32, Dynamic, 0.3, 0.5);
-    body.append_rotation(&Vec3::new(0.0, 0.0, Float::frac_pi_2()));
     body.append_translation(&pos);
 
     // right arm
     let     rarm_geom = Cylinder::new(1.6, 0.2);
     let mut rarm      = RigidBody::new(rarm_geom, 1.0f32, Dynamic, 0.3, 0.5);
-    rarm.append_rotation(&Vec3::new(0.0, Float::frac_pi_2(), 0.0));
+    rarm.append_rotation(&Vec3::new(Float::frac_pi_2(), 0.0, 0.0));
     rarm.append_translation(&(pos + Vec3::new(0.0f32, 1.0, 2.4)));
 
     // left arm
@@ -98,7 +97,6 @@ fn add_ragdoll(pos:      Vec3<f32>,
     // right foot
     let     rfoot_geom = Cylinder::new(1.6, 0.2);
     let mut rfoot      = RigidBody::new(rfoot_geom, 1.0f32, Dynamic, 0.3, 0.5);
-    rfoot.append_rotation(&Vec3::new(0.0, 0.0, Float::frac_pi_2()));
     rfoot.append_translation(&(pos + Vec3::new(0.0f32, -3.0, 0.4)));
 
     // left foot
@@ -131,17 +129,17 @@ fn add_ragdoll(pos:      Vec3<f32>,
     /*
      * Create joints.
      */
-    let body_anchor_head  = Anchor::new(Some(body.clone()), Vec3::new(1.5, 0.0, 0.0));
-    let body_anchor_rarm  = Anchor::new(Some(body.clone()), Vec3::new(1.0, 0.0, 0.75));
-    let body_anchor_larm  = Anchor::new(Some(body.clone()), Vec3::new(1.0, 0.0, -0.75));
-    let body_anchor_rfoot = Anchor::new(Some(body.clone()), Vec3::new(-1.5, 0.0, 0.2));
-    let body_anchor_lfoot = Anchor::new(Some(body.clone()), Vec3::new(-1.5, 0.0, -0.2));
+    let body_anchor_head  = Anchor::new(Some(body.clone()), Vec3::new(0.0, 1.5, 0.0));
+    let body_anchor_rarm  = Anchor::new(Some(body.clone()), Vec3::new(0.0, 1.0, 0.75));
+    let body_anchor_larm  = Anchor::new(Some(body.clone()), Vec3::new(0.0, 1.0, -0.75));
+    let body_anchor_rfoot = Anchor::new(Some(body.clone()), Vec3::new(0.0, -1.5, 0.2));
+    let body_anchor_lfoot = Anchor::new(Some(body.clone()), Vec3::new(0.0, -1.5, -0.2));
 
     let head_anchor       = Anchor::new(Some(head), Vec3::new(0.0, -0.9, 0.0));
-    let rarm_anchor       = Anchor::new(Some(rarm), Vec3::new(1.7, 0.0, 0.0));
-    let larm_anchor       = Anchor::new(Some(larm), Vec3::new(-1.7, 0.0, 0.0));
-    let rfoot_anchor      = Anchor::new(Some(rfoot), Vec3::new(1.7, 0.0, 0.0));
-    let lfoot_anchor      = Anchor::new(Some(lfoot), Vec3::new(1.7, 0.0, 0.0));
+    let rarm_anchor       = Anchor::new(Some(rarm), Vec3::new(0.0, -1.7, 0.0));
+    let larm_anchor       = Anchor::new(Some(larm), Vec3::new(0.0, 1.7, 0.0));
+    let rfoot_anchor      = Anchor::new(Some(rfoot), Vec3::new(0.0, 1.7, 0.0));
+    let lfoot_anchor      = Anchor::new(Some(lfoot), Vec3::new(0.0, 1.7, 0.0));
 
     let head_joint  = BallInSocket::new(body_anchor_head,   head_anchor);
     let rarm_joint  = BallInSocket::new(body_anchor_rarm,   rarm_anchor);
