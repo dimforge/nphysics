@@ -78,6 +78,7 @@ bugs:
 	mkdir -p ../bin
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
 	$(build_cmd_opt) ./regression_tests/bug_long_thin_box_one_shot_manifold.rs
+	$(build_cmd_opt) ./regression_tests/bug_optimization_on_patch_boundaries_does_not_converge.rs
 
 deps:
 	mkdir -p lib
