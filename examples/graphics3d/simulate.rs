@@ -31,7 +31,7 @@ fn usage(exe_name: &str) {
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
-    println!("    r      - start/stop recording to the files {:s}_\\{1,2,3,...\\}.mpg.", exe_name);
+    println!("    r      - start/stop recording to the files {:s}_{{1,2,3,...}}.mpg.", exe_name);
     println!("    1      - launch a ball.");
     println!("    2      - launch a cube.");
     println!("    3      - launch a fast cube using continuous collision detection.");
