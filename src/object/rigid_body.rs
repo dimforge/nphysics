@@ -46,7 +46,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    geom:                 Rc<Box<Geom:'static>>,
+    geom:                 Rc<Box<Geom + 'static>>,
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -131,7 +131,7 @@ impl RigidBody {
 
     /// Gets a copy of this body's shared geometry.
     #[inline]
-    pub fn geom<'r>(&'r self) -> Rc<Box<Geom:'static>> {
+    pub fn geom<'r>(&'r self) -> Rc<Box<Geom + 'static>> {
         self.geom.clone()
     }
 
@@ -203,7 +203,7 @@ impl RigidBody {
         let props = geom.mass_properties(&density);
 
         RigidBody::new(
-            Rc::new(box geom as Box<Geom:'static>),
+            Rc::new(box geom as Box<Geom + 'static>),
             Some(props),
             restitution,
             friction)
@@ -216,7 +216,7 @@ impl RigidBody {
                       friction:    Scalar)
                       -> RigidBody {
         RigidBody::new(
-            Rc::new(box geom as Box<Geom:'static>),
+            Rc::new(box geom as Box<Geom + 'static>),
             None,
             restitution,
             friction)
@@ -226,7 +226,7 @@ impl RigidBody {
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(geom:            Rc<Box<Geom:'static>>,
+    pub fn new(geom:            Rc<Box<Geom + 'static>>,
                mass_properties: Option<(Scalar, Vect, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)

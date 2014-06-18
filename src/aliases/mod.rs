@@ -9,6 +9,6 @@ use ncollide::bounding_volume::AABB;
 use detection::{BodyBodyDispatcher, BodiesBodies};
 use object::RigidBody;
 
-pub type DefaultBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, Box<GeomGeomCollisionDetector:'static>>;
+pub type DefaultBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, Box<GeomGeomCollisionDetector + 'static>>;
 pub type DefaultCollisionDetector = BodiesBodies<DefaultBroadPhase>;
 // pub type DefaultSweptBallMotionClamping = SweptBallMotionClamping<DefaultBroadPhase>;

@@ -68,7 +68,7 @@ pub fn cross_2d(graphics: &mut GraphicsManager) -> World {
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(&1.0);
-    let cross = Rc::new(box compound as Box<Geom:'static>);
+    let cross = Rc::new(box compound as Box<Geom + 'static>);
 
     /*
      * Create the boxes
