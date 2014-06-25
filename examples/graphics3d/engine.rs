@@ -119,10 +119,6 @@ impl GraphicsManager {
         }
     }
 
-    pub fn init_camera<'a>(&'a mut self, window: &'a mut Window) {
-        window.set_camera(&'a mut self.arc_ball as &'a mut Camera);
-    }
-
     pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
         simulate::simulate(builder)
     }
@@ -346,17 +342,24 @@ impl GraphicsManager {
         }
     }
 
-    pub fn switch_cameras<'a>(&'a mut self, window: &'a mut Window) {
+    pub fn switch_cameras(&mut self) {
         if self.curr_is_arc_ball {
             self.first_person.look_at_z(self.arc_ball.eye(), self.arc_ball.at());
-            window.set_camera(&'a mut self.first_person as &'a mut Camera);
         }
         else {
             self.arc_ball.look_at_z(self.first_person.eye(), self.first_person.at());
-            window.set_camera(&'a mut self.arc_ball as &'a mut Camera);
         }
 
         self.curr_is_arc_ball = !self.curr_is_arc_ball;
+    }
+
+    pub fn camera<'a>(&'a mut self) -> &'a mut Camera {
+        if self.curr_is_arc_ball {
+            &'a mut self.arc_ball as &'a mut Camera
+        }
+        else {
+            &'a mut self.first_person as &'a mut Camera
+        }
     }
 
     pub fn look_at(&mut self, eye: Vec3<f32>, at: Vec3<f32>) {
