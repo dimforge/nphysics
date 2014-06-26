@@ -85,7 +85,7 @@ deps:
 	mkdir -p lib
 	make rsfml -C lib/rust-sfml
 	make deps -C lib/kiss3d
-	make -C lib/kiss3d
+	make kiss3d -C lib/kiss3d
 
 distcheck:
 	rm -rf $(tmp)

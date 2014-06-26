@@ -9,7 +9,7 @@ use nalgebra::na;
 use kiss3d::window::{Window, RenderFrame};
 use kiss3d::light;
 use kiss3d::text::Font;
-use kiss3d::utils::Recorder;
+use kiss3d::camera::ArcBall;
 use ncollide::geom::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
@@ -30,7 +30,6 @@ fn usage(exe_name: &str) {
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
-    println!("    r      - start/stop recording to the files {:s}_{{1,2,3,...}}.mpg.", exe_name);
     println!("    1      - launch a ball.");
     println!("    2      - launch a cube.");
     println!("    3      - launch a fast cube using continuous collision detection.");
@@ -60,8 +59,6 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
     let mut window = Window::new("nphysics: 3d demo");
 
-    let mut recorder   = None;
-    let mut irec       = 1u;
     let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
     let mut draw_colls = false;
     let mut graphics   = GraphicsManager::new();
@@ -221,18 +218,6 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                         frame.window().glfw_window().get_key(glfw::KeyRightControl) != glfw::Release ||
                         frame.window().glfw_window().get_key(glfw::KeyLeftControl)  != glfw::Release;
                 },
-                glfw::KeyEvent(glfw::KeyR, _, glfw::Press, _) => {
-                    if recorder.is_some() {
-                        recorder = None;
-                    }
-                    else {
-                        let rec = Recorder::new(Path::new(format!("{:s}_{}.mpg", *args.get(0), irec)),
-                        frame.window().width()  as uint,
-                        frame.window().height() as uint);
-                        recorder = Some(rec);
-                        irec = irec + 1;
-                    }
-                },
                 glfw::KeyEvent(glfw::KeyTab, _, glfw::Release, _) => graphics.switch_cameras(),
                 glfw::KeyEvent(glfw::KeyT, _, glfw::Release, _) => {
                     if running == Stop {
@@ -338,9 +323,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
             draw_collisions(&mut frame, &mut physics);
         }
 
-        let _ = recorder.as_mut().map(|r| r.snap(frame.window()));
-
-        let color = if recorder.is_none() { Vec3::new(1.0, 1.0, 1.0) } else { Vec3::x() };
+        let color = Vec3::new(1.0, 1.0, 1.0);
 
         if running != Stop {
             let dt    = time::precise_time_s() - before;
@@ -362,7 +345,7 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(frame: &mut RenderFrame, physics: &mut World) {
+fn draw_collisions(frame: &mut RenderFrame<ArcBall>, physics: &mut World) {
     let mut collisions = Vec::new();
 
     physics.interferences(&mut collisions);
