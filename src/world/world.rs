@@ -54,7 +54,7 @@ impl World {
         let dispatcher = BodyBodyDispatcher::new(geom_dispatcher.clone());
 
         // Broad phase
-        let broad_phase = DBVTBroadPhase::new(dispatcher, na::cast(0.08));
+        let broad_phase = DBVTBroadPhase::new(dispatcher, na::cast(0.08f64));
 
         // CCD handler
         // XXX let ccd = SweptBallMotionClamping::new(broad_phase, true);
@@ -63,7 +63,7 @@ impl World {
         let detector = BodiesBodies::new(geom_dispatcher);
 
         // Deactivation
-        let sleep = ActivationManager::new(na::cast(1.0), na::cast(0.01));
+        let sleep = ActivationManager::new(na::cast(1.0f64), na::cast(0.01f64));
 
         // Joints
         let joints = JointManager::new();
@@ -72,10 +72,10 @@ impl World {
          * For constraints resolution
          */
         let solver = AccumulatedImpulseSolver::new(
-            na::cast(0.1),
-            VelocityAndPosition(na::cast(0.2), na::cast(0.2), na::cast(0.08)),
-            na::cast(0.4),
-            na::cast(1.0),
+            na::cast(0.1f64),
+            VelocityAndPosition(na::cast(0.2f64), na::cast(0.2f64), na::cast(0.08f64)),
+            na::cast(0.4f64),
+            na::cast(1.0f64),
             10,
             10);
 

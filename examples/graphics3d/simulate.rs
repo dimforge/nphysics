@@ -61,7 +61,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     let mut window = Window::new("nphysics: 3d demo");
 
     let mut recorder   = None;
-    let mut irec       = 1;
+    let mut irec       = 1u;
     let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
     let mut draw_colls = false;
     let mut graphics   = GraphicsManager::new();

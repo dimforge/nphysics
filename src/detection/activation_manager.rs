@@ -58,7 +58,7 @@ impl ActivationManager {
         let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
             self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
 
-        b.activate(new_energy.min(self.threshold * na::cast(4.0)));
+        b.activate(new_energy.min(self.threshold * na::cast(4.0f64)));
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
@@ -189,7 +189,7 @@ impl ActivationManager {
                         bodies.insert(to_activate.deref() as *RefCell<RigidBody> as uint, to_activate.clone());
                     }
 
-                    b.activate(self.threshold * na::cast(2.0))
+                    b.activate(self.threshold * na::cast(2.0f64))
                 }
             }
 

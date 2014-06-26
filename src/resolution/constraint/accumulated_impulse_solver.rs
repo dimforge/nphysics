@@ -189,11 +189,11 @@ impl AccumulatedImpulseSolver {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * na::cast(0.85);
+            imps[0]  = dv.impulse * na::cast(0.85f64);
 
             for j in range(0u, na::dim::<Vect>() - 1) {
                 let fc = self.friction_constraints.get(i * (na::dim::<Vect>() - 1) + j);
-                imps[1 + j] = fc.impulse * na::cast(0.85);
+                imps[1 + j] = fc.impulse * na::cast(0.85f64);
             }
         }
 
