@@ -53,9 +53,23 @@ bugs:
 examples_deps:
 	make -C examples deps
 
+examples2d_deps:
+	make -C examples deps2d
+
+examples3d_deps:
+	make -C examples deps3d
+
 examples:
 	mkdir -p bin
-	make -C examples
+	make examples -C examples
+
+examples2d:
+	mkdir -p bin
+	make examples2d -C examples
+
+examples3d:
+	mkdir -p bin
+	make examples3d -C examples
 
 distcheck:
 	rm -rf $(tmp)

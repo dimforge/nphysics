@@ -51,7 +51,9 @@ lib_build_opt=rustc -L$(nphysics_lib_path)  \
 					-Llib					\
 					--out-dir lib --opt-level 3
 
-examples:
+examples: examples2d examples3d
+
+examples3d:
 	mkdir -p ../bin
 	$(lib_build_opt) ./graphics3d/graphics3d.rs
 	#$(build_cmd_opt) ./bezier_bezier3d.rs
@@ -65,6 +67,8 @@ examples:
 	$(build_cmd_opt) ./cross3d.rs
 	$(build_cmd_opt) ./pyramid3d.rs
 	$(build_cmd_opt) ./wall3d.rs
+
+examples2d:
 	$(lib_build_opt) ./graphics2d/graphics2d.rs
 	$(build_cmd_opt) ./mesh2d.rs
 	$(build_cmd_opt) ./boxes_vee2d.rs
@@ -81,9 +85,14 @@ bugs:
 	$(build_cmd_opt) ./regression_tests/bug_long_thin_box_one_shot_manifold.rs
 	$(build_cmd_opt) ./regression_tests/bug_optimization_on_patch_boundaries_does_not_converge.rs
 
-deps:
+deps: deps2d deps3d
+
+deps2d:
 	mkdir -p lib
 	make rsfml -C lib/rust-sfml
+
+deps3d:
+	mkdir -p lib
 	make deps -C lib/kiss3d
 	make kiss3d -C lib/kiss3d
 
@@ -95,5 +104,11 @@ distcheck:
 	make -C $(tmp) release
 	rm -rf $(tmp)
 
+# FIXME: not sure if all those are useful.
 .PHONY:doc
 .PHONY:bugs
+.PHONY:deps2d
+.PHONY:deps3d
+.PHONY:examples2d
+.PHONY:examples3d
+.PHONY:examples
