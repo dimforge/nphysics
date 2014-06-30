@@ -160,7 +160,7 @@ impl ActivationManager {
                 let b = &bodies.elements()[i].value;
                 b.borrow_mut().deactivate();
                 broad_phase.deactivate(b);
-                self.to_deactivate.push(b.deref() as *RefCell<RigidBody> as uint);
+                self.to_deactivate.push(b.deref() as *const RefCell<RigidBody> as uint);
             }
         }
 
@@ -186,7 +186,7 @@ impl ActivationManager {
                 }
                 else {
                     if !b.is_active() {
-                        bodies.insert(to_activate.deref() as *RefCell<RigidBody> as uint, to_activate.clone());
+                        bodies.insert(to_activate.deref() as *const RefCell<RigidBody> as uint, to_activate.clone());
                     }
 
                     b.activate(self.threshold * na::cast(2.0f64))

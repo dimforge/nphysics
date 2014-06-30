@@ -118,13 +118,13 @@ impl World {
 
     /// Adds a rigid body to the physics world.
     pub fn add_body(&mut self, b: Rc<RefCell<RigidBody>>) {
-        self.bodies.insert(b.deref() as *RefCell<RigidBody> as uint, b.clone());
+        self.bodies.insert(b.deref() as *const RefCell<RigidBody> as uint, b.clone());
         self.broad_phase.add(b);
     }
 
     /// Remove a rigid body from the physics world.
     pub fn remove_body(&mut self, b: &Rc<RefCell<RigidBody>>) {
-        self.bodies.remove(&(b.deref() as *RefCell<RigidBody> as uint));
+        self.bodies.remove(&(b.deref() as *const RefCell<RigidBody> as uint));
         self.broad_phase.remove(b);
         self.detector.remove(b, &mut self.broad_phase, &mut self.sleep);
         self.joints.remove(b, &mut self.sleep);

@@ -1,6 +1,6 @@
 use std::num::Bounded;
 use nalgebra::na;
-use ncollide::contact::Contact;
+use ncollide::narrow::Contact;
 use ncollide::volumetric::InertiaTensor;
 use ncollide::math::{Scalar, Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;

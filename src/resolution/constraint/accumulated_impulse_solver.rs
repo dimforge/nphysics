@@ -270,8 +270,8 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                 match *cstr {
                     RBRB(ref a, ref b, ref c) => {
                         self.cache.insert(i,
-                                          a.deref() as *RefCell<RigidBody> as uint,
-                                          b.deref() as *RefCell<RigidBody> as uint,
+                                          a.deref() as *const RefCell<RigidBody> as uint,
+                                          b.deref() as *const RefCell<RigidBody> as uint,
                                           (c.world1 + c.world2) / na::cast::<f32, Scalar>(2.0));
                     },
                     BallInSocket(_) => {
