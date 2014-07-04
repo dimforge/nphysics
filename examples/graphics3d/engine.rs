@@ -124,7 +124,7 @@ impl GraphicsManager {
     }
 
     pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
-        let key = body.deref() as *RefCell<RigidBody> as uint;
+        let key = body.deref() as *const RefCell<RigidBody> as uint;
 
         match self.rb2sn.find(&key) {
             Some(sns) => {
@@ -160,7 +160,7 @@ impl GraphicsManager {
             nodes
         };
 
-        self.rb2sn.insert(body.deref() as *RefCell<RigidBody> as uint, nodes);
+        self.rb2sn.insert(body.deref() as *const RefCell<RigidBody> as uint, nodes);
     }
 
     pub fn load_mesh(&mut self, path: &str) -> Vec<(Vec<Vec3<f32>>, Vec<uint>)> {
@@ -368,6 +368,6 @@ impl GraphicsManager {
     }
 
     pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<Node>> {
-        self.rb2sn.find_mut(&(rb.deref() as *RefCell<RigidBody> as uint))
+        self.rb2sn.find_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
     }
 }

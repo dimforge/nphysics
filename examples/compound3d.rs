@@ -21,7 +21,7 @@ use nphysics::object::RigidBody;
 use graphics3d::engine::GraphicsManager;
 
 #[start]
-fn start(argc: int, argv: **u8) -> int {
+fn start(argc: int, argv: *const *const u8) -> int {
     native::start(argc, argv, main)
 }
 
@@ -60,7 +60,8 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(&1.0);
-    let cross    = Rc::new(box compound as Box<Geom + 'static>);
+    let cross    = box compound as Box<Geom + 'static>;
+    let cross    = Rc::new(cross);
 
     /*
      * Create the crosses 
