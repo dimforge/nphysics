@@ -58,9 +58,9 @@ impl ContactIdentifier {
 }
 
 pub struct ImpulseCache {
-    hash_prev:           HashMap<ContactIdentifier, (uint, uint)>,
+    hash_prev:           HashMap<ContactIdentifier, (uint, uint), SipHasher>,
     cache_prev:          Vec<Scalar>,
-    hash_next:           HashMap<ContactIdentifier, (uint, uint)>,
+    hash_next:           HashMap<ContactIdentifier, (uint, uint), SipHasher>,
     cache_next:          Vec<Scalar>,
     step:                Scalar,
     impulse_per_contact: uint
@@ -91,11 +91,11 @@ impl ImpulseCache {
         self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash<'a>(&'a self) -> &'a HashMap<ContactIdentifier, (uint, uint)> {
+    pub fn hash<'a>(&'a self) -> &'a HashMap<ContactIdentifier, (uint, uint), SipHasher> {
         &'a self.hash_next
     }
 
-    pub fn hash_mut<'a>(&'a mut self) -> &'a mut HashMap<ContactIdentifier, (uint, uint)> {
+    pub fn hash_mut<'a>(&'a mut self) -> &'a mut HashMap<ContactIdentifier, (uint, uint), SipHasher> {
         &'a mut self.hash_next
     }
 

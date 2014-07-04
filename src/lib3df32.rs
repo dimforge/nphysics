@@ -97,6 +97,7 @@ The libraries needed to compile the examples are:
 #![warn(non_camel_case_types)]
 #![feature(managed_boxes)]
 #![feature(globs)]
+#![feature(default_type_params)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
 extern crate std;
