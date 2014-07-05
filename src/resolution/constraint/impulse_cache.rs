@@ -92,11 +92,11 @@ impl ImpulseCache {
     }
 
     pub fn hash<'a>(&'a self) -> &'a HashMap<ContactIdentifier, (uint, uint), SipHasher> {
-        &'a self.hash_next
+        &self.hash_next
     }
 
     pub fn hash_mut<'a>(&'a mut self) -> &'a mut HashMap<ContactIdentifier, (uint, uint), SipHasher> {
-        &'a mut self.hash_next
+        &mut self.hash_next
     }
 
     pub fn push_impulsions<'a>(&'a mut self) -> &'a mut [Scalar] {

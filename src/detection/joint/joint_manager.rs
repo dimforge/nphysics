@@ -29,7 +29,7 @@ impl JointManager {
     /// Joints handled by this manager.
     #[inline]
     pub fn joints<'a>(&'a self) -> &'a HashMap<uint, Constraint, UintTWHash> {
-        &'a self.joints
+        &self.joints
     }
 
     /// List of joints attached to a specific body.

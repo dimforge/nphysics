@@ -118,7 +118,7 @@ impl RigidBody {
     /// Gets a reference to this body's transform.
     #[inline]
     pub fn transform_ref<'r>(&'r self) -> &'r Matrix {
-        &'r self.local_to_world
+        &self.local_to_world
     }
 
     /// Gets a reference to this body's geometry.
@@ -150,7 +150,7 @@ impl RigidBody {
     /// Gets a reference to this body's center of mass.
     #[inline]
     pub fn center_of_mass<'r>(&'r self) -> &'r Vect {
-        &'r self.center_of_mass
+        &self.center_of_mass
     }
 
     /// Gets this body's restitution coefficent.
@@ -184,7 +184,7 @@ impl RigidBody {
     #[doc(hidden)]
     #[inline]
     pub fn activation_state<'a>(&'a self) -> &'a ActivationState {
-        &'a self.activation_state
+        &self.activation_state
     }
 
     #[doc(hidden)]
@@ -351,7 +351,7 @@ impl RigidBody {
     /// Gets the inverse inertia tensor of this rigid body.
     #[inline]
     pub fn inv_inertia<'r>(&'r self) -> &'r AngularInertia {
-        &'r self.inv_inertia
+        &self.inv_inertia
     }
 
     /// Sets the inverse inertia tensor of this rigid body.

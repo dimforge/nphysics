@@ -58,10 +58,10 @@ impl Ball {
     }
 
     pub fn object<'r>(&'r self) -> &'r SceneNode {
-        &'r self.gfx
+        &self.gfx
     }
 
     pub fn object_mut<'r>(&'r mut self) -> &'r mut SceneNode {
-        &'r mut self.gfx
+        &mut self.gfx
     }
 }

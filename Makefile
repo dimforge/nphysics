@@ -36,7 +36,10 @@ all:
 
 deps:
 	make deps -C ncollide
-	make -C ncollide
+	make 3df32 -C ncollide
+	make 3df64 -C ncollide
+	make 2df32 -C ncollide
+	make 2df64 -C ncollide
 
 bench:
 	mkdir -p $(ncollide_lib_path)

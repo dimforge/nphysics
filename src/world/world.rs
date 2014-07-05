@@ -133,22 +133,22 @@ impl World {
 
     /// Gets a mutable reference to the force generator.
     pub fn forces_generator<'a>(&'a mut self) -> &'a mut BodyForceGenerator {
-        &'a mut self.forces
+        &mut self.forces
     }
 
     /// Gets a mutable reference to the position and orientation integrator.
     pub fn integrator<'a>(&'a mut self) -> &'a mut BodySmpEulerIntegrator {
-        &'a mut self.integrator
+        &mut self.integrator
     }
 
     /// Gets a mutable reference to the collision detector.
     pub fn collision_detector<'a>(&'a mut self) -> &'a mut BodiesBodies<WorldBroadPhase> {
-        &'a mut self.detector
+        &mut self.detector
     }
 
     /// Gets a mutable reference to the broad phase.
     pub fn broad_phase<'a>(&'a mut self) -> &'a mut WorldBroadPhase {
-        &'a mut self.broad_phase
+        &mut self.broad_phase
     }
 
     // pub fn ccd_manager<'a>(&'a mut self) -> &'a mut SweptBallMotionClamping<WorldBroadPhase> {
@@ -157,12 +157,12 @@ impl World {
 
     /// Gets a mutable reference to the joint manager.
     pub fn joint_manager<'a>(&'a mut self) -> &'a mut JointManager {
-        &'a mut self.joints
+        &mut self.joints
     }
 
     /// Gets a mutable reference to the constraint solver.
     pub fn constraints_solver<'a>(&'a mut self) -> &'a mut AccumulatedImpulseSolver {
-        &'a mut self.solver
+        &mut self.solver
     }
 
     /// Sets the linear acceleration afecting every dynamic rigid body.

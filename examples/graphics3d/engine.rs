@@ -355,10 +355,10 @@ impl GraphicsManager {
 
     pub fn camera<'a>(&'a mut self) -> &'a mut Camera {
         if self.curr_is_arc_ball {
-            &'a mut self.arc_ball as &'a mut Camera
+            &mut self.arc_ball as &'a mut Camera
         }
         else {
-            &'a mut self.first_person as &'a mut Camera
+            &mut self.first_person as &'a mut Camera
         }
     }
 
