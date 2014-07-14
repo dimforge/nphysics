@@ -1,9 +1,0 @@
-[submodule "ncollide"]
-	path = ncollide
-	url = git://github.com/sebcrozet/ncollide
-[submodule "examples/lib/rust-sfml"]
-	path = examples/lib/rust-sfml
-	url = git://github.com/sebcrozet/rust-sfml.git
-[submodule "examples/lib/kiss3d"]
-	path = examples/lib/kiss3d
-	url = git://github.com/sebcrozet/kiss3d.git
