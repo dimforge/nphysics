@@ -326,9 +326,9 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
         let color = Vec3::new(1.0, 1.0, 1.0);
 
         if running != Stop {
-            let dt    = time::precise_time_s() - before;
+            let dt = time::precise_time_s() - before;
 
-            frame.draw_text(dt.to_str().as_slice(), &na::zero(), &font, &color);
+            frame.draw_text(dt.to_string().as_slice(), &na::zero(), &font, &color);
         }
         else {
             frame.draw_text("Paused", &na::zero(), &font, &color);

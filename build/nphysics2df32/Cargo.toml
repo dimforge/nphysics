@@ -14,7 +14,6 @@ git     = "https://github.com/sebcrozet/ncollide"
 
 [dependencies.nalgebra]
 version = "0.1.0"
-path    = "../../nalgebra"
 git     = "https://github.com/sebcrozet/nalgebra"
 
 [dependencies.ncollide2df32]

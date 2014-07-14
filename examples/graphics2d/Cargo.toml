@@ -1,0 +1,16 @@
+[package]
+name    = "graphics2d"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[[lib]]
+name       = "graphics2d"
+crate_type = [ "dylib", "rlib" ]
+
+[dependencies.nphysics2df32]
+version = "0.1.0"
+path    = "../../build/nphysics2df32"
+
+[dependencies.rust-sfml]
+version = "0.9.0"
+git     = "https://github.com/sebcrozet/rust-sfml"

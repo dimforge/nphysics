@@ -1,0 +1,16 @@
+[package]
+name    = "graphics3d"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[[lib]]
+name       = "graphics3d"
+crate_type = [ "dylib", "rlib" ]
+
+[dependencies.nphysics3df32]
+version = "0.1.0"
+path    = "../../build/nphysics3df32"
+
+[dependencies.kiss3d]
+version = "0.1.0"
+git     = "https://github.com/sebcrozet/kiss3d"
