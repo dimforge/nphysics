@@ -86,8 +86,6 @@ The libraries needed to compile the examples are:
 * [rust-sfml](https://github.com/JeremyLetang/rust-sfml): the 2d graphics engine.
 */
 
-#![crate_id = "nphysics3df64#0.1"]
-#![crate_type = "lib"]
 #![deny(non_camel_case_types)]
 #![deny(unnecessary_parens)]
 #![deny(non_uppercase_statics)]
@@ -99,7 +97,10 @@ The libraries needed to compile the examples are:
 #![feature(managed_boxes)]
 #![feature(globs)]
 #![feature(default_type_params)]
+#![feature(phase)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
+
+#[phase(plugin)] extern crate dim3;
 
 extern crate std;
 extern crate rand;

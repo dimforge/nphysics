@@ -1,0 +1,22 @@
+[package]
+name    = "nphysics3df64"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[[lib]]
+name       = "nphysics3df64"
+crate_type = [ "dylib", "rlib" ]
+path       = "../../src/lib3df64.rs"
+
+[dependencies.dim3]
+version = "1.0.0"
+git     = "https://github.com/sebcrozet/ncollide"
+
+[dependencies.nalgebra]
+version = "0.1.0"
+path    = "../../nalgebra"
+git     = "https://github.com/sebcrozet/nalgebra"
+
+[dependencies.ncollide3df64]
+version = "0.1.0"
+git     = "https://github.com/sebcrozet/ncollide"

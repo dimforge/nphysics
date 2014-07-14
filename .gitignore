@@ -3,6 +3,7 @@
 *.html
 *.so
 *.dSYM
+target
 lib
 examples/lib
 examples/bin

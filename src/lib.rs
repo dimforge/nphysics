@@ -91,33 +91,35 @@ The libraries needed to compile the examples are:
 #![deny(unnecessary_qualification)]
 #![deny(missing_doc)]
 #![deny(unused_result)]
+#![warn(unused_imports)]
 #![deny(unnecessary_typecast)]
-#![warn(non_camel_case_types)]
+#![feature(macro_rules)]
 #![feature(managed_boxes)]
+#![feature(unsafe_destructor)]
 #![feature(globs)]
-#![feature(default_type_params)]
-#![feature(phase)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
-#[phase(plugin)] extern crate dim3;
+extern crate nphysics2df32;
+extern crate nphysics3df32;
+extern crate nphysics2df64;
+extern crate nphysics3df64;
 
-extern crate std;
-extern crate rand;
-extern crate serialize;
-extern crate collections;
-extern crate nalgebra;
-extern crate ncollide = "ncollide3df32";
-#[cfg(test)]
-extern crate test;
+mod f32 {
+    mod d2 {
+        pub use nphysics2df32::*;
+    }
 
-pub mod aliases;
+    mod d3 {
+        pub use nphysics3df32::*;
+    }
+}
 
-pub mod integration;
-pub mod detection;
-pub mod resolution;
+mod f64 {
+    mod d2 {
+        pub use nphysics2df64::*;
+    }
 
-pub mod world;
-
-pub mod object;
-
-pub mod utils;
+    mod d3 {
+        pub use nphysics3df64::*;
+    }
+}

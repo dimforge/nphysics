@@ -6,7 +6,7 @@ use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
 use std::collections::HashMap;
 use nalgebra::na;
-use nalgebra::na::{Iterable, IterableMut};
+use nalgebra::na::{Iterable, IterableMut, Vec2, Vec3};
 use ncollide::math::{Scalar, Vect};
 
 #[deriving(PartialEq)]
@@ -19,25 +19,50 @@ pub struct ContactIdentifier {
 
 impl Eq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
 
-impl Hash for ContactIdentifier {
-    #[inline]
-    #[cfg(f32)]
-    fn hash(&self, state: &mut SipState) {
-        for e in self.ccenter.iter() {
-            unsafe { // FIXME: could we do this without going unsafe?
-                let _ = state.write(mem::transmute::<f32, [u8, ..4]>(*e));
-            }
+trait AsBytes {
+    fn as_bytes<'a>(&'a self) -> &'a [u8];
+}
+
+impl AsBytes for Vec3<f32> {
+    #[inline(always)]
+    fn as_bytes<'a>(&'a self) -> &'a [u8] {
+        unsafe {
+            mem::transmute::<&'a Vec3<f32>, &'a [u8, ..12]>(self).as_slice()
         }
     }
+}
 
-    #[inline]
-    #[cfg(f64)]
-    fn hash(&self, state: &mut SipState) {
-        for e in self.ccenter.iter() {
-            unsafe { // FIXME: could we do this without going unsafe?
-                let _ = state.write(mem::transmute::<f64, [u8, ..8]>(*e));
-            }
+impl AsBytes for Vec3<f64> {
+    #[inline(always)]
+    fn as_bytes<'a>(&'a self) -> &'a [u8] {
+        unsafe {
+            mem::transmute::<&'a Vec3<f64>, &'a [u8, ..24]>(self).as_slice()
         }
+    }
+}
+
+impl AsBytes for Vec2<f32> {
+    #[inline(always)]
+    fn as_bytes<'a>(&'a self) -> &'a [u8] {
+        unsafe {
+            mem::transmute::<&'a Vec2<f32>, &'a [u8, ..8]>(self).as_slice()
+        }
+    }
+}
+
+impl AsBytes for Vec2<f64> {
+    #[inline(always)]
+    fn as_bytes<'a>(&'a self) -> &'a [u8] {
+        unsafe {
+            mem::transmute::<&'a Vec2<f64>, &'a [u8, ..16]>(self).as_slice()
+        }
+    }
+}
+
+impl Hash for ContactIdentifier {
+    #[inline]
+    fn hash(&self, state: &mut SipState) {
+        state.write(self.ccenter.as_bytes())
     }
 }
 
