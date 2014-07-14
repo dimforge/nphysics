@@ -2,6 +2,8 @@ env:
   global:
     - secure: bfjbY6f6Mf69oAzin8TvBC2GuCJk0ba3cssHh6R4Np8a9Ni57hOqC9MnXWZQFKuBIFPumHRSIAcwfFECWQ+LtVVyHP1XEw0CigXhddrRRnK8S8z3IMICwc/51pTvGX2vjGvcAbyVkhoh17oXiQZp1Pbktb5mSjeVC2FXZAEOINw=
 language: c
+before_install:
+  - yes | sudo add-apt-repository ppa:cmrx64/cargo
 install:
   - curl -O http://static.rust-lang.org/dist/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
   - tar xfz rust-nightly-x86_64-unknown-linux-gnu.tar.gz
@@ -10,6 +12,8 @@ install:
   - sudo apt-get install libsfml-dev
   - sudo apt-get install libjpeg62
 script:
+  - sudo apt-get update
+  - sudo apt-get install cargo
   - rustc --version
   - git clone https://github.com/glfw/glfw.git
   - cd glfw
@@ -24,15 +28,7 @@ script:
   - wget http://www.sfml-dev.org/download/csfml/CSFML-2.1-linux-gcc-64bits.tar.bz2
   - tar xf CSFML-2.1-linux-gcc-64bits.tar.bz2
   - sudo cp -r CSFML-2.1/lib/* /usr/local/lib/.
-  - git submodule init
-  - git submodule update
-  - git submodule foreach --recursive git submodule init
-  - git submodule foreach --recursive git submodule update
-  - make deps
   - make
-  - make examples_deps
   - make examples
-  - make bugs
-  - make doc
 after_script:
   - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
