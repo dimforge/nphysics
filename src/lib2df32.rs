@@ -28,26 +28,15 @@ writing bindings and has several advantages:
   exhibiting its _rusty_ sexyness.
 
 ## Compilation
-You will need the last rust compiler from the master branch.
-If you encounter problems, make sure you have the last version before creating an issue.
+You will need the last nightly build of the [rust compiler](http://www.rust-lang.org)
+and the official package manager: [cargo](https://github.com/rust-lang/cargo).
 
-The simplest way to build **nphysics** and all its dependencies is to do a
-recursive clone:
+Simply add the following to your `Cargo.toml` file:
 
-
-    git clone --recursive git://github.com/sebcrozet/nphysics.git
-    cd nphysics
-    make deps
-    make
-
-To build the examples to the `bin` folder:
-
-
-    make examples_deps
-    make examples
-
-
-Use `./your_favorite_example_here --help` to see all the cool stuffs you can do.
+```
+[dependencies.nphysics2df32]
+git = "https://github.com/sebcrozet/nphysics"
+```
 
 ## Features
 - static and dynamic rigid bodies

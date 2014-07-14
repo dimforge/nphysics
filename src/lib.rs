@@ -28,26 +28,27 @@ writing bindings and has several advantages:
   exhibiting its _rusty_ sexyness.
 
 ## Compilation
-You will need the last rust compiler from the master branch.
-If you encounter problems, make sure you have the last version before creating an issue.
+You will need the last nightly build of the [rust compiler](http://www.rust-lang.org)
+and the official package manager: [cargo](https://github.com/rust-lang/cargo).
 
-The simplest way to build **nphysics** and all its dependencies is to do a
-recursive clone:
+Simply add the following to your `Cargo.toml` file if you want the 3d version
+of nphysics, using 32-bits foalting point numbers:
 
+```
+[dependencies.nphysics3df32]
+git = "https://github.com/sebcrozet/nphysics"
+```
 
-    git clone --recursive git://github.com/sebcrozet/nphysics.git
-    cd nphysics
-    make deps
-    make
+Depending on the accuracy or the dimension that you need, `nphysics3df32` may
+be replaced by:
 
-To build the examples to the `bin` folder:
+* `nphysics2df32` − for 2d collision detection and 32 bits precision.
+* `nphysics3df32` − for 3d collision detection and 32 bits precision.
+* `nphysics2df64` − for 2d collision detection and 64 bits precision.
+* `nphysics3df64` − for 3d collision detection and 64 bits precision.
 
-
-    make examples_deps
-    make examples
-
-
-Use `./your_favorite_example_here --help` to see all the cool stuffs you can do.
+Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
+to see all the cool stuffs you can do.
 
 ## Features
 - static and dynamic rigid bodies
