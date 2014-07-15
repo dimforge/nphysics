@@ -90,3 +90,11 @@ path = "./wall2d.rs"
 [[bin]]
 name = "wall3d"
 path = "./wall3d.rs"
+
+[[bin]]
+name = "gravity2d"
+path = "./gravity2d.rs"
+
+[[bin]]
+name = "gravity3d"
+path = "./gravity3d.rs"

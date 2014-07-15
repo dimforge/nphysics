@@ -42,6 +42,18 @@ impl<'a> GraphicsManager<'a> {
         simulate::simulate(builder)
     }
 
+    pub fn add_with_color(&mut self, body: Rc<RefCell<RigidBody>>, color: Vec3<f32>) {
+        let color = Vec3::new(
+            (color.x * 255.0) as u8,
+            (color.y * 255.0) as u8,
+            (color.z * 255.0) as u8
+        );
+
+        self.set_color_for_object(&body, color);
+
+        self.add(body)
+    }
+
     pub fn add(&mut self, body: Rc<RefCell<RigidBody>>) {
 
         let nodes = {
@@ -164,6 +176,10 @@ impl<'a> GraphicsManager<'a> {
         c.activate_ui(rw);
     }
 
+    fn set_color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>, color: Vec3<u8>) {
+        let key = body.deref() as *const RefCell<RigidBody> as uint;
+        self.obj2color.insert(key, color);
+    }
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<u8> {
         let key = body.deref() as *const RefCell<RigidBody> as uint;

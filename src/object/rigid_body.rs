@@ -60,7 +60,9 @@ pub struct RigidBody {
     restitution:          Scalar,
     friction:             Scalar,
     index:                int,
-    activation_state:     ActivationState
+    activation_state:     ActivationState,
+    lin_acc_scale:        Vect,       // FIXME: find a better way of doing that.
+    ang_acc_scale:        Orientation // FIXME: find a better way of doing that.
 }
 
 impl Clone for RigidBody {
@@ -81,7 +83,9 @@ impl Clone for RigidBody {
             restitution:       self.restitution.clone(),
             friction:          self.friction.clone(),
             index:             self.index.clone(),
-            activation_state:  self.activation_state.clone()
+            activation_state:  self.activation_state.clone(),
+            lin_acc_scale:     self.lin_acc_scale.clone(),
+            ang_acc_scale:     self.ang_acc_scale.clone(),
         }
     }
 }
@@ -239,9 +243,12 @@ impl RigidBody {
                         fail!("A dynamic body must not have a zero volume.")
                     }
 
-                    let ii: AngularInertia =
-                          na::inv(&inertia)
-                          .expect("A dynamic body must not have a singular inertia tensor.");
+                    let ii: AngularInertia;
+                    
+                    match na::inv(&inertia) {
+                        Some(i) => ii = i,
+                        None    => ii = na::zero()
+                    }
 
                     let _1: Scalar = na::one();
 
@@ -266,7 +273,9 @@ impl RigidBody {
                 friction:             friction,
                 restitution:          restitution,
                 index:                0,
-                activation_state:     active
+                activation_state:     active,
+                lin_acc_scale:        na::one(),
+                ang_acc_scale:        na::one()
             };
 
         res.update_center_of_mass();
@@ -284,6 +293,30 @@ impl RigidBody {
         }
     }
 
+    /// Gets the linear acceleraction scale of this rigid body.
+    #[inline]
+    pub fn lin_acc_scale(&self) -> Vect {
+        self.lin_acc_scale.clone()
+    }
+
+    /// Sets the linear acceleration scale of this rigid body.
+    #[inline]
+    pub fn set_lin_acc_scale(&mut self, scale: Vect) {
+        self.lin_acc_scale = scale
+    }
+
+    /// Gets the angular acceleration scale of this rigid body.
+    #[inange]
+    pub fn ang_acc_scale(&self) -> Orientation {
+        self.ang_acc_scale.clone()
+    }
+
+    /// Sets the angular acceleration scale of this rigid body.
+    #[inange]
+    pub fn set_ang_acc_scale(&mut self, scale: Orientation) {
+        self.ang_acc_scale = scale
+    }
+
     /// Get the linear velocity of this rigid body.
     #[inline]
     pub fn lin_vel(&self) -> Vect {
@@ -299,7 +332,7 @@ impl RigidBody {
     /// Gets the linear acceleration of this rigid body.
     #[inline]
     pub fn lin_acc(&self) -> Vect {
-        self.lin_acc.clone()
+        self.lin_acc
     }
 
     /// Sets the linear acceleration of this rigid body.
@@ -307,7 +340,7 @@ impl RigidBody {
     /// Note that this might be reset by the physics engine automatically.
     #[inline]
     pub fn set_lin_acc(&mut self, lf: Vect) {
-        self.lin_acc = lf
+        self.lin_acc = lf * self.lin_acc_scale
     }
 
     /// Gets the angular velocity of this rigid body.
@@ -333,7 +366,7 @@ impl RigidBody {
     /// Note that this might be reset by the physics engine automatically.
     #[inline]
     pub fn set_ang_acc(&mut self, af: Orientation) {
-        self.ang_acc = af
+        self.ang_acc = af * self.ang_acc_scale
     }
 
     /// Gets the inverse mass of this rigid body.
