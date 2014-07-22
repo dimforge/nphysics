@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [[lib]]
-name       = "nphysics3df32"
-crate_type = [ "dylib", "rlib" ]
-path       = "../../src/lib3df32.rs"
+name = "nphysics3df32"
+path = "../../src/lib3df32.rs"
 
 [dependencies.dim3]
 version = "1.0.0"

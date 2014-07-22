@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [[lib]]
-name       = "nphysics2df64"
-crate_type = [ "dylib", "rlib" ]
-path       = "../../src/lib2df64.rs"
+name = "nphysics2df64"
+path = "../../src/lib2df64.rs"
 
 [dependencies.dim2]
 version = "1.0.0"
