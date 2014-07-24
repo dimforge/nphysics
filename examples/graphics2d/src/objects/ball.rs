@@ -19,7 +19,7 @@ impl<'a> Ball<'a> {
     pub fn new(body:   Rc<RefCell<RigidBody>>,
                delta:  Iso2<f32>,
                radius: f32,
-               color:  Vec3<u8>) -> Ball {
+               color:  Vec3<u8>) -> Ball<'a> {
         let dradius = radius as f32 * DRAW_SCALE;
 
         let mut res = Ball {

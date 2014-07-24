@@ -26,6 +26,9 @@ doc:
 	rustdoc src/lib2df32.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path) --cfg dim2 --cfg f32
 	rustdoc src/lib2df64.rs -L$(nalgebra_lib_path) -L$(ncollide_lib_path) --cfg dim2 --cfg f64
 
+clean:
+	cargo clean
+
 .PHONY:doc
 # FIXME: uggly!
 .PHONY:examples

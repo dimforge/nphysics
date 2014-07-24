@@ -16,6 +16,7 @@ use ncollide::geom;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use objects::bezier_surface::BezierSurface;
+use objects::parametric_surface::ParametricSurface;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -31,67 +32,73 @@ pub enum Node {
     ConeNode(Cone),
     MeshNode(Mesh),
     PlaneNode(Plane),
-    BezierSurfaceNode(BezierSurface)
+    BezierSurfaceNode(BezierSurface),
+    ParametricSurfaceNode(ParametricSurface)
 }
 
 impl Node {
     pub fn select(&mut self) {
         match *self {
-            PlaneNode(ref mut n)         => n.select(),
-            BallNode(ref mut n)          => n.select(),
-            BoxNode(ref mut n)           => n.select(),
-            CylinderNode(ref mut n)      => n.select(),
-            ConeNode(ref mut n)          => n.select(),
-            MeshNode(ref mut n)          => n.select(),
-            BezierSurfaceNode(ref mut n) => n.select()
+            PlaneNode(ref mut n)             => n.select(),
+            BallNode(ref mut n)              => n.select(),
+            BoxNode(ref mut n)               => n.select(),
+            CylinderNode(ref mut n)          => n.select(),
+            ConeNode(ref mut n)              => n.select(),
+            MeshNode(ref mut n)              => n.select(),
+            BezierSurfaceNode(ref mut n)     => n.select(),
+            ParametricSurfaceNode(ref mut n) => n.select()
         }
     }
 
     pub fn unselect(&mut self) {
         match *self {
-            PlaneNode(ref mut n)         => n.unselect(),
-            BallNode(ref mut n)          => n.unselect(),
-            BoxNode(ref mut n)           => n.unselect(),
-            CylinderNode(ref mut n)      => n.unselect(),
-            ConeNode(ref mut n)          => n.unselect(),
-            MeshNode(ref mut n)          => n.unselect(),
-            BezierSurfaceNode(ref mut n) => n.unselect()
+            PlaneNode(ref mut n)             => n.unselect(),
+            BallNode(ref mut n)              => n.unselect(),
+            BoxNode(ref mut n)               => n.unselect(),
+            CylinderNode(ref mut n)          => n.unselect(),
+            ConeNode(ref mut n)              => n.unselect(),
+            MeshNode(ref mut n)              => n.unselect(),
+            BezierSurfaceNode(ref mut n)     => n.unselect(),
+            ParametricSurfaceNode(ref mut n) => n.unselect()
         }
     }
 
     pub fn update(&mut self) {
         match *self {
-            PlaneNode(ref mut n)         => n.update(),
-            BallNode(ref mut n)          => n.update(),
-            BoxNode(ref mut n)           => n.update(),
-            CylinderNode(ref mut n)      => n.update(),
-            ConeNode(ref mut n)          => n.update(),
-            MeshNode(ref mut n)          => n.update(),
-            BezierSurfaceNode(ref mut n) => n.update()
+            PlaneNode(ref mut n)             => n.update(),
+            BallNode(ref mut n)              => n.update(),
+            BoxNode(ref mut n)               => n.update(),
+            CylinderNode(ref mut n)          => n.update(),
+            ConeNode(ref mut n)              => n.update(),
+            MeshNode(ref mut n)              => n.update(),
+            BezierSurfaceNode(ref mut n)     => n.update(),
+            ParametricSurfaceNode(ref mut n) => n.update()
         }
     }
 
     pub fn object<'r>(&'r self) -> &'r SceneNode {
         match *self {
-            PlaneNode(ref n)         => n.object(),
-            BallNode(ref n)          => n.object(),
-            BoxNode(ref n)           => n.object(),
-            CylinderNode(ref n)      => n.object(),
-            ConeNode(ref n)          => n.object(),
-            MeshNode(ref n)          => n.object(),
-            BezierSurfaceNode(ref n) => n.object()
+            PlaneNode(ref n)             => n.object(),
+            BallNode(ref n)              => n.object(),
+            BoxNode(ref n)               => n.object(),
+            CylinderNode(ref n)          => n.object(),
+            ConeNode(ref n)              => n.object(),
+            MeshNode(ref n)              => n.object(),
+            BezierSurfaceNode(ref n)     => n.object(),
+            ParametricSurfaceNode(ref n) => n.object()
         }
     }
 
     pub fn object_mut<'r>(&'r mut self) -> &'r mut SceneNode {
         match *self {
-            PlaneNode(ref mut n)         => n.object_mut(),
-            BallNode(ref mut n)          => n.object_mut(),
-            BoxNode(ref mut n)           => n.object_mut(),
-            CylinderNode(ref mut n)      => n.object_mut(),
-            ConeNode(ref mut n)          => n.object_mut(),
-            MeshNode(ref mut n)          => n.object_mut(),
-            BezierSurfaceNode(ref mut n) => n.object_mut()
+            PlaneNode(ref mut n)             => n.object_mut(),
+            BallNode(ref mut n)              => n.object_mut(),
+            BoxNode(ref mut n)               => n.object_mut(),
+            CylinderNode(ref mut n)          => n.object_mut(),
+            ConeNode(ref mut n)              => n.object_mut(),
+            MeshNode(ref mut n)              => n.object_mut(),
+            BezierSurfaceNode(ref mut n)     => n.object_mut(),
+            ParametricSurfaceNode(ref mut n) => n.object_mut()
         }
     }
 }
@@ -205,6 +212,7 @@ impl GraphicsManager {
         type Cm = geom::Compound;
         type Tm = geom::Mesh;
         type Bs = geom::BezierSurface;
+        type Ps = geom::SpacializedParametricSurface;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -224,6 +232,9 @@ impl GraphicsManager {
         }
         else if id == TypeId::of::<Bs>() {
             self.add_bezier_surface(window, body, delta, geom.as_ref::<Bs>().unwrap(), color, out)
+        }
+        else if id == TypeId::of::<Ps>() {
+            self.add_parametric_surface(window, body, delta, geom.as_ref::<Ps>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cm>() {
             let c = geom.as_ref::<Cm>().unwrap();
@@ -281,6 +292,16 @@ impl GraphicsManager {
                 color:  Vec3<f32>,
                 out:    &mut Vec<Node>) {
         out.push(BezierSurfaceNode(BezierSurface::new(body, delta, geom.control_points(), geom.nupoints(), geom.nvpoints(), color, window)))
+    }
+
+    fn add_parametric_surface(&mut self,
+                              window: &mut Window,
+                              body:   Rc<RefCell<RigidBody>>,
+                              delta:  Iso3<f32>,
+                              geom:   &geom::SpacializedParametricSurface,
+                              color:  Vec3<f32>,
+                              out:    &mut Vec<Node>) {
+        out.push(ParametricSurfaceNode(ParametricSurface::new(body, delta, geom, color, window)))
     }
 
 

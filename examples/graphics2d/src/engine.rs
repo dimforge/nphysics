@@ -30,7 +30,7 @@ pub struct GraphicsManager<'a> {
 }
 
 impl<'a> GraphicsManager<'a> {
-    pub fn new() -> GraphicsManager {
+    pub fn new() -> GraphicsManager<'a> {
         GraphicsManager {
             rand:      SeedableRng::from_seed([0, 1, 2, 3]),
             rb2sn:     HashMap::new(),

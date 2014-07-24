@@ -20,7 +20,7 @@ impl<'a> Box<'a> {
                delta: Iso2<f32>,
                rx:    f32,
                ry:    f32,
-               color: Vec3<u8>) -> Box {
+               color: Vec3<u8>) -> Box<'a> {
         let mut res = Box {
             color: color,
             delta: delta,
