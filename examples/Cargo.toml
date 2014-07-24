@@ -98,3 +98,7 @@ path = "./gravity2d.rs"
 [[bin]]
 name = "gravity3d"
 path = "./gravity3d.rs"
+
+[[bin]]
+name = "issue_11"
+path = "./regression_tests/issue_11.rs"

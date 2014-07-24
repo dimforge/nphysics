@@ -61,6 +61,7 @@ pub struct RigidBody {
     friction:             Scalar,
     index:                int,
     activation_state:     ActivationState,
+    sleep_threshold:      Option<Scalar>,
     lin_acc_scale:        Vect,       // FIXME: find a better way of doing that.
     ang_acc_scale:        Orientation // FIXME: find a better way of doing that.
 }
@@ -84,6 +85,7 @@ impl Clone for RigidBody {
             friction:          self.friction.clone(),
             index:             self.index.clone(),
             activation_state:  self.activation_state.clone(),
+            sleep_threshold:   self.sleep_threshold.clone(),
             lin_acc_scale:     self.lin_acc_scale.clone(),
             ang_acc_scale:     self.ang_acc_scale.clone(),
         }
@@ -185,6 +187,26 @@ impl RigidBody {
         self.activation_state != Inactive
     }
 
+    /// The velocity threshold bellow whith the rigid body might be deactivated.
+    ///
+    /// If None, the object cannot be deactivated.
+    /// If the total squared velocity (i-e: v^2 + w^2) falls bellow this threshold for a long
+    /// enough time, the rigid body will fall asleep (i-e be "forzen") for performance reasons.
+    #[inline]
+    pub fn deactivation_threshold(&self) -> Option<Scalar> {
+        self.sleep_threshold.clone()
+    }
+
+    /// Set the velocity threshold bellow whith the rigid body might be deactivated.
+    ///
+    /// If None, the object cannot be deactivated.
+    /// If the total squared velocity (i-e: v^2 + w^2) falls bellow this threshold for a long
+    /// enough time, the rigid body will fall asleep (i-e be "forzen") for performance reasons.
+    #[inline]
+    pub fn set_deactivation_threshold(&mut self, threshold: Option<Scalar>) {
+        self.sleep_threshold = threshold
+    }
+
     #[doc(hidden)]
     #[inline]
     pub fn activation_state<'a>(&'a self) -> &'a ActivationState {
@@ -274,6 +296,7 @@ impl RigidBody {
                 restitution:          restitution,
                 index:                0,
                 activation_state:     active,
+                sleep_threshold:      Some(na::one()),
                 lin_acc_scale:        na::one(),
                 ang_acc_scale:        na::one()
             };
@@ -306,13 +329,13 @@ impl RigidBody {
     }
 
     /// Gets the angular acceleration scale of this rigid body.
-    #[inange]
+    #[inline]
     pub fn ang_acc_scale(&self) -> Orientation {
         self.ang_acc_scale.clone()
     }
 
     /// Sets the angular acceleration scale of this rigid body.
-    #[inange]
+    #[inline]
     pub fn set_ang_acc_scale(&mut self, scale: Orientation) {
         self.ang_acc_scale = scale
     }

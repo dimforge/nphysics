@@ -63,7 +63,7 @@ impl World {
         let detector = BodiesBodies::new(geom_dispatcher);
 
         // Deactivation
-        let sleep = ActivationManager::new(na::cast(1.0f64), na::cast(0.01f64));
+        let sleep = ActivationManager::new(na::cast(0.01f64));
 
         // Joints
         let joints = JointManager::new();

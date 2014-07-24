@@ -16,7 +16,6 @@ use utils::union_find;
 ///
 /// It is responsible for making objects sleep or wake up.
 pub struct ActivationManager {
-    threshold:      Scalar,
     mix_factor:     Scalar,
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
@@ -30,12 +29,10 @@ impl ActivationManager {
     /// # Arguments:
     /// * `thresold`   - the minimum energy required to keep an object awake.
     /// * `mix_factor` - the ratio of energy to keep between two frames.
-    pub fn new(threshold:  Scalar, mix_factor: Scalar) -> ActivationManager {
-        assert!(mix_factor >= na::zero() && threshold <= na::one(),
-                "The energy mixing factor must be between 0.0 and 1.0.");
+    pub fn new(mix_factor: Scalar) -> ActivationManager {
+        assert!(mix_factor >= na::zero(), "The energy mixing factor must be between 0.0 and 1.0.");
 
         ActivationManager {
-            threshold:      threshold,
             mix_factor:     mix_factor,
             ufind:          Vec::new(),
             can_deactivate: Vec::new(),
@@ -53,12 +50,17 @@ impl ActivationManager {
     }
 
     fn update_energy(&self, b: &mut RigidBody) {
-        // FIXME: take the time in account (to make a true RWA)
-        let _1         = na::one::<Scalar>();
-        let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
-            self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
+        match b.deactivation_threshold() {
+            Some(threshold) => {
+                // FIXME: take the time in account (to make a true RWA)
+                let _1         = na::one::<Scalar>();
+                let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
+                    self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
 
-        b.activate(new_energy.min(self.threshold * na::cast(4.0f64)));
+                b.activate(new_energy.min(threshold * na::cast(4.0f64)));
+            },
+            None => { }
+        }
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
@@ -147,9 +149,15 @@ impl ActivationManager {
         // find out whether islands can be deactivated
         for i in range(0u, self.ufind.len()) {
             let root = union_find::find(i, self.ufind.as_mut_slice());
+            let b    = bodies.elements()[i].value.borrow();
+
             *self.can_deactivate.get_mut(root) =
-                *self.can_deactivate.get(root) &&
-                bodies.elements()[i].value.borrow().activation_state().energy() < self.threshold
+                match b.deactivation_threshold() {
+                    Some(threshold) => {
+                        *self.can_deactivate.get(root) && b.activation_state().energy() < threshold
+                    },
+                    None => false
+                };
         }
 
         // deactivate islands having only deactivable objects
@@ -189,7 +197,8 @@ impl ActivationManager {
                         bodies.insert(to_activate.deref() as *const RefCell<RigidBody> as uint, to_activate.clone());
                     }
 
-                    b.activate(self.threshold * na::cast(2.0f64))
+                    let threshold = b.deactivation_threshold().unwrap();
+                    b.activate(threshold * na::cast(2.0f64))
                 }
             }
 
