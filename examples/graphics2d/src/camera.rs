@@ -10,8 +10,8 @@ pub struct Camera {
     pressing:  bool,
     ui:        Rc<RefCell<graphics::View>>,
     scene:     Rc<RefCell<graphics::View>>,
-    lastx:     int,
-    lasty:     int,
+    lastx:     i32,
+    lasty:     i32,
     curr_zoom: f32
 }
 

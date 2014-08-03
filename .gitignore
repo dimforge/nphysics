@@ -4,6 +4,7 @@
 *.so
 *.dSYM
 target
+private
 lib
 examples/lib
 examples/bin

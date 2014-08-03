@@ -8,13 +8,10 @@ name = "nphysics2df64"
 path = "../../src/lib2df64.rs"
 
 [dependencies.dim2]
-version = "1.0.0"
-git     = "https://github.com/sebcrozet/ncollide"
+git = "https://github.com/sebcrozet/ncollide"
 
 [dependencies.nalgebra]
-version = "0.1.0"
-git     = "https://github.com/sebcrozet/nalgebra"
+git = "https://github.com/sebcrozet/nalgebra"
 
 [dependencies.ncollide2df64]
-version = "0.1.0"
-git     = "https://github.com/sebcrozet/ncollide"
+git = "https://github.com/sebcrozet/ncollide"

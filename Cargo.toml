@@ -4,21 +4,17 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [[lib]]
-name    = "nphysics"
-path    = "src/lib.rs"
+name = "nphysics"
+path = "src/lib.rs"
 
 [dependencies.nphysics2df32]
-version = "0.1.0"
-path    = "build/nphysics2df32"
+path = "build/nphysics2df32"
 
 [dependencies.nphysics3df32]
-version = "0.1.0"
-path    = "build/nphysics3df32"
+path = "build/nphysics3df32"
 
 [dependencies.nphysics2df64]
-version = "0.1.0"
-path    = "build/nphysics2df64"
+path = "build/nphysics2df64"
 
 [dependencies.nphysics3df64]
-version = "0.1.0"
-path    = "build/nphysics3df64"
+path = "build/nphysics3df64"

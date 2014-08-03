@@ -11,6 +11,7 @@ use kiss3d::loader::obj;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
+use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
 use ncollide::geom;
 use nphysics::world::World;
@@ -212,9 +213,8 @@ impl GraphicsManager {
         type Cm = geom::Compound;
         type Tm = geom::Mesh;
         type Bs = geom::BezierSurface;
-        type Ps = geom::SpacializedParametricSurface;
 
-        let id = geom.get_type_id();
+        let id = geom.get_dyn_type_id();
         if id == TypeId::of::<Pl>(){
             self.add_plane(window, body, geom.as_ref::<Pl>().unwrap(), color, out)
         }
@@ -232,9 +232,6 @@ impl GraphicsManager {
         }
         else if id == TypeId::of::<Bs>() {
             self.add_bezier_surface(window, body, delta, geom.as_ref::<Bs>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Ps>() {
-            self.add_parametric_surface(window, body, delta, geom.as_ref::<Ps>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cm>() {
             let c = geom.as_ref::<Cm>().unwrap();
@@ -293,17 +290,6 @@ impl GraphicsManager {
                 out:    &mut Vec<Node>) {
         out.push(BezierSurfaceNode(BezierSurface::new(body, delta, geom.control_points(), geom.nupoints(), geom.nvpoints(), color, window)))
     }
-
-    fn add_parametric_surface(&mut self,
-                              window: &mut Window,
-                              body:   Rc<RefCell<RigidBody>>,
-                              delta:  Iso3<f32>,
-                              geom:   &geom::SpacializedParametricSurface,
-                              color:  Vec3<f32>,
-                              out:    &mut Vec<Node>) {
-        out.push(ParametricSurfaceNode(ParametricSurface::new(body, delta, geom, color, window)))
-    }
-
 
     fn add_ball(&mut self,
                 window: &mut Window,

@@ -92,14 +92,14 @@ pub fn simulate(builder: |&mut GraphicsManager| -> World) {
                         _                => { }
                     }
                 },
-                ev @ event::MouseMoved{x, y} => {
+                event::MouseMoved{x, y} => {
                     cursor_pos = Vec2::new(x as f32, y as f32);
                     match grabbed_object {
                         Some(_) => {
                             let joint = grabbed_object_joint.as_ref().unwrap();
                             joint.borrow_mut().set_local2(cursor_pos);
                         },
-                        None => camera.handle_event(&ev)
+                        None => camera.handle_event(&event::MouseMoved{x: x, y: y})
                     };
                 },
                 event::Closed  => rwindow.close(),

@@ -9,6 +9,7 @@ use rsfml::graphics::RenderWindow;
 use nalgebra::na::{Vec3, Iso2};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
+use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
 use ncollide::geom;
 use camera::Camera;
@@ -81,7 +82,7 @@ impl<'a> GraphicsManager<'a> {
         type Cm = geom::Compound;
         type Ls = geom::Mesh;
 
-        let id = geom.get_type_id();
+        let id = geom.get_dyn_type_id();
         if id == TypeId::of::<Pl>(){
             self.add_plane(body, geom.as_ref::<Pl>().unwrap(), out)
         }

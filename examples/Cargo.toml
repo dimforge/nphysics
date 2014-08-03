@@ -4,20 +4,16 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies.nphysics2df32]
-version = "0.1.0"
-path    = "../build/nphysics2df32"
+path = "../build/nphysics2df32"
 
 [dependencies.nphysics3df32]
-version = "0.1.0"
-path    = "../build/nphysics3df32"
+path = "../build/nphysics3df32"
 
 [dependencies.graphics2d]
-version = "0.1.0"
-path    = "./graphics2d"
+path = "./graphics2d"
 
 [dependencies.graphics3d]
-version = "0.1.0"
-path    = "./graphics3d"
+path = "./graphics3d"
 
 [[bin]]
 name = "ball_vee2d"

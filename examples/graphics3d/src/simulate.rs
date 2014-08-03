@@ -6,7 +6,7 @@ use time;
 use glfw;
 use nalgebra::na::{Vec2, Vec3, Translation, Iso3};
 use nalgebra::na;
-use kiss3d::window::{Window, RenderFrame};
+use kiss3d::window::Window;
 use kiss3d::light;
 use kiss3d::text::Font;
 use kiss3d::camera::ArcBall;
@@ -74,13 +74,13 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
     window.set_light(light::StickToCamera);
 
 
-    for mut frame in window.iter() {
-        for mut event in frame.events().iter() {
+    while !window.should_close() {
+        for mut event in window.events().iter() {
             match event.value {
                 glfw::MouseButtonEvent(_, glfw::Press, modifier) => {
                     if modifier.contains(glfw::Shift) {
                         // XXX: huge and uggly code duplication
-                        let size = frame.window().size();
+                        let size = window.size();
                         let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
                         let ray = Ray::new(pos, dir);
 
@@ -102,7 +102,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                             let b = minb.as_ref().unwrap();
                             if b.borrow().can_move() {
                                 physics.remove_body(b);
-                                graphics.remove(frame.window(), b);
+                                graphics.remove(&mut window, b);
                             }
                         }
 
@@ -119,7 +119,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                         }
 
                         // XXX: huge and uggly code duplication
-                        let size = frame.window().size();
+                        let size = window.size();
                         let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
                         let ray = Ray::new(pos, dir);
 
@@ -196,7 +196,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     // update the joint
                     match grabbed_object_joint {
                         Some(ref j) => {
-                            let size = frame.window().size();
+                            let size = window.size();
                             let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
                             let (ref ppos, ref pdir) = grabbed_object_plane;
 
@@ -213,10 +213,10 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     }
 
                     event.inhibited =
-                        frame.window().glfw_window().get_key(glfw::KeyRightShift)   != glfw::Release ||
-                        frame.window().glfw_window().get_key(glfw::KeyLeftShift)    != glfw::Release ||
-                        frame.window().glfw_window().get_key(glfw::KeyRightControl) != glfw::Release ||
-                        frame.window().glfw_window().get_key(glfw::KeyLeftControl)  != glfw::Release;
+                        window.glfw_window().get_key(glfw::KeyRightShift)   != glfw::Release ||
+                        window.glfw_window().get_key(glfw::KeyLeftShift)    != glfw::Release ||
+                        window.glfw_window().get_key(glfw::KeyRightControl) != glfw::Release ||
+                        window.glfw_window().get_key(glfw::KeyLeftControl)  != glfw::Release;
                 },
                 glfw::KeyEvent(glfw::KeyTab, _, glfw::Release, _) => graphics.switch_cameras(),
                 glfw::KeyEvent(glfw::KeyT, _, glfw::Release, _) => {
@@ -231,12 +231,12 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                 glfw::KeyEvent(glfw::KeySpace, _, glfw::Release, _) => {
                     draw_colls = !draw_colls;
                     if draw_colls {
-                        frame.window().scene_mut().set_lines_width(1.0);
-                        frame.window().scene_mut().set_surface_rendering_activation(false);
+                        window.scene_mut().set_lines_width(1.0);
+                        window.scene_mut().set_surface_rendering_activation(false);
                     }
                     else {
-                        frame.window().scene_mut().set_lines_width(0.0);
-                        frame.window().scene_mut().set_surface_rendering_activation(true);
+                        window.scene_mut().set_lines_width(0.0);
+                        window.scene_mut().set_surface_rendering_activation(true);
                     }
                 },
                 glfw::KeyEvent(glfw::Key1, _, glfw::Press, _) => {
@@ -258,7 +258,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
                     let body = Rc::new(RefCell::new(rb));
                     physics.add_body(body.clone());
-                    graphics.add(frame.window(), body.clone());
+                    graphics.add(&mut window, body.clone());
                 },
                 glfw::KeyEvent(glfw::Key2, _, glfw::Press, _) => {
                     let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
@@ -279,7 +279,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
                     let body = Rc::new(RefCell::new(rb));
                     physics.add_body(body.clone());
-                    graphics.add(frame.window(), body.clone());
+                    graphics.add(&mut window, body.clone());
                 },
                 glfw::KeyEvent(glfw::Key3, _, glfw::Press, _) => {
                     let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
@@ -301,7 +301,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     let body = Rc::new(RefCell::new(rb));
                     physics.add_body(body.clone());
                     // physics.add_ccd_to(body, 0.4, 1.0);
-                    graphics.add(frame.window(), body);
+                    graphics.add(&mut window, body);
                     fail!("FIXME: review ccd");
                 },
                 _ => { }
@@ -320,7 +320,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
         }
 
         if draw_colls {
-            draw_collisions(&mut frame, &mut physics);
+            draw_collisions(&mut window, &mut physics);
         }
 
         let color = Vec3::new(1.0, 1.0, 1.0);
@@ -328,13 +328,13 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
         if running != Stop {
             let dt = time::precise_time_s() - before;
 
-            frame.draw_text(dt.to_string().as_slice(), &na::zero(), &font, &color);
+            window.draw_text(dt.to_string().as_slice(), &na::zero(), &font, &color);
         }
         else {
-            frame.draw_text("Paused", &na::zero(), &font, &color);
+            window.draw_text("Paused", &na::zero(), &font, &color);
         }
 
-        frame.set_camera(graphics.camera());
+        window.render_with_camera(graphics.camera());
     }
 }
 
@@ -345,7 +345,7 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(frame: &mut RenderFrame<ArcBall>, physics: &mut World) {
+fn draw_collisions(window: &mut Window, physics: &mut World) {
     let mut collisions = Vec::new();
 
     physics.interferences(&mut collisions);
@@ -353,19 +353,19 @@ fn draw_collisions(frame: &mut RenderFrame<ArcBall>, physics: &mut World) {
     for c in collisions.iter() {
         match *c {
             RBRB(_, _, ref c) => {
-                frame.draw_line(&c.world1, &c.world2, &Vec3::x());
+                window.draw_line(&c.world1, &c.world2, &Vec3::x());
 
                 let center = (c.world1 + c.world2) / 2.0f32;
                 let end    = center + c.normal * 0.4f32;
-                frame.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
+                window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
             },
             BallInSocket(ref bis) => {
                 let bbis = bis.borrow();
-                frame.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Vec3::y());
+                window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Vec3::y());
             },
             Fixed(ref f) => {
                 // FIXME: draw the rotation too
-                frame.draw_line(&na::translation(&f.borrow().anchor1_pos()), &na::translation(&f.borrow().anchor2_pos()), &Vec3::y());
+                window.draw_line(&na::translation(&f.borrow().anchor1_pos()), &na::translation(&f.borrow().anchor2_pos()), &Vec3::y());
             }
         }
     }
