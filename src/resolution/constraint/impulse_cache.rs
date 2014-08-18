@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use nalgebra::na;
 use nalgebra::na::{Iterable, IterableMut, Vec2, Vec3};
 use ncollide::math::{Scalar, Vect};
+use ncollide::utils::AsBytes;
 
 #[deriving(PartialEq)]
 /// The identifier of a contact stored in the impulse cache.
@@ -18,46 +19,6 @@ pub struct ContactIdentifier {
 }
 
 impl Eq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
-
-trait AsBytes {
-    fn as_bytes<'a>(&'a self) -> &'a [u8];
-}
-
-impl AsBytes for Vec3<f32> {
-    #[inline(always)]
-    fn as_bytes<'a>(&'a self) -> &'a [u8] {
-        unsafe {
-            mem::transmute::<&'a Vec3<f32>, &'a [u8, ..12]>(self).as_slice()
-        }
-    }
-}
-
-impl AsBytes for Vec3<f64> {
-    #[inline(always)]
-    fn as_bytes<'a>(&'a self) -> &'a [u8] {
-        unsafe {
-            mem::transmute::<&'a Vec3<f64>, &'a [u8, ..24]>(self).as_slice()
-        }
-    }
-}
-
-impl AsBytes for Vec2<f32> {
-    #[inline(always)]
-    fn as_bytes<'a>(&'a self) -> &'a [u8] {
-        unsafe {
-            mem::transmute::<&'a Vec2<f32>, &'a [u8, ..8]>(self).as_slice()
-        }
-    }
-}
-
-impl AsBytes for Vec2<f64> {
-    #[inline(always)]
-    fn as_bytes<'a>(&'a self) -> &'a [u8] {
-        unsafe {
-            mem::transmute::<&'a Vec2<f64>, &'a [u8, ..16]>(self).as_slice()
-        }
-    }
-}
 
 impl Hash for ContactIdentifier {
     #[inline]

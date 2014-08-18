@@ -3,7 +3,7 @@ name    = "nphysics2df32"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
-[[lib]]
+[lib]
 name = "nphysics2df32"
 path = "../../src/lib2df32.rs"
 

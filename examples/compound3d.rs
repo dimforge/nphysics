@@ -1,7 +1,6 @@
 #![crate_type = "bin"]
 #![warn(non_camel_case_types)]
 
-extern crate std;
 extern crate native;
 extern crate kiss3d;
 extern crate graphics3d;
@@ -9,6 +8,7 @@ extern crate nphysics = "nphysics3df32";
 extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
 
+use std::sync::Arc;
 use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
@@ -48,7 +48,6 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World
     /*
      * Cross shaped geometry
      */
-
     let delta1 = Iso3::new(Vec3::new(0.0f32, -5.0, 0.0), na::zero());
     let delta2 = Iso3::new(Vec3::new(-5.0f32, 0.0, 0.0), na::zero());
     let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
@@ -60,8 +59,8 @@ pub fn compound_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(&1.0);
-    let cross    = box compound as Box<Geom + 'static>;
-    let cross    = Rc::new(cross);
+    let cross    = box compound as Box<Geom + Send + Sync>;
+    let cross    = Arc::new(cross);
 
     /*
      * Create the crosses 

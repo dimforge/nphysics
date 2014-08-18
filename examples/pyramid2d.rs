@@ -1,7 +1,6 @@
 #![crate_type = "bin"]
 #![warn(non_camel_case_types)]
 
-extern crate std;
 extern crate native;
 extern crate rsfml;
 extern crate nphysics = "nphysics2df32";

@@ -3,7 +3,7 @@ name    = "graphics2d"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
-[[lib]]
+[lib]
 name       = "graphics2d"
 crate_type = [ "dylib", "rlib" ]
 

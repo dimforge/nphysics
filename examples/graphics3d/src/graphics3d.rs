@@ -1,7 +1,6 @@
 #![warn(non_camel_case_types)]
 #![feature(managed_boxes)]
 
-extern crate std;
 extern crate rand;
 extern crate time;
 extern crate collections;
@@ -17,13 +16,4 @@ pub mod engine;
 
 // mod draw_helper;
 
-pub mod objects {
-    pub mod ball;
-    pub mod box_node;
-    pub mod plane;
-    pub mod cylinder;
-    pub mod cone;
-    pub mod mesh;
-    pub mod bezier_surface;
-    pub mod parametric_surface;
-}
+pub mod objects;

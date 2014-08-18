@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
-use nalgebra::na::{Vec3, Iso3};
+use nalgebra::na::{Vec3, Iso3, Col};
 use nalgebra::na;
 use kiss3d::loader::obj;
 use kiss3d::window::Window;
@@ -13,6 +13,7 @@ use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
+use ncollide::bounding_volume::HasBoundingVolume;
 use ncollide::geom;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -24,6 +25,7 @@ use objects::cylinder::Cylinder;
 use objects::cone::Cone;
 use objects::mesh::Mesh;
 use objects::plane::Plane;
+use objects::convex::Convex;
 use simulate;
 
 pub enum Node {
@@ -34,7 +36,8 @@ pub enum Node {
     MeshNode(Mesh),
     PlaneNode(Plane),
     BezierSurfaceNode(BezierSurface),
-    ParametricSurfaceNode(ParametricSurface)
+    ParametricSurfaceNode(ParametricSurface),
+    ConvexNode(Convex)
 }
 
 impl Node {
@@ -47,7 +50,8 @@ impl Node {
             ConeNode(ref mut n)              => n.select(),
             MeshNode(ref mut n)              => n.select(),
             BezierSurfaceNode(ref mut n)     => n.select(),
-            ParametricSurfaceNode(ref mut n) => n.select()
+            ParametricSurfaceNode(ref mut n) => n.select(),
+            ConvexNode(ref mut n)            => n.select()
         }
     }
 
@@ -60,7 +64,8 @@ impl Node {
             ConeNode(ref mut n)              => n.unselect(),
             MeshNode(ref mut n)              => n.unselect(),
             BezierSurfaceNode(ref mut n)     => n.unselect(),
-            ParametricSurfaceNode(ref mut n) => n.unselect()
+            ParametricSurfaceNode(ref mut n) => n.unselect(),
+            ConvexNode(ref mut n)            => n.unselect()
         }
     }
 
@@ -73,7 +78,8 @@ impl Node {
             ConeNode(ref mut n)              => n.update(),
             MeshNode(ref mut n)              => n.update(),
             BezierSurfaceNode(ref mut n)     => n.update(),
-            ParametricSurfaceNode(ref mut n) => n.update()
+            ParametricSurfaceNode(ref mut n) => n.update(),
+            ConvexNode(ref mut n)            => n.update()
         }
     }
 
@@ -86,7 +92,8 @@ impl Node {
             ConeNode(ref n)              => n.object(),
             MeshNode(ref n)              => n.object(),
             BezierSurfaceNode(ref n)     => n.object(),
-            ParametricSurfaceNode(ref n) => n.object()
+            ParametricSurfaceNode(ref n) => n.object(),
+            ConvexNode(ref n)            => n.object()
         }
     }
 
@@ -99,7 +106,22 @@ impl Node {
             ConeNode(ref mut n)              => n.object_mut(),
             MeshNode(ref mut n)              => n.object_mut(),
             BezierSurfaceNode(ref mut n)     => n.object_mut(),
-            ParametricSurfaceNode(ref mut n) => n.object_mut()
+            ParametricSurfaceNode(ref mut n) => n.object_mut(),
+            ConvexNode(ref mut n)            => n.object_mut()
+        }
+    }
+
+    pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody>> {
+        match *self {
+            PlaneNode(ref n)             => n.body(),
+            BallNode(ref n)              => n.body(),
+            BoxNode(ref n)               => n.body(),
+            CylinderNode(ref n)          => n.body(),
+            ConeNode(ref n)              => n.body(),
+            MeshNode(ref n)              => n.body(),
+            BezierSurfaceNode(ref n)     => n.body(),
+            ParametricSurfaceNode(ref n) => n.body(),
+            ConvexNode(ref n)            => n.body()
         }
     }
 }
@@ -109,7 +131,8 @@ pub struct GraphicsManager {
     rb2sn:            HashMap<uint, Vec<Node>>,
     arc_ball:         ArcBall,
     first_person:     FirstPerson,
-    curr_is_arc_ball: bool
+    curr_is_arc_ball: bool,
+    aabbs:            Vec<SceneNode>
 
 }
 
@@ -118,12 +141,20 @@ impl GraphicsManager {
         let arc_ball     = ArcBall::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
         let first_person = FirstPerson::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
 
+        let mut rng: XorShiftRng = SeedableRng::from_seed([0, 2, 4, 8]);
+
+        // the first colors are boring.
+        for _ in range(0u, 100) {
+            let _: Vec3<f32> = rng.gen();
+        }
+
         GraphicsManager {
             arc_ball:         arc_ball,
             first_person:     first_person,
             curr_is_arc_ball: true,
-            rand:             SeedableRng::from_seed([0, 2, 4, 8]),
+            rand:             rng,
             rb2sn:            HashMap::new(),
+            aabbs:            Vec::new()
         }
     }
 
@@ -151,7 +182,14 @@ impl GraphicsManager {
     }
 
     pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
-        let color = self.gen_color();
+        let color;
+
+        if body.borrow().can_move() {
+            color = self.gen_color();
+        }
+        else {
+            color = Vec3::new(0.5, 0.5, 0.5);
+        }
         self.add_with_color(window, body, color)
     }
 
@@ -213,6 +251,7 @@ impl GraphicsManager {
         type Cm = geom::Compound;
         type Tm = geom::Mesh;
         type Bs = geom::BezierSurface;
+        type Cx = geom::Convex;
 
         let id = geom.get_dyn_type_id();
         if id == TypeId::of::<Pl>(){
@@ -223,6 +262,9 @@ impl GraphicsManager {
         }
         else if id == TypeId::of::<Bo>() {
             self.add_box(window, body, delta, geom.as_ref::<Bo>().unwrap(), color, out)
+        }
+        else if id == TypeId::of::<Cx>() {
+            self.add_convex(window, body, delta, geom.as_ref::<Cx>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cy>() {
             self.add_cylinder(window, body, delta, geom.as_ref::<Cy>().unwrap(), color, out)
@@ -258,7 +300,7 @@ impl GraphicsManager {
         let position = na::translation(body.borrow().deref());
         let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
 
-        out.push(PlaneNode(Plane::new(&position, &normal, color, window)))
+        out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
     }
 
     fn add_mesh(&mut self,
@@ -315,6 +357,16 @@ impl GraphicsManager {
         out.push(BoxNode(Box::new(body, delta, rx, ry, rz, color, window)))
     }
 
+    fn add_convex(&mut self,
+                  window: &mut Window,
+                  body:   Rc<RefCell<RigidBody>>,
+                  delta:  Iso3<f32>,
+                  geom:   &geom::Convex,
+                  color:  Vec3<f32>,
+                  out:    &mut Vec<Node>) {
+        out.push(ConvexNode(Convex::new(body, delta, geom.mesh(), color, window)))
+    }
+
     fn add_cylinder(&mut self,
                     window: &mut Window,
                     body:   Rc<RefCell<RigidBody>>,
@@ -347,6 +399,50 @@ impl GraphicsManager {
                 n.update()
             }
         }
+    }
+
+    pub fn draw_positions(&mut self, window: &mut Window) {
+        for (_, ns) in self.rb2sn.mut_iter() {
+            for n in ns.mut_iter() {
+                let rb = n.body().borrow();
+
+                let t      = na::transformation(rb.deref());
+                let center = rb.center_of_mass();
+
+                let x = t.rotation.col(0) * 0.25f32;
+                let y = t.rotation.col(1) * 0.25f32;
+                let z = t.rotation.col(2) * 0.25f32;
+
+                window.draw_line(center, &(*center + x), &Vec3::x());
+                window.draw_line(center, &(*center + y), &Vec3::y());
+                window.draw_line(center, &(*center + z), &Vec3::z());
+            }
+        }
+    }
+
+    pub fn enable_aabb_draw(&mut self, window: &mut Window) {
+        for ns in self.rb2sn.values() {
+            for n in ns.iter() {
+                let aabb = n.body().bounding_volume();
+                let mins = aabb.mins();
+                let maxs = aabb.maxs();
+                let extents = *maxs - *mins;
+                let center  = (*maxs + *mins) / 2.0f32;
+
+                let mut g = window.add_cube(extents.x, extents.y, extents.z);
+                g.append_translation(&center);
+                g.set_surface_rendering_activation(false);
+                g.set_lines_width(2.0);
+            }
+        }
+    }
+
+    pub fn disable_aabb_draw(&mut self, window: &mut Window) {
+        for n in self.aabbs.mut_iter() {
+            window.remove(n);
+        }
+
+        self.aabbs.clear();
     }
 
     pub fn switch_cameras(&mut self) {

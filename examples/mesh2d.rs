@@ -1,7 +1,6 @@
 #![crate_type = "bin"]
 #![warn(non_camel_case_types)]
 
-extern crate std;
 extern crate rand;
 extern crate native;
 extern crate sync;

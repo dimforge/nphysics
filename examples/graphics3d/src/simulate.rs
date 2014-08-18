@@ -38,6 +38,7 @@ fn usage(exe_name: &str) {
     println!("    SHIFT + click - remove an object.");
     println!("    arrows - move around when in first-person camera mode.");
     println!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
+    println!("    b      - draw the bounding boxes.");
 }
 
 pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
@@ -61,6 +62,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
 
     let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
     let mut draw_colls = false;
+    let mut draw_aabbs = false;
     let mut graphics   = GraphicsManager::new();
     let mut physics    = builder(&mut window, &mut graphics);
 
@@ -228,6 +230,16 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
                     }
                 },
                 glfw::KeyEvent(glfw::KeyS, _, glfw::Release, _) => running = Step,
+                glfw::KeyEvent(glfw::KeyB, _, glfw::Release, _) => {
+                    // XXX: there is a bug on kiss3d with the removal of objects.
+                    // draw_aabbs = !draw_aabbs;
+                    // if draw_aabbs {
+                    //     graphics.enable_aabb_draw(&mut window);
+                    // }
+                    // else {
+                    //     graphics.disable_aabb_draw(&mut window);
+                    // }
+                },
                 glfw::KeyEvent(glfw::KeySpace, _, glfw::Release, _) => {
                     draw_colls = !draw_colls;
                     if draw_colls {
@@ -320,6 +332,7 @@ pub fn simulate(builder: |&mut Window, &mut GraphicsManager| -> World) {
         }
 
         if draw_colls {
+            graphics.draw_positions(&mut window);
             draw_collisions(&mut window, &mut physics);
         }
 

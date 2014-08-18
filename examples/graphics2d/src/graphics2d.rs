@@ -1,7 +1,6 @@
 #![warn(non_camel_case_types)]
 #![feature(managed_boxes)]
 
-extern crate std;
 extern crate rand;
 extern crate sync;
 extern crate time;

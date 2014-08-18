@@ -1,5 +1,6 @@
 use std::num::{Zero, Bounded};
 use std::rc::Rc;
+use std::sync::Arc;
 use std::cell::RefCell;
 use nalgebra::na::{Transformation, Translation, Rotation};
 use nalgebra::na;
@@ -46,7 +47,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    geom:                 Rc<Box<Geom + 'static>>,
+    geom:                 Arc<Box<Geom + Send + Sync>>,
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -137,7 +138,7 @@ impl RigidBody {
 
     /// Gets a copy of this body's shared geometry.
     #[inline]
-    pub fn geom<'r>(&'r self) -> Rc<Box<Geom + 'static>> {
+    pub fn geom<'r>(&'r self) -> Arc<Box<Geom + Send + Sync>> {
         self.geom.clone()
     }
 
@@ -220,7 +221,7 @@ impl RigidBody {
     }
 
     /// Creates a new rigid body that can move.
-    pub fn new_dynamic<G: 'static + Send + Geom + Volumetric>(
+    pub fn new_dynamic<G: Send + Sync + Geom + Volumetric>(
                        geom:        G,
                        density:     Scalar,
                        restitution: Scalar,
@@ -229,20 +230,20 @@ impl RigidBody {
         let props = geom.mass_properties(&density);
 
         RigidBody::new(
-            Rc::new(box geom as Box<Geom + 'static>),
+            Arc::new(box geom as Box<Geom + Send + Sync>),
             Some(props),
             restitution,
             friction)
     }
 
     /// Creates a new rigid body that cannot move.
-    pub fn new_static<G: 'static + Send + Geom>(
+    pub fn new_static<G: Send + Sync + Geom>(
                       geom:        G,
                       restitution: Scalar,
                       friction:    Scalar)
                       -> RigidBody {
         RigidBody::new(
-            Rc::new(box geom as Box<Geom + 'static>),
+            Arc::new(box geom as Box<Geom + Send + Sync>),
             None,
             restitution,
             friction)
@@ -252,7 +253,7 @@ impl RigidBody {
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(geom:            Rc<Box<Geom + 'static>>,
+    pub fn new(geom:            Arc<Box<Geom + Send + Sync>>,
                mass_properties: Option<(Scalar, Vect, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)

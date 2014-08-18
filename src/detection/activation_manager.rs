@@ -154,7 +154,7 @@ impl ActivationManager {
             *self.can_deactivate.get_mut(root) =
                 match b.deactivation_threshold() {
                     Some(threshold) => {
-                        *self.can_deactivate.get(root) && b.activation_state().energy() < threshold
+                        self.can_deactivate[root] && b.activation_state().energy() < threshold
                     },
                     None => false
                 };
@@ -164,7 +164,7 @@ impl ActivationManager {
         for i in range(0u, self.ufind.len()) {
             let root = union_find::find(i, self.ufind.as_mut_slice());
 
-            if *self.can_deactivate.get(root) { // everybody in this set can be deactivacted
+            if self.can_deactivate[root] { // everybody in this set can be deactivacted
                 let b = &bodies.elements()[i].value;
                 b.borrow_mut().deactivate();
                 broad_phase.deactivate(b);

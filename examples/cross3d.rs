@@ -1,7 +1,6 @@
 #![crate_type = "bin"]
 #![warn(non_camel_case_types)]
 
-extern crate std;
 extern crate native;
 extern crate kiss3d;
 extern crate graphics3d;
@@ -9,6 +8,7 @@ extern crate nphysics = "nphysics3df32";
 extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
 
+use std::sync::Arc;
 use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
@@ -55,7 +55,7 @@ pub fn cross3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(&1.0);
-    let cross    = Rc::new(box compound as Box<Geom + 'static>);
+    let cross    = Arc::new(box compound as Box<Geom + Send + Sync>);
 
     /*
      * Create the crosses 

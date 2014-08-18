@@ -183,8 +183,8 @@ impl AccumulatedImpulseSolver {
             let curr_lin_vel = rb.lin_vel();
             let curr_ang_vel = rb.ang_vel();
 
-            rb.set_lin_vel(curr_lin_vel + self.mjLambda.get(i as uint).lv);
-            rb.set_ang_vel(curr_ang_vel + self.mjLambda.get(i as uint).av);
+            rb.set_lin_vel(curr_lin_vel + self.mjLambda[i as uint].lv);
+            rb.set_ang_vel(curr_ang_vel + self.mjLambda[i as uint].av);
         }
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
@@ -192,7 +192,7 @@ impl AccumulatedImpulseSolver {
             imps[0]  = dv.impulse * na::cast(0.85f64);
 
             for j in range(0u, na::dim::<Vect>() - 1) {
-                let fc = self.friction_constraints.get(i * (na::dim::<Vect>() - 1) + j);
+                let fc = self.friction_constraints[i * (na::dim::<Vect>() - 1) + j];
                 imps[1 + j] = fc.impulse * na::cast(0.85f64);
             }
         }
@@ -242,8 +242,8 @@ impl AccumulatedImpulseSolver {
                 let mut rb = b.borrow_mut();
                 let i      = rb.index();
 
-                let translation = self.mjLambda.get(i as uint).lv * dt;
-                let rotation    = self.mjLambda.get(i as uint).av * dt;
+                let translation = self.mjLambda[i as uint].lv * dt;
+                let rotation    = self.mjLambda[i as uint].av * dt;
 
                 let center = &rb.center_of_mass().clone();
 

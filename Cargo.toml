@@ -3,7 +3,7 @@ name    = "nphysics"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
-[[lib]]
+[lib]
 name = "nphysics"
 path = "src/lib.rs"
 

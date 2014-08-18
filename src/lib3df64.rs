@@ -91,7 +91,6 @@ The libraries needed to compile the examples are:
 
 #[phase(plugin)] extern crate dim3;
 
-extern crate std;
 extern crate rand;
 extern crate serialize;
 extern crate collections;

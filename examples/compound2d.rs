@@ -1,7 +1,6 @@
 #![crate_type = "bin"]
 #![warn(non_camel_case_types)]
 
-extern crate std;
 extern crate native;
 extern crate rsfml;
 extern crate nphysics = "nphysics2df32";
@@ -9,6 +8,7 @@ extern crate nalgebra;
 extern crate ncollide = "ncollide2df32";
 extern crate graphics2d;
 
+use std::sync::Arc;
 use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec2, Iso2, Translation};
@@ -73,7 +73,7 @@ pub fn compound_2d(graphics: &mut GraphicsManager) -> World {
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(&1.0);
-    let cross    = Rc::new(box compound as Box<Geom + 'static>);
+    let cross    = Arc::new(box compound as Box<Geom + Send + Sync>);
 
     /*
      * Create the boxes

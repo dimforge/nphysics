@@ -102,7 +102,7 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
                   activation:  &mut ActivationManager) {
         if !o.borrow().is_active() {
             // wake up everybody in contact
-            let aabb              = o.bounding_volume();
+            let aabb              = o.borrow().bounding_volume();
             let mut interferences = Vec::new();
 
             broad_phase.interferences_with_bounding_volume(&aabb, &mut interferences);
