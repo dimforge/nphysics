@@ -3,17 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="The nphysics3df64 library documentation.">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `explicit_integrate` fn in crate `nphysics3df64`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, explicit_integrate">
 
     <title>nphysics3df64::integration::euler::explicit_integrate - Rust</title>
 
-    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,600'
-          rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
+    
 </head>
-<body>
+<body class="rustdoc">
     <!--[if lte IE 8]>
     <div class="warning">
         This old browser is unsupported and will most likely display funky
@@ -21,10 +22,11 @@
     </div>
     <![endif]-->
 
+    
+
     <section class="sidebar">
         
-
-        <p class='location'><a href='../../index.html'>nphysics3df64</a>&#8203;::<a href='../index.html'>integration</a>&#8203;::<a href='index.html'>euler</a></p><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.displacement.html'>displacement</a><br/><a class='fn current' href='fn.explicit_integrate.html'>explicit_integrate</a><br/><a class='fn ' href='fn.explicit_integrate_wo_rotation.html'>explicit_integrate_wo_rotation</a><br/><a class='fn ' href='fn.semi_implicit_integrate.html'>semi_implicit_integrate</a><br/><a class='fn ' href='fn.semi_implicit_integrate_wo_rotation.html'>semi_implicit_integrate_wo_rotation</a><br/></div>
+        <p class='location'><a href='../../index.html'>nphysics3df64</a>&#8203;::<a href='../index.html'>integration</a>&#8203;::<a href='index.html'>euler</a></p><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.displacement.html'>displacement</a><a class='fn current' href='fn.explicit_integrate.html'>explicit_integrate</a><a class='fn ' href='fn.explicit_integrate_wo_rotation.html'>explicit_integrate_wo_rotation</a><a class='fn ' href='fn.semi_implicit_integrate.html'>semi_implicit_integrate</a><a class='fn ' href='fn.semi_implicit_integrate_wo_rotation.html'>semi_implicit_integrate_wo_rotation</a></div>
     </section>
 
     <nav class="sub">
@@ -32,15 +34,18 @@
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Search documentation..."
+                       placeholder="Click or press 'S' to search, '?' for more options..."
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content fn">
-<h1 class='fqn'>Function <a href='../../index.html'>nphysics3df64</a>::<a href='../index.html'>integration</a>::<a href='index.html'>euler</a>::<a class='fn' href=''>explicit_integrate</a><a class='source' id='src-439' href='../../../src/nphysics3df64/src/integration/euler.rs.html#8-14'>[src]</a></h1>
-<pre class='rust fn'>pub fn explicit_integrate(dt: <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>, p: &amp;<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Matrix.html' title='ncollide3df64::math::Matrix'>Matrix</a>, c: &amp;<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, lv: &amp;<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, av: &amp;<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Orientation.html' title='ncollide3df64::math::Orientation'>Orientation</a>, lf: &amp;<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, af: &amp;<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Orientation.html' title='ncollide3df64::math::Orientation'>Orientation</a>) -&gt; <a href='http://doc.rust-lang.org/std/primitive.tuple.html'>(<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Matrix.html' title='ncollide3df64::math::Matrix'>Matrix</a>, <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Orientation.html' title='ncollide3df64::math::Orientation'>Orientation</a>)</a></pre><div class='docblock'><p>Explicit Euler integrator.</p>
+<h1 class='fqn'><div class='in-band'>Function <a href='../../index.html'>nphysics3df64</a>&#8203;::<a href='../index.html'>integration</a>&#8203;::<a href='index.html'>euler</a>&#8203;::<a class='fn' href=''>explicit_integrate</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-468' href='../../../src/nphysics3df64/up/up/src/integration/euler.rs.html#8-14'>[src]</a></div></h1>
+<pre class='rust fn'>pub fn explicit_integrate(dt: <a class='type' href='../../../ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>, p: &amp;<a class='type' href='../../../ncollide3df64/math/type.Matrix.html' title='ncollide3df64::math::Matrix'>Matrix</a>, c: &amp;<a class='type' href='../../../ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, lv: &amp;<a class='type' href='../../../ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, av: &amp;<a class='type' href='../../../ncollide3df64/math/type.Orientation.html' title='ncollide3df64::math::Orientation'>Orientation</a>, lf: &amp;<a class='type' href='../../../ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, af: &amp;<a class='type' href='../../../ncollide3df64/math/type.Orientation.html' title='ncollide3df64::math::Orientation'>Orientation</a>) -&gt; <a href='http://doc.rust-lang.org/master/std/primitive.tuple.html'>(<a class='type' href='../../../ncollide3df64/math/type.Matrix.html' title='ncollide3df64::math::Matrix'>Matrix</a>, <a class='type' href='../../../ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a>, <a class='type' href='../../../ncollide3df64/math/type.Orientation.html' title='ncollide3df64::math::Orientation'>Orientation</a>)</a></pre><div class='docblock'><p>Explicit Euler integrator.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -54,9 +59,9 @@
                 <dd>Show this help dialog</dd>
                 <dt>S</dt>
                 <dd>Focus the search field</dd>
-                <dt>&uarr;</dt>
+                <dt>&larrb;</dt>
                 <dd>Move up in search results</dd>
-                <dt>&darr;</dt>
+                <dt>&rarrb;</dt>
                 <dd>Move down in search results</dd>
                 <dt>&#9166;</dt>
                 <dd>Go to active search result</dd>
@@ -70,12 +75,14 @@
             </p>
             <p>
                 Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code> (or <code>str</code>), <code>enum</code>,
+                <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
             </p>
         </div>
     </div>
+
+    
 
     <script>
         window.rootPath = "../../../";

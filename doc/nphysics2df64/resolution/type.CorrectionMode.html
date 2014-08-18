@@ -3,17 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="The nphysics2df64 library documentation.">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `CorrectionMode` type in crate `nphysics2df64`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, CorrectionMode">
 
     <title>nphysics2df64::resolution::CorrectionMode - Rust</title>
 
-    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,600'
-          rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
+    
 </head>
-<body>
+<body class="rustdoc">
     <!--[if lte IE 8]>
     <div class="warning">
         This old browser is unsupported and will most likely display funky
@@ -21,10 +22,11 @@
     </div>
     <![endif]-->
 
+    
+
     <section class="sidebar">
         
-
-        <p class='location'><a href='../index.html'>nphysics2df64</a>&#8203;::<a href='index.html'>resolution</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.AccumulatedImpulseSolver.html'>AccumulatedImpulseSolver</a><br/><a class='struct ' href='struct.ContactIdentifier.html'>ContactIdentifier</a><br/><a class='struct ' href='struct.ImpulseCache.html'>ImpulseCache</a><br/><a class='struct ' href='struct.Velocities.html'>Velocities</a><br/><a class='struct ' href='struct.VelocityConstraint.html'>VelocityConstraint</a><br/></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Solver.html'>Solver</a><br/></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.projected_gauss_seidel_solve.html'>projected_gauss_seidel_solve</a><br/></div>
+        <p class='location'><a href='../index.html'>nphysics2df64</a>&#8203;::<a href='index.html'>resolution</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.AccumulatedImpulseSolver.html'>AccumulatedImpulseSolver</a><a class='struct ' href='struct.ContactIdentifier.html'>ContactIdentifier</a><a class='struct ' href='struct.ImpulseCache.html'>ImpulseCache</a><a class='struct ' href='struct.Velocities.html'>Velocities</a><a class='struct ' href='struct.VelocityConstraint.html'>VelocityConstraint</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Solver.html'>Solver</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.projected_gauss_seidel_solve.html'>projected_gauss_seidel_solve</a></div>
     </section>
 
     <nav class="sub">
@@ -32,32 +34,35 @@
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Search documentation..."
+                       placeholder="Click or press 'S' to search, '?' for more options..."
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content type">
-<h1 class='fqn'>Enum <a href='../index.html'>nphysics2df64</a>::<a href='index.html'>resolution</a>::<a class='type' href=''>CorrectionMode</a><a class='source' id='src-8470' href='../../src/nphysics2df64/src/resolution/constraint/contact_equation.rs.html#10-19'>[src]</a></h1>
+<h1 class='fqn'><div class='in-band'>Enum <a href='../index.html'>nphysics2df64</a>&#8203;::<a href='index.html'>resolution</a>&#8203;::<a class='type' href=''>CorrectionMode</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-7975' href='../../src/nphysics2df64/up/up/src/resolution/constraint/contact_equation.rs.html#10-19'>[src]</a></div></h1>
 <pre class='rust enum'>pub enum CorrectionMode {
-    Velocity(<a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>),
-    VelocityAndPosition(<a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>),
-    VelocityAndPositionThresold(<a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>),
+    Velocity(<a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>),
+    VelocityAndPosition(<a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>),
+    VelocityAndPositionThresold(<a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>),
 }</pre><div class='docblock'><p>The correction coefficient used by the constraint solver.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Velocity'><code>Velocity</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method.</p>
-</div></td></tr><tr><td id='variant.VelocityAndPosition'><code>VelocityAndPosition</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
-</div></td></tr><tr><td id='variant.VelocityAndPositionThresold'><code>VelocityAndPositionThresold</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
+<table><tr><td id='variant.Velocity'><a class='stability Unmarked' title='No stability level'></a><code>Velocity</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method.</p>
+</div></td></tr><tr><td id='variant.VelocityAndPosition'><a class='stability Unmarked' title='No stability level'></a><code>VelocityAndPosition</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
+</div></td></tr><tr><td id='variant.VelocityAndPositionThresold'><a class='stability Unmarked' title='No stability level'></a><code>VelocityAndPositionThresold</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
 
 <p>The amount of velocity correction is bounded by threshold.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='type' href='../../nphysics2df64/resolution/type.CorrectionMode.html' title='nphysics2df64::resolution::CorrectionMode'>CorrectionMode</a></code></h3><div class='methods'><h4 id='method.vel_corr_factor' class='method'><code>fn <a href='#method.vel_corr_factor' class='fnname'>vel_corr_factor</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='type' href='../../nphysics2df64/resolution/type.CorrectionMode.html' title='nphysics2df64::resolution::CorrectionMode'>CorrectionMode</a></code></h3><div class='impl-methods'><h4 id='method.vel_corr_factor' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.vel_corr_factor' class='fnname'>vel_corr_factor</a>(&amp;self) -&gt; <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
 <div class='docblock'><p>The velocity correction coefficient.</p>
-</div><h4 id='method.pos_corr_factor' class='method'><code>fn <a href='#method.pos_corr_factor' class='fnname'>pos_corr_factor</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
+</div><h4 id='method.pos_corr_factor' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.pos_corr_factor' class='fnname'>pos_corr_factor</a>(&amp;self) -&gt; <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
 <div class='docblock'><p>The position correction coefficient.</p>
-</div><h4 id='method.min_depth_for_pos_corr' class='method'><code>fn <a href='#method.min_depth_for_pos_corr' class='fnname'>min_depth_for_pos_corr</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
+</div><h4 id='method.min_depth_for_pos_corr' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.min_depth_for_pos_corr' class='fnname'>min_depth_for_pos_corr</a>(&amp;self) -&gt; <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
 <div class='docblock'><p>The minimum penetration depth required to switch on the hard repositioning based method.</p>
-</div><h4 id='method.max_depth_for_vel_corr' class='method'><code>fn <a href='#method.max_depth_for_vel_corr' class='fnname'>max_depth_for_vel_corr</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
+</div><h4 id='method.max_depth_for_vel_corr' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.max_depth_for_vel_corr' class='fnname'>max_depth_for_vel_corr</a>(&amp;self) -&gt; <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a></code></h4>
 <div class='docblock'><p>The max penetration depth the velocity correction will attempt to correct.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -72,9 +77,9 @@
                 <dd>Show this help dialog</dd>
                 <dt>S</dt>
                 <dd>Focus the search field</dd>
-                <dt>&uarr;</dt>
+                <dt>&larrb;</dt>
                 <dd>Move up in search results</dd>
-                <dt>&darr;</dt>
+                <dt>&rarrb;</dt>
                 <dd>Move down in search results</dd>
                 <dt>&#9166;</dt>
                 <dd>Go to active search result</dd>
@@ -88,12 +93,14 @@
             </p>
             <p>
                 Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code> (or <code>str</code>), <code>enum</code>,
+                <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
             </p>
         </div>
     </div>
+
+    
 
     <script>
         window.rootPath = "../../";

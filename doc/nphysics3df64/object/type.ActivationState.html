@@ -3,17 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="The nphysics3df64 library documentation.">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ActivationState` type in crate `nphysics3df64`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ActivationState">
 
     <title>nphysics3df64::object::ActivationState - Rust</title>
 
-    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,600'
-          rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
+    
 </head>
-<body>
+<body class="rustdoc">
     <!--[if lte IE 8]>
     <div class="warning">
         This old browser is unsupported and will most likely display funky
@@ -21,10 +22,11 @@
     </div>
     <![endif]-->
 
+    
+
     <section class="sidebar">
         
-
-        <p class='location'><a href='../index.html'>nphysics3df64</a>&#8203;::<a href='index.html'>object</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.RigidBody.html'>RigidBody</a><br/></div>
+        <p class='location'><a href='../index.html'>nphysics3df64</a>&#8203;::<a href='index.html'>object</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.RigidBody.html'>RigidBody</a></div>
     </section>
 
     <nav class="sub">
@@ -32,32 +34,35 @@
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Search documentation..."
+                       placeholder="Click or press 'S' to search, '?' for more options..."
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content type">
-<h1 class='fqn'>Enum <a href='../index.html'>nphysics3df64</a>::<a href='index.html'>object</a>::<a class='type' href=''>ActivationState</a><a class='source' id='src-11298' href='../../src/nphysics3df64/src/object/rigid_body.rs.html#23-30'>[src]</a></h1>
+<h1 class='fqn'><div class='in-band'>Enum <a href='../index.html'>nphysics3df64</a>&#8203;::<a href='index.html'>object</a>&#8203;::<a class='type' href=''>ActivationState</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-10893' href='../../src/nphysics3df64/up/up/src/object/rigid_body.rs.html#25-32'>[src]</a></div></h1>
 <pre class='rust enum'>pub enum ActivationState {
-    Active(<a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>),
+    Active(<a class='type' href='../../ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a>),
     Inactive,
     Deleted,
 }</pre><div class='docblock'><p>The activation state of a rigid body.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Active'><code>Active</code></td><td><div class='docblock'><p>The rigid body is active with a not-zero energy.</p>
-</div></td></tr><tr><td id='variant.Inactive'><code>Inactive</code></td><td><div class='docblock'><p>The rigid body is inactive.</p>
-</div></td></tr><tr><td id='variant.Deleted'><code>Deleted</code></td><td><div class='docblock'><p>The rigid body has been removed from the physics engine.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='methods'><h4 id='method.energy' class='method'><code>fn <a href='#method.energy' class='fnname'>energy</a>(&amp;self) -&gt; <a class='type' href='http://ncollide.org/doc/ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a></code></h4>
+<table><tr><td id='variant.Active'><a class='stability Unmarked' title='No stability level'></a><code>Active</code></td><td><div class='docblock'><p>The rigid body is active with a not-zero energy.</p>
+</div></td></tr><tr><td id='variant.Inactive'><a class='stability Unmarked' title='No stability level'></a><code>Inactive</code></td><td><div class='docblock'><p>The rigid body is inactive.</p>
+</div></td></tr><tr><td id='variant.Deleted'><a class='stability Unmarked' title='No stability level'></a><code>Deleted</code></td><td><div class='docblock'><p>The rigid body has been removed from the physics engine.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='impl-methods'><h4 id='method.energy' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.energy' class='fnname'>energy</a>(&amp;self) -&gt; <a class='type' href='../../ncollide3df64/math/type.Scalar.html' title='ncollide3df64::math::Scalar'>Scalar</a></code></h4>
 <div class='docblock'><p>The energy accumulated other several frames.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;__D: <a class='trait' href='http://doc.rust-lang.org/serialize/serialize/trait.Decoder.html' title='serialize::serialize::Decoder'>Decoder</a>&lt;__E&gt;, __E&gt; <a class='trait' href='http://doc.rust-lang.org/serialize/serialize/trait.Decodable.html' title='serialize::serialize::Decodable'>Decodable</a>&lt;__D, __E&gt; for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='methods'><h4 id='method.decode' class='method'><code>fn <a href='#method.decode' class='fnname'>decode</a>(__arg_0: &amp;mut __D) -&gt; <a class='type' href='http://doc.rust-lang.org/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;<a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a>, __E&gt;</code></h4>
-</div><h3 class='impl'><code>impl&lt;__S: <a class='trait' href='http://doc.rust-lang.org/serialize/serialize/trait.Encoder.html' title='serialize::serialize::Encoder'>Encoder</a>&lt;__E&gt;, __E&gt; <a class='trait' href='http://doc.rust-lang.org/serialize/serialize/trait.Encodable.html' title='serialize::serialize::Encodable'>Encodable</a>&lt;__S, __E&gt; for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='methods'><h4 id='method.encode' class='method'><code>fn <a href='#method.encode' class='fnname'>encode</a>(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='type' href='http://doc.rust-lang.org/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;(), __E&gt;</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='methods'><h4 id='method.clone' class='method'><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='methods'><h4 id='method.eq' class='method'><code>fn <a href='#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a>) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
-<h4 id='method.ne' class='method'><code>fn <a href='#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a>) -&gt; <a href='http://doc.rust-lang.org/std/primitive.bool.html'>bool</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/core/fmt/trait.Show.html' title='core::fmt::Show'>Show</a> for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='methods'><h4 id='method.fmt' class='method'><code>fn <a href='#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;__D: <a class='trait' href='http://doc.rust-lang.org/master/serialize/serialize/trait.Decoder.html' title='serialize::serialize::Decoder'>Decoder</a>&lt;__E&gt;, __E&gt; <a class='trait' href='http://doc.rust-lang.org/master/serialize/serialize/trait.Decodable.html' title='serialize::serialize::Decodable'>Decodable</a>&lt;__D, __E&gt; for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='impl-methods'><h4 id='method.decode' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.decode' class='fnname'>decode</a>(__arg_0: &amp;mut __D) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;<a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a>, __E&gt;</code></h4>
+</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;__S: <a class='trait' href='http://doc.rust-lang.org/master/serialize/serialize/trait.Encoder.html' title='serialize::serialize::Encoder'>Encoder</a>&lt;__E&gt;, __E&gt; <a class='trait' href='http://doc.rust-lang.org/master/serialize/serialize/trait.Encodable.html' title='serialize::serialize::Encodable'>Encodable</a>&lt;__S, __E&gt; for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='impl-methods'><h4 id='method.encode' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.encode' class='fnname'>encode</a>(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/result/type.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/master/std/primitive.unit.html'>()</a>, __E&gt;</code></h4>
+</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/master/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='impl-methods'><h4 id='method.clone' class='method'><a class='stability Unstable' title='Unstable'></a><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h4>
+<h4 id='method.clone_from' class='method'><a class='stability Experimental' title='Experimental: this function is mostly unused'></a><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/master/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='impl-methods'><h4 id='method.eq' class='method'><a class='stability Unstable' title='Unstable: Definition may change slightly after trait reform'></a><code>fn <a href='#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a>) -&gt; <a href='http://doc.rust-lang.org/master/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><a class='stability Unstable' title='Unstable: Definition may change slightly after trait reform'></a><code>fn <a href='#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a>) -&gt; <a href='http://doc.rust-lang.org/master/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/master/core/fmt/trait.Show.html' title='core::fmt::Show'>Show</a> for <a class='type' href='../../nphysics3df64/object/type.ActivationState.html' title='nphysics3df64::object::ActivationState'>ActivationState</a></code></h3><div class='impl-methods'><h4 id='method.fmt' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/master/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/master/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -71,9 +76,9 @@
                 <dd>Show this help dialog</dd>
                 <dt>S</dt>
                 <dd>Focus the search field</dd>
-                <dt>&uarr;</dt>
+                <dt>&larrb;</dt>
                 <dd>Move up in search results</dd>
-                <dt>&darr;</dt>
+                <dt>&rarrb;</dt>
                 <dd>Move down in search results</dd>
                 <dt>&#9166;</dt>
                 <dd>Go to active search result</dd>
@@ -87,12 +92,14 @@
             </p>
             <p>
                 Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code> (or <code>str</code>), <code>enum</code>,
+                <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
             </p>
         </div>
     </div>
+
+    
 
     <script>
         window.rootPath = "../../";
