@@ -14,7 +14,7 @@ use resolution::constraint::contact_equation::{CorrectionMode, CorrectionParamet
 use resolution::constraint::ball_in_socket_equation;
 use resolution::constraint::fixed_equation;
 use resolution::solver::Solver;
-use pgs = resolution::constraint::projected_gauss_seidel_solver;
+use resolution::constraint::projected_gauss_seidel_solver as pgs;
 use resolution::constraint::projected_gauss_seidel_solver::Velocities;
 use resolution::constraint::impulse_cache::ImpulseCache;
 
