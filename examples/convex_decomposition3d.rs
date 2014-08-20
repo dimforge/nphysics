@@ -46,11 +46,34 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * Planes
      */
-    let geom = Plane::new(Vec3::new(0.0f32, 1.0, 0.0));
-    let body = Rc::new(RefCell::new(RigidBody::new_static(geom, 0.3, 0.6)));
+    let shift = 10.0f32;
 
-    world.add_body(body.clone());
-    graphics.add(window, body);
+    let normals = [
+        Vec3::new(0.0f32, 1.0, 0.0),
+        Vec3::new(-1.0, 1.0, 0.0),
+        Vec3::new(1.0, 1.0, 0.0),
+        Vec3::new(0.0, 1.0, -1.0),
+        Vec3::new(0.0, 1.0, 1.0),
+    ];
+    let poss = [
+        Vec3::new(0.0f32, 0.0, 0.0),
+        Vec3::new(shift, 0.0, 0.0),
+        Vec3::new(-shift, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, shift),
+        Vec3::new(0.0, 0.0, -shift)
+    ];
+
+    for (normal, pos) in normals.iter().zip(poss.iter()) {
+        let geom = Plane::new(*normal);
+        let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
+
+        rb.append_translation(pos);
+
+        let body = Rc::new(RefCell::new(rb));
+
+        world.add_body(body.clone());
+        graphics.add(window, body);
+    }
 
     /*
      * Create the convex decompositions.
@@ -58,6 +81,7 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
 
     let geoms = models();
     let bodies = Arc::new(RWLock::new(Vec::new()));
+    let ngeoms = geoms.len();
 
     for obj_path in geoms.move_iter() {
         let deltas   = na::one();
@@ -101,11 +125,7 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
             let compound = Compound::new(geom_data);
 
             let mut rb = RigidBody::new_dynamic(compound, 1.0f32, 0.3, 0.5);
-            rb.set_deactivation_threshold(None);
-
-            // Position them randomly.
-            let pos = rand::random::<Vec3<f32>>() * 50.0f32 + Vec3::new(0.0f32, 2.0, 0.0);
-            rb.append_translation(&pos);
+            rb.set_deactivation_threshold(Some(0.5));
 
 
             bodies.write().push(rb);
@@ -114,10 +134,25 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
 
     bookkeeping::wait_for_other_tasks();
 
+    if bodies.read().len() != ngeoms {
+        println!("#########################################################################################");
+        println!("Some model are missing. You can download them all at : http://crozet.re/nphysics/models.");
+        println!("All the obj files should be put on the `./media/models` folder.");
+        println!("#########################################################################################");
+    }
+
+    let nreplicats = 100 / bodies.read().len();
+
     for rb in bodies.read().iter() {
-        let body = Rc::new(RefCell::new(rb.clone()));
-        world.add_body(body.clone());
-        graphics.add(window, body);
+        for i in range(0, nreplicats) {
+            let mut rb = rb.clone();
+            let pos = rand::random::<Vec3<f32>>() * 30.0f32 + Vec3::new(-15.0f32, 15.0, -15.0);
+            rb.append_translation(&pos);
+
+            let body = Rc::new(RefCell::new(rb));
+            world.add_body(body.clone());
+            graphics.add(window, body);
+        }
     }
 
     /*
