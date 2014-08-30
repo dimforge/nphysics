@@ -130,7 +130,8 @@ impl Testbed {
             }
         }
 
-        let font           = Font::new(&Path::new("Inconsolata.otf"), 60);
+        let font_mem       = include_bin!("Inconsolata.otf");
+        let font           = Font::from_memory(font_mem, 60);
         let mut draw_colls = false;
 
         let mut cursor_pos = Vec2::new(0.0f32, 0.0);

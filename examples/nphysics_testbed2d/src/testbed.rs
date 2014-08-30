@@ -116,8 +116,9 @@ impl<'a> Testbed<'a> {
         self.window.set_framerate_limit(60);
 
 
-        let     fnt      = Font::new_from_file("Inconsolata.otf").unwrap();
-        let mut fps      = Fps::new(&fnt);
+        let font_mem = include_bin!("Inconsolata.otf");
+        let     fnt  = Font::new_from_memory(font_mem).unwrap();
+        let mut fps  = Fps::new(&fnt);
         let mut cursor_pos;
         let grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
         let grabbed_object_joint: Option<Rc<RefCell<BallInSocket>>> = None;
