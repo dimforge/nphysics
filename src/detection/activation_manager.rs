@@ -64,7 +64,7 @@ impl ActivationManager {
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
-    pub fn update<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector>>>(
+    pub fn update<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector + Send>>>(
                   &mut self,
                   broad_phase: &mut BF,
                   joints:      &JointManager,
