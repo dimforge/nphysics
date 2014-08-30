@@ -4,7 +4,7 @@
 extern crate native;
 extern crate sync;
 extern crate kiss3d;
-extern crate graphics3d;
+extern crate nphysics_testbed3d;
 extern crate nphysics = "nphysics3df32";
 extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
@@ -17,7 +17,7 @@ use kiss3d::window::Window;
 use ncollide::geom::Mesh;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use graphics3d::engine::GraphicsManager;
+use nphysics_testbed3d::engine::GraphicsManager;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {

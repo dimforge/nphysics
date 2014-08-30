@@ -6,7 +6,7 @@ extern crate rsfml;
 extern crate nalgebra;
 extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
-extern crate graphics2d;
+extern crate nphysics_testbed2d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -15,7 +15,7 @@ use ncollide::geom::{Plane, Cuboid, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};
-use graphics2d::engine::GraphicsManager;
+use nphysics_testbed2d::engine::GraphicsManager;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {

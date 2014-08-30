@@ -20,7 +20,7 @@
 #![crate_type = "bin"]
 #![warn(non_camel_case_types)]
 extern crate native;
-extern crate graphics2d;
+extern crate nphysics_testbed2d;
 extern crate nalgebra;
 extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
@@ -31,7 +31,7 @@ use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::Cuboid;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use graphics2d::engine::GraphicsManager;
+use nphysics_testbed2d::engine::GraphicsManager;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {

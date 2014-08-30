@@ -1,11 +1,10 @@
 [package]
-name    = "graphics2d"
+name    = "nphysics_testbed2d"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [lib]
-name       = "graphics2d"
-crate_type = [ "dylib", "rlib" ]
+name = "nphysics_testbed2d"
 
 [dependencies.nphysics2df32]
 path = "../../build/nphysics2df32"

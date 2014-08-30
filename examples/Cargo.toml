@@ -9,11 +9,11 @@ path = "../build/nphysics2df32"
 [dependencies.nphysics3df32]
 path = "../build/nphysics3df32"
 
-[dependencies.graphics2d]
-path = "./graphics2d"
+[dependencies.nphysics_testbed2d]
+path = "./nphysics_testbed2d"
 
-[dependencies.graphics3d]
-path = "./graphics3d"
+[dependencies.nphysics_testbed3d]
+path = "./nphysics_testbed3d"
 
 [[bin]]
 name = "ball_vee2d"
