@@ -1,22 +1,17 @@
-#![crate_type = "bin"]
-#![warn(non_camel_case_types)]
-
 extern crate native;
-extern crate kiss3d;
-extern crate nphysics_testbed3d;
-extern crate nphysics = "nphysics3df32";
-extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
+extern crate ncollide = "ncollide3df32";
+extern crate nphysics = "nphysics3df32";
+extern crate nphysics_testbed3d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::rand;
 use nalgebra::na::{Vec3, Translation};
-use kiss3d::window::Window;
 use ncollide::geom::{Plane, Convex};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics_testbed3d::engine::GraphicsManager;
+use nphysics_testbed3d::Testbed;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {
@@ -24,10 +19,6 @@ fn start(argc: int, argv: *const *const u8) -> int {
 }
 
 fn main() {
-    GraphicsManager::simulate(convex_3d)
-}
-
-pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
@@ -41,7 +32,6 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     let body = Rc::new(RefCell::new(RigidBody::new_static(geom, 0.3, 0.6)));
 
     world.add_body(body.clone());
-    graphics.add(window, body);
 
     /*
      * Create the convex geometries.
@@ -74,15 +64,15 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
                 let body = Rc::new(RefCell::new(rb));
 
                 world.add_body(body.clone());
-                graphics.add(window, body);
             }
         }
     }
 
     /*
-     * Set up the camera and that is it!
+     * Set up the testbed.
      */
-    graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    let mut testbed = Testbed::new(world);
 
-    world
+    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.run();
 }

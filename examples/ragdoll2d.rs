@@ -1,8 +1,4 @@
-#![crate_type = "bin"]
-#![warn(non_camel_case_types)]
-
 extern crate native;
-extern crate rsfml;
 extern crate nalgebra;
 extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
@@ -15,7 +11,7 @@ use ncollide::geom::{Plane, Cuboid, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};
-use nphysics_testbed2d::engine::GraphicsManager;
+use nphysics_testbed2d::Testbed;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {
@@ -23,10 +19,6 @@ fn start(argc: int, argv: *const *const u8) -> int {
 }
 
 fn main() {
-    GraphicsManager::simulate(boxes_vee_3d)
-}
-
-pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
@@ -40,7 +32,6 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> World {
     let ground      = Rc::new(RefCell::new(RigidBody::new_static(ground_geom, 0.3, 0.6)));
 
     world.add_body(ground.clone());
-    graphics.add(ground);
 
     /*
      * Create the ragdolls
@@ -53,18 +44,19 @@ pub fn boxes_vee_3d(graphics: &mut GraphicsManager) -> World {
             let x = i as f32 * shift - n as f32 * shift / 2.0;
             let y = j as f32 * (-shift) - 10.0;
 
-            add_ragdoll(Vec2::new(x, y), &mut world, graphics);
+            add_ragdoll(Vec2::new(x, y), &mut world);
         }
     }
 
     /*
-     * Set up the camera and that is it!
+     * Run the simulation.
      */
+    let mut testbed = Testbed::new(world);
 
-    world
+    testbed.run();
 }
 
-fn add_ragdoll(pos: Vec2<f32>, world: &mut World, graphics: &mut GraphicsManager) {
+fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     // head
     let     head_geom = Ball::new(0.8);
     let mut head      = RigidBody::new_dynamic(head_geom, 1.0f32, 0.3, 0.5);
@@ -109,14 +101,6 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World, graphics: &mut GraphicsManager
     world.add_body(larm.clone());
     world.add_body(rfoot.clone());
     world.add_body(lfoot.clone());
-
-    // let color = graphics.gen_color();
-    graphics.add(head.clone());
-    graphics.add(body.clone());
-    graphics.add(rarm.clone());
-    graphics.add(larm.clone());
-    graphics.add(rfoot.clone());
-    graphics.add(lfoot.clone());
 
     /*
      * Create joints.

@@ -1,21 +1,16 @@
-#![crate_type = "bin"]
-#![warn(non_camel_case_types)]
-
 extern crate native;
-extern crate kiss3d;
-extern crate nphysics_testbed3d;
-extern crate nphysics = "nphysics3df32";
-extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
+extern crate ncollide = "ncollide3df32";
+extern crate nphysics = "nphysics3df32";
+extern crate nphysics_testbed3d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use kiss3d::window::Window;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Plane, Cuboid, Cone, Cylinder, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics_testbed3d::engine::GraphicsManager;
+use nphysics_testbed3d::Testbed;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {
@@ -23,11 +18,6 @@ fn start(argc: int, argv: *const *const u8) -> int {
 }
 
 fn main() {
-    GraphicsManager::simulate(primitives_3d)
-}
-
-
-pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
@@ -41,7 +31,6 @@ pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Wor
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
-    graphics.add(window, body);
 
     /*
      * Create the boxes
@@ -84,15 +73,15 @@ pub fn primitives_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Wor
                 let body = Rc::new(RefCell::new(rb));
 
                 world.add_body(body.clone());
-                graphics.add(window, body);
             }
         }
     }
 
     /*
-     * Set up the camera and that is it!
+     * Set up the testbed.
      */
-    graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    let mut testbed = Testbed::new(world);
 
-    world
+    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.run();
 }

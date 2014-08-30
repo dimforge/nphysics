@@ -11,14 +11,16 @@ extern crate nalgebra;
 extern crate ncollide = "ncollide2df32";
 
 
-pub mod simulate;
-pub mod engine;
+pub use testbed::Testbed;
 
-pub mod camera;
-pub mod fps;
-pub mod draw_helper;
+mod testbed;
+mod engine;
 
-pub mod objects {
+mod camera;
+mod fps;
+mod draw_helper;
+
+mod objects {
     pub mod ball;
     pub mod box_node;
     pub mod lines;

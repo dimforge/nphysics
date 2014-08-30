@@ -1,11 +1,7 @@
-#![crate_type = "bin"]
-#![warn(non_camel_case_types)]
-
 extern crate native;
-extern crate rsfml;
-extern crate nphysics = "nphysics2df32";
 extern crate nalgebra;
 extern crate ncollide = "ncollide2df32";
+extern crate nphysics = "nphysics2df32";
 extern crate nphysics_testbed2d;
 
 use std::rc::Rc;
@@ -14,7 +10,7 @@ use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Ball, Plane};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics_testbed2d::engine::GraphicsManager;
+use nphysics_testbed2d::Testbed;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {
@@ -22,10 +18,6 @@ fn start(argc: int, argv: *const *const u8) -> int {
 }
 
 fn main() {
-    GraphicsManager::simulate(balls_vee_2d)
-}
-
-pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
@@ -42,7 +34,6 @@ pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> World {
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
-    graphics.add(body);
 
     /*
      * Second plane
@@ -54,7 +45,6 @@ pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> World {
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
-    graphics.add(body);
 
     /*
      * Create the balls
@@ -77,12 +67,13 @@ pub fn balls_vee_2d(graphics: &mut GraphicsManager) -> World {
             let body = Rc::new(RefCell::new(rb));
 
             world.add_body(body.clone());
-            graphics.add(body);
         }
     }
 
     /*
-     * The end.
+     * Run the simulation.
      */
-    world
+    let mut testbed = Testbed::new(world);
+
+    testbed.run();
 }

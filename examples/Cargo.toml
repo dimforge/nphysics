@@ -103,7 +103,6 @@ path = "./convex3d.rs"
 name = "convex_decomposition3d"
 path = "./convex_decomposition3d.rs"
 
-
 [[bin]]
 name = "bug_11"
 path = "./regression_tests/bug_11.rs"

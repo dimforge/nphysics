@@ -11,9 +11,8 @@ extern crate nalgebra;
 extern crate ncollide = "ncollide3df32";
 
 
-pub mod simulate;
-pub mod engine;
+pub use testbed::Testbed;
 
-// mod draw_helper;
-
-pub mod objects;
+mod testbed;
+mod engine;
+mod objects;

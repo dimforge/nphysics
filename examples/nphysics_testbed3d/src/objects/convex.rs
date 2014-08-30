@@ -2,7 +2,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use kiss3d::resource;
 use nalgebra::na::{Vec3, Iso3};
 use nalgebra::na;
 use ncollide::procedural::TriMesh;
@@ -64,10 +63,6 @@ impl Convex {
 
     pub fn object<'r>(&'r self) -> &'r SceneNode {
         &self.gfx
-    }
-
-    pub fn object_mut<'r>(&'r mut self) -> &'r mut SceneNode {
-        &mut self.gfx
     }
 
     pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody>> {

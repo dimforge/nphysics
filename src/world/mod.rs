@@ -1,5 +1,5 @@
 //! The physics world.
 
-pub use world::world::{World, WorldBroadPhase};
+pub use world::world::{World, WorldBroadPhase, RigidBodies};
 
 mod world;

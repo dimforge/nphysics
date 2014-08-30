@@ -32,19 +32,8 @@ impl<'a> Fps<'a> {
         self.delta = self.elapsed_seconds()
     }
 
-    pub fn registred_delta(&self) -> f64 {
-        self.delta
-    }
-
     pub fn elapsed_seconds(&self) -> f64 {
         time::precise_time_s() - self.last_time
-    }
-
-    pub fn draw_elapsed(&mut self, rw: &mut graphics::RenderWindow) {
-        let elapsed = self.elapsed_seconds();
-
-        self.fps.set_string(elapsed.to_string().as_slice());
-        self.fps.draw_in_render_window(rw);
     }
 
     pub fn draw_registered(&mut self, rw: &mut graphics::RenderWindow) {

@@ -63,10 +63,6 @@ impl Cone {
         &self.gfx
     }
 
-    pub fn object_mut<'r>(&'r mut self) -> &'r mut SceneNode {
-        &mut self.gfx
-    }
-
     pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody>> {
         &self.body
     }

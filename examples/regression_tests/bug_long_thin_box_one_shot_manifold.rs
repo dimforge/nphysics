@@ -20,26 +20,19 @@
  * This will create only a three-points manifold for a small axis-alligned cube, instead of four.
  */
 
-
-#![crate_type = "bin"]
-#![warn(non_camel_case_types)]
-#![feature(managed_boxes)]
-
 extern crate native;
-extern crate kiss3d;
-extern crate nphysics_testbed3d;
-extern crate nphysics = "nphysics3df32";
 extern crate nalgebra;
 extern crate ncollide = "ncollide3df32";
+extern crate nphysics = "nphysics3df32";
+extern crate nphysics_testbed3d;
 
 use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
-use kiss3d::window::Window;
 use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics_testbed3d::engine::GraphicsManager;
+use nphysics_testbed3d::Testbed;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {
@@ -47,10 +40,6 @@ fn start(argc: int, argv: *const *const u8) -> int {
 }
 
 fn main() {
-    GraphicsManager::simulate(boxes_vee_3d)
-}
-
-pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
@@ -64,7 +53,6 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     let body = Rc::new(RefCell::new(RigidBody::new_static(geom, 0.3, 0.6)));
 
     world.add_body(body.clone());
-    graphics.add(window, body);
 
     /*
      * Create the boxes
@@ -82,12 +70,12 @@ pub fn boxes_vee_3d(window: &mut Window, graphics: &mut GraphicsManager) -> Worl
     let body = Rc::new(RefCell::new(rb));
 
     world.add_body(body.clone());
-    graphics.add(window, body);
 
     /*
-     * Set up the camera and that is it!
+     * Set up the testbed.
      */
-    graphics.look_at(Vec3::new(-30.0f32, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    let mut testbed = Testbed::new(world);
 
-    world
+    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.run();
 }

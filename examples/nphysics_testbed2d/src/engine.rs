@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
 use nalgebra::na::{Vec3, Iso2};
-use nphysics::world::World;
 use nphysics::object::RigidBody;
 use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
@@ -16,7 +15,6 @@ use camera::Camera;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::lines::Lines;
-use simulate;
 
 pub enum SceneNode<'a> {
     BallNode(Ball<'a>),
@@ -37,22 +35,6 @@ impl<'a> GraphicsManager<'a> {
             rb2sn:     HashMap::new(),
             obj2color: HashMap::new()
         }
-    }
-
-    pub fn simulate(builder: |&mut GraphicsManager| -> World) {
-        simulate::simulate(builder)
-    }
-
-    pub fn add_with_color(&mut self, body: Rc<RefCell<RigidBody>>, color: Vec3<f32>) {
-        let color = Vec3::new(
-            (color.x * 255.0) as u8,
-            (color.y * 255.0) as u8,
-            (color.z * 255.0) as u8
-        );
-
-        self.set_color_for_object(&body, color);
-
-        self.add(body)
     }
 
     pub fn add(&mut self, body: Rc<RefCell<RigidBody>>) {
@@ -84,23 +66,23 @@ impl<'a> GraphicsManager<'a> {
 
         let id = geom.get_dyn_type_id();
         if id == TypeId::of::<Pl>(){
-            self.add_plane(body, geom.as_ref::<Pl>().unwrap(), out)
+            self.add_plane(body, geom.downcast_ref::<Pl>().unwrap(), out)
         }
         else if id == TypeId::of::<Bl>() {
-            self.add_ball(body, delta, geom.as_ref::<Bl>().unwrap(), out)
+            self.add_ball(body, delta, geom.downcast_ref::<Bl>().unwrap(), out)
         }
         else if id == TypeId::of::<Bo>() {
-            self.add_box(body, delta, geom.as_ref::<Bo>().unwrap(), out)
+            self.add_box(body, delta, geom.downcast_ref::<Bo>().unwrap(), out)
         }
         else if id == TypeId::of::<Cm>() {
-            let c = geom.as_ref::<Cm>().unwrap();
+            let c = geom.downcast_ref::<Cm>().unwrap();
 
             for &(t, ref s) in c.geoms().iter() {
                 self.add_geom(body.clone(), delta * t, **s, out)
             }
         }
         else if id == TypeId::of::<Ls>() {
-            self.add_lines(body, delta, geom.as_ref::<Ls>().unwrap(), out)
+            self.add_lines(body, delta, geom.downcast_ref::<Ls>().unwrap(), out)
         }
         else {
             fail!("Not yet implemented.")
@@ -151,6 +133,10 @@ impl<'a> GraphicsManager<'a> {
         out.push(BoxNode(Box::new(body, delta, rx, ry, color)))
     }
 
+    pub fn clear(&mut self) {
+        self.rb2sn.clear();
+    }
+
     pub fn draw(&mut self, rw: &mut RenderWindow, c: &Camera) {
         c.activate_scene(rw);
 
@@ -177,7 +163,7 @@ impl<'a> GraphicsManager<'a> {
         c.activate_ui(rw);
     }
 
-    fn set_color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>, color: Vec3<u8>) {
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Vec3<u8>) {
         let key = body.deref() as *const RefCell<RigidBody> as uint;
         self.obj2color.insert(key, color);
     }

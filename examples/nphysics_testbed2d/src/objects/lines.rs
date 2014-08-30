@@ -42,8 +42,8 @@ impl Lines {
         let vs = self.vertices.deref();
 
         for is in self.indices.as_slice().chunks(2) {
-            let gsv0 = transform * *vs.get(is[0]);
-            let gsv1 = transform * *vs.get(is[1]);
+            let gsv0 = transform * vs[is[0]];
+            let gsv1 = transform * vs[is[1]];
             draw_line(rw, &gsv0, &gsv1, &Color::new_RGB(self.color.x, self.color.y, self.color.z));
         }
     }

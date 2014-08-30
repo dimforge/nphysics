@@ -1,12 +1,14 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::iter::Map;
+use std::slice::Items;
 use nalgebra::na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
 use ncollide::ray::Ray;
 use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
 use ncollide::math::{Scalar, Vect, Orientation};
-use ncollide::data::hash_map::HashMap;
+use ncollide::data::hash_map::{HashMap, Entry};
 use ncollide::data::hash::UintTWHash;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
 use detection::{BodiesBodies, BodyBodyDispatcher, ActivationManager};
@@ -18,6 +20,8 @@ use object::RigidBody;
 
 /// The default broad phase.
 pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, Box<GeomGeomCollisionDetector + Send>>;
+/// An iterator visiting rigid bodies.
+pub type RigidBodies<'a> = Map<'a, &'a Entry<uint, Rc<RefCell<RigidBody>>>, &'a Rc<RefCell<RigidBody>>, Items<'a, Entry<uint, Rc<RefCell<RigidBody>>>>>;
 
 /// The physics world.
 ///
@@ -223,5 +227,10 @@ impl World {
     pub fn interferences(&mut self, out: &mut Vec<Constraint>) {
         self.detector.interferences(out, &mut self.broad_phase);
         self.joints.interferences(out, &mut self.broad_phase);
+    }
+
+    /// An iterator visiting all rigid bodies on this world.
+    pub fn bodies<'a>(&'a self) -> RigidBodies<'a> {
+        self.bodies.elements().iter().map(|e| &e.value)
     }
 }

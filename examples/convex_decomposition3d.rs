@@ -1,13 +1,10 @@
-#![crate_type = "bin"]
-#![warn(non_camel_case_types)]
-
 extern crate native;
 extern crate rustrt;
 extern crate kiss3d;
-extern crate nphysics_testbed3d;
-extern crate nphysics = "nphysics3df32";
-extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
+extern crate ncollide = "ncollide3df32";
+extern crate nphysics = "nphysics3df32";
+extern crate nphysics_testbed3d;
 
 use rustrt::bookkeeping;
 use std::sync::{Arc, RWLock};
@@ -16,7 +13,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use nalgebra::na;
-use kiss3d::window::Window;
 use kiss3d::loader::obj;
 use ncollide::geom::{Plane, Convex, Compound, CompoundData};
 use ncollide::procedural::TriMesh;
@@ -25,7 +21,7 @@ use ncollide::bounding_volume::{BoundingVolume, AABB};
 use ncollide::bounding_volume;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics_testbed3d::engine::GraphicsManager;
+use nphysics_testbed3d::Testbed;
 
 #[start]
 fn start(argc: int, argv: *const *const u8) -> int {
@@ -33,10 +29,6 @@ fn start(argc: int, argv: *const *const u8) -> int {
 }
 
 fn main() {
-    GraphicsManager::simulate(convex_3d)
-}
-
-pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
     /*
      * World
      */
@@ -72,7 +64,6 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
         let body = Rc::new(RefCell::new(rb));
 
         world.add_body(body.clone());
-        graphics.add(window, body);
     }
 
     /*
@@ -151,16 +142,16 @@ pub fn convex_3d(window: &mut Window, graphics: &mut GraphicsManager) -> World {
 
             let body = Rc::new(RefCell::new(rb));
             world.add_body(body.clone());
-            graphics.add(window, body);
         }
     }
 
     /*
-     * Set up the camera and that is it!
+     * Set up the testbed.
      */
-    graphics.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    let mut testbed = Testbed::new(world);
 
-    world
+    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.run();
 }
 
 fn models() -> Vec<String> {
