@@ -6,8 +6,6 @@ extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
 extern crate nphysics_testbed2d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use nalgebra::na::{Vec2, Translation};
@@ -52,9 +50,8 @@ fn main() {
 
     let mesh = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
     let rb   = RigidBody::new_static(mesh, 0.3, 0.6);
-    let body = Rc::new(RefCell::new(rb));
 
-    world.add_body(body.clone());
+    world.add_body(rb);
 
     /*
      * Create the boxes
@@ -76,9 +73,7 @@ fn main() {
 
             rb.append_translation(&Vec2::new(x, y));
 
-            let body = Rc::new(RefCell::new(rb));
-
-            world.add_body(body.clone());
+            world.add_body(rb);
         }
     }
 

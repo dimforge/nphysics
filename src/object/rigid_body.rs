@@ -10,6 +10,9 @@ use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
 use ncollide::math::{Scalar, Vect, Orientation, Matrix, AngularInertia};
 
+/// A shared, mutable, rigid body.
+pub type RigidBodyHandle = Rc<RefCell<RigidBody>>;
+
 // FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?
 #[deriving(Show, PartialEq, Clone, Encodable, Decodable)]
 /// The movement state of a rigid body.

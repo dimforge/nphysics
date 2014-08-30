@@ -226,10 +226,9 @@ impl Testbed {
                                         let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
-                                        let joint   = Rc::new(RefCell::new(Fixed::new(anchor1, anchor2)));
-                                        grabbed_object_joint = Some(joint.clone());
+                                        let joint   = Fixed::new(anchor1, anchor2);
                                         grabbed_object_plane = (na::translation(&attach2), -ray.dir);
-                                        self.world.add_fixed(joint);
+                                        grabbed_object_joint = Some(self.world.add_fixed(joint));
                                         // add a joint
                                         sn.select()
                                     }
@@ -335,8 +334,7 @@ impl Testbed {
 
                         rb.set_lin_vel(front * 40.0f32);
 
-                        let body = Rc::new(RefCell::new(rb));
-                        self.world.add_body(body.clone());
+                        let body = self.world.add_body(rb);
                         self.graphics.add(&mut self.window, body.clone());
                     },
                     glfw::KeyEvent(glfw::Key2, _, glfw::Press, _) => {
@@ -356,8 +354,7 @@ impl Testbed {
 
                         rb.set_lin_vel(front * 40.0f32);
 
-                        let body = Rc::new(RefCell::new(rb));
-                        self.world.add_body(body.clone());
+                        let body = self.world.add_body(rb);
                         self.graphics.add(&mut self.window, body.clone());
                     },
                     glfw::KeyEvent(glfw::Key3, _, glfw::Press, _) => {
@@ -377,8 +374,7 @@ impl Testbed {
 
                         rb.set_lin_vel(front * 400.0f32);
 
-                        let body = Rc::new(RefCell::new(rb));
-                        self.world.add_body(body.clone());
+                        let body = self.world.add_body(rb);
                         // physics.add_ccd_to(body, 0.4, 1.0);
                         self.graphics.add(&mut self.window, body);
                         fail!("FIXME: review ccd");

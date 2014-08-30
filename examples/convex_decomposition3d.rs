@@ -9,8 +9,6 @@ extern crate nphysics_testbed3d;
 use rustrt::bookkeeping;
 use std::sync::{Arc, RWLock};
 use std::rand;
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use nalgebra::na;
 use kiss3d::loader::obj;
@@ -61,9 +59,7 @@ fn main() {
 
         rb.append_translation(pos);
 
-        let body = Rc::new(RefCell::new(rb));
-
-        world.add_body(body.clone());
+        world.add_body(rb);
     }
 
     /*
@@ -140,8 +136,7 @@ fn main() {
             let pos = rand::random::<Vec3<f32>>() * 30.0f32 + Vec3::new(-15.0f32, 15.0, -15.0);
             rb.append_translation(&pos);
 
-            let body = Rc::new(RefCell::new(rb));
-            world.add_body(body.clone());
+            world.add_body(rb);
         }
     }
 

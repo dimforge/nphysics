@@ -4,8 +4,6 @@ extern crate ncollide = "ncollide3df32";
 extern crate nphysics = "nphysics3df32";
 extern crate nphysics_testbed3d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Ball, Plane};
 use nphysics::world::World;
@@ -30,16 +28,15 @@ fn main() {
      * Planes
      */
     let geom = Plane::new(Vec3::new(0.0f32, 1.0, 0.0));
-    let body = Rc::new(RefCell::new(RigidBody::new_static(geom, 0.3, 0.6)));
 
-    world.add_body(body.clone());
+    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     let geom   = Plane::new(Vec3::new(0.0f32, -1.0, 0.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
-    rb.append_translation(&Vec3::new(0.0, 50.0, 0.0));
-    let body = Rc::new(RefCell::new(rb));
 
-    world.add_body(body.clone());
+    rb.append_translation(&Vec3::new(0.0, 50.0, 0.0));
+
+    world.add_body(rb);
 
     /*
      * Create the balls
@@ -75,9 +72,7 @@ fn main() {
                     color = Vec3::new(0.0, 1.0, 0.0);
                 }
 
-                let body = Rc::new(RefCell::new(rb));
-
-                world.add_body(body.clone());
+                let body = world.add_body(rb);
                 testbed.set_color(&body, color);
             }
         }

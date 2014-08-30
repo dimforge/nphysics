@@ -4,8 +4,6 @@ extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
 extern crate nphysics_testbed2d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec1, Vec2, Translation, Rotation};
 use ncollide::geom::{Plane, Cuboid, Ball};
 use nphysics::world::World;
@@ -29,9 +27,8 @@ fn main() {
      * A plane for the ground
      */
     let ground_geom = Plane::new(Vec2::new(0.0f32, -1.0));
-    let ground      = Rc::new(RefCell::new(RigidBody::new_static(ground_geom, 0.3, 0.6)));
 
-    world.add_body(ground.clone());
+    world.add_body(RigidBody::new_static(ground_geom, 0.3, 0.6));
 
     /*
      * Create the ragdolls
@@ -87,20 +84,12 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     let mut lfoot      = rfoot.clone();
     lfoot.append_translation(&Vec2::new(-0.8f32, 0.0));
 
-
-    let head  = Rc::new(RefCell::new(head));
-    let body  = Rc::new(RefCell::new(body));
-    let rarm  = Rc::new(RefCell::new(rarm));
-    let larm  = Rc::new(RefCell::new(larm));
-    let rfoot = Rc::new(RefCell::new(rfoot));
-    let lfoot = Rc::new(RefCell::new(lfoot));
-
-    world.add_body(head.clone());
-    world.add_body(body.clone());
-    world.add_body(rarm.clone());
-    world.add_body(larm.clone());
-    world.add_body(rfoot.clone());
-    world.add_body(lfoot.clone());
+    let head  = world.add_body(head);
+    let body  = world.add_body(body);
+    let rarm  = world.add_body(rarm);
+    let larm  = world.add_body(larm);
+    let rfoot = world.add_body(rfoot);
+    let lfoot = world.add_body(lfoot);
 
     /*
      * Create joints.
@@ -123,9 +112,9 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     let rfoot_joint = BallInSocket::new(body_anchor_rfoot, rfoot_anchor);
     let lfoot_joint = BallInSocket::new(body_anchor_lfoot, lfoot_anchor);
 
-    world.add_ball_in_socket(Rc::new(RefCell::new(head_joint)));
-    world.add_ball_in_socket(Rc::new(RefCell::new(rarm_joint)));
-    world.add_ball_in_socket(Rc::new(RefCell::new(larm_joint)));
-    world.add_ball_in_socket(Rc::new(RefCell::new(rfoot_joint)));
-    world.add_ball_in_socket(Rc::new(RefCell::new(lfoot_joint)));
+    world.add_ball_in_socket(head_joint);
+    world.add_ball_in_socket(rarm_joint);
+    world.add_ball_in_socket(larm_joint);
+    world.add_ball_in_socket(rfoot_joint);
+    world.add_ball_in_socket(lfoot_joint);
 }

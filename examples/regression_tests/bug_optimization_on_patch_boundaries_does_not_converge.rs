@@ -23,8 +23,6 @@ extern crate ncollide = "ncollide3df32";
 extern crate nphysics = "nphysics3df32";
 extern crate nphysics_testbed3d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Ball, BezierSurface};
 use nphysics::world::World;
@@ -55,9 +53,8 @@ fn main() {
     );
 
     let rb   = RigidBody::new_static(BezierSurface::new(control_points, 5, 5), 0.3, 0.6);
-    let body = Rc::new(RefCell::new(rb));
 
-    world.add_body(body.clone());
+    world.add_body(rb);
 
     /*
      * Create the balls
@@ -79,9 +76,7 @@ fn main() {
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
-                let body = Rc::new(RefCell::new(rb));
-
-                world.add_body(body.clone());
+                world.add_body(rb);
             }
         }
     }

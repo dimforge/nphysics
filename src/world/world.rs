@@ -16,7 +16,7 @@ use detection::Detector;
 use detection::constraint::Constraint;
 use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, VelocityAndPosition};
-use object::RigidBody;
+use object::{RigidBody, RigidBodyHandle};
 
 /// The default broad phase.
 pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, Box<GeomGeomCollisionDetector + Send>>;
@@ -27,7 +27,7 @@ pub type RigidBodies<'a> = Map<'a, &'a Entry<uint, Rc<RefCell<RigidBody>>>, &'a 
 ///
 /// This is the main structure of the physics engine.
 pub struct World {
-    bodies:      HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>,
+    bodies:      HashMap<uint, RigidBodyHandle, UintTWHash>,
     forces:      BodyForceGenerator,
     broad_phase: WorldBroadPhase,
     integrator:  BodySmpEulerIntegrator,
@@ -121,13 +121,17 @@ impl World {
     }
 
     /// Adds a rigid body to the physics world.
-    pub fn add_body(&mut self, b: Rc<RefCell<RigidBody>>) {
-        self.bodies.insert(b.deref() as *const RefCell<RigidBody> as uint, b.clone());
-        self.broad_phase.add(b);
+    pub fn add_body(&mut self, rb: RigidBody) -> RigidBodyHandle {
+        let handle = Rc::new(RefCell::new(rb));
+
+        self.bodies.insert(handle.deref() as *const RefCell<RigidBody> as uint, handle.clone());
+        self.broad_phase.add(handle.clone());
+
+        handle
     }
 
     /// Remove a rigid body from the physics world.
-    pub fn remove_body(&mut self, b: &Rc<RefCell<RigidBody>>) {
+    pub fn remove_body(&mut self, b: &RigidBodyHandle) {
         self.bodies.remove(&(b.deref() as *const RefCell<RigidBody> as uint));
         self.broad_phase.remove(b);
         self.detector.remove(b, &mut self.broad_phase, &mut self.sleep);
@@ -190,7 +194,7 @@ impl World {
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn cast_ray(&mut self, ray: &Ray, out: &mut Vec<(Rc<RefCell<RigidBody>>, Scalar)>) {
+    pub fn cast_ray(&mut self, ray: &Ray, out: &mut Vec<(RigidBodyHandle, Scalar)>) {
         self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
     }
 
@@ -204,8 +208,12 @@ impl World {
     */
 
     /// Adds a ball-in-socket joint to the world.
-    pub fn add_ball_in_socket(&mut self, joint: Rc<RefCell<BallInSocket>>) {
-        self.joints.add_ball_in_socket(joint, &mut self.sleep)
+    pub fn add_ball_in_socket(&mut self, joint: BallInSocket) -> Rc<RefCell<BallInSocket>> {
+        let res = Rc::new(RefCell::new(joint));
+
+        self.joints.add_ball_in_socket(res.clone(), &mut self.sleep);
+
+        res
     }
 
     /// Removes a ball-in-socket joint from the world.
@@ -214,8 +222,12 @@ impl World {
     }
 
     /// Adds a fixed joint to the world.
-    pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>) {
-        self.joints.add_fixed(joint, &mut self.sleep)
+    pub fn add_fixed(&mut self, joint: Fixed) -> Rc<RefCell<Fixed>> {
+        let res = Rc::new(RefCell::new(joint));
+
+        self.joints.add_fixed(res.clone(), &mut self.sleep);
+
+        res
     }
 
     /// Removes a fixed joint from the world.

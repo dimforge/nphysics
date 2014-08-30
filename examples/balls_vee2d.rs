@@ -4,8 +4,6 @@ extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
 extern crate nphysics_testbed2d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::{Ball, Plane};
 use nphysics::world::World;
@@ -31,9 +29,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    let body = Rc::new(RefCell::new(rb));
-
-    world.add_body(body.clone());
+    world.add_body(rb);
 
     /*
      * Second plane
@@ -42,9 +38,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    let body = Rc::new(RefCell::new(rb));
-
-    world.add_body(body.clone());
+    world.add_body(rb);
 
     /*
      * Create the balls
@@ -64,9 +58,7 @@ fn main() {
 
             rb.append_translation(&Vec2::new(x, y));
 
-            let body = Rc::new(RefCell::new(rb));
-
-            world.add_body(body.clone());
+            world.add_body(rb);
         }
     }
 

@@ -4,8 +4,6 @@ extern crate ncollide = "ncollide3df32";
 extern crate nphysics = "nphysics3df32";
 extern crate nphysics_testbed3d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Plane, Cuboid};
 use nphysics::world::World;
@@ -28,9 +26,8 @@ fn main() {
      * Plane
      */
     let geom = Plane::new(Vec3::new(0.0f32, 1.0, 0.0));
-    let body = Rc::new(RefCell::new(RigidBody::new_static(geom, 0.3, 0.6)));
 
-    world.add_body(body.clone());
+    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     /*
      * Create the boxes
@@ -54,9 +51,7 @@ fn main() {
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
-                let body = Rc::new(RefCell::new(rb));
-
-                world.add_body(body.clone());
+                world.add_body(rb);
             }
         }
     }

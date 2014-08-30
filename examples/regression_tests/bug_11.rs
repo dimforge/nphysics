@@ -23,8 +23,6 @@ extern crate ncollide = "ncollide2df32";
 extern crate nphysics = "nphysics2df32";
 extern crate nphysics_testbed2d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec2, Translation};
 use ncollide::geom::Cuboid;
 use nphysics::world::World;
@@ -52,9 +50,7 @@ fn main() {
 
     rb.set_lin_vel(Vec2::new(0.99, 0.0));
 
-    let body = Rc::new(RefCell::new(rb.clone()));
-
-    world.add_body(body.clone());
+    world.add_body(rb.clone());
 
     /*
      * Create the box that will not be deactivated.
@@ -62,9 +58,7 @@ fn main() {
     rb.set_deactivation_threshold(Some(0.5));
     rb.append_translation(&Vec2::new(0.0, 3.0));
 
-    let body = Rc::new(RefCell::new(rb));
-
-    world.add_body(body.clone());
+    world.add_body(rb);
 
     /*
      * Set up the testbed.

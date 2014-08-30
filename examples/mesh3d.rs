@@ -5,8 +5,6 @@ extern crate nphysics = "nphysics3df32";
 extern crate ncollide = "ncollide3df32";
 extern crate nalgebra;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use sync::Arc;
 use nalgebra::na::Vec3;
 use ncollide::geom::Mesh;
@@ -31,9 +29,8 @@ fn main() {
     for (vertices, indices) in meshes.move_iter() {
         let vertices = vertices.iter().map(|v| v * 3.0f32).collect();
         let mesh     = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
-        let body     = Rc::new(RefCell::new(RigidBody::new_static(mesh, 0.3, 0.6)));
 
-        world.add_body(body.clone());
+        world.add_body(RigidBody::new_static(mesh, 0.3, 0.6));
     }
 
     /*

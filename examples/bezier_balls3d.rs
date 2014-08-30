@@ -4,8 +4,6 @@ extern crate ncollide = "ncollide3df32";
 extern crate nphysics = "nphysics3df32";
 extern crate nphysics_testbed3d;
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use nalgebra::na::{Vec3, Translation};
 use ncollide::geom::{Ball, BezierSurface};
 use nphysics::world::World;
@@ -34,20 +32,10 @@ fn main() {
         Vec3::new(-20.0, -00.0, -10.0), Vec3::new(-10.0, -40.0, -10.0), Vec3::new(00.0, 040.0, -10.0), Vec3::new(10.0, -40.0, -10.0), Vec3::new(20.0, -00.0, -10.0),
         Vec3::new(-20.0, -00.0, -20.0), Vec3::new(-10.0, -00.0, -20.0), Vec3::new(00.0, -00.0, -20.0), Vec3::new(10.0, -00.0, -20.0), Vec3::new(20.0, -00.0, -20.0),
     );
-    /*
-    let control_points = vec!(
-        Vec3::new(-20.0, -00.0, 020.0), Vec3::new(-10.0, -00.0, 020.0), Vec3::new(00.0, -00.0, 020.0), Vec3::new(10.0, -00.0, 020.0), Vec3::new(20.0, -00.0, 020.0),
-        Vec3::new(-20.0, -00.0, 010.0), Vec3::new(-10.0, -00.0, 010.0), Vec3::new(00.0, 000.0, 010.0), Vec3::new(10.0, -00.0, 010.0), Vec3::new(20.0, -00.0, 010.0),
-        Vec3::new(-20.0, -00.0, 000.0), Vec3::new(-10.0, -00.0, 000.0), Vec3::new(00.0, 000.0, 000.0), Vec3::new(10.0, -00.0, 000.0), Vec3::new(20.0, -00.0, 000.0),
-        Vec3::new(-20.0, -00.0, -10.0), Vec3::new(-10.0, -00.0, -10.0), Vec3::new(00.0, 000.0, -10.0), Vec3::new(10.0, -00.0, -10.0), Vec3::new(20.0, -00.0, -10.0),
-        Vec3::new(-20.0, -00.0, -20.0), Vec3::new(-10.0, -00.0, -20.0), Vec3::new(00.0, -00.0, -20.0), Vec3::new(10.0, -00.0, -20.0), Vec3::new(20.0, -00.0, -20.0),
-    );
-    */
 
-    let rb   = RigidBody::new_static(BezierSurface::new(control_points, 5, 5), 0.3, 0.6);
-    let body = Rc::new(RefCell::new(rb));
+    let rb = RigidBody::new_static(BezierSurface::new(control_points, 5, 5), 0.3, 0.6);
 
-    world.add_body(body.clone());
+    world.add_body(rb);
 
     /*
      * Create the balls
@@ -69,9 +57,7 @@ fn main() {
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
-                let body = Rc::new(RefCell::new(rb));
-
-                world.add_body(body.clone());
+                world.add_body(rb);
             }
         }
     }
