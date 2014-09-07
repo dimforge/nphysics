@@ -6,9 +6,9 @@ extern crate time;
 extern crate collections;
 extern crate glfw;
 extern crate kiss3d;
-extern crate nphysics = "nphysics3df32";
+extern crate "nphysics3df32" as nphysics;
 extern crate nalgebra;
-extern crate ncollide = "ncollide3df32";
+extern crate "ncollide3df32" as ncollide;
 
 
 pub use testbed::Testbed;

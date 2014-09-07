@@ -19,8 +19,8 @@
 
 extern crate native;
 extern crate nalgebra;
-extern crate ncollide = "ncollide3df32";
-extern crate nphysics = "nphysics3df32";
+extern crate "ncollide3df32" as ncollide;
+extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
 use nalgebra::na::{Vec3, Translation};

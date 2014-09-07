@@ -246,7 +246,7 @@ impl GraphicsManager {
             let c = geom.downcast_ref::<Cm>().unwrap();
 
             for &(t, ref s) in c.geoms().iter() {
-                self.add_geom(window, body.clone(), delta * t, **s, color, out)
+                self.add_geom(window, body.clone(), delta * t, &***s, color, out)
             }
         }
         else if id == TypeId::of::<Tm>() {

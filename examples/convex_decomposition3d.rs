@@ -2,8 +2,8 @@ extern crate native;
 extern crate rustrt;
 extern crate kiss3d;
 extern crate nalgebra;
-extern crate ncollide = "ncollide3df32";
-extern crate nphysics = "nphysics3df32";
+extern crate "ncollide3df32" as ncollide;
+extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
 use rustrt::bookkeeping;

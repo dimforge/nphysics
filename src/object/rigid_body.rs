@@ -134,9 +134,7 @@ impl RigidBody {
     /// Gets a reference to this body's geometry.
     #[inline]
     pub fn geom_ref<'r>(&'r self) -> &'r Geom {
-        let res: &'r Geom = *self.geom;
-
-        res
+        &**self.geom
     }
 
     /// Gets a copy of this body's shared geometry.

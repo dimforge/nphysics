@@ -1,7 +1,7 @@
 extern crate native;
 extern crate nphysics_testbed3d;
-extern crate nphysics = "nphysics3df32";
-extern crate ncollide = "ncollide3df32";
+extern crate "ncollide3df32" as ncollide;
+extern crate "nphysics3df32" as nphysics;
 extern crate nalgebra;
 
 use nalgebra::na::{Vec3, Translation, Rotation};
