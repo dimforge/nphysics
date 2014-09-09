@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use nalgebra::na::{Transformation, Translation, Rotation};
 use nalgebra::na;
 use nalgebra::na::Transform;
-use ncollide::bounding_volume::{HasBoundingVolume, AABB, HasAABB};
+use ncollide::bounding_volume::{HasBoundingVolume, LooseBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
 use ncollide::math::{Scalar, Vect, Orientation, Matrix, AngularInertia};
@@ -66,8 +66,9 @@ pub struct RigidBody {
     index:                int,
     activation_state:     ActivationState,
     sleep_threshold:      Option<Scalar>,
-    lin_acc_scale:        Vect,       // FIXME: find a better way of doing that.
-    ang_acc_scale:        Orientation // FIXME: find a better way of doing that.
+    lin_acc_scale:        Vect,        // FIXME: find a better way of doing that.
+    ang_acc_scale:        Orientation, // FIXME: find a better way of doing that.
+    margin:               Scalar
 }
 
 impl Clone for RigidBody {
@@ -92,6 +93,7 @@ impl Clone for RigidBody {
             sleep_threshold:   self.sleep_threshold.clone(),
             lin_acc_scale:     self.lin_acc_scale.clone(),
             ang_acc_scale:     self.ang_acc_scale.clone(),
+            margin:            self.margin.clone()
         }
     }
 }
@@ -141,6 +143,12 @@ impl RigidBody {
     #[inline]
     pub fn geom<'r>(&'r self) -> Arc<Box<Geom + Send + Sync>> {
         self.geom.clone()
+    }
+
+    /// The margin surrounding this object's geometry.
+    #[inline]
+    pub fn margin(&self) -> Scalar {
+        self.margin.clone()
     }
 
     #[doc(hidden)]
@@ -300,7 +308,8 @@ impl RigidBody {
                 activation_state:     active,
                 sleep_threshold:      Some(na::one()),
                 lin_acc_scale:        na::one(),
-                ang_acc_scale:        na::one()
+                ang_acc_scale:        na::one(),
+                margin:               na::cast(0.04f32) // FIXME: do not hard-code this.
             };
 
         res.update_center_of_mass();
@@ -582,13 +591,13 @@ impl Rotation<Orientation> for RigidBody {
 
 impl HasBoundingVolume<AABB> for RigidBody {
     fn bounding_volume(&self) -> AABB {
-        self.geom.aabb(&self.local_to_world)
+        self.geom.aabb(&self.local_to_world).loosened(self.margin())
     }
 }
 
 impl HasBoundingVolume<AABB> for Rc<RefCell<RigidBody>> {
     fn bounding_volume(&self) -> AABB {
         let bself = self.borrow();
-        bself.geom().aabb(&bself.local_to_world)
+        bself.geom().aabb(&bself.local_to_world).loosened(bself.margin())
     }
 }

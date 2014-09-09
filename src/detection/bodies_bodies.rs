@@ -151,7 +151,14 @@ Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
             cd.colls(&mut self.contacts_collector);
 
             for c in self.contacts_collector.iter() {
-                out.push(RBRB(b1.clone(), b2.clone(), c.clone()))
+                let mut contact = c.clone();
+                // Take the margins in account.
+                let m1 = b1.borrow().margin();
+                let m2 = b2.borrow().margin();
+
+                contact.depth = contact.depth + m1 + m2;
+
+                out.push(RBRB(b1.clone(), b2.clone(), contact))
             }
 
             self.contacts_collector.clear()

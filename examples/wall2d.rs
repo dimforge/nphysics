@@ -43,9 +43,9 @@ fn main() {
             let fj = j as f32;
             let fi = i as f32;
             let x  = fj * 2.0 * rad - centerx;
-            let y  = -fi * 2.0 * rad;
+            let y  = -fi * 2.0 * rad - 0.04 - rad;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad, rad)), 1.0f32, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad - 0.04, rad - 0.04)), 1.0f32, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

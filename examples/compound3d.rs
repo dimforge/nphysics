@@ -40,9 +40,9 @@ fn main() {
     let delta3 = Iso3::new(Vec3::new(5.0f32, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = CompoundData::new();
-    cross_geoms.push_geom(delta1, Cuboid::new(Vec3::new(5.0f32, 0.25, 0.25)), 1.0);
-    cross_geoms.push_geom(delta2, Cuboid::new(Vec3::new(0.25f32, 5.0, 0.25)), 1.0);
-    cross_geoms.push_geom(delta3, Cuboid::new(Vec3::new(0.25f32, 5.0, 0.25)), 1.0);
+    cross_geoms.push_geom(delta1, Cuboid::new(Vec3::new(4.96f32, 0.21, 0.21)), 1.0);
+    cross_geoms.push_geom(delta2, Cuboid::new(Vec3::new(0.21f32, 4.96, 0.21)), 1.0);
+    cross_geoms.push_geom(delta3, Cuboid::new(Vec3::new(0.21f32, 4.96, 0.21)), 1.0);
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(&1.0);

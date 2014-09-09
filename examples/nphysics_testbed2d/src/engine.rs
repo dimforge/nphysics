@@ -102,7 +102,8 @@ impl<'a> GraphicsManager<'a> {
                 geom:  &geom::Ball,
                 out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
-        out.push(BallNode(Ball::new(body, delta, geom.radius(), color)))
+        let margin = body.borrow().margin();
+        out.push(BallNode(Ball::new(body, delta, geom.radius() + margin, color)))
     }
 
     fn add_lines(&mut self,
@@ -127,10 +128,11 @@ impl<'a> GraphicsManager<'a> {
                out:   &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
+        let margin = body.borrow().margin();
 
         let color = self.color_for_object(&body);
 
-        out.push(BoxNode(Box::new(body, delta, rx, ry, color)))
+        out.push(BoxNode(Box::new(body, delta, rx + margin, ry + margin, color)))
     }
 
     pub fn clear(&mut self) {

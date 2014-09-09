@@ -36,7 +36,7 @@ fn main() {
     let rad     = 0.5;
     let shift   = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
+    let centery = shift / 2.0 + 0.04;
 
     for i in range(0u, num) {
         for j in range(i, num) {
@@ -45,7 +45,7 @@ fn main() {
             let x = (fi * shift / 2.0) + fj * shift - centerx;
             let y = fi * shift + centery;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(rad, rad, rad)), 1.0f32, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(rad - 0.04, rad - 0.04, rad - 0.04)), 1.0f32, 0.3, 0.6);
 
             rb.append_translation(&Vec3::new(x, y, 0.0));
 

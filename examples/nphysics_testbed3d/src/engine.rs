@@ -307,7 +307,8 @@ impl GraphicsManager {
                 geom:   &geom::Ball,
                 color:  Vec3<f32>,
                 out:    &mut Vec<Node>) {
-        out.push(BallNode(Ball::new(body, delta, geom.radius(), color, window)))
+        let margin = body.borrow().margin();
+        out.push(BallNode(Ball::new(body, delta, geom.radius() + margin, color, window)))
     }
 
     fn add_box(&mut self,
@@ -317,9 +318,9 @@ impl GraphicsManager {
                geom:   &geom::Cuboid,
                color:  Vec3<f32>,
                out:    &mut Vec<Node>) {
-        let rx = geom.half_extents().x + geom.margin();
-        let ry = geom.half_extents().y + geom.margin();
-        let rz = geom.half_extents().z + geom.margin();
+        let rx = geom.half_extents().x + body.borrow().margin();
+        let ry = geom.half_extents().y + body.borrow().margin();
+        let rz = geom.half_extents().z + body.borrow().margin();
 
         out.push(BoxNode(Box::new(body, delta, rx, ry, rz, color, window)))
     }

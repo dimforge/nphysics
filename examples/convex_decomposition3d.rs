@@ -12,7 +12,7 @@ use std::rand;
 use nalgebra::na::{Vec3, Translation};
 use nalgebra::na;
 use kiss3d::loader::obj;
-use ncollide::geom::{Plane, Convex, Compound, CompoundData};
+use ncollide::geom::{Plane, Compound, CompoundData};
 use ncollide::procedural::TriMesh;
 use ncollide::procedural;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
@@ -101,10 +101,7 @@ fn main() {
 
                 let (decomp, _) = procedural::hacd(trimesh, 0.03, 1);
 
-                for comp in decomp.move_iter() {
-                    // FIXME: add to Convex a method to modify its margin.
-                    let mesh = unsafe { Convex::new_with_convex_mesh(comp.unwrap(), 0.04) };
-
+                for mesh in decomp.move_iter() {
                     geom_data.push_geom(deltas, mesh, 1.0);
                 }
             }

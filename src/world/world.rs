@@ -54,7 +54,7 @@ impl World {
          * For the collision detection
          */
         // Collision Dispatcher
-        let geom_dispatcher = Rc::new(GeomGeomDispatcher::new());
+        let geom_dispatcher = Rc::new(GeomGeomDispatcher::new(na::cast(0.10f64)));
         let dispatcher = BodyBodyDispatcher::new(geom_dispatcher.clone());
 
         // Broad phase

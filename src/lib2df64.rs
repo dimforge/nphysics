@@ -94,7 +94,7 @@ extern crate rand;
 extern crate serialize;
 extern crate collections;
 extern crate nalgebra;
-extern crate ncollide = "ncollide2df64";
+extern crate "ncollide2df64" as ncollide;
 #[cfg(test)]
 extern crate test;
 
