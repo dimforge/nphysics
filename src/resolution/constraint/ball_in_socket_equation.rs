@@ -85,9 +85,9 @@ pub fn cancel_relative_linear_motion<P>(
             constraint
         );
 
-        let _M: Scalar = Bounded::max_value();
-        constraint.lobound   = -_M;
-        constraint.hibound   = _M;
+        let _max: Scalar = Bounded::max_value();
+        constraint.lobound   = -_max;
+        constraint.hibound   = _max;
         constraint.objective = -dvel - error.at(i) / dt;
         constraint.impulse   = na::zero(); // FIXME: cache
     }

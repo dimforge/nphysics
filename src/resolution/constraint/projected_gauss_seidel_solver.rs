@@ -46,7 +46,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
                                     num_iterations: uint,
                                     is_lambda_zero: bool) {
     // initialize the solution with zeros...
-    // mjLambda is result
+    // mj_lambda is result
     assert!(result.len() == num_bodies);
 
     for v in result.mut_iter() {
@@ -87,36 +87,36 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
 }
 
 #[inline(always)]
-fn setup_warmstart_for_constraint(c: &VelocityConstraint, mjLambda: &mut [Velocities]) {
+fn setup_warmstart_for_constraint(c: &VelocityConstraint, mj_lambda: &mut [Velocities]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
     if id1 >= 0 {
-        mjLambda[id1 as uint].lv = mjLambda[id1 as uint].lv - c.weighted_normal1 * c.impulse;
-        mjLambda[id1 as uint].av = mjLambda[id1 as uint].av + c.weighted_rot_axis1 * c.impulse;
+        mj_lambda[id1 as uint].lv = mj_lambda[id1 as uint].lv - c.weighted_normal1 * c.impulse;
+        mj_lambda[id1 as uint].av = mj_lambda[id1 as uint].av + c.weighted_rot_axis1 * c.impulse;
     }
 
     if id2 >= 0 {
-        mjLambda[id2 as uint].lv = mjLambda[id2 as uint].lv + c.weighted_normal2 * c.impulse;
-        mjLambda[id2 as uint].av = mjLambda[id2 as uint].av + c.weighted_rot_axis2 * c.impulse;
+        mj_lambda[id2 as uint].lv = mj_lambda[id2 as uint].lv + c.weighted_normal2 * c.impulse;
+        mj_lambda[id2 as uint].av = mj_lambda[id2 as uint].av + c.weighted_rot_axis2 * c.impulse;
     }
 }
 
 #[inline(always)]
-fn solve_velocity_constraint(c: &mut VelocityConstraint, mjLambda: &mut [Velocities]) {
+fn solve_velocity_constraint(c: &mut VelocityConstraint, mj_lambda: &mut [Velocities]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
     let mut d_lambda_i = c.objective.clone();
 
     if id1 >= 0 {
-        d_lambda_i = d_lambda_i + na::dot(&c.normal, &mjLambda[id1 as uint].lv)
-                                - na::dot(&c.rot_axis1, &mjLambda[id1 as uint].av);
+        d_lambda_i = d_lambda_i + na::dot(&c.normal, &mj_lambda[id1 as uint].lv)
+                                - na::dot(&c.rot_axis1, &mj_lambda[id1 as uint].av);
     }
 
     if id2 >= 0 {
-        d_lambda_i = d_lambda_i - na::dot(&c.normal, &mjLambda[id2 as uint].lv)
-                                - na::dot(&c.rot_axis2, &mjLambda[id2 as uint].av);
+        d_lambda_i = d_lambda_i - na::dot(&c.normal, &mj_lambda[id2 as uint].lv)
+                                - na::dot(&c.rot_axis2, &mj_lambda[id2 as uint].av);
     }
 
     d_lambda_i = d_lambda_i * c.inv_projected_mass;
@@ -131,12 +131,12 @@ fn solve_velocity_constraint(c: &mut VelocityConstraint, mjLambda: &mut [Velocit
 
 
     if id1 >= 0 {
-        mjLambda[id1 as uint].lv = mjLambda[id1 as uint].lv - c.weighted_normal1 * d_lambda_i;
-        mjLambda[id1 as uint].av = mjLambda[id1 as uint].av + c.weighted_rot_axis1 * d_lambda_i;
+        mj_lambda[id1 as uint].lv = mj_lambda[id1 as uint].lv - c.weighted_normal1 * d_lambda_i;
+        mj_lambda[id1 as uint].av = mj_lambda[id1 as uint].av + c.weighted_rot_axis1 * d_lambda_i;
     }
 
     if id2 >= 0 {
-        mjLambda[id2 as uint].lv = mjLambda[id2 as uint].lv + c.weighted_normal2 * d_lambda_i;
-        mjLambda[id2 as uint].av = mjLambda[id2 as uint].av + c.weighted_rot_axis2 * d_lambda_i;
+        mj_lambda[id2 as uint].lv = mj_lambda[id2 as uint].lv + c.weighted_normal2 * d_lambda_i;
+        mj_lambda[id2 as uint].av = mj_lambda[id2 as uint].av + c.weighted_rot_axis2 * d_lambda_i;
     }
 }

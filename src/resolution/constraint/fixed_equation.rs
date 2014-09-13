@@ -63,9 +63,9 @@ pub fn cancel_relative_angular_motion<P>(dt:          Scalar,
         let ang_vel1 = match opt_rb1 { Some(rb) => rb.ang_vel(), None => na::zero() };
         let ang_vel2 = match opt_rb2 { Some(rb) => rb.ang_vel(), None => na::zero() };
 
-        let _M: Scalar = Bounded::max_value();
-        constraint.lobound   = -_M;
-        constraint.hibound   = _M;
+        let _max: Scalar = Bounded::max_value();
+        constraint.lobound   = -_max;
+        constraint.hibound   = _max;
         // FIXME: dont compute the difference at each iteration
         let error = na::dot(&delta_rot, &rot_axis) * correction.joint_corr / dt;
         constraint.objective = na::dot(&(ang_vel2 - ang_vel1), &rot_axis) - error;

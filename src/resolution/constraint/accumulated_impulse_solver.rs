@@ -27,7 +27,7 @@ pub struct AccumulatedImpulseSolver {
     num_second_order_iter:   uint,
     restitution_constraints: Vec<VelocityConstraint>,
     friction_constraints:    Vec<VelocityConstraint>,
-    mjLambda:                Vec<Velocities>
+    mj_lambda:               Vec<Velocities>
 }
 
 impl AccumulatedImpulseSolver {
@@ -44,7 +44,7 @@ impl AccumulatedImpulseSolver {
             num_second_order_iter:   num_second_order_iter,
             restitution_constraints: Vec::new(),
             friction_constraints:    Vec::new(),
-            mjLambda:                Vec::new(),
+            mj_lambda:               Vec::new(),
             cache:                   ImpulseCache::new(step, na::dim::<Vect>()),
 
             correction: CorrectionParameters {
@@ -162,13 +162,13 @@ impl AccumulatedImpulseSolver {
             }
         }
 
-        resize_buffer(&mut self.mjLambda, bodies.len(), Velocities::new());
+        resize_buffer(&mut self.mj_lambda, bodies.len(), Velocities::new());
 
         // FIXME: parametrize by the resolution algorithm?
         pgs::projected_gauss_seidel_solve(
             self.restitution_constraints.as_mut_slice(),
             self.friction_constraints.as_mut_slice(),
-            self.mjLambda.as_mut_slice(),
+            self.mj_lambda.as_mut_slice(),
             bodies.len(),
             self.num_second_order_iter,
             false);
@@ -183,8 +183,8 @@ impl AccumulatedImpulseSolver {
             let curr_lin_vel = rb.lin_vel();
             let curr_ang_vel = rb.ang_vel();
 
-            rb.set_lin_vel(curr_lin_vel + self.mjLambda[i as uint].lv);
-            rb.set_ang_vel(curr_ang_vel + self.mjLambda[i as uint].av);
+            rb.set_lin_vel(curr_lin_vel + self.mj_lambda[i as uint].lv);
+            rb.set_ang_vel(curr_ang_vel + self.mj_lambda[i as uint].av);
         }
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
@@ -233,7 +233,7 @@ impl AccumulatedImpulseSolver {
             pgs::projected_gauss_seidel_solve(
                 self.restitution_constraints.as_mut_slice(),
                 [],
-                self.mjLambda.as_mut_slice(),
+                self.mj_lambda.as_mut_slice(),
                 bodies.len(),
                 self.num_first_order_iter,
                 true);
@@ -242,8 +242,8 @@ impl AccumulatedImpulseSolver {
                 let mut rb = b.borrow_mut();
                 let i      = rb.index();
 
-                let translation = self.mjLambda[i as uint].lv * dt;
-                let rotation    = self.mjLambda[i as uint].av * dt;
+                let translation = self.mj_lambda[i as uint].lv * dt;
+                let rotation    = self.mj_lambda[i as uint].av * dt;
 
                 let center = &rb.center_of_mass().clone();
 

@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use nalgebra::na;
-use ncollide::data::hash_map::HashMap;
-use ncollide::data::hash::UintTWHash;
+use ncollide::utils::data::hash_map::HashMap;
+use ncollide::utils::data::hash::UintTWHash;
 use ncollide::math::Scalar;
 use ncollide::broad::{InterferencesBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
