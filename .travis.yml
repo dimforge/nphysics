@@ -1,15 +1,9 @@
-env:
-  global:
-    - secure: bfjbY6f6Mf69oAzin8TvBC2GuCJk0ba3cssHh6R4Np8a9Ni57hOqC9MnXWZQFKuBIFPumHRSIAcwfFECWQ+LtVVyHP1XEw0CigXhddrRRnK8S8z3IMICwc/51pTvGX2vjGvcAbyVkhoh17oXiQZp1Pbktb5mSjeVC2FXZAEOINw=
-language: c
+language: rust
 install:
-  - curl -s http://www.rust-lang.org/rustup.sh | sudo sh
   - sudo apt-get install libXxf86vm-dev
   - sudo apt-get install libsfml-dev
   - sudo apt-get install libjpeg62
-script:
   - sudo apt-get update
-  - rustc --version
   - git clone https://github.com/glfw/glfw.git
   - cd glfw
   - git checkout 3.0.3
@@ -23,7 +17,3 @@ script:
   - wget http://www.sfml-dev.org/download/csfml/CSFML-2.1-linux-gcc-64bits.tar.bz2
   - tar xf CSFML-2.1-linux-gcc-64bits.tar.bz2
   - sudo cp -r CSFML-2.1/lib/* /usr/local/lib/.
-  - make
-  - make examples
-after_script:
-  - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
