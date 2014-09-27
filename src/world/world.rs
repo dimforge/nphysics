@@ -99,7 +99,7 @@ impl World {
 
     /// Updates the physics world.
     pub fn step(&mut self, dt: Scalar) {
-        for e in self.bodies.elements_mut().mut_iter() {
+        for e in self.bodies.elements_mut().iter_mut() {
             let mut rb = e.value.borrow_mut();
 
             self.forces.update(dt.clone(), rb.deref_mut());

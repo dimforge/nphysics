@@ -82,7 +82,7 @@ fn main() {
 
                 let mut shape = procedural::cuboid(&Vec3::new(2.0 - 0.08, 2.0 - 0.08, 2.0 - 0.08));
 
-                for c in shape.coords.mut_iter() {
+                for c in shape.coords.iter_mut() {
                     *c = *c + Vec3::new(excentricity, excentricity, excentricity);
                 }
 

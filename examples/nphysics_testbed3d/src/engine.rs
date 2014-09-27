@@ -142,7 +142,7 @@ impl GraphicsManager {
             }
         }
 
-        for aabb in self.aabbs.mut_iter() {
+        for aabb in self.aabbs.iter_mut() {
             window.remove(aabb);
         }
 
@@ -362,16 +362,16 @@ impl GraphicsManager {
     }
 
     pub fn draw(&mut self) {
-        for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.mut_iter() {
+        for (_, ns) in self.rb2sn.iter_mut() {
+            for n in ns.iter_mut() {
                 n.update()
             }
         }
     }
 
     pub fn draw_positions(&mut self, window: &mut Window) {
-        for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.mut_iter() {
+        for (_, ns) in self.rb2sn.iter_mut() {
+            for n in ns.iter_mut() {
                 let rb = n.body().borrow();
 
                 let t      = na::transformation(rb.deref());

@@ -14,7 +14,7 @@ use ncollide::geom::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::detection::Detector;
-use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
+use nphysics::detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
 use nphysics::detection::joint::{Anchor, Fixed, Joint};
 use nphysics::object::RigidBody;
 use nphysics::world::World;
@@ -93,13 +93,13 @@ impl Testbed {
 
         let mut res = Vec::new();
 
-        for (_, m, _) in objects.move_iter() {
+        for (_, m, _) in objects.into_iter() {
             let vertices = m.coords().read().to_owned().unwrap();
             let indices  = m.faces().read().to_owned().unwrap();
 
             let mut flat_indices = Vec::new();
 
-            for i in indices.move_iter() {
+            for i in indices.into_iter() {
                 flat_indices.push(i.x as uint);
                 flat_indices.push(i.y as uint);
                 flat_indices.push(i.z as uint);
@@ -161,7 +161,7 @@ impl Testbed {
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
-                            for (b, toi) in interferences.move_iter() {
+                            for (b, toi) in interferences.into_iter() {
                                 if toi < mintoi {
                                     mintoi = toi;
                                     minb   = Some(b);
@@ -181,7 +181,7 @@ impl Testbed {
                         else if modifier.contains(glfw::Control) {
                             match grabbed_object {
                                 Some(ref rb) => {
-                                    for sn in self.graphics.body_to_scene_node(rb).unwrap().mut_iter() {
+                                    for sn in self.graphics.body_to_scene_node(rb).unwrap().iter_mut() {
                                         sn.unselect()
                                     }
                                 },
@@ -200,7 +200,7 @@ impl Testbed {
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
-                            for (b, toi) in interferences.move_iter() {
+                            for (b, toi) in interferences.into_iter() {
                                 if toi < mintoi {
                                     mintoi = toi;
                                     minb   = Some(b);
@@ -216,7 +216,7 @@ impl Testbed {
 
                             match grabbed_object {
                                 Some(ref b) => {
-                                    for sn in self.graphics.body_to_scene_node(b).unwrap().mut_iter() {
+                                    for sn in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
                                         match grabbed_object_joint {
                                             Some(ref j) => self.world.remove_fixed(j),
                                             None        => { }
@@ -243,7 +243,7 @@ impl Testbed {
                     glfw::MouseButtonEvent(_, glfw::Release, _) => {
                         match grabbed_object {
                             Some(ref b) => {
-                                for sn in self.graphics.body_to_scene_node(b).unwrap().mut_iter() {
+                                for sn in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
                                     sn.unselect()
                                 }
                             },
@@ -437,11 +437,11 @@ fn draw_collisions(window: &mut Window, physics: &mut World) {
                 let end    = center + c.normal * 0.4f32;
                 window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
             },
-            BallInSocket(ref bis) => {
+            BallInSocketConstraint(ref bis) => {
                 let bbis = bis.borrow();
                 window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Vec3::y());
             },
-            Fixed(ref f) => {
+            FixedConstraint(ref f) => {
                 // FIXME: draw the rotation too
                 window.draw_line(&na::translation(&f.borrow().anchor1_pos()), &na::translation(&f.borrow().anchor2_pos()), &Vec3::y());
             }

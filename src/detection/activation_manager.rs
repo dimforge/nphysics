@@ -6,7 +6,7 @@ use ncollide::utils::data::hash::UintTWHash;
 use ncollide::math::Scalar;
 use ncollide::broad::{InterferencesBroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
-use detection::constraint::{RBRB, BallInSocket, Fixed};
+use detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
 use detection::joint::{JointManager, Joint};
 use object::{RigidBody, Deleted};
 use utils::union_find::UnionFindSet;
@@ -90,8 +90,8 @@ impl ActivationManager {
         // resize buffers
         if bodies.len() > self.ufind.len() {
             let to_add = bodies.len() - self.ufind.len();
-            self.ufind.grow(to_add, &UnionFindSet::new(0));
-            self.can_deactivate.grow(to_add, &false);
+            self.ufind.grow(to_add, UnionFindSet::new(0));
+            self.can_deactivate.grow(to_add, false);
         }
         else {
             self.ufind.truncate(bodies.len());
@@ -99,11 +99,11 @@ impl ActivationManager {
         }
 
         // init the union find
-        for (i, u) in self.ufind.mut_iter().enumerate() {
+        for (i, u) in self.ufind.iter_mut().enumerate() {
             u.reinit(i)
         }
 
-        for d in self.can_deactivate.mut_iter() {
+        for d in self.can_deactivate.iter_mut() {
             *d = true
         }
 
@@ -126,13 +126,13 @@ impl ActivationManager {
         for e in joints.joints().elements().iter() {
             match e.value {
                 RBRB(ref b1, ref b2, _) => make_union(b1, b2, self.ufind.as_mut_slice()),
-                BallInSocket(ref bis)   => {
+                BallInSocketConstraint(ref bis)   => {
                     match (bis.borrow().anchor1().body.as_ref(), bis.borrow().anchor2().body.as_ref()) {
                         (Some(b1), Some(b2)) => make_union(b1, b2, self.ufind.as_mut_slice()),
                         _ => { }
                     }
                 },
-                Fixed(ref f)   => {
+                FixedConstraint(ref f)   => {
                     match (f.borrow().anchor1().body.as_ref(), f.borrow().anchor2().body.as_ref()) {
                         (Some(b1), Some(b2)) => make_union(b1, b2, self.ufind.as_mut_slice()),
                         _ => { }
@@ -225,11 +225,11 @@ impl ActivationManager {
                             add_to_activation_list(b1, &mut self.to_activate);
                             add_to_activation_list(b2, &mut self.to_activate);
                         },
-                        BallInSocket(ref bis) => {
+                        BallInSocketConstraint(ref bis) => {
                             let _ = bis.borrow().anchor1().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
                             let _ = bis.borrow().anchor2().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
                         }
-                        Fixed(ref f) => {
+                        FixedConstraint(ref f) => {
                             let _ = f.borrow().anchor1().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
                             let _ = f.borrow().anchor2().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
                         }

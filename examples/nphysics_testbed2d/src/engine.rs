@@ -142,8 +142,8 @@ impl<'a> GraphicsManager<'a> {
     pub fn draw(&mut self, rw: &mut RenderWindow, c: &Camera) {
         c.activate_scene(rw);
 
-        for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.mut_iter() {
+        for (_, ns) in self.rb2sn.iter_mut() {
+            for n in ns.iter_mut() {
                 match *n {
                     BoxNode(ref mut b)   => b.update(),
                     BallNode(ref mut b)  => b.update(),
@@ -152,8 +152,8 @@ impl<'a> GraphicsManager<'a> {
             }
         }
 
-        for (_, ns) in self.rb2sn.mut_iter() {
-            for n in ns.mut_iter() {
+        for (_, ns) in self.rb2sn.iter_mut() {
+            for n in ns.iter_mut() {
                 match *n {
                     BoxNode(ref b)   => b.draw(rw),
                     BallNode(ref b)  => b.draw(rw),

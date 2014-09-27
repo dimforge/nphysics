@@ -77,7 +77,7 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
 
         broad_phase.interferences_with_ray(ray, &mut bodies);
 
-        for rb in bodies.move_iter() { // FIXME: no move_rev_iter?
+        for rb in bodies.into_iter() { // FIXME: no move_rev_iter?
             let toi;
 
             {

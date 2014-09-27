@@ -30,7 +30,7 @@ pub fn fill_second_order_equation(dt:          Scalar,
         &ref2,
         joint.anchor1(),
         joint.anchor2(),
-        constraints.mut_slice_from(na::dim::<Vect>()),
+        constraints.slice_from_mut(na::dim::<Vect>()),
         correction);
 }
 

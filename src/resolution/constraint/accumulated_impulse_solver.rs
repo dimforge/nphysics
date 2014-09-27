@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use nalgebra::na::{Translation, Transformation, RotationWithTranslation};
 use nalgebra::na;
 use ncollide::math::{Scalar, Vect, Orientation, Matrix};
-use detection::constraint::{Constraint, RBRB, BallInSocket, Fixed};
+use detection::constraint::{Constraint, RBRB, BallInSocketConstraint, FixedConstraint};
 use detection::joint::Joint;
 use object::RigidBody;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -100,10 +100,10 @@ impl AccumulatedImpulseSolver {
 
         for i in joints.iter() {
             match constraints[*i] {
-                BallInSocket(_) => {
+                BallInSocketConstraint(_) => {
                     num_joint_equations = num_joint_equations + na::dim::<Vect>()
                 },
-                Fixed(_) => {
+                FixedConstraint(_) => {
                     num_joint_equations = num_joint_equations + na::dim::<Vect>() + na::dim::<Orientation>()
                 },
                 RBRB(_, _, _) => { }
@@ -138,21 +138,21 @@ impl AccumulatedImpulseSolver {
         for i in joints.iter() {
             let nconstraints = self.restitution_constraints.len();
             match constraints[*i] {
-                BallInSocket(ref bis) => {
+                BallInSocketConstraint(ref bis) => {
                     ball_in_socket_equation::fill_second_order_equation(
                         dt.clone(),
                         bis.borrow().deref(),
-                        self.restitution_constraints.mut_slice(joint_offset, nconstraints), // XXX
+                        self.restitution_constraints.slice_mut(joint_offset, nconstraints), // XXX
                         &self.correction
                     );
 
                     joint_offset = joint_offset + na::dim::<Vect>();
                 },
-                Fixed(ref f) => {
+                FixedConstraint(ref f) => {
                     fixed_equation::fill_second_order_equation(
                         dt.clone(),
                         f.borrow().deref(),
-                        self.restitution_constraints.mut_slice(joint_offset, nconstraints), // XXX
+                        self.restitution_constraints.slice_mut(joint_offset, nconstraints), // XXX
                         &self.correction
                     );
 
@@ -198,7 +198,7 @@ impl AccumulatedImpulseSolver {
         }
 
         let offset = self.cache.reserved_impulse_offset();
-        for (i, (_, kv)) in self.cache.hash_mut().mut_iter().enumerate() {
+        for (i, (_, kv)) in self.cache.hash_mut().iter_mut().enumerate() {
             *kv = (kv.val0(), offset + i * na::dim::<Vect>());
         }
 
@@ -274,10 +274,10 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                                           b.deref() as *const RefCell<RigidBody> as uint,
                                           (c.world1 + c.world2) / na::cast::<f32, Scalar>(2.0));
                     },
-                    BallInSocket(_) => {
+                    BallInSocketConstraint(_) => {
                         // XXX: cache for ball in socket?
                     },
-                    Fixed(_) => {
+                    FixedConstraint(_) => {
                         // XXX: cache for fixed?
                     }
                 }
@@ -295,7 +295,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                         a.borrow_mut().set_index(-2);
                         b.borrow_mut().set_index(-2)
                     },
-                    BallInSocket(ref bis) => {
+                    BallInSocketConstraint(ref bis) => {
                         let bbis = bis.borrow();
                         match bbis.anchor1().body {
                             Some(ref b) => {
@@ -311,7 +311,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                             None    => { }
                         }
                     }
-                    Fixed(ref f) => { // FIXME: code duplication from BallInSocket
+                    FixedConstraint(ref f) => { // FIXME: code duplication from BallInSocket
                         let bf = f.borrow();
                         match bf.anchor1().body {
                             Some(ref b) => {
@@ -354,7 +354,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                         set_body_index(a, &mut bodies, &mut id);
                         set_body_index(b, &mut bodies, &mut id);
                     },
-                    BallInSocket(ref bis) => {
+                    BallInSocketConstraint(ref bis) => {
                         joints.push(i);
                         let bbis = bis.borrow();
                         match bbis.anchor1().body {
@@ -367,7 +367,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                             None        => { }
                         }
                     },
-                    Fixed(ref f) => { // FIXME: code duplication from BallInSocket
+                    FixedConstraint(ref f) => { // FIXME: code duplication from BallInSocket
                         joints.push(i);
                         let bf = f.borrow();
                         match bf.anchor1().body {
@@ -391,7 +391,8 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
 
 fn resize_buffer<A: Clone>(buff: &mut Vec<A>, size: uint, val: A) {
     if buff.len() < size {
-        buff.grow_set(size - 1, &val, val.clone());
+        let diff = size - buff.len();
+        buff.grow(diff, val);
     }
     else {
         buff.truncate(size)

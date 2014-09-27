@@ -11,17 +11,17 @@ pub enum Constraint {
     /// A contact.
     RBRB(Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Contact),
     /// A ball-in-socket joint.
-    BallInSocket(Rc<RefCell<BallInSocket>>),
+    BallInSocketConstraint(Rc<RefCell<BallInSocket>>),
     /// A fixed joint.
-    Fixed(Rc<RefCell<Fixed>>),
+    FixedConstraint(Rc<RefCell<Fixed>>),
 }
 
 impl Clone for Constraint {
     fn clone(&self) -> Constraint {
         match *self {
-            RBRB(ref a, ref b, ref c) => RBRB(a.clone(), b.clone(), c.clone()),
-            BallInSocket(ref bis)     => BallInSocket(bis.clone()),
-            Fixed(ref f)              => Fixed(f.clone()),
+            RBRB(ref a, ref b, ref c)       => RBRB(a.clone(), b.clone(), c.clone()),
+            BallInSocketConstraint(ref bis) => BallInSocketConstraint(bis.clone()),
+            FixedConstraint(ref f)          => FixedConstraint(f.clone()),
         }
     }
 }

@@ -70,7 +70,7 @@ fn main() {
     let bodies = Arc::new(RWLock::new(Vec::new()));
     let ngeoms = geoms.len();
 
-    for obj_path in geoms.move_iter() {
+    for obj_path in geoms.into_iter() {
         let deltas   = na::one();
         let mtl_path = Path::new("");
 
@@ -80,7 +80,7 @@ fn main() {
             let mut geom_data = CompoundData::new();
 
             let model  = obj::parse_file(&Path::new(obj_path), &mtl_path, "").unwrap();
-            let meshes: Vec<TriMesh<f32, Vec3<f32>>> = model.move_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
+            let meshes: Vec<TriMesh<f32, Vec3<f32>>> = model.into_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
 
             // Compute the size of the model, to scale it and have similar size for everything.
             let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, meshes[0].coords.as_slice());
@@ -94,14 +94,14 @@ fn main() {
             let center = aabb.translation();
             let diag = na::norm(&(*aabb.maxs() - *aabb.mins()));
 
-            for mut trimesh in meshes.move_iter() {
+            for mut trimesh in meshes.into_iter() {
                 trimesh.translate_by(&-center);
                 trimesh.scale_by_scalar(&(6.0 / diag));
                 trimesh.split_index_buffer(true);
 
                 let (decomp, _) = procedural::hacd(trimesh, 0.03, 1);
 
-                for mesh in decomp.move_iter() {
+                for mesh in decomp.into_iter() {
                     geom_data.push_geom(deltas, mesh, 1.0);
                 }
             }

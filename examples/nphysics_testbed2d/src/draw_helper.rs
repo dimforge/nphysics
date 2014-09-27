@@ -4,7 +4,7 @@ use rsfml::system::vector2::Vector2f;
 use nalgebra::na::Vec2;
 use nalgebra::na;
 use nphysics::world::World;
-use nphysics::detection::constraint::{RBRB, BallInSocket, Fixed};
+use nphysics::detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
 use nphysics::detection::joint::Joint;
 
 pub static DRAW_SCALE: f32 = 20.0;
@@ -38,7 +38,7 @@ pub fn draw_colls(window:  &graphics::RenderWindow,
                     &(center + c.normal),
                     &Color::new_RGB(0, 0, 255));
             },
-            BallInSocket(ref bis) => {
+            BallInSocketConstraint(ref bis) => {
                 draw_line(
                     window,
                     &bis.borrow().anchor1_pos(),
@@ -46,7 +46,7 @@ pub fn draw_colls(window:  &graphics::RenderWindow,
                     &Color::new_RGB(255, 0, 0)
                 );
             },
-            Fixed(ref bis) => {
+            FixedConstraint(ref bis) => {
                 draw_line(
                     window,
                     &na::translation(&bis.borrow().anchor1_pos()),

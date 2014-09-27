@@ -49,7 +49,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
     // mj_lambda is result
     assert!(result.len() == num_bodies);
 
-    for v in result.mut_iter() {
+    for v in result.iter_mut() {
         v.reset();
     }
 
@@ -68,11 +68,11 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
      * solve the system
      */
     for _ in range(0, num_iterations) {
-        for c in restitution.mut_iter() {
+        for c in restitution.iter_mut() {
             solve_velocity_constraint(c, result);
         }
 
-        for c in friction.mut_iter() {
+        for c in friction.iter_mut() {
             let impulse = restitution[c.friction_limit_id].impulse.clone();
 
             if impulse > na::zero() {

@@ -94,7 +94,7 @@ impl ImpulseCache {
 
         let end = self.cache_next.len();
 
-        self.cache_next.mut_slice(begin, end)
+        self.cache_next.slice_mut(begin, end)
     }
 
     pub fn reserved_impulse_offset(&self) -> uint {
@@ -115,8 +115,8 @@ impl ImpulseCache {
         self.cache_next.clear();
         self.hash_next.clear();
 
-        self.cache_prev.grow_set(self.impulse_per_contact, &na::zero(), na::zero());
-        self.cache_next.grow_set(self.impulse_per_contact, &na::zero(), na::zero());
+        self.cache_prev.grow(self.impulse_per_contact, na::zero());
+        self.cache_next.grow(self.impulse_per_contact, na::zero());
     }
 
     pub fn swap(&mut self) {

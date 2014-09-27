@@ -8,7 +8,7 @@ use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 use detection::joint::joint::Joint;
-use detection::constraint::{Constraint, BallInSocket, Fixed, RBRB};
+use detection::constraint::{Constraint, BallInSocketConstraint, FixedConstraint, RBRB};
 use object::RigidBody;
 
 /// Structure that handles creation and removal of joints.
@@ -44,13 +44,13 @@ impl JointManager {
     pub fn add_ball_in_socket(&mut self,
                               joint:      Rc<RefCell<BallInSocket>>,
                               activation: &mut ActivationManager) {
-        if self.joints.insert(joint.deref() as *const RefCell<BallInSocket> as uint, BallInSocket(joint.clone())) {
+        if self.joints.insert(joint.deref() as *const RefCell<BallInSocket> as uint, BallInSocketConstraint(joint.clone())) {
             match joint.borrow().anchor1().body.as_ref() {
                 Some(b) => {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *const RefCell<RigidBody> as uint,
                                                                   || Some(Vec::new()));
-                    js.unwrap().push(BallInSocket(joint.clone()));
+                    js.unwrap().push(BallInSocketConstraint(joint.clone()));
                 },
                 _ => { }
             }
@@ -60,7 +60,7 @@ impl JointManager {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *const RefCell<RigidBody> as uint,
                                                                   || Some(Vec::new()));
-                    js.unwrap().push(BallInSocket(joint.clone()));
+                    js.unwrap().push(BallInSocketConstraint(joint.clone()));
                 },
                 _ => { }
             }
@@ -81,13 +81,13 @@ impl JointManager {
     ///
     /// This will force the activation of the two objects attached to the joint.
     pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed>>, activation: &mut ActivationManager) {
-        if self.joints.insert(joint.deref() as *const RefCell<Fixed> as uint, Fixed(joint.clone())) {
+        if self.joints.insert(joint.deref() as *const RefCell<Fixed> as uint, FixedConstraint(joint.clone())) {
             match joint.borrow().anchor1().body.as_ref() {
                 Some(b) => {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *const RefCell<RigidBody> as uint,
                                                                   || Some(Vec::new()));
-                    js.unwrap().push(Fixed(joint.clone()));
+                    js.unwrap().push(FixedConstraint(joint.clone()));
                 },
                 _ => { }
             }
@@ -97,7 +97,7 @@ impl JointManager {
                     activation.will_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(b.deref() as *const RefCell<RigidBody> as uint,
                                                                   || Some(Vec::new()));
-                    js.unwrap().push(Fixed(joint.clone()));
+                    js.unwrap().push(FixedConstraint(joint.clone()));
                 },
                 _ => { }
             }
@@ -131,9 +131,9 @@ impl JointManager {
                             // we do not know the type of the joint, so cast it to uint for
                             // comparison.
                             let id = match *j {
-                                RBRB(_, _, _)         => ptr::null::<uint>() as uint,
-                                BallInSocket(ref bis) => bis.deref() as *const RefCell<BallInSocket> as uint,
-                                Fixed(ref f)          => f.deref() as *const RefCell<Fixed> as uint
+                                RBRB(_, _, _)                   => ptr::null::<uint>() as uint,
+                                BallInSocketConstraint(ref bis) => bis.deref() as *const RefCell<BallInSocket> as uint,
+                                FixedConstraint(ref f)          => f.deref() as *const RefCell<Fixed> as uint
                             };
 
                             id != jkey as uint
@@ -171,9 +171,9 @@ impl JointManager {
                 }
 
                 match *joint {
-                    BallInSocket(ref bis) => do_remove(self, bis, b, activation),
-                    Fixed(ref f)          => do_remove(self, f, b, activation),
-                    RBRB(_, _, _)         => fail!("Internal error: a contact RBRB should not be here.")
+                    BallInSocketConstraint(ref bis) => do_remove(self, bis, b, activation),
+                    FixedConstraint(ref f)          => do_remove(self, f, b, activation),
+                    RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
                 }
             }
         }
@@ -185,7 +185,7 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
     fn update(&mut self, _: &mut BF, activation: &mut ActivationManager) {
         for joint in self.joints.elements().iter() {
             match joint.value {
-                BallInSocket(ref bis) => {
+                BallInSocketConstraint(ref bis) => {
                     let mut bbis = bis.borrow_mut();
                     if !bbis.up_to_date() {
                         // the joint has been invalidated by the user: wake up the attached bodies
@@ -200,7 +200,7 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
                         }
                     }
                 },
-                Fixed(ref f) => { // FIXME: code duplication from BallInSocket
+                FixedConstraint(ref f) => { // FIXME: code duplication from BallInSocket
                     let mut bf = f.borrow_mut();
                     if !bf.up_to_date() {
                         // the joint has been invalidated by the user: wake up the attached bodies
