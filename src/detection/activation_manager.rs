@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use nalgebra::na;
+use na;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::math::Scalar;

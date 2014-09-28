@@ -1,11 +1,11 @@
 extern crate native;
-extern crate nalgebra;
+extern crate "nalgebra" as na;
 extern crate "ncollide3df32" as ncollide;
 extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
 use std::rand;
-use nalgebra::na::{Vec3, Translation};
+use na::{Vec3, Translation};
 use ncollide::geom::{Plane, Convex};
 use nphysics::world::World;
 use nphysics::object::RigidBody;

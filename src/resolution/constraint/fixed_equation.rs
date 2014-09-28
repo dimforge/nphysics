@@ -1,6 +1,6 @@
 use std::num::Bounded;
-use nalgebra::na::{Translation, Rotation};
-use nalgebra::na;
+use na::{Translation, Rotation};
+use na;
 use ncollide::math::{Scalar, Vect, Orientation, Matrix};
 use detection::joint::{Fixed, Anchor, Joint};
 use resolution::constraint::ball_in_socket_equation;

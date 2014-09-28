@@ -1,6 +1,6 @@
 //! Semi-implicit Euler integrator.
 
-use nalgebra::na::Transformation;
+use na::Transformation;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;

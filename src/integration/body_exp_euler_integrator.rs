@@ -1,6 +1,6 @@
 //! Explicit Euler integrator.
 
-use nalgebra::na::Transformation;
+use na::Transformation;
 use ncollide::math::Scalar;
 use object::RigidBody;
 use integration::Integrator;

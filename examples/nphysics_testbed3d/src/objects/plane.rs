@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::num::Zero;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
-use nalgebra::na::Vec3;
+use na::Vec3;
 use nphysics::object::RigidBody;
 
 pub struct Plane {

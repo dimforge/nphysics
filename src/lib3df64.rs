@@ -94,7 +94,7 @@ The libraries needed to compile the examples are:
 extern crate rand;
 extern crate serialize;
 extern crate collections;
-extern crate nalgebra;
+extern crate "nalgebra" as na;
 extern crate "ncollide3df64" as ncollide;
 #[cfg(test)]
 extern crate test;

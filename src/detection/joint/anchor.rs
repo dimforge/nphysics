@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use object::RigidBody;
-use nalgebra::na;
+use na;
 use ncollide::math::Vect;
 
 /// One of the two end points of a joint.

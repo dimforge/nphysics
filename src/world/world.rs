@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::iter::Map;
 use std::slice::Items;
-use nalgebra::na;
+use na;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
 use ncollide::ray::Ray;

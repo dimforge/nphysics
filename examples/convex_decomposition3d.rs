@@ -1,7 +1,7 @@
 extern crate native;
 extern crate rustrt;
 extern crate kiss3d;
-extern crate nalgebra;
+extern crate "nalgebra" as na;
 extern crate "ncollide3df32" as ncollide;
 extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
@@ -9,8 +9,7 @@ extern crate nphysics_testbed3d;
 use rustrt::bookkeeping;
 use std::sync::{Arc, RWLock};
 use std::rand;
-use nalgebra::na::{Vec3, Translation};
-use nalgebra::na;
+use na::{Vec3, Translation};
 use kiss3d::loader::obj;
 use ncollide::geom::{Plane, Compound, CompoundData};
 use ncollide::procedural::TriMesh;

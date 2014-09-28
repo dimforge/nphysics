@@ -1,7 +1,7 @@
 use std::ptr;
 use std::managed;
-use nalgebra::na::{Translation, Norm};
-use nalgebra::na;
+use na::{Translation, Norm};
+use na;
 use ncollide::bounding_volume::{AABB, BoundingVolume, ball_aabb};
 use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;

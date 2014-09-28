@@ -5,8 +5,8 @@ use std::hash::{Hash, Writer};
 use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
 use std::collections::HashMap;
-use nalgebra::na;
-use nalgebra::na::{Iterable, IterableMut};
+use na;
+use na::{Iterable, IterableMut};
 use ncollide::math::{Scalar, Vect};
 use ncollide::utils::AsBytes;
 

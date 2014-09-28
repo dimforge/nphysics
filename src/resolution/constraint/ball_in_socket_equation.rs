@@ -1,9 +1,9 @@
 use std::num::Bounded;
 use std::cell::Ref;
-use nalgebra::na::{Row, Indexable};
-use nalgebra::na::Mat3;
-use nalgebra::na::Vec2;
-use nalgebra::na;
+use na::{Row, Indexable};
+use na::Mat3;
+use na::Vec2;
+use na;
 use ncollide::math::{Scalar, Vect};
 use ncollide::math::Orientation;
 use object::RigidBody;

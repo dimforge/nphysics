@@ -1,5 +1,5 @@
 use std::num::Bounded;
-use nalgebra::na;
+use na;
 use ncollide::narrow::Contact;
 use ncollide::volumetric::InertiaTensor;
 use ncollide::math::{Scalar, Vect, Orientation};

@@ -3,8 +3,8 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::resource;
-use nalgebra::na::{Vec3, Iso3};
-use nalgebra::na;
+use na::{Vec3, Iso3};
+use na;
 use nphysics::object::RigidBody;
 
 pub struct Mesh {

@@ -1,4 +1,4 @@
-use nalgebra::na;
+use na;
 use ncollide::math::{Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 

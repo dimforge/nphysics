@@ -6,7 +6,7 @@ use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
 use rsfml::window::keyboard;
 use rsfml::graphics::Color;
-use nalgebra::na::{Vec2, Vec3};
+use na::{Vec2, Vec3};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::BallInSocket;

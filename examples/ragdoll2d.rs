@@ -1,10 +1,10 @@
 extern crate native;
-extern crate nalgebra;
+extern crate "nalgebra" as na;
 extern crate "ncollide2df32" as ncollide;
 extern crate "nphysics2df32" as nphysics;
 extern crate nphysics_testbed2d;
 
-use nalgebra::na::{Vec1, Vec2, Translation, Rotation};
+use na::{Vec1, Vec2, Translation, Rotation};
 use ncollide::geom::{Plane, Cuboid, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;

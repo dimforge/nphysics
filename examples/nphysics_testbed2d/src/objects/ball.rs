@@ -3,8 +3,8 @@ use std::cell::RefCell;
 use rsfml::graphics;
 use rsfml::graphics::{CircleShape, Color};
 use rsfml::system::vector2;
-use nalgebra::na::{Vec3, Iso2};
-use nalgebra::na;
+use na::{Vec3, Iso2};
+use na;
 use nphysics::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 

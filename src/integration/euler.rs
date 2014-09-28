@@ -1,7 +1,7 @@
 //! Euler integration functions.
 
-use nalgebra::na::{Translation, RotationWithTranslation};
-use nalgebra::na;
+use na::{Translation, RotationWithTranslation};
+use na;
 use ncollide::math::{Scalar, Vect, Orientation, Matrix};
 
 /// Explicit Euler integrator.

@@ -1,4 +1,4 @@
-use nalgebra::na::Transform;
+use na::Transform;
 use ncollide::math::Vect;
 use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;

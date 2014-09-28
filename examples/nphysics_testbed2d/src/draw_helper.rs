@@ -1,8 +1,8 @@
 use rsfml::graphics;
 use rsfml::graphics::{Vertex, VertexArray, Color};
 use rsfml::system::vector2::Vector2f;
-use nalgebra::na::Vec2;
-use nalgebra::na;
+use na::Vec2;
+use na;
 use nphysics::world::World;
 use nphysics::detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
 use nphysics::detection::joint::Joint;

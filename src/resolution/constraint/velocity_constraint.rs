@@ -1,4 +1,4 @@
-use nalgebra::na;
+use na;
 use ncollide::math::{Scalar, Vect, Orientation};
 
 #[deriving(PartialEq, Show, Clone)]

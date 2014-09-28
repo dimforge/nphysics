@@ -7,7 +7,7 @@ extern crate time;
 extern crate collections;
 extern crate rsfml;
 extern crate "nphysics2df32" as nphysics;
-extern crate nalgebra;
+extern crate "nalgebra" as na;
 extern crate "ncollide2df32" as ncollide;
 
 

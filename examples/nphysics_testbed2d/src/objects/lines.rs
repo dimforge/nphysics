@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use sync::Arc;
 use rsfml::graphics;
 use rsfml::graphics::Color;
-use nalgebra::na::{Vec2, Vec3, Iso2};
+use na::{Vec2, Vec3, Iso2};
 use nphysics::object::RigidBody;
 use draw_helper::draw_line;
 

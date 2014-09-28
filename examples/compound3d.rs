@@ -1,12 +1,11 @@
 extern crate native;
-extern crate nalgebra;
+extern crate "nalgebra" as na;
 extern crate "ncollide3df32" as ncollide;
 extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
 use std::sync::Arc;
-use nalgebra::na::{Vec3, Iso3, Translation};
-use nalgebra::na;
+use na::{Vec3, Iso3, Translation};
 use ncollide::geom::{Plane, Cuboid, Compound, CompoundData, Geom};
 use ncollide::volumetric::Volumetric;
 use nphysics::world::World;

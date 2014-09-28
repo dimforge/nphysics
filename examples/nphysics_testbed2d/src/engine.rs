@@ -6,7 +6,7 @@ use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
-use nalgebra::na::{Vec3, Iso2};
+use na::{Vec3, Iso2};
 use nphysics::object::RigidBody;
 use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
