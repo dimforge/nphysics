@@ -7,11 +7,9 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 name = "nphysics2df64"
 path = "../../src/lib2df64.rs"
 
-[dependencies.dim2]
-git = "https://github.com/sebcrozet/ncollide"
-
 [dependencies.nalgebra]
 git = "https://github.com/sebcrozet/nalgebra"
 
-[dependencies.ncollide2df64]
+[dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"
+features = [ "2df64" ]

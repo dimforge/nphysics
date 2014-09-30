@@ -7,11 +7,9 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 name = "nphysics3df32"
 path = "../../src/lib3df32.rs"
 
-[dependencies.dim3]
-git = "https://github.com/sebcrozet/ncollide"
-
 [dependencies.nalgebra]
 git = "https://github.com/sebcrozet/nalgebra"
 
-[dependencies.ncollide3df32]
+[dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"
+features = [ "3df32" ]

@@ -1,0 +1,75 @@
+[package]
+name    = "nphysics-examples"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[dependencies.nphysics3df32]
+path = "../build/nphysics3df32"
+
+[dependencies.nphysics_testbed3d]
+path = "./nphysics_testbed3d"
+
+[[bin]]
+name = "ball_vee3d"
+path = "./balls_vee3d.rs"
+
+[[bin]]
+name = "bezier_balls3d"
+path = "./bezier_balls3d.rs"
+
+[[bin]]
+name = "boxes_vee3d"
+path = "./boxes_vee3d.rs"
+
+[[bin]]
+name = "compound3d"
+path = "./compound3d.rs"
+
+[[bin]]
+name = "cross3d"
+path = "./cross3d.rs"
+
+[[bin]]
+name = "mesh3d"
+path = "./mesh3d.rs"
+
+[[bin]]
+name = "primitives3d"
+path = "./primitives3d.rs"
+
+[[bin]]
+name = "pyramid3d"
+path = "./pyramid3d.rs"
+
+[[bin]]
+name = "ragdoll3d"
+path = "./ragdoll3d.rs"
+
+[[bin]]
+name = "wall3d"
+path = "./wall3d.rs"
+
+[[bin]]
+name = "gravity3d"
+path = "./gravity3d.rs"
+
+[[bin]]
+name = "convex3d"
+path = "./convex3d.rs"
+
+[[bin]]
+name = "convex_decomposition3d"
+path = "./convex_decomposition3d.rs"
+
+[[bin]]
+name = "fixed_bug_long_thin_box_one_shot_manifold"
+path = "fixed_bug_long_thin_box_one_shot_manifold.rs"
+
+[[bin]]
+name = "fixed_bug_optimization_on_patch_boundaries_does_not_converge"
+path = "fixed_bug_optimization_on_patch_boundaries_does_not_converge.rs"
+
+[[bin]]
+name = "known_bug_excentric_convex3d"
+path = "known_bug_excentric_convex3d.rs"
+

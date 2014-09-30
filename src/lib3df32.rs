@@ -88,13 +88,11 @@ The libraries needed to compile the examples are:
 #![feature(phase)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
-#[phase(plugin)] extern crate dim3;
-
 extern crate rand;
 extern crate serialize;
 extern crate collections;
 extern crate "nalgebra" as na;
-extern crate "ncollide3df32" as ncollide;
+extern crate ncollide;
 #[cfg(test)]
 extern crate test;
 

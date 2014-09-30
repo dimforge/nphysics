@@ -1,0 +1,50 @@
+[package]
+name    = "nphysics-examples"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[dependencies.nphysics2df32]
+path = "../build/nphysics2df32"
+
+[dependencies.nphysics_testbed2d]
+path = "./nphysics_testbed2d"
+
+[[bin]]
+name = "ball_vee2d"
+path = "./balls_vee2d.rs"
+
+[[bin]]
+name = "boxes_vee2d"
+path = "./boxes_vee2d.rs"
+
+[[bin]]
+name = "compound2d"
+path = "./compound2d.rs"
+
+[[bin]]
+name = "cross2d"
+path = "./cross2d.rs"
+
+[[bin]]
+name = "mesh2d"
+path = "./mesh2d.rs"
+
+[[bin]]
+name = "pyramid2d"
+path = "./pyramid2d.rs"
+
+[[bin]]
+name = "ragdoll2d"
+path = "./ragdoll2d.rs"
+
+[[bin]]
+name = "wall2d"
+path = "./wall2d.rs"
+
+[[bin]]
+name = "gravity2d"
+path = "./gravity2d.rs"
+
+[[bin]]
+name = "fixed_bug_11"
+path = "./fixed_bug_11.rs"
