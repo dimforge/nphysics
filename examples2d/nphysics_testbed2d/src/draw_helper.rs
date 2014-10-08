@@ -1,5 +1,5 @@
 use rsfml::graphics;
-use rsfml::graphics::{Vertex, VertexArray, Color};
+use rsfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
 use rsfml::system::vector2::Vector2f;
 use na::Vec2;
 use na;
@@ -9,7 +9,7 @@ use nphysics::detection::joint::Joint;
 
 pub static DRAW_SCALE: f32 = 20.0;
 
-pub fn draw_colls(window:  &graphics::RenderWindow,
+pub fn draw_colls(window:  &mut graphics::RenderWindow,
                   physics: &mut World) {
 
     let mut collisions = Vec::new();
@@ -58,7 +58,7 @@ pub fn draw_colls(window:  &graphics::RenderWindow,
     }
 }
 
-pub fn draw_line(window: &graphics::RenderWindow, v1: &Vec2<f32>, v2: &Vec2<f32>, color: &Color) {
+pub fn draw_line(window: &mut graphics::RenderWindow, v1: &Vec2<f32>, v2: &Vec2<f32>, color: &Color) {
     let mut vertices = VertexArray::new().unwrap();
 
     vertices.append(&Vertex::new(
@@ -73,5 +73,5 @@ pub fn draw_line(window: &graphics::RenderWindow, v1: &Vec2<f32>, v2: &Vec2<f32>
 
     vertices.set_primitive_type(graphics::Lines);
 
-    window.draw_vertex_array(&vertices);
+    window.draw(&vertices);
 }

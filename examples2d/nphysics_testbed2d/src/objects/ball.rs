@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use rsfml::graphics;
-use rsfml::graphics::{CircleShape, Color};
+use rsfml::graphics::{CircleShape, Color, RenderTarget};
 use rsfml::system::vector2;
 use na::{Vec3, Iso2};
 use na;

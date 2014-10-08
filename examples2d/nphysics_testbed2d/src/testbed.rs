@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::os;
-use rsfml::graphics::{RenderWindow, Font};
+use rsfml::graphics::{RenderWindow, RenderTarget, Font};
 use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
 use rsfml::window::keyboard;
@@ -174,7 +174,7 @@ impl<'a> Testbed<'a> {
 
             camera.activate_scene(&mut self.window);
             if draw_colls {
-                draw_helper::draw_colls(&self.window, &mut self.world);
+                draw_helper::draw_colls(&mut self.window, &mut self.world);
             }
 
             camera.activate_ui(&mut self.window);

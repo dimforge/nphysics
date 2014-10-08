@@ -10,4 +10,4 @@ name = "nphysics_testbed2d"
 path = "../../build/nphysics2df32"
 
 [dependencies.rust-sfml]
-git = "https://github.com/sebcrozet/rust-sfml"
+git = "https://github.com/jeremyletang/rust-sfml"

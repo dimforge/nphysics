@@ -95,7 +95,6 @@ The libraries needed to compile the examples are:
 #![warn(unused_imports)]
 #![deny(unnecessary_typecast)]
 #![feature(macro_rules)]
-#![feature(managed_boxes)]
 #![feature(unsafe_destructor)]
 #![feature(globs)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
