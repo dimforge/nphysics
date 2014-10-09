@@ -3,6 +3,11 @@ name    = "nphysics2df32"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
+[features]
+default = [ "2d", "f32" ]
+2d      = []
+f32     = []
+
 [lib]
 name = "nphysics2df32"
 path = "../../src/lib2df32.rs"

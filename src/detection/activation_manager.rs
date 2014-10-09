@@ -203,7 +203,7 @@ impl ActivationManager {
             }
 
             fn add_to_activation_list(body: &Rc<RefCell<RigidBody>>, list: &mut Vec<Rc<RefCell<RigidBody>>>) {
-                let mut rb = body.borrow_mut();
+                let rb = body.borrow_mut();
 
                 if !rb.is_active() && rb.can_move() {
                     list.push(body.clone());

@@ -3,6 +3,11 @@ name    = "nphysics2df64"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
+[features]
+default = [ "2d", "f64" ]
+2d      = []
+f64     = []
+
 [lib]
 name = "nphysics2df64"
 path = "../../src/lib2df64.rs"

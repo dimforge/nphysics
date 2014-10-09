@@ -1,11 +1,8 @@
 use std::num::Bounded;
 use std::cell::Ref;
 use na::{Row, Indexable};
-use na::Mat3;
-use na::Vec2;
 use na;
 use ncollide::math::{Scalar, Vect};
-use ncollide::math::Orientation;
 use object::RigidBody;
 use detection::joint::{Anchor, BallInSocket, Joint};
 use resolution::constraint::velocity_constraint::VelocityConstraint;

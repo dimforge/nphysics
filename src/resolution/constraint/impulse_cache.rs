@@ -6,7 +6,7 @@ use std::hash::sip::{SipHasher, SipState};
 use rand::{IsaacRng, Rng};
 use std::collections::HashMap;
 use na;
-use na::{Iterable, IterableMut};
+use na::IterableMut;
 use ncollide::math::{Scalar, Vect};
 use ncollide::utils::AsBytes;
 
