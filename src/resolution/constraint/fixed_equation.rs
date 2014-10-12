@@ -17,8 +17,8 @@ pub fn fill_second_order_equation(dt:          Scalar,
 
     ball_in_socket_equation::cancel_relative_linear_motion(
         dt.clone(),
-        &ref1.translation(),
-        &ref2.translation(),
+        ref1.translation().as_pnt(),
+        ref2.translation().as_pnt(),
         joint.anchor1(),
         joint.anchor2(),
         constraints,

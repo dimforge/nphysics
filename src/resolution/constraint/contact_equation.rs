@@ -2,7 +2,7 @@ use std::num::Bounded;
 use na;
 use ncollide::narrow::Contact;
 use ncollide::volumetric::InertiaTensor;
-use ncollide::math::{Scalar, Vect, Orientation};
+use ncollide::math::{Scalar, Point, Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
 
@@ -98,7 +98,7 @@ pub fn fill_second_order_equation(dt:           Scalar,
                                   correction:   &CorrectionParameters) {
     let restitution = rb1.restitution() * rb2.restitution();
 
-    let center = (coll.world1 + coll.world2) * na::cast::<f32, Scalar>(0.5);
+    let center = na::center(&coll.world1, &coll.world2);
 
     fill_velocity_constraint(dt.clone(),
                              coll.normal.clone(),
@@ -190,7 +190,7 @@ pub fn fill_constraint_geometry(normal:     Vect,
 
 fn fill_velocity_constraint(dt:              Scalar,
                             normal:          Vect,
-                            center:          Vect,
+                            center:          Point,
                             restitution:     Scalar,
                             depth:           Scalar,
                             initial_impulse: Scalar,

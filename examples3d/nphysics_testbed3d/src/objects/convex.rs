@@ -2,14 +2,14 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Vec3, Iso3};
+use na::{Pnt3, Vec3, Iso3};
 use na;
 use ncollide::procedural::TriMesh;
 use nphysics::object::RigidBody;
 
 pub struct Convex {
-    color:      Vec3<f32>,
-    base_color: Vec3<f32>,
+    color:      Pnt3<f32>,
+    base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
     body:       Rc<RefCell<RigidBody>>
@@ -18,8 +18,8 @@ pub struct Convex {
 impl Convex {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso3<f32>,
-               convex:   &TriMesh<f32, Vec3<f32>>,
-               color:    Vec3<f32>,
+               convex:   &TriMesh<f32, Pnt3<f32>, Vec3<f32>>,
+               color:    Pnt3<f32>,
                window:   &mut Window) -> Convex {
         let t = na::transformation(body.borrow().deref());
 
@@ -39,7 +39,7 @@ impl Convex {
     }
 
     pub fn select(&mut self) {
-        self.color = Vec3::x();
+        self.color = Pnt3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {

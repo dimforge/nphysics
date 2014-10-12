@@ -6,9 +6,8 @@ use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
-use na::{Vec3, Iso2};
+use na::{Pnt3, Iso2};
 use nphysics::object::RigidBody;
-use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
 use ncollide::geom;
 use camera::Camera;
@@ -25,7 +24,7 @@ pub enum SceneNode<'a> {
 pub struct GraphicsManager<'a> {
     rand:      XorShiftRng,
     rb2sn:     HashMap<uint, Vec<SceneNode<'a>>>,
-    obj2color: HashMap<uint, Vec3<u8>>
+    obj2color: HashMap<uint, Pnt3<u8>>
 }
 
 impl<'a> GraphicsManager<'a> {
@@ -64,7 +63,7 @@ impl<'a> GraphicsManager<'a> {
         type Cm = geom::Compound;
         type Ls = geom::Mesh;
 
-        let id = geom.get_dyn_type_id();
+        let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
             self.add_plane(body, geom.downcast_ref::<Pl>().unwrap(), out)
         }
@@ -165,19 +164,19 @@ impl<'a> GraphicsManager<'a> {
         c.activate_ui(rw);
     }
 
-    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Vec3<u8>) {
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<u8>) {
         let key = body.deref() as *const RefCell<RigidBody> as uint;
         self.obj2color.insert(key, color);
     }
 
-    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Vec3<u8> {
+    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Pnt3<u8> {
         let key = body.deref() as *const RefCell<RigidBody> as uint;
         match self.obj2color.find(&key) {
             Some(color) => return *color,
             None => { }
         }
 
-        let color = Vec3::new(
+        let color = Pnt3::new(
             self.rand.gen_range(0u, 256) as u8,
             self.rand.gen_range(0u, 256) as u8,
             self.rand.gen_range(0u, 256) as u8);

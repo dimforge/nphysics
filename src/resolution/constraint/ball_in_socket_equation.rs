@@ -2,7 +2,7 @@ use std::num::Bounded;
 use std::cell::Ref;
 use na::{Row, Indexable};
 use na;
-use ncollide::math::{Scalar, Vect};
+use ncollide::math::{Scalar, Point, Vect};
 use object::RigidBody;
 use detection::joint::{Anchor, BallInSocket, Joint};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -26,8 +26,8 @@ pub fn fill_second_order_equation(dt:          Scalar,
 // FIXME: move this on another file. Something like "joint_equation_helper.rs"
 pub fn cancel_relative_linear_motion<P>(
                                      dt:          Scalar,
-                                     global1:     &Vect,
-                                     global2:     &Vect,
+                                     global1:     &Point,
+                                     global2:     &Point,
                                      anchor1:     &Anchor<P>,
                                      anchor2:     &Anchor<P>,
                                      constraints: &mut [VelocityConstraint],

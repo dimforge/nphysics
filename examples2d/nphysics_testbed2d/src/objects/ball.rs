@@ -3,13 +3,13 @@ use std::cell::RefCell;
 use rsfml::graphics;
 use rsfml::graphics::{CircleShape, Color, RenderTarget};
 use rsfml::system::vector2;
-use na::{Vec3, Iso2};
+use na::{Pnt3, Iso2};
 use na;
 use nphysics::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 
 pub struct Ball<'a> {
-    color: Vec3<u8>,
+    color: Pnt3<u8>,
     delta: Iso2<f32>,
     body:  Rc<RefCell<RigidBody>>,
     gfx:   CircleShape<'a>
@@ -19,7 +19,7 @@ impl<'a> Ball<'a> {
     pub fn new(body:   Rc<RefCell<RigidBody>>,
                delta:  Iso2<f32>,
                radius: f32,
-               color:  Vec3<u8>) -> Ball<'a> {
+               color:  Pnt3<u8>) -> Ball<'a> {
         let dradius = radius as f32 * DRAW_SCALE;
 
         let mut res = Ball {

@@ -1,7 +1,7 @@
 use rsfml::graphics;
 use rsfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
 use rsfml::system::vector2::Vector2f;
-use na::Vec2;
+use na::Pnt2;
 use na;
 use nphysics::world::World;
 use nphysics::detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
@@ -25,7 +25,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
                     &c.world2,
                     &Color::new_RGB(255, 255, 255));
 
-                let center = (c.world1 + c.world2) / 2.0f32;
+                let center = na::center(&c.world1, &c.world2);
                 draw_line(
                     window,
                     &center,
@@ -49,8 +49,8 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
             FixedConstraint(ref bis) => {
                 draw_line(
                     window,
-                    &na::translation(&bis.borrow().anchor1_pos()),
-                    &na::translation(&bis.borrow().anchor2_pos()),
+                    na::translation(&bis.borrow().anchor1_pos()).as_pnt(),
+                    na::translation(&bis.borrow().anchor2_pos()).as_pnt(),
                     &Color::new_RGB(255, 0, 0)
                 );
             }
@@ -58,7 +58,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
     }
 }
 
-pub fn draw_line(window: &mut graphics::RenderWindow, v1: &Vec2<f32>, v2: &Vec2<f32>, color: &Color) {
+pub fn draw_line(window: &mut graphics::RenderWindow, v1: &Pnt2<f32>, v2: &Pnt2<f32>, color: &Color) {
     let mut vertices = VertexArray::new().unwrap();
 
     vertices.append(&Vertex::new(

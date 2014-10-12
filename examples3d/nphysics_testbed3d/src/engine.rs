@@ -5,12 +5,11 @@ use std::cell::RefCell;
 use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
-use na::{Vec3, Iso3, Col};
+use na::{Pnt3, Vec3, Iso3, Col};
 use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
-use ncollide::utils::AnyPrivate;
 use ncollide::geom::Geom;
 use ncollide::geom;
 use nphysics::object::RigidBody;
@@ -105,7 +104,7 @@ impl Node {
 pub struct GraphicsManager {
     rand:             XorShiftRng,
     rb2sn:            HashMap<uint, Vec<Node>>,
-    rb2color:         HashMap<uint, Vec3<f32>>,
+    rb2color:         HashMap<uint, Pnt3<f32>>,
     arc_ball:         ArcBall,
     first_person:     FirstPerson,
     curr_is_arc_ball: bool,
@@ -114,14 +113,14 @@ pub struct GraphicsManager {
 
 impl GraphicsManager {
     pub fn new() -> GraphicsManager {
-        let arc_ball     = ArcBall::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
-        let first_person = FirstPerson::new(Vec3::new(10.0, 10.0, 10.0), Vec3::new(0.0, 0.0, 0.0));
+        let arc_ball     = ArcBall::new(Pnt3::new(10.0, 10.0, 10.0), Pnt3::new(0.0, 0.0, 0.0));
+        let first_person = FirstPerson::new(Pnt3::new(10.0, 10.0, 10.0), Pnt3::new(0.0, 0.0, 0.0));
 
         let mut rng: XorShiftRng = SeedableRng::from_seed([0, 2, 4, 8]);
 
         // the first colors are boring.
         for _ in range(0u, 100) {
-            let _: Vec3<f32> = rng.gen();
+            let _: Pnt3<f32> = rng.gen();
         }
 
         GraphicsManager {
@@ -165,7 +164,7 @@ impl GraphicsManager {
         self.rb2sn.remove(&key);
     }
 
-    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Vec3<f32>) {
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
         self.rb2color.insert(body.deref() as *const RefCell<RigidBody> as uint, color);
     }
 
@@ -179,7 +178,7 @@ impl GraphicsManager {
                     color = self.rand.gen();
                 }
                 else {
-                    color = Vec3::new(0.5, 0.5, 0.5);
+                    color = Pnt3::new(0.5, 0.5, 0.5);
                 }
             }
         }
@@ -190,7 +189,7 @@ impl GraphicsManager {
     pub fn add_with_color(&mut self,
                           window: &mut Window,
                           body:   Rc<RefCell<RigidBody>>,
-                          color:  Vec3<f32>) {
+                          color:  Pnt3<f32>) {
         let nodes = {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
@@ -208,7 +207,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &Geom,
-                color:  Vec3<f32>,
+                color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         type Pl = geom::Plane;
         type Bl = geom::Ball;
@@ -220,7 +219,7 @@ impl GraphicsManager {
         type Bs = geom::BezierSurface;
         type Cx = geom::Convex;
 
-        let id = geom.get_dyn_type_id();
+        let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
             self.add_plane(window, body, geom.downcast_ref::<Pl>().unwrap(), color, out)
         }
@@ -262,9 +261,9 @@ impl GraphicsManager {
                  window: &mut Window,
                  body:   Rc<RefCell<RigidBody>>,
                  geom:   &geom::Plane,
-                 color:  Vec3<f32>,
+                 color:  Pnt3<f32>,
                  out:    &mut Vec<Node>) {
-        let position = na::translation(body.borrow().deref());
+        let position = na::translation(body.borrow().deref()).to_pnt();
         let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
 
         out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
@@ -275,7 +274,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Mesh,
-                color:  Vec3<f32>,
+                color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let vertices = geom.vertices().deref();
         let indices  = geom.indices().deref();
@@ -295,7 +294,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::BezierSurface,
-                color:  Vec3<f32>,
+                color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         out.push(BezierSurfaceNode(BezierSurface::new(body, delta, geom.control_points(), geom.nupoints(), geom.nvpoints(), color, window)))
     }
@@ -305,7 +304,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Ball,
-                color:  Vec3<f32>,
+                color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let margin = body.borrow().margin();
         out.push(BallNode(Ball::new(body, delta, geom.radius() + margin, color, window)))
@@ -316,7 +315,7 @@ impl GraphicsManager {
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
                geom:   &geom::Cuboid,
-               color:  Vec3<f32>,
+               color:  Pnt3<f32>,
                out:    &mut Vec<Node>) {
         let rx = geom.half_extents().x + body.borrow().margin();
         let ry = geom.half_extents().y + body.borrow().margin();
@@ -330,7 +329,7 @@ impl GraphicsManager {
                   body:   Rc<RefCell<RigidBody>>,
                   delta:  Iso3<f32>,
                   geom:   &geom::Convex,
-                  color:  Vec3<f32>,
+                  color:  Pnt3<f32>,
                   out:    &mut Vec<Node>) {
         out.push(ConvexNode(Convex::new(body, delta, geom.mesh(), color, window)))
     }
@@ -340,7 +339,7 @@ impl GraphicsManager {
                     body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
                     geom:   &geom::Cylinder,
-                    color:  Vec3<f32>,
+                    color:  Pnt3<f32>,
                     out:    &mut Vec<Node>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
@@ -353,7 +352,7 @@ impl GraphicsManager {
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
                 geom:   &geom::Cone,
-                color:  Vec3<f32>,
+                color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let r = geom.radius();
         let h = geom.half_height() * 2.0;
@@ -381,9 +380,9 @@ impl GraphicsManager {
                 let y = t.rotation.col(1) * 0.25f32;
                 let z = t.rotation.col(2) * 0.25f32;
 
-                window.draw_line(center, &(*center + x), &Vec3::x());
-                window.draw_line(center, &(*center + y), &Vec3::y());
-                window.draw_line(center, &(*center + z), &Vec3::z());
+                window.draw_line(center, &(*center + x), &Pnt3::new(1.0, 0.0, 0.0));
+                window.draw_line(center, &(*center + y), &Pnt3::new(0.0, 1.0, 0.0));
+                window.draw_line(center, &(*center + z), &Pnt3::new(0.0, 0.0, 1.0));
             }
         }
     }
@@ -408,7 +407,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn look_at(&mut self, eye: Vec3<f32>, at: Vec3<f32>) {
+    pub fn look_at(&mut self, eye: Pnt3<f32>, at: Pnt3<f32>) {
         self.arc_ball.look_at_z(eye, at);
         self.first_person.look_at_z(eye, at);
     }

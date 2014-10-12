@@ -2,10 +2,10 @@
 
 use na::{Translation, RotationWithTranslation};
 use na;
-use ncollide::math::{Scalar, Vect, Orientation, Matrix};
+use ncollide::math::{Scalar, Point, Vect, Orientation, Matrix};
 
 /// Explicit Euler integrator.
-pub fn explicit_integrate(dt: Scalar, p: &Matrix, c: &Vect, lv: &Vect, av: &Orientation, lf: &Vect, af: &Orientation) -> (Matrix, Vect, Orientation) {
+pub fn explicit_integrate(dt: Scalar, p: &Matrix, c: &Point, lv: &Vect, av: &Orientation, lf: &Vect, af: &Orientation) -> (Matrix, Vect, Orientation) {
     (
         displacement(dt.clone(), p, c, lv, av), 
         lv + lf * dt,
@@ -14,7 +14,7 @@ pub fn explicit_integrate(dt: Scalar, p: &Matrix, c: &Vect, lv: &Vect, av: &Orie
 }
 
 /// Explicit Euler integrator. This will not update the rotational components.
-pub fn explicit_integrate_wo_rotation(dt: Scalar, p: &Vect, lv: &Vect, lf: &Vect) -> (Vect, Vect) {
+pub fn explicit_integrate_wo_rotation(dt: Scalar, p: &Point, lv: &Vect, lf: &Vect) -> (Point, Vect) {
     (
         p  + lv * dt, 
         lv + lf * dt
@@ -22,7 +22,7 @@ pub fn explicit_integrate_wo_rotation(dt: Scalar, p: &Vect, lv: &Vect, lf: &Vect
 }
 
 /// Semi-implicit Euler integrator.
-pub fn semi_implicit_integrate(dt: Scalar, p: &Matrix, c: &Vect, lv: &Vect, av: &Orientation, lf: &Vect, af: &Orientation) -> (Matrix, Vect, Orientation) {
+pub fn semi_implicit_integrate(dt: Scalar, p: &Matrix, c: &Point, lv: &Vect, av: &Orientation, lf: &Vect, af: &Orientation) -> (Matrix, Vect, Orientation) {
     let nlv = lv + lf * dt;
     let nav = av + af * dt;
 
@@ -34,7 +34,7 @@ pub fn semi_implicit_integrate(dt: Scalar, p: &Matrix, c: &Vect, lv: &Vect, av: 
 }
 
 /// Semi-implicit Euler integrator. This will not update the rotational components.
-pub fn semi_implicit_integrate_wo_rotation(dt: Scalar, p: &Vect, lv: &Vect, lf: &Vect) -> (Vect, Vect) {
+pub fn semi_implicit_integrate_wo_rotation(dt: Scalar, p: &Point, lv: &Vect, lf: &Vect) -> (Point, Vect) {
     let nlv = lv + lf * dt;
 
     (
@@ -45,9 +45,9 @@ pub fn semi_implicit_integrate_wo_rotation(dt: Scalar, p: &Vect, lv: &Vect, lf: 
 
 /// Computes the transformation matrix required to move an object with a `lin_vel` linear velocity,
 /// a `ang_vil` angular velocity, and a center of mass `center_of_mass`, during the time step `dt`.
-pub fn displacement(dt: Scalar, _: &Matrix, center_of_mass: &Vect, lin_vel: &Vect, ang_vel: &Orientation) -> Matrix {
+pub fn displacement(dt: Scalar, _: &Matrix, center_of_mass: &Point, lin_vel: &Vect, ang_vel: &Orientation) -> Matrix {
     let mut res: Matrix = na::one();
-    res.append_rotation_wrt_point(&(ang_vel * dt), center_of_mass);
+    res.append_rotation_wrt_point(&(ang_vel * dt), center_of_mass.as_vec());
 
     res.append_translation(&(lin_vel * dt));
 

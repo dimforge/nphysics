@@ -2,15 +2,15 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Vec3, Iso3};
+use na::{Pnt3, Iso3};
 use na;
 use nphysics::object::RigidBody;
 use ncollide::procedural;
 use ncollide::parametric;
 
 pub struct ParametricSurface {
-    color:      Vec3<f32>,
-    base_color: Vec3<f32>,
+    color:      Pnt3<f32>,
+    base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
     body:       Rc<RefCell<RigidBody>>
@@ -20,7 +20,7 @@ impl ParametricSurface {
     pub fn new<S: parametric::ParametricSurface>(body:           Rc<RefCell<RigidBody>>,
                                                  delta:          Iso3<f32>,
                                                  surface:        &S,
-                                                 color:          Vec3<f32>,
+                                                 color:          Pnt3<f32>,
                                                  window:         &mut Window)
                                                  -> ParametricSurface {
         let t     = na::transformation(body.borrow().deref());
@@ -43,7 +43,7 @@ impl ParametricSurface {
     }
 
     pub fn select(&mut self) {
-        self.color = Vec3::x();
+        self.color = Pnt3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {

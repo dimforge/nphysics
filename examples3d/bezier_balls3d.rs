@@ -4,7 +4,7 @@ extern crate ncollide;
 extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
-use na::{Vec3, Translation};
+use na::{Pnt3, Vec3, Translation};
 use ncollide::geom::{Ball, BezierSurface};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -26,11 +26,11 @@ fn main() {
      * Ground
      */
     let control_points = vec!(
-        Vec3::new(-20.0, -00.0, 020.0), Vec3::new(-10.0, -00.0, 020.0), Vec3::new(00.0, -00.0, 020.0), Vec3::new(10.0, -00.0, 020.0), Vec3::new(20.0, -00.0, 020.0),
-        Vec3::new(-20.0, -00.0, 010.0), Vec3::new(-10.0, -40.0, 010.0), Vec3::new(00.0, 040.0, 010.0), Vec3::new(10.0, -40.0, 010.0), Vec3::new(20.0, -00.0, 010.0),
-        Vec3::new(-20.0, -00.0, 000.0), Vec3::new(-10.0, -40.0, 000.0), Vec3::new(00.0, 040.0, 000.0), Vec3::new(10.0, -40.0, 000.0), Vec3::new(20.0, -00.0, 000.0),
-        Vec3::new(-20.0, -00.0, -10.0), Vec3::new(-10.0, -40.0, -10.0), Vec3::new(00.0, 040.0, -10.0), Vec3::new(10.0, -40.0, -10.0), Vec3::new(20.0, -00.0, -10.0),
-        Vec3::new(-20.0, -00.0, -20.0), Vec3::new(-10.0, -00.0, -20.0), Vec3::new(00.0, -00.0, -20.0), Vec3::new(10.0, -00.0, -20.0), Vec3::new(20.0, -00.0, -20.0),
+        Pnt3::new(-20.0, -00.0, 020.0), Pnt3::new(-10.0, -00.0, 020.0), Pnt3::new(00.0, -00.0, 020.0), Pnt3::new(10.0, -00.0, 020.0), Pnt3::new(20.0, -00.0, 020.0),
+        Pnt3::new(-20.0, -00.0, 010.0), Pnt3::new(-10.0, -40.0, 010.0), Pnt3::new(00.0, 040.0, 010.0), Pnt3::new(10.0, -40.0, 010.0), Pnt3::new(20.0, -00.0, 010.0),
+        Pnt3::new(-20.0, -00.0, 000.0), Pnt3::new(-10.0, -40.0, 000.0), Pnt3::new(00.0, 040.0, 000.0), Pnt3::new(10.0, -40.0, 000.0), Pnt3::new(20.0, -00.0, 000.0),
+        Pnt3::new(-20.0, -00.0, -10.0), Pnt3::new(-10.0, -40.0, -10.0), Pnt3::new(00.0, 040.0, -10.0), Pnt3::new(10.0, -40.0, -10.0), Pnt3::new(20.0, -00.0, -10.0),
+        Pnt3::new(-20.0, -00.0, -20.0), Pnt3::new(-10.0, -00.0, -20.0), Pnt3::new(00.0, -00.0, -20.0), Pnt3::new(10.0, -00.0, -20.0), Pnt3::new(20.0, -00.0, -20.0),
     );
 
     let rb = RigidBody::new_static(BezierSurface::new(control_points, 5, 5), 0.3, 0.6);
@@ -67,6 +67,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Vec3::new(-10.0, 50.0, -10.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Pnt3::new(-10.0, 50.0, -10.0), Pnt3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

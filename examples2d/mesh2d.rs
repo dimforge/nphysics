@@ -8,7 +8,7 @@ extern crate nphysics_testbed2d;
 
 use std::rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
-use na::{Vec2, Translation};
+use na::{Pnt2, Vec2, Translation};
 use ncollide::geom::{Cuboid, Mesh};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -34,7 +34,7 @@ fn main() {
     let max_h     = 15.0;
     let begin_h   = 15.0;
     let step      = (begin.abs() * 2.0) / (num_split as f32);
-    let mut vertices = Vec::from_fn(num_split + 2, |i| Vec2::new(begin + (i as f32) * step, 0.0));
+    let mut vertices = Vec::from_fn(num_split + 2, |i| Pnt2::new(begin + (i as f32) * step, 0.0));
     let mut indices  = Vec::new();
     let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_slice());
 

@@ -7,7 +7,7 @@ use rand::{IsaacRng, Rng};
 use std::collections::HashMap;
 use na;
 use na::IterableMut;
-use ncollide::math::{Scalar, Vect};
+use ncollide::math::{Scalar, Point};
 use ncollide::utils::AsBytes;
 
 #[deriving(PartialEq)]
@@ -15,7 +15,7 @@ use ncollide::utils::AsBytes;
 pub struct ContactIdentifier {
     obj1:    uint,
     obj2:    uint,
-    ccenter: Vect
+    ccenter: Point
 }
 
 impl Eq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
@@ -28,7 +28,7 @@ impl Hash for ContactIdentifier {
 }
 
 impl ContactIdentifier {
-    pub fn new(obj1: uint, obj2: uint, center: Vect, step: &Scalar) -> ContactIdentifier {
+    pub fn new(obj1: uint, obj2: uint, center: Point, step: &Scalar) -> ContactIdentifier {
         let mut cell = center / *step;
 
         for x in cell.mut_iter() {
@@ -66,7 +66,7 @@ impl ImpulseCache {
         }
     }
 
-    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: Vect) {
+    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: Point) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
             match self.hash_prev.find_copy(&id) {

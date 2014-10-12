@@ -9,7 +9,7 @@ extern crate nphysics_testbed3d;
 use rustrt::bookkeeping;
 use std::sync::{Arc, RWLock};
 use std::rand;
-use na::{Vec3, Translation};
+use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
 use ncollide::geom::{Plane, Compound, CompoundData};
 use ncollide::procedural::TriMesh;
@@ -79,7 +79,7 @@ fn main() {
             let mut geom_data = CompoundData::new();
 
             let model  = obj::parse_file(&Path::new(obj_path), &mtl_path, "").unwrap();
-            let meshes: Vec<TriMesh<f32, Vec3<f32>>> = model.into_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
+            let meshes: Vec<TriMesh<f32, Pnt3<f32>, Vec3<f32>>> = model.into_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
 
             // Compute the size of the model, to scale it and have similar size for everything.
             let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, meshes[0].coords.as_slice());
@@ -141,7 +141,7 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
     testbed.run();
 }
 

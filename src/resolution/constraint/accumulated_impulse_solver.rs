@@ -248,7 +248,7 @@ impl AccumulatedImpulseSolver {
                 let center = &rb.center_of_mass().clone();
 
                 let mut delta: Matrix = na::one();
-                delta.append_rotation_wrt_point(&rotation, center);
+                delta.append_rotation_wrt_point(&rotation, center.as_vec());
                 delta.append_translation(&translation);
 
                 rb.append_transformation(&delta);
@@ -272,7 +272,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                         self.cache.insert(i,
                                           a.deref() as *const RefCell<RigidBody> as uint,
                                           b.deref() as *const RefCell<RigidBody> as uint,
-                                          (c.world1 + c.world2) / na::cast::<f32, Scalar>(2.0));
+                                          na::center(&c.world1, &c.world2));
                     },
                     BallInSocketConstraint(_) => {
                         // XXX: cache for ball in socket?

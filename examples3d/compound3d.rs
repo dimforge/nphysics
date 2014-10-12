@@ -5,7 +5,7 @@ extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
 use std::sync::Arc;
-use na::{Vec3, Iso3, Translation};
+use na::{Pnt3, Vec3, Iso3, Translation};
 use ncollide::geom::{Plane, Cuboid, Compound, CompoundData, Geom};
 use ncollide::volumetric::Volumetric;
 use nphysics::world::World;
@@ -79,6 +79,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

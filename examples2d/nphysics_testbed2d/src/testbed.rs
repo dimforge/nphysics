@@ -6,7 +6,7 @@ use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
 use rsfml::window::keyboard;
 use rsfml::graphics::Color;
-use na::{Vec2, Vec3};
+use na::{Pnt2, Pnt3};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::BallInSocket;
@@ -83,8 +83,8 @@ impl<'a> Testbed<'a> {
         }
     }
 
-    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Vec3<f32>) {
-        let color = Vec3::new(
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
+        let color = Pnt3::new(
             (color.x * 255.0) as u8,
             (color.y * 255.0) as u8,
             (color.z * 255.0) as u8
@@ -143,7 +143,7 @@ impl<'a> Testbed<'a> {
                         }
                     },
                     event::MouseMoved{x, y} => {
-                        cursor_pos = Vec2::new(x as f32, y as f32);
+                        cursor_pos = Pnt2::new(x as f32, y as f32);
                         match grabbed_object {
                             Some(_) => {
                                 let joint = grabbed_object_joint.as_ref().unwrap();

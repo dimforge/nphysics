@@ -2,14 +2,14 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Vec3, Iso3};
+use na::{Pnt3, Iso3};
 use na;
 use nphysics::object::RigidBody;
 use ncollide::procedural;
 
 pub struct BezierSurface {
-    color:      Vec3<f32>,
-    base_color: Vec3<f32>,
+    color:      Pnt3<f32>,
+    base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
     body:       Rc<RefCell<RigidBody>>
@@ -18,10 +18,10 @@ pub struct BezierSurface {
 impl BezierSurface {
     pub fn new(body:           Rc<RefCell<RigidBody>>,
                delta:          Iso3<f32>,
-               control_points: &[Vec3<f32>],
+               control_points: &[Pnt3<f32>],
                nupoints:       uint,
                nvpoints:       uint,
-               color:          Vec3<f32>,
+               color:          Pnt3<f32>,
                window:         &mut Window) -> BezierSurface {
         let t      = na::transformation(body.borrow().deref());
         let bezier = procedural::bezier_surface(control_points, nupoints, nvpoints, 100, 100);
@@ -43,7 +43,7 @@ impl BezierSurface {
     }
 
     pub fn select(&mut self) {
-        self.color = Vec3::x();
+        self.color = Pnt3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {

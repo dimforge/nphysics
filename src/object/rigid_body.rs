@@ -8,7 +8,7 @@ use na::Transform;
 use ncollide::bounding_volume::{HasBoundingVolume, LooseBoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
-use ncollide::math::{Scalar, Vect, Orientation, Matrix, AngularInertia};
+use ncollide::math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
 
 /// A shared, mutable, rigid body.
 pub type RigidBodyHandle = Rc<RefCell<RigidBody>>;
@@ -57,8 +57,8 @@ pub struct RigidBody {
     inv_mass:             Scalar,
     ls_inv_inertia:       AngularInertia,
     inv_inertia:          AngularInertia,
-    ls_center_of_mass:    Vect,
-    center_of_mass:       Vect,
+    ls_center_of_mass:    Point,
+    center_of_mass:       Point,
     lin_acc:              Vect,
     ang_acc:              Orientation,
     restitution:          Scalar,
@@ -165,7 +165,7 @@ impl RigidBody {
 
     /// Gets a reference to this body's center of mass.
     #[inline]
-    pub fn center_of_mass<'r>(&'r self) -> &'r Vect {
+    pub fn center_of_mass<'r>(&'r self) -> &'r Point {
         &self.center_of_mass
     }
 
@@ -263,13 +263,13 @@ impl RigidBody {
     /// Use this if the geometry is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
     pub fn new(geom:            Arc<Box<Geom + Send + Sync>>,
-               mass_properties: Option<(Scalar, Vect, AngularInertia)>,
+               mass_properties: Option<(Scalar, Point, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)
                -> RigidBody {
         let (inv_mass, center_of_mass, inv_inertia, active, state) =
             match mass_properties {
-                None => (na::zero(), na::zero(), na::zero(), Inactive, Static),
+                None => (na::zero(), na::orig(), na::zero(), Inactive, Static),
                 Some((mass, com, inertia)) => {
                     if mass.is_zero() {
                         fail!("A dynamic body must not have a zero volume.")
@@ -299,7 +299,7 @@ impl RigidBody {
                 ls_inv_inertia:       inv_inertia.clone(),
                 inv_inertia:          inv_inertia,
                 ls_center_of_mass:    center_of_mass,
-                center_of_mass:       na::zero(),
+                center_of_mass:       na::orig(),
                 lin_acc:              na::zero(),
                 ang_acc:              na::zero(),
                 friction:             friction,

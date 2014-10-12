@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::num::Zero;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
-use na::Vec3;
+use na::{Pnt3, Vec3};
 use nphysics::object::RigidBody;
 
 pub struct Plane {
@@ -13,9 +13,9 @@ pub struct Plane {
 
 impl Plane {
     pub fn new(body:         Rc<RefCell<RigidBody>>,
-               world_pos:    &Vec3<f32>,
+               world_pos:    &Pnt3<f32>,
                world_normal: &Vec3<f32>,
-               color:        Vec3<f32>,
+               color:        Pnt3<f32>,
                window:       &mut window::Window) -> Plane {
         let mut res = Plane {
             gfx:  window.add_quad(100.0, 100.0, 10, 10),

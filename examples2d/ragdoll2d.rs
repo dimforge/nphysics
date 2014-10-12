@@ -4,7 +4,7 @@ extern crate ncollide;
 extern crate "nphysics2df32" as nphysics;
 extern crate nphysics_testbed2d;
 
-use na::{Vec1, Vec2, Translation, Rotation};
+use na::{Pnt2, Vec1, Vec2, Translation, Rotation};
 use ncollide::geom::{Plane, Cuboid, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -94,17 +94,17 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     /*
      * Create joints.
      */
-    let body_anchor_head  = Anchor::new(Some(body.clone()), Vec2::new(1.3, 0.0));
-    let body_anchor_rarm  = Anchor::new(Some(body.clone()), Vec2::new(1.0, 0.75));
-    let body_anchor_larm  = Anchor::new(Some(body.clone()), Vec2::new(1.0, -0.75));
-    let body_anchor_rfoot = Anchor::new(Some(body.clone()), Vec2::new(-1.3, 0.2));
-    let body_anchor_lfoot = Anchor::new(Some(body.clone()), Vec2::new(-1.3, -0.2));
+    let body_anchor_head  = Anchor::new(Some(body.clone()), Pnt2::new(1.4, 0.0));
+    let body_anchor_rarm  = Anchor::new(Some(body.clone()), Pnt2::new(1.0, 0.76));
+    let body_anchor_larm  = Anchor::new(Some(body.clone()), Pnt2::new(1.0, -0.76));
+    let body_anchor_rfoot = Anchor::new(Some(body.clone()), Pnt2::new(-1.5, 0.3));
+    let body_anchor_lfoot = Anchor::new(Some(body.clone()), Pnt2::new(-1.5, -0.3));
 
-    let head_anchor       = Anchor::new(Some(head), Vec2::new(0.0, 0.9));
-    let rarm_anchor       = Anchor::new(Some(rarm), Vec2::new(-1.5, 0.0));
-    let larm_anchor       = Anchor::new(Some(larm), Vec2::new(1.5, 0.0));
-    let rfoot_anchor      = Anchor::new(Some(rfoot), Vec2::new(1.5, 0.0));
-    let lfoot_anchor      = Anchor::new(Some(lfoot), Vec2::new(1.5, 0.0));
+    let head_anchor       = Anchor::new(Some(head), Pnt2::new(0.0, 0.9));
+    let rarm_anchor       = Anchor::new(Some(rarm), Pnt2::new(-1.5, 0.0));
+    let larm_anchor       = Anchor::new(Some(larm), Pnt2::new(1.5, 0.0));
+    let rfoot_anchor      = Anchor::new(Some(rfoot), Pnt2::new(1.5, 0.0));
+    let lfoot_anchor      = Anchor::new(Some(lfoot), Pnt2::new(1.5, 0.0));
 
     let head_joint  = BallInSocket::new(body_anchor_head,   head_anchor);
     let rarm_joint  = BallInSocket::new(body_anchor_rarm,   rarm_anchor);

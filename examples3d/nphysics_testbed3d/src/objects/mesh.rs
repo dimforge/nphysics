@@ -3,13 +3,13 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::resource;
-use na::{Vec3, Iso3};
+use na::{Pnt3, Vec3, Iso3};
 use na;
 use nphysics::object::RigidBody;
 
 pub struct Mesh {
-    color:      Vec3<f32>,
-    base_color: Vec3<f32>,
+    color:      Pnt3<f32>,
+    base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
     body:       Rc<RefCell<RigidBody>>
@@ -18,9 +18,9 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso3<f32>,
-               vertices: Vec<Vec3<f32>>,
+               vertices: Vec<Pnt3<f32>>,
                indices:  Vec<Vec3<u32>>,
-               color:    Vec3<f32>,
+               color:    Pnt3<f32>,
                window:   &mut Window) -> Mesh {
         let vs = vertices;
         let is = indices;
@@ -45,7 +45,7 @@ impl Mesh {
     }
 
     pub fn select(&mut self) {
-        self.color = Vec3::x();
+        self.color = Pnt3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {

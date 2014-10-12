@@ -2,13 +2,13 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
-use na::{Vec3, Iso3};
+use na::{Pnt3, Iso3};
 use na;
 use nphysics::object::RigidBody;
 
 pub struct Cylinder {
-    color:      Vec3<f32>,
-    base_color: Vec3<f32>,
+    color:      Pnt3<f32>,
+    base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
     body:       Rc<RefCell<RigidBody>>,
@@ -19,7 +19,7 @@ impl Cylinder {
                delta:  Iso3<f32>,
                r:     f32,
                h:     f32,
-               color:  Vec3<f32>,
+               color:  Pnt3<f32>,
                window: &mut window::Window) -> Cylinder {
         let _frac_pi_2: f32 = Float::frac_pi_2();
         let t = na::transformation(body.borrow().deref());
@@ -39,7 +39,7 @@ impl Cylinder {
     }
 
     pub fn select(&mut self) {
-        self.color = Vec3::x();
+        self.color = Pnt3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {

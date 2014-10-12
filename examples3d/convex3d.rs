@@ -5,7 +5,7 @@ extern crate "nphysics3df32" as nphysics;
 extern crate nphysics_testbed3d;
 
 use std::rand;
-use na::{Vec3, Translation};
+use na::{Pnt3, Vec3, Translation};
 use ncollide::geom::{Plane, Convex};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -50,7 +50,7 @@ fn main() {
                 let mut pts = Vec::with_capacity(npts);
 
                 for _ in range(0, npts) {
-                    pts.push(rand::random::<Vec3<f32>>() * 2.0f32 + Vec3::new(5.0f32, 5.0f32, 5.0f32));
+                    pts.push(rand::random::<Pnt3<f32>>() * 2.0f32 + Vec3::new(5.0f32, 5.0f32, 5.0f32));
                 }
 
                 let geom = Convex::new(pts.as_slice());
@@ -68,6 +68,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Vec3::new(-30.0, 30.0, -30.0), Vec3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

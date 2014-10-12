@@ -4,7 +4,7 @@ extern crate ncollide;
 extern crate "nphysics2df32" as nphysics;
 extern crate nphysics_testbed2d;
 
-use na::{Vec2, Vec3, Translation};
+use na::{Vec2, Pnt3, Translation};
 use ncollide::geom::{Ball, Plane};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -65,12 +65,12 @@ fn main() {
             if j == 0 {
                 // invert the gravity for the blue balls.
                 rb.set_lin_acc_scale(Vec2::new(0.0, -1.0));
-                color = Vec3::new(0.0, 0.0, 1.0);
+                color = Pnt3::new(0.0, 0.0, 1.0);
             }
             else {
                 // double the gravity for the green balls.
                 rb.set_lin_acc_scale(Vec2::new(0.0, 2.0));
-                color = Vec3::new(0.0, 1.0, 0.0);
+                color = Pnt3::new(0.0, 1.0, 0.0);
             }
 
             let body = world.add_body(rb);

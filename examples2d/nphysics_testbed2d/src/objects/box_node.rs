@@ -3,13 +3,13 @@ use std::cell::RefCell;
 use rsfml::graphics;
 use rsfml::graphics::{RectangleShape, Color, RenderTarget};
 use rsfml::system::vector2;
-use na::{Vec3, Iso2};
+use na::{Pnt3, Iso2};
 use na;
 use nphysics::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 
 pub struct Box<'a> {
-    color: Vec3<u8>,
+    color: Pnt3<u8>,
     delta: Iso2<f32>,
     body:  Rc<RefCell<RigidBody>>,
     gfx:   RectangleShape<'a>
@@ -20,7 +20,7 @@ impl<'a> Box<'a> {
                delta: Iso2<f32>,
                rx:    f32,
                ry:    f32,
-               color: Vec3<u8>) -> Box<'a> {
+               color: Pnt3<u8>) -> Box<'a> {
         let mut res = Box {
             color: color,
             delta: delta,

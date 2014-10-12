@@ -1,10 +1,10 @@
 use std::os;
-use std::num::{Zero, One, Bounded};
+use std::num::{One, Bounded};
 use std::rc::Rc;
 use std::cell::RefCell;
 use time;
 use glfw;
-use na::{Vec2, Vec3, Translation, Iso3};
+use na::{Pnt2, Pnt3, Vec3, Translation, Iso3};
 use na;
 use kiss3d::window::Window;
 use kiss3d::light;
@@ -78,15 +78,15 @@ impl Testbed {
         }
     }
 
-    pub fn look_at(&mut self, eye: Vec3<f32>, at: Vec3<f32>) {
+    pub fn look_at(&mut self, eye: Pnt3<f32>, at: Pnt3<f32>) {
         self.graphics.look_at(eye, at);
     }
 
-    pub fn set_color(&mut self, rb: &Rc<RefCell<RigidBody>>, color: Vec3<f32>) {
+    pub fn set_color(&mut self, rb: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
         self.graphics.set_color(rb, color);
     }
 
-    pub fn load_obj(path: &str) -> Vec<(Vec<Vec3<f32>>, Vec<uint>)> {
+    pub fn load_obj(path: &str) -> Vec<(Vec<Pnt3<f32>>, Vec<uint>)> {
         let path    = Path::new(path);
         let empty   = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
         let objects = obj::parse_file(&path, &empty, "").ok().expect("Unable to open the obj file.");
@@ -134,10 +134,10 @@ impl Testbed {
         let font           = Font::from_memory(font_mem, 60);
         let mut draw_colls = false;
 
-        let mut cursor_pos = Vec2::new(0.0f32, 0.0);
+        let mut cursor_pos = Pnt2::new(0.0f32, 0.0);
         let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
         let mut grabbed_object_joint: Option<Rc<RefCell<Fixed>>> = None;
-        let mut grabbed_object_plane: (Vec3<f32>, Vec3<f32>) = (Zero::zero(), Zero::zero());
+        let mut grabbed_object_plane: (Pnt3<f32>, Vec3<f32>) = (na::orig(), na::zero());
 
 
         self.window.set_framerate_limit(Some(60));
@@ -223,12 +223,12 @@ impl Testbed {
                                         }
 
                                         let _1: Iso3<f32> = One::one();
-                                        let attach2 = na::append_translation(&_1, &(ray.orig + ray.dir * mintoi));
+                                        let attach2 = na::append_translation(&_1, (ray.orig + ray.dir * mintoi).as_vec());
                                         let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = Fixed::new(anchor1, anchor2);
-                                        grabbed_object_plane = (na::translation(&attach2), -ray.dir);
+                                        grabbed_object_plane = (na::translation(&attach2).to_pnt(), -ray.dir);
                                         grabbed_object_joint = Some(self.world.add_fixed(joint));
                                         // add a joint
                                         sn.select()
@@ -272,7 +272,7 @@ impl Testbed {
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
                                         let _1: Iso3<f32> = One::one();
-                                        j.borrow_mut().set_local2(na::append_translation(&_1, &(pos + dir * inter)))
+                                        j.borrow_mut().set_local2(na::append_translation(&_1, (pos + dir * inter).as_vec()))
                                     },
                                     None => { }
                                 }
@@ -400,15 +400,15 @@ impl Testbed {
                 draw_collisions(&mut self.window, &mut self.world);
             }
 
-            let color = Vec3::new(1.0, 1.0, 1.0);
+            let color = Pnt3::new(1.0, 1.0, 1.0);
 
             if running != Stop {
                 let dt = time::precise_time_s() - before;
 
-                self.window.draw_text(dt.to_string().as_slice(), &na::zero(), &font, &color);
+                self.window.draw_text(dt.to_string().as_slice(), &na::orig(), &font, &color);
             }
             else {
-                self.window.draw_text("Paused", &na::zero(), &font, &color);
+                self.window.draw_text("Paused", &na::orig(), &font, &color);
             }
 
             self.window.render_with_camera(self.graphics.camera());
@@ -431,19 +431,19 @@ fn draw_collisions(window: &mut Window, physics: &mut World) {
     for c in collisions.iter() {
         match *c {
             RBRB(_, _, ref c) => {
-                window.draw_line(&c.world1, &c.world2, &Vec3::x());
+                window.draw_line(&c.world1, &c.world2, &Pnt3::new(1.0, 0.0, 0.0));
 
-                let center = (c.world1 + c.world2) / 2.0f32;
+                let center = na::center(&c.world1, &c.world2);
                 let end    = center + c.normal * 0.4f32;
-                window.draw_line(&center, &end, &Vec3::new(0.0, 1.0, 1.0))
+                window.draw_line(&center, &end, &Pnt3::new(0.0, 1.0, 1.0))
             },
             BallInSocketConstraint(ref bis) => {
                 let bbis = bis.borrow();
-                window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Vec3::y());
+                window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Pnt3::new(0.0, 1.0, 0.0));
             },
             FixedConstraint(ref f) => {
                 // FIXME: draw the rotation too
-                window.draw_line(&na::translation(&f.borrow().anchor1_pos()), &na::translation(&f.borrow().anchor2_pos()), &Vec3::y());
+                window.draw_line(na::translation(&f.borrow().anchor1_pos()).as_pnt(), na::translation(&f.borrow().anchor2_pos()).as_pnt(), &Pnt3::new(0.0, 1.0, 0.0));
             }
         }
     }

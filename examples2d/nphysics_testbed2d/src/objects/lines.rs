@@ -3,24 +3,24 @@ use std::cell::RefCell;
 use sync::Arc;
 use rsfml::graphics;
 use rsfml::graphics::Color;
-use na::{Vec2, Vec3, Iso2};
+use na::{Pnt2, Pnt3, Iso2};
 use nphysics::object::RigidBody;
 use draw_helper::draw_line;
 
 pub struct Lines {
-    color:    Vec3<u8>,
+    color:    Pnt3<u8>,
     delta:    Iso2<f32>,
     body:     Rc<RefCell<RigidBody>>,
     indices:  Arc<Vec<uint>>,
-    vertices: Arc<Vec<Vec2<f32>>>
+    vertices: Arc<Vec<Pnt2<f32>>>
 }
 
 impl Lines {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso2<f32>,
-               vertices: Arc<Vec<Vec2<f32>>>,
+               vertices: Arc<Vec<Pnt2<f32>>>,
                indices:  Arc<Vec<uint>>,
-               color:    Vec3<u8>) -> Lines {
+               color:    Pnt3<u8>) -> Lines {
         Lines {
             color:    color,
             delta:    delta,
