@@ -10,40 +10,40 @@ path = "../build/nphysics2df32"
 path = "./nphysics_testbed2d"
 
 [[bin]]
-name = "ball_vee2d"
-path = "./balls_vee2d.rs"
+name = "ball_vee"
+path = "./balls_vee.rs"
 
 [[bin]]
-name = "boxes_vee2d"
-path = "./boxes_vee2d.rs"
+name = "boxes_vee"
+path = "./boxes_vee.rs"
 
 [[bin]]
-name = "compound2d"
-path = "./compound2d.rs"
+name = "compound"
+path = "./compound.rs"
 
 [[bin]]
-name = "cross2d"
-path = "./cross2d.rs"
+name = "cross"
+path = "./cross.rs"
 
 [[bin]]
-name = "mesh2d"
-path = "./mesh2d.rs"
+name = "mesh"
+path = "./mesh.rs"
 
 [[bin]]
-name = "pyramid2d"
-path = "./pyramid2d.rs"
+name = "pyramid"
+path = "./pyramid.rs"
 
 [[bin]]
-name = "ragdoll2d"
-path = "./ragdoll2d.rs"
+name = "ragdoll"
+path = "./ragdoll.rs"
 
 [[bin]]
-name = "wall2d"
-path = "./wall2d.rs"
+name = "wall"
+path = "./wall.rs"
 
 [[bin]]
-name = "gravity2d"
-path = "./gravity2d.rs"
+name = "gravity"
+path = "./gravity.rs"
 
 [[bin]]
 name = "fixed_bug_11"
