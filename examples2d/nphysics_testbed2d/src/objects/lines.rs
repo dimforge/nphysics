@@ -8,10 +8,11 @@ use nphysics::object::RigidBody;
 use draw_helper::draw_line;
 
 pub struct Lines {
-    color:    Pnt3<u8>,
-    delta:    Iso2<f32>,
-    body:     Rc<RefCell<RigidBody>>,
-    indices:  Arc<Vec<uint>>,
+    color: Pnt3<u8>,
+    base_color: Pnt3<u8>,
+    delta: Iso2<f32>,
+    body: Rc<RefCell<RigidBody>>,
+    indices: Arc<Vec<uint>>,
     vertices: Arc<Vec<Pnt2<f32>>>
 }
 
@@ -22,11 +23,12 @@ impl Lines {
                indices:  Arc<Vec<uint>>,
                color:    Pnt3<u8>) -> Lines {
         Lines {
-            color:    color,
-            delta:    delta,
-            body:     body,
+            color: color,
+            base_color: color,
+            delta: delta,
+            body: body,
             vertices: vertices,
-            indices:  indices
+            indices: indices
         }
     }
 }
@@ -46,5 +48,13 @@ impl Lines {
             let gsv1 = transform * vs[is[1]];
             draw_line(rw, &gsv0, &gsv1, &Color::new_RGB(self.color.x, self.color.y, self.color.z));
         }
+    }
+
+    pub fn select(&mut self) {
+        self.color = Pnt3::new(200, 0, 0);
+    }
+
+    pub fn unselect(&mut self) {
+        self.color = self.base_color;
     }
 }

@@ -21,6 +21,24 @@ pub enum SceneNode<'a> {
     LinesNode(Lines)
 }
 
+impl<'a> SceneNode<'a> {
+    pub fn select(&mut self) {
+        match *self {
+            BallNode(ref mut n) => n.select(),
+            BoxNode(ref mut n) => n.select(),
+            LinesNode(ref mut n) => n.select(),
+        }
+    }
+
+    pub fn unselect(&mut self) {
+        match *self {
+            BallNode(ref mut n) => n.unselect(),
+            BoxNode(ref mut n) => n.unselect(),
+            LinesNode(ref mut n) => n.unselect(),
+        }
+    }
+}
+
 pub struct GraphicsManager<'a> {
     rand:      XorShiftRng,
     rb2sn:     HashMap<uint, Vec<SceneNode<'a>>>,
@@ -185,5 +203,9 @@ impl<'a> GraphicsManager<'a> {
         self.obj2color.insert(key, color);
 
         color
+    }
+
+    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<SceneNode<'a>>> {
+        self.rb2sn.find_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
     }
 }

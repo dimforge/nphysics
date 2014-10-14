@@ -1,19 +1,23 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::os;
+use std::num::{Zero, One};
 use rsfml::graphics::{RenderWindow, RenderTarget, Font};
 use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
-use rsfml::window::keyboard;
+use rsfml::window::{keyboard, mouse};
 use rsfml::graphics::Color;
-use na::{Pnt2, Pnt3};
+use rsfml::system::vector2::Vector2i;
+use na::{Pnt2, Pnt3, Vec2, Iso2};
+use na;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
-use nphysics::detection::joint::BallInSocket;
+use nphysics::detection::joint::{Fixed, Anchor};
 use camera::Camera;
 use fps::Fps;
 use engine::GraphicsManager;
 use draw_helper;
+use ncollide::ray::Ray;
 
 fn usage(exe_name: &str) {
     println!("Usage: {:s} [OPTION] ", exe_name);
@@ -119,9 +123,8 @@ impl<'a> Testbed<'a> {
         let font_mem = include_bin!("Inconsolata.otf");
         let     fnt  = Font::new_from_memory(font_mem).unwrap();
         let mut fps  = Fps::new(&fnt);
-        let mut cursor_pos;
-        let grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
-        let grabbed_object_joint: Option<Rc<RefCell<BallInSocket>>> = None;
+        let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
+        let mut grabbed_object_joint: Option<Rc<RefCell<Fixed>>> = None;
 
         while self.window.is_open() {
             loop {
@@ -142,12 +145,90 @@ impl<'a> Testbed<'a> {
                             _                => { }
                         }
                     },
+                    event::MouseButtonPressed{button, x, y} => {
+                        match button {
+                            mouse::MouseLeft => {
+                                let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
+                                let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                                let ray = Ray::new(mapped_point, Vec2::new(1.0, 0.0));
+                                let mut interferences = Vec::new();
+                                self.world.cast_ray(&ray, &mut interferences);
+
+                                let mut minb = None;
+
+                                for (b, toi) in interferences.into_iter() {
+                                    if toi.is_zero() {
+                                        minb = Some(b);
+                                    }
+                                }
+
+                                if minb.is_some() {
+                                    let b = minb.as_ref().unwrap();
+                                    if b.borrow().can_move() {
+                                        grabbed_object = Some(b.clone())
+                                    }
+                                }
+
+                                match grabbed_object {
+                                    Some(ref b) => {
+                                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
+                                            match grabbed_object_joint {
+                                                Some(ref j) => self.world.remove_fixed(j),
+                                                None        => { }
+                                            }
+
+                                            let _1: Iso2<f32> = One::one();
+                                            let attach2 = na::append_translation(&_1, (ray.orig).as_vec());
+                                            let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
+                                            let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
+                                            let anchor2 = Anchor::new(None, attach2);
+                                            let joint = Fixed::new(anchor1, anchor2);
+                                            grabbed_object_joint = Some(self.world.add_fixed(joint));
+                                            node.select()
+                                        }
+                                    },
+                                    None => { }
+                                }
+                            },
+                            _ => {
+                                camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
+                            }
+                        }
+                    },
+                    event::MouseButtonReleased{button, x, y} => {
+                        match button {
+                            mouse::MouseLeft => {
+                                match grabbed_object {
+                                    Some(ref b) => {
+                                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
+                                            node.unselect()
+                                        }
+                                    },
+                                    None => { }
+                                }
+
+                                match grabbed_object_joint {
+                                    Some(ref j) => self.world.remove_fixed(j),
+                                    None => { }
+                                }
+
+                                grabbed_object = None;
+                                grabbed_object_joint = None;
+                            },
+                            _ => {
+                                camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
+                            }
+                        }
+                    }
                     event::MouseMoved{x, y} => {
-                        cursor_pos = Pnt2::new(x as f32, y as f32);
+                        let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
+                        let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                        let _1: Iso2<f32> = One::one();
+                        let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
                         match grabbed_object {
                             Some(_) => {
                                 let joint = grabbed_object_joint.as_ref().unwrap();
-                                joint.borrow_mut().set_local2(cursor_pos);
+                                joint.borrow_mut().set_local2(attach2);
                             },
                             None => camera.handle_event(&event::MouseMoved{x: x, y: y})
                         };

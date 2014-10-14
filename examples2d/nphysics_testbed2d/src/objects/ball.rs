@@ -10,6 +10,7 @@ use draw_helper::DRAW_SCALE;
 
 pub struct Ball<'a> {
     color: Pnt3<u8>,
+    base_color: Pnt3<u8>,
     delta: Iso2<f32>,
     body:  Rc<RefCell<RigidBody>>,
     gfx:   CircleShape<'a>
@@ -24,6 +25,7 @@ impl<'a> Ball<'a> {
 
         let mut res = Ball {
             color: color,
+            base_color: color,
             delta: delta,
             gfx:   CircleShape::new().unwrap(),
             body:  body
@@ -62,5 +64,13 @@ impl<'a> Ball<'a> {
 
     pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         rw.draw(&self.gfx);
+    }
+
+    pub fn select(&mut self) {
+        self.color = Pnt3::new(200, 0, 0);
+    }
+
+    pub fn unselect(&mut self) {
+        self.color = self.base_color;
     }
 }
