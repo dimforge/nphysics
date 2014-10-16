@@ -10,9 +10,10 @@ use draw_helper::DRAW_SCALE;
 
 pub struct Box<'a> {
     color: Pnt3<u8>,
+    base_color: Pnt3<u8>,
     delta: Iso2<f32>,
-    body:  Rc<RefCell<RigidBody>>,
-    gfx:   RectangleShape<'a>
+    body: Rc<RefCell<RigidBody>>,
+    gfx: RectangleShape<'a>
 }
 
 impl<'a> Box<'a> {
@@ -23,9 +24,10 @@ impl<'a> Box<'a> {
                color: Pnt3<u8>) -> Box<'a> {
         let mut res = Box {
             color: color,
+            base_color: color,
             delta: delta,
-            gfx:   RectangleShape::new().unwrap(),
-            body:  body
+            gfx: RectangleShape::new().unwrap(),
+            body: body
         };
 
         let drx = rx as f32 * DRAW_SCALE;
@@ -64,5 +66,13 @@ impl<'a> Box<'a> {
 
     pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         rw.draw(&self.gfx);
+    }
+
+    pub fn select(&mut self) {
+        self.color = Pnt3::new(200, 0, 0);
+    }
+
+    pub fn unselect(&mut self) {
+        self.color = self.base_color;
     }
 }

@@ -1,7 +1,8 @@
-use rsfml::system::vector2::Vector2f;
+use rsfml::system::vector2::{Vector2f, Vector2i};
 use rsfml::graphics::RenderTarget;
 use rsfml::graphics;
 use rsfml::window::event;
+use draw_helper::DRAW_SCALE;
 
 static ZOOM_FACTOR: f32 = 0.1;
 
@@ -72,5 +73,15 @@ impl Camera {
             }
             _ => {}
         }
+    }
+
+    pub fn map_pixel_to_coords(&mut self, pixel_pos: Vector2i) -> Vector2f {
+        let center = self.scene.get_center();
+        let size = self.scene.get_size();
+        let mapped_coords = Vector2f::new(
+            (pixel_pos.x as f32 * self.curr_zoom - (size.x / 2.0) + center.x) / DRAW_SCALE,
+            (pixel_pos.y as f32 * self.curr_zoom - (size.y / 2.0) + center.y) / DRAW_SCALE
+        );
+        mapped_coords
     }
 }
