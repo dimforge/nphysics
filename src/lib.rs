@@ -31,24 +31,12 @@ writing bindings and has several advantages:
 You will need the last nightly build of the [rust compiler](http://www.rust-lang.org)
 and the official package manager: [cargo](https://github.com/rust-lang/cargo).
 
-Simply add the following to your `Cargo.toml` file if you want the 3d version
-of nphysics, using 32-bits foalting point numbers:
+Simply add the following to your `Cargo.toml` file:
 
 ```
 [dependencies.nphysics3df32]
 git = "https://github.com/sebcrozet/nphysics"
 ```
-
-Depending on the accuracy or the dimension that you need, `nphysics3df32` may
-be replaced by:
-
-* `nphysics2df32` − for 2d collision detection and 32 bits precision.
-* `nphysics3df32` − for 3d collision detection and 32 bits precision.
-* `nphysics2df64` − for 2d collision detection and 64 bits precision.
-* `nphysics3df64` − for 3d collision detection and 64 bits precision.
-
-Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
-to see all the cool stuffs you can do.
 
 ## Features
 - static and dynamic rigid bodies
@@ -92,34 +80,29 @@ The libraries needed to compile the examples are:
 #![deny(unnecessary_qualification)]
 #![deny(missing_doc)]
 #![deny(unused_result)]
-#![warn(unused_imports)]
 #![deny(unnecessary_typecast)]
-#![feature(macro_rules)]
-#![feature(unsafe_destructor)]
+#![warn(non_camel_case_types)]
 #![feature(globs)]
+#![feature(default_type_params)]
+#![feature(phase)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
-extern crate nphysics2df32;
-extern crate nphysics3df32;
-extern crate nphysics2df64;
-extern crate nphysics3df64;
+extern crate rand;
+extern crate serialize;
+extern crate collections;
+extern crate "nalgebra" as na;
+extern crate ncollide;
+#[cfg(test)]
+extern crate test;
 
-mod f32 {
-    mod d2 {
-        pub use nphysics2df32::*;
-    }
+pub mod aliases;
 
-    mod d3 {
-        pub use nphysics3df32::*;
-    }
-}
+pub mod integration;
+pub mod detection;
+pub mod resolution;
 
-mod f64 {
-    mod d2 {
-        pub use nphysics2df64::*;
-    }
+pub mod world;
 
-    mod d3 {
-        pub use nphysics3df64::*;
-    }
-}
+pub mod object;
+
+pub mod utils;

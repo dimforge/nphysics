@@ -3,9 +3,6 @@ name    = "nphysics-examples"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
-[dependencies.nphysics2df32]
-path = "../build/nphysics2df32"
-
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"
 

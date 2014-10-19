@@ -6,8 +6,9 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [lib]
 name = "nphysics_testbed3d"
 
-[dependencies.nphysics3df32]
-path = "../../build/nphysics3df32"
+[dependencies.nphysics]
+features = [ "3df32" ]
+path = "../.."
 
 [dependencies.kiss3d]
 git = "https://github.com/sebcrozet/kiss3d"

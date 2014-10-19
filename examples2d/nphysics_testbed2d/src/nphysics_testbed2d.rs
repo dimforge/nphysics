@@ -5,9 +5,9 @@ extern crate sync;
 extern crate time;
 extern crate collections;
 extern crate rsfml;
-extern crate ncollide;
 extern crate "nalgebra" as na;
-extern crate "nphysics2df32" as nphysics;
+extern crate ncollide;
+extern crate nphysics;
 
 
 pub use testbed::Testbed;

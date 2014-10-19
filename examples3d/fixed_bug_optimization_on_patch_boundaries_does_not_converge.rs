@@ -20,7 +20,7 @@
 extern crate native;
 extern crate "nalgebra" as na;
 extern crate ncollide;
-extern crate "nphysics3df32" as nphysics;
+extern crate nphysics;
 extern crate nphysics_testbed3d;
 
 use na::{Pnt3, Vec3, Translation};

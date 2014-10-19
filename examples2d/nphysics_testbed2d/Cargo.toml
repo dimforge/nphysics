@@ -6,8 +6,9 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [lib]
 name = "nphysics_testbed2d"
 
-[dependencies.nphysics2df32]
-path = "../../build/nphysics2df32"
+[dependencies.nphysics]
+features = [ "2df32" ]
+path = "../.."
 
 [dependencies.rust-sfml]
 git = "https://github.com/jeremyletang/rust-sfml"

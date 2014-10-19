@@ -5,16 +5,15 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [features]
 default = [ "3d", "f32" ]
-3d      = []
-f32     = []
+3d      = [ "ncollide/3d" ]
+f32     = [ "ncollide/f32" ]
 
 [lib]
 name = "nphysics3df32"
-path = "../../src/lib3df32.rs"
+path = "../../src/lib.rs"
 
 [dependencies.nalgebra]
 git = "https://github.com/sebcrozet/nalgebra"
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"
-features = [ "3df32" ]

@@ -3,7 +3,7 @@ extern crate rustrt;
 extern crate kiss3d;
 extern crate "nalgebra" as na;
 extern crate ncollide;
-extern crate "nphysics3df32" as nphysics;
+extern crate nphysics;
 extern crate nphysics_testbed3d;
 
 use rustrt::bookkeeping;
@@ -127,7 +127,7 @@ fn main() {
     let nreplicats = 100 / bodies.read().len();
 
     for rb in bodies.read().iter() {
-        for i in range(0, nreplicats) {
+        for _ in range(0, nreplicats) {
             let mut rb = rb.clone();
             let pos = rand::random::<Vec3<f32>>() * 30.0f32 + Vec3::new(-15.0f32, 15.0, -15.0);
             rb.append_translation(&pos);

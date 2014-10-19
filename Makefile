@@ -1,6 +1,10 @@
 tmp=_git_distcheck
 
 all:
+	cargo build --release --features "3df32"
+	cargo build --release --features "2df32"
+	cargo build --release --features "2df64"
+	cargo build --release --features "3df64"
 	cd build/nphysics2df32; cargo build --release
 	cd build/nphysics2df64; cargo build --release
 	cd build/nphysics3df32; cargo build --release

@@ -5,16 +5,15 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [features]
 default = [ "2d", "f64" ]
-2d      = []
-f64     = []
+2d      = [ "ncollide/2d" ]
+f64     = [ "ncollide/f64" ]
 
 [lib]
 name = "nphysics2df64"
-path = "../../src/lib2df64.rs"
+path = "../../src/lib.rs"
 
 [dependencies.nalgebra]
 git = "https://github.com/sebcrozet/nalgebra"
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"
-features = [ "2df64" ]

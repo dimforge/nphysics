@@ -1,7 +1,7 @@
 extern crate native;
 extern crate "nalgebra" as na;
 extern crate ncollide;
-extern crate "nphysics2df32" as nphysics;
+extern crate nphysics;
 extern crate nphysics_testbed2d;
 
 use std::sync::Arc;
