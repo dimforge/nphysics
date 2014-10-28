@@ -7,7 +7,8 @@ pub use integration::body_force_generator::BodyForceGenerator;
 pub use integration::body_damping::BodyDamping;
 // pub use integration::swept_ball_motion_clamping::SweptBallMotionClamping;
 
-mod integrator;
+// XXX: `pub` due to rust#18241
+pub mod integrator;
 mod body_exp_euler_integrator;
 mod body_smp_euler_integrator;
 mod body_force_generator;

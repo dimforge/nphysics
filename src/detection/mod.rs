@@ -6,7 +6,8 @@ pub use detection::activation_manager::ActivationManager;
 
 pub mod constraint;
 
-mod detector;
+// XXX: `pub` due to rust#18241
+pub mod detector;
 mod bodies_bodies;
 
 /// Joint handling.
@@ -21,7 +22,9 @@ pub mod joint {
     mod anchor;
     mod ball_in_socket;
     mod fixed;
-    mod joint;
+    // XXX: `pub` due to rust#18241
+    #[allow(missing_doc)]
+    pub mod joint;
 }
 
 mod activation_manager;
