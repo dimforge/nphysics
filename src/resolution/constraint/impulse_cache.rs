@@ -31,7 +31,7 @@ impl ContactIdentifier {
     pub fn new(obj1: uint, obj2: uint, center: Point, step: &Scalar) -> ContactIdentifier {
         let mut cell = center / *step;
 
-        for x in cell.mut_iter() {
+        for x in cell.iter_mut() {
             *x = x.trunc()
         }
 

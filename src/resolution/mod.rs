@@ -9,7 +9,9 @@ pub use resolution::constraint::impulse_cache::{ImpulseCache, ContactIdentifier}
 pub use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 
-mod solver;
+// XXX: `pub` due to rust#18241
+#[allow(missing_doc)]
+pub mod solver;
 
 mod constraint {
     pub mod impulse_cache;
