@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use time;
 use glfw;
-use na::{Pnt2, Pnt3, Vec3, Translation, Iso3};
+use na::{Pnt2, Pnt3, Vec3, Translation, Translate, Iso3};
 use na;
 use kiss3d::window::Window;
 use kiss3d::light;
@@ -228,7 +228,7 @@ impl Testbed {
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = Fixed::new(anchor1, anchor2);
-                                        grabbed_object_plane = (na::translation(&attach2).to_pnt(), -ray.dir);
+                                        grabbed_object_plane = (attach2.translate(&na::orig()), -ray.dir);
                                         grabbed_object_joint = Some(self.world.add_fixed(joint));
                                         // add a joint
                                         sn.select()
@@ -378,7 +378,7 @@ impl Testbed {
                         let body = self.world.add_body(rb);
                         // physics.add_ccd_to(body, 0.4, 1.0);
                         self.graphics.add(&mut self.window, body);
-                        fail!("FIXME: review ccd");
+                        panic!("FIXME: review ccd");
                     },
                     _ => { }
                 }
@@ -443,7 +443,7 @@ fn draw_collisions(window: &mut Window, physics: &mut World) {
             },
             FixedConstraint(ref f) => {
                 // FIXME: draw the rotation too
-                window.draw_line(na::translation(&f.borrow().anchor1_pos()).as_pnt(), na::translation(&f.borrow().anchor2_pos()).as_pnt(), &Pnt3::new(0.0, 1.0, 0.0));
+                window.draw_line(&f.borrow().anchor1_pos().translate(&na::orig()), &f.borrow().anchor2_pos().translate(&na::orig()), &Pnt3::new(0.0, 1.0, 0.0));
             }
         }
     }

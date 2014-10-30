@@ -1,4 +1,4 @@
-use ncollide::math::Matrix;
+use math::Matrix;
 use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;
 
@@ -53,13 +53,13 @@ impl Fixed {
 impl Joint<Matrix> for Fixed {
     /// The first anchor affected by this joint.
     #[inline]
-    fn anchor1<'r>(&'r self) -> &'r Anchor<Matrix> {
+    fn anchor1(&self) -> &Anchor<Matrix> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
     #[inline]
-    fn anchor2<'r>(&'r self) -> &'r Anchor<Matrix> {
+    fn anchor2(&self) -> &Anchor<Matrix> {
         &self.anchor2
     }
 

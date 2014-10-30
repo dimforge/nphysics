@@ -5,8 +5,8 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [features]
 default = [ "2d", "f64" ]
-2d      = [ "ncollide/2d" ]
-f64     = [ "ncollide/f64" ]
+2d      = [ ]
+f64     = [ ]
 
 [lib]
 name = "nphysics2df64"

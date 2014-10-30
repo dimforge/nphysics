@@ -1,6 +1,6 @@
 //! Trait implemented by every integrators.
 
-use ncollide::math::Scalar;
+use math::Scalar;
 
 /// Trait implemented by every integrator.
 ///

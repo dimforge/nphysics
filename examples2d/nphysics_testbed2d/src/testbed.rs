@@ -59,7 +59,7 @@ impl<'a> Testbed<'a> {
         let window =
             match RenderWindow::new(mode, "nphysics 2d demo", Close, &setting) {
                 Some(rwindow) => rwindow,
-                None          => fail!("Error on creating the sfml window.")
+                None          => panic!("Error on creating the sfml window.")
             };
         let graphics = GraphicsManager::new();
 

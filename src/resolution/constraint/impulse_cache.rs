@@ -7,7 +7,7 @@ use rand::{IsaacRng, Rng};
 use std::collections::HashMap;
 use na;
 use na::IterableMut;
-use ncollide::math::{Scalar, Point};
+use math::{Scalar, Point};
 use ncollide::utils::AsBytes;
 
 #[deriving(PartialEq)]
@@ -66,7 +66,7 @@ impl ImpulseCache {
         }
     }
 
-    pub fn insert<'a>(&'a mut self, cid: uint, obj1: uint, obj2: uint, center: Point) {
+    pub fn insert(&mut self, cid: uint, obj1: uint, obj2: uint, center: Point) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
             match self.hash_prev.find_copy(&id) {
@@ -77,15 +77,15 @@ impl ImpulseCache {
         self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash<'a>(&'a self) -> &'a HashMap<ContactIdentifier, (uint, uint), SipHasher> {
+    pub fn hash(&self) -> &HashMap<ContactIdentifier, (uint, uint), SipHasher> {
         &self.hash_next
     }
 
-    pub fn hash_mut<'a>(&'a mut self) -> &'a mut HashMap<ContactIdentifier, (uint, uint), SipHasher> {
+    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (uint, uint), SipHasher> {
         &mut self.hash_next
     }
 
-    pub fn push_impulsions<'a>(&'a mut self) -> &'a mut [Scalar] {
+    pub fn push_impulsions(&mut self) -> &mut [Scalar] {
         let begin = self.cache_next.len();
 
         for _ in range(0, self.impulse_per_contact) {
@@ -101,7 +101,7 @@ impl ImpulseCache {
         self.impulse_per_contact
     }
 
-    pub fn impulsions_at<'a>(&'a self, at: uint) -> &'a [Scalar] {
+    pub fn impulsions_at(&self, at: uint) -> &[Scalar] {
         self.cache_prev.slice(at, at + self.impulse_per_contact)
     }
 

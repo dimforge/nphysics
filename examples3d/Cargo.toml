@@ -30,9 +30,10 @@ path = "./compound.rs"
 name = "cross"
 path = "./cross.rs"
 
-[[bin]]
-name = "mesh"
-path = "./mesh.rs"
+# XXX: the Mesh3 is causing an ICE when the rigid body is created…
+# [[bin]]
+# name = "mesh"
+# path = "./mesh.rs"
 
 [[bin]]
 name = "primitives"

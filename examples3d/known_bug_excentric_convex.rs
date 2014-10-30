@@ -86,7 +86,7 @@ fn main() {
                     *c = *c + Vec3::new(excentricity, excentricity, excentricity);
                 }
 
-                let geom = Convex::new(shape.coords.as_slice());
+                let geom = Convex::new(shape.coords);
                 let mut rb = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
                 rb.set_deactivation_threshold(None);
 

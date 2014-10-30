@@ -5,13 +5,14 @@ use std::cell::RefCell;
 use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
-use na::{Pnt3, Vec3, Iso3, Col};
+use na::{Pnt3, Vec3, Iso3, Col, Translate};
 use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
-use ncollide::geom::Geom;
+use ncollide::geom::Geom3;
 use ncollide::geom;
+use ncollide::procedural;
 use nphysics::object::RigidBody;
 use objects::bezier_surface::BezierSurface;
 use objects::ball::Ball;
@@ -74,7 +75,7 @@ impl Node {
         }
     }
 
-    pub fn object<'r>(&'r self) -> &'r SceneNode {
+    pub fn object(&self) -> &SceneNode {
         match *self {
             PlaneNode(ref n)             => n.object(),
             BallNode(ref n)              => n.object(),
@@ -206,18 +207,18 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &Geom,
+                geom:   &Geom3,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        type Pl = geom::Plane;
-        type Bl = geom::Ball;
-        type Bo = geom::Cuboid;
-        type Cy = geom::Cylinder;
-        type Co = geom::Cone;
-        type Cm = geom::Compound;
-        type Tm = geom::Mesh;
-        type Bs = geom::BezierSurface;
-        type Cx = geom::Convex;
+        type Pl = geom::Plane3;
+        type Bl = geom::Ball3;
+        type Bo = geom::Cuboid3;
+        type Cy = geom::Cylinder3;
+        type Co = geom::Cone3;
+        type Cm = geom::Compound3;
+        type Tm = geom::Mesh3;
+        type Bs = geom::BezierSurface3;
+        type Cx = geom::Convex3;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -252,7 +253,7 @@ impl GraphicsManager {
             self.add_mesh(window, body, delta, geom.downcast_ref::<Tm>().unwrap(), color, out);
         }
         else {
-            fail!("Not yet implemented.")
+            panic!("Not yet implemented.")
         }
 
     }
@@ -260,11 +261,11 @@ impl GraphicsManager {
     fn add_plane(&mut self,
                  window: &mut Window,
                  body:   Rc<RefCell<RigidBody>>,
-                 geom:   &geom::Plane,
+                 geom:   &geom::Plane3,
                  color:  Pnt3<f32>,
                  out:    &mut Vec<Node>) {
-        let position = na::translation(body.borrow().deref()).to_pnt();
-        let normal   = na::rotate(body.borrow().transform_ref(), &geom.normal());
+        let position = na::translation(&*body.borrow()).translate(&na::orig());
+        let normal   = na::rotate(body.borrow().transform_ref(), geom.normal());
 
         out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
     }
@@ -273,7 +274,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &geom::Mesh,
+                geom:   &geom::Mesh3,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let vertices = geom.vertices().deref();
@@ -293,7 +294,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &geom::BezierSurface,
+                geom:   &geom::BezierSurface3,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         out.push(BezierSurfaceNode(BezierSurface::new(body, delta, geom.control_points(), geom.nupoints(), geom.nvpoints(), color, window)))
@@ -303,7 +304,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &geom::Ball,
+                geom:   &geom::Ball3,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let margin = body.borrow().margin();
@@ -314,7 +315,7 @@ impl GraphicsManager {
                window: &mut Window,
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
-               geom:   &geom::Cuboid,
+               geom:   &geom::Cuboid3,
                color:  Pnt3<f32>,
                out:    &mut Vec<Node>) {
         let rx = geom.half_extents().x + body.borrow().margin();
@@ -328,17 +329,17 @@ impl GraphicsManager {
                   window: &mut Window,
                   body:   Rc<RefCell<RigidBody>>,
                   delta:  Iso3<f32>,
-                  geom:   &geom::Convex,
+                  geom:   &geom::Convex3,
                   color:  Pnt3<f32>,
                   out:    &mut Vec<Node>) {
-        out.push(ConvexNode(Convex::new(body, delta, geom.mesh(), color, window)))
+        out.push(ConvexNode(Convex::new(body, delta, &procedural::convex_hull3(geom.points()), color, window)))
     }
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
                     body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
-                    geom:   &geom::Cylinder,
+                    geom:   &geom::Cylinder3,
                     color:  Pnt3<f32>,
                     out:    &mut Vec<Node>) {
         let r = geom.radius();
@@ -351,7 +352,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &geom::Cone,
+                geom:   &geom::Cone3,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let r = geom.radius();
@@ -412,7 +413,7 @@ impl GraphicsManager {
         self.first_person.look_at_z(eye, at);
     }
 
-    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<Node>> {
+    pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<Node>> {
         self.rb2sn.find_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
     }
 }

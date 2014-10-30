@@ -53,7 +53,7 @@ fn main() {
                     pts.push(rand::random::<Pnt3<f32>>() * 2.0f32 + Vec3::new(5.0f32, 5.0f32, 5.0f32));
                 }
 
-                let geom = Convex::new(pts.as_slice());
+                let geom = Convex::new(pts);
                 let mut rb = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));

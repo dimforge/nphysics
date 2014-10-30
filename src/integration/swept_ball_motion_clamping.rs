@@ -7,7 +7,7 @@ use ncollide::util::hash_map::HashMap;
 use ncollide::util::hash::UintTWHash;
 use ncollide::geom::Ball;
 use ncollide::broad::{RayCastBroadPhase, BoundingVolumeBroadPhase};
-use ncollide::math::{Scalar, Vect};
+use math::{Scalar, Vect};
 use integration::Integrator;
 use object::{RigidBody, RB, SB};
 use signal::signal::{SignalEmiter, BodyActivationSignalHandler};

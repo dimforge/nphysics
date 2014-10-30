@@ -4,7 +4,7 @@ use na::Transformation;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
-use ncollide::math::Scalar;
+use math::Scalar;
 
 /// A semi-implicit Euler integrator.
 pub struct BodySmpEulerIntegrator;

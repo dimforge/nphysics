@@ -3,34 +3,34 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use ncollide::bounding_volume::{HasBoundingVolume, AABB};
-use ncollide::broad::{Dispatcher, InterferencesBroadPhase, BoundingVolumeBroadPhase, RayCastBroadPhase};
+use ncollide::broad::{Dispatcher, BroadPhase};
 use ncollide::narrow::{CollisionDetector, GeomGeomDispatcher, GeomGeomCollisionDetector};
 use ncollide::narrow::Contact;
 use ncollide::ray::Ray;
-use ncollide::math::Scalar;
 use object::RigidBody;
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use detection::activation_manager::ActivationManager;
+use math::{Scalar, Point, Vect, Matrix, AngularInertia};
 
 /// Collision detector dispatcher for rigid bodies.
 ///
 /// This is meat to be used as the broad phase collision dispatcher.
 pub struct BodyBodyDispatcher {
-    geom_dispatcher: Rc<GeomGeomDispatcher>
+    geom_dispatcher: Rc<GeomGeomDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>
 }
 
 impl BodyBodyDispatcher {
     /// Creates a new `BodyBodyDispatcher` given a dispatcher for pairs of rigid bodies' geometry.
-    pub fn new(d: Rc<GeomGeomDispatcher>) -> BodyBodyDispatcher {
+    pub fn new(d: Rc<GeomGeomDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>) -> BodyBodyDispatcher {
         BodyBodyDispatcher {
             geom_dispatcher: d
         }
     }
 }
 
-impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector + Send>> for BodyBodyDispatcher {
-    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Option<Box<GeomGeomCollisionDetector + Send>> {
+impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> for BodyBodyDispatcher {
+    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Option<Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 
@@ -53,24 +53,26 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<GeomGeomColl
 
 /// Collision detector between rigid bodies.
 pub struct BodiesBodies<BF> {
-    geom_geom_dispatcher:  Rc<GeomGeomDispatcher>,
-    contacts_collector:    Vec<Contact>,
+    geom_geom_dispatcher:  Rc<GeomGeomDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>,
+    contacts_collector:    Vec<Contact<Scalar, Point, Vect>>,
 }
 
-impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector + Send>>> BodiesBodies<BF> {
+impl<BF> BodiesBodies<BF>
+    where BF: BroadPhase<Point, Vect,
+                         Rc<RefCell<RigidBody>>,
+                         AABB<Point>,
+                         Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
     /// Creates a new `BodiesBodies` collision detector.
-    pub fn new(dispatcher: Rc<GeomGeomDispatcher>) -> BodiesBodies<BF> {
+    pub fn new(dispatcher: Rc<GeomGeomDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>) -> BodiesBodies<BF> {
         BodiesBodies {
             geom_geom_dispatcher:  dispatcher,
             contacts_collector:    Vec::new()
         }
     }
-}
 
-impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
     /// Computes the interferences between every rigid bodies of a given broad phase, and a ray.
     pub fn interferences_with_ray(&mut self,
-                                  ray:         &Ray,
+                                  ray:         &Ray<Point, Vect>,
                                   broad_phase: &mut BF,
                                   out:         &mut Vec<(Rc<RefCell<RigidBody>>, Scalar)>) {
         let mut bodies = Vec::new();
@@ -90,9 +92,7 @@ impl<BF: RayCastBroadPhase<Rc<RefCell<RigidBody>>>> BodiesBodies<BF> {
             }
         }
     }
-}
 
-impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF> {
     /// Removes a rigid body from this detector.
     ///
     /// This must be called whenever a rigid body is removed from the physics world.
@@ -118,9 +118,11 @@ impl<BF: BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>> BodiesBodies<BF
     }
 }
 
-impl<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector + Send>> +
-         BoundingVolumeBroadPhase<Rc<RefCell<RigidBody>>, AABB>>
-Detector<RigidBody, Constraint, BF> for BodiesBodies<BF> {
+impl<BF> Detector<RigidBody, Constraint, BF> for BodiesBodies<BF>
+    where BF: BroadPhase<Point, Vect,
+                         Rc<RefCell<RigidBody>>,
+                         AABB<Point>,
+                         Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
     fn update(&mut self, broad_phase: &mut BF, activation: &mut ActivationManager) {
         broad_phase.for_each_pair_mut(|b1, b2, cd| {
             let ncols = cd.num_colls();

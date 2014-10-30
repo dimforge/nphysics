@@ -9,7 +9,7 @@ extern crate nphysics_testbed2d;
 use std::rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use na::{Pnt2, Vec2, Translation};
-use ncollide::geom::{Cuboid, Mesh};
+use ncollide::geom::{Cuboid, Mesh, Mesh2};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed2d::Testbed;
@@ -48,8 +48,8 @@ fn main() {
     indices.push(num_split);
     indices.push(num_split + 1);
 
-    let mesh = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
-    let rb   = RigidBody::new_static(mesh, 0.3, 0.6);
+    let mesh: Mesh2 = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
+    let rb = RigidBody::new_static(mesh, 0.3, 0.6);
 
     world.add_body(rb);
 

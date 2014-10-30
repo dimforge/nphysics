@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use object::RigidBody;
 use na;
-use ncollide::math::Point;
+use math::Point;
 
 /// One of the two end points of a joint.
 pub struct Anchor<P> {

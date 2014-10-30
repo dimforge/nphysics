@@ -3,14 +3,15 @@ use std::cell::RefCell;
 use na;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
-use ncollide::math::Scalar;
-use ncollide::broad::{InterferencesBroadPhase};
+use ncollide::broad::BroadPhase;
 use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
+use ncollide::bounding_volume::AABB;
 use detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
 use detection::joint::{JointManager, Joint};
 use object::{RigidBody, Deleted};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
+use math::{Scalar, Point, Vect, Matrix, AngularInertia};
 
 /// Structure that monitors island-based activation/deactivation of objects.
 ///
@@ -64,11 +65,14 @@ impl ActivationManager {
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
-    pub fn update<BF: InterferencesBroadPhase<Rc<RefCell<RigidBody>>, Box<GeomGeomCollisionDetector + Send>>>(
-                  &mut self,
-                  broad_phase: &mut BF,
-                  joints:      &JointManager,
-                  bodies:      &mut HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>) {
+    pub fn update<BF>(&mut self,
+                      broad_phase: &mut BF,
+                      joints:      &JointManager,
+                      bodies:      &mut HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>)
+        where BF: BroadPhase<Point, Vect,
+                             Rc<RefCell<RigidBody>>,
+                             AABB<Point>,
+                             Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
         /*
          *
          * Update bodies energy

@@ -2,9 +2,9 @@ use std::num::Bounded;
 use na;
 use ncollide::narrow::Contact;
 use ncollide::volumetric::InertiaTensor;
-use ncollide::math::{Scalar, Point, Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
+use math::{Scalar, Point, Vect, Orientation};
 
 /// The correction coefficient used by the constraint solver.
 pub enum CorrectionMode {
@@ -67,7 +67,7 @@ pub struct CorrectionParameters {
 }
 
 pub fn reinit_to_first_order_equation(dt:         Scalar,
-                                      coll:       &Contact,
+                                      coll:       &Contact<Scalar, Point, Vect>,
                                       constraint: &mut VelocityConstraint,
                                       correction: &CorrectionParameters) {
     /*
@@ -87,7 +87,7 @@ pub fn reinit_to_first_order_equation(dt:         Scalar,
 }
 
 pub fn fill_second_order_equation(dt:           Scalar,
-                                  coll:         &Contact,
+                                  coll:         &Contact<Scalar, Point, Vect>,
                                   rb1:          &RigidBody,
                                   rb2:          &RigidBody,
                                   rconstraint:  &mut VelocityConstraint,

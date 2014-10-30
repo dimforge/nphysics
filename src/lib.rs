@@ -106,3 +106,100 @@ pub mod world;
 pub mod object;
 
 pub mod utils;
+
+
+/// Compilation flags dependent aliases for mathematical types.
+#[cfg(feature = "3d")]
+pub mod math {
+    use na::{Pnt3, Vec3, Mat3, Rot3, Iso3};
+
+    /// The scalar type.
+    #[cfg(feature = "f32")]
+    pub type Scalar = f32;
+
+    /// The scalar type.
+    #[cfg(feature = "f64")]
+    pub type Scalar = f64;
+
+    /// The point type.
+    pub type Point = Pnt3<Scalar>;
+
+    /// The vector type.
+    pub type Vect = Vec3<Scalar>;
+
+    /// The orientation type.
+    pub type Orientation = Vec3<Scalar>;
+
+    /// The transformation matrix type.
+    pub type Matrix = Iso3<Scalar>;
+
+    /// The rotation matrix type.
+    pub type RotationMatrix = Rot3<Scalar>;
+
+    /// The inertia tensor type.
+    pub type AngularInertia = Mat3<Scalar>;
+}
+
+/// Compilation flags dependent aliases for mathematical types.
+#[cfg(feature = "2d")]
+pub mod math {
+    use na::{Pnt2, Vec1, Vec2, Mat1, Rot2, Iso2};
+
+    /// The scalar type.
+    #[cfg(feature = "f32")]
+    pub type Scalar = f32;
+
+    /// The scalar type.
+    #[cfg(feature = "f64")]
+    pub type Scalar = f64;
+
+    /// The point type.
+    pub type Point = Pnt2<Scalar>;
+
+    /// The vector type.
+    pub type Vect = Vec2<Scalar>;
+
+    /// The orientation type.
+    pub type Orientation = Vec1<Scalar>;
+
+    /// The transformation matrix type.
+    pub type Matrix = Iso2<Scalar>;
+
+    /// The rotation matrix type.
+    pub type RotationMatrix = Rot2<Scalar>;
+
+    /// The inertia tensor type.
+    pub type AngularInertia = Mat1<Scalar>;
+}
+
+/// Compilation flags dependent aliases for mathematical types.
+#[cfg(feature = "4d")]
+pub mod math {
+    use na::{Pnt4, Vec4, Mat4, Rot4, Iso4};
+
+    /// The scalar type.
+    #[cfg(feature = "f32")]
+    pub type Scalar = f32;
+
+    /// The scalar type.
+    #[cfg(feature = "f64")]
+    pub type Scalar = f64;
+
+    /// The point type.
+    pub type Point = Pnt4<Scalar>;
+
+    /// The vector type.
+    pub type Vect = Vec4<Scalar>;
+
+    /// The orientation type.
+    pub type Orientation = Vec4<Scalar>;
+
+    /// The transformation matrix type.
+    pub type Matrix = Iso4<Scalar>;
+
+    /// The rotation matrix type.
+    pub type RotationMatrix = Rot4<Scalar>;
+
+    /// The inertia tensor type.
+    pub type AngularInertia = Mat4<Scalar>;
+}

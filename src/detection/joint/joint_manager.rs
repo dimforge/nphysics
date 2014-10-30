@@ -28,13 +28,13 @@ impl JointManager {
 
     /// Joints handled by this manager.
     #[inline]
-    pub fn joints<'a>(&'a self) -> &'a HashMap<uint, Constraint, UintTWHash> {
+    pub fn joints(&self) -> &HashMap<uint, Constraint, UintTWHash> {
         &self.joints
     }
 
     /// List of joints attached to a specific body.
     #[inline]
-    pub fn joints_with_body<'a>(&'a self, body: &Rc<RefCell<RigidBody>>) -> Option<&'a [Constraint]> {
+    pub fn joints_with_body(&self, body: &Rc<RefCell<RigidBody>>) -> Option<&[Constraint]> {
         self.body2joints.find(&(body.deref() as *const RefCell<RigidBody> as uint)).map(|v| v.as_slice())
     }
 
@@ -173,7 +173,7 @@ impl JointManager {
                 match *joint {
                     BallInSocketConstraint(ref bis) => do_remove(self, bis, b, activation),
                     FixedConstraint(ref f)          => do_remove(self, f, b, activation),
-                    RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
+                    RBRB(_, _, _) => panic!("Internal error: a contact RBRB should not be here.")
                 }
             }
         }
@@ -215,7 +215,7 @@ impl<BF> Detector<RigidBody, Constraint, BF> for JointManager {
                         }
                     }
                 },
-                RBRB(_, _, _) => fail!("Internal error: a contact RBRB should not be here.")
+                RBRB(_, _, _) => panic!("Internal error: a contact RBRB should not be here.")
  
             }
         }

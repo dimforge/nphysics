@@ -4,7 +4,7 @@ use std::cell::RefCell;
 // use rand::RngUtil;
 use na::{Translation, Transformation, RotationWithTranslation};
 use na;
-use ncollide::math::{Scalar, Vect, Orientation, Matrix};
+use math::{Scalar, Vect, Orientation, Matrix};
 use detection::constraint::{Constraint, RBRB, BallInSocketConstraint, FixedConstraint};
 use detection::joint::Joint;
 use object::RigidBody;

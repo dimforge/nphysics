@@ -11,7 +11,7 @@ use std::sync::{Arc, RWLock};
 use std::rand;
 use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
-use ncollide::geom::{Plane, Compound, CompoundData};
+use ncollide::geom::{Plane, Compound, Convex, CompoundData};
 use ncollide::procedural::TriMesh;
 use ncollide::procedural;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
@@ -95,13 +95,13 @@ fn main() {
 
             for mut trimesh in meshes.into_iter() {
                 trimesh.translate_by(&-center);
-                trimesh.scale_by_scalar(&(6.0 / diag));
+                trimesh.scale_by_scalar(6.0 / diag);
                 trimesh.split_index_buffer(true);
 
                 let (decomp, _) = procedural::hacd(trimesh, 0.03, 1);
 
                 for mesh in decomp.into_iter() {
-                    geom_data.push_geom(deltas, mesh, 1.0);
+                    geom_data.push_geom(deltas, Convex::new(mesh.coords), 1.0);
                 }
             }
 

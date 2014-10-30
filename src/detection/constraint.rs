@@ -5,11 +5,12 @@ use std::cell::RefCell;
 use ncollide::narrow::Contact;
 use object::RigidBody;
 use detection::joint::{Fixed, BallInSocket};
+use math::{Scalar, Point, Vect};
 
 /// A constraint between two rigid bodies.
 pub enum Constraint {
     /// A contact.
-    RBRB(Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Contact),
+    RBRB(Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Contact<Scalar, Point, Vect>),
     /// A ball-in-socket joint.
     BallInSocketConstraint(Rc<RefCell<BallInSocket>>),
     /// A fixed joint.

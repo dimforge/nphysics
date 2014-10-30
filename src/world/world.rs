@@ -7,7 +7,6 @@ use ncollide::bounding_volume::AABB;
 use ncollide::broad::{BroadPhase, DBVTBroadPhase};
 use ncollide::ray::Ray;
 use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
-use ncollide::math::{Scalar, Vect, Orientation};
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
@@ -17,9 +16,10 @@ use detection::constraint::Constraint;
 use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, VelocityAndPosition};
 use object::{RigidBody, RigidBodyHandle};
+use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Rc<RefCell<RigidBody>>, AABB, BodyBodyDispatcher, Box<GeomGeomCollisionDetector + Send>>;
+pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>>;
 /// An iterator visiting rigid bodies.
 pub type RigidBodies<'a> = Map<'a, &'a Entry<uint, Rc<RefCell<RigidBody>>>, &'a Rc<RefCell<RigidBody>>, Items<'a, Entry<uint, Rc<RefCell<RigidBody>>>>>;
 
@@ -140,22 +140,22 @@ impl World {
     }
 
     /// Gets a mutable reference to the force generator.
-    pub fn forces_generator<'a>(&'a mut self) -> &'a mut BodyForceGenerator {
+    pub fn forces_generator(&mut self) -> &mut BodyForceGenerator {
         &mut self.forces
     }
 
     /// Gets a mutable reference to the position and orientation integrator.
-    pub fn integrator<'a>(&'a mut self) -> &'a mut BodySmpEulerIntegrator {
+    pub fn integrator(&mut self) -> &mut BodySmpEulerIntegrator {
         &mut self.integrator
     }
 
     /// Gets a mutable reference to the collision detector.
-    pub fn collision_detector<'a>(&'a mut self) -> &'a mut BodiesBodies<WorldBroadPhase> {
+    pub fn collision_detector(&mut self) -> &mut BodiesBodies<WorldBroadPhase> {
         &mut self.detector
     }
 
     /// Gets a mutable reference to the broad phase.
-    pub fn broad_phase<'a>(&'a mut self) -> &'a mut WorldBroadPhase {
+    pub fn broad_phase(&mut self) -> &mut WorldBroadPhase {
         &mut self.broad_phase
     }
 
@@ -164,12 +164,12 @@ impl World {
     // }
 
     /// Gets a mutable reference to the joint manager.
-    pub fn joint_manager<'a>(&'a mut self) -> &'a mut JointManager {
+    pub fn joint_manager(&mut self) -> &mut JointManager {
         &mut self.joints
     }
 
     /// Gets a mutable reference to the constraint solver.
-    pub fn constraints_solver<'a>(&'a mut self) -> &'a mut AccumulatedImpulseSolver {
+    pub fn constraints_solver(&mut self) -> &mut AccumulatedImpulseSolver {
         &mut self.solver
     }
 
@@ -194,7 +194,7 @@ impl World {
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn cast_ray(&mut self, ray: &Ray, out: &mut Vec<(RigidBodyHandle, Scalar)>) {
+    pub fn cast_ray(&mut self, ray: &Ray<Point, Vect>, out: &mut Vec<(RigidBodyHandle, Scalar)>) {
         self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
     }
 
@@ -242,7 +242,7 @@ impl World {
     }
 
     /// An iterator visiting all rigid bodies on this world.
-    pub fn bodies<'a>(&'a self) -> RigidBodies<'a> {
+    pub fn bodies(&self) -> RigidBodies {
         self.bodies.elements().iter().map(|e| &e.value)
     }
 }

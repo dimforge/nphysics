@@ -1,5 +1,5 @@
 use na::Transform;
-use ncollide::math::Point;
+use math::Point;
 use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;
 
@@ -57,13 +57,13 @@ impl BallInSocket {
 impl Joint<Point> for BallInSocket {
     /// The first anchor affected by this joint.
     #[inline]
-    fn anchor1<'r>(&'r self) -> &'r Anchor<Point> {
+    fn anchor1(&self) -> &Anchor<Point> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
     #[inline]
-    fn anchor2<'r>(&'r self) -> &'r Anchor<Point> {
+    fn anchor2(&self) -> &Anchor<Point> {
         &self.anchor2
     }
 

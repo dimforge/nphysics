@@ -1,8 +1,8 @@
 use std::num::Bounded;
 use std::cell::Ref;
-use na::{Row, Indexable};
+use na::Row;
 use na;
-use ncollide::math::{Scalar, Point, Vect};
+use math::{Scalar, Point, Vect};
 use object::RigidBody;
 use detection::joint::{Anchor, BallInSocket, Joint};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -40,7 +40,7 @@ pub fn cancel_relative_linear_motion<P>(
         let mut lin_axis: Vect = na::zero();
         let constraint = &mut constraints[i];
 
-        lin_axis.set(i, na::one());
+        lin_axis[i] = na::one();
 
         let opt_rb1 = write_anchor_id(anchor1, &mut constraint.id1);
         let opt_rb2 = write_anchor_id(anchor2, &mut constraint.id2);
@@ -79,7 +79,7 @@ pub fn cancel_relative_linear_motion<P>(
         let _max: Scalar = Bounded::max_value();
         constraint.lobound   = -_max;
         constraint.hibound   = _max;
-        constraint.objective = -dvel - error.at(i) / dt;
+        constraint.objective = -dvel - error[i] / dt;
         constraint.impulse   = na::zero(); // FIXME: cache
     }
 }

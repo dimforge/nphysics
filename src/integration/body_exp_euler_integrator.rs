@@ -1,7 +1,7 @@
 //! Explicit Euler integrator.
 
 use na::Transformation;
-use ncollide::math::Scalar;
+use math::Scalar;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;

@@ -5,10 +5,10 @@ use std::cell::RefCell;
 use na::{Transformation, Translation, Rotation};
 use na;
 use na::Transform;
-use ncollide::bounding_volume::{HasBoundingVolume, LooseBoundingVolume, AABB, HasAABB};
+use ncollide::bounding_volume::{HasBoundingVolume, BoundingVolume, AABB, HasAABB};
 use ncollide::geom::Geom;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
-use ncollide::math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
+use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
 
 /// A shared, mutable, rigid body.
 pub type RigidBodyHandle = Rc<RefCell<RigidBody>>;
@@ -50,7 +50,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    geom:                 Arc<Box<Geom + Send + Sync>>,
+    geom:                 Arc<Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>>,
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -129,19 +129,19 @@ impl RigidBody {
 
     /// Gets a reference to this body's transform.
     #[inline]
-    pub fn transform_ref<'r>(&'r self) -> &'r Matrix {
+    pub fn transform_ref(&self) -> &Matrix {
         &self.local_to_world
     }
 
     /// Gets a reference to this body's geometry.
     #[inline]
-    pub fn geom_ref<'r>(&'r self) -> &'r Geom {
+    pub fn geom_ref(&self) -> &Geom<Scalar, Point, Vect, Matrix> + Send + Sync {
         &**self.geom
     }
 
     /// Gets a copy of this body's shared geometry.
     #[inline]
-    pub fn geom<'r>(&'r self) -> Arc<Box<Geom + Send + Sync>> {
+    pub fn geom(&self) -> Arc<Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>> {
         self.geom.clone()
     }
 
@@ -165,7 +165,7 @@ impl RigidBody {
 
     /// Gets a reference to this body's center of mass.
     #[inline]
-    pub fn center_of_mass<'r>(&'r self) -> &'r Point {
+    pub fn center_of_mass(&self) -> &Point {
         &self.center_of_mass
     }
 
@@ -219,7 +219,7 @@ impl RigidBody {
 
     #[doc(hidden)]
     #[inline]
-    pub fn activation_state<'a>(&'a self) -> &'a ActivationState {
+    pub fn activation_state(&self) -> &ActivationState {
         &self.activation_state
     }
 
@@ -230,29 +230,22 @@ impl RigidBody {
     }
 
     /// Creates a new rigid body that can move.
-    pub fn new_dynamic<G: Send + Sync + Geom + Volumetric>(
-                       geom:        G,
-                       density:     Scalar,
-                       restitution: Scalar,
-                       friction:    Scalar)
-                       -> RigidBody {
-        let props = geom.mass_properties(&density);
+    pub fn new_dynamic<G>(geom: G, density: Scalar, restitution: Scalar, friction: Scalar) -> RigidBody
+        where G: Send + Sync + Geom<Scalar, Point, Vect, Matrix> + Volumetric<Scalar, Point, AngularInertia> {
+        let props = geom.mass_properties(density);
 
         RigidBody::new(
-            Arc::new(box geom as Box<Geom + Send + Sync>),
+            Arc::new(box geom as Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>),
             Some(props),
             restitution,
             friction)
     }
 
     /// Creates a new rigid body that cannot move.
-    pub fn new_static<G: Send + Sync + Geom>(
-                      geom:        G,
-                      restitution: Scalar,
-                      friction:    Scalar)
-                      -> RigidBody {
+    pub fn new_static<G>(geom: G, restitution: Scalar, friction: Scalar) -> RigidBody
+        where G: Send + Sync + Geom<Scalar, Point, Vect, Matrix> {
         RigidBody::new(
-            Arc::new(box geom as Box<Geom + Send + Sync>),
+            Arc::new(box geom as Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>),
             None,
             restitution,
             friction)
@@ -262,7 +255,7 @@ impl RigidBody {
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(geom:            Arc<Box<Geom + Send + Sync>>,
+    pub fn new(geom:            Arc<Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>>,
                mass_properties: Option<(Scalar, Point, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)
@@ -272,7 +265,7 @@ impl RigidBody {
                 None => (na::zero(), na::orig(), na::zero(), Inactive, Static),
                 Some((mass, com, inertia)) => {
                     if mass.is_zero() {
-                        fail!("A dynamic body must not have a zero volume.")
+                        panic!("A dynamic body must not have a zero volume.")
                     }
 
                     let ii: AngularInertia;
@@ -417,7 +410,7 @@ impl RigidBody {
 
     /// Gets the inverse inertia tensor of this rigid body.
     #[inline]
-    pub fn inv_inertia<'r>(&'r self) -> &'r AngularInertia {
+    pub fn inv_inertia(&self) -> &AngularInertia {
         &self.inv_inertia
     }
 
@@ -589,14 +582,14 @@ impl Rotation<Orientation> for RigidBody {
     }
 }
 
-impl HasBoundingVolume<AABB> for RigidBody {
-    fn bounding_volume(&self) -> AABB {
+impl HasBoundingVolume<AABB<Point>> for RigidBody {
+    fn bounding_volume(&self) -> AABB<Point> {
         self.geom.aabb(&self.local_to_world).loosened(self.margin())
     }
 }
 
-impl HasBoundingVolume<AABB> for Rc<RefCell<RigidBody>> {
-    fn bounding_volume(&self) -> AABB {
+impl HasBoundingVolume<AABB<Point>> for Rc<RefCell<RigidBody>> {
+    fn bounding_volume(&self) -> AABB<Point> {
         let bself = self.borrow();
         bself.geom().aabb(&bself.local_to_world).loosened(bself.margin())
     }

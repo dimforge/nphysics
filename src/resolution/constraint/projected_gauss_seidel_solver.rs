@@ -1,5 +1,5 @@
 use na;
-use ncollide::math::{Vect, Orientation};
+use math::{Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.

@@ -8,7 +8,7 @@ use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
 use na::{Pnt3, Iso2};
 use nphysics::object::RigidBody;
-use ncollide::geom::Geom;
+use ncollide::geom::Geom2;
 use ncollide::geom;
 use camera::Camera;
 use objects::ball::Ball;
@@ -71,15 +71,15 @@ impl<'a> GraphicsManager<'a> {
     fn add_geom(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &Geom,
+                geom:  &Geom2,
                 out:   &mut Vec<SceneNode<'a>>) {
-        type Pl = geom::Plane;
-        type Bl = geom::Ball;
-        type Bo = geom::Cuboid;
-        type Cy = geom::Cylinder;
-        type Co = geom::Cone;
-        type Cm = geom::Compound;
-        type Ls = geom::Mesh;
+        type Pl = geom::Plane2;
+        type Bl = geom::Ball2;
+        type Bo = geom::Cuboid2;
+        type Cy = geom::Cylinder2;
+        type Co = geom::Cone2;
+        type Cm = geom::Compound2;
+        type Ls = geom::Mesh2;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -102,21 +102,21 @@ impl<'a> GraphicsManager<'a> {
             self.add_lines(body, delta, geom.downcast_ref::<Ls>().unwrap(), out)
         }
         else {
-            fail!("Not yet implemented.")
+            panic!("Not yet implemented.")
         }
 
     }
 
     fn add_plane(&mut self,
                  _: Rc<RefCell<RigidBody>>,
-                 _: &geom::Plane,
+                 _: &geom::Plane2,
                  _: &mut Vec<SceneNode>) {
     }
 
     fn add_ball(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &geom::Ball,
+                geom:  &geom::Ball2,
                 out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         let margin = body.borrow().margin();
@@ -126,7 +126,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_lines(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &geom::Mesh,
+               geom:  &geom::Mesh2,
                out:   &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&body);
@@ -141,7 +141,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_box(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &geom::Cuboid,
+               geom:  &geom::Cuboid2,
                out:   &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;
@@ -205,7 +205,7 @@ impl<'a> GraphicsManager<'a> {
         color
     }
 
-    pub fn body_to_scene_node<'r>(&'r mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&'r mut Vec<SceneNode<'a>>> {
+    pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<SceneNode<'a>>> {
         self.rb2sn.find_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
     }
 }

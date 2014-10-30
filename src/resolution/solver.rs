@@ -1,4 +1,4 @@
-use ncollide::math::Scalar;
+use math::Scalar;
 
 /// Trait implemented by constraint solvers.
 pub trait Solver<I> {

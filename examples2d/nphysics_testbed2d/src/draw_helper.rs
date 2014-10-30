@@ -1,6 +1,7 @@
 use rsfml::graphics;
 use rsfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
 use rsfml::system::vector2::Vector2f;
+use na::Translate;
 use na::Pnt2;
 use na;
 use nphysics::world::World;
@@ -49,8 +50,8 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
             FixedConstraint(ref bis) => {
                 draw_line(
                     window,
-                    na::translation(&bis.borrow().anchor1_pos()).as_pnt(),
-                    na::translation(&bis.borrow().anchor2_pos()).as_pnt(),
+                    &na::translation(&bis.borrow().anchor1_pos()).translate(&na::orig()),
+                    &na::translation(&bis.borrow().anchor2_pos()).translate(&na::orig()),
                     &Color::new_RGB(255, 0, 0)
                 );
             }

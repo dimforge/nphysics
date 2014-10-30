@@ -5,8 +5,8 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [features]
 default = [ "3d", "f32" ]
-3d      = [ "ncollide/3d" ]
-f32     = [ "ncollide/f32" ]
+3d      = [ ]
+f32     = [ ]
 
 [lib]
 name = "nphysics3df32"

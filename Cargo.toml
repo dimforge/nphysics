@@ -4,11 +4,11 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [features]
-f32 = [ "ncollide/f32" ]
-f64 = [ "ncollide/f64" ]
-2d  = [ "ncollide/2d" ]
-3d  = [ "ncollide/3d" ]
-4d  = [ "ncollide/4d" ]
+f32 = [ ]
+f64 = [ ]
+2d  = [ ]
+3d  = [ ]
+4d  = [ ]
 
 2df32 = [ "2d", "f32" ]
 2df64 = [ "2d", "f64" ]

@@ -58,11 +58,11 @@ impl Cylinder {
         }
     }
 
-    pub fn object<'r>(&'r self) -> &'r SceneNode {
+    pub fn object(&self) -> &SceneNode {
         &self.gfx
     }
 
-    pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody>> {
+    pub fn body(&self) -> &Rc<RefCell<RigidBody>> {
         &self.body
     }
 }

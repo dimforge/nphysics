@@ -2,7 +2,7 @@
 
 use na::{Translation, RotationWithTranslation};
 use na;
-use ncollide::math::{Scalar, Point, Vect, Orientation, Matrix};
+use math::{Scalar, Point, Vect, Orientation, Matrix};
 
 /// Explicit Euler integrator.
 pub fn explicit_integrate(dt: Scalar, p: &Matrix, c: &Point, lv: &Vect, av: &Orientation, lf: &Vect, af: &Orientation) -> (Matrix, Vect, Orientation) {

@@ -1,6 +1,6 @@
 //! Constant linear and angular force generator.
 
-use ncollide::math::{Scalar, Vect, Orientation};
+use math::{Scalar, Vect, Orientation};
 use object::RigidBody;
 use integration::Integrator;
 

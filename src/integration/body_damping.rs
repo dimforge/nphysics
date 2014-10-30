@@ -1,6 +1,6 @@
 //! Linear and angular velocity damping.
 
-use ncollide::math::Scalar;
+use math::Scalar;
 use integration::Integrator;
 use object::RigidBody;
 

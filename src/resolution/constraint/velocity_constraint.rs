@@ -1,5 +1,5 @@
 use na;
-use ncollide::math::{Scalar, Vect, Orientation};
+use math::{Scalar, Vect, Orientation};
 
 #[deriving(PartialEq, Show, Clone)]
 /// A constraint of velocity at a point of contact.
