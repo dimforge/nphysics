@@ -121,7 +121,7 @@ impl AccumulatedImpulseSolver {
                         dt.clone(),
                         c,
                         rb1.borrow().deref(), rb2.borrow().deref(),
-                        self.restitution_constraints.get_mut(i),
+                        &mut self.restitution_constraints[i],
                         i,
                         self.friction_constraints.as_mut_slice(),
                         friction_offset,
@@ -222,7 +222,7 @@ impl AccumulatedImpulseSolver {
                         contact_equation::reinit_to_first_order_equation(
                             dt.clone(),
                             c,
-                            self.restitution_constraints.get_mut(i),
+                            &mut self.restitution_constraints[i],
                             &self.correction);
                     },
                     _ => { }

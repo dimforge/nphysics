@@ -155,7 +155,7 @@ impl ActivationManager {
             let root = union_find::find(i, self.ufind.as_mut_slice());
             let b    = bodies.elements()[i].value.borrow();
 
-            *self.can_deactivate.get_mut(root) =
+            self.can_deactivate[root] =
                 match b.deactivation_threshold() {
                     Some(threshold) => {
                         self.can_deactivate[root] && b.activation_state().energy() < threshold

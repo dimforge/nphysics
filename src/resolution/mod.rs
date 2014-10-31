@@ -10,7 +10,7 @@ pub use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 
 // XXX: `pub` due to rust#18241
-#[allow(missing_doc)]
+#[allow(missing_docs)]
 pub mod solver;
 
 mod constraint {

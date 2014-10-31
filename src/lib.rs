@@ -75,12 +75,12 @@ The libraries needed to compile the examples are:
 */
 
 #![deny(non_camel_case_types)]
-#![deny(unnecessary_parens)]
-#![deny(non_uppercase_statics)]
-#![deny(unnecessary_qualification)]
-#![deny(missing_doc)]
-#![deny(unused_result)]
-#![deny(unnecessary_typecast)]
+#![deny(unused_parens)]
+#![deny(non_upper_case_globals)]
+#![deny(unused_qualifications)]
+#![deny(missing_docs)]
+#![deny(unused_results)]
+#![deny(unused_typecasts)]
 #![warn(non_camel_case_types)]
 #![feature(globs)]
 #![feature(default_type_params)]

@@ -23,7 +23,7 @@ pub mod joint {
     mod ball_in_socket;
     mod fixed;
     // XXX: `pub` due to rust#18241
-    #[allow(missing_doc)]
+    #[allow(missing_docs)]
     pub mod joint;
 }
 
