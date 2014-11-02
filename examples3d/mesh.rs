@@ -7,7 +7,7 @@ extern crate nphysics_testbed3d;
 
 use sync::Arc;
 use na::Vec3;
-use ncollide::geom::{Mesh, Mesh3};
+use ncollide::shape::{Mesh, Mesh3};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;

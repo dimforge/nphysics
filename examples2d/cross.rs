@@ -7,7 +7,7 @@ extern crate nphysics_testbed2d;
 use std::sync::Arc;
 use na::{Vec2, Translation};
 use ncollide::volumetric::Volumetric;
-use ncollide::geom::{Plane, Cuboid, Compound, CompoundData, Geom2};
+use ncollide::shape::{Plane, Cuboid, Compound, CompoundData, Shape2};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed2d::Testbed;
@@ -51,7 +51,7 @@ fn main() {
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(1.0);
-    let cross = Arc::new(box compound as Box<Geom2>);
+    let cross = Arc::new(box compound as Box<Shape2>);
 
     /*
      * Create the boxes

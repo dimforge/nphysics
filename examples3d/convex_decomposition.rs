@@ -11,7 +11,7 @@ use std::sync::{Arc, RWLock};
 use std::rand;
 use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
-use ncollide::geom::{Plane, Compound, Convex, CompoundData};
+use ncollide::shape::{Plane, Compound, Convex, CompoundData};
 use ncollide::procedural::TriMesh;
 use ncollide::procedural;
 use ncollide::bounding_volume::{BoundingVolume, AABB};

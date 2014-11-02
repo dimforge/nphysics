@@ -5,7 +5,7 @@ extern crate nphysics;
 extern crate nphysics_testbed3d;
 
 use na::{Pnt3, Vec3, Translation};
-use ncollide::geom::{Ball, BezierSurface};
+use ncollide::shape::{Ball, BezierSurface};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;

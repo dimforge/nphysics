@@ -38,7 +38,7 @@ extern crate nphysics;
 extern crate nphysics_testbed3d;
 
 use na::{Pnt3, Vec3, Translation};
-use ncollide::geom::{Plane, Convex};
+use ncollide::shape::{Plane, Convex};
 use ncollide::procedural;
 use nphysics::world::World;
 use nphysics::object::RigidBody;

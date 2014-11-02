@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 
 use std::rand;
 use na::{Pnt3, Vec3, Translation};
-use ncollide::geom::{Plane, Convex};
+use ncollide::shape::{Plane, Convex};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;

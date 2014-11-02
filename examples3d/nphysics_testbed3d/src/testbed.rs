@@ -10,7 +10,7 @@ use kiss3d::window::Window;
 use kiss3d::light;
 use kiss3d::text::Font;
 use kiss3d::loader::obj;
-use ncollide::geom::{Cuboid, Ball};
+use ncollide::shape::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::detection::Detector;

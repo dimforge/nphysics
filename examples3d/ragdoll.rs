@@ -5,7 +5,7 @@ extern crate nphysics;
 extern crate "nalgebra" as na;
 
 use na::{Pnt3, Vec3, Translation, Rotation};
-use ncollide::geom::{Plane, Ball, Cylinder};
+use ncollide::shape::{Plane, Ball, Cylinder};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};

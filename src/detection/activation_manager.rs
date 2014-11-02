@@ -3,8 +3,8 @@ use std::cell::RefCell;
 use na;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
-use ncollide::broad::BroadPhase;
-use ncollide::narrow::{CollisionDetector, GeomGeomCollisionDetector};
+use ncollide::broad_phase::BroadPhase;
+use ncollide::narrow_phase::{CollisionDetector, ShapeShapeCollisionDetector};
 use ncollide::bounding_volume::AABB;
 use detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
 use detection::joint::{JointManager, Joint};
@@ -72,7 +72,7 @@ impl ActivationManager {
         where BF: BroadPhase<Point, Vect,
                              Rc<RefCell<RigidBody>>,
                              AABB<Point>,
-                             Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
+                             Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
         /*
          *
          * Update bodies energy

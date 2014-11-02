@@ -5,7 +5,7 @@ extern crate nphysics;
 extern crate nphysics_testbed2d;
 
 use na::{Pnt2, Vec1, Vec2, Translation, Rotation};
-use ncollide::geom::{Plane, Cuboid, Ball};
+use ncollide::shape::{Plane, Cuboid, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};

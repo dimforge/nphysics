@@ -4,9 +4,9 @@ use std::iter::Map;
 use std::slice::Items;
 use na;
 use ncollide::bounding_volume::AABB;
-use ncollide::broad::{BroadPhase, DBVTBroadPhase};
+use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase};
 use ncollide::ray::Ray;
-use ncollide::narrow::{GeomGeomDispatcher, GeomGeomCollisionDetector};
+use ncollide::narrow_phase::{ShapeShapeDispatcher, ShapeShapeCollisionDetector};
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
@@ -19,7 +19,7 @@ use object::{RigidBody, RigidBodyHandle};
 use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<GeomGeomCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>>;
+pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>>;
 /// An iterator visiting rigid bodies.
 pub type RigidBodies<'a> = Map<'a, &'a Entry<uint, Rc<RefCell<RigidBody>>>, &'a Rc<RefCell<RigidBody>>, Items<'a, Entry<uint, Rc<RefCell<RigidBody>>>>>;
 
@@ -54,7 +54,7 @@ impl World {
          * For the collision detection
          */
         // Collision Dispatcher
-        let geom_dispatcher = Rc::new(GeomGeomDispatcher::new(na::cast(0.10f64)));
+        let geom_dispatcher = Rc::new(ShapeShapeDispatcher::new(na::cast(0.10f64)));
         let dispatcher = BodyBodyDispatcher::new(geom_dispatcher.clone());
 
         // Broad phase

@@ -8,8 +8,8 @@ use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
 use na::{Pnt3, Iso2};
 use nphysics::object::RigidBody;
-use ncollide::geom::Geom2;
-use ncollide::geom;
+use ncollide::shape::Shape2;
+use ncollide::shape;
 use camera::Camera;
 use objects::ball::Ball;
 use objects::box_node::Box;
@@ -71,15 +71,15 @@ impl<'a> GraphicsManager<'a> {
     fn add_geom(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &Geom2,
+                geom:  &Shape2,
                 out:   &mut Vec<SceneNode<'a>>) {
-        type Pl = geom::Plane2;
-        type Bl = geom::Ball2;
-        type Bo = geom::Cuboid2;
-        type Cy = geom::Cylinder2;
-        type Co = geom::Cone2;
-        type Cm = geom::Compound2;
-        type Ls = geom::Mesh2;
+        type Pl = shape::Plane2;
+        type Bl = shape::Ball2;
+        type Bo = shape::Cuboid2;
+        type Cy = shape::Cylinder2;
+        type Co = shape::Cone2;
+        type Cm = shape::Compound2;
+        type Ls = shape::Mesh2;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -109,14 +109,14 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_plane(&mut self,
                  _: Rc<RefCell<RigidBody>>,
-                 _: &geom::Plane2,
+                 _: &shape::Plane2,
                  _: &mut Vec<SceneNode>) {
     }
 
     fn add_ball(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &geom::Ball2,
+                geom:  &shape::Ball2,
                 out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         let margin = body.borrow().margin();
@@ -126,7 +126,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_lines(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &geom::Mesh2,
+               geom:  &shape::Mesh2,
                out:   &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&body);
@@ -141,7 +141,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_box(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &geom::Cuboid2,
+               geom:  &shape::Cuboid2,
                out:   &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;

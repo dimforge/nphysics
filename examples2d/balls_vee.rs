@@ -5,7 +5,7 @@ extern crate nphysics;
 extern crate nphysics_testbed2d;
 
 use na::{Vec2, Translation};
-use ncollide::geom::{Ball, Plane};
+use ncollide::shape::{Ball, Plane};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed2d::Testbed;

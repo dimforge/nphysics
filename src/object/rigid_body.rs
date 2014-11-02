@@ -6,7 +6,7 @@ use na::{Transformation, Translation, Rotation};
 use na;
 use na::Transform;
 use ncollide::bounding_volume::{HasBoundingVolume, BoundingVolume, AABB, HasAABB};
-use ncollide::geom::Geom;
+use ncollide::shape::Shape;
 use ncollide::volumetric::{InertiaTensor, Volumetric};
 use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
 
@@ -50,7 +50,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    geom:                 Arc<Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>>,
+    geom:                 Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>>,
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -135,13 +135,13 @@ impl RigidBody {
 
     /// Gets a reference to this body's geometry.
     #[inline]
-    pub fn geom_ref(&self) -> &Geom<Scalar, Point, Vect, Matrix> + Send + Sync {
+    pub fn geom_ref(&self) -> &Shape<Scalar, Point, Vect, Matrix> + Send + Sync {
         &**self.geom
     }
 
     /// Gets a copy of this body's shared geometry.
     #[inline]
-    pub fn geom(&self) -> Arc<Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>> {
+    pub fn geom(&self) -> Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>> {
         self.geom.clone()
     }
 
@@ -231,11 +231,11 @@ impl RigidBody {
 
     /// Creates a new rigid body that can move.
     pub fn new_dynamic<G>(geom: G, density: Scalar, restitution: Scalar, friction: Scalar) -> RigidBody
-        where G: Send + Sync + Geom<Scalar, Point, Vect, Matrix> + Volumetric<Scalar, Point, AngularInertia> {
+        where G: Send + Sync + Shape<Scalar, Point, Vect, Matrix> + Volumetric<Scalar, Point, AngularInertia> {
         let props = geom.mass_properties(density);
 
         RigidBody::new(
-            Arc::new(box geom as Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>),
+            Arc::new(box geom as Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>),
             Some(props),
             restitution,
             friction)
@@ -243,9 +243,9 @@ impl RigidBody {
 
     /// Creates a new rigid body that cannot move.
     pub fn new_static<G>(geom: G, restitution: Scalar, friction: Scalar) -> RigidBody
-        where G: Send + Sync + Geom<Scalar, Point, Vect, Matrix> {
+        where G: Send + Sync + Shape<Scalar, Point, Vect, Matrix> {
         RigidBody::new(
-            Arc::new(box geom as Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>),
+            Arc::new(box geom as Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>),
             None,
             restitution,
             friction)
@@ -255,7 +255,7 @@ impl RigidBody {
     ///
     /// Use this if the geometry is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(geom:            Arc<Box<Geom<Scalar, Point, Vect, Matrix> + Send + Sync>>,
+    pub fn new(geom:            Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>>,
                mass_properties: Option<(Scalar, Point, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)

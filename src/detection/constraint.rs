@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use ncollide::narrow::Contact;
+use ncollide::narrow_phase::Contact;
 use object::RigidBody;
 use detection::joint::{Fixed, BallInSocket};
 use math::{Scalar, Point, Vect};

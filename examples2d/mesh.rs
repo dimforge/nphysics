@@ -9,7 +9,7 @@ extern crate nphysics_testbed2d;
 use std::rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use na::{Pnt2, Vec2, Translation};
-use ncollide::geom::{Cuboid, Mesh, Mesh2};
+use ncollide::shape::{Cuboid, Mesh, Mesh2};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed2d::Testbed;
