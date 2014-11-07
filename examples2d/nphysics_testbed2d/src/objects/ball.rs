@@ -42,7 +42,7 @@ impl<'a> Ball<'a> {
 impl<'a> Ball<'a> {
     pub fn update(&mut self) {
         let body = self.body.borrow();
-        let transform = body.transform_ref() * self.delta;
+        let transform = *body.transform_ref() * self.delta;
         let pos = na::translation(&transform);
         let rot = na::rotation(&transform);
 

@@ -1,6 +1,6 @@
 use std::num::Bounded;
 use na;
-use ncollide::narrow_phase::Contact;
+use ncollide::geometry::Contact;
 use ncollide::volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;

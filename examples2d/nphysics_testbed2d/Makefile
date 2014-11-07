@@ -1,2 +1,2 @@
 all:
-	cargo build
+	make -C ..

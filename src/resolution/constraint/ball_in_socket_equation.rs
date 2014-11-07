@@ -32,9 +32,9 @@ pub fn cancel_relative_linear_motion<P>(
                                      anchor2:     &Anchor<P>,
                                      constraints: &mut [VelocityConstraint],
                                      correction:  &CorrectionParameters) {
-    let error      = (global2 - *global1) * correction.joint_corr;
-    let rot_axis1  = na::cross_matrix(&(global1 - anchor1.center_of_mass()));
-    let rot_axis2  = na::cross_matrix(&(global2 - anchor2.center_of_mass()));
+    let error      = (*global2 - *global1) * correction.joint_corr;
+    let rot_axis1  = na::cross_matrix(&(*global1 - anchor1.center_of_mass()));
+    let rot_axis2  = na::cross_matrix(&(*global2 - anchor2.center_of_mass()));
 
     for i in range(0u, na::dim::<Vect>()) {
         let mut lin_axis: Vect = na::zero();
