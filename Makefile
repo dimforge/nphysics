@@ -7,8 +7,8 @@ all:
 	cargo build --features "3df64"
 
 examples:
-	cd examples3d; cargo build --release
-	cd examples2d; cargo build --release
+	cd examples3; cargo build --release
+	cd examples2; cargo build --release
 
 distcheck:
 	rm -rf $(tmp)
