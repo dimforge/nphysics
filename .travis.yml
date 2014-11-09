@@ -17,3 +17,6 @@ install:
   - wget http://www.sfml-dev.org/download/csfml/CSFML-2.1-linux-gcc-64bits.tar.bz2
   - tar xf CSFML-2.1-linux-gcc-64bits.tar.bz2
   - sudo cp -r CSFML-2.1/lib/* /usr/local/lib/.
+script:
+  - make all
+  - make examples

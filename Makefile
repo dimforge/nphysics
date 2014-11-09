@@ -1,14 +1,10 @@
 tmp=_git_distcheck
 
 all:
-	cargo build --release --features "3df32"
-	cargo build --release --features "2df32"
-	cargo build --release --features "2df64"
-	cargo build --release --features "3df64"
-	cd build/nphysics2df32; cargo build --release
-	cd build/nphysics2df64; cargo build --release
-	cd build/nphysics3df32; cargo build --release
-	cd build/nphysics3df64; cargo build --release
+	cargo build --features "3df32"
+	cargo build --features "2df32"
+	cargo build --features "2df64"
+	cargo build --features "3df64"
 
 examples:
 	cd examples3d; cargo build --release
@@ -18,8 +14,7 @@ distcheck:
 	rm -rf $(tmp)
 	git clone . $(tmp)
 	make -C $(tmp)
-	make -C $(tmp) examples2d
-	make -C $(tmp) examples3d
+	make -C $(tmp) examples
 	rm -rf $(tmp)
 
 doc:
