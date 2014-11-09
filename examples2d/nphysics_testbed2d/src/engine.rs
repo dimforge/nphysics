@@ -189,7 +189,7 @@ impl<'a> GraphicsManager<'a> {
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Pnt3<u8> {
         let key = body.deref() as *const RefCell<RigidBody> as uint;
-        match self.obj2color.find(&key) {
+        match self.obj2color.get(&key) {
             Some(color) => return *color,
             None => { }
         }
@@ -206,6 +206,6 @@ impl<'a> GraphicsManager<'a> {
     }
 
     pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<SceneNode<'a>>> {
-        self.rb2sn.find_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
+        self.rb2sn.get_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
     }
 }

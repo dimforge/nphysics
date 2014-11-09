@@ -74,7 +74,7 @@ impl ImpulseCache {
                 None         => 0
             };
 
-        self.hash_next.insert(id, (cid, imp));
+        let _ = self.hash_next.insert(id, (cid, imp));
     }
 
     pub fn hash(&self) -> &HashMap<ContactIdentifier, (uint, uint), SipHasher> {

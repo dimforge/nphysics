@@ -153,7 +153,7 @@ impl GraphicsManager {
     pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
         let key = body.deref() as *const RefCell<RigidBody> as uint;
 
-        match self.rb2sn.find(&key) {
+        match self.rb2sn.get(&key) {
             Some(sns) => {
                 for sn in sns.iter() {
                     window.remove(&mut sn.object().clone());
@@ -172,7 +172,7 @@ impl GraphicsManager {
     pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
         let color;
 
-        match self.rb2color.find(&(body.deref() as *const RefCell<RigidBody> as uint)) {
+        match self.rb2color.get(&(body.deref() as *const RefCell<RigidBody> as uint)) {
             Some(c) => color = *c,
             None    => {
                 if body.borrow().can_move() {
@@ -414,6 +414,6 @@ impl GraphicsManager {
     }
 
     pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<Node>> {
-        self.rb2sn.find_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
+        self.rb2sn.get_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
     }
 }

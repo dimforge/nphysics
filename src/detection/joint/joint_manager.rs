@@ -161,7 +161,7 @@ impl JointManager {
                     let body2 = bj.anchor2().body.as_ref();
 
                     for body in bj.anchor1().body.as_ref().iter() {
-                        if body.deref() as *const RefCell<RigidBody> == b.deref() as *const RefCell<RigidBody> {
+                        if (*body).deref() as *const RefCell<RigidBody> == b.deref() as *const RefCell<RigidBody> {
                             _self.remove_joint_for_body(joint, body2, activation);
                         }
                         else {
