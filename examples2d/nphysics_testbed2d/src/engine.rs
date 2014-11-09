@@ -71,15 +71,15 @@ impl<'a> GraphicsManager<'a> {
     fn add_geom(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &Shape2,
+                geom:  &Shape2<f32>,
                 out:   &mut Vec<SceneNode<'a>>) {
-        type Pl = shape::Plane2;
-        type Bl = shape::Ball2;
-        type Bo = shape::Cuboid2;
-        type Cy = shape::Cylinder2;
-        type Co = shape::Cone2;
-        type Cm = shape::Compound2;
-        type Ls = shape::Mesh2;
+        type Pl = shape::Plane2<f32>;
+        type Bl = shape::Ball2<f32>;
+        type Bo = shape::Cuboid2<f32>;
+        type Cy = shape::Cylinder2<f32>;
+        type Co = shape::Cone2<f32>;
+        type Cm = shape::Compound2<f32>;
+        type Ls = shape::Mesh2<f32>;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -109,14 +109,14 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_plane(&mut self,
                  _: Rc<RefCell<RigidBody>>,
-                 _: &shape::Plane2,
+                 _: &shape::Plane2<f32>,
                  _: &mut Vec<SceneNode>) {
     }
 
     fn add_ball(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &shape::Ball2,
+                geom:  &shape::Ball2<f32>,
                 out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         let margin = body.borrow().margin();
@@ -126,7 +126,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_lines(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &shape::Mesh2,
+               geom:  &shape::Mesh2<f32>,
                out:   &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&body);
@@ -141,7 +141,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_box(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &shape::Cuboid2,
+               geom:  &shape::Cuboid2<f32>,
                out:   &mut Vec<SceneNode>) {
         let rx = geom.half_extents().x;
         let ry = geom.half_extents().y;

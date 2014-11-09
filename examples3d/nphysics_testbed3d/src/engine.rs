@@ -207,18 +207,18 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &Shape3,
+                geom:   &Shape3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        type Pl = shape::Plane3;
-        type Bl = shape::Ball3;
-        type Bo = shape::Cuboid3;
-        type Cy = shape::Cylinder3;
-        type Co = shape::Cone3;
-        type Cm = shape::Compound3;
-        type Tm = shape::Mesh3;
-        type Bs = shape::BezierSurface3;
-        type Cx = shape::Convex3;
+        type Pl = shape::Plane3<f32>;
+        type Bl = shape::Ball3<f32>;
+        type Bo = shape::Cuboid3<f32>;
+        type Cy = shape::Cylinder3<f32>;
+        type Co = shape::Cone3<f32>;
+        type Cm = shape::Compound3<f32>;
+        type Tm = shape::Mesh3<f32>;
+        type Bs = shape::BezierSurface3<f32>;
+        type Cx = shape::Convex3<f32>;
 
         let id = geom.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -261,7 +261,7 @@ impl GraphicsManager {
     fn add_plane(&mut self,
                  window: &mut Window,
                  body:   Rc<RefCell<RigidBody>>,
-                 geom:   &shape::Plane3,
+                 geom:   &shape::Plane3<f32>,
                  color:  Pnt3<f32>,
                  out:    &mut Vec<Node>) {
         let position = na::translation(&*body.borrow()).translate(&na::orig());
@@ -274,7 +274,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::Mesh3,
+                geom:   &shape::Mesh3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let vertices = geom.vertices().deref();
@@ -294,7 +294,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::BezierSurface3,
+                geom:   &shape::BezierSurface3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         out.push(BezierSurfaceNode(BezierSurface::new(body, delta, geom.control_points(), geom.nupoints(), geom.nvpoints(), color, window)))
@@ -304,7 +304,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::Ball3,
+                geom:   &shape::Ball3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let margin = body.borrow().margin();
@@ -315,7 +315,7 @@ impl GraphicsManager {
                window: &mut Window,
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
-               geom:   &shape::Cuboid3,
+               geom:   &shape::Cuboid3<f32>,
                color:  Pnt3<f32>,
                out:    &mut Vec<Node>) {
         let rx = geom.half_extents().x + body.borrow().margin();
@@ -329,7 +329,7 @@ impl GraphicsManager {
                   window: &mut Window,
                   body:   Rc<RefCell<RigidBody>>,
                   delta:  Iso3<f32>,
-                  geom:   &shape::Convex3,
+                  geom:   &shape::Convex3<f32>,
                   color:  Pnt3<f32>,
                   out:    &mut Vec<Node>) {
         out.push(ConvexNode(Convex::new(body, delta, &procedural::convex_hull3(geom.points()), color, window)))
@@ -339,7 +339,7 @@ impl GraphicsManager {
                     window: &mut Window,
                     body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
-                    geom:   &shape::Cylinder3,
+                    geom:   &shape::Cylinder3<f32>,
                     color:  Pnt3<f32>,
                     out:    &mut Vec<Node>) {
         let r = geom.radius();
@@ -352,7 +352,7 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::Cone3,
+                geom:   &shape::Cone3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let r = geom.radius();

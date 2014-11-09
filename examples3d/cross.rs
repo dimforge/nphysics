@@ -41,7 +41,7 @@ fn main() {
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(1.0);
-    let cross    = Arc::new(box compound as Box<Shape3>);
+    let cross    = Arc::new(box compound as Box<Shape3<f32>>);
 
     /*
      * Create the crosses 

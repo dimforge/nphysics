@@ -48,7 +48,7 @@ fn main() {
     indices.push(num_split);
     indices.push(num_split + 1);
 
-    let mesh: Mesh2 = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
+    let mesh: Mesh2<f32> = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
     let rb = RigidBody::new_static(mesh, 0.3, 0.6);
 
     world.add_body(rb);
