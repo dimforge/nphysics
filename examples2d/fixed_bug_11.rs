@@ -39,14 +39,14 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0f32, 0.0));
+    world.set_gravity(Vec2::new(0.0, 0.0));
 
     /*
      * Create the box that will be deactivated.
      */
-    let rad    = 1.0f32;
+    let rad    = 1.0;
     let geom   = Cuboid::new(Vec2::new(rad, rad));
-    let mut rb = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
+    let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
     rb.set_lin_vel(Vec2::new(0.99, 0.0));
 

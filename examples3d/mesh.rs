@@ -22,12 +22,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
 
     let meshes = Testbed::load_obj("media/great_hall.obj");
 
     for (vertices, indices) in meshes.into_iter() {
-        let vertices = vertices.iter().map(|v| *v * 3.0f32).collect();
+        let vertices = vertices.iter().map(|v| *v * 3.0).collect();
         let mesh: Mesh3<f32> = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
 
         world.add_body(RigidBody::new_static(mesh, 0.3, 0.6));

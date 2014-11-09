@@ -21,12 +21,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0f32, 9.81));
+    world.set_gravity(Vec2::new(0.0, 9.81));
 
     /*
      * A plane for the ground
      */
-    let ground_geom = Plane::new(Vec2::new(0.0f32, -1.0));
+    let ground_geom = Plane::new(Vec2::new(0.0, -1.0));
 
     world.add_body(RigidBody::new_static(ground_geom, 0.3, 0.6));
 
@@ -56,33 +56,33 @@ fn main() {
 fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     // head
     let     head_geom = Ball::new(0.8);
-    let mut head      = RigidBody::new_dynamic(head_geom, 1.0f32, 0.3, 0.5);
-    head.append_translation(&(pos + Vec2::new(0.0f32, -2.4)));
+    let mut head      = RigidBody::new_dynamic(head_geom, 1.0, 0.3, 0.5);
+    head.append_translation(&(pos + Vec2::new(0.0, -2.4)));
 
     // body
     let     body_geom = Cuboid::new(Vec2::new(1.2, 0.5));
-    let mut body      = RigidBody::new_dynamic(body_geom, 1.0f32, 0.3, 0.5);
+    let mut body      = RigidBody::new_dynamic(body_geom, 1.0, 0.3, 0.5);
     body.append_rotation(&-Vec1::new(Float::frac_pi_2()));
     body.append_translation(&pos);
 
     // right arm
     let     rarm_geom = Cuboid::new(Vec2::new(1.6, 0.2));
-    let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0f32, 0.3, 0.5);
-    rarm.append_translation(&(pos + Vec2::new(2.4f32, -1.0)));
+    let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0, 0.3, 0.5);
+    rarm.append_translation(&(pos + Vec2::new(2.4, -1.0)));
 
     // left arm
     let mut larm      = rarm.clone();
-    larm.append_translation(&Vec2::new(-4.8f32, 0.0));
+    larm.append_translation(&Vec2::new(-4.8, 0.0));
 
     // right foot
     let     rfoot_geom = Cuboid::new(Vec2::new(1.6, 0.2));
-    let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0f32, 0.3, 0.5);
+    let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0, 0.3, 0.5);
     rfoot.append_rotation(&-Vec1::new(Float::frac_pi_2()));
-    rfoot.append_translation(&(pos + Vec2::new(0.4f32, 3.0)));
+    rfoot.append_translation(&(pos + Vec2::new(0.4, 3.0)));
 
     // left foot
     let mut lfoot      = rfoot.clone();
-    lfoot.append_translation(&Vec2::new(-0.8f32, 0.0));
+    lfoot.append_translation(&Vec2::new(-0.8, 0.0));
 
     let head  = world.add_body(head);
     let body  = world.add_body(body);

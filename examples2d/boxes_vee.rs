@@ -20,12 +20,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0f32, 9.81));
+    world.set_gravity(Vec2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0f32, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -34,7 +34,7 @@ fn main() {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0f32, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -55,7 +55,7 @@ fn main() {
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 10.0;
 
             let geom   = Cuboid::new(Vec2::new(rad, rad));
-            let mut rb = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

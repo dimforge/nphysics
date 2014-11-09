@@ -22,12 +22,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0f32, 9.81));
+    world.set_gravity(Vec2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0f32, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -36,7 +36,7 @@ fn main() {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0f32, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -45,14 +45,14 @@ fn main() {
     /*
      * Cross shaped geometry
      */
-    let delta1 = Iso2::new(Vec2::new(0.0f32, -5.0), na::zero());
-    let delta2 = Iso2::new(Vec2::new(-5.0f32, 0.0), na::zero());
-    let delta3 = Iso2::new(Vec2::new(5.0f32,  0.0), na::zero());
+    let delta1 = Iso2::new(Vec2::new(0.0, -5.0), na::zero());
+    let delta2 = Iso2::new(Vec2::new(-5.0, 0.0), na::zero());
+    let delta3 = Iso2::new(Vec2::new(5.0,  0.0), na::zero());
 
     let mut cross_geoms = CompoundData::new();
-    cross_geoms.push_geom(delta1, Cuboid::new(Vec2::new(4.96f32, 0.71)), 1.0);
-    cross_geoms.push_geom(delta2, Cuboid::new(Vec2::new(0.71f32, 4.96)), 1.0);
-    cross_geoms.push_geom(delta3, Cuboid::new(Vec2::new(0.71f32, 4.96)), 1.0);
+    cross_geoms.push_geom(delta1, Cuboid::new(Vec2::new(4.96, 0.71)), 1.0);
+    cross_geoms.push_geom(delta2, Cuboid::new(Vec2::new(0.71, 4.96)), 1.0);
+    cross_geoms.push_geom(delta3, Cuboid::new(Vec2::new(0.71, 4.96)), 1.0);
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(1.0);

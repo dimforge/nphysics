@@ -20,12 +20,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
 
     /*
      * Planes
      */
-    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0f32, 1.0, 0.0)), 0.3, 0.6);
+    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
 
     world.add_body(rb);
 
@@ -50,19 +50,19 @@ fn main() {
 
                 if j % 4 == 0 {
                     let geom = Cuboid::new(Vec3::new(rad, rad, rad));
-                    rb       = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
+                    rb       = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
                 }
                 else if j % 3 == 0 {
                     let geom = Ball::new(rad);
-                    rb       = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
+                    rb       = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
                 }
                 else if j % 2 == 0 {
                     let geom = Cylinder::new(rad, rad);
-                    rb       = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
+                    rb       = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
                 }
                 else {
                     let geom = Cone::new(rad, rad);
-                    rb       = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
+                    rb       = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
                 }
 
                 rb.append_translation(&Vec3::new(x, y, z));

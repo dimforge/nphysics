@@ -24,13 +24,13 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0f32, 9.81));
+    world.set_gravity(Vec2::new(0.0, 9.81));
 
     /*
      * First plane
      */
     let num_split = 5;
-    let begin     = -75.0f32;
+    let begin     = -75.0;
     let max_h     = 15.0;
     let begin_h   = 15.0;
     let step      = (begin.abs() * 2.0) / (num_split as f32);
@@ -69,7 +69,7 @@ fn main() {
             let x = fj * 2.0 * rad - centerx;
             let y = -fi * 2.0 * rad;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad, rad)), 1.0f32, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad, rad)), 1.0, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

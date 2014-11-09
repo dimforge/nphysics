@@ -30,22 +30,22 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
 
     /*
      * Planes
      */
-    let shift = 10.0f32;
+    let shift = 10.0;
 
     let normals = [
-        Vec3::new(0.0f32, 1.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
         Vec3::new(-1.0, 1.0, 0.0),
         Vec3::new(1.0, 1.0, 0.0),
         Vec3::new(0.0, 1.0, -1.0),
         Vec3::new(0.0, 1.0, 1.0),
     ];
     let poss = [
-        Vec3::new(0.0f32, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(shift, 0.0, 0.0),
         Vec3::new(-shift, 0.0, 0.0),
         Vec3::new(0.0, 0.0, shift),
@@ -107,7 +107,7 @@ fn main() {
 
             let compound = Compound::new(geom_data);
 
-            let mut rb = RigidBody::new_dynamic(compound, 1.0f32, 0.3, 0.5);
+            let mut rb = RigidBody::new_dynamic(compound, 1.0, 0.3, 0.5);
             rb.set_deactivation_threshold(Some(0.5));
 
 
@@ -129,7 +129,7 @@ fn main() {
     for rb in bodies.read().iter() {
         for _ in range(0, nreplicats) {
             let mut rb = rb.clone();
-            let pos = rand::random::<Vec3<f32>>() * 30.0f32 + Vec3::new(-15.0f32, 15.0, -15.0);
+            let pos = rand::random::<Vec3<f32>>() * 30.0+ Vec3::new(-15.0, 15.0, -15.0);
             rb.append_translation(&pos);
 
             world.add_body(rb);

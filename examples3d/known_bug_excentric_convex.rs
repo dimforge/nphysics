@@ -54,12 +54,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0f32, -9.81, 0.0));
+    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
 
     /*
      * Plane
      */
-    let geom = Plane::new(Vec3::new(0.0f32, 1.0, 0.0));
+    let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
 
     world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
 
@@ -87,7 +87,7 @@ fn main() {
                 }
 
                 let geom = Convex::new(shape.coords);
-                let mut rb = RigidBody::new_dynamic(geom, 1.0f32, 0.3, 0.5);
+                let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
                 rb.set_deactivation_threshold(None);
 
                 rb.append_translation(&Vec3::new(x, y, z));
