@@ -40,7 +40,7 @@ fn main() {
 
     for i in range(0u, num_split) {
         let h: f32 = rng.gen();
-        vertices.get_mut(i + 1).y = begin_h - h * max_h;
+        vertices[i + 1].y = begin_h - h * max_h;
 
         indices.push(i);
         indices.push(i + 1);

@@ -27,7 +27,7 @@ fn main() {
     let meshes = Testbed::load_obj("media/great_hall.obj");
 
     for (vertices, indices) in meshes.into_iter() {
-        let vertices = vertices.iter().map(|v| v * 3.0f32).collect();
+        let vertices = vertices.iter().map(|v| *v * 3.0f32).collect();
         let mesh: Mesh3 = Mesh::new(Arc::new(vertices), Arc::new(indices), None, None);
 
         world.add_body(RigidBody::new_static(mesh, 0.3, 0.6));
