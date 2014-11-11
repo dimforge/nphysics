@@ -12,7 +12,7 @@ use std::rand;
 use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
 use ncollide::shape::{Plane, Compound, Convex, CompoundData};
-use ncollide::procedural::TriMesh;
+use ncollide::procedural::TriMesh3;
 use ncollide::procedural;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
 use ncollide::bounding_volume;
@@ -79,7 +79,7 @@ fn main() {
             let mut geom_data = CompoundData::new();
 
             let model  = obj::parse_file(&Path::new(obj_path), &mtl_path, "").unwrap();
-            let meshes: Vec<TriMesh<f32, Pnt3<f32>, Vec3<f32>>> = model.into_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
+            let meshes: Vec<TriMesh3<f32>> = model.into_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
 
             // Compute the size of the model, to scale it and have similar size for everything.
             let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, meshes[0].coords.as_slice());

@@ -11,7 +11,7 @@ use detection::joint::{JointManager, Joint};
 use object::{RigidBody, Deleted};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
-use math::{Scalar, Point, Vect, Matrix, AngularInertia};
+use math::{Scalar, Point, Vect, Matrix};
 
 /// Structure that monitors island-based activation/deactivation of objects.
 ///
@@ -72,7 +72,7 @@ impl ActivationManager {
         where BF: BroadPhase<Point, Vect,
                              Rc<RefCell<RigidBody>>,
                              AABB<Point>,
-                             Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
+                             Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>> {
         /*
          *
          * Update bodies energy

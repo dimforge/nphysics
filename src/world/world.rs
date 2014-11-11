@@ -16,10 +16,10 @@ use detection::constraint::Constraint;
 use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, VelocityAndPosition};
 use object::{RigidBody, RigidBodyHandle};
-use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
+use math::{Scalar, Point, Vect, Orientation, Matrix};
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>>;
+pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>>;
 /// An iterator visiting rigid bodies.
 pub type RigidBodies<'a> = Map<'a, &'a Entry<uint, Rc<RefCell<RigidBody>>>, &'a Rc<RefCell<RigidBody>>, Items<'a, Entry<uint, Rc<RefCell<RigidBody>>>>>;
 

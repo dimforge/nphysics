@@ -11,26 +11,26 @@ use object::RigidBody;
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
 use detection::activation_manager::ActivationManager;
-use math::{Scalar, Point, Vect, Matrix, AngularInertia};
+use math::{Scalar, Point, Vect, Matrix};
 
 /// Collision detector dispatcher for rigid bodies.
 ///
 /// This is meat to be used as the broad phase collision dispatcher.
 pub struct BodyBodyDispatcher {
-    geom_dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>
+    geom_dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>
 }
 
 impl BodyBodyDispatcher {
     /// Creates a new `BodyBodyDispatcher` given a dispatcher for pairs of rigid bodies' geometry.
-    pub fn new(d: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>) -> BodyBodyDispatcher {
+    pub fn new(d: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>) -> BodyBodyDispatcher {
         BodyBodyDispatcher {
             geom_dispatcher: d
         }
     }
 }
 
-impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> for BodyBodyDispatcher {
-    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Option<Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
+impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>> for BodyBodyDispatcher {
+    fn dispatch(&self, rb1: &Rc<RefCell<RigidBody>>, rb2: &Rc<RefCell<RigidBody>>) -> Option<Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>> {
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 
@@ -53,7 +53,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<ShapeShapeCo
 
 /// Collision detector between rigid bodies.
 pub struct BodiesBodies<BF> {
-    geom_geom_dispatcher:  Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>,
+    geom_geom_dispatcher:  Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>,
     contacts_collector:    Vec<Contact<Scalar, Point, Vect>>,
 }
 
@@ -61,9 +61,9 @@ impl<BF> BodiesBodies<BF>
     where BF: BroadPhase<Point, Vect,
                          Rc<RefCell<RigidBody>>,
                          AABB<Point>,
-                         Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
+                         Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>> {
     /// Creates a new `BodiesBodies` collision detector.
-    pub fn new(dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix, AngularInertia>>) -> BodiesBodies<BF> {
+    pub fn new(dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>) -> BodiesBodies<BF> {
         BodiesBodies {
             geom_geom_dispatcher:  dispatcher,
             contacts_collector:    Vec::new()
@@ -122,7 +122,7 @@ impl<BF> Detector<RigidBody, Constraint, BF> for BodiesBodies<BF>
     where BF: BroadPhase<Point, Vect,
                          Rc<RefCell<RigidBody>>,
                          AABB<Point>,
-                         Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + Send>> {
+                         Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>> {
     fn update(&mut self, broad_phase: &mut BF, activation: &mut ActivationManager) {
         broad_phase.for_each_pair_mut(|b1, b2, cd| {
             let ncols = cd.num_colls();

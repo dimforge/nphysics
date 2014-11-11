@@ -8,8 +8,8 @@ use ncollide::bounding_volume::AABB;
 // use integration::SweptBallMotionClamping;
 use detection::{BodyBodyDispatcher, BodiesBodies};
 use object::RigidBody;
-use math::{Scalar, Point, Vect, Matrix, AngularInertia};
+use math::{Scalar, Point, Vect, Matrix};
 
-pub type DefaultBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix, AngularInertia> + 'static>>;
+pub type DefaultBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + 'static>>;
 pub type DefaultCollisionDetector = BodiesBodies<DefaultBroadPhase>;
 // pub type DefaultSweptBallMotionClamping = SweptBallMotionClamping<DefaultBroadPhase>;
