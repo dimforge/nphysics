@@ -35,9 +35,9 @@ fn main() {
      * Cross shaped geometry
      */
     let mut cross_geoms = CompoundData::new();
-    cross_geoms.push_geom(na::one(), Cuboid::new(Vec3::new(4.96, 0.21, 0.21)), 1.0);
-    cross_geoms.push_geom(na::one(), Cuboid::new(Vec3::new(0.21, 4.96, 0.21)), 1.0);
-    cross_geoms.push_geom(na::one(), Cuboid::new(Vec3::new(0.21, 0.21, 4.96)), 1.0);
+    cross_geoms.push_shape(na::one(), Cuboid::new(Vec3::new(4.96, 0.21, 0.21)), 1.0);
+    cross_geoms.push_shape(na::one(), Cuboid::new(Vec3::new(0.21, 4.96, 0.21)), 1.0);
+    cross_geoms.push_shape(na::one(), Cuboid::new(Vec3::new(0.21, 0.21, 4.96)), 1.0);
 
     let compound = Compound::new(cross_geoms);
     let mass     = compound.mass_properties(1.0);

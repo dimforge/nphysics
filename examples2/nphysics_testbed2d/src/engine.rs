@@ -60,7 +60,7 @@ impl<'a> GraphicsManager<'a> {
             let rb    = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_geom(body.clone(), One::one(), rb.geom_ref(), &mut nodes);
+            self.add_shape(body.clone(), One::one(), rb.shape_ref(), &mut nodes);
 
             nodes
         };
@@ -68,11 +68,11 @@ impl<'a> GraphicsManager<'a> {
         self.rb2sn.insert(body.deref() as *const RefCell<RigidBody> as uint, nodes);
     }
 
-    fn add_geom(&mut self,
-                body:  Rc<RefCell<RigidBody>>,
-                delta: Iso2<f32>,
-                geom:  &Shape2<f32>,
-                out:   &mut Vec<SceneNode<'a>>) {
+    fn add_shape(&mut self,
+                 body:  Rc<RefCell<RigidBody>>,
+                 delta: Iso2<f32>,
+                 shape: &Shape2<f32>,
+                 out:   &mut Vec<SceneNode<'a>>) {
         type Pl = shape::Plane2<f32>;
         type Bl = shape::Ball2<f32>;
         type Bo = shape::Cuboid2<f32>;
@@ -81,25 +81,25 @@ impl<'a> GraphicsManager<'a> {
         type Cm = shape::Compound2<f32>;
         type Ls = shape::Mesh2<f32>;
 
-        let id = geom.get_type_id();
+        let id = shape.get_type_id();
         if id == TypeId::of::<Pl>(){
-            self.add_plane(body, geom.downcast_ref::<Pl>().unwrap(), out)
+            self.add_plane(body, shape.downcast_ref::<Pl>().unwrap(), out)
         }
         else if id == TypeId::of::<Bl>() {
-            self.add_ball(body, delta, geom.downcast_ref::<Bl>().unwrap(), out)
+            self.add_ball(body, delta, shape.downcast_ref::<Bl>().unwrap(), out)
         }
         else if id == TypeId::of::<Bo>() {
-            self.add_box(body, delta, geom.downcast_ref::<Bo>().unwrap(), out)
+            self.add_box(body, delta, shape.downcast_ref::<Bo>().unwrap(), out)
         }
         else if id == TypeId::of::<Cm>() {
-            let c = geom.downcast_ref::<Cm>().unwrap();
+            let c = shape.downcast_ref::<Cm>().unwrap();
 
-            for &(t, ref s) in c.geoms().iter() {
-                self.add_geom(body.clone(), delta * t, &***s, out)
+            for &(t, ref s) in c.shapes().iter() {
+                self.add_shape(body.clone(), delta * t, &***s, out)
             }
         }
         else if id == TypeId::of::<Ls>() {
-            self.add_lines(body, delta, geom.downcast_ref::<Ls>().unwrap(), out)
+            self.add_lines(body, delta, shape.downcast_ref::<Ls>().unwrap(), out)
         }
         else {
             panic!("Not yet implemented.")
@@ -116,23 +116,23 @@ impl<'a> GraphicsManager<'a> {
     fn add_ball(&mut self,
                 body:  Rc<RefCell<RigidBody>>,
                 delta: Iso2<f32>,
-                geom:  &shape::Ball2<f32>,
+                shape: &shape::Ball2<f32>,
                 out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         let margin = body.borrow().margin();
-        out.push(BallNode(Ball::new(body, delta, geom.radius() + margin, color)))
+        out.push(BallNode(Ball::new(body, delta, shape.radius() + margin, color)))
     }
 
     fn add_lines(&mut self,
-               body:  Rc<RefCell<RigidBody>>,
-               delta: Iso2<f32>,
-               geom:  &shape::Mesh2<f32>,
-               out:   &mut Vec<SceneNode>) {
+                 body:  Rc<RefCell<RigidBody>>,
+                 delta: Iso2<f32>,
+                 shape: &shape::Mesh2<f32>,
+                 out:   &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&body);
 
-        let vs = geom.vertices().clone();
-        let is = geom.indices().clone();
+        let vs = shape.vertices().clone();
+        let is = shape.indices().clone();
 
         out.push(LinesNode(Lines::new(body, delta, vs, is, color)))
     }
@@ -141,10 +141,10 @@ impl<'a> GraphicsManager<'a> {
     fn add_box(&mut self,
                body:  Rc<RefCell<RigidBody>>,
                delta: Iso2<f32>,
-               geom:  &shape::Cuboid2<f32>,
+               shape: &shape::Cuboid2<f32>,
                out:   &mut Vec<SceneNode>) {
-        let rx = geom.half_extents().x;
-        let ry = geom.half_extents().y;
+        let rx = shape.half_extents().x;
+        let ry = shape.half_extents().y;
         let margin = body.borrow().margin();
 
         let color = self.color_for_object(&body);

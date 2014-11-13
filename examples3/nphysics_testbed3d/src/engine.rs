@@ -195,7 +195,7 @@ impl GraphicsManager {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_geom(window, body.clone(), One::one(), rb.shape_ref(), color, &mut nodes);
+            self.add_shape(window, body.clone(), One::one(), rb.shape_ref(), color, &mut nodes);
 
             nodes
         };
@@ -203,13 +203,13 @@ impl GraphicsManager {
         self.rb2sn.insert(body.deref() as *const RefCell<RigidBody> as uint, nodes);
     }
 
-    fn add_geom(&mut self,
-                window: &mut Window,
-                body:   Rc<RefCell<RigidBody>>,
-                delta:  Iso3<f32>,
-                geom:   &Shape3<f32>,
-                color:  Pnt3<f32>,
-                out:    &mut Vec<Node>) {
+    fn add_shape(&mut self,
+                 window: &mut Window,
+                 body:   Rc<RefCell<RigidBody>>,
+                 delta:  Iso3<f32>,
+                 shape:   &Shape3<f32>,
+                 color:  Pnt3<f32>,
+                 out:    &mut Vec<Node>) {
         type Pl = shape::Plane3<f32>;
         type Bl = shape::Ball3<f32>;
         type Bo = shape::Cuboid3<f32>;
@@ -220,37 +220,37 @@ impl GraphicsManager {
         type Bs = shape::BezierSurface3<f32>;
         type Cx = shape::Convex3<f32>;
 
-        let id = geom.get_type_id();
+        let id = shape.get_type_id();
         if id == TypeId::of::<Pl>(){
-            self.add_plane(window, body, geom.downcast_ref::<Pl>().unwrap(), color, out)
+            self.add_plane(window, body, shape.downcast_ref::<Pl>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Bl>() {
-            self.add_ball(window, body, delta, geom.downcast_ref::<Bl>().unwrap(), color, out)
+            self.add_ball(window, body, delta, shape.downcast_ref::<Bl>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Bo>() {
-            self.add_box(window, body, delta, geom.downcast_ref::<Bo>().unwrap(), color, out)
+            self.add_box(window, body, delta, shape.downcast_ref::<Bo>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cx>() {
-            self.add_convex(window, body, delta, geom.downcast_ref::<Cx>().unwrap(), color, out)
+            self.add_convex(window, body, delta, shape.downcast_ref::<Cx>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cy>() {
-            self.add_cylinder(window, body, delta, geom.downcast_ref::<Cy>().unwrap(), color, out)
+            self.add_cylinder(window, body, delta, shape.downcast_ref::<Cy>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Co>() {
-            self.add_cone(window, body, delta, geom.downcast_ref::<Co>().unwrap(), color, out)
+            self.add_cone(window, body, delta, shape.downcast_ref::<Co>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Bs>() {
-            self.add_bezier_surface(window, body, delta, geom.downcast_ref::<Bs>().unwrap(), color, out)
+            self.add_bezier_surface(window, body, delta, shape.downcast_ref::<Bs>().unwrap(), color, out)
         }
         else if id == TypeId::of::<Cm>() {
-            let c = geom.downcast_ref::<Cm>().unwrap();
+            let c = shape.downcast_ref::<Cm>().unwrap();
 
-            for &(t, ref s) in c.geoms().iter() {
-                self.add_geom(window, body.clone(), delta * t, &***s, color, out)
+            for &(t, ref s) in c.shapes().iter() {
+                self.add_shape(window, body.clone(), delta * t, &***s, color, out)
             }
         }
         else if id == TypeId::of::<Tm>() {
-            self.add_mesh(window, body, delta, geom.downcast_ref::<Tm>().unwrap(), color, out);
+            self.add_mesh(window, body, delta, shape.downcast_ref::<Tm>().unwrap(), color, out);
         }
         else {
             panic!("Not yet implemented.")
@@ -261,11 +261,11 @@ impl GraphicsManager {
     fn add_plane(&mut self,
                  window: &mut Window,
                  body:   Rc<RefCell<RigidBody>>,
-                 geom:   &shape::Plane3<f32>,
+                 shape:   &shape::Plane3<f32>,
                  color:  Pnt3<f32>,
                  out:    &mut Vec<Node>) {
         let position = na::translation(&*body.borrow()).translate(&na::orig());
-        let normal   = na::rotate(body.borrow().transform_ref(), geom.normal());
+        let normal   = na::rotate(body.borrow().transform_ref(), shape.normal());
 
         out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
     }
@@ -274,11 +274,11 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::Mesh3<f32>,
+                shape:   &shape::Mesh3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        let vertices = geom.vertices().deref();
-        let indices  = geom.indices().deref();
+        let vertices = shape.vertices().deref();
+        let indices  = shape.indices().deref();
 
         let vs     = vertices.clone();
         let mut is = Vec::new();
@@ -294,33 +294,33 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::BezierSurface3<f32>,
+                shape:   &shape::BezierSurface3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        out.push(BezierSurfaceNode(BezierSurface::new(body, delta, geom.control_points(), geom.nupoints(), geom.nvpoints(), color, window)))
+        out.push(BezierSurfaceNode(BezierSurface::new(body, delta, shape.control_points(), shape.nupoints(), shape.nvpoints(), color, window)))
     }
 
     fn add_ball(&mut self,
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::Ball3<f32>,
+                shape:   &shape::Ball3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let margin = body.borrow().margin();
-        out.push(BallNode(Ball::new(body, delta, geom.radius() + margin, color, window)))
+        out.push(BallNode(Ball::new(body, delta, shape.radius() + margin, color, window)))
     }
 
     fn add_box(&mut self,
                window: &mut Window,
                body:   Rc<RefCell<RigidBody>>,
                delta:  Iso3<f32>,
-               geom:   &shape::Cuboid3<f32>,
+               shape:   &shape::Cuboid3<f32>,
                color:  Pnt3<f32>,
                out:    &mut Vec<Node>) {
-        let rx = geom.half_extents().x + body.borrow().margin();
-        let ry = geom.half_extents().y + body.borrow().margin();
-        let rz = geom.half_extents().z + body.borrow().margin();
+        let rx = shape.half_extents().x + body.borrow().margin();
+        let ry = shape.half_extents().y + body.borrow().margin();
+        let rz = shape.half_extents().z + body.borrow().margin();
 
         out.push(BoxNode(Box::new(body, delta, rx, ry, rz, color, window)))
     }
@@ -329,21 +329,21 @@ impl GraphicsManager {
                   window: &mut Window,
                   body:   Rc<RefCell<RigidBody>>,
                   delta:  Iso3<f32>,
-                  geom:   &shape::Convex3<f32>,
+                  shape:   &shape::Convex3<f32>,
                   color:  Pnt3<f32>,
                   out:    &mut Vec<Node>) {
-        out.push(ConvexNode(Convex::new(body, delta, &procedural::convex_hull3(geom.points()), color, window)))
+        out.push(ConvexNode(Convex::new(body, delta, &procedural::convex_hull3(shape.points()), color, window)))
     }
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
                     body:   Rc<RefCell<RigidBody>>,
                     delta:  Iso3<f32>,
-                    geom:   &shape::Cylinder3<f32>,
+                    shape:   &shape::Cylinder3<f32>,
                     color:  Pnt3<f32>,
                     out:    &mut Vec<Node>) {
-        let r = geom.radius();
-        let h = geom.half_height() * 2.0;
+        let r = shape.radius();
+        let h = shape.half_height() * 2.0;
 
         out.push(CylinderNode(Cylinder::new(body, delta, r, h, color, window)))
     }
@@ -352,11 +352,11 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                geom:   &shape::Cone3<f32>,
+                shape:   &shape::Cone3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        let r = geom.radius();
-        let h = geom.half_height() * 2.0;
+        let r = shape.radius();
+        let h = shape.half_height() * 2.0;
 
         out.push(ConeNode(Cone::new(body, delta, r, h, color, window)))
     }

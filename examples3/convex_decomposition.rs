@@ -101,7 +101,7 @@ fn main() {
                 let (decomp, _) = procedural::hacd(trimesh, 0.03, 1);
 
                 for mesh in decomp.into_iter() {
-                    geom_data.push_geom(deltas, Convex::new(mesh.coords), 1.0);
+                    geom_data.push_shape(deltas, Convex::new(mesh.coords), 1.0);
                 }
             }
 
