@@ -373,12 +373,11 @@ impl Testbed {
 
                         let front = na::rotate(&cam_transfom, &Vec3::z());
 
-                        rb.set_lin_vel(front * 400.0f32);
+                        rb.set_lin_vel(front * 1000.0f32);
 
                         let body = self.world.add_body(rb);
-                        // physics.add_ccd_to(body, 0.4, 1.0);
+                        self.world.add_ccd_to(&body, 1.0);
                         self.graphics.add(&mut self.window, body);
-                        panic!("FIXME: review ccd");
                     },
                     _ => { }
                 }

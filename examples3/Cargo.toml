@@ -71,6 +71,9 @@ name = "fixed_bug_optimization_on_patch_boundaries_does_not_converge"
 path = "fixed_bug_optimization_on_patch_boundaries_does_not_converge.rs"
 
 [[bin]]
+name = "fixed_bug_minkowski_sampling_fails_on_touching_objects"
+path = "fixed_bug_minkowski_sampling_fails_on_touching_objects.rs"
+
+[[bin]]
 name = "known_bug_excentric_convex"
 path = "known_bug_excentric_convex.rs"
-

@@ -9,7 +9,8 @@ use ncollide::ray::Ray;
 use ncollide::narrow_phase::{ShapeShapeDispatcher, ShapeShapeCollisionDetector};
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
-use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator};
+use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
+                  TranslationalCCDMotionClamping};
 use detection::{BodiesBodies, BodyBodyDispatcher, ActivationManager};
 use detection::Detector;
 use detection::constraint::Constraint;
@@ -33,7 +34,7 @@ pub struct World {
     integrator:  BodySmpEulerIntegrator,
     detector:    BodiesBodies<WorldBroadPhase>,
     sleep:       ActivationManager,
-    // ccd:        SweptBallMotionClamping<WorldBroadPhase>,
+    ccd:         TranslationalCCDMotionClamping,
     joints:      JointManager,
     solver:      AccumulatedImpulseSolver,
     collector:   Vec<Constraint>
@@ -61,7 +62,7 @@ impl World {
         let broad_phase = DBVTBroadPhase::new(dispatcher, na::cast(0.08f64));
 
         // CCD handler
-        // XXX let ccd = SweptBallMotionClamping::new(broad_phase, true);
+        let ccd = TranslationalCCDMotionClamping::new();
 
         // Collision detector
         let detector = BodiesBodies::new(geom_dispatcher);
@@ -90,7 +91,7 @@ impl World {
             integrator:  integrator,
             detector:    detector,
             sleep:       sleep,
-            // ccd:      ccd,
+            ccd:      ccd,
             joints:      joints,
             solver:      solver,
             collector:   Vec::new()
@@ -107,6 +108,7 @@ impl World {
         }
 
         self.broad_phase.update();
+        self.ccd.update(&mut self.broad_phase);
 
         self.detector.update(&mut self.broad_phase, &mut self.sleep);
         self.joints.update(&mut self.broad_phase, &mut self.sleep);
@@ -159,9 +161,10 @@ impl World {
         &mut self.broad_phase
     }
 
-    // pub fn ccd_manager<'a>(&'a mut self) -> &'a mut SweptBallMotionClamping<WorldBroadPhase> {
-    //     self.ccd
-    // }
+    /// Gets a mutable reference to the CCD manager.
+    pub fn ccd_manager(&mut self) -> &mut TranslationalCCDMotionClamping {
+        &mut self.ccd
+    }
 
     /// Gets a mutable reference to the joint manager.
     pub fn joint_manager(&mut self) -> &mut JointManager {
@@ -198,14 +201,10 @@ impl World {
         self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
     }
 
-    /*
-    pub fn add_ccd_to(&mut self,
-                      body:                Rc<RefCell<RigidBody>>,
-                      swept_sphere_radius: Scalar,
-                      motion_thresold:     Scalar) {
-        self.ccd.add_ccd_to(body, swept_sphere_radius, motion_thresold)
+    /// Adds continuous collision detection to the given rigid body.
+    pub fn add_ccd_to(&mut self, body: &RigidBodyHandle, motion_thresold: Scalar) {
+        self.ccd.add_ccd_to(body.clone(), motion_thresold)
     }
-    */
 
     /// Adds a ball-in-socket joint to the world.
     pub fn add_ball_in_socket(&mut self, joint: BallInSocket) -> Rc<RefCell<BallInSocket>> {

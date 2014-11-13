@@ -50,7 +50,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    geom:                 Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>>,
+    shape:                Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>>,
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -75,7 +75,7 @@ impl Clone for RigidBody {
     fn clone(&self) -> RigidBody {
         RigidBody {
             state:             self.state.clone(),
-            geom:              self.geom.clone(),
+            shape:             self.shape.clone(),
             local_to_world:    self.local_to_world.clone(),
             lin_vel:           self.lin_vel.clone(),
             ang_vel:           self.ang_vel.clone(),
@@ -133,19 +133,19 @@ impl RigidBody {
         &self.local_to_world
     }
 
-    /// Gets a reference to this body's geometry.
+    /// Gets a reference to this body's shape.
     #[inline]
-    pub fn geom_ref(&self) -> &Shape<Scalar, Point, Vect, Matrix> + Send + Sync {
-        &**self.geom
+    pub fn shape_ref(&self) -> &Shape<Scalar, Point, Vect, Matrix> + Send + Sync {
+        &**self.shape
     }
 
-    /// Gets a copy of this body's shared geometry.
+    /// Gets a copy of this body's shared shape.
     #[inline]
-    pub fn geom(&self) -> Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>> {
-        self.geom.clone()
+    pub fn shape(&self) -> Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>> {
+        self.shape.clone()
     }
 
-    /// The margin surrounding this object's geometry.
+    /// The margin surrounding this object's shape.
     #[inline]
     pub fn margin(&self) -> Scalar {
         self.margin.clone()
@@ -230,32 +230,32 @@ impl RigidBody {
     }
 
     /// Creates a new rigid body that can move.
-    pub fn new_dynamic<G>(geom: G, density: Scalar, restitution: Scalar, friction: Scalar) -> RigidBody
+    pub fn new_dynamic<G>(shape: G, density: Scalar, restitution: Scalar, friction: Scalar) -> RigidBody
         where G: Send + Sync + Shape<Scalar, Point, Vect, Matrix> + Volumetric<Scalar, Point, AngularInertia> {
-        let props = geom.mass_properties(density);
+        let props = shape.mass_properties(density);
 
         RigidBody::new(
-            Arc::new(box geom as Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>),
+            Arc::new(box shape as Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>),
             Some(props),
             restitution,
             friction)
     }
 
     /// Creates a new rigid body that cannot move.
-    pub fn new_static<G>(geom: G, restitution: Scalar, friction: Scalar) -> RigidBody
+    pub fn new_static<G>(shape: G, restitution: Scalar, friction: Scalar) -> RigidBody
         where G: Send + Sync + Shape<Scalar, Point, Vect, Matrix> {
         RigidBody::new(
-            Arc::new(box geom as Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>),
+            Arc::new(box shape as Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>),
             None,
             restitution,
             friction)
     }
 
-    /// Creates a new rigid body with a given geometry.
+    /// Creates a new rigid body with a given shape.
     ///
-    /// Use this if the geometry is shared by multiple rigid bodies.
+    /// Use this if the shape is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(geom:            Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>>,
+    pub fn new(shape:           Arc<Box<Shape<Scalar, Point, Vect, Matrix> + Send + Sync>>,
                mass_properties: Option<(Scalar, Point, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)
@@ -284,7 +284,7 @@ impl RigidBody {
         let mut res =
             RigidBody {
                 state:                state,
-                geom:                 geom,
+                shape:                shape,
                 local_to_world:       na::one(),
                 lin_vel:              na::zero(),
                 ang_vel:              na::zero(),
@@ -584,13 +584,13 @@ impl Rotation<Orientation> for RigidBody {
 
 impl HasBoundingVolume<AABB<Point>> for RigidBody {
     fn bounding_volume(&self) -> AABB<Point> {
-        self.geom.aabb(&self.local_to_world).loosened(self.margin())
+        self.shape.aabb(&self.local_to_world).loosened(self.margin())
     }
 }
 
 impl HasBoundingVolume<AABB<Point>> for Rc<RefCell<RigidBody>> {
     fn bounding_volume(&self) -> AABB<Point> {
         let bself = self.borrow();
-        bself.geom().aabb(&bself.local_to_world).loosened(bself.margin())
+        bself.shape().aabb(&bself.local_to_world).loosened(bself.margin())
     }
 }

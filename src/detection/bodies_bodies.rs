@@ -17,14 +17,14 @@ use math::{Scalar, Point, Vect, Matrix};
 ///
 /// This is meat to be used as the broad phase collision dispatcher.
 pub struct BodyBodyDispatcher {
-    geom_dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>
+    shape_dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>
 }
 
 impl BodyBodyDispatcher {
-    /// Creates a new `BodyBodyDispatcher` given a dispatcher for pairs of rigid bodies' geometry.
+    /// Creates a new `BodyBodyDispatcher` given a dispatcher for pairs of rigid bodies' shape.
     pub fn new(d: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>) -> BodyBodyDispatcher {
         BodyBodyDispatcher {
-            geom_dispatcher: d
+            shape_dispatcher: d
         }
     }
 }
@@ -34,7 +34,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<ShapeShapeCo
         let brb1 = rb1.borrow();
         let brb2 = rb2.borrow();
 
-        self.geom_dispatcher.dispatch(brb1.geom_ref(), brb2.geom_ref())
+        self.shape_dispatcher.dispatch(brb1.shape_ref(), brb2.shape_ref())
     }
 
     fn is_valid(&self, a: &Rc<RefCell<RigidBody>>, b: &Rc<RefCell<RigidBody>>) -> bool {
@@ -53,7 +53,7 @@ impl Dispatcher<Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Box<ShapeShapeCo
 
 /// Collision detector between rigid bodies.
 pub struct BodiesBodies<BF> {
-    geom_geom_dispatcher:  Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>,
+    shape_shape_dispatcher:  Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>,
     contacts_collector:    Vec<Contact<Scalar, Point, Vect>>,
 }
 
@@ -65,8 +65,8 @@ impl<BF> BodiesBodies<BF>
     /// Creates a new `BodiesBodies` collision detector.
     pub fn new(dispatcher: Rc<ShapeShapeDispatcher<Scalar, Point, Vect, Matrix>>) -> BodiesBodies<BF> {
         BodiesBodies {
-            geom_geom_dispatcher:  dispatcher,
-            contacts_collector:    Vec::new()
+            shape_shape_dispatcher: dispatcher,
+            contacts_collector:     Vec::new()
         }
     }
 
@@ -83,7 +83,7 @@ impl<BF> BodiesBodies<BF>
             let toi;
 
             {
-                toi = rb.borrow().geom().toi_with_transform_and_ray(rb.borrow().transform_ref(), ray, true)
+                toi = rb.borrow().shape().toi_with_transform_and_ray(rb.borrow().transform_ref(), ray, true)
             }
 
             match toi {
@@ -128,11 +128,11 @@ impl<BF> Detector<RigidBody, Constraint, BF> for BodiesBodies<BF>
             let ncols = cd.num_colls();
 
             {
-                cd.update(&*self.geom_geom_dispatcher,
+                cd.update(&*self.shape_shape_dispatcher,
                           b1.borrow().transform_ref(),
-                          b1.borrow().geom_ref(),
+                          b1.borrow().shape_ref(),
                           b2.borrow().transform_ref(),
-                          b2.borrow().geom_ref());
+                          b2.borrow().shape_ref());
             }
 
             let new_ncols = cd.num_colls();

@@ -195,7 +195,7 @@ impl GraphicsManager {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_geom(window, body.clone(), One::one(), rb.geom_ref(), color, &mut nodes);
+            self.add_geom(window, body.clone(), One::one(), rb.shape_ref(), color, &mut nodes);
 
             nodes
         };
