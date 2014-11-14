@@ -23,4 +23,5 @@ mod objects {
     pub mod ball;
     pub mod box_node;
     pub mod lines;
+    pub mod segment;
 }

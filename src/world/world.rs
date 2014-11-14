@@ -197,8 +197,18 @@ impl World {
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn cast_ray(&mut self, ray: &Ray<Point, Vect>, out: &mut Vec<(RigidBodyHandle, Scalar)>) {
+    pub fn interferences_with_ray(&mut self, ray: &Ray<Point, Vect>, out: &mut Vec<(RigidBodyHandle, Scalar)>) {
         self.detector.interferences_with_ray(ray, &mut self.broad_phase, out)
+    }
+
+    /// Gets every body that contain a specific point.
+    pub fn interferences_with_point(&mut self, p: &Point, out: &mut Vec<RigidBodyHandle>) {
+        self.detector.interferences_with_point(p, &mut self.broad_phase, out)
+    }
+
+    /// Gets every body that intersects a specific AABB.
+    pub fn interferences_with_aabb(&mut self, aabb: &AABB<Point>, out: &mut Vec<RigidBodyHandle>) {
+        self.detector.interferences_with_aabb(aabb, &mut self.broad_phase, out)
     }
 
     /// Adds continuous collision detection to the given rigid body.

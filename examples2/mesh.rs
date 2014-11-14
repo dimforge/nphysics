@@ -27,7 +27,7 @@ fn main() {
     world.set_gravity(Vec2::new(0.0, 9.81));
 
     /*
-     * First plane
+     * Mesh
      */
     let num_split = 5;
     let begin     = -75.0;

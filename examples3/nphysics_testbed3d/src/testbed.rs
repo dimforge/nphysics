@@ -156,7 +156,7 @@ impl Testbed {
 
                             // cast the ray
                             let mut interferences = Vec::new();
-                            self.world.cast_ray(&ray, &mut interferences);
+                            self.world.interferences_with_ray(&ray, &mut interferences);
 
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
@@ -195,7 +195,7 @@ impl Testbed {
 
                             // cast the ray
                             let mut interferences = Vec::new();
-                            self.world.cast_ray(&ray, &mut interferences);
+                            self.world.interferences_with_ray(&ray, &mut interferences);
 
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;

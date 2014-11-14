@@ -14,11 +14,13 @@ use camera::Camera;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::lines::Lines;
+use objects::segment::Segment;
 
 pub enum SceneNode<'a> {
     BallNode(Ball<'a>),
     BoxNode(Box<'a>),
-    LinesNode(Lines)
+    LinesNode(Lines),
+    SegmentNode(Segment)
 }
 
 impl<'a> SceneNode<'a> {
@@ -27,6 +29,7 @@ impl<'a> SceneNode<'a> {
             BallNode(ref mut n) => n.select(),
             BoxNode(ref mut n) => n.select(),
             LinesNode(ref mut n) => n.select(),
+            SegmentNode(ref mut n) => n.select(),
         }
     }
 
@@ -35,6 +38,7 @@ impl<'a> SceneNode<'a> {
             BallNode(ref mut n) => n.unselect(),
             BoxNode(ref mut n) => n.unselect(),
             LinesNode(ref mut n) => n.unselect(),
+            SegmentNode(ref mut n) => n.unselect(),
         }
     }
 }
@@ -80,6 +84,7 @@ impl<'a> GraphicsManager<'a> {
         type Co = shape::Cone2<f32>;
         type Cm = shape::Compound2<f32>;
         type Ls = shape::Mesh2<f32>;
+        type Se = shape::Segment2<f32>;
 
         let id = shape.get_type_id();
         if id == TypeId::of::<Pl>(){
@@ -90,6 +95,9 @@ impl<'a> GraphicsManager<'a> {
         }
         else if id == TypeId::of::<Bo>() {
             self.add_box(body, delta, shape.downcast_ref::<Bo>().unwrap(), out)
+        }
+        else if id == TypeId::of::<Se>() {
+            self.add_segment(body, delta, shape.downcast_ref::<Se>().unwrap(), out)
         }
         else if id == TypeId::of::<Cm>() {
             let c = shape.downcast_ref::<Cm>().unwrap();
@@ -152,6 +160,20 @@ impl<'a> GraphicsManager<'a> {
         out.push(BoxNode(Box::new(body, delta, rx + margin, ry + margin, color)))
     }
 
+    fn add_segment(&mut self,
+                   body:  Rc<RefCell<RigidBody>>,
+                   delta: Iso2<f32>,
+                   shape: &shape::Segment2<f32>,
+                   out:   &mut Vec<SceneNode>) {
+        let a = shape.a();
+        let b = shape.b();
+
+        let color = self.color_for_object(&body);
+
+        out.push(SegmentNode(Segment::new(body, delta, *a, *b, color)))
+    }
+
+
     pub fn clear(&mut self) {
         self.rb2sn.clear();
     }
@@ -162,9 +184,10 @@ impl<'a> GraphicsManager<'a> {
         for (_, ns) in self.rb2sn.iter_mut() {
             for n in ns.iter_mut() {
                 match *n {
-                    BoxNode(ref mut b)   => b.update(),
-                    BallNode(ref mut b)  => b.update(),
-                    LinesNode(ref mut l) => l.update(),
+                    BoxNode(ref mut n) => n.update(),
+                    BallNode(ref mut n) => n.update(),
+                    LinesNode(ref mut n) => n.update(),
+                    SegmentNode(ref mut n) => n.update(),
                 }
             }
         }
@@ -172,9 +195,10 @@ impl<'a> GraphicsManager<'a> {
         for (_, ns) in self.rb2sn.iter_mut() {
             for n in ns.iter_mut() {
                 match *n {
-                    BoxNode(ref b)   => b.draw(rw),
-                    BallNode(ref b)  => b.draw(rw),
-                    LinesNode(ref l) => l.draw(rw),
+                    BoxNode(ref n) => n.draw(rw),
+                    BallNode(ref n) => n.draw(rw),
+                    LinesNode(ref n) => n.draw(rw),
+                    SegmentNode(ref n) => n.draw(rw),
                 }
             }
         }

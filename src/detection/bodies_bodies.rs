@@ -7,6 +7,7 @@ use ncollide::broad_phase::{Dispatcher, BroadPhase};
 use ncollide::narrow_phase::{CollisionDetector, ShapeShapeDispatcher, ShapeShapeCollisionDetector};
 use ncollide::geometry::Contact;
 use ncollide::ray::Ray;
+use ncollide::point::PointQuery;
 use object::RigidBody;
 use detection::constraint::{Constraint, RBRB};
 use detection::detector::Detector;
@@ -91,6 +92,30 @@ impl<BF> BodiesBodies<BF>
                 Some(t) => out.push((rb, t))
             }
         }
+    }
+
+    /// Computes the interferences between every rigid bodies of a given broad phase, and a point.
+    pub fn interferences_with_point(&mut self,
+                                    point:       &Point,
+                                    broad_phase: &mut BF,
+                                    out:         &mut Vec<Rc<RefCell<RigidBody>>>) {
+        let mut bodies = Vec::new();
+
+        broad_phase.interferences_with_point(point, &mut bodies);
+
+        for rb in bodies.into_iter() {
+            if rb.borrow().shape().contains_point_with_transform(rb.borrow().transform_ref(), point) {
+                out.push(rb.clone())
+            }
+        }
+    }
+
+    /// Computes the interferences between every rigid bodies of a given broad phase, and a aabb.
+    pub fn interferences_with_aabb(&mut self,
+                                  aabb:        &AABB<Point>,
+                                  broad_phase: &mut BF,
+                                  out:         &mut Vec<Rc<RefCell<RigidBody>>>) {
+        broad_phase.interferences_with_bounding_volume(aabb, out);
     }
 
     /// Removes a rigid body from this detector.

@@ -1,14 +1,14 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::os;
-use std::num::{Zero, One};
+use std::num::One;
 use rsfml::graphics::{RenderWindow, RenderTarget, Font};
 use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
 use rsfml::window::{keyboard, mouse};
 use rsfml::graphics::Color;
 use rsfml::system::vector2::Vector2i;
-use na::{Pnt2, Pnt3, Vec2, Iso2};
+use na::{Pnt2, Pnt3, Iso2};
 use na;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
@@ -17,7 +17,6 @@ use camera::Camera;
 use fps::Fps;
 use engine::GraphicsManager;
 use draw_helper;
-use ncollide::ray::Ray;
 
 fn usage(exe_name: &str) {
     println!("Usage: {:s} [OPTION] ", exe_name);
@@ -150,20 +149,10 @@ impl<'a> Testbed<'a> {
                             mouse::MouseLeft => {
                                 let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
                                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                                let ray = Ray::new(mapped_point, Vec2::new(1.0, 0.0));
                                 let mut interferences = Vec::new();
-                                self.world.cast_ray(&ray, &mut interferences);
+                                self.world.interferences_with_point(&mapped_point, &mut interferences);
 
-                                let mut minb = None;
-
-                                for (b, toi) in interferences.into_iter() {
-                                    if toi.is_zero() {
-                                        minb = Some(b);
-                                    }
-                                }
-
-                                if minb.is_some() {
-                                    let b = minb.as_ref().unwrap();
+                                for b in interferences.into_iter() {
                                     if b.borrow().can_move() {
                                         grabbed_object = Some(b.clone())
                                     }
@@ -178,9 +167,9 @@ impl<'a> Testbed<'a> {
                                             }
 
                                             let _1: Iso2<f32> = One::one();
-                                            let attach2 = na::append_translation(&_1, (ray.orig).as_vec());
+                                            let attach2 = na::append_translation(&_1, mapped_point.as_vec());
                                             let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
-                                            let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
+                                            let anchor1 = Anchor::new(Some(grabbed_object.as_ref().unwrap().clone()), attach1);
                                             let anchor2 = Anchor::new(None, attach2);
                                             let joint = Fixed::new(anchor1, anchor2);
                                             grabbed_object_joint = Some(self.world.add_fixed(joint));
