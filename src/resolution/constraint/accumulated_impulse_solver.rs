@@ -1,4 +1,3 @@
-use std::num::Zero;
 use std::rc::Rc;
 use std::cell::RefCell;
 // use rand::RngUtil;
@@ -205,7 +204,7 @@ impl AccumulatedImpulseSolver {
         /*
          * first order resolution
          */
-        let needs_correction = !self.correction.corr_mode.pos_corr_factor().is_zero() &&
+        let needs_correction = !na::is_zero(&self.correction.corr_mode.pos_corr_factor()) &&
             constraints.iter().any(|constraint| {
             match *constraint {
                 RBRB(_, _, ref c) => c.depth >= self.correction.corr_mode.min_depth_for_pos_corr(),

@@ -1,5 +1,6 @@
 #![doc(hidden)]
 
+use std::num::Float;
 use std::mem;
 use std::hash::{Hash, Writer};
 use std::hash::sip::{SipHasher, SipState};

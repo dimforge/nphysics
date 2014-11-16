@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::os;
-use std::num::One;
 use rsfml::graphics::{RenderWindow, RenderTarget, Font};
 use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
@@ -166,7 +165,7 @@ impl<'a> Testbed<'a> {
                                                 None        => { }
                                             }
 
-                                            let _1: Iso2<f32> = One::one();
+                                            let _1: Iso2<f32> = na::one();
                                             let attach2 = na::append_translation(&_1, mapped_point.as_vec());
                                             let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
                                             let anchor1 = Anchor::new(Some(grabbed_object.as_ref().unwrap().clone()), attach1);
@@ -212,7 +211,7 @@ impl<'a> Testbed<'a> {
                     event::MouseMoved{x, y} => {
                         let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
                         let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                        let _1: Iso2<f32> = One::one();
+                        let _1: Iso2<f32> = na::one();
                         let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
                         match grabbed_object {
                             Some(_) => {

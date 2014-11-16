@@ -4,6 +4,7 @@ extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
 
+use std::num::Float;
 use std::sync::Arc;
 use na::{Vec2, Iso2, Translation};
 use ncollide::volumetric::Volumetric;

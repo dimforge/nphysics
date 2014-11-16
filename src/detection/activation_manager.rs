@@ -1,3 +1,4 @@
+use std::num::FloatMath;
 use std::rc::Rc;
 use std::cell::RefCell;
 use na;

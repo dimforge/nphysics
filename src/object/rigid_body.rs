@@ -1,8 +1,7 @@
-use std::num::{Zero, Bounded};
 use std::rc::Rc;
 use std::sync::Arc;
 use std::cell::RefCell;
-use na::{Transformation, Translation, Rotation};
+use na::{Transformation, Translation, Rotation, Bounded};
 use na;
 use na::Transform;
 use ncollide::bounding_volume::{HasBoundingVolume, BoundingVolume, AABB, HasAABB};
@@ -264,7 +263,7 @@ impl RigidBody {
             match mass_properties {
                 None => (na::zero(), na::orig(), na::zero(), Inactive, Static),
                 Some((mass, com, inertia)) => {
-                    if mass.is_zero() {
+                    if na::is_zero(&mass) {
                         panic!("A dynamic body must not have a zero volume.")
                     }
 

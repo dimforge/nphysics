@@ -1,5 +1,4 @@
-use std::num::Bounded;
-use na::{Translate, Rotation};
+use na::{Translate, Rotation, Bounded};
 use na;
 use detection::joint::{Fixed, Anchor, Joint};
 use resolution::constraint::ball_in_socket_equation;

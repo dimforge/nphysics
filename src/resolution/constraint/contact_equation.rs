@@ -1,4 +1,5 @@
-use std::num::Bounded;
+use std::num::FloatMath;
+use na::Bounded;
 use na;
 use ncollide::geometry::Contact;
 use ncollide::volumetric::InertiaTensor;

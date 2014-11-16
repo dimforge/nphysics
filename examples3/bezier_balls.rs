@@ -4,6 +4,7 @@ extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;
 
+use std::num::Float;
 use na::{Pnt3, Vec3, Translation};
 use ncollide::shape::{Ball, BezierSurface};
 use nphysics::world::World;

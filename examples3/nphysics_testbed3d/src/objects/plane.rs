@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::num::Zero;
+use na;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Vec3};
@@ -26,7 +26,7 @@ impl Plane {
 
         let up;
 
-        if world_normal.z.is_zero() && world_normal.y.is_zero() {
+        if na::is_zero(&world_normal.z) && na::is_zero(&world_normal.y) {
             up = Vec3::z();
         }
         else {

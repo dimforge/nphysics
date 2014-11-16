@@ -6,6 +6,7 @@ extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
 
+use std::num::Float;
 use std::rand::{StdRng, SeedableRng, Rng};
 use sync::Arc;
 use na::{Pnt2, Vec2, Translation};

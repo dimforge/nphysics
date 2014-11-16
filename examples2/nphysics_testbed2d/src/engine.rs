@@ -2,11 +2,11 @@ use std::any::AnyRefExt;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::intrinsics::TypeId;
-use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
 use na::{Pnt3, Iso2};
+use na;
 use nphysics::object::RigidBody;
 use ncollide::shape::Shape2;
 use ncollide::shape;
@@ -64,7 +64,7 @@ impl<'a> GraphicsManager<'a> {
             let rb    = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_shape(body.clone(), One::one(), rb.shape_ref(), &mut nodes);
+            self.add_shape(body.clone(), na::one(), rb.shape_ref(), &mut nodes);
 
             nodes
         };

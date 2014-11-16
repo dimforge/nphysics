@@ -2,6 +2,7 @@ use rsfml::system::vector2::{Vector2f, Vector2i};
 use rsfml::graphics::RenderTarget;
 use rsfml::graphics;
 use rsfml::window::event;
+use na;
 use draw_helper::DRAW_SCALE;
 
 static ZOOM_FACTOR: f32 = 0.1;
@@ -57,7 +58,7 @@ impl Camera {
             }
             event::MouseMoved{x, y}             => {
                 if self.pressing {
-                    let zoom = self.curr_zoom.abs();
+                    let zoom = na::abs(&self.curr_zoom);
                     let zx   = (self.lastx - x) as f32 * zoom;
                     let zy   = (self.lasty - y) as f32 * zoom;
 

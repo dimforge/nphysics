@@ -12,3 +12,6 @@ path = "../.."
 
 [dependencies.rust-sfml]
 git = "https://github.com/jeremyletang/rust-sfml"
+
+[dependencies.time]
+git = "https://github.com/rust-lang/time"

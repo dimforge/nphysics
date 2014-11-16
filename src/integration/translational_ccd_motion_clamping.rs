@@ -1,3 +1,4 @@
+use std::num::Float;
 use na::Translation;
 use na;
 use ncollide::utils::data::has_uid::HasUid;

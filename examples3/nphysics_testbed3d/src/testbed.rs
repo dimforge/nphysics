@@ -1,10 +1,9 @@
 use std::os;
-use std::num::{One, Bounded};
 use std::rc::Rc;
 use std::cell::RefCell;
 use time;
 use glfw;
-use na::{Pnt2, Pnt3, Vec3, Translation, Translate, Iso3};
+use na::{Pnt2, Pnt3, Vec3, Translation, Translate, Iso3, Bounded};
 use na;
 use kiss3d::window::Window;
 use kiss3d::light;
@@ -222,7 +221,7 @@ impl Testbed {
                                             None        => { }
                                         }
 
-                                        let _1: Iso3<f32> = One::one();
+                                        let _1: Iso3<f32> = na::one();
                                         let attach2 = na::append_translation(&_1, (ray.orig + ray.dir * mintoi).as_vec());
                                         let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
@@ -271,7 +270,7 @@ impl Testbed {
 
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
-                                        let _1: Iso3<f32> = One::one();
+                                        let _1: Iso3<f32> = na::one();
                                         j.borrow_mut().set_local2(na::append_translation(&_1, (pos + dir * inter).as_vec()))
                                     },
                                     None => { }

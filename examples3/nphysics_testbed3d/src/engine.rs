@@ -2,7 +2,6 @@ use std::intrinsics::TypeId;
 use std::any::AnyRefExt;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::num::One;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use na::{Pnt3, Vec3, Iso3, Col, Translate};
@@ -195,7 +194,7 @@ impl GraphicsManager {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_shape(window, body.clone(), One::one(), rb.shape_ref(), color, &mut nodes);
+            self.add_shape(window, body.clone(), na::one(), rb.shape_ref(), color, &mut nodes);
 
             nodes
         };

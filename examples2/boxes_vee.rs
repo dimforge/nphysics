@@ -4,6 +4,7 @@ extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
 
+use std::num::Float;
 use na::{Vec2, Translation};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics::world::World;

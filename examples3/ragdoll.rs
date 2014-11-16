@@ -4,6 +4,7 @@ extern crate ncollide;
 extern crate nphysics;
 extern crate "nalgebra" as na;
 
+use std::num::Float;
 use na::{Pnt3, Vec3, Translation, Rotation};
 use ncollide::shape::{Plane, Ball, Cylinder};
 use nphysics::world::World;

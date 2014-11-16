@@ -1,6 +1,5 @@
-use std::num::Bounded;
 use std::cell::Ref;
-use na::Row;
+use na::{Row, Bounded};
 use na;
 use math::{Scalar, Point, Vect};
 use object::RigidBody;

@@ -10,5 +10,8 @@ name = "nphysics_testbed3d"
 features = [ "3df32" ]
 path = "../.."
 
+[dependencies.time]
+git = "https://github.com/rust-lang/time"
+
 [dependencies.kiss3d]
 git = "https://github.com/sebcrozet/kiss3d"
