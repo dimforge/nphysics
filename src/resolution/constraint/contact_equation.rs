@@ -24,9 +24,9 @@ impl CorrectionMode {
     /// The velocity correction coefficient.
     pub fn vel_corr_factor(&self) -> Scalar {
         match *self {
-            Velocity(ref v)                          => v.clone(),
-            VelocityAndPosition(ref v, _, _)         => v.clone(),
-            VelocityAndPositionThresold(ref v, _, _) => v.clone()
+            CorrectionMode::Velocity(ref v)                          => v.clone(),
+            CorrectionMode::VelocityAndPosition(ref v, _, _)         => v.clone(),
+            CorrectionMode::VelocityAndPositionThresold(ref v, _, _) => v.clone()
         }
     }
 
@@ -34,9 +34,9 @@ impl CorrectionMode {
     /// The position correction coefficient.
     pub fn pos_corr_factor(&self) -> Scalar {
         match *self {
-            VelocityAndPosition(_, ref p, _)         => p.clone(),
-            VelocityAndPositionThresold(_, ref p, _) => p.clone(),
-            Velocity(_)                              => na::zero()
+            CorrectionMode::VelocityAndPosition(_, ref p, _)         => p.clone(),
+            CorrectionMode::VelocityAndPositionThresold(_, ref p, _) => p.clone(),
+            CorrectionMode::Velocity(_)                              => na::zero()
         }
     }
 
@@ -44,9 +44,9 @@ impl CorrectionMode {
     /// The minimum penetration depth required to switch on the hard repositioning based method.
     pub fn min_depth_for_pos_corr(&self) -> Scalar {
         match *self {
-            VelocityAndPosition(_, _, ref t)         => t.clone(),
-            VelocityAndPositionThresold(_, _, ref t) => t.clone(),
-            Velocity(_)                              => Bounded::max_value()
+            CorrectionMode::VelocityAndPosition(_, _, ref t)         => t.clone(),
+            CorrectionMode::VelocityAndPositionThresold(_, _, ref t) => t.clone(),
+            CorrectionMode::Velocity(_)                              => Bounded::max_value()
         }
     }
 
@@ -54,9 +54,9 @@ impl CorrectionMode {
     /// The max penetration depth the velocity correction will attempt to correct.
     pub fn max_depth_for_vel_corr(&self) -> Scalar {
         match *self {
-            VelocityAndPosition(_, _, _)             => Bounded::max_value(),
-            VelocityAndPositionThresold(_, _, ref t) => t.clone(),
-            Velocity(_)                              => Bounded::max_value()
+            CorrectionMode::VelocityAndPosition(_, _, _)             => Bounded::max_value(),
+            CorrectionMode::VelocityAndPositionThresold(_, _, ref t) => t.clone(),
+            CorrectionMode::Velocity(_)                              => Bounded::max_value()
         }
     }
 }

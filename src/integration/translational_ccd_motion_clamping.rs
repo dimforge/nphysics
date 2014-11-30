@@ -5,10 +5,11 @@ use ncollide::utils::data::has_uid::HasUid;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::BroadPhase;
-use ncollide::bounding_volume::{BoundingVolume, AABB};
+use ncollide::bounding_volume::BoundingVolume;
 use ncollide::geometry;
+use world::RigidBodyCollisionWorld;
 use object::RigidBodyHandle;
-use math::{Scalar, Point, Vect};
+use math::{Scalar, Vect};
 
 
 struct CCDBody {
@@ -22,7 +23,7 @@ impl CCDBody {
     fn new(body: RigidBodyHandle, threshold: Scalar) -> CCDBody {
         CCDBody {
             sqthreshold: threshold * threshold,
-            last_pos:    body.borrow().translation(),
+            last_pos:    body.borrow().position().translation(),
             body:        body,
             accept_zero: true
         }
@@ -31,8 +32,7 @@ impl CCDBody {
 
 /// Handles Continuous Collision Detection.
 pub struct TranslationalCCDMotionClamping {
-    objects: HashMap<uint, CCDBody, UintTWHash>,
-    interferences_collector: Vec<RigidBodyHandle>
+    objects: HashMap<uint, CCDBody, UintTWHash>
 }
 
 impl TranslationalCCDMotionClamping {
@@ -40,8 +40,7 @@ impl TranslationalCCDMotionClamping {
     /// fast-moving rigid bodies.
     pub fn new() -> TranslationalCCDMotionClamping {
         TranslationalCCDMotionClamping {
-            objects:                 HashMap::new(UintTWHash::new()),
-            interferences_collector: Vec::new()
+            objects: HashMap::new(UintTWHash::new())
         }
     }
 
@@ -56,29 +55,22 @@ impl TranslationalCCDMotionClamping {
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.
-    pub fn update<BF, DV>(&mut self, bf: &mut BF)
-        where BF: BroadPhase<Point, Vect, RigidBodyHandle, AABB<Point>, DV> {
+    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld) {
+        let mut update_collision_world = false;
+
         // XXX: we should no do this in a sequential order because CCD betwen two fast, CCD-enabled
         // objects, will not work properly (it will be biased toward the first object).
         for o in self.objects.elements_mut().iter_mut() {
             let brb1 = o.value.body.borrow();
 
-            let movement = brb1.translation() - o.value.last_pos;
+            let movement = brb1.position().translation() - o.value.last_pos;
 
             if na::sqnorm(&movement) > o.value.sqthreshold {
                 // Use CCD for this object.
-                let last_transform = na::append_translation(brb1.transform_ref(), &-movement);
+                let last_transform = na::append_translation(brb1.position(), &-movement);
                 let begin_aabb = brb1.shape_ref().aabb(&last_transform);
-                let end_aabb   = brb1.shape_ref().aabb(brb1.transform_ref());
+                let end_aabb   = brb1.shape_ref().aabb(brb1.position());
                 let swept_aabb = begin_aabb.merged(&end_aabb);
-
-                /*
-                 * Ask the broad phase for interferences.
-                 */
-                // FIXME: performing a convex-cast here would be much more efficient.
-                bf.interferences_with_bounding_volume(
-                    &swept_aabb,
-                    &mut self.interferences_collector);
 
                 /*
                  * Find the minimum toi.
@@ -89,17 +81,18 @@ impl TranslationalCCDMotionClamping {
 
                 let _eps: Scalar = Float::epsilon();
 
-                for rb2 in self.interferences_collector.iter() {
+                // FIXME: performing a convex-cast here would be much more efficient.
+                cw.interferences_with_aabb(&swept_aabb, |rb2| {
                     if rb2.uid() != o.value.body.uid() {
                         let brb2 = rb2.borrow();
 
                         let toi = geometry::time_of_impact_internal::shape_against_shape(
-                                    &last_transform,
-                                    &dir,
-                                    brb1.shape_ref(),
-                                    brb2.transform_ref(),
-                                    &na::zero(), // assume the other object does not move.
-                                    brb2.shape_ref());
+                            &last_transform,
+                            &dir,
+                            brb1.shape_ref(),
+                            brb2.position(),
+                            &na::zero(), // assume the other object does not move.
+                            brb2.shape_ref());
 
                         match toi {
                             Some(t) => {
@@ -114,9 +107,7 @@ impl TranslationalCCDMotionClamping {
                             None => { }
                         }
                     }
-                }
-
-                self.interferences_collector.clear();
+                });
 
                 /*
                  * Revert the object translation at the toi
@@ -134,10 +125,15 @@ impl TranslationalCCDMotionClamping {
                 /*
                  * We moved the object: ensure the broad phase takes that in account.
                  */
-                bf.update_object(&o.value.body);
+                cw.set_next_position(&o.value.body, o.value.body.borrow().position().clone());
+                update_collision_world = true;
             }
 
-            o.value.last_pos = o.value.body.borrow().translation();
+            o.value.last_pos = o.value.body.borrow().position().translation();
+        }
+
+        if update_collision_world {
+            cw.update();
         }
     }
 }

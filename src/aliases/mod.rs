@@ -2,14 +2,11 @@
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use ncollide::broad_phase::DBVTBroadPhase;
-use ncollide::narrow_phase::ShapeShapeCollisionDetector;
 use ncollide::bounding_volume::AABB;
+use ncollide::broad_phase::DBVTBroadPhase;
 // use integration::SweptBallMotionClamping;
-use detection::{BodyBodyDispatcher, BodiesBodies};
 use object::RigidBody;
-use math::{Scalar, Point, Vect, Matrix};
+use math::{Scalar, Point};
 
-pub type DefaultBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>, BodyBodyDispatcher, Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + 'static>>;
-pub type DefaultCollisionDetector = BodiesBodies<DefaultBroadPhase>;
+pub type DefaultBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
 // pub type DefaultSweptBallMotionClamping = SweptBallMotionClamping<DefaultBroadPhase>;

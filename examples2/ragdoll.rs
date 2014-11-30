@@ -1,21 +1,14 @@
-extern crate native;
 extern crate "nalgebra" as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
 
-use std::num::Float;
-use na::{Pnt2, Vec1, Vec2, Translation, Rotation};
+use na::{Pnt2, Vec1, Vec2, Translation, Rotation, BaseFloat};
 use ncollide::shape::{Plane, Cuboid, Ball};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};
 use nphysics_testbed2d::Testbed;
-
-#[start]
-fn start(argc: int, argv: *const *const u8) -> int {
-    native::start(argc, argv, main)
-}
 
 fn main() {
     /*
@@ -63,7 +56,7 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     // body
     let     body_geom = Cuboid::new(Vec2::new(1.2, 0.5));
     let mut body      = RigidBody::new_dynamic(body_geom, 1.0, 0.3, 0.5);
-    body.append_rotation(&-Vec1::new(Float::frac_pi_2()));
+    body.append_rotation(&-Vec1::new(BaseFloat::frac_pi_2()));
     body.append_translation(&pos);
 
     // right arm
@@ -78,7 +71,7 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World) {
     // right foot
     let     rfoot_geom = Cuboid::new(Vec2::new(1.6, 0.2));
     let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0, 0.3, 0.5);
-    rfoot.append_rotation(&-Vec1::new(Float::frac_pi_2()));
+    rfoot.append_rotation(&-Vec1::new(BaseFloat::frac_pi_2()));
     rfoot.append_translation(&(pos + Vec2::new(0.4, 3.0)));
 
     // left foot

@@ -25,7 +25,7 @@ impl Integrator<RigidBody> for BodyExpEulerIntegrator {
         if rb.can_move() {
             let (t, lv, av) = euler::explicit_integrate(
                 dt.clone(),
-                rb.transform_ref(),
+                rb.position(),
                 rb.center_of_mass(),
                 &rb.lin_vel(),
                 &rb.ang_vel(),

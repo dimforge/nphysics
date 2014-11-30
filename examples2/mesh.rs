@@ -1,6 +1,4 @@
-extern crate native;
 extern crate rand;
-extern crate sync;
 extern crate "nalgebra" as na;
 extern crate ncollide;
 extern crate nphysics;
@@ -8,17 +6,12 @@ extern crate nphysics_testbed2d;
 
 use std::num::Float;
 use std::rand::{StdRng, SeedableRng, Rng};
-use sync::Arc;
+use std::sync::Arc;
 use na::{Pnt2, Vec2, Translation};
 use ncollide::shape::{Cuboid, Mesh, Mesh2};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed2d::Testbed;
-
-#[start]
-fn start(argc: int, argv: *const *const u8) -> int {
-    native::start(argc, argv, main)
-}
 
 fn main() {
     /*

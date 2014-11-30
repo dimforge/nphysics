@@ -38,7 +38,7 @@ impl Segment {
 
     pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         let body      = self.body.borrow();
-        let transform = *body.transform_ref() * self.delta;
+        let transform = *body.position() * self.delta;
 
         let ga = transform * self.a;
         let gb = transform * self.b;

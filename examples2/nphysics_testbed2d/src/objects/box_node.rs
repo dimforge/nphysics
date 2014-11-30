@@ -45,7 +45,7 @@ impl<'a> Box<'a> {
 impl<'a> Box<'a> {
     pub fn update(&mut self) {
         let body     = self.body.borrow();
-        let transform = *body.transform_ref() * self.delta;
+        let transform = *body.position() * self.delta;
         let pos = na::translation(&transform);
         let rot = na::rotation(&transform);
 

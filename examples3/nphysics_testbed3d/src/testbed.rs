@@ -3,6 +3,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use time;
 use glfw;
+use glfw::{Key, Action};
 use na::{Pnt2, Pnt3, Vec3, Translation, Translate, Iso3, Bounded};
 use na;
 use kiss3d::window::Window;
@@ -13,7 +14,7 @@ use ncollide::shape::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use nphysics::detection::Detector;
-use nphysics::detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
+use nphysics::detection::constraint::Constraint;
 use nphysics::detection::joint::{Anchor, Fixed, Joint};
 use nphysics::object::RigidBody;
 use nphysics::world::World;
@@ -21,7 +22,7 @@ use engine::GraphicsManager;
 
 
 fn usage(exe_name: &str) {
-    println!("Usage: {:s} [OPTION] ", exe_name);
+    println!("Usage: {} [OPTION] ", exe_name);
     println!("");
     println!("Options:");
     println!("    --help  - prints this help message and exits.");
@@ -34,8 +35,9 @@ fn usage(exe_name: &str) {
     println!("    2      - launch a cube.");
     println!("    3      - launch a fast cube using continuous collision detection.");
     println!("    TAB    - switch camera mode (first-person or arc-ball).");
-    println!("    CTRL + click + drag - select and drag an object using a ball-in-socket joint.");
-    println!("    SHIFT + click - remove an object.");
+    println!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
+    println!("    CTRL + left click + drag - select and drag an object using a ball-in-socket joint.");
+    println!("    SHIFT + left click - remove an object.");
     println!("    arrows - move around when in first-person camera mode.");
     println!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
     println!("    b      - draw the bounding boxes.");
@@ -114,7 +116,7 @@ impl Testbed {
 
     pub fn run(&mut self) {
         let args        = os::args();
-        let mut running = Running;
+        let mut running = RunMode::Running;
 
         if args.len() > 1 {
             for arg in args.iter() {
@@ -124,7 +126,7 @@ impl Testbed {
                     return;
                 }
                 else if arg.as_slice() == "--pause" {
-                    running = Stop;
+                    running = RunMode::Stop;
                 }
             }
         }
@@ -146,7 +148,21 @@ impl Testbed {
         while !self.window.should_close() {
             for mut event in self.window.events().iter() {
                 match event.value {
-                    glfw::MouseButtonEvent(_, glfw::Press, modifier) => {
+                    glfw::MouseButtonEvent(glfw::Button2, glfw::Press, glfw::Control) => {
+                        let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+
+                        let size = self.window.size();
+                        let (pos, dir) = self.graphics.camera().unproject(&cursor_pos, &size);
+
+                        rb.set_translation(pos.to_vec());
+                        rb.set_lin_vel(dir * 1000.0f32);
+
+                        let body = self.world.add_body(rb);
+                        self.world.add_ccd_to(&body, 1.0);
+                        self.graphics.add(&mut self.window, body);
+                    },
+                    glfw::MouseButtonEvent(glfw::Button1, glfw::Press, modifier) => {
                         if modifier.contains(glfw::Shift) {
                             // XXX: huge and uggly code duplication
                             let size = self.window.size();
@@ -154,18 +170,15 @@ impl Testbed {
                             let ray = Ray::new(pos, dir);
 
                             // cast the ray
-                            let mut interferences = Vec::new();
-                            self.world.interferences_with_ray(&ray, &mut interferences);
-
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
-                            for (b, toi) in interferences.into_iter() {
-                                if toi < mintoi {
-                                    mintoi = toi;
-                                    minb   = Some(b);
+                            self.world.interferences_with_ray(&ray, |b, inter| {
+                                if inter.toi < mintoi {
+                                    mintoi = inter.toi;
+                                    minb   = Some(b.clone());
                                 }
-                            }
+                            });
 
                             if minb.is_some() {
                                 let b = minb.as_ref().unwrap();
@@ -193,18 +206,15 @@ impl Testbed {
                             let ray = Ray::new(pos, dir);
 
                             // cast the ray
-                            let mut interferences = Vec::new();
-                            self.world.interferences_with_ray(&ray, &mut interferences);
-
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
-                            for (b, toi) in interferences.into_iter() {
-                                if toi < mintoi {
-                                    mintoi = toi;
-                                    minb   = Some(b);
+                            self.world.interferences_with_ray(&ray, |b, inter| {
+                                if inter.toi < mintoi {
+                                    mintoi = inter.toi;
+                                    minb   = Some(b.clone());
                                 }
-                            }
+                            });
 
                             if minb.is_some() {
                                 let b = minb.as_ref().unwrap();
@@ -223,7 +233,7 @@ impl Testbed {
 
                                         let _1: Iso3<f32> = na::one();
                                         let attach2 = na::append_translation(&_1, (ray.orig + ray.dir * mintoi).as_vec());
-                                        let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
+                                        let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = Fixed::new(anchor1, anchor2);
@@ -281,22 +291,22 @@ impl Testbed {
                         }
 
                         event.inhibited =
-                            self.window.glfw_window().get_key(glfw::KeyRightShift)   != glfw::Release ||
-                            self.window.glfw_window().get_key(glfw::KeyLeftShift)    != glfw::Release ||
-                            self.window.glfw_window().get_key(glfw::KeyRightControl) != glfw::Release ||
-                            self.window.glfw_window().get_key(glfw::KeyLeftControl)  != glfw::Release;
+                            self.window.glfw_window().get_key(Key::RightShift)   != Action::Release ||
+                            self.window.glfw_window().get_key(Key::LeftShift)    != Action::Release ||
+                            self.window.glfw_window().get_key(Key::RightControl) != Action::Release ||
+                            self.window.glfw_window().get_key(Key::LeftControl)  != Action::Release;
                     },
-                    glfw::KeyEvent(glfw::KeyTab, _, glfw::Release, _) => self.graphics.switch_cameras(),
-                    glfw::KeyEvent(glfw::KeyT, _, glfw::Release, _) => {
-                        if running == Stop {
-                            running = Running;
+                    glfw::KeyEvent(Key::Tab, _, Action::Release, _) => self.graphics.switch_cameras(),
+                    glfw::KeyEvent(Key::T, _,   Action::Release, _) => {
+                        if running == RunMode::Stop {
+                            running = RunMode::Running;
                         }
                         else {
-                            running = Stop;
+                            running = RunMode::Stop;
                         }
                     },
-                    glfw::KeyEvent(glfw::KeyS, _, glfw::Release, _) => running = Step,
-                    glfw::KeyEvent(glfw::KeyB, _, glfw::Release, _) => {
+                    glfw::KeyEvent(Key::S, _, Action::Release, _) => running = RunMode::Step,
+                    glfw::KeyEvent(Key::B, _, Action::Release, _) => {
                         // XXX: there is a bug on kiss3d with the removal of objects.
                         // draw_aabbs = !draw_aabbs;
                         // if draw_aabbs {
@@ -306,7 +316,7 @@ impl Testbed {
                         //     graphics.disable_aabb_draw(&mut self.window);
                         // }
                     },
-                    glfw::KeyEvent(glfw::KeySpace, _, glfw::Release, _) => {
+                    glfw::KeyEvent(Key::Space, _, Action::Release, _) => {
                         draw_colls = !draw_colls;
                         if draw_colls {
                             self.window.scene_mut().set_lines_width(1.0);
@@ -317,7 +327,7 @@ impl Testbed {
                             self.window.scene_mut().set_surface_rendering_activation(true);
                         }
                     },
-                    glfw::KeyEvent(glfw::Key1, _, glfw::Press, _) => {
+                    glfw::KeyEvent(Key::Num1, _, Action::Press, _) => {
                         let geom   = Ball::new(0.5f32);
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -337,7 +347,7 @@ impl Testbed {
                         let body = self.world.add_body(rb);
                         self.graphics.add(&mut self.window, body.clone());
                     },
-                    glfw::KeyEvent(glfw::Key2, _, glfw::Press, _) => {
+                    glfw::KeyEvent(Key::Num2, _, Action::Press, _) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -356,41 +366,26 @@ impl Testbed {
 
                         let body = self.world.add_body(rb);
                         self.graphics.add(&mut self.window, body.clone());
-                    },
-                    glfw::KeyEvent(glfw::Key3, _, glfw::Press, _) => {
-                        let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
-                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
-
-                        let cam_transfom;
-
-                        {
-                            let cam = self.graphics.camera();
-                            cam_transfom = cam.view_transform();
-                        }
-
-                        rb.append_translation(&na::translation(&cam_transfom));
-
-                        let front = na::rotate(&cam_transfom, &Vec3::z());
-
-                        rb.set_lin_vel(front * 1000.0f32);
-
-                        let body = self.world.add_body(rb);
-                        self.world.add_ccd_to(&body, 1.0);
-                        self.graphics.add(&mut self.window, body);
-                    },
+                    }
                     _ => { }
                 }
             }
 
-            let before = time::precise_time_s();
+            let dt;
 
-            if running != Stop {
+            if running != RunMode::Stop {
+                let before = time::precise_time_s();
                 self.world.step(0.016);
+                dt = time::precise_time_s() - before;
+
                 self.graphics.draw();
             }
+            else {
+                dt = 0.0;
+            }
 
-            if running == Step {
-                running = Stop;
+            if running == RunMode::Step {
+                running = RunMode::Stop;
             }
 
             if draw_colls {
@@ -400,9 +395,7 @@ impl Testbed {
 
             let color = Pnt3::new(1.0, 1.0, 1.0);
 
-            if running != Stop {
-                let dt = time::precise_time_s() - before;
-
+            if running != RunMode::Stop {
                 self.window.draw_text(dt.to_string().as_slice(), &na::orig(), &font, &color);
             }
             else {
@@ -428,18 +421,18 @@ fn draw_collisions(window: &mut Window, physics: &mut World) {
 
     for c in collisions.iter() {
         match *c {
-            RBRB(_, _, ref c) => {
+            Constraint::RBRB(_, _, ref c) => {
                 window.draw_line(&c.world1, &c.world2, &Pnt3::new(1.0, 0.0, 0.0));
 
                 let center = na::center(&c.world1, &c.world2);
                 let end    = center + c.normal * 0.4f32;
                 window.draw_line(&center, &end, &Pnt3::new(0.0, 1.0, 1.0))
             },
-            BallInSocketConstraint(ref bis) => {
+            Constraint::BallInSocket(ref bis) => {
                 let bbis = bis.borrow();
                 window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Pnt3::new(0.0, 1.0, 0.0));
             },
-            FixedConstraint(ref f) => {
+            Constraint::Fixed(ref f) => {
                 // FIXME: draw the rotation too
                 window.draw_line(&f.borrow().anchor1_pos().translate(&na::orig()), &f.borrow().anchor2_pos().translate(&na::orig()), &Pnt3::new(0.0, 1.0, 0.0));
             }

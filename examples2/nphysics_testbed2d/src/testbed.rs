@@ -18,7 +18,7 @@ use engine::GraphicsManager;
 use draw_helper;
 
 fn usage(exe_name: &str) {
-    println!("Usage: {:s} [OPTION] ", exe_name);
+    println!("Usage: {} [OPTION] ", exe_name);
     println!("");
     println!("Options:");
     println!("    --help  - prints this help message and exits.");
@@ -97,7 +97,7 @@ impl<'a> Testbed<'a> {
 
     pub fn run(&mut self) {
         let args        = os::args();
-        let mut running = Running;
+        let mut running = RunMode::Running;
 
         if args.len() > 1 {
             if args.len() > 2 || args[1].as_slice() != "--pause" {
@@ -106,7 +106,7 @@ impl<'a> Testbed<'a> {
                 return;
             }
             else {
-                running = Stop;
+                running = RunMode::Stop;
             }
         }
 
@@ -130,14 +130,14 @@ impl<'a> Testbed<'a> {
                     event::KeyPressed{code, ..} => {
                         match code {
                             keyboard::Escape => self.window.close(),
-                            keyboard::S      => running = Step,
+                            keyboard::S      => running = RunMode::Step,
                             keyboard::Space  => draw_colls = !draw_colls,
                             keyboard::T      => {
-                                if running == Stop {
-                                    running = Running;
+                                if running == RunMode::Stop {
+                                    running = RunMode::Running;
                                 }
                                 else {
-                                    running = Stop;
+                                    running = RunMode::Stop;
                                 }
                             },
                             _                => { }
@@ -148,14 +148,11 @@ impl<'a> Testbed<'a> {
                             mouse::MouseLeft => {
                                 let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
                                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                                let mut interferences = Vec::new();
-                                self.world.interferences_with_point(&mapped_point, &mut interferences);
-
-                                for b in interferences.into_iter() {
+                                self.world.interferences_with_point(&mapped_point, |b| {
                                     if b.borrow().can_move() {
                                         grabbed_object = Some(b.clone())
                                     }
-                                }
+                                });
 
                                 match grabbed_object {
                                     Some(ref b) => {
@@ -167,7 +164,7 @@ impl<'a> Testbed<'a> {
 
                                             let _1: Iso2<f32> = na::one();
                                             let attach2 = na::append_translation(&_1, mapped_point.as_vec());
-                                            let attach1 = na::inv(&na::transformation(b.borrow().transform_ref())).unwrap() * attach2;
+                                            let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
                                             let anchor1 = Anchor::new(Some(grabbed_object.as_ref().unwrap().clone()), attach1);
                                             let anchor2 = Anchor::new(None, attach2);
                                             let joint = Fixed::new(anchor1, anchor2);
@@ -231,12 +228,12 @@ impl<'a> Testbed<'a> {
 
             fps.reset();
 
-            if running != Stop {
+            if running != RunMode::Stop {
                 self.world.step(0.016);
             }
 
-            if running == Step {
-                running = Stop;
+            if running == RunMode::Step {
+                running = RunMode::Stop;
             }
             fps.register_delta();
             self.graphics.draw(&mut self.window, &camera);

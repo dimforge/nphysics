@@ -3,6 +3,14 @@ name    = "nphysics"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
+description = "2 and 3-dimensional physics engine in Rust."
+documentation = "http://nphysics-dev.org/doc/nphysics"
+homepage = "http://nphysics-dev.org"
+repository = "https://github.com/sebcrozet/nphysics"
+readme = "README.md"
+keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
+license = "BSD-3-Clause"
+
 [features]
 f32 = [ ]
 f64 = [ ]

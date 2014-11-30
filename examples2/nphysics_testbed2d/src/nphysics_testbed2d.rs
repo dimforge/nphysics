@@ -1,7 +1,6 @@
 #![warn(non_camel_case_types)]
 
 extern crate rand;
-extern crate sync;
 extern crate time;
 extern crate collections;
 extern crate rsfml;

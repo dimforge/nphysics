@@ -4,15 +4,13 @@ use std::cell::RefCell;
 use na;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
-use ncollide::broad_phase::BroadPhase;
-use ncollide::narrow_phase::{CollisionDetector, ShapeShapeCollisionDetector};
-use ncollide::bounding_volume::AABB;
-use detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
+use world::RigidBodyCollisionWorld;
+use detection::constraint::Constraint;
 use detection::joint::{JointManager, Joint};
-use object::{RigidBody, Deleted};
+use object::{RigidBody, ActivationState};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
-use math::{Scalar, Point, Vect, Matrix};
+use math::Scalar;
 
 /// Structure that monitors island-based activation/deactivation of objects.
 ///
@@ -22,7 +20,6 @@ pub struct ActivationManager {
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
     to_activate:    Vec<Rc<RefCell<RigidBody>>>,
-    to_deactivate:  Vec<uint>
 }
 
 impl ActivationManager {
@@ -39,7 +36,6 @@ impl ActivationManager {
             ufind:          Vec::new(),
             can_deactivate: Vec::new(),
             to_activate:    Vec::new(),
-            to_deactivate:  Vec::new()
         }
     }
 
@@ -66,14 +62,10 @@ impl ActivationManager {
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
-    pub fn update<BF>(&mut self,
-                      broad_phase: &mut BF,
-                      joints:      &JointManager,
-                      bodies:      &mut HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>)
-        where BF: BroadPhase<Point, Vect,
-                             Rc<RefCell<RigidBody>>,
-                             AABB<Point>,
-                             Box<ShapeShapeCollisionDetector<Scalar, Point, Vect, Matrix> + Send>> {
+    pub fn update(&mut self,
+                  world:  &mut RigidBodyCollisionWorld,
+                  joints: &JointManager,
+                  bodies: &HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>) {
         /*
          *
          * Update bodies energy
@@ -82,17 +74,36 @@ impl ActivationManager {
         for (i, b) in bodies.elements().iter().enumerate() {
             let mut b = b.value.borrow_mut();
 
-            self.update_energy(&mut *b);
+            assert!(*b.activation_state() != ActivationState::Deleted);
+            if b.is_active() {
+                self.update_energy(&mut *b);
+            }
+
             b.set_index(i as int);
         }
 
+        /*
+         *
+         * Activate bodies that need it.
+         *
+         */
+        for b in self.to_activate.iter() {
+            let mut rb = b.borrow_mut();
+
+            match rb.deactivation_threshold() {
+                Some(threshold) => rb.activate(threshold * na::cast(2.0f64)),
+                None => { }
+            }
+        }
+
+        self.to_activate.clear();
 
         /*
          *
          * Build islands to deactivate those with low-energy objects only.
          *
          */
-        // resize buffers
+        // Resize buffers.
         if bodies.len() > self.ufind.len() {
             let to_add = bodies.len() - self.ufind.len();
             self.ufind.grow(to_add, UnionFindSet::new(0));
@@ -103,7 +114,7 @@ impl ActivationManager {
             self.can_deactivate.truncate(bodies.len());
         }
 
-        // init the union find
+        // Init the union find.
         for (i, u) in self.ufind.iter_mut().enumerate() {
             u.reinit(i)
         }
@@ -112,17 +123,17 @@ impl ActivationManager {
             *d = true
         }
 
-        // run the union-find
+        // Run the union-find.
         fn make_union(b1: &Rc<RefCell<RigidBody>>, b2: &Rc<RefCell<RigidBody>>, ufs: &mut [UnionFindSet]) {
             let rb1 = b1.borrow();
             let rb2 = b2.borrow();
 
-            if rb1.is_active() && rb2.is_active() {
+            if rb1.can_move() && rb2.can_move() {
                 union_find::union(rb1.index() as uint, rb2.index() as uint, ufs)
             }
         }
 
-        broad_phase.for_each_pair(|b1, b2, cd| {
+        world.contact_pairs(|b1, b2, cd| {
             if cd.num_colls() != 0 {
                 make_union(b1, b2, self.ufind.as_mut_slice())
             }
@@ -130,14 +141,14 @@ impl ActivationManager {
 
         for e in joints.joints().elements().iter() {
             match e.value {
-                RBRB(ref b1, ref b2, _) => make_union(b1, b2, self.ufind.as_mut_slice()),
-                BallInSocketConstraint(ref bis)   => {
-                    match (bis.borrow().anchor1().body.as_ref(), bis.borrow().anchor2().body.as_ref()) {
+                Constraint::RBRB(ref b1, ref b2, _) => make_union(b1, b2, self.ufind.as_mut_slice()),
+                Constraint::BallInSocket(ref b)   => {
+                    match (b.borrow().anchor1().body.as_ref(), b.borrow().anchor2().body.as_ref()) {
                         (Some(b1), Some(b2)) => make_union(b1, b2, self.ufind.as_mut_slice()),
                         _ => { }
                     }
                 },
-                FixedConstraint(ref f)   => {
+                Constraint::Fixed(ref f)   => {
                     match (f.borrow().anchor1().body.as_ref(), f.borrow().anchor2().body.as_ref()) {
                         (Some(b1), Some(b2)) => make_union(b1, b2, self.ufind.as_mut_slice()),
                         _ => { }
@@ -147,11 +158,9 @@ impl ActivationManager {
         }
 
         /*
-         *
-         * Find deactivable islands and deactivate them
-         *
+         * Body activation/deactivation.
          */
-        // find out whether islands can be deactivated
+        // Find deactivable islands.
         for i in range(0u, self.ufind.len()) {
             let root = union_find::find(i, self.ufind.as_mut_slice());
             let b    = bodies.elements()[i].value.borrow();
@@ -165,79 +174,19 @@ impl ActivationManager {
                 };
         }
 
-        // deactivate islands having only deactivable objects
+        // Activate/deactivate islands.
         for i in range(0u, self.ufind.len()) {
             let root = union_find::find(i, self.ufind.as_mut_slice());
+            let mut b = bodies.elements()[i].value.borrow_mut();
 
-            if self.can_deactivate[root] { // everybody in this set can be deactivacted
-                let b = &bodies.elements()[i].value;
-                b.borrow_mut().deactivate();
-                broad_phase.deactivate(b);
-                self.to_deactivate.push(b.deref() as *const RefCell<RigidBody> as uint);
+            if self.can_deactivate[root] { // Everybody in this set can be deactivacted.
+                b.deactivate();
             }
-        }
-
-        for b in self.to_deactivate.iter() {
-            bodies.remove(b);
-        }
-
-        self.to_deactivate.clear();
-
-        /*
-         *
-         * Activate any deactivated island interfering with an active object.
-         *
-         */
-        while !self.to_activate.is_empty() { // the len will change
-            let to_activate = self.to_activate.pop().unwrap();
-
-            {
-                let mut b = to_activate.borrow_mut();
-
-                if *b.activation_state() == Deleted {
-                    continue
-                }
-                else {
-                    if !b.is_active() {
-                        bodies.insert(to_activate.deref() as *const RefCell<RigidBody> as uint, to_activate.clone());
-                    }
-
-                    let threshold = b.deactivation_threshold().unwrap();
-                    b.activate(threshold * na::cast(2.0f64))
-                }
-            }
-
-            fn add_to_activation_list(body: &Rc<RefCell<RigidBody>>, list: &mut Vec<Rc<RefCell<RigidBody>>>) {
-                let rb = body.borrow_mut();
-
-                if !rb.is_active() && rb.can_move() {
-                    list.push(body.clone());
-                }
-            }
-
-            broad_phase.activate(&to_activate, |b1, b2, cd| {
-                if cd.num_colls() > 0 {
-                    add_to_activation_list(b1, &mut self.to_activate);
-                    add_to_activation_list(b2, &mut self.to_activate);
-                }
-            });
-
-            // propagate through joints too
-            for joints in joints.joints_with_body(&to_activate).iter() {
-                for joint in joints.iter() {
-                    match *joint {
-                        RBRB(ref b1, ref b2, _) => {
-                            add_to_activation_list(b1, &mut self.to_activate);
-                            add_to_activation_list(b2, &mut self.to_activate);
-                        },
-                        BallInSocketConstraint(ref bis) => {
-                            let _ = bis.borrow().anchor1().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
-                            let _ = bis.borrow().anchor2().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
-                        }
-                        FixedConstraint(ref f) => {
-                            let _ = f.borrow().anchor1().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
-                            let _ = f.borrow().anchor2().body.as_ref().map(|b| add_to_activation_list(b, &mut self.to_activate));
-                        }
+            else { // Everybody in this set must be reactivated.
+                if !b.is_active() && b.can_move() {
+                    match b.deactivation_threshold() {
+                        Some(threshold) => b.activate(threshold * na::cast(2.0f64)),
+                        None => { }
                     }
                 }
             }

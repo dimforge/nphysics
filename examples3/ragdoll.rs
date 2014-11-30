@@ -1,21 +1,15 @@
-extern crate native;
 extern crate nphysics_testbed3d;
 extern crate ncollide;
 extern crate nphysics;
 extern crate "nalgebra" as na;
 
-use std::num::Float;
+use std::f32;
 use na::{Pnt3, Vec3, Translation, Rotation};
 use ncollide::shape::{Plane, Ball, Cylinder};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Anchor, BallInSocket};
 use nphysics_testbed3d::Testbed;
-
-#[start]
-fn start(argc: int, argv: *const *const u8) -> int {
-    native::start(argc, argv, main)
-}
 
 fn main() {
     /*
@@ -72,7 +66,7 @@ fn add_ragdoll(pos: Vec3<f32>, world: &mut World) {
     // right arm
     let     rarm_geom = Cylinder::new(1.6, 0.2);
     let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0, 0.3, 0.5);
-    rarm.append_rotation(&Vec3::new(Float::frac_pi_2(), 0.0, 0.0));
+    rarm.append_rotation(&Vec3::new(f32::consts::FRAC_PI_2, 0.0, 0.0));
     rarm.append_translation(&(pos + Vec3::new(0.0, 1.0, 2.4)));
 
     // left arm

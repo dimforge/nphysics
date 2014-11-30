@@ -1,21 +1,14 @@
-extern crate native;
-extern crate sync;
 extern crate "nalgebra" as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;
 
-use sync::Arc;
+use std::sync::Arc;
 use na::Vec3;
 use ncollide::shape::{Mesh, Mesh3};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;
-
-#[start]
-fn start(argc: int, argv: *const *const u8) -> int {
-    native::start(argc, argv, main)
-}
 
 fn main() {
     /*

@@ -26,19 +26,19 @@ pub enum SceneNode<'a> {
 impl<'a> SceneNode<'a> {
     pub fn select(&mut self) {
         match *self {
-            BallNode(ref mut n) => n.select(),
-            BoxNode(ref mut n) => n.select(),
-            LinesNode(ref mut n) => n.select(),
-            SegmentNode(ref mut n) => n.select(),
+            SceneNode::BallNode(ref mut n) => n.select(),
+            SceneNode::BoxNode(ref mut n) => n.select(),
+            SceneNode::LinesNode(ref mut n) => n.select(),
+            SceneNode::SegmentNode(ref mut n) => n.select(),
         }
     }
 
     pub fn unselect(&mut self) {
         match *self {
-            BallNode(ref mut n) => n.unselect(),
-            BoxNode(ref mut n) => n.unselect(),
-            LinesNode(ref mut n) => n.unselect(),
-            SegmentNode(ref mut n) => n.unselect(),
+            SceneNode::BallNode(ref mut n) => n.unselect(),
+            SceneNode::BoxNode(ref mut n) => n.unselect(),
+            SceneNode::LinesNode(ref mut n) => n.unselect(),
+            SceneNode::SegmentNode(ref mut n) => n.unselect(),
         }
     }
 }
@@ -128,7 +128,7 @@ impl<'a> GraphicsManager<'a> {
                 out:   &mut Vec<SceneNode>) {
         let color = self.color_for_object(&body);
         let margin = body.borrow().margin();
-        out.push(BallNode(Ball::new(body, delta, shape.radius() + margin, color)))
+        out.push(SceneNode::BallNode(Ball::new(body, delta, shape.radius() + margin, color)))
     }
 
     fn add_lines(&mut self,
@@ -142,7 +142,7 @@ impl<'a> GraphicsManager<'a> {
         let vs = shape.vertices().clone();
         let is = shape.indices().clone();
 
-        out.push(LinesNode(Lines::new(body, delta, vs, is, color)))
+        out.push(SceneNode::LinesNode(Lines::new(body, delta, vs, is, color)))
     }
 
 
@@ -157,7 +157,7 @@ impl<'a> GraphicsManager<'a> {
 
         let color = self.color_for_object(&body);
 
-        out.push(BoxNode(Box::new(body, delta, rx + margin, ry + margin, color)))
+        out.push(SceneNode::BoxNode(Box::new(body, delta, rx + margin, ry + margin, color)))
     }
 
     fn add_segment(&mut self,
@@ -170,7 +170,7 @@ impl<'a> GraphicsManager<'a> {
 
         let color = self.color_for_object(&body);
 
-        out.push(SegmentNode(Segment::new(body, delta, *a, *b, color)))
+        out.push(SceneNode::SegmentNode(Segment::new(body, delta, *a, *b, color)))
     }
 
 
@@ -184,10 +184,10 @@ impl<'a> GraphicsManager<'a> {
         for (_, ns) in self.rb2sn.iter_mut() {
             for n in ns.iter_mut() {
                 match *n {
-                    BoxNode(ref mut n) => n.update(),
-                    BallNode(ref mut n) => n.update(),
-                    LinesNode(ref mut n) => n.update(),
-                    SegmentNode(ref mut n) => n.update(),
+                    SceneNode::BoxNode(ref mut n) => n.update(),
+                    SceneNode::BallNode(ref mut n) => n.update(),
+                    SceneNode::LinesNode(ref mut n) => n.update(),
+                    SceneNode::SegmentNode(ref mut n) => n.update(),
                 }
             }
         }
@@ -195,10 +195,10 @@ impl<'a> GraphicsManager<'a> {
         for (_, ns) in self.rb2sn.iter_mut() {
             for n in ns.iter_mut() {
                 match *n {
-                    BoxNode(ref n) => n.draw(rw),
-                    BallNode(ref n) => n.draw(rw),
-                    LinesNode(ref n) => n.draw(rw),
-                    SegmentNode(ref n) => n.draw(rw),
+                    SceneNode::BoxNode(ref n) => n.draw(rw),
+                    SceneNode::BallNode(ref n) => n.draw(rw),
+                    SceneNode::LinesNode(ref n) => n.draw(rw),
+                    SceneNode::SegmentNode(ref n) => n.draw(rw),
                 }
             }
         }

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use sync::Arc;
+use std::sync::Arc;
 use rsfml::graphics;
 use rsfml::graphics::Color;
 use na::{Pnt2, Pnt3, Iso2};
@@ -39,7 +39,7 @@ impl Lines {
 
     pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         let body      = self.body.borrow();
-        let transform = *body.transform_ref() * self.delta;
+        let transform = *body.position() * self.delta;
 
         let vs = self.vertices.deref();
 

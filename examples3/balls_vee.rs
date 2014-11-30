@@ -1,4 +1,3 @@
-extern crate native;
 extern crate "nalgebra" as na;
 extern crate ncollide;
 extern crate nphysics;
@@ -10,11 +9,6 @@ use ncollide::shape::{Ball, Plane};
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;
-
-#[start]
-fn start(argc: int, argv: *const *const u8) -> int {
-    native::start(argc, argv, main)
-}
 
 fn main() {
     /*

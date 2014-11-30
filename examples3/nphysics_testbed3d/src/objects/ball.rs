@@ -3,7 +3,6 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Iso3};
-use na;
 use nphysics::object::RigidBody;
 
 pub struct Ball {
@@ -20,7 +19,7 @@ impl Ball {
                radius: f32,
                color:  Pnt3<f32>,
                window: &mut Window) -> Ball {
-        let t  = na::transformation(body.borrow().deref());
+        let t = body.borrow().position().clone();
 
         let mut res = Ball {
             color:      color,
@@ -49,7 +48,7 @@ impl Ball {
         let rb = self.body.borrow();
 
         if rb.is_active() {
-            self.gfx.set_local_transformation(na::transformation(rb.deref()) * self.delta);
+            self.gfx.set_local_transformation(*rb.position() * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

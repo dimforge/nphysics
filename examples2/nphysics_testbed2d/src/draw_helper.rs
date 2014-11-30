@@ -5,7 +5,7 @@ use na::Translate;
 use na::Pnt2;
 use na;
 use nphysics::world::World;
-use nphysics::detection::constraint::{RBRB, BallInSocketConstraint, FixedConstraint};
+use nphysics::detection::constraint::Constraint;
 use nphysics::detection::joint::Joint;
 
 pub static DRAW_SCALE: f32 = 20.0;
@@ -19,7 +19,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
 
     for c in collisions.iter() {
         match *c {
-            RBRB(_, _, c) => {
+            Constraint::RBRB(_, _, c) => {
                 draw_line(
                     window,
                     &c.world1,
@@ -39,7 +39,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
                     &(center + c.normal),
                     &Color::new_RGB(0, 0, 255));
             },
-            BallInSocketConstraint(ref bis) => {
+            Constraint::BallInSocket(ref bis) => {
                 draw_line(
                     window,
                     &bis.borrow().anchor1_pos(),
@@ -47,7 +47,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
                     &Color::new_RGB(255, 0, 0)
                 );
             },
-            FixedConstraint(ref bis) => {
+            Constraint::Fixed(ref bis) => {
                 draw_line(
                     window,
                     &na::translation(&bis.borrow().anchor1_pos()).translate(&na::orig()),

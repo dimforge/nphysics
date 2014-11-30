@@ -72,7 +72,7 @@ impl Joint<Point> for BallInSocket {
     fn anchor1_pos(&self) -> Point {
         match self.anchor1.body {
             Some(ref b) => {
-                b.borrow().transform_ref().transform(&self.anchor1.position)
+                b.borrow().position().transform(&self.anchor1.position)
             },
             None => self.anchor1.position.clone()
         }
@@ -83,7 +83,7 @@ impl Joint<Point> for BallInSocket {
     fn anchor2_pos(&self) -> Point {
         match self.anchor2.body {
             Some(ref b) => {
-                b.borrow().transform_ref().transform(&self.anchor2.position)
+                b.borrow().position().transform(&self.anchor2.position)
             },
             None => self.anchor2.position.clone()
         }

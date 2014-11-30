@@ -1,4 +1,3 @@
-extern crate native;
 extern crate rustrt;
 extern crate kiss3d;
 extern crate "nalgebra" as na;
@@ -19,11 +18,6 @@ use ncollide::bounding_volume;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;
-
-#[start]
-fn start(argc: int, argv: *const *const u8) -> int {
-    native::start(argc, argv, main)
-}
 
 fn main() {
     /*

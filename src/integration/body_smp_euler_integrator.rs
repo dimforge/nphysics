@@ -23,7 +23,7 @@ impl Integrator<RigidBody> for BodySmpEulerIntegrator {
         if rb.can_move() {
             let (t, lv, av) = euler::semi_implicit_integrate(
                 dt.clone(),
-                rb.transform_ref(),
+                rb.position(),
                 rb.center_of_mass(),
                 &rb.lin_vel(),
                 &rb.ang_vel(),

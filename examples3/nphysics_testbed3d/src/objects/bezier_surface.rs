@@ -23,7 +23,7 @@ impl BezierSurface {
                nvpoints:       uint,
                color:          Pnt3<f32>,
                window:         &mut Window) -> BezierSurface {
-        let t      = na::transformation(body.borrow().deref());
+        let t      = body.borrow().position().clone();
         let bezier = procedural::bezier_surface(control_points, nupoints, nvpoints, 100, 100);
 
         let mut res = BezierSurface {
@@ -54,7 +54,7 @@ impl BezierSurface {
         let rb = self.body.borrow();
 
         if rb.is_active() {
-            self.gfx.set_local_transformation(na::transformation(rb.deref()) * self.delta);
+            self.gfx.set_local_transformation(*rb.position() * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {

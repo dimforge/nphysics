@@ -21,7 +21,7 @@ impl Convex {
                convex:   &TriMesh<f32, Pnt3<f32>, Vec3<f32>>,
                color:    Pnt3<f32>,
                window:   &mut Window) -> Convex {
-        let t = na::transformation(body.borrow().deref());
+        let t = body.borrow().position().clone();
 
         let mut res = Convex {
             color:      color,
@@ -51,7 +51,7 @@ impl Convex {
 
         if rb.is_active() {
             {
-                self.gfx.set_local_transformation(na::transformation(rb.deref()) * self.delta);
+                self.gfx.set_local_transformation(*rb.position() * self.delta);
             }
 
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);

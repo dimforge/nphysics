@@ -70,7 +70,7 @@ impl ImpulseCache {
     pub fn insert(&mut self, cid: uint, obj1: uint, obj2: uint, center: Point) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
-            match self.hash_prev.find_copy(&id) {
+            match self.hash_prev.get(&id).cloned() {
                 Some((_, i)) => i,
                 None         => 0
             };

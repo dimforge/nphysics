@@ -1,14 +1,12 @@
 //! Collision detection and joints.
 
 pub use detection::detector::Detector;
-pub use detection::bodies_bodies::{BodiesBodies, BodyBodyDispatcher};
 pub use detection::activation_manager::ActivationManager;
 
 pub mod constraint;
 
 // XXX: `pub` due to rust#18241
 pub mod detector;
-mod bodies_bodies;
 
 /// Joint handling.
 pub mod joint {

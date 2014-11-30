@@ -24,79 +24,79 @@ use objects::convex::Convex;
 
 
 pub enum Node {
-    BallNode(Ball),
-    BoxNode(Box),
-    CylinderNode(Cylinder),
-    ConeNode(Cone),
-    MeshNode(Mesh),
-    PlaneNode(Plane),
-    BezierSurfaceNode(BezierSurface),
-    ConvexNode(Convex)
+    Ball(Ball),
+    Box(Box),
+    Cylinder(Cylinder),
+    Cone(Cone),
+    Mesh(Mesh),
+    Plane(Plane),
+    BezierSurface(BezierSurface),
+    Convex(Convex)
 }
 
 impl Node {
     pub fn select(&mut self) {
         match *self {
-            PlaneNode(ref mut n)             => n.select(),
-            BallNode(ref mut n)              => n.select(),
-            BoxNode(ref mut n)               => n.select(),
-            CylinderNode(ref mut n)          => n.select(),
-            ConeNode(ref mut n)              => n.select(),
-            MeshNode(ref mut n)              => n.select(),
-            BezierSurfaceNode(ref mut n)     => n.select(),
-            ConvexNode(ref mut n)            => n.select()
+            Node::Plane(ref mut n)             => n.select(),
+            Node::Ball(ref mut n)              => n.select(),
+            Node::Box(ref mut n)               => n.select(),
+            Node::Cylinder(ref mut n)          => n.select(),
+            Node::Cone(ref mut n)              => n.select(),
+            Node::Mesh(ref mut n)              => n.select(),
+            Node::BezierSurface(ref mut n)     => n.select(),
+            Node::Convex(ref mut n)            => n.select()
         }
     }
 
     pub fn unselect(&mut self) {
         match *self {
-            PlaneNode(ref mut n)             => n.unselect(),
-            BallNode(ref mut n)              => n.unselect(),
-            BoxNode(ref mut n)               => n.unselect(),
-            CylinderNode(ref mut n)          => n.unselect(),
-            ConeNode(ref mut n)              => n.unselect(),
-            MeshNode(ref mut n)              => n.unselect(),
-            BezierSurfaceNode(ref mut n)     => n.unselect(),
-            ConvexNode(ref mut n)            => n.unselect()
+            Node::Plane(ref mut n)             => n.unselect(),
+            Node::Ball(ref mut n)              => n.unselect(),
+            Node::Box(ref mut n)               => n.unselect(),
+            Node::Cylinder(ref mut n)          => n.unselect(),
+            Node::Cone(ref mut n)              => n.unselect(),
+            Node::Mesh(ref mut n)              => n.unselect(),
+            Node::BezierSurface(ref mut n)     => n.unselect(),
+            Node::Convex(ref mut n)            => n.unselect()
         }
     }
 
     pub fn update(&mut self) {
         match *self {
-            PlaneNode(ref mut n)             => n.update(),
-            BallNode(ref mut n)              => n.update(),
-            BoxNode(ref mut n)               => n.update(),
-            CylinderNode(ref mut n)          => n.update(),
-            ConeNode(ref mut n)              => n.update(),
-            MeshNode(ref mut n)              => n.update(),
-            BezierSurfaceNode(ref mut n)     => n.update(),
-            ConvexNode(ref mut n)            => n.update()
+            Node::Plane(ref mut n)             => n.update(),
+            Node::Ball(ref mut n)              => n.update(),
+            Node::Box(ref mut n)               => n.update(),
+            Node::Cylinder(ref mut n)          => n.update(),
+            Node::Cone(ref mut n)              => n.update(),
+            Node::Mesh(ref mut n)              => n.update(),
+            Node::BezierSurface(ref mut n)     => n.update(),
+            Node::Convex(ref mut n)            => n.update()
         }
     }
 
     pub fn object(&self) -> &SceneNode {
         match *self {
-            PlaneNode(ref n)             => n.object(),
-            BallNode(ref n)              => n.object(),
-            BoxNode(ref n)               => n.object(),
-            CylinderNode(ref n)          => n.object(),
-            ConeNode(ref n)              => n.object(),
-            MeshNode(ref n)              => n.object(),
-            BezierSurfaceNode(ref n)     => n.object(),
-            ConvexNode(ref n)            => n.object()
+            Node::Plane(ref n)             => n.object(),
+            Node::Ball(ref n)              => n.object(),
+            Node::Box(ref n)               => n.object(),
+            Node::Cylinder(ref n)          => n.object(),
+            Node::Cone(ref n)              => n.object(),
+            Node::Mesh(ref n)              => n.object(),
+            Node::BezierSurface(ref n)     => n.object(),
+            Node::Convex(ref n)            => n.object()
         }
     }
 
     pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody>> {
         match *self {
-            PlaneNode(ref n)             => n.body(),
-            BallNode(ref n)              => n.body(),
-            BoxNode(ref n)               => n.body(),
-            CylinderNode(ref n)          => n.body(),
-            ConeNode(ref n)              => n.body(),
-            MeshNode(ref n)              => n.body(),
-            BezierSurfaceNode(ref n)     => n.body(),
-            ConvexNode(ref n)            => n.body()
+            Node::Plane(ref n)             => n.body(),
+            Node::Ball(ref n)              => n.body(),
+            Node::Box(ref n)               => n.body(),
+            Node::Cylinder(ref n)          => n.body(),
+            Node::Cone(ref n)              => n.body(),
+            Node::Mesh(ref n)              => n.body(),
+            Node::BezierSurface(ref n)     => n.body(),
+            Node::Convex(ref n)            => n.body()
         }
     }
 }
@@ -263,10 +263,10 @@ impl GraphicsManager {
                  shape:   &shape::Plane3<f32>,
                  color:  Pnt3<f32>,
                  out:    &mut Vec<Node>) {
-        let position = na::translation(&*body.borrow()).translate(&na::orig());
-        let normal   = na::rotate(body.borrow().transform_ref(), shape.normal());
+        let position = na::translation(body.borrow().position()).translate(&na::orig());
+        let normal   = na::rotate(body.borrow().position(), shape.normal());
 
-        out.push(PlaneNode(Plane::new(body, &position, &normal, color, window)))
+        out.push(Node::Plane(Plane::new(body, &position, &normal, color, window)))
     }
 
     fn add_mesh(&mut self,
@@ -286,7 +286,7 @@ impl GraphicsManager {
             is.push(Vec3::new(i[0] as u32, i[1] as u32, i[2] as u32))
         }
 
-        out.push(MeshNode(Mesh::new(body, delta, vs, is, color, window)))
+        out.push(Node::Mesh(Mesh::new(body, delta, vs, is, color, window)))
     }
 
     fn add_bezier_surface(&mut self,
@@ -296,7 +296,7 @@ impl GraphicsManager {
                 shape:   &shape::BezierSurface3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        out.push(BezierSurfaceNode(BezierSurface::new(body, delta, shape.control_points(), shape.nupoints(), shape.nvpoints(), color, window)))
+        out.push(Node::BezierSurface(BezierSurface::new(body, delta, shape.control_points(), shape.nupoints(), shape.nvpoints(), color, window)))
     }
 
     fn add_ball(&mut self,
@@ -307,7 +307,7 @@ impl GraphicsManager {
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
         let margin = body.borrow().margin();
-        out.push(BallNode(Ball::new(body, delta, shape.radius() + margin, color, window)))
+        out.push(Node::Ball(Ball::new(body, delta, shape.radius() + margin, color, window)))
     }
 
     fn add_box(&mut self,
@@ -321,7 +321,7 @@ impl GraphicsManager {
         let ry = shape.half_extents().y + body.borrow().margin();
         let rz = shape.half_extents().z + body.borrow().margin();
 
-        out.push(BoxNode(Box::new(body, delta, rx, ry, rz, color, window)))
+        out.push(Node::Box(Box::new(body, delta, rx, ry, rz, color, window)))
     }
 
     fn add_convex(&mut self,
@@ -331,7 +331,7 @@ impl GraphicsManager {
                   shape:   &shape::Convex3<f32>,
                   color:  Pnt3<f32>,
                   out:    &mut Vec<Node>) {
-        out.push(ConvexNode(Convex::new(body, delta, &procedural::convex_hull3(shape.points()), color, window)))
+        out.push(Node::Convex(Convex::new(body, delta, &procedural::convex_hull3(shape.points()), color, window)))
     }
 
     fn add_cylinder(&mut self,
@@ -344,7 +344,7 @@ impl GraphicsManager {
         let r = shape.radius();
         let h = shape.half_height() * 2.0;
 
-        out.push(CylinderNode(Cylinder::new(body, delta, r, h, color, window)))
+        out.push(Node::Cylinder(Cylinder::new(body, delta, r, h, color, window)))
     }
 
     fn add_cone(&mut self,
@@ -357,7 +357,7 @@ impl GraphicsManager {
         let r = shape.radius();
         let h = shape.half_height() * 2.0;
 
-        out.push(ConeNode(Cone::new(body, delta, r, h, color, window)))
+        out.push(Node::Cone(Cone::new(body, delta, r, h, color, window)))
     }
 
     pub fn draw(&mut self) {
@@ -373,7 +373,7 @@ impl GraphicsManager {
             for n in ns.iter_mut() {
                 let rb = n.body().borrow();
 
-                let t      = na::transformation(rb.deref());
+                let t      = rb.position();
                 let center = rb.center_of_mass();
 
                 let x = t.rotation.col(0) * 0.25f32;

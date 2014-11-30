@@ -3,7 +3,6 @@ use std::cell::RefCell;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Iso3};
-use na;
 use nphysics::object::RigidBody;
 
 pub struct Box {
@@ -25,7 +24,7 @@ impl Box {
         let gx = rx as f32 * 2.0;
         let gy = ry as f32 * 2.0;
         let gz = rz as f32 * 2.0;
-        let t  = na::transformation(body.borrow().deref());
+        let t  = body.borrow().position().clone();
 
         let mut res = Box {
             color:      color,
@@ -54,7 +53,7 @@ impl Box {
         let rb = self.body.borrow();
 
         if rb.is_active() {
-            self.gfx.set_local_transformation(na::transformation(rb.deref()) * self.delta);
+            self.gfx.set_local_transformation(*rb.position() * self.delta);
             self.gfx.set_color(self.color.x, self.color.y, self.color.z);
         }
         else {
