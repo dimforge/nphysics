@@ -7,30 +7,30 @@ nphysics
 Its most distinctive feature is its genericity wrt the simulation
 dimension. That means you can use it for both 2-dimensional physics and
 3-dimensional physics. Higher dimensions could be possible, but **nphysics**
-has not be written/tested with those in thought.
+has not been written/tested with those in thought.
 
-Examples are available on the `examples` directory.
+Examples are available in the `examples` directory.
 There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
 
 An on-line version of this documentation is available [here](http://nphysics-dev.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
-However having a physics engine written in rust is much more fun than
+However having a physics engine written in Rust is much more fun than
 writing bindings and has several advantages:
 
-- it shows that rust is suitable for soft real-time applications
-- it shows how well rust behaves with highly generic code
+- it shows that Rust is suitable for soft real-time applications
+- it shows how well Rust behaves with highly generic code
 - it shows that there is no need to write two separate engine for 2d and 3d:
   genericity wrt the dimension is possible (modulo low level arithmetic
   specializations for each dimension).
 - in a not-that-near future, C++ will die of ugliness. Then, people will
   search for a physics engine and **nphysics** will be there, proudly
-  exhibiting its _rusty_ sexyness.
+  exhibiting its _Rusty_ sexyness.
 
 ## Compilation
-You will need the last nightly build of the [rust compiler](http://www.rust-lang.org)
-and the official package manager: [cargo](https://github.com/rust-lang/cargo).
+You will need the last nightly build of the [Rust compiler](http://www.rust-lang.org)
+and the official package manager: [Cargo](https://github.com/rust-lang/cargo).
 
 Simply add the following to your `Cargo.toml` file if you want the 3d version
 of nphysics, using 32-bits foalting point numbers:
