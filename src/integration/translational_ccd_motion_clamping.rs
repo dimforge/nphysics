@@ -1,14 +1,16 @@
 use std::num::Float;
+use std::cell::RefCell;
 use na::Translation;
 use na;
-use ncollide::utils::data::has_uid::HasUid;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::BroadPhase;
 use ncollide::bounding_volume::BoundingVolume;
 use ncollide::geometry;
+use ncollide::bounding_volume::HasAABB;
 use world::RigidBodyCollisionWorld;
 use object::RigidBodyHandle;
+use object::RigidBody;
 use math::{Scalar, Vect};
 
 
@@ -32,7 +34,7 @@ impl CCDBody {
 
 /// Handles Continuous Collision Detection.
 pub struct TranslationalCCDMotionClamping {
-    objects: HashMap<uint, CCDBody, UintTWHash>
+    objects: HashMap<usize, CCDBody, UintTWHash>
 }
 
 impl TranslationalCCDMotionClamping {
@@ -46,12 +48,12 @@ impl TranslationalCCDMotionClamping {
 
     /// Enables continuous collision for the given rigid body.
     pub fn add_ccd_to(&mut self, body: RigidBodyHandle, motion_threshold: Scalar) {
-        self.objects.insert(body.uid(), CCDBody::new(body, motion_threshold));
+        self.objects.insert(&*body as *const RefCell<RigidBody> as usize, CCDBody::new(body, motion_threshold));
     }
 
     /// Remove continuous collision from the given rigid body.
     pub fn remove_ccd_from(&mut self, body: &RigidBodyHandle) {
-        self.objects.remove(&body.uid());
+        self.objects.remove(&(&**body as *const RefCell<RigidBody> as usize));
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.
@@ -83,13 +85,14 @@ impl TranslationalCCDMotionClamping {
 
                 // FIXME: performing a convex-cast here would be much more efficient.
                 cw.interferences_with_aabb(&swept_aabb, |rb2| {
-                    if rb2.uid() != o.value.body.uid() {
+                    if &**rb2 as *const RefCell<RigidBody> as usize !=
+                       &*o.value.body as *const RefCell<RigidBody> as usize {
                         let brb2 = rb2.borrow();
 
-                        let toi = geometry::time_of_impact_internal::shape_against_shape(
+                        let toi = geometry::time_of_impact(
                             &last_transform,
                             &dir,
-                            brb1.shape_ref(),
+                            &*brb1.shape_ref(),
                             brb2.position(),
                             &na::zero(), // assume the other object does not move.
                             brb2.shape_ref());
@@ -125,7 +128,7 @@ impl TranslationalCCDMotionClamping {
                 /*
                  * We moved the object: ensure the broad phase takes that in account.
                  */
-                cw.set_next_position(&o.value.body, o.value.body.borrow().position().clone());
+                cw.defered_set_position(&* o.value.body as *const RefCell<RigidBody> as usize, o.value.body.borrow().position().clone());
                 update_collision_world = true;
             }
 

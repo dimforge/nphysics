@@ -39,14 +39,14 @@ fn main() {
     /*
      * Create the balls
      */
-    let num     = 1000u;
+    let num     = 1000us;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = 2.0;
 
-    for i in range(0u, num) {
-        for j in range(0u, 2) {
+    for i in (0us .. num) {
+        for j in 0us .. 2 {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0;
 

@@ -1,7 +1,7 @@
 use na;
 use math::{Scalar, Vect, Orientation};
 
-#[deriving(PartialEq, Show, Clone)]
+#[derive(PartialEq, Show, Clone)]
 /// A constraint of velocity at a point of contact.
 pub struct VelocityConstraint {
     /// The contact normal.
@@ -34,11 +34,11 @@ pub struct VelocityConstraint {
     /// The target delta velocity.
     pub objective:          Scalar,
     /// The id of the first body.
-    pub id1:                int,
+    pub id1:                isize,
     /// The id of the second body.
-    pub id2:                int,
+    pub id2:                isize,
     /// The id of the friction constraint.
-    pub friction_limit_id:  uint,
+    pub friction_limit_id:  usize,
     /// The friction coefficient on this contact.
     pub friction_coeff:     Scalar
 }

@@ -1,8 +1,8 @@
-use std::num::FloatMath;
+use std::num::Float;
 use na::Bounded;
 use na;
 use ncollide::geometry::Contact;
-use ncollide::volumetric::InertiaTensor;
+use volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
 use math::{Scalar, Point, Vect, Orientation};
@@ -92,9 +92,9 @@ pub fn fill_second_order_equation(dt:           Scalar,
                                   rb1:          &RigidBody,
                                   rb2:          &RigidBody,
                                   rconstraint:  &mut VelocityConstraint,
-                                  idr:          uint,
+                                  idr:          usize,
                                   fconstraints: &mut [VelocityConstraint],
-                                  idf:          uint,
+                                  idf:          usize,
                                   cache:        &[Scalar],
                                   correction:   &CorrectionParameters) {
     let restitution = rb1.restitution() * rb2.restitution();

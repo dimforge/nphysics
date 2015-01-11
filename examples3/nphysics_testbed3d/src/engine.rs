@@ -1,19 +1,16 @@
-use std::intrinsics::TypeId;
-use std::any::AnyRefExt;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
-use na::{Pnt3, Vec3, Iso3, Col, Translate};
+use na::{Pnt3, Iso3, Col, Translate};
 use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
-use ncollide::shape::Shape3;
 use ncollide::shape;
-use ncollide::procedural;
+use ncollide::transformation;
+use ncollide::inspection::Repr3;
 use nphysics::object::RigidBody;
-use objects::bezier_surface::BezierSurface;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -30,7 +27,6 @@ pub enum Node {
     Cone(Cone),
     Mesh(Mesh),
     Plane(Plane),
-    BezierSurface(BezierSurface),
     Convex(Convex)
 }
 
@@ -43,7 +39,6 @@ impl Node {
             Node::Cylinder(ref mut n)          => n.select(),
             Node::Cone(ref mut n)              => n.select(),
             Node::Mesh(ref mut n)              => n.select(),
-            Node::BezierSurface(ref mut n)     => n.select(),
             Node::Convex(ref mut n)            => n.select()
         }
     }
@@ -56,7 +51,6 @@ impl Node {
             Node::Cylinder(ref mut n)          => n.unselect(),
             Node::Cone(ref mut n)              => n.unselect(),
             Node::Mesh(ref mut n)              => n.unselect(),
-            Node::BezierSurface(ref mut n)     => n.unselect(),
             Node::Convex(ref mut n)            => n.unselect()
         }
     }
@@ -69,7 +63,6 @@ impl Node {
             Node::Cylinder(ref mut n)          => n.update(),
             Node::Cone(ref mut n)              => n.update(),
             Node::Mesh(ref mut n)              => n.update(),
-            Node::BezierSurface(ref mut n)     => n.update(),
             Node::Convex(ref mut n)            => n.update()
         }
     }
@@ -82,7 +75,6 @@ impl Node {
             Node::Cylinder(ref n)          => n.object(),
             Node::Cone(ref n)              => n.object(),
             Node::Mesh(ref n)              => n.object(),
-            Node::BezierSurface(ref n)     => n.object(),
             Node::Convex(ref n)            => n.object()
         }
     }
@@ -95,7 +87,6 @@ impl Node {
             Node::Cylinder(ref n)          => n.body(),
             Node::Cone(ref n)              => n.body(),
             Node::Mesh(ref n)              => n.body(),
-            Node::BezierSurface(ref n)     => n.body(),
             Node::Convex(ref n)            => n.body()
         }
     }
@@ -103,8 +94,8 @@ impl Node {
 
 pub struct GraphicsManager {
     rand:             XorShiftRng,
-    rb2sn:            HashMap<uint, Vec<Node>>,
-    rb2color:         HashMap<uint, Pnt3<f32>>,
+    rb2sn:            HashMap<usize, Vec<Node>>,
+    rb2color:         HashMap<usize, Pnt3<f32>>,
     arc_ball:         ArcBall,
     first_person:     FirstPerson,
     curr_is_arc_ball: bool,
@@ -119,7 +110,7 @@ impl GraphicsManager {
         let mut rng: XorShiftRng = SeedableRng::from_seed([0, 2, 4, 8]);
 
         // the first colors are boring.
-        for _ in range(0u, 100) {
+        for _ in range(0us, 100) {
             let _: Pnt3<f32> = rng.gen();
         }
 
@@ -150,7 +141,7 @@ impl GraphicsManager {
     }
 
     pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
-        let key = body.deref() as *const RefCell<RigidBody> as uint;
+        let key = &**body as *const RefCell<RigidBody> as usize;
 
         match self.rb2sn.get(&key) {
             Some(sns) => {
@@ -165,13 +156,13 @@ impl GraphicsManager {
     }
 
     pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
-        self.rb2color.insert(body.deref() as *const RefCell<RigidBody> as uint, color);
+        self.rb2color.insert(&**body as *const RefCell<RigidBody> as usize, color);
     }
 
     pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
         let color;
 
-        match self.rb2color.get(&(body.deref() as *const RefCell<RigidBody> as uint)) {
+        match self.rb2color.get(&(&*body as *const RefCell<RigidBody> as usize)) {
             Some(c) => color = *c,
             None    => {
                 if body.borrow().can_move() {
@@ -194,62 +185,57 @@ impl GraphicsManager {
             let rb        = body.borrow();
             let mut nodes = Vec::new();
 
-            self.add_shape(window, body.clone(), na::one(), rb.shape_ref(), color, &mut nodes);
+            self.add_repr(window, body.clone(), na::one(), rb.shape_ref(), color, &mut nodes);
 
             nodes
         };
 
-        self.rb2sn.insert(body.deref() as *const RefCell<RigidBody> as uint, nodes);
+        self.rb2sn.insert(&*body as *const RefCell<RigidBody> as usize, nodes);
     }
 
-    fn add_shape(&mut self,
-                 window: &mut Window,
-                 body:   Rc<RefCell<RigidBody>>,
-                 delta:  Iso3<f32>,
-                 shape:   &Shape3<f32>,
-                 color:  Pnt3<f32>,
-                 out:    &mut Vec<Node>) {
+    fn add_repr(&mut self,
+                window: &mut Window,
+                body:   Rc<RefCell<RigidBody>>,
+                delta:  Iso3<f32>,
+                shape:  &Repr3<f32>,
+                color:  Pnt3<f32>,
+                out:    &mut Vec<Node>) {
         type Pl = shape::Plane3<f32>;
         type Bl = shape::Ball3<f32>;
         type Bo = shape::Cuboid3<f32>;
         type Cy = shape::Cylinder3<f32>;
         type Co = shape::Cone3<f32>;
         type Cm = shape::Compound3<f32>;
-        type Tm = shape::Mesh3<f32>;
-        type Bs = shape::BezierSurface3<f32>;
+        type Tm = shape::TriMesh3<f32>;
         type Cx = shape::Convex3<f32>;
 
-        let id = shape.get_type_id();
-        if id == TypeId::of::<Pl>(){
-            self.add_plane(window, body, shape.downcast_ref::<Pl>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Bl>() {
-            self.add_ball(window, body, delta, shape.downcast_ref::<Bl>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Bo>() {
-            self.add_box(window, body, delta, shape.downcast_ref::<Bo>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Cx>() {
-            self.add_convex(window, body, delta, shape.downcast_ref::<Cx>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Cy>() {
-            self.add_cylinder(window, body, delta, shape.downcast_ref::<Cy>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Co>() {
-            self.add_cone(window, body, delta, shape.downcast_ref::<Co>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Bs>() {
-            self.add_bezier_surface(window, body, delta, shape.downcast_ref::<Bs>().unwrap(), color, out)
-        }
-        else if id == TypeId::of::<Cm>() {
-            let c = shape.downcast_ref::<Cm>().unwrap();
+        let repr = shape.repr();
 
-            for &(t, ref s) in c.shapes().iter() {
-                self.add_shape(window, body.clone(), delta * t, &***s, color, out)
+        if let Some(s) = repr.downcast_ref::<Pl>() {
+            self.add_plane(window, body, s, color, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Bl>() {
+            self.add_ball(window, body, delta, s, color, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Bo>() {
+            self.add_box(window, body, delta, s, color, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Cx>() {
+            self.add_convex(window, body, delta, s, color, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Cy>() {
+            self.add_cylinder(window, body, delta, s, color, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Co>() {
+            self.add_cone(window, body, delta, s, color, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Cm>() {
+            for &(t, ref s) in s.shapes().iter() {
+                self.add_repr(window, body.clone(), delta * t, &***s, color, out)
             }
         }
-        else if id == TypeId::of::<Tm>() {
-            self.add_mesh(window, body, delta, shape.downcast_ref::<Tm>().unwrap(), color, out);
+        else if let Some(s) = repr.downcast_ref::<Tm>() {
+            self.add_mesh(window, body, delta, s, color, out);
         }
         else {
             panic!("Not yet implemented.")
@@ -273,30 +259,15 @@ impl GraphicsManager {
                 window: &mut Window,
                 body:   Rc<RefCell<RigidBody>>,
                 delta:  Iso3<f32>,
-                shape:   &shape::Mesh3<f32>,
+                shape:   &shape::TriMesh3<f32>,
                 color:  Pnt3<f32>,
                 out:    &mut Vec<Node>) {
-        let vertices = shape.vertices().deref();
-        let indices  = shape.indices().deref();
+        let vertices = &**shape.vertices();
+        let indices = &**shape.indices();
 
-        let vs     = vertices.clone();
-        let mut is = Vec::new();
+        let is = indices.iter().map(|p| Pnt3::new(p.x as u32, p.y as u32, p.z as u32)).collect();
 
-        for i in indices.as_slice().chunks(3) {
-            is.push(Vec3::new(i[0] as u32, i[1] as u32, i[2] as u32))
-        }
-
-        out.push(Node::Mesh(Mesh::new(body, delta, vs, is, color, window)))
-    }
-
-    fn add_bezier_surface(&mut self,
-                window: &mut Window,
-                body:   Rc<RefCell<RigidBody>>,
-                delta:  Iso3<f32>,
-                shape:   &shape::BezierSurface3<f32>,
-                color:  Pnt3<f32>,
-                out:    &mut Vec<Node>) {
-        out.push(Node::BezierSurface(BezierSurface::new(body, delta, shape.control_points(), shape.nupoints(), shape.nvpoints(), color, window)))
+        out.push(Node::Mesh(Mesh::new(body, delta, vertices.clone(), is, color, window)))
     }
 
     fn add_ball(&mut self,
@@ -331,7 +302,7 @@ impl GraphicsManager {
                   shape:   &shape::Convex3<f32>,
                   color:  Pnt3<f32>,
                   out:    &mut Vec<Node>) {
-        out.push(Node::Convex(Convex::new(body, delta, &procedural::convex_hull3(shape.points()), color, window)))
+        out.push(Node::Convex(Convex::new(body, delta, &transformation::convex_hull3(shape.points()), color, window)))
     }
 
     fn add_cylinder(&mut self,
@@ -413,6 +384,6 @@ impl GraphicsManager {
     }
 
     pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<Node>> {
-        self.rb2sn.get_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
+        self.rb2sn.get_mut(&(&**rb as *const RefCell<RigidBody> as usize))
     }
 }

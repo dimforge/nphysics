@@ -33,9 +33,9 @@ fn main() {
     let centery = shift / 2.0 + 0.04;
     let centerz = shift * (num as f32) / 2.0;
 
-    for i in range(0u, num) {
-        for j in range(0u, num) {
-            for k in range(0u, num) {
+    for i in range(0us, num) {
+        for j in range(0us, num) {
+            for k in range(0us, num) {
                 let x = i as f32 * shift - centerx;
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;

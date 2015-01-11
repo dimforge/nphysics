@@ -15,3 +15,9 @@ git = "https://github.com/jeremyletang/rust-sfml"
 
 [dependencies.time]
 git = "https://github.com/rust-lang/time"
+
+[dependencies.nalgebra]
+git = "https://github.com/sebcrozet/nalgebra"
+
+[dependencies.ncollide]
+git = "https://github.com/sebcrozet/ncollide"

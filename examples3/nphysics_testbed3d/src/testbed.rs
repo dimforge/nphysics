@@ -3,11 +3,11 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use time;
 use glfw;
-use glfw::{Key, Action};
+use glfw::{MouseButton, Key, Action, WindowEvent};
 use na::{Pnt2, Pnt3, Vec3, Translation, Translate, Iso3, Bounded};
 use na;
 use kiss3d::window::Window;
-use kiss3d::light;
+use kiss3d::light::Light;
 use kiss3d::text::Font;
 use kiss3d::loader::obj;
 use ncollide::shape::{Cuboid, Ball};
@@ -87,7 +87,7 @@ impl Testbed {
         self.graphics.set_color(rb, color);
     }
 
-    pub fn load_obj(path: &str) -> Vec<(Vec<Pnt3<f32>>, Vec<uint>)> {
+    pub fn load_obj(path: &str) -> Vec<(Vec<Pnt3<f32>>, Vec<usize>)> {
         let path    = Path::new(path);
         let empty   = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
         let objects = obj::parse_file(&path, &empty, "").ok().expect("Unable to open the obj file.");
@@ -95,15 +95,15 @@ impl Testbed {
         let mut res = Vec::new();
 
         for (_, m, _) in objects.into_iter() {
-            let vertices = m.coords().read().to_owned().unwrap();
-            let indices  = m.faces().read().to_owned().unwrap();
+            let vertices = m.coords().read().unwrap().to_owned().unwrap();
+            let indices  = m.faces().read().unwrap().to_owned().unwrap();
 
             let mut flat_indices = Vec::new();
 
             for i in indices.into_iter() {
-                flat_indices.push(i.x as uint);
-                flat_indices.push(i.y as uint);
-                flat_indices.push(i.z as uint);
+                flat_indices.push(i.x as usize);
+                flat_indices.push(i.y as usize);
+                flat_indices.push(i.z as usize);
             }
 
             let m = (vertices, flat_indices);
@@ -131,7 +131,7 @@ impl Testbed {
             }
         }
 
-        let font_mem       = include_bin!("Inconsolata.otf");
+        let font_mem       = include_bytes!("Inconsolata.otf");
         let font           = Font::from_memory(font_mem, 60);
         let mut draw_colls = false;
 
@@ -142,13 +142,13 @@ impl Testbed {
 
 
         self.window.set_framerate_limit(Some(60));
-        self.window.set_light(light::StickToCamera);
+        self.window.set_light(Light::StickToCamera);
 
 
         while !self.window.should_close() {
             for mut event in self.window.events().iter() {
                 match event.value {
-                    glfw::MouseButtonEvent(glfw::Button2, glfw::Press, glfw::Control) => {
+                    WindowEvent::MouseButton(MouseButton::Button2, Action::Press, glfw::Control) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -162,7 +162,7 @@ impl Testbed {
                         self.world.add_ccd_to(&body, 1.0);
                         self.graphics.add(&mut self.window, body);
                     },
-                    glfw::MouseButtonEvent(glfw::Button1, glfw::Press, modifier) => {
+                    WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
                         if modifier.contains(glfw::Shift) {
                             // XXX: huge and uggly code duplication
                             let size = self.window.size();
@@ -249,7 +249,7 @@ impl Testbed {
                             event.inhibited = true;
                         }
                     },
-                    glfw::MouseButtonEvent(_, glfw::Release, _) => {
+                    WindowEvent::MouseButton(_, Action::Release, _) => {
                         match grabbed_object {
                             Some(ref b) => {
                                 for sn in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
@@ -267,7 +267,7 @@ impl Testbed {
                         grabbed_object       = None;
                         grabbed_object_joint = None;
                     },
-                    glfw::CursorPosEvent(x, y) => {
+                    WindowEvent::CursorPos(x, y) => {
                         cursor_pos.x = x as f32;
                         cursor_pos.y = y as f32;
 
@@ -296,8 +296,8 @@ impl Testbed {
                             self.window.glfw_window().get_key(Key::RightControl) != Action::Release ||
                             self.window.glfw_window().get_key(Key::LeftControl)  != Action::Release;
                     },
-                    glfw::KeyEvent(Key::Tab, _, Action::Release, _) => self.graphics.switch_cameras(),
-                    glfw::KeyEvent(Key::T, _,   Action::Release, _) => {
+                    WindowEvent::Key(Key::Tab, _, Action::Release, _) => self.graphics.switch_cameras(),
+                    WindowEvent::Key(Key::T, _,   Action::Release, _) => {
                         if running == RunMode::Stop {
                             running = RunMode::Running;
                         }
@@ -305,8 +305,8 @@ impl Testbed {
                             running = RunMode::Stop;
                         }
                     },
-                    glfw::KeyEvent(Key::S, _, Action::Release, _) => running = RunMode::Step,
-                    glfw::KeyEvent(Key::B, _, Action::Release, _) => {
+                    WindowEvent::Key(Key::S, _, Action::Release, _) => running = RunMode::Step,
+                    WindowEvent::Key(Key::B, _, Action::Release, _) => {
                         // XXX: there is a bug on kiss3d with the removal of objects.
                         // draw_aabbs = !draw_aabbs;
                         // if draw_aabbs {
@@ -316,7 +316,7 @@ impl Testbed {
                         //     graphics.disable_aabb_draw(&mut self.window);
                         // }
                     },
-                    glfw::KeyEvent(Key::Space, _, Action::Release, _) => {
+                    WindowEvent::Key(Key::Space, _, Action::Release, _) => {
                         draw_colls = !draw_colls;
                         if draw_colls {
                             self.window.scene_mut().set_lines_width(1.0);
@@ -327,7 +327,7 @@ impl Testbed {
                             self.window.scene_mut().set_surface_rendering_activation(true);
                         }
                     },
-                    glfw::KeyEvent(Key::Num1, _, Action::Press, _) => {
+                    WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
                         let geom   = Ball::new(0.5f32);
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -347,7 +347,7 @@ impl Testbed {
                         let body = self.world.add_body(rb);
                         self.graphics.add(&mut self.window, body.clone());
                     },
-                    glfw::KeyEvent(Key::Num2, _, Action::Press, _) => {
+                    WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -407,7 +407,7 @@ impl Testbed {
     }
 }
 
-#[deriving(PartialEq)]
+#[derive(PartialEq)]
 enum RunMode {
     Running,
     Stop,

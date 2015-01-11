@@ -1,20 +1,20 @@
-extern crate rustrt;
 extern crate kiss3d;
 extern crate "nalgebra" as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;
 
-use rustrt::bookkeeping;
-use std::sync::{Arc, RWLock};
+use std::thread::Thread;
+use std::sync::{Arc, RwLock};
 use std::rand;
 use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
-use ncollide::shape::{Plane, Compound, Convex, CompoundData};
+use ncollide::shape::{Plane, Compound, Convex};
 use ncollide::procedural::TriMesh3;
-use ncollide::procedural;
+use ncollide::transformation;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
 use ncollide::bounding_volume;
+use ncollide::inspection::Repr3;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics_testbed3d::Testbed;
@@ -60,20 +60,20 @@ fn main() {
      */
 
     let geoms = models();
-    let bodies = Arc::new(RWLock::new(Vec::new()));
+    let mut bodies = Vec::new();
     let ngeoms = geoms.len();
 
     for obj_path in geoms.into_iter() {
         let deltas   = na::one();
         let mtl_path = Path::new("");
 
-        let bodies = bodies.clone();
 
-        spawn(proc() {
-            let mut geom_data = CompoundData::new();
+        let mut geom_data = Vec::new();
 
-            let model  = obj::parse_file(&Path::new(obj_path), &mtl_path, "").unwrap();
-            let meshes: Vec<TriMesh3<f32>> = model.into_iter().map(|mesh| mesh.ref1().to_trimesh().unwrap()).collect();
+        let obj = obj::parse_file(&Path::new(obj_path), &mtl_path, "");
+
+        if let Ok(model) = obj {
+            let meshes: Vec<TriMesh3<f32>> = model.into_iter().map(|mesh| mesh.1.to_trimesh().unwrap()).collect();
 
             // Compute the size of the model, to scale it and have similar size for everything.
             let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, meshes[0].coords.as_slice());
@@ -92,10 +92,11 @@ fn main() {
                 trimesh.scale_by_scalar(6.0 / diag);
                 trimesh.split_index_buffer(true);
 
-                let (decomp, _) = procedural::hacd(trimesh, 0.03, 1);
+                let (decomp, _) = transformation::hacd(trimesh, 0.03, 1);
 
                 for mesh in decomp.into_iter() {
-                    geom_data.push_shape(deltas, Convex::new(mesh.coords), 1.0);
+                    let convex = Arc::new(Box::new(Convex::new(mesh.coords)) as Box<Repr3<f32>>);
+                    geom_data.push((deltas, convex));
                 }
             }
 
@@ -104,23 +105,20 @@ fn main() {
             let mut rb = RigidBody::new_dynamic(compound, 1.0, 0.3, 0.5);
             rb.set_deactivation_threshold(Some(0.5));
 
-
-            bodies.write().push(rb);
-        })
+            bodies.push(rb)
+        }
     }
 
-    bookkeeping::wait_for_other_tasks();
-
-    if bodies.read().len() != ngeoms {
+    if bodies.len() != ngeoms {
         println!("#########################################################################################");
         println!("Some model are missing. You can download them all at : http://crozet.re/nphysics/models.");
         println!("All the obj files should be put on the `./media/models` folder.");
         println!("#########################################################################################");
     }
 
-    let nreplicats = 100 / bodies.read().len();
+    let nreplicats = 100 / bodies.len();
 
-    for rb in bodies.read().iter() {
+    for rb in bodies.iter() {
         for _ in range(0, nreplicats) {
             let mut rb = rb.clone();
             let pos = rand::random::<Vec3<f32>>() * 30.0+ Vec3::new(-15.0, 15.0, -15.0);

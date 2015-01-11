@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::iter;
 // use rand::RngUtil;
 use na::{Translation, Transformation, RotationWithTranslation};
 use na;
@@ -22,8 +23,8 @@ use resolution::constraint::impulse_cache::ImpulseCache;
 pub struct AccumulatedImpulseSolver {
     correction:              CorrectionParameters,
     cache:                   ImpulseCache,
-    num_first_order_iter:    uint,
-    num_second_order_iter:   uint,
+    num_first_order_iter:    usize,
+    num_second_order_iter:   usize,
     restitution_constraints: Vec<VelocityConstraint>,
     friction_constraints:    Vec<VelocityConstraint>,
     mj_lambda:               Vec<Velocities>
@@ -35,8 +36,8 @@ impl AccumulatedImpulseSolver {
                correction_mode:       CorrectionMode,
                joint_corr_factor:     Scalar,
                rest_eps:              Scalar,
-               num_first_order_iter:  uint,
-               num_second_order_iter: uint)
+               num_first_order_iter:  usize,
+               num_second_order_iter: usize)
                -> AccumulatedImpulseSolver {
         AccumulatedImpulseSolver {
             num_first_order_iter:    num_first_order_iter,
@@ -56,29 +57,29 @@ impl AccumulatedImpulseSolver {
 
     /// Gets the number of iteration done by the penetration depth correction solver.
     #[inline]
-    pub fn num_first_order_iter(&self) -> uint {
+    pub fn num_first_order_iter(&self) -> usize {
         self.num_first_order_iter
     }
 
     /// Sets the number of iteration done by the penetration depth correction solver.
     #[inline]
-    pub fn set_num_first_order_iter(&mut self, num: uint) {
+    pub fn set_num_first_order_iter(&mut self, num: usize) {
         self.num_first_order_iter = num
     }
 
     /// Gets the number of iteration done by the velocity constraint solver.
     #[inline]
-    pub fn num_second_order_iter(&self) -> uint {
+    pub fn num_second_order_iter(&self) -> usize {
         self.num_second_order_iter
     }
 
     /// Sets the number of iteration done by the velocity constraint solver.
     #[inline]
-    pub fn set_num_second_order_iter(&mut self, num: uint) {
+    pub fn set_num_second_order_iter(&mut self, num: usize) {
         self.num_second_order_iter = num
     }
 
-    fn resize_buffers(&mut self, num_restitution_equations: uint, num_friction_equations: uint) {
+    fn resize_buffers(&mut self, num_restitution_equations: usize, num_friction_equations: usize) {
         resize_buffer(&mut self.restitution_constraints,
                       num_restitution_equations,
                       VelocityConstraint::new());
@@ -91,7 +92,7 @@ impl AccumulatedImpulseSolver {
     fn do_solve(&mut self,
                 dt:          Scalar,
                 constraints: &[Constraint],
-                joints:      &[uint],
+                joints:      &[usize],
                 bodies:      &[Rc<RefCell<RigidBody>>]) {
         let num_friction_equations    = (na::dim::<Vect>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
@@ -119,7 +120,7 @@ impl AccumulatedImpulseSolver {
                     contact_equation::fill_second_order_equation(
                         dt.clone(),
                         c,
-                        rb1.borrow().deref(), rb2.borrow().deref(),
+                        &*rb1.borrow(), &*rb2.borrow(),
                         &mut self.restitution_constraints[i],
                         i,
                         self.friction_constraints.as_mut_slice(),
@@ -140,7 +141,7 @@ impl AccumulatedImpulseSolver {
                 Constraint::BallInSocket(ref bis) => {
                     ball_in_socket_equation::fill_second_order_equation(
                         dt.clone(),
-                        bis.borrow().deref(),
+                        &*bis.borrow(),
                         self.restitution_constraints.slice_mut(joint_offset, nconstraints), // XXX
                         &self.correction
                     );
@@ -150,7 +151,7 @@ impl AccumulatedImpulseSolver {
                 Constraint::Fixed(ref f) => {
                     fixed_equation::fill_second_order_equation(
                         dt.clone(),
-                        f.borrow().deref(),
+                        &*f.borrow(),
                         self.restitution_constraints.slice_mut(joint_offset, nconstraints), // XXX
                         &self.correction
                     );
@@ -182,23 +183,23 @@ impl AccumulatedImpulseSolver {
             let curr_lin_vel = rb.lin_vel();
             let curr_ang_vel = rb.ang_vel();
 
-            rb.set_lin_vel(curr_lin_vel + self.mj_lambda[i as uint].lv);
-            rb.set_ang_vel(curr_ang_vel + self.mj_lambda[i as uint].av);
+            rb.set_lin_vel(curr_lin_vel + self.mj_lambda[i as usize].lv);
+            rb.set_ang_vel(curr_ang_vel + self.mj_lambda[i as usize].av);
         }
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * na::cast(0.85f64);
 
-            for j in range(0u, na::dim::<Vect>() - 1) {
-                let fc = self.friction_constraints[i * (na::dim::<Vect>() - 1) + j];
+            for j in range(0us, na::dim::<Vect>() - 1) {
+                let fc = &self.friction_constraints[i * (na::dim::<Vect>() - 1) + j];
                 imps[1 + j] = fc.impulse * na::cast(0.85f64);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().iter_mut().enumerate() {
-            *kv = (kv.val0(), offset + i * na::dim::<Vect>());
+            *kv = (kv.0, offset + i * na::dim::<Vect>());
         }
 
         /*
@@ -242,8 +243,8 @@ impl AccumulatedImpulseSolver {
                 let mut rb = b.borrow_mut();
                 let i      = rb.index();
 
-                let translation = self.mj_lambda[i as uint].lv * dt;
-                let rotation    = self.mj_lambda[i as uint].av * dt;
+                let translation = self.mj_lambda[i as usize].lv * dt;
+                let rotation    = self.mj_lambda[i as usize].av * dt;
 
                 let center = &rb.center_of_mass().clone();
 
@@ -270,8 +271,8 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                 match *cstr {
                     Constraint::RBRB(ref a, ref b, ref c) => {
                         self.cache.insert(i,
-                                          a.deref() as *const RefCell<RigidBody> as uint,
-                                          b.deref() as *const RefCell<RigidBody> as uint,
+                                          &**a as *const RefCell<RigidBody> as usize,
+                                          &**b as *const RefCell<RigidBody> as usize,
                                           na::center(&c.world1, &c.world2));
                     },
                     Constraint::BallInSocket(_) => {
@@ -332,7 +333,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
 
             let mut id = 0;
 
-            fn set_body_index(a: &Rc<RefCell<RigidBody>>, bodies: &mut Vec<Rc<RefCell<RigidBody>>>, id: &mut int) {
+            fn set_body_index(a: &Rc<RefCell<RigidBody>>, bodies: &mut Vec<Rc<RefCell<RigidBody>>>, id: &mut isize) {
                 let mut ba = a.borrow_mut();
                 if ba.index() == -2 {
                     if ba.can_move() {
@@ -389,10 +390,10 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
     }
 }
 
-fn resize_buffer<A: Clone>(buff: &mut Vec<A>, size: uint, val: A) {
+fn resize_buffer<A: Clone>(buff: &mut Vec<A>, size: usize, val: A) {
     if buff.len() < size {
         let diff = size - buff.len();
-        buff.grow(diff, val);
+        buff.extend(iter::repeat(val).take(diff));
     }
     else {
         buff.truncate(size)

@@ -35,15 +35,15 @@ fn main() {
     /*
      * Create the balls
      */
-    let num     = 1500.0f32.powf(1.0f32 / 3.0) as uint;
+    let num     = 1500.0f32.powf(1.0f32 / 3.0) as usize;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
-    for i in range(0u, num) {
-        for j in range(0u, num) {
-            for k in range(0u, num) {
+    for i in range(0us, num) {
+        for j in range(0us, num) {
+            for k in range(0us, num) {
                 let x = i as f32 * 2.5 * rad - centerx;
                 let y = 10.0 + j as f32 * 2.5 * rad + centery * 2.0;
                 let z = k as f32 * 2.5 * rad - centerx;

@@ -7,16 +7,21 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 features = [ "3df32" ]
 path = ".."
 
+[dependencies.nalgebra]
+git = "https://github.com/sebcrozet/nalgebra"
+
+[dependencies.ncollide]
+git = "https://github.com/sebcrozet/ncollide"
+
+[dependencies.kiss3d]
+git = "https://github.com/sebcrozet/kiss3d"
+
 [dependencies.nphysics_testbed3d]
 path = "./nphysics_testbed3d"
 
 [[bin]]
 name = "ball_vee"
 path = "./balls_vee.rs"
-
-[[bin]]
-name = "bezier_balls"
-path = "./bezier_balls.rs"
 
 [[bin]]
 name = "boxes_vee"
@@ -65,10 +70,6 @@ path = "./convex_decomposition.rs"
 [[bin]]
 name = "fixed_bug_long_thin_box_one_shot_manifold"
 path = "fixed_bug_long_thin_box_one_shot_manifold.rs"
-
-[[bin]]
-name = "fixed_bug_optimization_on_patch_boundaries_does_not_converge"
-path = "fixed_bug_optimization_on_patch_boundaries_does_not_converge.rs"
 
 [[bin]]
 name = "fixed_bug_minkowski_sampling_fails_on_touching_objects"

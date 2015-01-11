@@ -8,5 +8,5 @@ use ncollide::broad_phase::DBVTBroadPhase;
 use object::RigidBody;
 use math::{Scalar, Point};
 
+/// The type of the broad phase used by the world by default.
 pub type DefaultBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
-// pub type DefaultSweptBallMotionClamping = SweptBallMotionClamping<DefaultBroadPhase>;

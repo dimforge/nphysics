@@ -1,14 +1,12 @@
-use std::any::AnyRefExt;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::intrinsics::TypeId;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use rsfml::graphics::RenderWindow;
 use na::{Pnt3, Iso2};
 use na;
 use nphysics::object::RigidBody;
-use ncollide::shape::Shape2;
+use ncollide::inspection::Repr2;
 use ncollide::shape;
 use camera::Camera;
 use objects::ball::Ball;
@@ -45,8 +43,8 @@ impl<'a> SceneNode<'a> {
 
 pub struct GraphicsManager<'a> {
     rand:      XorShiftRng,
-    rb2sn:     HashMap<uint, Vec<SceneNode<'a>>>,
-    obj2color: HashMap<uint, Pnt3<u8>>
+    rb2sn:     HashMap<usize, Vec<SceneNode<'a>>>,
+    obj2color: HashMap<usize, Pnt3<u8>>
 }
 
 impl<'a> GraphicsManager<'a> {
@@ -69,13 +67,13 @@ impl<'a> GraphicsManager<'a> {
             nodes
         };
 
-        self.rb2sn.insert(body.deref() as *const RefCell<RigidBody> as uint, nodes);
+        self.rb2sn.insert(&*body as *const RefCell<RigidBody> as usize, nodes);
     }
 
     fn add_shape(&mut self,
                  body:  Rc<RefCell<RigidBody>>,
                  delta: Iso2<f32>,
-                 shape: &Shape2<f32>,
+                 shape: &Repr2<f32>,
                  out:   &mut Vec<SceneNode<'a>>) {
         type Pl = shape::Plane2<f32>;
         type Bl = shape::Ball2<f32>;
@@ -83,31 +81,30 @@ impl<'a> GraphicsManager<'a> {
         type Cy = shape::Cylinder2<f32>;
         type Co = shape::Cone2<f32>;
         type Cm = shape::Compound2<f32>;
-        type Ls = shape::Mesh2<f32>;
+        type Ls = shape::Polyline2<f32>;
         type Se = shape::Segment2<f32>;
 
-        let id = shape.get_type_id();
-        if id == TypeId::of::<Pl>(){
-            self.add_plane(body, shape.downcast_ref::<Pl>().unwrap(), out)
-        }
-        else if id == TypeId::of::<Bl>() {
-            self.add_ball(body, delta, shape.downcast_ref::<Bl>().unwrap(), out)
-        }
-        else if id == TypeId::of::<Bo>() {
-            self.add_box(body, delta, shape.downcast_ref::<Bo>().unwrap(), out)
-        }
-        else if id == TypeId::of::<Se>() {
-            self.add_segment(body, delta, shape.downcast_ref::<Se>().unwrap(), out)
-        }
-        else if id == TypeId::of::<Cm>() {
-            let c = shape.downcast_ref::<Cm>().unwrap();
+        let repr = shape.repr();
 
-            for &(t, ref s) in c.shapes().iter() {
+        if let Some(s) = repr.downcast_ref::<Pl>() {
+            self.add_plane(body, s, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Bl>() {
+            self.add_ball(body, delta, s, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Bo>() {
+            self.add_box(body, delta, s, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Se>() {
+            self.add_segment(body, delta, s, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Cm>() {
+            for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(body.clone(), delta * t, &***s, out)
             }
         }
-        else if id == TypeId::of::<Ls>() {
-            self.add_lines(body, delta, shape.downcast_ref::<Ls>().unwrap(), out)
+        else if let Some(s) = repr.downcast_ref::<Ls>() {
+            self.add_lines(body, delta, s, out)
         }
         else {
             panic!("Not yet implemented.")
@@ -134,7 +131,7 @@ impl<'a> GraphicsManager<'a> {
     fn add_lines(&mut self,
                  body:  Rc<RefCell<RigidBody>>,
                  delta: Iso2<f32>,
-                 shape: &shape::Mesh2<f32>,
+                 shape: &shape::Polyline2<f32>,
                  out:   &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&body);
@@ -207,21 +204,21 @@ impl<'a> GraphicsManager<'a> {
     }
 
     pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<u8>) {
-        let key = body.deref() as *const RefCell<RigidBody> as uint;
+        let key = &**body as *const RefCell<RigidBody> as usize;
         self.obj2color.insert(key, color);
     }
 
     pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Pnt3<u8> {
-        let key = body.deref() as *const RefCell<RigidBody> as uint;
+        let key = &**body as *const RefCell<RigidBody> as usize;
         match self.obj2color.get(&key) {
             Some(color) => return *color,
             None => { }
         }
 
         let color = Pnt3::new(
-            self.rand.gen_range(0u, 256) as u8,
-            self.rand.gen_range(0u, 256) as u8,
-            self.rand.gen_range(0u, 256) as u8);
+            self.rand.gen_range(0us, 256) as u8,
+            self.rand.gen_range(0us, 256) as u8,
+            self.rand.gen_range(0us, 256) as u8);
 
 
         self.obj2color.insert(key, color);
@@ -230,6 +227,6 @@ impl<'a> GraphicsManager<'a> {
     }
 
     pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<SceneNode<'a>>> {
-        self.rb2sn.get_mut(&(rb.deref() as *const RefCell<RigidBody> as uint))
+        self.rb2sn.get_mut(&(&**rb as *const RefCell<RigidBody> as usize))
     }
 }

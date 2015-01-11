@@ -82,13 +82,12 @@ The libraries needed to compile the examples are:
 #![deny(unused_results)]
 #![deny(unused_typecasts)]
 #![warn(non_camel_case_types)]
-#![feature(globs)]
-#![feature(default_type_params)]
-#![feature(phase)]
+#![allow(unstable)]
+#![allow(missing_copy_implementations)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
 extern crate rand;
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 extern crate collections;
 extern crate "nalgebra" as na;
 extern crate ncollide;
@@ -100,12 +99,10 @@ pub mod aliases;
 pub mod integration;
 pub mod detection;
 pub mod resolution;
-
 pub mod world;
-
 pub mod object;
-
 pub mod utils;
+pub mod volumetric;
 
 
 /// Compilation flags dependent aliases for mathematical types.

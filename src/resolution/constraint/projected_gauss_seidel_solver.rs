@@ -3,7 +3,7 @@ use math::{Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.
-#[deriving(PartialEq, Show, Clone)]
+#[derive(PartialEq, Show, Clone)]
 pub struct Velocities {
     /// Linear velocity.
     pub lv: Vect,
@@ -42,8 +42,8 @@ impl Velocities {
 pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
                                     friction:       &mut [VelocityConstraint],
                                     result:         &mut [Velocities],
-                                    num_bodies:     uint,
-                                    num_iterations: uint,
+                                    num_bodies:     usize,
+                                    num_iterations: usize,
                                     is_lambda_zero: bool) {
     // initialize the solution with zeros...
     // mj_lambda is result
@@ -92,13 +92,13 @@ fn setup_warmstart_for_constraint(c: &VelocityConstraint, mj_lambda: &mut [Veloc
     let id2 = c.id2;
 
     if id1 >= 0 {
-        mj_lambda[id1 as uint].lv = mj_lambda[id1 as uint].lv - c.weighted_normal1 * c.impulse;
-        mj_lambda[id1 as uint].av = mj_lambda[id1 as uint].av + c.weighted_rot_axis1 * c.impulse;
+        mj_lambda[id1 as usize].lv = mj_lambda[id1 as usize].lv - c.weighted_normal1 * c.impulse;
+        mj_lambda[id1 as usize].av = mj_lambda[id1 as usize].av + c.weighted_rot_axis1 * c.impulse;
     }
 
     if id2 >= 0 {
-        mj_lambda[id2 as uint].lv = mj_lambda[id2 as uint].lv + c.weighted_normal2 * c.impulse;
-        mj_lambda[id2 as uint].av = mj_lambda[id2 as uint].av + c.weighted_rot_axis2 * c.impulse;
+        mj_lambda[id2 as usize].lv = mj_lambda[id2 as usize].lv + c.weighted_normal2 * c.impulse;
+        mj_lambda[id2 as usize].av = mj_lambda[id2 as usize].av + c.weighted_rot_axis2 * c.impulse;
     }
 }
 
@@ -110,13 +110,13 @@ fn solve_velocity_constraint(c: &mut VelocityConstraint, mj_lambda: &mut [Veloci
     let mut d_lambda_i = c.objective.clone();
 
     if id1 >= 0 {
-        d_lambda_i = d_lambda_i + na::dot(&c.normal, &mj_lambda[id1 as uint].lv)
-                                - na::dot(&c.rot_axis1, &mj_lambda[id1 as uint].av);
+        d_lambda_i = d_lambda_i + na::dot(&c.normal, &mj_lambda[id1 as usize].lv)
+                                - na::dot(&c.rot_axis1, &mj_lambda[id1 as usize].av);
     }
 
     if id2 >= 0 {
-        d_lambda_i = d_lambda_i - na::dot(&c.normal, &mj_lambda[id2 as uint].lv)
-                                - na::dot(&c.rot_axis2, &mj_lambda[id2 as uint].av);
+        d_lambda_i = d_lambda_i - na::dot(&c.normal, &mj_lambda[id2 as usize].lv)
+                                - na::dot(&c.rot_axis2, &mj_lambda[id2 as usize].av);
     }
 
     d_lambda_i = d_lambda_i * c.inv_projected_mass;
@@ -131,12 +131,12 @@ fn solve_velocity_constraint(c: &mut VelocityConstraint, mj_lambda: &mut [Veloci
 
 
     if id1 >= 0 {
-        mj_lambda[id1 as uint].lv = mj_lambda[id1 as uint].lv - c.weighted_normal1 * d_lambda_i;
-        mj_lambda[id1 as uint].av = mj_lambda[id1 as uint].av + c.weighted_rot_axis1 * d_lambda_i;
+        mj_lambda[id1 as usize].lv = mj_lambda[id1 as usize].lv - c.weighted_normal1 * d_lambda_i;
+        mj_lambda[id1 as usize].av = mj_lambda[id1 as usize].av + c.weighted_rot_axis1 * d_lambda_i;
     }
 
     if id2 >= 0 {
-        mj_lambda[id2 as uint].lv = mj_lambda[id2 as uint].lv + c.weighted_normal2 * d_lambda_i;
-        mj_lambda[id2 as uint].av = mj_lambda[id2 as uint].av + c.weighted_rot_axis2 * d_lambda_i;
+        mj_lambda[id2 as usize].lv = mj_lambda[id2 as usize].lv + c.weighted_normal2 * d_lambda_i;
+        mj_lambda[id2 as usize].av = mj_lambda[id2 as usize].av + c.weighted_rot_axis2 * d_lambda_i;
     }
 }

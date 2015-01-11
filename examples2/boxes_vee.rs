@@ -38,14 +38,14 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = (1000.0f32.sqrt()) as uint;
+    let num = (1000.0f32.sqrt()) as usize;
     let rad = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
-    for i in range(0u, num) {
-        for j in range(0u, num) {
+    for i in range(0us, num) {
+        for j in range(0us, num) {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 10.0;
 

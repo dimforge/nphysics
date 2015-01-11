@@ -1,6 +1,7 @@
-use std::num::FloatMath;
+use std::num::Float;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::iter;
 use na;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
@@ -65,7 +66,7 @@ impl ActivationManager {
     pub fn update(&mut self,
                   world:  &mut RigidBodyCollisionWorld,
                   joints: &JointManager,
-                  bodies: &HashMap<uint, Rc<RefCell<RigidBody>>, UintTWHash>) {
+                  bodies: &HashMap<usize, Rc<RefCell<RigidBody>>, UintTWHash>) {
         /*
          *
          * Update bodies energy
@@ -79,7 +80,7 @@ impl ActivationManager {
                 self.update_energy(&mut *b);
             }
 
-            b.set_index(i as int);
+            b.set_index(i as isize);
         }
 
         /*
@@ -106,8 +107,8 @@ impl ActivationManager {
         // Resize buffers.
         if bodies.len() > self.ufind.len() {
             let to_add = bodies.len() - self.ufind.len();
-            self.ufind.grow(to_add, UnionFindSet::new(0));
-            self.can_deactivate.grow(to_add, false);
+            self.ufind.extend(iter::repeat(UnionFindSet::new(0)).take(to_add));
+            self.can_deactivate.extend(iter::repeat(false).take(to_add));
         }
         else {
             self.ufind.truncate(bodies.len());
@@ -129,7 +130,7 @@ impl ActivationManager {
             let rb2 = b2.borrow();
 
             if rb1.can_move() && rb2.can_move() {
-                union_find::union(rb1.index() as uint, rb2.index() as uint, ufs)
+                union_find::union(rb1.index() as usize, rb2.index() as usize, ufs)
             }
         }
 
@@ -161,7 +162,7 @@ impl ActivationManager {
          * Body activation/deactivation.
          */
         // Find deactivable islands.
-        for i in range(0u, self.ufind.len()) {
+        for i in range(0us, self.ufind.len()) {
             let root = union_find::find(i, self.ufind.as_mut_slice());
             let b    = bodies.elements()[i].value.borrow();
 
@@ -175,7 +176,7 @@ impl ActivationManager {
         }
 
         // Activate/deactivate islands.
-        for i in range(0u, self.ufind.len()) {
+        for i in range(0us, self.ufind.len()) {
             let root = union_find::find(i, self.ufind.as_mut_slice());
             let mut b = bodies.elements()[i].value.borrow_mut();
 

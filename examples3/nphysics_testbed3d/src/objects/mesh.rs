@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::resource;
-use na::{Pnt3, Vec3, Iso3};
+use na::{Pnt3, Iso3};
 use na;
 use nphysics::object::RigidBody;
 
@@ -19,7 +19,7 @@ impl Mesh {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso3<f32>,
                vertices: Vec<Pnt3<f32>>,
-               indices:  Vec<Vec3<u32>>,
+               indices:  Vec<Pnt3<u32>>,
                color:    Pnt3<f32>,
                window:   &mut Window) -> Mesh {
         let vs = vertices;

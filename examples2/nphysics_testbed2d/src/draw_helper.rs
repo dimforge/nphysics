@@ -19,7 +19,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
 
     for c in collisions.iter() {
         match *c {
-            Constraint::RBRB(_, _, c) => {
+            Constraint::RBRB(_, _, ref c) => {
                 draw_line(
                     window,
                     &c.world1,
@@ -63,12 +63,12 @@ pub fn draw_line(window: &mut graphics::RenderWindow, v1: &Pnt2<f32>, v2: &Pnt2<
     let mut vertices = VertexArray::new().unwrap();
 
     vertices.append(&Vertex::new(
-            &Vector2f::new(v1.x.to_f32().unwrap() * DRAW_SCALE, v1.y.to_f32().unwrap() * DRAW_SCALE),
+            &Vector2f::new(v1.x * DRAW_SCALE, v1.y * DRAW_SCALE),
             color,
             &Vector2f::new(0.0, 0.0)));
 
     vertices.append(&Vertex::new(
-            &Vector2f::new(v2.x.to_f32().unwrap() * DRAW_SCALE, v2.y.to_f32().unwrap() * DRAW_SCALE),
+            &Vector2f::new(v2.x * DRAW_SCALE, v2.y * DRAW_SCALE),
             color,
             &Vector2f::new(0.0, 0.0)));
 

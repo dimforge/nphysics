@@ -35,7 +35,7 @@ pub fn cancel_relative_linear_motion<P>(
     let rot_axis1  = na::cross_matrix(&(*global1 - anchor1.center_of_mass()));
     let rot_axis2  = na::cross_matrix(&(*global2 - anchor2.center_of_mass()));
 
-    for i in range(0u, na::dim::<Vect>()) {
+    for i in range(0us, na::dim::<Vect>()) {
         let mut lin_axis: Vect = na::zero();
         let constraint = &mut constraints[i];
 
@@ -84,7 +84,7 @@ pub fn cancel_relative_linear_motion<P>(
 }
 
 #[inline]
-pub fn write_anchor_id<'a, P>(anchor: &'a Anchor<P>, id: &mut int) -> Option<Ref<'a, RigidBody>> {
+pub fn write_anchor_id<'a, P>(anchor: &'a Anchor<P>, id: &mut isize) -> Option<Ref<'a, RigidBody>> {
     match anchor.body {
         Some(ref b) => {
             let rb = b.borrow();

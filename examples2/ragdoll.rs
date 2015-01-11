@@ -30,8 +30,8 @@ fn main() {
     let n     = 5;
     let shift = 10.0;
 
-    for i in range(0u, n) {
-        for j in range(0u, n) {
+    for i in range(0us, n) {
+        for j in range(0us, n) {
             let x = i as f32 * shift - n as f32 * shift / 2.0;
             let y = j as f32 * (-shift) - 10.0;
 

@@ -29,5 +29,11 @@ f64 = [ ]
 name = "nphysics"
 path = "src/lib.rs"
 
+[dependencies]
+rustc-serialize = "*"
+
+[dependencies.nalgebra]
+git = "https://github.com/sebcrozet/nalgebra"
+
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"

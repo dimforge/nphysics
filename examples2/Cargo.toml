@@ -6,6 +6,16 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"
 
+[dependencies.nalgebra]
+git = "https://github.com/sebcrozet/nalgebra"
+
+[dependencies.ncollide]
+git = "https://github.com/sebcrozet/ncollide"
+
+[dependencies.nphysics]
+features = [ "2df32" ]
+path = ".."
+
 [[bin]]
 name = "ball_vee"
 path = "./balls_vee.rs"

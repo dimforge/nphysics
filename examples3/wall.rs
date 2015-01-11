@@ -33,8 +33,8 @@ fn main() {
     let centerx = shift * (width as f32) / 2.0;
     let centery = shift / 2.0 + 0.04;
 
-    for i in range(0u, width) {
-        for j in range(0u, height) {
+    for i in range(0us, width) {
+        for j in range(0us, height) {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 

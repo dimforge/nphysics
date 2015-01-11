@@ -12,7 +12,7 @@ pub struct Lines {
     base_color: Pnt3<u8>,
     delta: Iso2<f32>,
     body: Rc<RefCell<RigidBody>>,
-    indices: Arc<Vec<uint>>,
+    indices: Arc<Vec<Pnt2<usize>>>,
     vertices: Arc<Vec<Pnt2<f32>>>
 }
 
@@ -20,7 +20,7 @@ impl Lines {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso2<f32>,
                vertices: Arc<Vec<Pnt2<f32>>>,
-               indices:  Arc<Vec<uint>>,
+               indices:  Arc<Vec<Pnt2<usize>>>,
                color:    Pnt3<u8>) -> Lines {
         Lines {
             color: color,
@@ -41,11 +41,11 @@ impl Lines {
         let body      = self.body.borrow();
         let transform = *body.position() * self.delta;
 
-        let vs = self.vertices.deref();
+        let vs = &*self.vertices;
 
-        for is in self.indices.as_slice().chunks(2) {
-            let gsv0 = transform * vs[is[0]];
-            let gsv1 = transform * vs[is[1]];
+        for is in self.indices.iter() {
+            let gsv0 = transform * vs[is.x];
+            let gsv1 = transform * vs[is.y];
             draw_line(rw, &gsv0, &gsv1, &Color::new_RGB(self.color.x, self.color.y, self.color.z));
         }
     }

@@ -12,6 +12,15 @@ path = "../.."
 
 [dependencies.time]
 git = "https://github.com/rust-lang/time"
+ 
+[dependencies.glfw]
+git = "https://github.com/bjz/glfw-rs"
+
+[dependencies.nalgebra]
+git = "https://github.com/sebcrozet/nalgebra"
+
+[dependencies.ncollide]
+git = "https://github.com/sebcrozet/ncollide"
 
 [dependencies.kiss3d]
 git = "https://github.com/sebcrozet/kiss3d"

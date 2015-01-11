@@ -4,7 +4,8 @@ use std::os;
 use rsfml::graphics::{RenderWindow, RenderTarget, Font};
 use rsfml::window::{ContextSettings, VideoMode, Close};
 use rsfml::window::event;
-use rsfml::window::{keyboard, mouse};
+use rsfml::window::keyboard::Key;
+use rsfml::window::mouse::MouseButton;
 use rsfml::graphics::Color;
 use rsfml::system::vector2::Vector2i;
 use na::{Pnt2, Pnt3, Iso2};
@@ -31,7 +32,7 @@ fn usage(exe_name: &str) {
 }
 
 
-#[deriving(PartialEq)]
+#[derive(PartialEq)]
 enum RunMode {
     Running,
     Stop,
@@ -118,7 +119,7 @@ impl<'a> Testbed<'a> {
         self.window.set_framerate_limit(60);
 
 
-        let font_mem = include_bin!("Inconsolata.otf");
+        let font_mem = include_bytes!("Inconsolata.otf");
         let     fnt  = Font::new_from_memory(font_mem).unwrap();
         let mut fps  = Fps::new(&fnt);
         let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
@@ -129,10 +130,10 @@ impl<'a> Testbed<'a> {
                 match self.window.poll_event() {
                     event::KeyPressed{code, ..} => {
                         match code {
-                            keyboard::Escape => self.window.close(),
-                            keyboard::S      => running = RunMode::Step,
-                            keyboard::Space  => draw_colls = !draw_colls,
-                            keyboard::T      => {
+                            Key::Escape => self.window.close(),
+                            Key::S      => running = RunMode::Step,
+                            Key::Space  => draw_colls = !draw_colls,
+                            Key::T      => {
                                 if running == RunMode::Stop {
                                     running = RunMode::Running;
                                 }
@@ -145,7 +146,7 @@ impl<'a> Testbed<'a> {
                     },
                     event::MouseButtonPressed{button, x, y} => {
                         match button {
-                            mouse::MouseLeft => {
+                            MouseButton::MouseLeft => {
                                 let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
                                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
                                 self.world.interferences_with_point(&mapped_point, |b| {
@@ -182,7 +183,7 @@ impl<'a> Testbed<'a> {
                     },
                     event::MouseButtonReleased{button, x, y} => {
                         match button {
-                            mouse::MouseLeft => {
+                            MouseButton::MouseLeft => {
                                 match grabbed_object {
                                     Some(ref b) => {
                                         for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {

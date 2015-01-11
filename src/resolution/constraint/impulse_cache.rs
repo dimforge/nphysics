@@ -1,35 +1,36 @@
 #![doc(hidden)]
 
+use std::iter;
 use std::num::Float;
 use std::mem;
 use std::hash::{Hash, Writer};
-use std::hash::sip::{SipHasher, SipState};
-use rand::{IsaacRng, Rng};
+use std::hash::SipHasher;
+use std::collections::hash_state::DefaultState;
 use std::collections::HashMap;
 use na;
 use na::IterableMut;
 use math::{Scalar, Point};
 use ncollide::utils::AsBytes;
 
-#[deriving(PartialEq)]
+#[derive(PartialEq)]
 /// The identifier of a contact stored in the impulse cache.
 pub struct ContactIdentifier {
-    obj1:    uint,
-    obj2:    uint,
+    obj1:    usize,
+    obj2:    usize,
     ccenter: Point
 }
 
 impl Eq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
 
-impl Hash for ContactIdentifier {
+impl Hash<SipHasher> for ContactIdentifier {
     #[inline]
-    fn hash(&self, state: &mut SipState) {
+    fn hash(&self, state: &mut SipHasher) {
         state.write(self.ccenter.as_bytes())
     }
 }
 
 impl ContactIdentifier {
-    pub fn new(obj1: uint, obj2: uint, center: Point, step: &Scalar) -> ContactIdentifier {
+    pub fn new(obj1: usize, obj2: usize, center: Point, step: &Scalar) -> ContactIdentifier {
         let mut cell = center / *step;
 
         for x in cell.iter_mut() {
@@ -45,29 +46,27 @@ impl ContactIdentifier {
 }
 
 pub struct ImpulseCache {
-    hash_prev:           HashMap<ContactIdentifier, (uint, uint), SipHasher>,
+    hash_prev:           HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>>,
     cache_prev:          Vec<Scalar>,
-    hash_next:           HashMap<ContactIdentifier, (uint, uint), SipHasher>,
+    hash_next:           HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>>,
     cache_next:          Vec<Scalar>,
     step:                Scalar,
-    impulse_per_contact: uint
+    impulse_per_contact: usize
 }
 
 impl ImpulseCache {
-    pub fn new(step: Scalar, impulse_per_contact: uint) -> ImpulseCache {
-        let mut rng = IsaacRng::new_unseeded();
-
+    pub fn new(step: Scalar, impulse_per_contact: usize) -> ImpulseCache {
         ImpulseCache {
-            hash_prev:           HashMap::with_capacity_and_hasher(32, SipHasher::new_with_keys(rng.gen(), rng.gen())),
-            hash_next:           HashMap::with_capacity_and_hasher(32, SipHasher::new_with_keys(rng.gen(), rng.gen())),
-            cache_prev:          Vec::from_elem(impulse_per_contact, na::zero()),
-            cache_next:          Vec::from_elem(impulse_per_contact, na::zero()),
+            hash_prev:           HashMap::with_capacity_and_hash_state(32, DefaultState),
+            hash_next:           HashMap::with_capacity_and_hash_state(32, DefaultState),
+            cache_prev:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
+            cache_next:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             step:                step,
             impulse_per_contact: impulse_per_contact
         }
     }
 
-    pub fn insert(&mut self, cid: uint, obj1: uint, obj2: uint, center: Point) {
+    pub fn insert(&mut self, cid: usize, obj1: usize, obj2: usize, center: Point) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
             match self.hash_prev.get(&id).cloned() {
@@ -78,11 +77,11 @@ impl ImpulseCache {
         let _ = self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash(&self) -> &HashMap<ContactIdentifier, (uint, uint), SipHasher> {
+    pub fn hash(&self) -> &HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>> {
         &self.hash_next
     }
 
-    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (uint, uint), SipHasher> {
+    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>> {
         &mut self.hash_next
     }
 
@@ -98,15 +97,15 @@ impl ImpulseCache {
         self.cache_next.slice_mut(begin, end)
     }
 
-    pub fn reserved_impulse_offset(&self) -> uint {
+    pub fn reserved_impulse_offset(&self) -> usize {
         self.impulse_per_contact
     }
 
-    pub fn impulsions_at(&self, at: uint) -> &[Scalar] {
+    pub fn impulsions_at(&self, at: usize) -> &[Scalar] {
         self.cache_prev.slice(at, at + self.impulse_per_contact)
     }
 
-    pub fn len(&self) -> uint {
+    pub fn len(&self) -> usize {
         self.hash_next.len()
     }
 
@@ -116,8 +115,8 @@ impl ImpulseCache {
         self.cache_next.clear();
         self.hash_next.clear();
 
-        self.cache_prev.grow(self.impulse_per_contact, na::zero());
-        self.cache_next.grow(self.impulse_per_contact, na::zero());
+        self.cache_prev.extend(iter::repeat(na::zero()).take(self.impulse_per_contact));
+        self.cache_next.extend(iter::repeat(na::zero()).take(self.impulse_per_contact));
     }
 
     pub fn swap(&mut self) {

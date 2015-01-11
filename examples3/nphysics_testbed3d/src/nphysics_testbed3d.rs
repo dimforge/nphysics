@@ -1,3 +1,4 @@
+#![allow(unstable)]
 #![warn(non_camel_case_types)]
 
 extern crate rand;

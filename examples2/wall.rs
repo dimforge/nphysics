@@ -32,8 +32,8 @@ fn main() {
     let shift   = 2.0 * rad;
     let centerx = shift * (width as f32) / 2.0;
 
-    for i in range(0u, height) {
-        for j in range(0u, width) {
+    for i in range(0us, height) {
+        for j in range(0us, width) {
             let fj = j as f32;
             let fi = i as f32;
             let x  = fj * 2.0 * rad - centerx;

@@ -1,16 +1,15 @@
+use std::slice::Iter;
+use std::iter::Map;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::iter::Map;
-use std::slice::Items;
 use na;
 use ncollide::bounding_volume::AABB;
 use ncollide::ray::{Ray, RayIntersection};
-use ncollide::narrow_phase::ShapeShapeCollisionDetector;
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
-use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase, ProximitySignalHandler};
+use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase};
 use ncollide::narrow_phase::ContactSignalHandler;
-use ncollide::world::{CollisionWorld, CollisionObject};
+use ncollide::world::CollisionWorld;
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
 use detection::ActivationManager;
@@ -24,7 +23,8 @@ use math::{Scalar, Point, Vect, Orientation, Matrix};
 /// The default broad phase.
 pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
 /// An iterator visiting rigid bodies.
-pub type RigidBodies<'a> = Map<'a, &'a Entry<uint, Rc<RefCell<RigidBody>>>, &'a Rc<RefCell<RigidBody>>, Items<'a, Entry<uint, Rc<RefCell<RigidBody>>>>>;
+pub type RigidBodies<'a> = Map<&'a Entry<usize, RigidBodyHandle>, &'a RigidBodyHandle, Iter<'a, Entry<usize, RigidBodyHandle>>, fn(&'a Entry<usize, RigidBodyHandle>) -> &'a RigidBodyHandle>;
+/// Type of the collision world containing rigid bodies.
 pub type RigidBodyCollisionWorld = CollisionWorld<Scalar, Point, Vect, Matrix, Rc<RefCell<RigidBody>>>;
 
 /// The physics world.
@@ -32,7 +32,7 @@ pub type RigidBodyCollisionWorld = CollisionWorld<Scalar, Point, Vect, Matrix, R
 /// This is the main structure of the physics engine.
 pub struct World {
     cworld:      RigidBodyCollisionWorld,
-    bodies:      HashMap<uint, RigidBodyHandle, UintTWHash>,
+    bodies:      HashMap<usize, RigidBodyHandle, UintTWHash>,
     forces:      BodyForceGenerator,
     integrator:  BodySmpEulerIntegrator,
     sleep:       ActivationManager,
@@ -56,7 +56,7 @@ impl World {
          * For the collision detection
          */
         // Collision world
-        let cworld = CollisionWorld::new(na::cast(0.10f64), na::cast(0.10f64));
+        let cworld = CollisionWorld::new(na::cast(0.10f64), na::cast(0.10f64), false);
 
         // CCD handler
         let ccd = TranslationalCCDMotionClamping::new();
@@ -96,9 +96,10 @@ impl World {
             let mut rb = e.value.borrow_mut();
 
             if rb.is_active() {
-                self.forces.update(dt.clone(), rb.deref_mut());
-                self.integrator.update(dt.clone(), rb.deref_mut());
-                self.cworld.set_next_position(&e.value, rb.position().clone());
+                self.forces.update(dt.clone(), &mut *rb);
+                self.integrator.update(dt.clone(), &mut *rb);
+                self.cworld.defered_set_position(&*e.value as *const RefCell<RigidBody> as usize,
+                                                 rb.position().clone());
             }
         }
 
@@ -134,26 +135,27 @@ impl World {
 
     /// Adds a rigid body to the physics world.
     pub fn add_body(&mut self, rb: RigidBody) -> RigidBodyHandle {
-        // XXX: dont create the collision object here.
-        let co = CollisionObject::new_shared(
-            rb.position().clone(),
-            rb.shape().clone(),
-            rb.collision_groups().clone());
+        let position = rb.position().clone();
+        let shape = rb.shape().clone();
+        let groups = rb.collision_groups().clone();
 
         let handle = Rc::new(RefCell::new(rb));
 
-        self.bodies.insert(handle.deref() as *const RefCell<RigidBody> as uint, handle.clone());
-        self.cworld.add(handle.clone(), co);
+        let uid = &*handle as *const RefCell<RigidBody> as usize;;
+
+        self.bodies.insert(uid, handle.clone());
+        self.cworld.add(uid, position, shape, groups, handle.clone());
 
         handle
     }
 
     /// Remove a rigid body from the physics world.
     pub fn remove_body(&mut self, b: &RigidBodyHandle) {
-        self.cworld.remove(b);
+        let uid = &**b as *const RefCell<RigidBody> as usize;
+        self.cworld.remove(uid);
         self.joints.remove(b, &mut self.sleep);
         self.ccd.remove_ccd_from(b);
-        self.bodies.remove(&(b.deref() as *const RefCell<RigidBody> as uint));
+        self.bodies.remove(&uid);
         b.borrow_mut().delete();
     }
 
@@ -208,19 +210,19 @@ impl World {
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn interferences_with_ray(&mut self,
+    pub fn interferences_with_ray<F: FnMut(&RigidBodyHandle, RayIntersection<Scalar, Vect>) -> ()>(&mut self,
                                   ray: &Ray<Point, Vect>,
-                                  f: |&RigidBodyHandle, RayIntersection<Scalar, Vect>| -> ()) {
+                                  f:   F) {
         self.cworld.interferences_with_ray(ray, f)
     }
 
     /// Gets every body that contain a specific point.
-    pub fn interferences_with_point(&mut self, p: &Point, f: |&RigidBodyHandle| -> ()) {
+    pub fn interferences_with_point<F: FnMut(&RigidBodyHandle) -> ()>(&mut self, p: &Point, f: F) {
         self.cworld.interferences_with_point(p, f)
     }
 
     /// Gets every body that intersects a specific AABB.
-    pub fn interferences_with_aabb(&mut self, aabb: &AABB<Point>, f: |&RigidBodyHandle| -> ()) {
+    pub fn interferences_with_aabb<F: FnMut(&RigidBodyHandle) -> ()>(&mut self, aabb: &AABB<Point>, f: F) {
         self.cworld.interferences_with_aabb(aabb, f)
     }
 
@@ -275,9 +277,15 @@ impl World {
 
     /// An iterator visiting all rigid bodies on this world.
     pub fn bodies(&self) -> RigidBodies {
-        self.bodies.elements().iter().map(|e| &e.value)
+        fn extract_value(e: &Entry<usize, RigidBodyHandle>) -> &RigidBodyHandle {
+            &e.value
+        }
+
+        let extract_value_fn: fn(_) -> _ = extract_value;
+        self.bodies.elements().iter().map(extract_value_fn)
     }
 
+    /* FIXME
     /// Registers a handler for proximity start/stop events.
     pub fn register_proximity_signal_handler<H>(&mut self, name: &str, handler: H)
         where H: ProximitySignalHandler<RigidBodyHandle> + 'static {
@@ -288,6 +296,7 @@ impl World {
     pub fn unregister_proximity_signal_handler(&mut self, name: &str) {
         self.cworld.unregister_proximity_signal_handler(name)
     }
+    */
 
     /// Registers a handler for contact start/stop events.
     pub fn register_contact_signal_handler<H>(&mut self, name: &str, handler: H)
