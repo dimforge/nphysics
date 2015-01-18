@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sebcrozet/nphysics.svg)](https://travis-ci.org/sebcrozet/nphysics)
+
 nphysics
 ========
 **nphysics** is a 2 and 3-dimensional physics engine for games and animations. It uses
