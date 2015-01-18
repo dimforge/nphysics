@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `contact` fn in crate `ncollide_queries`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, contact">
+
+    <title>ncollide_queries::geometry::contact - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='../index.html'>ncollide_queries</a>::<wbr><a href='index.html'>geometry</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='algorithms/index.html'>algorithms</a><a class='mod ' href='contacts_internal/index.html'>contacts_internal</a><a class='mod ' href='distance_internal/index.html'>distance_internal</a><a class='mod ' href='time_of_impact_internal/index.html'>time_of_impact_internal</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.Contact.html'>Contact</a></div><div class='block fn'><h2>Functions</h2><a class='fn current' href='fn.contact.html'>contact</a><a class='fn ' href='fn.distance.html'>distance</a><a class='fn ' href='fn.time_of_impact.html'>time_of_impact</a></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content fn">
+<h1 class='fqn'><span class='in-band'>Function <a href='../index.html'>ncollide_queries</a>::<wbr><a href='index.html'>geometry</a>::<wbr><a class='fn' href=''>contact</a><wbr></span><span class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-5893' href='../../src/ncollide_queries/geometry/contacts_internal/any_against_any.rs.html#14-55'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn contact&lt;N, P, V, M, G1: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, G2: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt;(m1: &amp;M, g1: &amp;G1, m2: &amp;M, g2: &amp;G2, prediction: N) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../ncollide_queries/geometry/struct.Contact.html' title='ncollide_queries::geometry::Contact'>Contact</a>&lt;N, P, V&gt;&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt;, M: <a class='trait' href='../../ncollide_math/trait.Isometry.html' title='ncollide_math::Isometry'>Isometry</a>&lt;N, P, V&gt;, G1: <a class='trait' href='../../ncollide_entities/inspection/repr/trait.Repr.html' title='ncollide_entities::inspection::repr::Repr'>Repr</a>&lt;N, P, V, M&gt; + <a class='trait' href='../../ncollide_entities/bounding_volume/aabb/trait.HasAABB.html' title='ncollide_entities::bounding_volume::aabb::HasAABB'>HasAABB</a>&lt;P, M&gt;, G2: <a class='trait' href='../../ncollide_entities/inspection/repr/trait.Repr.html' title='ncollide_entities::inspection::repr::Repr'>Repr</a>&lt;N, P, V, M&gt; + <a class='trait' href='../../ncollide_entities/bounding_volume/aabb/trait.HasAABB.html' title='ncollide_entities::bounding_volume::aabb::HasAABB'>HasAABB</a>&lt;P, M&gt;</span></pre><div class='docblock'><p>Computes the minimum distance separating two shapes.</p>
+
+<p>Returns <code>0.0</code> if the objects are touching or penetrating.</p>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "ncollide_queries";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

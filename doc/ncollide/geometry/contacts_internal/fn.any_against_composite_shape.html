@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `any_against_composite_shape` fn in crate `ncollide`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, any_against_composite_shape">
+
+    <title>ncollide::geometry::contacts_internal::any_against_composite_shape - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>ncollide</a>::<wbr><a href='../index.html'>geometry</a>::<wbr><a href='index.html'>contacts_internal</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.Contact.html'>Contact</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.any_against_any.html'>any_against_any</a><a class='fn ' href='fn.any_against_any.html'>any_against_any</a><a class='fn current' href='fn.any_against_composite_shape.html'>any_against_composite_shape</a><a class='fn ' href='fn.ball_against_ball.html'>ball_against_ball</a><a class='fn ' href='fn.composite_shape_against_any.html'>composite_shape_against_any</a><a class='fn ' href='fn.plane_against_support_map.html'>plane_against_support_map</a><a class='fn ' href='fn.support_map_against_plane.html'>support_map_against_plane</a><a class='fn ' href='fn.support_map_against_support_map.html'>support_map_against_support_map</a><a class='fn ' href='fn.support_map_against_support_map_with_params.html'>support_map_against_support_map_with_params</a></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content fn">
+<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>ncollide</a>::<wbr><a href='../index.html'>geometry</a>::<wbr><a href='index.html'>contacts_internal</a>::<wbr><a class='fn' href=''>any_against_composite_shape</a><wbr></span><span class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-6457' href='../../../ncollide_queries/geometry/contacts_internal/composite_shape_against_any/fn.any_against_composite_shape.html?gotosrc=6457'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn any_against_composite_shape&lt;N, P, V, M, G1, G2&gt;(m1: &amp;M, g1: &amp;G1, m2: &amp;M, g2: &amp;G2, prediction: N) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../ncollide/geometry/struct.Contact.html' title='ncollide::geometry::Contact'>Contact</a>&lt;N, P, V&gt;&gt; <span class='where'>where N: <a class='trait' href='../../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a>, P: <a class='trait' href='../../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a>&lt;N&gt;, V: <a class='trait' href='../../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt;, M: <a class='trait' href='../../../ncollide/math/trait.Isometry.html' title='ncollide::math::Isometry'>Isometry</a>&lt;N, P, V&gt;, G1: <a class='trait' href='../../../ncollide/inspection/trait.Repr.html' title='ncollide::inspection::Repr'>Repr</a>&lt;N, P, V, M&gt;, G1: <a class='trait' href='../../../ncollide/bounding_volume/trait.HasAABB.html' title='ncollide::bounding_volume::HasAABB'>HasAABB</a>&lt;P, M&gt;, G2: <a class='trait' href='../../../ncollide/shape/trait.CompositeShape.html' title='ncollide::shape::CompositeShape'>CompositeShape</a>&lt;N, P, V, M&gt;, G1: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, G2: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span></pre><div class='docblock'><p>Best contact between a shape and a composite (<code>Mesh</code>, <code>Compound</code>) shape.</p>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "ncollide";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script async src="../../../search-index.js"></script>
+</body>
+</html>

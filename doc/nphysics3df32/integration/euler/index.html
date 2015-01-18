@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `euler` mod in crate `nphysics3df32`.">
+    <meta name="description" content="API documentation for the Rust `euler` mod in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, euler">
 
-    <title>nphysics3df32::integration::euler - Rust</title>
+    <title>nphysics::integration::euler - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../../index.html'>nphysics3df32</a>&#8203;::<a href='../index.html'>integration</a></p><div class='block mod'><h2>Modules</h2><a class='mod current' href='../euler/index.html'>euler</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='../struct.BodyDamping.html'>BodyDamping</a><a class='struct ' href='../struct.BodyExpEulerIntegrator.html'>BodyExpEulerIntegrator</a><a class='struct ' href='../struct.BodyForceGenerator.html'>BodyForceGenerator</a><a class='struct ' href='../struct.BodySmpEulerIntegrator.html'>BodySmpEulerIntegrator</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='../trait.Integrator.html'>Integrator</a></div>
+        <p class='location'><a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>integration</a></p><div class='block mod'><h2>Modules</h2><a class='mod current' href='../euler/index.html'>euler</a><a class='mod ' href='../integrator/index.html'>integrator</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='../struct.BodyDamping.html'>BodyDamping</a><a class='struct ' href='../struct.BodyExpEulerIntegrator.html'>BodyExpEulerIntegrator</a><a class='struct ' href='../struct.BodyForceGenerator.html'>BodyForceGenerator</a><a class='struct ' href='../struct.BodySmpEulerIntegrator.html'>BodySmpEulerIntegrator</a><a class='struct ' href='../struct.TranslationalCCDMotionClamping.html'>TranslationalCCDMotionClamping</a></div>
     </section>
 
     <nav class="sub">
@@ -41,16 +41,16 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Module <a href='../../index.html'>nphysics3df32</a>&#8203;::<a href='../index.html'>integration</a>&#8203;::<a class='mod' href=''>euler</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>integration</a>::<wbr><a class='mod' href=''>euler</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-457' href='../../../src/nphysics3df32/up/up/src/integration/euler.rs.html#1-55'>[src]</a></div></h1>
+        </span><a id='src-888' href='../../../src/nphysics/integration/euler.rs.html#1-55'>[src]</a></span></h1>
 <div class='docblock'><p>Euler integration functions.</p>
 </div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.displacement.html'
-                               title='nphysics3df32::integration::euler::displacement'>displacement</a></td>
+                               title='nphysics::integration::euler::displacement'>displacement</a></td>
                         <td class='docblock short'><p>Computes the transformation matrix required to move an object with a <code>lin_vel</code> linear velocity,
 a <code>ang_vil</code> angular velocity, and a center of mass <code>center_of_mass</code>, during the time step <code>dt</code>.</p>
 </td>
@@ -58,28 +58,28 @@ a <code>ang_vil</code> angular velocity, and a center of mass <code>center_of_ma
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.explicit_integrate.html'
-                               title='nphysics3df32::integration::euler::explicit_integrate'>explicit_integrate</a></td>
+                               title='nphysics::integration::euler::explicit_integrate'>explicit_integrate</a></td>
                         <td class='docblock short'><p>Explicit Euler integrator.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.explicit_integrate_wo_rotation.html'
-                               title='nphysics3df32::integration::euler::explicit_integrate_wo_rotation'>explicit_integrate_wo_rotation</a></td>
+                               title='nphysics::integration::euler::explicit_integrate_wo_rotation'>explicit_integrate_wo_rotation</a></td>
                         <td class='docblock short'><p>Explicit Euler integrator. This will not update the rotational components.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.semi_implicit_integrate.html'
-                               title='nphysics3df32::integration::euler::semi_implicit_integrate'>semi_implicit_integrate</a></td>
+                               title='nphysics::integration::euler::semi_implicit_integrate'>semi_implicit_integrate</a></td>
                         <td class='docblock short'><p>Semi-implicit Euler integrator.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.semi_implicit_integrate_wo_rotation.html'
-                               title='nphysics3df32::integration::euler::semi_implicit_integrate_wo_rotation'>semi_implicit_integrate_wo_rotation</a></td>
+                               title='nphysics::integration::euler::semi_implicit_integrate_wo_rotation'>semi_implicit_integrate_wo_rotation</a></td>
                         <td class='docblock short'><p>Semi-implicit Euler integrator. This will not update the rotational components.</p>
 </td>
                     </tr>
@@ -123,7 +123,7 @@ a <code>ang_vil</code> angular velocity, and a center of mass <code>center_of_ma
 
     <script>
         window.rootPath = "../../../";
-        window.currentCrate = "nphysics3df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>

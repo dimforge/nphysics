@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_entities/support_map/support_map.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>support_map.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+</pre><pre class='rust '>
+<span class='doccomment'>//! Traits for support mapping based shapes.</span>
+
+<span class='doccomment'>/// Traits of convex shapes representable by a support mapping function.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// # Parameters:</span>
+<span class='doccomment'>///   * V - type of the support mapping direction argument and of the returned point.</span>
+<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>: <span class='ident'>PreferedSamplingDirections</span><span class='op'>&lt;</span><span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+    <span class='comment'>// FIXME: add methods that takes a unit `dir` in argument.</span>
+    <span class='comment'>// This might be useful to avoid useless normalizations.</span>
+    <span class='doccomment'>/**
+     * Evaluates the support function of the object. A support function is a
+     * function associating a vector to the shape point which maximizes their
+     * dot product. This does not include the `margin` of the object. Margins are
+     * shape-dependent. Use `support_point` to sample the complete shape.
+     *
+     * # Arguments:
+     *  * `dir` - the input of the support function. It is not required for it to
+     *            be normalized.
+     */</span>
+    <span class='kw'>fn</span> <span class='ident'>support_point</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>transform</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>dir</span>: <span class='kw-2'>&amp;</span><span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>P</span>;
+}
+
+<span class='doccomment'>/// Trait of shapes having prefered sampling directions for the Minkowski sampling algorithm.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// Those directions are usually the shape faces normals.</span>
+<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>PreferedSamplingDirections</span><span class='op'>&lt;</span><span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// Applies a function to this shape with a given transform.</span>
+    <span class='kw'>fn</span> <span class='ident'>sample</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>FnMut</span>(<span class='ident'>V</span>));
+}
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "ncollide_entities";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script async src="../../../search-index.js"></script>
+</body>
+</html>

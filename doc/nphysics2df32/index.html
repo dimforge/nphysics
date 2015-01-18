@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `nphysics2df32` crate.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, nphysics2df32">
+    <meta name="description" content="API documentation for the Rust `nphysics` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, nphysics">
 
-    <title>nphysics2df32 - Rust</title>
+    <title>nphysics - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../main.css">
 
@@ -41,10 +41,10 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Crate <a class='mod' href=''>nphysics2df32</a>&#8203;</div><div class='out-of-band'><a href='stability.html'>[stability]</a> <span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>nphysics</a><wbr></span><span class='out-of-band'><a href='stability.html'>[stability]</a> <span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-0' href='../src/nphysics2df32/up/up/src/lib2df32.rs.html#1-111'>[src]</a></div></h1>
+        </span><a id='src-0' href='../src/nphysics/lib.rs.html#1-202'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id="nphysics" class='section-header'><a
                            href="#nphysics">nphysics</a></h1>
@@ -83,8 +83,8 @@ exhibiting its <em>rusty</em> sexyness.</li>
 and the official package manager: <a href="https://github.com/rust-lang/cargo">cargo</a>.</p>
 
 <p>Simply add the following to your <code>Cargo.toml</code> file:</p>
-<pre class='rust '>
-[<span class='ident'>dependencies</span>.<span class='ident'>nphysics2df32</span>]
+<pre id='rust-example-rendered' class='rust '>
+[<span class='ident'>dependencies</span>.<span class='ident'>nphysics3df32</span>]
 <span class='ident'>git</span> <span class='op'>=</span> <span class='string'>&quot;https://github.com/sebcrozet/nphysics&quot;</span>
 </pre>
 
@@ -137,49 +137,63 @@ The libraries needed to compile the physics engine are:</p>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='aliases/index.html'
-                               title='nphysics2df32::aliases'>aliases</a></td>
+                               title='nphysics::aliases'>aliases</a></td>
                         <td class='docblock short'><p>Aliases for complicated parameterized types.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='detection/index.html'
-                               title='nphysics2df32::detection'>detection</a></td>
+                               title='nphysics::detection'>detection</a></td>
                         <td class='docblock short'><p>Collision detection and joints.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='integration/index.html'
-                               title='nphysics2df32::integration'>integration</a></td>
+                               title='nphysics::integration'>integration</a></td>
                         <td class='docblock short'><p>Position and orientation update of rigid bodies.</p>
 </td>
                     </tr>
                 
                     <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='math/index.html'
+                               title='nphysics::math'>math</a></td>
+                        <td class='docblock short'><p>Compilation flags dependent aliases for mathematical types.</p>
+</td>
+                    </tr>
+                
+                    <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='object/index.html'
-                               title='nphysics2df32::object'>object</a></td>
+                               title='nphysics::object'>object</a></td>
                         <td class='docblock short'><p>Rigid bodies.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='resolution/index.html'
-                               title='nphysics2df32::resolution'>resolution</a></td>
+                               title='nphysics::resolution'>resolution</a></td>
                         <td class='docblock short'><p>Constraint resolution.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='utils/index.html'
-                               title='nphysics2df32::utils'>utils</a></td>
+                               title='nphysics::utils'>utils</a></td>
                         <td class='docblock short'><p>Miscellaneous utilities.</p>
 </td>
                     </tr>
                 
                     <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='volumetric/index.html'
+                               title='nphysics::volumetric'>volumetric</a></td>
+                        <td class='docblock short'><p>Volume and inertia tensor computation.</p>
+</td>
+                    </tr>
+                
+                    <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='world/index.html'
-                               title='nphysics2df32::world'>world</a></td>
+                               title='nphysics::world'>world</a></td>
                         <td class='docblock short'><p>The physics world.</p>
 </td>
                     </tr>
@@ -223,7 +237,7 @@ The libraries needed to compile the physics engine are:</p>
 
     <script>
         window.rootPath = "../";
-        window.currentCrate = "nphysics2df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../jquery.js"></script>

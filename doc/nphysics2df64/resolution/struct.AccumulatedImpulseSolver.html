@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `AccumulatedImpulseSolver` struct in crate `nphysics2df64`.">
+    <meta name="description" content="API documentation for the Rust `AccumulatedImpulseSolver` struct in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, AccumulatedImpulseSolver">
 
-    <title>nphysics2df64::resolution::AccumulatedImpulseSolver - Rust</title>
+    <title>nphysics::resolution::AccumulatedImpulseSolver - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>nphysics2df64</a>&#8203;::<a href='index.html'>resolution</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.AccumulatedImpulseSolver.html'>AccumulatedImpulseSolver</a><a class='struct ' href='struct.ContactIdentifier.html'>ContactIdentifier</a><a class='struct ' href='struct.ImpulseCache.html'>ImpulseCache</a><a class='struct ' href='struct.Velocities.html'>Velocities</a><a class='struct ' href='struct.VelocityConstraint.html'>VelocityConstraint</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Solver.html'>Solver</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.projected_gauss_seidel_solve.html'>projected_gauss_seidel_solve</a></div>
+        <p class='location'><a href='../index.html'>nphysics</a>::<wbr><a href='index.html'>resolution</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='solver/index.html'>solver</a></div><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.AccumulatedImpulseSolver.html'>AccumulatedImpulseSolver</a><a class='struct ' href='struct.ContactIdentifier.html'>ContactIdentifier</a><a class='struct ' href='struct.ImpulseCache.html'>ImpulseCache</a><a class='struct ' href='struct.Velocities.html'>Velocities</a><a class='struct ' href='struct.VelocityConstraint.html'>VelocityConstraint</a></div><div class='block enum'><h2>Enums</h2><a class='enum ' href='enum.CorrectionMode.html'>CorrectionMode</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.projected_gauss_seidel_solve.html'>projected_gauss_seidel_solve</a></div>
     </section>
 
     <nav class="sub">
@@ -41,24 +41,24 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><div class='in-band'>Struct <a href='../index.html'>nphysics2df64</a>&#8203;::<a href='index.html'>resolution</a>&#8203;::<a class='struct' href=''>AccumulatedImpulseSolver</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>nphysics</a>::<wbr><a href='index.html'>resolution</a>::<wbr><a class='struct' href=''>AccumulatedImpulseSolver</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-4782' href='../../src/nphysics2df64/up/up/src/resolution/constraint/accumulated_impulse_solver.rs.html#23-31'>[src]</a></div></h1>
+        </span><a id='src-4276' href='../../src/nphysics/resolution/constraint/accumulated_impulse_solver.rs.html#23-31'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct AccumulatedImpulseSolver {
     // some fields omitted
 }</pre><div class='docblock'><p>Constraint solver using the projected gauss seidel algorithm and warm-starting.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../nphysics2df64/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2df64::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h3><div class='impl-methods'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(step: <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, correction_mode: <a class='type' href='../../nphysics2df64/resolution/type.CorrectionMode.html' title='nphysics2df64::resolution::CorrectionMode'>CorrectionMode</a>, joint_corr_factor: <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, rest_eps: <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, num_first_order_iter: <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a>, num_second_order_iter: <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a>) -&gt; <a class='struct' href='../../nphysics2df64/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2df64::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../nphysics/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(step: <a class='type' href='../../nphysics/math/type.Scalar.html' title='nphysics::math::Scalar'>Scalar</a>, correction_mode: <a class='enum' href='../../nphysics/resolution/enum.CorrectionMode.html' title='nphysics::resolution::CorrectionMode'>CorrectionMode</a>, joint_corr_factor: <a class='type' href='../../nphysics/math/type.Scalar.html' title='nphysics::math::Scalar'>Scalar</a>, rest_eps: <a class='type' href='../../nphysics/math/type.Scalar.html' title='nphysics::math::Scalar'>Scalar</a>, num_first_order_iter: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, num_second_order_iter: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../nphysics/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h4>
 <div class='docblock'><p>Creates a new <code>AccumulatedImpulseSolver</code>.</p>
-</div><h4 id='method.num_first_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.num_first_order_iter' class='fnname'>num_first_order_iter</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a></code></h4>
+</div><h4 id='method.num_first_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.num_first_order_iter' class='fnname'>num_first_order_iter</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Gets the number of iteration done by the penetration depth correction solver.</p>
-</div><h4 id='method.set_num_first_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_num_first_order_iter' class='fnname'>set_num_first_order_iter</a>(&amp;mut self, num: <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a>)</code></h4>
+</div><h4 id='method.set_num_first_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_num_first_order_iter' class='fnname'>set_num_first_order_iter</a>(&amp;mut self, num: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
 <div class='docblock'><p>Sets the number of iteration done by the penetration depth correction solver.</p>
-</div><h4 id='method.num_second_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.num_second_order_iter' class='fnname'>num_second_order_iter</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a></code></h4>
+</div><h4 id='method.num_second_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.num_second_order_iter' class='fnname'>num_second_order_iter</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Gets the number of iteration done by the velocity constraint solver.</p>
-</div><h4 id='method.set_num_second_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_num_second_order_iter' class='fnname'>set_num_second_order_iter</a>(&amp;mut self, num: <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a>)</code></h4>
+</div><h4 id='method.set_num_second_order_iter' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_num_second_order_iter' class='fnname'>set_num_second_order_iter</a>(&amp;mut self, num: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
 <div class='docblock'><p>Sets the number of iteration done by the velocity constraint solver.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='../../nphysics2df64/resolution/trait.Solver.html' title='nphysics2df64::resolution::Solver'>Solver</a>&lt;<a class='type' href='../../nphysics2df64/detection/constraint/type.Constraint.html' title='nphysics2df64::detection::constraint::Constraint'>Constraint</a>&gt; for <a class='struct' href='../../nphysics2df64/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2df64::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h3><div class='impl-methods'><h4 id='method.solve' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.solve' class='fnname'>solve</a>(&amp;mut self, dt: <a class='type' href='../../ncollide2df64/math/type.Scalar.html' title='ncollide2df64::math::Scalar'>Scalar</a>, constraints: &amp;<a href='http://doc.rust-lang.org/master/std/primitive.slice.html'>[<a class='type' href='../../nphysics2df64/detection/constraint/type.Constraint.html' title='nphysics2df64::detection::constraint::Constraint'>Constraint</a>]</a>)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='../../nphysics/resolution/solver/trait.Solver.html' title='nphysics::resolution::solver::Solver'>Solver</a>&lt;<a class='enum' href='../../nphysics/detection/constraint/enum.Constraint.html' title='nphysics::detection::constraint::Constraint'>Constraint</a>&gt; for <a class='struct' href='../../nphysics/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h3><div class='impl-items'><h4 id='method.solve' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.solve' class='fnname'>solve</a>(&amp;mut self, dt: <a class='type' href='../../nphysics/math/type.Scalar.html' title='nphysics::math::Scalar'>Scalar</a>, constraints: <a href='http://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='enum' href='../../nphysics/detection/constraint/enum.Constraint.html' title='nphysics::detection::constraint::Constraint'>Constraint</a><a href='http://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -99,7 +99,7 @@
 
     <script>
         window.rootPath = "../../";
-        window.currentCrate = "nphysics2df64";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>

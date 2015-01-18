@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `Anchor` struct in crate `nphysics3df64`.">
+    <meta name="description" content="API documentation for the Rust `Anchor` struct in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, Anchor">
 
-    <title>nphysics3df64::detection::joint::Anchor - Rust</title>
+    <title>nphysics::detection::joint::Anchor - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../../index.html'>nphysics3df64</a>&#8203;::<a href='../index.html'>detection</a>&#8203;::<a href='index.html'>joint</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.Anchor.html'>Anchor</a><a class='struct ' href='struct.BallInSocket.html'>BallInSocket</a><a class='struct ' href='struct.Fixed.html'>Fixed</a><a class='struct ' href='struct.JointManager.html'>JointManager</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Joint.html'>Joint</a></div>
+        <p class='location'><a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>detection</a>::<wbr><a href='index.html'>joint</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='joint/index.html'>joint</a></div><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.Anchor.html'>Anchor</a><a class='struct ' href='struct.BallInSocket.html'>BallInSocket</a><a class='struct ' href='struct.Fixed.html'>Fixed</a><a class='struct ' href='struct.JointManager.html'>JointManager</a></div>
     </section>
 
     <nav class="sub">
@@ -41,23 +41,23 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><div class='in-band'>Struct <a href='../../index.html'>nphysics3df64</a>&#8203;::<a href='../index.html'>detection</a>&#8203;::<a href='index.html'>joint</a>&#8203;::<a class='struct' href=''>Anchor</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>detection</a>::<wbr><a href='index.html'>joint</a>::<wbr><a class='struct' href=''>Anchor</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-2597' href='../../../src/nphysics3df64/up/up/src/detection/joint/anchor.rs.html#8-13'>[src]</a></div></h1>
+        </span><a id='src-2404' href='../../../src/nphysics/detection/joint/anchor.rs.html#8-13'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Anchor&lt;P&gt; {
-    pub body: <a class='type' href='http://doc.rust-lang.org/master/core/option/type.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/master/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt;&gt;&gt;,
+    pub body: <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics/object/struct.RigidBody.html' title='nphysics::object::RigidBody'>RigidBody</a>&gt;&gt;&gt;,
     pub position: P,
 }</pre><div class='docblock'><p>One of the two end points of a joint.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr><td id='structfield.body'><a class='stability Unmarked' title='No stability level'></a><code>body</code></td><td><div class='docblock'><p>The body attached to this anchor.</p>
 </div></td></tr><tr><td id='structfield.position'><a class='stability Unmarked' title='No stability level'></a><code>position</code></td><td><div class='docblock'><p>The attach position, in local coordinates of the attached body.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;P&gt; <a class='struct' href='../../../nphysics3df64/detection/joint/struct.Anchor.html' title='nphysics3df64::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h3><div class='impl-methods'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(body: <a class='type' href='http://doc.rust-lang.org/master/core/option/type.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/master/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3df64/object/struct.RigidBody.html' title='nphysics3df64::object::RigidBody'>RigidBody</a>&gt;&gt;&gt;, position: P) -&gt; <a class='struct' href='../../../nphysics3df64/detection/joint/struct.Anchor.html' title='nphysics3df64::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;P&gt; <a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(body: <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics/object/struct.RigidBody.html' title='nphysics::object::RigidBody'>RigidBody</a>&gt;&gt;&gt;, position: P) -&gt; <a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>Anchor</code> at a given <code>position</code> on a <code>body</code> local space.</p>
 
 <p>If <code>body</code> is <code>None</code>, the anchor is concidered to be attached to the ground and <code>position</code>
 is the attach point in global coordinates.</p>
-</div></div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;P&gt; <a class='struct' href='../../../nphysics3df64/detection/joint/struct.Anchor.html' title='nphysics3df64::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h3><div class='impl-methods'><h4 id='method.center_of_mass' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.center_of_mass' class='fnname'>center_of_mass</a>(&amp;self) -&gt; <a class='type' href='../../../ncollide3df64/math/type.Vect.html' title='ncollide3df64::math::Vect'>Vect</a></code></h4>
+</div></div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;P&gt; <a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h3><div class='impl-items'><h4 id='method.center_of_mass' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.center_of_mass' class='fnname'>center_of_mass</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a></code></h4>
 <div class='docblock'><p>The center of mass of the body attached to this anchor.</p>
 
 <p>Returns the zero vector if no body is attached.</p>
@@ -101,7 +101,7 @@ is the attach point in global coordinates.</p>
 
     <script>
         window.rootPath = "../../../";
-        window.currentCrate = "nphysics3df64";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>

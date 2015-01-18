@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `UnionFindSet` struct in crate `nphysics2df32`.">
+    <meta name="description" content="API documentation for the Rust `UnionFindSet` struct in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, UnionFindSet">
 
-    <title>nphysics2df32::utils::union_find::UnionFindSet - Rust</title>
+    <title>nphysics::utils::union_find::UnionFindSet - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../../index.html'>nphysics2df32</a>&#8203;::<a href='../index.html'>utils</a>&#8203;::<a href='index.html'>union_find</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.UnionFindSet.html'>UnionFindSet</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.find.html'>find</a><a class='fn ' href='fn.union.html'>union</a></div>
+        <p class='location'><a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>utils</a>::<wbr><a href='index.html'>union_find</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.UnionFindSet.html'>UnionFindSet</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.find.html'>find</a><a class='fn ' href='fn.union.html'>union</a></div>
     </section>
 
     <nav class="sub">
@@ -41,19 +41,19 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><div class='in-band'>Struct <a href='../../index.html'>nphysics2df32</a>&#8203;::<a href='../index.html'>utils</a>&#8203;::<a href='index.html'>union_find</a>&#8203;::<a class='struct' href=''>UnionFindSet</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>utils</a>::<wbr><a href='index.html'>union_find</a>::<wbr><a class='struct' href=''>UnionFindSet</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-12930' href='../../../src/nphysics2df32/up/up/src/utils/union_find.rs.html#5-10'>[src]</a></div></h1>
+        </span><a id='src-12175' href='../../../src/nphysics/utils/union_find.rs.html#5-10'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct UnionFindSet {
     // some fields omitted
 }</pre><div class='docblock'><p>An element used by the union-find algorithm.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../../nphysics2df32/utils/union_find/struct.UnionFindSet.html' title='nphysics2df32::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h3><div class='impl-methods'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(key: <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a>) -&gt; <a class='struct' href='../../../nphysics2df32/utils/union_find/struct.UnionFindSet.html' title='nphysics2df32::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../../nphysics/utils/union_find/struct.UnionFindSet.html' title='nphysics::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(key: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../../nphysics/utils/union_find/struct.UnionFindSet.html' title='nphysics::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h4>
 <div class='docblock'><p>Creates a new <code>UnionFindSet</code>.</p>
-</div><h4 id='method.reinit' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.reinit' class='fnname'>reinit</a>(&amp;mut self, key: <a href='http://doc.rust-lang.org/master/std/primitive.uint.html'>uint</a>)</code></h4>
+</div><h4 id='method.reinit' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.reinit' class='fnname'>reinit</a>(&amp;mut self, key: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
 <div class='docblock'><p>Reinitialize this set.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/master/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../../nphysics2df32/utils/union_find/struct.UnionFindSet.html' title='nphysics2df32::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h3><div class='impl-methods'><h4 id='method.clone' class='method'><a class='stability Unstable' title='Unstable'></a><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../nphysics2df32/utils/union_find/struct.UnionFindSet.html' title='nphysics2df32::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h4>
-<h4 id='method.clone_from' class='method'><a class='stability Experimental' title='Experimental: this function is mostly unused'></a><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../../nphysics/utils/union_find/struct.UnionFindSet.html' title='nphysics::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../nphysics/utils/union_find/struct.UnionFindSet.html' title='nphysics::utils::union_find::UnionFindSet'>UnionFindSet</a></code></h4>
+<h4 id='method.clone_from' class='tymethod'><a class='stability Unstable' title='Unstable: this function is rarely used'></a><code>fn <a href='#tymethod.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -94,7 +94,7 @@
 
     <script>
         window.rootPath = "../../../";
-        window.currentCrate = "nphysics2df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>

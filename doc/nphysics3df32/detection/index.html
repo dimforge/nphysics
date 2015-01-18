@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `detection` mod in crate `nphysics3df32`.">
+    <meta name="description" content="API documentation for the Rust `detection` mod in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, detection">
 
-    <title>nphysics3df32::detection - Rust</title>
+    <title>nphysics::detection - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>nphysics3df32</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><a class='mod current' href='../detection/index.html'>detection</a><a class='mod ' href='../integration/index.html'>integration</a><a class='mod ' href='../object/index.html'>object</a><a class='mod ' href='../resolution/index.html'>resolution</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../world/index.html'>world</a></div>
+        <p class='location'><a href='../index.html'>nphysics</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><a class='mod current' href='../detection/index.html'>detection</a><a class='mod ' href='../integration/index.html'>integration</a><a class='mod ' href='../math/index.html'>math</a><a class='mod ' href='../object/index.html'>object</a><a class='mod ' href='../resolution/index.html'>resolution</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../volumetric/index.html'>volumetric</a><a class='mod ' href='../world/index.html'>world</a></div>
     </section>
 
     <nav class="sub">
@@ -41,23 +41,31 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Module <a href='../index.html'>nphysics3df32</a>&#8203;::<a class='mod' href=''>detection</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>nphysics</a>::<wbr><a class='mod' href=''>detection</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-741' href='../../src/nphysics3df32/up/up/src/detection/mod.rs.html#1-27'>[src]</a></div></h1>
+        </span><a id='src-1188' href='../../src/nphysics/detection/mod.rs.html#1-28'>[src]</a></span></h1>
 <div class='docblock'><p>Collision detection and joints.</p>
-</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use detection::detector::<a class='trait' href='../../nphysics/detection/detector/trait.Detector.html' title='nphysics::detection::detector::Detector'>Detector</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='constraint/index.html'
-                               title='nphysics3df32::detection::constraint'>constraint</a></td>
+                               title='nphysics::detection::constraint'>constraint</a></td>
                         <td class='docblock short'><p>Data structure to describe a constraint between two rigid bodies.</p>
 </td>
                     </tr>
                 
                     <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='detector/index.html'
+                               title='nphysics::detection::detector'>detector</a></td>
+                        <td class='docblock short'><p>Collision detector.</p>
+</td>
+                    </tr>
+                
+                    <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='joint/index.html'
-                               title='nphysics3df32::detection::joint'>joint</a></td>
+                               title='nphysics::detection::joint'>joint</a></td>
                         <td class='docblock short'><p>Joint handling.</p>
 </td>
                     </tr>
@@ -65,30 +73,8 @@
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.ActivationManager.html'
-                               title='nphysics3df32::detection::ActivationManager'>ActivationManager</a></td>
+                               title='nphysics::detection::ActivationManager'>ActivationManager</a></td>
                         <td class='docblock short'><p>Structure that monitors island-based activation/deactivation of objects.</p>
-</td>
-                    </tr>
-                
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BodiesBodies.html'
-                               title='nphysics3df32::detection::BodiesBodies'>BodiesBodies</a></td>
-                        <td class='docblock short'><p>Collision detector between rigid bodies.</p>
-</td>
-                    </tr>
-                
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BodyBodyDispatcher.html'
-                               title='nphysics3df32::detection::BodyBodyDispatcher'>BodyBodyDispatcher</a></td>
-                        <td class='docblock short'><p>Collision detector dispatcher for rigid bodies.</p>
-</td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
-<table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.Detector.html'
-                               title='nphysics3df32::detection::Detector'>Detector</a></td>
-                        <td class='docblock short'><p>Trait implemented by collision detectors.</p>
 </td>
                     </tr>
                 </table></section>
@@ -131,7 +117,7 @@
 
     <script>
         window.rootPath = "../../";
-        window.currentCrate = "nphysics3df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>

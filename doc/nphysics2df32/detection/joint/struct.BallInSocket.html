@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `BallInSocket` struct in crate `nphysics2df32`.">
+    <meta name="description" content="API documentation for the Rust `BallInSocket` struct in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, BallInSocket">
 
-    <title>nphysics2df32::detection::joint::BallInSocket - Rust</title>
+    <title>nphysics::detection::joint::BallInSocket - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../../index.html'>nphysics2df32</a>&#8203;::<a href='../index.html'>detection</a>&#8203;::<a href='index.html'>joint</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.Anchor.html'>Anchor</a><a class='struct current' href='struct.BallInSocket.html'>BallInSocket</a><a class='struct ' href='struct.Fixed.html'>Fixed</a><a class='struct ' href='struct.JointManager.html'>JointManager</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Joint.html'>Joint</a></div>
+        <p class='location'><a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>detection</a>::<wbr><a href='index.html'>joint</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='joint/index.html'>joint</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.Anchor.html'>Anchor</a><a class='struct current' href='struct.BallInSocket.html'>BallInSocket</a><a class='struct ' href='struct.Fixed.html'>Fixed</a><a class='struct ' href='struct.JointManager.html'>JointManager</a></div>
     </section>
 
     <nav class="sub">
@@ -41,34 +41,34 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><div class='in-band'>Struct <a href='../../index.html'>nphysics2df32</a>&#8203;::<a href='../index.html'>detection</a>&#8203;::<a href='index.html'>joint</a>&#8203;::<a class='struct' href=''>BallInSocket</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>detection</a>::<wbr><a href='index.html'>joint</a>::<wbr><a class='struct' href=''>BallInSocket</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-2683' href='../../../src/nphysics2df32/up/up/src/detection/joint/ball_in_socket.rs.html#9-13'>[src]</a></div></h1>
+        </span><a id='src-2489' href='../../../src/nphysics/detection/joint/ball_in_socket.rs.html#9-13'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct BallInSocket {
     // some fields omitted
 }</pre><div class='docblock'><p>A ball-in-socket joint.</p>
 
 <p>This is usually used to create ragdolls.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../../nphysics2df32/detection/joint/struct.BallInSocket.html' title='nphysics2df32::detection::joint::BallInSocket'>BallInSocket</a></code></h3><div class='impl-methods'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(anchor1: <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>&gt;, anchor2: <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>&gt;) -&gt; <a class='struct' href='../../../nphysics2df32/detection/joint/struct.BallInSocket.html' title='nphysics2df32::detection::joint::BallInSocket'>BallInSocket</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../../nphysics/detection/joint/struct.BallInSocket.html' title='nphysics::detection::joint::BallInSocket'>BallInSocket</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(anchor1: <a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>&gt;, anchor2: <a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>&gt;) -&gt; <a class='struct' href='../../../nphysics/detection/joint/struct.BallInSocket.html' title='nphysics::detection::joint::BallInSocket'>BallInSocket</a></code></h4>
 <div class='docblock'><p>Creates a ball-in-socket joint.</p>
-</div><h4 id='method.up_to_date' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.up_to_date' class='fnname'>up_to_date</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/master/std/primitive.bool.html'>bool</a></code></h4>
+</div><h4 id='method.up_to_date' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.up_to_date' class='fnname'>up_to_date</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Tells if this joint has been modified by the user.</p>
-</div><h4 id='method.set_local1' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_local1' class='fnname'>set_local1</a>(&amp;mut self, local1: <a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>)</code></h4>
+</div><h4 id='method.set_local1' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_local1' class='fnname'>set_local1</a>(&amp;mut self, local1: <a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>)</code></h4>
 <div class='docblock'><p>Sets the the second anchor position.</p>
 
 <p>The position is expressed in the second attached body’s local coordinates.</p>
-</div><h4 id='method.set_local2' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_local2' class='fnname'>set_local2</a>(&amp;mut self, local2: <a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>)</code></h4>
+</div><h4 id='method.set_local2' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.set_local2' class='fnname'>set_local2</a>(&amp;mut self, local2: <a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>)</code></h4>
 <div class='docblock'><p>Sets the the second anchor position.</p>
 
 <p>The position is expressed in the second attached body’s local coordinates.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='../../../nphysics2df32/detection/joint/trait.Joint.html' title='nphysics2df32::detection::joint::Joint'>Joint</a>&lt;<a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>&gt; for <a class='struct' href='../../../nphysics2df32/detection/joint/struct.BallInSocket.html' title='nphysics2df32::detection::joint::BallInSocket'>BallInSocket</a></code></h3><div class='impl-methods'><h4 id='method.anchor1' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor1' class='fnname'>anchor1</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='../../../nphysics/detection/joint/joint/trait.Joint.html' title='nphysics::detection::joint::joint::Joint'>Joint</a>&lt;<a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>&gt; for <a class='struct' href='../../../nphysics/detection/joint/struct.BallInSocket.html' title='nphysics::detection::joint::BallInSocket'>BallInSocket</a></code></h3><div class='impl-items'><h4 id='method.anchor1' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>&gt;</code></h4>
 <div class='docblock'><p>The first anchor affected by this joint.</p>
-</div><h4 id='method.anchor2' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor2' class='fnname'>anchor2</a>&lt;'r&gt;(&amp;'r self) -&gt; &amp;'r <a class='struct' href='../../../nphysics2df32/detection/joint/struct.Anchor.html' title='nphysics2df32::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a>&gt;</code></h4>
+</div><h4 id='method.anchor2' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../nphysics/detection/joint/struct.Anchor.html' title='nphysics::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a>&gt;</code></h4>
 <div class='docblock'><p>The second anchor affected by this joint.</p>
-</div><h4 id='method.anchor1_pos' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; <a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a></code></h4>
+</div><h4 id='method.anchor1_pos' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a></code></h4>
 <div class='docblock'><p>The first attach point in global coordinates.</p>
-</div><h4 id='method.anchor2_pos' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; <a class='type' href='../../../ncollide2df32/math/type.Vect.html' title='ncollide2df32::math::Vect'>Vect</a></code></h4>
+</div><h4 id='method.anchor2_pos' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics/math/type.Point.html' title='nphysics::math::Point'>Point</a></code></h4>
 <div class='docblock'><p>The second attach point in global coordinates.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -110,7 +110,7 @@
 
     <script>
         window.rootPath = "../../../";
-        window.currentCrate = "nphysics2df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>

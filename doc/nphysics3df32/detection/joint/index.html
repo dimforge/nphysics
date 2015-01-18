@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `joint` mod in crate `nphysics3df32`.">
+    <meta name="description" content="API documentation for the Rust `joint` mod in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, joint">
 
-    <title>nphysics3df32::detection::joint - Rust</title>
+    <title>nphysics::detection::joint - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../../index.html'>nphysics3df32</a>&#8203;::<a href='../index.html'>detection</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../constraint/index.html'>constraint</a><a class='mod current' href='../joint/index.html'>joint</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='../struct.ActivationManager.html'>ActivationManager</a><a class='struct ' href='../struct.BodiesBodies.html'>BodiesBodies</a><a class='struct ' href='../struct.BodyBodyDispatcher.html'>BodyBodyDispatcher</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='../trait.Detector.html'>Detector</a></div>
+        <p class='location'><a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>detection</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../constraint/index.html'>constraint</a><a class='mod ' href='../detector/index.html'>detector</a><a class='mod current' href='../joint/index.html'>joint</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='../struct.ActivationManager.html'>ActivationManager</a></div>
     </section>
 
     <nav class="sub">
@@ -41,46 +41,46 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Module <a href='../../index.html'>nphysics3df32</a>&#8203;::<a href='../index.html'>detection</a>&#8203;::<a class='mod' href=''>joint</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>nphysics</a>::<wbr><a href='../index.html'>detection</a>::<wbr><a class='mod' href=''>joint</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-1512' href='../../../src/nphysics3df32/up/up/src/detection/mod.rs.html#13-25'>[src]</a></div></h1>
+        </span><a id='src-1329' href='../../../src/nphysics/detection/mod.rs.html#12-26'>[src]</a></span></h1>
 <div class='docblock'><p>Joint handling.</p>
-</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use detection::joint::joint::<a class='trait' href='../../../nphysics/detection/joint/joint/trait.Joint.html' title='nphysics::detection::joint::joint::Joint'>Joint</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='joint/index.html'
+                               title='nphysics::detection::joint::joint'>joint</a></td>
+                        <td class='docblock short'></td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Anchor.html'
-                               title='nphysics3df32::detection::joint::Anchor'>Anchor</a></td>
+                               title='nphysics::detection::joint::Anchor'>Anchor</a></td>
                         <td class='docblock short'><p>One of the two end points of a joint.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BallInSocket.html'
-                               title='nphysics3df32::detection::joint::BallInSocket'>BallInSocket</a></td>
+                               title='nphysics::detection::joint::BallInSocket'>BallInSocket</a></td>
                         <td class='docblock short'><p>A ball-in-socket joint.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Fixed.html'
-                               title='nphysics3df32::detection::joint::Fixed'>Fixed</a></td>
+                               title='nphysics::detection::joint::Fixed'>Fixed</a></td>
                         <td class='docblock short'><p>A joint that prevents any relative movement (linear and angular) between two objects.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.JointManager.html'
-                               title='nphysics3df32::detection::joint::JointManager'>JointManager</a></td>
+                               title='nphysics::detection::joint::JointManager'>JointManager</a></td>
                         <td class='docblock short'><p>Structure that handles creation and removal of joints.</p>
-</td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
-<table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.Joint.html'
-                               title='nphysics3df32::detection::joint::Joint'>Joint</a></td>
-                        <td class='docblock short'><p>Trait implemented by every joint.</p>
 </td>
                     </tr>
                 </table></section>
@@ -123,7 +123,7 @@
 
     <script>
         window.rootPath = "../../../";
-        window.currentCrate = "nphysics3df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../../jquery.js"></script>

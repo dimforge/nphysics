@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `integration` mod in crate `nphysics2df32`.">
+    <meta name="description" content="API documentation for the Rust `integration` mod in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, integration">
 
-    <title>nphysics2df32::integration - Rust</title>
+    <title>nphysics::integration - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>nphysics2df32</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><a class='mod ' href='../detection/index.html'>detection</a><a class='mod current' href='../integration/index.html'>integration</a><a class='mod ' href='../object/index.html'>object</a><a class='mod ' href='../resolution/index.html'>resolution</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../world/index.html'>world</a></div>
+        <p class='location'><a href='../index.html'>nphysics</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><a class='mod ' href='../detection/index.html'>detection</a><a class='mod current' href='../integration/index.html'>integration</a><a class='mod ' href='../math/index.html'>math</a><a class='mod ' href='../object/index.html'>object</a><a class='mod ' href='../resolution/index.html'>resolution</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../volumetric/index.html'>volumetric</a><a class='mod ' href='../world/index.html'>world</a></div>
     </section>
 
     <nav class="sub">
@@ -41,54 +41,61 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Module <a href='../index.html'>nphysics2df32</a>&#8203;::<a class='mod' href=''>integration</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>nphysics</a>::<wbr><a class='mod' href=''>integration</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-44' href='../../src/nphysics2df32/up/up/src/integration/mod.rs.html#1-16'>[src]</a></div></h1>
+        </span><a id='src-37' href='../../src/nphysics/integration/mod.rs.html#1-17'>[src]</a></span></h1>
 <div class='docblock'><p>Position and orientation update of rigid bodies.</p>
-</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use integration::integrator::<a class='trait' href='../../nphysics/integration/integrator/trait.Integrator.html' title='nphysics::integration::integrator::Integrator'>Integrator</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='euler/index.html'
-                               title='nphysics2df32::integration::euler'>euler</a></td>
+                               title='nphysics::integration::euler'>euler</a></td>
                         <td class='docblock short'><p>Euler integration functions.</p>
+</td>
+                    </tr>
+                
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='integrator/index.html'
+                               title='nphysics::integration::integrator'>integrator</a></td>
+                        <td class='docblock short'><p>Trait implemented by every integrators.</p>
 </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BodyDamping.html'
-                               title='nphysics2df32::integration::BodyDamping'>BodyDamping</a></td>
+                               title='nphysics::integration::BodyDamping'>BodyDamping</a></td>
                         <td class='docblock short'><p>A linear and angular velocity damper.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BodyExpEulerIntegrator.html'
-                               title='nphysics2df32::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></td>
+                               title='nphysics::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></td>
                         <td class='docblock short'><p>An explicit Euler integrator.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BodyForceGenerator.html'
-                               title='nphysics2df32::integration::BodyForceGenerator'>BodyForceGenerator</a></td>
+                               title='nphysics::integration::BodyForceGenerator'>BodyForceGenerator</a></td>
                         <td class='docblock short'><p>A constant linear and angular force generator.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BodySmpEulerIntegrator.html'
-                               title='nphysics2df32::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></td>
+                               title='nphysics::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></td>
                         <td class='docblock short'><p>A semi-implicit Euler integrator.</p>
 </td>
                     </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
-<table>
+                
                     <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.Integrator.html'
-                               title='nphysics2df32::integration::Integrator'>Integrator</a></td>
-                        <td class='docblock short'><p>Trait implemented by every integrator.</p>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.TranslationalCCDMotionClamping.html'
+                               title='nphysics::integration::TranslationalCCDMotionClamping'>TranslationalCCDMotionClamping</a></td>
+                        <td class='docblock short'><p>Handles Continuous Collision Detection.</p>
 </td>
                     </tr>
                 </table></section>
@@ -131,7 +138,7 @@
 
     <script>
         window.rootPath = "../../";
-        window.currentCrate = "nphysics2df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>

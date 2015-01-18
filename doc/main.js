@@ -50,7 +50,7 @@
     resizeShortBlocks();
     $(window).on('resize', resizeShortBlocks);
 
-    function highlightSourceLines() {
+    function highlightSourceLines(ev) {
         var i, from, to, match = window.location.hash.match(/^#?(\d+)(?:-(\d+))?$/);
         if (match) {
             from = parseInt(match[1], 10);
@@ -59,14 +59,14 @@
             if ($('#' + from).length === 0) {
                 return;
             }
-            $('#' + from)[0].scrollIntoView();
+            if (ev === null) $('#' + from)[0].scrollIntoView();
             $('.line-numbers span').removeClass('line-highlighted');
             for (i = from; i <= to; ++i) {
                 $('#' + i).addClass('line-highlighted');
             }
         }
     }
-    highlightSourceLines();
+    highlightSourceLines(null);
     $(window).on('hashchange', highlightSourceLines);
 
     $(document).on('keyup', function(e) {
@@ -118,7 +118,7 @@
      * A function to compute the Levenshtein distance between two strings
      * Licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported
      * Full License can be found at http://creativecommons.org/licenses/by-sa/3.0/legalcode
-     * This code is an unmodified version of the code written by Marco de Wit 
+     * This code is an unmodified version of the code written by Marco de Wit
      * and was found at http://stackoverflow.com/a/18514751/745719
      */
     var levenshtein = (function() {
@@ -224,7 +224,7 @@
                                 });
                             }
                         } else if (
-                            (lev_distance = levenshtein(searchWords[j], val)) <= 
+                            (lev_distance = levenshtein(searchWords[j], val)) <=
                                 MAX_LEV_DISTANCE) {
                             if (typeFilter < 0 || typeFilter === searchIndex[j].ty) {
                                 results.push({
@@ -313,7 +313,8 @@
             for (var i = results.length - 1; i > 0; i -= 1) {
                 if (results[i].word === results[i - 1].word &&
                     results[i].item.ty === results[i - 1].item.ty &&
-                    results[i].item.path === results[i - 1].item.path)
+                    results[i].item.path === results[i - 1].item.path &&
+                    (results[i].item.parent || {}).name === (results[i - 1].item.parent || {}).name)
                 {
                     results[i].id = -1;
                 }
@@ -350,16 +351,16 @@
         function validateResult(name, path, keys, parent) {
             for (var i=0; i < keys.length; ++i) {
                 // each check is for validation so we negate the conditions and invalidate
-                if (!( 
+                if (!(
                     // check for an exact name match
                     name.toLowerCase().indexOf(keys[i]) > -1 ||
                     // then an exact path match
                     path.toLowerCase().indexOf(keys[i]) > -1 ||
                     // next if there is a parent, check for exact parent match
-                    (parent !== undefined && 
+                    (parent !== undefined &&
                         parent.name.toLowerCase().indexOf(keys[i]) > -1) ||
                     // lastly check to see if the name was a levenshtein match
-                    levenshtein(name.toLowerCase(), keys[i]) <= 
+                    levenshtein(name.toLowerCase(), keys[i]) <=
                         MAX_LEV_DISTANCE)) {
                     return false;
                 }
@@ -395,8 +396,8 @@
                 if (window.location.pathname == dst.pathname) {
                     $('#search').addClass('hidden');
                     $('#main').removeClass('hidden');
+                    document.location.href = dst.href;
                 }
-                document.location.href = dst.href;
             }).on('mouseover', function() {
                 var $el = $(this);
                 clearTimeout(hoverTimeout);
@@ -451,7 +452,7 @@
                 shown = [];
 
                 results.forEach(function(item) {
-                    var name, type;
+                    var name, type, href, displayPath;
 
                     if (shown.indexOf(item) !== -1) {
                         return;
@@ -461,43 +462,35 @@
                     name = item.name;
                     type = itemTypes[item.ty];
 
-                    output += '<tr class="' + type + ' result"><td>';
-
                     if (type === 'mod') {
-                        output += item.path +
-                            '::<a href="' + rootPath +
-                            item.path.replace(/::/g, '/') + '/' +
-                            name + '/index.html" class="' +
-                            type + '">' + name + '</a>';
+                        displayPath = item.path + '::';
+                        href = rootPath + item.path.replace(/::/g, '/') + '/' +
+                               name + '/index.html';
                     } else if (type === 'static' || type === 'reexport') {
-                        output += item.path +
-                            '::<a href="' + rootPath +
-                            item.path.replace(/::/g, '/') +
-                            '/index.html" class="' + type +
-                            '">' + name + '</a>';
+                        displayPath = item.path + '::';
+                        href = rootPath + item.path.replace(/::/g, '/') +
+                               '/index.html';
                     } else if (item.parent !== undefined) {
                         var myparent = item.parent;
                         var anchor = '#' + type + '.' + name;
-                        output += item.path + '::' + myparent.name +
-                            '::<a href="' + rootPath +
-                            item.path.replace(/::/g, '/') +
-                            '/' + itemTypes[myparent.ty] +
-                            '.' + myparent.name +
-                            '.html' + anchor +
-                            '" class="' + type +
-                            '">' + name + '</a>';
+                        displayPath = item.path + '::' + myparent.name + '::';
+                        href = rootPath + item.path.replace(/::/g, '/') +
+                               '/' + itemTypes[myparent.ty] +
+                               '.' + myparent.name +
+                               '.html' + anchor;
                     } else {
-                        output += item.path +
-                            '::<a href="' + rootPath +
-                            item.path.replace(/::/g, '/') +
-                            '/' + type +
-                            '.' + name +
-                            '.html" class="' + type +
-                            '">' + name + '</a>';
+                        displayPath = item.path + '::';
+                        href = rootPath + item.path.replace(/::/g, '/') +
+                               '/' + type + '.' + name + '.html';
                     }
 
-                    output += '</td><td><span class="desc">' + item.desc +
-                        '</span></td></tr>';
+                    output += '<tr class="' + type + ' result"><td>' +
+                              '<a href="' + href + '">' +
+                              displayPath + '<span class="' + type + '">' +
+                              name + '</span></a></td><td>' +
+                              '<a href="' + href + '">' +
+                              '<span class="desc">' + item.desc +
+                              '&nbsp;</span></a></td></tr>';
                 });
             } else {
                 output += 'No results :( <a href="https://duckduckgo.com/?q=' +
@@ -563,7 +556,7 @@
         // `rustdoc::html::item_type::ItemType` type in Rust.
         var itemTypes = ["mod",
                          "struct",
-                         "type",
+                         "enum",
                          "fn",
                          "type",
                          "static",
@@ -574,10 +567,12 @@
                          "method",
                          "structfield",
                          "variant",
-                         "ffi",
-                         "ffs",
+                         "ffi", // retained for backward compatibility
+                         "ffs", // retained for backward compatibility
                          "macro",
-                         "primitive"];
+                         "primitive",
+                         "associatedtype",
+                         "constant"];
 
         function itemTypeFromName(typename) {
             for (var i = 0; i < itemTypes.length; ++i) {
@@ -713,8 +708,8 @@
                 var code = $('<code>').append(structs[j]);
                 $.each(code.find('a'), function(idx, a) {
                     var href = $(a).attr('href');
-                    if (!href.startsWith('http')) {
-                        $(a).attr('href', rootPath + $(a).attr('href'));
+                    if (href && href.indexOf('http') !== 0) {
+                        $(a).attr('href', rootPath + href);
                     }
                 });
                 var li = $('<li>').append(code);
@@ -765,21 +760,53 @@
     });
 
     $(function() {
-        var toggle = "<a href='javascript:void(0)'"
-            + "class='collapse-toggle'>[<span class='inner'>-</span>]</a>";
+        var toggle = $("<a/>", {'href': 'javascript:void(0)', 'class': 'collapse-toggle'})
+            .html("[<span class='inner'>-</span>]");
 
         $(".method").each(function() {
            if ($(this).next().is(".docblock")) {
-               $(this).children().first().after(toggle);
+               $(this).children().first().after(toggle.clone());
            }
         });
 
-        var mainToggle = $(toggle);
-        mainToggle.append("<span class='toggle-label' style='display:none'>"
-            + "&nbsp;Expand&nbsp;description</span></a>")
-        var wrapper =  $("<div class='toggle-wrapper'>");
-        wrapper.append(mainToggle);
+        var mainToggle =
+            $(toggle).append(
+                $('<span/>', {'class': 'toggle-label'})
+                    .css('display', 'none')
+                    .html('&nbsp;Expand&nbsp;description'));
+        var wrapper =  $("<div class='toggle-wrapper'>").append(mainToggle);
         $("#main > .docblock").before(wrapper);
     });
+
+    $('pre.line-numbers').on('click', 'span', function() {
+        var prev_id = 0;
+
+        function set_fragment(name) {
+            if (history.replaceState) {
+                history.replaceState(null, null, '#' + name);
+                $(window).trigger('hashchange');
+            } else {
+                location.replace('#' + name);
+            }
+        }
+
+        return function(ev) {
+            var cur_id = parseInt(ev.target.id);
+
+            if (ev.shiftKey && prev_id) {
+                if (prev_id > cur_id) {
+                    var tmp = prev_id;
+                    prev_id = cur_id;
+                    cur_id = tmp;
+                }
+
+                set_fragment(prev_id + '-' + cur_id);
+            } else {
+                prev_id = cur_id;
+
+                set_fragment(cur_id);
+            }
+        };
+    }());
 
 }());

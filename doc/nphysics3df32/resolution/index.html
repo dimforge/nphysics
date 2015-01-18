@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `resolution` mod in crate `nphysics3df32`.">
+    <meta name="description" content="API documentation for the Rust `resolution` mod in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, resolution">
 
-    <title>nphysics3df32::resolution - Rust</title>
+    <title>nphysics::resolution - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>nphysics3df32</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><a class='mod ' href='../detection/index.html'>detection</a><a class='mod ' href='../integration/index.html'>integration</a><a class='mod ' href='../object/index.html'>object</a><a class='mod current' href='../resolution/index.html'>resolution</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../world/index.html'>world</a></div>
+        <p class='location'><a href='../index.html'>nphysics</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../aliases/index.html'>aliases</a><a class='mod ' href='../detection/index.html'>detection</a><a class='mod ' href='../integration/index.html'>integration</a><a class='mod ' href='../math/index.html'>math</a><a class='mod ' href='../object/index.html'>object</a><a class='mod current' href='../resolution/index.html'>resolution</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../volumetric/index.html'>volumetric</a><a class='mod ' href='../world/index.html'>world</a></div>
     </section>
 
     <nav class="sub">
@@ -41,68 +41,67 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><div class='in-band'>Module <a href='../index.html'>nphysics3df32</a>&#8203;::<a class='mod' href=''>resolution</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>nphysics</a>::<wbr><a class='mod' href=''>resolution</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-4105' href='../../src/nphysics3df32/up/up/src/resolution/mod.rs.html#1-22'>[src]</a></div></h1>
+        </span><a id='src-3637' href='../../src/nphysics/resolution/mod.rs.html#1-23'>[src]</a></span></h1>
 <div class='docblock'><p>Constraint resolution.</p>
 </div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
-<table><tr><td><code>pub use resolution::constraint::contact_equation::{<a class='type' href='../../nphysics3df32/resolution/type.CorrectionMode.html' title='nphysics3df32::resolution::CorrectionMode'>VelocityAndPosition</a>, <a class='type' href='../../nphysics3df32/resolution/type.CorrectionMode.html' title='nphysics3df32::resolution::CorrectionMode'>Velocity</a>, <a class='type' href='../../nphysics3df32/resolution/type.CorrectionMode.html' title='nphysics3df32::resolution::CorrectionMode'>VelocityAndPositionThresold</a>};</code></td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr><td><code>pub use resolution::solver::<a class='trait' href='../../nphysics/resolution/solver/trait.Solver.html' title='nphysics::resolution::solver::Solver'>Solver</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='mod' href='solver/index.html'
+                               title='nphysics::resolution::solver'>solver</a></td>
+                        <td class='docblock short'></td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.AccumulatedImpulseSolver.html'
-                               title='nphysics3df32::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></td>
+                               title='nphysics::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></td>
                         <td class='docblock short'><p>Constraint solver using the projected gauss seidel algorithm and warm-starting.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.ContactIdentifier.html'
-                               title='nphysics3df32::resolution::ContactIdentifier'>ContactIdentifier</a></td>
+                               title='nphysics::resolution::ContactIdentifier'>ContactIdentifier</a></td>
                         <td class='docblock short'><p>The identifier of a contact stored in the impulse cache.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.ImpulseCache.html'
-                               title='nphysics3df32::resolution::ImpulseCache'>ImpulseCache</a></td>
+                               title='nphysics::resolution::ImpulseCache'>ImpulseCache</a></td>
                         <td class='docblock short'></td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Velocities.html'
-                               title='nphysics3df32::resolution::Velocities'>Velocities</a></td>
+                               title='nphysics::resolution::Velocities'>Velocities</a></td>
                         <td class='docblock short'><p>Structure holding the result of the projected gauss seidel solver.</p>
 </td>
                     </tr>
                 
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.VelocityConstraint.html'
-                               title='nphysics3df32::resolution::VelocityConstraint'>VelocityConstraint</a></td>
+                               title='nphysics::resolution::VelocityConstraint'>VelocityConstraint</a></td>
                         <td class='docblock short'><p>A constraint of velocity at a point of contact.</p>
 </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
                     <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.CorrectionMode.html'
-                               title='nphysics3df32::resolution::CorrectionMode'>CorrectionMode</a></td>
+                        <td><a class='stability Unmarked' title='No stability level'></a><a class='enum' href='enum.CorrectionMode.html'
+                               title='nphysics::resolution::CorrectionMode'>CorrectionMode</a></td>
                         <td class='docblock short'><p>The correction coefficient used by the constraint solver.</p>
-</td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
-<table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.Solver.html'
-                               title='nphysics3df32::resolution::Solver'>Solver</a></td>
-                        <td class='docblock short'><p>Trait implemented by constraint solvers.</p>
 </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr>
                         <td><a class='stability Unmarked' title='No stability level'></a><a class='fn' href='fn.projected_gauss_seidel_solve.html'
-                               title='nphysics3df32::resolution::projected_gauss_seidel_solve'>projected_gauss_seidel_solve</a></td>
+                               title='nphysics::resolution::projected_gauss_seidel_solve'>projected_gauss_seidel_solve</a></td>
                         <td class='docblock short'><p>Solve a set of velocity constraints using the projected gauss seidel solver.</p>
 </td>
                     </tr>
@@ -146,7 +145,7 @@
 
     <script>
         window.rootPath = "../../";
-        window.currentCrate = "nphysics3df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>

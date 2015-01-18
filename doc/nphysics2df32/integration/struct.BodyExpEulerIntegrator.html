@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `BodyExpEulerIntegrator` struct in crate `nphysics2df32`.">
+    <meta name="description" content="API documentation for the Rust `BodyExpEulerIntegrator` struct in crate `nphysics`.">
     <meta name="keywords" content="rust, rustlang, rust-lang, BodyExpEulerIntegrator">
 
-    <title>nphysics2df32::integration::BodyExpEulerIntegrator - Rust</title>
+    <title>nphysics::integration::BodyExpEulerIntegrator - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>nphysics2df32</a>&#8203;::<a href='index.html'>integration</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='euler/index.html'>euler</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.BodyDamping.html'>BodyDamping</a><a class='struct current' href='struct.BodyExpEulerIntegrator.html'>BodyExpEulerIntegrator</a><a class='struct ' href='struct.BodyForceGenerator.html'>BodyForceGenerator</a><a class='struct ' href='struct.BodySmpEulerIntegrator.html'>BodySmpEulerIntegrator</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Integrator.html'>Integrator</a></div>
+        <p class='location'><a href='../index.html'>nphysics</a>::<wbr><a href='index.html'>integration</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='euler/index.html'>euler</a><a class='mod ' href='integrator/index.html'>integrator</a></div><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.BodyDamping.html'>BodyDamping</a><a class='struct current' href='struct.BodyExpEulerIntegrator.html'>BodyExpEulerIntegrator</a><a class='struct ' href='struct.BodyForceGenerator.html'>BodyForceGenerator</a><a class='struct ' href='struct.BodySmpEulerIntegrator.html'>BodySmpEulerIntegrator</a><a class='struct ' href='struct.TranslationalCCDMotionClamping.html'>TranslationalCCDMotionClamping</a></div>
     </section>
 
     <nav class="sub">
@@ -41,16 +41,16 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><div class='in-band'>Struct <a href='../index.html'>nphysics2df32</a>&#8203;::<a href='index.html'>integration</a>&#8203;::<a class='struct' href=''>BodyExpEulerIntegrator</a>&#8203;</div><div class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>nphysics</a>::<wbr><a href='index.html'>integration</a>::<wbr><a class='struct' href=''>BodyExpEulerIntegrator</a><wbr></span><span class='out-of-band'><span id='render-detail'>
             <a id="collapse-all" href="#">[-]
             </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-79' href='../../src/nphysics2df32/up/up/src/integration/body_exp_euler_integrator.rs.html#12'>[src]</a></div></h1>
+        </span><a id='src-73' href='../../src/nphysics/integration/body_exp_euler_integrator.rs.html#12'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct BodyExpEulerIntegrator;</pre><div class='docblock'><p>An explicit Euler integrator.</p>
 
 <p>Do not use this, prefer the <code>BodySmpEulerIntegrator</code> instead.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../nphysics2df32/integration/struct.BodyExpEulerIntegrator.html' title='nphysics2df32::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></h3><div class='impl-methods'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics2df32/integration/struct.BodyExpEulerIntegrator.html' title='nphysics2df32::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='struct' href='../../nphysics/integration/struct.BodyExpEulerIntegrator.html' title='nphysics::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics/integration/struct.BodyExpEulerIntegrator.html' title='nphysics::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></h4>
 <div class='docblock'><p>Creates a new <code>BodyExpEulerIntegrator</code>.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='../../nphysics2df32/integration/trait.Integrator.html' title='nphysics2df32::integration::Integrator'>Integrator</a>&lt;<a class='struct' href='../../nphysics2df32/object/struct.RigidBody.html' title='nphysics2df32::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../nphysics2df32/integration/struct.BodyExpEulerIntegrator.html' title='nphysics2df32::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></h3><div class='impl-methods'><h4 id='method.update' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, dt: <a class='type' href='../../ncollide2df32/math/type.Scalar.html' title='ncollide2df32::math::Scalar'>Scalar</a>, rb: &amp;mut <a class='struct' href='../../nphysics2df32/object/struct.RigidBody.html' title='nphysics2df32::object::RigidBody'>RigidBody</a>)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl <a class='trait' href='../../nphysics/integration/integrator/trait.Integrator.html' title='nphysics::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../nphysics/object/struct.RigidBody.html' title='nphysics::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../nphysics/integration/struct.BodyExpEulerIntegrator.html' title='nphysics::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></h3><div class='impl-items'><h4 id='method.update' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, dt: <a class='type' href='../../nphysics/math/type.Scalar.html' title='nphysics::math::Scalar'>Scalar</a>, rb: &amp;mut <a class='struct' href='../../nphysics/object/struct.RigidBody.html' title='nphysics::object::RigidBody'>RigidBody</a>)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -91,7 +91,7 @@
 
     <script>
         window.rootPath = "../../";
-        window.currentCrate = "nphysics2df32";
+        window.currentCrate = "nphysics";
         window.playgroundUrl = "";
     </script>
     <script src="../../jquery.js"></script>
