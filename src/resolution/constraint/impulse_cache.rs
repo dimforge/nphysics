@@ -1,5 +1,6 @@
 #![doc(hidden)]
 
+use std::default::Default;
 use std::iter;
 use std::num::Float;
 use std::mem;
@@ -56,9 +57,11 @@ pub struct ImpulseCache {
 
 impl ImpulseCache {
     pub fn new(step: Scalar, impulse_per_contact: usize) -> ImpulseCache {
+        let state: DefaultState<SipHasher> = Default::default();
+
         ImpulseCache {
-            hash_prev:           HashMap::with_capacity_and_hash_state(32, DefaultState),
-            hash_next:           HashMap::with_capacity_and_hash_state(32, DefaultState),
+            hash_prev:           HashMap::with_capacity_and_hash_state(32, state.clone()),
+            hash_next:           HashMap::with_capacity_and_hash_state(32, state),
             cache_prev:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             cache_next:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             step:                step,
