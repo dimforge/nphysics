@@ -162,7 +162,7 @@ impl ActivationManager {
          * Body activation/deactivation.
          */
         // Find deactivable islands.
-        for i in range(0us, self.ufind.len()) {
+        for i in 0usize .. self.ufind.len() {
             let root = union_find::find(i, self.ufind.as_mut_slice());
             let b    = bodies.elements()[i].value.borrow();
 
@@ -176,7 +176,7 @@ impl ActivationManager {
         }
 
         // Activate/deactivate islands.
-        for i in range(0us, self.ufind.len()) {
+        for i in 0usize .. self.ufind.len() {
             let root = union_find::find(i, self.ufind.as_mut_slice());
             let mut b = bodies.elements()[i].value.borrow_mut();
 

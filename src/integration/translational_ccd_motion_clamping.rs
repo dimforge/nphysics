@@ -23,9 +23,11 @@ struct CCDBody {
 
 impl CCDBody {
     fn new(body: RigidBodyHandle, threshold: Scalar) -> CCDBody {
+        let last_pos = body.borrow().position().translation();
+
         CCDBody {
             sqthreshold: threshold * threshold,
-            last_pos:    body.borrow().position().translation(),
+            last_pos:    last_pos,
             body:        body,
             accept_zero: true
         }

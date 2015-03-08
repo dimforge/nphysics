@@ -23,7 +23,8 @@ use math::{Scalar, Point, Vect, Orientation, Matrix};
 /// The default broad phase.
 pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
 /// An iterator visiting rigid bodies.
-pub type RigidBodies<'a> = Map<&'a Entry<usize, RigidBodyHandle>, &'a RigidBodyHandle, Iter<'a, Entry<usize, RigidBodyHandle>>, fn(&'a Entry<usize, RigidBodyHandle>) -> &'a RigidBodyHandle>;
+pub type RigidBodies<'a> = Map<Iter<'a, Entry<usize, Rc<RefCell<RigidBody>>>>, fn(&'a Entry<usize, Rc<RefCell<RigidBody>>>) -> &'a Rc<RefCell<RigidBody>>>;
+
 /// Type of the collision world containing rigid bodies.
 pub type RigidBodyCollisionWorld = CollisionWorld<Scalar, Point, Vect, Matrix, Rc<RefCell<RigidBody>>>;
 
@@ -128,7 +129,7 @@ impl World {
 
         self.joints.interferences(&mut collector);
 
-        self.solver.solve(dt, collector.as_slice());
+        self.solver.solve(dt, &collector[..]);
 
         collector.clear();
     }

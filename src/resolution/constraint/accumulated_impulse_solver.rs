@@ -142,7 +142,7 @@ impl AccumulatedImpulseSolver {
                     ball_in_socket_equation::fill_second_order_equation(
                         dt.clone(),
                         &*bis.borrow(),
-                        self.restitution_constraints.slice_mut(joint_offset, nconstraints), // XXX
+                        &mut self.restitution_constraints[joint_offset .. nconstraints], // XXX
                         &self.correction
                     );
 
@@ -152,7 +152,7 @@ impl AccumulatedImpulseSolver {
                     fixed_equation::fill_second_order_equation(
                         dt.clone(),
                         &*f.borrow(),
-                        self.restitution_constraints.slice_mut(joint_offset, nconstraints), // XXX
+                        &mut self.restitution_constraints[joint_offset .. nconstraints], // XXX
                         &self.correction
                     );
 
@@ -191,7 +191,7 @@ impl AccumulatedImpulseSolver {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * na::cast(0.85f64);
 
-            for j in range(0us, na::dim::<Vect>() - 1) {
+            for j in 0usize .. na::dim::<Vect>() - 1 {
                 let fc = &self.friction_constraints[i * (na::dim::<Vect>() - 1) + j];
                 imps[1 + j] = fc.impulse * na::cast(0.85f64);
             }
@@ -249,8 +249,8 @@ impl AccumulatedImpulseSolver {
                 let center = &rb.center_of_mass().clone();
 
                 let mut delta: Matrix = na::one();
-                delta.append_rotation_wrt_point(&rotation, center.as_vec());
-                delta.append_translation(&translation);
+                delta.append_rotation_wrt_point_mut(&rotation, center.as_vec());
+                delta.append_translation_mut(&translation);
 
                 rb.append_transformation(&delta);
             }
@@ -384,7 +384,7 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                 }
             }
 
-            self.do_solve(dt.clone(), constraints, joints.as_slice(), bodies.as_slice());
+            self.do_solve(dt.clone(), constraints, &joints[..], &bodies[..]);
             self.cache.swap();
         }
     }

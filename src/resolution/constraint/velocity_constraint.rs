@@ -1,7 +1,7 @@
 use na;
 use math::{Scalar, Vect, Orientation};
 
-#[derive(PartialEq, Show, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 /// A constraint of velocity at a point of contact.
 pub struct VelocityConstraint {
     /// The contact normal.

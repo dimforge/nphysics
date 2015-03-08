@@ -35,7 +35,7 @@ impl JointManager {
     /// List of joints attached to a specific body.
     #[inline]
     pub fn joints_with_body(&self, body: &Rc<RefCell<RigidBody>>) -> Option<&[Constraint]> {
-        self.body2joints.find(&(&**body as *const RefCell<RigidBody> as usize)).map(|v| v.as_slice())
+        self.body2joints.find(&(&**body as *const RefCell<RigidBody> as usize)).map(|v| &v[..])
     }
 
     /// Add a `BallInSocket` joint to this manager.
