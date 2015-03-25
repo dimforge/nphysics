@@ -38,7 +38,8 @@ Simply add the following to your `Cargo.toml` file if you want the 3d version
 of nphysics, using 32-bits foalting point numbers:
 
 ```
-[dependencies.nphysics3df32]
+[dependencies.nphysics]
+features = [ "3df32" ]
 git = "https://github.com/sebcrozet/nphysics"
 ```
 

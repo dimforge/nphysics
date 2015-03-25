@@ -3,7 +3,7 @@ use math::{Vect, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.
-#[derive(PartialEq, Show, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Velocities {
     /// Linear velocity.
     pub lv: Vect,
@@ -67,7 +67,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
     /*
      * solve the system
      */
-    for _ in range(0, num_iterations) {
+    for _ in 0 .. num_iterations {
         for c in restitution.iter_mut() {
             solve_velocity_constraint(c, result);
         }

@@ -4,7 +4,7 @@ use std::default::Default;
 use std::iter;
 use std::num::Float;
 use std::mem;
-use std::hash::{Hash, Writer};
+use std::hash::{Hash, Hasher};
 use std::hash::SipHasher;
 use std::collections::hash_state::DefaultState;
 use std::collections::HashMap;
@@ -23,9 +23,9 @@ pub struct ContactIdentifier {
 
 impl Eq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
 
-impl Hash<SipHasher> for ContactIdentifier {
+impl Hash for ContactIdentifier {
     #[inline]
-    fn hash(&self, state: &mut SipHasher) {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         state.write(self.ccenter.as_bytes())
     }
 }
@@ -91,13 +91,13 @@ impl ImpulseCache {
     pub fn push_impulsions(&mut self) -> &mut [Scalar] {
         let begin = self.cache_next.len();
 
-        for _ in range(0, self.impulse_per_contact) {
+        for _ in 0 .. self.impulse_per_contact {
             self.cache_next.push(na::zero());
         }
 
         let end = self.cache_next.len();
 
-        self.cache_next.slice_mut(begin, end)
+        &mut self.cache_next[begin .. end]
     }
 
     pub fn reserved_impulse_offset(&self) -> usize {
@@ -105,7 +105,7 @@ impl ImpulseCache {
     }
 
     pub fn impulsions_at(&self, at: usize) -> &[Scalar] {
-        self.cache_prev.slice(at, at + self.impulse_per_contact)
+        &self.cache_prev[at .. at + self.impulse_per_contact]
     }
 
     pub fn len(&self) -> usize {

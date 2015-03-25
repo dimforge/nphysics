@@ -70,7 +70,7 @@ pub unsafe fn convex_mesh_volume_and_center_of_mass<N, P, V>(convex_mesh: &TriMe
     where N: Scalar,
           P: Point<N, V>,
           V: Vect<N> {
-    let geometric_center = utils::center(convex_mesh.coords.as_slice());
+    let geometric_center = utils::center(&convex_mesh.coords[..]);
 
     let mut res = na::orig::<P>();
     let mut vol = na::zero::<N>();

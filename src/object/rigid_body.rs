@@ -14,7 +14,7 @@ use volumetric::{InertiaTensor, Volumetric};
 pub type RigidBodyHandle = Rc<RefCell<RigidBody>>;
 
 // FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?
-#[derive(Show, PartialEq, Clone, RustcEncodable, RustcDecodable)]
+#[derive(Debug, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 /// The movement state of a rigid body.
 pub enum RigidBodyState { // FIXME: rename this to "RigidBodyKind"?
     /// The rigid body cannot move.
@@ -23,7 +23,7 @@ pub enum RigidBodyState { // FIXME: rename this to "RigidBodyKind"?
     Dynamic
 }
 
-#[derive(Show, PartialEq, Clone, RustcEncodable, RustcDecodable)]
+#[derive(Debug, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 /// The activation state of a rigid body.
 pub enum ActivationState {
     /// The rigid body is active with a not-zero energy.
@@ -439,7 +439,7 @@ impl RigidBody {
     /// Appends a transformation to this rigid body.
     #[inline]
     pub fn append_transformation(&mut self, to_append: &Matrix) {
-        self.local_to_world.append_transformation(to_append);
+        self.local_to_world.append_transformation_mut(to_append);
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -448,7 +448,7 @@ impl RigidBody {
     /// Prepends a transformation to this rigid body.
     #[inline]
     pub fn prepend_transformation(&mut self, to_prepend: &Matrix) {
-        self.local_to_world.prepend_transformation(to_prepend);
+        self.local_to_world.prepend_transformation_mut(to_prepend);
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -466,14 +466,14 @@ impl RigidBody {
     /// Appends a translation to this rigid body.
     #[inline]
     pub fn append_translation(&mut self, t: &Vect) {
-        self.local_to_world.append_translation(t);
+        self.local_to_world.append_translation_mut(t);
         self.update_center_of_mass();
     }
 
     /// Prepends a translation to this rigid body.
     #[inline]
     pub fn prepend_translation(&mut self, t: &Vect) {
-        self.local_to_world.prepend_translation(t);
+        self.local_to_world.prepend_translation_mut(t);
         self.update_center_of_mass();
     }
 
@@ -489,7 +489,7 @@ impl RigidBody {
     /// Appends a rotation to this rigid body.
     #[inline]
     pub fn append_rotation(&mut self, rot: &Orientation) {
-        self.local_to_world.append_rotation(rot);
+        self.local_to_world.append_rotation_mut(rot);
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -498,7 +498,7 @@ impl RigidBody {
     /// Prepends a rotation to this rigid body.
     #[inline]
     pub fn prepend_rotation(&mut self, rot: &Orientation) {
-        self.local_to_world.prepend_rotation(rot);
+        self.local_to_world.prepend_rotation_mut(rot);
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
