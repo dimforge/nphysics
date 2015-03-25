@@ -86,12 +86,13 @@ The libraries needed to compile the examples are:
 #![feature(std_misc)]
 #![feature(rand)]
 #![feature(collections)]
+#![feature(core)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
 extern crate rand;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 extern crate collections;
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 #[cfg(test)]
 extern crate test;
