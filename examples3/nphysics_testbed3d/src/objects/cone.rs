@@ -26,7 +26,7 @@ impl Cone {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_cone(r as f32, h as f32),
+            gfx:        window.add_cone(r, h),
             body:       body
         };
 

@@ -1,6 +1,7 @@
-use std::os;
+use std::env;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::path::Path;
 use time;
 use glfw;
 use glfw::{MouseButton, Key, Action, WindowEvent};
@@ -115,17 +116,18 @@ impl Testbed {
     }
 
     pub fn run(&mut self) {
-        let args        = os::args();
+        let mut args    = env::args();
         let mut running = RunMode::Running;
 
         if args.len() > 1 {
-            for arg in args.iter() {
-                if arg.as_slice() == "--help" || arg.as_slice() == "-h" {
-                    usage(args[0].as_slice());
-                    os::set_exit_status(1);
+            let exname = args.next().unwrap();
+            for arg in args {
+                if &arg[..] == "--help" || &arg[..] == "-h" {
+                    usage(&exname[..]);
+                    env::set_exit_status(1);
                     return;
                 }
-                else if arg.as_slice() == "--pause" {
+                else if &arg[..] == "--pause" {
                     running = RunMode::Stop;
                 }
             }
@@ -396,7 +398,7 @@ impl Testbed {
             let color = Pnt3::new(1.0, 1.0, 1.0);
 
             if running != RunMode::Stop {
-                self.window.draw_text(dt.to_string().as_slice(), &na::orig(), &font, &color);
+                self.window.draw_text(&dt.to_string()[..], &na::orig(), &font, &color);
             }
             else {
                 self.window.draw_text("Paused", &na::orig(), &font, &color);

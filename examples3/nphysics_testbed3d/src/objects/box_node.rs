@@ -21,9 +21,9 @@ impl Box {
                rz:     f32,
                color:  Pnt3<f32>,
                        window: &mut window::Window) -> Box {
-        let gx = rx as f32 * 2.0;
-        let gy = ry as f32 * 2.0;
-        let gz = rz as f32 * 2.0;
+        let gx = rx * 2.0;
+        let gy = ry * 2.0;
+        let gz = rz * 2.0;
         let t  = body.borrow().position().clone();
 
         let mut res = Box {

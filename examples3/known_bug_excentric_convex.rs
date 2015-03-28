@@ -31,7 +31,7 @@
  * 
  */
 
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;
@@ -66,9 +66,9 @@ fn main() {
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
 
-    for i in range(0us, num) {
-        for j in range(0us, num) {
-            for k in range(0us, num) {
+    for i in 0usize .. num {
+        for j in 0usize .. num {
+            for k in 0usize .. num {
                 let excentricity = 5000.0;
                 let x = i as f32 * shift - centerx - excentricity;
                 let y = j as f32 * shift + centery - excentricity;

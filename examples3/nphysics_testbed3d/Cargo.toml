@@ -6,18 +6,18 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [lib]
 name = "nphysics_testbed3d"
 
+[dependencies]
+nalgebra = "*"
+time = "*"
+rand = "*"
+
 [dependencies.nphysics]
 features = [ "3df32" ]
 path = "../.."
 
-[dependencies.time]
-git = "https://github.com/rust-lang/time"
- 
 [dependencies.glfw]
 git = "https://github.com/bjz/glfw-rs"
-
-[dependencies.nalgebra]
-git = "https://github.com/sebcrozet/nalgebra"
+default-features = false
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"

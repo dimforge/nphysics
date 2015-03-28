@@ -1,4 +1,4 @@
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;
@@ -34,8 +34,8 @@ fn main() {
     let delta3 = Iso3::new(Vec3::new(5.0, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    let vertical   = Arc::new(Box::new(Cuboid::new(Vec3::new(0.21, 4.96, 0.21))) as Box<Repr3<f32>>);
-    let horizontal = Arc::new(Box::new(Cuboid::new(Vec3::new(4.96, 0.21, 0.21))) as Box<Repr3<f32>>);
+    let vertical   = Arc::new(Box::new(Cuboid::new(Vec3::new(0.21f32, 4.96, 0.21))) as Box<Repr3<f32>>);
+    let horizontal = Arc::new(Box::new(Cuboid::new(Vec3::new(4.96f32, 0.21, 0.21))) as Box<Repr3<f32>>);
     cross_geoms.push((delta1, horizontal));
     cross_geoms.push((delta2, vertical.clone()));
     cross_geoms.push((delta3, vertical));
@@ -55,9 +55,9 @@ fn main() {
     let centery = 30.0 + shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
 
-    for i in (0us .. num) {
-        for j in (0us .. num) {
-            for k in (0us .. num) {
+    for i in 0usize .. num {
+        for j in 0usize .. num {
+            for k in 0usize .. num {
                 let x = i as f32 * shift - centerx;
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;

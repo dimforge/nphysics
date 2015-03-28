@@ -20,7 +20,7 @@
  * This will create only a three-points manifold for a small axis-alligned cube, instead of four.
  */
 
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;

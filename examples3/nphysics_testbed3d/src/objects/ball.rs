@@ -25,7 +25,7 @@ impl Ball {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_sphere(radius as f32),
+            gfx:        window.add_sphere(radius),
             body:       body
         };
 

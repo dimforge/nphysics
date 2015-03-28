@@ -3,6 +3,9 @@ name    = "nphysics-examples"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
+[dependencies]
+rand = "*"
+
 [dependencies.nphysics]
 features = [ "3df32" ]
 path = ".."

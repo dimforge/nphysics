@@ -110,7 +110,7 @@ impl GraphicsManager {
         let mut rng: XorShiftRng = SeedableRng::from_seed([0, 2, 4, 8]);
 
         // the first colors are boring.
-        for _ in range(0us, 100) {
+        for _ in 0usize .. 100 {
             let _: Pnt3<f32> = rng.gen();
         }
 

@@ -26,7 +26,7 @@ impl Cylinder {
             color:      color,
             base_color: color,
             delta: delta,
-            gfx:   window.add_cylinder(r as f32, h as f32),
+            gfx:   window.add_cylinder(r, h),
             body:  body
         };
         res.gfx.set_color(color.x, color.y, color.z);

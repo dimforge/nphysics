@@ -1,12 +1,13 @@
+extern crate rand;
 extern crate kiss3d;
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed3d;
 
-use std::thread::Thread;
-use std::sync::{Arc, RwLock};
-use std::rand;
+use std::sync::Arc;
+use std::path::Path;
+use rand::random;
 use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
 use ncollide::shape::{Plane, Compound, Convex};
@@ -70,17 +71,17 @@ fn main() {
 
         let mut geom_data = Vec::new();
 
-        let obj = obj::parse_file(&Path::new(obj_path), &mtl_path, "");
+        let obj = obj::parse_file(&Path::new(&obj_path), &mtl_path, "");
 
         if let Ok(model) = obj {
             let meshes: Vec<TriMesh3<f32>> = model.into_iter().map(|mesh| mesh.1.to_trimesh().unwrap()).collect();
 
             // Compute the size of the model, to scale it and have similar size for everything.
-            let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, meshes[0].coords.as_slice());
+            let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, &meshes[0].coords[..]);
             let mut aabb = AABB::new(mins, maxs);
 
-            for mesh in meshes.slice_from(1).iter() {
-                let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, mesh.coords.as_slice());
+            for mesh in meshes[1 ..].iter() {
+                let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, &mesh.coords[..]);
                 aabb.merge(&AABB::new(mins, maxs));
             }
 
@@ -119,9 +120,9 @@ fn main() {
     let nreplicats = 100 / bodies.len();
 
     for rb in bodies.iter() {
-        for _ in range(0, nreplicats) {
+        for _ in 0 .. nreplicats {
             let mut rb = rb.clone();
-            let pos = rand::random::<Vec3<f32>>() * 30.0+ Vec3::new(-15.0, 15.0, -15.0);
+            let pos = random::<Vec3<f32>>() * 30.0+ Vec3::new(-15.0, 15.0, -15.0);
             rb.append_translation(&pos);
 
             world.add_body(rb);
