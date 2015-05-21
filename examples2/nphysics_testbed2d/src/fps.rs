@@ -1,7 +1,7 @@
-use rsfml::system::vector2;
-use rsfml::traits::Drawable;
-use rsfml::graphics::{Font, Text, Color, RenderTarget};
-use rsfml::graphics;
+use sfml::system::vector2;
+use sfml::traits::Drawable;
+use sfml::graphics::{Font, Text, Color, RenderTarget};
+use sfml::graphics;
 use time;
 
 pub struct Fps<'a> {
@@ -15,7 +15,7 @@ impl<'a> Fps<'a> {
         let mut txt = Text::new().unwrap();
         txt.set_font(font);
         txt.set_position(&vector2::Vector2f { x: 0.0, y: 0.0 });
-        txt.set_color(&Color::new_RGB(255, 255, 255));
+        txt.set_color(&Color::new_rgb(255, 255, 255));
 
         Fps {
             delta:     0.0,
@@ -42,7 +42,7 @@ impl<'a> Fps<'a> {
         let v = rw.get_view();
 
         self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, &v));
-        self.fps.set_string(elapsed.to_string().as_slice());
+        self.fps.set_string(&elapsed.to_string()[..]);
         rw.draw(&self.fps);
     }
 }

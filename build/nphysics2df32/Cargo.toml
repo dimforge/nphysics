@@ -12,6 +12,9 @@ f32     = [ ]
 name = "nphysics2df32"
 path = "../../src/lib.rs"
 
+[dependencies]
+num = "*"
+
 [dependencies.nalgebra]
 git = "https://github.com/sebcrozet/nalgebra"
 

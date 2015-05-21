@@ -50,7 +50,7 @@ impl ActivationState {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody {
     state:                RigidBodyState,
-    shape:                Arc<Box<Repr<Scalar, Point, Vect, Matrix>>>, // FIXME: define our own trait.
+    shape:                Arc<Box<Repr<Point, Matrix>>>, // FIXME: define our own trait.
     local_to_world:       Matrix,
     lin_vel:              Vect,
     ang_vel:              Orientation,
@@ -137,13 +137,13 @@ impl RigidBody {
 
     /// Gets a reference to this body's shape.
     #[inline]
-    pub fn shape_ref(&self) -> &(Repr<Scalar, Point, Vect, Matrix>) {
+    pub fn shape_ref(&self) -> &(Repr<Point, Matrix>) {
         &**self.shape
     }
 
     /// Gets a copy of this body's shared shape.
     #[inline]
-    pub fn shape(&self) -> Arc<Box<Repr<Scalar, Point, Vect, Matrix>>> {
+    pub fn shape(&self) -> Arc<Box<Repr<Point, Matrix>>> {
         self.shape.clone()
     }
 
@@ -238,11 +238,11 @@ impl RigidBody {
 
     /// Creates a new rigid body that can move.
     pub fn new_dynamic<G>(shape: G, density: Scalar, restitution: Scalar, friction: Scalar) -> RigidBody
-        where G: Send + Sync + Repr<Scalar, Point, Vect, Matrix> + Volumetric<Scalar, Point, AngularInertia> {
+        where G: Send + Sync + Repr<Point, Matrix> + Volumetric<Scalar, Point, AngularInertia> {
         let props = shape.mass_properties(density);
 
         RigidBody::new(
-            Arc::new(Box::new(shape) as Box<Repr<Scalar, Point, Vect, Matrix>>),
+            Arc::new(Box::new(shape) as Box<Repr<Point, Matrix>>),
             Some(props),
             restitution,
             friction)
@@ -250,9 +250,9 @@ impl RigidBody {
 
     /// Creates a new rigid body that cannot move.
     pub fn new_static<G>(shape: G, restitution: Scalar, friction: Scalar) -> RigidBody
-        where G: Send + Sync + Repr<Scalar, Point, Vect, Matrix> {
+        where G: Send + Sync + Repr<Point, Matrix> {
         RigidBody::new(
-            Arc::new(Box::new(shape) as Box<Repr<Scalar, Point, Vect, Matrix>>),
+            Arc::new(Box::new(shape) as Box<Repr<Point, Matrix>>),
             None,
             restitution,
             friction)
@@ -262,7 +262,7 @@ impl RigidBody {
     ///
     /// Use this if the shape is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(shape:           Arc<Box<Repr<Scalar, Point, Vect, Matrix>>>,
+    pub fn new(shape:           Arc<Box<Repr<Point, Matrix>>>,
                mass_properties: Option<(Scalar, Point, AngularInertia)>,
                restitution:     Scalar,
                friction:        Scalar)
@@ -517,12 +517,5 @@ impl RigidBody {
 impl HasBoundingVolume<AABB<Point>> for RigidBody {
     fn bounding_volume(&self) -> AABB<Point> {
         self.shape.aabb(&self.local_to_world).loosened(self.margin())
-    }
-}
-
-impl HasBoundingVolume<AABB<Point>> for Rc<RefCell<RigidBody>> {
-    fn bounding_volume(&self) -> AABB<Point> {
-        let bself = self.borrow();
-        bself.shape().aabb(&bself.local_to_world).loosened(bself.margin())
     }
 }

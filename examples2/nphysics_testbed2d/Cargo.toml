@@ -10,14 +10,12 @@ name = "nphysics_testbed2d"
 features = [ "2df32" ]
 path = "../.."
 
-[dependencies.rust-sfml]
-git = "https://github.com/jeremyletang/rust-sfml"
-
-[dependencies.time]
-git = "https://github.com/rust-lang/time"
-
-[dependencies.nalgebra]
-git = "https://github.com/sebcrozet/nalgebra"
+[dependencies]
+sfml = "*"
+nalgebra = "*"
+time = "*"
+num = "*"
+rand = "*"
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"

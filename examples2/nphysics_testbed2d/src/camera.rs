@@ -1,7 +1,7 @@
-use rsfml::system::vector2::{Vector2f, Vector2i};
-use rsfml::graphics::RenderTarget;
-use rsfml::graphics;
-use rsfml::window::event;
+use sfml::system::vector2::{Vector2f, Vector2i};
+use sfml::graphics::RenderTarget;
+use sfml::graphics;
+use sfml::window::event;
 use na;
 use draw_helper::DRAW_SCALE;
 

@@ -5,13 +5,12 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
 rand = "*"
+num = "*"
+nalgebra = "*"
 
 [dependencies.nphysics]
 features = [ "3df32" ]
 path = ".."
-
-[dependencies.nalgebra]
-git = "https://github.com/sebcrozet/nalgebra"
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"

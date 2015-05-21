@@ -1,13 +1,10 @@
 #![doc(hidden)]
 
-use std::default::Default;
 use std::iter;
-use std::num::Float;
 use std::mem;
 use std::hash::{Hash, Hasher};
-use std::hash::SipHasher;
-use std::collections::hash_state::DefaultState;
 use std::collections::HashMap;
+use num::Float;
 use na;
 use na::IterableMut;
 use math::{Scalar, Point};
@@ -47,9 +44,10 @@ impl ContactIdentifier {
 }
 
 pub struct ImpulseCache {
-    hash_prev:           HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>>,
+    // XXX: simulations won't be reproductible because of the randomized HashMap.
+    hash_prev:           HashMap<ContactIdentifier, (usize, usize)>,
     cache_prev:          Vec<Scalar>,
-    hash_next:           HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>>,
+    hash_next:           HashMap<ContactIdentifier, (usize, usize)>,
     cache_next:          Vec<Scalar>,
     step:                Scalar,
     impulse_per_contact: usize
@@ -57,11 +55,10 @@ pub struct ImpulseCache {
 
 impl ImpulseCache {
     pub fn new(step: Scalar, impulse_per_contact: usize) -> ImpulseCache {
-        let state: DefaultState<SipHasher> = Default::default();
 
         ImpulseCache {
-            hash_prev:           HashMap::with_capacity_and_hash_state(32, state.clone()),
-            hash_next:           HashMap::with_capacity_and_hash_state(32, state),
+            hash_prev:           HashMap::with_capacity(32),
+            hash_next:           HashMap::with_capacity(32),
             cache_prev:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             cache_next:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             step:                step,
@@ -80,11 +77,11 @@ impl ImpulseCache {
         let _ = self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash(&self) -> &HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>> {
+    pub fn hash(&self) -> &HashMap<ContactIdentifier, (usize, usize)> {
         &self.hash_next
     }
 
-    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (usize, usize), DefaultState<SipHasher>> {
+    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (usize, usize)> {
         &mut self.hash_next
     }
 

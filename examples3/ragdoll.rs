@@ -1,5 +1,3 @@
-#![feature(core)]
-
 extern crate nphysics_testbed3d;
 extern crate ncollide;
 extern crate nphysics;

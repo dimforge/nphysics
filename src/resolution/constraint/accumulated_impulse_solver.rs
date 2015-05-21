@@ -123,7 +123,7 @@ impl AccumulatedImpulseSolver {
                         &*rb1.borrow(), &*rb2.borrow(),
                         &mut self.restitution_constraints[i],
                         i,
-                        self.friction_constraints.as_mut_slice(),
+                        &mut self.friction_constraints[..],
                         friction_offset,
                         self.cache.impulsions_at(imp),
                         &self.correction);
@@ -166,9 +166,9 @@ impl AccumulatedImpulseSolver {
 
         // FIXME: parametrize by the resolution algorithm?
         pgs::projected_gauss_seidel_solve(
-            self.restitution_constraints.as_mut_slice(),
-            self.friction_constraints.as_mut_slice(),
-            self.mj_lambda.as_mut_slice(),
+            &mut self.restitution_constraints[..],
+            &mut self.friction_constraints[..],
+            &mut self.mj_lambda[..],
             bodies.len(),
             self.num_second_order_iter,
             false);
@@ -189,11 +189,11 @@ impl AccumulatedImpulseSolver {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * na::cast(0.85f64);
+            imps[0]  = dv.impulse * na::cast::<f64, Scalar>(0.85f64);
 
             for j in 0usize .. na::dim::<Vect>() - 1 {
                 let fc = &self.friction_constraints[i * (na::dim::<Vect>() - 1) + j];
-                imps[1 + j] = fc.impulse * na::cast(0.85f64);
+                imps[1 + j] = fc.impulse * na::cast::<f64, Scalar>(0.85f64);
             }
         }
 
@@ -232,9 +232,9 @@ impl AccumulatedImpulseSolver {
 
             // FIXME: parametrize by the resolution algorithm?
             pgs::projected_gauss_seidel_solve(
-                self.restitution_constraints.as_mut_slice(),
-                [].as_mut_slice(),
-                self.mj_lambda.as_mut_slice(),
+                &mut self.restitution_constraints[..],
+                &mut [][..],
+                &mut self.mj_lambda[..],
                 bodies.len(),
                 self.num_first_order_iter,
                 true);

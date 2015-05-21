@@ -1,4 +1,4 @@
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
@@ -31,8 +31,8 @@ fn main() {
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
 
-    for i in range(0us, num) {
-        for j in range(i, num) {
+    for i in 0usize .. num {
+        for j in i .. num {
             let fj = j as f32;
             let fi = i as f32;
             let x = (fi * shift / 2.0) + (fj - fi) * 2.5 * rad - centerx;

@@ -1,6 +1,3 @@
-#![feature(exit_status)]
-#![warn(non_camel_case_types)]
-
 extern crate rand;
 extern crate time;
 extern crate glfw;

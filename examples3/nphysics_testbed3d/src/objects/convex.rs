@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Pnt3, Vec3, Iso3};
+use na::{Pnt3, Iso3};
 use na;
 use ncollide::procedural::TriMesh;
 use nphysics::object::RigidBody;
@@ -18,7 +18,7 @@ pub struct Convex {
 impl Convex {
     pub fn new(body:     Rc<RefCell<RigidBody>>,
                delta:    Iso3<f32>,
-               convex:   &TriMesh<f32, Pnt3<f32>, Vec3<f32>>,
+               convex:   &TriMesh<Pnt3<f32>>,
                color:    Pnt3<f32>,
                window:   &mut Window) -> Convex {
         let t = body.borrow().position().clone();

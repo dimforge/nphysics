@@ -1,9 +1,9 @@
-use std::num::Float;
+use std::f32;
 use std::rc::Rc;
 use std::cell::RefCell;
-use rsfml::graphics;
-use rsfml::graphics::{CircleShape, Color, RenderTarget};
-use rsfml::system::vector2;
+use sfml::graphics;
+use sfml::graphics::{CircleShape, Color, RenderTarget};
+use sfml::system::vector2;
 use na::{Pnt3, Iso2};
 use na;
 use nphysics::object::RigidBody;
@@ -32,7 +32,7 @@ impl<'a> Ball<'a> {
             body:  body
         };
 
-        res.gfx.set_fill_color(&Color::new_RGB(color.x, color.y, color.z));
+        res.gfx.set_fill_color(&Color::new_rgb(color.x, color.y, color.z));
         res.gfx.set_radius(dradius);
         res.gfx.set_origin(&vector2::Vector2f { x: dradius, y: dradius }); 
 
@@ -51,15 +51,15 @@ impl<'a> Ball<'a> {
             x: pos.x as f32 * DRAW_SCALE,
             y: pos.y as f32 * DRAW_SCALE
         });
-        self.gfx.set_rotation(rot.x.to_degrees() as f32);
+        self.gfx.set_rotation(rot.x * 180.0 / f32::consts::PI as f32);
 
         if body.is_active() {
             self.gfx.set_fill_color(
-                &Color::new_RGB(self.color.x, self.color.y, self.color.z));
+                &Color::new_rgb(self.color.x, self.color.y, self.color.z));
         }
         else {
             self.gfx.set_fill_color(
-                &Color::new_RGB(self.color.x / 4, self.color.y / 4, self.color.z / 4));
+                &Color::new_rgb(self.color.x / 4, self.color.y / 4, self.color.z / 4));
         }
     }
 

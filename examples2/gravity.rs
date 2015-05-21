@@ -1,4 +1,4 @@
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
@@ -39,14 +39,14 @@ fn main() {
     /*
      * Create the balls
      */
-    let num     = 1000us;
+    let num     = 1000usize;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = 2.0;
 
-    for i in (0us .. num) {
-        for j in 0us .. 2 {
+    for i in (0usize .. num) {
+        for j in 0usize .. 2 {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0;
 
