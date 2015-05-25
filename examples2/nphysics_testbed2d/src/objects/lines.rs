@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::sync::Arc;
-use rsfml::graphics;
-use rsfml::graphics::Color;
+use sfml::graphics;
+use sfml::graphics::Color;
 use na::{Pnt2, Pnt3, Iso2};
 use nphysics::object::RigidBody;
 use draw_helper::draw_line;
@@ -46,7 +46,7 @@ impl Lines {
         for is in self.indices.iter() {
             let gsv0 = transform * vs[is.x];
             let gsv1 = transform * vs[is.y];
-            draw_line(rw, &gsv0, &gsv1, &Color::new_RGB(self.color.x, self.color.y, self.color.z));
+            draw_line(rw, &gsv0, &gsv1, &Color::new_rgb(self.color.x, self.color.y, self.color.z));
         }
     }
 

@@ -1,13 +1,13 @@
+use std::env;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::os;
-use rsfml::graphics::{RenderWindow, RenderTarget, Font};
-use rsfml::window::{ContextSettings, VideoMode, Close};
-use rsfml::window::event;
-use rsfml::window::keyboard::Key;
-use rsfml::window::mouse::MouseButton;
-use rsfml::graphics::Color;
-use rsfml::system::vector2::Vector2i;
+use sfml::graphics::{RenderWindow, RenderTarget, Font};
+use sfml::window::{ContextSettings, VideoMode, Close};
+use sfml::window::event;
+use sfml::window::keyboard::Key;
+use sfml::window::mouse::MouseButton;
+use sfml::graphics::Color;
+use sfml::system::vector2::Vector2i;
 use na::{Pnt2, Pnt3, Iso2};
 use na;
 use nphysics::world::World;
@@ -97,17 +97,19 @@ impl<'a> Testbed<'a> {
     }
 
     pub fn run(&mut self) {
-        let args        = os::args();
+        let mut args    = env::args();
         let mut running = RunMode::Running;
 
         if args.len() > 1 {
-            if args.len() > 2 || args[1].as_slice() != "--pause" {
-                usage(args[0].as_slice());
-                os::set_exit_status(1);
-                return;
-            }
-            else {
-                running = RunMode::Stop;
+            let exname = args.next().unwrap();
+            for arg in args {
+                if &arg[..] == "--help" || &arg[..] == "-h" {
+                    usage(&exname[..]);
+                    return;
+                }
+                else if &arg[..] == "--pause" {
+                    running = RunMode::Stop;
+                }
             }
         }
 

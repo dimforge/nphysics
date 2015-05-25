@@ -1,4 +1,4 @@
-use na::{Pnt2, Vec2, Iso2, Pnt3, Vec3, Mat3, Iso3, Mat1};
+use na::{Pnt2, Iso2, Pnt3, Mat3, Iso3, Mat1};
 use ncollide::shape::{Ball, Cone, Cylinder, Convex3, Cuboid2, Cuboid3, Compound2, Compound3};
 use ncollide::inspection::Repr;
 use ncollide::math::Scalar;
@@ -37,7 +37,7 @@ macro_rules! dispatch(
     }
 );
 
-impl<N> Volumetric<N, Pnt2<N>, Mat1<N>> for Repr<N, Pnt2<N>, Vec2<N>, Iso2<N>>
+impl<N> Volumetric<N, Pnt2<N>, Mat1<N>> for Repr<Pnt2<N>, Iso2<N>>
     where N: Scalar {
     fn surface(&self) -> N {
         dispatch!(Pnt2<N>, Mat1<N>, Compound2<N>, Cuboid2<N>/* Convex2<N> */, Cuboid2<N>, self.surface())
@@ -70,7 +70,7 @@ impl<N> Volumetric<N, Pnt2<N>, Mat1<N>> for Repr<N, Pnt2<N>, Vec2<N>, Iso2<N>>
     }
 }
 
-impl<N> Volumetric<N, Pnt3<N>, Mat3<N>> for Repr<N, Pnt3<N>, Vec3<N>, Iso3<N>>
+impl<N> Volumetric<N, Pnt3<N>, Mat3<N>> for Repr<Pnt3<N>, Iso3<N>>
     where N: Scalar {
     fn surface(&self) -> N {
         dispatch!(Pnt3<N>, Mat3<N>, Compound3<N>, Convex3<N>, Cuboid3<N>, self.surface())

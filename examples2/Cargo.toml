@@ -3,6 +3,10 @@ name    = "nphysics-examples"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
+[dependencies]
+num = "*"
+rand = "*"
+
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"
 

@@ -1,12 +1,13 @@
+extern crate num;
 extern crate rand;
-extern crate "nalgebra" as na;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
 
-use std::num::Float;
-use std::rand::{StdRng, SeedableRng, Rng};
 use std::sync::Arc;
+use num::Float;
+use rand::{StdRng, SeedableRng, Rng};
 use na::{Pnt2, Vec2, Translation};
 use ncollide::shape::{Cuboid, Polyline};
 use nphysics::world::World;
@@ -30,9 +31,9 @@ fn main() {
     let step      = (begin.abs() * 2.0) / (num_split as f32);
     let mut vertices: Vec<Pnt2<f32>> = (0 .. num_split + 2).map(|i| Pnt2::new(begin + (i as f32) * step, 0.0)).collect();
     let mut indices  = Vec::new();
-    let mut rng: StdRng = SeedableRng::from_seed([1, 2, 3, 4].as_slice());
+    let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4][..]);
 
-    for i in (0us .. num_split) {
+    for i in (0usize .. num_split) {
         let h: f32 = rng.gen();
         vertices[i + 1].y = begin_h - h * max_h;
 
@@ -54,8 +55,8 @@ fn main() {
     let shift   = 2.0 * rad;
     let centerx = shift * (width as f32) / 2.0;
 
-    for i in (0us .. height) {
-        for j in (0us .. width) {
+    for i in (0usize .. height) {
+        for j in (0usize .. width) {
             let fj = j as f32;
             let fi = i as f32;
             let x = fj * 2.0 * rad - centerx;

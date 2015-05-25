@@ -1,7 +1,8 @@
 // XXX: implement this for 2d too.
 
 use std::ops::{Add, Mul, IndexMut};
-use na::{FloatVec, Outer, EigenQR, Pnt3, Mat3, Zero};
+use num::Zero;
+use na::{Outer, EigenQR, Pnt3, Mat3};
 use na;
 use ncollide::utils;
 use ncollide::procedural::{TriMesh, IndexBuffer};
@@ -11,11 +12,9 @@ use ncollide::shape::Convex3;
 use volumetric::Volumetric;
 
 
-fn tetrahedron_unit_inertia_tensor_wrt_point<N, P, V, I>(point: &P, p1: &P, p2: &P, p3: &P, p4: &P) -> I
-    where N: Scalar,
-          P: Point<N, V>,
-          V: FloatVec<N>,
-          I: Zero + IndexMut<(usize, usize), Output = N> {
+fn tetrahedron_unit_inertia_tensor_wrt_point<P, I>(point: &P, p1: &P, p2: &P, p3: &P, p4: &P) -> I
+    where P: Point,
+          I: Zero + IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar> {
     assert!(na::dim::<P>() == 3);
 
     let p1 = *p1 - *point;
@@ -23,9 +22,9 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<N, P, V, I>(point: &P, p1: &P, p2: 
     let p3 = *p3 - *point;
     let p4 = *p4 - *point;
 
-    let _frac_10: N = na::cast(0.1f64);
-    let _frac_20: N = na::cast(0.05f64);
-    let _2      : N = na::cast(2.0f64);
+    let _frac_10: <P::Vect as Vect>::Scalar = na::cast(0.1f64);
+    let _frac_20: <P::Vect as Vect>::Scalar = na::cast(0.05f64);
+    let _2      : <P::Vect as Vect>::Scalar = na::cast(2.0f64);
 
     // Just for readability.
     let x1 = p1[0]; let y1 = p1[1]; let z1 = p1[2];
@@ -66,14 +65,12 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<N, P, V, I>(point: &P, p1: &P, p2: 
 /// The volume and center of mass of a convex mesh.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_volume_and_center_of_mass<N, P, V>(convex_mesh: &TriMesh<N, P, V>) -> (N, P)
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N> {
+pub unsafe fn convex_mesh_volume_and_center_of_mass<P>(convex_mesh: &TriMesh<P>) -> (<P::Vect as Vect>::Scalar, P)
+    where P: Point {
     let geometric_center = utils::center(&convex_mesh.coords[..]);
 
     let mut res = na::orig::<P>();
-    let mut vol = na::zero::<N>();
+    let mut vol = na::zero::<<P::Vect as Vect>::Scalar>();
 
     match convex_mesh.indices {
         IndexBuffer::Unified(ref idx) => {
@@ -103,13 +100,14 @@ pub unsafe fn convex_mesh_volume_and_center_of_mass<N, P, V>(convex_mesh: &TriMe
 /// The mass properties of a convex mesh.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_mass_properties<N, P, V, I>(convex_mesh: &TriMesh<N, P, V>,
-                                                      density:     N)
-                                                      -> (N, P, I)
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N>,
-          I: Zero + Add<I, Output = I> + Mul<N, Output = I> + IndexMut<(usize, usize), Output = N> {
+pub unsafe fn convex_mesh_mass_properties<P, I>(convex_mesh: &TriMesh<P>,
+                                                density:     <P::Vect as Vect>::Scalar)
+                                                -> (<P::Vect as Vect>::Scalar, P, I)
+    where P: Point,
+          I: Zero +
+             Add<I, Output = I> +
+             Mul<<P::Vect as Vect>::Scalar, Output = I> +
+             IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar> {
     assert!(na::dim::<P>() == 3);
 
     let (volume, com) = convex_mesh_volume_and_center_of_mass(convex_mesh);
@@ -142,11 +140,9 @@ pub unsafe fn convex_mesh_mass_properties<N, P, V, I>(convex_mesh: &TriMesh<N, P
 /// The surface of a convex mesh.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_surface<N, P, V>(convex_mesh: &TriMesh<N, P, V>) -> N
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N> {
-    let mut surface = na::zero::<N>();
+pub unsafe fn convex_mesh_surface<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Vect>::Scalar
+    where P: Point {
+    let mut surface = na::zero::<<P::Vect as Vect>::Scalar>();
 
     match convex_mesh.indices {
         IndexBuffer::Unified(ref idx) => {
@@ -165,11 +161,13 @@ pub unsafe fn convex_mesh_surface<N, P, V>(convex_mesh: &TriMesh<N, P, V>) -> N
 }
 
 /// The surface of a convex hull.
-pub fn convex_hull_surface<N, P, V, M>(dim: usize, points: &[P]) -> N
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N> + Outer<M>,
-          M: EigenQR<N, V> + Mul<P, Output = P> + Add<M, Output = M> + Zero + Copy {
+pub fn convex_hull_surface<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
+    where P: Point,
+          P::Vect: Outer,
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+                                                Mul<P, Output = P> +
+                                                Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
+                                                Zero + Copy {
     assert!(dim == 2 || dim == 3);
 
     match dim {
@@ -187,11 +185,13 @@ pub fn convex_hull_surface<N, P, V, M>(dim: usize, points: &[P]) -> N
 }
 
 /// The volume of the convex hull of a set of points.
-pub fn convex_hull_volume<N, P, V, M>(dim: usize, points: &[P]) -> N
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N> + Outer<M>,
-          M: EigenQR<N, V> + Mul<P, Output = P> + Add<M, Output = M> + Zero + Copy {
+pub fn convex_hull_volume<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
+    where P: Point,
+          P::Vect: Outer,
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+                                                Mul<P, Output = P> +
+                                                Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
+                                                Zero + Copy {
     assert!(dim == 2 || dim == 3);
 
     match dim {
@@ -209,11 +209,13 @@ pub fn convex_hull_volume<N, P, V, M>(dim: usize, points: &[P]) -> N
 }
 
 /// The center of mass of the convex hull of a set of points.
-pub fn convex_hull_center_of_mass<N, P, V, M>(dim: usize, points: &[P]) -> P
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N> + Outer<M>,
-          M: EigenQR<N, V> + Mul<P, Output = P> + Add<M, Output = M> + Zero + Copy {
+pub fn convex_hull_center_of_mass<P>(dim: usize, points: &[P]) -> P
+    where P: Point,
+          P::Vect: Outer,
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+                                                Mul<P, Output = P> +
+                                                Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
+                                                Zero + Copy {
     assert!(dim == 2 || dim == 3);
 
     match dim {
@@ -231,12 +233,17 @@ pub fn convex_hull_center_of_mass<N, P, V, M>(dim: usize, points: &[P]) -> P
 }
 
 /// The angular inertia of the convex hull of a set of points.
-pub fn convex_hull_unit_angular_inertia<N, P, V, M, I>(dim: usize, points: &[P]) -> I
-    where N: Scalar,
-          P: Point<N, V>,
-          V: Vect<N> + Outer<M>,
-          M: EigenQR<N, V> + Mul<P, Output = P> + Add<M, Output = M> + Zero + Copy,
-          I: Zero + Add<I, Output = I> + Mul<N, Output = I> + IndexMut<(usize, usize), Output = N> {
+pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
+    where P: Point,
+          I: Zero +
+             Add<I, Output = I> +
+             Mul<<P::Vect as Vect>::Scalar, Output = I> +
+             IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar>,
+          P::Vect: Outer,
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+                                                Mul<P, Output = P> +
+                                                Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
+                                                Zero + Copy {
     assert!(dim == 2 || dim == 3);
 
     match dim {
@@ -246,9 +253,9 @@ pub fn convex_hull_unit_angular_inertia<N, P, V, M, I>(dim: usize, points: &[P])
         3 => {
             let convex_mesh = transformation::convex_hull3(points);
             unsafe {
-                let (vol, _, i): (N, _, I) = convex_mesh_mass_properties(&convex_mesh, na::one());
+                let (vol, _, i): (_, _, I) = convex_mesh_mass_properties(&convex_mesh, na::one());
 
-                i * (na::one::<N>() / vol)
+                i * (na::one::<<P::Vect as Vect>::Scalar>() / vol)
             }
         }
         _ => {

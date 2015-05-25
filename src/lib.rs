@@ -80,18 +80,12 @@ The libraries needed to compile the examples are:
 #![deny(unused_qualifications)]
 #![deny(missing_docs)]
 #![deny(unused_results)]
-#![deny(unused_typecasts)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
-#![feature(std_misc)]
-#![feature(rand)]
-#![feature(collections)]
-#![feature(core)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
-extern crate rand;
+extern crate num;
 extern crate rustc_serialize;
-extern crate collections;
 extern crate nalgebra as na;
 extern crate ncollide;
 #[cfg(test)]

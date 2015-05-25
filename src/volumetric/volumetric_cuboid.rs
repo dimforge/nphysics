@@ -1,5 +1,6 @@
 use std::ops::{Index, IndexMut};
-use na::{Pnt2, Pnt3, Mat1, Mat3, Orig, Iterable, Zero};
+use num::Zero;
+use na::{Pnt2, Pnt3, Mat1, Mat3, Orig, Iterable};
 use na;
 use ncollide::shape::{Cuboid2, Cuboid3};
 use ncollide::math::Scalar;

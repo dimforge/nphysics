@@ -1,4 +1,3 @@
-use std::num::Float;
 use std::cell::RefCell;
 use na::Translation;
 use na;
@@ -8,6 +7,7 @@ use ncollide::broad_phase::BroadPhase;
 use ncollide::bounding_volume::BoundingVolume;
 use ncollide::geometry;
 use ncollide::bounding_volume::HasAABB;
+use ncollide::math::FloatError;
 use world::RigidBodyCollisionWorld;
 use object::RigidBodyHandle;
 use object::RigidBody;
@@ -83,7 +83,7 @@ impl TranslationalCCDMotionClamping {
                 let mut toi_found = false;
                 let dir = movement.clone();
 
-                let _eps: Scalar = Float::epsilon();
+                let _eps: Scalar = FloatError::epsilon();
 
                 // FIXME: performing a convex-cast here would be much more efficient.
                 cw.interferences_with_aabb(&swept_aabb, |rb2| {

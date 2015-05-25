@@ -1,6 +1,6 @@
-use rsfml::graphics;
-use rsfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
-use rsfml::system::vector2::Vector2f;
+use sfml::graphics;
+use sfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
+use sfml::system::vector2::Vector2f;
 use na::Translate;
 use na::Pnt2;
 use na;
@@ -24,27 +24,27 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
                     window,
                     &c.world1,
                     &c.world2,
-                    &Color::new_RGB(255, 255, 255));
+                    &Color::new_rgb(255, 255, 255));
 
                 let center = na::center(&c.world1, &c.world2);
                 draw_line(
                     window,
                     &center,
                     &(center + c.normal * c.depth),
-                    &Color::new_RGB(255, 0, 0));
+                    &Color::new_rgb(255, 0, 0));
 
                 draw_line(
                     window,
                     &center,
                     &(center + c.normal),
-                    &Color::new_RGB(0, 0, 255));
+                    &Color::new_rgb(0, 0, 255));
             },
             Constraint::BallInSocket(ref bis) => {
                 draw_line(
                     window,
                     &bis.borrow().anchor1_pos(),
                     &bis.borrow().anchor2_pos(),
-                    &Color::new_RGB(255, 0, 0)
+                    &Color::new_rgb(255, 0, 0)
                 );
             },
             Constraint::Fixed(ref bis) => {
@@ -52,7 +52,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
                     window,
                     &na::translation(&bis.borrow().anchor1_pos()).translate(&na::orig()),
                     &na::translation(&bis.borrow().anchor2_pos()).translate(&na::orig()),
-                    &Color::new_RGB(255, 0, 0)
+                    &Color::new_rgb(255, 0, 0)
                 );
             }
         }

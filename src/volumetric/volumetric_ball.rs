@@ -1,6 +1,6 @@
 use std::ops::IndexMut;
-use std::num::Float;
-use na::{Orig, Zero, BaseFloat, Pnt2, Pnt3, Mat1, Mat3};
+use num::{Float, Zero};
+use na::{Orig, BaseFloat, Pnt2, Pnt3, Mat1, Mat3};
 use na;
 use ncollide::math::Scalar;
 use ncollide::shape::{Ball2, Ball3};

@@ -124,7 +124,6 @@ impl Testbed {
             for arg in args {
                 if &arg[..] == "--help" || &arg[..] == "-h" {
                     usage(&exname[..]);
-                    env::set_exit_status(1);
                     return;
                 }
                 else if &arg[..] == "--pause" {

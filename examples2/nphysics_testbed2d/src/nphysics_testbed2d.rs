@@ -1,11 +1,10 @@
-#![allow(unstable)]
 #![warn(non_camel_case_types)]
 
+extern crate num;
 extern crate rand;
 extern crate time;
-extern crate collections;
-extern crate rsfml;
-extern crate "nalgebra" as na;
+extern crate sfml;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 

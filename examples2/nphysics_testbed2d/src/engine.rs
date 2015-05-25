@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
-use rsfml::graphics::RenderWindow;
+use sfml::graphics::RenderWindow;
 use na::{Pnt3, Iso2};
 use na;
 use nphysics::object::RigidBody;
@@ -216,9 +216,9 @@ impl<'a> GraphicsManager<'a> {
         }
 
         let color = Pnt3::new(
-            self.rand.gen_range(0us, 256) as u8,
-            self.rand.gen_range(0us, 256) as u8,
-            self.rand.gen_range(0us, 256) as u8);
+            self.rand.gen_range(0usize, 256) as u8,
+            self.rand.gen_range(0usize, 256) as u8,
+            self.rand.gen_range(0usize, 256) as u8);
 
 
         self.obj2color.insert(key, color);

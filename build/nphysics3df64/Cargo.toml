@@ -12,6 +12,9 @@ f64     = [ ]
 name = "nphysics3df64"
 path = "../../src/lib.rs"
 
+[dependencies]
+num = "*"
+
 [dependencies.nalgebra]
 git = "https://github.com/sebcrozet/nalgebra"
 

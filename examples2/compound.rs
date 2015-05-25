@@ -1,10 +1,11 @@
-extern crate "nalgebra" as na;
+extern crate num;
+extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics;
 extern crate nphysics_testbed2d;
 
-use std::num::Float;
 use std::sync::Arc;
+use num::Float;
 use na::{Vec2, Iso2, Translation};
 use ncollide::shape::{Plane, Cuboid, Compound};
 use ncollide::inspection::Repr2;
@@ -46,8 +47,8 @@ fn main() {
     let delta3 = Iso2::new(Vec2::new(5.0,  0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    let vertical   = Arc::new(Box::new(Cuboid::new(Vec2::new(0.21, 4.96))) as Box<Repr2<f32>>);
-    let horizontal = Arc::new(Box::new(Cuboid::new(Vec2::new(4.96, 0.21))) as Box<Repr2<f32>>);
+    let vertical   = Arc::new(Box::new(Cuboid::new(Vec2::new(0.21f32, 4.96))) as Box<Repr2<f32>>);
+    let horizontal = Arc::new(Box::new(Cuboid::new(Vec2::new(4.96f32, 0.21))) as Box<Repr2<f32>>);
     cross_geoms.push((delta1, horizontal));
     cross_geoms.push((delta2, vertical.clone()));
     cross_geoms.push((delta3, vertical));
@@ -65,8 +66,8 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
-    for i in (0us .. num) {
-        for j in (0us .. num) {
+    for i in (0usize .. num) {
+        for j in (0usize .. num) {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 250.0;
 

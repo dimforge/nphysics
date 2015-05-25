@@ -21,12 +21,12 @@ use object::{RigidBody, RigidBodyHandle};
 use math::{Scalar, Point, Vect, Orientation, Matrix};
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Scalar, Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
+pub type WorldBroadPhase = DBVTBroadPhase<Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
 /// An iterator visiting rigid bodies.
 pub type RigidBodies<'a> = Map<Iter<'a, Entry<usize, Rc<RefCell<RigidBody>>>>, fn(&'a Entry<usize, Rc<RefCell<RigidBody>>>) -> &'a Rc<RefCell<RigidBody>>>;
 
 /// Type of the collision world containing rigid bodies.
-pub type RigidBodyCollisionWorld = CollisionWorld<Scalar, Point, Vect, Matrix, Rc<RefCell<RigidBody>>>;
+pub type RigidBodyCollisionWorld = CollisionWorld<Point, Matrix, Rc<RefCell<RigidBody>>>;
 
 /// The physics world.
 ///
@@ -211,8 +211,8 @@ impl World {
     }
 
     /// Gets every body intersected by a given ray.
-    pub fn interferences_with_ray<F: FnMut(&RigidBodyHandle, RayIntersection<Scalar, Vect>) -> ()>(&mut self,
-                                  ray: &Ray<Point, Vect>,
+    pub fn interferences_with_ray<F: FnMut(&RigidBodyHandle, RayIntersection<Vect>) -> ()>(&mut self,
+                                  ray: &Ray<Point>,
                                   f:   F) {
         self.cworld.interferences_with_ray(ray, f)
     }

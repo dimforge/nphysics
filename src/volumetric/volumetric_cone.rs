@@ -1,5 +1,6 @@
 use std::ops::IndexMut;
-use na::{BaseFloat, Orig, Zero, Pnt2, Pnt3, Mat1, Mat3};
+use num::Zero;
+use na::{BaseFloat, Orig, Pnt2, Pnt3, Mat1, Mat3};
 use na;
 use ncollide::shape::{Cone2, Cone3};
 use ncollide::math::Scalar;

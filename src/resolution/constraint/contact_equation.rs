@@ -1,6 +1,6 @@
-use std::num::Float;
 use na::Bounded;
 use na;
+use num::Float;
 use ncollide::geometry::Contact;
 use volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
@@ -68,7 +68,7 @@ pub struct CorrectionParameters {
 }
 
 pub fn reinit_to_first_order_equation(dt:         Scalar,
-                                      coll:       &Contact<Scalar, Point, Vect>,
+                                      coll:       &Contact<Point>,
                                       constraint: &mut VelocityConstraint,
                                       correction: &CorrectionParameters) {
     /*
@@ -88,7 +88,7 @@ pub fn reinit_to_first_order_equation(dt:         Scalar,
 }
 
 pub fn fill_second_order_equation(dt:           Scalar,
-                                  coll:         &Contact<Scalar, Point, Vect>,
+                                  coll:         &Contact<Point>,
                                   rb1:          &RigidBody,
                                   rb2:          &RigidBody,
                                   rconstraint:  &mut VelocityConstraint,
