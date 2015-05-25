@@ -32,9 +32,7 @@ path = "src/lib.rs"
 [dependencies]
 rustc-serialize = "*"
 num = "*"
-
-[dependencies.nalgebra]
-git = "https://github.com/sebcrozet/nalgebra"
+nalgebra = "*"
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"

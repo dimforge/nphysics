@@ -6,12 +6,10 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [dependencies]
 num = "*"
 rand = "*"
+nalgebra = "*"
 
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"
-
-[dependencies.nalgebra]
-git = "https://github.com/sebcrozet/nalgebra"
 
 [dependencies.ncollide]
 git = "https://github.com/sebcrozet/ncollide"
