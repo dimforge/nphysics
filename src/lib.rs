@@ -88,8 +88,8 @@ extern crate num;
 extern crate rustc_serialize;
 extern crate nalgebra as na;
 extern crate ncollide;
-#[cfg(test)]
-extern crate test;
+//#[cfg(test)]
+//extern crate test;
 
 pub mod aliases;
 

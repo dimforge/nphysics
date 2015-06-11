@@ -1,9 +1,10 @@
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::sync::Arc;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use sfml::graphics::RenderWindow;
-use na::{Pnt3, Iso2};
+use na::{Pnt2, Pnt3, Iso2};
 use na;
 use nphysics::object::RigidBody;
 use ncollide::inspection::Repr2;
@@ -77,6 +78,7 @@ impl<'a> GraphicsManager<'a> {
                  out:   &mut Vec<SceneNode<'a>>) {
         type Pl = shape::Plane2<f32>;
         type Bl = shape::Ball2<f32>;
+        type Cx = shape::Convex2<f32>;
         type Bo = shape::Cuboid2<f32>;
         type Cy = shape::Cylinder2<f32>;
         type Co = shape::Cone2<f32>;
@@ -94,6 +96,9 @@ impl<'a> GraphicsManager<'a> {
         }
         else if let Some(s) = repr.downcast_ref::<Bo>() {
             self.add_box(body, delta, s, out)
+        }
+        else if let Some(s) = repr.downcast_ref::<Cx>() {
+            self.add_convex(body, delta, s, out)
         }
         else if let Some(s) = repr.downcast_ref::<Se>() {
             self.add_segment(body, delta, s, out)
@@ -126,6 +131,24 @@ impl<'a> GraphicsManager<'a> {
         let color = self.color_for_object(&body);
         let margin = body.borrow().margin();
         out.push(SceneNode::BallNode(Ball::new(body, delta, shape.radius() + margin, color)))
+    }
+    
+    fn add_convex(&mut self,
+                body:  Rc<RefCell<RigidBody>>,
+                delta: Iso2<f32>,
+                shape: &shape::Convex2<f32>,
+                out:   &mut Vec<SceneNode>) {
+        let color = self.color_for_object(&body);
+        //let margin = body.borrow().margin();
+        let points = shape.points();
+        let vector = points.iter().cloned().collect();
+        let vs = Arc::new(vector);
+        let is = {
+	    let limit = shape.points().len();
+	    Arc::new( (0..limit as usize).map(|x| Pnt2::new(x, (x+(1 as usize)) % limit )).collect() )
+        };
+        
+        out.push(SceneNode::LinesNode(Lines::new(body, delta, vs, is, color)))
     }
 
     fn add_lines(&mut self,
