@@ -27,6 +27,10 @@ name = "boxes_vee"
 path = "./boxes_vee.rs"
 
 [[bin]]
+name = "convex_vee"
+path = "./convex_vee.rs"
+
+[[bin]]
 name = "compound"
 path = "./compound.rs"
 
