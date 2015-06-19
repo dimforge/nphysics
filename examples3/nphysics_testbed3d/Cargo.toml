@@ -10,17 +10,10 @@ name = "nphysics_testbed3d"
 nalgebra = "*"
 time = "*"
 rand = "*"
+glfw = "*"
+ncollide = "*"
+kiss3d = "*"
 
 [dependencies.nphysics]
 features = [ "3df32" ]
 path = "../.."
-
-[dependencies.glfw]
-git = "https://github.com/bjz/glfw-rs"
-default-features = false
-
-[dependencies.ncollide]
-git = "https://github.com/sebcrozet/ncollide"
-
-[dependencies.kiss3d]
-git = "https://github.com/sebcrozet/kiss3d"

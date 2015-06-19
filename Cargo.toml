@@ -33,6 +33,4 @@ path = "src/lib.rs"
 rustc-serialize = "*"
 num = "*"
 nalgebra = "*"
-
-[dependencies.ncollide]
-git = "https://github.com/sebcrozet/ncollide"
+ncollide = "*"

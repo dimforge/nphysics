@@ -16,6 +16,4 @@ nalgebra = "*"
 time = "*"
 num = "*"
 rand = "*"
-
-[dependencies.ncollide]
-git = "https://github.com/sebcrozet/ncollide"
+ncollide = "*"

@@ -15,6 +15,4 @@ path = "../../src/lib.rs"
 [dependencies]
 num = "*"
 nalgebra = "*"
-
-[dependencies.ncollide]
-git = "https://github.com/sebcrozet/ncollide"
+ncollide = "*"

@@ -7,16 +7,12 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 rand = "*"
 num = "*"
 nalgebra = "*"
+ncollide = "*"
+kiss3d = "*"
 
 [dependencies.nphysics]
 features = [ "3df32" ]
 path = ".."
-
-[dependencies.ncollide]
-git = "https://github.com/sebcrozet/ncollide"
-
-[dependencies.kiss3d]
-git = "https://github.com/sebcrozet/kiss3d"
 
 [dependencies.nphysics_testbed3d]
 path = "./nphysics_testbed3d"
