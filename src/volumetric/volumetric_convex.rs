@@ -109,13 +109,13 @@ pub unsafe fn convex_mesh_area_and_center_of_mass2<P>(convex_mesh: &Polyline<P>)
     let mut iterpeek = convex_mesh.coords.iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // store first element to close the cycle in the end with unwrap_or
     while let Some(elem) = iterpeek.next() {
-	let area = utils::triangle_area( elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center );
-	let center = utils::triangle_center( elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center );
-	
-	res = res + *center.as_vec() * area;
+        let area = utils::triangle_area(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
+        let center = utils::triangle_center(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
+
+        res = res + *center.as_vec() * area;
         areasum = areasum + area;
     }
-    
+
     if na::is_zero(&areasum) {
         (areasum, geometric_center)
     }
@@ -140,25 +140,25 @@ pub unsafe fn convex_mesh_mass_properties<P, I>(convex_mesh: &TriMesh<P>,
     let (volume, com) = convex_mesh_volume_and_center_of_mass(convex_mesh);
 
     if na::is_zero(&volume) {
-	return (na::zero(), com, na::zero());
+        return (na::zero(), com, na::zero());
     }
 
     let mut itot = na::zero::<I>();
 
     match convex_mesh.indices {
-	IndexBuffer::Unified(ref idx) => {
-	    for t in idx.iter() {
-		let p2 = &convex_mesh.coords[t.x as usize];
-		let p3 = &convex_mesh.coords[t.y as usize];
-		let p4 = &convex_mesh.coords[t.z as usize];
+        IndexBuffer::Unified(ref idx) => {
+            for t in idx.iter() {
+                let p2 = &convex_mesh.coords[t.x as usize];
+                let p3 = &convex_mesh.coords[t.y as usize];
+                let p4 = &convex_mesh.coords[t.z as usize];
 
-		let vol      = utils::tetrahedron_volume(&com, p2, p3, p4);
-		let ipart: I = tetrahedron_unit_inertia_tensor_wrt_point(&com, &com, p2, p3, p4);
+                let vol      = utils::tetrahedron_volume(&com, p2, p3, p4);
+                let ipart: I = tetrahedron_unit_inertia_tensor_wrt_point(&com, &com, p2, p3, p4);
 
-		itot = itot + ipart * vol;
-	    }
-	},
-	IndexBuffer::Split(_) => unreachable!()
+                itot = itot + ipart * vol;
+            }
+        },
+        IndexBuffer::Split(_) => unreachable!()
     }
 
     (volume * density, com, itot * density)
@@ -185,25 +185,25 @@ pub unsafe fn convex_mesh_mass_properties2<P>(convex_mesh: &Polyline<P>,
     let mut iterpeek = convex_mesh.coords.iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // store first element to close the cycle in the end with unwrap_or
     while let Some (elem) = iterpeek.next() {
-	let area     = utils::triangle_area(&com, elem, iterpeek.peek().unwrap_or(&firstelement));
-	
-	// algorithm adapted from Box2D
-	let e1 = *elem - com;
-	let e2 = **(iterpeek.peek().unwrap_or(&firstelement)) - com;
-	
-	let ex1 = e1[0];
-	let ey1 = e1[1];
-	let ex2 = e2[0];
-	let ey2 = e2[1];
-	
-	let intx2 = ex1*ex1 + ex2*ex1 + ex2*ex2;
-	let inty2 = ey1*ey1 + ey2*ey1 + ey2*ey2;
+        let area = utils::triangle_area(&com, elem, iterpeek.peek().unwrap_or(&firstelement));
 
-	let ipart = factor * (intx2 + inty2);
-	
-	itot = itot + ipart * area;
+        // algorithm adapted from Box2D
+        let e1 = *elem - com;
+        let e2 = **(iterpeek.peek().unwrap_or(&firstelement)) - com;
+
+        let ex1 = e1[0];
+        let ey1 = e1[1];
+        let ex2 = e2[0];
+        let ey2 = e2[1];
+
+        let intx2 = ex1 * ex1 + ex2 * ex1 + ex2 * ex2;
+        let inty2 = ey1 * ey1 + ey2 * ey1 + ey2 * ey2;
+
+        let ipart = factor * (intx2 + inty2);
+
+        itot = itot + ipart * area;
     }
-    
+
     (area * density, com, itot * density)
 }
 
@@ -319,13 +319,12 @@ pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
     match dim {
         2 => {
             let convex_mesh = transformation::convex_hull2(points);
-	    unsafe {
-		let (area, _, i): (_, _, <P::Vect as Vect>::Scalar) = convex_mesh_mass_properties2(&convex_mesh, na::one());
-		let mut tensor: I = na::zero();
-		tensor[(0, 0)] = i * (na::one::<<P::Vect as Vect>::Scalar>() / area);
-		
-		tensor
-	    }
+            let (area, _, i): (_, _, <P::Vect as Vect>::Scalar) =
+                               unsafe { convex_mesh_mass_properties2(&convex_mesh, na::one()) };
+            let mut tensor: I = na::zero();
+            tensor[(0, 0)] = i * (na::one::<<P::Vect as Vect>::Scalar>() / area);
+
+            tensor
         }
         3 => {
             let convex_mesh = transformation::convex_hull3(points);
@@ -383,8 +382,8 @@ impl<N: Scalar> Volumetric<N, Pnt2<N>, Mat1<N>> for Convex2<N> {
 
     fn mass_properties(&self, density: N) -> (N, Pnt2<N>, Mat1<N>) {
         let convex_mesh = transformation::convex_hull2(self.points());
-        let ( r1, r2, r3 ) = unsafe { convex_mesh_mass_properties2(&convex_mesh, density) };
-        (r1, r2, Mat1::<N>::new( r3 ))
+        let (r1, r2, r3) = unsafe { convex_mesh_mass_properties2(&convex_mesh, density) };
+        (r1, r2, Mat1::<N>::new(r3))
     }
 }
 
@@ -429,88 +428,86 @@ mod test {
         assert!(na::approx_eq(&actual_m, &expected_m),
                 format!("Masses do not match: actual {}, expected: {}.", actual_m, expected_m));
     }
-    
+
     #[test]
     fn test_inertia_tensor2() {
-	// square
-	let a = 3.8f32; // some value for side length
-	let half_a = a / 2.0;
-	
-	// real moment of inertia but divided by the area of the square
-	let real_moi = a.powf( 2.0 ) / 6.0; 
-	let expected = Mat1::new( real_moi );
-	
-	// standard cuboid
-	let cube = Cuboid::new(Vec2::new(half_a, half_a));
-	
-	let actual = cube.unit_angular_inertia();
-	assert!(na::approx_eq(&actual, &expected),
-               format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
-	
-	// convex shape
-	let geom = {
-	    let points = vec![Pnt2::new( half_a,  half_a), Pnt2::new(-half_a,  half_a),
-	                      Pnt2::new(-half_a, -half_a), Pnt2::new( half_a, -half_a) ];
-	    Convex::new( points )
-	};
-	let actual = geom.unit_angular_inertia();
-	assert!(na::approx_eq(&actual, &expected),
+        // square
+        let a = 3.8f32; // some value for side length
+        let half_a = a / 2.0;
+
+        // real moment of inertia but divided by the area of the square
+        let real_moi = a.powf(2.0) / 6.0;
+        let expected = Mat1::new(real_moi);
+
+        // standard cuboid
+        let cube = Cuboid::new(Vec2::new(half_a, half_a));
+    
+        let actual = cube.unit_angular_inertia();
+        assert!(na::approx_eq(&actual, &expected),
                 format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
-                
-                
+
+        // convex shape
+        let geom = {
+            let points = vec![Pnt2::new(half_a,  half_a), Pnt2::new(-half_a,  half_a),
+                              Pnt2::new(-half_a, -half_a), Pnt2::new(half_a, -half_a) ];
+            Convex::new(points)
+        };
+        let actual = geom.unit_angular_inertia();
+        assert!(na::approx_eq(&actual, &expected),
+                format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
+
         // rectangle
         let a = 2.3f32; // some values for side lengths
         let b = 6.7f32;
         let half_a = a / 2.0;
         let half_b = b / 2.0;
-        
+
         // real moment of inertia but divided by the area of the rectangle
-	let real_moi = (1.0 / 12.0) * (a.powf( 2.0 ) + b.powf( 2.0 )); 
-	let expected = Mat1::new( real_moi );
-	
-	// standard cuboid
-	let cube = Cuboid::new(Vec2::new( half_a, half_b ));
-	
-	let actual = cube.unit_angular_inertia();
-	assert!(na::approx_eq(&actual, &expected),
-               format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
-	
-	// convex shape
-	let geom = {
-	    let points = vec![Pnt2::new( half_a,  half_b), Pnt2::new(-half_a,  half_b),
-	                      Pnt2::new(-half_a, -half_b), Pnt2::new( half_a, -half_b) ];
-	    Convex::new( points )
-	};
-	let actual = geom.unit_angular_inertia();
-	assert!(na::approx_eq(&actual, &expected),
+        let real_moi = (1.0 / 12.0) * (a.powf(2.0) + b.powf(2.0));
+        let expected = Mat1::new(real_moi);
+    
+        // standard cuboid
+        let cube = Cuboid::new(Vec2::new(half_a, half_b));
+    
+        let actual = cube.unit_angular_inertia();
+        assert!(na::approx_eq(&actual, &expected),
                 format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
-                
-                
+
+        // convex shape
+        let geom = {
+            let points = vec![Pnt2::new(half_a,  half_b), Pnt2::new(-half_a,  half_b),
+                              Pnt2::new(-half_a, -half_b), Pnt2::new(half_a, -half_b) ];
+            Convex::new(points)
+        };
+        let actual = geom.unit_angular_inertia();
+        assert!(na::approx_eq(&actual, &expected),
+                format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
+
+
         // triangle
         let b = 6.7f32; // base length
         let h = 3.8f32; // height
         let a = 2.3f32; // offset of triangle top to base begin on the x-axis
-			// if the base line is on the x-axis and starts at 0, the the top of the triangle
-			// is at x = a, y = h
-        
+        // if the base line is on the x-axis and starts at 0, the the top of the triangle
+        // is at x = a, y = h
+
         let c_x = a + b / 3.0;
         let c_y = h / 3.0;
-        
+
         // real moment of inertia but divided by the area of the triangle
         // formula taken from http://www.efunda.com/math/areas/triangle.cfm
         let area = b * h / 2.0;
-	let real_moi = (b.powf(3.0) * h - b.powf(2.0) * h * a + b * h * a.powf(2.0) + b * h.powf(3.0)) / (36.0 * area);
-	let expected = Mat1::new( real_moi );
-		
-	// convex shape
-	let geom = {
-	    let points = vec![Pnt2::new( 0.0 - c_x,  0.0 - c_y ), Pnt2::new( b - c_x, 0.0 - c_y ),
-	                      Pnt2::new( a - c_x, h - c_y ) ];
-	    Convex::new( points )
-	};
-	let actual = geom.unit_angular_inertia();
-	assert!(na::approx_eq(&actual, &expected),
-                format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
+        let real_moi = (b.powf(3.0) * h - b.powf(2.0) * h * a + b * h * a.powf(2.0) + b * h.powf(3.0)) / (36.0 * area);
+        let expected = Mat1::new(real_moi);
 
+        // convex shape
+        let geom = {
+            let points = vec![Pnt2::new(0.0 - c_x, 0.0 - c_y), Pnt2::new(b - c_x, 0.0 - c_y),
+                              Pnt2::new(a - c_x, h - c_y) ];
+            Convex::new(points)
+        };
+        let actual = geom.unit_angular_inertia();
+        assert!(na::approx_eq(&actual, &expected),
+                format!("Inertia values do not match: actual {:?}, expected: {:?}.", actual, expected));
     }
 }
