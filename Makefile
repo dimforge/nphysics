@@ -19,6 +19,13 @@ distcheck:
 
 doc:
 	cargo doc
+	
+test:
+	cargo test --features "3df32"
+	cargo test --features "2df32"
+	cargo test --features "2df64"
+	cargo test --features "3df64"
+	
 
 clean:
 	cargo clean

@@ -24,3 +24,4 @@ install:
 script:
   - make all
   - make examples
+  - make test
