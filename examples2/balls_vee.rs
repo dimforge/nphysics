@@ -12,33 +12,38 @@ use nphysics::object::RigidBody;
 use nphysics_testbed2d::Testbed;
 
 fn main() {
-    /*
-     * World
-     */
+    let mut world = create_the_world();
+    create_the_walls(&mut world);
+    create_the_balls(&mut world);
+    run_simulation(world);
+}
+
+
+fn create_the_world() -> World {
     let mut world = World::new();
     world.set_gravity(Vec2::new(0.0, 9.81));
+    world
+}
 
+
+fn create_the_walls(world: &mut World) {
     /*
      * First plane
      */
     let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
-
     rb.append_translation(&Vec2::new(0.0, 10.0));
-
     world.add_body(rb);
 
     /*
      * Second plane
      */
     let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
-
     rb.append_translation(&Vec2::new(0.0, 10.0));
-
     world.add_body(rb);
+}
 
-    /*
-     * Create the balls
-     */
+
+fn create_the_balls(world: &mut World) {
     let num     = (4000.0f32.sqrt()) as usize;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
@@ -57,10 +62,10 @@ fn main() {
             world.add_body(rb);
         }
     }
+}
 
-    /*
-     * Run the simulation.
-     */
+
+fn run_simulation(world: World) {
     let mut testbed = Testbed::new(world);
 
     testbed.run();
