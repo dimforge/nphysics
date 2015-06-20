@@ -180,43 +180,7 @@ impl<'a> Testbed<'a> {
         loop {
             match self.window.poll_event() {
                 event::KeyPressed{code, ..} => self.process_key_press(&mut state, code),
-                event::MouseButtonPressed{button, x, y} => {
-                    match button {
-                        MouseButton::MouseLeft => {
-                            let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-                            let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                            self.world.interferences_with_point(&mapped_point, |b| {
-                                if b.borrow().can_move() {
-                                    state.grabbed_object = Some(b.clone())
-                                }
-                            });
-
-                            match state.grabbed_object {
-                                Some(ref b) => {
-                                    for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
-                                        match state.grabbed_object_joint {
-                                            Some(ref j) => self.world.remove_fixed(j),
-                                            None        => { }
-                                        }
-
-                                        let _1: Iso2<f32> = na::one();
-                                        let attach2 = na::append_translation(&_1, mapped_point.as_vec());
-                                        let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
-                                        let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
-                                        let anchor2 = Anchor::new(None, attach2);
-                                        let joint = Fixed::new(anchor1, anchor2);
-                                        state.grabbed_object_joint = Some(self.world.add_fixed(joint));
-                                        node.select()
-                                    }
-                                },
-                                None => { }
-                            }
-                        },
-                        _ => {
-                            state.camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
-                        }
-                    }
-                },
+                event::MouseButtonPressed{button, x, y} => self.process_mouse_press(&mut state, button, x, y),
                 event::MouseButtonReleased{button, x, y} => {
                     match button {
                         MouseButton::MouseLeft => {
@@ -276,6 +240,44 @@ impl<'a> Testbed<'a> {
                 }
             },
             _                => { }
+        }
+    }
+
+    fn process_mouse_press(&mut self, state: &mut TestbedState, button: MouseButton, x: i32, y: i32) {
+        match button {
+            MouseButton::MouseLeft => {
+                let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
+                let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                self.world.interferences_with_point(&mapped_point, |b| {
+                    if b.borrow().can_move() {
+                        state.grabbed_object = Some(b.clone())
+                    }
+                });
+
+                match state.grabbed_object {
+                    Some(ref b) => {
+                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
+                            match state.grabbed_object_joint {
+                                Some(ref j) => self.world.remove_fixed(j),
+                                None        => { }
+                            }
+
+                            let _1: Iso2<f32> = na::one();
+                            let attach2 = na::append_translation(&_1, mapped_point.as_vec());
+                            let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
+                            let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
+                            let anchor2 = Anchor::new(None, attach2);
+                            let joint = Fixed::new(anchor1, anchor2);
+                            state.grabbed_object_joint = Some(self.world.add_fixed(joint));
+                            node.select()
+                        }
+                    },
+                    None => { }
+                }
+            },
+            _ => {
+                state.camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
+            }
         }
     }
 }
