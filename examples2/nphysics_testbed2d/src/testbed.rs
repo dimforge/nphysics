@@ -176,25 +176,10 @@ impl<'a> Testbed<'a> {
         }
     }
 
-    fn foo_loop(&mut self, state: &mut TestbedState) {
+    fn foo_loop(&mut self, mut state: &mut TestbedState) {
         loop {
             match self.window.poll_event() {
-                event::KeyPressed{code, ..} => {
-                    match code {
-                        Key::Escape => self.window.close(),
-                        Key::S      => state.running = RunMode::Step,
-                        Key::Space  => state.draw_colls = !state.draw_colls,
-                        Key::T      => {
-                            if state.running == RunMode::Stop {
-                                state.running = RunMode::Running;
-                            }
-                            else {
-                                state.running = RunMode::Stop;
-                            }
-                        },
-                        _                => { }
-                    }
-                },
+                event::KeyPressed{code, ..} => self.process_key_press(&mut state, code),
                 event::MouseButtonPressed{button, x, y} => {
                     match button {
                         MouseButton::MouseLeft => {
@@ -274,6 +259,23 @@ impl<'a> Testbed<'a> {
                 event::NoEvent => break,
                 e              => state.camera.handle_event(&e)
             }
+        }
+    }
+
+    fn process_key_press(&mut self, state: &mut TestbedState, code: Key) {
+        match code {
+            Key::Escape => self.window.close(),
+            Key::S      => state.running = RunMode::Step,
+            Key::Space  => state.draw_colls = !state.draw_colls,
+            Key::T      => {
+                if state.running == RunMode::Stop {
+                    state.running = RunMode::Running;
+                }
+                else {
+                    state.running = RunMode::Stop;
+                }
+            },
+            _                => { }
         }
     }
 }
