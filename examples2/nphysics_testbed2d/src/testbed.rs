@@ -181,31 +181,7 @@ impl<'a> Testbed<'a> {
             match self.window.poll_event() {
                 event::KeyPressed{code, ..} => self.process_key_press(&mut state, code),
                 event::MouseButtonPressed{button, x, y} => self.process_mouse_press(&mut state, button, x, y),
-                event::MouseButtonReleased{button, x, y} => {
-                    match button {
-                        MouseButton::MouseLeft => {
-                            match state.grabbed_object {
-                                Some(ref b) => {
-                                    for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
-                                        node.unselect()
-                                    }
-                                },
-                                None => { }
-                            }
-
-                            match state.grabbed_object_joint {
-                                Some(ref j) => self.world.remove_fixed(j),
-                                None => { }
-                            }
-
-                            state.grabbed_object = None;
-                            state.grabbed_object_joint = None;
-                        },
-                        _ => {
-                            state.camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
-                        }
-                    }
-                }
+                event::MouseButtonReleased{button, x, y} => self.process_mouse_release(&mut state, button, x, y),
                 event::MouseMoved{x, y} => {
                     let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                     let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
@@ -277,6 +253,32 @@ impl<'a> Testbed<'a> {
             },
             _ => {
                 state.camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
+            }
+        }
+    }
+
+    fn process_mouse_release(&mut self, state: &mut TestbedState, button: MouseButton, x: i32, y: i32) {
+        match button {
+            MouseButton::MouseLeft => {
+                match state.grabbed_object {
+                    Some(ref b) => {
+                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
+                            node.unselect()
+                        }
+                    },
+                    None => { }
+                }
+
+                match state.grabbed_object_joint {
+                    Some(ref j) => self.world.remove_fixed(j),
+                    None => { }
+                }
+
+                state.grabbed_object = None;
+                state.grabbed_object_joint = None;
+            },
+            _ => {
+                state.camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
             }
         }
     }
