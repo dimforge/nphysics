@@ -148,104 +148,7 @@ impl<'a> Testbed<'a> {
 
     fn foo(&mut self, mut state: TestbedState) {
         while self.window.is_open() {
-            loop {
-                match self.window.poll_event() {
-                    event::KeyPressed{code, ..} => {
-                        match code {
-                            Key::Escape => self.window.close(),
-                            Key::S      => state.running = RunMode::Step,
-                            Key::Space  => state.draw_colls = !state.draw_colls,
-                            Key::T      => {
-                                if state.running == RunMode::Stop {
-                                    state.running = RunMode::Running;
-                                }
-                                else {
-                                    state.running = RunMode::Stop;
-                                }
-                            },
-                            _                => { }
-                        }
-                    },
-                    event::MouseButtonPressed{button, x, y} => {
-                        match button {
-                            MouseButton::MouseLeft => {
-                                let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-                                let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                                self.world.interferences_with_point(&mapped_point, |b| {
-                                    if b.borrow().can_move() {
-                                        state.grabbed_object = Some(b.clone())
-                                    }
-                                });
-
-                                match state.grabbed_object {
-                                    Some(ref b) => {
-                                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
-                                            match state.grabbed_object_joint {
-                                                Some(ref j) => self.world.remove_fixed(j),
-                                                None        => { }
-                                            }
-
-                                            let _1: Iso2<f32> = na::one();
-                                            let attach2 = na::append_translation(&_1, mapped_point.as_vec());
-                                            let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
-                                            let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
-                                            let anchor2 = Anchor::new(None, attach2);
-                                            let joint = Fixed::new(anchor1, anchor2);
-                                            state.grabbed_object_joint = Some(self.world.add_fixed(joint));
-                                            node.select()
-                                        }
-                                    },
-                                    None => { }
-                                }
-                            },
-                            _ => {
-                                state.camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
-                            }
-                        }
-                    },
-                    event::MouseButtonReleased{button, x, y} => {
-                        match button {
-                            MouseButton::MouseLeft => {
-                                match state.grabbed_object {
-                                    Some(ref b) => {
-                                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
-                                            node.unselect()
-                                        }
-                                    },
-                                    None => { }
-                                }
-
-                                match state.grabbed_object_joint {
-                                    Some(ref j) => self.world.remove_fixed(j),
-                                    None => { }
-                                }
-
-                                state.grabbed_object = None;
-                                state.grabbed_object_joint = None;
-                            },
-                            _ => {
-                                state.camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
-                            }
-                        }
-                    }
-                    event::MouseMoved{x, y} => {
-                        let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-                        let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                        let _1: Iso2<f32> = na::one();
-                        let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
-                        match state.grabbed_object {
-                            Some(_) => {
-                                let joint = state.grabbed_object_joint.as_ref().unwrap();
-                                joint.borrow_mut().set_local2(attach2);
-                            },
-                            None => state.camera.handle_event(&event::MouseMoved{x: x, y: y})
-                        };
-                    },
-                    event::Closed  => self.window.close(),
-                    event::NoEvent => break,
-                    e              => state.camera.handle_event(&e)
-                }
-            }
+            self.foo_loop(&mut state);
 
             self.window.clear(&Color::black());
 
@@ -270,6 +173,107 @@ impl<'a> Testbed<'a> {
             state.fps.draw_registered(&mut self.window);
 
             self.window.display();
+        }
+    }
+
+    fn foo_loop(&mut self, state: &mut TestbedState) {
+        loop {
+            match self.window.poll_event() {
+                event::KeyPressed{code, ..} => {
+                    match code {
+                        Key::Escape => self.window.close(),
+                        Key::S      => state.running = RunMode::Step,
+                        Key::Space  => state.draw_colls = !state.draw_colls,
+                        Key::T      => {
+                            if state.running == RunMode::Stop {
+                                state.running = RunMode::Running;
+                            }
+                            else {
+                                state.running = RunMode::Stop;
+                            }
+                        },
+                        _                => { }
+                    }
+                },
+                event::MouseButtonPressed{button, x, y} => {
+                    match button {
+                        MouseButton::MouseLeft => {
+                            let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
+                            let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                            self.world.interferences_with_point(&mapped_point, |b| {
+                                if b.borrow().can_move() {
+                                    state.grabbed_object = Some(b.clone())
+                                }
+                            });
+
+                            match state.grabbed_object {
+                                Some(ref b) => {
+                                    for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
+                                        match state.grabbed_object_joint {
+                                            Some(ref j) => self.world.remove_fixed(j),
+                                            None        => { }
+                                        }
+
+                                        let _1: Iso2<f32> = na::one();
+                                        let attach2 = na::append_translation(&_1, mapped_point.as_vec());
+                                        let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
+                                        let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
+                                        let anchor2 = Anchor::new(None, attach2);
+                                        let joint = Fixed::new(anchor1, anchor2);
+                                        state.grabbed_object_joint = Some(self.world.add_fixed(joint));
+                                        node.select()
+                                    }
+                                },
+                                None => { }
+                            }
+                        },
+                        _ => {
+                            state.camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
+                        }
+                    }
+                },
+                event::MouseButtonReleased{button, x, y} => {
+                    match button {
+                        MouseButton::MouseLeft => {
+                            match state.grabbed_object {
+                                Some(ref b) => {
+                                    for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
+                                        node.unselect()
+                                    }
+                                },
+                                None => { }
+                            }
+
+                            match state.grabbed_object_joint {
+                                Some(ref j) => self.world.remove_fixed(j),
+                                None => { }
+                            }
+
+                            state.grabbed_object = None;
+                            state.grabbed_object_joint = None;
+                        },
+                        _ => {
+                            state.camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
+                        }
+                    }
+                }
+                event::MouseMoved{x, y} => {
+                    let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
+                    let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                    let _1: Iso2<f32> = na::one();
+                    let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
+                    match state.grabbed_object {
+                        Some(_) => {
+                            let joint = state.grabbed_object_joint.as_ref().unwrap();
+                            joint.borrow_mut().set_local2(attach2);
+                        },
+                        None => state.camera.handle_event(&event::MouseMoved{x: x, y: y})
+                    };
+                },
+                event::Closed  => self.window.close(),
+                event::NoEvent => break,
+                e              => state.camera.handle_event(&e)
+            }
         }
     }
 }
