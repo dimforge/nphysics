@@ -45,6 +45,28 @@ pub struct Testbed<'a> {
     graphics: GraphicsManager<'a>
 }
 
+struct TestbedState<'a> {
+    running: RunMode,
+    draw_colls: bool,
+    camera: Camera,
+    fps: Fps<'a>,
+    grabbed_object: Option<Rc<RefCell<RigidBody>>>,
+    grabbed_object_joint: Option<Rc<RefCell<Fixed>>>,
+}
+
+impl<'a> TestbedState<'a> {
+    fn new(fnt: &'a Font) -> TestbedState<'a> {
+        TestbedState{
+            running: RunMode::Running,
+            draw_colls: false,
+            camera: Camera::new(),
+            fps: Fps::new(&fnt),
+            grabbed_object: None,
+            grabbed_object_joint: None,
+        }
+    }
+}
+
 impl<'a> Testbed<'a> {
     pub fn new_empty() -> Testbed<'a> {
         let mode    = VideoMode::new_init(800, 600, 32);
@@ -97,8 +119,12 @@ impl<'a> Testbed<'a> {
     }
 
     pub fn run(&mut self) {
+        let font_mem = include_bytes!("Inconsolata.otf");
+        let     fnt  = Font::new_from_memory(font_mem).unwrap();
+
+        let mut state = TestbedState::new(&fnt);
+
         let mut args    = env::args();
-        let mut running = RunMode::Running;
 
         if args.len() > 1 {
             let exname = args.next().unwrap();
@@ -108,39 +134,33 @@ impl<'a> Testbed<'a> {
                     return;
                 }
                 else if &arg[..] == "--pause" {
-                    running = RunMode::Stop;
+                    state.running = RunMode::Stop;
                 }
             }
         }
 
-        let mut draw_colls = false;
-
-
-        let mut camera = Camera::new();
-
         self.window.set_framerate_limit(60);
 
+        self.foo(state);
 
-        let font_mem = include_bytes!("Inconsolata.otf");
-        let     fnt  = Font::new_from_memory(font_mem).unwrap();
-        let mut fps  = Fps::new(&fnt);
-        let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
-        let mut grabbed_object_joint: Option<Rc<RefCell<Fixed>>> = None;
+        self.window.close();
+    }
 
+    fn foo(&mut self, mut state: TestbedState) {
         while self.window.is_open() {
             loop {
                 match self.window.poll_event() {
                     event::KeyPressed{code, ..} => {
                         match code {
                             Key::Escape => self.window.close(),
-                            Key::S      => running = RunMode::Step,
-                            Key::Space  => draw_colls = !draw_colls,
+                            Key::S      => state.running = RunMode::Step,
+                            Key::Space  => state.draw_colls = !state.draw_colls,
                             Key::T      => {
-                                if running == RunMode::Stop {
-                                    running = RunMode::Running;
+                                if state.running == RunMode::Stop {
+                                    state.running = RunMode::Running;
                                 }
                                 else {
-                                    running = RunMode::Stop;
+                                    state.running = RunMode::Stop;
                                 }
                             },
                             _                => { }
@@ -149,18 +169,18 @@ impl<'a> Testbed<'a> {
                     event::MouseButtonPressed{button, x, y} => {
                         match button {
                             MouseButton::MouseLeft => {
-                                let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
+                                let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
                                 self.world.interferences_with_point(&mapped_point, |b| {
                                     if b.borrow().can_move() {
-                                        grabbed_object = Some(b.clone())
+                                        state.grabbed_object = Some(b.clone())
                                     }
                                 });
 
-                                match grabbed_object {
+                                match state.grabbed_object {
                                     Some(ref b) => {
                                         for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
-                                            match grabbed_object_joint {
+                                            match state.grabbed_object_joint {
                                                 Some(ref j) => self.world.remove_fixed(j),
                                                 None        => { }
                                             }
@@ -168,10 +188,10 @@ impl<'a> Testbed<'a> {
                                             let _1: Iso2<f32> = na::one();
                                             let attach2 = na::append_translation(&_1, mapped_point.as_vec());
                                             let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
-                                            let anchor1 = Anchor::new(Some(grabbed_object.as_ref().unwrap().clone()), attach1);
+                                            let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
                                             let anchor2 = Anchor::new(None, attach2);
                                             let joint = Fixed::new(anchor1, anchor2);
-                                            grabbed_object_joint = Some(self.world.add_fixed(joint));
+                                            state.grabbed_object_joint = Some(self.world.add_fixed(joint));
                                             node.select()
                                         }
                                     },
@@ -179,14 +199,14 @@ impl<'a> Testbed<'a> {
                                 }
                             },
                             _ => {
-                                camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
+                                state.camera.handle_event(&event::MouseButtonPressed{ button: button, x: x, y: y })
                             }
                         }
                     },
                     event::MouseButtonReleased{button, x, y} => {
                         match button {
                             MouseButton::MouseLeft => {
-                                match grabbed_object {
+                                match state.grabbed_object {
                                     Some(ref b) => {
                                         for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
                                             node.unselect()
@@ -195,63 +215,61 @@ impl<'a> Testbed<'a> {
                                     None => { }
                                 }
 
-                                match grabbed_object_joint {
+                                match state.grabbed_object_joint {
                                     Some(ref j) => self.world.remove_fixed(j),
                                     None => { }
                                 }
 
-                                grabbed_object = None;
-                                grabbed_object_joint = None;
+                                state.grabbed_object = None;
+                                state.grabbed_object_joint = None;
                             },
                             _ => {
-                                camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
+                                state.camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
                             }
                         }
                     }
                     event::MouseMoved{x, y} => {
-                        let mapped_coords = camera.map_pixel_to_coords(Vector2i::new(x, y));
+                        let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                         let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
                         let _1: Iso2<f32> = na::one();
                         let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
-                        match grabbed_object {
+                        match state.grabbed_object {
                             Some(_) => {
-                                let joint = grabbed_object_joint.as_ref().unwrap();
+                                let joint = state.grabbed_object_joint.as_ref().unwrap();
                                 joint.borrow_mut().set_local2(attach2);
                             },
-                            None => camera.handle_event(&event::MouseMoved{x: x, y: y})
+                            None => state.camera.handle_event(&event::MouseMoved{x: x, y: y})
                         };
                     },
                     event::Closed  => self.window.close(),
                     event::NoEvent => break,
-                    e              => camera.handle_event(&e)
+                    e              => state.camera.handle_event(&e)
                 }
             }
 
             self.window.clear(&Color::black());
 
-            fps.reset();
+            state.fps.reset();
 
-            if running != RunMode::Stop {
+            if state.running != RunMode::Stop {
                 self.world.step(0.016);
             }
 
-            if running == RunMode::Step {
-                running = RunMode::Stop;
+            if state.running == RunMode::Step {
+                state.running = RunMode::Stop;
             }
-            fps.register_delta();
-            self.graphics.draw(&mut self.window, &camera);
+            state.fps.register_delta();
+            self.graphics.draw(&mut self.window, &state.camera);
 
-            camera.activate_scene(&mut self.window);
-            if draw_colls {
+            state.camera.activate_scene(&mut self.window);
+            if state.draw_colls {
                 draw_helper::draw_colls(&mut self.window, &mut self.world);
             }
 
-            camera.activate_ui(&mut self.window);
-            fps.draw_registered(&mut self.window);
+            state.camera.activate_ui(&mut self.window);
+            state.fps.draw_registered(&mut self.window);
 
             self.window.display();
         }
-
-        self.window.close();
     }
 }
