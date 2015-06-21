@@ -141,12 +141,12 @@ impl<'a> Testbed<'a> {
 
         self.window.set_framerate_limit(60);
 
-        self.foo(state);
+        self.run_loop(state);
 
         self.window.close();
     }
 
-    fn foo(&mut self, mut state: TestbedState) {
+    fn run_loop(&mut self, mut state: TestbedState) {
         while self.window.is_open() {
             self.process_events(&mut state);
 
