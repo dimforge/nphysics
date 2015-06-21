@@ -154,20 +154,14 @@ impl<'a> Testbed<'a> {
 
             state.fps.reset();
 
-            if state.running != RunMode::Stop {
-                self.world.step(0.016);
-            }
+            self.progress_world(&mut state);
 
-            if state.running == RunMode::Step {
-                state.running = RunMode::Stop;
-            }
             state.fps.register_delta();
+
             self.graphics.draw(&mut self.window, &state.camera);
 
             state.camera.activate_scene(&mut self.window);
-            if state.draw_colls {
-                draw_helper::draw_colls(&mut self.window, &mut self.world);
-            }
+            self.draw_collisions(&mut state);
 
             state.camera.activate_ui(&mut self.window);
             state.fps.draw_registered(&mut self.window);
@@ -283,5 +277,21 @@ impl<'a> Testbed<'a> {
             },
             None => state.camera.handle_event(&event::MouseMoved{x: x, y: y})
         };
+    }
+
+    fn progress_world(&mut self, state: &mut TestbedState) {
+        if state.running != RunMode::Stop {
+            self.world.step(0.016);
+        }
+
+        if state.running == RunMode::Step {
+            state.running = RunMode::Stop;
+        }
+    }
+
+    fn draw_collisions(&mut self, state: &mut TestbedState) {
+        if state.draw_colls {
+            draw_helper::draw_colls(&mut self.window, &mut self.world);
+        }
     }
 }
