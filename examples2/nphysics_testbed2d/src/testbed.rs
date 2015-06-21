@@ -148,7 +148,7 @@ impl<'a> Testbed<'a> {
 
     fn foo(&mut self, mut state: TestbedState) {
         while self.window.is_open() {
-            self.foo_loop(&mut state);
+            self.process_events(&mut state);
 
             self.window.clear(&Color::black());
 
@@ -176,7 +176,7 @@ impl<'a> Testbed<'a> {
         }
     }
 
-    fn foo_loop(&mut self, mut state: &mut TestbedState) {
+    fn process_events(&mut self, mut state: &mut TestbedState) {
         loop {
             match self.window.poll_event() {
                 event::KeyPressed{code, ..} => self.process_key_press(&mut state, code),
