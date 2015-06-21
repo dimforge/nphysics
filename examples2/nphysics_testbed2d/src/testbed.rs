@@ -182,19 +182,7 @@ impl<'a> Testbed<'a> {
                 event::KeyPressed{code, ..} => self.process_key_press(&mut state, code),
                 event::MouseButtonPressed{button, x, y} => self.process_mouse_press(&mut state, button, x, y),
                 event::MouseButtonReleased{button, x, y} => self.process_mouse_release(&mut state, button, x, y),
-                event::MouseMoved{x, y} => {
-                    let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-                    let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                    let _1: Iso2<f32> = na::one();
-                    let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
-                    match state.grabbed_object {
-                        Some(_) => {
-                            let joint = state.grabbed_object_joint.as_ref().unwrap();
-                            joint.borrow_mut().set_local2(attach2);
-                        },
-                        None => state.camera.handle_event(&event::MouseMoved{x: x, y: y})
-                    };
-                },
+                event::MouseMoved{x, y} => self.process_mouse_moved(&mut state, x, y),
                 event::Closed  => self.window.close(),
                 event::NoEvent => break,
                 e              => state.camera.handle_event(&e)
@@ -281,5 +269,19 @@ impl<'a> Testbed<'a> {
                 state.camera.handle_event(&event::MouseButtonReleased{ button: button, x: x, y: y })
             }
         }
+    }
+
+    fn process_mouse_moved(&mut self, state: &mut TestbedState, x: i32, y: i32) {
+        let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
+        let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+        let _1: Iso2<f32> = na::one();
+        let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
+        match state.grabbed_object {
+            Some(_) => {
+                let joint = state.grabbed_object_joint.as_ref().unwrap();
+                joint.borrow_mut().set_local2(attach2);
+            },
+            None => state.camera.handle_event(&event::MouseMoved{x: x, y: y})
+        };
     }
 }
