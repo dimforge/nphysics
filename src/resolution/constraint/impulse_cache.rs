@@ -115,8 +115,8 @@ impl ImpulseCache {
         self.cache_next.clear();
         self.hash_next.clear();
 
-        self.cache_prev.extend(iter::repeat(na::zero()).take(self.impulse_per_contact));
-        self.cache_next.extend(iter::repeat(na::zero()).take(self.impulse_per_contact));
+        self.cache_prev.extend(iter::repeat(na::zero::<Scalar>()).take(self.impulse_per_contact));
+        self.cache_next.extend(iter::repeat(na::zero::<Scalar>()).take(self.impulse_per_contact));
     }
 
     pub fn swap(&mut self) {
