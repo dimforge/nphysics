@@ -214,19 +214,20 @@ impl<'a> Testbed<'a> {
 
                 match state.grabbed_object {
                     Some(ref b) => {
-                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
-                            match state.grabbed_object_joint {
-                                Some(ref j) => self.world.remove_fixed(j),
-                                None        => { }
-                            }
+                        match state.grabbed_object_joint {
+                            Some(ref j) => self.world.remove_fixed(j),
+                            None        => { }
+                        }
 
-                            let _1: Iso2<f32> = na::one();
-                            let attach2 = na::append_translation(&_1, mapped_point.as_vec());
-                            let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
-                            let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
-                            let anchor2 = Anchor::new(None, attach2);
-                            let joint = Fixed::new(anchor1, anchor2);
-                            state.grabbed_object_joint = Some(self.world.add_fixed(joint));
+                        let _1: Iso2<f32> = na::one();
+                        let attach2 = na::append_translation(&_1, mapped_point.as_vec());
+                        let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
+                        let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
+                        let anchor2 = Anchor::new(None, attach2);
+                        let joint = Fixed::new(anchor1, anchor2);
+                        state.grabbed_object_joint = Some(self.world.add_fixed(joint));
+
+                        for node in self.graphics.body_to_scene_node(b).unwrap().iter_mut() {
                             node.select()
                         }
                     },
