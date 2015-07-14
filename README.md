@@ -14,7 +14,7 @@ has not been written/tested with those in thought.
 Examples are available in the `examples` directory.
 There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
 
-An on-line version of this documentation is available [here](http://nphysics-dev.org).
+An on-line version of this documentation is available [here](http://nphysics.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.

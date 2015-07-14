@@ -4,8 +4,8 @@ version = "0.1.1"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 description = "2 and 3-dimensional physics engine in Rust."
-documentation = "http://nphysics-dev.org/doc/nphysics"
-homepage = "http://nphysics-dev.org"
+documentation = "http://nphysics.org/doc/nphysics"
+homepage = "http://nphysics.org"
 repository = "https://github.com/sebcrozet/nphysics"
 readme = "README.md"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
