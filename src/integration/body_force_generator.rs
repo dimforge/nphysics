@@ -54,7 +54,7 @@ impl BodyForceGenerator {
 impl Integrator<RigidBody> for BodyForceGenerator {
     #[inline]
     fn update(&mut self, _: Scalar, rb: &mut RigidBody) {
-        rb.set_lin_acc(self.lin_acc.clone());
-        rb.set_ang_acc(self.ang_acc.clone());
+        rb.set_gravity(self.lin_acc.clone());
+        //rb.set_ang_acc(self.ang_acc.clone());
     }
 }

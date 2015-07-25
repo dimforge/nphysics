@@ -134,11 +134,11 @@ impl ActivationManager {
             }
         }
 
-        world.contact_pairs(|b1, b2, cd| {
+        for (b1, b2, cd) in world.contact_pairs() {
             if cd.num_colls() != 0 {
-                make_union(b1, b2, &mut self.ufind[..])
+                make_union(&b1.data, &b2.data, &mut self.ufind[..])
             }
-        });
+        }
 
         for e in joints.joints().elements().iter() {
             match e.value {

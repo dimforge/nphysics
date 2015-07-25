@@ -22,9 +22,9 @@ pub fn explicit_integrate_wo_rotation(dt: Scalar, p: &Point, lv: &Vect, lf: &Vec
 }
 
 /// Semi-implicit Euler integrator.
-pub fn semi_implicit_integrate(dt: Scalar, p: &Matrix, c: &Point, lv: &Vect, av: &Orientation, lf: &Vect, af: &Orientation) -> (Matrix, Vect, Orientation) {
-    let nlv = *lv + *lf * dt;
-    let nav = *av + *af * dt;
+pub fn semi_implicit_integrate(dt: Scalar, p: &Matrix, c: &Point, lv: &Vect, av: &Orientation, l_acc: &Vect, a_acc: &Orientation) -> (Matrix, Vect, Orientation) {
+    let nlv = *lv + *l_acc * dt;
+    let nav = *av + *a_acc * dt;
 
     (
         displacement(dt.clone(), p, c, &nlv, &nav),

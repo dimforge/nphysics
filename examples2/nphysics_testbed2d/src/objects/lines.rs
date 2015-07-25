@@ -40,13 +40,17 @@ impl Lines {
     pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         let body      = self.body.borrow();
         let transform = *body.position() * self.delta;
+        let color = match body.is_active() {
+	    true  => Color::new_rgb(self.color.x, self.color.y, self.color.z),
+	    false => Color::new_rgb(self.color.x/4, self.color.y/4, self.color.z/4)
+	};
 
         let vs = &*self.vertices;
 
         for is in self.indices.iter() {
             let gsv0 = transform * vs[is.x];
             let gsv1 = transform * vs[is.y];
-            draw_line(rw, &gsv0, &gsv1, &Color::new_rgb(self.color.x, self.color.y, self.color.z));
+            draw_line(rw, &gsv0, &gsv1, &color);
         }
     }
 

@@ -1,10 +1,11 @@
+use std::ops::Mul;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::cell::RefCell;
-use na::{Transformation, Translation, Rotation, Bounded};
+use na::{Transformation, Translation, Rotation, Bounded, Cross};
 use na;
 use na::Transform;
-use ncollide::bounding_volume::{HasBoundingVolume, BoundingVolume, AABB, HasAABB};
+use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
 use ncollide::world::CollisionGroups;
 use ncollide::inspection::Repr;
 use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
@@ -61,6 +62,9 @@ pub struct RigidBody {
     center_of_mass:       Point,
     lin_acc:              Vect,
     ang_acc:              Orientation,
+    gravity:              Vect,
+    lin_force:            Vect,
+    ang_force:            Orientation,
     restitution:          Scalar,
     friction:             Scalar,
     index:                isize,
@@ -87,6 +91,9 @@ impl Clone for RigidBody {
             center_of_mass:    self.center_of_mass.clone(),
             lin_acc:           self.lin_acc.clone(),
             ang_acc:           self.ang_acc.clone(),
+            gravity:           self.gravity.clone(),
+            lin_force:         self.lin_force.clone(),
+            ang_force:         self.ang_force.clone(),
             restitution:       self.restitution.clone(),
             friction:          self.friction.clone(),
             index:             self.index.clone(),
@@ -206,7 +213,7 @@ impl RigidBody {
     ///
     /// If None, the object cannot be deactivated.
     /// If the total squared velocity (i-e: v^2 + w^2) falls bellow this threshold for a long
-    /// enough time, the rigid body will fall asleep (i-e be "forzen") for performance reasons.
+    /// enough time, the rigid body will fall asleep (i-e be "frozen") for performance reasons.
     #[inline]
     pub fn deactivation_threshold(&self) -> Option<Scalar> {
         self.sleep_threshold.clone()
@@ -216,7 +223,7 @@ impl RigidBody {
     ///
     /// If None, the object cannot be deactivated.
     /// If the total squared velocity (i-e: v^2 + w^2) falls bellow this threshold for a long
-    /// enough time, the rigid body will fall asleep (i-e be "forzen") for performance reasons.
+    /// enough time, the rigid body will fall asleep (i-e be "frozen") for performance reasons.
     #[inline]
     pub fn set_deactivation_threshold(&mut self, threshold: Option<Scalar>) {
         self.sleep_threshold = threshold
@@ -302,6 +309,9 @@ impl RigidBody {
                 center_of_mass:    na::orig(),
                 lin_acc:           na::zero(),
                 ang_acc:           na::zero(),
+                gravity:           na::zero(),
+                lin_force:         na::zero(),
+                ang_force:         na::zero(),
                 friction:          friction,
                 restitution:       restitution,
                 index:             0,
@@ -410,6 +420,103 @@ impl RigidBody {
         self.ang_acc = af * self.ang_acc_scale
     }
 
+    /// Sets the gravity for this RigidBody. It's internally called from BodyForceGenerator,
+    /// don't use manually.
+    #[doc(hidden)]
+    #[inline]
+    pub fn set_gravity(&mut self, gravity: Vect) {
+	self.gravity = gravity;
+	self.update_lin_acc();
+    }
+
+    /// Resets linear and angular force.
+    #[inline]
+    pub fn clear_forces(&mut self) {
+	self.clear_linear_force();
+	self.clear_angular_force();
+    }
+
+    /// Resets linear force.
+    #[inline]
+    pub fn clear_linear_force(&mut self) {
+	self.lin_force = na::zero();
+	self.update_lin_acc();
+    }
+
+    /// Resets angular force.
+    #[inline]
+    pub fn clear_angular_force(&mut self) {
+	self.ang_force = na::zero();
+	self.update_ang_acc();
+    }
+
+    /// Adds an additional linear force.
+    #[inline]
+    pub fn append_lin_force(&mut self, force: Vect) {
+	self.lin_force = self.lin_force + force;
+	self.update_acc();
+    }
+
+    /// Adds an additional angular force.
+    #[inline]
+    pub fn append_ang_force(&mut self, force: Orientation) {
+	self.ang_force = self.ang_force + force;
+	self.update_ang_acc();
+    }
+
+    /// Adds an additional force acting at a point different to the center of mass.
+    ///
+    /// The ```pnt_to_com``` vector has to point from the center of mass to 
+    /// the point where the force acts.
+    #[inline]
+    pub fn append_force_wrt_point(&mut self, force: Vect, pnt_to_com: Vect) {
+	self.append_lin_force(force);
+	self.append_ang_force(pnt_to_com.cross(&force));
+    }
+
+    /// Update the linear and angular acceleraction from the applied forces.
+    #[inline]
+    fn update_acc(&mut self) {
+	self.update_lin_acc();
+	self.update_ang_acc();
+    }
+    /// Update the linear acceleraction from the applied forces.
+    #[inline]
+    fn update_lin_acc(&mut self) {
+	self.lin_acc = self.lin_force * self.inv_mass + self.gravity;
+    }
+    /// Update the angular acceleraction from the applied forces.
+    #[inline]
+    fn update_ang_acc(&mut self) {
+	self.ang_acc = self.ang_force * self.inv_inertia;
+    }
+    
+    /// Applies a one-time central impulse.
+    #[inline]
+    pub fn apply_central_impulse(&mut self, impulse: Vect){
+	let current_velocity = self.lin_vel();
+	let inverted_mass = self.inv_mass();
+	self.set_lin_vel(current_velocity + impulse*inverted_mass);
+    }
+    
+    /// Applies a one-time angular impulse.
+    #[inline]
+    pub fn apply_angular_momentum(&mut self, ang_moment: Orientation){
+	let current_ang_velocity = self.ang_vel();
+	let inverted_tensor = self.inv_inertia().clone();
+	self.set_ang_vel(current_ang_velocity + inverted_tensor*ang_moment);
+    }
+
+    /// Applies a one-time impulse to a point relative to the center of mass.
+    ///
+    /// The ```pnt_to_com``` vector has to point from the center of mass to the
+    /// point where the impulse acts.
+    #[inline]
+    pub fn apply_impulse_wrt_point(&mut self, impulse: Vect, pnt_to_com: Vect){
+	self.apply_central_impulse(impulse);
+	self.apply_angular_momentum(pnt_to_com.cross(&impulse));
+    }
+    
     /// Gets the inverse mass of this rigid body.
     #[inline]
     pub fn inv_mass(&self) -> Scalar {
@@ -514,8 +621,16 @@ impl RigidBody {
     }
 }
 
-impl HasBoundingVolume<AABB<Point>> for RigidBody {
-    fn bounding_volume(&self) -> AABB<Point> {
-        self.shape.aabb(&self.local_to_world).loosened(self.margin())
+impl<M> HasBoundingVolume<M, BoundingSphere<Point>> for RigidBody
+    where M: Copy + Mul<Matrix, Output = Matrix> { // FIXME: avoiding `Copy` would be great.
+    fn bounding_volume(&self, m: &M) -> BoundingSphere<Point> {
+        bounding_volume::bounding_sphere(&**self.shape, &(*m * self.local_to_world)).loosened(self.margin())
+    }
+}
+
+impl<M> HasBoundingVolume<M, AABB<Point>> for RigidBody
+    where M: Copy + Mul<Matrix, Output = Matrix> { // FIXME: avoiding `Copy` would be great.
+    fn bounding_volume(&self, m: &M) -> AABB<Point> {
+        bounding_volume::aabb(&**self.shape, &(*m * self.local_to_world)).loosened(self.margin())
     }
 }

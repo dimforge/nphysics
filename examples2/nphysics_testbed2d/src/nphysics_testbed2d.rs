@@ -10,6 +10,7 @@ extern crate nphysics;
 
 
 pub use testbed::Testbed;
+pub use testbed::CallBackMode;
 
 mod testbed;
 mod engine;

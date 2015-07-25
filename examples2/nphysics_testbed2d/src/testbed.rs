@@ -10,6 +10,7 @@ use sfml::graphics::Color;
 use sfml::system::vector2::Vector2i;
 use na::{Pnt2, Pnt3, Iso2};
 use na;
+use ncollide::world::CollisionGroups;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Fixed, Anchor};
@@ -39,8 +40,19 @@ enum RunMode {
     Step
 }
 
+pub enum CallBackMode {
+    StateActivated,
+    StateDeactivated,
+    LoopActive,
+    LoopNonActive
+}
+
 pub struct Testbed<'a> {
     world:    World,
+    callback1: Option<Box<Fn(CallBackMode)>>,
+    callback2: Option<Box<Fn(CallBackMode)>>,
+    callback3: Option<Box<Fn(CallBackMode)>>,
+    callback4: Option<Box<Fn(CallBackMode)>>,
     window:   RenderWindow,
     graphics: GraphicsManager<'a>
 }
@@ -48,6 +60,10 @@ pub struct Testbed<'a> {
 struct TestbedState<'a> {
     running: RunMode,
     draw_colls: bool,
+    cb1_state: bool,
+    cb2_state: bool,
+    cb3_state: bool,
+    cb4_state: bool,
     camera: Camera,
     fps: Fps<'a>,
     grabbed_object: Option<Rc<RefCell<RigidBody>>>,
@@ -59,6 +75,10 @@ impl<'a> TestbedState<'a> {
         TestbedState{
             running: RunMode::Running,
             draw_colls: false,
+	    cb1_state: false,
+	    cb2_state: false,
+	    cb3_state: false,
+	    cb4_state: false,
             camera: Camera::new(),
             fps: Fps::new(&fnt),
             grabbed_object: None,
@@ -86,6 +106,10 @@ impl<'a> Testbed<'a> {
 
         Testbed {
             world:    World::new(),
+            callback1: None,
+            callback2: None,
+            callback3: None,
+            callback4: None,
             window:   window,
             graphics: graphics
         }
@@ -117,7 +141,23 @@ impl<'a> Testbed<'a> {
 
         self.graphics.set_color(body, color);
     }
-
+    
+    pub fn add_callback1(&mut self, callback: Box<Fn(CallBackMode)>){
+	self.callback1 = Some(callback);
+    }
+    
+    pub fn add_callback2(&mut self, callback: Box<Fn(CallBackMode)>){
+	self.callback2 = Some(callback);
+    }
+    
+    pub fn add_callback3(&mut self, callback: Box<Fn(CallBackMode)>){
+	self.callback3 = Some(callback);
+    }
+    
+    pub fn add_callback4(&mut self, callback: Box<Fn(CallBackMode)>){
+	self.callback4 = Some(callback);
+    }
+    
     pub fn run(&mut self) {
         let font_mem = include_bytes!("Inconsolata.otf");
         let     fnt  = Font::new_from_memory(font_mem).unwrap();
@@ -197,6 +237,59 @@ impl<'a> Testbed<'a> {
                     state.running = RunMode::Stop;
                 }
             },
+            Key::Num1   => {
+		state.cb1_state = !state.cb1_state;
+		match self.callback1 {
+		    Some(ref p) => {
+			if state.cb1_state {
+			    p(CallBackMode::StateActivated);
+			} else {
+			    p(CallBackMode::StateDeactivated);
+			}
+		    },
+		    None => {}
+		}
+            },
+            Key::Num2   => {
+		state.cb2_state = !state.cb2_state;
+		match self.callback2 {
+		    Some(ref p) => {
+			if state.cb2_state {
+			    p(CallBackMode::StateActivated);
+			} else {
+			    p(CallBackMode::StateDeactivated);
+			}
+		    },
+		    None => {}
+		}
+            },
+            Key::Num3   => {
+		state.cb3_state = !state.cb3_state;
+		match self.callback3 {
+		    Some(ref p) => {
+			if state.cb3_state {
+			    p(CallBackMode::StateActivated);
+			} else {
+			    p(CallBackMode::StateDeactivated);
+			}
+		    },
+		    None => {}
+		}
+            },
+            Key::Num4   => {
+		state.cb4_state = !state.cb4_state;
+		match self.callback4 {
+		    Some(ref p) => {
+			if state.cb4_state {
+			    p(CallBackMode::StateActivated);
+			} else {
+			    p(CallBackMode::StateDeactivated);
+			}
+		    },
+		    None => {}
+		}
+            },
+            
             _                => { }
         }
     }
@@ -206,11 +299,13 @@ impl<'a> Testbed<'a> {
             MouseButton::MouseLeft => {
                 let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                self.world.interferences_with_point(&mapped_point, |b| {
-                    if b.borrow().can_move() {
-                        state.grabbed_object = Some(b.clone())
+                for b in self.world
+                             .collision_world()
+                             .interferences_with_point(&mapped_point, &CollisionGroups::new()) {
+                    if b.data.borrow().can_move() {
+                        state.grabbed_object = Some(b.data.clone())
                     }
-                });
+                }
 
                 match state.grabbed_object {
                     Some(ref b) => {
@@ -282,6 +377,47 @@ impl<'a> Testbed<'a> {
 
     fn progress_world(&mut self, state: &mut TestbedState) {
         if state.running != RunMode::Stop {
+	    match self.callback1 {
+		Some(ref p) => {
+		    if state.cb1_state {
+			p(CallBackMode::LoopActive);
+		    } else {
+			p(CallBackMode::LoopNonActive);
+		    }
+		},
+		None => {}
+	    }
+    	    match self.callback2 {
+		Some(ref p) => {
+		    if state.cb2_state {
+			p(CallBackMode::LoopActive);
+		    } else {
+			p(CallBackMode::LoopNonActive);
+		    }
+		},
+		None => {}
+	    }
+	    match self.callback3 {
+		Some(ref p) => {
+		    if state.cb3_state {
+			p(CallBackMode::LoopActive);
+		    } else {
+			p(CallBackMode::LoopNonActive);
+		    }
+		},
+		None => {}
+	    }
+	    match self.callback4 {
+		Some(ref p) => {
+		    if state.cb4_state {
+			p(CallBackMode::LoopActive);
+		    } else {
+			p(CallBackMode::LoopNonActive);
+		    }
+		},
+		None => {}
+	    }
+                
             self.world.step(0.016);
         }
 

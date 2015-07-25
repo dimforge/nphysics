@@ -100,6 +100,7 @@ pub mod world;
 pub mod object;
 pub mod utils;
 pub mod volumetric;
+mod tests;
 
 
 /// Compilation flags dependent aliases for mathematical types.
