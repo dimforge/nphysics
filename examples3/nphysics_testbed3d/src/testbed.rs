@@ -14,6 +14,7 @@ use kiss3d::loader::obj;
 use ncollide::shape::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
+use ncollide::world::CollisionGroups;
 use nphysics::detection::Detector;
 use nphysics::detection::constraint::Constraint;
 use nphysics::detection::joint::{Anchor, Fixed, Joint};
@@ -174,12 +175,14 @@ impl Testbed {
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
-                            self.world.interferences_with_ray(&ray, |b, inter| {
+                            for (b, inter) in self.world
+                                                  .collision_world()
+                                                  .interferences_with_ray(&ray, &CollisionGroups::new()) {
                                 if inter.toi < mintoi {
                                     mintoi = inter.toi;
-                                    minb   = Some(b.clone());
+                                    minb   = Some(b.data.clone());
                                 }
-                            });
+                            }
 
                             if minb.is_some() {
                                 let b = minb.as_ref().unwrap();
@@ -210,12 +213,14 @@ impl Testbed {
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
-                            self.world.interferences_with_ray(&ray, |b, inter| {
+                            for (b, inter) in self.world
+                                                  .collision_world()
+                                                  .interferences_with_ray(&ray, &CollisionGroups::new()) {
                                 if inter.toi < mintoi {
                                     mintoi = inter.toi;
-                                    minb   = Some(b.clone());
+                                    minb   = Some(b.data.clone());
                                 }
-                            });
+                            }
 
                             if minb.is_some() {
                                 let b = minb.as_ref().unwrap();

@@ -10,6 +10,7 @@ use sfml::graphics::Color;
 use sfml::system::vector2::Vector2i;
 use na::{Pnt2, Pnt3, Iso2};
 use na;
+use ncollide::world::CollisionGroups;
 use nphysics::world::World;
 use nphysics::object::RigidBody;
 use nphysics::detection::joint::{Fixed, Anchor};
@@ -206,11 +207,13 @@ impl<'a> Testbed<'a> {
             MouseButton::MouseLeft => {
                 let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-                self.world.interferences_with_point(&mapped_point, |b| {
-                    if b.borrow().can_move() {
-                        state.grabbed_object = Some(b.clone())
+                for b in self.world
+                             .collision_world()
+                             .interferences_with_point(&mapped_point, &CollisionGroups::new()) {
+                    if b.data.borrow().can_move() {
+                        state.grabbed_object = Some(b.data.clone())
                     }
-                });
+                }
 
                 match state.grabbed_object {
                     Some(ref b) => {

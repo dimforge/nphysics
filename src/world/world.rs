@@ -4,12 +4,11 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use na;
 use ncollide::bounding_volume::AABB;
-use ncollide::ray::{Ray, RayIntersection};
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase};
 use ncollide::narrow_phase::ContactSignalHandler;
-use ncollide::world::CollisionWorld;
+use ncollide::world::{CollisionWorld, CollisionObject};
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
 use detection::ActivationManager;
@@ -27,6 +26,9 @@ pub type RigidBodies<'a> = Map<Iter<'a, Entry<usize, Rc<RefCell<RigidBody>>>>, f
 
 /// Type of the collision world containing rigid bodies.
 pub type RigidBodyCollisionWorld = CollisionWorld<Point, Matrix, Rc<RefCell<RigidBody>>>;
+
+/// Type of a collision object containing a rigid body as its data.
+pub type RigidBodyCollisionObject = CollisionObject<Point, Matrix, Rc<RefCell<RigidBody>>>;
 
 /// The physics world.
 ///
@@ -115,17 +117,17 @@ impl World {
         // XXX: use `self.collector` instead to avoid allocation.
         let mut collector = Vec::new();
 
-        self.cworld.contacts(|b1, b2, c| {
-            if b1.borrow().is_active() || b2.borrow().is_active() {
-                let m1 = b1.borrow().margin();
-                let m2 = b2.borrow().margin();
+        for (b1, b2, c) in self.cworld.contacts() {
+            if b1.data.borrow().is_active() || b2.data.borrow().is_active() {
+                let m1 = b1.data.borrow().margin();
+                let m2 = b2.data.borrow().margin();
 
                 let mut c = c.clone();
                 c.depth = c.depth + m1 + m2;
 
-                collector.push(Constraint::RBRB(b1.clone(), b2.clone(), c));
+                collector.push(Constraint::RBRB(b1.data.clone(), b2.data.clone(), c));
             }
-        });
+        }
 
         self.joints.interferences(&mut collector);
 
@@ -160,34 +162,39 @@ impl World {
         b.borrow_mut().delete();
     }
 
+    // XXX: keep this reference mutable?
     /// Gets a mutable reference to the force generator.
     pub fn forces_generator(&mut self) -> &mut BodyForceGenerator {
         &mut self.forces
     }
 
+    // XXX: keep this reference mutable?
     /// Gets a mutable reference to the position and orientation integrator.
     pub fn integrator(&mut self) -> &mut BodySmpEulerIntegrator {
         &mut self.integrator
     }
 
-    /// Gets a mutable reference to the collision detector.
-    pub fn collision_world(&mut self) -> &mut RigidBodyCollisionWorld {
-        &mut self.cworld
-    }
-
+    // XXX: keep this reference mutable?
     /// Gets a mutable reference to the CCD manager.
     pub fn ccd_manager(&mut self) -> &mut TranslationalCCDMotionClamping {
         &mut self.ccd
     }
 
+    // XXX: keep this reference mutable?
     /// Gets a mutable reference to the joint manager.
     pub fn joint_manager(&mut self) -> &mut JointManager {
         &mut self.joints
     }
 
+    // XXX: keep this reference mutable?
     /// Gets a mutable reference to the constraint solver.
     pub fn constraints_solver(&mut self) -> &mut AccumulatedImpulseSolver {
         &mut self.solver
+    }
+
+    /// Gets the underlying collision world.
+    pub fn collision_world(&self) -> &RigidBodyCollisionWorld {
+        &self.cworld
     }
 
     /// Sets the linear acceleration afecting every dynamic rigid body.
@@ -208,23 +215,6 @@ impl World {
     /// Gets the angular acceleration afecting every dynamic rigid body.
     pub fn angular_acceleration(&self) -> Orientation {
         self.forces.ang_acc()
-    }
-
-    /// Gets every body intersected by a given ray.
-    pub fn interferences_with_ray<F: FnMut(&RigidBodyHandle, RayIntersection<Vect>) -> ()>(&mut self,
-                                  ray: &Ray<Point>,
-                                  f:   F) {
-        self.cworld.interferences_with_ray(ray, f)
-    }
-
-    /// Gets every body that contain a specific point.
-    pub fn interferences_with_point<F: FnMut(&RigidBodyHandle) -> ()>(&mut self, p: &Point, f: F) {
-        self.cworld.interferences_with_point(p, f)
-    }
-
-    /// Gets every body that intersects a specific AABB.
-    pub fn interferences_with_aabb<F: FnMut(&RigidBodyHandle) -> ()>(&mut self, aabb: &AABB<Point>, f: F) {
-        self.cworld.interferences_with_aabb(aabb, f)
     }
 
     /// Adds continuous collision detection to the given rigid body.
@@ -263,15 +253,15 @@ impl World {
     /// Collects every interferences detected since the last update.
     pub fn interferences(&mut self, out: &mut Vec<Constraint>) {
         // FIXME: ugly.
-        self.cworld.contacts(|b1, b2, c| {
-            let m1 = b1.borrow().margin();
-            let m2 = b2.borrow().margin();
+        for (b1, b2, c) in self.cworld.contacts() {
+            let m1 = b1.data.borrow().margin();
+            let m2 = b2.data.borrow().margin();
 
             let mut c = c.clone();
             c.depth = c.depth + m1 + m2;
 
-            out.push(Constraint::RBRB(b1.clone(), b2.clone(), c));
-        });
+            out.push(Constraint::RBRB(b1.data.clone(), b2.data.clone(), c));
+        }
 
         self.joints.interferences(out);
     }

@@ -6,8 +6,9 @@ use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::BroadPhase;
 use ncollide::bounding_volume::BoundingVolume;
 use ncollide::geometry;
-use ncollide::bounding_volume::HasAABB;
+use ncollide::bounding_volume;
 use ncollide::math::FloatError;
+use ncollide::world::CollisionGroups;
 use world::RigidBodyCollisionWorld;
 use object::RigidBodyHandle;
 use object::RigidBody;
@@ -72,8 +73,8 @@ impl TranslationalCCDMotionClamping {
             if na::sqnorm(&movement) > o.value.sqthreshold {
                 // Use CCD for this object.
                 let last_transform = na::append_translation(brb1.position(), &-movement);
-                let begin_aabb = brb1.shape_ref().aabb(&last_transform);
-                let end_aabb   = brb1.shape_ref().aabb(brb1.position());
+                let begin_aabb = bounding_volume::aabb(brb1.shape_ref(), &last_transform);
+                let end_aabb   = bounding_volume::aabb(brb1.shape_ref(), brb1.position());
                 let swept_aabb = begin_aabb.merged(&end_aabb);
 
                 /*
@@ -86,10 +87,10 @@ impl TranslationalCCDMotionClamping {
                 let _eps: Scalar = FloatError::epsilon();
 
                 // FIXME: performing a convex-cast here would be much more efficient.
-                cw.interferences_with_aabb(&swept_aabb, |rb2| {
-                    if &**rb2 as *const RefCell<RigidBody> as usize !=
+                for co2 in cw.interferences_with_aabb(&swept_aabb, &CollisionGroups::new()) {
+                    if &*co2.data as *const RefCell<RigidBody> as usize !=
                        &*o.value.body as *const RefCell<RigidBody> as usize {
-                        let brb2 = rb2.borrow();
+                        let brb2 = co2.data.borrow();
 
                         let toi = geometry::time_of_impact(
                             &last_transform,
@@ -112,7 +113,7 @@ impl TranslationalCCDMotionClamping {
                             None => { }
                         }
                     }
-                });
+                }
 
                 /*
                  * Revert the object translation at the toi

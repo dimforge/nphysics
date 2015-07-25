@@ -233,7 +233,7 @@ pub unsafe fn convex_mesh_surface<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Ve
 /// The surface of a convex hull.
 pub fn convex_hull_surface<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
     where P: Point,
-          P::Vect: Outer,
+          P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
           <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
@@ -257,7 +257,7 @@ pub fn convex_hull_surface<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Sc
 /// The volume of the convex hull of a set of points.
 pub fn convex_hull_volume<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
     where P: Point,
-          P::Vect: Outer,
+          P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
           <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
@@ -281,7 +281,7 @@ pub fn convex_hull_volume<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Sca
 /// The center of mass of the convex hull of a set of points.
 pub fn convex_hull_center_of_mass<P>(dim: usize, points: &[P]) -> P
     where P: Point,
-          P::Vect: Outer,
+          P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
           <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
@@ -309,7 +309,7 @@ pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
              Add<I, Output = I> +
              Mul<<P::Vect as Vect>::Scalar, Output = I> +
              IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar>,
-          P::Vect: Outer,
+          P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
           <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
