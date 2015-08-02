@@ -1,31 +1,30 @@
+sudo: false
 language: rust
 rust:
     - stable
     - beta
     - nightly
-before_install:
-  # This ppa provides cmake 2.8.11, which travis doesn't have yet
-  - sudo add-apt-repository --yes ppa:kalakris/cmake
-  - sudo apt-get update -qq
+addons:
+  apt:
+    sources:
+      - kalakris-cmake
+    packages:
+      - cmake
+      - libxxf86vm-dev
+      - libglew-dev
+      - libopenal-dev
+      - libsndfile1-dev
+cache:
+  apt: true
+  directories:
+  - $HOME/local
 install:
-  - sudo apt-get install cmake
-  - sudo apt-get install libXxf86vm-dev
-  - sudo apt-get install libsfml-dev
-  - sudo apt-get install libjpeg62
-  - git clone https://github.com/glfw/glfw.git
-  - cd glfw
-  - git checkout 3.0.3
-  - cmake -DBUILD_SHARED_LIBS=ON
-  - make
-  - sudo make install
-  - cd ..
-  - wget http://www.sfml-dev.org/download/sfml/2.1/SFML-2.1-linux-gcc-64bits.tar.bz2
-  - tar xf SFML-2.1-linux-gcc-64bits.tar.bz2
-  - sudo cp -r SFML-2.1/lib/* /usr/local/lib/.
-  - wget http://www.sfml-dev.org/download/csfml/CSFML-2.1-linux-gcc-64bits.tar.bz2
-  - tar xf CSFML-2.1-linux-gcc-64bits.tar.bz2
-  - sudo cp -r CSFML-2.1/lib/* /usr/local/lib/.
+  - export PATH="$PATH:$HOME/local/bin"
+  - export LIBRARY_PATH="$LIBRARY_PATH:$HOME/local/lib"
+  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/local/lib"
+  - bash $TRAVIS_BUILD_DIR/.travis.payload/install-dependencies.sh
 script:
+  - cd $TRAVIS_BUILD_DIR
   - make all
   - make examples
   - make test
