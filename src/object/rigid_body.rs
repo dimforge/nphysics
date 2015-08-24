@@ -1,10 +1,11 @@
+use std::ops::Mul;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::cell::RefCell;
 use na::{Transformation, Translation, Rotation, Bounded};
 use na;
 use na::Transform;
-use ncollide::bounding_volume::{HasBoundingVolume, BoundingVolume, AABB, HasAABB};
+use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
 use ncollide::world::CollisionGroups;
 use ncollide::inspection::Repr;
 use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
@@ -514,8 +515,16 @@ impl RigidBody {
     }
 }
 
-impl HasBoundingVolume<AABB<Point>> for RigidBody {
-    fn bounding_volume(&self) -> AABB<Point> {
-        self.shape.aabb(&self.local_to_world).loosened(self.margin())
+impl<M> HasBoundingVolume<M, BoundingSphere<Point>> for RigidBody
+    where M: Copy + Mul<Matrix, Output = Matrix> { // FIXME: avoiding `Copy` would be great.
+    fn bounding_volume(&self, m: &M) -> BoundingSphere<Point> {
+        bounding_volume::bounding_sphere(&**self.shape, &(*m * self.local_to_world)).loosened(self.margin())
+    }
+}
+
+impl<M> HasBoundingVolume<M, AABB<Point>> for RigidBody
+    where M: Copy + Mul<Matrix, Output = Matrix> { // FIXME: avoiding `Copy` would be great.
+    fn bounding_volume(&self, m: &M) -> AABB<Point> {
+        bounding_volume::aabb(&**self.shape, &(*m * self.local_to_world)).loosened(self.margin())
     }
 }
