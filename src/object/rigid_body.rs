@@ -425,43 +425,43 @@ impl RigidBody {
     #[doc(hidden)]
     #[inline]
     pub fn set_gravity(&mut self, gravity: Vect) {
-	self.gravity = gravity;
-	self.update_lin_acc();
+        self.gravity = gravity;
+        self.update_lin_acc();
     }
 
     /// Resets linear and angular force.
     #[inline]
     pub fn clear_forces(&mut self) {
-	self.clear_linear_force();
-	self.clear_angular_force();
+        self.clear_linear_force();
+        self.clear_angular_force();
     }
 
     /// Resets linear force.
     #[inline]
     pub fn clear_linear_force(&mut self) {
-	self.lin_force = na::zero();
-	self.update_lin_acc();
+        self.lin_force = na::zero();
+        self.update_lin_acc();
     }
 
     /// Resets angular force.
     #[inline]
     pub fn clear_angular_force(&mut self) {
-	self.ang_force = na::zero();
-	self.update_ang_acc();
+        self.ang_force = na::zero();
+        self.update_ang_acc();
     }
 
     /// Adds an additional linear force.
     #[inline]
     pub fn append_lin_force(&mut self, force: Vect) {
-	self.lin_force = self.lin_force + force;
-	self.update_acc();
+        self.lin_force = self.lin_force + force;
+        self.update_acc();
     }
 
     /// Adds an additional angular force.
     #[inline]
     pub fn append_ang_force(&mut self, force: Orientation) {
-	self.ang_force = self.ang_force + force;
-	self.update_ang_acc();
+        self.ang_force = self.ang_force + force;
+        self.update_ang_acc();
     }
 
     /// Adds an additional force acting at a point different to the center of mass.
@@ -470,41 +470,41 @@ impl RigidBody {
     /// the point where the force acts.
     #[inline]
     pub fn append_force_wrt_point(&mut self, force: Vect, pnt_to_com: Vect) {
-	self.append_lin_force(force);
-	self.append_ang_force(pnt_to_com.cross(&force));
+        self.append_lin_force(force);
+        self.append_ang_force(pnt_to_com.cross(&force));
     }
 
     /// Update the linear and angular acceleraction from the applied forces.
     #[inline]
     fn update_acc(&mut self) {
-	self.update_lin_acc();
-	self.update_ang_acc();
+        self.update_lin_acc();
+        self.update_ang_acc();
     }
     /// Update the linear acceleraction from the applied forces.
     #[inline]
     fn update_lin_acc(&mut self) {
-	self.lin_acc = self.lin_force * self.inv_mass + self.gravity;
+        self.lin_acc = self.lin_force * self.inv_mass + self.gravity;
     }
     /// Update the angular acceleraction from the applied forces.
     #[inline]
     fn update_ang_acc(&mut self) {
-	self.ang_acc = self.ang_force * self.inv_inertia;
+        self.ang_acc = self.ang_force * self.inv_inertia;
     }
     
     /// Applies a one-time central impulse.
     #[inline]
     pub fn apply_central_impulse(&mut self, impulse: Vect){
-	let current_velocity = self.lin_vel();
-	let inverted_mass = self.inv_mass();
-	self.set_lin_vel(current_velocity + impulse*inverted_mass);
+        let current_velocity = self.lin_vel();
+        let inverted_mass = self.inv_mass();
+        self.set_lin_vel(current_velocity + impulse*inverted_mass);
     }
     
     /// Applies a one-time angular impulse.
     #[inline]
     pub fn apply_angular_momentum(&mut self, ang_moment: Orientation){
-	let current_ang_velocity = self.ang_vel();
-	let inverted_tensor = self.inv_inertia().clone();
-	self.set_ang_vel(current_ang_velocity + inverted_tensor*ang_moment);
+        let current_ang_velocity = self.ang_vel();
+        let inverted_tensor = self.inv_inertia().clone();
+        self.set_ang_vel(current_ang_velocity + inverted_tensor*ang_moment);
     }
 
     /// Applies a one-time impulse to a point relative to the center of mass.
@@ -513,8 +513,8 @@ impl RigidBody {
     /// point where the impulse acts.
     #[inline]
     pub fn apply_impulse_wrt_point(&mut self, impulse: Vect, pnt_to_com: Vect){
-	self.apply_central_impulse(impulse);
-	self.apply_angular_momentum(pnt_to_com.cross(&impulse));
+        self.apply_central_impulse(impulse);
+        self.apply_angular_momentum(pnt_to_com.cross(&impulse));
     }
     
     /// Gets the inverse mass of this rigid body.

@@ -40,9 +40,9 @@ impl Segment {
         let body      = self.body.borrow();
         let transform = *body.position() * self.delta;
         let color = match body.is_active() {
-	    true  => Color::new_rgb(self.color.x, self.color.y, self.color.z),
-	    false => Color::new_rgb(self.color.x/4, self.color.y/4, self.color.z/4)
-	};
+            true  => Color::new_rgb(self.color.x, self.color.y, self.color.z),
+            false => Color::new_rgb(self.color.x / 4, self.color.y / 4, self.color.z / 4)
+        };
 
         let ga = transform * self.a;
         let gb = transform * self.b;

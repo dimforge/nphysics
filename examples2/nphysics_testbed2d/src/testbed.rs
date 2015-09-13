@@ -47,23 +47,22 @@ pub enum CallBackMode {
     LoopNonActive
 }
 
+pub enum CallBackId {
+    Cb1, Cb2, Cb3, Cb4, Cb5,
+    Cb6, Cb7, Cb8, Cb9
+}
+
 pub struct Testbed<'a> {
-    world:    World,
-    callback1: Option<Box<Fn(CallBackMode)>>,
-    callback2: Option<Box<Fn(CallBackMode)>>,
-    callback3: Option<Box<Fn(CallBackMode)>>,
-    callback4: Option<Box<Fn(CallBackMode)>>,
-    window:   RenderWindow,
-    graphics: GraphicsManager<'a>
+    world:     World,
+    callbacks: [Option<Box<Fn(CallBackMode)>>; 9],
+    window:    RenderWindow,
+    graphics:  GraphicsManager<'a>
 }
 
 struct TestbedState<'a> {
     running: RunMode,
     draw_colls: bool,
-    cb1_state: bool,
-    cb2_state: bool,
-    cb3_state: bool,
-    cb4_state: bool,
+    cb_states: [bool; 9],
     camera: Camera,
     fps: Fps<'a>,
     grabbed_object: Option<Rc<RefCell<RigidBody>>>,
@@ -75,10 +74,7 @@ impl<'a> TestbedState<'a> {
         TestbedState{
             running: RunMode::Running,
             draw_colls: false,
-	    cb1_state: false,
-	    cb2_state: false,
-	    cb3_state: false,
-	    cb4_state: false,
+            cb_states: [ false; 9 ],
             camera: Camera::new(),
             fps: Fps::new(&fnt),
             grabbed_object: None,
@@ -105,13 +101,10 @@ impl<'a> Testbed<'a> {
         let graphics = GraphicsManager::new();
 
         Testbed {
-            world:    World::new(),
-            callback1: None,
-            callback2: None,
-            callback3: None,
-            callback4: None,
-            window:   window,
-            graphics: graphics
+            world:     World::new(),
+            callbacks: [ None, None, None, None, None, None, None, None, None ],
+            window:    window,
+            graphics:  graphics
         }
     }
 
@@ -141,23 +134,21 @@ impl<'a> Testbed<'a> {
 
         self.graphics.set_color(body, color);
     }
-    
-    pub fn add_callback1(&mut self, callback: Box<Fn(CallBackMode)>){
-	self.callback1 = Some(callback);
+
+    pub fn add_callback(&mut self, id: CallBackId, callback: Box<Fn(CallBackMode)>) {
+        match id {
+            CallBackId::Cb1 => self.callbacks[0] = Some(callback),
+            CallBackId::Cb2 => self.callbacks[1] = Some(callback),
+            CallBackId::Cb3 => self.callbacks[2] = Some(callback),
+            CallBackId::Cb4 => self.callbacks[3] = Some(callback),
+            CallBackId::Cb5 => self.callbacks[4] = Some(callback),
+            CallBackId::Cb6 => self.callbacks[5] = Some(callback),
+            CallBackId::Cb7 => self.callbacks[6] = Some(callback),
+            CallBackId::Cb8 => self.callbacks[7] = Some(callback),
+            CallBackId::Cb9 => self.callbacks[8] = Some(callback)
+        }
     }
-    
-    pub fn add_callback2(&mut self, callback: Box<Fn(CallBackMode)>){
-	self.callback2 = Some(callback);
-    }
-    
-    pub fn add_callback3(&mut self, callback: Box<Fn(CallBackMode)>){
-	self.callback3 = Some(callback);
-    }
-    
-    pub fn add_callback4(&mut self, callback: Box<Fn(CallBackMode)>){
-	self.callback4 = Some(callback);
-    }
-    
+
     pub fn run(&mut self) {
         let font_mem = include_bytes!("Inconsolata.otf");
         let     fnt  = Font::new_from_memory(font_mem).unwrap();
@@ -225,6 +216,8 @@ impl<'a> Testbed<'a> {
     }
 
     fn process_key_press(&mut self, state: &mut TestbedState, code: Key) {
+        let mut toogled_callback = None;
+
         match code {
             Key::Escape => self.window.close(),
             Key::S      => state.running = RunMode::Step,
@@ -237,60 +230,30 @@ impl<'a> Testbed<'a> {
                     state.running = RunMode::Stop;
                 }
             },
-            Key::Num1   => {
-		state.cb1_state = !state.cb1_state;
-		match self.callback1 {
-		    Some(ref p) => {
-			if state.cb1_state {
-			    p(CallBackMode::StateActivated);
-			} else {
-			    p(CallBackMode::StateDeactivated);
-			}
-		    },
-		    None => {}
-		}
-            },
-            Key::Num2   => {
-		state.cb2_state = !state.cb2_state;
-		match self.callback2 {
-		    Some(ref p) => {
-			if state.cb2_state {
-			    p(CallBackMode::StateActivated);
-			} else {
-			    p(CallBackMode::StateDeactivated);
-			}
-		    },
-		    None => {}
-		}
-            },
-            Key::Num3   => {
-		state.cb3_state = !state.cb3_state;
-		match self.callback3 {
-		    Some(ref p) => {
-			if state.cb3_state {
-			    p(CallBackMode::StateActivated);
-			} else {
-			    p(CallBackMode::StateDeactivated);
-			}
-		    },
-		    None => {}
-		}
-            },
-            Key::Num4   => {
-		state.cb4_state = !state.cb4_state;
-		match self.callback4 {
-		    Some(ref p) => {
-			if state.cb4_state {
-			    p(CallBackMode::StateActivated);
-			} else {
-			    p(CallBackMode::StateDeactivated);
-			}
-		    },
-		    None => {}
-		}
-            },
-            
-            _                => { }
+            Key::Num1 => toogled_callback = Some(0),
+            Key::Num2 => toogled_callback = Some(1),
+            Key::Num3 => toogled_callback = Some(2),
+            Key::Num4 => toogled_callback = Some(3),
+            Key::Num5 => toogled_callback = Some(4),
+            Key::Num6 => toogled_callback = Some(5),
+            Key::Num7 => toogled_callback = Some(6),
+            Key::Num8 => toogled_callback = Some(7),
+            Key::Num9 => toogled_callback = Some(8),
+            _ => { }
+        }
+
+        if let Some(id) = toogled_callback {
+            state.cb_states[id] = !state.cb_states[id];
+            match self.callbacks[id] {
+                Some(ref p) => {
+                    if state.cb_states[id] {
+                        p(CallBackMode::StateActivated);
+                    } else {
+                        p(CallBackMode::StateDeactivated);
+                    }
+                },
+                None => {}
+            }
         }
     }
 
@@ -377,47 +340,19 @@ impl<'a> Testbed<'a> {
 
     fn progress_world(&mut self, state: &mut TestbedState) {
         if state.running != RunMode::Stop {
-	    match self.callback1 {
-		Some(ref p) => {
-		    if state.cb1_state {
-			p(CallBackMode::LoopActive);
-		    } else {
-			p(CallBackMode::LoopNonActive);
-		    }
-		},
-		None => {}
-	    }
-    	    match self.callback2 {
-		Some(ref p) => {
-		    if state.cb2_state {
-			p(CallBackMode::LoopActive);
-		    } else {
-			p(CallBackMode::LoopNonActive);
-		    }
-		},
-		None => {}
-	    }
-	    match self.callback3 {
-		Some(ref p) => {
-		    if state.cb3_state {
-			p(CallBackMode::LoopActive);
-		    } else {
-			p(CallBackMode::LoopNonActive);
-		    }
-		},
-		None => {}
-	    }
-	    match self.callback4 {
-		Some(ref p) => {
-		    if state.cb4_state {
-			p(CallBackMode::LoopActive);
-		    } else {
-			p(CallBackMode::LoopNonActive);
-		    }
-		},
-		None => {}
-	    }
-                
+            for i in 0 .. 9 {
+                match self.callbacks[i] {
+                    Some(ref p) => {
+                        if state.cb_states[i] {
+                            p(CallBackMode::LoopActive);
+                        } else {
+                            p(CallBackMode::LoopNonActive);
+                        }
+                    },
+                    None => {}
+                }
+            }
+
             self.world.step(0.016);
         }
 
