@@ -87,7 +87,8 @@ impl TranslationalCCDMotionClamping {
                 let _eps: Scalar = FloatError::epsilon();
 
                 // FIXME: performing a convex-cast here would be much more efficient.
-                for co2 in cw.interferences_with_aabb(&swept_aabb, &CollisionGroups::new()) {
+                let all_groups = CollisionGroups::new();
+                for co2 in cw.interferences_with_aabb(&swept_aabb, &all_groups) {
                     if &*co2.data as *const RefCell<RigidBody> as usize !=
                        &*o.value.body as *const RefCell<RigidBody> as usize {
                         let brb2 = co2.data.borrow();

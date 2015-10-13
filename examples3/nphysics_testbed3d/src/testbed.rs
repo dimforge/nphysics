@@ -175,9 +175,10 @@ impl Testbed {
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
+                            let all_groups = &CollisionGroups::new();
                             for (b, inter) in self.world
                                                   .collision_world()
-                                                  .interferences_with_ray(&ray, &CollisionGroups::new()) {
+                                                  .interferences_with_ray(&ray, all_groups) {
                                 if inter.toi < mintoi {
                                     mintoi = inter.toi;
                                     minb   = Some(b.data.clone());
@@ -213,9 +214,10 @@ impl Testbed {
                             let mut mintoi = Bounded::max_value();
                             let mut minb   = None;
 
+                            let all_groups = CollisionGroups::new();
                             for (b, inter) in self.world
                                                   .collision_world()
-                                                  .interferences_with_ray(&ray, &CollisionGroups::new()) {
+                                                  .interferences_with_ray(&ray, &all_groups) {
                                 if inter.toi < mintoi {
                                     mintoi = inter.toi;
                                     minb   = Some(b.data.clone());

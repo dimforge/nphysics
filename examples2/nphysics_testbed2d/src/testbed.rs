@@ -262,9 +262,10 @@ impl<'a> Testbed<'a> {
             MouseButton::MouseLeft => {
                 let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                 let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                let all_groups = &CollisionGroups::new();
                 for b in self.world
                              .collision_world()
-                             .interferences_with_point(&mapped_point, &CollisionGroups::new()) {
+                             .interferences_with_point(&mapped_point, all_groups) {
                     if b.data.borrow().can_move() {
                         state.grabbed_object = Some(b.data.clone())
                     }

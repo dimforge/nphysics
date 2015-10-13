@@ -33,7 +33,7 @@ fn main() {
     let mut indices  = Vec::new();
     let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4][..]);
 
-    for i in (0usize .. num_split) {
+    for i in 0usize .. num_split {
         let h: f32 = rng.gen();
         vertices[i + 1].y = begin_h - h * max_h;
 
@@ -55,8 +55,8 @@ fn main() {
     let shift   = 2.0 * rad;
     let centerx = shift * (width as f32) / 2.0;
 
-    for i in (0usize .. height) {
-        for j in (0usize .. width) {
+    for i in 0usize .. height {
+        for j in 0usize .. width {
             let fj = j as f32;
             let fi = i as f32;
             let x = fj * 2.0 * rad - centerx;
