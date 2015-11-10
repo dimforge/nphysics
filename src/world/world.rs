@@ -20,17 +20,18 @@ use object::{RigidBody, RigidBodyHandle};
 use math::{Scalar, Point, Vect, Matrix};
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
+pub type WorldBroadPhase = DBVTBroadPhase<Point, RigidBodyHandle, AABB<Point>>;
 /// An iterator visiting rigid bodies.
-pub type RigidBodies<'a> = Map<Iter<'a, Entry<usize, Rc<RefCell<RigidBody>>>>, fn(&'a Entry<usize, Rc<RefCell<RigidBody>>>) -> &'a Rc<RefCell<RigidBody>>>;
+pub type RigidBodies<'a> = Map<Iter<'a, Entry<usize, RigidBodyHandle>>, fn(&'a Entry<usize, RigidBodyHandle>) -> &'a RigidBodyHandle>;
 
 /// Type of the collision world containing rigid bodies.
-pub type RigidBodyCollisionWorld = CollisionWorld<Point, Matrix, Rc<RefCell<RigidBody>>>;
+pub type RigidBodyCollisionWorld = CollisionWorld<Point, Matrix, RigidBodyHandle>;
 
 /// Type of a collision object containing a rigid body as its data.
-pub type RigidBodyCollisionObject = CollisionObject<Point, Matrix, Rc<RefCell<RigidBody>>>;
+pub type RigidBodyCollisionObject = CollisionObject<Point, Matrix, RigidBodyHandle>;
 
-/// The physics world.
+
+/// The physical world.
 ///
 /// This is the main structure of the physics engine.
 pub struct World {
@@ -38,7 +39,7 @@ pub struct World {
     bodies:      HashMap<usize, RigidBodyHandle, UintTWHash>,
     forces:      BodyForceGenerator,
     integrator:  BodySmpEulerIntegrator,
-    sleep:       ActivationManager,
+    sleep:       Rc<RefCell<ActivationManager>>, // FIXME: avoid sharing (needed for the contact signal handler)
     ccd:         TranslationalCCDMotionClamping,
     joints:      JointManager,
     solver:      AccumulatedImpulseSolver,
@@ -59,13 +60,17 @@ impl World {
          * For the collision detection
          */
         // Collision world
-        let cworld = CollisionWorld::new(na::cast(0.10f64), na::cast(0.10f64), false);
+        let mut cworld = CollisionWorld::new(na::cast(0.10f64), na::cast(0.10f64), false);
 
         // CCD handler
         let ccd = TranslationalCCDMotionClamping::new();
 
         // Deactivation
-        let sleep = ActivationManager::new(na::cast(0.01f64));
+        let sleep = Rc::new(RefCell::new(ActivationManager::new(na::cast(0.01f64))));
+
+        // Setup contact handler to reactivate sleeping objects that loose contact.
+        let handler = ObjectActivationOnContactHandler::new(sleep.clone());
+        cworld.register_contact_signal_handler("__nphysics_internal_ObjectActivationOnContactHandler", handler);
 
         // Joints
         let joints = JointManager::new();
@@ -101,8 +106,8 @@ impl World {
             if rb.is_active() {
                 self.forces.update(dt.clone(), &mut *rb);
                 self.integrator.update(dt.clone(), &mut *rb);
-                self.cworld.defered_set_position(&*e.value as *const RefCell<RigidBody> as usize,
-                                                 rb.position().clone());
+                self.cworld.deferred_set_position(&*e.value as *const RefCell<RigidBody> as usize,
+                                                  rb.position().clone());
             }
         }
 
@@ -111,8 +116,8 @@ impl World {
         self.ccd.update(&mut self.cworld);
         self.cworld.perform_narrow_phase();
 
-        self.joints.update(&mut self.sleep);
-        self.sleep.update(&mut self.cworld, &self.joints, &self.bodies);
+        self.joints.update(&mut *self.sleep.borrow_mut());
+        self.sleep.borrow_mut().update(&mut self.cworld, &self.joints, &self.bodies);
 
         // XXX: use `self.collector` instead to avoid allocation.
         let mut collector = Vec::new();
@@ -154,8 +159,9 @@ impl World {
     /// Remove a rigid body from the physics world.
     pub fn remove_body(&mut self, b: &RigidBodyHandle) {
         let uid = &**b as *const RefCell<RigidBody> as usize;
-        self.cworld.remove(uid);
-        self.joints.remove(b, &mut self.sleep);
+        self.cworld.deferred_remove(uid);
+        self.cworld.perform_removals_and_broad_phase();
+        self.joints.remove(b, &mut *self.sleep.borrow_mut());
         self.ccd.remove_ccd_from(b);
         self.bodies.remove(&uid);
         b.borrow_mut().delete();
@@ -225,28 +231,28 @@ impl World {
     pub fn add_ball_in_socket(&mut self, joint: BallInSocket) -> Rc<RefCell<BallInSocket>> {
         let res = Rc::new(RefCell::new(joint));
 
-        self.joints.add_ball_in_socket(res.clone(), &mut self.sleep);
+        self.joints.add_ball_in_socket(res.clone(), &mut *self.sleep.borrow_mut());
 
         res
     }
 
     /// Removes a ball-in-socket joint from the world.
     pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>) {
-        self.joints.remove_ball_in_socket(joint, &mut self.sleep)
+        self.joints.remove_ball_in_socket(joint, &mut *self.sleep.borrow_mut())
     }
 
     /// Adds a fixed joint to the world.
     pub fn add_fixed(&mut self, joint: Fixed) -> Rc<RefCell<Fixed>> {
         let res = Rc::new(RefCell::new(joint));
 
-        self.joints.add_fixed(res.clone(), &mut self.sleep);
+        self.joints.add_fixed(res.clone(), &mut *self.sleep.borrow_mut());
 
         res
     }
 
     /// Removes a fixed joint from the world.
     pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>) {
-        self.joints.remove_joint(joint, &mut self.sleep)
+        self.joints.remove_joint(joint, &mut *self.sleep.borrow_mut())
     }
 
     /// Collects every interferences detected since the last update.
@@ -297,5 +303,27 @@ impl World {
     /// Unregisters a handler for contact start/stop events.
     pub fn unregister_contact_signal_handler(&mut self, name: &str) {
         self.cworld.unregister_contact_signal_handler(name)
+    }
+}
+
+struct ObjectActivationOnContactHandler {
+    sleep: Rc<RefCell<ActivationManager>>
+}
+
+impl ObjectActivationOnContactHandler {
+    pub fn new(sleep: Rc<RefCell<ActivationManager>>) -> ObjectActivationOnContactHandler {
+        ObjectActivationOnContactHandler {
+            sleep: sleep
+        }
+    }
+}
+
+impl ContactSignalHandler<RigidBodyHandle> for ObjectActivationOnContactHandler {
+    fn handle_contact(&mut self, b1: &RigidBodyHandle, b2: &RigidBodyHandle, started: bool) {
+        // Wake on collision lost.
+        if !started {
+            self.sleep.borrow_mut().deferred_activate(b1);
+            self.sleep.borrow_mut().deferred_activate(b2);
+        }
     }
 }

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::iter;
 use num::Float;
 use na;
@@ -8,7 +6,7 @@ use ncollide::utils::data::hash::UintTWHash;
 use world::RigidBodyCollisionWorld;
 use detection::constraint::Constraint;
 use detection::joint::{JointManager, Joint};
-use object::{RigidBody, ActivationState};
+use object::{RigidBody, RigidBodyHandle, ActivationState};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
 use math::Scalar;
@@ -20,7 +18,7 @@ pub struct ActivationManager {
     mix_factor:     Scalar,
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
-    to_activate:    Vec<Rc<RefCell<RigidBody>>>,
+    to_activate:    Vec<RigidBodyHandle>,
 }
 
 impl ActivationManager {
@@ -42,7 +40,7 @@ impl ActivationManager {
 
     /// Notify the `ActivationManager` that is has to activate an object at the next update.
     // FIXME: this is not a very good name
-    pub fn will_activate(&mut self, b: &Rc<RefCell<RigidBody>>) {
+    pub fn deferred_activate(&mut self, b: &RigidBodyHandle) {
         if b.borrow().can_move() && !b.borrow().is_active() {
             self.to_activate.push(b.clone());
         }
@@ -66,7 +64,7 @@ impl ActivationManager {
     pub fn update(&mut self,
                   world:  &mut RigidBodyCollisionWorld,
                   joints: &JointManager,
-                  bodies: &HashMap<usize, Rc<RefCell<RigidBody>>, UintTWHash>) {
+                  bodies: &HashMap<usize, RigidBodyHandle, UintTWHash>) {
         /*
          *
          * Update bodies energy
@@ -125,7 +123,7 @@ impl ActivationManager {
         }
 
         // Run the union-find.
-        fn make_union(b1: &Rc<RefCell<RigidBody>>, b2: &Rc<RefCell<RigidBody>>, ufs: &mut [UnionFindSet]) {
+        fn make_union(b1: &RigidBodyHandle, b2: &RigidBodyHandle, ufs: &mut [UnionFindSet]) {
             let rb1 = b1.borrow();
             let rb2 = b2.borrow();
 

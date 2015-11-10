@@ -132,7 +132,7 @@ impl TranslationalCCDMotionClamping {
                 /*
                  * We moved the object: ensure the broad phase takes that in account.
                  */
-                cw.defered_set_position(&* o.value.body as *const RefCell<RigidBody> as usize, o.value.body.borrow().position().clone());
+                cw.deferred_set_position(&* o.value.body as *const RefCell<RigidBody> as usize, o.value.body.borrow().position().clone());
                 update_collision_world = true;
             }
 
