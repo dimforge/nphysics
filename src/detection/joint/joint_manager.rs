@@ -48,7 +48,7 @@ impl JointManager {
                               Constraint::BallInSocket(joint.clone())) {
             match joint.borrow().anchor1().body.as_ref() {
                 Some(b) => {
-                    activation.will_activate(b);
+                    activation.deferred_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody> as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::BallInSocket(joint.clone()));
@@ -58,7 +58,7 @@ impl JointManager {
 
             match joint.borrow().anchor2().body.as_ref() {
                 Some(b) => {
-                    activation.will_activate(b);
+                    activation.deferred_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody> as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::BallInSocket(joint.clone()));
@@ -73,8 +73,8 @@ impl JointManager {
     /// This will force the activation of the two objects attached to the joint.
     pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>, activation: &mut ActivationManager) {
         if self.joints.remove(&(&**joint as *const RefCell<BallInSocket> as usize)) {
-            let _  = joint.borrow().anchor1().body.as_ref().map(|b| activation.will_activate(b));
-            let _  = joint.borrow().anchor2().body.as_ref().map(|b| activation.will_activate(b));
+            let _  = joint.borrow().anchor1().body.as_ref().map(|b| activation.deferred_activate(b));
+            let _  = joint.borrow().anchor2().body.as_ref().map(|b| activation.deferred_activate(b));
         }
     }
 
@@ -85,7 +85,7 @@ impl JointManager {
         if self.joints.insert(&*joint as *const RefCell<Fixed> as usize, Constraint::Fixed(joint.clone())) {
             match joint.borrow().anchor1().body.as_ref() {
                 Some(b) => {
-                    activation.will_activate(b);
+                    activation.deferred_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody> as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::Fixed(joint.clone()));
@@ -95,7 +95,7 @@ impl JointManager {
 
             match joint.borrow().anchor2().body.as_ref() {
                 Some(b) => {
-                    activation.will_activate(b);
+                    activation.deferred_activate(b);
                     let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody> as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::Fixed(joint.clone()));
@@ -123,7 +123,7 @@ impl JointManager {
                                              activation: &mut ActivationManager) {
         match body {
             Some(b) => {
-                activation.will_activate(b);
+                activation.deferred_activate(b);
                 let key = &**b as *const RefCell<RigidBody> as usize;
                 match self.body2joints.find_mut(&key) {
                     Some(ref mut js) => {
@@ -191,11 +191,11 @@ impl JointManager {
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bbis.update();
                         match bbis.anchor1().body {
-                            Some(ref b) => activation.will_activate(b),
+                            Some(ref b) => activation.deferred_activate(b),
                             None        => { }
                         }
                         match bbis.anchor2().body {
-                            Some(ref b) => activation.will_activate(b),
+                            Some(ref b) => activation.deferred_activate(b),
                             None        => { }
                         }
                     }
@@ -206,11 +206,11 @@ impl JointManager {
                         // the joint has been invalidated by the user: wake up the attached bodies
                         bf.update();
                         match bf.anchor1().body {
-                            Some(ref b) => activation.will_activate(b),
+                            Some(ref b) => activation.deferred_activate(b),
                             None        => { }
                         }
                         match bf.anchor2().body {
-                            Some(ref b) => activation.will_activate(b),
+                            Some(ref b) => activation.deferred_activate(b),
                             None        => { }
                         }
                     }

@@ -63,8 +63,8 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
-    for i in (0usize .. num) {
-        for j in (0usize .. num) {
+    for i in 0usize .. num {
+        for j in 0usize .. num {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 250.0;
 
