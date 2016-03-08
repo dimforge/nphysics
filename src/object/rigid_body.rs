@@ -181,7 +181,7 @@ impl RigidBody {
     /// Gets this body's restitution coefficent.
     ///
     /// The actual restitution coefficient of a contact is computed averaging the two bodies
-    /// friction coefficient.
+    /// restitution coefficient.
     #[inline]
     pub fn restitution(&self) -> Scalar {
         self.restitution.clone()
