@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["support_map_against_support_map","Contact between support-mapped shapes (`Cuboid`, `Convex`, etc.)"],["support_map_against_support_map_with_params","Contact between support-mapped shapes (`Cuboid`, `Convex`, etc.)"]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["DMat","Matrix with dimensions unknown at compile-time."],["DMat1",""],["DMat2",""],["DMat3",""],["DMat4",""],["DMat5",""],["DMat6",""]]});

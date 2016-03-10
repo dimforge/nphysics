@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["bounding_volume","Bounding volumes."],["inspection","Traits and methods to inspect and retrieve the capabilities and representations of shapes at runtime."],["partitioning","Spatial partitioning tools."],["shape","Collision shapes supported by ncollide."],["support_map","Definition of support functions."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["triangle_ray_intersection","Computes the intersection between a triangle and a ray."]]});

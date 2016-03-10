@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["plane_against_support_map","Time Of Impact of a plane with a support-mapped shape under translational movement."],["support_map_against_plane","Time Of Impact of a plane with a support-mapped shape under translational movement."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["support_map_against_support_map","Time of impacts between two support-mapped shapes under translational movement."]]});

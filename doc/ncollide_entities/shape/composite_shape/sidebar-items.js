@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["CompositeShape","Trait implemented by shapes composed of multiple simpler shapes."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["DBVT","A Dynamic Bounding Volume Tree."],["DBVTLeaf","Leaf of a Dynamic Bounding Volume Tree."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Plane","SupportMap description of a plane."]]});

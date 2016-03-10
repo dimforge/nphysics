@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["OneShotContactManifoldGenerator","Contact manifold generator producing a full manifold at the first update."]]});

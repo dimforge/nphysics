@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["Simplex","Trait of a simplex usable by the GJK algorithm."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["point_cloud_support_point","Computes the support point of a cloud of points."]]});

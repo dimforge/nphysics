@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["CollisionObjectsDispatcher","Collision detector dispatcher for collision objects."],["ContactPairs","Iterator through contact pairs."],["Contacts","An iterator through contacts."]]});

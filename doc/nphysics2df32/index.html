@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `nphysics` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, nphysics">
+
+    <title>nphysics - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'nphysics', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>nphysics</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/nphysics/src/lib.rs.html.html#1-200' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h1 id='nphysics' class='section-header'><a href='#nphysics'>nphysics</a></h1>
+<p><strong>nphysics</strong> is a 2 and 3-dimensional physics engine for games and animations. It uses
+<a href="http://ncollide.org">ncollide</a> for collision detection, and
+<a href="http://nalgebra.org">nalgebra</a> for vector/matrix math.</p>
+
+<p>Its most distinctive feature is its genericity wrt the simulation
+dimension. That means you can use it for both 2-dimensional physics and
+3-dimensional physics. Higher dimensions could be possible, but <strong>nphysics</strong>
+has not be written/tested with those in thought.</p>
+
+<p>Examples are available on the <code>examples</code> directory.
+There is also a short (outdated) <a href="http://youtu.be/CANjXZ5rocI">demonstration video</a>.</p>
+
+<h2 id='why-another-physics-engine' class='section-header'><a href='#why-another-physics-engine'>Why another physics engine?</a></h2>
+<p>There are a lot of physics engine out there.
+However having a physics engine written in rust is much more fun than
+writing bindings and has several advantages:</p>
+
+<ul>
+<li>it shows that rust is suitable for soft real-time applications</li>
+<li>it shows how well rust behaves with highly generic code</li>
+<li>it shows that there is no need to write two separate engine for 2d and 3d:
+genericity wrt the dimension is possible (modulo low level arithmetic
+specializations for each dimension).</li>
+<li>in a not-that-near future, C++ will die of ugliness. Then, people will
+search for a physics engine and <strong>nphysics</strong> will be there, proudly
+exhibiting its <em>rusty</em> sexyness.</li>
+</ul>
+
+<h2 id='compilation' class='section-header'><a href='#compilation'>Compilation</a></h2>
+<p>You will need the last nightly build of the <a href="http://www.rust-lang.org">rust compiler</a>
+and the official package manager: <a href="https://github.com/rust-lang/cargo">cargo</a>.</p>
+
+<p>Simply add the following to your <code>Cargo.toml</code> file:</p>
+
+<pre class='rust rust-example-rendered'>
+[<span class='ident'>dependencies</span>.<span class='ident'>nphysics2df32</span>]
+<span class='ident'>git</span> <span class='op'>=</span> <span class='string'>&quot;https://github.com/sebcrozet/nphysics&quot;</span></pre>
+
+<h2 id='features' class='section-header'><a href='#features'>Features</a></h2>
+<ul>
+<li>static and dynamic rigid bodies</li>
+<li>common convex primitives: cone, box, ball, cylinder</li>
+<li>concave geometries build from convex primitives (aka. compound geometries)</li>
+<li>stable stacking</li>
+<li>island based sleeping (objects deactivation)</li>
+<li>ray casting</li>
+<li>swept sphere based continuous collision detection</li>
+<li>ball-in-socket joint</li>
+<li>fixed joint</li>
+</ul>
+
+<h2 id='what-is-missing' class='section-header'><a href='#what-is-missing'>What is missing?</a></h2>
+<p><strong>nphysics</strong> is a very young library and needs to learn a lot of things to
+become a grown up. Many missing features are because of missing features on
+<strong>ncollide</strong>. Features missing from <strong>nphysics</strong> itself include:</p>
+
+<ul>
+<li>kinematic bodies</li>
+<li>efficient signaling system</li>
+<li>more joints, joint limits, joint motors and breakable joints.</li>
+<li>soft-bodies (see <a href="https://github.com/natal/roft">https://github.com/natal/roft</a> for a draft)</li>
+<li>parallel pipeline</li>
+<li>GPU-based pipeline</li>
+</ul>
+
+<h2 id='dependencies' class='section-header'><a href='#dependencies'>Dependencies</a></h2>
+<p>All dependencies are automatically cloned with a recursive clone.
+The libraries needed to compile the physics engine are:</p>
+
+<ul>
+<li><a href="https://github.com/sebcrozet/ncollide">ncollide</a>: the collision detection library.</li>
+<li><a href="https://github.com/sebcrozet/nalgebra">nalgebra</a>: the linear algebra library.</li>
+</ul>
+
+<p>The libraries needed to compile the examples are:</p>
+
+<ul>
+<li><a href="https://github.com/sebcrozet/kiss3d">kiss3d</a>: the 3d graphics engine.</li>
+<li><a href="https://github.com/JeremyLetang/rust-sfml">rust-sfml</a>: the 2d graphics engine.</li>
+</ul>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='aliases/index.html'
+                               title='nphysics::aliases'>aliases</a></td>
+                        <td class='docblock short'>
+                             <p>Aliases for complicated parameterized types.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='detection/index.html'
+                               title='nphysics::detection'>detection</a></td>
+                        <td class='docblock short'>
+                             <p>Collision detection and joints.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='integration/index.html'
+                               title='nphysics::integration'>integration</a></td>
+                        <td class='docblock short'>
+                             <p>Position and orientation update of rigid bodies.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='math/index.html'
+                               title='nphysics::math'>math</a></td>
+                        <td class='docblock short'>
+                             <p>Compilation flags dependent aliases for mathematical types.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='object/index.html'
+                               title='nphysics::object'>object</a></td>
+                        <td class='docblock short'>
+                             <p>Rigid bodies.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='resolution/index.html'
+                               title='nphysics::resolution'>resolution</a></td>
+                        <td class='docblock short'>
+                             <p>Constraint resolution.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='utils/index.html'
+                               title='nphysics::utils'>utils</a></td>
+                        <td class='docblock short'>
+                             <p>Miscellaneous utilities.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='volumetric/index.html'
+                               title='nphysics::volumetric'>volumetric</a></td>
+                        <td class='docblock short'>
+                             <p>Volume and inertia tensor computation.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='world/index.html'
+                               title='nphysics::world'>world</a></td>
+                        <td class='docblock short'>
+                             <p>The physics world.</p>
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "nphysics";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

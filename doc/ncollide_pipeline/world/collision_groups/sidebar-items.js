@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["CollisionGroups","30 groups of collision used to filter which object collide with which other one."]]});

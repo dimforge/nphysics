@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["point_cloud_bounding_sphere","Computes a bounding sphere of the specified set of point."],["point_cloud_bounding_sphere_with_center","Computes the bounding sphere of a set of point, given its center."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["closest_points","Computes the closest points between two implicit inter-penetrating shapes. Returns None if the shapes are not in penetration. This can be used as a fallback algorithm for the GJK algorithm."],["project_origin","Projects the origin on a support-mapped shape."]]});

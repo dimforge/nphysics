@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["DBVTBroadPhase","Broad phase based on a Dynamic Bounding Volume Tree."]]});

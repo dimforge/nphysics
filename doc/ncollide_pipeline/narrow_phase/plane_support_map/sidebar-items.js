@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["PlaneSupportMap","Collision detector between a plane and a shape implementing the `SupportMap` trait."],["SupportMapPlane","Collision detector between a plane and a shape implementing the `SupportMap` trait."]]});

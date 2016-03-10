@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["gjk","The Gilbert–Johnson–Keerthi distance algorithm."],["johnson_simplex","Simplex using the Johnson subalgorithm to compute the projection of the origin on the simplex."],["minkowski_sampling","Penetration depth computation algorithm approximating the Minkowskis sum."],["simplex","Abstract definition of a simplex usable by the GJK algorithm."]]});

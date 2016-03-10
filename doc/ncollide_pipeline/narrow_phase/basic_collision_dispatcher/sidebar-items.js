@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["BasicCollisionDispatcher","Collision dispatcher for shapes defined by `ncollide_entities`."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["TriMesh","Shape commonly known as a 2d line strip or a 3d triangle mesh."]]});

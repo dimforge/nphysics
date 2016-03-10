@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["CompositeShapeRepr","Collision detector between a concave shape and another shape."],["ReprCompositeShape","Collision detector between a shape and a concave shape."]]});

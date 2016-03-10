@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["ball_toi_with_ray","Computes the time of impact of a ray on a ball."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["implicit_shape_aabb","Computes the AABB of an support mapped shape."],["point_cloud_aabb","Computes the AABB of a set of point."]]});

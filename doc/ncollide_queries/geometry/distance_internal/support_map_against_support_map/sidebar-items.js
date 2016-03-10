@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["support_map_against_support_map","Distance between support-mapped shapes."],["support_map_against_support_map_with_params","Distance between support-mapped shapes."]]});
