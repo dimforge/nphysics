@@ -9,6 +9,7 @@
 
     <title>ncollide_pipeline::world::CollisionObjectsDispatcher - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,81 +25,95 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.CollisionGroups.html'>CollisionGroups</a><a class='struct ' href='struct.CollisionObject.html'>CollisionObject</a><a class='struct current' href='struct.CollisionObjectsDispatcher.html'>CollisionObjectsDispatcher</a><a class='struct ' href='struct.CollisionWorld.html'>CollisionWorld</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a></p><script>window.sidebarCurrent = {name: 'CollisionObjectsDispatcher', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a>::<wbr><a class='struct' href=''>CollisionObjectsDispatcher</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-8280' href='../../src/ncollide_pipeline/world/collision_objects_dispatcher.rs.html#10-14'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct CollisionObjectsDispatcher&lt;N, P, V, M, T&gt; {
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a>::<wbr><a class='struct' href=''>CollisionObjectsDispatcher</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1055' class='srclink' href='../../src/ncollide_pipeline/world/collision_objects_dispatcher.rs.html.html#13-17' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct CollisionObjectsDispatcher&lt;P, M, T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Collision detector dispatcher for collision objects.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M, T&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObjectsDispatcher.html' title='ncollide_pipeline::world::CollisionObjectsDispatcher'>CollisionObjectsDispatcher</a>&lt;N, P, V, M, T&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(shape_dispatcher: <a class='struct' href='http://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../ncollide_pipeline/narrow_phase/trait.CollisionDispatcher.html' title='ncollide_pipeline::narrow_phase::CollisionDispatcher'>CollisionDispatcher</a>&lt;N, P, V, M&gt; + 'static&gt;) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObjectsDispatcher.html' title='ncollide_pipeline::world::CollisionObjectsDispatcher'>CollisionObjectsDispatcher</a>&lt;N, P, V, M, T&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: 'static, T&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObjectsDispatcher.html' title='ncollide_pipeline::world::CollisionObjectsDispatcher'>CollisionObjectsDispatcher</a>&lt;P, M, T&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(shape_dispatcher: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../ncollide_pipeline/narrow_phase/trait.CollisionDispatcher.html' title='ncollide_pipeline::narrow_phase::CollisionDispatcher'>CollisionDispatcher</a>&lt;P, M&gt; + 'static&gt;) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObjectsDispatcher.html' title='ncollide_pipeline::world::CollisionObjectsDispatcher'>CollisionObjectsDispatcher</a>&lt;P, M, T&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>CollisionObjectsDispatcher</code>.</p>
-</div><h4 id='method.update' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;N, P, V, M, T&gt;&gt;, timestamp: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
+</div><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;P, M, T&gt;&gt;, timestamp: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
 <div class='docblock'><p>Updates the contact pairs.</p>
-</div><h4 id='method.contact_pairs' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.contact_pairs' class='fnname'>contact_pairs</a>&lt;F&gt;(&amp;self, objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;N, P, V, M, T&gt;&gt;, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T, &amp;<a class='type' href='../../ncollide_pipeline/narrow_phase/type.CollisionAlgorithm.html' title='ncollide_pipeline::narrow_phase::CollisionAlgorithm'>CollisionAlgorithm</a>&lt;N, P, V, M&gt;)</span></code></h4>
+</div><h4 id='method.contact_pairs' class='method'><code>fn <a href='#method.contact_pairs' class='fnname'>contact_pairs</a>&lt;'a&gt;(&amp;'a self, objects: &amp;'a <a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;P, M, T&gt;&gt;) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.ContactPairs.html' title='ncollide_pipeline::world::ContactPairs'>ContactPairs</a>&lt;'a, P, M, T&gt;</code></h4>
 <div class='docblock'><p>Iterates through all the contact pairs.</p>
-</div><h4 id='method.contacts' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.contacts' class='fnname'>contacts</a>&lt;F&gt;(&amp;self, objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;N, P, V, M, T&gt;&gt;, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T, &amp;<a class='struct' href='../../ncollide_queries/geometry/contacts_internal/contact/struct.Contact.html' title='ncollide_queries::geometry::contacts_internal::contact::Contact'>Contact</a>&lt;N, P, V&gt;)</span></code></h4>
-<div class='docblock'><p>Calls a closures on each contact between two objects.</p>
-</div><h4 id='method.register_contact_signal_handler' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.register_contact_signal_handler' class='fnname'>register_contact_signal_handler</a>(&amp;mut self, name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, handler: <a class='struct' href='http://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../ncollide_pipeline/narrow_phase/trait.ContactSignalHandler.html' title='ncollide_pipeline::narrow_phase::ContactSignalHandler'>ContactSignalHandler</a>&lt;T&gt; + 'static&gt;)</code></h4>
+</div><h4 id='method.contacts' class='method'><code>fn <a href='#method.contacts' class='fnname'>contacts</a>&lt;'a&gt;(&amp;'a self, objects: &amp;'a <a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;P, M, T&gt;&gt;) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.Contacts.html' title='ncollide_pipeline::world::Contacts'>Contacts</a>&lt;'a, P, M, T&gt;</code></h4>
+<div class='docblock'><p>Iterates through all the contacts detected since the last update.</p>
+</div><h4 id='method.register_contact_signal_handler' class='method'><code>fn <a href='#method.register_contact_signal_handler' class='fnname'>register_contact_signal_handler</a>(&amp;mut self, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, handler: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../ncollide_pipeline/narrow_phase/trait.ContactSignalHandler.html' title='ncollide_pipeline::narrow_phase::ContactSignalHandler'>ContactSignalHandler</a>&lt;T&gt; + 'static&gt;)</code></h4>
 <div class='docblock'><p>Registers a handler for contact start/stop events.</p>
-</div><h4 id='method.unregister_contact_signal_handler' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.unregister_contact_signal_handler' class='fnname'>unregister_contact_signal_handler</a>(&amp;mut self, name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
+</div><h4 id='method.unregister_contact_signal_handler' class='method'><code>fn <a href='#method.unregister_contact_signal_handler' class='fnname'>unregister_contact_signal_handler</a>(&amp;mut self, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
 <div class='docblock'><p>Unregisters a handler for contact start/stop events.</p>
-</div><h4 id='method.handle_proximity' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.handle_proximity' class='fnname'>handle_proximity</a>(&amp;mut self, objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;N, P, V, M, T&gt;&gt;, fk1: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>, fk2: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>, started: <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)</code></h4>
+</div><h4 id='method.handle_proximity' class='method'><code>fn <a href='#method.handle_proximity' class='fnname'>handle_proximity</a>(&amp;mut self, objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;P, M, T&gt;&gt;, fk1: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>, fk2: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>, started: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)</code></h4>
 <div class='docblock'><p>Creates/removes the persistant collision detector associated to a given pair of objects.</p>
-</div><h4 id='method.is_proximity_allowed' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.is_proximity_allowed' class='fnname'>is_proximity_allowed</a>(objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;N, P, V, M, T&gt;&gt;, fk1: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>, fk2: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h4 id='method.is_proximity_allowed' class='method'><code>fn <a href='#method.is_proximity_allowed' class='fnname'>is_proximity_allowed</a>(objects: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.UidRemap.html' title='ncollide_utils::data::uid_remap::UidRemap'>UidRemap</a>&lt;<a class='struct' href='../../ncollide_pipeline/world/struct.CollisionObject.html' title='ncollide_pipeline::world::CollisionObject'>CollisionObject</a>&lt;P, M, T&gt;&gt;, fk1: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>, fk2: &amp;<a class='struct' href='../../ncollide_utils/data/uid_remap/struct.FastKey.html' title='ncollide_utils::data::uid_remap::FastKey'>FastKey</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Tests if two objects can be tested for mutual collision.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -110,6 +125,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

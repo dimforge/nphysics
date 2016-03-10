@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Cuboid","Shape of a box."]]});

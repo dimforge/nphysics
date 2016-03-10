@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_procedural/path/polyline_path.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_procedural/path/polyline_path.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>polyline_path.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -107,30 +108,30 @@
 <span id="65">65</span>
 <span id="66">66</span>
 <span id="67">67</span>
-<span id="68">68</span>
 </pre><pre class='rust '>
+<span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Norm</span>;
 <span class='kw'>use</span> <span class='ident'>path</span>::{<span class='ident'>PathSample</span>, <span class='ident'>CurveSampler</span>};
 <span class='kw'>use</span> <span class='ident'>polyline</span>::<span class='ident'>Polyline</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>};
 
 <span class='doccomment'>/// A path with its sample points given by a polyline.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This will return sequencially each vertex of the polyline.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>V</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
-    <span class='ident'>curr_len</span>:               <span class='ident'>N</span>,
-    <span class='ident'>curr_dir</span>:               <span class='ident'>V</span>,
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span> <span class='op'>+</span> <span class='ident'>Point</span><span class='op'>&gt;</span> {
+    <span class='ident'>curr_len</span>:               <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>,
+    <span class='ident'>curr_dir</span>:               <span class='ident'>P</span>::<span class='ident'>Vect</span>,
     <span class='ident'>curr_pt_id</span>:             <span class='ident'>usize</span>,
     <span class='ident'>curr_pt</span>:                <span class='ident'>P</span>,
-    <span class='ident'>polyline</span>:               <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
+    <span class='ident'>polyline</span>:               <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>: <span class='ident'>Scalar</span>, <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&gt;</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new polyline-based path.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>polyline</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>polyline</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span><span class='op'>&gt;</span> {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>polyline</span>.<span class='ident'>coords</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>1</span>, <span class='string'>&quot;The polyline must have at least two points.&quot;</span>);
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dir</span> <span class='op'>=</span> <span class='ident'>polyline</span>.<span class='ident'>coords</span>[<span class='number'>1</span>] <span class='op'>-</span> <span class='ident'>polyline</span>.<span class='ident'>coords</span>[<span class='number'>0</span>];
-        <span class='kw'>let</span> <span class='ident'>len</span>     <span class='op'>=</span> <span class='ident'>dir</span>.<span class='ident'>normalize</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dir</span>: <span class='ident'>P</span>::<span class='ident'>Vect</span>  <span class='op'>=</span> <span class='ident'>polyline</span>.<span class='ident'>coords</span>[<span class='number'>1</span>] <span class='op'>-</span> <span class='ident'>polyline</span>.<span class='ident'>coords</span>[<span class='number'>0</span>];
+        <span class='kw'>let</span> <span class='ident'>len</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>dir</span>.<span class='ident'>normalize_mut</span>();
 
         <span class='ident'>PolylinePath</span> {
             <span class='ident'>curr_len</span>:   <span class='ident'>len</span>,
@@ -142,11 +143,9 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>CurveSampler</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PathSample</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='ident'>CurveSampler</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>PolylinePath</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
+    <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PathSample</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span>
             <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>curr_pt_id</span> <span class='op'>==</span> <span class='number'>0</span> {
                 <span class='ident'>PathSample</span>::<span class='ident'>StartPoint</span>(<span class='self'>self</span>.<span class='ident'>curr_pt</span>.<span class='ident'>clone</span>(), <span class='self'>self</span>.<span class='ident'>curr_dir</span>.<span class='ident'>clone</span>())
@@ -169,7 +168,7 @@
             <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>curr_pt_id</span> <span class='op'>&lt;</span> <span class='self'>self</span>.<span class='ident'>polyline</span>.<span class='ident'>coords</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='number'>1</span> {
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>curr_diff</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>polyline</span>.<span class='ident'>coords</span>[<span class='self'>self</span>.<span class='ident'>curr_pt_id</span> <span class='op'>+</span> <span class='number'>1</span>] <span class='op'>-</span>
                                     <span class='self'>self</span>.<span class='ident'>polyline</span>.<span class='ident'>coords</span>[<span class='self'>self</span>.<span class='ident'>curr_pt_id</span>];
-                <span class='self'>self</span>.<span class='ident'>curr_len</span> <span class='op'>=</span> <span class='ident'>curr_diff</span>.<span class='ident'>normalize</span>();
+                <span class='self'>self</span>.<span class='ident'>curr_len</span> <span class='op'>=</span> <span class='ident'>curr_diff</span>.<span class='ident'>normalize_mut</span>();
                 <span class='self'>self</span>.<span class='ident'>curr_dir</span> <span class='op'>=</span> <span class='ident'>curr_diff</span>;
             }
         }
@@ -183,36 +182,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -224,6 +236,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["constraint","Data structure to describe a constraint between two rigid bodies."],["detector","Collision detector."],["joint","Joint handling."]],"struct":[["ActivationManager","Structure that monitors island-based activation/deactivation of objects."]]});

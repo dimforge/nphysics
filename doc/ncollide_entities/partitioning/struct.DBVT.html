@@ -9,6 +9,7 @@
 
     <title>ncollide_entities::partitioning::DBVT - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,75 +25,92 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>partitioning</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.BVT.html'>BVT</a><a class='struct ' href='struct.BoundingVolumeInterferencesCollector.html'>BoundingVolumeInterferencesCollector</a><a class='struct current' href='struct.DBVT.html'>DBVT</a><a class='struct ' href='struct.DBVTLeaf.html'>DBVTLeaf</a></div><div class='block enum'><h2>Enums</h2><a class='enum ' href='enum.BVTNode.html'>BVTNode</a><a class='enum ' href='enum.BinaryPartition.html'>BinaryPartition</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.BVTCostFn.html'>BVTCostFn</a><a class='trait ' href='trait.BVTTVisitor.html'>BVTTVisitor</a><a class='trait ' href='trait.BVTVisitor.html'>BVTVisitor</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.median_partitioner.html'>median_partitioner</a><a class='fn ' href='fn.median_partitioner_with_centers.html'>median_partitioner_with_centers</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>partitioning</a></p><script>window.sidebarCurrent = {name: 'DBVT', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>partitioning</a>::<wbr><a class='struct' href=''>DBVT</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-17469' href='../../src/ncollide_entities/partitioning/dbvt.rs.html#24-28'>[src]</a></span></h1>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>partitioning</a>::<wbr><a class='struct' href=''>DBVT</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-2506' class='srclink' href='../../src/ncollide_entities/partitioning/dbvt.rs.html.html#24-28' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct DBVT&lt;P, B, BV&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A Dynamic Bounding Volume Tree.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;P, B, BV&gt; <a class='struct' href='../../ncollide_entities/partitioning/struct.DBVT.html' title='ncollide_entities::partitioning::DBVT'>DBVT</a>&lt;P, B, BV&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../ncollide_entities/partitioning/struct.DBVT.html' title='ncollide_entities::partitioning::DBVT'>DBVT</a>&lt;P, B, BV&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;P, B, BV&gt; <a class='struct' href='../../ncollide_entities/partitioning/struct.DBVT.html' title='ncollide_entities::partitioning::DBVT'>DBVT</a>&lt;P, B, BV&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../ncollide_entities/partitioning/struct.DBVT.html' title='ncollide_entities::partitioning::DBVT'>DBVT</a>&lt;P, B, BV&gt;</code></h4>
 <div class='docblock'><p>Creates a new Dynamic Bounding Volume Tree.</p>
-</div></div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, B, BV&gt; <a class='struct' href='../../ncollide_entities/partitioning/struct.DBVT.html' title='ncollide_entities::partitioning::DBVT'>DBVT</a>&lt;P, B, BV&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../nalgebra/traits/structure/trait.FloatVec.html' title='nalgebra::traits::structure::FloatVec'>FloatVec</a>&lt;N&gt;, BV: 'static + <a class='trait' href='../../ncollide_entities/bounding_volume/trait.BoundingVolume.html' title='ncollide_entities::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;V&gt; + <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, B: 'static + <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.remove' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.remove' class='fnname'>remove</a>(&amp;mut self, leaf: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../ncollide_entities/partitioning/struct.DBVTLeaf.html' title='ncollide_entities::partitioning::DBVTLeaf'>DBVTLeaf</a>&lt;P, B, BV&gt;&gt;&gt;)</code></h4>
+</div></div><h3 class='impl'><code>impl&lt;P, B, BV&gt; <a class='struct' href='../../ncollide_entities/partitioning/struct.DBVT.html' title='ncollide_entities::partitioning::DBVT'>DBVT</a>&lt;P, B, BV&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, BV: 'static + <a class='trait' href='../../ncollide_entities/bounding_volume/trait.BoundingVolume.html' title='ncollide_entities::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;P::Vect::Scalar&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;P::Vect&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, B: 'static + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.remove' class='method'><code>fn <a href='#method.remove' class='fnname'>remove</a>(&amp;mut self, leaf: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../ncollide_entities/partitioning/struct.DBVTLeaf.html' title='ncollide_entities::partitioning::DBVTLeaf'>DBVTLeaf</a>&lt;P, B, BV&gt;&gt;&gt;)</code></h4>
 <div class='docblock'><p>Removes a leaf from the tree. Fails if the tree is empty.</p>
-</div><h4 id='method.insert_new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.insert_new' class='fnname'>insert_new</a>(&amp;mut self, b: B, bv: BV) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../ncollide_entities/partitioning/struct.DBVTLeaf.html' title='ncollide_entities::partitioning::DBVTLeaf'>DBVTLeaf</a>&lt;P, B, BV&gt;&gt;&gt;</code></h4>
+</div><h4 id='method.insert_new' class='method'><code>fn <a href='#method.insert_new' class='fnname'>insert_new</a>(&amp;mut self, b: B, bv: BV) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../ncollide_entities/partitioning/struct.DBVTLeaf.html' title='ncollide_entities::partitioning::DBVTLeaf'>DBVTLeaf</a>&lt;P, B, BV&gt;&gt;&gt;</code></h4>
 <div class='docblock'><p>Creates, inserts, and returns a new leaf with the given content.</p>
-</div><h4 id='method.insert' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.insert' class='fnname'>insert</a>(&amp;mut self, leaf: <a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../ncollide_entities/partitioning/struct.DBVTLeaf.html' title='ncollide_entities::partitioning::DBVTLeaf'>DBVTLeaf</a>&lt;P, B, BV&gt;&gt;&gt;)</code></h4>
+</div><h4 id='method.insert' class='method'><code>fn <a href='#method.insert' class='fnname'>insert</a>(&amp;mut self, leaf: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../ncollide_entities/partitioning/struct.DBVTLeaf.html' title='ncollide_entities::partitioning::DBVTLeaf'>DBVTLeaf</a>&lt;P, B, BV&gt;&gt;&gt;)</code></h4>
 <div class='docblock'><p>Inserts a leaf to the tree.</p>
-</div><h4 id='method.visit' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.visit' class='fnname'>visit</a>&lt;Vis: <a class='trait' href='../../ncollide_entities/partitioning/trait.BVTVisitor.html' title='ncollide_entities::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt;&gt;(&amp;self, visitor: &amp;mut Vis)</code></h4>
-<div class='docblock'><p>Visit this tree using… a visitor!</p>
+</div><h4 id='method.visit' class='method'><code>fn <a href='#method.visit' class='fnname'>visit</a>&lt;Vis: <a class='trait' href='../../ncollide_entities/partitioning/trait.BVTVisitor.html' title='ncollide_entities::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt;&gt;(&amp;self, visitor: &amp;mut Vis)</code></h4>
+<div class='docblock'><p>Traverses this tree using an object implementing the <code>BVTVisitor</code>trait.</p>
+
+<p>This will traverse the whole tree and call the visitor <code>.visit_internal(...)</code> (resp.
+<code>.visit_leaf(...)</code>) method on each internal (resp. leaf) node.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -104,6 +122,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

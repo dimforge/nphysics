@@ -9,6 +9,7 @@
 
     <title>ncollide_entities::support_map::SupportMap - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,46 +25,45 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>support_map</a></p><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.PreferedSamplingDirections.html'>PreferedSamplingDirections</a><a class='trait current' href='trait.SupportMap.html'>SupportMap</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.cso_support_point.html'>cso_support_point</a><a class='fn ' href='fn.point_cloud_support_point.html'>point_cloud_support_point</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>support_map</a></p><script>window.sidebarCurrent = {name: 'SupportMap', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>support_map</a>::<wbr><a class='trait' href=''>SupportMap</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-9246' href='../../src/ncollide_entities/support_map/support_map.rs.html#7-21'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait SupportMap&lt;P, V, M&gt;: <a class='trait' href='../../ncollide_entities/support_map/trait.PreferedSamplingDirections.html' title='ncollide_entities::support_map::PreferedSamplingDirections'>PreferedSamplingDirections</a>&lt;V, M&gt; {
-    fn <a href='#tymethod.support_point' class='fnname'>support_point</a>(&amp;self, transform: &amp;M, dir: &amp;V) -&gt; P;
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>support_map</a>::<wbr><a class='trait' href=''>SupportMap</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1418' class='srclink' href='../../src/ncollide_entities/support_map/support_map.rs.html.html#9-23' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait SupportMap&lt;P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M&gt; {
+    fn <a href='#tymethod.support_point' class='fnname'>support_point</a>(&amp;self, transform: &amp;M, dir: &amp;P::Vect) -&gt; P;
 }</pre><div class='docblock'><p>Traits of convex shapes representable by a support mapping function.</p>
 
-<h1 id="parameters:" class='section-header'><a
-                           href="#parameters:">Parameters:</a></h1>
+<h1 id='parameters' class='section-header'><a href='#parameters'>Parameters:</a></h1>
 <ul>
 <li>V - type of the support mapping direction argument and of the returned point.</li>
 </ul>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.support_point' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#tymethod.support_point' class='fnname'>support_point</a>(&amp;self, transform: &amp;M, dir: &amp;V) -&gt; P</code></h3><div class='docblock'><p>Evaluates the support function of the object. A support function is a
+        <h3 id='tymethod.support_point' class='method stab '><code>fn <a href='#tymethod.support_point' class='fnname'>support_point</a>(&amp;self, transform: &amp;M, dir: &amp;P::Vect) -&gt; P</code></h3><div class='docblock'><p>Evaluates the support function of the object. A support function is a
 function associating a vector to the shape point which maximizes their
 dot product. This does not include the <code>margin</code> of the object. Margins are
 shape-dependent. Use <code>support_point</code> to sample the complete shape.</p>
 
-<h1 id="arguments:" class='section-header'><a
-                           href="#arguments:">Arguments:</a></h1>
+<h1 id='arguments' class='section-header'><a href='#arguments'>Arguments:</a></h1>
 <ul>
 <li><code>dir</code> - the input of the support function. It is not required for it to
        be normalized.</li>
@@ -71,17 +71,17 @@ shape-dependent. Use <code>support_point</code> to sample the complete shape.</p
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Cuboid.html' title='ncollide_entities::shape::Cuboid'>Cuboid</a>&lt;V&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Ball.html' title='ncollide_entities::shape::Ball'>Ball</a>&lt;N&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Capsule.html' title='ncollide_entities::shape::Capsule'>Capsule</a>&lt;N&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Cone.html' title='ncollide_entities::shape::Cone'>Cone</a>&lt;N&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Cylinder.html' title='ncollide_entities::shape::Cylinder'>Cylinder</a>&lt;N&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Convex.html' title='ncollide_entities::shape::Convex'>Convex</a>&lt;P&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, M, G: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.Neg.html' title='core::ops::Neg'>Neg</a>&lt;Output=P&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, G: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Triangle.html' title='ncollide_entities::shape::Triangle'>Triangle</a>&lt;P&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Segment.html' title='ncollide_entities::shape::Segment'>Segment</a>&lt;P&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, M, G1: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, G2: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.MinkowskiSum.html' title='ncollide_entities::shape::MinkowskiSum'>MinkowskiSum</a>&lt;'a, M, G1, G2&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, G1: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;, G2: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, M, G1: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, G2: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;AnnotatedPoint&lt;P&gt;, V, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.AnnotatedMinkowskiSum.html' title='ncollide_entities::shape::AnnotatedMinkowskiSum'>AnnotatedMinkowskiSum</a>&lt;'a, M, G1, G2&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, G1: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;, G2: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;</span></code></li>
+    <li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Cuboid.html' title='ncollide_entities::shape::Cuboid'>Cuboid</a>&lt;P::Vect&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Ball.html' title='ncollide_entities::shape::Ball'>Ball</a>&lt;P::Vect::Scalar&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Capsule.html' title='ncollide_entities::shape::Capsule'>Capsule</a>&lt;P::Vect::Scalar&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Cone.html' title='ncollide_entities::shape::Cone'>Cone</a>&lt;P::Vect::Scalar&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Cylinder.html' title='ncollide_entities::shape::Cylinder'>Cylinder</a>&lt;P::Vect::Scalar&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Convex.html' title='ncollide_entities::shape::Convex'>Convex</a>&lt;P&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt;</span></code></li>
+<li><code>impl&lt;'a, P, M, G: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, G: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Triangle.html' title='ncollide_entities::shape::Triangle'>Triangle</a>&lt;P&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt;</span></code></li>
+<li><code>impl&lt;P, M&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Segment.html' title='ncollide_entities::shape::Segment'>Segment</a>&lt;P&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, M: <a class='trait' href='../../nalgebra/traits/geometry/trait.Transform.html' title='nalgebra::traits::geometry::Transform'>Transform</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::Vect&gt;</span></code></li>
+<li><code>impl&lt;'a, P, M, G1: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, G2: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.MinkowskiSum.html' title='ncollide_entities::shape::MinkowskiSum'>MinkowskiSum</a>&lt;'a, M, G1, G2&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, G1: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt;, G2: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt;</span></code></li>
+<li><code>impl&lt;'a, P, M, G1: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, G2: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;AnnotatedPoint&lt;P&gt;, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.AnnotatedMinkowskiSum.html' title='ncollide_entities::shape::AnnotatedMinkowskiSum'>AnnotatedMinkowskiSum</a>&lt;'a, M, G1, G2&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, G1: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt;, G2: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt;</span></code></li>
 </ul><script type="text/javascript" async
                               src="../../implementors/ncollide_entities/support_map/trait.SupportMap.js">
                       </script></section>
@@ -89,36 +89,49 @@ shape-dependent. Use <code>support_point</code> to sample the complete shape.</p
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -130,6 +143,6 @@ shape-dependent. Use <code>support_point</code> to sample the complete shape.</p
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["any_against_composite_shape","Time Of Impact of any shape with a composite shape, under translational movement."],["composite_shape_against_any","Time Of Impact of a composite shape with any other shape, under translational movement."]]});

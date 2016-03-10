@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["plane_against_support_map","Contact between a plane and a support-mapped shape (Cuboid, Convex, etc.)"],["support_map_against_plane","Contact between a support-mapped shape (Cuboid, Convex, etc.) and a plane."]]});

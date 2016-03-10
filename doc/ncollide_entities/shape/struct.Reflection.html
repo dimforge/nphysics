@@ -9,6 +9,7 @@
 
     <title>ncollide_entities::shape::Reflection - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,79 +25,88 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>shape</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.AnnotatedMinkowskiSum.html'>AnnotatedMinkowskiSum</a><a class='struct ' href='struct.Ball.html'>Ball</a><a class='struct ' href='struct.BaseMesh.html'>BaseMesh</a><a class='struct ' href='struct.Capsule.html'>Capsule</a><a class='struct ' href='struct.Compound.html'>Compound</a><a class='struct ' href='struct.Cone.html'>Cone</a><a class='struct ' href='struct.Convex.html'>Convex</a><a class='struct ' href='struct.Cuboid.html'>Cuboid</a><a class='struct ' href='struct.Cylinder.html'>Cylinder</a><a class='struct ' href='struct.MinkowskiSum.html'>MinkowskiSum</a><a class='struct ' href='struct.Plane.html'>Plane</a><a class='struct ' href='struct.Polyline.html'>Polyline</a><a class='struct current' href='struct.Reflection.html'>Reflection</a><a class='struct ' href='struct.Segment.html'>Segment</a><a class='struct ' href='struct.Torus.html'>Torus</a><a class='struct ' href='struct.TriMesh.html'>TriMesh</a><a class='struct ' href='struct.Triangle.html'>Triangle</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.BaseMeshElement.html'>BaseMeshElement</a><a class='trait ' href='trait.CompositeShape.html'>CompositeShape</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>shape</a></p><script>window.sidebarCurrent = {name: 'Reflection', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>shape</a>::<wbr><a class='struct' href=''>Reflection</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-7149' href='../../src/ncollide_entities/shape/reflection.rs.html#5-7'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct Reflection&lt;'a, G: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + 'a&gt; {
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_entities</a>::<wbr><a href='index.html'>shape</a>::<wbr><a class='struct' href=''>Reflection</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1084' class='srclink' href='../../src/ncollide_entities/shape/reflection.rs.html.html#5-7' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Reflection&lt;'a, G: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + 'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>SupportMap representation of the reflection of a shape.</p>
 
 <p>A reflection is obtained with the central symmetry with regard to the origin.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, G: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(shape: &amp;'a G) -&gt; <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, G: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(shape: &amp;'a G) -&gt; <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt;</code></h4>
 <div class='docblock'><p>Build the reflection of a shape. Since the representation is implicit,
 the reflection computation is done in constant time.</p>
-</div><h4 id='method.shape' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.shape' class='fnname'>shape</a>(&amp;self) -&gt; &amp;'a G</code></h4>
+</div><h4 id='method.shape' class='method'><code>fn <a href='#method.shape' class='fnname'>shape</a>(&amp;self) -&gt; &amp;'a G</code></h4>
 <div class='docblock'><p>The reflected shape.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, M, G: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.Neg.html' title='core::ops::Neg'>Neg</a>&lt;Output=P&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, G: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;</span></code></h3><div class='impl-items'><h4 id='method.support_point' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.support_point' class='fnname'>support_point</a>(&amp;self, m: &amp;M, dir: &amp;V) -&gt; P</code></h4>
-</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, V: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.Neg.html' title='core::ops::Neg'>Neg</a>&lt;Output=V&gt;, M, G: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.PreferedSamplingDirections.html' title='ncollide_entities::support_map::PreferedSamplingDirections'>PreferedSamplingDirections</a>&lt;V, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt; <span class='where'>where G: <a class='trait' href='../../ncollide_entities/support_map/trait.PreferedSamplingDirections.html' title='ncollide_entities::support_map::PreferedSamplingDirections'>PreferedSamplingDirections</a>&lt;V, M&gt;</span></code></h3><div class='docblock'><p>Trait of shapes having prefered sampling directions for the Minkowski sampling algorithm.</p>
-
-<p>Those directions are usually the shape faces normals.</p>
-</div><div class='impl-items'><h4 id='method.sample' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.sample' class='fnname'>sample</a>(&amp;self, m: &amp;M, f: &amp;mut <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(V))</code></h4>
-<div class='docblock'><p>Applies a function to this shape with a given transform.</p>
-</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Unstable' title='Unstable: I/O and core have yet to be reconciled'></a><code>impl&lt;'a, G: <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Show.html' title='core::fmt::Show'>Show</a> + ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + 'a&gt; <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Show.html' title='core::fmt::Show'>Show</a> for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><a class='stability Unstable' title='Unstable: I/O and core have yet to be reconciled'></a><code>fn <a href='#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, P, M, G: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, G: <a class='trait' href='../../ncollide_entities/support_map/trait.SupportMap.html' title='ncollide_entities::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt;</span></code></h3><div class='impl-items'><h4 id='method.support_point' class='method'><code>fn <a href='../../ncollide_entities/support_map/trait.SupportMap.html#method.support_point' class='fnname'>support_point</a>(&amp;self, m: &amp;M, dir: &amp;P::Vect) -&gt; P</code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;'a, G: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + 'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../ncollide_entities/shape/struct.Reflection.html' title='ncollide_entities::shape::Reflection'>Reflection</a>&lt;'a, G&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -108,6 +118,6 @@ the reflection computation is done in constant time.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

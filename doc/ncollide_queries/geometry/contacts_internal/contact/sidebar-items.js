@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Contact","Geometric description of a contact."]]});

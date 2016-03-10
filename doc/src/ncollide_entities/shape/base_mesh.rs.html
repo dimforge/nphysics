@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_entities/shape/base_mesh.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_entities/shape/base_mesh.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>base_mesh.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -173,59 +174,63 @@
 <span id="131">131</span>
 <span id="132">132</span>
 <span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! A mesh generic wrt. the contained mesh element characterized by vertices.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>PhantomData</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Translate</span>, <span class='ident'>Identity</span>, <span class='ident'>Pnt2</span>};
 <span class='kw'>use</span> <span class='ident'>partitioning</span>::<span class='ident'>BVT</span>;
-<span class='kw'>use</span> <span class='ident'>bounding_volume</span>::{<span class='ident'>HasAABB</span>, <span class='ident'>AABB</span>};
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>bounding_volume</span>::{<span class='self'>self</span>, <span class='ident'>HasBoundingVolume</span>, <span class='ident'>AABB</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>};
 
 
 <span class='doccomment'>/// Trait implemented by elements usable on the Mesh.</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new mesh element from a set of vertices and indices.</span>
-    <span class='kw'>fn</span> <span class='ident'>new_with_vertices_and_indices</span>(<span class='kw-2'>&amp;</span>[<span class='ident'>P</span>], <span class='kw-2'>&amp;</span><span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>Self</span>;
+    <span class='kw'>fn</span> <span class='ident'>new_with_vertices_and_indices</span>(<span class='kw-2'>&amp;</span>[<span class='ident'>P</span>], <span class='kw-2'>&amp;</span><span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span>;
 }
 
 <span class='doccomment'>/// A mesh generic wrt. the contained mesh elements characterized by vertices.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
     <span class='ident'>bvt</span>:      <span class='ident'>BVT</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>bvs</span>:      <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>vertices</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>indices</span>:  <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;&gt;</span>,
-    <span class='ident'>uvs</span>:      <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span>,
-    <span class='ident'>normals</span>:  <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+    <span class='ident'>uvs</span>:      <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pnt2</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>normals</span>:  <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+    <span class='ident'>elt</span>:      <span class='ident'>PhantomData</span><span class='op'>&lt;</span><span class='ident'>E</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Clone</span>,
-          <span class='ident'>P</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Clone</span>,
-          <span class='ident'>V</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> {
-    <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
+    <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
         <span class='ident'>BaseMesh</span> {
             <span class='ident'>bvt</span>:      <span class='self'>self</span>.<span class='ident'>bvt</span>.<span class='ident'>clone</span>(),
             <span class='ident'>bvs</span>:      <span class='self'>self</span>.<span class='ident'>bvs</span>.<span class='ident'>clone</span>(),
             <span class='ident'>vertices</span>: <span class='self'>self</span>.<span class='ident'>vertices</span>.<span class='ident'>clone</span>(),
             <span class='ident'>indices</span>:  <span class='self'>self</span>.<span class='ident'>indices</span>.<span class='ident'>clone</span>(),
             <span class='ident'>uvs</span>:      <span class='self'>self</span>.<span class='ident'>uvs</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>normals</span>:  <span class='self'>self</span>.<span class='ident'>normals</span>.<span class='ident'>clone</span>()
+            <span class='ident'>normals</span>:  <span class='self'>self</span>.<span class='ident'>normals</span>.<span class='ident'>clone</span>(),
+            <span class='ident'>elt</span>:      <span class='ident'>PhantomData</span>
         }
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Translate</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>HasAABB</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>P</span>::<span class='ident'>Vect</span>: <span class='ident'>Translate</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>HasBoundingVolume</span><span class='op'>&lt;</span><span class='ident'>Identity</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span> {
     <span class='doccomment'>/// Builds a new mesh.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>vertices</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
                <span class='ident'>indices</span>:  <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;&gt;</span>,
-               <span class='ident'>uvs</span>:      <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span>,
-               <span class='ident'>normals</span>:  <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>) <span class='comment'>// a loosening margin for the BVT.</span>
-               <span class='op'>-&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
+               <span class='ident'>uvs</span>:      <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pnt2</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span>,
+               <span class='ident'>normals</span>:  <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>) <span class='comment'>// a loosening margin for the BVT.</span>
+               <span class='op'>-&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
         <span class='kw'>for</span> <span class='ident'>uvs</span> <span class='kw'>in</span> <span class='ident'>uvs</span>.<span class='ident'>iter</span>() {
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>uvs</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>vertices</span>.<span class='ident'>len</span>());
         }
@@ -237,11 +242,11 @@
             <span class='kw'>let</span> <span class='ident'>vs</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>vertices</span>;
             <span class='kw'>let</span> <span class='ident'>is</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>indices</span>;
 
-            <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>is</span>) <span class='kw'>in</span> <span class='ident'>is</span>.<span class='ident'>as_slice</span>().<span class='ident'>iter</span>().<span class='ident'>enumerate</span>() {
-                <span class='kw'>let</span> <span class='ident'>vs</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>] <span class='op'>=</span> <span class='ident'>vs</span>.<span class='ident'>as_slice</span>();
+            <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>is</span>) <span class='kw'>in</span> <span class='ident'>is</span>[..].<span class='ident'>iter</span>().<span class='ident'>enumerate</span>() {
+                <span class='kw'>let</span> <span class='ident'>vs</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>] <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>vs</span>[..];
                 <span class='kw'>let</span> <span class='ident'>element</span>: <span class='ident'>E</span> <span class='op'>=</span> <span class='ident'>BaseMeshElement</span>::<span class='ident'>new_with_vertices_and_indices</span>(<span class='ident'>vs</span>, <span class='ident'>is</span>);
                 <span class='comment'>// loosen for better persistancy</span>
-                <span class='kw'>let</span> <span class='ident'>bv</span> <span class='op'>=</span> <span class='ident'>element</span>.<span class='ident'>aabb</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>());
+                <span class='kw'>let</span> <span class='ident'>bv</span> <span class='op'>=</span> <span class='ident'>bounding_volume</span>::<span class='ident'>aabb</span>(<span class='kw-2'>&amp;</span><span class='ident'>element</span>, <span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>());
                 <span class='ident'>leaves</span>.<span class='ident'>push</span>((<span class='ident'>i</span>, <span class='ident'>bv</span>.<span class='ident'>clone</span>()));
                 <span class='ident'>bvs</span>.<span class='ident'>push</span>(<span class='ident'>bv</span>);
             }
@@ -255,12 +260,14 @@
             <span class='ident'>vertices</span>: <span class='ident'>vertices</span>,
             <span class='ident'>indices</span>:  <span class='ident'>indices</span>,
             <span class='ident'>uvs</span>:      <span class='ident'>uvs</span>,
-            <span class='ident'>normals</span>:  <span class='ident'>normals</span>
+            <span class='ident'>normals</span>:  <span class='ident'>normals</span>,
+            <span class='ident'>elt</span>:      <span class='ident'>PhantomData</span>
         }
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
     <span class='doccomment'>/// The vertices of this mesh.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>vertices</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span> {
@@ -270,7 +277,7 @@
     <span class='doccomment'>/// Bounding volumes of the subsimplices.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bounding_volumes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[<span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>] {
-        <span class='self'>self</span>.<span class='ident'>bvs</span>.<span class='ident'>as_slice</span>()
+        <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>bvs</span>[..]
     }
 
     <span class='doccomment'>/// The indices of this mesh.</span>
@@ -281,13 +288,13 @@
 
     <span class='doccomment'>/// The texture coordinates of this mesh.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>uvs</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>uvs</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pnt2</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>uvs</span>
     }
 
     <span class='doccomment'>/// The normals of this mesh.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>normals</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>normals</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>normals</span>
     }
 
@@ -298,11 +305,13 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Gets the i-th mesh element.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>element_at</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>i</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>E</span> {
-        <span class='kw'>let</span> <span class='ident'>vs</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>] <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>vertices</span>.<span class='ident'>as_slice</span>();
+        <span class='kw'>let</span> <span class='ident'>vs</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>] <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>vertices</span>[..];
 
         <span class='ident'>BaseMeshElement</span>::<span class='ident'>new_with_vertices_and_indices</span>(<span class='ident'>vs</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>indices</span>[<span class='ident'>i</span>])
     }
@@ -313,36 +322,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -354,6 +376,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

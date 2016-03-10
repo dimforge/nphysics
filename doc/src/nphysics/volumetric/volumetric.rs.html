@@ -153,10 +153,10 @@
     <span class='kw'>fn</span> <span class='ident'>apply</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>a</span>: <span class='kw-2'>&amp;</span><span class='ident'>AV</span>) <span class='op'>-&gt;</span> <span class='ident'>AV</span>;
 
     <span class='doccomment'>/// Transforms this inertia tensor from local space to world space.</span>
-    <span class='kw'>fn</span> <span class='ident'>to_world_space</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='kw-2'>&amp;</span><span class='ident'>M</span>) <span class='op'>-&gt;</span> <span class='ident'>Self</span>;
+    <span class='kw'>fn</span> <span class='ident'>to_world_space</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='kw-2'>&amp;</span><span class='ident'>M</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span>;
 
     <span class='doccomment'>/// Computes this inertia tensor relative to a given point.</span>
-    <span class='kw'>fn</span> <span class='ident'>to_relative_wrt_point</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>N</span>, <span class='kw-2'>&amp;</span><span class='ident'>P</span>) <span class='op'>-&gt;</span> <span class='ident'>Self</span>;
+    <span class='kw'>fn</span> <span class='ident'>to_relative_wrt_point</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>N</span>, <span class='kw-2'>&amp;</span><span class='ident'>P</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span>;
 }
 
 <span class='doccomment'>/// Trait implemented by objects which have a mass, a center of mass, and an inertia tensor.</span>
@@ -268,6 +268,10 @@
                 <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
             </p>
         </div>
     </div>

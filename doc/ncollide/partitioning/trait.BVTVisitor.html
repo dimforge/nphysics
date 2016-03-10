@@ -9,6 +9,7 @@
 
     <title>ncollide::partitioning::BVTVisitor - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,46 +25,46 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.BVT.html'>BVT</a><a class='struct ' href='struct.BoundingVolumeInterferencesCollector.html'>BoundingVolumeInterferencesCollector</a><a class='struct ' href='struct.DBVT.html'>DBVT</a><a class='struct ' href='struct.DBVTLeaf.html'>DBVTLeaf</a></div><div class='block enum'><h2>Enums</h2><a class='enum ' href='enum.BVTNode.html'>BVTNode</a><a class='enum ' href='enum.BinaryPartition.html'>BinaryPartition</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.BVTCostFn.html'>BVTCostFn</a><a class='trait ' href='trait.BVTTVisitor.html'>BVTTVisitor</a><a class='trait current' href='trait.BVTVisitor.html'>BVTVisitor</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.median_partitioner.html'>median_partitioner</a><a class='fn ' href='fn.median_partitioner_with_centers.html'>median_partitioner_with_centers</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a></p><script>window.sidebarCurrent = {name: 'BVTVisitor', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a>::<wbr><a class='trait' href=''>BVTVisitor</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-21437' href='../../ncollide_entities/partitioning/bvt_visitor/trait.BVTVisitor.html?gotosrc=21437'>[src]</a></span></h1>
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a>::<wbr><a class='trait' href=''>BVTVisitor</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-3027' class='srclink' href='../../ncollide_entities/partitioning/bvt_visitor/trait.BVTVisitor.html?gotosrc=3027' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait BVTVisitor&lt;B, BV&gt; {
-    fn <a href='#tymethod.visit_internal' class='fnname'>visit_internal</a>(&amp;mut self, &amp;BV) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>;
+    fn <a href='#tymethod.visit_internal' class='fnname'>visit_internal</a>(&amp;mut self, &amp;BV) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>;
     fn <a href='#tymethod.visit_leaf' class='fnname'>visit_leaf</a>(&amp;mut self, &amp;B, &amp;BV);
 }</pre><div class='docblock'><p>Visitor of Bounding Volume Trees.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.visit_internal' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#tymethod.visit_internal' class='fnname'>visit_internal</a>(&amp;mut self, &amp;BV) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h3><div class='docblock'><p>Visits an internal node. Returns <code>true</code> if the internal node children have to be visited
+        <h3 id='tymethod.visit_internal' class='method stab '><code>fn <a href='#tymethod.visit_internal' class='fnname'>visit_internal</a>(&amp;mut self, &amp;BV) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h3><div class='docblock'><p>Visits an internal node. Returns <code>true</code> if the internal node children have to be visited
 too.</p>
-</div><h3 id='tymethod.visit_leaf' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#tymethod.visit_leaf' class='fnname'>visit_leaf</a>(&amp;mut self, &amp;B, &amp;BV)</code></h3><div class='docblock'><p>Visits a leaf.</p>
+</div><h3 id='tymethod.visit_leaf' class='method stab '><code>fn <a href='#tymethod.visit_leaf' class='fnname'>visit_leaf</a>(&amp;mut self, &amp;B, &amp;BV)</code></h3><div class='docblock'><p>Visits a leaf.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/bounding_volume/struct.BoundingVolumeInterferencesCollector.html' title='ncollide::bounding_volume::BoundingVolumeInterferencesCollector'>BoundingVolumeInterferencesCollector</a>&lt;'a, B, BV&gt; <span class='where'>where B: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, BV: <a class='trait' href='../../ncollide/bounding_volume/trait.BoundingVolume.html' title='ncollide::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/partitioning/struct.BoundingVolumeInterferencesCollector.html' title='ncollide::partitioning::BoundingVolumeInterferencesCollector'>BoundingVolumeInterferencesCollector</a>&lt;'a, B, BV&gt; <span class='where'>where B: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, BV: <a class='trait' href='../../ncollide/bounding_volume/trait.BoundingVolume.html' title='ncollide::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, M&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='../../ncollide/bounding_volume/struct.AABB.html' title='ncollide::bounding_volume::AABB'>AABB</a>&lt;P&gt;&gt; for <a class='struct' href='../../ncollide_queries/point/point_compound/struct.PointContainementTest.html' title='ncollide_queries::point::point_compound::PointContainementTest'>PointContainementTest</a>&lt;'a, N, P, V, M&gt; <span class='where'>where N: <a class='trait' href='../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a>&lt;N&gt;, V: <a class='trait' href='../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt;, M: <a class='trait' href='../../ncollide/math/trait.Isometry.html' title='ncollide::math::Isometry'>Isometry</a>&lt;N, P, V&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, I, E&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='../../ncollide/bounding_volume/struct.AABB.html' title='ncollide::bounding_volume::AABB'>AABB</a>&lt;P&gt;&gt; for <a class='struct' href='../../ncollide_queries/point/point_mesh/struct.PointContainementTest.html' title='ncollide_queries::point::point_mesh::PointContainementTest'>PointContainementTest</a>&lt;'a, N, P, V, I, E&gt; <span class='where'>where N: <a class='trait' href='../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a>&lt;N&gt;, E: <a class='trait' href='../../ncollide/shape/trait.BaseMeshElement.html' title='ncollide::shape::BaseMeshElement'>BaseMeshElement</a>&lt;I, P&gt;, E: <a class='trait' href='../../ncollide/point/trait.LocalPointQuery.html' title='ncollide::point::LocalPointQuery'>LocalPointQuery</a>&lt;N, P&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/point/struct.PointInterferencesCollector.html' title='ncollide::point::PointInterferencesCollector'>PointInterferencesCollector</a>&lt;'a, P, B&gt; <span class='where'>where B: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, BV: <a class='trait' href='../../ncollide/point/trait.LocalPointQuery.html' title='ncollide::point::LocalPointQuery'>LocalPointQuery</a>&lt;N, P&gt;</span></code></li>
-<li><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;'a, N, P, V, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/ray/struct.RayInterferencesCollector.html' title='ncollide::ray::RayInterferencesCollector'>RayInterferencesCollector</a>&lt;'a, P, V, B&gt; <span class='where'>where B: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, BV: <a class='trait' href='../../ncollide/ray/trait.LocalRayCast.html' title='ncollide::ray::LocalRayCast'>LocalRayCast</a>&lt;N, P, V&gt;</span></code></li>
+    <li><code>impl&lt;'a, N, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/bounding_volume/struct.BoundingVolumeInterferencesCollector.html' title='ncollide::bounding_volume::BoundingVolumeInterferencesCollector'>BoundingVolumeInterferencesCollector</a>&lt;'a, N, B, BV&gt; <span class='where'>where B: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, BV: <a class='trait' href='../../ncollide/bounding_volume/trait.BoundingVolume.html' title='ncollide::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt;</span></code></li>
+<li><code>impl&lt;'a, P, M&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='../../ncollide/bounding_volume/struct.AABB.html' title='ncollide::bounding_volume::AABB'>AABB</a>&lt;P&gt;&gt; for <a class='struct' href='../../ncollide_queries/point/point_compound/struct.PointContainementTest.html' title='ncollide_queries::point::point_compound::PointContainementTest'>PointContainementTest</a>&lt;'a, P, M&gt; <span class='where'>where M: <a class='trait' href='../../ncollide/math/trait.Isometry.html' title='ncollide::math::Isometry'>Isometry</a>&lt;P, P::<a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;P::<a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>&gt;, P: <a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a></span></code></li>
+<li><code>impl&lt;'a, P, I, E&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='../../ncollide/bounding_volume/struct.AABB.html' title='ncollide::bounding_volume::AABB'>AABB</a>&lt;P&gt;&gt; for <a class='struct' href='../../ncollide_queries/point/point_mesh/struct.PointContainementTest.html' title='ncollide_queries::point::point_mesh::PointContainementTest'>PointContainementTest</a>&lt;'a, P, I, E&gt; <span class='where'>where P: <a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>, E: <a class='trait' href='../../ncollide/shape/trait.BaseMeshElement.html' title='ncollide::shape::BaseMeshElement'>BaseMeshElement</a>&lt;I, P&gt; + <a class='trait' href='../../ncollide/point/trait.PointQuery.html' title='ncollide::point::PointQuery'>PointQuery</a>&lt;P, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt;</span></code></li>
+<li><code>impl&lt;'a, P, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/point/struct.PointInterferencesCollector.html' title='ncollide::point::PointInterferencesCollector'>PointInterferencesCollector</a>&lt;'a, P, B&gt; <span class='where'>where B: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, P: <a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>, BV: <a class='trait' href='../../ncollide/point/trait.PointQuery.html' title='ncollide::point::PointQuery'>PointQuery</a>&lt;P, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt;</span></code></li>
+<li><code>impl&lt;'a, P, B, BV&gt; <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt; for <a class='struct' href='../../ncollide/ray/struct.RayInterferencesCollector.html' title='ncollide::ray::RayInterferencesCollector'>RayInterferencesCollector</a>&lt;'a, P, B&gt; <span class='where'>where P: <a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>, BV: <a class='trait' href='../../ncollide/ray/trait.RayCast.html' title='ncollide::ray::RayCast'>RayCast</a>&lt;P, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt;, B: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></li>
 </ul><script type="text/javascript" async
                               src="../../implementors/ncollide_entities/partitioning/bvt_visitor/trait.BVTVisitor.js">
                       </script></section>
@@ -71,36 +72,49 @@ too.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -112,6 +126,6 @@ too.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

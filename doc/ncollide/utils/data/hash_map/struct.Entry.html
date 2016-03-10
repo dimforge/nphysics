@@ -9,6 +9,7 @@
 
     <title>ncollide::utils::data::hash_map::Entry - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -24,73 +25,88 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../../../index.html'>ncollide</a>::<wbr><a href='../../index.html'>utils</a>::<wbr><a href='../index.html'>data</a>::<wbr><a href='index.html'>hash_map</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.Entry.html'>Entry</a><a class='struct ' href='struct.HashMap.html'>HashMap</a></div>
-    </section>
+        <p class='location'><a href='../../../index.html'>ncollide</a>::<wbr><a href='../../index.html'>utils</a>::<wbr><a href='../index.html'>data</a>::<wbr><a href='index.html'>hash_map</a></p><script>window.sidebarCurrent = {name: 'Entry', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>ncollide</a>::<wbr><a href='../../index.html'>utils</a>::<wbr><a href='../index.html'>data</a>::<wbr><a href='index.html'>hash_map</a>::<wbr><a class='struct' href=''>Entry</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-1072' href='../../../../ncollide_utils/data/hash_map/struct.Entry.html?gotosrc=1072'>[src]</a></span></h1>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>ncollide</a>::<wbr><a href='../../index.html'>utils</a>::<wbr><a href='../index.html'>data</a>::<wbr><a href='index.html'>hash_map</a>::<wbr><a class='struct' href=''>Entry</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-201' class='srclink' href='../../../../ncollide_utils/data/hash_map/struct.Entry.html?gotosrc=201' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Entry&lt;K, V&gt; {
     pub key: K,
     pub value: V,
 }</pre><div class='docblock'><p>Entry of an <code>HashMap</code>.</p>
 </div><h2 class='fields'>Fields</h2>
-<table><tr><td id='structfield.key'><a class='stability Unmarked' title='No stability level'></a><code>key</code></td><td><div class='docblock'><p>The key of the entry.</p>
-</div></td></tr><tr><td id='structfield.value'><a class='stability Unmarked' title='No stability level'></a><code>value</code></td><td><div class='docblock'><p>The value of the entry.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;K, V&gt; <a class='trait' href='../../../../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a> for <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt; <span class='where'>where K: <a class='trait' href='../../../../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a>, V: <a class='trait' href='../../../../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a></span></code></h3><div class='impl-items'><h4 id='method.decode' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.decode' class='fnname'>decode</a>&lt;__D&gt;(__arg_0: &amp;mut __D) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt;, &lt;__D as <a class='trait' href='../../../../rustc-serialize/serialize/trait.Decoder.html' title='rustc-serialize::serialize::Decoder'>Decoder</a>&gt;::Error&gt; <span class='where'>where __D: <a class='trait' href='../../../../rustc-serialize/serialize/trait.Decoder.html' title='rustc-serialize::serialize::Decoder'>Decoder</a></span></code></h4>
-</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;K, V&gt; <a class='trait' href='../../../../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a> for <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt; <span class='where'>where K: <a class='trait' href='../../../../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a>, V: <a class='trait' href='../../../../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a></span></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.encode' class='fnname'>encode</a>&lt;__S&gt;(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, &lt;__S as <a class='trait' href='../../../../rustc-serialize/serialize/trait.Encoder.html' title='rustc-serialize::serialize::Encoder'>Encoder</a>&gt;::Error&gt; <span class='where'>where __S: <a class='trait' href='../../../../rustc-serialize/serialize/trait.Encoder.html' title='rustc-serialize::serialize::Encoder'>Encoder</a></span></code></h4>
-</div><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl&lt;K, V&gt; <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt; <span class='where'>where K: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, V: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt;</code></h4>
-<h4 id='method.clone_from' class='method'><a class='stability Unstable' title='Unstable: this function is rarely used'></a><code>fn <a href='#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, &amp;<a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt;)</code></h4>
+<table><tr class='stab '>
+                                  <td id='structfield.key'><code>key</code></td><td><div class='docblock'><p>The key of the entry.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.value'><code>value</code></td><td><div class='docblock'><p>The value of the entry.</p>
+</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;K, V&gt; <a class='trait' href='../../../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a> for <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt; <span class='where'>where V: <a class='trait' href='../../../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>, K: <a class='trait' href='../../../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a></span></code></h3><div class='impl-items'><h4 id='method.decode' class='method'><code>fn <a href='../../../../rustc_serialize/serialize/trait.Decodable.html#method.decode' class='fnname'>decode</a>&lt;__D&gt;(__arg_0: &amp;mut __D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt;, __D::<a class='trait' href='../../../../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Error</a>&gt; <span class='where'>where __D: <a class='trait' href='../../../../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Decoder</a></span></code></h4>
+</div><h3 class='impl'><code>impl&lt;K, V&gt; <a class='trait' href='../../../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a> for <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt; <span class='where'>where V: <a class='trait' href='../../../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a>, K: <a class='trait' href='../../../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a></span></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><code>fn <a href='../../../../rustc_serialize/serialize/trait.Encodable.html#method.encode' class='fnname'>encode</a>&lt;__S&gt;(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, __S::<a class='trait' href='../../../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Error</a>&gt; <span class='where'>where __S: <a class='trait' href='../../../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a></span></code></h4>
+</div><h3 class='impl'><code>impl&lt;K, V&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt; <span class='where'>where K: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, V: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../../ncollide/utils/data/hash_map/struct.Entry.html' title='ncollide::utils::data::hash_map::Entry'>Entry</a>&lt;K, V&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -102,6 +118,6 @@
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

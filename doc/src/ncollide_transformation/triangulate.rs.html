@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_transformation/triangulate.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_transformation/triangulate.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>triangulate.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -226,29 +227,27 @@
 <span id="184">184</span>
 <span id="185">185</span>
 <span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Point cloud triangulation.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>hash_map</span>::<span class='ident'>Entry</span>;
+<span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Float</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>BaseFloat</span>, <span class='ident'>Pnt3</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>};
 <span class='kw'>use</span> <span class='ident'>utils</span>;
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>bounding_volume</span>;
 <span class='kw'>use</span> <span class='ident'>procedural</span>::{<span class='ident'>TriMesh</span>, <span class='ident'>IndexBuffer</span>};
 
-<span class='kw'>struct</span> <span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>struct</span> <span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&gt;</span> {
     <span class='ident'>idx</span>:                    <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>,
     <span class='ident'>circumcircle_center</span>:    <span class='ident'>P</span>,
-    <span class='ident'>circumcircle_sq_radius</span>: <span class='ident'>N</span>
+    <span class='ident'>circumcircle_sq_radius</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>,
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span>, <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>idx</span>: <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>, <span class='ident'>pts</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&gt;</span> <span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>idx</span>: <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>, <span class='ident'>pts</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>pa</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>pts</span>[<span class='ident'>idx</span>.<span class='ident'>x</span>];
         <span class='kw'>let</span> <span class='ident'>pb</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>pts</span>[<span class='ident'>idx</span>.<span class='ident'>y</span>];
         <span class='kw'>let</span> <span class='ident'>pc</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>pts</span>[<span class='ident'>idx</span>.<span class='ident'>z</span>];
@@ -269,23 +268,21 @@
 }
 
 <span class='doccomment'>/// Incremental triangulation utility.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Triangulator</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Triangulator</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&gt;</span> {
     <span class='ident'>vertices</span>:  <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
-    <span class='ident'>triangles</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>triangles</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Triangle</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>edges</span>:     <span class='ident'>HashMap</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>usize</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>Triangulator</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='ident'>Triangulator</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
     <span class='doccomment'>/// Creates a new Triangulator.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>supertriangle_a</span>: <span class='ident'>P</span>, <span class='ident'>supertriangle_b</span>: <span class='ident'>P</span>, <span class='ident'>supertriangle_c</span>: <span class='ident'>P</span>) <span class='op'>-&gt;</span> <span class='ident'>Triangulator</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>supertriangle_a</span>: <span class='ident'>P</span>, <span class='ident'>supertriangle_b</span>: <span class='ident'>P</span>, <span class='ident'>supertriangle_c</span>: <span class='ident'>P</span>) <span class='op'>-&gt;</span> <span class='ident'>Triangulator</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>vertices</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>(<span class='ident'>supertriangle_a</span>, <span class='ident'>supertriangle_b</span>, <span class='ident'>supertriangle_c</span>);
 
         <span class='ident'>Triangulator</span> {
             <span class='comment'>// FIXME: why do we have to specify the type explicitely here ?</span>
-            <span class='ident'>triangles</span>: <span class='macro'>vec</span><span class='macro'>!</span>(<span class='ident'>Triangle</span>::<span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>Pnt3</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>2</span>), <span class='ident'>vertices</span>.<span class='ident'>as_slice</span>())),
+            <span class='ident'>triangles</span>: <span class='macro'>vec</span><span class='macro'>!</span>(<span class='ident'>Triangle</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>Pnt3</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>2</span>), <span class='kw-2'>&amp;</span><span class='ident'>vertices</span>[..])),
             <span class='ident'>vertices</span>:  <span class='ident'>vertices</span>,
             <span class='ident'>edges</span>:     <span class='ident'>HashMap</span>::<span class='ident'>new</span>()
         }
@@ -301,7 +298,7 @@
         <span class='kw'>for</span> (<span class='kw-2'>&amp;</span>(<span class='ident'>ia</span>, <span class='ident'>ib</span>), <span class='ident'>num</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>edges</span>.<span class='ident'>iter</span>() {
             <span class='kw'>if</span> <span class='op'>*</span><span class='ident'>num</span> <span class='op'>==</span> <span class='number'>1</span> {
                 <span class='comment'>// FIXME: why do we have to specify the type explicitely here ?</span>
-                <span class='kw'>let</span> <span class='ident'>t</span> <span class='op'>=</span> <span class='ident'>Triangle</span>::<span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>Pnt3</span>::<span class='ident'>new</span>(<span class='ident'>ia</span>, <span class='ident'>ib</span>, <span class='ident'>ipt</span>), <span class='self'>self</span>.<span class='ident'>vertices</span>.<span class='ident'>as_slice</span>());
+                <span class='kw'>let</span> <span class='ident'>t</span> <span class='op'>=</span> <span class='ident'>Triangle</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>Pnt3</span>::<span class='ident'>new</span>(<span class='ident'>ia</span>, <span class='ident'>ib</span>, <span class='ident'>ipt</span>), <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>vertices</span>[..]);
 
                 <span class='self'>self</span>.<span class='ident'>triangles</span>.<span class='ident'>push</span>(<span class='ident'>t</span>)
             }
@@ -309,7 +306,7 @@
     }
 
     <span class='doccomment'>/// Returns the result of the triangulation.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_trimesh</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_trimesh</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>idx</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='self'>self</span>.<span class='ident'>triangles</span>.<span class='ident'>len</span>());
 
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>vertices</span>.<span class='ident'>swap_remove</span>(<span class='number'>2</span>);
@@ -379,23 +376,21 @@
 <span class='doccomment'>/// If the points do not lie on the same 2d plane, strange things might happends (triangle might be</span>
 <span class='doccomment'>/// attached together in an unnatural way). Though, if they are only slighly perturbated on the</span>
 <span class='doccomment'>/// directions orthogonal to the plane, this should be fine.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>triangulate</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>(<span class='ident'>pts</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>triangulate</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>pts</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
     <span class='comment'>//// Compute the super-triangle</span>
     <span class='kw'>let</span> (<span class='ident'>center</span>, <span class='ident'>radius</span>) <span class='op'>=</span> <span class='ident'>bounding_volume</span>::<span class='ident'>point_cloud_bounding_sphere</span>(<span class='ident'>pts</span>);
     <span class='kw'>let</span> <span class='ident'>radius</span>           <span class='op'>=</span> <span class='ident'>radius</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0</span>);
 
     <span class='comment'>// Compute a triangle with (center, radius) as its inscribed circle.</span>
-    <span class='kw'>let</span> <span class='ident'>pi</span>: <span class='ident'>N</span>       <span class='op'>=</span> <span class='ident'>BaseFloat</span>::<span class='ident'>pi</span>();
+    <span class='kw'>let</span> <span class='ident'>pi</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>BaseFloat</span>::<span class='ident'>pi</span>();
     <span class='kw'>let</span> <span class='ident'>right_shift</span> <span class='op'>=</span> <span class='ident'>radius</span> <span class='op'>/</span> (<span class='ident'>pi</span> <span class='op'>/</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>6.0</span>)).<span class='ident'>tan</span>();
     <span class='kw'>let</span> <span class='ident'>up_shift</span>    <span class='op'>=</span> (<span class='ident'>right_shift</span> <span class='op'>*</span> <span class='ident'>right_shift</span> <span class='op'>+</span> <span class='ident'>radius</span> <span class='op'>*</span> <span class='ident'>radius</span>).<span class='ident'>sqrt</span>();
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>up</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>up</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>();
     <span class='ident'>up</span>[<span class='number'>0</span>] <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>();
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>right</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>right</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>();
     <span class='ident'>right</span>[<span class='number'>1</span>] <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>();
 
     <span class='comment'>// Triangle:</span>
@@ -425,36 +420,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -466,6 +474,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

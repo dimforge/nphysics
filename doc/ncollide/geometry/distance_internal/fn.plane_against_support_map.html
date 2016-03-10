@@ -9,6 +9,7 @@
 
     <title>ncollide::geometry::distance_internal::plane_against_support_map - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,63 +25,77 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../../index.html'>ncollide</a>::<wbr><a href='../index.html'>geometry</a>::<wbr><a href='index.html'>distance_internal</a></p><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.any_against_any.html'>any_against_any</a><a class='fn ' href='fn.any_against_any.html'>any_against_any</a><a class='fn ' href='fn.any_against_composite_shape.html'>any_against_composite_shape</a><a class='fn ' href='fn.ball_against_ball.html'>ball_against_ball</a><a class='fn ' href='fn.composite_shape_against_any.html'>composite_shape_against_any</a><a class='fn current' href='fn.plane_against_support_map.html'>plane_against_support_map</a><a class='fn ' href='fn.support_map_against_plane.html'>support_map_against_plane</a><a class='fn ' href='fn.support_map_against_support_map.html'>support_map_against_support_map</a><a class='fn ' href='fn.support_map_against_support_map_with_params.html'>support_map_against_support_map_with_params</a></div>
-    </section>
+        <p class='location'><a href='../../index.html'>ncollide</a>::<wbr><a href='../index.html'>geometry</a>::<wbr><a href='index.html'>distance_internal</a></p><script>window.sidebarCurrent = {name: 'plane_against_support_map', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content fn">
-<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>ncollide</a>::<wbr><a href='../index.html'>geometry</a>::<wbr><a href='index.html'>distance_internal</a>::<wbr><a class='fn' href=''>plane_against_support_map</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-6938' href='../../../ncollide_queries/geometry/distance_internal/plane_against_support_map/fn.plane_against_support_map.html?gotosrc=6938'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn plane_against_support_map&lt;N, P, V, M, G&gt;(mplane: &amp;M, plane: &amp;<a class='struct' href='../../../ncollide/shape/struct.Plane.html' title='ncollide::shape::Plane'>Plane</a>&lt;V&gt;, mother: &amp;M, other: &amp;G) -&gt; N <span class='where'>where N: <a class='trait' href='../../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a>, P: <a class='trait' href='../../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt;, M: <a class='trait' href='../../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;V&gt;, G: <a class='trait' href='../../../ncollide/support_map/trait.SupportMap.html' title='ncollide::support_map::SupportMap'>SupportMap</a>&lt;P, V, M&gt;, G: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span></pre><div class='docblock'><p>Distance between a plane and a support-mapped shape.</p>
+<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>ncollide</a>::<wbr><a href='../index.html'>geometry</a>::<wbr><a href='index.html'>distance_internal</a>::<wbr><a class='fn' href=''>plane_against_support_map</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-920' class='srclink' href='../../../ncollide_queries/geometry/distance_internal/plane_against_support_map/fn.plane_against_support_map.html?gotosrc=920' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn plane_against_support_map&lt;P, M, G&gt;(mplane: &amp;M, plane: &amp;<a class='struct' href='../../../ncollide/shape/struct.Plane.html' title='ncollide::shape::Plane'>Plane</a>&lt;P::<a class='trait' href='../../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>&gt;, mother: &amp;M, other: &amp;G) -&gt; P::<a class='trait' href='../../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>::<a class='trait' href='../../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Scalar</a> <span class='where'>where M: <a class='trait' href='../../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt; + <a class='trait' href='../../../nalgebra/traits/geometry/trait.Rotate.html' title='nalgebra::traits::geometry::Rotate'>Rotate</a>&lt;P::<a class='trait' href='../../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>&gt;, G: <a class='trait' href='../../../ncollide/support_map/trait.SupportMap.html' title='ncollide::support_map::SupportMap'>SupportMap</a>&lt;P, M&gt; + ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, P: <a class='trait' href='../../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Point</a></span></pre><div class='docblock'><p>Distance between a plane and a support-mapped shape.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -92,6 +107,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

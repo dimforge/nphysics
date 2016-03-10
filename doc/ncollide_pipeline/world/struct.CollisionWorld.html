@@ -9,6 +9,7 @@
 
     <title>ncollide_pipeline::world::CollisionWorld - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,102 +25,119 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a></p><div class='block struct'><h2>Structs</h2><a class='struct ' href='struct.CollisionGroups.html'>CollisionGroups</a><a class='struct ' href='struct.CollisionObject.html'>CollisionObject</a><a class='struct ' href='struct.CollisionObjectsDispatcher.html'>CollisionObjectsDispatcher</a><a class='struct current' href='struct.CollisionWorld.html'>CollisionWorld</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a></p><script>window.sidebarCurrent = {name: 'CollisionWorld', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a>::<wbr><a class='struct' href=''>CollisionWorld</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-9036' href='../../src/ncollide_pipeline/world/collision_world.rs.html#21-28'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct CollisionWorld&lt;N, P, V, M, T&gt; {
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>world</a>::<wbr><a class='struct' href=''>CollisionWorld</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1173' class='srclink' href='../../src/ncollide_pipeline/world/collision_world.rs.html.html#22-30' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct CollisionWorld&lt;P, M, T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A world that handles collision objects.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, AV, M, T&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionWorld.html' title='ncollide_pipeline::world::CollisionWorld'>CollisionWorld</a>&lt;N, P, V, M, T&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Cross.html' title='nalgebra::traits::geometry::Cross'>Cross</a>&lt;Output=AV&gt;, AV: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, M: <a class='trait' href='../../ncollide_math/trait.Isometry.html' title='ncollide_math::Isometry'>Isometry</a>&lt;N, P, V&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotation.html' title='nalgebra::traits::geometry::Rotation'>Rotation</a>&lt;AV&gt;</span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(margin: N, prediction: N, small_uids: <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionWorld.html' title='ncollide_pipeline::world::CollisionWorld'>CollisionWorld</a>&lt;N, P, V, M, T&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;P, M, T&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionWorld.html' title='ncollide_pipeline::world::CollisionWorld'>CollisionWorld</a>&lt;P, M, T&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, P::Vect: <a class='trait' href='../../nalgebra/traits/geometry/trait.Translate.html' title='nalgebra::traits::geometry::Translate'>Translate</a>&lt;P&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Cross.html' title='nalgebra::traits::geometry::Cross'>Cross</a>, P::Vect::CrossProductType: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;Scalar=P::Vect::Scalar&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;P::Vect::Scalar, Output=P::Vect::CrossProductType&gt;, M: <a class='trait' href='../../ncollide_math/trait.Isometry.html' title='ncollide_math::Isometry'>Isometry</a>&lt;P, P::Vect&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;P::Vect&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Rotation.html' title='nalgebra::traits::geometry::Rotation'>Rotation</a>&lt;P::Vect::CrossProductType&gt;</span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(margin: P::Vect::Scalar, prediction: P::Vect::Scalar, small_uids: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionWorld.html' title='ncollide_pipeline::world::CollisionWorld'>CollisionWorld</a>&lt;P, M, T&gt;</code></h4>
 <div class='docblock'><p>Creates a new collision world.</p>
-</div><h4 id='method.add' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.add' class='fnname'>add</a>(&amp;mut self, uid: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, position: M, shape: <a class='struct' href='http://doc.rust-lang.org/nightly/alloc/arc/struct.Arc.html' title='alloc::arc::Arc'>Arc</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../ncollide_entities/inspection/repr/trait.Repr.html' title='ncollide_entities::inspection::repr::Repr'>Repr</a>&lt;N, P, V, M&gt;&gt;&gt;, collision_groups: <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionGroups.html' title='ncollide_pipeline::world::CollisionGroups'>CollisionGroups</a>, data: T)</code></h4>
+</div><h4 id='method.add' class='method'><code>fn <a href='#method.add' class='fnname'>add</a>(&amp;mut self, uid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, position: M, shape: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/arc/struct.Arc.html' title='alloc::arc::Arc'>Arc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../ncollide_entities/inspection/repr/trait.Repr.html' title='ncollide_entities::inspection::repr::Repr'>Repr</a>&lt;P, M&gt;&gt;&gt;, collision_groups: <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionGroups.html' title='ncollide_pipeline::world::CollisionGroups'>CollisionGroups</a>, data: T)</code></h4>
 <div class='docblock'><p>Adds a collision object to the world.</p>
-</div><h4 id='method.remove' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.remove' class='fnname'>remove</a>(&amp;mut self, uid: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
-<div class='docblock'><p>Remove a collision object from the world.</p>
-</div><h4 id='method.update' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self)</code></h4>
+</div><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Updates the collision world.</p>
 
 <p>This executes the whole collision detection pipeline: the broad phase first, then the
 narrow phase.</p>
-</div><h4 id='method.defered_set_position' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.defered_set_position' class='fnname'>defered_set_position</a>(&amp;mut self, uid: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, pos: M)</code></h4>
+</div><h4 id='method.deferred_remove' class='method'><code>fn <a href='#method.deferred_remove' class='fnname'>deferred_remove</a>(&amp;mut self, uid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
+<div class='docblock'><p>Marks a collision object for removal from the world during the next update.</p>
+</div><h4 id='method.deferred_set_position' class='method'><code>fn <a href='#method.deferred_set_position' class='fnname'>deferred_set_position</a>(&amp;mut self, uid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, pos: M)</code></h4>
 <div class='docblock'><p>Sets the position the collision object attached to the specified object will have during
 the next update.</p>
-</div><h4 id='method.register_contact_signal_handler' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.register_contact_signal_handler' class='fnname'>register_contact_signal_handler</a>&lt;H&gt;(&amp;mut self, name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, handler: H) <span class='where'>where H: <a class='trait' href='../../ncollide_pipeline/narrow_phase/trait.ContactSignalHandler.html' title='ncollide_pipeline::narrow_phase::ContactSignalHandler'>ContactSignalHandler</a>&lt;T&gt; + 'static</span></code></h4>
+</div><h4 id='method.register_contact_signal_handler' class='method'><code>fn <a href='#method.register_contact_signal_handler' class='fnname'>register_contact_signal_handler</a>&lt;H&gt;(&amp;mut self, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, handler: H) <span class='where'>where H: <a class='trait' href='../../ncollide_pipeline/narrow_phase/trait.ContactSignalHandler.html' title='ncollide_pipeline::narrow_phase::ContactSignalHandler'>ContactSignalHandler</a>&lt;T&gt; + 'static</span></code></h4>
 <div class='docblock'><p>Registers a handler for contact start/stop events.</p>
-</div><h4 id='method.unregister_contact_signal_handler' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.unregister_contact_signal_handler' class='fnname'>unregister_contact_signal_handler</a>(&amp;mut self, name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
+</div><h4 id='method.unregister_contact_signal_handler' class='method'><code>fn <a href='#method.unregister_contact_signal_handler' class='fnname'>unregister_contact_signal_handler</a>(&amp;mut self, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
 <div class='docblock'><p>Unregisters a handler for contact start/stop events.</p>
-</div><h4 id='method.perform_position_update' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.perform_position_update' class='fnname'>perform_position_update</a>(&amp;mut self)</code></h4>
+</div><h4 id='method.perform_position_update' class='method'><code>fn <a href='#method.perform_position_update' class='fnname'>perform_position_update</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Executes the position updates.</p>
-</div><h4 id='method.perform_broad_phase' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.perform_broad_phase' class='fnname'>perform_broad_phase</a>(&amp;mut self)</code></h4>
+</div><h4 id='method.perform_broad_phase' class='method'><code>fn <a href='#method.perform_broad_phase' class='fnname'>perform_broad_phase</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Executes the broad phase of the collision detection pipeline.</p>
 
 <p>Not that this does not take in account the changes made to the collision updates after the
 last <code>.perform_position_update()</code> call.</p>
-</div><h4 id='method.perform_narrow_phase' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.perform_narrow_phase' class='fnname'>perform_narrow_phase</a>(&amp;mut self)</code></h4>
+</div><h4 id='method.perform_removals_and_broad_phase' class='method'><code>fn <a href='#method.perform_removals_and_broad_phase' class='fnname'>perform_removals_and_broad_phase</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>Actually removes all the objects marked by <code>.deferred_remove(...)</code> and updates the broad
+phase.</p>
+</div><h4 id='method.perform_narrow_phase' class='method'><code>fn <a href='#method.perform_narrow_phase' class='fnname'>perform_narrow_phase</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Executes the narrow phase of the collision detection pipeline.</p>
-</div><h4 id='method.contact_pairs' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.contact_pairs' class='fnname'>contact_pairs</a>&lt;F&gt;(&amp;self, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T, &amp;<a class='type' href='../../ncollide_pipeline/narrow_phase/type.CollisionAlgorithm.html' title='ncollide_pipeline::narrow_phase::CollisionAlgorithm'>CollisionAlgorithm</a>&lt;N, P, V, M&gt;)</span></code></h4>
-<div class='docblock'><p>Iterats through all the contact pairs.</p>
-</div><h4 id='method.contacts' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.contacts' class='fnname'>contacts</a>&lt;F&gt;(&amp;self, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T, &amp;<a class='struct' href='../../ncollide_queries/geometry/contacts_internal/contact/struct.Contact.html' title='ncollide_queries::geometry::contacts_internal::contact::Contact'>Contact</a>&lt;N, P, V&gt;)</span></code></h4>
-<div class='docblock'><p>Collects every contact detected since the last update.</p>
-</div><h4 id='method.interferences_with_ray' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.interferences_with_ray' class='fnname'>interferences_with_ray</a>&lt;'a, F&gt;(&amp;'a mut self, ray: &amp;<a class='struct' href='../../ncollide_queries/ray/ray/struct.Ray.html' title='ncollide_queries::ray::ray::Ray'>Ray</a>&lt;P, V&gt;, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, <a class='struct' href='../../ncollide_queries/ray/ray/struct.RayIntersection.html' title='ncollide_queries::ray::ray::RayIntersection'>RayIntersection</a>&lt;N, V&gt;)</span></code></h4>
-<div class='docblock'><p>Computes the interferences between every rigid bodies of a given broad phase, and a ray.</p>
-</div><h4 id='method.interferences_with_point' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.interferences_with_point' class='fnname'>interferences_with_point</a>&lt;F&gt;(&amp;self, point: &amp;P, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T)</span></code></h4>
+</div><h4 id='method.contact_pairs' class='method'><code>fn <a href='#method.contact_pairs' class='fnname'>contact_pairs</a>(&amp;self) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.ContactPairs.html' title='ncollide_pipeline::world::ContactPairs'>ContactPairs</a>&lt;P, M, T&gt;</code></h4>
+<div class='docblock'><p>Iterates through all the contact pairs detected since the last update.</p>
+</div><h4 id='method.contacts' class='method'><code>fn <a href='#method.contacts' class='fnname'>contacts</a>(&amp;self) -&gt; <a class='struct' href='../../ncollide_pipeline/world/struct.Contacts.html' title='ncollide_pipeline::world::Contacts'>Contacts</a>&lt;P, M, T&gt;</code></h4>
+<div class='docblock'><p>Iterates through every contact detected since the last update.</p>
+</div><h4 id='method.interferences_with_ray' class='method'><code>fn <a href='#method.interferences_with_ray' class='fnname'>interferences_with_ray</a>&lt;'a&gt;(&amp;'a self, ray: &amp;'a <a class='struct' href='../../ncollide_queries/ray/ray/struct.Ray.html' title='ncollide_queries::ray::ray::Ray'>Ray</a>&lt;P&gt;, groups: &amp;'a <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionGroups.html' title='ncollide_pipeline::world::CollisionGroups'>CollisionGroups</a>) -&gt; InterferencesWithRay&lt;'a, P, M, T&gt;</code></h4>
+<div class='docblock'><p>Computes the interferences between every rigid bodies on this world and a ray.</p>
+</div><h4 id='method.interferences_with_point' class='method'><code>fn <a href='#method.interferences_with_point' class='fnname'>interferences_with_point</a>&lt;'a&gt;(&amp;'a self, point: &amp;'a P, groups: &amp;'a <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionGroups.html' title='ncollide_pipeline::world::CollisionGroups'>CollisionGroups</a>) -&gt; InterferencesWithPoint&lt;'a, P, M, T&gt;</code></h4>
 <div class='docblock'><p>Computes the interferences between every rigid bodies of a given broad phase, and a point.</p>
-</div><h4 id='method.interferences_with_aabb' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.interferences_with_aabb' class='fnname'>interferences_with_aabb</a>&lt;F&gt;(&amp;self, aabb: &amp;<a class='struct' href='../../ncollide_entities/bounding_volume/aabb/struct.AABB.html' title='ncollide_entities::bounding_volume::aabb::AABB'>AABB</a>&lt;P&gt;, f: F) <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T)</span></code></h4>
+</div><h4 id='method.interferences_with_aabb' class='method'><code>fn <a href='#method.interferences_with_aabb' class='fnname'>interferences_with_aabb</a>&lt;'a&gt;(&amp;'a self, aabb: &amp;'a <a class='struct' href='../../ncollide_entities/bounding_volume/aabb/struct.AABB.html' title='ncollide_entities::bounding_volume::aabb::AABB'>AABB</a>&lt;P&gt;, groups: &amp;'a <a class='struct' href='../../ncollide_pipeline/world/struct.CollisionGroups.html' title='ncollide_pipeline::world::CollisionGroups'>CollisionGroups</a>) -&gt; InterferencesWithAABB&lt;'a, P, M, T&gt;</code></h4>
 <div class='docblock'><p>Computes the interferences between every rigid bodies of a given broad phase, and a aabb.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -131,6 +149,6 @@ last <code>.perform_position_update()</code> call.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

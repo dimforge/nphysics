@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Segment","A segment shape."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["find","Performs the `find` part of the union-find algorithm."],["union","Performs the `union` part of the union-find algorithm."]],"struct":[["UnionFindSet","An element used by the union-find algorithm."]]});

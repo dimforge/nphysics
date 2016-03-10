@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["cso_support_point","Computes the support point of the CSO `g1 - g2` on a given direction."]]});

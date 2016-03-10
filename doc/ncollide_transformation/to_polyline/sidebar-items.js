@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["ToPolyline","Trait implemented by shapes that can be approximated by a triangle mesh."]]});

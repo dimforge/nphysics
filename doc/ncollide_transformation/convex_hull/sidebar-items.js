@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["convex_hull2","Computes the convex hull of a set of 2d points."],["convex_hull2_idx","Computes the convex hull of a set of 2d points and returns only the indices of the hull vertices."],["convex_hull3","Computes the convex hull of a set of 3d points."]]});

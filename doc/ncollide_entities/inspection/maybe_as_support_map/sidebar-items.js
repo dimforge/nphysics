@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["maybe_as_support_map","Converts a shape to a support map if possible."],["maybe_repr_desc_as_support_map","Converts a shape descriptor to a support map if possible."],["support_map_repr_id","Gets the id associated with the `SupportMap` trait."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BodyDamping","A linear and angular velocity damper."]]});

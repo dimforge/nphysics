@@ -117,7 +117,7 @@
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Vect</span>, <span class='ident'>Orientation</span>};
 
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Show</span>, <span class='ident'>Clone</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
 <span class='doccomment'>/// A constraint of velocity at a point of contact.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>VelocityConstraint</span> {
     <span class='doccomment'>/// The contact normal.</span>
@@ -220,6 +220,10 @@
                 <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
             </p>
         </div>
     </div>

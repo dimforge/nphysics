@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BoundingVolumeInterferencesCollector","Bounding Volume Tree visitor collecting interferences with a given bounding volume."]]});

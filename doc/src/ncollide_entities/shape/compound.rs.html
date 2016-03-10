@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_entities/shape/compound.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_entities/shape/compound.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>compound.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -128,8 +129,6 @@
 <span id="86">86</span>
 <span id="87">87</span>
 <span id="88">88</span>
-<span id="89">89</span>
-<span id="90">90</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! Shape composed from the union of primitives.</span>
@@ -138,9 +137,9 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Translate</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>;
-<span class='kw'>use</span> <span class='ident'>bounding_volume</span>::{<span class='ident'>HasAABB</span>, <span class='ident'>AABB</span>, <span class='ident'>BoundingVolume</span>};
+<span class='kw'>use</span> <span class='ident'>bounding_volume</span>::{<span class='self'>self</span>, <span class='ident'>AABB</span>, <span class='ident'>BoundingVolume</span>};
 <span class='kw'>use</span> <span class='ident'>partitioning</span>::<span class='ident'>BVT</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Isometry</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Isometry</span>};
 <span class='kw'>use</span> <span class='ident'>inspection</span>::<span class='ident'>Repr</span>;
 
 <span class='doccomment'>/// A compound shape with an aabb bounding volume.</span>
@@ -148,18 +147,16 @@
 <span class='doccomment'>/// A compound shape is a shape composed of the union of several simpler shape. This is</span>
 <span class='doccomment'>/// the main way of creating a concave shape from convex parts. Each parts can have its own</span>
 <span class='doccomment'>/// delta transformation to shift or rotate it with regard to the other shapes.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
-    <span class='ident'>shapes</span>:  <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>M</span>, <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>,
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+    <span class='ident'>shapes</span>:  <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>M</span>, <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>,
     <span class='ident'>bvt</span>:     <span class='ident'>BVT</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>bvs</span>:     <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Clone</span>,
-          <span class='ident'>P</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Clone</span>,
-          <span class='ident'>V</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Clone</span>,
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>M</span>: <span class='ident'>Clone</span> {
-    <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
         <span class='ident'>Compound</span> {
             <span class='ident'>shapes</span>: <span class='self'>self</span>.<span class='ident'>shapes</span>.<span class='ident'>clone</span>(),
             <span class='ident'>bvt</span>:    <span class='self'>self</span>.<span class='ident'>bvt</span>.<span class='ident'>clone</span>(),
@@ -168,19 +165,18 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Translate</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
-          <span class='ident'>M</span>: <span class='ident'>Isometry</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>P</span>::<span class='ident'>Vect</span>: <span class='ident'>Translate</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>M</span>: <span class='ident'>Isometry</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Builds a new compound shape.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>shapes</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>M</span>, <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>shapes</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>M</span>, <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bvs</span>    <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>leaves</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
 
         <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='kw-2'>&amp;</span>(<span class='kw-2'>ref</span> <span class='ident'>delta</span>, <span class='kw-2'>ref</span> <span class='ident'>shape</span>)) <span class='kw'>in</span> <span class='ident'>shapes</span>.<span class='ident'>iter</span>().<span class='ident'>enumerate</span>() {
             <span class='comment'>// loosen for better persistancy</span>
-            <span class='kw'>let</span> <span class='ident'>bv</span> <span class='op'>=</span> <span class='ident'>shape</span>.<span class='ident'>aabb</span>(<span class='ident'>delta</span>).<span class='ident'>loosened</span>(<span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.04f64</span>));
+            <span class='kw'>let</span> <span class='ident'>bv</span> <span class='op'>=</span> <span class='ident'>bounding_volume</span>::<span class='ident'>aabb</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>shape</span>, <span class='ident'>delta</span>).<span class='ident'>loosened</span>(<span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.04f64</span>));
 
             <span class='ident'>bvs</span>.<span class='ident'>push</span>(<span class='ident'>bv</span>.<span class='ident'>clone</span>());
             <span class='ident'>leaves</span>.<span class='ident'>push</span>((<span class='ident'>i</span>, <span class='ident'>bv</span>));
@@ -196,11 +192,12 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>Compound</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
     <span class='doccomment'>/// The shapes of this compound shape.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shapes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[(<span class='ident'>M</span>, <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)] {
-        <span class='self'>self</span>.<span class='ident'>shapes</span>.<span class='ident'>as_slice</span>()
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shapes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[(<span class='ident'>M</span>, <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>)] {
+        <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>shapes</span>[..]
     }
 
     <span class='doccomment'>/// The optimization structure used by this compound shape.</span>
@@ -212,7 +209,7 @@
     <span class='doccomment'>/// The shapes bounding volumes.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bounding_volumes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[<span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>] {
-        <span class='self'>self</span>.<span class='ident'>bvs</span>.<span class='ident'>as_slice</span>()
+        <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>bvs</span>[..]
     }
 
     <span class='doccomment'>/// The AABB of the i-th shape compositing this compound.</span>
@@ -227,36 +224,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -268,6 +278,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

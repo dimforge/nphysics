@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["plane_against_support_map","Distance between a plane and a support-mapped shape."],["support_map_against_plane","Distance between a support-mapped shape and a plane."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["composite_shape_repr_id","Gets the id associated with the `CompositeShape` trait."],["maybe_as_composite_shape","Converts a shape to a composite shape if possible."],["maybe_repr_desc_as_composite_shape","Converts a shape to a composite shape if possible."]]});

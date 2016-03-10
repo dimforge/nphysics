@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_queries/ray/ray_mesh.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_queries/ray/ray_mesh.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>ray_mesh.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -247,65 +248,52 @@
 <span id="205">205</span>
 <span id="206">206</span>
 <span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
-<span id="218">218</span>
-<span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::<span class='ident'>Index</span>;
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Pnt2</span>, <span class='ident'>Vec3</span>, <span class='ident'>Transform</span>, <span class='ident'>Rotate</span>};
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Pnt2</span>, <span class='ident'>Vec3</span>, <span class='ident'>Identity</span>, <span class='ident'>Transform</span>, <span class='ident'>Rotate</span>, <span class='ident'>Norm</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
-<span class='kw'>use</span> <span class='ident'>ray</span>::{<span class='ident'>Ray</span>, <span class='ident'>LocalRayCast</span>, <span class='ident'>RayCast</span>, <span class='ident'>RayIntersection</span>};
+<span class='kw'>use</span> <span class='ident'>ray</span>::{<span class='ident'>Ray</span>, <span class='ident'>RayCast</span>, <span class='ident'>RayIntersection</span>};
 <span class='kw'>use</span> <span class='ident'>ray</span>;
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>shape</span>::{<span class='ident'>BaseMesh</span>, <span class='ident'>BaseMeshElement</span>, <span class='ident'>TriMesh</span>, <span class='ident'>Polyline</span>};
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>bounding_volume</span>::<span class='ident'>AABB</span>;
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>partitioning</span>::<span class='ident'>BVTCostFn</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>};
 
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Rotate</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>,
           <span class='ident'>I</span>: <span class='ident'>Index</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>usize</span><span class='op'>&gt;</span>,
-          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, _: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cost_fn</span> <span class='op'>=</span> <span class='ident'>BaseMeshRayToiCostFn</span> { <span class='ident'>mesh</span>: <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='ident'>ray</span> };
+    <span class='kw'>fn</span> <span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, _: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>ls_ray</span> <span class='op'>=</span> <span class='ident'>Ray</span>::<span class='ident'>new</span>(<span class='ident'>m</span>.<span class='ident'>inv_transform</span>(<span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>orig</span>), <span class='ident'>m</span>.<span class='ident'>inv_rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>dir</span>));
+
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cost_fn</span> <span class='op'>=</span> <span class='ident'>BaseMeshRayToiCostFn</span> { <span class='ident'>mesh</span>: <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>ls_ray</span> };
 
         <span class='self'>self</span>.<span class='ident'>bvt</span>().<span class='ident'>best_first_search</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>cost_fn</span>).<span class='ident'>map</span>(<span class='op'>|</span>(_, <span class='ident'>res</span>)<span class='op'>|</span> <span class='ident'>res</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, _: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cost_fn</span> <span class='op'>=</span> <span class='ident'>BaseMeshRayToiAndNormalCostFn</span> { <span class='ident'>mesh</span>: <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='ident'>ray</span> };
+    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, _: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>ls_ray</span> <span class='op'>=</span> <span class='ident'>Ray</span>::<span class='ident'>new</span>(<span class='ident'>m</span>.<span class='ident'>inv_transform</span>(<span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>orig</span>), <span class='ident'>m</span>.<span class='ident'>inv_rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>dir</span>));
 
-        <span class='self'>self</span>.<span class='ident'>bvt</span>().<span class='ident'>best_first_search</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>cost_fn</span>).<span class='ident'>map</span>(<span class='op'>|</span>(_, <span class='ident'>res</span>)<span class='op'>|</span> <span class='ident'>res</span>)
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cost_fn</span> <span class='op'>=</span> <span class='ident'>BaseMeshRayToiAndNormalCostFn</span> { <span class='ident'>mesh</span>: <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>ls_ray</span> };
+
+        <span class='self'>self</span>.<span class='ident'>bvt</span>().<span class='ident'>best_first_search</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>cost_fn</span>).<span class='ident'>map</span>(<span class='op'>|</span>(_, <span class='kw-2'>mut</span> <span class='ident'>res</span>)<span class='op'>|</span> {
+            <span class='ident'>res</span>.<span class='ident'>normal</span> <span class='op'>=</span> <span class='ident'>m</span>.<span class='ident'>rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>res</span>.<span class='ident'>normal</span>);
+            <span class='ident'>res</span>
+        })
     }
 
-    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>uvs</span>().<span class='ident'>is_none</span>() <span class='op'>||</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>!=</span> <span class='number'>3</span> {
-            <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>toi_and_normal_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>);
+            <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>toi_and_normal_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>);
         }
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cost_fn</span> <span class='op'>=</span> <span class='ident'>BaseMeshRayToiAndNormalAndUVsCostFn</span> { <span class='ident'>mesh</span>: <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='ident'>ray</span> };
+        <span class='kw'>let</span> <span class='ident'>ls_ray</span> <span class='op'>=</span> <span class='ident'>Ray</span>::<span class='ident'>new</span>(<span class='ident'>m</span>.<span class='ident'>inv_transform</span>(<span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>orig</span>), <span class='ident'>m</span>.<span class='ident'>inv_rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>dir</span>));
+
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cost_fn</span> <span class='op'>=</span> <span class='ident'>BaseMeshRayToiAndNormalAndUVsCostFn</span> { <span class='ident'>mesh</span>: <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>ls_ray</span> };
         <span class='kw'>let</span> <span class='ident'>cast</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>bvt</span>().<span class='ident'>best_first_search</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>cost_fn</span>);
 
         <span class='kw'>match</span> <span class='ident'>cast</span> {
@@ -328,7 +316,7 @@
                 <span class='comment'>// XXX: this interpolation should be done on the two other ray cast too!</span>
                 <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>normals</span>() {
                     <span class='prelude-val'>None</span>         <span class='op'>=&gt;</span> {
-                        <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='ident'>n</span>, <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
+                        <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='ident'>m</span>.<span class='ident'>rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>n</span>), <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
                     },
                     <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>ns</span>) <span class='op'>=&gt;</span> {
                         <span class='kw'>let</span> <span class='ident'>n1</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>ns</span>[<span class='ident'>idx</span>[<span class='number'>0</span>]];
@@ -337,15 +325,15 @@
 
                         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>n123</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>n1</span> <span class='op'>*</span> <span class='ident'>uv</span>.<span class='ident'>x</span> <span class='op'>+</span> <span class='op'>*</span><span class='ident'>n2</span> <span class='op'>*</span> <span class='ident'>uv</span>.<span class='ident'>y</span> <span class='op'>+</span> <span class='op'>*</span><span class='ident'>n3</span> <span class='op'>*</span> <span class='ident'>uv</span>.<span class='ident'>z</span>;
 
-                        <span class='kw'>if</span> <span class='ident'>na</span>::<span class='ident'>is_zero</span>(<span class='kw-2'>&amp;</span><span class='ident'>n123</span>.<span class='ident'>normalize</span>()) {
-                            <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='ident'>n</span>, <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
+                        <span class='kw'>if</span> <span class='ident'>na</span>::<span class='ident'>is_zero</span>(<span class='kw-2'>&amp;</span><span class='ident'>n123</span>.<span class='ident'>normalize_mut</span>()) {
+                            <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='ident'>m</span>.<span class='ident'>rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>n</span>), <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
                         }
                         <span class='kw'>else</span> {
-                            <span class='kw'>if</span> <span class='ident'>na</span>::<span class='ident'>dot</span>(<span class='kw-2'>&amp;</span><span class='ident'>n123</span>, <span class='kw-2'>&amp;</span><span class='ident'>ray</span>.<span class='ident'>dir</span>) <span class='op'>&gt;</span> <span class='ident'>na</span>::<span class='ident'>zero</span>() {
-                                <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='op'>-</span><span class='ident'>n123</span>, <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
+                            <span class='kw'>if</span> <span class='ident'>na</span>::<span class='ident'>dot</span>(<span class='kw-2'>&amp;</span><span class='ident'>n123</span>, <span class='kw-2'>&amp;</span><span class='ident'>ls_ray</span>.<span class='ident'>dir</span>) <span class='op'>&gt;</span> <span class='ident'>na</span>::<span class='ident'>zero</span>() {
+                                <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='op'>-</span><span class='ident'>m</span>.<span class='ident'>rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>n123</span>), <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
                             }
                             <span class='kw'>else</span> {
-                                <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='ident'>n123</span>, <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
+                                <span class='prelude-val'>Some</span>(<span class='ident'>RayIntersection</span>::<span class='ident'>new_with_uvs</span>(<span class='ident'>toi</span>, <span class='ident'>m</span>.<span class='ident'>rotate</span>(<span class='kw-2'>&amp;</span><span class='ident'>n123</span>), <span class='prelude-val'>Some</span>(<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>uvx</span>, <span class='ident'>uvy</span>))))
                             }
                         }
                     }
@@ -355,82 +343,69 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Rotate</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>I</span>: <span class='ident'>Index</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>usize</span><span class='op'>&gt;</span>,
-          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
-}
-
 
 <span class='comment'>/*
  * Costs functions.
  */</span>
-<span class='kw'>struct</span> <span class='ident'>BaseMeshRayToiCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>V</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>I</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>E</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
-    <span class='ident'>mesh</span>:  <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
-    <span class='ident'>ray</span>:   <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
+<span class='kw'>struct</span> <span class='ident'>BaseMeshRayToiCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span> <span class='op'>+</span> <span class='ident'>Point</span>, <span class='ident'>I</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>E</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='ident'>mesh</span>:  <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
+    <span class='ident'>ray</span>:   <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BVTCostFn</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>N</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BaseMeshRayToiCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BVTCostFn</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>
+<span class='kw'>for</span> <span class='ident'>BaseMeshRayToiCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>compute_bv_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>aabb</span>: <span class='kw-2'>&amp;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-        <span class='ident'>aabb</span>.<span class='ident'>toi_with_ray</span>(<span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>)
+    <span class='kw'>fn</span> <span class='ident'>compute_bv_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>aabb</span>: <span class='kw-2'>&amp;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+        <span class='ident'>aabb</span>.<span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>compute_b_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>N</span>, <span class='ident'>N</span>)<span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>element_at</span>(<span class='op'>*</span><span class='ident'>b</span>).<span class='ident'>toi_with_ray</span>(<span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>toi</span><span class='op'>|</span> (<span class='ident'>toi</span>, <span class='ident'>toi</span>))
+    <span class='kw'>fn</span> <span class='ident'>compute_b_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>element_at</span>(<span class='op'>*</span><span class='ident'>b</span>).<span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>toi</span><span class='op'>|</span> (<span class='ident'>toi</span>, <span class='ident'>toi</span>))
     }
 }
 
-<span class='kw'>struct</span> <span class='ident'>BaseMeshRayToiAndNormalCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>V</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>I</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>E</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
-    <span class='ident'>mesh</span>:  <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
-    <span class='ident'>ray</span>:   <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
+<span class='kw'>struct</span> <span class='ident'>BaseMeshRayToiAndNormalCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span> <span class='op'>+</span> <span class='ident'>Point</span>, <span class='ident'>I</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>E</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='ident'>mesh</span>:  <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
+    <span class='ident'>ray</span>:   <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BVTCostFn</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span>
-<span class='kw'>for</span> <span class='ident'>BaseMeshRayToiAndNormalCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BVTCostFn</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span>
+<span class='kw'>for</span> <span class='ident'>BaseMeshRayToiAndNormalCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>compute_bv_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>aabb</span>: <span class='kw-2'>&amp;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-        <span class='ident'>aabb</span>.<span class='ident'>toi_with_ray</span>(<span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>)
+    <span class='kw'>fn</span> <span class='ident'>compute_bv_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>aabb</span>: <span class='kw-2'>&amp;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+        <span class='ident'>aabb</span>.<span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>compute_b_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>N</span>, <span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>element_at</span>(<span class='op'>*</span><span class='ident'>b</span>).<span class='ident'>toi_and_normal_with_ray</span>(<span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>inter</span><span class='op'>|</span> (<span class='ident'>inter</span>.<span class='ident'>toi</span>, <span class='ident'>inter</span>))
+    <span class='kw'>fn</span> <span class='ident'>compute_b_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>element_at</span>(<span class='op'>*</span><span class='ident'>b</span>).<span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>inter</span><span class='op'>|</span> (<span class='ident'>inter</span>.<span class='ident'>toi</span>, <span class='ident'>inter</span>))
     }
 }
 
-<span class='kw'>struct</span> <span class='ident'>BaseMeshRayToiAndNormalAndUVsCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>V</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>I</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>E</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
-    <span class='ident'>mesh</span>:  <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
-    <span class='ident'>ray</span>:   <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
+<span class='kw'>struct</span> <span class='ident'>BaseMeshRayToiAndNormalAndUVsCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>: <span class='lifetime'>&#39;a</span> <span class='op'>+</span> <span class='ident'>Point</span>, <span class='ident'>I</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>E</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='ident'>mesh</span>:  <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BaseMesh</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
+    <span class='ident'>ray</span>:   <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BVTCostFn</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, (<span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>Vec3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>
-<span class='kw'>for</span> <span class='ident'>BaseMeshRayToiAndNormalAndUVsCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span> <span class='ident'>BVTCostFn</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>usize</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, (<span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>, <span class='ident'>Vec3</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>
+<span class='kw'>for</span> <span class='ident'>BaseMeshRayToiAndNormalAndUVsCostFn</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>P</span>, <span class='ident'>I</span>, <span class='ident'>E</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>I</span>: <span class='ident'>Index</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>usize</span><span class='op'>&gt;</span>,
-          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
+          <span class='ident'>E</span>: <span class='ident'>BaseMeshElement</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>compute_bv_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>aabb</span>: <span class='kw-2'>&amp;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-        <span class='ident'>aabb</span>.<span class='ident'>toi_with_ray</span>(<span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>)
+    <span class='kw'>fn</span> <span class='ident'>compute_bv_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>aabb</span>: <span class='kw-2'>&amp;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+        <span class='ident'>aabb</span>.<span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='self'>self</span>.<span class='ident'>ray</span>, <span class='boolval'>true</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>compute_b_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>N</span>, (<span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>Vec3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>))<span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>vs</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>vertices</span>().<span class='ident'>as_slice</span>();
+    <span class='kw'>fn</span> <span class='ident'>compute_b_cost</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>)
+        <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, (<span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>, <span class='ident'>Vec3</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>))<span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>vs</span>  <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>vertices</span>()[..];
         <span class='kw'>let</span> <span class='ident'>idx</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>mesh</span>.<span class='ident'>indices</span>()[<span class='op'>*</span><span class='ident'>b</span>];
 
         <span class='kw'>let</span> <span class='ident'>a</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>vs</span>[<span class='ident'>idx</span>[<span class='number'>0</span>]];
@@ -444,58 +419,42 @@
 <span class='comment'>/*
  * fwd impls. to the exact shapes.
  */</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Rotate</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>)
+    <span class='kw'>fn</span> <span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>)
+    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>)
-    }
-}
-
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Rotate</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
-}
-
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>)
-    }
-
-    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>)
-    }
-
-    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='ident'>ray</span>, <span class='ident'>solid</span>)
+    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>)
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Rotate</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Rotate</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> {
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>toi_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>solid</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RayIntersection</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>base_mesh</span>().<span class='ident'>toi_and_normal_and_uv_with_ray</span>(<span class='ident'>m</span>, <span class='ident'>ray</span>, <span class='ident'>solid</span>)
+    }
 }
 </pre>
 </section>
@@ -503,36 +462,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -544,6 +516,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

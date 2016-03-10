@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["JohnsonSimplex","Simplex using the Johnson subalgorithm to compute the projection of the origin on the simplex."],["RecursionTemplate","Set of indices to explain to the JohnsonSimplex how to do its work. Building this is very time consuming, and thus should be shared between all instances of the Johnson simplex."]]});

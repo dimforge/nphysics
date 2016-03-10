@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Reflection","SupportMap representation of the reflection of a shape."]]});

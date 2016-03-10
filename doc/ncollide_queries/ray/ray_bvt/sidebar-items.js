@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["RayInterferencesCollector","Bounding Volume Tree visitor collecting interferences with a given ray."],["RayIntersectionCostFn","A search thet selects the objects that has the smallest time of impact with a given ray."]]});

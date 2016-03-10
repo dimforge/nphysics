@@ -182,8 +182,9 @@
 <span id="140">140</span>
 <span id="141">141</span>
 <span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>num</span>::<span class='ident'>Float</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Translation</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>;
@@ -193,6 +194,7 @@
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>bounding_volume</span>::<span class='ident'>BoundingVolume</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>geometry</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>bounding_volume</span>::<span class='ident'>HasAABB</span>;
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>FloatError</span>;
 <span class='kw'>use</span> <span class='ident'>world</span>::<span class='ident'>RigidBodyCollisionWorld</span>;
 <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>RigidBodyHandle</span>;
 <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>RigidBody</span>;
@@ -208,9 +210,11 @@
 
 <span class='kw'>impl</span> <span class='ident'>CCDBody</span> {
     <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>body</span>: <span class='ident'>RigidBodyHandle</span>, <span class='ident'>threshold</span>: <span class='ident'>Scalar</span>) <span class='op'>-&gt;</span> <span class='ident'>CCDBody</span> {
+        <span class='kw'>let</span> <span class='ident'>last_pos</span> <span class='op'>=</span> <span class='ident'>body</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>().<span class='ident'>translation</span>();
+
         <span class='ident'>CCDBody</span> {
             <span class='ident'>sqthreshold</span>: <span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>threshold</span>,
-            <span class='ident'>last_pos</span>:    <span class='ident'>body</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>().<span class='ident'>translation</span>(),
+            <span class='ident'>last_pos</span>:    <span class='ident'>last_pos</span>,
             <span class='ident'>body</span>:        <span class='ident'>body</span>,
             <span class='ident'>accept_zero</span>: <span class='boolval'>true</span>
         }
@@ -266,7 +270,7 @@
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>toi_found</span> <span class='op'>=</span> <span class='boolval'>false</span>;
                 <span class='kw'>let</span> <span class='ident'>dir</span> <span class='op'>=</span> <span class='ident'>movement</span>.<span class='ident'>clone</span>();
 
-                <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>Float</span>::<span class='ident'>epsilon</span>();
+                <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>FloatError</span>::<span class='ident'>epsilon</span>();
 
                 <span class='comment'>// FIXME: performing a convex-cast here would be much more efficient.</span>
                 <span class='ident'>cw</span>.<span class='ident'>interferences_with_aabb</span>(<span class='kw-2'>&amp;</span><span class='ident'>swept_aabb</span>, <span class='op'>|</span><span class='ident'>rb2</span><span class='op'>|</span> {
@@ -358,6 +362,10 @@
                 <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
             </p>
         </div>
     </div>

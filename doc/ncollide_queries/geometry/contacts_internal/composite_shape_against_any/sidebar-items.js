@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["any_against_composite_shape","Best contact between a shape and a composite (`Mesh`, `Compound`) shape."],["composite_shape_against_any","Best contact between a composite shape (`Mesh`, `Compound`) and any other shape."]]});

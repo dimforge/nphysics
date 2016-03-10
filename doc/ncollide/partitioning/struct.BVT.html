@@ -9,6 +9,7 @@
 
     <title>ncollide::partitioning::BVT - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,85 +25,101 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.BVT.html'>BVT</a><a class='struct ' href='struct.BoundingVolumeInterferencesCollector.html'>BoundingVolumeInterferencesCollector</a><a class='struct ' href='struct.DBVT.html'>DBVT</a><a class='struct ' href='struct.DBVTLeaf.html'>DBVTLeaf</a></div><div class='block enum'><h2>Enums</h2><a class='enum ' href='enum.BVTNode.html'>BVTNode</a><a class='enum ' href='enum.BinaryPartition.html'>BinaryPartition</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.BVTCostFn.html'>BVTCostFn</a><a class='trait ' href='trait.BVTTVisitor.html'>BVTTVisitor</a><a class='trait ' href='trait.BVTVisitor.html'>BVTVisitor</a></div><div class='block fn'><h2>Functions</h2><a class='fn ' href='fn.median_partitioner.html'>median_partitioner</a><a class='fn ' href='fn.median_partitioner_with_centers.html'>median_partitioner_with_centers</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a></p><script>window.sidebarCurrent = {name: 'BVT', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a>::<wbr><a class='struct' href=''>BVT</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-19506' href='../../ncollide_entities/partitioning/bvt/struct.BVT.html?gotosrc=19506'>[src]</a></span></h1>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>partitioning</a>::<wbr><a class='struct' href=''>BVT</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-2732' class='srclink' href='../../ncollide_entities/partitioning/bvt/struct.BVT.html?gotosrc=2732' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct BVT&lt;B, BV&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A Boundig Volume Tree.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;B, BV&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;</code></h3><div class='impl-items'><h4 id='method.new_with_partitioner' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new_with_partitioner' class='fnname'>new_with_partitioner</a>&lt;F&gt;(leaves: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, BV)</a>&gt;, partitioner: &amp;mut F) -&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where F: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(<a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, BV)</a>&gt;) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(BV, <a class='enum' href='../../ncollide/partitioning/enum.BinaryPartition.html' title='ncollide::partitioning::BinaryPartition'>BinaryPartition</a>&lt;B, BV&gt;)</a></span></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;B, BV&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;</code></h3><div class='impl-items'><h4 id='method.new_with_partitioner' class='method'><code>fn <a href='#method.new_with_partitioner' class='fnname'>new_with_partitioner</a>&lt;F&gt;(leaves: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>B, BV<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;, partitioner: &amp;mut F) -&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>B, BV<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>BV, <a class='enum' href='../../ncollide/partitioning/enum.BinaryPartition.html' title='ncollide::partitioning::BinaryPartition'>BinaryPartition</a>&lt;B, BV&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a></span></code></h4>
 <div class='docblock'><p>Builds a bounding volume tree using an user-defined construction function.</p>
-</div><h4 id='method.visit' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.visit' class='fnname'>visit</a>&lt;Vis&gt;(&amp;self, visitor: &amp;mut Vis) <span class='where'>where Vis: <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt;</span></code></h4>
-<div class='docblock'><p>Visit this tree using… a visitor!</p>
-</div><h4 id='method.visit_bvtt' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.visit_bvtt' class='fnname'>visit_bvtt</a>&lt;Vis&gt;(&amp;self, other: &amp;<a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;, visitor: &amp;mut Vis) <span class='where'>where Vis: <a class='trait' href='../../ncollide/partitioning/trait.BVTTVisitor.html' title='ncollide::partitioning::BVTTVisitor'>BVTTVisitor</a>&lt;B, BV&gt;</span></code></h4>
+</div><h4 id='method.visit' class='method'><code>fn <a href='#method.visit' class='fnname'>visit</a>&lt;Vis&gt;(&amp;self, visitor: &amp;mut Vis) <span class='where'>where Vis: <a class='trait' href='../../ncollide/partitioning/trait.BVTVisitor.html' title='ncollide::partitioning::BVTVisitor'>BVTVisitor</a>&lt;B, BV&gt;</span></code></h4>
+<div class='docblock'><p>Traverses this tree using an object implementing the <code>BVTVisitor</code>trait.</p>
+
+<p>This will traverse the whole tree and call the visitor <code>.visit_internal(...)</code> (resp.
+<code>.visit_leaf(...)</code>) method on each internal (resp. leaf) node.</p>
+</div><h4 id='method.visit_bvtt' class='method'><code>fn <a href='#method.visit_bvtt' class='fnname'>visit_bvtt</a>&lt;Vis&gt;(&amp;self, other: &amp;<a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;, visitor: &amp;mut Vis) <span class='where'>where Vis: <a class='trait' href='../../ncollide/partitioning/trait.BVTTVisitor.html' title='ncollide::partitioning::BVTTVisitor'>BVTTVisitor</a>&lt;B, BV&gt;</span></code></h4>
 <div class='docblock'><p>Visits the bounding volume traversal tree implicitely formed with <code>other</code>.</p>
-</div><h4 id='method.best_first_search' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.best_first_search' class='fnname'>best_first_search</a>&lt;N, BFS, R&gt;(&amp;'a self, algorithm: &amp;mut BFS) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(&amp;'a B, R)</a>&gt; <span class='where'>where N: <a class='trait' href='../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a>, BFS: <a class='trait' href='../../ncollide/partitioning/trait.BVTCostFn.html' title='ncollide::partitioning::BVTCostFn'>BVTCostFn</a>&lt;N, B, BV, R&gt;</span></code></h4>
+</div><h4 id='method.best_first_search' class='method'><code>fn <a href='#method.best_first_search' class='fnname'>best_first_search</a>&lt;N, BFS, R&gt;(&amp;'a self, algorithm: &amp;mut BFS) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>&amp;'a B, R<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt; <span class='where'>where BFS: <a class='trait' href='../../ncollide/partitioning/trait.BVTCostFn.html' title='ncollide::partitioning::BVTCostFn'>BVTCostFn</a>&lt;N, B, BV, R&gt;, N: <a class='trait' href='../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a></span></code></h4>
 <div class='docblock'><p>Performs a best-fist-search on the tree.</p>
 
 <p>Returns the content of the best leaf nound, and a result of user-defined type.</p>
-</div><h4 id='method.root_bounding_volume' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.root_bounding_volume' class='fnname'>root_bounding_volume</a>(&amp;'r self) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'r BV&gt;</code></h4>
+</div><h4 id='method.root_bounding_volume' class='method'><code>fn <a href='#method.root_bounding_volume' class='fnname'>root_bounding_volume</a>(&amp;'r self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'r BV&gt;</code></h4>
 <div class='docblock'><p>Reference to the bounding volume of the tree root.</p>
-</div><h4 id='method.depth' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.depth' class='fnname'>depth</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+</div><h4 id='method.depth' class='method'><code>fn <a href='#method.depth' class='fnname'>depth</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Computes the depth of this tree.</p>
-</div></div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, V, B, BV&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where N: <a class='trait' href='../../ncollide/math/trait.Scalar.html' title='ncollide::math::Scalar'>Scalar</a>, V: <a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a>&lt;N&gt;, BV: <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;V&gt;, BV: <a class='trait' href='../../ncollide/bounding_volume/trait.BoundingVolume.html' title='ncollide::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt;, BV: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.new_balanced' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new_balanced' class='fnname'>new_balanced</a>(leaves: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, BV)</a>&gt;) -&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;</code></h4>
+</div></div><h3 class='impl'><code>impl&lt;B, BV&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;</code></h3><div class='impl-items'><h4 id='method.new_balanced' class='method'><code>fn <a href='#method.new_balanced' class='fnname'>new_balanced</a>&lt;V&gt;(leaves: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>B, BV<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;) -&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where BV: <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;V&gt; + <a class='trait' href='../../ncollide/bounding_volume/trait.BoundingVolume.html' title='ncollide::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;V::<a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Scalar</a>&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, V: <a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a></span></code></h4>
 <div class='docblock'><p>Creates a balanced <code>BVT</code>.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;B, BV&gt; <a class='trait' href='../../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a> for <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where B: <a class='trait' href='../../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a>, BV: <a class='trait' href='../../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a></span></code></h3><div class='impl-items'><h4 id='method.decode' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.decode' class='fnname'>decode</a>&lt;__D&gt;(__arg_0: &amp;mut __D) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;, &lt;__D as <a class='trait' href='../../rustc-serialize/serialize/trait.Decoder.html' title='rustc-serialize::serialize::Decoder'>Decoder</a>&gt;::Error&gt; <span class='where'>where __D: <a class='trait' href='../../rustc-serialize/serialize/trait.Decoder.html' title='rustc-serialize::serialize::Decoder'>Decoder</a></span></code></h4>
-</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;B, BV&gt; <a class='trait' href='../../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a> for <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where B: <a class='trait' href='../../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a>, BV: <a class='trait' href='../../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a></span></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.encode' class='fnname'>encode</a>&lt;__S&gt;(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, &lt;__S as <a class='trait' href='../../rustc-serialize/serialize/trait.Encoder.html' title='rustc-serialize::serialize::Encoder'>Encoder</a>&gt;::Error&gt; <span class='where'>where __S: <a class='trait' href='../../rustc-serialize/serialize/trait.Encoder.html' title='rustc-serialize::serialize::Encoder'>Encoder</a></span></code></h4>
-</div><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl&lt;B, BV&gt; <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where B: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, BV: <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;</code></h4>
-<h4 id='method.clone_from' class='method'><a class='stability Unstable' title='Unstable: this function is rarely used'></a><code>fn <a href='#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, &amp;<a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;B, BV&gt; <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a> for <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where B: <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>, BV: <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a></span></code></h3><div class='impl-items'><h4 id='method.decode' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Decodable.html#method.decode' class='fnname'>decode</a>&lt;__D&gt;(__arg_0: &amp;mut __D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;, __D::<a class='trait' href='../../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Error</a>&gt; <span class='where'>where __D: <a class='trait' href='../../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Decoder</a></span></code></h4>
+</div><h3 class='impl'><code>impl&lt;B, BV&gt; <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a> for <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where B: <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a>, BV: <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a></span></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Encodable.html#method.encode' class='fnname'>encode</a>&lt;__S&gt;(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, __S::<a class='trait' href='../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Error</a>&gt; <span class='where'>where __S: <a class='trait' href='../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a></span></code></h4>
+</div><h3 class='impl'><code>impl&lt;B, BV&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt; <span class='where'>where BV: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, B: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../ncollide/partitioning/struct.BVT.html' title='ncollide::partitioning::BVT'>BVT</a>&lt;B, BV&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -114,6 +131,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

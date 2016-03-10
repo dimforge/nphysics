@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Convex","The implicit convex hull of a set of points."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["hacd","Approximate convex decomposition of a triangle mesh."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["ball_against_ball","Time Of Impact of two balls under translational movement."]]});

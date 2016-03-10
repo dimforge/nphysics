@@ -9,6 +9,7 @@
 
     <title>ncollide_pipeline::narrow_phase - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,162 +25,192 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_pipeline</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../broad_phase/index.html'>broad_phase</a><a class='mod current' href='../narrow_phase/index.html'>narrow_phase</a><a class='mod ' href='../world/index.html'>world</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_pipeline</a></p><script>window.sidebarCurrent = {name: 'narrow_phase', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>ncollide_pipeline</a>::<wbr><a class='mod' href=''>narrow_phase</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-1436' href='../../src/ncollide_pipeline/narrow_phase/mod.rs.html#1-26'>[src]</a></span></h1>
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>ncollide_pipeline</a>::<wbr><a class='mod' href=''>narrow_phase</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-209' class='srclink' href='../../src/ncollide_pipeline/narrow_phase/mod.rs.html.html#1-26' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Collision detection algorithms and structure for the Narrow Phase.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BallBall.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.BallBall.html'
                                title='ncollide_pipeline::narrow_phase::BallBall'>BallBall</a></td>
-                        <td class='docblock short'><p>Collision detector between two balls.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Collision detector between two balls.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BasicCollisionDispatcher.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.BasicCollisionDispatcher.html'
                                title='ncollide_pipeline::narrow_phase::BasicCollisionDispatcher'>BasicCollisionDispatcher</a></td>
-                        <td class='docblock short'><p>Collision dispatcher for shapes defined by <code>ncollide_entities</code>.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Collision dispatcher for shapes defined by <code>ncollide_entities</code>.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.CompositeShapeRepr.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.CompositeShapeRepr.html'
                                title='ncollide_pipeline::narrow_phase::CompositeShapeRepr'>CompositeShapeRepr</a></td>
-                        <td class='docblock short'><p>Collision detector between a concave shape and another shape.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Collision detector between a concave shape and another shape.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.ContactSignal.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ContactSignal.html'
                                title='ncollide_pipeline::narrow_phase::ContactSignal'>ContactSignal</a></td>
-                        <td class='docblock short'><p>Signal for contact start/stop.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Signal for contact start/stop.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.IncrementalContactManifoldGenerator.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.IncrementalContactManifoldGenerator.html'
                                title='ncollide_pipeline::narrow_phase::IncrementalContactManifoldGenerator'>IncrementalContactManifoldGenerator</a></td>
-                        <td class='docblock short'><p>Contact manifold generator which keeps track of several contacts.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Contact manifold generator which keeps track of several contacts.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.OneShotContactManifoldGenerator.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.OneShotContactManifoldGenerator.html'
                                title='ncollide_pipeline::narrow_phase::OneShotContactManifoldGenerator'>OneShotContactManifoldGenerator</a></td>
-                        <td class='docblock short'><p>Contact manifold generator producing a full manifold at the first update.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Contact manifold generator producing a full manifold at the first update.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.PlaneSupportMap.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PlaneSupportMap.html'
                                title='ncollide_pipeline::narrow_phase::PlaneSupportMap'>PlaneSupportMap</a></td>
-                        <td class='docblock short'><p>Collision detector between a plane and a shape implementing the <code>SupportMap</code> trait.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Collision detector between a plane and a shape implementing the <code>SupportMap</code> trait.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.ReprCompositeShape.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ReprCompositeShape.html'
                                title='ncollide_pipeline::narrow_phase::ReprCompositeShape'>ReprCompositeShape</a></td>
-                        <td class='docblock short'><p>Collision detector between a shape and a concave shape.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Collision detector between a shape and a concave shape.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.SupportMapPlane.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SupportMapPlane.html'
                                title='ncollide_pipeline::narrow_phase::SupportMapPlane'>SupportMapPlane</a></td>
-                        <td class='docblock short'><p>Collision detector between a plane and a shape implementing the <code>SupportMap</code> trait.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Collision detector between a plane and a shape implementing the <code>SupportMap</code> trait.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.SupportMapSupportMap.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SupportMapSupportMap.html'
                                title='ncollide_pipeline::narrow_phase::SupportMapSupportMap'>SupportMapSupportMap</a></td>
-                        <td class='docblock short'><p>Persistent collision detector between two shapes having a support mapping function.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Persistent collision detector between two shapes having a support mapping function.</p>
+                        </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.CollisionDetector.html'
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.CollisionDetector.html'
                                title='ncollide_pipeline::narrow_phase::CollisionDetector'>CollisionDetector</a></td>
-                        <td class='docblock short'><p>Trait of the algorithms executed during the so-called Narrow Phase.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Trait of the algorithms executed during the so-called Narrow Phase.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.CollisionDispatcher.html'
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.CollisionDispatcher.html'
                                title='ncollide_pipeline::narrow_phase::CollisionDispatcher'>CollisionDispatcher</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.ContactSignalHandler.html'
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.ContactSignalHandler.html'
                                title='ncollide_pipeline::narrow_phase::ContactSignalHandler'>ContactSignalHandler</a></td>
-                        <td class='docblock short'><p>A signal handler for contact detection.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A signal handler for contact detection.</p>
+                        </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.CollisionAlgorithm.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.CollisionAlgorithm.html'
                                title='ncollide_pipeline::narrow_phase::CollisionAlgorithm'>CollisionAlgorithm</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 </table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -191,6 +222,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

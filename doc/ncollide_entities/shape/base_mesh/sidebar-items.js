@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BaseMesh","A mesh generic wrt. the contained mesh elements characterized by vertices."]],"trait":[["BaseMeshElement","Trait implemented by elements usable on the Mesh."]]});

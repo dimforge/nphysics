@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["any_against_any","Computes the smallest time of impact of two shapes under translational movement."]]});

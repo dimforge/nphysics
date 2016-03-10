@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BallBall","Collision detector between two balls."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["cso_support_point","Computes the support point of the CSO `g1 - g2` on a given direction."],["point_cloud_support_point","Computes the support point of a cloud of points."]],"trait":[["SupportMap","Traits of convex shapes representable by a support mapping function."]]});

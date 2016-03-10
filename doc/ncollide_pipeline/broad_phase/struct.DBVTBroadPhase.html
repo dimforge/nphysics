@@ -9,6 +9,7 @@
 
     <title>ncollide_pipeline::broad_phase::DBVTBroadPhase - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,79 +25,93 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>broad_phase</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.DBVTBroadPhase.html'>DBVTBroadPhase</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.BroadPhase.html'>BroadPhase</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>broad_phase</a></p><script>window.sidebarCurrent = {name: 'DBVTBroadPhase', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>broad_phase</a>::<wbr><a class='struct' href=''>DBVTBroadPhase</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-238' href='../../src/ncollide_pipeline/broad_phase/dbvt_broad_phase.rs.html#30-42'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct DBVTBroadPhase&lt;N, P, BV, T&gt; {
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>ncollide_pipeline</a>::<wbr><a href='index.html'>broad_phase</a>::<wbr><a class='struct' href=''>DBVTBroadPhase</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-78' class='srclink' href='../../src/ncollide_pipeline/broad_phase/dbvt_broad_phase.rs.html.html#30-44' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct DBVTBroadPhase&lt;P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, BV, T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Broad phase based on a Dynamic Bounding Volume Tree.</p>
 
 <p>It uses two separate trees: one for static objects and which is never updated, and one for
 moving objects.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, BV, T&gt; <a class='struct' href='../../ncollide_pipeline/broad_phase/struct.DBVTBroadPhase.html' title='ncollide_pipeline::broad_phase::DBVTBroadPhase'>DBVTBroadPhase</a>&lt;N, P, BV, T&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, BV: 'static + <a class='trait' href='../../ncollide_entities/bounding_volume/bounding_volume/trait.BoundingVolume.html' title='ncollide_entities::bounding_volume::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;V&gt; + <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.new' class='fnname'>new</a>(margin: N, small_keys: <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../ncollide_pipeline/broad_phase/struct.DBVTBroadPhase.html' title='ncollide_pipeline::broad_phase::DBVTBroadPhase'>DBVTBroadPhase</a>&lt;N, P, BV, T&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;P, BV, T&gt; <a class='struct' href='../../ncollide_pipeline/broad_phase/struct.DBVTBroadPhase.html' title='ncollide_pipeline::broad_phase::DBVTBroadPhase'>DBVTBroadPhase</a>&lt;P, BV, T&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, BV: 'static + <a class='trait' href='../../ncollide_entities/bounding_volume/bounding_volume/trait.BoundingVolume.html' title='ncollide_entities::bounding_volume::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;P::Vect::Scalar&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;P::Vect&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(margin: P::Vect::Scalar, small_keys: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../ncollide_pipeline/broad_phase/struct.DBVTBroadPhase.html' title='ncollide_pipeline::broad_phase::DBVTBroadPhase'>DBVTBroadPhase</a>&lt;P, BV, T&gt;</code></h4>
 <div class='docblock'><p>Creates a new broad phase based on a Dynamic Bounding Volume Tree.</p>
-</div><h4 id='method.num_interferences' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.num_interferences' class='fnname'>num_interferences</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+</div><h4 id='method.num_interferences' class='method'><code>fn <a href='#method.num_interferences' class='fnname'>num_interferences</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Number of interferences detected by this broad phase.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;N, P, V, BV, T&gt; <a class='trait' href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html' title='ncollide_pipeline::broad_phase::BroadPhase'>BroadPhase</a>&lt;P, V, BV, T&gt; for <a class='struct' href='../../ncollide_pipeline/broad_phase/struct.DBVTBroadPhase.html' title='ncollide_pipeline::broad_phase::DBVTBroadPhase'>DBVTBroadPhase</a>&lt;N, P, BV, T&gt; <span class='where'>where N: <a class='trait' href='../../ncollide_math/trait.Scalar.html' title='ncollide_math::Scalar'>Scalar</a>, P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>&lt;N, V&gt;, V: <a class='trait' href='../../ncollide_math/trait.Vect.html' title='ncollide_math::Vect'>Vect</a>&lt;N&gt;, BV: 'static + <a class='trait' href='../../ncollide_entities/bounding_volume/bounding_volume/trait.BoundingVolume.html' title='ncollide_entities::bounding_volume::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;V&gt; + <a class='trait' href='../../ncollide_queries/ray/ray/trait.LocalRayCast.html' title='ncollide_queries::ray::ray::LocalRayCast'>LocalRayCast</a>&lt;N, P, V&gt; + <a class='trait' href='../../ncollide_queries/point/point_query/trait.LocalPointQuery.html' title='ncollide_queries::point::point_query::LocalPointQuery'>LocalPointQuery</a>&lt;N, P&gt; + <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.defered_add' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.defered_add' class='fnname'>defered_add</a>(&amp;mut self, uid: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, bv: BV, data: T)</code></h4>
-<h4 id='method.defered_remove' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.defered_remove' class='fnname'>defered_remove</a>(&amp;mut self, uid: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
-<h4 id='method.update' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, allow_proximity: &amp;mut <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, handler: &amp;mut <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T, <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>))</code></h4>
-<h4 id='method.defered_set_bounding_volume' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.defered_set_bounding_volume' class='fnname'>defered_set_bounding_volume</a>(&amp;mut self, uid: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, bounding_volume: BV)</code></h4>
-<h4 id='method.interferences_with_bounding_volume' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.interferences_with_bounding_volume' class='fnname'>interferences_with_bounding_volume</a>&lt;'a&gt;(&amp;'a self, bv: &amp;BV, out: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a T&gt;)</code></h4>
-<h4 id='method.interferences_with_ray' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.interferences_with_ray' class='fnname'>interferences_with_ray</a>&lt;'a&gt;(&amp;'a self, ray: &amp;<a class='struct' href='../../ncollide_queries/ray/ray/struct.Ray.html' title='ncollide_queries::ray::ray::Ray'>Ray</a>&lt;P, V&gt;, out: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a T&gt;)</code></h4>
-<h4 id='method.interferences_with_point' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.interferences_with_point' class='fnname'>interferences_with_point</a>&lt;'a&gt;(&amp;'a self, point: &amp;P, out: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a T&gt;)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;P, BV, T&gt; <a class='trait' href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html' title='ncollide_pipeline::broad_phase::BroadPhase'>BroadPhase</a>&lt;P, BV, T&gt; for <a class='struct' href='../../ncollide_pipeline/broad_phase/struct.DBVTBroadPhase.html' title='ncollide_pipeline::broad_phase::DBVTBroadPhase'>DBVTBroadPhase</a>&lt;P, BV, T&gt; <span class='where'>where P: <a class='trait' href='../../ncollide_math/trait.Point.html' title='ncollide_math::Point'>Point</a>, BV: 'static + <a class='trait' href='../../ncollide_entities/bounding_volume/bounding_volume/trait.BoundingVolume.html' title='ncollide_entities::bounding_volume::bounding_volume::BoundingVolume'>BoundingVolume</a>&lt;P::Vect::Scalar&gt; + <a class='trait' href='../../nalgebra/traits/geometry/trait.Translation.html' title='nalgebra::traits::geometry::Translation'>Translation</a>&lt;P::Vect&gt; + <a class='trait' href='../../ncollide_queries/ray/ray/trait.RayCast.html' title='ncollide_queries::ray::ray::RayCast'>RayCast</a>&lt;P, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt; + <a class='trait' href='../../ncollide_queries/point/point_query/trait.PointQuery.html' title='ncollide_queries::point::point_query::PointQuery'>PointQuery</a>&lt;P, <a class='struct' href='../../nalgebra/structs/mat/struct.Identity.html' title='nalgebra::structs::mat::Identity'>Identity</a>&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.deferred_add' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.deferred_add' class='fnname'>deferred_add</a>(&amp;mut self, uid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, bv: BV, data: T)</code></h4>
+<h4 id='method.deferred_remove' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.deferred_remove' class='fnname'>deferred_remove</a>(&amp;mut self, uid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
+<h4 id='method.update' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.update' class='fnname'>update</a>(&amp;mut self, allow_proximity: &amp;mut <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, handler: &amp;mut <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T, &amp;T, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>))</code></h4>
+<h4 id='method.deferred_set_bounding_volume' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.deferred_set_bounding_volume' class='fnname'>deferred_set_bounding_volume</a>(&amp;mut self, uid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, bounding_volume: BV)</code></h4>
+<h4 id='method.interferences_with_bounding_volume' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.interferences_with_bounding_volume' class='fnname'>interferences_with_bounding_volume</a>&lt;'a&gt;(&amp;'a self, bv: &amp;BV, out: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a T&gt;)</code></h4>
+<h4 id='method.interferences_with_ray' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.interferences_with_ray' class='fnname'>interferences_with_ray</a>&lt;'a&gt;(&amp;'a self, ray: &amp;<a class='struct' href='../../ncollide_queries/ray/ray/struct.Ray.html' title='ncollide_queries::ray::ray::Ray'>Ray</a>&lt;P&gt;, out: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a T&gt;)</code></h4>
+<h4 id='method.interferences_with_point' class='method'><code>fn <a href='../../ncollide_pipeline/broad_phase/trait.BroadPhase.html#method.interferences_with_point' class='fnname'>interferences_with_point</a>&lt;'a&gt;(&amp;'a self, point: &amp;P, out: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a T&gt;)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -108,6 +123,6 @@ moving objects.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

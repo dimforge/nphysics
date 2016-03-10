@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["any_against_any","Computes one contact point between two shapes."]]});

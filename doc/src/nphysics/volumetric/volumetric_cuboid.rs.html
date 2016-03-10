@@ -164,9 +164,11 @@
 <span id="122">122</span>
 <span id="123">123</span>
 <span id="124">124</span>
+<span id="125">125</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Index</span>, <span class='ident'>IndexMut</span>};
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Pnt2</span>, <span class='ident'>Pnt3</span>, <span class='ident'>Mat1</span>, <span class='ident'>Mat3</span>, <span class='ident'>Orig</span>, <span class='ident'>Iterable</span>, <span class='ident'>Zero</span>};
+<span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Zero</span>;
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Pnt2</span>, <span class='ident'>Pnt3</span>, <span class='ident'>Mat1</span>, <span class='ident'>Mat3</span>, <span class='ident'>Orig</span>, <span class='ident'>Iterable</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::{<span class='ident'>Cuboid2</span>, <span class='ident'>Cuboid3</span>};
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
@@ -322,6 +324,10 @@
                 <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
             </p>
         </div>
     </div>

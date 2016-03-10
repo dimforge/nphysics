@@ -188,7 +188,7 @@
 <span class='kw'>use</span> <span class='ident'>resolution</span>::<span class='ident'>constraint</span>::<span class='ident'>velocity_constraint</span>::<span class='ident'>VelocityConstraint</span>;
 
 <span class='doccomment'>/// Structure holding the result of the projected gauss seidel solver.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Show</span>, <span class='ident'>Clone</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Velocities</span> {
     <span class='doccomment'>/// Linear velocity.</span>
     <span class='kw'>pub</span> <span class='ident'>lv</span>: <span class='ident'>Vect</span>,
@@ -252,7 +252,7 @@
     <span class='comment'>/*
      * solve the system
      */</span>
-    <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='ident'>range</span>(<span class='number'>0</span>, <span class='ident'>num_iterations</span>) {
+    <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='ident'>num_iterations</span> {
         <span class='kw'>for</span> <span class='ident'>c</span> <span class='kw'>in</span> <span class='ident'>restitution</span>.<span class='ident'>iter_mut</span>() {
             <span class='ident'>solve_velocity_constraint</span>(<span class='ident'>c</span>, <span class='ident'>result</span>);
         }
@@ -358,6 +358,10 @@
                 <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
             </p>
         </div>
     </div>

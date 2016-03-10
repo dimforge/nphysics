@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["IncrementalContactManifoldGenerator","Contact manifold generator which keeps track of several contacts."]]});

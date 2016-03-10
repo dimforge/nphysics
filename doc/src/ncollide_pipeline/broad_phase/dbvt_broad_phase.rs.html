@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_pipeline/broad_phase/dbvt_broad_phase.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_pipeline/broad_phase/dbvt_broad_phase.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>dbvt_broad_phase.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -367,19 +368,48 @@
 <span id="325">325</span>
 <span id="326">326</span>
 <span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
-<span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Translation</span>;
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Translation</span>, <span class='ident'>Identity</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>uid_remap</span>::{<span class='ident'>UidRemap</span>, <span class='ident'>FastKey</span>};
 <span class='kw'>use</span> <span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>pair</span>::{<span class='ident'>Pair</span>, <span class='ident'>PairTWHash</span>};
 <span class='kw'>use</span> <span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>hash_map</span>::<span class='ident'>HashMap</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
-<span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>bounding_volume</span>::{<span class='ident'>HasBoundingVolume</span>, <span class='ident'>BoundingVolume</span>, <span class='ident'>BoundingVolumeInterferencesCollector</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>bounding_volume</span>::{<span class='ident'>BoundingVolume</span>, <span class='ident'>BoundingVolumeInterferencesCollector</span>};
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>partitioning</span>::{<span class='ident'>DBVT</span>, <span class='ident'>DBVTLeaf</span>};
-<span class='kw'>use</span> <span class='ident'>queries</span>::<span class='ident'>ray</span>::{<span class='ident'>Ray</span>, <span class='ident'>LocalRayCast</span>, <span class='ident'>RayInterferencesCollector</span>};
-<span class='kw'>use</span> <span class='ident'>queries</span>::<span class='ident'>point</span>::{<span class='ident'>LocalPointQuery</span>, <span class='ident'>PointInterferencesCollector</span>};
+<span class='kw'>use</span> <span class='ident'>queries</span>::<span class='ident'>ray</span>::{<span class='ident'>Ray</span>, <span class='ident'>RayCast</span>, <span class='ident'>RayInterferencesCollector</span>};
+<span class='kw'>use</span> <span class='ident'>queries</span>::<span class='ident'>point</span>::{<span class='ident'>PointQuery</span>, <span class='ident'>PointInterferencesCollector</span>};
 <span class='kw'>use</span> <span class='ident'>broad_phase</span>::<span class='ident'>BroadPhase</span>;
 
 <span class='kw'>struct</span> <span class='ident'>DBVTBroadPhaseProxy</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> {
@@ -397,29 +427,28 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// It uses two separate trees: one for static objects and which is never updated, and one for</span>
 <span class='doccomment'>/// moving objects.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='ident'>proxies</span>:    <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>DBVTBroadPhaseProxy</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>tree</span>:       <span class='ident'>DBVT</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>FastKey</span>, <span class='ident'>BV</span><span class='op'>&gt;</span>, <span class='comment'>// DBVT for moving objects.</span>
     <span class='ident'>stree</span>:      <span class='ident'>DBVT</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>FastKey</span>, <span class='ident'>BV</span><span class='op'>&gt;</span>, <span class='comment'>// DBVT for static objects.</span>
     <span class='ident'>pairs</span>:      <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>Pair</span>, (), <span class='ident'>PairTWHash</span><span class='op'>&gt;</span>, <span class='comment'>// Pairs detected (FIXME: use a Vec instead?)</span>
-    <span class='ident'>margin</span>:     <span class='ident'>N</span>, <span class='comment'>// The margin added to each bounding volume.</span>
+    <span class='ident'>margin</span>:     <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='comment'>// The margin added to each bounding volume.</span>
     <span class='ident'>update_off</span>: <span class='ident'>usize</span>, <span class='comment'>// Incremental pairs removal index.</span>
     <span class='ident'>purge_all</span>:  <span class='ident'>bool</span>,
 
     <span class='comment'>// Just to avoid dynamic allocations.</span>
-    <span class='ident'>collector</span>:  <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>FastKey</span><span class='op'>&gt;</span>,
-    <span class='ident'>to_update</span>:  <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>FastKey</span>, <span class='ident'>BV</span>)<span class='op'>&gt;</span>,
+    <span class='ident'>collector</span>:         <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>FastKey</span><span class='op'>&gt;</span>,
+    <span class='ident'>pairs_to_remove</span>:   <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Pair</span><span class='op'>&gt;</span>,
+    <span class='ident'>proxies_to_remove</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>,
+    <span class='ident'>to_update</span>:         <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>FastKey</span>, <span class='ident'>BV</span>)<span class='op'>&gt;</span>,
 }
 
-<span class='attribute'>#[<span class='ident'>old_impl_check</span>]</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>:  <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>:  <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>:  <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>BV</span>: <span class='lifetime'>&#39;static</span> <span class='op'>+</span> <span class='ident'>BoundingVolume</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Translation</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>:  <span class='ident'>Point</span>,
+          <span class='ident'>BV</span>: <span class='lifetime'>&#39;static</span> <span class='op'>+</span> <span class='ident'>BoundingVolume</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Translation</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
     <span class='doccomment'>/// Creates a new broad phase based on a Dynamic Bounding Volume Tree.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>margin</span>: <span class='ident'>N</span>, <span class='ident'>small_keys</span>: <span class='ident'>bool</span>)
-               <span class='op'>-&gt;</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>margin</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>small_keys</span>: <span class='ident'>bool</span>)
+               <span class='op'>-&gt;</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> {
         <span class='ident'>DBVTBroadPhase</span> {
             <span class='ident'>proxies</span>:    <span class='ident'>UidRemap</span>::<span class='ident'>new</span>(<span class='ident'>small_keys</span>),
             <span class='ident'>tree</span>:       <span class='ident'>DBVT</span>::<span class='ident'>new</span>(),
@@ -429,7 +458,9 @@
             <span class='ident'>purge_all</span>:  <span class='boolval'>false</span>,
             <span class='ident'>collector</span>:  <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>to_update</span>:  <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>margin</span>:     <span class='ident'>margin</span>
+            <span class='ident'>pairs_to_remove</span>:   <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
+            <span class='ident'>proxies_to_remove</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
+            <span class='ident'>margin</span>:            <span class='ident'>margin</span>
         }
     }
 
@@ -440,13 +471,12 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>BroadPhase</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>:  <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>:  <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>:  <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>BV</span>: <span class='lifetime'>&#39;static</span> <span class='op'>+</span> <span class='ident'>BoundingVolume</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Translation</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalRayCast</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>LocalPointQuery</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>BroadPhase</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>BV</span>, <span class='ident'>T</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>:  <span class='ident'>Point</span>,
+          <span class='ident'>BV</span>: <span class='lifetime'>&#39;static</span> <span class='op'>+</span> <span class='ident'>BoundingVolume</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Translation</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
+              <span class='ident'>RayCast</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>PointQuery</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Identity</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>defered_add</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>uid</span>: <span class='ident'>usize</span>, <span class='ident'>bv</span>: <span class='ident'>BV</span>, <span class='ident'>data</span>: <span class='ident'>T</span>) {
+    <span class='kw'>fn</span> <span class='ident'>deferred_add</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>uid</span>: <span class='ident'>usize</span>, <span class='ident'>bv</span>: <span class='ident'>BV</span>, <span class='ident'>data</span>: <span class='ident'>T</span>) {
         <span class='kw'>let</span> <span class='ident'>lbv</span> <span class='op'>=</span> <span class='ident'>bv</span>.<span class='ident'>loosened</span>(<span class='self'>self</span>.<span class='ident'>margin</span>.<span class='ident'>clone</span>());
         <span class='kw'>let</span> <span class='ident'>leaf</span>: <span class='ident'>DBVTLeaf</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>FastKey</span>, <span class='ident'>BV</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>DBVTLeaf</span>::<span class='ident'>new</span>(<span class='ident'>lbv</span>.<span class='ident'>clone</span>(), <span class='ident'>FastKey</span>::<span class='ident'>new_invalid</span>());
         <span class='kw'>let</span> <span class='ident'>leaf</span> <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>leaf</span>));
@@ -461,7 +491,7 @@
         <span class='self'>self</span>.<span class='ident'>to_update</span>.<span class='ident'>push</span>((<span class='ident'>proxy_key</span>, <span class='ident'>lbv</span>));
     }
 
-    <span class='kw'>fn</span> <span class='ident'>defered_remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>uid</span>: <span class='ident'>usize</span>) {
+    <span class='kw'>fn</span> <span class='ident'>deferred_remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>uid</span>: <span class='ident'>usize</span>) {
         <span class='kw'>let</span> <span class='ident'>proxy_key</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>proxies</span>.<span class='ident'>get_fast_key</span>(<span class='ident'>uid</span>) {
             <span class='prelude-val'>None</span>      <span class='op'>=&gt;</span> <span class='kw'>return</span>,
             <span class='prelude-val'>Some</span>(<span class='ident'>uid</span>) <span class='op'>=&gt;</span> <span class='ident'>uid</span>
@@ -481,6 +511,8 @@
 
             <span class='self'>self</span>.<span class='ident'>purge_all</span> <span class='op'>=</span> <span class='boolval'>true</span>;
         }
+
+        <span class='self'>self</span>.<span class='ident'>proxies_to_remove</span>.<span class='ident'>push</span>(<span class='ident'>uid</span>);
     }
 
     <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>allow_proximity</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>FnMut</span>(<span class='kw-2'>&amp;</span><span class='ident'>T</span>, <span class='kw-2'>&amp;</span><span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span>, <span class='ident'>handler</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>FnMut</span>(<span class='kw-2'>&amp;</span><span class='ident'>T</span>, <span class='kw-2'>&amp;</span><span class='ident'>T</span>, <span class='ident'>bool</span>)) {
@@ -559,28 +591,14 @@
         }
 
         <span class='comment'>/*
-         * Update activation states.
-         */</span>
-        <span class='kw'>for</span> (_, <span class='ident'>proxy</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>proxies</span>.<span class='ident'>iter_mut</span>() {
-            <span class='kw'>if</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>==</span> <span class='number'>1</span> {
-                <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>=</span> <span class='number'>0</span>;
-                <span class='self'>self</span>.<span class='ident'>tree</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>proxy</span>.<span class='ident'>leaf</span>);
-                <span class='self'>self</span>.<span class='ident'>stree</span>.<span class='ident'>insert</span>(<span class='ident'>proxy</span>.<span class='ident'>leaf</span>.<span class='ident'>clone</span>());
-            }
-            <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>&gt;</span> <span class='number'>1</span> {
-                <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>=</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>-</span> <span class='number'>1</span>;
-            }
-        }
-
-        <span class='comment'>/*
          * Remove some of the outdated collisions.
          */</span>
         <span class='comment'>// NOTE: the exact same code is used on `brute_force_bounding_volume_broad_phase.rs`.</span>
         <span class='comment'>// Refactor that?</span>
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>purge_all</span> <span class='op'>||</span> (<span class='self'>self</span>.<span class='ident'>to_update</span>.<span class='ident'>len</span>() <span class='op'>!=</span> <span class='number'>0</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>() <span class='op'>!=</span> <span class='number'>0</span>) {
-            <span class='kw'>let</span> <span class='ident'>len</span>          <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>();
+            <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>();
             <span class='kw'>let</span> <span class='ident'>num_removals</span>;
-            
+
             <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>purge_all</span> {
                 <span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>=</span> <span class='number'>0</span>;
                 <span class='ident'>num_removals</span> <span class='op'>=</span> <span class='ident'>len</span>;
@@ -590,13 +608,12 @@
                 <span class='ident'>num_removals</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>clamp</span>(<span class='self'>self</span>.<span class='ident'>to_update</span>.<span class='ident'>len</span>(), <span class='ident'>len</span> <span class='op'>/</span> <span class='number'>10</span>, <span class='ident'>len</span>);
             }
 
-            <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='ident'>range</span>(<span class='self'>self</span>.<span class='ident'>update_off</span>, <span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>+</span> <span class='ident'>num_removals</span>) {
-                <span class='kw'>let</span> <span class='ident'>id</span> <span class='op'>=</span> <span class='ident'>i</span> <span class='op'>%</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>();
+            <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>update_off</span> .. <span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>+</span> <span class='ident'>num_removals</span> {
+                <span class='kw'>let</span> <span class='ident'>id</span>   <span class='op'>=</span> <span class='ident'>i</span> <span class='op'>%</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>();
+                <span class='kw'>let</span> <span class='ident'>elts</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>elements</span>();
+                <span class='kw'>let</span> <span class='ident'>ids</span>  <span class='op'>=</span> <span class='ident'>elts</span>[<span class='ident'>id</span>].<span class='ident'>key</span>;
 
                 <span class='kw'>let</span> <span class='ident'>remove</span> <span class='op'>=</span> {
-                    <span class='kw'>let</span> <span class='ident'>elts</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>elements</span>();
-                    <span class='kw'>let</span> <span class='ident'>ids</span> <span class='op'>=</span> <span class='ident'>elts</span>[<span class='ident'>id</span>].<span class='ident'>key</span>;
-
                     <span class='kw'>let</span> <span class='ident'>proxy1</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>proxies</span>[<span class='ident'>ids</span>.<span class='ident'>first</span>];
                     <span class='kw'>let</span> <span class='ident'>proxy2</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>proxies</span>[<span class='ident'>ids</span>.<span class='ident'>second</span>];
 
@@ -618,17 +635,59 @@
                 };
 
                 <span class='kw'>if</span> <span class='ident'>remove</span> {
-                    <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>remove_elem_at</span>(<span class='ident'>id</span>);
+                    <span class='self'>self</span>.<span class='ident'>pairs_to_remove</span>.<span class='ident'>push</span>(<span class='ident'>ids</span>);
                 }
             }
 
-            <span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>+</span> <span class='ident'>num_removals</span>) <span class='op'>%</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>();
+            <span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>() <span class='op'>!=</span> <span class='number'>0</span> {
+                (<span class='self'>self</span>.<span class='ident'>update_off</span> <span class='op'>+</span> <span class='ident'>num_removals</span>) <span class='op'>%</span> <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>len</span>()
+            } <span class='kw'>else</span> {
+                <span class='number'>0</span>
+            };
         }
 
         <span class='self'>self</span>.<span class='ident'>to_update</span>.<span class='ident'>clear</span>();
+
+        <span class='comment'>/*
+         * Actually remove the pairs.
+         */</span>
+        <span class='kw'>for</span> <span class='ident'>pair</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>pairs_to_remove</span>.<span class='ident'>iter</span>() { 
+            <span class='self'>self</span>.<span class='ident'>pairs</span>.<span class='ident'>remove</span>(<span class='ident'>pair</span>);
+        }
+        <span class='self'>self</span>.<span class='ident'>pairs_to_remove</span>.<span class='ident'>clear</span>();
+
+        <span class='comment'>/*
+         * Update activation states.
+         * FIXME: could we avoid having to iterate through _all_ the proxies at each update?
+         * (for example, using a timestamp instead of a counter).
+         */</span>
+        <span class='kw'>for</span> (_, <span class='ident'>proxy</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>proxies</span>.<span class='ident'>iter_mut</span>() {
+            <span class='kw'>if</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>==</span> <span class='number'>1</span> {
+                <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>=</span> <span class='number'>0</span>;
+                <span class='self'>self</span>.<span class='ident'>tree</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>proxy</span>.<span class='ident'>leaf</span>);
+                <span class='self'>self</span>.<span class='ident'>stree</span>.<span class='ident'>insert</span>(<span class='ident'>proxy</span>.<span class='ident'>leaf</span>.<span class='ident'>clone</span>());
+            }
+            <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>&gt;</span> <span class='number'>1</span> {
+                <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>=</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>-</span> <span class='number'>1</span>;
+            }
+        }
+
+        <span class='kw'>for</span> <span class='ident'>uid</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>proxies_to_remove</span>.<span class='ident'>iter</span>() {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((_, <span class='kw-2'>mut</span> <span class='ident'>proxy</span>)) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>proxies</span>.<span class='ident'>remove</span>(<span class='op'>*</span><span class='ident'>uid</span>) {
+                <span class='kw'>if</span> <span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>==</span> <span class='ident'>REMOVE_FROM_TREE</span> {
+                    <span class='self'>self</span>.<span class='ident'>tree</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>proxy</span>.<span class='ident'>leaf</span>);
+                }
+                <span class='kw'>else</span> {
+                    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>proxy</span>.<span class='ident'>active</span> <span class='op'>==</span> <span class='ident'>REMOVE_FROM_STREE</span>);
+                    <span class='self'>self</span>.<span class='ident'>stree</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>proxy</span>.<span class='ident'>leaf</span>);
+                }
+            }
+        }
+
+        <span class='self'>self</span>.<span class='ident'>proxies_to_remove</span>.<span class='ident'>clear</span>();
     }
 
-    <span class='kw'>fn</span> <span class='ident'>defered_set_bounding_volume</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>uid</span>: <span class='ident'>usize</span>, <span class='ident'>bounding_volume</span>: <span class='ident'>BV</span>) {
+    <span class='kw'>fn</span> <span class='ident'>deferred_set_bounding_volume</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>uid</span>: <span class='ident'>usize</span>, <span class='ident'>bounding_volume</span>: <span class='ident'>BV</span>) {
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>proxy_key</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>proxies</span>.<span class='ident'>get_fast_key</span>(<span class='ident'>uid</span>) {
             <span class='kw'>let</span> <span class='ident'>proxy</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>proxies</span>.<span class='ident'>get_fast_mut</span>(<span class='kw-2'>&amp;</span><span class='ident'>proxy_key</span>).<span class='ident'>unwrap</span>();
 
@@ -665,7 +724,7 @@
         }
     }
 
-    <span class='kw'>fn</span> <span class='ident'>interferences_with_ray</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>out</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>T</span><span class='op'>&gt;</span>) {
+    <span class='kw'>fn</span> <span class='ident'>interferences_with_ray</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>, <span class='ident'>ray</span>: <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>, <span class='ident'>out</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>T</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>collector</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
 
         {
@@ -701,36 +760,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -742,6 +814,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

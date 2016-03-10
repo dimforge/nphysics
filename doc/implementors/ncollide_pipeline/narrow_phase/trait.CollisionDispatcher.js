@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['ncollide_pipeline'] = [];
+implementors['ncollide_pipeline'] = [];implementors['ncollide_pipeline'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

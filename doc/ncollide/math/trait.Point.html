@@ -9,6 +9,7 @@
 
     <title>ncollide::math::Point - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,29 +25,35 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>math</a></p><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.HasInertiaMatrix.html'>HasInertiaMatrix</a><a class='trait ' href='trait.Isometry.html'>Isometry</a><a class='trait current' href='trait.Point.html'>Point</a><a class='trait ' href='trait.Scalar.html'>Scalar</a><a class='trait ' href='trait.Vect.html'>Vect</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>math</a></p><script>window.sidebarCurrent = {name: 'Point', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>math</a>::<wbr><a class='trait' href=''>Point</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-65' href='../../ncollide_math/trait.Point.html?gotosrc=65'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait Point&lt;N, V&gt;: <a class='trait' href='http://doc.rust-lang.org/nightly/core/ops/trait.IndexMut.html' title='core::ops::IndexMut'>IndexMut</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt; + <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Show.html' title='core::fmt::Show'>Show</a> + <a class='trait' href='../../nalgebra/traits/structure/trait.Bounded.html' title='nalgebra::traits::structure::Bounded'>Bounded</a> + <a class='trait' href='../../nalgebra/traits/structure/trait.FloatPnt.html' title='nalgebra::traits::structure::FloatPnt'>FloatPnt</a>&lt;N, V&gt; + <a class='trait' href='../../nalgebra/traits/operations/trait.POrd.html' title='nalgebra::traits::operations::POrd'>POrd</a> + <a class='trait' href='../../nalgebra/traits/operations/trait.ScalarAdd.html' title='nalgebra::traits::operations::ScalarAdd'>ScalarAdd</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/operations/trait.ScalarSub.html' title='nalgebra::traits::operations::ScalarSub'>ScalarSub</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/operations/trait.ScalarMul.html' title='nalgebra::traits::operations::ScalarMul'>ScalarMul</a>&lt;N&gt; + <a class='trait' href='../../nalgebra/traits/operations/trait.ScalarDiv.html' title='nalgebra::traits::operations::ScalarDiv'>ScalarDiv</a>&lt;N&gt; { }</pre><div class='docblock'><p>Trait implemented by point types.</p>
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>ncollide</a>::<wbr><a href='index.html'>math</a>::<wbr><a class='trait' href=''>Point</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-21' class='srclink' href='../../ncollide_math/trait.Point.html?gotosrc=21' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Point: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + 'static + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Neg.html' title='core::ops::Neg'>Neg</a>&lt;Output=Self&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.IndexMut.html' title='core::ops::IndexMut'>IndexMut</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Output=Self::<a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>::<a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Scalar</a>&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a> + <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a> + <a class='trait' href='../../nalgebra/traits/structure/trait.Repeat.html' title='nalgebra::traits::structure::Repeat'>Repeat</a>&lt;Self::<a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>::<a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Scalar</a>&gt; + <a class='trait' href='../../nalgebra/traits/structure/trait.Bounded.html' title='nalgebra::traits::structure::Bounded'>Bounded</a> + <a class='trait' href='../../nalgebra/traits/structure/trait.FloatPnt.html' title='nalgebra::traits::structure::FloatPnt'>FloatPnt</a>&lt;Self::<a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>::<a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Scalar</a>, Self::<a class='trait' href='../../ncollide/math/trait.Point.html' title='ncollide::math::Point'>Vect</a>&gt; + <a class='trait' href='../../nalgebra/traits/operations/trait.POrd.html' title='nalgebra::traits::operations::POrd'>POrd</a> {
+    type Vect: <a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a>;
+}</pre><div class='docblock'><p>Trait implemented by point types.</p>
 </div>
+            <h2 id='associated-types'>Associated Types</h2>
+            <div class='methods'>
+        <h3 id='associatedtype.Vect' class='method stab '><code>type Vect: <a class='trait' href='../../ncollide/math/trait.Vect.html' title='ncollide::math::Vect'>Vect</a></code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     </ul><script type="text/javascript" async
@@ -56,36 +63,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -97,6 +117,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

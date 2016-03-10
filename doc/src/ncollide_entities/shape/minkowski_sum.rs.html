@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_entities/shape/minkowski_sum.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_entities/shape/minkowski_sum.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>minkowski_sum.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -401,48 +402,12 @@
 <span id="359">359</span>
 <span id="360">360</span>
 <span id="361">361</span>
-<span id="362">362</span>
-<span id="363">363</span>
-<span id="364">364</span>
-<span id="365">365</span>
-<span id="366">366</span>
-<span id="367">367</span>
-<span id="368">368</span>
-<span id="369">369</span>
-<span id="370">370</span>
-<span id="371">371</span>
-<span id="372">372</span>
-<span id="373">373</span>
-<span id="374">374</span>
-<span id="375">375</span>
-<span id="376">376</span>
-<span id="377">377</span>
-<span id="378">378</span>
-<span id="379">379</span>
-<span id="380">380</span>
-<span id="381">381</span>
-<span id="382">382</span>
-<span id="383">383</span>
-<span id="384">384</span>
-<span id="385">385</span>
-<span id="386">386</span>
-<span id="387">387</span>
-<span id="388">388</span>
-<span id="389">389</span>
-<span id="390">390</span>
-<span id="391">391</span>
-<span id="392">392</span>
-<span id="393">393</span>
-<span id="394">394</span>
-<span id="395">395</span>
-<span id="396">396</span>
-<span id="397">397</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Minkowski sum.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Index</span>, <span class='ident'>IndexMut</span>, <span class='ident'>Add</span>, <span class='ident'>Sub</span>, <span class='ident'>Mul</span>, <span class='ident'>Div</span>, <span class='ident'>Neg</span>};
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Dim</span>, <span class='ident'>ApproxEq</span>, <span class='ident'>Orig</span>, <span class='ident'>PntAsVec</span>, <span class='ident'>Axpy</span>, <span class='ident'>Translate</span>, <span class='ident'>NumPnt</span>, <span class='ident'>NumVec</span>, <span class='ident'>POrd</span>,
-         <span class='ident'>POrdering</span>, <span class='ident'>ScalarSub</span>, <span class='ident'>ScalarAdd</span>, <span class='ident'>ScalarMul</span>, <span class='ident'>ScalarDiv</span>, <span class='ident'>FloatPnt</span>, <span class='ident'>Bounded</span>};
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Dim</span>, <span class='ident'>ApproxEq</span>, <span class='ident'>Orig</span>, <span class='ident'>PntAsVec</span>, <span class='ident'>Axpy</span>, <span class='ident'>Translate</span>, <span class='ident'>NumPnt</span>, <span class='ident'>POrd</span>,
+         <span class='ident'>POrdering</span>, <span class='ident'>FloatPnt</span>, <span class='ident'>Bounded</span>, <span class='ident'>Repeat</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>shape</span>::<span class='ident'>Reflection</span>;
 <span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
@@ -462,7 +427,7 @@
  *  - `G1`: type of the first object involved on the sum.
  *  - `G2`: type of the second object involved on the sum.
  */</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>MinkowskiSum</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>M</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='lifetime'>&#39;a</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
     <span class='ident'>m1</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>M</span>,
     <span class='ident'>g1</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>G1</span>,
@@ -512,7 +477,7 @@
  * * `G1`: type of the first object involved on the sum.
  * * `G2`: type of the second object involved on the sum.
  */</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>AnnotatedMinkowskiSum</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>M</span>: <span class='lifetime'>&#39;a</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='lifetime'>&#39;a</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
     <span class='ident'>m1</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>M</span>,
     <span class='ident'>g1</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>G1</span>,
@@ -558,7 +523,7 @@
 <span class='comment'>// FIXME: AnnotatedPoint is not a good name.</span>
 <span class='comment'>// XXX: do not hide the documentation!</span>
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Show</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
     <span class='ident'>orig1</span>: <span class='ident'>P</span>,
     <span class='ident'>orig2</span>: <span class='ident'>P</span>,
@@ -630,16 +595,14 @@
     <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span>::<span class='ident'>Output</span>;
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>index</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>i</span>: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>P</span>::<span class='ident'>Output</span> {
-        <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>point</span>[<span class='op'>*</span><span class='ident'>i</span>]
+    <span class='kw'>fn</span> <span class='ident'>index</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>i</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>P</span>::<span class='ident'>Output</span> {
+        <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>point</span>[<span class='ident'>i</span>]
     }
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>IndexMut</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;&gt;</span> <span class='ident'>IndexMut</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span>::<span class='ident'>Output</span>;
-
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>index_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>P</span>::<span class='ident'>Output</span> {
+    <span class='kw'>fn</span> <span class='ident'>index_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>P</span>::<span class='ident'>Output</span> {
         <span class='macro'>unimplemented</span><span class='macro'>!</span>()
     }
 }
@@ -670,16 +633,13 @@
     }
 }
 
-<span class='attribute'>#[<span class='ident'>old_impl_check</span>]</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>V</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Copy</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>V</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
     <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>;
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='self'>self</span>, <span class='ident'>other</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>_0_5</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.5f64</span>);
+    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='self'>self</span>, <span class='ident'>other</span>: <span class='ident'>P</span>::<span class='ident'>Vect</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>_0_5</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.5f64</span>);
 
         <span class='ident'>AnnotatedPoint</span>::<span class='ident'>new</span>(
             <span class='self'>self</span>.<span class='ident'>orig1</span> <span class='op'>+</span> <span class='ident'>other</span> <span class='op'>*</span> <span class='ident'>_0_5</span>,
@@ -703,38 +663,6 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>sub</span>(<span class='self'>self</span>, <span class='ident'>other</span>: <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>P</span>::<span class='ident'>Output</span> {
         <span class='self'>self</span>.<span class='ident'>point</span> <span class='op'>-</span> <span class='ident'>other</span>.<span class='ident'>point</span>
-    }
-}
-
-<span class='attribute'>#[<span class='ident'>old_impl_check</span>]</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>ScalarSub</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>sub_s</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
-        <span class='macro'>unimplemented</span><span class='macro'>!</span>()
-    }
-}
-
-<span class='attribute'>#[<span class='ident'>old_impl_check</span>]</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>ScalarAdd</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>add_s</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
-        <span class='macro'>unimplemented</span><span class='macro'>!</span>()
-    }
-}
-
-<span class='attribute'>#[<span class='ident'>old_impl_check</span>]</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>ScalarMul</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>mul_s</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
-        <span class='macro'>unimplemented</span><span class='macro'>!</span>()
-    }
-}
-
-<span class='attribute'>#[<span class='ident'>old_impl_check</span>]</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>ScalarDiv</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>div_s</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
-        <span class='macro'>unimplemented</span><span class='macro'>!</span>()
     }
 }
 
@@ -818,22 +746,23 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>NumPnt</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>NumPnt</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Copy</span> <span class='op'>+</span> <span class='ident'>NumVec</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&gt;</span> <span class='ident'>Repeat</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>repeat</span>(_: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>) <span class='op'>-&gt;</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
+        <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;`Repeat` is not implemented for `AnnotatedPoint`.&quot;</span>);
+    }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>FloatPnt</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='ident'>NumPnt</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='ident'>FloatPnt</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
+}
+
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='ident'>Point</span> <span class='kw'>for</span> <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
+        <span class='kw'>type</span> <span class='ident'>Vect</span> <span class='op'>=</span> <span class='ident'>P</span>::<span class='ident'>Vect</span>;
 }
 </pre>
 </section>
@@ -841,36 +770,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -882,6 +824,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

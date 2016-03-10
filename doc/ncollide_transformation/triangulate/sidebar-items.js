@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["triangulate","Triangulates a set of point (sort of) lying on the same 2d plane."]]});

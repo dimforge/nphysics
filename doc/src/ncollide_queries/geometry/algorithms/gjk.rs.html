@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_queries/geometry/algorithms/gjk.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_queries/geometry/algorithms/gjk.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>gjk.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -346,30 +347,18 @@
 <span id="304">304</span>
 <span id="305">305</span>
 <span id="306">306</span>
-<span id="307">307</span>
-<span id="308">308</span>
-<span id="309">309</span>
-<span id="310">310</span>
-<span id="311">311</span>
-<span id="312">312</span>
-<span id="313">313</span>
-<span id="314">314</span>
-<span id="315">315</span>
-<span id="316">316</span>
-<span id="317">317</span>
-<span id="318">318</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! The Gilbert–Johnson–Keerthi distance algorithm.</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>num</span>::<span class='ident'>Float</span>;
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Identity</span>, <span class='ident'>Translation</span>, <span class='ident'>Bounded</span>};
+<span class='kw'>use</span> <span class='ident'>num</span>::{<span class='ident'>Float</span>, <span class='ident'>Zero</span>};
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Identity</span>, <span class='ident'>Translate</span>, <span class='ident'>Bounded</span>, <span class='ident'>Norm</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>shape</span>::{<span class='ident'>AnnotatedPoint</span>, <span class='ident'>AnnotatedMinkowskiSum</span>, <span class='ident'>MinkowskiSum</span>, <span class='ident'>Reflection</span>};
 <span class='kw'>use</span> <span class='ident'>entities</span>::<span class='ident'>support_map</span>::<span class='ident'>SupportMap</span>;
 <span class='kw'>use</span> <span class='ident'>geometry</span>::<span class='ident'>algorithms</span>::<span class='ident'>simplex</span>::<span class='ident'>Simplex</span>;
 <span class='kw'>use</span> <span class='ident'>ray</span>::<span class='ident'>Ray</span>;
 <span class='kw'>use</span> <span class='ident'>ray</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>FloatError</span>};
 
 
 <span class='doccomment'>/// Results of the GJK algorithm.</span>
@@ -392,23 +381,21 @@
 <span class='doccomment'>/// * `simplex` - the simplex to be used by the GJK algorithm. It must be already initialized</span>
 <span class='doccomment'>///               with at least one point on the shapes CSO. See</span>
 <span class='doccomment'>///               `minkowski_sum::cso_support_point` to compute such point.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>closest_points</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m1</span>:      <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
-                                                             <span class='ident'>g1</span>:      <span class='kw-2'>&amp;</span><span class='ident'>G1</span>,
-                                                             <span class='ident'>m2</span>:      <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
-                                                             <span class='ident'>g2</span>:      <span class='kw-2'>&amp;</span><span class='ident'>G2</span>,
-                                                             <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>)
-                                                             <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>P</span>, <span class='ident'>P</span>)<span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>:  <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>:  <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>S</span>:  <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
-          <span class='ident'>G1</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>,
-          <span class='ident'>G2</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>closest_points</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m1</span>:      <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
+                                                       <span class='ident'>g1</span>:      <span class='kw-2'>&amp;</span><span class='ident'>G1</span>,
+                                                       <span class='ident'>m2</span>:      <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
+                                                       <span class='ident'>g2</span>:      <span class='kw-2'>&amp;</span><span class='ident'>G2</span>,
+                                                       <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>)
+                                                       <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>P</span>, <span class='ident'>P</span>)<span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>:  <span class='ident'>Point</span>,
+          <span class='ident'>S</span>:  <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
+          <span class='ident'>G1</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>,
+          <span class='ident'>G2</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>reflect2</span> <span class='op'>=</span> <span class='ident'>Reflection</span>::<span class='ident'>new</span>(<span class='ident'>g2</span>);
     <span class='kw'>let</span> <span class='ident'>cso</span>      <span class='op'>=</span> <span class='ident'>AnnotatedMinkowskiSum</span>::<span class='ident'>new</span>(<span class='ident'>m1</span>, <span class='ident'>g1</span>, <span class='ident'>m2</span>, <span class='kw-2'>&amp;</span><span class='ident'>reflect2</span>);
 
     <span class='comment'>// XXX: we need to specify S because of a bug on the compiler.</span>
-    <span class='ident'>project_origin</span>::<span class='op'>&lt;</span>_, _, _, _, <span class='ident'>S</span>, _<span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='kw-2'>&amp;</span><span class='ident'>cso</span>, <span class='ident'>simplex</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>p</span><span class='op'>|</span> (<span class='ident'>p</span>.<span class='ident'>orig1</span>().<span class='ident'>clone</span>(), <span class='op'>-</span><span class='op'>*</span><span class='ident'>p</span>.<span class='ident'>orig2</span>()))
+    <span class='ident'>project_origin</span>::<span class='op'>&lt;</span>_, _, <span class='ident'>S</span>, _<span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='kw-2'>&amp;</span><span class='ident'>cso</span>, <span class='ident'>simplex</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>p</span><span class='op'>|</span> (<span class='ident'>p</span>.<span class='ident'>orig1</span>().<span class='ident'>clone</span>(), <span class='op'>-</span><span class='op'>*</span><span class='ident'>p</span>.<span class='ident'>orig2</span>()))
 }
 
 <span class='doccomment'>/// Computes the closest points between two convex shapes unsing the GJK algorithm.</span>
@@ -419,24 +406,22 @@
 <span class='doccomment'>/// * `simplex` - the simplex to be used by the GJK algorithm. It must be already initialized</span>
 <span class='doccomment'>///               with at least one point on the shapes CSO. See `minkowski_sum::cso_support_point`</span>
 <span class='doccomment'>///               to compute such point.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>closest_points_with_max_dist</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m1</span>:       <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
-                                                                           <span class='ident'>g1</span>:       <span class='kw-2'>&amp;</span><span class='ident'>G1</span>,
-                                                                           <span class='ident'>m2</span>:       <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
-                                                                           <span class='ident'>g2</span>:       <span class='kw-2'>&amp;</span><span class='ident'>G2</span>,
-                                                                           <span class='ident'>max_dist</span>: <span class='ident'>N</span>,
-                                                                           <span class='ident'>simplex</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>)
-                                                                           <span class='op'>-&gt;</span> <span class='ident'>GJKResult</span><span class='op'>&lt;</span>(<span class='ident'>P</span>, <span class='ident'>P</span>), <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>:  <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>:  <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>S</span>:  <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
-          <span class='ident'>G1</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>,
-          <span class='ident'>G2</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>closest_points_with_max_dist</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m1</span>:       <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
+                                                                     <span class='ident'>g1</span>:       <span class='kw-2'>&amp;</span><span class='ident'>G1</span>,
+                                                                     <span class='ident'>m2</span>:       <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
+                                                                     <span class='ident'>g2</span>:       <span class='kw-2'>&amp;</span><span class='ident'>G2</span>,
+                                                                     <span class='ident'>max_dist</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>,
+                                                                     <span class='ident'>simplex</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>)
+                                                                     <span class='op'>-&gt;</span> <span class='ident'>GJKResult</span><span class='op'>&lt;</span>(<span class='ident'>P</span>, <span class='ident'>P</span>), <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>:  <span class='ident'>Point</span>,
+          <span class='ident'>S</span>:  <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>AnnotatedPoint</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;&gt;</span>,
+          <span class='ident'>G1</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>,
+          <span class='ident'>G2</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>reflect2</span> <span class='op'>=</span> <span class='ident'>Reflection</span>::<span class='ident'>new</span>(<span class='ident'>g2</span>);
     <span class='kw'>let</span> <span class='ident'>cso</span>      <span class='op'>=</span> <span class='ident'>AnnotatedMinkowskiSum</span>::<span class='ident'>new</span>(<span class='ident'>m1</span>, <span class='ident'>g1</span>, <span class='ident'>m2</span>, <span class='kw-2'>&amp;</span><span class='ident'>reflect2</span>);
 
     <span class='comment'>// XXX: we need to specify S because of a bug on the compiler.</span>
-    <span class='kw'>match</span> <span class='ident'>project_origin_with_max_dist</span>::<span class='op'>&lt;</span>_, _, _, _, <span class='ident'>S</span>, _<span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='kw-2'>&amp;</span><span class='ident'>cso</span>, <span class='ident'>max_dist</span>, <span class='ident'>simplex</span>) {
+    <span class='kw'>match</span> <span class='ident'>project_origin_with_max_dist</span>::<span class='op'>&lt;</span>_, _, <span class='ident'>S</span>, _<span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='kw-2'>&amp;</span><span class='ident'>cso</span>, <span class='ident'>max_dist</span>, <span class='ident'>simplex</span>) {
         <span class='ident'>GJKResult</span>::<span class='ident'>Projection</span>(<span class='ident'>p</span>)       <span class='op'>=&gt;</span> <span class='ident'>GJKResult</span>::<span class='ident'>Projection</span>((<span class='ident'>p</span>.<span class='ident'>orig1</span>().<span class='ident'>clone</span>(), <span class='op'>-</span><span class='op'>*</span><span class='ident'>p</span>.<span class='ident'>orig2</span>())),
         <span class='ident'>GJKResult</span>::<span class='ident'>Intersection</span>        <span class='op'>=&gt;</span> <span class='ident'>GJKResult</span>::<span class='ident'>Intersection</span>,
         <span class='ident'>GJKResult</span>::<span class='ident'>NoIntersection</span>(<span class='ident'>dir</span>) <span class='op'>=&gt;</span> <span class='ident'>GJKResult</span>::<span class='ident'>NoIntersection</span>(<span class='ident'>dir</span>.<span class='ident'>clone</span>())
@@ -452,18 +437,16 @@
 <span class='doccomment'>/// * `simplex` - the simplex to be used by the GJK algorithm. It must be already initialized</span>
 <span class='doccomment'>///               with at least one point on the shapes CSO. See `minkowski_sum::cso_support_point`</span>
 <span class='doccomment'>///               to compute such point.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>distance</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m1</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>g1</span>: <span class='kw-2'>&amp;</span><span class='ident'>G1</span>, <span class='ident'>m2</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>g2</span>: <span class='kw-2'>&amp;</span><span class='ident'>G2</span>, <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>:  <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>:  <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>:  <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>S</span>:  <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>,
-          <span class='ident'>G1</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>,
-          <span class='ident'>G2</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>distance</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G1</span>: ?<span class='ident'>Sized</span>, <span class='ident'>G2</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m1</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>g1</span>: <span class='kw-2'>&amp;</span><span class='ident'>G1</span>, <span class='ident'>m2</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>g2</span>: <span class='kw-2'>&amp;</span><span class='ident'>G2</span>, <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>:  <span class='ident'>Point</span>,
+          <span class='ident'>S</span>:  <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>G1</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>,
+          <span class='ident'>G2</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>reflect2</span> <span class='op'>=</span> <span class='ident'>Reflection</span>::<span class='ident'>new</span>(<span class='ident'>g2</span>);
     <span class='kw'>let</span> <span class='ident'>cso</span>      <span class='op'>=</span> <span class='ident'>MinkowskiSum</span>::<span class='ident'>new</span>(<span class='ident'>m1</span>, <span class='ident'>g1</span>, <span class='ident'>m2</span>, <span class='kw-2'>&amp;</span><span class='ident'>reflect2</span>);
 
     <span class='comment'>// XXX: we need to specify S because of a bug on the compiler.</span>
-    <span class='kw'>match</span> <span class='ident'>project_origin</span>::<span class='op'>&lt;</span>_, _, _, _, <span class='ident'>S</span>, _<span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='kw-2'>&amp;</span><span class='ident'>cso</span>, <span class='ident'>simplex</span>) {
+    <span class='kw'>match</span> <span class='ident'>project_origin</span>::<span class='op'>&lt;</span>_, _, <span class='ident'>S</span>, _<span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>Identity</span>::<span class='ident'>new</span>(), <span class='kw-2'>&amp;</span><span class='ident'>cso</span>, <span class='ident'>simplex</span>) {
         <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='op'>=&gt;</span> <span class='ident'>na</span>::<span class='ident'>norm</span>(<span class='ident'>c</span>.<span class='ident'>as_vec</span>()),
         <span class='prelude-val'>None</span>    <span class='op'>=&gt;</span> <span class='ident'>na</span>::<span class='ident'>zero</span>()
     }
@@ -478,20 +461,18 @@
 <span class='doccomment'>/// * shape - the shape to project the origin on</span>
 <span class='doccomment'>/// * simplex - the simplex to be used by the GJK algorithm. It must be already initialized</span>
 <span class='doccomment'>///             with at least one point on the shape boundary.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>project_origin</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>shape</span>: <span class='kw-2'>&amp;</span><span class='ident'>G</span>, <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>S</span>: <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>,
-          <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>project_origin</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>shape</span>: <span class='kw-2'>&amp;</span><span class='ident'>G</span>, <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>S</span>: <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
     <span class='comment'>// FIXME: reset the simplex if it is empty?</span>
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>proj</span>       <span class='op'>=</span> <span class='ident'>simplex</span>.<span class='ident'>project_origin_and_reduce</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>sq_len_dir</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>sqnorm</span>(<span class='ident'>proj</span>.<span class='ident'>as_vec</span>());
 
-    <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='ident'>N</span>  <span class='op'>=</span> <span class='ident'>Float</span>::<span class='ident'>epsilon</span>();
+    <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>FloatError</span>::<span class='ident'>epsilon</span>();
     <span class='kw'>let</span> <span class='ident'>_eps_tol</span> <span class='op'>=</span> <span class='ident'>_eps</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>100.0f64</span>);
     <span class='kw'>let</span> <span class='ident'>_eps_rel</span> <span class='op'>=</span> <span class='ident'>_eps</span>.<span class='ident'>sqrt</span>();
-    <span class='kw'>let</span> <span class='ident'>_dim</span>     <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='ident'>_dim</span>     <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
 
     <span class='kw'>loop</span> {
         <span class='kw'>if</span> <span class='ident'>simplex</span>.<span class='ident'>dimension</span>() <span class='op'>==</span> <span class='ident'>_dim</span> <span class='op'>||</span> <span class='ident'>sq_len_dir</span> <span class='op'>&lt;=</span> <span class='ident'>_eps_tol</span> <span class='comment'>/* * simplex.max_sq_len()*/</span> {
@@ -531,24 +512,22 @@
 <span class='doccomment'>/// * shape - the shape to project the origin on</span>
 <span class='doccomment'>/// * simplex - the simplex to be used by the GJK algorithm. It must be already initialized</span>
 <span class='doccomment'>///             with at least one point on the shape boundary.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>project_origin_with_max_dist</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m</span>:        <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
-                                                              <span class='ident'>shape</span>:    <span class='kw-2'>&amp;</span><span class='ident'>G</span>,
-                                                              <span class='ident'>max_dist</span>: <span class='ident'>N</span>,
-                                                              <span class='ident'>simplex</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>)
-                                                              <span class='op'>-&gt;</span> <span class='ident'>GJKResult</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>S</span>: <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>,
-          <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>project_origin_with_max_dist</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m</span>:        <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
+                                                        <span class='ident'>shape</span>:    <span class='kw-2'>&amp;</span><span class='ident'>G</span>,
+                                                        <span class='ident'>max_dist</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>,
+                                                        <span class='ident'>simplex</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>)
+                                                        <span class='op'>-&gt;</span> <span class='ident'>GJKResult</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>S</span>: <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
     <span class='comment'>// FIXME: reset the simplex if it is empty?</span>
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>proj</span>       <span class='op'>=</span> <span class='ident'>simplex</span>.<span class='ident'>project_origin_and_reduce</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>sq_len_dir</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>sqnorm</span>(<span class='ident'>proj</span>.<span class='ident'>as_vec</span>());
 
-    <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='ident'>N</span>  <span class='op'>=</span> <span class='ident'>Float</span>::<span class='ident'>epsilon</span>();
+    <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>FloatError</span>::<span class='ident'>epsilon</span>();
     <span class='kw'>let</span> <span class='ident'>_eps_tol</span> <span class='op'>=</span> <span class='ident'>_eps</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>100.0f64</span>);
     <span class='kw'>let</span> <span class='ident'>_eps_rel</span> <span class='op'>=</span> <span class='ident'>_eps</span>.<span class='ident'>sqrt</span>();
-    <span class='kw'>let</span> <span class='ident'>_dim</span>     <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='ident'>_dim</span>     <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
 
     <span class='kw'>loop</span> {
         <span class='kw'>if</span> <span class='ident'>simplex</span>.<span class='ident'>dimension</span>() <span class='op'>==</span> <span class='ident'>_dim</span> <span class='op'>||</span> <span class='ident'>sq_len_dir</span> <span class='op'>&lt;=</span> <span class='ident'>_eps_tol</span> <span class='comment'>/* * simplex.max_sq_len()*/</span> {
@@ -585,40 +564,38 @@
 }
 
 <span class='doccomment'>/// Casts a ray on a support map using the GJK algorithm.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cast_ray</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m</span>:       <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
-                                          <span class='ident'>shape</span>:   <span class='kw-2'>&amp;</span><span class='ident'>G</span>,
-                                          <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>,
-                                          <span class='ident'>ray</span>:     <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span><span class='op'>&gt;</span>)
-                                          <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>N</span>, <span class='ident'>V</span>)<span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-          <span class='ident'>M</span>: <span class='ident'>Translation</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>,
-          <span class='ident'>S</span>: <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>,
-          <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ltoi</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cast_ray</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>S</span>, <span class='ident'>G</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>m</span>:       <span class='kw-2'>&amp;</span><span class='ident'>M</span>,
+                                    <span class='ident'>shape</span>:   <span class='kw-2'>&amp;</span><span class='ident'>G</span>,
+                                    <span class='ident'>simplex</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>,
+                                    <span class='ident'>ray</span>:     <span class='kw-2'>&amp;</span><span class='ident'>Ray</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>)
+                                    <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span>)<span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+          <span class='ident'>M</span>: <span class='ident'>Translate</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>S</span>: <span class='ident'>Simplex</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+          <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ltoi</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
 
-    <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='ident'>N</span>     <span class='op'>=</span> <span class='ident'>Float</span>::<span class='ident'>epsilon</span>();
-    <span class='kw'>let</span> <span class='ident'>_eps_tol</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>_eps</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>100.0f64</span>);
-    <span class='kw'>let</span> <span class='ident'>_dim</span>             <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='ident'>_eps</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>     <span class='op'>=</span> <span class='ident'>FloatError</span>::<span class='ident'>epsilon</span>();
+    <span class='kw'>let</span> <span class='ident'>_eps_tol</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>_eps</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>100.0f64</span>);
+    <span class='kw'>let</span> <span class='ident'>_dim</span>                                <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
 
     <span class='comment'>// initialization</span>
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>curr_ray</span>   <span class='op'>=</span> <span class='ident'>Ray</span>::<span class='ident'>new</span>(<span class='ident'>ray</span>.<span class='ident'>orig</span>.<span class='ident'>clone</span>(), <span class='ident'>ray</span>.<span class='ident'>dir</span>.<span class='ident'>clone</span>());
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dir</span>        <span class='op'>=</span> <span class='op'>*</span><span class='ident'>curr_ray</span>.<span class='ident'>orig</span>.<span class='ident'>as_vec</span>() <span class='op'>-</span> <span class='ident'>m</span>.<span class='ident'>translation</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dir</span>        <span class='op'>=</span> <span class='ident'>m</span>.<span class='ident'>inv_translate</span>(<span class='kw-2'>&amp;</span><span class='ident'>curr_ray</span>.<span class='ident'>orig</span>).<span class='ident'>as_vec</span>().<span class='ident'>clone</span>();
 
     <span class='kw'>if</span> <span class='ident'>dir</span>.<span class='ident'>is_zero</span>() {
         <span class='ident'>dir</span>[<span class='number'>0</span>] <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>();
     }
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>old_sq_len</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>old_sq_len</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>();
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ldir</span> <span class='op'>=</span> <span class='ident'>dir</span>.<span class='ident'>clone</span>();
     <span class='comment'>// FIXME: this converges in more than 100 iterations… something is wrong here…</span>
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>niter</span> <span class='op'>=</span> <span class='number'>0u</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>niter</span> <span class='op'>=</span> <span class='number'>0usize</span>;
     <span class='kw'>loop</span> {
         <span class='ident'>niter</span> <span class='op'>=</span> <span class='ident'>niter</span> <span class='op'>+</span> <span class='number'>1</span>;
 
-        <span class='kw'>if</span> <span class='ident'>dir</span>.<span class='ident'>normalize</span>().<span class='ident'>is_zero</span>() {
+        <span class='kw'>if</span> <span class='ident'>dir</span>.<span class='ident'>normalize_mut</span>().<span class='ident'>is_zero</span>() {
             <span class='kw'>return</span> <span class='prelude-val'>Some</span>((<span class='ident'>ltoi</span>, <span class='ident'>ldir</span>))
         }
 
@@ -642,7 +619,7 @@
                     <span class='ident'>dir</span> <span class='op'>=</span> <span class='ident'>curr_ray</span>.<span class='ident'>orig</span> <span class='op'>-</span> <span class='ident'>support_point</span>;
                     <span class='comment'>// FIXME: could we simply translate the simpex by old_orig - new_orig ?</span>
                     <span class='ident'>simplex</span>.<span class='ident'>reset</span>(<span class='ident'>na</span>::<span class='ident'>orig</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>+</span> (<span class='op'>-</span><span class='ident'>dir</span>));
-                    <span class='kw'>let</span> <span class='ident'>_max</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>();
+                    <span class='kw'>let</span> <span class='ident'>_max</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>();
                     <span class='ident'>old_sq_len</span> <span class='op'>=</span> <span class='ident'>_max</span>;
                     <span class='kw'>continue</span>
                 }
@@ -683,36 +660,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -724,6 +714,6 @@
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

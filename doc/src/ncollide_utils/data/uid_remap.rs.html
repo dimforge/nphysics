@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_utils/data/uid_remap.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_utils/data/uid_remap.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>uid_remap.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -332,17 +333,17 @@
 </pre><pre class='rust '>
 <span class='doccomment'>//! A map allowing a slow lookup for arbitrary `usize` and fast lookup for small ones.</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>FromIterator</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::{<span class='ident'>FromIterator</span>, <span class='ident'>IntoIterator</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::<span class='ident'>Index</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>num</span>::<span class='ident'>Int</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>default</span>::<span class='ident'>Default</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>hash_map</span>::<span class='ident'>Entry</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>vec_map</span>::{<span class='ident'>Iter</span>, <span class='ident'>IterMut</span>, <span class='ident'>Values</span>, <span class='ident'>Keys</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>VecMap</span>, <span class='ident'>HashMap</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>};
+<span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Bounded</span>;
+<span class='kw'>use</span> <span class='ident'>data</span>::<span class='ident'>vec_map</span>::{<span class='ident'>VecMap</span>, <span class='ident'>Iter</span>, <span class='ident'>IterMut</span>, <span class='ident'>Values</span>, <span class='ident'>Keys</span>};
 
 <span class='doccomment'>/// A special type of key used by `UidRemap` to perform faster lookups than with the user-defined</span>
 <span class='doccomment'>/// id of type `usize`.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Hash</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialOrd</span>, <span class='ident'>Ord</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Hash</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialOrd</span>, <span class='ident'>Ord</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>FastKey</span> {
     <span class='ident'>uid</span>: <span class='ident'>usize</span>
 }
@@ -352,7 +353,7 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_invalid</span>() <span class='op'>-&gt;</span> <span class='ident'>FastKey</span> {
         <span class='ident'>FastKey</span> {
-            <span class='ident'>uid</span>: <span class='ident'>Int</span>::<span class='ident'>max_value</span>()
+            <span class='ident'>uid</span>: <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>()
         }
     }
 
@@ -363,17 +364,17 @@
     }
 }
 
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
-<span class='kw'>struct</span> <span class='ident'>LookupData</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> {
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='kw'>struct</span> <span class='ident'>LookupData</span> {
     <span class='ident'>uid2key</span>:   <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>FastKey</span><span class='op'>&gt;</span>,
-    <span class='ident'>free_keys</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>FastKey</span><span class='op'>&gt;</span>
+    <span class='ident'>free_keys</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>FastKey</span><span class='op'>&gt;</span>,
 }
 
 <span class='doccomment'>/// A set of values having large usize key.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> { <span class='comment'>// FIXME: find a better name.</span>
     <span class='ident'>values</span>: <span class='ident'>VecMap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span>,
-    <span class='ident'>lookup</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>LookupData</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;&gt;</span>
+    <span class='ident'>lookup</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>LookupData</span><span class='op'>&gt;</span>
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> <span class='ident'>Default</span> <span class='kw'>for</span> <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> {
@@ -595,17 +596,17 @@
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> <span class='ident'>FromIterator</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>O</span>)<span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>from_iter</span><span class='op'>&lt;</span><span class='ident'>Iter</span>: <span class='ident'>Iterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> (<span class='ident'>usize</span>, <span class='ident'>O</span>)<span class='op'>&gt;&gt;</span>(<span class='ident'>iter</span>: <span class='ident'>Iter</span>) <span class='op'>-&gt;</span> <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>from_iter</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> (<span class='ident'>usize</span>, <span class='ident'>O</span>)<span class='op'>&gt;&gt;</span>(<span class='ident'>iter</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>map</span> <span class='op'>=</span> <span class='ident'>UidRemap</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);
-        <span class='ident'>map</span>.<span class='ident'>extend</span>(<span class='ident'>iter</span>);
+        <span class='ident'>map</span>.<span class='ident'>extend</span>(<span class='ident'>iter</span>.<span class='ident'>into_iter</span>());
         <span class='ident'>map</span>
     }
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> <span class='ident'>Extend</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>O</span>)<span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>UidRemap</span><span class='op'>&lt;</span><span class='ident'>O</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>extend</span><span class='op'>&lt;</span><span class='ident'>Iter</span>: <span class='ident'>Iterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> (<span class='ident'>usize</span>, <span class='ident'>O</span>)<span class='op'>&gt;&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>iter</span>: <span class='ident'>Iter</span>) {
-        <span class='kw'>for</span> (<span class='ident'>k</span>, <span class='ident'>v</span>) <span class='kw'>in</span> <span class='ident'>iter</span> {
+    <span class='kw'>fn</span> <span class='ident'>extend</span><span class='op'>&lt;</span><span class='ident'>Iter</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> (<span class='ident'>usize</span>, <span class='ident'>O</span>)<span class='op'>&gt;&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>iter</span>: <span class='ident'>Iter</span>) {
+        <span class='kw'>for</span> (<span class='ident'>k</span>, <span class='ident'>v</span>) <span class='kw'>in</span> <span class='ident'>iter</span>.<span class='ident'>into_iter</span>() {
             <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>insert</span>(<span class='ident'>k</span>, <span class='ident'>v</span>);
         }
     }
@@ -615,8 +616,8 @@
     <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>O</span>;
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>index</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>key</span>: <span class='kw-2'>&amp;</span><span class='ident'>FastKey</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>O</span> {
-        <span class='self'>self</span>.<span class='ident'>get_fast</span>(<span class='ident'>key</span>).<span class='ident'>expect</span>(<span class='string'>&quot;key not present&quot;</span>)
+    <span class='kw'>fn</span> <span class='ident'>index</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>key</span>: <span class='ident'>FastKey</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>O</span> {
+        <span class='self'>self</span>.<span class='ident'>get_fast</span>(<span class='kw-2'>&amp;</span><span class='ident'>key</span>).<span class='ident'>expect</span>(<span class='string'>&quot;key not present&quot;</span>)
     }
 }
 </pre>
@@ -625,36 +626,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -666,6 +680,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

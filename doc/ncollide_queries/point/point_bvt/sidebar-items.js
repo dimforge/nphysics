@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["PointInterferencesCollector","Bounding Volume Tree visitor collecting nodes that may contain a given point."]]});

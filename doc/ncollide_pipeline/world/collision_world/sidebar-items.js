@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CollisionWorld","A world that handles collision objects."]],"type":[["BroadPhaseObject","Type of the broad phase trait-object used by the collision world."]]});

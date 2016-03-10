@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["implicit_toi_and_normal_with_ray","Cast a ray on a shape using the GJK algorithm."]]});

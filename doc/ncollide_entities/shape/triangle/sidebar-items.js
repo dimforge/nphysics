@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Triangle","A triangle shape."]]});

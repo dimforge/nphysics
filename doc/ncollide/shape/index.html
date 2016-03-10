@@ -9,6 +9,7 @@
 
     <title>ncollide::shape - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -24,338 +25,417 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
-        <p class='location'><a href='../index.html'>ncollide</a></p><div class='block mod'><h2>Modules</h2><a class='mod ' href='../bounding_volume/index.html'>bounding_volume</a><a class='mod ' href='../broad_phase/index.html'>broad_phase</a><a class='mod ' href='../geometry/index.html'>geometry</a><a class='mod ' href='../inspection/index.html'>inspection</a><a class='mod ' href='../math/index.html'>math</a><a class='mod ' href='../narrow_phase/index.html'>narrow_phase</a><a class='mod ' href='../partitioning/index.html'>partitioning</a><a class='mod ' href='../point/index.html'>point</a><a class='mod ' href='../procedural/index.html'>procedural</a><a class='mod ' href='../ray/index.html'>ray</a><a class='mod current' href='../shape/index.html'>shape</a><a class='mod ' href='../support_map/index.html'>support_map</a><a class='mod ' href='../transformation/index.html'>transformation</a><a class='mod ' href='../utils/index.html'>utils</a><a class='mod ' href='../world/index.html'>world</a></div>
-    </section>
+        <p class='location'><a href='../index.html'>ncollide</a></p><script>window.sidebarCurrent = {name: 'shape', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>ncollide</a>::<wbr><a class='mod' href=''>shape</a><wbr></span><span class='out-of-band'><span id='render-detail'>
-            <a id="collapse-all" href="#">[-]
-            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
-        </span><a id='src-9' href='../../ncollide_entities/shape/index.html?gotosrc=9'>[src]</a></span></h1>
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>ncollide</a>::<wbr><a class='mod' href=''>shape</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-9' class='srclink' href='../../ncollide_entities/shape/index.html?gotosrc=9' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Collision shapes supported by ncollide.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.AnnotatedMinkowskiSum.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.AnnotatedMinkowskiSum.html'
                                title='ncollide::shape::AnnotatedMinkowskiSum'>AnnotatedMinkowskiSum</a></td>
-                        <td class='docblock short'><p>Same as the MinkowskiSum but with a support mapping which keeps track of the
+                        <td class='docblock short'>
+                             <p>Same as the MinkowskiSum but with a support mapping which keeps track of the
 original supports points from the two wrapped shapes.</p>
-</td>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Ball.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Ball.html'
                                title='ncollide::shape::Ball'>Ball</a></td>
-                        <td class='docblock short'><p>A Ball shape.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A Ball shape.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.BaseMesh.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.BaseMesh.html'
                                title='ncollide::shape::BaseMesh'>BaseMesh</a></td>
-                        <td class='docblock short'><p>A mesh generic wrt. the contained mesh elements characterized by vertices.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A mesh generic wrt. the contained mesh elements characterized by vertices.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Capsule.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Capsule.html'
                                title='ncollide::shape::Capsule'>Capsule</a></td>
-                        <td class='docblock short'><p>SupportMap description of a capsule shape with its principal axis aligned with the <code>y</code> axis.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>SupportMap description of a capsule shape with its principal axis aligned with the <code>y</code> axis.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Compound.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Compound.html'
                                title='ncollide::shape::Compound'>Compound</a></td>
-                        <td class='docblock short'><p>A compound shape with an aabb bounding volume.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A compound shape with an aabb bounding volume.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Cone.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Cone.html'
                                title='ncollide::shape::Cone'>Cone</a></td>
-                        <td class='docblock short'><p>SupportMap description of a cylinder shape with its principal axis aligned with the <code>y</code> axis.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>SupportMap description of a cylinder shape with its principal axis aligned with the <code>y</code> axis.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Convex.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Convex.html'
                                title='ncollide::shape::Convex'>Convex</a></td>
-                        <td class='docblock short'><p>The implicit convex hull of a set of points.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>The implicit convex hull of a set of points.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Cuboid.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Cuboid.html'
                                title='ncollide::shape::Cuboid'>Cuboid</a></td>
-                        <td class='docblock short'><p>Shape of a box.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Shape of a box.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Cylinder.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Cylinder.html'
                                title='ncollide::shape::Cylinder'>Cylinder</a></td>
-                        <td class='docblock short'><p>SupportMap description of a cylinder shape with its principal axis aligned with the <code>y</code> axis.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>SupportMap description of a cylinder shape with its principal axis aligned with the <code>y</code> axis.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.MinkowskiSum.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MinkowskiSum.html'
                                title='ncollide::shape::MinkowskiSum'>MinkowskiSum</a></td>
-                        <td class='docblock short'><p>SupportMap representation of the Minkowski sum of two shapes.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>SupportMap representation of the Minkowski sum of two shapes.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Plane.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Plane.html'
                                title='ncollide::shape::Plane'>Plane</a></td>
-                        <td class='docblock short'><p>SupportMap description of a plane.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>SupportMap description of a plane.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Polyline.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Polyline.html'
                                title='ncollide::shape::Polyline'>Polyline</a></td>
-                        <td class='docblock short'><p>Shape commonly known as a 2d line strip or a 3d segment mesh.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Shape commonly known as a 2d line strip or a 3d segment mesh.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Reflection.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Reflection.html'
                                title='ncollide::shape::Reflection'>Reflection</a></td>
-                        <td class='docblock short'><p>SupportMap representation of the reflection of a shape.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>SupportMap representation of the reflection of a shape.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Segment.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Segment.html'
                                title='ncollide::shape::Segment'>Segment</a></td>
-                        <td class='docblock short'><p>A segment shape.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A segment shape.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Torus.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Torus.html'
                                title='ncollide::shape::Torus'>Torus</a></td>
-                        <td class='docblock short'><p>A torus.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A torus.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.TriMesh.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.TriMesh.html'
                                title='ncollide::shape::TriMesh'>TriMesh</a></td>
-                        <td class='docblock short'><p>Shape commonly known as a 2d line strip or a 3d triangle mesh.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Shape commonly known as a 2d line strip or a 3d triangle mesh.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='struct' href='struct.Triangle.html'
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Triangle.html'
                                title='ncollide::shape::Triangle'>Triangle</a></td>
-                        <td class='docblock short'><p>A triangle shape.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>A triangle shape.</p>
+                        </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.BaseMeshElement.html'
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.BaseMeshElement.html'
                                title='ncollide::shape::BaseMeshElement'>BaseMeshElement</a></td>
-                        <td class='docblock short'><p>Trait implemented by elements usable on the Mesh.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Trait implemented by elements usable on the Mesh.</p>
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='trait' href='trait.CompositeShape.html'
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.CompositeShape.html'
                                title='ncollide::shape::CompositeShape'>CompositeShape</a></td>
-                        <td class='docblock short'><p>Trait implemented by shapes composed of multiple simpler shapes.</p>
-</td>
+                        <td class='docblock short'>
+                             <p>Trait implemented by shapes composed of multiple simpler shapes.</p>
+                        </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Ball2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Ball2.html'
                                title='ncollide::shape::Ball2'>Ball2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Ball3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Ball3.html'
                                title='ncollide::shape::Ball3'>Ball3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Capsule2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Capsule2.html'
                                title='ncollide::shape::Capsule2'>Capsule2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Capsule3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Capsule3.html'
                                title='ncollide::shape::Capsule3'>Capsule3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Compound2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Compound2.html'
                                title='ncollide::shape::Compound2'>Compound2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Compound3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Compound3.html'
                                title='ncollide::shape::Compound3'>Compound3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Cone2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Cone2.html'
                                title='ncollide::shape::Cone2'>Cone2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Cone3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Cone3.html'
                                title='ncollide::shape::Cone3'>Cone3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Convex2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Convex2.html'
                                title='ncollide::shape::Convex2'>Convex2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Convex3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Convex3.html'
                                title='ncollide::shape::Convex3'>Convex3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Cuboid2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Cuboid2.html'
                                title='ncollide::shape::Cuboid2'>Cuboid2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Cuboid3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Cuboid3.html'
                                title='ncollide::shape::Cuboid3'>Cuboid3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Cylinder2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Cylinder2.html'
                                title='ncollide::shape::Cylinder2'>Cylinder2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Cylinder3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Cylinder3.html'
                                title='ncollide::shape::Cylinder3'>Cylinder3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Plane2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Plane2.html'
                                title='ncollide::shape::Plane2'>Plane2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Plane3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Plane3.html'
                                title='ncollide::shape::Plane3'>Plane3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Polyline2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Polyline2.html'
                                title='ncollide::shape::Polyline2'>Polyline2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Polyline3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Polyline3.html'
                                title='ncollide::shape::Polyline3'>Polyline3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Segment2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Segment2.html'
                                title='ncollide::shape::Segment2'>Segment2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Segment3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Segment3.html'
                                title='ncollide::shape::Segment3'>Segment3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.TriMesh3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.TriMesh3.html'
                                title='ncollide::shape::TriMesh3'>TriMesh3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Triangle2.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Triangle2.html'
                                title='ncollide::shape::Triangle2'>Triangle2</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 
-                    <tr>
-                        <td><a class='stability Unmarked' title='No stability level'></a><a class='type' href='type.Triangle3.html'
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Triangle3.html'
                                title='ncollide::shape::Triangle3'>Triangle3</a></td>
-                        <td class='docblock short'></td>
+                        <td class='docblock short'>
+                             
+                        </td>
                     </tr>
                 </table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -367,6 +447,6 @@ original supports points from the two wrapped shapes.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

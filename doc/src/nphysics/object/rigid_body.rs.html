@@ -561,13 +561,6 @@
 <span id="519">519</span>
 <span id="520">520</span>
 <span id="521">521</span>
-<span id="522">522</span>
-<span id="523">523</span>
-<span id="524">524</span>
-<span id="525">525</span>
-<span id="526">526</span>
-<span id="527">527</span>
-<span id="528">528</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
@@ -585,7 +578,7 @@
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RigidBodyHandle</span> <span class='op'>=</span> <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;&gt;</span>;
 
 <span class='comment'>// FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='doccomment'>/// The movement state of a rigid body.</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>RigidBodyState</span> { <span class='comment'>// FIXME: rename this to &quot;RigidBodyKind&quot;?</span>
     <span class='doccomment'>/// The rigid body cannot move.</span>
@@ -594,7 +587,7 @@
     <span class='ident'>Dynamic</span>
 }
 
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Show</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='doccomment'>/// The activation state of a rigid body.</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>ActivationState</span> {
     <span class='doccomment'>/// The rigid body is active with a not-zero energy.</span>
@@ -621,7 +614,7 @@
 <span class='doccomment'>/// This is the structure describing an object on the physics world.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RigidBody</span> {
     <span class='ident'>state</span>:                <span class='ident'>RigidBodyState</span>,
-    <span class='ident'>shape</span>:                <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>, <span class='comment'>// FIXME: define our own trait.</span>
+    <span class='ident'>shape</span>:                <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>, <span class='comment'>// FIXME: define our own trait.</span>
     <span class='ident'>local_to_world</span>:       <span class='ident'>Matrix</span>,
     <span class='ident'>lin_vel</span>:              <span class='ident'>Vect</span>,
     <span class='ident'>ang_vel</span>:              <span class='ident'>Orientation</span>,
@@ -708,13 +701,13 @@
 
     <span class='doccomment'>/// Gets a reference to this body&#39;s shape.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shape_ref</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>(<span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shape_ref</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>(<span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;</span>) {
         <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='self'>self</span>.<span class='ident'>shape</span>
     }
 
     <span class='doccomment'>/// Gets a copy of this body&#39;s shared shape.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shape</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shape</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>shape</span>.<span class='ident'>clone</span>()
     }
 
@@ -809,11 +802,11 @@
 
     <span class='doccomment'>/// Creates a new rigid body that can move.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_dynamic</span><span class='op'>&lt;</span><span class='ident'>G</span><span class='op'>&gt;</span>(<span class='ident'>shape</span>: <span class='ident'>G</span>, <span class='ident'>density</span>: <span class='ident'>Scalar</span>, <span class='ident'>restitution</span>: <span class='ident'>Scalar</span>, <span class='ident'>friction</span>: <span class='ident'>Scalar</span>) <span class='op'>-&gt;</span> <span class='ident'>RigidBody</span>
-        <span class='kw'>where</span> <span class='ident'>G</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>AngularInertia</span><span class='op'>&gt;</span> {
+        <span class='kw'>where</span> <span class='ident'>G</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>AngularInertia</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>props</span> <span class='op'>=</span> <span class='ident'>shape</span>.<span class='ident'>mass_properties</span>(<span class='ident'>density</span>);
 
         <span class='ident'>RigidBody</span>::<span class='ident'>new</span>(
-            <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>shape</span>) <span class='kw'>as</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span>),
+            <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>shape</span>) <span class='kw'>as</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span>),
             <span class='prelude-val'>Some</span>(<span class='ident'>props</span>),
             <span class='ident'>restitution</span>,
             <span class='ident'>friction</span>)
@@ -821,9 +814,9 @@
 
     <span class='doccomment'>/// Creates a new rigid body that cannot move.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_static</span><span class='op'>&lt;</span><span class='ident'>G</span><span class='op'>&gt;</span>(<span class='ident'>shape</span>: <span class='ident'>G</span>, <span class='ident'>restitution</span>: <span class='ident'>Scalar</span>, <span class='ident'>friction</span>: <span class='ident'>Scalar</span>) <span class='op'>-&gt;</span> <span class='ident'>RigidBody</span>
-        <span class='kw'>where</span> <span class='ident'>G</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;</span> {
+        <span class='kw'>where</span> <span class='ident'>G</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;</span> {
         <span class='ident'>RigidBody</span>::<span class='ident'>new</span>(
-            <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>shape</span>) <span class='kw'>as</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span>),
+            <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>shape</span>) <span class='kw'>as</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span>),
             <span class='prelude-val'>None</span>,
             <span class='ident'>restitution</span>,
             <span class='ident'>friction</span>)
@@ -833,7 +826,7 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Use this if the shape is shared by multiple rigid bodies.</span>
     <span class='doccomment'>/// Set `mass_properties` to `None` if the rigid body is to be static.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>shape</span>:           <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>shape</span>:           <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Repr</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
                <span class='ident'>mass_properties</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>AngularInertia</span>)<span class='op'>&gt;</span>,
                <span class='ident'>restitution</span>:     <span class='ident'>Scalar</span>,
                <span class='ident'>friction</span>:        <span class='ident'>Scalar</span>)
@@ -1010,7 +1003,7 @@
     <span class='doccomment'>/// Appends a transformation to this rigid body.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>append_transformation</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>to_append</span>: <span class='kw-2'>&amp;</span><span class='ident'>Matrix</span>) {
-        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>append_transformation</span>(<span class='ident'>to_append</span>);
+        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>append_transformation_mut</span>(<span class='ident'>to_append</span>);
 
         <span class='self'>self</span>.<span class='ident'>update_center_of_mass</span>();
         <span class='self'>self</span>.<span class='ident'>update_inertia_tensor</span>();
@@ -1019,7 +1012,7 @@
     <span class='doccomment'>/// Prepends a transformation to this rigid body.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prepend_transformation</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>to_prepend</span>: <span class='kw-2'>&amp;</span><span class='ident'>Matrix</span>) {
-        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>prepend_transformation</span>(<span class='ident'>to_prepend</span>);
+        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>prepend_transformation_mut</span>(<span class='ident'>to_prepend</span>);
 
         <span class='self'>self</span>.<span class='ident'>update_center_of_mass</span>();
         <span class='self'>self</span>.<span class='ident'>update_inertia_tensor</span>();
@@ -1037,14 +1030,14 @@
     <span class='doccomment'>/// Appends a translation to this rigid body.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>append_translation</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='kw-2'>&amp;</span><span class='ident'>Vect</span>) {
-        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>append_translation</span>(<span class='ident'>t</span>);
+        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>append_translation_mut</span>(<span class='ident'>t</span>);
         <span class='self'>self</span>.<span class='ident'>update_center_of_mass</span>();
     }
 
     <span class='doccomment'>/// Prepends a translation to this rigid body.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prepend_translation</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='kw-2'>&amp;</span><span class='ident'>Vect</span>) {
-        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>prepend_translation</span>(<span class='ident'>t</span>);
+        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>prepend_translation_mut</span>(<span class='ident'>t</span>);
         <span class='self'>self</span>.<span class='ident'>update_center_of_mass</span>();
     }
 
@@ -1060,7 +1053,7 @@
     <span class='doccomment'>/// Appends a rotation to this rigid body.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>append_rotation</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>rot</span>: <span class='kw-2'>&amp;</span><span class='ident'>Orientation</span>) {
-        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>append_rotation</span>(<span class='ident'>rot</span>);
+        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>append_rotation_mut</span>(<span class='ident'>rot</span>);
 
         <span class='self'>self</span>.<span class='ident'>update_center_of_mass</span>();
         <span class='self'>self</span>.<span class='ident'>update_inertia_tensor</span>();
@@ -1069,7 +1062,7 @@
     <span class='doccomment'>/// Prepends a rotation to this rigid body.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prepend_rotation</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>rot</span>: <span class='kw-2'>&amp;</span><span class='ident'>Orientation</span>) {
-        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>prepend_rotation</span>(<span class='ident'>rot</span>);
+        <span class='self'>self</span>.<span class='ident'>local_to_world</span>.<span class='ident'>prepend_rotation_mut</span>(<span class='ident'>rot</span>);
 
         <span class='self'>self</span>.<span class='ident'>update_center_of_mass</span>();
         <span class='self'>self</span>.<span class='ident'>update_inertia_tensor</span>();
@@ -1088,13 +1081,6 @@
 <span class='kw'>impl</span> <span class='ident'>HasBoundingVolume</span><span class='op'>&lt;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>RigidBody</span> {
     <span class='kw'>fn</span> <span class='ident'>bounding_volume</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>shape</span>.<span class='ident'>aabb</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>local_to_world</span>).<span class='ident'>loosened</span>(<span class='self'>self</span>.<span class='ident'>margin</span>())
-    }
-}
-
-<span class='kw'>impl</span> <span class='ident'>HasBoundingVolume</span><span class='op'>&lt;</span><span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>bounding_volume</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>bself</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>borrow</span>();
-        <span class='ident'>bself</span>.<span class='ident'>shape</span>().<span class='ident'>aabb</span>(<span class='kw-2'>&amp;</span><span class='ident'>bself</span>.<span class='ident'>local_to_world</span>).<span class='ident'>loosened</span>(<span class='ident'>bself</span>.<span class='ident'>margin</span>())
     }
 }
 </pre>
@@ -1130,6 +1116,10 @@
                 <code>struct</code>, <code>enum</code>,
                 <code>trait</code>, <code>typedef</code> (or
                 <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
             </p>
         </div>
     </div>

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["plane_toi_with_ray","Computes the toi of a ray with a plane described by its center and normal."]]});

@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `../../../../rust/ncollide/ncollide_entities/bounding_volume/aabb_utils.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/tortue/rust/ncollide/ncollide_entities/bounding_volume/aabb_utils.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>aabb_utils.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -24,17 +25,17 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
                 <input class="search-input" name="search"
                        autocomplete="off"
-                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
                        type="search">
             </div>
         </form>
@@ -88,35 +89,30 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
-<span id="49">49</span>
-<span id="50">50</span>
-<span id="51">51</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Transform</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>support_map</span>::<span class='ident'>SupportMap</span>;
 <span class='kw'>use</span> <span class='ident'>bounding_volume</span>::<span class='ident'>AABB</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vect</span>};
 
 
 
 <span class='doccomment'>/// Computes the AABB of an support mapped shape.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>implicit_shape_aabb</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span>, <span class='ident'>G</span><span class='op'>&gt;</span>(<span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>i</span>: <span class='kw-2'>&amp;</span><span class='ident'>G</span>) <span class='op'>-&gt;</span> <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-              <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
-              <span class='ident'>V</span>: <span class='ident'>Vect</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
-              <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>implicit_shape_aabb</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span>, <span class='ident'>G</span><span class='op'>&gt;</span>(<span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>i</span>: <span class='kw-2'>&amp;</span><span class='ident'>G</span>) <span class='op'>-&gt;</span> <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
+              <span class='ident'>G</span>: <span class='ident'>SupportMap</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>min</span>   <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>orig</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>max</span>   <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>orig</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>basis</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>basis</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>();
 
-        <span class='kw'>for</span> <span class='ident'>d</span> <span class='kw'>in</span> <span class='ident'>range</span>(<span class='number'>0</span>, <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>()) {
+        <span class='kw'>for</span> <span class='ident'>d</span> <span class='kw'>in</span> <span class='number'>0</span> .. <span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>() {
             <span class='comment'>// FIXME: this could be further improved iterating on `m`&#39;s columns, and passing</span>
             <span class='comment'>// Identity as the transformation matrix.</span>
             <span class='ident'>basis</span>[<span class='ident'>d</span>] <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>();
             <span class='ident'>max</span>[<span class='ident'>d</span>] <span class='op'>=</span> <span class='ident'>i</span>.<span class='ident'>support_point</span>(<span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>basis</span>)[<span class='ident'>d</span>];
 
-            <span class='ident'>basis</span>[<span class='ident'>d</span>] <span class='op'>=</span> <span class='op'>-</span><span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>();
+            <span class='ident'>basis</span>[<span class='ident'>d</span>] <span class='op'>=</span> <span class='op'>-</span><span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
             <span class='ident'>min</span>[<span class='ident'>d</span>] <span class='op'>=</span> <span class='ident'>i</span>.<span class='ident'>support_point</span>(<span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>basis</span>)[<span class='ident'>d</span>];
 
             <span class='ident'>basis</span>[<span class='ident'>d</span>] <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
@@ -127,15 +123,14 @@
 
 <span class='comment'>// FIXME: return an AABB?</span>
 <span class='doccomment'>/// Computes the AABB of a set of point.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>point_cloud_aabb</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span>, <span class='ident'>V</span>, <span class='ident'>M</span><span class='op'>&gt;</span>(<span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>pts</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> (<span class='ident'>P</span>, <span class='ident'>P</span>)
-    <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>V</span><span class='op'>&gt;</span>,
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>point_cloud_aabb</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>M</span><span class='op'>&gt;</span>(<span class='ident'>m</span>: <span class='kw-2'>&amp;</span><span class='ident'>M</span>, <span class='ident'>pts</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> (<span class='ident'>P</span>, <span class='ident'>P</span>)
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>M</span>: <span class='ident'>Transform</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>wp0</span>        <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>transform</span>(<span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>pts</span>[<span class='number'>0</span>]);
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>min</span>: <span class='ident'>P</span> <span class='op'>=</span> <span class='ident'>wp0</span>.<span class='ident'>clone</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>max</span>: <span class='ident'>P</span> <span class='op'>=</span> <span class='ident'>wp0</span>.<span class='ident'>clone</span>();
 
-    <span class='kw'>for</span> <span class='ident'>pt</span> <span class='kw'>in</span> <span class='ident'>pts</span>.<span class='ident'>slice_from</span>(<span class='number'>1</span>).<span class='ident'>iter</span>() {
+    <span class='kw'>for</span> <span class='ident'>pt</span> <span class='kw'>in</span> <span class='ident'>pts</span>[<span class='number'>1</span> ..].<span class='ident'>iter</span>() {
         <span class='kw'>let</span> <span class='ident'>wpt</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>transform</span>(<span class='ident'>m</span>, <span class='ident'>pt</span>);
         <span class='ident'>min</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>inf</span>(<span class='kw-2'>&amp;</span><span class='ident'>min</span>, <span class='kw-2'>&amp;</span><span class='ident'>wpt</span>);
         <span class='ident'>max</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>sup</span>(<span class='kw-2'>&amp;</span><span class='ident'>max</span>, <span class='kw-2'>&amp;</span><span class='ident'>wpt</span>);
@@ -149,36 +144,49 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
-        <div class="shortcuts">
-            <h1>Keyboard shortcuts</h1>
-            <dl>
-                <dt>?</dt>
-                <dd>Show this help dialog</dd>
-                <dt>S</dt>
-                <dd>Focus the search field</dd>
-                <dt>&larrb;</dt>
-                <dd>Move up in search results</dd>
-                <dt>&rarrb;</dt>
-                <dd>Move down in search results</dd>
-                <dt>&#9166;</dt>
-                <dd>Go to active search result</dd>
-            </dl>
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
         </div>
-        <div class="infos">
-            <h1>Search tricks</h1>
-            <p>
-                Prefix searches with a type followed by a colon (e.g.
-                <code>fn:</code>) to restrict the search to a given type.
-            </p>
-            <p>
-                Accepted types are: <code>fn</code>, <code>mod</code>,
-                <code>struct</code>, <code>enum</code>,
-                <code>trait</code>, <code>typedef</code> (or
-                <code>tdef</code>).
-            </p>
-        </div>
-    </div>
+    </aside>
 
     
 
@@ -190,6 +198,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>
