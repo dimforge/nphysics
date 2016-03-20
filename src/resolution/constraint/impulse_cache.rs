@@ -9,6 +9,7 @@ use na;
 use na::IterableMut;
 use math::{Scalar, Point};
 use ncollide::utils::AsBytes;
+use utils::DeterministicState;
 
 #[derive(PartialEq)]
 /// The identifier of a contact stored in the impulse cache.
@@ -45,9 +46,9 @@ impl ContactIdentifier {
 
 pub struct ImpulseCache {
     // XXX: simulations won't be reproductible because of the randomized HashMap.
-    hash_prev:           HashMap<ContactIdentifier, (usize, usize)>,
+    hash_prev:           HashMap<ContactIdentifier, (usize, usize), DeterministicState>,
     cache_prev:          Vec<Scalar>,
-    hash_next:           HashMap<ContactIdentifier, (usize, usize)>,
+    hash_next:           HashMap<ContactIdentifier, (usize, usize), DeterministicState>,
     cache_next:          Vec<Scalar>,
     step:                Scalar,
     impulse_per_contact: usize
@@ -57,8 +58,8 @@ impl ImpulseCache {
     pub fn new(step: Scalar, impulse_per_contact: usize) -> ImpulseCache {
 
         ImpulseCache {
-            hash_prev:           HashMap::with_capacity(32),
-            hash_next:           HashMap::with_capacity(32),
+            hash_prev:           HashMap::with_capacity_and_hasher(32, DeterministicState::new()),
+            hash_next:           HashMap::with_capacity_and_hasher(32, DeterministicState::new()),
             cache_prev:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             cache_next:          iter::repeat(na::zero()).take(impulse_per_contact).collect(),
             step:                step,
@@ -77,11 +78,11 @@ impl ImpulseCache {
         let _ = self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash(&self) -> &HashMap<ContactIdentifier, (usize, usize)> {
+    pub fn hash(&self) -> &HashMap<ContactIdentifier, (usize, usize), DeterministicState> {
         &self.hash_next
     }
 
-    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (usize, usize)> {
+    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (usize, usize), DeterministicState> {
         &mut self.hash_next
     }
 
