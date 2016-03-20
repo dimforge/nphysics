@@ -8,9 +8,9 @@ name = "nphysics_testbed3d"
 
 [dependencies]
 nalgebra = "*"
-time = "*"
-rand = "*"
-glfw = "*"
+time = "0.1.*"
+rand = "0.3.*"
+glfw = "0.2.*"
 ncollide = "*"
 kiss3d = "*"
 
