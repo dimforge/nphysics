@@ -87,4 +87,4 @@ The libraries needed to compile the physics engine are:
 The libraries needed to compile the examples are:
 
 * [kiss3d](http://kiss3d.org): the 3d graphics engine.
-* [rust-sfml](http://www.rust-sfml.org): the 2d graphics engine. See [windows installation instructions](https://github.com/jeremyletang/rust-sfml/wiki/How-to-use-rust-sfml-on-Windows)
+* [rust-sfml](http://www.rust-sfml.org): the 2d graphics engine. See [windows installation instructions](https://github.com/jeremyletang/rust-sfml/wiki/How-to-use-rust-sfml-on-Windows).
