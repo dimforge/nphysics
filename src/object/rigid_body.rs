@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::ops::Mul;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -73,10 +74,12 @@ pub struct RigidBody {
     lin_acc_scale:        Vect,        // FIXME: find a better way of doing that.
     ang_acc_scale:        Orientation, // FIXME: find a better way of doing that.
     margin:               Scalar,
-    collision_groups:     CollisionGroups
+    collision_groups:     CollisionGroups,
+    user_data:            Option<Box<Any>>
 }
 
 impl Clone for RigidBody {
+    /// Clones this rigid body but not its associated user-data.
     fn clone(&self) -> RigidBody {
         RigidBody {
             state:             self.state.clone(),
@@ -102,7 +105,8 @@ impl Clone for RigidBody {
             lin_acc_scale:     self.lin_acc_scale.clone(),
             ang_acc_scale:     self.ang_acc_scale.clone(),
             margin:            self.margin.clone(),
-            collision_groups:  self.collision_groups.clone()
+            collision_groups:  self.collision_groups.clone(),
+            user_data:         None
         }
     }
 }
@@ -320,7 +324,8 @@ impl RigidBody {
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
                 margin:            na::cast(0.04f32), // FIXME: do not hard-code this.
-                collision_groups:  CollisionGroups::new()
+                collision_groups:  CollisionGroups::new(),
+                user_data:         None
             };
 
         res.update_center_of_mass();
@@ -618,6 +623,18 @@ impl RigidBody {
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
+    }
+
+    /// Reference to user-defined data attached to this rigid body.
+    #[inline]
+    pub fn user_data(&self) -> &Option<Box<Any>> {
+        &self.user_data
+    }
+
+    /// Mutable reference to user-defined data attached to this rigid body.
+    #[inline]
+    pub fn user_data_mut(&mut self) -> &mut Option<Box<Any>> {
+        &mut self.user_data
     }
 }
 
