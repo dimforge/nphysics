@@ -8,7 +8,7 @@ use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase};
 use ncollide::narrow_phase::ContactSignalHandler;
-use ncollide::world::{CollisionWorld, CollisionObject};
+use ncollide::world::{CollisionWorld, CollisionObject, CollisionGroups};
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
 use detection::ActivationManager;
@@ -145,7 +145,20 @@ impl World {
     pub fn add_body(&mut self, rb: RigidBody) -> RigidBodyHandle {
         let position = rb.position().clone();
         let shape = rb.shape().clone();
-        let groups = rb.collision_groups().clone();
+
+        let mut groups = CollisionGroups::new();
+        const STATIC_GROUP_ID: usize = 29;
+        groups.modify_whitelist(STATIC_GROUP_ID, false); // The static group is special.
+
+        if rb.can_move() {
+            // This is a dynamic object, remove it from the static objects group.
+            groups.modify_membership(STATIC_GROUP_ID, false);
+        }
+        else {
+            // This is a dynamic object, keep is on the static objects group but prevent it from
+            // colliding with other static objects.
+            groups.modify_blacklist(STATIC_GROUP_ID, true);
+        }
         
         let handle = Rc::new(RefCell::new(rb));
         let uid = &*handle as *const RefCell<RigidBody> as usize;;

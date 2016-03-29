@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics3df64"
-version = "0.1.0"
+version = "0.1.1"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [features]

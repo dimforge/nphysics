@@ -7,7 +7,6 @@ use na::{Transformation, Translation, Rotation, Bounded, Cross};
 use na;
 use na::Transform;
 use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
-use ncollide::world::CollisionGroups;
 use ncollide::inspection::Repr;
 use math::{Scalar, Point, Vect, Orientation, Matrix, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
@@ -74,7 +73,6 @@ pub struct RigidBody {
     lin_acc_scale:        Vect,        // FIXME: find a better way of doing that.
     ang_acc_scale:        Orientation, // FIXME: find a better way of doing that.
     margin:               Scalar,
-    collision_groups:     CollisionGroups,
     user_data:            Option<Box<Any>>
 }
 
@@ -105,7 +103,6 @@ impl Clone for RigidBody {
             lin_acc_scale:     self.lin_acc_scale.clone(),
             ang_acc_scale:     self.ang_acc_scale.clone(),
             margin:            self.margin.clone(),
-            collision_groups:  self.collision_groups.clone(),
             user_data:         None
         }
     }
@@ -324,7 +321,6 @@ impl RigidBody {
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
                 margin:            na::cast(0.04f32), // FIXME: do not hard-code this.
-                collision_groups:  CollisionGroups::new(),
                 user_data:         None
             };
 
@@ -332,12 +328,6 @@ impl RigidBody {
         res.update_inertia_tensor();
 
         res
-    }
-
-    /// The collision groups this rigid body is part of.
-    #[inline]
-    pub fn collision_groups(&self) -> &CollisionGroups {
-        &self.collision_groups
     }
 
     /// Indicates whether this rigid body is static or dynamic.
