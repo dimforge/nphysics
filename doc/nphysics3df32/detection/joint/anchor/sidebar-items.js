@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Anchor","One of the two end points of a joint."]]});

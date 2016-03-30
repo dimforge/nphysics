@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["TranslationalCCDMotionClamping","Handles Continuous Collision Detection."]]});

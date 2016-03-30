@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["joint",""]],"struct":[["Anchor","One of the two end points of a joint."],["BallInSocket","A ball-in-socket joint."],["Fixed","A joint that prevents any relative movement (linear and angular) between two objects."],["JointManager","Structure that handles creation and removal of joints."]]});

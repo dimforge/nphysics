@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["BodySmpEulerIntegrator","A semi-implicit Euler integrator."]]});

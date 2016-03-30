@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["cylinder_center_of_mass","The center of mass of a cylinder."],["cylinder_surface","The surface of a cylinder."],["cylinder_unit_angular_inertia","The unit angular inertia of a cylinder."],["cylinder_volume","The volume of a cylinder."]]});

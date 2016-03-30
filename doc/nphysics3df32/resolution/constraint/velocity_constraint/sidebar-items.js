@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["VelocityConstraint","A constraint of velocity at a point of contact."]]});

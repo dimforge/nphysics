@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["ball_center_of_mass","The center of mass of a ball."],["ball_surface","The surface of a ball."],["ball_unit_angular_inertia","The unit angular inertia of a ball."],["ball_volume","The volume of a ball."]]});

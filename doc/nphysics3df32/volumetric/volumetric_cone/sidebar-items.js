@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["cone_center_of_mass","The center of mass of a cone."],["cone_surface","The surface of a cone."],["cone_unit_angular_inertia","The unit angular inertia of a cone."],["cone_volume","The volume of a cone."]]});

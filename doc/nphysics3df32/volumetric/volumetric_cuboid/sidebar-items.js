@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["cuboid_center_of_mass","The center of mass of a cuboid."],["cuboid_surface","The surface of a cuboid."],["cuboid_unit_angular_inertia","The unit angular inertia of a cuboid."],["cuboid_volume","The volume of a cuboid."]]});

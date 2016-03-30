@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["accumulated_impulse_solver",""],["ball_in_socket_equation",""],["contact_equation",""],["fixed_equation",""],["projected_gauss_seidel_solver",""],["velocity_constraint",""]]});

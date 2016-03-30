@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["Solver","Trait implemented by constraint solvers."]]});

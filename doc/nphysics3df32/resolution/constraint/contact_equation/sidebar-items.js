@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["CorrectionMode","The correction coefficient used by the constraint solver."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["Detector","Trait implemented by collision detectors."]]});

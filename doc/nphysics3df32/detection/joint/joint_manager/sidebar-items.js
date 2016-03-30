@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["JointManager","Structure that handles creation and removal of joints."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["Joint","Trait implemented by every joint."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["World","The physical world."]],"type":[["RigidBodyCollisionWorld","Type of the collision world containing rigid bodies."],["WorldBroadPhase","The default broad phase."]]});

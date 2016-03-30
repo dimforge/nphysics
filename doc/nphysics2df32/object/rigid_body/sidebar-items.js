@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["ActivationState","The activation state of a rigid body."],["RigidBodyState","The movement state of a rigid body."]],"struct":[["RigidBody","The rigid body structure."]],"type":[["RigidBodyHandle","A shared, mutable, rigid body."]]});

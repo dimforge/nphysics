@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["ActivationManager","Structure that monitors island-based activation/deactivation of objects."]]});
