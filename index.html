@@ -1,36 +1,43 @@
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html>
+<html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>nphysics by sebcrozet</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
   </head>
   <body>
-    <section class="page-header">
-      <h1 class="project-name">nphysics</h1>
-      <h2 class="project-tagline">2 and 3-dimensional rigid body physics engine for Rust.</h2>
-      <a href="https://github.com/sebcrozet/nphysics" class="btn">View on GitHub</a>
-      <a href="https://github.com/sebcrozet/nphysics/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/sebcrozet/nphysics/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+    <div class="wrapper">
+      <header>
+        <h1>nphysics</h1>
+        <p>2 and 3-dimensional rigid body physics engine for Rust.</p>
 
-    <section class="main-content">
-      <h1>
-<a id="about-nphysics" class="anchor" href="#about-nphysics" aria-hidden="true"><span class="octicon octicon-link"></span></a>About nphysics</h1>
+        <p class="view"><a href="https://github.com/sebcrozet/nphysics">View the Project on GitHub <small>sebcrozet/nphysics</small></a></p>
 
-<p><strong>nphysics</strong> is a 2 and 3-dimensional physics engine for games and animations.</p>
 
-<p>Its most distinctive feature is its genericity wrt the simulation
-dimension. That means you can use it for both 2-dimensional physics and
-3-dimensional physics. Higher dimensions could be possible, but <strong>nphysics</strong>
-has not be written/tested with those in thought.</p>
+        <ul>
+          <li><a href="https://github.com/sebcrozet/nphysics/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/sebcrozet/nphysics/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/sebcrozet/nphysics">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="about-nphysics" class="anchor" href="#about-nphysics" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>About nphysics</h1>
+
+<p><strong>nphysics</strong> is a 2 and 3-dimensional physics engine for games and animation.</p>
+
+<p>Examples are available in the <a href="https://github.com/sebcrozet/nphysics/tree/master/examples2"><code>examples2</code></a> and  <a href="https://github.com/sebcrozet/nphysics/tree/master/examples3"><code>examples3</code></a> directories. There is also a short
+(outdated) demonstration video <a href="http://youtu.be/CANjXZ5rocI">there</a>. Feel free to ask for help and discuss features on the official <a href="http://users.nphysics.org">users forum</a>.  </p>
 
 <h2>
-<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
 <li>static and dynamic rigid bodies.</li>
@@ -44,28 +51,24 @@ has not be written/tested with those in thought.</p>
 <li>fixed joint.</li>
 </ul>
 
-<p>For more, check out the documentations of the different variants of the library:</p>
+<p>For more, check out the documentations of the two variants of the library:</p>
 
 <ul>
 <li>
-<a href="doc/nphysics2df32">nphysics2df32</a>, for a 2d physics engine using single-precision numbers.</li>
+<a href="doc/nphysics2d">nphysics2d</a>, for the 2d physics engine using single-precision numbers.</li>
 <li>
-<a href="doc/nphysics3df32">nphysics3df32</a>, for a 3d physics engine using single-precision numbers.</li>
-<li>
-<a href="doc/nphysics2df64">nphysics2df64</a>, for a 2d physics engine using double-precision numbers.</li>
-<li>
-<a href="doc/nphysics3df64">nphysics3df64</a>, for a 3d physics engine using double-precision numbers.</li>
+<a href="doc/nphysics3d">nphysics3d</a>, for the 3d physics engine using single-precision numbers.</li>
 </ul>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/sebcrozet/nphysics">nphysics</a> is maintained by <a href="https://github.com/sebcrozet">sebcrozet</a>.</span>
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+<p>Double-precision floating point numbers may be enabled using the <code>f64</code> feature.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/sebcrozet">sebcrozet</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
-
-    </section>
-
-            <script type="text/javascript">
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -78,4 +81,3 @@ has not be written/tested with those in thought.</p>
 
   </body>
 </html>
-
