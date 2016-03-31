@@ -7,11 +7,11 @@ It uses [ncollide](http://ncollide.org) for collision detection, and
 implementations both share the same code!
 
 
-Examples are available in the `examples` directory. There is also a short
-(outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).  An on-line
-version of this documentation is available [here](http://nphysics.org).  Feel
-free to ask for help and discuss features on the official [user
-forum](http://users.nphysics.org).
+Examples are available in the `examples2d` and `examples3d` directories. There
+is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
+An on-line version of this documentation is available
+[here](http://nphysics.org). Feel free to ask for help and discuss features on
+the official [user forum](http://users.nphysics.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
