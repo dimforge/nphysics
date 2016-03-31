@@ -1,18 +1,18 @@
 #[cfg(test)]
 mod test {
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     use na;
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     use na::{Vec1, Vec2, Iso2};
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     use ncollide::shape::Cuboid;
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     use object::{ActivationState, RigidBody};
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     use world::World;
 
     /// Gravity tests
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     #[test]
     fn gravity2() {
         // world
@@ -118,7 +118,7 @@ mod test {
 
 
     /// Forces tests
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     #[test]
     fn forces2() {
         // world
@@ -372,7 +372,7 @@ mod test {
     }
 
     /// Impulse tests
-    #[cfg(feature = "2d")]
+    #[cfg(feature = "dim2")]
     #[test]
     fn impulse2() {
         // world

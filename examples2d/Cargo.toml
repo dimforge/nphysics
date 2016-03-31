@@ -1,0 +1,64 @@
+[package]
+name    = "nphysics-examples"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[dependencies]
+num = "*"
+rand = "*"
+nalgebra = "*"
+ncollide = "*"
+
+[dependencies.nphysics_testbed2d]
+path = "./nphysics_testbed2d"
+
+[dependencies.nphysics2d]
+path = "../build/nphysics2d"
+
+[[bin]]
+name = "ball_vee"
+path = "./balls_vee.rs"
+
+[[bin]]
+name = "boxes_vee"
+path = "./boxes_vee.rs"
+
+[[bin]]
+name = "convex_vee"
+path = "./convex_vee.rs"
+
+[[bin]]
+name = "compound"
+path = "./compound.rs"
+
+[[bin]]
+name = "cross"
+path = "./cross.rs"
+
+[[bin]]
+name = "mesh"
+path = "./mesh.rs"
+
+[[bin]]
+name = "pyramid"
+path = "./pyramid.rs"
+
+[[bin]]
+name = "ragdoll"
+path = "./ragdoll.rs"
+
+[[bin]]
+name = "wall"
+path = "./wall.rs"
+
+[[bin]]
+name = "gravity"
+path = "./gravity.rs"
+
+[[bin]]
+name = "fixed_bug_11"
+path = "./fixed_bug_11.rs"
+
+[[bin]]
+name = "manual_forces"
+path = "./manual_forces.rs"

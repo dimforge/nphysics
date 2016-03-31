@@ -1,0 +1,18 @@
+[package]
+name    = "nphysics_testbed2d"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[lib]
+name = "nphysics_testbed2d"
+
+[dependencies.nphysics2d]
+path = "../../build/nphysics2d"
+
+[dependencies]
+sfml = "0.9.*"
+nalgebra = "0.6.*"
+time = "*"
+num = "*"
+rand = "*"
+ncollide = "*"

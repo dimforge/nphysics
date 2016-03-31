@@ -1,0 +1,27 @@
+[package]
+name    = "nphysics3d"
+version = "0.1.2"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+description = "3-dimensional physics engine in Rust."
+documentation = "http://nphysics.org/doc/nphysics3d"
+homepage = "http://nphysics.org"
+repository = "https://github.com/sebcrozet/nphysics"
+readme = "README.md"
+keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
+license = "BSD-3-Clause"
+
+[features]
+default = [ "dim3", "f32" ]
+dim3    = [ ]
+f32     = [ ]
+f64     = [ ]
+
+[lib]
+name = "nphysics3d"
+path = "../../src/lib.rs"
+
+[dependencies]
+rustc-serialize = "0.3.*"
+num  = "0.1.*"
+nalgebra = "0.6.*"
+ncollide = "0.7.*"
