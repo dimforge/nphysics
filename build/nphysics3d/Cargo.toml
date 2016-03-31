@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics3d"
-version = "0.1.1"
+version = "0.1.2"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "3-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/doc/nphysics3d"
