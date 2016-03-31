@@ -5,7 +5,7 @@ use kiss3d::scene::SceneNode;
 use kiss3d::resource;
 use na::{Pnt3, Iso3};
 use na;
-use nphysics::object::RigidBody;
+use nphysics3d::object::RigidBody;
 
 pub struct Mesh {
     color:      Pnt3<f32>,

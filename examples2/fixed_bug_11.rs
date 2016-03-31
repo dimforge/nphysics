@@ -19,13 +19,13 @@
 
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use na::{Vec2, Translation};
 use ncollide::shape::Cuboid;
-use nphysics::world::World;
-use nphysics::object::RigidBody;
+use nphysics2d::world::World;
+use nphysics2d::object::RigidBody;
 use nphysics_testbed2d::Testbed;
 
 fn main() {

@@ -6,7 +6,7 @@ use sfml::graphics::{CircleShape, Color, RenderTarget};
 use sfml::system::vector2;
 use na::{Pnt3, Iso2};
 use na;
-use nphysics::object::RigidBody;
+use nphysics2d::object::RigidBody;
 use draw_helper::DRAW_SCALE;
 
 pub struct Ball<'a> {

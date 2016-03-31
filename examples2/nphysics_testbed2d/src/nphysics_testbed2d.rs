@@ -6,7 +6,7 @@ extern crate time;
 extern crate sfml;
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics2d;
 
 
 pub use testbed::Testbed;

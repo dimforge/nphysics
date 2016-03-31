@@ -1,13 +1,13 @@
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::sync::Arc;
 use na::{Vec3, Pnt3};
 use ncollide::shape::{TriMesh, TriMesh3};
-use nphysics::world::World;
-use nphysics::object::RigidBody;
+use nphysics3d::world::World;
+use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
 
 fn main() {

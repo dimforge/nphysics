@@ -1,0 +1,27 @@
+[package]
+name    = "nphysics2d"
+version = "0.1.1"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+description = "2-dimensional physics engine in Rust."
+documentation = "http://nphysics.org/doc/nphysics2d"
+homepage = "http://nphysics.org"
+repository = "https://github.com/sebcrozet/nphysics"
+readme = "README.md"
+keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
+license = "BSD-3-Clause"
+
+[features]
+default = [ "dim2", "f32" ]
+dim2    = [ ]
+f32     = [ ]
+f64     = [ ]
+
+[lib]
+name = "nphysics2d"
+path = "../../src/lib.rs"
+
+[dependencies]
+rustc-serialize = "0.3.*"
+num  = "0.1.*"
+nalgebra = "0.6.*"
+ncollide = "0.7.*"

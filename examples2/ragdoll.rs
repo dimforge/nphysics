@@ -1,13 +1,13 @@
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use na::{Pnt2, Vec1, Vec2, Translation, Rotation, BaseFloat};
 use ncollide::shape::{Plane, Cuboid, Ball};
-use nphysics::world::World;
-use nphysics::object::RigidBody;
-use nphysics::detection::joint::{Anchor, BallInSocket};
+use nphysics2d::world::World;
+use nphysics2d::object::RigidBody;
+use nphysics2d::detection::joint::{Anchor, BallInSocket};
 use nphysics_testbed2d::Testbed;
 
 fn main() {

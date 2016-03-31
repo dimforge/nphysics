@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Iso3};
-use nphysics::object::RigidBody;
+use nphysics3d::object::RigidBody;
 
 pub struct Ball {
     color:      Pnt3<f32>,

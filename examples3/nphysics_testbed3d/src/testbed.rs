@@ -15,11 +15,11 @@ use ncollide::shape::{Cuboid, Ball};
 use ncollide::ray;
 use ncollide::ray::Ray;
 use ncollide::world::CollisionGroups;
-use nphysics::detection::Detector;
-use nphysics::detection::constraint::Constraint;
-use nphysics::detection::joint::{Anchor, Fixed, Joint};
-use nphysics::object::RigidBody;
-use nphysics::world::World;
+use nphysics3d::detection::Detector;
+use nphysics3d::detection::constraint::Constraint;
+use nphysics3d::detection::joint::{Anchor, Fixed, Joint};
+use nphysics3d::object::RigidBody;
+use nphysics3d::world::World;
 use engine::GraphicsManager;
 
 

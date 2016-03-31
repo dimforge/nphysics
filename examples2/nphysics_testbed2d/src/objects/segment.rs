@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use sfml::graphics;
 use sfml::graphics::Color;
 use na::{Pnt2, Pnt3, Iso2};
-use nphysics::object::RigidBody;
+use nphysics2d::object::RigidBody;
 use draw_helper::draw_line;
 
 pub struct Segment {

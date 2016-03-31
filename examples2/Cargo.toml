@@ -12,9 +12,8 @@ ncollide = "*"
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"
 
-[dependencies.nphysics]
-features = [ "2df32" ]
-path = ".."
+[dependencies.nphysics2d]
+path = "../build/nphysics2d"
 
 [[bin]]
 name = "ball_vee"

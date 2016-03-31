@@ -2,7 +2,7 @@ extern crate rand;
 extern crate kiss3d;
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::sync::Arc;
@@ -16,8 +16,8 @@ use ncollide::transformation;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
 use ncollide::bounding_volume;
 use ncollide::inspection::Repr3;
-use nphysics::world::World;
-use nphysics::object::RigidBody;
+use nphysics3d::world::World;
+use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
 
 fn main() {

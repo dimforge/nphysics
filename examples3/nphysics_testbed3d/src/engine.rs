@@ -10,7 +10,7 @@ use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use ncollide::shape;
 use ncollide::transformation;
 use ncollide::inspection::Repr3;
-use nphysics::object::RigidBody;
+use nphysics3d::object::RigidBody;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -360,10 +360,10 @@ impl GraphicsManager {
 
     pub fn switch_cameras(&mut self) {
         if self.curr_is_arc_ball {
-            self.first_person.look_at_z(self.arc_ball.eye(), self.arc_ball.at());
+            self.first_person.look_at(self.arc_ball.eye(), self.arc_ball.at());
         }
         else {
-            self.arc_ball.look_at_z(self.first_person.eye(), self.first_person.at());
+            self.arc_ball.look_at(self.first_person.eye(), self.first_person.at());
         }
 
         self.curr_is_arc_ball = !self.curr_is_arc_ball;
@@ -379,8 +379,8 @@ impl GraphicsManager {
     }
 
     pub fn look_at(&mut self, eye: Pnt3<f32>, at: Pnt3<f32>) {
-        self.arc_ball.look_at_z(eye, at);
-        self.first_person.look_at_z(eye, at);
+        self.arc_ball.look_at(eye, at);
+        self.first_person.look_at(eye, at);
     }
 
     pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<Node>> {

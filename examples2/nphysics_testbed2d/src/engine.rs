@@ -6,7 +6,7 @@ use rand::{SeedableRng, XorShiftRng, Rng};
 use sfml::graphics::RenderWindow;
 use na::{Pnt2, Pnt3, Iso2};
 use na;
-use nphysics::object::RigidBody;
+use nphysics2d::object::RigidBody;
 use ncollide::inspection::Repr2;
 use ncollide::shape;
 use camera::Camera;

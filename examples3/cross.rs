@@ -1,15 +1,15 @@
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::sync::Arc;
 use na::{Pnt3, Vec3, Translation};
 use ncollide::shape::{Plane, Cuboid, Compound};
 use ncollide::inspection::Repr3;
-use nphysics::volumetric::Volumetric;
-use nphysics::world::World;
-use nphysics::object::RigidBody;
+use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
+use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
 
 fn main() {

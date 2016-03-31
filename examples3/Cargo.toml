@@ -10,9 +10,8 @@ nalgebra = "*"
 ncollide = "*"
 kiss3d = "*"
 
-[dependencies.nphysics]
-features = [ "3df32" ]
-path = ".."
+[dependencies.nphysics3d]
+path = "../build/nphysics3d"
 
 [dependencies.nphysics_testbed3d]
 path = "./nphysics_testbed3d"

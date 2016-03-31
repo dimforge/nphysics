@@ -1,7 +1,7 @@
 extern crate num;
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use std::sync::Arc;
@@ -9,9 +9,9 @@ use num::Float;
 use na::{Vec2, Iso2, Translation};
 use ncollide::shape::{Plane, Cuboid, Compound};
 use ncollide::inspection::Repr2;
-use nphysics::volumetric::Volumetric;
-use nphysics::world::World;
-use nphysics::object::RigidBody;
+use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
+use nphysics2d::object::RigidBody;
 use nphysics_testbed2d::Testbed;
 
 fn main() {

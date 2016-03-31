@@ -4,9 +4,9 @@ use sfml::system::vector2::Vector2f;
 use na::Translate;
 use na::Pnt2;
 use na;
-use nphysics::world::World;
-use nphysics::detection::constraint::Constraint;
-use nphysics::detection::joint::Joint;
+use nphysics2d::world::World;
+use nphysics2d::detection::constraint::Constraint;
+use nphysics2d::detection::joint::Joint;
 
 pub static DRAW_SCALE: f32 = 20.0;
 

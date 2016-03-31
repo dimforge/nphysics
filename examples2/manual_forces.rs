@@ -1,15 +1,15 @@
 extern crate num;
 extern crate nalgebra as na;
 extern crate ncollide;
-extern crate nphysics;
+extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
 use num::Float;
 use na::{Vec1, Vec2, Pnt2, Translation};
 use ncollide::shape::{Plane, Convex2};
-use nphysics::world::World;
-use nphysics::object::RigidBody;
+use nphysics2d::world::World;
+use nphysics2d::object::RigidBody;
 use nphysics_testbed2d::Testbed;
 use rand::distributions::{IndependentSample, Range, Weighted, WeightedChoice};
 use nphysics_testbed2d::{CallBackMode, CallBackId};

@@ -5,7 +5,7 @@ use kiss3d::scene::SceneNode;
 use na::{Pnt3, Iso3};
 use na;
 use ncollide::procedural::TriMesh;
-use nphysics::object::RigidBody;
+use nphysics3d::object::RigidBody;
 
 pub struct Convex {
     color:      Pnt3<f32>,

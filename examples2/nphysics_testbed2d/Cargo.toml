@@ -6,13 +6,12 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [lib]
 name = "nphysics_testbed2d"
 
-[dependencies.nphysics]
-features = [ "2df32" ]
-path = "../.."
+[dependencies.nphysics2d]
+path = "../../build/nphysics2d"
 
 [dependencies]
 sfml = "0.9.*"
-nalgebra = "*"
+nalgebra = "0.6.*"
 time = "*"
 num = "*"
 rand = "*"

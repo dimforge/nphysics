@@ -1,42 +1,63 @@
 /*!
 nphysics
 ========
-**nphysics** is a 2 and 3-dimensional physics engine for games and animations. It uses
-[ncollide](http://ncollide.org) for collision detection, and
-[nalgebra](http://nalgebra.org) for vector/matrix math.
+**nphysics** is a 2 and 3-dimensional physics engine for games and animations.
+It uses [ncollide](http://ncollide.org) for collision detection, and
+[nalgebra](http://nalgebra.org) for vector/matrix math. 2D and 3D
+implementations both share the same code!
 
-Its most distinctive feature is its genericity wrt the simulation
-dimension. That means you can use it for both 2-dimensional physics and
-3-dimensional physics. Higher dimensions could be possible, but **nphysics**
-has not be written/tested with those in thought.
 
-Examples are available on the `examples` directory.
-There is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
+Examples are available in the `examples` directory. There is also a short
+(outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).  An on-line
+version of this documentation is available [here](http://nphysics.org).  Feel
+free to ask for help and discuss features on the official [user
+forum](http://users.nphysics.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
-However having a physics engine written in rust is much more fun than
+However having a physics engine written in Rust is much more fun than
 writing bindings and has several advantages:
 
-- it shows that rust is suitable for soft real-time applications
-- it shows how well rust behaves with highly generic code
-- it shows that there is no need to write two separate engine for 2d and 3d:
+- it shows that Rust is suitable for soft real-time applications
+- it shows how well Rust behaves with highly generic code
+- it shows that there is no need to write two separate engine for 2D and 3D:
   genericity wrt the dimension is possible (modulo low level arithmetic
   specializations for each dimension).
 - in a not-that-near future, C++ will die of ugliness. Then, people will
   search for a physics engine and **nphysics** will be there, proudly
-  exhibiting its _rusty_ sexyness.
+  exhibiting its _Rusty_ sexyness.
 
 ## Compilation
-You will need the last nightly build of the [rust compiler](http://www.rust-lang.org)
-and the official package manager: [cargo](https://github.com/rust-lang/cargo).
+You will need the latest release of the [Rust compiler](http://www.rust-lang.org)
+and the official package manager: [Cargo](https://github.com/rust-lang/cargo).
 
-Simply add the following to your `Cargo.toml` file:
+If you want to use the 2D version of `nphysics`, add the crate named
+`nphysics2d` to your dependencies:
 
 ```ignore
-[dependencies.nphysics3df32]
-git = "https://github.com/sebcrozet/nphysics"
+[dependencies]
+nphysics2d = "0.1.*"
 ```
+
+For the 3D version, add the crate named `nphysics3d`:
+
+```ignore
+[dependencies]
+nphysics3d = "0.1.*"
+```
+
+By default, 32-bit floating point numbers are used by the library. If you need
+more accuracy, use either version of nphysics with the feature `f64` enabled.
+For example:
+
+```ignore
+[dependencies.nphysics2d]
+version  = "0.1.*"
+features = "f64"
+```
+
+Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
+to see all the cool stuffs you can do.
 
 ## Features
 - static and dynamic rigid bodies
@@ -65,13 +86,11 @@ become a grown up. Many missing features are because of missing features on
 All dependencies are automatically cloned with a recursive clone.
 The libraries needed to compile the physics engine are:
 
-* [ncollide](https://github.com/sebcrozet/ncollide): the collision detection library.
-* [nalgebra](https://github.com/sebcrozet/nalgebra): the linear algebra library.
+* [ncollide](http://ncollide.org): the collision detection library.
+* [nalgebra](http://nalgebra.org): the linear algebra library.
 
 The libraries needed to compile the examples are:
 
-* [kiss3d](https://github.com/sebcrozet/kiss3d): the 3d graphics engine.
-* [rust-sfml](https://github.com/JeremyLetang/rust-sfml): the 2d graphics engine.
 */
 
 #![deny(non_camel_case_types)]
@@ -104,12 +123,12 @@ mod tests;
 
 
 /// Compilation flags dependent aliases for mathematical types.
-#[cfg(feature = "3d")]
+#[cfg(feature = "dim3")]
 pub mod math {
     use na::{Pnt3, Vec3, Mat3, Rot3, Iso3};
 
     /// The scalar type.
-    #[cfg(feature = "f32")]
+    #[cfg(all(feature = "f32", not(feature = "f64")))]
     pub type Scalar = f32;
 
     /// The scalar type.
@@ -136,12 +155,12 @@ pub mod math {
 }
 
 /// Compilation flags dependent aliases for mathematical types.
-#[cfg(feature = "2d")]
+#[cfg(feature = "dim2")]
 pub mod math {
     use na::{Pnt2, Vec1, Vec2, Mat1, Rot2, Iso2};
 
     /// The scalar type.
-    #[cfg(feature = "f32")]
+    #[cfg(all(feature = "f32", not(feature = "f64")))]
     pub type Scalar = f32;
 
     /// The scalar type.
@@ -165,36 +184,4 @@ pub mod math {
 
     /// The inertia tensor type.
     pub type AngularInertia = Mat1<Scalar>;
-}
-
-/// Compilation flags dependent aliases for mathematical types.
-#[cfg(feature = "4d")]
-pub mod math {
-    use na::{Pnt4, Vec4, Mat4, Rot4, Iso4};
-
-    /// The scalar type.
-    #[cfg(feature = "f32")]
-    pub type Scalar = f32;
-
-    /// The scalar type.
-    #[cfg(feature = "f64")]
-    pub type Scalar = f64;
-
-    /// The point type.
-    pub type Point = Pnt4<Scalar>;
-
-    /// The vector type.
-    pub type Vect = Vec4<Scalar>;
-
-    /// The orientation type.
-    pub type Orientation = Vec4<Scalar>;
-
-    /// The transformation matrix type.
-    pub type Matrix = Iso4<Scalar>;
-
-    /// The rotation matrix type.
-    pub type RotationMatrix = Rot4<Scalar>;
-
-    /// The inertia tensor type.
-    pub type AngularInertia = Mat4<Scalar>;
 }

@@ -4,7 +4,7 @@ use na;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Vec3};
-use nphysics::object::RigidBody;
+use nphysics3d::object::RigidBody;
 
 pub struct Plane {
     gfx:  SceneNode,
@@ -33,7 +33,7 @@ impl Plane {
             up = Vec3::x();
         }
 
-        res.gfx.look_at_z(world_pos, &(*world_pos + *world_normal), &up);
+        res.gfx.reorient(world_pos, &(*world_pos + *world_normal), &up);
 
         res.update();
 
