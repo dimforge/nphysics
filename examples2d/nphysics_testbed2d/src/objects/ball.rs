@@ -13,12 +13,12 @@ pub struct Ball<'a> {
     color: Pnt3<u8>,
     base_color: Pnt3<u8>,
     delta: Iso2<f32>,
-    body:  Rc<RefCell<RigidBody>>,
+    body:  Rc<RefCell<RigidBody<f32>>>,
     gfx:   CircleShape<'a>
 }
 
 impl<'a> Ball<'a> {
-    pub fn new(body:   Rc<RefCell<RigidBody>>,
+    pub fn new(body:   Rc<RefCell<RigidBody<f32>>>,
                delta:  Iso2<f32>,
                radius: f32,
                color:  Pnt3<u8>) -> Ball<'a> {

@@ -10,11 +10,11 @@ pub struct Ball {
     base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
-    body:       Rc<RefCell<RigidBody>>
+    body:       Rc<RefCell<RigidBody<f32>>>
 }
 
 impl Ball {
-    pub fn new(body:   Rc<RefCell<RigidBody>>,
+    pub fn new(body:   Rc<RefCell<RigidBody<f32>>>,
                delta:  Iso3<f32>,
                radius: f32,
                color:  Pnt3<f32>,
@@ -60,7 +60,7 @@ impl Ball {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody>> {
+    pub fn body(&self) -> &Rc<RefCell<RigidBody<f32>>> {
         &self.body
     }
 }

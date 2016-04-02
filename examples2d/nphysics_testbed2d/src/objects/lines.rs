@@ -11,13 +11,13 @@ pub struct Lines {
     color: Pnt3<u8>,
     base_color: Pnt3<u8>,
     delta: Iso2<f32>,
-    body: Rc<RefCell<RigidBody>>,
+    body: Rc<RefCell<RigidBody<f32>>>,
     indices: Arc<Vec<Pnt2<usize>>>,
     vertices: Arc<Vec<Pnt2<f32>>>
 }
 
 impl Lines {
-    pub fn new(body:     Rc<RefCell<RigidBody>>,
+    pub fn new(body:     Rc<RefCell<RigidBody<f32>>>,
                delta:    Iso2<f32>,
                vertices: Arc<Vec<Pnt2<f32>>>,
                indices:  Arc<Vec<Pnt2<usize>>>,

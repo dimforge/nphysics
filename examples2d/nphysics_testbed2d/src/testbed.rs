@@ -53,7 +53,7 @@ pub enum CallBackId {
 }
 
 pub struct Testbed<'a> {
-    world:     World,
+    world:     World<f32>,
     callbacks: [Option<Box<Fn(CallBackMode)>>; 9],
     window:    RenderWindow,
     graphics:  GraphicsManager<'a>
@@ -65,8 +65,8 @@ struct TestbedState<'a> {
     cb_states: [bool; 9],
     camera: Camera,
     fps: Fps<'a>,
-    grabbed_object: Option<Rc<RefCell<RigidBody>>>,
-    grabbed_object_joint: Option<Rc<RefCell<Fixed>>>,
+    grabbed_object: Option<Rc<RefCell<RigidBody<f32>>>>,
+    grabbed_object_joint: Option<Rc<RefCell<Fixed<f32>>>>,
 }
 
 impl<'a> TestbedState<'a> {
@@ -108,7 +108,7 @@ impl<'a> Testbed<'a> {
         }
     }
 
-    pub fn new(world: World) -> Testbed<'a> {
+    pub fn new(world: World<f32>) -> Testbed<'a> {
         let mut res = Testbed::new_empty();
 
         res.set_world(world);
@@ -116,7 +116,7 @@ impl<'a> Testbed<'a> {
         res
     }
 
-    pub fn set_world(&mut self, world: World) {
+    pub fn set_world(&mut self, world: World<f32>) {
         self.world = world;
         self.graphics.clear();
 
@@ -125,7 +125,7 @@ impl<'a> Testbed<'a> {
         }
     }
 
-    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody<f32>>>, color: Pnt3<f32>) {
         let color = Pnt3::new(
             (color.x * 255.0) as u8,
             (color.y * 255.0) as u8,

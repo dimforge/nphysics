@@ -46,7 +46,7 @@ fn usage(exe_name: &str) {
 }
 
 pub struct Testbed {
-    world:    World,
+    world:    World<f32>,
     window:   Window,
     graphics: GraphicsManager,
 }
@@ -63,7 +63,7 @@ impl Testbed {
         }
     }
 
-    pub fn new(world: World) -> Testbed {
+    pub fn new(world: World<f32>) -> Testbed {
         let mut res = Testbed::new_empty();
 
         res.set_world(world);
@@ -71,7 +71,7 @@ impl Testbed {
         res
     }
 
-    pub fn set_world(&mut self, world: World) {
+    pub fn set_world(&mut self, world: World<f32>) {
         self.world = world;
 
         self.graphics.clear(&mut self.window);
@@ -85,7 +85,7 @@ impl Testbed {
         self.graphics.look_at(eye, at);
     }
 
-    pub fn set_color(&mut self, rb: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
+    pub fn set_color(&mut self, rb: &Rc<RefCell<RigidBody<f32>>>, color: Pnt3<f32>) {
         self.graphics.set_color(rb, color);
     }
 
@@ -138,8 +138,8 @@ impl Testbed {
         let mut draw_colls = false;
 
         let mut cursor_pos = Pnt2::new(0.0f32, 0.0);
-        let mut grabbed_object: Option<Rc<RefCell<RigidBody>>> = None;
-        let mut grabbed_object_joint: Option<Rc<RefCell<Fixed>>> = None;
+        let mut grabbed_object: Option<Rc<RefCell<RigidBody<f32>>>> = None;
+        let mut grabbed_object_joint: Option<Rc<RefCell<Fixed<f32>>>> = None;
         let mut grabbed_object_plane: (Pnt3<f32>, Vec3<f32>) = (na::orig(), na::zero());
 
 
@@ -343,12 +343,12 @@ impl Testbed {
 
                         {
                             let cam      = self.graphics.camera();
-                            cam_transfom = cam.view_transform();
+                            cam_transfom = na::inv(&cam.view_transform()).unwrap();
                         }
 
                         rb.append_translation(&na::translation(&cam_transfom));
 
-                        let front = na::rotate(&cam_transfom, &Vec3::z());
+                        let front = -na::rotate(&cam_transfom, &Vec3::z());
 
                         rb.set_lin_vel(front * 40.0f32);
 
@@ -363,12 +363,12 @@ impl Testbed {
 
                         {
                             let cam = self.graphics.camera();
-                            cam_transform = cam.view_transform();
+                            cam_transform = na::inv(&cam.view_transform()).unwrap();
                         }
 
                         rb.append_translation(&na::translation(&cam_transform));
 
-                        let front = na::rotate(&cam_transform, &Vec3::z());
+                        let front = -na::rotate(&cam_transform, &Vec3::z());
 
                         rb.set_lin_vel(front * 40.0f32);
 
@@ -422,7 +422,7 @@ enum RunMode {
     Step
 }
 
-fn draw_collisions(window: &mut Window, physics: &mut World) {
+fn draw_collisions(window: &mut Window, physics: &mut World<f32>) {
     let mut collisions = Vec::new();
 
     physics.interferences(&mut collisions);

@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics2d"
-version = "0.1.2"
+version = "0.2.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "2-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/doc/nphysics2d"
@@ -11,10 +11,8 @@ keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
 
 [features]
-default = [ "dim2", "f32" ]
+default = [ "dim2" ]
 dim2    = [ ]
-f32     = [ ]
-f64     = [ ]
 
 [lib]
 name = "nphysics2d"

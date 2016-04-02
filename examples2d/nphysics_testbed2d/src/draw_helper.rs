@@ -11,7 +11,7 @@ use nphysics2d::detection::joint::Joint;
 pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window:  &mut graphics::RenderWindow,
-                  physics: &mut World) {
+                  physics: &mut World<f32>) {
 
     let mut collisions = Vec::new();
 

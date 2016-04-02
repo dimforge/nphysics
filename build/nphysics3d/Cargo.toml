@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics3d"
-version = "0.1.2"
+version = "0.2.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "3-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/doc/nphysics3d"
@@ -11,10 +11,8 @@ keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
 
 [features]
-default = [ "dim3", "f32" ]
+default = [ "dim3" ]
 dim3    = [ ]
-f32     = [ ]
-f64     = [ ]
 
 [lib]
 name = "nphysics3d"

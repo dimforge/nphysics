@@ -19,14 +19,14 @@ fn main() {
 }
 
 
-fn create_the_world() -> World {
+fn create_the_world() -> World<f32> {
     let mut world = World::new();
     world.set_gravity(Vec2::new(0.0, 9.81));
     world
 }
 
 
-fn create_the_walls(world: &mut World) {
+fn create_the_walls(world: &mut World<f32>) {
     /*
      * First plane
      */
@@ -43,7 +43,7 @@ fn create_the_walls(world: &mut World) {
 }
 
 
-fn create_the_balls(world: &mut World) {
+fn create_the_balls(world: &mut World<f32>) {
     let num     = (4000.0f32.sqrt()) as usize;
     let rad     = 0.5;
     let shift   = 2.5 * rad;
@@ -65,7 +65,7 @@ fn create_the_balls(world: &mut World) {
 }
 
 
-fn run_simulation(world: World) {
+fn run_simulation(world: World<f32>) {
     let mut testbed = Testbed::new(world);
 
     testbed.run();

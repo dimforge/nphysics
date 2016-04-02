@@ -3,6 +3,7 @@ use std::iter::Map;
 use std::rc::Rc;
 use std::cell::RefCell;
 use na;
+use ncollide::math::Scalar;
 use ncollide::bounding_volume::AABB;
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
@@ -17,37 +18,37 @@ use detection::constraint::Constraint;
 use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, CorrectionMode};
 use object::{RigidBody, RigidBodyHandle};
-use math::{Scalar, Point, Vect, Matrix};
+use math::{Point, Vector, Matrix};
 
 /// The default broad phase.
-pub type WorldBroadPhase = DBVTBroadPhase<Point, RigidBodyHandle, AABB<Point>>;
+pub type WorldBroadPhase<N> = DBVTBroadPhase<Point<N>, RigidBodyHandle<N>, AABB<Point<N>>>;
 /// An iterator visiting rigid bodies.
-pub type RigidBodies<'a> = Map<Iter<'a, Entry<usize, RigidBodyHandle>>, fn(&'a Entry<usize, RigidBodyHandle>) -> &'a RigidBodyHandle>;
+pub type RigidBodies<'a, N> = Map<Iter<'a, Entry<usize, RigidBodyHandle<N>>>, fn(&'a Entry<usize, RigidBodyHandle<N>>) -> &'a RigidBodyHandle<N>>;
 
 /// Type of the collision world containing rigid bodies.
-pub type RigidBodyCollisionWorld = CollisionWorld<Point, Matrix, RigidBodyHandle>;
+pub type RigidBodyCollisionWorld<N> = CollisionWorld<Point<N>, Matrix<N>, RigidBodyHandle<N>>;
 
 /// Type of a collision object containing a rigid body as its data.
-pub type RigidBodyCollisionObject = CollisionObject<Point, Matrix, RigidBodyHandle>;
+pub type RigidBodyCollisionObject<N> = CollisionObject<Point<N>, Matrix<N>, RigidBodyHandle<N>>;
 
 
 /// The physical world.
 ///
 /// This is the main structure of the physics engine.
-pub struct World {
-    cworld:      RigidBodyCollisionWorld,
-    bodies:      HashMap<usize, RigidBodyHandle, UintTWHash>,
-    forces:      BodyForceGenerator,
+pub struct World<N: Scalar> {
+    cworld:      RigidBodyCollisionWorld<N>,
+    bodies:      HashMap<usize, RigidBodyHandle<N>, UintTWHash>,
+    forces:      BodyForceGenerator<N>,
     integrator:  BodySmpEulerIntegrator,
-    sleep:       Rc<RefCell<ActivationManager>>, // FIXME: avoid sharing (needed for the contact signal handler)
-    ccd:         TranslationalCCDMotionClamping,
-    joints:      JointManager,
-    solver:      AccumulatedImpulseSolver,
+    sleep:       Rc<RefCell<ActivationManager<N>>>, // FIXME: avoid sharing (needed for the contact signal handler)
+    ccd:         TranslationalCCDMotionClamping<N>,
+    joints:      JointManager<N>,
+    solver:      AccumulatedImpulseSolver<N>,
 }
 
-impl World {
+impl<N: Scalar> World<N> {
     /// Creates a new physics world.
-    pub fn new() -> World {
+    pub fn new() -> World<N> {
         /*
          * Setup the physics world
          */
@@ -99,14 +100,14 @@ impl World {
     }
 
     /// Updates the physics world.
-    pub fn step(&mut self, dt: Scalar) {
+    pub fn step(&mut self, dt: N) {
         for e in self.bodies.elements_mut().iter_mut() {
             let mut rb = e.value.borrow_mut();
 
             if rb.is_active() {
                 self.forces.update(dt.clone(), &mut *rb);
                 self.integrator.update(dt.clone(), &mut *rb);
-                self.cworld.deferred_set_position(&*e.value as *const RefCell<RigidBody> as usize,
+                self.cworld.deferred_set_position(&*e.value as *const RefCell<RigidBody<N>> as usize,
                                                   rb.position().clone());
             }
         }
@@ -142,7 +143,7 @@ impl World {
     }
 
     /// Adds a rigid body to the physics world.
-    pub fn add_body(&mut self, rb: RigidBody) -> RigidBodyHandle {
+    pub fn add_body(&mut self, rb: RigidBody<N>) -> RigidBodyHandle<N> {
         let position = rb.position().clone();
         let shape = rb.shape().clone();
 
@@ -161,7 +162,7 @@ impl World {
         }
         
         let handle = Rc::new(RefCell::new(rb));
-        let uid = &*handle as *const RefCell<RigidBody> as usize;;
+        let uid = &*handle as *const RefCell<RigidBody<N>> as usize;;
 
         self.bodies.insert(uid, handle.clone());
         self.cworld.add(uid, position, shape, groups, handle.clone());
@@ -170,8 +171,8 @@ impl World {
     }
 
     /// Remove a rigid body from the physics world.
-    pub fn remove_body(&mut self, b: &RigidBodyHandle) {
-        let uid = &**b as *const RefCell<RigidBody> as usize;
+    pub fn remove_body(&mut self, b: &RigidBodyHandle<N>) {
+        let uid = &**b as *const RefCell<RigidBody<N>> as usize;
         self.cworld.deferred_remove(uid);
         self.cworld.perform_removals_and_broad_phase();
         self.joints.remove(b, &mut *self.sleep.borrow_mut());
@@ -182,7 +183,7 @@ impl World {
 
     // XXX: keep this reference mutable?
     /// Gets a mutable reference to the force generator.
-    pub fn forces_generator(&mut self) -> &mut BodyForceGenerator {
+    pub fn forces_generator(&mut self) -> &mut BodyForceGenerator<N> {
         &mut self.forces
     }
 
@@ -194,29 +195,29 @@ impl World {
 
     // XXX: keep this reference mutable?
     /// Gets a mutable reference to the CCD manager.
-    pub fn ccd_manager(&mut self) -> &mut TranslationalCCDMotionClamping {
+    pub fn ccd_manager(&mut self) -> &mut TranslationalCCDMotionClamping<N> {
         &mut self.ccd
     }
 
     // XXX: keep this reference mutable?
     /// Gets a mutable reference to the joint manager.
-    pub fn joint_manager(&mut self) -> &mut JointManager {
+    pub fn joint_manager(&mut self) -> &mut JointManager<N> {
         &mut self.joints
     }
 
     // XXX: keep this reference mutable?
     /// Gets a mutable reference to the constraint solver.
-    pub fn constraints_solver(&mut self) -> &mut AccumulatedImpulseSolver {
+    pub fn constraints_solver(&mut self) -> &mut AccumulatedImpulseSolver<N> {
         &mut self.solver
     }
 
     /// Gets the underlying collision world.
-    pub fn collision_world(&self) -> &RigidBodyCollisionWorld {
+    pub fn collision_world(&self) -> &RigidBodyCollisionWorld<N> {
         &self.cworld
     }
 
     /// Sets the linear acceleration afecting every dynamic rigid body.
-    pub fn set_gravity(&mut self, gravity: Vect) {
+    pub fn set_gravity(&mut self, gravity: Vector<N>) {
         self.forces.set_lin_acc(gravity);
     }
 
@@ -226,7 +227,7 @@ impl World {
 //     }
 
     /// Gets the linear acceleration afecting every dynamic rigid body.
-    pub fn gravity(&self) -> Vect {
+    pub fn gravity(&self) -> Vector<N> {
         self.forces.lin_acc()
     }
 
@@ -236,12 +237,12 @@ impl World {
 //     }
 
     /// Adds continuous collision detection to the given rigid body.
-    pub fn add_ccd_to(&mut self, body: &RigidBodyHandle, motion_thresold: Scalar) {
+    pub fn add_ccd_to(&mut self, body: &RigidBodyHandle<N>, motion_thresold: N) {
         self.ccd.add_ccd_to(body.clone(), motion_thresold)
     }
 
     /// Adds a ball-in-socket joint to the world.
-    pub fn add_ball_in_socket(&mut self, joint: BallInSocket) -> Rc<RefCell<BallInSocket>> {
+    pub fn add_ball_in_socket(&mut self, joint: BallInSocket<N>) -> Rc<RefCell<BallInSocket<N>>> {
         let res = Rc::new(RefCell::new(joint));
 
         self.joints.add_ball_in_socket(res.clone(), &mut *self.sleep.borrow_mut());
@@ -250,12 +251,12 @@ impl World {
     }
 
     /// Removes a ball-in-socket joint from the world.
-    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket>>) {
+    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket<N>>>) {
         self.joints.remove_ball_in_socket(joint, &mut *self.sleep.borrow_mut())
     }
 
     /// Adds a fixed joint to the world.
-    pub fn add_fixed(&mut self, joint: Fixed) -> Rc<RefCell<Fixed>> {
+    pub fn add_fixed(&mut self, joint: Fixed<N>) -> Rc<RefCell<Fixed<N>>> {
         let res = Rc::new(RefCell::new(joint));
 
         self.joints.add_fixed(res.clone(), &mut *self.sleep.borrow_mut());
@@ -264,12 +265,12 @@ impl World {
     }
 
     /// Removes a fixed joint from the world.
-    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed>>) {
+    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed<N>>>) {
         self.joints.remove_joint(joint, &mut *self.sleep.borrow_mut())
     }
 
     /// Collects every interferences detected since the last update.
-    pub fn interferences(&mut self, out: &mut Vec<Constraint>) {
+    pub fn interferences(&mut self, out: &mut Vec<Constraint<N>>) {
         // FIXME: ugly.
         for (b1, b2, c) in self.cworld.contacts() {
             let m1 = b1.data.borrow().margin();
@@ -285,8 +286,8 @@ impl World {
     }
 
     /// An iterator visiting all rigid bodies on this world.
-    pub fn bodies(&self) -> RigidBodies {
-        fn extract_value(e: &Entry<usize, RigidBodyHandle>) -> &RigidBodyHandle {
+    pub fn bodies(&self) -> RigidBodies<N> {
+        fn extract_value<N: Scalar>(e: &Entry<usize, RigidBodyHandle<N>>) -> &RigidBodyHandle<N> {
             &e.value
         }
 
@@ -297,7 +298,7 @@ impl World {
     /* FIXME
     /// Registers a handler for proximity start/stop events.
     pub fn register_proximity_signal_handler<H>(&mut self, name: &str, handler: H)
-        where H: ProximitySignalHandler<RigidBodyHandle> + 'static {
+        where H: ProximitySignalHandler<RigidBodyHandle<N>> + 'static {
         self.cworld.register_proximity_signal_handler(name, handler)
     }
 
@@ -309,7 +310,7 @@ impl World {
 
     /// Registers a handler for contact start/stop events.
     pub fn register_contact_signal_handler<H>(&mut self, name: &str, handler: H)
-        where H: ContactSignalHandler<RigidBodyHandle> + 'static {
+        where H: ContactSignalHandler<RigidBodyHandle<N>> + 'static {
         self.cworld.register_contact_signal_handler(name, handler)
     }
 
@@ -319,20 +320,20 @@ impl World {
     }
 }
 
-struct ObjectActivationOnContactHandler {
-    sleep: Rc<RefCell<ActivationManager>>
+struct ObjectActivationOnContactHandler<N: Scalar> {
+    sleep: Rc<RefCell<ActivationManager<N>>>
 }
 
-impl ObjectActivationOnContactHandler {
-    pub fn new(sleep: Rc<RefCell<ActivationManager>>) -> ObjectActivationOnContactHandler {
+impl<N: Scalar> ObjectActivationOnContactHandler<N> {
+    pub fn new(sleep: Rc<RefCell<ActivationManager<N>>>) -> ObjectActivationOnContactHandler<N> {
         ObjectActivationOnContactHandler {
             sleep: sleep
         }
     }
 }
 
-impl ContactSignalHandler<RigidBodyHandle> for ObjectActivationOnContactHandler {
-    fn handle_contact(&mut self, b1: &RigidBodyHandle, b2: &RigidBodyHandle, started: bool) {
+impl<N: Scalar> ContactSignalHandler<RigidBodyHandle<N>> for ObjectActivationOnContactHandler<N> {
+    fn handle_contact(&mut self, b1: &RigidBodyHandle<N>, b2: &RigidBodyHandle<N>, started: bool) {
         // Wake on collision lost.
         if !started {
             self.sleep.borrow_mut().deferred_activate(b1);

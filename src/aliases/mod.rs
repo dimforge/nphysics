@@ -9,4 +9,4 @@ use object::RigidBody;
 use math::Point;
 
 /// The type of the broad phase used by the world by default.
-pub type DefaultBroadPhase = DBVTBroadPhase<Point, Rc<RefCell<RigidBody>>, AABB<Point>>;
+pub type DefaultBroadPhase<N> = DBVTBroadPhase<Point<N>, Rc<RefCell<RigidBody<N>>>, AABB<Point<N>>>;

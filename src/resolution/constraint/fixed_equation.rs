@@ -1,16 +1,16 @@
-use na::{Translate, Rotation, Bounded};
-use na;
+use na::{self, Translate, Rotation, Bounded};
+use ncollide::math::Scalar;
 use detection::joint::{Fixed, Anchor, Joint};
 use resolution::constraint::ball_in_socket_equation;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
-use math::{Scalar, Vect, Orientation, Matrix};
+use math::{Vector, Orientation, Matrix};
 
-pub fn fill_second_order_equation(dt:          Scalar,
-                                  joint:       &Fixed,
-                                  constraints: &mut [VelocityConstraint],
-                                  correction:  &CorrectionParameters) {
+pub fn fill_second_order_equation<N: Scalar>(dt:          N,
+                                             joint:       &Fixed<N>,
+                                             constraints: &mut [VelocityConstraint<N>],
+                                             correction:  &CorrectionParameters<N>) {
     let ref1 = joint.anchor1_pos();
     let ref2 = joint.anchor2_pos();
 
@@ -29,22 +29,22 @@ pub fn fill_second_order_equation(dt:          Scalar,
         &ref2,
         joint.anchor1(),
         joint.anchor2(),
-        &mut constraints[na::dim::<Vect>() ..],
+        &mut constraints[na::dim::<Vector<N>>() ..],
         correction);
 }
 
-pub fn cancel_relative_angular_motion<P>(dt:          Scalar,
-                                         ref1:        &Matrix,
-                                         ref2:        &Matrix,
-                                         anchor1:     &Anchor<P>,
-                                         anchor2:     &Anchor<P>,
-                                         constraints: &mut [VelocityConstraint],
-                                         correction:  &CorrectionParameters) {
+pub fn cancel_relative_angular_motion<N: Scalar, P>(dt:          N,
+                                                    ref1:        &Matrix<N>,
+                                                    ref2:        &Matrix<N>,
+                                                    anchor1:     &Anchor<N, P>,
+                                                    anchor2:     &Anchor<N, P>,
+                                                    constraints: &mut [VelocityConstraint<N>],
+                                                    correction:  &CorrectionParameters<N>) {
     let delta     = na::inv(ref2).expect("ref2 must be inversible.") * *ref1;
     let delta_rot = delta.rotation();
 
     let mut i = 0;
-    na::canonical_basis(|rot_axis: Orientation| {
+    na::canonical_basis(|rot_axis: Orientation<N>| {
         let constraint = &mut constraints[i];
 
         let opt_rb1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
@@ -62,7 +62,7 @@ pub fn cancel_relative_angular_motion<P>(dt:          Scalar,
         let ang_vel1 = match opt_rb1 { Some(rb) => rb.ang_vel(), None => na::zero() };
         let ang_vel2 = match opt_rb2 { Some(rb) => rb.ang_vel(), None => na::zero() };
 
-        let _max: Scalar = Bounded::max_value();
+        let _max: N = Bounded::max_value();
         constraint.lobound   = -_max;
         constraint.hibound   = _max;
         // FIXME: dont compute the difference at each iteration

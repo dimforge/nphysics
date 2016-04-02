@@ -5,31 +5,32 @@ use std::mem;
 use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
 use num::Float;
+use ncollide::math::Scalar;
 use na;
 use na::IterableMut;
-use math::{Scalar, Point};
+use math::Point;
 use ncollide::utils::AsBytes;
 use utils::DeterministicState;
 
 #[derive(PartialEq)]
 /// The identifier of a contact stored in the impulse cache.
-pub struct ContactIdentifier {
+pub struct ContactIdentifier<N: Scalar> {
     obj1:    usize,
     obj2:    usize,
-    ccenter: Point
+    ccenter: Point<N>
 }
 
-impl Eq for ContactIdentifier { } // NOTE: this is  wrong because of floats, but we dont care
+impl<N: Scalar> Eq for ContactIdentifier<N> { } // NOTE: this is  wrong because of floats, but we dont care
 
-impl Hash for ContactIdentifier {
+impl<N: Scalar> Hash for ContactIdentifier<N> {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         state.write(self.ccenter.as_bytes())
     }
 }
 
-impl ContactIdentifier {
-    pub fn new(obj1: usize, obj2: usize, center: Point, step: &Scalar) -> ContactIdentifier {
+impl<N: Scalar> ContactIdentifier<N> {
+    pub fn new(obj1: usize, obj2: usize, center: Point<N>, step: &N) -> ContactIdentifier<N> {
         let mut cell = center / *step;
 
         for x in cell.iter_mut() {
@@ -44,18 +45,18 @@ impl ContactIdentifier {
     }
 }
 
-pub struct ImpulseCache {
+pub struct ImpulseCache<N: Scalar> {
     // XXX: simulations won't be reproductible because of the randomized HashMap.
-    hash_prev:           HashMap<ContactIdentifier, (usize, usize), DeterministicState>,
-    cache_prev:          Vec<Scalar>,
-    hash_next:           HashMap<ContactIdentifier, (usize, usize), DeterministicState>,
-    cache_next:          Vec<Scalar>,
-    step:                Scalar,
+    hash_prev:           HashMap<ContactIdentifier<N>, (usize, usize), DeterministicState>,
+    cache_prev:          Vec<N>,
+    hash_next:           HashMap<ContactIdentifier<N>, (usize, usize), DeterministicState>,
+    cache_next:          Vec<N>,
+    step:                N,
     impulse_per_contact: usize
 }
 
-impl ImpulseCache {
-    pub fn new(step: Scalar, impulse_per_contact: usize) -> ImpulseCache {
+impl<N: Scalar> ImpulseCache<N> {
+    pub fn new(step: N, impulse_per_contact: usize) -> ImpulseCache<N> {
 
         ImpulseCache {
             hash_prev:           HashMap::with_capacity_and_hasher(32, DeterministicState::new()),
@@ -67,7 +68,7 @@ impl ImpulseCache {
         }
     }
 
-    pub fn insert(&mut self, cid: usize, obj1: usize, obj2: usize, center: Point) {
+    pub fn insert(&mut self, cid: usize, obj1: usize, obj2: usize, center: Point<N>) {
         let id = ContactIdentifier::new(obj1, obj2, center, &self.step);
         let imp =
             match self.hash_prev.get(&id).cloned() {
@@ -78,15 +79,15 @@ impl ImpulseCache {
         let _ = self.hash_next.insert(id, (cid, imp));
     }
 
-    pub fn hash(&self) -> &HashMap<ContactIdentifier, (usize, usize), DeterministicState> {
+    pub fn hash(&self) -> &HashMap<ContactIdentifier<N>, (usize, usize), DeterministicState> {
         &self.hash_next
     }
 
-    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier, (usize, usize), DeterministicState> {
+    pub fn hash_mut(&mut self) -> &mut HashMap<ContactIdentifier<N>, (usize, usize), DeterministicState> {
         &mut self.hash_next
     }
 
-    pub fn push_impulsions(&mut self) -> &mut [Scalar] {
+    pub fn push_impulsions(&mut self) -> &mut [N] {
         let begin = self.cache_next.len();
 
         for _ in 0 .. self.impulse_per_contact {
@@ -102,7 +103,7 @@ impl ImpulseCache {
         self.impulse_per_contact
     }
 
-    pub fn impulsions_at(&self, at: usize) -> &[Scalar] {
+    pub fn impulsions_at(&self, at: usize) -> &[N] {
         &self.cache_prev[at .. at + self.impulse_per_contact]
     }
 
@@ -116,8 +117,8 @@ impl ImpulseCache {
         self.cache_next.clear();
         self.hash_next.clear();
 
-        self.cache_prev.extend(iter::repeat(na::zero::<Scalar>()).take(self.impulse_per_contact));
-        self.cache_next.extend(iter::repeat(na::zero::<Scalar>()).take(self.impulse_per_contact));
+        self.cache_prev.extend(iter::repeat(na::zero::<N>()).take(self.impulse_per_contact));
+        self.cache_next.extend(iter::repeat(na::zero::<N>()).take(self.impulse_per_contact));
     }
 
     pub fn swap(&mut self) {
