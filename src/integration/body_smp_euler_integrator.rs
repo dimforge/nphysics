@@ -1,10 +1,10 @@
 //! Semi-implicit Euler integrator.
 
 use na::Transformation;
+use ncollide::math::Scalar;
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
-use math::Scalar;
 
 /// A semi-implicit Euler integrator.
 pub struct BodySmpEulerIntegrator;
@@ -17,9 +17,9 @@ impl BodySmpEulerIntegrator {
     }
 }
 
-impl Integrator<RigidBody> for BodySmpEulerIntegrator {
+impl<N: Scalar> Integrator<N, RigidBody<N>> for BodySmpEulerIntegrator {
     #[inline]
-    fn update(&mut self, dt: Scalar, rb: &mut RigidBody) {
+    fn update(&mut self, dt: N, rb: &mut RigidBody<N>) {
         if rb.can_move() {
             let (t, lv, av) = euler::semi_implicit_integrate(
                 dt.clone(),

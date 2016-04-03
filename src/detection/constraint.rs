@@ -2,23 +2,24 @@
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use ncollide::math::Scalar;
 use ncollide::geometry::Contact;
 use object::RigidBody;
 use detection::joint::{Fixed, BallInSocket};
 use math::Point;
 
 /// A constraint between two rigid bodies.
-pub enum Constraint {
+pub enum Constraint<N: Scalar> {
     /// A contact.
-    RBRB(Rc<RefCell<RigidBody>>, Rc<RefCell<RigidBody>>, Contact<Point>),
+    RBRB(Rc<RefCell<RigidBody<N>>>, Rc<RefCell<RigidBody<N>>>, Contact<Point<N>>),
     /// A ball-in-socket joint.
-    BallInSocket(Rc<RefCell<BallInSocket>>),
+    BallInSocket(Rc<RefCell<BallInSocket<N>>>),
     /// A fixed joint.
-    Fixed(Rc<RefCell<Fixed>>),
+    Fixed(Rc<RefCell<Fixed<N>>>),
 }
 
-impl Clone for Constraint {
-    fn clone(&self) -> Constraint {
+impl<N: Scalar> Clone for Constraint<N> {
+    fn clone(&self) -> Constraint<N> {
         match *self {
             Constraint::RBRB(ref a, ref b, ref c) => Constraint::RBRB(a.clone(), b.clone(), c.clone()),
             Constraint::BallInSocket(ref bis) => Constraint::BallInSocket(bis.clone()),

@@ -1,4 +1,5 @@
 use na::Transform;
+use ncollide::math::Scalar;
 use math::Point;
 use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;
@@ -6,15 +7,15 @@ use detection::joint::joint::Joint;
 /// A ball-in-socket joint.
 ///
 /// This is usually used to create ragdolls.
-pub struct BallInSocket {
+pub struct BallInSocket<N: Scalar> {
     up_to_date: bool,
-    anchor1:    Anchor<Point>,
-    anchor2:    Anchor<Point>,
+    anchor1:    Anchor<N, Point<N>>,
+    anchor2:    Anchor<N, Point<N>>,
 }
 
-impl BallInSocket {
+impl<N: Scalar> BallInSocket<N> {
     /// Creates a ball-in-socket joint.
-    pub fn new(anchor1: Anchor<Point>, anchor2: Anchor<Point>) -> BallInSocket {
+    pub fn new(anchor1: Anchor<N, Point<N>>, anchor2: Anchor<N, Point<N>>) -> BallInSocket<N> {
         BallInSocket {
             up_to_date: false,
             anchor1:    anchor1,
@@ -35,7 +36,7 @@ impl BallInSocket {
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
-    pub fn set_local1(&mut self, local1: Point) {
+    pub fn set_local1(&mut self, local1: Point<N>) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
             self.anchor1.position = local1
@@ -45,7 +46,7 @@ impl BallInSocket {
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
-    pub fn set_local2(&mut self, local2: Point) {
+    pub fn set_local2(&mut self, local2: Point<N>) {
         if local2 != self.anchor2.position {
             self.up_to_date = false;
             self.anchor2.position = local2
@@ -54,22 +55,22 @@ impl BallInSocket {
 }
 
 
-impl Joint<Point> for BallInSocket {
+impl<N: Scalar> Joint<N, Point<N>> for BallInSocket<N> {
     /// The first anchor affected by this joint.
     #[inline]
-    fn anchor1(&self) -> &Anchor<Point> {
+    fn anchor1(&self) -> &Anchor<N, Point<N>> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
     #[inline]
-    fn anchor2(&self) -> &Anchor<Point> {
+    fn anchor2(&self) -> &Anchor<N, Point<N>> {
         &self.anchor2
     }
 
     /// The first attach point in global coordinates.
     #[inline]
-    fn anchor1_pos(&self) -> Point {
+    fn anchor1_pos(&self) -> Point<N> {
         match self.anchor1.body {
             Some(ref b) => {
                 b.borrow().position().transform(&self.anchor1.position)
@@ -80,7 +81,7 @@ impl Joint<Point> for BallInSocket {
 
     /// The second attach point in global coordinates.
     #[inline]
-    fn anchor2_pos(&self) -> Point {
+    fn anchor2_pos(&self) -> Point<N> {
         match self.anchor2.body {
             Some(ref b) => {
                 b.borrow().position().transform(&self.anchor2.position)

@@ -52,7 +52,7 @@ fn main() {
     testbed.run();
 }
 
-fn add_ragdoll(pos: Vec3<f32>, world: &mut World) {
+fn add_ragdoll(pos: Vec3<f32>, world: &mut World<f32>) {
     // head
     let     head_geom = Ball::new(0.8);
     let mut head      = RigidBody::new_dynamic(head_geom, 1.0, 0.3, 0.5);

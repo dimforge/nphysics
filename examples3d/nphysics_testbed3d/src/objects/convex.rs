@@ -12,11 +12,11 @@ pub struct Convex {
     base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
-    body:       Rc<RefCell<RigidBody>>
+    body:       Rc<RefCell<RigidBody<f32>>>
 }
 
 impl Convex {
-    pub fn new(body:     Rc<RefCell<RigidBody>>,
+    pub fn new(body:     Rc<RefCell<RigidBody<f32>>>,
                delta:    Iso3<f32>,
                convex:   &TriMesh<Pnt3<f32>>,
                color:    Pnt3<f32>,
@@ -65,7 +65,7 @@ impl Convex {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody>> {
+    pub fn body(&self) -> &Rc<RefCell<RigidBody<f32>>> {
         &self.body
     }
 }

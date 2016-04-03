@@ -1,19 +1,20 @@
 use na;
-use math::{Vect, Orientation};
+use ncollide::math::Scalar;
+use math::{Vector, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.
 #[derive(PartialEq, Debug, Clone)]
-pub struct Velocities {
+pub struct Velocities<N: Scalar> {
     /// Linear velocity.
-    pub lv: Vect,
+    pub lv: Vector<N>,
     /// Angular velocity.
-    pub av: Orientation
+    pub av: Orientation<N>
 }
 
-impl Velocities {
+impl<N: Scalar> Velocities<N> {
     /// Creates a new `Velocities`.
-    pub fn new() -> Velocities {
+    pub fn new() -> Velocities<N> {
         Velocities {
             lv: na::zero(),
             av: na::zero()
@@ -39,12 +40,12 @@ impl Velocities {
 /// * `is_lambda_zero` - indicates whether or not the every element of `result` has been
 /// reinitialized. Set this to `false` if the `result` comes from a previous execution of
 /// `projected_gauss_seidel_solve`: this will perform warm-starting.
-pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
-                                    friction:       &mut [VelocityConstraint],
-                                    result:         &mut [Velocities],
-                                    num_bodies:     usize,
-                                    num_iterations: usize,
-                                    is_lambda_zero: bool) {
+pub fn projected_gauss_seidel_solve<N: Scalar>(restitution:    &mut [VelocityConstraint<N>],
+                                               friction:       &mut [VelocityConstraint<N>],
+                                               result:         &mut [Velocities<N>],
+                                               num_bodies:     usize,
+                                               num_iterations: usize,
+                                               is_lambda_zero: bool) {
     // initialize the solution with zeros...
     // mj_lambda is result
     assert!(result.len() == num_bodies);
@@ -87,7 +88,7 @@ pub fn projected_gauss_seidel_solve(restitution:    &mut [VelocityConstraint],
 }
 
 #[inline(always)]
-fn setup_warmstart_for_constraint(c: &VelocityConstraint, mj_lambda: &mut [Velocities]) {
+fn setup_warmstart_for_constraint<N: Scalar>(c: &VelocityConstraint<N>, mj_lambda: &mut [Velocities<N>]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
@@ -103,7 +104,7 @@ fn setup_warmstart_for_constraint(c: &VelocityConstraint, mj_lambda: &mut [Veloc
 }
 
 #[inline(always)]
-fn solve_velocity_constraint(c: &mut VelocityConstraint, mj_lambda: &mut [Velocities]) {
+fn solve_velocity_constraint<N: Scalar>(c: &mut VelocityConstraint<N>, mj_lambda: &mut [Velocities<N>]) {
     let id1 = c.id1;
     let id2 = c.id2;
 

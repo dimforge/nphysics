@@ -79,7 +79,7 @@ impl Node {
         }
     }
 
-    pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody>> {
+    pub fn body<'a>(&'a self) -> &'a Rc<RefCell<RigidBody<f32>>> {
         match *self {
             Node::Plane(ref n)             => n.body(),
             Node::Ball(ref n)              => n.body(),
@@ -140,8 +140,8 @@ impl GraphicsManager {
         self.aabbs.clear();
     }
 
-    pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody>>) {
-        let key = &**body as *const RefCell<RigidBody> as usize;
+    pub fn remove(&mut self, window: &mut Window, body: &Rc<RefCell<RigidBody<f32>>>) {
+        let key = &**body as *const RefCell<RigidBody<f32>> as usize;
 
         match self.rb2sn.get(&key) {
             Some(sns) => {
@@ -155,14 +155,14 @@ impl GraphicsManager {
         self.rb2sn.remove(&key);
     }
 
-    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<f32>) {
-        self.rb2color.insert(&**body as *const RefCell<RigidBody> as usize, color);
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody<f32>>>, color: Pnt3<f32>) {
+        self.rb2color.insert(&**body as *const RefCell<RigidBody<f32>> as usize, color);
     }
 
-    pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody>>) {
+    pub fn add(&mut self, window: &mut Window, body: Rc<RefCell<RigidBody<f32>>>) {
         let color;
 
-        match self.rb2color.get(&(&*body as *const RefCell<RigidBody> as usize)) {
+        match self.rb2color.get(&(&*body as *const RefCell<RigidBody<f32>> as usize)) {
             Some(c) => color = *c,
             None    => {
                 if body.borrow().can_move() {
@@ -179,7 +179,7 @@ impl GraphicsManager {
 
     pub fn add_with_color(&mut self,
                           window: &mut Window,
-                          body:   Rc<RefCell<RigidBody>>,
+                          body:   Rc<RefCell<RigidBody<f32>>>,
                           color:  Pnt3<f32>) {
         let nodes = {
             let rb        = body.borrow();
@@ -190,12 +190,12 @@ impl GraphicsManager {
             nodes
         };
 
-        self.rb2sn.insert(&*body as *const RefCell<RigidBody> as usize, nodes);
+        self.rb2sn.insert(&*body as *const RefCell<RigidBody<f32>> as usize, nodes);
     }
 
     fn add_repr(&mut self,
                 window: &mut Window,
-                body:   Rc<RefCell<RigidBody>>,
+                body:   Rc<RefCell<RigidBody<f32>>>,
                 delta:  Iso3<f32>,
                 shape:  &Repr3<f32>,
                 color:  Pnt3<f32>,
@@ -245,7 +245,7 @@ impl GraphicsManager {
 
     fn add_plane(&mut self,
                  window: &mut Window,
-                 body:   Rc<RefCell<RigidBody>>,
+                 body:   Rc<RefCell<RigidBody<f32>>>,
                  shape:   &shape::Plane3<f32>,
                  color:  Pnt3<f32>,
                  out:    &mut Vec<Node>) {
@@ -257,7 +257,7 @@ impl GraphicsManager {
 
     fn add_mesh(&mut self,
                 window: &mut Window,
-                body:   Rc<RefCell<RigidBody>>,
+                body:   Rc<RefCell<RigidBody<f32>>>,
                 delta:  Iso3<f32>,
                 shape:   &shape::TriMesh3<f32>,
                 color:  Pnt3<f32>,
@@ -272,7 +272,7 @@ impl GraphicsManager {
 
     fn add_ball(&mut self,
                 window: &mut Window,
-                body:   Rc<RefCell<RigidBody>>,
+                body:   Rc<RefCell<RigidBody<f32>>>,
                 delta:  Iso3<f32>,
                 shape:   &shape::Ball3<f32>,
                 color:  Pnt3<f32>,
@@ -283,7 +283,7 @@ impl GraphicsManager {
 
     fn add_box(&mut self,
                window: &mut Window,
-               body:   Rc<RefCell<RigidBody>>,
+               body:   Rc<RefCell<RigidBody<f32>>>,
                delta:  Iso3<f32>,
                shape:   &shape::Cuboid3<f32>,
                color:  Pnt3<f32>,
@@ -297,7 +297,7 @@ impl GraphicsManager {
 
     fn add_convex(&mut self,
                   window: &mut Window,
-                  body:   Rc<RefCell<RigidBody>>,
+                  body:   Rc<RefCell<RigidBody<f32>>>,
                   delta:  Iso3<f32>,
                   shape:   &shape::Convex3<f32>,
                   color:  Pnt3<f32>,
@@ -307,7 +307,7 @@ impl GraphicsManager {
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
-                    body:   Rc<RefCell<RigidBody>>,
+                    body:   Rc<RefCell<RigidBody<f32>>>,
                     delta:  Iso3<f32>,
                     shape:   &shape::Cylinder3<f32>,
                     color:  Pnt3<f32>,
@@ -320,7 +320,7 @@ impl GraphicsManager {
 
     fn add_cone(&mut self,
                 window: &mut Window,
-                body:   Rc<RefCell<RigidBody>>,
+                body:   Rc<RefCell<RigidBody<f32>>>,
                 delta:  Iso3<f32>,
                 shape:   &shape::Cone3<f32>,
                 color:  Pnt3<f32>,
@@ -383,7 +383,7 @@ impl GraphicsManager {
         self.first_person.look_at(eye, at);
     }
 
-    pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<Node>> {
-        self.rb2sn.get_mut(&(&**rb as *const RefCell<RigidBody> as usize))
+    pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody<f32>>>) -> Option<&mut Vec<Node>> {
+        self.rb2sn.get_mut(&(&**rb as *const RefCell<RigidBody<f32>> as usize))
     }
 }

@@ -10,11 +10,11 @@ pub struct Box {
     base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
-    body:       Rc<RefCell<RigidBody>>,
+    body:       Rc<RefCell<RigidBody<f32>>>,
 }
 
 impl Box {
-    pub fn new(body:   Rc<RefCell<RigidBody>>,
+    pub fn new(body:   Rc<RefCell<RigidBody<f32>>>,
                delta:  Iso3<f32>,
                rx:     f32,
                ry:     f32,
@@ -65,7 +65,7 @@ impl Box {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody>> {
+    pub fn body(&self) -> &Rc<RefCell<RigidBody<f32>>> {
         &self.body
     }
 }

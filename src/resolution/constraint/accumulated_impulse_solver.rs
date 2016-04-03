@@ -2,9 +2,9 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::iter;
 // use rand::RngUtil;
-use na::{Translation, Transformation, RotationWithTranslation};
-use na;
-use math::{Scalar, Vect, Orientation, Matrix};
+use na::{self, Translation, Transformation, RotationWithTranslation};
+use ncollide::math::Scalar;
+use math::{Vector, Orientation, Matrix};
 use detection::constraint::Constraint;
 use detection::joint::Joint;
 use object::RigidBody;
@@ -20,32 +20,32 @@ use resolution::constraint::impulse_cache::ImpulseCache;
 
 
 /// Constraint solver using the projected gauss seidel algorithm and warm-starting.
-pub struct AccumulatedImpulseSolver {
-    correction:              CorrectionParameters,
-    cache:                   ImpulseCache,
+pub struct AccumulatedImpulseSolver<N: Scalar> {
+    correction:              CorrectionParameters<N>,
+    cache:                   ImpulseCache<N>,
     num_first_order_iter:    usize,
     num_second_order_iter:   usize,
-    restitution_constraints: Vec<VelocityConstraint>,
-    friction_constraints:    Vec<VelocityConstraint>,
-    mj_lambda:               Vec<Velocities>
+    restitution_constraints: Vec<VelocityConstraint<N>>,
+    friction_constraints:    Vec<VelocityConstraint<N>>,
+    mj_lambda:               Vec<Velocities<N>>
 }
 
-impl AccumulatedImpulseSolver {
+impl<N: Scalar> AccumulatedImpulseSolver<N> {
     /// Creates a new `AccumulatedImpulseSolver`.
-    pub fn new(step:                  Scalar,
-               correction_mode:       CorrectionMode,
-               joint_corr_factor:     Scalar,
-               rest_eps:              Scalar,
+    pub fn new(step:                  N,
+               correction_mode:       CorrectionMode<N>,
+               joint_corr_factor:     N,
+               rest_eps:              N,
                num_first_order_iter:  usize,
                num_second_order_iter: usize)
-               -> AccumulatedImpulseSolver {
+               -> AccumulatedImpulseSolver<N> {
         AccumulatedImpulseSolver {
             num_first_order_iter:    num_first_order_iter,
             num_second_order_iter:   num_second_order_iter,
             restitution_constraints: Vec::new(),
             friction_constraints:    Vec::new(),
             mj_lambda:               Vec::new(),
-            cache:                   ImpulseCache::new(step, na::dim::<Vect>()),
+            cache:                   ImpulseCache::new(step, na::dim::<Vector<N>>()),
 
             correction: CorrectionParameters {
                 corr_mode:  correction_mode,
@@ -90,21 +90,21 @@ impl AccumulatedImpulseSolver {
     }
 
     fn do_solve(&mut self,
-                dt:          Scalar,
-                constraints: &[Constraint],
+                dt:          N,
+                constraints: &[Constraint<N>],
                 joints:      &[usize],
-                bodies:      &[Rc<RefCell<RigidBody>>]) {
-        let num_friction_equations    = (na::dim::<Vect>() - 1) * self.cache.len();
+                bodies:      &[Rc<RefCell<RigidBody<N>>>]) {
+        let num_friction_equations    = (na::dim::<Vector<N>>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
 
         for i in joints.iter() {
             match constraints[*i] {
                 Constraint::BallInSocket(_) => {
-                    num_joint_equations = num_joint_equations + na::dim::<Vect>()
+                    num_joint_equations = num_joint_equations + na::dim::<Vector<N>>()
                 },
                 Constraint::Fixed(_) => {
-                    num_joint_equations = num_joint_equations + na::dim::<Vect>() + na::dim::<Orientation>()
+                    num_joint_equations = num_joint_equations + na::dim::<Vector<N>>() + na::dim::<Orientation<N>>()
                 },
                 Constraint::RBRB(_, _, _) => { }
             }
@@ -131,7 +131,7 @@ impl AccumulatedImpulseSolver {
                 _ => { }
             }
 
-            friction_offset = friction_offset + na::dim::<Vect>() - 1;
+            friction_offset = friction_offset + na::dim::<Vector<N>>() - 1;
         }
 
         let mut joint_offset = num_restitution_equations;
@@ -146,7 +146,7 @@ impl AccumulatedImpulseSolver {
                         &self.correction
                     );
 
-                    joint_offset = joint_offset + na::dim::<Vect>();
+                    joint_offset = joint_offset + na::dim::<Vector<N>>();
                 },
                 Constraint::Fixed(ref f) => {
                     fixed_equation::fill_second_order_equation(
@@ -156,7 +156,7 @@ impl AccumulatedImpulseSolver {
                         &self.correction
                     );
 
-                    joint_offset = joint_offset + na::dim::<Vect>() + na::dim::<Orientation>();
+                    joint_offset = joint_offset + na::dim::<Vector<N>>() + na::dim::<Orientation<N>>();
                 },
                 Constraint::RBRB(_, _, _) => { }
             }
@@ -189,17 +189,17 @@ impl AccumulatedImpulseSolver {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * na::cast::<f64, Scalar>(0.85f64);
+            imps[0]  = dv.impulse * na::cast::<f64, N>(0.85f64);
 
-            for j in 0usize .. na::dim::<Vect>() - 1 {
-                let fc = &self.friction_constraints[i * (na::dim::<Vect>() - 1) + j];
-                imps[1 + j] = fc.impulse * na::cast::<f64, Scalar>(0.85f64);
+            for j in 0usize .. na::dim::<Vector<N>>() - 1 {
+                let fc = &self.friction_constraints[i * (na::dim::<Vector<N>>() - 1) + j];
+                imps[1 + j] = fc.impulse * na::cast::<f64, N>(0.85f64);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().iter_mut().enumerate() {
-            *kv = (kv.0, offset + i * na::dim::<Vect>());
+            *kv = (kv.0, offset + i * na::dim::<Vector<N>>());
         }
 
         /*
@@ -248,7 +248,7 @@ impl AccumulatedImpulseSolver {
 
                 let center = &rb.center_of_mass().clone();
 
-                let mut delta: Matrix = na::one();
+                let mut delta: Matrix<N> = na::one();
                 delta.append_rotation_wrt_point_mut(&rotation, center.as_vec());
                 delta.append_translation_mut(&translation);
 
@@ -258,8 +258,8 @@ impl AccumulatedImpulseSolver {
     }
 }
 
-impl Solver<Constraint> for AccumulatedImpulseSolver {
-    fn solve(&mut self, dt: Scalar, constraints: &[Constraint]) {
+impl<N: Scalar> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
+    fn solve(&mut self, dt: N, constraints: &[Constraint<N>]) {
         // FIXME: bodies index assignment is very ugly
         let mut bodies = Vec::new();
 
@@ -271,8 +271,8 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
                 match *cstr {
                     Constraint::RBRB(ref a, ref b, ref c) => {
                         self.cache.insert(i,
-                                          &**a as *const RefCell<RigidBody> as usize,
-                                          &**b as *const RefCell<RigidBody> as usize,
+                                          &**a as *const RefCell<RigidBody<N>> as usize,
+                                          &**b as *const RefCell<RigidBody<N>> as usize,
                                           na::center(&c.world1, &c.world2));
                     },
                     Constraint::BallInSocket(_) => {
@@ -333,7 +333,9 @@ impl Solver<Constraint> for AccumulatedImpulseSolver {
 
             let mut id = 0;
 
-            fn set_body_index(a: &Rc<RefCell<RigidBody>>, bodies: &mut Vec<Rc<RefCell<RigidBody>>>, id: &mut isize) {
+            fn set_body_index<N: Scalar>(a:      &Rc<RefCell<RigidBody<N>>>,
+                                         bodies: &mut Vec<Rc<RefCell<RigidBody<N>>>>,
+                                         id:     &mut isize) {
                 let mut ba = a.borrow_mut();
                 if ba.index() == -2 {
                     if ba.can_move() {

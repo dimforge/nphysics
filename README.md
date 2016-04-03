@@ -47,16 +47,6 @@ For the 3D version, add the crate named `nphysics3d`:
 nphysics3d = "0.1.*"
 ```
 
-By default, 32-bit floating point numbers are used by the library. If you need
-more accuracy, use either version of nphysics with the feature `f64` enabled.
-For example:
-
-```ignore
-[dependencies.nphysics2d]
-version  = "0.1.*"
-features = "f64"
-```
-
 Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
 to see all the cool stuffs you can do.
 

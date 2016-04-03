@@ -57,7 +57,7 @@ impl<'a> GraphicsManager<'a> {
         }
     }
 
-    pub fn add(&mut self, body: Rc<RefCell<RigidBody>>) {
+    pub fn add(&mut self, body: Rc<RefCell<RigidBody<f32>>>) {
 
         let nodes = {
             let rb    = body.borrow();
@@ -68,11 +68,11 @@ impl<'a> GraphicsManager<'a> {
             nodes
         };
 
-        self.rb2sn.insert(&*body as *const RefCell<RigidBody> as usize, nodes);
+        self.rb2sn.insert(&*body as *const RefCell<RigidBody<f32>> as usize, nodes);
     }
 
     fn add_shape(&mut self,
-                 body:  Rc<RefCell<RigidBody>>,
+                 body:  Rc<RefCell<RigidBody<f32>>>,
                  delta: Iso2<f32>,
                  shape: &Repr2<f32>,
                  out:   &mut Vec<SceneNode<'a>>) {
@@ -118,13 +118,13 @@ impl<'a> GraphicsManager<'a> {
     }
 
     fn add_plane(&mut self,
-                 _: Rc<RefCell<RigidBody>>,
+                 _: Rc<RefCell<RigidBody<f32>>>,
                  _: &shape::Plane2<f32>,
                  _: &mut Vec<SceneNode>) {
     }
 
     fn add_ball(&mut self,
-                body:  Rc<RefCell<RigidBody>>,
+                body:  Rc<RefCell<RigidBody<f32>>>,
                 delta: Iso2<f32>,
                 shape: &shape::Ball2<f32>,
                 out:   &mut Vec<SceneNode>) {
@@ -134,7 +134,7 @@ impl<'a> GraphicsManager<'a> {
     }
     
     fn add_convex(&mut self,
-                body:  Rc<RefCell<RigidBody>>,
+                body:  Rc<RefCell<RigidBody<f32>>>,
                 delta: Iso2<f32>,
                 shape: &shape::Convex2<f32>,
                 out:   &mut Vec<SceneNode>) {
@@ -152,7 +152,7 @@ impl<'a> GraphicsManager<'a> {
     }
 
     fn add_lines(&mut self,
-                 body:  Rc<RefCell<RigidBody>>,
+                 body:  Rc<RefCell<RigidBody<f32>>>,
                  delta: Iso2<f32>,
                  shape: &shape::Polyline2<f32>,
                  out:   &mut Vec<SceneNode>) {
@@ -167,7 +167,7 @@ impl<'a> GraphicsManager<'a> {
 
 
     fn add_box(&mut self,
-               body:  Rc<RefCell<RigidBody>>,
+               body:  Rc<RefCell<RigidBody<f32>>>,
                delta: Iso2<f32>,
                shape: &shape::Cuboid2<f32>,
                out:   &mut Vec<SceneNode>) {
@@ -181,7 +181,7 @@ impl<'a> GraphicsManager<'a> {
     }
 
     fn add_segment(&mut self,
-                   body:  Rc<RefCell<RigidBody>>,
+                   body:  Rc<RefCell<RigidBody<f32>>>,
                    delta: Iso2<f32>,
                    shape: &shape::Segment2<f32>,
                    out:   &mut Vec<SceneNode>) {
@@ -226,13 +226,13 @@ impl<'a> GraphicsManager<'a> {
         c.activate_ui(rw);
     }
 
-    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody>>, color: Pnt3<u8>) {
-        let key = &**body as *const RefCell<RigidBody> as usize;
+    pub fn set_color(&mut self, body: &Rc<RefCell<RigidBody<f32>>>, color: Pnt3<u8>) {
+        let key = &**body as *const RefCell<RigidBody<f32>> as usize;
         self.obj2color.insert(key, color);
     }
 
-    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody>>) -> Pnt3<u8> {
-        let key = &**body as *const RefCell<RigidBody> as usize;
+    pub fn color_for_object(&mut self, body: &Rc<RefCell<RigidBody<f32>>>) -> Pnt3<u8> {
+        let key = &**body as *const RefCell<RigidBody<f32>> as usize;
         match self.obj2color.get(&key) {
             Some(color) => return *color,
             None => { }
@@ -249,7 +249,7 @@ impl<'a> GraphicsManager<'a> {
         color
     }
 
-    pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody>>) -> Option<&mut Vec<SceneNode<'a>>> {
-        self.rb2sn.get_mut(&(&**rb as *const RefCell<RigidBody> as usize))
+    pub fn body_to_scene_node(&mut self, rb: &Rc<RefCell<RigidBody<f32>>>) -> Option<&mut Vec<SceneNode<'a>>> {
+        self.rb2sn.get_mut(&(&**rb as *const RefCell<RigidBody<f32>> as usize))
     }
 }

@@ -10,13 +10,13 @@ pub struct Segment {
     color: Pnt3<u8>,
     base_color: Pnt3<u8>,
     delta: Iso2<f32>,
-    body:  Rc<RefCell<RigidBody>>,
+    body:  Rc<RefCell<RigidBody<f32>>>,
     a:     Pnt2<f32>,
     b:     Pnt2<f32>,
 }
 
 impl Segment {
-    pub fn new(body:     Rc<RefCell<RigidBody>>,
+    pub fn new(body:     Rc<RefCell<RigidBody<f32>>>,
                delta:    Iso2<f32>,
                a:        Pnt2<f32>,
                b:        Pnt2<f32>,

@@ -1,6 +1,7 @@
 use std::iter;
 use num::Float;
 use na;
+use ncollide::math::Scalar;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use world::RigidBodyCollisionWorld;
@@ -9,25 +10,24 @@ use detection::joint::{JointManager, Joint};
 use object::{RigidBody, RigidBodyHandle, ActivationState};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
-use math::Scalar;
 
 /// Structure that monitors island-based activation/deactivation of objects.
 ///
 /// It is responsible for making objects sleep or wake up.
-pub struct ActivationManager {
-    mix_factor:     Scalar,
+pub struct ActivationManager<N: Scalar> {
+    mix_factor:     N,
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
-    to_activate:    Vec<RigidBodyHandle>,
+    to_activate:    Vec<RigidBodyHandle<N>>,
 }
 
-impl ActivationManager {
+impl<N: Scalar> ActivationManager<N> {
     /// Creates a new `ActivationManager`.
     ///
     /// # Arguments:
     /// * `thresold`   - the minimum energy required to keep an object awake.
     /// * `mix_factor` - the ratio of energy to keep between two frames.
-    pub fn new(mix_factor: Scalar) -> ActivationManager {
+    pub fn new(mix_factor: N) -> ActivationManager<N> {
         assert!(mix_factor >= na::zero(), "The energy mixing factor must be between 0.0 and 1.0.");
 
         ActivationManager {
@@ -40,21 +40,21 @@ impl ActivationManager {
 
     /// Notify the `ActivationManager` that is has to activate an object at the next update.
     // FIXME: this is not a very good name
-    pub fn deferred_activate(&mut self, b: &RigidBodyHandle) {
+    pub fn deferred_activate(&mut self, b: &RigidBodyHandle<N>) {
         if b.borrow().can_move() && !b.borrow().is_active() {
             self.to_activate.push(b.clone());
         }
     }
 
-    fn update_energy(&self, b: &mut RigidBody) {
+    fn update_energy(&self, b: &mut RigidBody<N>) {
         match b.deactivation_threshold() {
             Some(threshold) => {
                 // FIXME: take the time in account (to make a true RWA)
-                let _1         = na::one::<Scalar>();
+                let _1         = na::one::<N>();
                 let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
                     self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
 
-                b.activate(new_energy.min(threshold * na::cast::<f64, Scalar>(4.0f64)));
+                b.activate(new_energy.min(threshold * na::cast::<f64, N>(4.0f64)));
             },
             None => { }
         }
@@ -62,9 +62,9 @@ impl ActivationManager {
 
     /// Update the activation manager, activating and deactivating objects when needed.
     pub fn update(&mut self,
-                  world:  &mut RigidBodyCollisionWorld,
-                  joints: &JointManager,
-                  bodies: &HashMap<usize, RigidBodyHandle, UintTWHash>) {
+                  world:  &mut RigidBodyCollisionWorld<N>,
+                  joints: &JointManager<N>,
+                  bodies: &HashMap<usize, RigidBodyHandle<N>, UintTWHash>) {
         /*
          *
          * Update bodies energy
@@ -90,7 +90,7 @@ impl ActivationManager {
             let mut rb = b.borrow_mut();
 
             match rb.deactivation_threshold() {
-                Some(threshold) => rb.activate(threshold * na::cast::<f64, Scalar>(2.0f64)),
+                Some(threshold) => rb.activate(threshold * na::cast::<f64, N>(2.0f64)),
                 None => { }
             }
         }
@@ -123,7 +123,7 @@ impl ActivationManager {
         }
 
         // Run the union-find.
-        fn make_union(b1: &RigidBodyHandle, b2: &RigidBodyHandle, ufs: &mut [UnionFindSet]) {
+        fn make_union<N: Scalar>(b1: &RigidBodyHandle<N>, b2: &RigidBodyHandle<N>, ufs: &mut [UnionFindSet]) {
             let rb1 = b1.borrow();
             let rb2 = b2.borrow();
 
@@ -184,7 +184,7 @@ impl ActivationManager {
             else { // Everybody in this set must be reactivated.
                 if !b.is_active() && b.can_move() {
                     match b.deactivation_threshold() {
-                        Some(threshold) => b.activate(threshold * na::cast::<f64, Scalar>(2.0f64)),
+                        Some(threshold) => b.activate(threshold * na::cast::<f64, N>(2.0f64)),
                         None => { }
                     }
                 }

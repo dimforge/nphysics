@@ -1,6 +1,6 @@
 use std::cell::RefCell;
-use na::Translation;
-use na;
+use na::{self, Translation};
+use ncollide::math::Scalar;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::BroadPhase;
@@ -12,18 +12,18 @@ use ncollide::world::CollisionGroups;
 use world::RigidBodyCollisionWorld;
 use object::RigidBodyHandle;
 use object::RigidBody;
-use math::{Scalar, Vect};
+use math::Vector;
 
 
-struct CCDBody {
-    body:        RigidBodyHandle,
-    sqthreshold: Scalar,
-    last_pos:    Vect,
+struct CCDBody<N: Scalar> {
+    body:        RigidBodyHandle<N>,
+    sqthreshold: N,
+    last_pos:    Vector<N>,
     accept_zero: bool
 }
 
-impl CCDBody {
-    fn new(body: RigidBodyHandle, threshold: Scalar) -> CCDBody {
+impl<N: Scalar> CCDBody<N> {
+    fn new(body: RigidBodyHandle<N>, threshold: N) -> CCDBody<N> {
         let last_pos = body.borrow().position().translation();
 
         CCDBody {
@@ -36,31 +36,31 @@ impl CCDBody {
 }
 
 /// Handles Continuous Collision Detection.
-pub struct TranslationalCCDMotionClamping {
-    objects: HashMap<usize, CCDBody, UintTWHash>
+pub struct TranslationalCCDMotionClamping<N: Scalar> {
+    objects: HashMap<usize, CCDBody<N>, UintTWHash>
 }
 
-impl TranslationalCCDMotionClamping {
+impl<N: Scalar> TranslationalCCDMotionClamping<N> {
     /// Creates a new `TranslationalCCDMotionClamping` to enable continuous collision detection to
     /// fast-moving rigid bodies.
-    pub fn new() -> TranslationalCCDMotionClamping {
+    pub fn new() -> TranslationalCCDMotionClamping<N> {
         TranslationalCCDMotionClamping {
             objects: HashMap::new(UintTWHash::new())
         }
     }
 
     /// Enables continuous collision for the given rigid body.
-    pub fn add_ccd_to(&mut self, body: RigidBodyHandle, motion_threshold: Scalar) {
-        self.objects.insert(&*body as *const RefCell<RigidBody> as usize, CCDBody::new(body, motion_threshold));
+    pub fn add_ccd_to(&mut self, body: RigidBodyHandle<N>, motion_threshold: N) {
+        self.objects.insert(&*body as *const RefCell<RigidBody<N>> as usize, CCDBody::new(body, motion_threshold));
     }
 
     /// Remove continuous collision from the given rigid body.
-    pub fn remove_ccd_from(&mut self, body: &RigidBodyHandle) {
-        self.objects.remove(&(&**body as *const RefCell<RigidBody> as usize));
+    pub fn remove_ccd_from(&mut self, body: &RigidBodyHandle<N>) {
+        self.objects.remove(&(&**body as *const RefCell<RigidBody<N>> as usize));
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.
-    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld) {
+    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld<N>) {
         let mut update_collision_world = false;
 
         // XXX: we should no do this in a sequential order because CCD betwen two fast, CCD-enabled
@@ -80,17 +80,17 @@ impl TranslationalCCDMotionClamping {
                 /*
                  * Find the minimum toi.
                  */
-                let mut min_toi = na::one::<Scalar>();
+                let mut min_toi = na::one::<N>();
                 let mut toi_found = false;
                 let dir = movement.clone();
 
-                let _eps: Scalar = FloatError::epsilon();
+                let _eps: N = FloatError::epsilon();
 
                 // FIXME: performing a convex-cast here would be much more efficient.
                 let all_groups = CollisionGroups::new();
                 for co2 in cw.interferences_with_aabb(&swept_aabb, &all_groups) {
-                    if &*co2.data as *const RefCell<RigidBody> as usize !=
-                       &*o.value.body as *const RefCell<RigidBody> as usize {
+                    if &*co2.data as *const RefCell<RigidBody<N>> as usize !=
+                       &*o.value.body as *const RefCell<RigidBody<N>> as usize {
                         let brb2 = co2.data.borrow();
 
                         let toi = geometry::time_of_impact(
@@ -122,7 +122,7 @@ impl TranslationalCCDMotionClamping {
                 drop(brb1);
 
                 if toi_found {
-                    o.value.body.borrow_mut().append_translation(&(-dir * (na::one::<Scalar>() - min_toi)));
+                    o.value.body.borrow_mut().append_translation(&(-dir * (na::one::<N>() - min_toi)));
                     o.value.accept_zero = false;
                 }
                 else {
@@ -132,7 +132,7 @@ impl TranslationalCCDMotionClamping {
                 /*
                  * We moved the object: ensure the broad phase takes that in account.
                  */
-                cw.deferred_set_position(&* o.value.body as *const RefCell<RigidBody> as usize, o.value.body.borrow().position().clone());
+                cw.deferred_set_position(&* o.value.body as *const RefCell<RigidBody<N>> as usize, o.value.body.borrow().position().clone());
                 update_collision_world = true;
             }
 

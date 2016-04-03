@@ -13,12 +13,12 @@ pub struct Box<'a> {
     color: Pnt3<u8>,
     base_color: Pnt3<u8>,
     delta: Iso2<f32>,
-    body: Rc<RefCell<RigidBody>>,
+    body: Rc<RefCell<RigidBody<f32>>>,
     gfx: RectangleShape<'a>
 }
 
 impl<'a> Box<'a> {
-    pub fn new(body:  Rc<RefCell<RigidBody>>,
+    pub fn new(body:  Rc<RefCell<RigidBody<f32>>>,
                delta: Iso2<f32>,
                rx:    f32,
                ry:    f32,

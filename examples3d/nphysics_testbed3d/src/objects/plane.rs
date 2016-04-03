@@ -8,11 +8,11 @@ use nphysics3d::object::RigidBody;
 
 pub struct Plane {
     gfx:  SceneNode,
-    body: Rc<RefCell<RigidBody>>
+    body: Rc<RefCell<RigidBody<f32>>>
 }
 
 impl Plane {
-    pub fn new(body:         Rc<RefCell<RigidBody>>,
+    pub fn new(body:         Rc<RefCell<RigidBody<f32>>>,
                world_pos:    &Pnt3<f32>,
                world_normal: &Vec3<f32>,
                color:        Pnt3<f32>,
@@ -54,7 +54,7 @@ impl Plane {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody>> {
+    pub fn body(&self) -> &Rc<RefCell<RigidBody<f32>>> {
         &self.body
     }
 }

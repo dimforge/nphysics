@@ -46,16 +46,6 @@ For the 3D version, add the crate named `nphysics3d`:
 nphysics3d = "0.1.*"
 ```
 
-By default, 32-bit floating point numbers are used by the library. If you need
-more accuracy, use either version of nphysics with the feature `f64` enabled.
-For example:
-
-```ignore
-[dependencies.nphysics2d]
-version  = "0.1.*"
-features = "f64"
-```
-
 Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
 to see all the cool stuffs you can do.
 
@@ -127,31 +117,23 @@ mod tests;
 pub mod math {
     use na::{Pnt3, Vec3, Mat3, Rot3, Iso3};
 
-    /// The scalar type.
-    #[cfg(all(feature = "f32", not(feature = "f64")))]
-    pub type Scalar = f32;
-
-    /// The scalar type.
-    #[cfg(feature = "f64")]
-    pub type Scalar = f64;
-
     /// The point type.
-    pub type Point = Pnt3<Scalar>;
+    pub type Point<N> = Pnt3<N>;
 
     /// The vector type.
-    pub type Vect = Vec3<Scalar>;
+    pub type Vector<N> = Vec3<N>;
 
     /// The orientation type.
-    pub type Orientation = Vec3<Scalar>;
+    pub type Orientation<N> = Vec3<N>;
 
     /// The transformation matrix type.
-    pub type Matrix = Iso3<Scalar>;
+    pub type Matrix<N> = Iso3<N>;
 
     /// The rotation matrix type.
-    pub type RotationMatrix = Rot3<Scalar>;
+    pub type RotationMatrix<N> = Rot3<N>;
 
     /// The inertia tensor type.
-    pub type AngularInertia = Mat3<Scalar>;
+    pub type AngularInertia<N> = Mat3<N>;
 }
 
 /// Compilation flags dependent aliases for mathematical types.
@@ -159,29 +141,21 @@ pub mod math {
 pub mod math {
     use na::{Pnt2, Vec1, Vec2, Mat1, Rot2, Iso2};
 
-    /// The scalar type.
-    #[cfg(all(feature = "f32", not(feature = "f64")))]
-    pub type Scalar = f32;
-
-    /// The scalar type.
-    #[cfg(feature = "f64")]
-    pub type Scalar = f64;
-
     /// The point type.
-    pub type Point = Pnt2<Scalar>;
+    pub type Point<N> = Pnt2<N>;
 
     /// The vector type.
-    pub type Vect = Vec2<Scalar>;
+    pub type Vector<N> = Vec2<N>;
 
     /// The orientation type.
-    pub type Orientation = Vec1<Scalar>;
+    pub type Orientation<N> = Vec1<N>;
 
     /// The transformation matrix type.
-    pub type Matrix = Iso2<Scalar>;
+    pub type Matrix<N> = Iso2<N>;
 
     /// The rotation matrix type.
-    pub type RotationMatrix = Rot2<Scalar>;
+    pub type RotationMatrix<N> = Rot2<N>;
 
     /// The inertia tensor type.
-    pub type AngularInertia = Mat1<Scalar>;
+    pub type AngularInertia<N> = Mat1<N>;
 }

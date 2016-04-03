@@ -1,7 +1,7 @@
-use math::Scalar;
+use na::BaseFloat;
 
 /// Trait implemented by constraint solvers.
-pub trait Solver<I> {
+pub trait Solver<N: BaseFloat, I> {
     /// Solve the set of constraints of type `I`.
-    fn solve(&mut self, Scalar, &[I]);
+    fn solve(&mut self, N, &[I]);
 }
