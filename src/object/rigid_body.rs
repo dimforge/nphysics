@@ -13,6 +13,8 @@ use volumetric::{InertiaTensor, Volumetric};
 /// A shared, mutable, rigid body.
 pub type RigidBodyHandle<N> = Rc<RefCell<RigidBody<N>>>;
 
+pub const DEFAULT_MARGIN: f64 = 0.04;
+
 // FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?
 #[derive(Debug, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 /// The movement state of a rigid body.
@@ -244,7 +246,7 @@ impl<N: Scalar> RigidBody<N> {
     }
 
     /// Creates a new rigid body that can move.
-    pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N) -> RigidBody<N>
+    pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N, margin: Option<N>) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
         let props = shape.mass_properties(density);
 
@@ -252,27 +254,31 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             Some(props),
             restitution,
-            friction)
+            friction,
+            margin)
     }
 
     /// Creates a new rigid body that cannot move.
-    pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
+    pub fn new_static<G>(shape: G, restitution: N, friction: N, margin: Option<N>) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
         RigidBody::new(
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             None,
             restitution,
-            friction)
+            friction,
+            margin)
     }
 
     /// Creates a new rigid body with a given shape.
     ///
     /// Use this if the shape is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
+    /// If `margin` is None, then the default margin of 0.04 is used.
     pub fn new(shape:           Arc<Box<Repr<Point<N>, Matrix<N>>>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
-               friction:        N)
+               friction:        N,
+               margin:          Option<N>)
                -> RigidBody<N> {
         let (inv_mass, center_of_mass, inv_inertia, active, state) =
             match mass_properties {
@@ -283,7 +289,7 @@ impl<N: Scalar> RigidBody<N> {
                     }
 
                     let ii: AngularInertia<N>;
-                    
+
                     match na::inv(&inertia) {
                         Some(i) => ii = i,
                         None    => ii = na::zero()
@@ -319,7 +325,7 @@ impl<N: Scalar> RigidBody<N> {
                 sleep_threshold:   Some(na::cast(0.1f64)),
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
-                margin:            na::cast(0.04f64), // FIXME: do not hard-code this.
+                margin:            margin.unwrap_or(na::cast(DEFAULT_MARGIN)),
                 user_data:         None
             };
 
@@ -460,7 +466,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Adds an additional force acting at a point different to the center of mass.
     ///
-    /// The ```pnt_to_com``` vector has to point from the center of mass to 
+    /// The ```pnt_to_com``` vector has to point from the center of mass to
     /// the point where the force acts.
     #[inline]
     pub fn append_force_wrt_point(&mut self, force: Vector<N>, pnt_to_com: Vector<N>) {
@@ -484,7 +490,7 @@ impl<N: Scalar> RigidBody<N> {
     fn update_ang_acc(&mut self) {
         self.ang_acc = self.ang_force * self.inv_inertia;
     }
-    
+
     /// Applies a one-time central impulse.
     #[inline]
     pub fn apply_central_impulse(&mut self, impulse: Vector<N>){
@@ -492,7 +498,7 @@ impl<N: Scalar> RigidBody<N> {
         let inverted_mass = self.inv_mass();
         self.set_lin_vel(current_velocity + impulse*inverted_mass);
     }
-    
+
     /// Applies a one-time angular impulse.
     #[inline]
     pub fn apply_angular_momentum(&mut self, ang_moment: Orientation<N>){
@@ -510,7 +516,7 @@ impl<N: Scalar> RigidBody<N> {
         self.apply_central_impulse(impulse);
         self.apply_angular_momentum(pnt_to_com.cross(&impulse));
     }
-    
+
     /// Gets the inverse mass of this rigid body.
     #[inline]
     pub fn inv_mass(&self) -> N {
