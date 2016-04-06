@@ -22,13 +22,13 @@
  * This might be (but it is very unlikely) a problem with the DBVT that might become invalid.
  * Though this seems very unlikely as the AABBs seem to be fine and the plane has an infinite aabb
  * anyway. Thurthermore, the ray-cast (which uses the dbvt…) works fine, even for "jumpy" objects.
- * 
+ *
  *
  * # Solution:
  *
  *
  * # Limitations of the solution:
- * 
+ *
  */
 
 extern crate nalgebra as na;

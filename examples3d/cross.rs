@@ -44,7 +44,7 @@ fn main() {
     let cross    = Arc::new(Box::new(compound) as Box<Repr3<f32>>);
 
     /*
-     * Create the crosses 
+     * Create the crosses
      */
     let num     = 6;
     let rad     = 5.0;

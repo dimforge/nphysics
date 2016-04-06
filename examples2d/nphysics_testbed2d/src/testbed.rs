@@ -86,15 +86,8 @@ impl<'a> TestbedState<'a> {
 impl<'a> Testbed<'a> {
     pub fn new_empty() -> Testbed<'a> {
         let mode    = VideoMode::new_init(800, 600, 32);
-        let setting = ContextSettings {
-            depth_bits:         10,
-            stencil_bits:       10,
-            antialiasing_level: 2,
-            major_version:      0,
-            minor_version:      1
-        };
         let window =
-            match RenderWindow::new(mode, "nphysics 2d demo", Close, &setting) {
+            match RenderWindow::new(mode, "nphysics 2d demo", Close, &ContextSettings::default()) {
                 Some(rwindow) => rwindow,
                 None          => panic!("Error on creating the sfml window.")
             };

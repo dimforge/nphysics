@@ -9,6 +9,7 @@ use ncollide::inspection::Repr;
 use ncollide::math::Scalar;
 use math::{Point, Vector, Orientation, Matrix, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
+use object::RigidBodyCollisionGroups;
 
 /// A shared, mutable, rigid body.
 pub type RigidBodyHandle<N> = Rc<RefCell<RigidBody<N>>>;
@@ -72,6 +73,7 @@ pub struct RigidBody<N: Scalar> {
     lin_acc_scale:        Vector<N>,      // FIXME: find a better way of doing that.
     ang_acc_scale:        Orientation<N>, // FIXME: find a better way of doing that.
     margin:               N,
+    collision_groups:     RigidBodyCollisionGroups,
     user_data:            Option<Box<Any>>
 }
 
@@ -102,6 +104,7 @@ impl<N: Scalar> Clone for RigidBody<N> {
             lin_acc_scale:     self.lin_acc_scale.clone(),
             ang_acc_scale:     self.ang_acc_scale.clone(),
             margin:            self.margin.clone(),
+            collision_groups:  self.collision_groups.clone(),
             user_data:         None
         }
     }
@@ -258,6 +261,7 @@ impl<N: Scalar> RigidBody<N> {
     /// Creates a new rigid body that cannot move.
     pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
+
         RigidBody::new(
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             None,
@@ -274,16 +278,16 @@ impl<N: Scalar> RigidBody<N> {
                restitution:     N,
                friction:        N)
                -> RigidBody<N> {
-        let (inv_mass, center_of_mass, inv_inertia, active, state) =
+        let (inv_mass, center_of_mass, inv_inertia, active, state, groups) =
             match mass_properties {
-                None => (na::zero(), na::orig(), na::zero(), ActivationState::Inactive, RigidBodyState::Static),
+                None => (na::zero(), na::orig(), na::zero(), ActivationState::Inactive, RigidBodyState::Static, RigidBodyCollisionGroups::new_static()),
                 Some((mass, com, inertia)) => {
                     if na::is_zero(&mass) {
                         panic!("A dynamic body must not have a zero volume.")
                     }
 
                     let ii: AngularInertia<N>;
-                    
+
                     match na::inv(&inertia) {
                         Some(i) => ii = i,
                         None    => ii = na::zero()
@@ -291,7 +295,7 @@ impl<N: Scalar> RigidBody<N> {
 
                     let _1: N = na::one();
 
-                    (_1 / mass, com, ii, ActivationState::Active(Bounded::max_value()), RigidBodyState::Dynamic)
+                    (_1 / mass, com, ii, ActivationState::Active(Bounded::max_value()), RigidBodyState::Dynamic, RigidBodyCollisionGroups::new_dynamic())
                 },
             };
 
@@ -320,6 +324,7 @@ impl<N: Scalar> RigidBody<N> {
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
                 margin:            na::cast(0.04f64), // FIXME: do not hard-code this.
+                collision_groups:  groups,
                 user_data:         None
             };
 
@@ -460,7 +465,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Adds an additional force acting at a point different to the center of mass.
     ///
-    /// The ```pnt_to_com``` vector has to point from the center of mass to 
+    /// The ```pnt_to_com``` vector has to point from the center of mass to
     /// the point where the force acts.
     #[inline]
     pub fn append_force_wrt_point(&mut self, force: Vector<N>, pnt_to_com: Vector<N>) {
@@ -484,7 +489,7 @@ impl<N: Scalar> RigidBody<N> {
     fn update_ang_acc(&mut self) {
         self.ang_acc = self.ang_force * self.inv_inertia;
     }
-    
+
     /// Applies a one-time central impulse.
     #[inline]
     pub fn apply_central_impulse(&mut self, impulse: Vector<N>){
@@ -492,7 +497,7 @@ impl<N: Scalar> RigidBody<N> {
         let inverted_mass = self.inv_mass();
         self.set_lin_vel(current_velocity + impulse*inverted_mass);
     }
-    
+
     /// Applies a one-time angular impulse.
     #[inline]
     pub fn apply_angular_momentum(&mut self, ang_moment: Orientation<N>){
@@ -510,7 +515,7 @@ impl<N: Scalar> RigidBody<N> {
         self.apply_central_impulse(impulse);
         self.apply_angular_momentum(pnt_to_com.cross(&impulse));
     }
-    
+
     /// Gets the inverse mass of this rigid body.
     #[inline]
     pub fn inv_mass(&self) -> N {
@@ -612,6 +617,18 @@ impl<N: Scalar> RigidBody<N> {
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
+    }
+
+    /// Reference to the collision groups of this rigid body.
+    #[inline]
+    pub fn collision_groups(&self) -> &RigidBodyCollisionGroups {
+        &self.collision_groups
+    }
+
+    /// Set the new collisions groups of this rigid body.
+    #[inline]
+    pub fn set_collision_groups(&mut self, new_groups: RigidBodyCollisionGroups) {
+        self.collision_groups = new_groups;
     }
 
     /// Reference to user-defined data attached to this rigid body.

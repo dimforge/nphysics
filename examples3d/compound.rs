@@ -46,7 +46,7 @@ fn main() {
     let cross    = Arc::new(cross);
 
     /*
-     * Create the crosses 
+     * Create the crosses
      */
     let num     = 6;
     let rad     = 5.0;
