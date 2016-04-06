@@ -11,7 +11,6 @@ use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
-use nphysics3d::world::RigidBodyCollisionGroups;
 
 fn main() {
     /*
@@ -63,7 +62,7 @@ fn main() {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.5, RigidBodyCollisionGroups::new_dynamic());
+                let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.5);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

@@ -255,8 +255,7 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             Some(props),
             restitution,
-            friction,
-            RigidBodyCollisionGroups::new_dynamic())
+            friction)
     }
 
     /// Creates a new rigid body that cannot move.
@@ -267,8 +266,7 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             None,
             restitution,
-            friction,
-            RigidBodyCollisionGroups::new_static())
+            friction)
     }
 
     /// Creates a new rigid body with a given shape.
@@ -278,12 +276,11 @@ impl<N: Scalar> RigidBody<N> {
     pub fn new(shape:           Arc<Box<Repr<Point<N>, Matrix<N>>>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
-               friction:        N,
-               groups:          RigidBodyCollisionGroups)
+               friction:        N)
                -> RigidBody<N> {
-        let (inv_mass, center_of_mass, inv_inertia, active, state) =
+        let (inv_mass, center_of_mass, inv_inertia, active, state, groups) =
             match mass_properties {
-                None => (na::zero(), na::orig(), na::zero(), ActivationState::Inactive, RigidBodyState::Static),
+                None => (na::zero(), na::orig(), na::zero(), ActivationState::Inactive, RigidBodyState::Static, RigidBodyCollisionGroups::new_static()),
                 Some((mass, com, inertia)) => {
                     if na::is_zero(&mass) {
                         panic!("A dynamic body must not have a zero volume.")
@@ -298,7 +295,7 @@ impl<N: Scalar> RigidBody<N> {
 
                     let _1: N = na::one();
 
-                    (_1 / mass, com, ii, ActivationState::Active(Bounded::max_value()), RigidBodyState::Dynamic)
+                    (_1 / mass, com, ii, ActivationState::Active(Bounded::max_value()), RigidBodyState::Dynamic, RigidBodyCollisionGroups::new_dynamic())
                 },
             };
 
