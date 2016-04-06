@@ -13,6 +13,7 @@ use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
 use nphysics_testbed2d::Testbed;
+use nphysics2d::world::RigidBodyCollisionGroups;
 
 fn main() {
     /*
@@ -71,7 +72,7 @@ fn main() {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 250.0;
 
-            let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.6);
+            let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.6, RigidBodyCollisionGroups::new_dynamic());
 
             rb.append_translation(&Vec2::new(x, y));
 

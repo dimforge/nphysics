@@ -12,13 +12,29 @@ pub struct RigidBodyCollisionGroups {
 }
 
 impl RigidBodyCollisionGroups {
+    // FIXME better documentation
     /// Creates a new `RigidBodyCollisionGroups` that enables collisions with everything except
     /// self-collision.
     #[inline]
-    pub fn new() -> RigidBodyCollisionGroups {
+    pub fn new_dynamic() -> RigidBodyCollisionGroups {
 
         let mut groups = CollisionGroups::new();
-        groups.modify_whitelist(STATIC_GROUP_ID, false); // The static group is special.
+        groups.modify_whitelist(STATIC_GROUP_ID, false);
+
+        RigidBodyCollisionGroups{
+            collision_groups: groups
+        }
+    }
+
+    // FIXME better documentation
+    /// Creates a new `RigidBodyCollisionGroups` that enables collisions with everything except
+    /// self-collision.
+    #[inline]
+    pub fn new_static() -> RigidBodyCollisionGroups {
+
+        let mut groups = CollisionGroups::new();
+        groups.modify_membership(STATIC_GROUP_ID, true);
+        groups.modify_blacklist(STATIC_GROUP_ID, true);
 
         RigidBodyCollisionGroups{
             collision_groups: groups

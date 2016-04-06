@@ -255,7 +255,8 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             Some(props),
             restitution,
-            friction)
+            friction,
+            RigidBodyCollisionGroups::new_dynamic())
     }
 
     /// Creates a new rigid body that cannot move.
@@ -266,7 +267,8 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             None,
             restitution,
-            friction)
+            friction,
+            RigidBodyCollisionGroups::new_static())
     }
 
     /// Creates a new rigid body with a given shape.
@@ -276,7 +278,8 @@ impl<N: Scalar> RigidBody<N> {
     pub fn new(shape:           Arc<Box<Repr<Point<N>, Matrix<N>>>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
-               friction:        N)
+               friction:        N,
+               groups:          RigidBodyCollisionGroups)
                -> RigidBody<N> {
         let (inv_mass, center_of_mass, inv_inertia, active, state) =
             match mass_properties {
@@ -324,7 +327,7 @@ impl<N: Scalar> RigidBody<N> {
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
                 margin:            na::cast(0.04f64), // FIXME: do not hard-code this.
-                collision_groups:  RigidBodyCollisionGroups::new(),
+                collision_groups:  groups,
                 user_data:         None
             };
 
