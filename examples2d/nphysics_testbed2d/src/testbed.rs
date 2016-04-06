@@ -94,7 +94,7 @@ impl<'a> Testbed<'a> {
             minor_version:      1
         };
         let window =
-            match RenderWindow::new(mode, "nphysics 2d demo", Close, &setting) {
+            match RenderWindow::new(mode, "nphysics 2d demo", Close, &ContextSettings::default()) {
                 Some(rwindow) => rwindow,
                 None          => panic!("Error on creating the sfml window.")
             };

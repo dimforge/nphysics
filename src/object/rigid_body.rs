@@ -9,6 +9,7 @@ use ncollide::inspection::Repr;
 use ncollide::math::Scalar;
 use math::{Point, Vector, Orientation, Matrix, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
+use world::RigidBodyCollisionGroups;
 
 /// A shared, mutable, rigid body.
 pub type RigidBodyHandle<N> = Rc<RefCell<RigidBody<N>>>;
@@ -72,6 +73,7 @@ pub struct RigidBody<N: Scalar> {
     lin_acc_scale:        Vector<N>,      // FIXME: find a better way of doing that.
     ang_acc_scale:        Orientation<N>, // FIXME: find a better way of doing that.
     margin:               N,
+    collision_groups:     RigidBodyCollisionGroups,
     user_data:            Option<Box<Any>>
 }
 
@@ -102,6 +104,7 @@ impl<N: Scalar> Clone for RigidBody<N> {
             lin_acc_scale:     self.lin_acc_scale.clone(),
             ang_acc_scale:     self.ang_acc_scale.clone(),
             margin:            self.margin.clone(),
+            collision_groups:  self.collision_groups.clone(),
             user_data:         None
         }
     }
@@ -244,7 +247,7 @@ impl<N: Scalar> RigidBody<N> {
     }
 
     /// Creates a new rigid body that can move.
-    pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N) -> RigidBody<N>
+    pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N, groups: Option<RigidBodyCollisionGroups>) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
         let props = shape.mass_properties(density);
 
@@ -252,17 +255,20 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             Some(props),
             restitution,
-            friction)
+            friction,
+            groups.unwrap_or(RigidBodyCollisionGroups::new()))
     }
 
     /// Creates a new rigid body that cannot move.
-    pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
+    pub fn new_static<G>(shape: G, restitution: N, friction: N, groups: Option<RigidBodyCollisionGroups>) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
+
         RigidBody::new(
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             None,
             restitution,
-            friction)
+            friction,
+            groups.unwrap_or(RigidBodyCollisionGroups::new()))
     }
 
     /// Creates a new rigid body with a given shape.
@@ -272,7 +278,8 @@ impl<N: Scalar> RigidBody<N> {
     pub fn new(shape:           Arc<Box<Repr<Point<N>, Matrix<N>>>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
-               friction:        N)
+               friction:        N,
+               groups:          RigidBodyCollisionGroups)
                -> RigidBody<N> {
         let (inv_mass, center_of_mass, inv_inertia, active, state) =
             match mass_properties {
@@ -283,7 +290,7 @@ impl<N: Scalar> RigidBody<N> {
                     }
 
                     let ii: AngularInertia<N>;
-                    
+
                     match na::inv(&inertia) {
                         Some(i) => ii = i,
                         None    => ii = na::zero()
@@ -320,6 +327,7 @@ impl<N: Scalar> RigidBody<N> {
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
                 margin:            na::cast(0.04f64), // FIXME: do not hard-code this.
+                collision_groups:  groups,
                 user_data:         None
             };
 
@@ -460,7 +468,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Adds an additional force acting at a point different to the center of mass.
     ///
-    /// The ```pnt_to_com``` vector has to point from the center of mass to 
+    /// The ```pnt_to_com``` vector has to point from the center of mass to
     /// the point where the force acts.
     #[inline]
     pub fn append_force_wrt_point(&mut self, force: Vector<N>, pnt_to_com: Vector<N>) {
@@ -484,7 +492,7 @@ impl<N: Scalar> RigidBody<N> {
     fn update_ang_acc(&mut self) {
         self.ang_acc = self.ang_force * self.inv_inertia;
     }
-    
+
     /// Applies a one-time central impulse.
     #[inline]
     pub fn apply_central_impulse(&mut self, impulse: Vector<N>){
@@ -492,7 +500,7 @@ impl<N: Scalar> RigidBody<N> {
         let inverted_mass = self.inv_mass();
         self.set_lin_vel(current_velocity + impulse*inverted_mass);
     }
-    
+
     /// Applies a one-time angular impulse.
     #[inline]
     pub fn apply_angular_momentum(&mut self, ang_moment: Orientation<N>){
@@ -510,7 +518,7 @@ impl<N: Scalar> RigidBody<N> {
         self.apply_central_impulse(impulse);
         self.apply_angular_momentum(pnt_to_com.cross(&impulse));
     }
-    
+
     /// Gets the inverse mass of this rigid body.
     #[inline]
     pub fn inv_mass(&self) -> N {
@@ -612,6 +620,18 @@ impl<N: Scalar> RigidBody<N> {
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
+    }
+
+    /// Reference to the collision groups of this rigid body.
+    #[inline]
+    pub fn collision_groups(&self) -> &RigidBodyCollisionGroups {
+        &self.collision_groups
+    }
+
+    /// Mutable reference to the collision groups of this rigid body.
+    #[inline]
+    pub fn collision_groups_mut(&mut self) -> &mut RigidBodyCollisionGroups {
+        &mut self.collision_groups // FIXME implemented right now ???
     }
 
     /// Reference to user-defined data attached to this rigid body.

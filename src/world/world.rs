@@ -9,7 +9,7 @@ use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase};
 use ncollide::narrow_phase::ContactSignalHandler;
-use ncollide::world::{CollisionWorld, CollisionObject, CollisionGroups};
+use ncollide::world::{CollisionWorld, CollisionObject/*, CollisionGroups*/};
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
 use detection::ActivationManager;
@@ -19,6 +19,7 @@ use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, CorrectionMode};
 use object::{RigidBody, RigidBodyHandle};
 use math::{Point, Vector, Matrix};
+use world::STATIC_GROUP_ID;
 
 /// The default broad phase.
 pub type WorldBroadPhase<N> = DBVTBroadPhase<Point<N>, RigidBodyHandle<N>, AABB<Point<N>>>;
@@ -146,23 +147,20 @@ impl<N: Scalar> World<N> {
     pub fn add_body(&mut self, rb: RigidBody<N>) -> RigidBodyHandle<N> {
         let position = rb.position().clone();
         let shape = rb.shape().clone();
-
-        let mut groups = CollisionGroups::new();
-        const STATIC_GROUP_ID: usize = 29;
-        groups.modify_whitelist(STATIC_GROUP_ID, false); // The static group is special.
+        let mut groups = rb.collision_groups().get_internal_collision_groups().clone();
 
         if rb.can_move() {
             // This is a dynamic object, remove it from the static objects group.
             groups.modify_membership(STATIC_GROUP_ID, false);
         }
         else {
-            // This is a dynamic object, keep is on the static objects group but prevent it from
-            // colliding with other static objects.
+            // This is a static object, keep it on the static objects group
+            // but prevent it from colliding with other static objects.
             groups.modify_blacklist(STATIC_GROUP_ID, true);
         }
-        
+
         let handle = Rc::new(RefCell::new(rb));
-        let uid = &*handle as *const RefCell<RigidBody<N>> as usize;;
+        let uid = &*handle as *const RefCell<RigidBody<N>> as usize;
 
         self.bodies.insert(uid, handle.clone());
         self.cworld.add(uid, position, shape, groups, handle.clone());
