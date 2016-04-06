@@ -22,13 +22,13 @@
  * This might be (but it is very unlikely) a problem with the DBVT that might become invalid.
  * Though this seems very unlikely as the AABBs seem to be fine and the plane has an infinite aabb
  * anyway. Thurthermore, the ray-cast (which uses the dbvt…) works fine, even for "jumpy" objects.
- * 
+ *
  *
  * # Solution:
  *
  *
  * # Limitations of the solution:
- * 
+ *
  */
 
 extern crate nalgebra as na;
@@ -55,7 +55,7 @@ fn main() {
      */
     let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
 
-    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
+    world.add_body(RigidBody::new_static(geom, 0.3, 0.6, None));
 
     /*
      * Create the convex geometries.
@@ -81,7 +81,7 @@ fn main() {
                 }
 
                 let geom = Convex::new(shape.coords);
-                let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
+                let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5, None);
                 rb.set_deactivation_threshold(None);
 
                 rb.append_translation(&Vec3::new(x, y, z));

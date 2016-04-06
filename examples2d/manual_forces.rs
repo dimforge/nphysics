@@ -24,7 +24,7 @@ fn main() {
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6, None);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -33,12 +33,12 @@ fn main() {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6, None);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
     world.add_body(rb);
-    
+
     /*
      * Create the convex shapes
      */
@@ -48,7 +48,7 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
     //let g = 9.81;
-    
+
     let mut handles = Vec::new();
     let mut forces = Vec::new();
     let mut ang_forces = Vec::new();
@@ -60,7 +60,7 @@ fn main() {
     let mut items = vec!(Weighted { weight: 1, item: -1.0 },
                          Weighted { weight: 1, item:  1.0 });
     let wc = WeightedChoice::new(&mut items);
-    
+
     for i in 0usize .. num {
         for j in 0usize .. num {
             let x = i as f32 * shift - centerx;
@@ -70,10 +70,10 @@ fn main() {
                 Pnt2::new(0.0, -1.0)*rad, Pnt2::new( 0.5, -0.7)*rad ];
                 Convex2::new( points )
             };
-            let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6, None);
             rb.append_translation(&Vec2::new(x, y));
             let rb_handle = world.add_body(rb);
-            
+
             handles.push(rb_handle);
             forces.push(Vec2::new(posneg.ind_sample(&mut rng)*0.00008, pos.ind_sample(&mut rng)*-0.0008));
             ang_forces.push(Vec1::new(pos.ind_sample(&mut rng)*0.001 *wc.ind_sample(&mut rng)));
@@ -81,7 +81,7 @@ fn main() {
             torques.push(Vec1::new(posneg.ind_sample(&mut rng)*0.1));
         }
     }
-    
+
     println!("Press 1 to toggle linear upward forces buildup.");
     println!("Press 2 to toggle angular forces buildup.");
     println!("Press 3 to apply an upward central impulse to the pieces.");
@@ -91,7 +91,7 @@ fn main() {
      * Run the simulation.
      */
     let mut testbed = Testbed::new(world);
-    
+
     let ang_handles = handles.clone();
     let imp_handles = handles.clone();
     let torque_handles = handles.clone();
@@ -107,12 +107,12 @@ fn main() {
                     println!("Linear Forces deactivated.");
                 },
                 CallBackMode::LoopActive => {
-                    handles.iter().zip(forces.iter()).map( 
+                    handles.iter().zip(forces.iter()).map(
                         |(object, force)| {
                             let mut obj = object.borrow_mut();
                             let thr = obj.deactivation_threshold().unwrap_or(0.0);
                             obj.activate(thr*4.0);
-                            obj.append_lin_force(force.clone()); 
+                            obj.append_lin_force(force.clone());
                         }
                         ).last();
                 },
@@ -130,12 +130,12 @@ fn main() {
                     println!("Angular Forces deactivated.");
                 },
                 CallBackMode::LoopActive => {
-                    ang_handles.iter().zip(ang_forces.iter()).map( 
+                    ang_handles.iter().zip(ang_forces.iter()).map(
                         |(object, force)| {
                             let mut obj = object.borrow_mut();
                             let thr = obj.deactivation_threshold().unwrap_or(0.0);
                             obj.activate(thr*4.0);
-                            obj.append_ang_force(force.clone()); 
+                            obj.append_ang_force(force.clone());
                         }
                         ).last();
                 },
@@ -146,10 +146,10 @@ fn main() {
             move | mode: CallBackMode |
             match mode {
                 CallBackMode::StateActivated | CallBackMode::StateDeactivated => {
-                    imp_handles.iter().zip(impulses.iter()).map( 
+                    imp_handles.iter().zip(impulses.iter()).map(
                         |(object, impulse)| {
                             let mut obj = object.borrow_mut();
-                            obj.apply_central_impulse(impulse.clone()); 
+                            obj.apply_central_impulse(impulse.clone());
                         }
                         ).last();
                     println!("Nudge applied.");
@@ -161,10 +161,10 @@ fn main() {
             move | mode: CallBackMode |
             match mode {
                 CallBackMode::StateActivated | CallBackMode::StateDeactivated => {
-                    torque_handles.iter().zip(torques.iter()).map( 
+                    torque_handles.iter().zip(torques.iter()).map(
                         |(object, torque)| {
                             let mut obj = object.borrow_mut();
-                            obj.apply_angular_momentum(torque.clone()); 
+                            obj.apply_angular_momentum(torque.clone());
                         }
                         ).last();
                     println!("Angular momentum applied.");

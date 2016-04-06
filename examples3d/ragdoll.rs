@@ -23,7 +23,7 @@ fn main() {
      */
     let ground_geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
 
-    world.add_body(RigidBody::new_static(ground_geom, 0.3, 0.6));
+    world.add_body(RigidBody::new_static(ground_geom, 0.3, 0.6, None));
 
     /*
      * Create the ragdolls
@@ -55,17 +55,17 @@ fn main() {
 fn add_ragdoll(pos: Vec3<f32>, world: &mut World<f32>) {
     // head
     let     head_geom = Ball::new(0.8);
-    let mut head      = RigidBody::new_dynamic(head_geom, 1.0, 0.3, 0.5);
+    let mut head      = RigidBody::new_dynamic(head_geom, 1.0, 0.3, 0.5, None);
     head.append_translation(&(pos + Vec3::new(0.0, 2.4, 0.0)));
 
     // body
     let     body_geom = Cylinder::new(1.2, 0.5);
-    let mut body      = RigidBody::new_dynamic(body_geom, 1.0, 0.3, 0.5);
+    let mut body      = RigidBody::new_dynamic(body_geom, 1.0, 0.3, 0.5, None);
     body.append_translation(&pos);
 
     // right arm
     let     rarm_geom = Cylinder::new(1.6, 0.2);
-    let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0, 0.3, 0.5);
+    let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0, 0.3, 0.5, None);
     rarm.append_rotation(&Vec3::new(f32::consts::FRAC_PI_2, 0.0, 0.0));
     rarm.append_translation(&(pos + Vec3::new(0.0, 1.0, 2.4)));
 
@@ -75,7 +75,7 @@ fn add_ragdoll(pos: Vec3<f32>, world: &mut World<f32>) {
 
     // right foot
     let     rfoot_geom = Cylinder::new(1.6, 0.2);
-    let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0, 0.3, 0.5);
+    let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0, 0.3, 0.5, None);
     rfoot.append_translation(&(pos + Vec3::new(0.0, -3.0, 0.4)));
 
     // left foot

@@ -49,7 +49,7 @@ fn main() {
 
     for (normal, pos) in normals.iter().zip(poss.iter()) {
         let geom = Plane::new(*normal);
-        let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
+        let mut rb = RigidBody::new_static(geom, 0.3, 0.6, None);
 
         rb.append_translation(pos);
 
@@ -103,7 +103,7 @@ fn main() {
 
             let compound = Compound::new(geom_data);
 
-            let mut rb = RigidBody::new_dynamic(compound, 1.0, 0.3, 0.5);
+            let mut rb = RigidBody::new_dynamic(compound, 1.0, 0.3, 0.5, None);
             rb.set_deactivation_threshold(Some(0.5));
 
             bodies.push(rb)

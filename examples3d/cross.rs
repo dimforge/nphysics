@@ -11,6 +11,7 @@ use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
+use nphysics3d::world::RigidBodyCollisionGroups;
 
 fn main() {
     /*
@@ -22,7 +23,7 @@ fn main() {
     /*
      * Planes
      */
-    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
+    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6, None);
 
     world.add_body(rb);
 
@@ -44,7 +45,7 @@ fn main() {
     let cross    = Arc::new(Box::new(compound) as Box<Repr3<f32>>);
 
     /*
-     * Create the crosses 
+     * Create the crosses
      */
     let num     = 6;
     let rad     = 5.0;
@@ -60,7 +61,7 @@ fn main() {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.5);
+                let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.5, RigidBodyCollisionGroups::new());
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

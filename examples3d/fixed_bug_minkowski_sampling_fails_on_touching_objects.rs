@@ -40,7 +40,7 @@ fn main() {
     /*
      * Planes
      */
-    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
+    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6, None);
 
     world.add_body(rb);
 
@@ -53,14 +53,14 @@ fn main() {
     let y     = shift / 2.0;
     let z     = shift / 2.0;
 
-    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(0.21, 4.96, 0.21)), 1.0, 0.3, 0.5);
+    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(0.21, 4.96, 0.21)), 1.0, 0.3, 0.5, None);
     rb.append_translation(&Vec3::new(x, y, z));
     world.add_body(rb);
 
     /*
      * Create the ccd-enabled cube.
      */
-    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(0.5, 0.5, 0.5)), 1.0, 0.3, 0.5);
+    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(0.5, 0.5, 0.5)), 1.0, 0.3, 0.5, None);
     rb.append_translation(&Vec3::new(x - 1.0, y + 2.0, z - 1.0));
     rb.set_lin_vel(Vec3::new(10.0, 0.0, 10.0));
     let body_handle = world.add_body(rb);

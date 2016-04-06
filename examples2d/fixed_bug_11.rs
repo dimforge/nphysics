@@ -40,7 +40,7 @@ fn main() {
      */
     let rad    = 1.0;
     let geom   = Cuboid::new(Vec2::new(rad, rad));
-    let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
+    let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5, None);
 
     rb.set_lin_vel(Vec2::new(0.99, 0.0));
 

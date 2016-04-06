@@ -21,7 +21,7 @@ fn main() {
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6, None);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -30,7 +30,7 @@ fn main() {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6, None);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -54,7 +54,7 @@ fn main() {
 				  Pnt2::new(0.0, -1.0)*rad, Pnt2::new( 0.5, -0.7)*rad ];
 		Convex2::new( points )
 	    };
-            let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6, None);
             rb.append_translation(&Vec2::new(x, y));
             world.add_body(rb);
         }

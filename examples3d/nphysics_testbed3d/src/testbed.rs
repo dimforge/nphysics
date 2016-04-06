@@ -152,7 +152,7 @@ impl Testbed {
                 match event.value {
                     WindowEvent::MouseButton(MouseButton::Button2, Action::Press, glfw::Control) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
-                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6, None);
 
                         let size = self.window.size();
                         let (pos, dir) = self.graphics.camera().unproject(&cursor_pos, &size);
@@ -337,7 +337,7 @@ impl Testbed {
                     },
                     WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
                         let geom   = Ball::new(0.5f32);
-                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6, None);
 
                         let cam_transfom;
 
@@ -357,7 +357,7 @@ impl Testbed {
                     },
                     WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
                         let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
-                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+                        let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6, None);
 
                         let cam_transform;
 

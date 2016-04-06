@@ -25,10 +25,10 @@ fn main() {
      */
     let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
 
-    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
+    world.add_body(RigidBody::new_static(geom, 0.3, 0.6, None));
 
     let geom   = Plane::new(Vec3::new(0.0, -1.0, 0.0));
-    let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
+    let mut rb = RigidBody::new_static(geom, 0.3, 0.6, None);
 
     rb.append_translation(&Vec3::new(0.0, 50.0, 0.0));
 
@@ -51,7 +51,7 @@ fn main() {
                 let y = 10.0 + j as f32 * 2.5 * rad + centery;
                 let z = k as f32 * 2.5 * rad - centerx;
 
-                let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
+                let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6, None);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
