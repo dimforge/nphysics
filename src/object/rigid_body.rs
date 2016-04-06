@@ -9,7 +9,7 @@ use ncollide::inspection::Repr;
 use ncollide::math::Scalar;
 use math::{Point, Vector, Orientation, Matrix, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
-use world::RigidBodyCollisionGroups;
+use object::RigidBodyCollisionGroups;
 
 /// A shared, mutable, rigid body.
 pub type RigidBodyHandle<N> = Rc<RefCell<RigidBody<N>>>;
