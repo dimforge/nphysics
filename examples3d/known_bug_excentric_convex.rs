@@ -55,7 +55,7 @@ fn main() {
      */
     let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
 
-    world.add_body(RigidBody::new_static(geom, 0.3, 0.6, None));
+    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     /*
      * Create the convex geometries.
@@ -81,7 +81,7 @@ fn main() {
                 }
 
                 let geom = Convex::new(shape.coords);
-                let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5, None);
+                let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
                 rb.set_deactivation_threshold(None);
 
                 rb.append_translation(&Vec3::new(x, y, z));

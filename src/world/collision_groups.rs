@@ -27,8 +27,8 @@ impl RigidBodyCollisionGroups {
 
     /// Return a copy of the internal `CollisionGroups`
     #[inline]
-    pub fn get_internal_collision_groups(&self) -> CollisionGroups {
-        self.collision_groups.clone()
+    pub fn get_internal_collision_groups(&self) -> &CollisionGroups {
+        &self.collision_groups
     }
 
     /// Adds or removes this entity from the given group.

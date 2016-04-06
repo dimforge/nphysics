@@ -42,7 +42,7 @@ fn main() {
     indices.push(Pnt2::new(num_split, num_split + 1));
 
     let mesh = Polyline::new(Arc::new(vertices), Arc::new(indices), None, None);
-    let rb = RigidBody::new_static(mesh, 0.3, 0.6, None);
+    let rb = RigidBody::new_static(mesh, 0.3, 0.6);
 
     world.add_body(rb);
 
@@ -62,7 +62,7 @@ fn main() {
             let x = fj * 2.0 * rad - centerx;
             let y = -fi * 2.0 * rad;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad, rad)), 1.0, 0.3, 0.6, None);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad, rad)), 1.0, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

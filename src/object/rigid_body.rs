@@ -247,7 +247,7 @@ impl<N: Scalar> RigidBody<N> {
     }
 
     /// Creates a new rigid body that can move.
-    pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N, groups: Option<RigidBodyCollisionGroups>) -> RigidBody<N>
+    pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
         let props = shape.mass_properties(density);
 
@@ -255,20 +255,18 @@ impl<N: Scalar> RigidBody<N> {
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             Some(props),
             restitution,
-            friction,
-            groups.unwrap_or(RigidBodyCollisionGroups::new()))
+            friction)
     }
 
     /// Creates a new rigid body that cannot move.
-    pub fn new_static<G>(shape: G, restitution: N, friction: N, groups: Option<RigidBodyCollisionGroups>) -> RigidBody<N>
+    pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
 
         RigidBody::new(
             Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
             None,
             restitution,
-            friction,
-            groups.unwrap_or(RigidBodyCollisionGroups::new()))
+            friction)
     }
 
     /// Creates a new rigid body with a given shape.
@@ -278,8 +276,7 @@ impl<N: Scalar> RigidBody<N> {
     pub fn new(shape:           Arc<Box<Repr<Point<N>, Matrix<N>>>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
-               friction:        N,
-               groups:          RigidBodyCollisionGroups)
+               friction:        N)
                -> RigidBody<N> {
         let (inv_mass, center_of_mass, inv_inertia, active, state) =
             match mass_properties {
@@ -327,7 +324,7 @@ impl<N: Scalar> RigidBody<N> {
                 lin_acc_scale:     na::one(),
                 ang_acc_scale:     na::one(),
                 margin:            na::cast(0.04f64), // FIXME: do not hard-code this.
-                collision_groups:  groups,
+                collision_groups:  RigidBodyCollisionGroups::new(),
                 user_data:         None
             };
 

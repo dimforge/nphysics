@@ -21,7 +21,7 @@ fn main() {
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, 1.0)), 0.3, 0.6, None);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, 1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, -10.0));
 
@@ -30,7 +30,7 @@ fn main() {
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, -1.0)), 0.3, 0.6, None);
+    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, -1.0)), 0.3, 0.6);
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
@@ -50,7 +50,7 @@ fn main() {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0;
 
-            let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6, None);
+            let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
 
             rb.append_translation(&Vec2::new(x, y));
 

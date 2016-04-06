@@ -28,7 +28,7 @@ fn main() {
         Vec3::new(1.0, 1.0, 1.0 )
     ];
     for n in normals.iter() {
-        let rb   = RigidBody::new_static(Plane::new(*n), 0.3, 0.6, None);
+        let rb   = RigidBody::new_static(Plane::new(*n), 0.3, 0.6);
 
         world.add_body(rb);
     }
@@ -49,7 +49,7 @@ fn main() {
                 let y = 10.0 + j as f32 * 2.5 * rad + centery * 2.0;
                 let z = k as f32 * 2.5 * rad - centerx;
 
-                let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6, None);
+                let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
 
                 rb.append_translation(&Vec3::new(x, y, z));
 

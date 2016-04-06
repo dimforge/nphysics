@@ -19,7 +19,7 @@ fn main() {
     /*
      * Planes
      */
-    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6, None);
+    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
 
     world.add_body(rb);
 
@@ -38,7 +38,7 @@ fn main() {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(rad - 0.04, rad - 0.04, rad - 0.04)), 1.0, 0.3, 0.5, None);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(rad - 0.04, rad - 0.04, rad - 0.04)), 1.0, 0.3, 0.5);
 
             rb.append_translation(&Vec3::new(x, y, 0.0));
 
