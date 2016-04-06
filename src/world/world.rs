@@ -146,7 +146,7 @@ impl<N: Scalar> World<N> {
     pub fn add_body(&mut self, rb: RigidBody<N>) -> RigidBodyHandle<N> {
         let position = rb.position().clone();
         let shape = rb.shape().clone();
-        let groups = (*(*rb.collision_groups())).clone();
+        let groups = rb.collision_groups().as_collision_groups().clone();
 
         let handle = Rc::new(RefCell::new(rb));
         let uid = &*handle as *const RefCell<RigidBody<N>> as usize;

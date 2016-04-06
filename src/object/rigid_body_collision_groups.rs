@@ -1,14 +1,7 @@
-use std::ops::Deref;
 use ncollide::world::CollisionGroups;
-use object::STATIC_GROUP_ID;
 
-impl Deref for RigidBodyCollisionGroups {
-    type Target = CollisionGroups;
-
-    fn deref(&self) -> &CollisionGroups {
-        &self.collision_groups
-    }
-}
+// internal reserved static group id
+const STATIC_GROUP_ID: usize = 29;
 
 /// TODO: better explanations or redirect user to `ncollide` documentation ?!?
 ///
@@ -53,7 +46,7 @@ impl RigidBodyCollisionGroups {
     /// Return the internal `CollisionGroups`
     #[inline]
     pub fn as_collision_groups(&self) -> &CollisionGroups {
-        &**self // FIXME ugly little thing
+        &self.collision_groups
     }
 
     /// Adds or removes this entity from the given group.
