@@ -43,7 +43,7 @@ impl RigidBodyCollisionGroups {
 
     /// Return a copy of the internal `CollisionGroups`
     #[inline]
-    pub fn get_internal_collision_groups(&self) -> &CollisionGroups {
+    pub fn internal_collision_groups(&self) -> &CollisionGroups {
         &self.collision_groups
     }
 
