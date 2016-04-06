@@ -9,7 +9,7 @@ use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase};
 use ncollide::narrow_phase::ContactSignalHandler;
-use ncollide::world::{CollisionWorld, CollisionObject/*, CollisionGroups*/};
+use ncollide::world::{CollisionWorld, CollisionObject};
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
 use detection::ActivationManager;
