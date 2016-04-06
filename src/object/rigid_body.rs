@@ -625,10 +625,10 @@ impl<N: Scalar> RigidBody<N> {
         &self.collision_groups
     }
 
-    /// Mutable reference to the collision groups of this rigid body.
+    /// Set the new collisions groups of this rigid body.
     #[inline]
-    pub fn collision_groups_mut(&mut self) -> &mut RigidBodyCollisionGroups {
-        &mut self.collision_groups // FIXME implemented right now ???
+    pub fn set_collision_groups(&mut self, new_groups: RigidBodyCollisionGroups) {
+        self.collision_groups = new_groups;
     }
 
     /// Reference to user-defined data attached to this rigid body.

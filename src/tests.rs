@@ -20,7 +20,7 @@ mod test {
 
         // rigidbody with side length 2, area 4 and mass 4
         let geom   = Cuboid::new(Vec2::new(1.0, 1.0));
-        let rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.6, None);
+        let rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.6);
         let rb_handle = world.add_body(rb.clone());
 
         // ensure it's at the origin
@@ -126,11 +126,11 @@ mod test {
 
         // rigidbody with side length 2, area 4 and mass 4
         let geom   = Cuboid::new(Vec2::new(1.0, 1.0));
-        let rb = RigidBody::new_dynamic(geom.clone(), 1.0, 0.3, 0.6, None);
+        let rb = RigidBody::new_dynamic(geom.clone(), 1.0, 0.3, 0.6);
         let rb_handle = world.add_body(rb.clone());
 
         // add another body with double the density
-        let mut rb2 = RigidBody::new_dynamic(geom.clone(), 2.0, 0.3, 0.6, None);
+        let mut rb2 = RigidBody::new_dynamic(geom.clone(), 2.0, 0.3, 0.6);
         rb2.append_translation(&Vec2::new(5.0, 0.0));
         let rb_handle2 = world.add_body(rb2);
 
@@ -380,11 +380,11 @@ mod test {
 
         // rigidbody with side length 2, area 4 and mass 4
         let geom = Cuboid::new(Vec2::new(1.0, 1.0));
-        let rb = RigidBody::new_dynamic(geom.clone(), 1.0, 0.3, 0.6, None);
+        let rb = RigidBody::new_dynamic(geom.clone(), 1.0, 0.3, 0.6);
         let rb_handle = world.add_body(rb.clone());
 
         // add another body with double the density
-        let mut rb2 = RigidBody::new_dynamic(geom.clone(), 2.0, 0.3, 0.6, None);
+        let mut rb2 = RigidBody::new_dynamic(geom.clone(), 2.0, 0.3, 0.6);
         rb2.append_translation(&Vec2::new(5.0, 0.0));
         let rb_handle2 = world.add_body(rb2);
 
