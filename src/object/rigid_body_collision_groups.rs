@@ -3,8 +3,6 @@ use ncollide::world::CollisionGroups;
 // internal reserved static group id
 const STATIC_GROUP_ID: usize = 29;
 
-/// TODO: better explanations or redirect user to `ncollide` documentation ?!?
-///
 /// Groups of collision used to filter which object collide with which other one.
 /// nphysics use a specific group for its own purposes (i.e. the group of static objects).
 /// The `group 29` is reserved and you cannot use it.
@@ -28,7 +26,6 @@ impl RigidBodyCollisionGroups {
         }
     }
 
-    // FIXME better documentation
     /// Creates a new `RigidBodyCollisionGroups` that enables collisions with everything except
     /// self-collision.
     #[inline]
