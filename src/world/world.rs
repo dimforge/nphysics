@@ -208,20 +208,20 @@ impl<N: Scalar> World<N> {
         self.forces.set_lin_acc(gravity);
     }
 
-    /// Sets the angular acceleration afecting every dynamic rigid body.
-//     pub fn set_angular_acceleration(&mut self, accel: Orientation) {
-//         self.forces.set_ang_acc(accel)
-//     }
+    /*/// Sets the angular acceleration afecting every dynamic rigid body.
+    pub fn set_angular_acceleration(&mut self, accel: Orientation) {
+        self.forces.set_ang_acc(accel)
+    }*/
 
     /// Gets the linear acceleration afecting every dynamic rigid body.
     pub fn gravity(&self) -> Vector<N> {
         self.forces.lin_acc()
     }
 
-    /// Gets the angular acceleration afecting every dynamic rigid body.
-//     pub fn angular_acceleration(&self) -> Orientation {
-//         self.forces.ang_acc()
-//     }
+    /*/// Gets the angular acceleration afecting every dynamic rigid body.
+    pub fn angular_acceleration(&self) -> Orientation {
+        self.forces.ang_acc()
+    }*/
 
     /// Adds continuous collision detection to the given rigid body.
     pub fn add_ccd_to(&mut self, body: &RigidBodyHandle<N>, motion_thresold: N) {

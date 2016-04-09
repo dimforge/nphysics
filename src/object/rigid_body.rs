@@ -180,6 +180,17 @@ impl<N: Scalar> RigidBody<N> {
     pub fn center_of_mass(&self) -> &Point<N> {
         &self.center_of_mass
     }
+    
+    /// Gets this body's mass, if it has one.
+    #[inline]
+    pub fn mass(&self) -> Option<N> {
+        if self.inv_mass == na::zero() {
+            None
+        } else {
+            let _1: N = na::one();
+            Some(_1 / self.inv_mass)
+        }
+    }
 
     /// Gets this body's restitution coefficent.
     ///
