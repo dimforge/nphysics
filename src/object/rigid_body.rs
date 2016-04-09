@@ -163,6 +163,12 @@ impl<N: Scalar> RigidBody<N> {
         self.margin.clone()
     }
 
+    /// Sets the margin surrounding this object's shape.
+    #[inline]
+    pub fn set_margin(&mut self, margin: N) {
+        self.margin = margin;
+    }
+
     #[doc(hidden)]
     #[inline]
     pub fn index(&self) -> isize {
@@ -180,7 +186,7 @@ impl<N: Scalar> RigidBody<N> {
     pub fn center_of_mass(&self) -> &Point<N> {
         &self.center_of_mass
     }
-    
+
     /// Gets this body's mass, if it has one.
     #[inline]
     pub fn mass(&self) -> Option<N> {
