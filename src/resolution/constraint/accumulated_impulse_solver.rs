@@ -80,13 +80,8 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
     }
 
     fn resize_buffers(&mut self, num_restitution_equations: usize, num_friction_equations: usize) {
-        resize_buffer(&mut self.restitution_constraints,
-                      num_restitution_equations,
-                      VelocityConstraint::new());
-
-        resize_buffer(&mut self.friction_constraints,
-                      num_friction_equations,
-                      VelocityConstraint::new());
+        self.restitution_constraints.resize(num_restitution_equations, VelocityConstraint::new());
+        self.friction_constraints.resize(num_friction_equations, VelocityConstraint::new());
     }
 
     fn do_solve(&mut self,
@@ -162,7 +157,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
             }
         }
 
-        resize_buffer(&mut self.mj_lambda, bodies.len(), Velocities::new());
+        self.mj_lambda.resize(bodies.len(), Velocities::new());
 
         // FIXME: parametrize by the resolution algorithm?
         pgs::projected_gauss_seidel_solve(
@@ -389,15 +384,5 @@ impl<N: Scalar> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
             self.do_solve(dt.clone(), constraints, &joints[..], &bodies[..]);
             self.cache.swap();
         }
-    }
-}
-
-fn resize_buffer<A: Clone>(buff: &mut Vec<A>, size: usize, val: A) {
-    if buff.len() < size {
-        let diff = size - buff.len();
-        buff.extend(iter::repeat(val).take(diff));
-    }
-    else {
-        buff.truncate(size)
     }
 }
