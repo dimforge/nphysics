@@ -30,7 +30,7 @@ fn main() {
     for n in normals.iter() {
         let rb   = RigidBody::new_static(Plane::new(*n), 0.3, 0.6);
 
-        world.add_body(rb);
+        world.add_rigid_body(rb);
     }
 
     /*
@@ -53,7 +53,7 @@ fn main() {
 
                 rb.append_translation(&Vec3::new(x, y, z));
 
-                world.add_body(rb);
+                world.add_rigid_body(rb);
             }
         }
     }

@@ -22,7 +22,7 @@ fn main() {
      */
     let ground_geom = Plane::new(Vec2::new(0.0, -1.0));
 
-    world.add_body(RigidBody::new_static(ground_geom, 0.3, 0.6));
+    world.add_rigid_body(RigidBody::new_static(ground_geom, 0.3, 0.6));
 
     /*
      * Create the ragdolls
@@ -78,12 +78,12 @@ fn add_ragdoll(pos: Vec2<f32>, world: &mut World<f32>) {
     let mut lfoot      = rfoot.clone();
     lfoot.append_translation(&Vec2::new(-0.8, 0.0));
 
-    let head  = world.add_body(head);
-    let body  = world.add_body(body);
-    let rarm  = world.add_body(rarm);
-    let larm  = world.add_body(larm);
-    let rfoot = world.add_body(rfoot);
-    let lfoot = world.add_body(lfoot);
+    let head  = world.add_rigid_body(head);
+    let body  = world.add_rigid_body(body);
+    let rarm  = world.add_rigid_body(rarm);
+    let larm  = world.add_rigid_body(larm);
+    let rfoot = world.add_rigid_body(rfoot);
+    let lfoot = world.add_rigid_body(lfoot);
 
     /*
      * Create joints.

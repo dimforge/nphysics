@@ -32,14 +32,14 @@ fn create_the_walls(world: &mut World<f32>) {
      */
     let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
     rb.append_translation(&Vec2::new(0.0, 10.0));
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Second plane
      */
     let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
     rb.append_translation(&Vec2::new(0.0, 10.0));
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 }
 
 
@@ -59,7 +59,7 @@ fn create_the_balls(world: &mut World<f32>) {
 
             rb.append_translation(&Vec2::new(x, y));
 
-            world.add_body(rb);
+            world.add_rigid_body(rb);
         }
     }
 }

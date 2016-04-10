@@ -10,34 +10,36 @@ use ncollide::bounding_volume;
 use ncollide::math::FloatError;
 use ncollide::world::CollisionGroups;
 use world::RigidBodyCollisionWorld;
-use object::RigidBodyHandle;
-use object::RigidBody;
-use math::Vector;
+use object::{RigidBodyHandle, SensorHandle, RigidBody};
+use math::Point;
 
 
-struct CCDBody<N: Scalar> {
-    body:        RigidBodyHandle<N>,
-    sqthreshold: N,
-    last_pos:    Vector<N>,
-    accept_zero: bool
+struct CCDRigidBody<N: Scalar> {
+    rigid_body:      RigidBodyHandle<N>,
+    sqthreshold:     N,
+    last_center:     Point<N>,
+    trigger_sensors: bool,
+    accept_zero:     bool
 }
 
-impl<N: Scalar> CCDBody<N> {
-    fn new(body: RigidBodyHandle<N>, threshold: N) -> CCDBody<N> {
-        let last_pos = body.borrow().position().translation();
+impl<N: Scalar> CCDRigidBody<N> {
+    fn new(rigid_body: RigidBodyHandle<N>, threshold: N, trigger_sensors: bool) -> CCDRigidBody<N> {
+        let last_center = rigid_body.borrow().position().translation().to_pnt();
 
-        CCDBody {
-            sqthreshold: threshold * threshold,
-            last_pos:    last_pos,
-            body:        body,
-            accept_zero: true
+        CCDRigidBody {
+            sqthreshold:     threshold * threshold,
+            last_center:     last_center,
+            rigid_body:      rigid_body,
+            trigger_sensors: trigger_sensors,
+            accept_zero:     true
         }
     }
 }
 
 /// Handles Continuous Collision Detection.
 pub struct TranslationalCCDMotionClamping<N: Scalar> {
-    objects: HashMap<usize, CCDBody<N>, UintTWHash>
+    objects: HashMap<usize, CCDRigidBody<N>, UintTWHash>,
+    intersected_sensors_cache: Vec<(N, SensorHandle<N>)>
 }
 
 impl<N: Scalar> TranslationalCCDMotionClamping<N> {
@@ -45,68 +47,85 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
     /// fast-moving rigid bodies.
     pub fn new() -> TranslationalCCDMotionClamping<N> {
         TranslationalCCDMotionClamping {
-            objects: HashMap::new(UintTWHash::new())
+            objects:                   HashMap::new(UintTWHash::new()),
+            intersected_sensors_cache: Vec::new()
         }
     }
 
     /// Enables continuous collision for the given rigid body.
-    pub fn add_ccd_to(&mut self, body: RigidBodyHandle<N>, motion_threshold: N) {
-        self.objects.insert(&*body as *const RefCell<RigidBody<N>> as usize, CCDBody::new(body, motion_threshold));
+    pub fn add_ccd_to(&mut self,
+                      rigid_body:       RigidBodyHandle<N>,
+                      motion_threshold: N,
+                      trigger_sensors:  bool) {
+        self.objects.insert(&*rigid_body as *const RefCell<RigidBody<N>> as usize,
+                            CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
     }
 
-    /// Remove continuous collision from the given rigid body.
-    pub fn remove_ccd_from(&mut self, body: &RigidBodyHandle<N>) {
-        self.objects.remove(&(&**body as *const RefCell<RigidBody<N>> as usize));
+    /// Enables continuous collision for the given rigid body.
+    pub fn remove_ccd_from(&mut self, rigid_body: &RigidBodyHandle<N>) {
+        self.objects.remove(&(&**rigid_body as *const RefCell<RigidBody<N>> as usize));
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.
-    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld<N>) {
+    ///
+    /// Returns `false` if no clamping was done. If at least one clamping was performed, the
+    /// collision word will be updated by this method once all the clamping have been performed.
+    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld<N>) -> bool {
         let mut update_collision_world = false;
 
-        // XXX: we should no do this in a sequential order because CCD betwen two fast, CCD-enabled
-        // objects, will not work properly (it will be biased toward the first object).
-        for o in self.objects.elements_mut().iter_mut() {
-            let brb1 = o.value.body.borrow();
+        // XXX: we should no do this in a sequential order because CCD between two fast
+        // CCD-enabled objects will not work properly (it will be biased toward the first object).
+        for co1 in self.objects.elements_mut().iter_mut() {
+            let mut obj1 = co1.value.rigid_body.borrow_mut();
 
-            let movement = brb1.position().translation() - o.value.last_pos;
+            let movement = *obj1.position().translation().as_pnt() - co1.value.last_center;
 
-            if na::sqnorm(&movement) > o.value.sqthreshold {
+            if na::sqnorm(&movement) > co1.value.sqthreshold {
                 // Use CCD for this object.
-                let last_transform = na::append_translation(brb1.position(), &-movement);
-                let begin_aabb = bounding_volume::aabb(brb1.shape_ref(), &last_transform);
-                let end_aabb   = bounding_volume::aabb(brb1.shape_ref(), brb1.position());
-                let swept_aabb = begin_aabb.merged(&end_aabb);
+                let obj1_uid = &*co1.value.rigid_body as *const RefCell<RigidBody<N>> as usize;
+
+                let last_transform = na::append_translation(obj1.position(), &-movement);
+                let begin_aabb     = bounding_volume::aabb(obj1.shape_ref(), &last_transform);
+                let end_aabb       = bounding_volume::aabb(obj1.shape_ref(), obj1.position());
+                let swept_aabb     = begin_aabb.merged(&end_aabb);
 
                 /*
-                 * Find the minimum toi.
+                 * Find the minimum TOI.
                  */
-                let mut min_toi = na::one::<N>();
+                let mut min_toi   = na::one::<N>();
                 let mut toi_found = false;
                 let dir = movement.clone();
 
                 let _eps: N = FloatError::epsilon();
 
-                // FIXME: performing a convex-cast here would be much more efficient.
+                // XXX: handle groups.
                 let all_groups = CollisionGroups::new();
+
+                // FIXME: performing a convex-cast here would be much more efficient.
                 for co2 in cw.interferences_with_aabb(&swept_aabb, &all_groups) {
-                    if &*co2.data as *const RefCell<RigidBody<N>> as usize !=
-                       &*o.value.body as *const RefCell<RigidBody<N>> as usize {
-                        let brb2 = co2.data.borrow();
+                    if co2.data.uid() != obj1_uid {
+                        let obj2 = co2.data.borrow();
 
                         let toi = geometry::time_of_impact(
                             &last_transform,
                             &dir,
-                            &*brb1.shape_ref(),
-                            brb2.position(),
-                            &na::zero(), // assume the other object does not move.
-                            brb2.shape_ref());
+                            obj1.shape_ref(),
+                            &obj2.position(),
+                            &na::zero(), // Assume the other object does not move.
+                            obj2.shape_ref());
 
                         match toi {
                             Some(t) => {
-                                if t <= min_toi { // we need the equality case to set the `toi_found` flag.
+                                if obj2.is_sensor() {
+                                    if co1.value.trigger_sensors {
+                                        self.intersected_sensors_cache.push((t, co2.data.clone().unwrap_sensor()));
+                                        unimplemented!();
+                                    }
+                                }
+                                else if t <= min_toi { // we need the equality case to set the `toi_found` flag.
                                     toi_found = true;
 
-                                    if t > _eps || o.value.accept_zero {
+                                    if t > _eps || co1.value.accept_zero {
                                         min_toi = t;
                                     }
                                 }
@@ -117,30 +136,57 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                 }
 
                 /*
-                 * Revert the object translation at the toi
+                 * Revert the object translation at the toi.
                  */
-                drop(brb1);
-
                 if toi_found {
-                    o.value.body.borrow_mut().append_translation(&(-dir * (na::one::<N>() - min_toi)));
-                    o.value.accept_zero = false;
+                    obj1.append_translation(&(-dir * (na::one::<N>() - min_toi)));
+                    co1.value.accept_zero = false;
+
+                    // We moved the object: ensure the broad phase takes that in account.
+                    cw.deferred_set_position(obj1_uid, obj1.position().clone());
+                    update_collision_world = true;
                 }
                 else {
-                    o.value.accept_zero = true;
+                    co1.value.accept_zero = true;
                 }
 
                 /*
-                 * We moved the object: ensure the broad phase takes that in account.
+                 FIXME: * Activate then deactivate all the sensors that should have been traversed by the
+                 * rigid body (we do not activate those that the rigid body entered without
+                 * leaving).
                  */
-                cw.deferred_set_position(&* o.value.body as *const RefCell<RigidBody<N>> as usize, o.value.body.borrow().position().clone());
-                update_collision_world = true;
+                // self.intersected_sensors_cache.sort();
+                // for sensor in self.intersected_sensors_cache.iter() {
+                //     if sensor.0 < min_toi {
+                //         let bsensor = sensor.borrow();
+
+                //         // See if at the final rigid body position the sensor is still intersected.
+                //         // NOTE: we are assuming the tensor is convex (handling concave cases would
+                //         // be to complicated without much uses).
+                //         if !geometry::test_interference(
+                //             obj1.position(),
+                //             obj1_shape,
+                //             bsensor.position(),
+                //             bsensor.shape_ref()) {
+                //             // FIXME: activate the collision-start and collision-end signals for
+                //             // this sensor.
+                //         }
+                //         // Otherwise do not trigger this sensor just yet. This will be done during
+                //         // the next narrow phase update.
+                //     }
+                // }
             }
 
-            o.value.last_pos = o.value.body.borrow().position().translation();
+            co1.value.last_center = obj1.position().translation().to_pnt();
+            self.intersected_sensors_cache.clear();
         }
 
         if update_collision_world {
             cw.update();
+            true
+        }
+        else {
+            false
         }
     }
 }

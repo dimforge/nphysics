@@ -1,42 +1,39 @@
-use std::f32;
-use std::rc::Rc;
-use std::cell::RefCell;
 use sfml::graphics;
-use sfml::graphics::{RectangleShape, Color, RenderTarget};
-use sfml::system::vector2;
+use sfml::graphics::{RectangleShape, Color, RenderTarget, Shape, Transformable};
+use sfml::system::Vector2f;
 use na::{Pnt3, Iso2};
-use na;
-use nphysics2d::object::RigidBody;
+use nphysics2d::object::WorldObject;
+use objects;
 use draw_helper::DRAW_SCALE;
 
 pub struct Box<'a> {
     color: Pnt3<u8>,
     base_color: Pnt3<u8>,
     delta: Iso2<f32>,
-    body: Rc<RefCell<RigidBody<f32>>>,
+    object: WorldObject<f32>,
     gfx: RectangleShape<'a>
 }
 
 impl<'a> Box<'a> {
-    pub fn new(body:  Rc<RefCell<RigidBody<f32>>>,
-               delta: Iso2<f32>,
-               rx:    f32,
-               ry:    f32,
-               color: Pnt3<u8>) -> Box<'a> {
+    pub fn new(object: WorldObject<f32>,
+               delta:  Iso2<f32>,
+               rx:     f32,
+               ry:     f32,
+               color:  Pnt3<u8>) -> Box<'a> {
         let mut res = Box {
             color: color,
             base_color: color,
             delta: delta,
             gfx: RectangleShape::new().unwrap(),
-            body: body
+            object: object
         };
 
         let drx = rx as f32 * DRAW_SCALE;
         let dry = ry as f32 * DRAW_SCALE;
 
         res.gfx.set_fill_color(&Color::new_rgb(color.x, color.y, color.z));
-        res.gfx.set_size(&vector2::Vector2f { x: drx * 2.0, y: dry * 2.0 });
-        res.gfx.set_origin(&vector2::Vector2f { x: drx, y: dry });
+        res.gfx.set_size(&Vector2f { x: drx * 2.0, y: dry * 2.0 });
+        res.gfx.set_origin(&Vector2f { x: drx, y: dry });
 
         res
     }
@@ -44,29 +41,16 @@ impl<'a> Box<'a> {
 
 impl<'a> Box<'a> {
     pub fn update(&mut self) {
-        let body     = self.body.borrow();
-        let transform = *body.position() * self.delta;
-        let pos = na::translation(&transform);
-        let rot = na::rotation(&transform);
-
-        self.gfx.set_position(&vector2::Vector2f {
-            x: pos.x as f32 * DRAW_SCALE,
-            y: pos.y as f32 * DRAW_SCALE
-        });
-        self.gfx.set_rotation(rot.x * 180.0 / f32::consts::PI as f32);
-
-        if body.is_active() {
-            self.gfx.set_fill_color(
-                &Color::new_rgb(self.color.x, self.color.y, self.color.z));
-        }
-        else {
-            self.gfx.set_fill_color(
-                &Color::new_rgb(self.color.x / 4, self.color.y / 4, self.color.z / 4));
-        }
+        objects::update_scene_node(&mut self.gfx, &self.object, &self.color, &self.delta)
     }
 
     pub fn draw(&self, rw: &mut graphics::RenderWindow) {
         rw.draw(&self.gfx);
+    }
+
+    pub fn set_color(&mut self, color: Pnt3<u8>) {
+        self.color      = color;
+        self.base_color = color;
     }
 
     pub fn select(&mut self) {

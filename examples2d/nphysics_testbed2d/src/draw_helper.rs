@@ -1,6 +1,6 @@
 use sfml::graphics;
 use sfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
-use sfml::system::vector2::Vector2f;
+use sfml::system::Vector2f;
 use na::Translate;
 use na::Pnt2;
 use na;
@@ -15,7 +15,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
 
     let mut collisions = Vec::new();
 
-    physics.interferences(&mut collisions);
+    physics.constraints(&mut collisions);
 
     for c in collisions.iter() {
         match *c {

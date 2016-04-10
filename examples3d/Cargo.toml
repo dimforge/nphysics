@@ -65,6 +65,10 @@ name = "convex_decomposition"
 path = "./convex_decomposition.rs"
 
 [[bin]]
+name = "sensor"
+path = "./sensor.rs"
+
+[[bin]]
 name = "fixed_bug_long_thin_box_one_shot_manifold"
 path = "fixed_bug_long_thin_box_one_shot_manifold.rs"
 

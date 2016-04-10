@@ -28,7 +28,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Second plane
@@ -37,8 +37,8 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    world.add_body(rb);
-
+    world.add_rigid_body(rb);
+    
     /*
      * Create the convex shapes
      */
@@ -72,8 +72,8 @@ fn main() {
             };
             let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6);
             rb.append_translation(&Vec2::new(x, y));
-            let rb_handle = world.add_body(rb);
-
+            let rb_handle = world.add_rigid_body(rb);
+            
             handles.push(rb_handle);
             forces.push(Vec2::new(posneg.ind_sample(&mut rng)*0.00008, pos.ind_sample(&mut rng)*-0.0008));
             ang_forces.push(Vec1::new(pos.ind_sample(&mut rng)*0.001 *wc.ind_sample(&mut rng)));

@@ -53,7 +53,7 @@ fn main() {
 
         rb.append_translation(pos);
 
-        world.add_body(rb);
+        world.add_rigid_body(rb);
     }
 
     /*
@@ -125,7 +125,7 @@ fn main() {
             let pos = random::<Vec3<f32>>() * 30.0+ Vec3::new(-15.0, 15.0, -15.0);
             rb.append_translation(&pos);
 
-            world.add_body(rb);
+            world.add_rigid_body(rb);
         }
     }
 

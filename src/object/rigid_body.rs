@@ -1,3 +1,4 @@
+use std::mem;
 use std::any::Any;
 use std::ops::Mul;
 use std::rc::Rc;
@@ -5,6 +6,7 @@ use std::sync::Arc;
 use std::cell::RefCell;
 use na::{self, Transformation, Transform, Translation, Rotation, Bounded, Cross};
 use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
+use ncollide::world::{CollisionShape, CollisionShapeHandle};
 use ncollide::inspection::Repr;
 use ncollide::math::Scalar;
 use math::{Point, Vector, Orientation, Matrix, AngularInertia};
@@ -51,7 +53,7 @@ impl<N: Scalar> ActivationState<N> {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody<N: Scalar> {
     state:                RigidBodyState,
-    shape:                Arc<Box<Repr<Point<N>, Matrix<N>>>>, // FIXME: define our own trait.
+    shape:                CollisionShapeHandle<Point<N>, Matrix<N>>, // FIXME: define our own trait.
     local_to_world:       Matrix<N>,
     lin_vel:              Vector<N>,
     ang_vel:              Orientation<N>,
@@ -151,10 +153,10 @@ impl<N: Scalar> RigidBody<N> {
         &**self.shape
     }
 
-    /// Gets a copy of this body's shared shape.
+    /// A reference to this body's shape handle.
     #[inline]
-    pub fn shape(&self) -> Arc<Box<Repr<Point<N>, Matrix<N>>>> {
-        self.shape.clone()
+    pub fn shape(&self) -> &CollisionShapeHandle<Point<N>, Matrix<N>> {
+        &self.shape
     }
 
     /// The margin surrounding this object's shape.
@@ -269,7 +271,7 @@ impl<N: Scalar> RigidBody<N> {
         let props = shape.mass_properties(density);
 
         RigidBody::new(
-            Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
+            Arc::new(Box::new(shape) as CollisionShape<Point<N>, Matrix<N>>),
             Some(props),
             restitution,
             friction)
@@ -280,7 +282,7 @@ impl<N: Scalar> RigidBody<N> {
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
 
         RigidBody::new(
-            Arc::new(Box::new(shape) as Box<Repr<Point<N>, Matrix<N>>>),
+            Arc::new(Box::new(shape) as CollisionShape<Point<N>, Matrix<N>>),
             None,
             restitution,
             friction)
@@ -290,7 +292,7 @@ impl<N: Scalar> RigidBody<N> {
     ///
     /// Use this if the shape is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(shape:           Arc<Box<Repr<Point<N>, Matrix<N>>>>,
+    pub fn new(shape:           CollisionShapeHandle<Point<N>, Matrix<N>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
                friction:        N)
@@ -650,14 +652,19 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Reference to user-defined data attached to this rigid body.
     #[inline]
-    pub fn user_data(&self) -> &Option<Box<Any>> {
-        &self.user_data
+    pub fn user_data(&self) -> Option<&Box<Any>> {
+        self.user_data.as_ref()
     }
 
     /// Mutable reference to user-defined data attached to this rigid body.
     #[inline]
-    pub fn user_data_mut(&mut self) -> &mut Option<Box<Any>> {
-        &mut self.user_data
+    pub fn user_data_mut(&mut self) -> Option<&mut Box<Any>> {
+        self.user_data.as_mut()
+    }
+
+    /// Attach some user-defined data to this rigid body and return the old one.
+    pub fn set_user_data(&mut self, user_data: Option<Box<Any>>) -> Option<Box<Any>> {
+        mem::replace(&mut self.user_data, user_data)
     }
 }
 

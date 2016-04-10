@@ -25,7 +25,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Second plane
@@ -34,7 +34,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Create the boxes
@@ -55,7 +55,7 @@ fn main() {
 
             rb.append_translation(&Vec2::new(x, y));
 
-            world.add_body(rb);
+            world.add_rigid_body(rb);
         }
     }
 

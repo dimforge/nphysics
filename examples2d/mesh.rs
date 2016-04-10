@@ -44,7 +44,7 @@ fn main() {
     let mesh = Polyline::new(Arc::new(vertices), Arc::new(indices), None, None);
     let rb = RigidBody::new_static(mesh, 0.3, 0.6);
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Create the boxes
@@ -66,7 +66,7 @@ fn main() {
 
             rb.append_translation(&Vec2::new(x, y));
 
-            world.add_body(rb);
+            world.add_rigid_body(rb);
         }
     }
 

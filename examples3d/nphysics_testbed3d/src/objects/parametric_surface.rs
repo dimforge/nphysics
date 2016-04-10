@@ -4,7 +4,7 @@ use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Iso3};
 use na;
-use nphysics::object::RigidBody;
+use nphysics::object::WorldObject;
 use ncollide::procedural;
 use ncollide::parametric;
 
@@ -13,15 +13,15 @@ pub struct ParametricSurface {
     base_color: Pnt3<f32>,
     delta:      Iso3<f32>,
     gfx:        SceneNode,
-    body:       Rc<RefCell<RigidBody>>
+    body:       WorldObject<f32>
 }
 
 impl ParametricSurface {
-    pub fn new<S: parametric::ParametricSurface>(body:           Rc<RefCell<RigidBody>>,
-                                                 delta:          Iso3<f32>,
-                                                 surface:        &S,
-                                                 color:          Pnt3<f32>,
-                                                 window:         &mut Window)
+    pub fn new<S: parametric::ParametricSurface>(body:    WorldObject<f32>,
+                                                 delta:   Iso3<f32>,
+                                                 surface: &S,
+                                                 color:   Pnt3<f32>,
+                                                 window:  &mut Window)
                                                  -> ParametricSurface {
         let t     = na::transformation(body.borrow().deref());
         let param = procedural::parametric_surface_uniform(surface, 100, 100);
@@ -33,6 +33,11 @@ impl ParametricSurface {
             gfx:        window.add_trimesh(param, na::one()),
             body:       body
         };
+
+        if body.is_sensor() {
+            res.gfx.set_surface_rendering_activation(false);
+            res.gfx.set_lines_width(1.0);
+        }
 
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx.set_local_transformation(t * res.delta);
@@ -50,6 +55,12 @@ impl ParametricSurface {
         self.color = self.base_color;
     }
 
+    pub fn set_color(&mut self, color: Pnt3<f32>) {
+        res.gfx.set_color(color.x, color.y, color.z);
+        self.color = color;
+        self.base_color = color;
+    }
+
     pub fn update(&mut self) {
         let rb = self.body.borrow();
 
@@ -62,11 +73,15 @@ impl ParametricSurface {
         }
     }
 
-    pub fn object(&self) -> &SceneNode {
+    pub fn scene_node(&self) -> &SceneNode {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody>> {
+    pub fn scene_node_mut(&mut self) -> &mut SceneNode {
+        &mut self.gfx
+    }
+
+    pub fn object(&self) -> &WorldObject<f32> {
         &self.body
     }
 }

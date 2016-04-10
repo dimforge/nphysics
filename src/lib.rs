@@ -50,15 +50,16 @@ Use `make examples` to build the demos and execute `./your_favorite_example_here
 to see all the cool stuffs you can do.
 
 ## Features
-- static and dynamic rigid bodies
-- common convex primitives: cone, box, ball, cylinder
-- concave geometries build from convex primitives (aka. compound geometries)
-- stable stacking
-- island based sleeping (objects deactivation)
-- ray casting
-- swept sphere based continuous collision detection
-- ball-in-socket joint
-- fixed joint
+- Static and dynamic rigid bodies.
+- Common convex primitives: cone, box, ball, cylinder.
+- Concave geometries build from convex primitives (aka. compound geometries).
+- Stable stacking.
+- Island based sleeping (objects deactivation).
+- Ray casting.
+- Swept sphere based continuous collision detection.
+- Ball-in-socket joint.
+- Fixed joint.
+- Sensors.
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to

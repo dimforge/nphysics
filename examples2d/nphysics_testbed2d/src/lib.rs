@@ -10,6 +10,7 @@ extern crate nphysics2d;
 
 
 pub use testbed::Testbed;
+pub use engine::{GraphicsManager, GraphicsManagerHandle};
 pub use testbed::{CallBackMode, CallBackId};
 
 mod testbed;
@@ -19,9 +20,4 @@ mod camera;
 mod fps;
 mod draw_helper;
 
-mod objects {
-    pub mod ball;
-    pub mod box_node;
-    pub mod lines;
-    pub mod segment;
-}
+pub mod objects;

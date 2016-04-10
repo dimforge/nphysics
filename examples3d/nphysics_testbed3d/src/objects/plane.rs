@@ -1,26 +1,31 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use na;
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
 use na::{Pnt3, Vec3};
-use nphysics3d::object::RigidBody;
+use nphysics3d::object::WorldObject;
 
 pub struct Plane {
     gfx:  SceneNode,
-    body: Rc<RefCell<RigidBody<f32>>>
+    body: WorldObject<f32>
 }
 
 impl Plane {
-    pub fn new(body:         Rc<RefCell<RigidBody<f32>>>,
+    pub fn new(body:         WorldObject<f32>,
                world_pos:    &Pnt3<f32>,
                world_normal: &Vec3<f32>,
                color:        Pnt3<f32>,
                window:       &mut window::Window) -> Plane {
+        let is_sensor = body.is_sensor();
+
         let mut res = Plane {
             gfx:  window.add_quad(100.0, 100.0, 10, 10),
             body: body
         };
+
+        if is_sensor {
+            res.gfx.set_surface_rendering_activation(false);
+            res.gfx.set_lines_width(1.0);
+        }
 
         res.gfx.set_color(color.x, color.y, color.z);
 
@@ -50,11 +55,19 @@ impl Plane {
         // FIXME: atm we assume the plane does not move
     }
 
-    pub fn object(&self) -> &SceneNode {
+    pub fn set_color(&mut self, color: Pnt3<f32>) {
+        self.gfx.set_color(color.x, color.y, color.z);
+    }
+
+    pub fn scene_node(&self) -> &SceneNode {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody<f32>>> {
+    pub fn scene_node_mut(&mut self) -> &mut SceneNode {
+        &mut self.gfx
+    }
+
+    pub fn object(&self) -> &WorldObject<f32> {
         &self.body
     }
 }

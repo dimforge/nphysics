@@ -25,14 +25,14 @@ fn main() {
      */
     let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
 
-    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
+    world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     let geom   = Plane::new(Vec3::new(0.0, -1.0, 0.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
     rb.append_translation(&Vec3::new(0.0, 50.0, 0.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Create the balls
@@ -58,18 +58,18 @@ fn main() {
                 let color;
 
                 if j == 1 {
-                    // invert the gravity for the blue balls.
+                    // Invert the gravity for the blue balls.
                     rb.set_lin_acc_scale(Vec3::new(0.0, -1.0, 0.0));
                     color = Pnt3::new(0.0, 0.0, 1.0);
                 }
                 else {
-                    // double the gravity for the green balls.
+                    // Double the gravity for the green balls.
                     rb.set_lin_acc_scale(Vec3::new(0.0, 2.0, 0.0));
                     color = Pnt3::new(0.0, 1.0, 0.0);
                 }
 
-                let body = world.add_body(rb);
-                testbed.set_color(&body, color);
+                let rb_handle = world.add_rigid_body(rb);
+                testbed.set_rigid_body_color(&rb_handle, color);
             }
         }
     }

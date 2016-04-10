@@ -223,7 +223,7 @@ impl<N: Scalar> JointManager<N> {
     }
 
     /// Collects all the constraints caused by joints.
-    pub fn interferences(&mut self, constraint: &mut Vec<Constraint<N>>) {
+    pub fn constraints(&mut self, constraint: &mut Vec<Constraint<N>>) {
         for joint in self.joints.elements().iter() {
             constraint.push(joint.value.clone())
         }

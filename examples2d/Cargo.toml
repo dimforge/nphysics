@@ -62,3 +62,7 @@ path = "./fixed_bug_11.rs"
 [[bin]]
 name = "manual_forces"
 path = "./manual_forces.rs"
+
+[[bin]]
+name = "sensor"
+path = "./sensor.rs"

@@ -25,7 +25,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, -10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Second plane
@@ -34,7 +34,7 @@ fn main() {
 
     rb.append_translation(&Vec2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Create the balls
@@ -67,8 +67,8 @@ fn main() {
                 color = Pnt3::new(0.0, 1.0, 0.0);
             }
 
-            let body = world.add_body(rb);
-            testbed.set_color(&body, color);
+            let body = world.add_rigid_body(rb);
+            testbed.set_rigid_body_color(&body, color);
         }
     }
 

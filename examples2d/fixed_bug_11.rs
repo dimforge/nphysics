@@ -44,7 +44,7 @@ fn main() {
 
     rb.set_lin_vel(Vec2::new(0.99, 0.0));
 
-    world.add_body(rb.clone());
+    world.add_rigid_body(rb.clone());
 
     /*
      * Create the box that will not be deactivated.
@@ -52,7 +52,7 @@ fn main() {
     rb.set_deactivation_threshold(Some(0.5));
     rb.append_translation(&Vec2::new(0.0, 3.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Set up the testbed.

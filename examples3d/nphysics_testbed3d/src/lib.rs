@@ -8,7 +8,8 @@ extern crate nphysics3d;
 
 
 pub use testbed::Testbed;
+pub use engine::{GraphicsManager, GraphicsManagerHandle};
 
 mod testbed;
 mod engine;
-mod objects;
+pub mod objects;

@@ -25,7 +25,7 @@ fn main() {
 
         let mesh: TriMesh3<f32> = TriMesh::new(Arc::new(vertices), Arc::new(indices), None, None);
 
-        world.add_body(RigidBody::new_static(mesh, 0.3, 0.6));
+        world.add_rigid_body(RigidBody::new_static(mesh, 0.3, 0.6));
     }
 
     /*

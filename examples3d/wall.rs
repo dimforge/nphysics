@@ -21,7 +21,7 @@ fn main() {
      */
     let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Create the boxes
@@ -42,7 +42,7 @@ fn main() {
 
             rb.append_translation(&Vec3::new(x, y, 0.0));
 
-            world.add_body(rb);
+            world.add_rigid_body(rb);
         }
     }
 

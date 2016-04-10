@@ -10,7 +10,7 @@ name = "nphysics_testbed2d"
 path = "../../build/nphysics2d"
 
 [dependencies]
-sfml = "0.9.*"
+sfml = "0.11.*"
 nalgebra = "0.6.*"
 time = "*"
 num = "*"
