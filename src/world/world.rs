@@ -44,6 +44,7 @@ pub struct World<N: Scalar> {
     ccd:         TranslationalCCDMotionClamping<N>,
     joints:      JointManager<N>,
     solver:      AccumulatedImpulseSolver<N>,
+    collector:   Vec<Constraint<N>>,
 }
 
 impl<N: Scalar> World<N> {
@@ -96,6 +97,7 @@ impl<N: Scalar> World<N> {
             ccd:        ccd,
             joints:     joints,
             solver:     solver,
+            collector:  Vec::new(),
         }
     }
 
@@ -120,8 +122,7 @@ impl<N: Scalar> World<N> {
         self.joints.update(&mut *self.sleep.borrow_mut());
         self.sleep.borrow_mut().update(&mut self.cworld, &self.joints, &self.bodies);
 
-        // XXX: use `self.collector` instead to avoid allocation.
-        let mut collector = Vec::new();
+        self.collector.clear();
 
         for (b1, b2, c) in self.cworld.contacts() {
             if b1.data.borrow().is_active() || b2.data.borrow().is_active() {
@@ -131,15 +132,19 @@ impl<N: Scalar> World<N> {
                 let mut c = c.clone();
                 c.depth = c.depth + m1 + m2;
 
-                collector.push(Constraint::RBRB(b1.data.clone(), b2.data.clone(), c));
+                self.collector.push(Constraint::RBRB(b1.data.clone(), b2.data.clone(), c));
             }
         }
 
-        self.joints.interferences(&mut collector);
+        self.joints.interferences(&mut self.collector);
 
-        self.solver.solve(dt, &collector[..]);
+        self.solver.solve(dt, &self.collector[..]);
 
-        collector.clear();
+        // if we are using less than half of the capacity of the collector,
+        // delete the old collector and allocate a new collector with half the capacity to save memory.
+        if self.collector.capacity() > self.collector.len() * 2 {
+            self.collector = Vec::with_capacity(self.collector.capacity() / 2);
+        }
     }
 
     /// Adds a rigid body to the physics world.
