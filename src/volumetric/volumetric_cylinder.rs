@@ -23,9 +23,9 @@ pub fn cylinder_volume<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
     }
 }
 
-/// The surface of a cylinder.
+/// The area of a cylinder.
 #[inline]
-pub fn cylinder_surface<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
+pub fn cylinder_area<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
     assert!(dim == 2 || dim == 3);
 
     match dim {
@@ -91,8 +91,8 @@ pub fn cylinder_unit_angular_inertia<N, I>(dim: usize, half_height: N, radius: N
 macro_rules! impl_volumetric_cylinder(
     ($t: ident, $dim: expr, $p: ident, $i: ident) => (
         impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
-            fn surface(&self) -> N {
-                cylinder_surface($dim, self.half_height(), self.radius())
+            fn area(&self) -> N {
+                cylinder_area($dim, self.half_height(), self.radius())
             }
 
             fn volume(&self) -> N {

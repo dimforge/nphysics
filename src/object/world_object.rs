@@ -1,6 +1,6 @@
 use std::cell::{RefCell, Ref, RefMut};
 use ncollide::math::Scalar;
-use ncollide::inspection::Repr;
+use ncollide::shape::ShapeHandle;
 use object::{RigidBody, Sensor, RigidBodyHandle, SensorHandle};
 use math::{Matrix, Point};
 
@@ -160,10 +160,10 @@ macro_rules! impl_getters(
 
             /// A reference to this object geometrical shape.
             #[inline]
-            pub fn shape_ref(&self) -> &(Repr<Point<N>, Matrix<N>>) {
+            pub fn shape(&self) -> &ShapeHandle<Point<N>, Matrix<N>> {
                 match *self {
-                    $t::RigidBody(ref rb) => rb.shape_ref(),
-                    $t::Sensor(ref s)     => s.shape_ref()
+                    $t::RigidBody(ref rb) => rb.shape(),
+                    $t::Sensor(ref s)     => s.shape()
                 }
             }
 

@@ -5,17 +5,15 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::sync::Arc;
 use std::path::Path;
 use rand::random;
 use na::{Pnt3, Vec3, Translation};
 use kiss3d::loader::obj;
-use ncollide::shape::{Plane, Compound, Convex};
+use ncollide::shape::{Plane, Compound, Convex, ShapeHandle};
 use ncollide::procedural::TriMesh3;
 use ncollide::transformation;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
 use ncollide::bounding_volume;
-use ncollide::inspection::Repr3;
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
@@ -96,7 +94,7 @@ fn main() {
                 let (decomp, _) = transformation::hacd(trimesh, 0.03, 1);
 
                 for mesh in decomp.into_iter() {
-                    let convex = Arc::new(Box::new(Convex::new(mesh.coords)) as Box<Repr3<f32>>);
+                    let convex = ShapeHandle::new(Convex::new(mesh.coords));
                     geom_data.push((deltas, convex));
                 }
             }

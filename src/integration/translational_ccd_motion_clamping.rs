@@ -85,8 +85,8 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                 let obj1_uid = &*co1.value.rigid_body as *const RefCell<RigidBody<N>> as usize;
 
                 let last_transform = na::append_translation(obj1.position(), &-movement);
-                let begin_aabb     = bounding_volume::aabb(obj1.shape_ref(), &last_transform);
-                let end_aabb       = bounding_volume::aabb(obj1.shape_ref(), obj1.position());
+                let begin_aabb     = bounding_volume::aabb(obj1.shape().as_ref(), &last_transform);
+                let end_aabb       = bounding_volume::aabb(obj1.shape().as_ref(), obj1.position());
                 let swept_aabb     = begin_aabb.merged(&end_aabb);
 
                 /*
@@ -109,10 +109,10 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                         let toi = geometry::time_of_impact(
                             &last_transform,
                             &dir,
-                            obj1.shape_ref(),
+                            obj1.shape().as_ref(),
                             &obj2.position(),
                             &na::zero(), // Assume the other object does not move.
-                            obj2.shape_ref());
+                            obj2.shape().as_ref());
 
                         match toi {
                             Some(t) => {

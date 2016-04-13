@@ -2,11 +2,10 @@ use std::mem;
 use std::any::Any;
 use std::ops::Mul;
 use std::rc::Rc;
-use std::sync::Arc;
 use std::cell::RefCell;
 use na::{self, Transformation, Transform, Translation, Rotation, Bounded, Cross};
 use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
-use ncollide::world::{CollisionShape, CollisionShapeHandle};
+use ncollide::shape::ShapeHandle;
 use ncollide::inspection::Repr;
 use ncollide::math::Scalar;
 use math::{Point, Vector, Orientation, Matrix, AngularInertia};
@@ -53,7 +52,7 @@ impl<N: Scalar> ActivationState<N> {
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody<N: Scalar> {
     state:                RigidBodyState,
-    shape:                CollisionShapeHandle<Point<N>, Matrix<N>>, // FIXME: define our own trait.
+    shape:                ShapeHandle<Point<N>, Matrix<N>>,
     local_to_world:       Matrix<N>,
     lin_vel:              Vector<N>,
     ang_vel:              Orientation<N>,
@@ -147,15 +146,9 @@ impl<N: Scalar> RigidBody<N> {
         &self.local_to_world
     }
 
-    /// Gets a reference to this body's shape.
-    #[inline]
-    pub fn shape_ref(&self) -> &(Repr<Point<N>, Matrix<N>>) {
-        &**self.shape
-    }
-
     /// A reference to this body's shape handle.
     #[inline]
-    pub fn shape(&self) -> &CollisionShapeHandle<Point<N>, Matrix<N>> {
+    pub fn shape(&self) -> &ShapeHandle<Point<N>, Matrix<N>> {
         &self.shape
     }
 
@@ -270,29 +263,21 @@ impl<N: Scalar> RigidBody<N> {
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
         let props = shape.mass_properties(density);
 
-        RigidBody::new(
-            Arc::new(Box::new(shape) as CollisionShape<Point<N>, Matrix<N>>),
-            Some(props),
-            restitution,
-            friction)
+        RigidBody::new(ShapeHandle::new(shape), Some(props), restitution, friction)
     }
 
     /// Creates a new rigid body that cannot move.
     pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
 
-        RigidBody::new(
-            Arc::new(Box::new(shape) as CollisionShape<Point<N>, Matrix<N>>),
-            None,
-            restitution,
-            friction)
+        RigidBody::new(ShapeHandle::new(shape), None, restitution, friction)
     }
 
     /// Creates a new rigid body with a given shape.
     ///
     /// Use this if the shape is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(shape:           CollisionShapeHandle<Point<N>, Matrix<N>>,
+    pub fn new(shape:           ShapeHandle<Point<N>, Matrix<N>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
                friction:        N)
@@ -672,7 +657,7 @@ impl<N, M> HasBoundingVolume<M, BoundingSphere<Point<N>>> for RigidBody<N>
     where N: Scalar,
           M: Copy + Mul<Matrix<N>, Output = Matrix<N>> { // FIXME: avoiding `Copy` would be great.
     fn bounding_volume(&self, m: &M) -> BoundingSphere<Point<N>> {
-        bounding_volume::bounding_sphere(&**self.shape, &(*m * self.local_to_world)).loosened(self.margin())
+        bounding_volume::bounding_sphere(self.shape.as_ref(), &(*m * self.local_to_world)).loosened(self.margin())
     }
 }
 
@@ -680,6 +665,6 @@ impl<N, M> HasBoundingVolume<M, AABB<Point<N>>> for RigidBody<N>
     where N: Scalar,
           M: Copy + Mul<Matrix<N>, Output = Matrix<N>> { // FIXME: avoiding `Copy` would be great.
     fn bounding_volume(&self, m: &M) -> AABB<Point<N>> {
-        bounding_volume::aabb(&**self.shape, &(*m * self.local_to_world)).loosened(self.margin())
+        bounding_volume::aabb(self.shape.as_ref(), &(*m * self.local_to_world)).loosened(self.margin())
     }
 }

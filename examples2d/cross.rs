@@ -5,10 +5,8 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use num::Float;
-use std::sync::Arc;
 use na::{Vec2, Translation};
-use ncollide::shape::{Plane, Cuboid, Compound};
-use ncollide::inspection::Repr2;
+use ncollide::shape::{Plane, Cuboid, Compound, ShapeHandle};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -44,15 +42,15 @@ fn main() {
      */
     let mut cross_geoms = Vec::new();
 
-    let edge_x = Box::new(Cuboid::new(Vec2::new(4.96f32, 0.21)));
-    let edge_y = Box::new(Cuboid::new(Vec2::new(0.21f32, 4.96)));
+    let edge_x = Cuboid::new(Vec2::new(4.96f32, 0.21));
+    let edge_y = Cuboid::new(Vec2::new(0.21f32, 4.96));
 
-    cross_geoms.push((na::one(), Arc::new(edge_x as Box<Repr2<f32>>)));
-    cross_geoms.push((na::one(), Arc::new(edge_y as Box<Repr2<f32>>)));
+    cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
+    cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
 
     let compound = Compound::new(cross_geoms);
-    let mass = compound.mass_properties(1.0);
-    let cross = Arc::new(Box::new(compound) as Box<Repr2<f32>>);
+    let mass     = compound.mass_properties(1.0);
+    let cross    = ShapeHandle::new(compound);
 
     /*
      * Create the boxes

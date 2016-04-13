@@ -16,9 +16,9 @@ pub fn ball_volume<N: Scalar>(dim: usize, radius: N) -> N {
     _pi * radius.powi(dim as i32)
 }
 
-/// The surface of a ball.
+/// The area of a ball.
 #[inline]
-pub fn ball_surface<N: Scalar>(dim: usize, radius: N) -> N {
+pub fn ball_area<N: Scalar>(dim: usize, radius: N) -> N {
     assert!(dim == 2 || dim == 3);
 
     match dim {
@@ -73,8 +73,8 @@ pub fn ball_unit_angular_inertia<N, I>(dim: usize, radius: N) -> I
 macro_rules! impl_volumetric_ball(
     ($t: ident, $dim: expr, $p: ident, $i: ident) => {
         impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
-            fn surface(&self) -> N {
-                ball_surface($dim, self.radius())
+            fn area(&self) -> N {
+                ball_area($dim, self.radius())
             }
 
             fn volume(&self) -> N {

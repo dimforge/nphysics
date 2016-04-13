@@ -7,11 +7,11 @@ use volumetric::{Volumetric, InertiaTensor};
 macro_rules! impl_volumetric_compound(
     ($t: ty, $p: ty, $i: ty) => (
         impl<N: Scalar> Volumetric<N, $p, $i> for $t {
-            fn surface(&self) -> N {
+            fn area(&self) -> N {
                 let mut stot: N = na::zero();
 
                 for &(_, ref s) in self.shapes().iter() {
-                    stot = stot + s.surface()
+                    stot = stot + s.area()
                 }
 
                 stot

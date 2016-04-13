@@ -38,7 +38,7 @@ impl<'a> GraphicsManager<'a> {
             let bobject = object.borrow();
             let mut nodes = Vec::new();
 
-            self.add_shape(object.clone(), na::one(), bobject.shape_ref(), &mut nodes);
+            self.add_shape(object.clone(), na::one(), bobject.shape().as_ref(), &mut nodes);
 
             nodes
         };
@@ -83,7 +83,7 @@ impl<'a> GraphicsManager<'a> {
         }
         else if let Some(s) = repr.downcast_ref::<Cm>() {
             for &(t, ref s) in s.shapes().iter() {
-                self.add_shape(object.clone(), delta * t, &***s, out)
+                self.add_shape(object.clone(), delta * t, s.as_ref(), out)
             }
         }
         else if let Some(s) = repr.downcast_ref::<Ls>() {

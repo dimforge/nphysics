@@ -2,11 +2,10 @@ use std::mem;
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::sync::Arc;
 use na;
 use ncollide::math::Scalar;
 use ncollide::inspection::Repr;
-use ncollide::world::CollisionShapeHandle;
+use ncollide::shape::ShapeHandle;
 use math::{Point, Matrix};
 use object::{RigidBodyHandle, SensorCollisionGroups};
 
@@ -17,7 +16,7 @@ pub type SensorHandle<N> = Rc<RefCell<Sensor<N>>>;
 pub struct Sensor<N: Scalar> {
     parent:              Option<RigidBodyHandle<N>>,
     relative_position:   Matrix<N>,
-    shape:               CollisionShapeHandle<Point<N>, Matrix<N>>, // FIXME: define our own trait.
+    shape:               ShapeHandle<Point<N>, Matrix<N>>,
     margin:              N,
     collision_groups:    SensorCollisionGroups,
     parent_prox:         bool,
@@ -37,10 +36,17 @@ impl<N: Scalar> Sensor<N> {
     /// A sensor has a default margin equal to zero.
     pub fn new<G>(shape: G, parent: Option<RigidBodyHandle<N>>) -> Sensor<N>
         where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
+        Sensor::new_with_shared_shape(ShapeHandle::new(shape), parent)
+    }
+
+    /// Creates a new senson with a given shared shape.
+    pub fn new_with_shared_shape(shape:  ShapeHandle<Point<N>, Matrix<N>>,
+                                 parent: Option<RigidBodyHandle<N>>)
+                                 -> Sensor<N> {
         Sensor {
             parent:              parent,
             relative_position:   na::one(),
-            shape:               Arc::new(Box::new(shape)),
+            shape:               shape,
             margin:              na::zero(),
             collision_groups:    SensorCollisionGroups::new(),
             parent_prox:         false,
@@ -164,14 +170,8 @@ impl<N: Scalar> Sensor<N> {
 
     /// A reference of this sensor's shared shape.
     #[inline]
-    pub fn shape(&self) -> &CollisionShapeHandle<Point<N>, Matrix<N>> {
+    pub fn shape(&self) -> &ShapeHandle<Point<N>, Matrix<N>> {
         &self.shape
-    }
-
-    /// A reference of this sensor's shape.
-    #[inline]
-    pub fn shape_ref(&self) -> &(Repr<Point<N>, Matrix<N>>) {
-        &**self.shape
     }
 
     /// This sensor's collision groups.

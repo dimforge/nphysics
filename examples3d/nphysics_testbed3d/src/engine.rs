@@ -140,7 +140,7 @@ impl GraphicsManager {
         let nodes = {
             let mut nodes = Vec::new();
 
-            self.add_repr(window, object.clone(), na::one(), object.borrow().shape_ref(), color, &mut nodes);
+            self.add_repr(window, object.clone(), na::one(), object.borrow().shape().as_ref(), color, &mut nodes);
 
             nodes
         };
@@ -195,7 +195,7 @@ impl GraphicsManager {
         }
         else if let Some(s) = repr.downcast_ref::<Cm>() {
             for &(t, ref s) in s.shapes().iter() {
-                self.add_repr(window, object.clone(), delta * t, &***s, color, out)
+                self.add_repr(window, object.clone(), delta * t, s.as_ref(), color, out)
             }
         }
         else if let Some(s) = repr.downcast_ref::<Tm>() {

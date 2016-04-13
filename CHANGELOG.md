@@ -15,3 +15,4 @@ This project adheres to [Semantic Versioning](http://semver.org/).
     rigid bodies with CCD should trigger events for sensors it should have
     traversed.
   * `World::interferences()` has been renamed to `World::constraints()`.
+  * `Volumetric::surface()` has been renamed to `Volumetric::area()`.

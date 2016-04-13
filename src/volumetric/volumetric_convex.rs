@@ -100,19 +100,19 @@ pub unsafe fn convex_mesh_volume_and_center_of_mass<P>(convex_mesh: &TriMesh<P>)
 /// The area and center of mass of a 2D convex Polyline.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_area_and_center_of_mass2<P>(convex_mesh: &Polyline<P>) -> (<P::Vect as Vect>::Scalar, P)
+pub unsafe fn convex_polyline_area_and_center_of_mass<P>(convex_mesh: &Polyline<P>) -> (<P::Vect as Vect>::Scalar, P)
     where P: Point {
     let geometric_center = utils::center(&convex_mesh.coords[..]);
-    let mut res = na::orig::<P>();
-    let mut areasum = na::zero::<<P::Vect as Vect>::Scalar>();
+    let mut res          = na::orig::<P>();
+    let mut areasum      = na::zero::<<P::Vect as Vect>::Scalar>();
 
     let mut iterpeek = convex_mesh.coords.iter().peekable();
-    let firstelement = *iterpeek.peek().unwrap(); // store first element to close the cycle in the end with unwrap_or
+    let firstelement = *iterpeek.peek().unwrap(); // Stores first element to close the cycle in the end with unwrap_or.
     while let Some(elem) = iterpeek.next() {
-        let area = utils::triangle_area(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
+        let area   = utils::triangle_area(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
         let center = utils::triangle_center(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
 
-        res = res + *center.as_vec() * area;
+        res     = res + *center.as_vec() * area;
         areasum = areasum + area;
     }
 
@@ -167,13 +167,13 @@ pub unsafe fn convex_mesh_mass_properties<P, I>(convex_mesh: &TriMesh<P>,
 /// The mass properties of a 2D convex Polyline.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_mass_properties2<P>(convex_mesh: &Polyline<P>,
-                                              density:     <P::Vect as Vect>::Scalar)
-                                              -> (<P::Vect as Vect>::Scalar, P, <P::Vect as Vect>::Scalar)
+pub unsafe fn convex_polyline_mass_properties<P>(convex_mesh: &Polyline<P>,
+                                                 density:     <P::Vect as Vect>::Scalar)
+                                                 -> (<P::Vect as Vect>::Scalar, P, <P::Vect as Vect>::Scalar)
     where P: Point {
     assert!(na::dim::<P>() == 2);
 
-    let (area, com) = convex_mesh_area_and_center_of_mass2(convex_mesh);
+    let (area, com) = convex_polyline_area_and_center_of_mass(convex_mesh);
 
     if na::is_zero(&area) {
         return (na::zero(), com, na::zero());
@@ -207,12 +207,31 @@ pub unsafe fn convex_mesh_mass_properties2<P>(convex_mesh: &Polyline<P>,
     (area * density, com, itot * density)
 }
 
-/// The surface of a convex mesh.
+/// The area of a convex polyline.
+///
+/// This is unsafe as the polyline is not checked to be actually convex.
+pub unsafe fn convex_polyline_area<P>(convex_polyline: &Polyline<P>) -> <P::Vect as Vect>::Scalar
+    where P: Point {
+    let geometric_center = utils::center(&convex_polyline.coords[..]);
+    let mut areasum = na::zero::<<P::Vect as Vect>::Scalar>();
+
+    let mut iterpeek = convex_polyline.coords.iter().peekable();
+    let firstelement = *iterpeek.peek().unwrap(); // Store first element to close the cycle in the end with unwrap_or.
+    while let Some(elem) = iterpeek.next() {
+        let area = utils::triangle_area(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
+
+        areasum = areasum + area;
+    }
+
+    areasum
+}
+
+/// The area of a convex mesh.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_surface<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Vect>::Scalar
+pub unsafe fn convex_mesh_area<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Vect>::Scalar
     where P: Point {
-    let mut surface = na::zero::<<P::Vect as Vect>::Scalar>();
+    let mut area = na::zero::<<P::Vect as Vect>::Scalar>();
 
     match convex_mesh.indices {
         IndexBuffer::Unified(ref idx) => {
@@ -221,17 +240,17 @@ pub unsafe fn convex_mesh_surface<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Ve
                 let p2 = &convex_mesh.coords[t.y as usize];
                 let p3 = &convex_mesh.coords[t.z as usize];
 
-                surface = surface + utils::triangle_area(p1, p2, p3);
+                area = area + utils::triangle_area(p1, p2, p3);
             }
         },
         IndexBuffer::Split(_) => unreachable!()
     }
 
-    surface
+    area
 }
 
-/// The surface of a convex hull.
-pub fn convex_hull_surface<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
+/// The area of a convex hull.
+pub fn convex_hull_area<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
     where P: Point,
           P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
           <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
@@ -242,11 +261,12 @@ pub fn convex_hull_surface<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Sc
 
     match dim {
         2 => {
-            unimplemented!()
+            let convex_polyline = transformation::convex_hull2(points);
+            unsafe { convex_polyline_area(&convex_polyline) }
         }
         3 => {
             let convex_mesh = transformation::convex_hull3(points);
-            unsafe { convex_mesh_surface(&convex_mesh) }
+            unsafe { convex_mesh_area(&convex_mesh) }
         }
         _ => {
             unimplemented!()
@@ -266,7 +286,7 @@ pub fn convex_hull_volume<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Sca
 
     match dim {
         2 => {
-            unimplemented!()
+            convex_hull_area(dim, points)
         }
         3 => {
             let convex_mesh = transformation::convex_hull3(points);
@@ -290,7 +310,8 @@ pub fn convex_hull_center_of_mass<P>(dim: usize, points: &[P]) -> P
 
     match dim {
         2 => {
-            unimplemented!()
+            let convex_polyline = transformation::convex_hull2(points);
+            unsafe { convex_polyline_area_and_center_of_mass(&convex_polyline).1 }
         }
         3 => {
             let convex_mesh = transformation::convex_hull3(points);
@@ -320,7 +341,7 @@ pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
         2 => {
             let convex_mesh = transformation::convex_hull2(points);
             let (area, _, i): (_, _, <P::Vect as Vect>::Scalar) =
-                               unsafe { convex_mesh_mass_properties2(&convex_mesh, na::one()) };
+                               unsafe { convex_polyline_mass_properties(&convex_mesh, na::one()) };
             let mut tensor: I = na::zero();
             tensor[(0, 0)] = i * (na::one::<<P::Vect as Vect>::Scalar>() / area);
 
@@ -341,8 +362,8 @@ pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
 }
 
 impl<N: Scalar> Volumetric<N, Pnt3<N>, Mat3<N>> for Convex3<N> {
-    fn surface(&self) -> N {
-        convex_hull_surface(3, self.points())
+    fn area(&self) -> N {
+        convex_hull_area(3, self.points())
     }
 
     fn volume(&self) -> N {
@@ -364,8 +385,8 @@ impl<N: Scalar> Volumetric<N, Pnt3<N>, Mat3<N>> for Convex3<N> {
 }
 
 impl<N: Scalar> Volumetric<N, Pnt2<N>, Mat1<N>> for Convex2<N> {
-    fn surface(&self) -> N {
-        convex_hull_surface(2, self.points())
+    fn area(&self) -> N {
+        convex_hull_area(2, self.points())
     }
 
     fn volume(&self) -> N {
@@ -382,7 +403,7 @@ impl<N: Scalar> Volumetric<N, Pnt2<N>, Mat1<N>> for Convex2<N> {
 
     fn mass_properties(&self, density: N) -> (N, Pnt2<N>, Mat1<N>) {
         let convex_mesh = transformation::convex_hull2(self.points());
-        let (r1, r2, r3) = unsafe { convex_mesh_mass_properties2(&convex_mesh, density) };
+        let (r1, r2, r3) = unsafe { convex_polyline_mass_properties(&convex_mesh, density) };
         (r1, r2, Mat1::<N>::new(r3))
     }
 }

@@ -129,8 +129,7 @@ impl<N: Scalar> World<N> {
             if rb.is_active() {
                 self.forces.update(dt.clone(), &mut *rb);
                 self.integrator.update(dt.clone(), &mut *rb);
-                self.cworld.deferred_set_position(&*e.value as *const RefCell<RigidBody<N>> as usize,
-                                                  rb.position().clone());
+                self.cworld.deferred_set_position(WorldObject::rigid_body_uid(&e.value), rb.position().clone());
             }
         }
 
@@ -139,8 +138,7 @@ impl<N: Scalar> World<N> {
 
             if let Some(rb) = sensor.parent() {
                 if rb.borrow().is_active() {
-                    self.cworld.deferred_set_position(&*e.value as *const RefCell<Sensor<N>> as usize,
-                                                      sensor.position());
+                    self.cworld.deferred_set_position(WorldObject::sensor_uid(&e.value), sensor.position());
                 }
             }
         }
@@ -185,7 +183,7 @@ impl<N: Scalar> World<N> {
         let groups = rb.collision_groups().as_collision_groups().clone();
         let collision_object_prediction = rb.margin() + self.prediction / na::cast(2.0f64);
         let handle = Rc::new(RefCell::new(rb));
-        let uid = &*handle as *const RefCell<RigidBody<N>> as usize;
+        let uid = WorldObject::rigid_body_uid(&handle);
 
         self.rigid_bodies.insert(uid, handle.clone());
         self.cworld.add(uid, position, shape, groups,
@@ -214,7 +212,7 @@ impl<N: Scalar> World<N> {
 
     /// Remove a rigid body from the physics world.
     pub fn remove_rigid_body(&mut self, rb: &RigidBodyHandle<N>) {
-        let uid = &**rb as *const RefCell<RigidBody<N>> as usize;
+        let uid = WorldObject::rigid_body_uid(rb);
         self.cworld.deferred_remove(uid);
         self.cworld.perform_removals_and_broad_phase();
         self.joints.remove(rb, &mut *self.sleep.borrow_mut());
@@ -225,7 +223,7 @@ impl<N: Scalar> World<N> {
 
     /// Remove a sensor from the physics world.
     pub fn remove_sensor(&mut self, sensor: &SensorHandle<N>) {
-        let uid = &**sensor as *const RefCell<Sensor<N>> as usize;
+        let uid = WorldObject::sensor_uid(sensor);
         self.cworld.deferred_remove(uid);
         self.cworld.perform_removals_and_broad_phase();
         self.sensors.remove(&uid);

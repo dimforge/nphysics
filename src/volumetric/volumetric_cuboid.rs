@@ -23,9 +23,9 @@ pub fn cuboid_volume<N, V>(dim: usize, half_extents: &V) -> N
     res
 }
 
-/// The surface of a cuboid.
+/// The area of a cuboid.
 #[inline]
-pub fn cuboid_surface<N, V>(dim: usize, half_extents: &V) -> N
+pub fn cuboid_area<N, V>(dim: usize, half_extents: &V) -> N
     where N: Scalar,
           V: Index<usize, Output = N> {
     assert!(dim == 2 || dim == 3);
@@ -102,8 +102,8 @@ pub fn cuboid_unit_angular_inertia<N, V, I>(dim: usize, half_extents: &V) -> I
 macro_rules! impl_volumetric_cuboid(
     ($t: ident, $dim: expr, $p: ident, $i: ident) => (
         impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
-            fn surface(&self) -> N {
-                cuboid_surface($dim, self.half_extents())
+            fn area(&self) -> N {
+                cuboid_area($dim, self.half_extents())
             }
 
             fn volume(&self) -> N {
