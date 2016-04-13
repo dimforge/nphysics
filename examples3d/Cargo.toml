@@ -65,6 +65,10 @@ name = "convex_decomposition"
 path = "./convex_decomposition.rs"
 
 [[bin]]
+name = "collision_groups"
+path = "./collision_groups.rs"
+
+[[bin]]
 name = "sensor"
 path = "./sensor.rs"
 

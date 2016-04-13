@@ -8,6 +8,12 @@ pub const SENSOR_GROUP_ID: usize = 28;
 macro_rules! collision_groups_wrapper_impl(
     ($t: ident) => (
         impl $t {
+            /// The maximum allowed group identifier.
+            #[inline]
+            pub fn max_group_id() -> usize {
+                27
+            }
+
             /// Return the internal, ncollide-compatible, `CollisionGroups`
             #[inline]
             pub fn as_collision_groups(&self) -> &CollisionGroups {
@@ -41,8 +47,8 @@ macro_rules! collision_groups_wrapper_impl(
             /// Make this object member of the given groups only.
             #[inline]
             pub fn set_membership(&mut self, groups: &[usize]) {
-                assert!(groups.contains(&STATIC_GROUP_ID), "The static group {} is reserved.", STATIC_GROUP_ID);
-                assert!(groups.contains(&SENSOR_GROUP_ID), "The sensor group {} is reserved.", SENSOR_GROUP_ID);
+                assert!(!groups.contains(&STATIC_GROUP_ID), "The static group {} is reserved.", STATIC_GROUP_ID);
+                assert!(!groups.contains(&SENSOR_GROUP_ID), "The sensor group {} is reserved.", SENSOR_GROUP_ID);
 
                 let is_dynamic = self.is_dynamic();
                 self.collision_groups.set_membership(groups);
@@ -52,8 +58,8 @@ macro_rules! collision_groups_wrapper_impl(
             /// Whitelists the given groups only (others will be un-whitelisted).
             #[inline]
             pub fn set_whitelist(&mut self, groups: &[usize]) {
-                assert!(groups.contains(&STATIC_GROUP_ID), "The static group {} is reserved.", STATIC_GROUP_ID);
-                assert!(groups.contains(&SENSOR_GROUP_ID), "The sensor group {} is reserved.", SENSOR_GROUP_ID);
+                assert!(!groups.contains(&STATIC_GROUP_ID), "The static group {} is reserved.", STATIC_GROUP_ID);
+                assert!(!groups.contains(&SENSOR_GROUP_ID), "The sensor group {} is reserved.", SENSOR_GROUP_ID);
 
                 let is_dynamic = self.is_dynamic();
                 self.collision_groups.set_whitelist(groups);
@@ -63,8 +69,8 @@ macro_rules! collision_groups_wrapper_impl(
             /// Blacklists the given groups only (others will be un-blacklisted).
             #[inline]
             pub fn set_blacklist(&mut self, groups: &[usize]) {
-                assert!(groups.contains(&STATIC_GROUP_ID), "The static group {} is reserved.", STATIC_GROUP_ID);
-                assert!(groups.contains(&SENSOR_GROUP_ID), "The sensor group {} is reserved.", SENSOR_GROUP_ID);
+                assert!(!groups.contains(&STATIC_GROUP_ID), "The static group {} is reserved.", STATIC_GROUP_ID);
+                assert!(!groups.contains(&SENSOR_GROUP_ID), "The sensor group {} is reserved.", SENSOR_GROUP_ID);
 
                 let is_dynamic = self.is_dynamic();
                 self.collision_groups.set_blacklist(groups);

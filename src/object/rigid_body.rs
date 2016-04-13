@@ -632,6 +632,15 @@ impl<N: Scalar> RigidBody<N> {
     /// Set the new collisions groups of this rigid body.
     #[inline]
     pub fn set_collision_groups(&mut self, new_groups: RigidBodyCollisionGroups) {
+        if self.can_move() && new_groups.is_static() {
+            panic!("Attempted to assign collision groups for static rigid bodies to a dynamic rigid body. \
+                    TIP: use RigidBodyCollisionGroups::new_dynamic() to create one.");
+        }
+        if !self.can_move() && new_groups.is_dynamic() {
+            panic!("Attempted to assign collision groups for dynamic rigid bodies to a static rigid body. \
+                    TIP: use RigidBodyCollisionGroups::new_static() to create one.");
+        }
+
         self.collision_groups = new_groups;
     }
 

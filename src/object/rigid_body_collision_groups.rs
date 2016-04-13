@@ -4,7 +4,7 @@ use object::{STATIC_GROUP_ID, SENSOR_GROUP_ID};
 /// Groups of collision used to filter which object collide with which other one.
 /// nphysics use a specific group for its own purposes (i.e. the group of static objects).
 /// The `group 29` is reserved and you cannot use it.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct RigidBodyCollisionGroups {
     collision_groups: CollisionGroups
 }
@@ -32,7 +32,6 @@ impl RigidBodyCollisionGroups {
     /// groups. Static objects and sensors are blacklisted by default and self-collision disabled.
     #[inline]
     pub fn new_static() -> RigidBodyCollisionGroups {
-
         // all memberships + all whitelists activated
         let mut groups = CollisionGroups::new();
 

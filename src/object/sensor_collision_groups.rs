@@ -4,7 +4,7 @@ use object::{STATIC_GROUP_ID, SENSOR_GROUP_ID};
 /// Groups of collision used to filter which object collide with which other one.
 /// nphysics use a specific group for its own purposes (i.e. the group of static objects).
 /// The `group 29` is reserved and you cannot use it.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct SensorCollisionGroups {
     collision_groups: CollisionGroups
 }
