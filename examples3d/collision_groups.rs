@@ -19,7 +19,7 @@ fn main() {
     world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
 
     /*
-     * Declare groups.
+     * Setup groups.
      */
     const GREEN_GROUP_ID: usize = 0;
     let mut green_static_group  = RigidBodyCollisionGroups::new_static();
@@ -47,7 +47,7 @@ fn main() {
     world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     /*
-     * A green floor that will collide with the BLUE group only.
+     * A green floor that will collide with the GREEN group only.
      */
     let geom   = Cuboid::new(Vec3::new(10.0, 1.0, 10.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
@@ -59,7 +59,7 @@ fn main() {
     testbed.set_rigid_body_color(&handle, Pnt3::new(0.0, 1.0, 0.0));
 
     /*
-     * A blue floor that will collide with the GREEN group only.
+     * A blue floor that will collide with the BLUE group only.
      */
     let geom   = Cuboid::new(Vec3::new(10.0, 1.0, 10.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
