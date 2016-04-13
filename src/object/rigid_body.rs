@@ -356,7 +356,8 @@ impl<N: Scalar> RigidBody<N> {
     /// Sets the linear acceleration scale of this rigid body.
     #[inline]
     pub fn set_lin_acc_scale(&mut self, scale: Vector<N>) {
-        self.lin_acc_scale = scale
+        self.lin_acc_scale = scale;
+        self.update_lin_acc();
     }
 
     /// Gets the angular acceleration scale of this rigid body.
@@ -368,7 +369,8 @@ impl<N: Scalar> RigidBody<N> {
     /// Sets the angular acceleration scale of this rigid body.
     #[inline]
     pub fn set_ang_acc_scale(&mut self, scale: Orientation<N>) {
-        self.ang_acc_scale = scale
+        self.ang_acc_scale = scale;
+        self.update_ang_acc();
     }
 
     /// Get the linear velocity of this rigid body.
@@ -392,9 +394,9 @@ impl<N: Scalar> RigidBody<N> {
     /// Sets the linear acceleration of this rigid body.
     ///
     /// Note that this might be reset by the physics engine automatically.
-    #[inline]
+    #[doc(hidden)]
     pub fn set_lin_acc(&mut self, lf: Vector<N>) {
-        self.lin_acc = lf * self.lin_acc_scale
+        self.lin_acc = lf
     }
 
     /// Gets the angular velocity of this rigid body.
@@ -418,9 +420,9 @@ impl<N: Scalar> RigidBody<N> {
     /// Sets the angular acceleration of this rigid body.
     ///
     /// Note that this might be reset by the physics engine automatically.
-    #[inline]
+    #[doc(hidden)]
     pub fn set_ang_acc(&mut self, af: Orientation<N>) {
-        self.ang_acc = af * self.ang_acc_scale
+        self.ang_acc = af
     }
 
     /// Sets the gravity for this RigidBody. It's internally called from BodyForceGenerator,
@@ -486,12 +488,12 @@ impl<N: Scalar> RigidBody<N> {
     /// Update the linear acceleraction from the applied forces.
     #[inline]
     fn update_lin_acc(&mut self) {
-        self.lin_acc = self.lin_force * self.inv_mass + self.gravity;
+        self.lin_acc = (self.lin_force * self.inv_mass + self.gravity) * self.lin_acc_scale;
     }
     /// Update the angular acceleraction from the applied forces.
     #[inline]
     fn update_ang_acc(&mut self) {
-        self.ang_acc = self.ang_force * self.inv_inertia;
+        self.ang_acc = (self.ang_force * self.inv_inertia) * self.ang_acc_scale;
     }
 
     /// Applies a one-time central impulse.
@@ -499,7 +501,7 @@ impl<N: Scalar> RigidBody<N> {
     pub fn apply_central_impulse(&mut self, impulse: Vector<N>){
         let current_velocity = self.lin_vel();
         let inverted_mass = self.inv_mass();
-        self.set_lin_vel(current_velocity + impulse*inverted_mass);
+        self.set_lin_vel(current_velocity + impulse * inverted_mass);
     }
 
     /// Applies a one-time angular impulse.

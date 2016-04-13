@@ -57,12 +57,12 @@ fn main() {
             let color;
 
             if j == 0 {
-                // invert the gravity for the blue balls.
+                // Invert the gravity for the blue balls.
                 rb.set_lin_acc_scale(Vec2::new(0.0, -1.0));
                 color = Pnt3::new(0.0, 0.0, 1.0);
             }
             else {
-                // double the gravity for the green balls.
+                // Double the gravity for the green balls.
                 rb.set_lin_acc_scale(Vec2::new(0.0, 2.0));
                 color = Pnt3::new(0.0, 1.0, 0.0);
             }
