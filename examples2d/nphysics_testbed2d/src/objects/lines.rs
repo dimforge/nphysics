@@ -1,25 +1,25 @@
 use std::sync::Arc;
 use sfml::graphics;
 use sfml::graphics::Color;
-use na::{Pnt2, Pnt3, Iso2};
+use na::{Point2, Point3, Isometry2};
 use nphysics2d::object::{WorldObject, WorldObjectBorrowed};
 use draw_helper::draw_line;
 
 pub struct Lines {
-    color: Pnt3<u8>,
-    base_color: Pnt3<u8>,
-    delta: Iso2<f32>,
+    color: Point3<u8>,
+    base_color: Point3<u8>,
+    delta: Isometry2<f32>,
     object: WorldObject<f32>,
-    indices: Arc<Vec<Pnt2<usize>>>,
-    vertices: Arc<Vec<Pnt2<f32>>>
+    indices: Arc<Vec<Point2<usize>>>,
+    vertices: Arc<Vec<Point2<f32>>>
 }
 
 impl Lines {
     pub fn new(object:   WorldObject<f32>,
-               delta:    Iso2<f32>,
-               vertices: Arc<Vec<Pnt2<f32>>>,
-               indices:  Arc<Vec<Pnt2<usize>>>,
-               color:    Pnt3<u8>)
+               delta:    Isometry2<f32>,
+               vertices: Arc<Vec<Point2<f32>>>,
+               indices:  Arc<Vec<Point2<usize>>>,
+               color:    Point3<u8>)
                -> Lines {
         Lines {
             color: color,
@@ -56,13 +56,13 @@ impl Lines {
         }
     }
 
-    pub fn set_color(&mut self, color: Pnt3<u8>) {
+    pub fn set_color(&mut self, color: Point3<u8>) {
         self.color      = color;
         self.base_color = color;
     }
 
     pub fn select(&mut self) {
-        self.color = Pnt3::new(200, 0, 0);
+        self.color = Point3::new(200, 0, 0);
     }
 
     pub fn unselect(&mut self) {

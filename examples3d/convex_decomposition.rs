@@ -7,9 +7,9 @@ extern crate nphysics_testbed3d;
 
 use std::path::Path;
 use rand::random;
-use na::{Pnt3, Vec3, Translation};
+use na::{Point3, Vector3, Translation};
 use kiss3d::loader::obj;
-use ncollide::shape::{Plane, Compound, Convex, ShapeHandle};
+use ncollide::shape::{Plane, Compound, ConvexHull, ShapeHandle};
 use ncollide::procedural::TriMesh3;
 use ncollide::transformation;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
@@ -23,7 +23,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
      * Planes
@@ -31,18 +31,18 @@ fn main() {
     let shift = 10.0;
 
     let normals = [
-        Vec3::new(0.0, 1.0, 0.0),
-        Vec3::new(-1.0, 1.0, 0.0),
-        Vec3::new(1.0, 1.0, 0.0),
-        Vec3::new(0.0, 1.0, -1.0),
-        Vec3::new(0.0, 1.0, 1.0),
+        Vector3::new(0.0, 1.0, 0.0),
+        Vector3::new(-1.0, 1.0, 0.0),
+        Vector3::new(1.0, 1.0, 0.0),
+        Vector3::new(0.0, 1.0, -1.0),
+        Vector3::new(0.0, 1.0, 1.0),
     ];
     let poss = [
-        Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(shift, 0.0, 0.0),
-        Vec3::new(-shift, 0.0, 0.0),
-        Vec3::new(0.0, 0.0, shift),
-        Vec3::new(0.0, 0.0, -shift)
+        Vector3::new(0.0, 0.0, 0.0),
+        Vector3::new(shift, 0.0, 0.0),
+        Vector3::new(-shift, 0.0, 0.0),
+        Vector3::new(0.0, 0.0, shift),
+        Vector3::new(0.0, 0.0, -shift)
     ];
 
     for (normal, pos) in normals.iter().zip(poss.iter()) {
@@ -94,7 +94,7 @@ fn main() {
                 let (decomp, _) = transformation::hacd(trimesh, 0.03, 1);
 
                 for mesh in decomp.into_iter() {
-                    let convex = ShapeHandle::new(Convex::new(mesh.coords));
+                    let convex = ShapeHandle::new(ConvexHull::new(mesh.coords));
                     geom_data.push((deltas, convex));
                 }
             }
@@ -120,7 +120,7 @@ fn main() {
     for rb in bodies.iter() {
         for _ in 0 .. nreplicats {
             let mut rb = rb.clone();
-            let pos = random::<Vec3<f32>>() * 30.0+ Vec3::new(-15.0, 15.0, -15.0);
+            let pos = random::<Vector3<f32>>() * 30.0+ Vector3::new(-15.0, 15.0, -15.0);
             rb.append_translation(&pos);
 
             world.add_rigid_body(rb);
@@ -132,7 +132,7 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }
 

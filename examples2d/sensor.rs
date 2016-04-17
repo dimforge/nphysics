@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vec2, Pnt3, Translation};
+use na::{Vector2, Point3, Translation};
 use ncollide::shape::{Plane, Cuboid, Ball};
 use ncollide::geometry::Proximity;
 use ncollide::narrow_phase::ProximitySignalHandler;
@@ -25,8 +25,8 @@ impl ProximitySignalHandler<WorldObject<f32>> for ColorChanger {
                         o1: &WorldObject<f32>, o2: &WorldObject<f32>,
                         _: Proximity, new_proximity: Proximity) {
         let color = match new_proximity {
-            Proximity::WithinMargin | Proximity::Intersecting => Pnt3::new(1.0, 1.0, 0.0),
-            Proximity::Disjoint                               => Pnt3::new(0.5, 0.5, 1.0)
+            Proximity::WithinMargin | Proximity::Intersecting => Point3::new(1.0, 1.0, 0.0),
+            Proximity::Disjoint                               => Point3::new(0.5, 0.5, 1.0)
         };
     
         if let WorldObject::RigidBody(ref rb) = *o1 {
@@ -46,12 +46,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
      * Plane
      */
-    let geom = Plane::new(Vec2::new(0.0, -1.0));
+    let geom = Plane::new(Vector2::new(0.0, -1.0));
     world.add_rigid_body(RigidBody::new_static(geom, 0.2, 0.6));
 
     /*
@@ -65,23 +65,23 @@ fn main() {
     for i in 0usize .. num {
         let x = i as f32 * shift - centerx;
 
-        let geom   = Cuboid::new(Vec2::new(rad - 0.04, rad - 0.04));
+        let geom   = Cuboid::new(Vector2::new(rad - 0.04, rad - 0.04));
         let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.2, 0.5);
 
-        rb.append_translation(&Vec2::new(x, -1.0));
+        rb.append_translation(&Vector2::new(x, -1.0));
 
         let rb_handle = world.add_rigid_body(rb);
-        testbed.set_rigid_body_color(&rb_handle, Pnt3::new(0.5, 0.5, 1.0));
+        testbed.set_rigid_body_color(&rb_handle, Point3::new(0.5, 0.5, 1.0));
     }
 
     /*
      * Create a box that will have a sensor attached.
      */
-    let geom   = Cuboid::new(Vec2::new(0.5f32, 0.5));
+    let geom   = Cuboid::new(Vector2::new(0.5f32, 0.5));
     let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.2, 0.5);
-    rb.append_translation(&Vec2::new(0.0, -10.0));
+    rb.append_translation(&Vector2::new(0.0, -10.0));
     let rb_handle = world.add_rigid_body(rb);
-    testbed.set_rigid_body_color(&rb_handle, Pnt3::new(0.5, 1.0, 1.0));
+    testbed.set_rigid_body_color(&rb_handle, Point3::new(0.5, 1.0, 1.0));
 
     // Attach a sensor.
     let sensor_geom = Ball::new(rad * 5.0);

@@ -8,7 +8,7 @@ use sfml::window::event::Event;
 use sfml::window::{Key, MouseButton};
 use sfml::graphics::Color;
 use sfml::system::Vector2i;
-use na::{Pnt2, Pnt3, Iso2};
+use na::{Point2, Point3, Isometry2};
 use na;
 use ncollide::world::CollisionGroups;
 use nphysics2d::world::World;
@@ -126,11 +126,11 @@ impl Testbed {
         }
     }
 
-    pub fn set_rigid_body_color(&mut self, rb: &RigidBodyHandle<f32>, color: Pnt3<f32>) {
+    pub fn set_rigid_body_color(&mut self, rb: &RigidBodyHandle<f32>, color: Point3<f32>) {
         self.graphics.borrow_mut().set_rigid_body_color(rb, color);
     }
 
-    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Pnt3<f32>) {
+    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
         self.graphics.borrow_mut().set_sensor_color(sensor, color);
     }
 
@@ -260,7 +260,7 @@ impl Testbed {
         match button {
             MouseButton::Left => {
                 let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-                let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
+                let mapped_point = Point2::new(mapped_coords.x, mapped_coords.y);
                 // FIXME: use the collision groups to filter out sensors.
                 let all_groups = &CollisionGroups::new();
                 for b in self.world
@@ -280,9 +280,9 @@ impl Testbed {
                             None        => { }
                         }
 
-                        let _1: Iso2<f32> = na::one();
-                        let attach2 = na::append_translation(&_1, mapped_point.as_vec());
-                        let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
+                        let _1: Isometry2<f32> = na::one();
+                        let attach2 = na::append_translation(&_1, mapped_point.as_vector());
+                        let attach1 = na::inverse(&na::transformation(b.borrow().position())).unwrap() * attach2;
                         let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
                         let anchor2 = Anchor::new(None, attach2);
                         let joint = Fixed::new(anchor1, anchor2);
@@ -329,9 +329,9 @@ impl Testbed {
 
     fn process_mouse_moved(&mut self, state: &mut TestbedState, x: i32, y: i32) {
         let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-        let mapped_point = Pnt2::new(mapped_coords.x, mapped_coords.y);
-        let _1: Iso2<f32> = na::one();
-        let attach2 = na::append_translation(&_1, (mapped_point).as_vec());
+        let mapped_point = Point2::new(mapped_coords.x, mapped_coords.y);
+        let _1: Isometry2<f32> = na::one();
+        let attach2 = na::append_translation(&_1, (mapped_point).as_vector());
         match state.grabbed_object {
             Some(_) => {
                 let joint = state.grabbed_object_joint.as_ref().unwrap();

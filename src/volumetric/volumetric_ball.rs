@@ -1,6 +1,6 @@
 use std::ops::IndexMut;
 use num::{Float, Zero};
-use na::{Orig, BaseFloat, Pnt2, Pnt3, Mat1, Mat3};
+use na::{Origin, BaseFloat, Point2, Point3, Matrix1, Matrix3};
 use na;
 use ncollide::math::Scalar;
 use ncollide::shape::{Ball2, Ball3};
@@ -9,19 +9,19 @@ use volumetric::Volumetric;
 
 /// The volume of a ball.
 #[inline]
-pub fn ball_volume<N: Scalar>(dim: usize, radius: N) -> N {
-    assert!(dim == 2 || dim == 3);
+pub fn ball_volume<N: Scalar>(dimension: usize, radius: N) -> N {
+    assert!(dimension == 2 || dimension == 3);
 
     let _pi: N = BaseFloat::pi();
-    _pi * radius.powi(dim as i32)
+    _pi * radius.powi(dimension as i32)
 }
 
 /// The area of a ball.
 #[inline]
-pub fn ball_area<N: Scalar>(dim: usize, radius: N) -> N {
-    assert!(dim == 2 || dim == 3);
+pub fn ball_area<N: Scalar>(dimension: usize, radius: N) -> N {
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             let _pi: N = BaseFloat::pi();
             _pi * radius * na::cast(2.0f64)
@@ -36,18 +36,18 @@ pub fn ball_area<N: Scalar>(dim: usize, radius: N) -> N {
 
 /// The center of mass of a ball.
 #[inline]
-pub fn ball_center_of_mass<P: Orig>() -> P {
-    na::orig()
+pub fn ball_center_of_mass<P: Origin>() -> P {
+    na::origin()
 }
 
 /// The unit angular inertia of a ball.
 #[inline]
-pub fn ball_unit_angular_inertia<N, I>(dim: usize, radius: N) -> I
+pub fn ball_unit_angular_inertia<N, I>(dimension: usize, radius: N) -> I
     where N: Scalar,
           I: Zero + IndexMut<(usize, usize), Output = N> {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             let diag = radius * radius / na::cast(2.0f64);
             let mut res = na::zero::<I>();
@@ -71,14 +71,14 @@ pub fn ball_unit_angular_inertia<N, I>(dim: usize, radius: N) -> I
 }
 
 macro_rules! impl_volumetric_ball(
-    ($t: ident, $dim: expr, $p: ident, $i: ident) => {
+    ($t: ident, $dimension: expr, $p: ident, $i: ident) => {
         impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
             fn area(&self) -> N {
-                ball_area($dim, self.radius())
+                ball_area($dimension, self.radius())
             }
 
             fn volume(&self) -> N {
-                ball_volume($dim, self.radius())
+                ball_volume($dimension, self.radius())
             }
 
             fn center_of_mass(&self) -> $p<N> {
@@ -86,11 +86,11 @@ macro_rules! impl_volumetric_ball(
             }
 
             fn unit_angular_inertia(&self) -> $i<N> {
-                ball_unit_angular_inertia($dim, self.radius())
+                ball_unit_angular_inertia($dimension, self.radius())
             }
         }
     }
 );
 
-impl_volumetric_ball!(Ball2, 2, Pnt2, Mat1);
-impl_volumetric_ball!(Ball3, 3, Pnt3, Mat3);
+impl_volumetric_ball!(Ball2, 2, Point2, Matrix1);
+impl_volumetric_ball!(Ball3, 3, Point3, Matrix3);

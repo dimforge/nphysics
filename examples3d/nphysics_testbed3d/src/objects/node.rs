@@ -1,5 +1,5 @@
 use kiss3d::scene::SceneNode;
-use na::{Iso3, Pnt3};
+use na::{Isometry3, Point3};
 use nphysics3d::object::{WorldObject, WorldObjectBorrowed};
 use objects::ball::Ball;
 use objects::box_node::Box;
@@ -92,7 +92,7 @@ impl Node {
         }
     }
 
-    pub fn set_color(&mut self, color: Pnt3<f32>)  {
+    pub fn set_color(&mut self, color: Point3<f32>)  {
         match *self {
             Node::Plane(ref mut n)    => n.set_color(color),
             Node::Ball(ref mut n)     => n.set_color(color),
@@ -108,8 +108,8 @@ impl Node {
 
 pub fn update_scene_node(node:   &mut SceneNode,
                          object: &WorldObject<f32>,
-                         color:  &Pnt3<f32>,
-                         delta:  &Iso3<f32>) {
+                         color:  &Point3<f32>,
+                         delta:  &Isometry3<f32>) {
     let rb = object.borrow();
 
     match rb {

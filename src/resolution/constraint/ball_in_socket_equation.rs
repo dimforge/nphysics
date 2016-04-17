@@ -35,7 +35,7 @@ pub fn cancel_relative_linear_motion<N: Scalar, P>(
     let rot_axis1  = na::cross_matrix(&(*global1 - anchor1.center_of_mass()));
     let rot_axis2  = na::cross_matrix(&(*global2 - anchor2.center_of_mass()));
 
-    for i in 0usize .. na::dim::<Vector<N>>() {
+    for i in 0usize .. na::dimension::<Vector<N>>() {
         let mut lin_axis: Vector<N> = na::zero();
         let constraint = &mut constraints[i];
 
@@ -51,7 +51,7 @@ pub fn cancel_relative_linear_motion<N: Scalar, P>(
         // let rot_axis1 = -rot_axis1.col(i);
         // let rot_axis2 = rot_axis2.col(i);
         let (rot_axis1, rot_axis2) =
-            if na::dim::<Vector<N>>() == 2 {
+            if na::dimension::<Vector<N>>() == 2 {
                 (-rot_axis1.row(i), rot_axis2.row(i))
             }
             else { // == 3

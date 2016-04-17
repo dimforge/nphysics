@@ -1,24 +1,24 @@
 use sfml::graphics;
 use sfml::graphics::{CircleShape, Color, RenderTarget, Shape, Transformable};
 use sfml::system::Vector2f;
-use na::{Pnt3, Iso2};
+use na::{Point3, Isometry2};
 use nphysics2d::object::WorldObject;
 use draw_helper::DRAW_SCALE;
 use objects;
 
 pub struct Ball<'a> {
-    color:  Pnt3<u8>,
-    base_color: Pnt3<u8>,
-    delta:  Iso2<f32>,
+    color:  Point3<u8>,
+    base_color: Point3<u8>,
+    delta:  Isometry2<f32>,
     object: WorldObject<f32>,
     gfx:    CircleShape<'a>
 }
 
 impl<'a> Ball<'a> {
     pub fn new(object: WorldObject<f32>,
-               delta:  Iso2<f32>,
+               delta:  Isometry2<f32>,
                radius: f32,
-               color:  Pnt3<u8>)
+               color:  Point3<u8>)
                -> Ball<'a> {
         let dradius = radius as f32 * DRAW_SCALE;
 
@@ -47,13 +47,13 @@ impl<'a> Ball<'a> {
         rw.draw(&self.gfx);
     }
 
-    pub fn set_color(&mut self, color: Pnt3<u8>) {
+    pub fn set_color(&mut self, color: Point3<u8>) {
         self.color      = color;
         self.base_color = color;
     }
 
     pub fn select(&mut self) {
-        self.color = Pnt3::new(200, 0, 0);
+        self.color = Point3::new(200, 0, 0);
     }
 
     pub fn unselect(&mut self) {

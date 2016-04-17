@@ -11,7 +11,7 @@ path = "../../build/nphysics2d"
 
 [dependencies]
 sfml = "0.11.*"
-nalgebra = "0.6.*"
+nalgebra = "0.8.*"
 time = "*"
 num = "*"
 rand = "*"

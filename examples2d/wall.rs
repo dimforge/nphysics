@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vec2, Translation};
+use na::{Vector2, Translation};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -14,12 +14,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, -1.0)), 0.3, 0.6);
+    let rb = RigidBody::new_static(Plane::new(Vector2::new(0.0, -1.0)), 0.3, 0.6);
 
     world.add_rigid_body(rb);
 
@@ -39,9 +39,9 @@ fn main() {
             let x  = fj * 2.0 * rad - centerx;
             let y  = -fi * 2.0 * rad - 0.04 - rad;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec2::new(rad - 0.04, rad - 0.04)), 1.0, 0.3, 0.6);
+            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector2::new(rad - 0.04, rad - 0.04)), 1.0, 0.3, 0.6);
 
-            rb.append_translation(&Vec2::new(x, y));
+            rb.append_translation(&Vector2::new(x, y));
 
             world.add_rigid_body(rb);
         }

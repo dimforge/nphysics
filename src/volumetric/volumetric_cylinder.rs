@@ -1,6 +1,6 @@
 use std::ops::IndexMut;
 use num::Zero;
-use na::{BaseFloat, Orig, Pnt2, Pnt3, Mat1, Mat3};
+use na::{BaseFloat, Origin, Point2, Point3, Matrix1, Matrix3};
 use na;
 use ncollide::shape::{Cylinder2, Cylinder3};
 use ncollide::math::Scalar;
@@ -9,10 +9,10 @@ use volumetric::Volumetric;
 
 /// The volume of a cylinder.
 #[inline]
-pub fn cylinder_volume<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
-    assert!(dim == 2 || dim == 3);
+pub fn cylinder_volume<N: Scalar>(dimension: usize, half_height: N, radius: N) -> N {
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             half_height * radius * na::cast(4.0f64)
         }
@@ -25,10 +25,10 @@ pub fn cylinder_volume<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
 
 /// The area of a cylinder.
 #[inline]
-pub fn cylinder_area<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
-    assert!(dim == 2 || dim == 3);
+pub fn cylinder_area<N: Scalar>(dimension: usize, half_height: N, radius: N) -> N {
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             (half_height + radius) * na::cast(2.0f64)
         }
@@ -45,18 +45,18 @@ pub fn cylinder_area<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
 
 /// The center of mass of a cylinder.
 #[inline]
-pub fn cylinder_center_of_mass<P: Orig>() -> P {
-    na::orig()
+pub fn cylinder_center_of_mass<P: Origin>() -> P {
+    na::origin()
 }
 
 /// The unit angular inertia of a cylinder.
 #[inline]
-pub fn cylinder_unit_angular_inertia<N, I>(dim: usize, half_height: N, radius: N) -> I
+pub fn cylinder_unit_angular_inertia<N, I>(dimension: usize, half_height: N, radius: N) -> I
     where N: Scalar,
           I: Zero + IndexMut<(usize, usize), Output = N> {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             // Same a the rectangle.
             let _2:   N = na::cast(2.0f64);
@@ -89,14 +89,14 @@ pub fn cylinder_unit_angular_inertia<N, I>(dim: usize, half_height: N, radius: N
 }
 
 macro_rules! impl_volumetric_cylinder(
-    ($t: ident, $dim: expr, $p: ident, $i: ident) => (
+    ($t: ident, $dimension: expr, $p: ident, $i: ident) => (
         impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
             fn area(&self) -> N {
-                cylinder_area($dim, self.half_height(), self.radius())
+                cylinder_area($dimension, self.half_height(), self.radius())
             }
 
             fn volume(&self) -> N {
-                cylinder_volume($dim, self.half_height(), self.radius())
+                cylinder_volume($dimension, self.half_height(), self.radius())
             }
 
             fn center_of_mass(&self) -> $p<N> {
@@ -104,11 +104,11 @@ macro_rules! impl_volumetric_cylinder(
             }
 
             fn unit_angular_inertia(&self) -> $i<N> {
-                cylinder_unit_angular_inertia($dim, self.half_height(), self.radius())
+                cylinder_unit_angular_inertia($dimension, self.half_height(), self.radius())
             }
         }
     )
 );
 
-impl_volumetric_cylinder!(Cylinder2, 2, Pnt2, Mat1);
-impl_volumetric_cylinder!(Cylinder3, 3, Pnt3, Mat3);
+impl_volumetric_cylinder!(Cylinder2, 2, Point2, Matrix1);
+impl_volumetric_cylinder!(Cylinder3, 3, Point3, Matrix3);

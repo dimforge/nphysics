@@ -1,4 +1,4 @@
-use na::{Pnt2, Pnt3, Mat1, Mat3};
+use na::{Point2, Point3, Matrix1, Matrix3};
 use na;
 use ncollide::shape::{Compound2, Compound3};
 use ncollide::math::Scalar;
@@ -29,8 +29,8 @@ macro_rules! impl_volumetric_compound(
 
             fn center_of_mass(&self) -> $p {
                 let mut mtot = na::zero::<N>();
-                let mut ctot = na::orig::<$p>();
-                let mut gtot = na::orig::<$p>(); // geometric center.
+                let mut ctot = na::origin::<$p>();
+                let mut gtot = na::origin::<$p>(); // geometric center.
 
                 let shapes = self.shapes();
 
@@ -38,8 +38,8 @@ macro_rules! impl_volumetric_compound(
                     let (mpart, cpart, _) = s.mass_properties(na::one());
 
                     mtot = mtot + mpart;
-                    ctot = ctot + (*m * cpart * mpart).to_vec();
-                    gtot = gtot + (*m * cpart).to_vec();
+                    ctot = ctot + (*m * cpart * mpart).to_vector();
+                    gtot = gtot + (*m * cpart).to_vector();
                 }
 
                 if na::is_zero(&mtot) {
@@ -60,7 +60,7 @@ macro_rules! impl_volumetric_compound(
                     let (mpart, cpart, ipart) = s.mass_properties(na::one());
 
                     itot = itot + ipart.to_world_space(m)
-                                       .to_relative_wrt_point(mpart, &(*m * cpart + (-*com.as_vec())));
+                                       .to_relative_wrt_point(mpart, &(*m * cpart + (-*com.as_vector())));
                 }
 
                 itot
@@ -73,16 +73,16 @@ macro_rules! impl_volumetric_compound(
             fn mass_properties(&self, density: N) -> (N, $p, $i) {
                 let mut mtot = na::zero::<N>();
                 let mut itot = na::zero::<$i>();
-                let mut ctot = na::orig::<$p>();
-                let mut gtot = na::orig::<$p>(); // geometric center.
+                let mut ctot = na::origin::<$p>();
+                let mut gtot = na::origin::<$p>(); // geometric center.
 
                 let shapes = self.shapes();
                 let props: Vec<_> = shapes.iter().map(|&(_, ref s)| s.mass_properties(na::one())).collect();
 
                 for (&(ref m, _), &(ref mpart, ref cpart, _)) in shapes.iter().zip(props.iter()) {
                     mtot = mtot + *mpart;
-                    ctot = ctot + (*m * *cpart * *mpart).to_vec();
-                    gtot = gtot + (*m * *cpart).to_vec();
+                    ctot = ctot + (*m * *cpart * *mpart).to_vector();
+                    gtot = gtot + (*m * *cpart).to_vector();
                 }
 
                 if na::is_zero(&mtot) {
@@ -93,7 +93,7 @@ macro_rules! impl_volumetric_compound(
                 }
 
                 for (&(ref m, _), &(ref mpart, ref cpart, ref ipart)) in shapes.iter().zip(props.iter()) {
-                    itot = itot + ipart.to_world_space(m).to_relative_wrt_point(*mpart, &(*m * *cpart + (-*ctot.as_vec())));
+                    itot = itot + ipart.to_world_space(m).to_relative_wrt_point(*mpart, &(*m * *cpart + (-*ctot.as_vector())));
                 }
 
                 (mtot * density, ctot, itot * density)
@@ -102,5 +102,5 @@ macro_rules! impl_volumetric_compound(
     )
 );
 
-impl_volumetric_compound!(Compound2<N>, Pnt2<N>, Mat1<N>);
-impl_volumetric_compound!(Compound3<N>, Pnt3<N>, Mat3<N>);
+impl_volumetric_compound!(Compound2<N>, Point2<N>, Matrix1<N>);
+impl_volumetric_compound!(Compound3<N>, Point3<N>, Matrix3<N>);

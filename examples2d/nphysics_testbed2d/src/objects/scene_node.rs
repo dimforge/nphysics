@@ -1,7 +1,7 @@
 use std::f32;
 use sfml::graphics::{Color, Shape, Transformable};
 use sfml::system::Vector2f;
-use na::{self, Pnt3, Iso2};
+use na::{self, Point3, Isometry2};
 use nphysics2d::object::{WorldObject, WorldObjectBorrowed};
 use objects::{Ball, Box, Lines, Segment};
 use draw_helper::DRAW_SCALE;
@@ -32,7 +32,7 @@ impl<'a> SceneNode<'a> {
         }
     }
 
-    pub fn set_color(&mut self, color: Pnt3<u8>) {
+    pub fn set_color(&mut self, color: Point3<u8>) {
         match *self {
             SceneNode::BallNode(ref mut n)    => n.set_color(color),
             SceneNode::BoxNode(ref mut n)     => n.set_color(color),
@@ -44,8 +44,8 @@ impl<'a> SceneNode<'a> {
 
 pub fn update_scene_node<'a, T>(node:   &mut T,
                                 object: &WorldObject<f32>,
-                                color:  &Pnt3<u8>,
-                                delta:  &Iso2<f32>)
+                                color:  &Point3<u8>,
+                                delta:  &Isometry2<f32>)
         where T: Transformable + Shape<'a> {
     let bobject   = object.borrow();
     let transform = bobject.position() * *delta;

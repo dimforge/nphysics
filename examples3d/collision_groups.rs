@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Pnt3, Vec3, Translation};
+use na::{Point3, Vector3, Translation};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics3d::world::World;
 use nphysics3d::object::{RigidBody, RigidBodyCollisionGroups};
@@ -16,7 +16,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
      * Setup groups.
@@ -43,32 +43,32 @@ fn main() {
     /*
      * A floor that will collide with everything (default behaviour).
      */
-    let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
+    let geom = Plane::new(Vector3::new(0.0, 1.0, 0.0));
     world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     /*
      * A green floor that will collide with the GREEN group only.
      */
-    let geom   = Cuboid::new(Vec3::new(10.0, 1.0, 10.0));
+    let geom   = Cuboid::new(Vector3::new(10.0, 1.0, 10.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
     rb.set_collision_groups(green_static_group);
-    rb.append_translation(&Vec3::new(0.0, 10.0, 0.0));
+    rb.append_translation(&Vector3::new(0.0, 10.0, 0.0));
 
     let handle = world.add_rigid_body(rb);
-    testbed.set_rigid_body_color(&handle, Pnt3::new(0.0, 1.0, 0.0));
+    testbed.set_rigid_body_color(&handle, Point3::new(0.0, 1.0, 0.0));
 
     /*
      * A blue floor that will collide with the BLUE group only.
      */
-    let geom   = Cuboid::new(Vec3::new(10.0, 1.0, 10.0));
+    let geom   = Cuboid::new(Vector3::new(10.0, 1.0, 10.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
     rb.set_collision_groups(blue_static_group);
-    rb.append_translation(&Vec3::new(0.0, 20.0, 0.0));
+    rb.append_translation(&Vector3::new(0.0, 20.0, 0.0));
 
     let handle = world.add_rigid_body(rb);
-    testbed.set_rigid_body_color(&handle, Pnt3::new(0.0, 0.0, 1.0));
+    testbed.set_rigid_body_color(&handle, Point3::new(0.0, 0.0, 1.0));
 
     /*
      * Create the boxes
@@ -87,21 +87,21 @@ fn main() {
                 let z = j as f32 * shift - centerz;
                 let y = k as f32 * shift + centery;
 
-                let geom   = Cuboid::new(Vec3::new(rad - 0.04, rad - 0.04, rad - 0.04));
+                let geom   = Cuboid::new(Vector3::new(rad - 0.04, rad - 0.04, rad - 0.04));
                 let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
-                rb.append_translation(&Vec3::new(x, y, z));
+                rb.append_translation(&Vector3::new(x, y, z));
 
                 // Alternate between the GREEN and BLUE groups.
                 if k % 2 == 0 {
                     rb.set_collision_groups(green_dynamic_group);
                     let handle = world.add_rigid_body(rb);
-                    testbed.set_rigid_body_color(&handle, Pnt3::new(0.0, 1.0, 0.0));
+                    testbed.set_rigid_body_color(&handle, Point3::new(0.0, 1.0, 0.0));
                 }
                 else {
                     rb.set_collision_groups(blue_dynamic_group);
                     let handle = world.add_rigid_body(rb);
-                    testbed.set_rigid_body_color(&handle, Pnt3::new(0.0, 0.0, 1.0));
+                    testbed.set_rigid_body_color(&handle, Point3::new(0.0, 0.0, 1.0));
                 }
             }
         }
@@ -111,6 +111,6 @@ fn main() {
      * Set up the testbed.
      */
     testbed.set_world(world);
-    testbed.look_at(Pnt3::new(-40.0, 40.0, -40.0), Pnt3::new(0.0, 3.0, 0.0));
+    testbed.look_at(Point3::new(-40.0, 40.0, -40.0), Point3::new(0.0, 3.0, 0.0));
     testbed.run();
 }

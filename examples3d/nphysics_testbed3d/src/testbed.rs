@@ -5,7 +5,7 @@ use std::path::Path;
 use time;
 use glfw;
 use glfw::{MouseButton, Key, Action, WindowEvent};
-use na::{Pnt2, Pnt3, Vec3, Translation, Translate, Iso3, Bounded};
+use na::{Point2, Point3, Vector3, Translation, Translate, Isometry3, Bounded};
 use na;
 use kiss3d::window::Window;
 use kiss3d::light::Light;
@@ -84,15 +84,15 @@ impl Testbed {
         }
     }
 
-    pub fn look_at(&mut self, eye: Pnt3<f32>, at: Pnt3<f32>) {
+    pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {
         self.graphics.borrow_mut().look_at(eye, at);
     }
 
-    pub fn set_rigid_body_color(&mut self, rb: &RigidBodyHandle<f32>, color: Pnt3<f32>) {
+    pub fn set_rigid_body_color(&mut self, rb: &RigidBodyHandle<f32>, color: Point3<f32>) {
         self.graphics.borrow_mut().set_rigid_body_color(rb, color);
     }
 
-    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Pnt3<f32>) {
+    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
         self.graphics.borrow_mut().set_sensor_color(sensor, color);
     }
 
@@ -104,7 +104,7 @@ impl Testbed {
         self.graphics.clone()
     }
 
-    pub fn load_obj(path: &str) -> Vec<(Vec<Pnt3<f32>>, Vec<usize>)> {
+    pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path    = Path::new(path);
         let empty   = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
         let objects = obj::parse_file(&path, &empty, "").ok().expect("Unable to open the obj file.");
@@ -152,10 +152,10 @@ impl Testbed {
         let font           = Font::from_memory(font_mem, 60);
         let mut draw_colls = false;
 
-        let mut cursor_pos = Pnt2::new(0.0f32, 0.0);
+        let mut cursor_pos = Point2::new(0.0f32, 0.0);
         let mut grabbed_object: Option<RigidBodyHandle<f32>> = None;
         let mut grabbed_object_joint: Option<Rc<RefCell<Fixed<f32>>>> = None;
-        let mut grabbed_object_plane: (Pnt3<f32>, Vec3<f32>) = (na::orig(), na::zero());
+        let mut grabbed_object_plane: (Point3<f32>, Vector3<f32>) = (na::origin(), na::zero());
 
 
         self.window.set_framerate_limit(Some(60));
@@ -166,13 +166,13 @@ impl Testbed {
                 match event.value {
                     WindowEvent::MouseButton(MouseButton::Button2, Action::Press, glfw::Control) => {
                         let mut graphics = self.graphics.borrow_mut();
-                        let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5f32, 0.5f32));
+                        let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5f32, 0.5f32));
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
                         let size = self.window.size();
                         let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
 
-                        rb.set_translation(pos.to_vec());
+                        rb.set_translation(pos.to_vector());
                         rb.set_lin_vel(dir * 1000.0f32);
 
                         let body = self.world.add_rigid_body(rb);
@@ -260,13 +260,13 @@ impl Testbed {
                                             None        => { }
                                         }
 
-                                        let _1: Iso3<f32> = na::one();
-                                        let attach2 = na::append_translation(&_1, (ray.orig + ray.dir * mintoi).as_vec());
-                                        let attach1 = na::inv(&na::transformation(b.borrow().position())).unwrap() * attach2;
+                                        let _1: Isometry3<f32> = na::one();
+                                        let attach2 = na::append_translation(&_1, (ray.origin + ray.dir * mintoi).as_vector());
+                                        let attach1 = na::inverse(&na::transformation(b.borrow().position())).unwrap() * attach2;
                                         let anchor1 = Anchor::new(Some(minb.as_ref().unwrap().clone()), attach1);
                                         let anchor2 = Anchor::new(None, attach2);
                                         let joint   = Fixed::new(anchor1, anchor2);
-                                        grabbed_object_plane = (attach2.translate(&na::orig()), -ray.dir);
+                                        grabbed_object_plane = (attach2.translate(&na::origin()), -ray.dir);
                                         grabbed_object_joint = Some(self.world.add_fixed(joint));
                                         // add a joint
                                         n.select()
@@ -310,8 +310,8 @@ impl Testbed {
 
                                 match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
-                                        let _1: Iso3<f32> = na::one();
-                                        j.borrow_mut().set_local2(na::append_translation(&_1, (pos + dir * inter).as_vec()))
+                                        let _1: Isometry3<f32> = na::one();
+                                        j.borrow_mut().set_local2(na::append_translation(&_1, (pos + dir * inter).as_vector()))
                                     },
                                     None => { }
                                 }
@@ -374,12 +374,12 @@ impl Testbed {
 
                         {
                             let cam      = graphics.camera();
-                            cam_transfom = na::inv(&cam.view_transform()).unwrap();
+                            cam_transfom = na::inverse(&cam.view_transform()).unwrap();
                         }
 
                         rb.append_translation(&na::translation(&cam_transfom));
 
-                        let front = -na::rotate(&cam_transfom, &Vec3::z());
+                        let front = -na::rotate(&cam_transfom, &Vector3::z());
 
                         rb.set_lin_vel(front * 40.0f32);
 
@@ -388,19 +388,19 @@ impl Testbed {
                     },
                     WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
                         let mut graphics = self.graphics.borrow_mut();
-                        let geom   = Cuboid::new(Vec3::new(0.5f32, 0.5, 0.5));
+                        let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5, 0.5));
                         let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
                         let cam_transform;
 
                         {
                             let cam = graphics.camera();
-                            cam_transform = na::inv(&cam.view_transform()).unwrap();
+                            cam_transform = na::inverse(&cam.view_transform()).unwrap();
                         }
 
                         rb.append_translation(&na::translation(&cam_transform));
 
-                        let front = -na::rotate(&cam_transform, &Vec3::z());
+                        let front = -na::rotate(&cam_transform, &Vector3::z());
 
                         rb.set_lin_vel(front * 40.0f32);
 
@@ -433,13 +433,13 @@ impl Testbed {
                 draw_collisions(&mut self.window, &mut self.world);
             }
 
-            let color = Pnt3::new(1.0, 1.0, 1.0);
+            let color = Point3::new(1.0, 1.0, 1.0);
 
             if running != RunMode::Stop {
-                self.window.draw_text(&format!("Time: {:.*}sec.", 4, dt)[..], &na::orig(), &font, &color);
+                self.window.draw_text(&format!("Time: {:.*}sec.", 4, dt)[..], &na::origin(), &font, &color);
             }
             else {
-                self.window.draw_text("Paused", &na::orig(), &font, &color);
+                self.window.draw_text("Paused", &na::origin(), &font, &color);
             }
 
             self.window.render_with_camera(self.graphics.borrow_mut().camera_mut());
@@ -462,19 +462,19 @@ fn draw_collisions(window: &mut Window, physics: &mut World<f32>) {
     for c in collisions.iter() {
         match *c {
             Constraint::RBRB(_, _, ref c) => {
-                window.draw_line(&c.world1, &c.world2, &Pnt3::new(1.0, 0.0, 0.0));
+                window.draw_line(&c.world1, &c.world2, &Point3::new(1.0, 0.0, 0.0));
 
                 let center = na::center(&c.world1, &c.world2);
                 let end    = center + c.normal * 0.4f32;
-                window.draw_line(&center, &end, &Pnt3::new(0.0, 1.0, 1.0))
+                window.draw_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
             },
             Constraint::BallInSocket(ref bis) => {
                 let bbis = bis.borrow();
-                window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Pnt3::new(0.0, 1.0, 0.0));
+                window.draw_line(&bbis.anchor1_pos(), &bbis.anchor2_pos(), &Point3::new(0.0, 1.0, 0.0));
             },
             Constraint::Fixed(ref f) => {
                 // FIXME: draw the rotation too
-                window.draw_line(&f.borrow().anchor1_pos().translate(&na::orig()), &f.borrow().anchor2_pos().translate(&na::orig()), &Pnt3::new(0.0, 1.0, 0.0));
+                window.draw_line(&f.borrow().anchor1_pos().translate(&na::origin()), &f.borrow().anchor2_pos().translate(&na::origin()), &Point3::new(0.0, 1.0, 0.0));
             }
         }
     }

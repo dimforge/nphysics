@@ -1,24 +1,24 @@
 use sfml::graphics;
 use sfml::graphics::Color;
-use na::{Pnt2, Pnt3, Iso2};
+use na::{Point2, Point3, Isometry2};
 use nphysics2d::object::{WorldObject, WorldObjectBorrowed};
 use draw_helper::draw_line;
 
 pub struct Segment {
-    color: Pnt3<u8>,
-    base_color: Pnt3<u8>,
-    delta: Iso2<f32>,
+    color: Point3<u8>,
+    base_color: Point3<u8>,
+    delta: Isometry2<f32>,
     object:  WorldObject<f32>,
-    a:     Pnt2<f32>,
-    b:     Pnt2<f32>,
+    a:     Point2<f32>,
+    b:     Point2<f32>,
 }
 
 impl Segment {
     pub fn new(object: WorldObject<f32>,
-               delta:  Iso2<f32>,
-               a:      Pnt2<f32>,
-               b:      Pnt2<f32>,
-               color:  Pnt3<u8>)
+               delta:  Isometry2<f32>,
+               a:      Point2<f32>,
+               b:      Point2<f32>,
+               color:  Point3<u8>)
                -> Segment {
         Segment {
             color: color,
@@ -51,13 +51,13 @@ impl Segment {
         draw_line(rw, &ga, &gb, &color);
     }
 
-    pub fn set_color(&mut self, color: Pnt3<u8>) {
+    pub fn set_color(&mut self, color: Point3<u8>) {
         self.color      = color;
         self.base_color = color;
     }
 
     pub fn select(&mut self) {
-        self.color = Pnt3::new(200, 0, 0);
+        self.color = Point3::new(200, 0, 0);
     }
 
     pub fn unselect(&mut self) {

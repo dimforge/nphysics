@@ -119,7 +119,7 @@ impl<N: Scalar> Sensor<N> {
     pub fn set_position(&mut self, abs_pos: Matrix<N>) {
         match self.parent {
             Some(ref rb) => {
-                self.relative_position = na::inv(rb.borrow().position()).unwrap() * abs_pos
+                self.relative_position = na::inverse(rb.borrow().position()).unwrap() * abs_pos
             }
             None => self.relative_position = abs_pos
         }
@@ -130,8 +130,8 @@ impl<N: Scalar> Sensor<N> {
     #[inline]
     pub fn center(&self) -> Point<N> {
         match self.parent {
-            Some(ref rb) => *rb.borrow().position() * na::translation(&self.relative_position).to_pnt(),
-            None         => na::translation(&self.relative_position).to_pnt()
+            Some(ref rb) => *rb.borrow().position() * na::translation(&self.relative_position).to_point(),
+            None         => na::translation(&self.relative_position).to_point()
         }
     }
 

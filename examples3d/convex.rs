@@ -5,8 +5,8 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use rand::random;
-use na::{Pnt3, Vec3, Translation};
-use ncollide::shape::{Plane, Convex};
+use na::{Point3, Vector3, Translation};
+use ncollide::shape::{Plane, ConvexHull};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
@@ -16,12 +16,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
      * Plane
      */
-    let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
+    let geom = Plane::new(Vector3::new(0.0, 1.0, 0.0));
 
     world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
 
@@ -45,13 +45,13 @@ fn main() {
                 let mut pts = Vec::with_capacity(npts);
 
                 for _ in 0 .. npts {
-                    pts.push(random::<Pnt3<f32>>() * 2.0+ Vec3::new(5.0, 5.0, 5.0));
+                    pts.push(random::<Point3<f32>>() * 2.0 + Vector3::new(5.0, 5.0, 5.0));
                 }
 
-                let geom = Convex::new(pts);
+                let geom = ConvexHull::new(pts);
                 let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
-                rb.append_translation(&Vec3::new(x, y, z));
+                rb.append_translation(&Vector3::new(x, y, z));
 
                 world.add_rigid_body(rb);
             }
@@ -63,6 +63,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

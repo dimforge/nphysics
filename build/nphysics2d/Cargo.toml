@@ -21,5 +21,5 @@ path = "../../src/lib.rs"
 [dependencies]
 rustc-serialize = "0.3.*"
 num  = "0.1.*"
-nalgebra = "0.6.*"
-ncollide = "0.7.*"
+nalgebra = "0.8.*"
+ncollide = "0.8.*"

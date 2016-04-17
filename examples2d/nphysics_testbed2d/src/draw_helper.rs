@@ -2,7 +2,7 @@ use sfml::graphics;
 use sfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
 use sfml::system::Vector2f;
 use na::Translate;
-use na::Pnt2;
+use na::Point2;
 use na;
 use nphysics2d::world::World;
 use nphysics2d::detection::constraint::Constraint;
@@ -50,8 +50,8 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
             Constraint::Fixed(ref bis) => {
                 draw_line(
                     window,
-                    &na::translation(&bis.borrow().anchor1_pos()).translate(&na::orig()),
-                    &na::translation(&bis.borrow().anchor2_pos()).translate(&na::orig()),
+                    &na::translation(&bis.borrow().anchor1_pos()).translate(&na::origin()),
+                    &na::translation(&bis.borrow().anchor2_pos()).translate(&na::origin()),
                     &Color::new_rgb(255, 0, 0)
                 );
             }
@@ -59,7 +59,7 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
     }
 }
 
-pub fn draw_line(window: &mut graphics::RenderWindow, v1: &Pnt2<f32>, v2: &Pnt2<f32>, color: &Color) {
+pub fn draw_line(window: &mut graphics::RenderWindow, v1: &Point2<f32>, v2: &Point2<f32>, color: &Color) {
     let mut vertices = VertexArray::new().unwrap();
 
     vertices.append(&Vertex::new(

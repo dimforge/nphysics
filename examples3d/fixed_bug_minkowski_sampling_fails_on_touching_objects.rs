@@ -24,7 +24,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Pnt3, Vec3, Translation};
+use na::{Point3, Vector3, Translation};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -35,12 +35,12 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
      * Planes
      */
-    let rb = RigidBody::new_static(Plane::new(Vec3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
+    let rb = RigidBody::new_static(Plane::new(Vector3::new(0.0, 1.0, 0.0)), 0.3, 0.6);
 
     world.add_rigid_body(rb);
 
@@ -53,16 +53,16 @@ fn main() {
     let y     = shift / 2.0;
     let z     = shift / 2.0;
 
-    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(0.21, 4.96, 0.21)), 1.0, 0.3, 0.5);
-    rb.append_translation(&Vec3::new(x, y, z));
+    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector3::new(0.21, 4.96, 0.21)), 1.0, 0.3, 0.5);
+    rb.append_translation(&Vector3::new(x, y, z));
     world.add_rigid_body(rb);
 
     /*
      * Create the ccd-enabled cube.
      */
-    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vec3::new(0.5, 0.5, 0.5)), 1.0, 0.3, 0.5);
-    rb.append_translation(&Vec3::new(x - 1.0, y + 2.0, z - 1.0));
-    rb.set_lin_vel(Vec3::new(10.0, 0.0, 10.0));
+    let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector3::new(0.5, 0.5, 0.5)), 1.0, 0.3, 0.5);
+    rb.append_translation(&Vector3::new(x - 1.0, y + 2.0, z - 1.0));
+    rb.set_lin_vel(Vector3::new(10.0, 0.0, 10.0));
     let body_handle = world.add_rigid_body(rb);
     world.add_ccd_to(&body_handle, 0.0, false);
 
@@ -71,6 +71,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

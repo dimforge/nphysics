@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vec2, Pnt3, Translation};
+use na::{Vector2, Point3, Translation};
 use ncollide::shape::{Ball, Plane};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -16,23 +16,23 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, 1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(0.0, 1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, -10.0));
+    rb.append_translation(&Vector2::new(0.0, -10.0));
 
     world.add_rigid_body(rb);
 
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(0.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(0.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
     world.add_rigid_body(rb);
 
@@ -52,19 +52,19 @@ fn main() {
 
             let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
 
-            rb.append_translation(&Vec2::new(x, y));
+            rb.append_translation(&Vector2::new(x, y));
 
             let color;
 
             if j == 0 {
                 // Invert the gravity for the blue balls.
-                rb.set_lin_acc_scale(Vec2::new(0.0, -1.0));
-                color = Pnt3::new(0.0, 0.0, 1.0);
+                rb.set_lin_acc_scale(Vector2::new(0.0, -1.0));
+                color = Point3::new(0.0, 0.0, 1.0);
             }
             else {
                 // Double the gravity for the green balls.
-                rb.set_lin_acc_scale(Vec2::new(0.0, 2.0));
-                color = Pnt3::new(0.0, 1.0, 0.0);
+                rb.set_lin_acc_scale(Vector2::new(0.0, 2.0));
+                color = Point3::new(0.0, 1.0, 0.0);
             }
 
             let body = world.add_rigid_body(rb);

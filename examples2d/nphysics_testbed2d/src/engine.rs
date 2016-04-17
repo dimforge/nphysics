@@ -4,11 +4,12 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use sfml::graphics::RenderWindow;
-use na::{Pnt2, Pnt3, Iso2};
+use na::{Point2, Point3, Isometry2};
 use na;
 use nphysics2d::object::{WorldObject, RigidBodyHandle, SensorHandle};
 use ncollide::inspection::Repr2;
-use ncollide::shape;
+use ncollide::transformation;
+use ncollide::shape::{Plane2, Ball2, Cuboid2, Compound2, Polyline2, ConvexHull2, Segment2};
 use camera::Camera;
 use objects::{SceneNode, Ball, Box, Lines, Segment};
 
@@ -20,7 +21,7 @@ pub struct GraphicsManager<'a> {
     rand:      XorShiftRng,
     rb2sn:     HashMap<usize, Vec<SceneNode<'a>>>,
     s2sn:      HashMap<usize, Vec<SceneNode<'a>>>,
-    obj2color: HashMap<usize, Pnt3<u8>>
+    obj2color: HashMap<usize, Point3<u8>>
 }
 
 impl<'a> GraphicsManager<'a> {
@@ -51,42 +52,32 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_shape(&mut self,
                  object: WorldObject<f32>,
-                 delta:  Iso2<f32>,
+                 delta:  Isometry2<f32>,
                  shape:  &Repr2<f32>,
                  out:    &mut Vec<SceneNode<'a>>) {
-        type Pl = shape::Plane2<f32>;
-        type Bl = shape::Ball2<f32>;
-        type Cx = shape::Convex2<f32>;
-        type Bo = shape::Cuboid2<f32>;
-        type Cy = shape::Cylinder2<f32>;
-        type Co = shape::Cone2<f32>;
-        type Cm = shape::Compound2<f32>;
-        type Ls = shape::Polyline2<f32>;
-        type Se = shape::Segment2<f32>;
-
         let repr = shape.repr();
 
-        if let Some(s) = repr.downcast_ref::<Pl>() {
+        if let Some(s) = repr.downcast_ref::<Plane2<f32>>() {
             self.add_plane(object, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Bl>() {
+        else if let Some(s) = repr.downcast_ref::<Ball2<f32>>() {
             self.add_ball(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Bo>() {
+        else if let Some(s) = repr.downcast_ref::<Cuboid2<f32>>() {
             self.add_box(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Cx>() {
+        else if let Some(s) = repr.downcast_ref::<ConvexHull2<f32>>() {
             self.add_convex(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Se>() {
+        else if let Some(s) = repr.downcast_ref::<Segment2<f32>>() {
             self.add_segment(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Cm>() {
+        else if let Some(s) = repr.downcast_ref::<Compound2<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(object.clone(), delta * t, s.as_ref(), out)
             }
         }
-        else if let Some(s) = repr.downcast_ref::<Ls>() {
+        else if let Some(s) = repr.downcast_ref::<Polyline2<f32>>() {
             self.add_lines(object, delta, s, out)
         }
         else {
@@ -97,14 +88,14 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_plane(&mut self,
                  _: WorldObject<f32>,
-                 _: &shape::Plane2<f32>,
+                 _: &Plane2<f32>,
                  _: &mut Vec<SceneNode>) {
     }
 
     fn add_ball(&mut self,
                 object: WorldObject<f32>,
-                delta:  Iso2<f32>,
-                shape:  &shape::Ball2<f32>,
+                delta:  Isometry2<f32>,
+                shape:  &Ball2<f32>,
                 out:    &mut Vec<SceneNode>) {
         let color = self.color_for_object(&object);
         let margin = object.borrow().margin();
@@ -113,17 +104,15 @@ impl<'a> GraphicsManager<'a> {
     
     fn add_convex(&mut self,
                   object: WorldObject<f32>,
-                  delta:  Iso2<f32>,
-                  shape:  &shape::Convex2<f32>,
+                  delta:  Isometry2<f32>,
+                  shape:  &ConvexHull2<f32>,
                   out:    &mut Vec<SceneNode>) {
         let color = self.color_for_object(&object);
-        //let margin = object.borrow().margin();
-        let points = shape.points();
-        let vector = points.iter().cloned().collect();
-        let vs = Arc::new(vector);
+        let vs = Arc::new(transformation::convex_hull2(shape.points()).unwrap().0);
+
         let is = {
-	    let limit = shape.points().len();
-	    Arc::new( (0..limit as usize).map(|x| Pnt2::new(x, (x+(1 as usize)) % limit )).collect() )
+            let limit = vs.len();
+            Arc::new((0 .. limit as usize).map(|x| Point2::new(x, (x + (1 as usize)) % limit)).collect())
         };
         
         out.push(SceneNode::LinesNode(Lines::new(object, delta, vs, is, color)))
@@ -131,8 +120,8 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_lines(&mut self,
                  object: WorldObject<f32>,
-                 delta:  Iso2<f32>,
-                 shape:  &shape::Polyline2<f32>,
+                 delta:  Isometry2<f32>,
+                 shape:  &Polyline2<f32>,
                  out:    &mut Vec<SceneNode>) {
 
         let color = self.color_for_object(&object);
@@ -146,8 +135,8 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_box(&mut self,
                object: WorldObject<f32>,
-               delta:  Iso2<f32>,
-               shape:  &shape::Cuboid2<f32>,
+               delta:  Isometry2<f32>,
+               shape:  &Cuboid2<f32>,
                out:    &mut Vec<SceneNode>) {
         let rx = shape.half_extents().x;
         let ry = shape.half_extents().y;
@@ -160,8 +149,8 @@ impl<'a> GraphicsManager<'a> {
 
     fn add_segment(&mut self,
                    object: WorldObject<f32>,
-                   delta:  Iso2<f32>,
-                   shape:  &shape::Segment2<f32>,
+                   delta:  Isometry2<f32>,
+                   shape:  &Segment2<f32>,
                    out:    &mut Vec<SceneNode>) {
         let a = shape.a();
         let b = shape.b();
@@ -205,8 +194,8 @@ impl<'a> GraphicsManager<'a> {
         c.activate_ui(rw);
     }
 
-    fn set_color(&mut self, key: usize, color: Pnt3<f32>) {
-        let color = Pnt3::new(
+    fn set_color(&mut self, key: usize, color: Point3<f32>) {
+        let color = Point3::new(
             (color.x * 255.0) as u8,
             (color.y * 255.0) as u8,
             (color.z * 255.0) as u8
@@ -227,22 +216,22 @@ impl<'a> GraphicsManager<'a> {
         }
     }
 
-    pub fn set_rigid_body_color(&mut self, object: &RigidBodyHandle<f32>, color: Pnt3<f32>) {
+    pub fn set_rigid_body_color(&mut self, object: &RigidBodyHandle<f32>, color: Point3<f32>) {
         self.set_color(WorldObject::rigid_body_uid(object), color)
     }
 
-    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Pnt3<f32>) {
+    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
         self.set_color(WorldObject::sensor_uid(sensor), color)
     }
 
-    pub fn color_for_object(&mut self, object: &WorldObject<f32>) -> Pnt3<u8> {
+    pub fn color_for_object(&mut self, object: &WorldObject<f32>) -> Point3<u8> {
         let key = object.uid();
         match self.obj2color.get(&key) {
             Some(color) => return *color,
             None        => { }
         }
 
-        let mut color = Pnt3::new(
+        let mut color = Point3::new(
             self.rand.gen_range(0usize, 256) as u8,
             self.rand.gen_range(0usize, 256) as u8,
             self.rand.gen_range(0usize, 256) as u8);

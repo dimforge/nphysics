@@ -16,8 +16,8 @@ pub fn fill_second_order_equation<N: Scalar>(dt:          N,
 
     ball_in_socket_equation::cancel_relative_linear_motion(
         dt.clone(),
-        &ref1.translate(&na::orig()),
-        &ref2.translate(&na::orig()),
+        &ref1.translate(&na::origin()),
+        &ref2.translate(&na::origin()),
         joint.anchor1(),
         joint.anchor2(),
         constraints,
@@ -29,7 +29,7 @@ pub fn fill_second_order_equation<N: Scalar>(dt:          N,
         &ref2,
         joint.anchor1(),
         joint.anchor2(),
-        &mut constraints[na::dim::<Vector<N>>() ..],
+        &mut constraints[na::dimension::<Vector<N>>() ..],
         correction);
 }
 
@@ -40,7 +40,7 @@ pub fn cancel_relative_angular_motion<N: Scalar, P>(dt:          N,
                                                     anchor2:     &Anchor<N, P>,
                                                     constraints: &mut [VelocityConstraint<N>],
                                                     correction:  &CorrectionParameters<N>) {
-    let delta     = na::inv(ref2).expect("ref2 must be inversible.") * *ref1;
+    let delta     = na::inverse(ref2).expect("ref2 must be inversible.") * *ref1;
     let delta_rot = delta.rotation();
 
     let mut i = 0;

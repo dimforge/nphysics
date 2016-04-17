@@ -24,7 +24,7 @@ struct CCDRigidBody<N: Scalar> {
 
 impl<N: Scalar> CCDRigidBody<N> {
     fn new(rigid_body: RigidBodyHandle<N>, threshold: N, trigger_sensors: bool) -> CCDRigidBody<N> {
-        let last_center = rigid_body.borrow().position().translation().to_pnt();
+        let last_center = rigid_body.borrow().position().translation().to_point();
 
         CCDRigidBody {
             sqthreshold:     threshold * threshold,
@@ -78,9 +78,9 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
         for co1 in self.objects.elements_mut().iter_mut() {
             let mut obj1 = co1.value.rigid_body.borrow_mut();
 
-            let movement = *obj1.position().translation().as_pnt() - co1.value.last_center;
+            let movement = *obj1.position().translation().as_point() - co1.value.last_center;
 
-            if na::sqnorm(&movement) > co1.value.sqthreshold {
+            if na::norm_squared(&movement) > co1.value.sqthreshold {
                 // Use CCD for this object.
                 let obj1_uid = &*co1.value.rigid_body as *const RefCell<RigidBody<N>> as usize;
 
@@ -177,7 +177,7 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                 // }
             }
 
-            co1.value.last_center = obj1.position().translation().to_pnt();
+            co1.value.last_center = obj1.position().translation().to_point();
             self.intersected_sensors_cache.clear();
         }
 

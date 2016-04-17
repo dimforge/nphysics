@@ -5,7 +5,7 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use num::Float;
-use na::{Vec2, Translation};
+use na::{Vector2, Translation};
 use ncollide::shape::{Plane, Cuboid, Compound, ShapeHandle};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
@@ -17,23 +17,23 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(-1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
     world.add_rigid_body(rb);
 
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
     world.add_rigid_body(rb);
 
@@ -42,8 +42,8 @@ fn main() {
      */
     let mut cross_geoms = Vec::new();
 
-    let edge_x = Cuboid::new(Vec2::new(4.96f32, 0.21));
-    let edge_y = Cuboid::new(Vec2::new(0.21f32, 4.96));
+    let edge_x = Cuboid::new(Vector2::new(4.96f32, 0.21));
+    let edge_y = Cuboid::new(Vector2::new(0.21f32, 4.96));
 
     cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
     cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
@@ -68,7 +68,7 @@ fn main() {
 
             let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.6);
 
-            rb.append_translation(&Vec2::new(x, y));
+            rb.append_translation(&Vector2::new(x, y));
 
             world.add_rigid_body(rb);
         }

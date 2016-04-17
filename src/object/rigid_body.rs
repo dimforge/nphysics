@@ -284,7 +284,7 @@ impl<N: Scalar> RigidBody<N> {
                -> RigidBody<N> {
         let (inv_mass, center_of_mass, inv_inertia, active, state, groups) =
             match mass_properties {
-                None => (na::zero(), na::orig(), na::zero(), ActivationState::Inactive, RigidBodyState::Static, RigidBodyCollisionGroups::new_static()),
+                None => (na::zero(), na::origin(), na::zero(), ActivationState::Inactive, RigidBodyState::Static, RigidBodyCollisionGroups::new_static()),
                 Some((mass, com, inertia)) => {
                     if na::is_zero(&mass) {
                         panic!("A dynamic body must not have a zero volume.")
@@ -292,7 +292,7 @@ impl<N: Scalar> RigidBody<N> {
 
                     let ii: AngularInertia<N>;
 
-                    match na::inv(&inertia) {
+                    match na::inverse(&inertia) {
                         Some(i) => ii = i,
                         None    => ii = na::zero()
                     }
@@ -314,7 +314,7 @@ impl<N: Scalar> RigidBody<N> {
                 ls_inv_inertia:    inv_inertia.clone(),
                 inv_inertia:       inv_inertia,
                 ls_center_of_mass: center_of_mass,
-                center_of_mass:    na::orig(),
+                center_of_mass:    na::origin(),
                 lin_acc:           na::zero(),
                 ang_acc:           na::zero(),
                 gravity:           na::zero(),

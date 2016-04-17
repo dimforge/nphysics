@@ -116,47 +116,47 @@ mod tests;
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]
 pub mod math {
-    use na::{Pnt3, Vec3, Mat3, Rot3, Iso3};
+    use na::{Point3, Vector3, Matrix3, Rotation3, Isometry3};
 
     /// The point type.
-    pub type Point<N> = Pnt3<N>;
+    pub type Point<N> = Point3<N>;
 
     /// The vector type.
-    pub type Vector<N> = Vec3<N>;
+    pub type Vector<N> = Vector3<N>;
 
     /// The orientation type.
-    pub type Orientation<N> = Vec3<N>;
+    pub type Orientation<N> = Vector3<N>;
 
     /// The transformation matrix type.
-    pub type Matrix<N> = Iso3<N>;
+    pub type Matrix<N> = Isometry3<N>;
 
     /// The rotation matrix type.
-    pub type RotationMatrix<N> = Rot3<N>;
+    pub type RotationMatrix<N> = Rotation3<N>;
 
     /// The inertia tensor type.
-    pub type AngularInertia<N> = Mat3<N>;
+    pub type AngularInertia<N> = Matrix3<N>;
 }
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim2")]
 pub mod math {
-    use na::{Pnt2, Vec1, Vec2, Mat1, Rot2, Iso2};
+    use na::{Point2, Vector1, Vector2, Matrix1, Rotation2, Isometry2};
 
     /// The point type.
-    pub type Point<N> = Pnt2<N>;
+    pub type Point<N> = Point2<N>;
 
     /// The vector type.
-    pub type Vector<N> = Vec2<N>;
+    pub type Vector<N> = Vector2<N>;
 
     /// The orientation type.
-    pub type Orientation<N> = Vec1<N>;
+    pub type Orientation<N> = Vector1<N>;
 
     /// The transformation matrix type.
-    pub type Matrix<N> = Iso2<N>;
+    pub type Matrix<N> = Isometry2<N>;
 
     /// The rotation matrix type.
-    pub type RotationMatrix<N> = Rot2<N>;
+    pub type RotationMatrix<N> = Rotation2<N>;
 
     /// The inertia tensor type.
-    pub type AngularInertia<N> = Mat1<N>;
+    pub type AngularInertia<N> = Matrix1<N>;
 }

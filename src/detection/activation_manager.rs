@@ -52,7 +52,7 @@ impl<N: Scalar> ActivationManager<N> {
                 // FIXME: take the time in account (to make a true RWA)
                 let _1         = na::one::<N>();
                 let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
-                    self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
+                    self.mix_factor * (na::norm_squared(&b.lin_vel()) + na::norm_squared(&b.ang_vel()));
 
                 b.activate(new_energy.min(threshold * na::cast::<f64, N>(4.0f64)));
             },

@@ -1,24 +1,24 @@
 use kiss3d::window;
 use kiss3d::scene::SceneNode;
-use na::{Pnt3, Iso3};
+use na::{Point3, Isometry3};
 use nphysics3d::object::WorldObject;
 use objects::node;
 
 pub struct Box {
-    color:      Pnt3<f32>,
-    base_color: Pnt3<f32>,
-    delta:      Iso3<f32>,
+    color:      Point3<f32>,
+    base_color: Point3<f32>,
+    delta:      Isometry3<f32>,
     gfx:        SceneNode,
     body:       WorldObject<f32>,
 }
 
 impl Box {
     pub fn new(body:   WorldObject<f32>,
-               delta:  Iso3<f32>,
+               delta:  Isometry3<f32>,
                rx:     f32,
                ry:     f32,
                rz:     f32,
-               color:  Pnt3<f32>,
+               color:  Point3<f32>,
                window: &mut window::Window) -> Box {
         let gx = rx * 2.0;
         let gy = ry * 2.0;
@@ -47,14 +47,14 @@ impl Box {
     }
 
     pub fn select(&mut self) {
-        self.color = Pnt3::new(1.0, 0.0, 0.0);
+        self.color = Point3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {
         self.color = self.base_color;
     }
 
-    pub fn set_color(&mut self, color: Pnt3<f32>) {
+    pub fn set_color(&mut self, color: Point3<f32>) {
         self.gfx.set_color(color.x, color.y, color.z);
         self.color = color;
         self.base_color = color;

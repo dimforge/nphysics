@@ -2,29 +2,29 @@
 
 use std::ops::{Add, Mul, IndexMut};
 use num::Zero;
-use na::{Outer, EigenQR, Pnt3, Mat3, Mat1, Pnt2};
+use na::{Outer, EigenQR, Point3, Matrix3, Matrix1, Point2};
 use na;
 use ncollide::utils;
 use ncollide::procedural::{Polyline, TriMesh, IndexBuffer};
 use ncollide::transformation;
-use ncollide::math::{Scalar, Point, Vect};
-use ncollide::shape::{Convex3, Convex2};
+use ncollide::math::{Scalar, Point, Vector};
+use ncollide::shape::{ConvexHull3, ConvexHull2};
 use volumetric::Volumetric;
 
 
 fn tetrahedron_unit_inertia_tensor_wrt_point<P, I>(point: &P, p1: &P, p2: &P, p3: &P, p4: &P) -> I
     where P: Point,
-          I: Zero + IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar> {
-    assert!(na::dim::<P>() == 3);
+          I: Zero + IndexMut<(usize, usize), Output = <P::Vect as Vector>::Scalar> {
+    assert!(na::dimension::<P>() == 3);
 
     let p1 = *p1 - *point;
     let p2 = *p2 - *point;
     let p3 = *p3 - *point;
     let p4 = *p4 - *point;
 
-    let _frac_10: <P::Vect as Vect>::Scalar = na::cast(0.1f64);
-    let _frac_20: <P::Vect as Vect>::Scalar = na::cast(0.05f64);
-    let _2      : <P::Vect as Vect>::Scalar = na::cast(2.0f64);
+    let _frac_10: <P::Vect as Vector>::Scalar = na::cast(0.1f64);
+    let _frac_20: <P::Vect as Vector>::Scalar = na::cast(0.05f64);
+    let _2      : <P::Vect as Vector>::Scalar = na::cast(2.0f64);
 
     // Just for readability.
     let x1 = p1[0]; let y1 = p1[1]; let z1 = p1[2];
@@ -65,12 +65,12 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<P, I>(point: &P, p1: &P, p2: &P, p3
 /// The volume and center of mass of a convex mesh.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_volume_and_center_of_mass<P>(convex_mesh: &TriMesh<P>) -> (<P::Vect as Vect>::Scalar, P)
+pub unsafe fn convex_mesh_volume_and_center_of_mass<P>(convex_mesh: &TriMesh<P>) -> (<P::Vect as Vector>::Scalar, P)
     where P: Point {
     let geometric_center = utils::center(&convex_mesh.coords[..]);
 
-    let mut res = na::orig::<P>();
-    let mut vol = na::zero::<<P::Vect as Vect>::Scalar>();
+    let mut res = na::origin::<P>();
+    let mut vol = na::zero::<<P::Vect as Vector>::Scalar>();
 
     match convex_mesh.indices {
         IndexBuffer::Unified(ref idx) => {
@@ -82,7 +82,7 @@ pub unsafe fn convex_mesh_volume_and_center_of_mass<P>(convex_mesh: &TriMesh<P>)
                 let volume = utils::tetrahedron_volume(&geometric_center, p2, p3, p4);
                 let center = utils::tetrahedron_center(&geometric_center, p2, p3, p4);
 
-                res = res + *center.as_vec() * volume;
+                res = res + *center.as_vector() * volume;
                 vol = vol + volume;
             }
         },
@@ -100,19 +100,19 @@ pub unsafe fn convex_mesh_volume_and_center_of_mass<P>(convex_mesh: &TriMesh<P>)
 /// The area and center of mass of a 2D convex Polyline.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_polyline_area_and_center_of_mass<P>(convex_mesh: &Polyline<P>) -> (<P::Vect as Vect>::Scalar, P)
+pub unsafe fn convex_polyline_area_and_center_of_mass<P>(convex_mesh: &Polyline<P>) -> (<P::Vect as Vector>::Scalar, P)
     where P: Point {
-    let geometric_center = utils::center(&convex_mesh.coords[..]);
-    let mut res          = na::orig::<P>();
-    let mut areasum      = na::zero::<<P::Vect as Vect>::Scalar>();
+    let geometric_center = utils::center(convex_mesh.coords());
+    let mut res          = na::origin::<P>();
+    let mut areasum      = na::zero::<<P::Vect as Vector>::Scalar>();
 
-    let mut iterpeek = convex_mesh.coords.iter().peekable();
+    let mut iterpeek = convex_mesh.coords().iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // Stores first element to close the cycle in the end with unwrap_or.
     while let Some(elem) = iterpeek.next() {
         let area   = utils::triangle_area(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
         let center = utils::triangle_center(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
 
-        res     = res + *center.as_vec() * area;
+        res     = res + *center.as_vector() * area;
         areasum = areasum + area;
     }
 
@@ -128,14 +128,14 @@ pub unsafe fn convex_polyline_area_and_center_of_mass<P>(convex_mesh: &Polyline<
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
 pub unsafe fn convex_mesh_mass_properties<P, I>(convex_mesh: &TriMesh<P>,
-                                                density:     <P::Vect as Vect>::Scalar)
-                                                -> (<P::Vect as Vect>::Scalar, P, I)
+                                                density:     <P::Vect as Vector>::Scalar)
+                                                -> (<P::Vect as Vector>::Scalar, P, I)
     where P: Point,
           I: Zero +
              Add<I, Output = I> +
-             Mul<<P::Vect as Vect>::Scalar, Output = I> +
-             IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar> {
-    assert!(na::dim::<P>() == 3);
+             Mul<<P::Vect as Vector>::Scalar, Output = I> +
+             IndexMut<(usize, usize), Output = <P::Vect as Vector>::Scalar> {
+    assert!(na::dimension::<P>() == 3);
 
     let (volume, com) = convex_mesh_volume_and_center_of_mass(convex_mesh);
 
@@ -168,10 +168,10 @@ pub unsafe fn convex_mesh_mass_properties<P, I>(convex_mesh: &TriMesh<P>,
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
 pub unsafe fn convex_polyline_mass_properties<P>(convex_mesh: &Polyline<P>,
-                                                 density:     <P::Vect as Vect>::Scalar)
-                                                 -> (<P::Vect as Vect>::Scalar, P, <P::Vect as Vect>::Scalar)
+                                                 density:     <P::Vect as Vector>::Scalar)
+                                                 -> (<P::Vect as Vector>::Scalar, P, <P::Vect as Vector>::Scalar)
     where P: Point {
-    assert!(na::dim::<P>() == 2);
+    assert!(na::dimension::<P>() == 2);
 
     let (area, com) = convex_polyline_area_and_center_of_mass(convex_mesh);
 
@@ -179,10 +179,10 @@ pub unsafe fn convex_polyline_mass_properties<P>(convex_mesh: &Polyline<P>,
         return (na::zero(), com, na::zero());
     }
 
-    let mut itot = na::zero::<<P::Vect as Vect>::Scalar>();
-    let factor: <P::Vect as Vect>::Scalar = na::cast(0.5 * 1.0/3.0);
+    let mut itot = na::zero::<<P::Vect as Vector>::Scalar>();
+    let factor: <P::Vect as Vector>::Scalar = na::cast(0.5 * 1.0/3.0);
 
-    let mut iterpeek = convex_mesh.coords.iter().peekable();
+    let mut iterpeek = convex_mesh.coords().iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // store first element to close the cycle in the end with unwrap_or
     while let Some (elem) = iterpeek.next() {
         let area = utils::triangle_area(&com, elem, iterpeek.peek().unwrap_or(&firstelement));
@@ -210,12 +210,12 @@ pub unsafe fn convex_polyline_mass_properties<P>(convex_mesh: &Polyline<P>,
 /// The area of a convex polyline.
 ///
 /// This is unsafe as the polyline is not checked to be actually convex.
-pub unsafe fn convex_polyline_area<P>(convex_polyline: &Polyline<P>) -> <P::Vect as Vect>::Scalar
+pub unsafe fn convex_polyline_area<P>(convex_polyline: &Polyline<P>) -> <P::Vect as Vector>::Scalar
     where P: Point {
-    let geometric_center = utils::center(&convex_polyline.coords[..]);
-    let mut areasum = na::zero::<<P::Vect as Vect>::Scalar>();
+    let geometric_center = utils::center(convex_polyline.coords());
+    let mut areasum = na::zero::<<P::Vect as Vector>::Scalar>();
 
-    let mut iterpeek = convex_polyline.coords.iter().peekable();
+    let mut iterpeek = convex_polyline.coords().iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // Store first element to close the cycle in the end with unwrap_or.
     while let Some(elem) = iterpeek.next() {
         let area = utils::triangle_area(elem, iterpeek.peek().unwrap_or(&firstelement), &geometric_center);
@@ -229,9 +229,9 @@ pub unsafe fn convex_polyline_area<P>(convex_polyline: &Polyline<P>) -> <P::Vect
 /// The area of a convex mesh.
 ///
 /// This is unsafe as the mesh is not checked to be actually convex.
-pub unsafe fn convex_mesh_area<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Vect>::Scalar
+pub unsafe fn convex_mesh_area<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Vector>::Scalar
     where P: Point {
-    let mut area = na::zero::<<P::Vect as Vect>::Scalar>();
+    let mut area = na::zero::<<P::Vect as Vector>::Scalar>();
 
     match convex_mesh.indices {
         IndexBuffer::Unified(ref idx) => {
@@ -250,16 +250,16 @@ pub unsafe fn convex_mesh_area<P>(convex_mesh: &TriMesh<P>) -> <P::Vect as Vect>
 }
 
 /// The area of a convex hull.
-pub fn convex_hull_area<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
+pub fn convex_hull_area<P>(dimension: usize, points: &[P]) -> <P::Vect as Vector>::Scalar
     where P: Point,
           P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
-          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vector>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
                                                 Zero + Copy {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             let convex_polyline = transformation::convex_hull2(points);
             unsafe { convex_polyline_area(&convex_polyline) }
@@ -275,18 +275,18 @@ pub fn convex_hull_area<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scala
 }
 
 /// The volume of the convex hull of a set of points.
-pub fn convex_hull_volume<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Scalar
+pub fn convex_hull_volume<P>(dimension: usize, points: &[P]) -> <P::Vect as Vector>::Scalar
     where P: Point,
           P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
-          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vector>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
                                                 Zero + Copy {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
-            convex_hull_area(dim, points)
+            convex_hull_area(dimension, points)
         }
         3 => {
             let convex_mesh = transformation::convex_hull3(points);
@@ -299,16 +299,16 @@ pub fn convex_hull_volume<P>(dim: usize, points: &[P]) -> <P::Vect as Vect>::Sca
 }
 
 /// The center of mass of the convex hull of a set of points.
-pub fn convex_hull_center_of_mass<P>(dim: usize, points: &[P]) -> P
+pub fn convex_hull_center_of_mass<P>(dimension: usize, points: &[P]) -> P
     where P: Point,
           P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
-          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vector>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
                                                 Zero + Copy {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             let convex_polyline = transformation::convex_hull2(points);
             unsafe { convex_polyline_area_and_center_of_mass(&convex_polyline).1 }
@@ -324,26 +324,26 @@ pub fn convex_hull_center_of_mass<P>(dim: usize, points: &[P]) -> P
 }
 
 /// The angular inertia of the convex hull of a set of points.
-pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
+pub fn convex_hull_unit_angular_inertia<P, I>(dimension: usize, points: &[P]) -> I
     where P: Point,
           I: Zero +
              Add<I, Output = I> +
-             Mul<<P::Vect as Vect>::Scalar, Output = I> +
-             IndexMut<(usize, usize), Output = <P::Vect as Vect>::Scalar>,
+             Mul<<P::Vect as Vector>::Scalar, Output = I> +
+             IndexMut<(usize, usize), Output = <P::Vect as Vector>::Scalar>,
           P::Vect: Outer + Mul<<<P as Point>::Vect as Outer>::OuterProductType, Output = <P as Point>::Vect>,
-          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vect>::Scalar, P::Vect> +
+          <P::Vect as Outer>::OuterProductType: EigenQR<<P::Vect as Vector>::Scalar, P::Vect> +
                                                 Mul<P, Output = P> +
                                                 Add<<P::Vect as Outer>::OuterProductType, Output = <P::Vect as Outer>::OuterProductType> +
                                                 Zero + Copy {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             let convex_mesh = transformation::convex_hull2(points);
-            let (area, _, i): (_, _, <P::Vect as Vect>::Scalar) =
+            let (area, _, i): (_, _, <P::Vect as Vector>::Scalar) =
                                unsafe { convex_polyline_mass_properties(&convex_mesh, na::one()) };
             let mut tensor: I = na::zero();
-            tensor[(0, 0)] = i * (na::one::<<P::Vect as Vect>::Scalar>() / area);
+            tensor[(0, 0)] = i * (na::one::<<P::Vect as Vector>::Scalar>() / area);
 
             tensor
         }
@@ -352,7 +352,7 @@ pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
             unsafe {
                 let (vol, _, i): (_, _, I) = convex_mesh_mass_properties(&convex_mesh, na::one());
 
-                i * (na::one::<<P::Vect as Vect>::Scalar>() / vol)
+                i * (na::one::<<P::Vect as Vector>::Scalar>() / vol)
             }
         }
         _ => {
@@ -361,7 +361,7 @@ pub fn convex_hull_unit_angular_inertia<P, I>(dim: usize, points: &[P]) -> I
     }
 }
 
-impl<N: Scalar> Volumetric<N, Pnt3<N>, Mat3<N>> for Convex3<N> {
+impl<N: Scalar> Volumetric<N, Point3<N>, Matrix3<N>> for ConvexHull3<N> {
     fn area(&self) -> N {
         convex_hull_area(3, self.points())
     }
@@ -370,21 +370,21 @@ impl<N: Scalar> Volumetric<N, Pnt3<N>, Mat3<N>> for Convex3<N> {
         convex_hull_volume(3, self.points())
     }
 
-    fn center_of_mass(&self) -> Pnt3<N> {
+    fn center_of_mass(&self) -> Point3<N> {
         convex_hull_center_of_mass(3, self.points())
     }
 
-    fn unit_angular_inertia(&self) -> Mat3<N> {
+    fn unit_angular_inertia(&self) -> Matrix3<N> {
         convex_hull_unit_angular_inertia(3, self.points())
     }
 
-    fn mass_properties(&self, density: N) -> (N, Pnt3<N>, Mat3<N>) {
+    fn mass_properties(&self, density: N) -> (N, Point3<N>, Matrix3<N>) {
         let convex_mesh = transformation::convex_hull3(self.points());
         unsafe { convex_mesh_mass_properties(&convex_mesh, density) }
     }
 }
 
-impl<N: Scalar> Volumetric<N, Pnt2<N>, Mat1<N>> for Convex2<N> {
+impl<N: Scalar> Volumetric<N, Point2<N>, Matrix1<N>> for ConvexHull2<N> {
     fn area(&self) -> N {
         convex_hull_area(2, self.points())
     }
@@ -393,26 +393,26 @@ impl<N: Scalar> Volumetric<N, Pnt2<N>, Mat1<N>> for Convex2<N> {
         convex_hull_volume(2, self.points())
     }
 
-    fn center_of_mass(&self) -> Pnt2<N> {
+    fn center_of_mass(&self) -> Point2<N> {
         convex_hull_center_of_mass(2, self.points())
     }
 
-    fn unit_angular_inertia(&self) -> Mat1<N> {
+    fn unit_angular_inertia(&self) -> Matrix1<N> {
         convex_hull_unit_angular_inertia(2, self.points())
     }
 
-    fn mass_properties(&self, density: N) -> (N, Pnt2<N>, Mat1<N>) {
+    fn mass_properties(&self, density: N) -> (N, Point2<N>, Matrix1<N>) {
         let convex_mesh = transformation::convex_hull2(self.points());
         let (r1, r2, r3) = unsafe { convex_polyline_mass_properties(&convex_mesh, density) };
-        (r1, r2, Mat1::<N>::new(r3))
+        (r1, r2, Matrix1::<N>::new(r3))
     }
 }
 
 #[cfg(test)]
 mod test {
-    use na::{Vec2, Vec3, Mat1, Pnt2};
+    use na::{Vector2, Vector3, Matrix1, Point2};
     use na;
-    use ncollide::shape::{Convex, Cuboid};
+    use ncollide::shape::{ConvexHull, Cuboid};
     use ncollide::procedural;
     use volumetric::Volumetric;
 
@@ -420,7 +420,7 @@ mod test {
     fn test_inertia_tensor() {
         let excentricity = 10.0;
 
-        let mut shape = procedural::cuboid(&Vec3::new(2.0f64 - 0.08, 2.0 - 0.08, 2.0 - 0.08));
+        let mut shape = procedural::cuboid(&Vector3::new(2.0f64 - 0.08, 2.0 - 0.08, 2.0 - 0.08));
 
         for c in shape.coords.iter_mut() {
             c.x = c.x + excentricity;
@@ -428,8 +428,8 @@ mod test {
             c.z = c.z + excentricity;
         }
 
-        let convex = Convex::new(shape.coords);
-        let cuboid = Cuboid::new(Vec3::new(0.96f64, 0.96, 0.96));
+        let convex = ConvexHull::new(shape.coords);
+        let cuboid = Cuboid::new(Vector3::new(0.96f64, 0.96, 0.96));
 
         let actual   = convex.unit_angular_inertia();
         let expected = cuboid.unit_angular_inertia();
@@ -458,10 +458,10 @@ mod test {
 
         // real moment of inertia but divided by the area of the square
         let real_moi = a.powf(2.0) / 6.0;
-        let expected = Mat1::new(real_moi);
+        let expected = Matrix1::new(real_moi);
 
         // standard cuboid
-        let cube = Cuboid::new(Vec2::new(half_a, half_a));
+        let cube = Cuboid::new(Vector2::new(half_a, half_a));
     
         let actual = cube.unit_angular_inertia();
         assert!(na::approx_eq(&actual, &expected),
@@ -469,8 +469,8 @@ mod test {
 
         // convex shape
         let geom = {
-            let points = vec![Pnt2::new(half_a,  half_a), Pnt2::new(-half_a,  half_a),
-                              Pnt2::new(-half_a, -half_a), Pnt2::new(half_a, -half_a) ];
+            let points = vec![Point2::new(half_a,  half_a), Point2::new(-half_a,  half_a),
+                              Point2::new(-half_a, -half_a), Point2::new(half_a, -half_a) ];
             Convex::new(points)
         };
         let actual = geom.unit_angular_inertia();
@@ -485,10 +485,10 @@ mod test {
 
         // real moment of inertia but divided by the area of the rectangle
         let real_moi = (1.0 / 12.0) * (a.powf(2.0) + b.powf(2.0));
-        let expected = Mat1::new(real_moi);
+        let expected = Matrix1::new(real_moi);
     
         // standard cuboid
-        let cube = Cuboid::new(Vec2::new(half_a, half_b));
+        let cube = Cuboid::new(Vector2::new(half_a, half_b));
     
         let actual = cube.unit_angular_inertia();
         assert!(na::approx_eq(&actual, &expected),
@@ -496,8 +496,8 @@ mod test {
 
         // convex shape
         let geom = {
-            let points = vec![Pnt2::new(half_a,  half_b), Pnt2::new(-half_a,  half_b),
-                              Pnt2::new(-half_a, -half_b), Pnt2::new(half_a, -half_b) ];
+            let points = vec![Point2::new(half_a,  half_b), Point2::new(-half_a,  half_b),
+                              Point2::new(-half_a, -half_b), Point2::new(half_a, -half_b) ];
             Convex::new(points)
         };
         let actual = geom.unit_angular_inertia();
@@ -519,12 +519,12 @@ mod test {
         // formula taken from http://www.efunda.com/math/areas/triangle.cfm
         let area = b * h / 2.0;
         let real_moi = (b.powf(3.0) * h - b.powf(2.0) * h * a + b * h * a.powf(2.0) + b * h.powf(3.0)) / (36.0 * area);
-        let expected = Mat1::new(real_moi);
+        let expected = Matrix1::new(real_moi);
 
         // convex shape
         let geom = {
-            let points = vec![Pnt2::new(0.0 - c_x, 0.0 - c_y), Pnt2::new(b - c_x, 0.0 - c_y),
-                              Pnt2::new(a - c_x, h - c_y) ];
+            let points = vec![Point2::new(0.0 - c_x, 0.0 - c_y), Point2::new(b - c_x, 0.0 - c_y),
+                              Point2::new(a - c_x, h - c_y) ];
             Convex::new(points)
         };
         let actual = geom.unit_angular_inertia();

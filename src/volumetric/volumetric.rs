@@ -2,7 +2,7 @@
 
 use std::ops::Mul;
 use na;
-use na::{Pnt2, Pnt3, Vec1, Vec3, Iso2, Iso3, Mat1, Mat3};
+use na::{Point2, Point3, Vector1, Vector3, Isometry2, Isometry3, Matrix1, Matrix3};
 use ncollide::math::Scalar;
 
 /// Trait implemented by inertia tensors.
@@ -54,44 +54,44 @@ pub trait Volumetric<N: Scalar, P, I: Mul<N, Output = I>> {
 
 }
 
-impl<N: Scalar> InertiaTensor<N, Pnt2<N>, Vec1<N>, Iso2<N>> for Mat1<N> {
+impl<N: Scalar> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<N> {
     #[inline]
-    fn apply(&self, av: &Vec1<N>) -> Vec1<N> {
+    fn apply(&self, av: &Vector1<N>) -> Vector1<N> {
         *self * *av
     }
 
     #[inline]
-    fn to_world_space(&self, _: &Iso2<N>) -> Mat1<N> {
+    fn to_world_space(&self, _: &Isometry2<N>) -> Matrix1<N> {
         self.clone()
     }
 
     #[inline]
-    fn to_relative_wrt_point(&self, mass: N, pt: &Pnt2<N>) -> Mat1<N> {
-        *self + Mat1::new(mass * na::sqnorm(pt.as_vec()))
+    fn to_relative_wrt_point(&self, mass: N, pt: &Point2<N>) -> Matrix1<N> {
+        *self + Matrix1::new(mass * na::norm_squared(pt.as_vector()))
     }
 }
 
-impl<N: Scalar> InertiaTensor<N, Pnt3<N>, Vec3<N>, Iso3<N>> for Mat3<N> {
+impl<N: Scalar> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<N> {
     #[inline]
-    fn apply(&self, av: &Vec3<N>) -> Vec3<N> {
+    fn apply(&self, av: &Vector3<N>) -> Vector3<N> {
         *self * *av
     }
 
     #[inline]
-    fn to_world_space(&self, t: &Iso3<N>) -> Mat3<N> {
-        let inv = na::inv(&t.rotation).unwrap();
-        *t.rotation.submat() * *self * *inv.submat()
+    fn to_world_space(&self, t: &Isometry3<N>) -> Matrix3<N> {
+        let inverse = na::inverse(&t.rotation).unwrap();
+        *t.rotation.submatrix() * *self * *inverse.submatrix()
     }
 
     #[inline]
-    fn to_relative_wrt_point(&self, mass: N, pt: &Pnt3<N>) -> Mat3<N> {
-        let diag  = na::sqnorm(pt.as_vec());
-        let diagm = Mat3::new(
+    fn to_relative_wrt_point(&self, mass: N, pt: &Point3<N>) -> Matrix3<N> {
+        let diag  = na::norm_squared(pt.as_vector());
+        let diagm = Matrix3::new(
             diag.clone(), na::zero(),   na::zero(),
             na::zero(),   diag.clone(), na::zero(),
             na::zero(),   na::zero(),   diag
         );
 
-        *self + (diagm - na::outer(pt.as_vec(), pt.as_vec())) * mass
+        *self + (diagm - na::outer(pt.as_vector(), pt.as_vector())) * mass
     }
 }
