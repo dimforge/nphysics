@@ -471,7 +471,7 @@ mod test {
         let geom = {
             let points = vec![Point2::new(half_a,  half_a), Point2::new(-half_a,  half_a),
                               Point2::new(-half_a, -half_a), Point2::new(half_a, -half_a) ];
-            Convex::new(points)
+            ConvexHull::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(na::approx_eq(&actual, &expected),
@@ -498,7 +498,7 @@ mod test {
         let geom = {
             let points = vec![Point2::new(half_a,  half_b), Point2::new(-half_a,  half_b),
                               Point2::new(-half_a, -half_b), Point2::new(half_a, -half_b) ];
-            Convex::new(points)
+            ConvexHull::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(na::approx_eq(&actual, &expected),
@@ -525,7 +525,7 @@ mod test {
         let geom = {
             let points = vec![Point2::new(0.0 - c_x, 0.0 - c_y), Point2::new(b - c_x, 0.0 - c_y),
                               Point2::new(a - c_x, h - c_y) ];
-            Convex::new(points)
+            ConvexHull::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(na::approx_eq(&actual, &expected),

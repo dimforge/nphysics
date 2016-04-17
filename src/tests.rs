@@ -3,7 +3,7 @@ mod test {
     #[cfg(feature = "dim2")]
     use na;
     #[cfg(feature = "dim2")]
-    use na::{Vec1, Vector2, Isometry2};
+    use na::{Vector1, Vector2, Isometry2};
     #[cfg(feature = "dim2")]
     use ncollide::shape::Cuboid;
     #[cfg(feature = "dim2")]
@@ -21,7 +21,7 @@ mod test {
         // rigidbody with side length 2, area 4 and mass 4
         let geom   = Cuboid::new(Vector2::new(1.0, 1.0));
         let rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.6);
-        let rb_handle = world.add_body(rb.clone());
+        let rb_handle = world.add_rigid_body(rb.clone());
 
         // ensure it's at the origin
         let expected = &Isometry2::new(na::zero(), na::zero());
@@ -127,12 +127,12 @@ mod test {
         // rigidbody with side length 2, area 4 and mass 4
         let geom   = Cuboid::new(Vector2::new(1.0, 1.0));
         let rb = RigidBody::new_dynamic(geom.clone(), 1.0, 0.3, 0.6);
-        let rb_handle = world.add_body(rb.clone());
+        let rb_handle = world.add_rigid_body(rb.clone());
 
         // add another body with double the density
         let mut rb2 = RigidBody::new_dynamic(geom.clone(), 2.0, 0.3, 0.6);
         rb2.append_translation(&Vector2::new(5.0, 0.0));
-        let rb_handle2 = world.add_body(rb2);
+        let rb_handle2 = world.add_rigid_body(rb2);
 
         // switch off gravity
         world.set_gravity(Vector2::new(0.0, 0.0));
@@ -141,8 +141,8 @@ mod test {
         // apply force
         rb_handle.borrow_mut().append_lin_force(Vector2::new(0.0, 10.0));
         rb_handle2.borrow_mut().append_lin_force(Vector2::new(0.0, 10.0));
-        rb_handle.borrow_mut().set_deactivation_threshold( None );
-        rb_handle2.borrow_mut().set_deactivation_threshold( None );
+        rb_handle.borrow_mut().set_deactivation_threshold(None);
+        rb_handle2.borrow_mut().set_deactivation_threshold(None);
 
         // simulate
         for _ in 0 .. 2000 {
@@ -203,8 +203,8 @@ mod test {
         rb_handle2.borrow_mut().clear_forces();
 
         // add angular forces
-        rb_handle.borrow_mut().append_ang_force(Vec1::new(10.0));
-        rb_handle2.borrow_mut().append_ang_force(Vec1::new(10.0));
+        rb_handle.borrow_mut().append_ang_force(Vector1::new(10.0));
+        rb_handle2.borrow_mut().append_ang_force(Vector1::new(10.0));
 
         // simulate
         for _ in 0 .. 1000 {
@@ -213,23 +213,23 @@ mod test {
         // expected angle
         // force of force of 10 (N), inertia of 2.67 => acc = force/inertia = 3.75 rad/s^2
         // 1 sec acceleration => angle = 1/2 * acc * t^2 = 1.875
-        let expected = &Isometry2::new(na::zero(), Vec1::new(1.875));
+        let expected = &Isometry2::new(na::zero(), Vector1::new(1.875));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Rotation did not properly work. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
         // expected angle
         // force of force of 10 (N), inertia of 5.33 => acc = force/inertia = 1.875 rad/s^2
         // 1 sec acceleration => angle = 1/2 * acc * t^2 = 0.9375
-        let expected = &Isometry2::new(Vector2::new(5.0, 0.0), Vec1::new(0.9375));
+        let expected = &Isometry2::new(Vector2::new(5.0, 0.0), Vector1::new(0.9375));
         assert!(na::approx_eq_eps(rb_handle2.borrow().position(), expected, &0.01),
                 format!("Rotation2 did not properly work. Actual: {:?}, Expected: {:?}",
                         rb_handle2.borrow().position(), expected));
 
         // clear angular forces
         rb_handle.borrow_mut().set_transformation(Isometry2::new(na::zero(), na::zero()));
-        rb_handle.borrow_mut().set_ang_vel(Vec1::new(0.0));
+        rb_handle.borrow_mut().set_ang_vel(Vector1::new(0.0));
         rb_handle2.borrow_mut().set_transformation(Isometry2::new(Vector2::new(5.0, 0.0), na::zero()));
-        rb_handle2.borrow_mut().set_ang_vel(Vec1::new(0.0));
+        rb_handle2.borrow_mut().set_ang_vel(Vector1::new(0.0));
         rb_handle.borrow_mut().clear_angular_force();
         rb_handle2.borrow_mut().clear_angular_force();
 
@@ -238,12 +238,12 @@ mod test {
             world.step(0.001);
         }
         // expected angle
-        let expected = &Isometry2::new(na::zero(), Vec1::new(0.0));
+        let expected = &Isometry2::new(na::zero(), Vector1::new(0.0));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Rotation did not properly stop. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
         // expected angle
-        let expected = &Isometry2::new(Vector2::new(5.0, 0.0), Vec1::new(0.0));
+        let expected = &Isometry2::new(Vector2::new(5.0, 0.0), Vector1::new(0.0));
         assert!(na::approx_eq_eps(rb_handle2.borrow().position(), expected, &0.01),
                 format!("Rotation2 did not properly stop. Actual: {:?}, Expected: {:?}",
                         rb_handle2.borrow().position(), expected));
@@ -251,13 +251,13 @@ mod test {
 
         // reset bodies
         rb_handle.borrow_mut().set_transformation(Isometry2::new(na::zero(), na::zero()));
-        rb_handle.borrow_mut().set_ang_vel(Vec1::new(0.0));
+        rb_handle.borrow_mut().set_ang_vel(Vector1::new(0.0));
         rb_handle.borrow_mut().clear_angular_force();
         rb_handle2.borrow_mut().deactivate();
 
         // add angular forces
-        rb_handle.borrow_mut().append_ang_force(Vec1::new(10.0));
-        rb_handle.borrow_mut().append_ang_force(Vec1::new(-20.0));
+        rb_handle.borrow_mut().append_ang_force(Vector1::new(10.0));
+        rb_handle.borrow_mut().append_ang_force(Vector1::new(-20.0));
 
         // simulate
         for _ in 0 .. 1000 {
@@ -266,7 +266,7 @@ mod test {
         // expected angle
         // resulting force of force of -10 (N), inertia of 2.67 => acc = force/inertia = -3.75 rad/s^2
         // 1 sec acceleration => angle = 1/2 * acc * t^2 = -1.875
-        let expected = &Isometry2::new(na::zero(), Vec1::new(-1.875));
+        let expected = &Isometry2::new(na::zero(), Vector1::new(-1.875));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Combined forces rotation did not properly work. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
@@ -274,12 +274,12 @@ mod test {
 
         // reset bodies
         rb_handle.borrow_mut().set_transformation(Isometry2::new(na::zero(), na::zero()));
-        rb_handle.borrow_mut().set_ang_vel(Vec1::new(0.0));
+        rb_handle.borrow_mut().set_ang_vel(Vector1::new(0.0));
         rb_handle.borrow_mut().clear_angular_force();
 
         // set and clear both linear and angular forces
         rb_handle.borrow_mut().append_lin_force(Vector2::new(0.0, 10.0));
-        rb_handle.borrow_mut().append_ang_force(Vec1::new(10.0));
+        rb_handle.borrow_mut().append_ang_force(Vector1::new(10.0));
         rb_handle.borrow_mut().clear_forces();
 
         // simulate
@@ -294,12 +294,12 @@ mod test {
 
         // reset bodies
         rb_handle.borrow_mut().set_transformation(Isometry2::new(na::zero(), na::zero()));
-        rb_handle.borrow_mut().set_ang_vel(Vec1::new(0.0));
+        rb_handle.borrow_mut().set_ang_vel(Vector1::new(0.0));
         rb_handle.borrow_mut().clear_angular_force();
 
         // only clear angular force
         rb_handle.borrow_mut().append_lin_force(Vector2::new(0.0, 10.0));
-        rb_handle.borrow_mut().append_ang_force(Vec1::new(10.0));
+        rb_handle.borrow_mut().append_ang_force(Vector1::new(10.0));
         rb_handle.borrow_mut().clear_angular_force();
 
         // simulate
@@ -321,7 +321,7 @@ mod test {
 
         // only clear linear force
         rb_handle.borrow_mut().append_lin_force(Vector2::new(0.0, 10.0));
-        rb_handle.borrow_mut().append_ang_force(Vec1::new(10.0));
+        rb_handle.borrow_mut().append_ang_force(Vector1::new(10.0));
         rb_handle.borrow_mut().clear_linear_force();
 
         // simulate
@@ -329,7 +329,7 @@ mod test {
             world.step(0.001);
         }
         // expected result, body rotates but doesn't move
-        let expected = &Isometry2::new(na::zero(), Vec1::new(1.875));
+        let expected = &Isometry2::new(na::zero(), Vector1::new(1.875));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Only rotation is expected. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
@@ -358,14 +358,14 @@ mod test {
         // expected result
         // linear displacement 1.25
         // angular rotation: -1.875
-        let expected = &Isometry2::new(Vector2::new(0.0, 1.25), Vec1::new(1.875));
+        let expected = &Isometry2::new(Vector2::new(0.0, 1.25), Vector1::new(1.875));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Only rotation is expected on body 1. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
         // expected result
         // linear displacement 1.25
         // angular rotation: -1.875
-        let expected = &Isometry2::new(Vector2::new(5.0, 0.625), Vec1::new(0.9375));
+        let expected = &Isometry2::new(Vector2::new(5.0, 0.625), Vector1::new(0.9375));
         assert!(na::approx_eq_eps(rb_handle2.borrow().position(), expected, &0.01),
                 format!("Only rotation is expected on body 2. Actual: {:?}, Expected: {:?}",
                         rb_handle2.borrow().position(), expected));
@@ -381,12 +381,12 @@ mod test {
         // rigidbody with side length 2, area 4 and mass 4
         let geom = Cuboid::new(Vector2::new(1.0, 1.0));
         let rb = RigidBody::new_dynamic(geom.clone(), 1.0, 0.3, 0.6);
-        let rb_handle = world.add_body(rb.clone());
+        let rb_handle = world.add_rigid_body(rb.clone());
 
         // add another body with double the density
         let mut rb2 = RigidBody::new_dynamic(geom.clone(), 2.0, 0.3, 0.6);
         rb2.append_translation(&Vector2::new(5.0, 0.0));
-        let rb_handle2 = world.add_body(rb2);
+        let rb_handle2 = world.add_rigid_body(rb2);
 
         // switch off gravity
         world.set_gravity(Vector2::new(0.0, 0.0));
@@ -430,8 +430,8 @@ mod test {
         rb_handle2.borrow_mut().activate(1.0);
 
         // torques have to work for different inertias
-        rb_handle.borrow_mut().apply_angular_momentum(Vec1::new(10.0));
-        rb_handle2.borrow_mut().apply_angular_momentum(Vec1::new(10.0));
+        rb_handle.borrow_mut().apply_angular_momentum(Vector1::new(10.0));
+        rb_handle2.borrow_mut().apply_angular_momentum(Vector1::new(10.0));
 
         // simulate
         for _ in 0 .. 1000 {
@@ -442,7 +442,7 @@ mod test {
         // torque of 10 N*m*s on body with inertia of 2.67 kg*m^2 results in
         // rotation speed of rvel = 10 N*m*s / 2.67 kg*m^2 = 3.75 1/s
         // angle after 1s: 3.75
-        let expected = &Isometry2::new(Vector2::new(0.0, 0.0), Vec1::new(3.75));
+        let expected = &Isometry2::new(Vector2::new(0.0, 0.0), Vector1::new(3.75));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Different torque result is expected on body 1. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
@@ -450,7 +450,7 @@ mod test {
         // torque of 10 N*m*s on body with inertia of 5.33 kg*m^2 results in
         // rotation speed of rvel = 10 N*m*s / 5.33 kg*m^2 = 1.875 1/s
         // angle after 1s: 1.875
-        let expected = &Isometry2::new(Vector2::new(5.0, 0.0), Vec1::new(1.875));
+        let expected = &Isometry2::new(Vector2::new(5.0, 0.0), Vector1::new(1.875));
         assert!(na::approx_eq_eps(rb_handle2.borrow().position(), expected, &0.01),
                 format!("Different torque result is expected on body 2. Actual: {:?}, Expected: {:?}",
                         rb_handle2.borrow().position(), expected));
@@ -479,14 +479,14 @@ mod test {
 
         // expected values are the combination of the values in the two previous tests,
         // except with opposite rotation direction
-        let expected = &Isometry2::new(Vector2::new(0.0, 2.5), Vec1::new(3.75));
+        let expected = &Isometry2::new(Vector2::new(0.0, 2.5), Vector1::new(3.75));
         assert!(na::approx_eq_eps(rb_handle.borrow().position(), expected, &0.01),
                 format!("Different torque result is expected on body 1. Actual: {:?}, Expected: {:?}",
                         rb_handle.borrow().position(), expected));
 
         // expected values are the combination of the values in the two previous tests,
         // except with opposite rotation direction
-        let expected = &Isometry2::new(Vector2::new(5.0, 1.25), Vec1::new(1.875));
+        let expected = &Isometry2::new(Vector2::new(5.0, 1.25), Vector1::new(1.875));
         assert!(na::approx_eq_eps(rb_handle2.borrow().position(), expected, &0.01),
                 format!("Different torque result is expected on body 2. Actual: {:?}, Expected: {:?}",
                         rb_handle2.borrow().position(), expected));
