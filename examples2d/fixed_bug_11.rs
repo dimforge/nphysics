@@ -22,7 +22,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vec2, Translation};
+use na::{Vector2, Translation};
 use ncollide::shape::Cuboid;
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -33,26 +33,26 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 0.0));
+    world.set_gravity(Vector2::new(0.0, 0.0));
 
     /*
      * Create the box that will be deactivated.
      */
     let rad    = 1.0;
-    let geom   = Cuboid::new(Vec2::new(rad, rad));
+    let geom   = Cuboid::new(Vector2::new(rad, rad));
     let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
-    rb.set_lin_vel(Vec2::new(0.99, 0.0));
+    rb.set_lin_vel(Vector2::new(0.99, 0.0));
 
-    world.add_body(rb.clone());
+    world.add_rigid_body(rb.clone());
 
     /*
      * Create the box that will not be deactivated.
      */
     rb.set_deactivation_threshold(Some(0.5));
-    rb.append_translation(&Vec2::new(0.0, 3.0));
+    rb.append_translation(&Vector2::new(0.0, 3.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Set up the testbed.

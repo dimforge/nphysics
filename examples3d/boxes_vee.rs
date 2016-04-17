@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Pnt3, Vec3, Translation};
+use na::{Point3, Vector3, Translation};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -14,14 +14,14 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec3::new(0.0, -9.81, 0.0));
+    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
      * Plane
      */
-    let geom = Plane::new(Vec3::new(0.0, 1.0, 0.0));
+    let geom = Plane::new(Vector3::new(0.0, 1.0, 0.0));
 
-    world.add_body(RigidBody::new_static(geom, 0.3, 0.6));
+    world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     /*
      * Create the boxes
@@ -40,12 +40,12 @@ fn main() {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let geom   = Cuboid::new(Vec3::new(rad - 0.04, rad - 0.04, rad - 0.04));
+                let geom   = Cuboid::new(Vector3::new(rad - 0.04, rad - 0.04, rad - 0.04));
                 let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
-                rb.append_translation(&Vec3::new(x, y, z));
+                rb.append_translation(&Vector3::new(x, y, z));
 
-                world.add_body(rb);
+                world.add_rigid_body(rb);
             }
         }
     }
@@ -55,6 +55,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Pnt3::new(-30.0, 30.0, -30.0), Pnt3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

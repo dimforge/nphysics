@@ -5,7 +5,7 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use num::Float;
-use na::{Vec2, Translation};
+use na::{Vector2, Translation};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -16,25 +16,25 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(-1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Create the boxes
@@ -50,12 +50,12 @@ fn main() {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * rad - centery * 2.0 - 10.0;
 
-            let geom   = Cuboid::new(Vec2::new(rad, rad));
+            let geom   = Cuboid::new(Vector2::new(rad, rad));
             let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.6);
 
-            rb.append_translation(&Vec2::new(x, y));
+            rb.append_translation(&Vector2::new(x, y));
 
-            world.add_body(rb);
+            world.add_rigid_body(rb);
         }
     }
 

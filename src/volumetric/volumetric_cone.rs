@@ -1,6 +1,6 @@
 use std::ops::IndexMut;
 use num::Zero;
-use na::{BaseFloat, Orig, Pnt2, Pnt3, Mat1, Mat3};
+use na::{BaseFloat, Origin, Point2, Point3, Matrix1, Matrix3};
 use na;
 use ncollide::shape::{Cone2, Cone3};
 use ncollide::math::Scalar;
@@ -9,10 +9,10 @@ use volumetric::Volumetric;
 
 /// The volume of a cone.
 #[inline]
-pub fn cone_volume<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
-    assert!(dim == 2 || dim == 3);
+pub fn cone_volume<N: Scalar>(dimension: usize, half_height: N, radius: N) -> N {
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             radius * half_height * na::cast(2.0f64)
         }
@@ -23,12 +23,12 @@ pub fn cone_volume<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
     }
 }
 
-/// The surface of a cone.
+/// The area of a cone.
 #[inline]
-pub fn cone_surface<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
-    assert!(dim == 2 || dim == 3);
+pub fn cone_area<N: Scalar>(dimension: usize, half_height: N, radius: N) -> N {
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             let height = half_height * na::cast(2.0f64);
             let side   = (height * height + radius * radius).sqrt();
@@ -50,8 +50,8 @@ pub fn cone_surface<N: Scalar>(dim: usize, half_height: N, radius: N) -> N {
 #[inline]
 pub fn cone_center_of_mass<N, P>(half_height: N) -> P
     where N: Scalar,
-          P: Orig + IndexMut<usize, Output = N> {
-    let mut com = na::orig::<P>();
+          P: Origin + IndexMut<usize, Output = N> {
+    let mut com = na::origin::<P>();
     com[1] = -half_height / na::cast(2.0f64);
 
     com
@@ -59,12 +59,12 @@ pub fn cone_center_of_mass<N, P>(half_height: N) -> P
 
 /// The unit angular inertia of a cone.
 #[inline]
-pub fn cone_unit_angular_inertia<N, I>(dim: usize, half_height: N, radius: N) -> I
+pub fn cone_unit_angular_inertia<N, I>(dimension: usize, half_height: N, radius: N) -> I
     where N: Scalar,
           I: Zero + IndexMut<(usize, usize), Output = N> {
-    assert!(dim == 2 || dim == 3);
+    assert!(dimension == 2 || dimension == 3);
 
-    match dim {
+    match dimension {
         2 => {
             // FIXME: not sure about that…
             let mut res = na::zero::<I>();
@@ -95,14 +95,14 @@ pub fn cone_unit_angular_inertia<N, I>(dim: usize, half_height: N, radius: N) ->
 }
 
 macro_rules! impl_volumetric_cone(
-    ($t: ident, $dim: expr, $p: ident, $i: ident) => (
+    ($t: ident, $dimension: expr, $p: ident, $i: ident) => (
         impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
-            fn surface(&self) -> N {
-                cone_surface($dim, self.half_height(), self.radius())
+            fn area(&self) -> N {
+                cone_area($dimension, self.half_height(), self.radius())
             }
 
             fn volume(&self) -> N {
-                cone_volume($dim, self.half_height(), self.radius())
+                cone_volume($dimension, self.half_height(), self.radius())
             }
 
             fn center_of_mass(&self) -> $p<N> {
@@ -110,11 +110,11 @@ macro_rules! impl_volumetric_cone(
             }
 
             fn unit_angular_inertia(&self) -> $i<N> {
-                cone_unit_angular_inertia($dim, self.half_height(), self.radius())
+                cone_unit_angular_inertia($dimension, self.half_height(), self.radius())
             }
         }
     )
 );
 
-impl_volumetric_cone!(Cone2, 2, Pnt2, Mat1);
-impl_volumetric_cone!(Cone3, 3, Pnt3, Mat3);
+impl_volumetric_cone!(Cone2, 2, Point2, Matrix1);
+impl_volumetric_cone!(Cone3, 3, Point3, Matrix3);

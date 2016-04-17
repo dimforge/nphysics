@@ -1,4 +1,4 @@
-use sfml::system::vector2::{Vector2f, Vector2i};
+use sfml::system::{Vector2f, Vector2i};
 use sfml::graphics::RenderTarget;
 use sfml::graphics;
 use sfml::window::event;
@@ -17,19 +17,23 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Camera {
-        let mut scene = graphics::View::new().unwrap();
-
-        scene.set_center(&Vector2f::new(0.0 as f32, 0.0 as f32));
-
-        Camera {
+    pub fn new(rw: &graphics::RenderWindow) -> Camera {
+        let mut res = Camera {
             pressing:  false,
             ui:        graphics::View::new().unwrap(),
-            scene:     scene,
+            scene:     graphics::View::new().unwrap(),
             lastx:     0,
             lasty:     0,
             curr_zoom: 1.0
-        }
+        };
+
+        res.scene.set_center(&Vector2f::new(0.0 as f32, 0.0 as f32));
+
+        let sz = rw.get_size();
+
+        res.set_size(sz.x, sz.y);
+
+        res
     }
 
     pub fn activate_ui(&self, rw: &mut graphics::RenderWindow) {
@@ -47,16 +51,16 @@ impl Camera {
 
                 self.curr_zoom *= 1.0 - ndelta * ZOOM_FACTOR;
                 self.scene.zoom(1.0 - ndelta * ZOOM_FACTOR);
-            }
-            event::MouseButtonPressed{x, y, ..}  => {
+            },
+            event::MouseButtonPressed{x, y, ..} => {
                 self.lastx    = x;
                 self.lasty    = y;
                 self.pressing = true;
-            }
-            event::MouseButtonReleased{..}  => {
+            },
+            event::MouseButtonReleased{..} => {
                 self.pressing = false;
-            }
-            event::MouseMoved{x, y}             => {
+            },
+            event::MouseMoved{x, y} => {
                 if self.pressing {
                     let zoom = na::abs(&self.curr_zoom);
                     let zx   = (self.lastx - x) as f32 * zoom;
@@ -67,18 +71,20 @@ impl Camera {
                     self.lastx = x;
                     self.lasty = y;
                 }
-            }
-            event::Resized{width, height} => {
-                self.scene.set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
-                self.ui.set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
-            }
+            },
+            event::Resized{width, height} => self.set_size(width, height),
             _ => {}
         }
     }
 
+    fn set_size(&mut self, width: u32, height: u32) {
+        self.scene.set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
+        self.ui.set_size(&Vector2f::new(self.curr_zoom * width as f32, self.curr_zoom * height as f32));
+    }
+
     pub fn map_pixel_to_coords(&mut self, pixel_pos: Vector2i) -> Vector2f {
         let center = self.scene.get_center();
-        let size = self.scene.get_size();
+        let size   = self.scene.get_size();
         let mapped_coords = Vector2f::new(
             (pixel_pos.x as f32 * self.curr_zoom - (size.x / 2.0) + center.x) / DRAW_SCALE,
             (pixel_pos.y as f32 * self.curr_zoom - (size.y / 2.0) + center.y) / DRAW_SCALE

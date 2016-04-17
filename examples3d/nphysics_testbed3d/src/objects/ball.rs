@@ -1,25 +1,25 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Pnt3, Iso3};
-use nphysics3d::object::RigidBody;
+use na::{Point3, Isometry3};
+use nphysics3d::object::WorldObject;
+use objects::node;
 
 pub struct Ball {
-    color:      Pnt3<f32>,
-    base_color: Pnt3<f32>,
-    delta:      Iso3<f32>,
+    color:      Point3<f32>,
+    base_color: Point3<f32>,
+    delta:      Isometry3<f32>,
     gfx:        SceneNode,
-    body:       Rc<RefCell<RigidBody<f32>>>
+    body:       WorldObject<f32>
 }
 
 impl Ball {
-    pub fn new(body:   Rc<RefCell<RigidBody<f32>>>,
-               delta:  Iso3<f32>,
+    pub fn new(body:   WorldObject<f32>,
+               delta:  Isometry3<f32>,
                radius: f32,
-               color:  Pnt3<f32>,
+               color:  Point3<f32>,
                window: &mut Window) -> Ball {
-        let t = body.borrow().position().clone();
+        let t         = body.borrow().position().clone();
+        let is_sensor = body.is_sensor();
 
         let mut res = Ball {
             color:      color,
@@ -29,6 +29,11 @@ impl Ball {
             body:       body
         };
 
+        if is_sensor {
+            res.gfx.set_surface_rendering_activation(false);
+            res.gfx.set_lines_width(1.0);
+        }
+
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx.set_local_transformation(t * res.delta);
         res.update();
@@ -37,30 +42,32 @@ impl Ball {
     }
 
     pub fn select(&mut self) {
-        self.color = Pnt3::new(1.0, 0.0, 0.0);
+        self.color = Point3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {
         self.color = self.base_color;
     }
 
-    pub fn update(&mut self) {
-        let rb = self.body.borrow();
-
-        if rb.is_active() {
-            self.gfx.set_local_transformation(*rb.position() * self.delta);
-            self.gfx.set_color(self.color.x, self.color.y, self.color.z);
-        }
-        else {
-            self.gfx.set_color(self.color.x * 0.25, self.color.y * 0.25, self.color.z * 0.25);
-        }
+    pub fn set_color(&mut self, color: Point3<f32>) {
+        self.gfx.set_color(color.x, color.y, color.z);
+        self.color = color;
+        self.base_color = color;
     }
 
-    pub fn object(&self) -> &SceneNode {
+    pub fn update(&mut self) {
+        node::update_scene_node(&mut self.gfx, &self.body, &self.color, &self.delta);
+    }
+
+    pub fn scene_node(&self) -> &SceneNode {
         &self.gfx
     }
 
-    pub fn body(&self) -> &Rc<RefCell<RigidBody<f32>>> {
+    pub fn scene_node_mut(&mut self) -> &mut SceneNode {
+        &mut self.gfx
+    }
+
+    pub fn object(&self) -> &WorldObject<f32> {
         &self.body
     }
 }

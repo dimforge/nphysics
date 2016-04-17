@@ -58,7 +58,7 @@ pub fn semi_implicit_integrate_wo_rotation<N: Scalar>(dt: N, p: &Point<N>, lv: &
 pub fn displacement<N: Scalar>(dt: N, _: &Matrix<N>, center_of_mass: &Point<N>,
                                lin_vel: &Vector<N>, ang_vel: &Orientation<N>) -> Matrix<N> {
     let mut res: Matrix<N> = na::one();
-    res.append_rotation_wrt_point_mut(&(*ang_vel * dt), center_of_mass.as_vec());
+    res.append_rotation_wrt_point_mut(&(*ang_vel * dt), center_of_mass.as_vector());
 
     res.append_translation_mut(&(*lin_vel * dt));
 

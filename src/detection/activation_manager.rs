@@ -7,7 +7,7 @@ use ncollide::utils::data::hash::UintTWHash;
 use world::RigidBodyCollisionWorld;
 use detection::constraint::Constraint;
 use detection::joint::{JointManager, Joint};
-use object::{RigidBody, RigidBodyHandle, ActivationState};
+use object::{WorldObject, RigidBody, RigidBodyHandle, ActivationState};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
 
@@ -52,7 +52,7 @@ impl<N: Scalar> ActivationManager<N> {
                 // FIXME: take the time in account (to make a true RWA)
                 let _1         = na::one::<N>();
                 let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
-                    self.mix_factor * (na::sqnorm(&b.lin_vel()) + na::sqnorm(&b.ang_vel()));
+                    self.mix_factor * (na::norm_squared(&b.lin_vel()) + na::norm_squared(&b.ang_vel()));
 
                 b.activate(new_energy.min(threshold * na::cast::<f64, N>(4.0f64)));
             },
@@ -133,8 +133,10 @@ impl<N: Scalar> ActivationManager<N> {
         }
 
         for (b1, b2, cd) in world.contact_pairs() {
-            if cd.num_colls() != 0 {
-                make_union(&b1.data, &b2.data, &mut self.ufind[..])
+            if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&b1.data, &b2.data) {
+                if cd.num_colls() != 0 {
+                    make_union(&rb1, &rb2, &mut self.ufind[..])
+                }
             }
         }
 

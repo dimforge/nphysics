@@ -37,7 +37,7 @@ impl<N: Scalar, P> Anchor<N, P> {
 
                 rb.center_of_mass().clone()
             },
-            None => na::orig()
+            None => na::origin()
         }
     }
 }

@@ -45,7 +45,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
             restitution_constraints: Vec::new(),
             friction_constraints:    Vec::new(),
             mj_lambda:               Vec::new(),
-            cache:                   ImpulseCache::new(step, na::dim::<Vector<N>>()),
+            cache:                   ImpulseCache::new(step, na::dimension::<Vector<N>>()),
 
             correction: CorrectionParameters {
                 corr_mode:  correction_mode,
@@ -94,17 +94,17 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                 constraints: &[Constraint<N>],
                 joints:      &[usize],
                 bodies:      &[Rc<RefCell<RigidBody<N>>>]) {
-        let num_friction_equations    = (na::dim::<Vector<N>>() - 1) * self.cache.len();
+        let num_friction_equations    = (na::dimension::<Vector<N>>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
 
         for i in joints.iter() {
             match constraints[*i] {
                 Constraint::BallInSocket(_) => {
-                    num_joint_equations = num_joint_equations + na::dim::<Vector<N>>()
+                    num_joint_equations = num_joint_equations + na::dimension::<Vector<N>>()
                 },
                 Constraint::Fixed(_) => {
-                    num_joint_equations = num_joint_equations + na::dim::<Vector<N>>() + na::dim::<Orientation<N>>()
+                    num_joint_equations = num_joint_equations + na::dimension::<Vector<N>>() + na::dimension::<Orientation<N>>()
                 },
                 Constraint::RBRB(_, _, _) => { }
             }
@@ -131,7 +131,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                 _ => { }
             }
 
-            friction_offset = friction_offset + na::dim::<Vector<N>>() - 1;
+            friction_offset = friction_offset + na::dimension::<Vector<N>>() - 1;
         }
 
         let mut joint_offset = num_restitution_equations;
@@ -146,7 +146,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                         &self.correction
                     );
 
-                    joint_offset = joint_offset + na::dim::<Vector<N>>();
+                    joint_offset = joint_offset + na::dimension::<Vector<N>>();
                 },
                 Constraint::Fixed(ref f) => {
                     fixed_equation::fill_second_order_equation(
@@ -156,7 +156,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                         &self.correction
                     );
 
-                    joint_offset = joint_offset + na::dim::<Vector<N>>() + na::dim::<Orientation<N>>();
+                    joint_offset = joint_offset + na::dimension::<Vector<N>>() + na::dimension::<Orientation<N>>();
                 },
                 Constraint::RBRB(_, _, _) => { }
             }
@@ -191,15 +191,15 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
             let imps = self.cache.push_impulsions();
             imps[0]  = dv.impulse * na::cast::<f64, N>(0.85f64);
 
-            for j in 0usize .. na::dim::<Vector<N>>() - 1 {
-                let fc = &self.friction_constraints[i * (na::dim::<Vector<N>>() - 1) + j];
+            for j in 0usize .. na::dimension::<Vector<N>>() - 1 {
+                let fc = &self.friction_constraints[i * (na::dimension::<Vector<N>>() - 1) + j];
                 imps[1 + j] = fc.impulse * na::cast::<f64, N>(0.85f64);
             }
         }
 
         let offset = self.cache.reserved_impulse_offset();
         for (i, (_, kv)) in self.cache.hash_mut().iter_mut().enumerate() {
-            *kv = (kv.0, offset + i * na::dim::<Vector<N>>());
+            *kv = (kv.0, offset + i * na::dimension::<Vector<N>>());
         }
 
         /*
@@ -249,7 +249,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                 let center = &rb.center_of_mass().clone();
 
                 let mut delta: Matrix<N> = na::one();
-                delta.append_rotation_wrt_point_mut(&rotation, center.as_vec());
+                delta.append_rotation_wrt_point_mut(&rotation, center.as_vector());
                 delta.append_translation_mut(&translation);
 
                 rb.append_transformation(&delta);

@@ -6,8 +6,8 @@ extern crate nphysics_testbed2d;
 extern crate rand;
 
 use num::Float;
-use na::{Vec1, Vec2, Pnt2, Translation};
-use ncollide::shape::{Plane, Convex2};
+use na::{Vector1, Vector2, Translation};
+use ncollide::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
 use nphysics_testbed2d::Testbed;
@@ -19,26 +19,26 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vec2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(-1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(-1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
-    world.add_body(rb);
+    world.add_rigid_body(rb);
 
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vec2::new(1.0, -1.0)), 0.3, 0.6);
+    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vec2::new(0.0, 10.0));
+    rb.append_translation(&Vector2::new(0.0, 10.0));
 
-    world.add_body(rb);
-
+    world.add_rigid_body(rb);
+    
     /*
      * Create the convex shapes
      */
@@ -65,20 +65,17 @@ fn main() {
         for j in 0usize .. num {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift - centery * 2.0 - 10.0;
-            let geom = {
-                let points = vec![Pnt2::new(0.0,  1.0)*rad, Pnt2::new(-0.5, -0.7)*rad,
-                Pnt2::new(0.0, -1.0)*rad, Pnt2::new( 0.5, -0.7)*rad ];
-                Convex2::new( points )
-            };
-            let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6);
-            rb.append_translation(&Vec2::new(x, y));
-            let rb_handle = world.add_body(rb);
 
+            let geom = Cuboid::new(Vector2::new(0.5, 0.5));
+            let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6);
+            rb.append_translation(&Vector2::new(x, y));
+            let rb_handle = world.add_rigid_body(rb);
+            
             handles.push(rb_handle);
-            forces.push(Vec2::new(posneg.ind_sample(&mut rng)*0.00008, pos.ind_sample(&mut rng)*-0.0008));
-            ang_forces.push(Vec1::new(pos.ind_sample(&mut rng)*0.001 *wc.ind_sample(&mut rng)));
-            impulses.push(Vec2::new(posneg.ind_sample(&mut rng)*0.1, pos.ind_sample(&mut rng)*-1.0));
-            torques.push(Vec1::new(posneg.ind_sample(&mut rng)*0.1));
+            forces.push(Vector2::new(posneg.ind_sample(&mut rng) * 0.00008, pos.ind_sample(&mut rng) * -0.0008));
+            ang_forces.push(Vector1::new(pos.ind_sample(&mut rng) * 0.001 * wc.ind_sample(&mut rng)));
+            impulses.push(Vector2::new(posneg.ind_sample(&mut rng) * 0.1, pos.ind_sample(&mut rng) * -1.0));
+            torques.push(Vector1::new(posneg.ind_sample(&mut rng) * 0.1));
         }
     }
 
@@ -134,7 +131,7 @@ fn main() {
                         |(object, force)| {
                             let mut obj = object.borrow_mut();
                             let thr = obj.deactivation_threshold().unwrap_or(0.0);
-                            obj.activate(thr*4.0);
+                            obj.activate(thr * 4.0);
                             obj.append_ang_force(force.clone());
                         }
                         ).last();

@@ -60,6 +60,7 @@ to see all the cool stuffs you can do.
 - Swept sphere based continuous collision detection.
 - Ball-in-socket joint.
 - Fixed joint.
+- Sensors.
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to

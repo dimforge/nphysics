@@ -1,6 +1,5 @@
-use sfml::system::vector2;
-use sfml::traits::Drawable;
-use sfml::graphics::{Font, Text, Color, RenderTarget};
+use sfml::system::{Vector2f, Vector2i};
+use sfml::graphics::{Font, Text, Color, RenderTarget, Drawable, Transformable};
 use sfml::graphics;
 use time;
 
@@ -14,7 +13,7 @@ impl<'a> Fps<'a> {
     pub fn new(font: &'a Font) -> Fps<'a> {
         let mut txt = Text::new().unwrap();
         txt.set_font(font);
-        txt.set_position(&vector2::Vector2f { x: 0.0, y: 0.0 });
+        txt.set_position(&Vector2f::new(0.0, 0.0));
         txt.set_color(&Color::new_rgb(255, 255, 255));
 
         Fps {
@@ -41,8 +40,8 @@ impl<'a> Fps<'a> {
 
         let v = rw.get_view();
 
-        self.fps.set_position(&rw.map_pixel_to_coords(&vector2::Vector2i { x: 0, y : 0 }, &v));
-        self.fps.set_string(&elapsed.to_string()[..]);
+        self.fps.set_position(&rw.map_pixel_to_coords(&Vector2i { x: 0, y : 0 }, &v));
+        self.fps.set_string(&format!("Time: {:.*}sec.", 4, elapsed)[..]);
         rw.draw(&self.fps);
     }
 }
