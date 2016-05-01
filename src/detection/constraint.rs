@@ -3,7 +3,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use ncollide::math::Scalar;
-use ncollide::geometry::Contact;
+use ncollide::query::Contact;
 use object::RigidBody;
 use detection::joint::{Fixed, BallInSocket};
 use math::Point;

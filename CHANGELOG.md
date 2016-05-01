@@ -4,6 +4,12 @@ documented here.
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.4.0]
+### Modified
+  * Use the latest **ncollide** API v0.9.0 which included breaking changes.
+  * Rename event handler registration methods and traits to remove
+    `signal_` and `Signal` from their names.
+
 ## [0.3.0]
 ### Added
   * Added sensors.

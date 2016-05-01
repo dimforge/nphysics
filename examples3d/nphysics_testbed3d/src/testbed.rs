@@ -3,17 +3,14 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::path::Path;
 use time;
-use glfw;
-use glfw::{MouseButton, Key, Action, WindowEvent};
-use na::{Point2, Point3, Vector3, Translation, Translate, Isometry3, Bounded};
-use na;
+use glfw::{self, MouseButton, Key, Action, WindowEvent};
+use na::{self, Point2, Point3, Vector3, Translation, Translate, Isometry3, Bounded};
 use kiss3d::window::Window;
 use kiss3d::light::Light;
 use kiss3d::text::Font;
 use kiss3d::loader::obj;
 use ncollide::shape::{Cuboid, Ball};
-use ncollide::ray;
-use ncollide::ray::Ray;
+use ncollide::query::{self, Ray};
 use ncollide::world::CollisionGroups;
 use nphysics3d::detection::constraint::Constraint;
 use nphysics3d::detection::joint::{Anchor, Fixed, Joint};
@@ -308,7 +305,7 @@ impl Testbed {
                                 let (pos, dir) = self.graphics.borrow().camera().unproject(&cursor_pos, &size);
                                 let (ref ppos, ref pdir) = grabbed_object_plane;
 
-                                match ray::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
+                                match query::ray_internal::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir)) {
                                     Some(inter) => {
                                         let _1: Isometry3<f32> = na::one();
                                         j.borrow_mut().set_local2(na::append_translation(&_1, (pos + dir * inter).as_vector()))

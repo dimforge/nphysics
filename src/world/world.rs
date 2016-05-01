@@ -8,9 +8,10 @@ use ncollide::bounding_volume::AABB;
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase, BroadPhasePairFilter};
-use ncollide::narrow_phase::{ContactSignalHandler, ProximitySignalHandler, DefaultNarrowPhase,
-                             DefaultCollisionDispatcher, DefaultProximityDispatcher};
-use ncollide::world::{CollisionWorld, CollisionObject, CollisionQueryType};
+use ncollide::narrow_phase::{ContactHandler, ProximityHandler, DefaultNarrowPhase,
+                             DefaultContactDispatcher, DefaultProximityDispatcher,
+                             ContactAlgorithm};
+use ncollide::world::{CollisionWorld, CollisionObject, GeometricQueryType};
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
 use detection::{ActivationManager, Detector};
@@ -72,7 +73,7 @@ impl<N: Scalar> World<N> {
         let mut cworld = CollisionWorld::new(prediction, false);
 
         // Custom narrow phase.
-        let disp = DefaultCollisionDispatcher::new();
+        let disp = DefaultContactDispatcher::new();
         let prox = DefaultProximityDispatcher::new();
         let nf   = DefaultNarrowPhase::new(Box::new(disp), Box::new(prox));
         let _    = cworld.set_narrow_phase(Box::new(nf));
@@ -85,7 +86,7 @@ impl<N: Scalar> World<N> {
 
         // Setup contact handler to reactivate sleeping objects that loose contact.
         let handler = ObjectActivationOnContactHandler { sleep: sleep.clone() };
-        cworld.register_contact_signal_handler("__nphysics_internal_ObjectActivationOnContactHandler", handler);
+        cworld.register_contact_handler("__nphysics_internal_ObjectActivationOnContactHandler", handler);
 
         // Setup the broad phase pair filter that will prevent sensors from colliding with their
         // parent.
@@ -187,8 +188,9 @@ impl<N: Scalar> World<N> {
 
         self.rigid_bodies.insert(uid, handle.clone());
         self.cworld.add(uid, position, shape, groups,
-                        CollisionQueryType::Contacts(collision_object_prediction),
+                        GeometricQueryType::Contacts(collision_object_prediction),
                         WorldObject::RigidBody(handle.clone()));
+        self.cworld.perform_removals_and_broad_phase();
 
         handle
     }
@@ -204,8 +206,9 @@ impl<N: Scalar> World<N> {
 
         self.sensors.insert(uid, handle.clone());
         self.cworld.add(uid, position, shape, groups,
-                        CollisionQueryType::Proximity(margin),
+                        GeometricQueryType::Proximity(margin),
                         WorldObject::Sensor(handle.clone()));
+        self.cworld.perform_removals_and_broad_phase();
 
         handle
     }
@@ -365,7 +368,7 @@ impl<N: Scalar> World<N> {
     /// a non-trivial overhead during the next update as it will force re-detection of all
     /// collision pairs.
     pub fn register_broad_phase_pair_filter<F>(&mut self, name: &str, filter: F)
-        where F: BroadPhasePairFilter<WorldCollisionObject<N>> + 'static {
+        where F: BroadPhasePairFilter<Point<N>, Matrix<N>, WorldObject<N>> + 'static {
         self.cworld.register_broad_phase_pair_filter(name, filter)
     }
 
@@ -375,25 +378,25 @@ impl<N: Scalar> World<N> {
     }
 
     /// Registers a handler for contact start/stop events.
-    pub fn register_contact_signal_handler<H>(&mut self, name: &str, handler: H)
-        where H: ContactSignalHandler<WorldObject<N>> + 'static {
-        self.cworld.register_contact_signal_handler(name, handler)
+    pub fn register_contact_handler<H>(&mut self, name: &str, handler: H)
+        where H: ContactHandler<Point<N>, Matrix<N>, WorldObject<N>> + 'static {
+        self.cworld.register_contact_handler(name, handler)
     }
 
     /// Unregisters a handler for contact start/stop events.
-    pub fn unregister_contact_signal_handler(&mut self, name: &str) {
-        self.cworld.unregister_contact_signal_handler(name)
+    pub fn unregister_contact_handler(&mut self, name: &str) {
+        self.cworld.unregister_contact_handler(name)
     }
 
     /// Registers a handler for proximity status change events.
-    pub fn register_proximity_signal_handler<H>(&mut self, name: &str, handler: H)
-        where H: ProximitySignalHandler<WorldObject<N>> + 'static {
-        self.cworld.register_proximity_signal_handler(name, handler);
+    pub fn register_proximity_handler<H>(&mut self, name: &str, handler: H)
+        where H: ProximityHandler<Point<N>, Matrix<N>, WorldObject<N>> + 'static {
+        self.cworld.register_proximity_handler(name, handler);
     }
 
     /// Unregisters a handler for proximity status change events.
-    pub fn unregister_proximity_signal_handler(&mut self, name: &str) {
-        self.cworld.unregister_proximity_signal_handler(name);
+    pub fn unregister_proximity_handler(&mut self, name: &str) {
+        self.cworld.unregister_proximity_handler(name);
     }
 }
 
@@ -401,23 +404,31 @@ struct ObjectActivationOnContactHandler<N: Scalar> {
     sleep: Rc<RefCell<ActivationManager<N>>>
 }
 
-impl<N: Scalar> ContactSignalHandler<WorldObject<N>> for ObjectActivationOnContactHandler<N> {
+impl<N: Scalar> ContactHandler<Point<N>, Matrix<N>, WorldObject<N>>
+for ObjectActivationOnContactHandler<N> {
     #[inline]
-    fn handle_contact(&mut self, b1: &WorldObject<N>, b2: &WorldObject<N>, started: bool) {
-        // Wake on collision lost.
-        if !started {
-            // There is no need to wake up anything if a rigid-body intersects a sensor.
-            if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (b1, b2) {
-                self.sleep.borrow_mut().deferred_activate(rb1);
-                self.sleep.borrow_mut().deferred_activate(rb2);
-            }
+    fn handle_contact_started(&mut self,
+                              _: &WorldCollisionObject<N>,
+                              _: &WorldCollisionObject<N>,
+                              _: &ContactAlgorithm<Point<N>, Matrix<N>>) {
+        // Do nothing.
+    }
+
+    fn handle_contact_stopped(&mut self, obj1: &WorldCollisionObject<N>, obj2: &WorldCollisionObject<N>) {
+        // Wake up on collision lost.
+
+        // There is no need to wake up anything if a rigid-body intersects a sensor.
+        if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&obj1.data, &obj2.data) {
+            self.sleep.borrow_mut().deferred_activate(rb1);
+            self.sleep.borrow_mut().deferred_activate(rb2);
         }
     }
 }
 
 struct SensorsNotCollidingTheirParentPairFilter;
 
-impl<N: Scalar> BroadPhasePairFilter<WorldCollisionObject<N>> for SensorsNotCollidingTheirParentPairFilter {
+impl<N: Scalar> BroadPhasePairFilter<Point<N>, Matrix<N>, WorldObject<N>>
+for SensorsNotCollidingTheirParentPairFilter {
     #[inline]
     fn is_pair_valid(&self, b1: &WorldCollisionObject<N>, b2: &WorldCollisionObject<N>) -> bool {
         match (&b1.data, &b2.data) {

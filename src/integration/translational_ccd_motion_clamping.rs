@@ -5,7 +5,7 @@ use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::broad_phase::BroadPhase;
 use ncollide::bounding_volume::BoundingVolume;
-use ncollide::geometry;
+use ncollide::query;
 use ncollide::bounding_volume;
 use ncollide::math::FloatError;
 use ncollide::world::CollisionGroups;
@@ -106,7 +106,7 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                     if co2.data.uid() != obj1_uid {
                         let obj2 = co2.data.borrow();
 
-                        let toi = geometry::time_of_impact(
+                        let toi = query::time_of_impact(
                             &last_transform,
                             &dir,
                             obj1.shape().as_ref(),
@@ -163,7 +163,7 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                 //         // See if at the final rigid body position the sensor is still intersected.
                 //         // NOTE: we are assuming the tensor is convex (handling concave cases would
                 //         // be to complicated without much uses).
-                //         if !geometry::test_interference(
+                //         if !query::test_interference(
                 //             obj1.position(),
                 //             obj1_shape,
                 //             bsensor.position(),

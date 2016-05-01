@@ -1,7 +1,7 @@
 use num::Float;
 use na::{self, Bounded};
 use ncollide::math::Scalar;
-use ncollide::geometry::Contact;
+use ncollide::query::Contact;
 use volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;

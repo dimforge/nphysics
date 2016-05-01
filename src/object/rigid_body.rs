@@ -5,8 +5,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use na::{self, Transformation, Transform, Translation, Rotation, Bounded, Cross};
 use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
-use ncollide::shape::ShapeHandle;
-use ncollide::inspection::Repr;
+use ncollide::shape::{Shape, ShapeHandle};
 use ncollide::math::Scalar;
 use math::{Point, Vector, Orientation, Matrix, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
@@ -260,7 +259,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Creates a new rigid body that can move.
     pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N) -> RigidBody<N>
-        where G: Send + Sync + Repr<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
+        where G: Send + Sync + Shape<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
         let props = shape.mass_properties(density);
 
         RigidBody::new(ShapeHandle::new(shape), Some(props), restitution, friction)
@@ -268,7 +267,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Creates a new rigid body that cannot move.
     pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
-        where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
+        where G: Send + Sync + Shape<Point<N>, Matrix<N>> {
 
         RigidBody::new(ShapeHandle::new(shape), None, restitution, friction)
     }
