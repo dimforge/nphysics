@@ -7,9 +7,8 @@ use sfml::graphics::RenderWindow;
 use na::{Point2, Point3, Isometry2};
 use na;
 use nphysics2d::object::{WorldObject, RigidBodyHandle, SensorHandle};
-use ncollide::inspection::Repr2;
 use ncollide::transformation;
-use ncollide::shape::{Plane2, Ball2, Cuboid2, Compound2, Polyline2, ConvexHull2, Segment2};
+use ncollide::shape::{Shape2, Plane2, Ball2, Cuboid2, Compound2, Polyline2, ConvexHull2, Segment2};
 use camera::Camera;
 use objects::{SceneNode, Ball, Box, Lines, Segment};
 
@@ -53,31 +52,29 @@ impl<'a> GraphicsManager<'a> {
     fn add_shape(&mut self,
                  object: WorldObject<f32>,
                  delta:  Isometry2<f32>,
-                 shape:  &Repr2<f32>,
+                 shape:  &Shape2<f32>,
                  out:    &mut Vec<SceneNode<'a>>) {
-        let repr = shape.repr();
-
-        if let Some(s) = repr.downcast_ref::<Plane2<f32>>() {
+        if let Some(s) = shape.as_shape::<Plane2<f32>>() {
             self.add_plane(object, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Ball2<f32>>() {
+        else if let Some(s) = shape.as_shape::<Ball2<f32>>() {
             self.add_ball(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Cuboid2<f32>>() {
+        else if let Some(s) = shape.as_shape::<Cuboid2<f32>>() {
             self.add_box(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<ConvexHull2<f32>>() {
+        else if let Some(s) = shape.as_shape::<ConvexHull2<f32>>() {
             self.add_convex(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Segment2<f32>>() {
+        else if let Some(s) = shape.as_shape::<Segment2<f32>>() {
             self.add_segment(object, delta, s, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Compound2<f32>>() {
+        else if let Some(s) = shape.as_shape::<Compound2<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(object.clone(), delta * t, s.as_ref(), out)
             }
         }
-        else if let Some(s) = repr.downcast_ref::<Polyline2<f32>>() {
+        else if let Some(s) = shape.as_shape::<Polyline2<f32>>() {
             self.add_lines(object, delta, s, out)
         }
         else {

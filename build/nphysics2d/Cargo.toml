@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics2d"
-version = "0.3.0"
+version = "0.4.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "2-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/doc/nphysics2d"
@@ -22,4 +22,4 @@ path = "../../src/lib.rs"
 rustc-serialize = "0.3.*"
 num  = "0.1.*"
 nalgebra = "0.8.*"
-ncollide = "0.8.*"
+ncollide = "0.9.*"

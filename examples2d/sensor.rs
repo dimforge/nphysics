@@ -3,11 +3,11 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Point3, Translation};
+use na::{Point2, Vector2, Point3, Isometry2, Translation};
 use ncollide::shape::{Plane, Cuboid, Ball};
-use ncollide::geometry::Proximity;
-use ncollide::narrow_phase::ProximitySignalHandler;
-use nphysics2d::world::World;
+use ncollide::query::Proximity;
+use ncollide::narrow_phase::ProximityHandler;
+use nphysics2d::world::{World, WorldCollisionObject};
 use nphysics2d::object::{RigidBody, WorldObject};
 use nphysics2d::object::Sensor;
 use nphysics_testbed2d::{Testbed, GraphicsManagerHandle};
@@ -20,20 +20,20 @@ struct ColorChanger {
     graphics: GraphicsManagerHandle
 }
 
-impl ProximitySignalHandler<WorldObject<f32>> for ColorChanger {
+impl ProximityHandler<Point2<f32>, Isometry2<f32>, WorldObject<f32>> for ColorChanger {
     fn handle_proximity(&mut self,
-                        o1: &WorldObject<f32>, o2: &WorldObject<f32>,
+                        o1: &WorldCollisionObject<f32>, o2: &WorldCollisionObject<f32>,
                         _: Proximity, new_proximity: Proximity) {
         let color = match new_proximity {
             Proximity::WithinMargin | Proximity::Intersecting => Point3::new(1.0, 1.0, 0.0),
             Proximity::Disjoint                               => Point3::new(0.5, 0.5, 1.0)
         };
     
-        if let WorldObject::RigidBody(ref rb) = *o1 {
+        if let WorldObject::RigidBody(ref rb) = o1.data {
             self.graphics.borrow_mut().set_rigid_body_color(rb, color);
         }
     
-        if let WorldObject::RigidBody(ref rb) = *o2 {
+        if let WorldObject::RigidBody(ref rb) = o2.data {
             self.graphics.borrow_mut().set_rigid_body_color(rb, color);
         }
     }
@@ -90,7 +90,7 @@ fn main() {
 
     // Setup the callback.
     let handler = ColorChanger { graphics: testbed.graphics() };
-    world.register_proximity_signal_handler("color_changer", handler);
+    world.register_proximity_handler("color_changer", handler);
 
     /*
      * Set up the testbed.

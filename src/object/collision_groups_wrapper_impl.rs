@@ -102,39 +102,39 @@ macro_rules! collision_groups_wrapper_impl(
             }
 
             /// Un-blacklists static objects.
-            pub fn enable_collision_with_static(&mut self) {
+            pub fn enable_interaction_with_static(&mut self) {
                 self.collision_groups.modify_blacklist(STATIC_GROUP_ID, false);
                 self.collision_groups.modify_whitelist(STATIC_GROUP_ID, true);
             }
 
             /// Blacklists any static object.
-            pub fn disable_collision_with_static(&mut self) {
+            pub fn disable_interaction_with_static(&mut self) {
                 self.collision_groups.modify_blacklist(STATIC_GROUP_ID, true);
                 self.collision_groups.modify_whitelist(STATIC_GROUP_ID, false);
             }
 
             /// Un-blacklists sensors.
-            pub fn enable_collision_with_sensors(&mut self) {
+            pub fn enable_interaction_with_sensors(&mut self) {
                 self.collision_groups.modify_blacklist(SENSOR_GROUP_ID, false);
                 self.collision_groups.modify_whitelist(SENSOR_GROUP_ID, true);
             }
 
             /// Blacklists sensors.
-            pub fn disable_collision_with_sensors(&mut self) {
+            pub fn disable_interaction_with_sensors(&mut self) {
                 self.collision_groups.modify_blacklist(SENSOR_GROUP_ID, true);
                 self.collision_groups.modify_whitelist(SENSOR_GROUP_ID, false);
             }
 
-            /// Enables self collision detection.
+            /// Enables self interaction detection.
             #[inline]
-            pub fn enable_self_collision(&mut self) {
-                self.collision_groups.enable_self_collision();
+            pub fn enable_self_interaction(&mut self) {
+                self.collision_groups.enable_self_interaction();
             }
 
-            /// Disables self collision detection.
+            /// Disables self interaction detection.
             #[inline]
-            pub fn disable_self_collision(&mut self) {
-                self.collision_groups.disable_self_collision();
+            pub fn disable_self_interaction(&mut self) {
+                self.collision_groups.disable_self_interaction();
             }
 
             /// Tests if this entity is part of the given group.
@@ -159,20 +159,20 @@ macro_rules! collision_groups_wrapper_impl(
             ///
             /// Collision is possible if `group_id` is whitelisted but not blacklisted.
             #[inline]
-            pub fn can_collide_with(&self, group_id: usize) -> bool {
-                self.collision_groups.can_collide_with(group_id)
+            pub fn can_interact_with(&self, group_id: usize) -> bool {
+                self.collision_groups.can_interact_with(group_id)
             }
 
             /// Tests whether two collision groups have at least one group in common.
             #[inline]
-            pub fn can_collide_with_groups(&self, other: &CollisionGroups) -> bool {
-                self.collision_groups.can_collide_with_groups(other)
+            pub fn can_interact_with_groups(&self, other: &CollisionGroups) -> bool {
+                self.collision_groups.can_interact_with_groups(other)
             }
 
             /// Tests whether self-collision is enabled.
             #[inline]
-            pub fn can_collide_with_self(&self) -> bool {
-                self.collision_groups.can_collide_with_self()
+            pub fn can_interact_with_self(&self) -> bool {
+                self.collision_groups.can_interact_with_self()
             }
         }
     )

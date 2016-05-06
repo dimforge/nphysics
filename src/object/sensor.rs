@@ -4,8 +4,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use na;
 use ncollide::math::Scalar;
-use ncollide::inspection::Repr;
-use ncollide::shape::ShapeHandle;
+use ncollide::shape::{Shape, ShapeHandle};
 use math::{Point, Matrix};
 use object::{RigidBodyHandle, SensorCollisionGroups};
 
@@ -35,7 +34,7 @@ impl<N: Scalar> Sensor<N> {
     ///
     /// A sensor has a default margin equal to zero.
     pub fn new<G>(shape: G, parent: Option<RigidBodyHandle<N>>) -> Sensor<N>
-        where G: Send + Sync + Repr<Point<N>, Matrix<N>> {
+        where G: Send + Sync + Shape<Point<N>, Matrix<N>> {
         Sensor::new_with_shared_shape(ShapeHandle::new(shape), parent)
     }
 

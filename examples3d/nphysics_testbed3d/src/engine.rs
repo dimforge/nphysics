@@ -7,9 +7,8 @@ use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
-use ncollide::shape::{Plane3, Ball3, Cuboid3, Cylinder3, Cone3, Compound3, TriMesh3, ConvexHull3};
+use ncollide::shape::{Shape3, Plane3, Ball3, Cuboid3, Cylinder3, Cone3, Compound3, TriMesh3, ConvexHull3};
 use ncollide::transformation;
-use ncollide::inspection::Repr3;
 use nphysics3d::object::{RigidBody, WorldObject, WorldObjectBorrowed, RigidBodyHandle, SensorHandle};
 use objects::ball::Ball;
 use objects::box_node::Box;
@@ -140,7 +139,7 @@ impl GraphicsManager {
         let nodes = {
             let mut nodes = Vec::new();
 
-            self.add_repr(window, object.clone(), na::one(), object.borrow().shape().as_ref(), color, &mut nodes);
+            self.add_shape(window, object.clone(), na::one(), object.borrow().shape().as_ref(), color, &mut nodes);
 
             nodes
         };
@@ -157,39 +156,37 @@ impl GraphicsManager {
         }
     }
 
-    fn add_repr(&mut self,
+    fn add_shape(&mut self,
                 window: &mut Window,
                 object: WorldObject<f32>,
                 delta:  Isometry3<f32>,
-                shape:  &Repr3<f32>,
+                shape:  &Shape3<f32>,
                 color:  Point3<f32>,
                 out:    &mut Vec<Node>) {
-        let repr = shape.repr();
-
-        if let Some(s) = repr.downcast_ref::<Plane3<f32>>() {
+        if let Some(s) = shape.as_shape::<Plane3<f32>>() {
             self.add_plane(window, object, s, color, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Ball3<f32>>() {
+        else if let Some(s) = shape.as_shape::<Ball3<f32>>() {
             self.add_ball(window, object, delta, s, color, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Cuboid3<f32>>() {
+        else if let Some(s) = shape.as_shape::<Cuboid3<f32>>() {
             self.add_box(window, object, delta, s, color, out)
         }
-        else if let Some(s) = repr.downcast_ref::<ConvexHull3<f32>>() {
+        else if let Some(s) = shape.as_shape::<ConvexHull3<f32>>() {
             self.add_convex(window, object, delta, s, color, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Cylinder3<f32>>() {
+        else if let Some(s) = shape.as_shape::<Cylinder3<f32>>() {
             self.add_cylinder(window, object, delta, s, color, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Cone3<f32>>() {
+        else if let Some(s) = shape.as_shape::<Cone3<f32>>() {
             self.add_cone(window, object, delta, s, color, out)
         }
-        else if let Some(s) = repr.downcast_ref::<Compound3<f32>>() {
+        else if let Some(s) = shape.as_shape::<Compound3<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
-                self.add_repr(window, object.clone(), delta * t, s.as_ref(), color, out)
+                self.add_shape(window, object.clone(), delta * t, s.as_ref(), color, out)
             }
         }
-        else if let Some(s) = repr.downcast_ref::<TriMesh3<f32>>() {
+        else if let Some(s) = shape.as_shape::<TriMesh3<f32>>() {
             self.add_mesh(window, object, delta, s, color, out);
         }
         else {

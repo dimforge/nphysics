@@ -134,7 +134,7 @@ impl<N: Scalar> ActivationManager<N> {
 
         for (b1, b2, cd) in world.contact_pairs() {
             if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&b1.data, &b2.data) {
-                if cd.num_colls() != 0 {
+                if cd.num_contacts() != 0 {
                     make_union(&rb1, &rb2, &mut self.ufind[..])
                 }
             }
