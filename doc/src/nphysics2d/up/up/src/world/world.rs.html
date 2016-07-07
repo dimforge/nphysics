@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -383,60 +384,178 @@
 <span id="340">340</span>
 <span id="341">341</span>
 <span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>slice</span>::<span class='ident'>Iter</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>Map</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>;
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>bounding_volume</span>::<span class='ident'>AABB</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>hash_map</span>::{<span class='ident'>HashMap</span>, <span class='ident'>Entry</span>};
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>hash</span>::<span class='ident'>UintTWHash</span>;
-<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>broad_phase</span>::{<span class='ident'>BroadPhase</span>, <span class='ident'>DBVTBroadPhase</span>};
-<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>narrow_phase</span>::<span class='ident'>ContactSignalHandler</span>;
-<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>world</span>::{<span class='ident'>CollisionWorld</span>, <span class='ident'>CollisionObject</span>, <span class='ident'>CollisionGroups</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>broad_phase</span>::{<span class='ident'>BroadPhase</span>, <span class='ident'>DBVTBroadPhase</span>, <span class='ident'>BroadPhasePairFilter</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>narrow_phase</span>::{<span class='ident'>ContactHandler</span>, <span class='ident'>ProximityHandler</span>, <span class='ident'>DefaultNarrowPhase</span>,
+                             <span class='ident'>DefaultContactDispatcher</span>, <span class='ident'>DefaultProximityDispatcher</span>,
+                             <span class='ident'>ContactAlgorithm</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>world</span>::{<span class='ident'>CollisionWorld</span>, <span class='ident'>CollisionObject</span>, <span class='ident'>GeometricQueryType</span>};
 <span class='kw'>use</span> <span class='ident'>integration</span>::{<span class='ident'>Integrator</span>, <span class='ident'>BodySmpEulerIntegrator</span>, <span class='ident'>BodyForceGenerator</span>,
                   <span class='ident'>TranslationalCCDMotionClamping</span>};
-<span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>ActivationManager</span>;
-<span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>Detector</span>;
+<span class='kw'>use</span> <span class='ident'>detection</span>::{<span class='ident'>ActivationManager</span>, <span class='ident'>Detector</span>};
 <span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>constraint</span>::<span class='ident'>Constraint</span>;
 <span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>joint</span>::{<span class='ident'>JointManager</span>, <span class='ident'>BallInSocket</span>, <span class='ident'>Fixed</span>};
 <span class='kw'>use</span> <span class='ident'>resolution</span>::{<span class='ident'>Solver</span>, <span class='ident'>AccumulatedImpulseSolver</span>, <span class='ident'>CorrectionMode</span>};
-<span class='kw'>use</span> <span class='ident'>object</span>::{<span class='ident'>RigidBody</span>, <span class='ident'>RigidBodyHandle</span>};
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Matrix</span>};
+<span class='kw'>use</span> <span class='ident'>object</span>::{<span class='ident'>WorldObject</span>, <span class='ident'>RigidBody</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>Sensor</span>, <span class='ident'>SensorHandle</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vector</span>, <span class='ident'>Matrix</span>};
 
 <span class='doccomment'>/// The default broad phase.</span>
-<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>WorldBroadPhase</span> <span class='op'>=</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;&gt;</span>;
+<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>WorldBroadPhase</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>DBVTBroadPhase</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>AABB</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>;
+
 <span class='doccomment'>/// An iterator visiting rigid bodies.</span>
-<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RigidBodies</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Map</span><span class='op'>&lt;</span><span class='ident'>Iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&gt;&gt;</span>, <span class='kw'>fn</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span>;
+<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RigidBodies</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Map</span><span class='op'>&lt;</span><span class='ident'>Iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>, <span class='kw'>fn</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>;
+
+<span class='doccomment'>/// An iterator visiting sensors.</span>
+<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Sensors</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Map</span><span class='op'>&lt;</span><span class='ident'>Iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>, <span class='kw'>fn</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>;
 
 <span class='doccomment'>/// Type of the collision world containing rigid bodies.</span>
-<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RigidBodyCollisionWorld</span> <span class='op'>=</span> <span class='ident'>CollisionWorld</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span>;
+<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RigidBodyCollisionWorld</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>CollisionWorld</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>;
 
-<span class='doccomment'>/// Type of a collision object containing a rigid body as its data.</span>
-<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RigidBodyCollisionObject</span> <span class='op'>=</span> <span class='ident'>CollisionObject</span><span class='op'>&lt;</span><span class='ident'>Point</span>, <span class='ident'>Matrix</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span>;
+<span class='doccomment'>/// Type of a collision object containing `WorldObject` body as its data.</span>
+<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>CollisionObject</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>;
 
 
 <span class='doccomment'>/// The physical world.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This is the main structure of the physics engine.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>World</span> {
-    <span class='ident'>cworld</span>:      <span class='ident'>RigidBodyCollisionWorld</span>,
-    <span class='ident'>bodies</span>:      <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>UintTWHash</span><span class='op'>&gt;</span>,
-    <span class='ident'>forces</span>:      <span class='ident'>BodyForceGenerator</span>,
-    <span class='ident'>integrator</span>:  <span class='ident'>BodySmpEulerIntegrator</span>,
-    <span class='ident'>sleep</span>:       <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>ActivationManager</span><span class='op'>&gt;&gt;</span>, <span class='comment'>// FIXME: avoid sharing (needed for the contact signal handler)</span>
-    <span class='ident'>ccd</span>:         <span class='ident'>TranslationalCCDMotionClamping</span>,
-    <span class='ident'>joints</span>:      <span class='ident'>JointManager</span>,
-    <span class='ident'>solver</span>:      <span class='ident'>AccumulatedImpulseSolver</span>,
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>World</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='ident'>cworld</span>:       <span class='ident'>RigidBodyCollisionWorld</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='ident'>rigid_bodies</span>: <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>UintTWHash</span><span class='op'>&gt;</span>,
+    <span class='ident'>sensors</span>:      <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>UintTWHash</span><span class='op'>&gt;</span>,
+    <span class='ident'>forces</span>:       <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='ident'>integrator</span>:   <span class='ident'>BodySmpEulerIntegrator</span>,
+    <span class='ident'>sleep</span>:        <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>ActivationManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>, <span class='comment'>// FIXME: avoid sharing (needed for the contact signal handler)</span>
+    <span class='ident'>ccd</span>:          <span class='ident'>TranslationalCCDMotionClamping</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='ident'>joints</span>:       <span class='ident'>JointManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='ident'>solver</span>:       <span class='ident'>AccumulatedImpulseSolver</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='ident'>prediction</span>:   <span class='ident'>N</span>
 }
 
-<span class='kw'>impl</span> <span class='ident'>World</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>World</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new physics world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>World</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>World</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='comment'>/*
          * Setup the physics world
          */</span>
+
+        <span class='kw'>let</span> <span class='ident'>prediction</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.02f64</span>); <span class='comment'>// FIXME: do not hard-code the prediction margin.</span>
 
         <span class='comment'>// For the intergration</span>
         <span class='kw'>let</span> <span class='ident'>forces</span>     <span class='op'>=</span> <span class='ident'>BodyForceGenerator</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>());
@@ -446,7 +565,13 @@
          * For the collision detection
          */</span>
         <span class='comment'>// Collision world</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cworld</span> <span class='op'>=</span> <span class='ident'>CollisionWorld</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.10f64</span>), <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.10f64</span>), <span class='boolval'>false</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cworld</span> <span class='op'>=</span> <span class='ident'>CollisionWorld</span>::<span class='ident'>new</span>(<span class='ident'>prediction</span>, <span class='bool-val'>false</span>);
+
+        <span class='comment'>// Custom narrow phase.</span>
+        <span class='kw'>let</span> <span class='ident'>disp</span> <span class='op'>=</span> <span class='ident'>DefaultContactDispatcher</span>::<span class='ident'>new</span>();
+        <span class='kw'>let</span> <span class='ident'>prox</span> <span class='op'>=</span> <span class='ident'>DefaultProximityDispatcher</span>::<span class='ident'>new</span>();
+        <span class='kw'>let</span> <span class='ident'>nf</span>   <span class='op'>=</span> <span class='ident'>DefaultNarrowPhase</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>disp</span>), <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>prox</span>));
+        <span class='kw'>let</span> _    <span class='op'>=</span> <span class='ident'>cworld</span>.<span class='ident'>set_narrow_phase</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>nf</span>));
 
         <span class='comment'>// CCD handler</span>
         <span class='kw'>let</span> <span class='ident'>ccd</span> <span class='op'>=</span> <span class='ident'>TranslationalCCDMotionClamping</span>::<span class='ident'>new</span>();
@@ -455,8 +580,14 @@
         <span class='kw'>let</span> <span class='ident'>sleep</span> <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>ActivationManager</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.01f64</span>))));
 
         <span class='comment'>// Setup contact handler to reactivate sleeping objects that loose contact.</span>
-        <span class='kw'>let</span> <span class='ident'>handler</span> <span class='op'>=</span> <span class='ident'>ObjectActivationOnContactHandler</span>::<span class='ident'>new</span>(<span class='ident'>sleep</span>.<span class='ident'>clone</span>());
-        <span class='ident'>cworld</span>.<span class='ident'>register_contact_signal_handler</span>(<span class='string'>&quot;__nphysics_internal_ObjectActivationOnContactHandler&quot;</span>, <span class='ident'>handler</span>);
+        <span class='kw'>let</span> <span class='ident'>handler</span> <span class='op'>=</span> <span class='ident'>ObjectActivationOnContactHandler</span> { <span class='ident'>sleep</span>: <span class='ident'>sleep</span>.<span class='ident'>clone</span>() };
+        <span class='ident'>cworld</span>.<span class='ident'>register_contact_handler</span>(<span class='string'>&quot;__nphysics_internal_ObjectActivationOnContactHandler&quot;</span>, <span class='ident'>handler</span>);
+
+        <span class='comment'>// Setup the broad phase pair filter that will prevent sensors from colliding with their</span>
+        <span class='comment'>// parent.</span>
+        <span class='kw'>let</span> <span class='ident'>filter</span>      <span class='op'>=</span> <span class='ident'>SensorsNotCollidingTheirParentPairFilter</span>;
+        <span class='kw'>let</span> <span class='ident'>filter_name</span> <span class='op'>=</span> <span class='string'>&quot;__nphysics_internal_SensorsNotCollidingTheirParentPairFilter&quot;</span>;
+        <span class='ident'>cworld</span>.<span class='ident'>register_broad_phase_pair_filter</span>(<span class='ident'>filter_name</span>, <span class='ident'>filter</span>);
 
         <span class='comment'>// Joints</span>
         <span class='kw'>let</span> <span class='ident'>joints</span> <span class='op'>=</span> <span class='ident'>JointManager</span>::<span class='ident'>new</span>();
@@ -473,54 +604,68 @@
             <span class='number'>10</span>);
 
         <span class='ident'>World</span> {
-            <span class='ident'>cworld</span>:     <span class='ident'>cworld</span>,
-            <span class='ident'>bodies</span>:     <span class='ident'>HashMap</span>::<span class='ident'>new</span>(<span class='ident'>UintTWHash</span>::<span class='ident'>new</span>()),
-            <span class='ident'>forces</span>:     <span class='ident'>forces</span>,
-            <span class='ident'>integrator</span>: <span class='ident'>integrator</span>,
-            <span class='ident'>sleep</span>:      <span class='ident'>sleep</span>,
-            <span class='ident'>ccd</span>:        <span class='ident'>ccd</span>,
-            <span class='ident'>joints</span>:     <span class='ident'>joints</span>,
-            <span class='ident'>solver</span>:     <span class='ident'>solver</span>,
+            <span class='ident'>cworld</span>:       <span class='ident'>cworld</span>,
+            <span class='ident'>rigid_bodies</span>: <span class='ident'>HashMap</span>::<span class='ident'>new</span>(<span class='ident'>UintTWHash</span>::<span class='ident'>new</span>()),
+            <span class='ident'>sensors</span>:      <span class='ident'>HashMap</span>::<span class='ident'>new</span>(<span class='ident'>UintTWHash</span>::<span class='ident'>new</span>()),
+            <span class='ident'>forces</span>:       <span class='ident'>forces</span>,
+            <span class='ident'>integrator</span>:   <span class='ident'>integrator</span>,
+            <span class='ident'>sleep</span>:        <span class='ident'>sleep</span>,
+            <span class='ident'>ccd</span>:          <span class='ident'>ccd</span>,
+            <span class='ident'>joints</span>:       <span class='ident'>joints</span>,
+            <span class='ident'>solver</span>:       <span class='ident'>solver</span>,
+            <span class='ident'>prediction</span>:   <span class='ident'>prediction</span>
         }
     }
 
     <span class='doccomment'>/// Updates the physics world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>step</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>dt</span>: <span class='ident'>Scalar</span>) {
-        <span class='kw'>for</span> <span class='ident'>e</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>bodies</span>.<span class='ident'>elements_mut</span>().<span class='ident'>iter_mut</span>() {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>step</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>dt</span>: <span class='ident'>N</span>) {
+        <span class='kw'>for</span> <span class='ident'>e</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>rigid_bodies</span>.<span class='ident'>elements_mut</span>().<span class='ident'>iter_mut</span>() {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rb</span> <span class='op'>=</span> <span class='ident'>e</span>.<span class='ident'>value</span>.<span class='ident'>borrow_mut</span>();
 
             <span class='kw'>if</span> <span class='ident'>rb</span>.<span class='ident'>is_active</span>() {
                 <span class='self'>self</span>.<span class='ident'>forces</span>.<span class='ident'>update</span>(<span class='ident'>dt</span>.<span class='ident'>clone</span>(), <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='ident'>rb</span>);
                 <span class='self'>self</span>.<span class='ident'>integrator</span>.<span class='ident'>update</span>(<span class='ident'>dt</span>.<span class='ident'>clone</span>(), <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='ident'>rb</span>);
-                <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_set_position</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>e</span>.<span class='ident'>value</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span> <span class='kw'>as</span> <span class='ident'>usize</span>,
-                                                  <span class='ident'>rb</span>.<span class='ident'>position</span>().<span class='ident'>clone</span>());
+                <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_set_position</span>(<span class='ident'>WorldObject</span>::<span class='ident'>rigid_body_uid</span>(<span class='kw-2'>&amp;</span><span class='ident'>e</span>.<span class='ident'>value</span>), <span class='ident'>rb</span>.<span class='ident'>position</span>().<span class='ident'>clone</span>());
+            }
+        }
+
+        <span class='kw'>for</span> <span class='ident'>e</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>sensors</span>.<span class='ident'>elements_mut</span>().<span class='ident'>iter_mut</span>() {
+            <span class='kw'>let</span> <span class='ident'>sensor</span> <span class='op'>=</span> <span class='ident'>e</span>.<span class='ident'>value</span>.<span class='ident'>borrow_mut</span>();
+
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>rb</span>) <span class='op'>=</span> <span class='ident'>sensor</span>.<span class='ident'>parent</span>() {
+                <span class='kw'>if</span> <span class='ident'>rb</span>.<span class='ident'>borrow</span>().<span class='ident'>is_active</span>() {
+                    <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_set_position</span>(<span class='ident'>WorldObject</span>::<span class='ident'>sensor_uid</span>(<span class='kw-2'>&amp;</span><span class='ident'>e</span>.<span class='ident'>value</span>), <span class='ident'>sensor</span>.<span class='ident'>position</span>());
+                }
             }
         }
 
         <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_position_update</span>();
         <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_broad_phase</span>();
-        <span class='self'>self</span>.<span class='ident'>ccd</span>.<span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>cworld</span>);
-        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_narrow_phase</span>();
+        <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>ccd</span>.<span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>cworld</span>) {
+            <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_narrow_phase</span>();
+        }
 
         <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>());
-        <span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>cworld</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>joints</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>bodies</span>);
+        <span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>cworld</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>joints</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>rigid_bodies</span>);
 
         <span class='comment'>// XXX: use `self.collector` instead to avoid allocation.</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>collector</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
 
         <span class='kw'>for</span> (<span class='ident'>b1</span>, <span class='ident'>b2</span>, <span class='ident'>c</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>contacts</span>() {
-            <span class='kw'>if</span> <span class='ident'>b1</span>.<span class='ident'>data</span>.<span class='ident'>borrow</span>().<span class='ident'>is_active</span>() <span class='op'>||</span> <span class='ident'>b2</span>.<span class='ident'>data</span>.<span class='ident'>borrow</span>().<span class='ident'>is_active</span>() {
-                <span class='kw'>let</span> <span class='ident'>m1</span> <span class='op'>=</span> <span class='ident'>b1</span>.<span class='ident'>data</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
-                <span class='kw'>let</span> <span class='ident'>m2</span> <span class='op'>=</span> <span class='ident'>b2</span>.<span class='ident'>data</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
+            <span class='kw'>if</span> <span class='kw'>let</span> (<span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb1</span>), <span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb2</span>)) <span class='op'>=</span> (<span class='kw-2'>&amp;</span><span class='ident'>b1</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='ident'>b2</span>.<span class='ident'>data</span>) {
+                <span class='kw'>if</span> <span class='ident'>rb1</span>.<span class='ident'>borrow</span>().<span class='ident'>is_active</span>() <span class='op'>||</span> <span class='ident'>rb2</span>.<span class='ident'>borrow</span>().<span class='ident'>is_active</span>() {
+                    <span class='kw'>let</span> <span class='ident'>m1</span> <span class='op'>=</span> <span class='ident'>rb1</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
+                    <span class='kw'>let</span> <span class='ident'>m2</span> <span class='op'>=</span> <span class='ident'>rb2</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
 
-                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>clone</span>();
-                <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>+</span> <span class='ident'>m1</span> <span class='op'>+</span> <span class='ident'>m2</span>;
+                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>clone</span>();
+                    <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>+</span> <span class='ident'>m1</span> <span class='op'>+</span> <span class='ident'>m2</span>;
 
-                <span class='ident'>collector</span>.<span class='ident'>push</span>(<span class='ident'>Constraint</span>::<span class='ident'>RBRB</span>(<span class='ident'>b1</span>.<span class='ident'>data</span>.<span class='ident'>clone</span>(), <span class='ident'>b2</span>.<span class='ident'>data</span>.<span class='ident'>clone</span>(), <span class='ident'>c</span>));
+                    <span class='ident'>collector</span>.<span class='ident'>push</span>(<span class='ident'>Constraint</span>::<span class='ident'>RBRB</span>(<span class='ident'>rb1</span>.<span class='ident'>clone</span>(), <span class='ident'>rb2</span>.<span class='ident'>clone</span>(), <span class='ident'>c</span>));
+                }
             }
         }
 
-        <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>interferences</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>collector</span>);
+        <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>constraints</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>collector</span>);
 
         <span class='self'>self</span>.<span class='ident'>solver</span>.<span class='ident'>solve</span>(<span class='ident'>dt</span>, <span class='kw-2'>&amp;</span><span class='ident'>collector</span>[..]);
 
@@ -528,47 +673,63 @@
     }
 
     <span class='doccomment'>/// Adds a rigid body to the physics world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_body</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>rb</span>: <span class='ident'>RigidBody</span>) <span class='op'>-&gt;</span> <span class='ident'>RigidBodyHandle</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_rigid_body</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>rb</span>: <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>position</span> <span class='op'>=</span> <span class='ident'>rb</span>.<span class='ident'>position</span>().<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>shape</span> <span class='op'>=</span> <span class='ident'>rb</span>.<span class='ident'>shape</span>().<span class='ident'>clone</span>();
-
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>groups</span> <span class='op'>=</span> <span class='ident'>CollisionGroups</span>::<span class='ident'>new</span>();
-        <span class='kw'>const</span> <span class='ident'>STATIC_GROUP_ID</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>29</span>;
-        <span class='ident'>groups</span>.<span class='ident'>modify_whitelist</span>(<span class='ident'>STATIC_GROUP_ID</span>, <span class='boolval'>false</span>); <span class='comment'>// The static group is special.</span>
-
-        <span class='kw'>if</span> <span class='ident'>rb</span>.<span class='ident'>can_move</span>() {
-            <span class='comment'>// This is a dynamic object, remove it from the static objects group.</span>
-            <span class='ident'>groups</span>.<span class='ident'>modify_membership</span>(<span class='ident'>STATIC_GROUP_ID</span>, <span class='boolval'>false</span>);
-        }
-        <span class='kw'>else</span> {
-            <span class='comment'>// This is a dynamic object, keep is on the static objects group but prevent it from</span>
-            <span class='comment'>// colliding with other static objects.</span>
-            <span class='ident'>groups</span>.<span class='ident'>modify_blacklist</span>(<span class='ident'>STATIC_GROUP_ID</span>, <span class='boolval'>true</span>);
-        }
-        
+        <span class='kw'>let</span> <span class='ident'>groups</span> <span class='op'>=</span> <span class='ident'>rb</span>.<span class='ident'>collision_groups</span>().<span class='ident'>as_collision_groups</span>().<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>collision_object_prediction</span> <span class='op'>=</span> <span class='ident'>rb</span>.<span class='ident'>margin</span>() <span class='op'>+</span> <span class='self'>self</span>.<span class='ident'>prediction</span> <span class='op'>/</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0f64</span>);
         <span class='kw'>let</span> <span class='ident'>handle</span> <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>rb</span>));
-        <span class='kw'>let</span> <span class='ident'>uid</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>handle</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span> <span class='kw'>as</span> <span class='ident'>usize</span>;;
+        <span class='kw'>let</span> <span class='ident'>uid</span> <span class='op'>=</span> <span class='ident'>WorldObject</span>::<span class='ident'>rigid_body_uid</span>(<span class='kw-2'>&amp;</span><span class='ident'>handle</span>);
 
-        <span class='self'>self</span>.<span class='ident'>bodies</span>.<span class='ident'>insert</span>(<span class='ident'>uid</span>, <span class='ident'>handle</span>.<span class='ident'>clone</span>());
-        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>add</span>(<span class='ident'>uid</span>, <span class='ident'>position</span>, <span class='ident'>shape</span>, <span class='ident'>groups</span>, <span class='ident'>handle</span>.<span class='ident'>clone</span>());
+        <span class='self'>self</span>.<span class='ident'>rigid_bodies</span>.<span class='ident'>insert</span>(<span class='ident'>uid</span>, <span class='ident'>handle</span>.<span class='ident'>clone</span>());
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_add</span>(<span class='ident'>uid</span>, <span class='ident'>position</span>, <span class='ident'>shape</span>, <span class='ident'>groups</span>,
+                                 <span class='ident'>GeometricQueryType</span>::<span class='ident'>Contacts</span>(<span class='ident'>collision_object_prediction</span>),
+                                 <span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='ident'>handle</span>.<span class='ident'>clone</span>()));
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_additions_removals_and_broad_phase</span>();
+
+        <span class='ident'>handle</span>
+    }
+
+    <span class='doccomment'>/// Adds a sensor to the physics world.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_sensor</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>sensor</span>: <span class='ident'>Sensor</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>position</span> <span class='op'>=</span> <span class='ident'>sensor</span>.<span class='ident'>position</span>().<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>shape</span>    <span class='op'>=</span> <span class='ident'>sensor</span>.<span class='ident'>shape</span>().<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>groups</span>   <span class='op'>=</span> <span class='ident'>sensor</span>.<span class='ident'>collision_groups</span>().<span class='ident'>as_collision_groups</span>().<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>margin</span>   <span class='op'>=</span> <span class='ident'>sensor</span>.<span class='ident'>margin</span>();
+        <span class='kw'>let</span> <span class='ident'>handle</span>   <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>sensor</span>));
+        <span class='kw'>let</span> <span class='ident'>uid</span>      <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>handle</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>Sensor</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>as</span> <span class='ident'>usize</span>;
+
+        <span class='self'>self</span>.<span class='ident'>sensors</span>.<span class='ident'>insert</span>(<span class='ident'>uid</span>, <span class='ident'>handle</span>.<span class='ident'>clone</span>());
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_add</span>(<span class='ident'>uid</span>, <span class='ident'>position</span>, <span class='ident'>shape</span>, <span class='ident'>groups</span>,
+                                 <span class='ident'>GeometricQueryType</span>::<span class='ident'>Proximity</span>(<span class='ident'>margin</span>),
+                                 <span class='ident'>WorldObject</span>::<span class='ident'>Sensor</span>(<span class='ident'>handle</span>.<span class='ident'>clone</span>()));
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_additions_removals_and_broad_phase</span>();
 
         <span class='ident'>handle</span>
     }
 
     <span class='doccomment'>/// Remove a rigid body from the physics world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_body</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>) {
-        <span class='kw'>let</span> <span class='ident'>uid</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>b</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span> <span class='kw'>as</span> <span class='ident'>usize</span>;
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_rigid_body</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
+        <span class='kw'>let</span> <span class='ident'>uid</span> <span class='op'>=</span> <span class='ident'>WorldObject</span>::<span class='ident'>rigid_body_uid</span>(<span class='ident'>rb</span>);
         <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_remove</span>(<span class='ident'>uid</span>);
-        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_removals_and_broad_phase</span>();
-        <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>remove</span>(<span class='ident'>b</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>());
-        <span class='self'>self</span>.<span class='ident'>ccd</span>.<span class='ident'>remove_ccd_from</span>(<span class='ident'>b</span>);
-        <span class='self'>self</span>.<span class='ident'>bodies</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>uid</span>);
-        <span class='ident'>b</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>delete</span>();
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_additions_removals_and_broad_phase</span>();
+        <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>remove</span>(<span class='ident'>rb</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>());
+        <span class='self'>self</span>.<span class='ident'>ccd</span>.<span class='ident'>remove_ccd_from</span>(<span class='ident'>rb</span>);
+        <span class='self'>self</span>.<span class='ident'>rigid_bodies</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>uid</span>);
+        <span class='ident'>rb</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>delete</span>();
+    }
+
+    <span class='doccomment'>/// Remove a sensor from the physics world.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_sensor</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>sensor</span>: <span class='kw-2'>&amp;</span><span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
+        <span class='kw'>let</span> <span class='ident'>uid</span> <span class='op'>=</span> <span class='ident'>WorldObject</span>::<span class='ident'>sensor_uid</span>(<span class='ident'>sensor</span>);
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>deferred_remove</span>(<span class='ident'>uid</span>);
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>perform_additions_removals_and_broad_phase</span>();
+        <span class='self'>self</span>.<span class='ident'>sensors</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>uid</span>);
     }
 
     <span class='comment'>// XXX: keep this reference mutable?</span>
     <span class='doccomment'>/// Gets a mutable reference to the force generator.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>forces_generator</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>BodyForceGenerator</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>forces_generator</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>forces</span>
     }
 
@@ -580,54 +741,57 @@
 
     <span class='comment'>// XXX: keep this reference mutable?</span>
     <span class='doccomment'>/// Gets a mutable reference to the CCD manager.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ccd_manager</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>TranslationalCCDMotionClamping</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ccd_manager</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>TranslationalCCDMotionClamping</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>ccd</span>
     }
 
     <span class='comment'>// XXX: keep this reference mutable?</span>
     <span class='doccomment'>/// Gets a mutable reference to the joint manager.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>joint_manager</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>JointManager</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>joint_manager</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>JointManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>joints</span>
     }
 
     <span class='comment'>// XXX: keep this reference mutable?</span>
     <span class='doccomment'>/// Gets a mutable reference to the constraint solver.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>constraints_solver</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>AccumulatedImpulseSolver</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>constraints_solver</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>AccumulatedImpulseSolver</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>solver</span>
     }
 
     <span class='doccomment'>/// Gets the underlying collision world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>collision_world</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyCollisionWorld</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>collision_world</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyCollisionWorld</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>cworld</span>
     }
 
     <span class='doccomment'>/// Sets the linear acceleration afecting every dynamic rigid body.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_gravity</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>gravity</span>: <span class='ident'>Vect</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_gravity</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>gravity</span>: <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>forces</span>.<span class='ident'>set_lin_acc</span>(<span class='ident'>gravity</span>);
     }
 
-    <span class='doccomment'>/// Sets the angular acceleration afecting every dynamic rigid body.</span>
-<span class='comment'>//     pub fn set_angular_acceleration(&amp;mut self, accel: Orientation) {</span>
-<span class='comment'>//         self.forces.set_ang_acc(accel)</span>
-<span class='comment'>//     }</span>
+    <span class='comment'>/*/// Sets the angular acceleration afecting every dynamic rigid body.
+    pub fn set_angular_acceleration(&amp;mut self, accel: Orientation) {
+        self.forces.set_ang_acc(accel)
+    }*/</span>
 
     <span class='doccomment'>/// Gets the linear acceleration afecting every dynamic rigid body.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>gravity</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vect</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>gravity</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>forces</span>.<span class='ident'>lin_acc</span>()
     }
 
-    <span class='doccomment'>/// Gets the angular acceleration afecting every dynamic rigid body.</span>
-<span class='comment'>//     pub fn angular_acceleration(&amp;self) -&gt; Orientation {</span>
-<span class='comment'>//         self.forces.ang_acc()</span>
-<span class='comment'>//     }</span>
+    <span class='comment'>/*/// Gets the angular acceleration afecting every dynamic rigid body.
+    pub fn angular_acceleration(&amp;self) -&gt; Orientation {
+        self.forces.ang_acc()
+    }*/</span>
 
     <span class='doccomment'>/// Adds continuous collision detection to the given rigid body.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_ccd_to</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>body</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>, <span class='ident'>motion_thresold</span>: <span class='ident'>Scalar</span>) {
-        <span class='self'>self</span>.<span class='ident'>ccd</span>.<span class='ident'>add_ccd_to</span>(<span class='ident'>body</span>.<span class='ident'>clone</span>(), <span class='ident'>motion_thresold</span>)
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Set `trigger_sensor` to `true` if the rigid body should active the sensors that would have</span>
+    <span class='doccomment'>/// been missed without CCD enabled.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_ccd_to</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>body</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>motion_thresold</span>: <span class='ident'>N</span>, <span class='ident'>trigger_sensors</span>: <span class='ident'>bool</span>) {
+        <span class='self'>self</span>.<span class='ident'>ccd</span>.<span class='ident'>add_ccd_to</span>(<span class='ident'>body</span>.<span class='ident'>clone</span>(), <span class='ident'>motion_thresold</span>, <span class='ident'>trigger_sensors</span>)
     }
 
     <span class='doccomment'>/// Adds a ball-in-socket joint to the world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_ball_in_socket</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='ident'>BallInSocket</span>) <span class='op'>-&gt;</span> <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>BallInSocket</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_ball_in_socket</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='ident'>BallInSocket</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>BallInSocket</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>joint</span>));
 
         <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>add_ball_in_socket</span>(<span class='ident'>res</span>.<span class='ident'>clone</span>(), <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>());
@@ -636,12 +800,12 @@
     }
 
     <span class='doccomment'>/// Removes a ball-in-socket joint from the world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_ball_in_socket</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='kw-2'>&amp;</span><span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>BallInSocket</span><span class='op'>&gt;&gt;</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_ball_in_socket</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='kw-2'>&amp;</span><span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>BallInSocket</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>remove_ball_in_socket</span>(<span class='ident'>joint</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>())
     }
 
     <span class='doccomment'>/// Adds a fixed joint to the world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_fixed</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='ident'>Fixed</span>) <span class='op'>-&gt;</span> <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>Fixed</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_fixed</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='ident'>Fixed</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>Fixed</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>joint</span>));
 
         <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>add_fixed</span>(<span class='ident'>res</span>.<span class='ident'>clone</span>(), <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>());
@@ -650,79 +814,132 @@
     }
 
     <span class='doccomment'>/// Removes a fixed joint from the world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_fixed</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='kw-2'>&amp;</span><span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>Fixed</span><span class='op'>&gt;&gt;</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_fixed</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>joint</span>: <span class='kw-2'>&amp;</span><span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>Fixed</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>remove_joint</span>(<span class='ident'>joint</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>())
     }
 
-    <span class='doccomment'>/// Collects every interferences detected since the last update.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>interferences</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>out</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Constraint</span><span class='op'>&gt;</span>) {
+    <span class='doccomment'>/// Collects every constraincts detected since the last update.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>constraints</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>out</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Constraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>) {
         <span class='comment'>// FIXME: ugly.</span>
         <span class='kw'>for</span> (<span class='ident'>b1</span>, <span class='ident'>b2</span>, <span class='ident'>c</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>contacts</span>() {
-            <span class='kw'>let</span> <span class='ident'>m1</span> <span class='op'>=</span> <span class='ident'>b1</span>.<span class='ident'>data</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
-            <span class='kw'>let</span> <span class='ident'>m2</span> <span class='op'>=</span> <span class='ident'>b2</span>.<span class='ident'>data</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
+            <span class='kw'>if</span> <span class='kw'>let</span> (<span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb1</span>), <span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb2</span>)) <span class='op'>=</span> (<span class='kw-2'>&amp;</span><span class='ident'>b1</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='ident'>b2</span>.<span class='ident'>data</span>) {
+                <span class='kw'>let</span> <span class='ident'>m1</span> <span class='op'>=</span> <span class='ident'>rb1</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
+                <span class='kw'>let</span> <span class='ident'>m2</span> <span class='op'>=</span> <span class='ident'>rb2</span>.<span class='ident'>borrow</span>().<span class='ident'>margin</span>();
 
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>clone</span>();
-            <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>+</span> <span class='ident'>m1</span> <span class='op'>+</span> <span class='ident'>m2</span>;
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>clone</span>();
+                <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>depth</span> <span class='op'>+</span> <span class='ident'>m1</span> <span class='op'>+</span> <span class='ident'>m2</span>;
 
-            <span class='ident'>out</span>.<span class='ident'>push</span>(<span class='ident'>Constraint</span>::<span class='ident'>RBRB</span>(<span class='ident'>b1</span>.<span class='ident'>data</span>.<span class='ident'>clone</span>(), <span class='ident'>b2</span>.<span class='ident'>data</span>.<span class='ident'>clone</span>(), <span class='ident'>c</span>));
+                <span class='ident'>out</span>.<span class='ident'>push</span>(<span class='ident'>Constraint</span>::<span class='ident'>RBRB</span>(<span class='ident'>rb1</span>.<span class='ident'>clone</span>(), <span class='ident'>rb2</span>.<span class='ident'>clone</span>(), <span class='ident'>c</span>));
+            }
         }
 
-        <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>interferences</span>(<span class='ident'>out</span>);
+        <span class='self'>self</span>.<span class='ident'>joints</span>.<span class='ident'>constraints</span>(<span class='ident'>out</span>);
     }
 
     <span class='doccomment'>/// An iterator visiting all rigid bodies on this world.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bodies</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>RigidBodies</span> {
-        <span class='kw'>fn</span> <span class='ident'>extract_value</span>(<span class='ident'>e</span>: <span class='kw-2'>&amp;</span><span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>rigid_bodies</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>RigidBodies</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+        <span class='kw'>fn</span> <span class='ident'>extract_value</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>e</span>: <span class='kw-2'>&amp;</span><span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
             <span class='kw-2'>&amp;</span><span class='ident'>e</span>.<span class='ident'>value</span>
         }
 
         <span class='kw'>let</span> <span class='ident'>extract_value_fn</span>: <span class='kw'>fn</span>(_) <span class='op'>-&gt;</span> _ <span class='op'>=</span> <span class='ident'>extract_value</span>;
-        <span class='self'>self</span>.<span class='ident'>bodies</span>.<span class='ident'>elements</span>().<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='ident'>extract_value_fn</span>)
+        <span class='self'>self</span>.<span class='ident'>rigid_bodies</span>.<span class='ident'>elements</span>().<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='ident'>extract_value_fn</span>)
     }
 
-    <span class='comment'>/* FIXME
-    /// Registers a handler for proximity start/stop events.
-    pub fn register_proximity_signal_handler&lt;H&gt;(&amp;mut self, name: &amp;str, handler: H)
-        where H: ProximitySignalHandler&lt;RigidBodyHandle&gt; + &#39;static {
-        self.cworld.register_proximity_signal_handler(name, handler)
+    <span class='doccomment'>/// An iterator visiting all sensors on this world.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>sensors</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Sensors</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+        <span class='kw'>fn</span> <span class='ident'>extract_value</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>e</span>: <span class='kw-2'>&amp;</span><span class='ident'>Entry</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>SensorHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+            <span class='kw-2'>&amp;</span><span class='ident'>e</span>.<span class='ident'>value</span>
+        }
+
+        <span class='kw'>let</span> <span class='ident'>extract_value_fn</span>: <span class='kw'>fn</span>(_) <span class='op'>-&gt;</span> _ <span class='op'>=</span> <span class='ident'>extract_value</span>;
+        <span class='self'>self</span>.<span class='ident'>sensors</span>.<span class='ident'>elements</span>().<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='ident'>extract_value_fn</span>)
     }
 
-    /// Unregisters a handler for proximity start/stop events.
-    pub fn unregister_proximity_signal_handler(&amp;mut self, name: &amp;str) {
-        self.cworld.unregister_proximity_signal_handler(name)
+    <span class='doccomment'>/// Adds a filter that tells if a potential collision pair should be ignored or not.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// The proximity filter returns `false` for a given pair of collision objects if they should</span>
+    <span class='doccomment'>/// be ignored by the narrow phase. Keep in mind that modifying the proximity filter will have</span>
+    <span class='doccomment'>/// a non-trivial overhead during the next update as it will force re-detection of all</span>
+    <span class='doccomment'>/// collision pairs.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_broad_phase_pair_filter</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>filter</span>: <span class='ident'>F</span>)
+        <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>BroadPhasePairFilter</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>register_broad_phase_pair_filter</span>(<span class='ident'>name</span>, <span class='ident'>filter</span>)
     }
-    */</span>
+
+    <span class='doccomment'>/// Removes the pair filter named `name`.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unregister_broad_phase_pair_filter</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) {
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>unregister_broad_phase_pair_filter</span>(<span class='ident'>name</span>)
+    }
 
     <span class='doccomment'>/// Registers a handler for contact start/stop events.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_contact_signal_handler</span><span class='op'>&lt;</span><span class='ident'>H</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>handler</span>: <span class='ident'>H</span>)
-        <span class='kw'>where</span> <span class='ident'>H</span>: <span class='ident'>ContactSignalHandler</span><span class='op'>&lt;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
-        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>register_contact_signal_handler</span>(<span class='ident'>name</span>, <span class='ident'>handler</span>)
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_contact_handler</span><span class='op'>&lt;</span><span class='ident'>H</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>handler</span>: <span class='ident'>H</span>)
+        <span class='kw'>where</span> <span class='ident'>H</span>: <span class='ident'>ContactHandler</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>register_contact_handler</span>(<span class='ident'>name</span>, <span class='ident'>handler</span>)
     }
 
     <span class='doccomment'>/// Unregisters a handler for contact start/stop events.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unregister_contact_signal_handler</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) {
-        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>unregister_contact_signal_handler</span>(<span class='ident'>name</span>)
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unregister_contact_handler</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) {
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>unregister_contact_handler</span>(<span class='ident'>name</span>)
+    }
+
+    <span class='doccomment'>/// Registers a handler for proximity status change events.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_proximity_handler</span><span class='op'>&lt;</span><span class='ident'>H</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>handler</span>: <span class='ident'>H</span>)
+        <span class='kw'>where</span> <span class='ident'>H</span>: <span class='ident'>ProximityHandler</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>register_proximity_handler</span>(<span class='ident'>name</span>, <span class='ident'>handler</span>);
+    }
+
+    <span class='doccomment'>/// Unregisters a handler for proximity status change events.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unregister_proximity_handler</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) {
+        <span class='self'>self</span>.<span class='ident'>cworld</span>.<span class='ident'>unregister_proximity_handler</span>(<span class='ident'>name</span>);
     }
 }
 
-<span class='kw'>struct</span> <span class='ident'>ObjectActivationOnContactHandler</span> {
-    <span class='ident'>sleep</span>: <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>ActivationManager</span><span class='op'>&gt;&gt;</span>
+<span class='kw'>struct</span> <span class='ident'>ObjectActivationOnContactHandler</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='ident'>sleep</span>: <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>ActivationManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span> <span class='ident'>ObjectActivationOnContactHandler</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>sleep</span>: <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>RefCell</span><span class='op'>&lt;</span><span class='ident'>ActivationManager</span><span class='op'>&gt;&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>ObjectActivationOnContactHandler</span> {
-        <span class='ident'>ObjectActivationOnContactHandler</span> {
-            <span class='ident'>sleep</span>: <span class='ident'>sleep</span>
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>ContactHandler</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>
+<span class='kw'>for</span> <span class='ident'>ObjectActivationOnContactHandler</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>handle_contact_started</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                              _: <span class='kw-2'>&amp;</span><span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                              _: <span class='kw-2'>&amp;</span><span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                              _: <span class='kw-2'>&amp;</span><span class='ident'>ContactAlgorithm</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>) {
+        <span class='comment'>// Do nothing.</span>
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>handle_contact_stopped</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>obj1</span>: <span class='kw-2'>&amp;</span><span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>obj2</span>: <span class='kw-2'>&amp;</span><span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
+        <span class='comment'>// Wake up on collision lost.</span>
+
+        <span class='comment'>// There is no need to wake up anything if a rigid-body intersects a sensor.</span>
+        <span class='kw'>if</span> <span class='kw'>let</span> (<span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb1</span>), <span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb2</span>)) <span class='op'>=</span> (<span class='kw-2'>&amp;</span><span class='ident'>obj1</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='ident'>obj2</span>.<span class='ident'>data</span>) {
+            <span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>deferred_activate</span>(<span class='ident'>rb1</span>);
+            <span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>deferred_activate</span>(<span class='ident'>rb2</span>);
         }
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>ContactSignalHandler</span><span class='op'>&lt;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>ObjectActivationOnContactHandler</span> {
-    <span class='kw'>fn</span> <span class='ident'>handle_contact</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b1</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>, <span class='ident'>b2</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>, <span class='ident'>started</span>: <span class='ident'>bool</span>) {
-        <span class='comment'>// Wake on collision lost.</span>
-        <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>started</span> {
-            <span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>deferred_activate</span>(<span class='ident'>b1</span>);
-            <span class='self'>self</span>.<span class='ident'>sleep</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>deferred_activate</span>(<span class='ident'>b2</span>);
+<span class='kw'>struct</span> <span class='ident'>SensorsNotCollidingTheirParentPairFilter</span>;
+
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>BroadPhasePairFilter</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>WorldObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>
+<span class='kw'>for</span> <span class='ident'>SensorsNotCollidingTheirParentPairFilter</span> {
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>is_pair_valid</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>b1</span>: <span class='kw-2'>&amp;</span><span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>b2</span>: <span class='kw-2'>&amp;</span><span class='ident'>WorldCollisionObject</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>match</span> (<span class='kw-2'>&amp;</span><span class='ident'>b1</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='ident'>b2</span>.<span class='ident'>data</span>) {
+            (<span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb</span>), <span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>Sensor</span>(<span class='kw-2'>ref</span> <span class='ident'>s</span>)) <span class='op'>|</span>
+            (<span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>Sensor</span>(<span class='kw-2'>ref</span> <span class='ident'>s</span>), <span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb</span>)) <span class='op'>=&gt;</span> {
+                <span class='kw'>let</span> <span class='ident'>bs</span> <span class='op'>=</span> <span class='ident'>s</span>.<span class='ident'>borrow</span>();
+
+                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>parent</span>) <span class='op'>=</span> <span class='ident'>bs</span>.<span class='ident'>parent</span>() {
+                    <span class='ident'>WorldObject</span>::<span class='ident'>rigid_body_uid</span>(<span class='ident'>rb</span>) <span class='op'>!=</span> <span class='ident'>WorldObject</span>::<span class='ident'>rigid_body_uid</span>(<span class='ident'>parent</span>) <span class='op'>||</span>
+                    <span class='ident'>bs</span>.<span class='ident'>proximity_with_parent_enabled</span>()
+                }
+                <span class='kw'>else</span> {
+                    <span class='bool-val'>true</span>
+                }
+            },
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>true</span>
         }
     }
 }
@@ -750,6 +967,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

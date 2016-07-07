@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['nphysics2d'] = [];
+implementors['nphysics2d'] = [];implementors["nphysics2d"] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,12 +47,15 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-60' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_smp_euler_integrator.rs.html#10' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-58' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_smp_euler_integrator.rs.html#10' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct BodySmpEulerIntegrator;</pre><div class='docblock'><p>A semi-implicit Euler integrator.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics2d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics2d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics2d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics2d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../nphysics2d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics2d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-60' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_smp_euler_integrator.rs.html#12-18' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics2d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics2d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></h4>
 <div class='docblock'><p>Creates a new <code>BodySmpEulerIntegrator</code>.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../nphysics2d/integration/integrator/trait.Integrator.html' title='nphysics2d::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../nphysics2d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics2d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></h3><div class='impl-items'><h4 id='method.update' class='method'><code>fn <a href='../../nphysics2d/integration/integrator/trait.Integrator.html#method.update' class='fnname'>update</a>(&amp;mut self, dt: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>, rb: &amp;mut <a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='trait' href='../../nphysics2d/integration/integrator/trait.Integrator.html' title='nphysics2d::integration::integrator::Integrator'>Integrator</a>&lt;N,&nbsp;<a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt; for <a class='struct' href='../../nphysics2d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics2d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-62' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_smp_euler_integrator.rs.html#20-38' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.update' class='method'><code>fn <a href='../../nphysics2d/integration/integrator/trait.Integrator.html#tymethod.update' class='fnname'>update</a>(&amp;mut self, dt: N, rb: &amp;mut <a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>&lt;N&gt;)</code></h4>
+<div class='docblock'><p>Updates the position and orientation of the object <code>o</code> after a time step of <code>dt</code>.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -74,6 +78,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -101,27 +102,29 @@
 <span id="58">58</span>
 <span id="59">59</span>
 <span id="60">60</span>
+<span id="61">61</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Constant linear and angular force generator.</span>
 
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Vect</span>, <span class='ident'>Orientation</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Vector</span>, <span class='ident'>Orientation</span>};
 <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>RigidBody</span>;
 <span class='kw'>use</span> <span class='ident'>integration</span>::<span class='ident'>Integrator</span>;
 
 <span class='doccomment'>/// A constant linear and angular force generator.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BodyForceGenerator</span> {
-    <span class='ident'>lin_acc</span>: <span class='ident'>Vect</span>,
-    <span class='ident'>ang_acc</span>: <span class='ident'>Orientation</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='ident'>lin_acc</span>: <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='ident'>ang_acc</span>: <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>
 }
 
-<span class='kw'>impl</span> <span class='ident'>BodyForceGenerator</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new `BodyForceGenerator`.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// # Arguments:</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// * `lin_acc` - the linear acceleration to apply to every body on the scene.</span>
     <span class='doccomment'>/// * `ang_acc` - the angular acceleration to apply to every body on the scene.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>lin_acc</span>: <span class='ident'>Vect</span>, <span class='ident'>ang_acc</span>: <span class='ident'>Orientation</span>) <span class='op'>-&gt;</span> <span class='ident'>BodyForceGenerator</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>lin_acc</span>: <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>ang_acc</span>: <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>BodyForceGenerator</span> {
             <span class='ident'>lin_acc</span>: <span class='ident'>lin_acc</span>,
             <span class='ident'>ang_acc</span>: <span class='ident'>ang_acc</span>
@@ -129,35 +132,35 @@
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>BodyForceGenerator</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// The linear acceleration applied by this force generator.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>lin_acc</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vect</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>lin_acc</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>lin_acc</span>.<span class='ident'>clone</span>()
     }
 
     <span class='doccomment'>/// Sets the linear acceleration applied by this force generator.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_lin_acc</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>lin_acc</span>: <span class='ident'>Vect</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_lin_acc</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>lin_acc</span>: <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>lin_acc</span> <span class='op'>=</span> <span class='ident'>lin_acc</span>;
     }
 
     <span class='doccomment'>/// The angular acceleration applied by this force generator.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ang_acc</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Orientation</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ang_acc</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>ang_acc</span>.<span class='ident'>clone</span>()
     }
 
     <span class='doccomment'>/// Sets the angular acceleration applied by this force generator.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_ang_acc</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ang_acc</span>: <span class='ident'>Orientation</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_ang_acc</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ang_acc</span>: <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>ang_acc</span> <span class='op'>=</span> <span class='ident'>ang_acc</span>;
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>Integrator</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BodyForceGenerator</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Integrator</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>BodyForceGenerator</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>Scalar</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span>) {
+    <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>N</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='ident'>rb</span>.<span class='ident'>set_gravity</span>(<span class='self'>self</span>.<span class='ident'>lin_acc</span>.<span class='ident'>clone</span>());
         <span class='comment'>//rb.set_ang_acc(self.ang_acc.clone());</span>
     }
@@ -186,6 +189,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

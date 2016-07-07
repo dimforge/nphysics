@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -46,25 +47,25 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-498' class='srclink' href='../../../../src/nphysics3d/up/up/src/detection/joint/joint.rs.html#5-14' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait Joint&lt;A&gt; {
-    fn <a href='#tymethod.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;A&gt;;
-    fn <a href='#tymethod.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;A&gt;;
+               </span><a id='src-514' class='srclink' href='../../../../src/nphysics3d/up/up/src/detection/joint/joint.rs.html#6-15' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Joint&lt;N:&nbsp;Scalar,&nbsp;A&gt; {
+    fn <a href='#tymethod.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;A&gt;;
+    fn <a href='#tymethod.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;A&gt;;
     fn <a href='#tymethod.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; A;
     fn <a href='#tymethod.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; A;
 }</pre><div class='docblock'><p>Trait implemented by every joint.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.anchor1' class='method stab '><code>fn <a href='#tymethod.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;A&gt;</code></h3><div class='docblock'><p>The first anchor affected by this joint.</p>
-</div><h3 id='tymethod.anchor2' class='method stab '><code>fn <a href='#tymethod.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;A&gt;</code></h3><div class='docblock'><p>The second anchor affected by this joint.</p>
+        <h3 id='tymethod.anchor1' class='method stab '><code>fn <a href='#tymethod.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;A&gt;</code></h3><div class='docblock'><p>The first anchor affected by this joint.</p>
+</div><h3 id='tymethod.anchor2' class='method stab '><code>fn <a href='#tymethod.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;A&gt;</code></h3><div class='docblock'><p>The second anchor affected by this joint.</p>
 </div><h3 id='tymethod.anchor1_pos' class='method stab '><code>fn <a href='#tymethod.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; A</code></h3><div class='docblock'><p>The first attach point in global coordinates.</p>
 </div><h3 id='tymethod.anchor2_pos' class='method stab '><code>fn <a href='#tymethod.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; A</code></h3><div class='docblock'><p>The second attach point in global coordinates.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../../nphysics3d/detection/joint/joint/trait.Joint.html' title='nphysics3d::detection::joint::joint::Joint'>Joint</a>&lt;<a class='type' href='../../../../nphysics3d/math/type.Point.html' title='nphysics3d::math::Point'>Point</a>&gt; for <a class='struct' href='../../../../nphysics3d/detection/joint/struct.BallInSocket.html' title='nphysics3d::detection::joint::BallInSocket'>BallInSocket</a></code></li>
-<li><code>impl <a class='trait' href='../../../../nphysics3d/detection/joint/joint/trait.Joint.html' title='nphysics3d::detection::joint::joint::Joint'>Joint</a>&lt;<a class='type' href='../../../../nphysics3d/math/type.Matrix.html' title='nphysics3d::math::Matrix'>Matrix</a>&gt; for <a class='struct' href='../../../../nphysics3d/detection/joint/struct.Fixed.html' title='nphysics3d::detection::joint::Fixed'>Fixed</a></code></li>
+    <li><code>impl&lt;N:&nbsp;Scalar&gt; Joint&lt;N,&nbsp;<a class='type' href='../../../../nphysics3d/math/type.Point.html' title='nphysics3d::math::Point'>Point</a>&lt;N&gt;&gt; for <a class='struct' href='../../../../nphysics3d/detection/joint/struct.BallInSocket.html' title='nphysics3d::detection::joint::BallInSocket'>BallInSocket</a>&lt;N&gt;</code></li>
+<li><code>impl&lt;N:&nbsp;Scalar&gt; Joint&lt;N,&nbsp;<a class='type' href='../../../../nphysics3d/math/type.Matrix.html' title='nphysics3d::math::Matrix'>Matrix</a>&lt;N&gt;&gt; for <a class='struct' href='../../../../nphysics3d/detection/joint/struct.Fixed.html' title='nphysics3d::detection::joint::Fixed'>Fixed</a>&lt;N&gt;</code></li>
 </ul><script type="text/javascript" async
                          src="../../../../implementors/nphysics3d/detection/joint/joint/trait.Joint.js">
                  </script></section>
@@ -90,6 +91,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

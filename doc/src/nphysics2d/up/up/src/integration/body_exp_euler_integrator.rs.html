@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -84,8 +85,8 @@
 </pre><pre class='rust '>
 <span class='doccomment'>//! Explicit Euler integrator.</span>
 
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Transformation</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>RigidBody</span>;
 <span class='kw'>use</span> <span class='ident'>integration</span>::<span class='ident'>Integrator</span>;
 <span class='kw'>use</span> <span class='ident'>integration</span>::<span class='ident'>euler</span>;
@@ -103,9 +104,9 @@
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>Integrator</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BodyExpEulerIntegrator</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Integrator</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>BodyExpEulerIntegrator</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>dt</span>: <span class='ident'>Scalar</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span>) {
+    <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>dt</span>: <span class='ident'>N</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='kw'>if</span> <span class='ident'>rb</span>.<span class='ident'>can_move</span>() {
             <span class='kw'>let</span> (<span class='ident'>t</span>, <span class='ident'>lv</span>, <span class='ident'>av</span>) <span class='op'>=</span> <span class='ident'>euler</span>::<span class='ident'>explicit_integrate</span>(
                 <span class='ident'>dt</span>.<span class='ident'>clone</span>(),
@@ -146,6 +147,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

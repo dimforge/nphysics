@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -46,27 +47,33 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-464' class='srclink' href='../../../src/nphysics2d/up/up/src/detection/joint/fixed.rs.html#6-10' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct Fixed {
+               </span><a id='src-477' class='srclink' href='../../../src/nphysics2d/up/up/src/detection/joint/fixed.rs.html#7-11' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Fixed&lt;N:&nbsp;Scalar&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A joint that prevents any relative movement (linear and angular) between two objects.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../nphysics2d/detection/joint/struct.Fixed.html' title='nphysics2d::detection::joint::Fixed'>Fixed</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(anchor1: <a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&gt;, anchor2: <a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&gt;) -&gt; <a class='struct' href='../../../nphysics2d/detection/joint/struct.Fixed.html' title='nphysics2d::detection::joint::Fixed'>Fixed</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../../nphysics2d/detection/joint/struct.Fixed.html' title='nphysics2d::detection::joint::Fixed'>Fixed</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-482' class='srclink' href='../../../src/nphysics2d/up/up/src/detection/joint/fixed.rs.html#13-52' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(anchor1: <a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;, anchor2: <a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;) -&gt; <a class='struct' href='../../../nphysics2d/detection/joint/struct.Fixed.html' title='nphysics2d::detection::joint::Fixed'>Fixed</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>Fixed</code> joint.</p>
 </div><h4 id='method.up_to_date' class='method'><code>fn <a href='#method.up_to_date' class='fnname'>up_to_date</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Tells if the joint has been modified by the user.</p>
-</div><h4 id='method.set_local1' class='method'><code>fn <a href='#method.set_local1' class='fnname'>set_local1</a>(&amp;mut self, local1: <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>)</code></h4>
+</div><h4 id='method.set_local1' class='method'><code>fn <a href='#method.set_local1' class='fnname'>set_local1</a>(&amp;mut self, local1: <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;)</code></h4>
 <div class='docblock'><p>Sets the the second anchor position.</p>
 
 <p>The position is expressed in the second attached body’s local coordinates.</p>
-</div><h4 id='method.set_local2' class='method'><code>fn <a href='#method.set_local2' class='fnname'>set_local2</a>(&amp;mut self, local2: <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>)</code></h4>
+</div><h4 id='method.set_local2' class='method'><code>fn <a href='#method.set_local2' class='fnname'>set_local2</a>(&amp;mut self, local2: <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;)</code></h4>
 <div class='docblock'><p>Sets the the second anchor position.</p>
 
 <p>The position is expressed in the second attached body’s local coordinates.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../nphysics2d/detection/joint/joint/trait.Joint.html' title='nphysics2d::detection::joint::joint::Joint'>Joint</a>&lt;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&gt; for <a class='struct' href='../../../nphysics2d/detection/joint/struct.Fixed.html' title='nphysics2d::detection::joint::Fixed'>Fixed</a></code></h3><div class='impl-items'><h4 id='method.anchor1' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#method.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&gt;</code></h4>
-<h4 id='method.anchor2' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#method.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&gt;</code></h4>
-<h4 id='method.anchor1_pos' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#method.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a></code></h4>
-<h4 id='method.anchor2_pos' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#method.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a></code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='trait' href='../../../nphysics2d/detection/joint/joint/trait.Joint.html' title='nphysics2d::detection::joint::joint::Joint'>Joint</a>&lt;N,&nbsp;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt; for <a class='struct' href='../../../nphysics2d/detection/joint/struct.Fixed.html' title='nphysics2d::detection::joint::Fixed'>Fixed</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-497' class='srclink' href='../../../src/nphysics2d/up/up/src/detection/joint/fixed.rs.html#54-88' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.anchor1' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#tymethod.anchor1' class='fnname'>anchor1</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;</code></h4>
+<div class='docblock'><p>The first anchor affected by this joint.</p>
+</div><h4 id='method.anchor2' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#tymethod.anchor2' class='fnname'>anchor2</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../nphysics2d/detection/joint/struct.Anchor.html' title='nphysics2d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;<a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;</code></h4>
+<div class='docblock'><p>The second anchor affected by this joint.</p>
+</div><h4 id='method.anchor1_pos' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#tymethod.anchor1_pos' class='fnname'>anchor1_pos</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>The first attach point in global coordinates.</p>
+</div><h4 id='method.anchor2_pos' class='method'><code>fn <a href='../../../nphysics2d/detection/joint/joint/trait.Joint.html#tymethod.anchor2_pos' class='fnname'>anchor2_pos</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>The second attach point in global coordinates.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -89,6 +96,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

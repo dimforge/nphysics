@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,19 +47,23 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-144' class='srclink' href='../../src/nphysics3d/up/up/src/integration/translational_ccd_motion_clamping.rs.html#39-41' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct TranslationalCCDMotionClamping {
+               </span><a id='src-151' class='srclink' href='../../src/nphysics3d/up/up/src/integration/translational_ccd_motion_clamping.rs.html#40-43' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct TranslationalCCDMotionClamping&lt;N:&nbsp;Scalar&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Handles Continuous Collision Detection.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics3d/integration/struct.TranslationalCCDMotionClamping.html' title='nphysics3d::integration::TranslationalCCDMotionClamping'>TranslationalCCDMotionClamping</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics3d/integration/struct.TranslationalCCDMotionClamping.html' title='nphysics3d::integration::TranslationalCCDMotionClamping'>TranslationalCCDMotionClamping</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics3d/integration/struct.TranslationalCCDMotionClamping.html' title='nphysics3d::integration::TranslationalCCDMotionClamping'>TranslationalCCDMotionClamping</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-155' class='srclink' href='../../src/nphysics3d/up/up/src/integration/translational_ccd_motion_clamping.rs.html#45-192' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics3d/integration/struct.TranslationalCCDMotionClamping.html' title='nphysics3d::integration::TranslationalCCDMotionClamping'>TranslationalCCDMotionClamping</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>TranslationalCCDMotionClamping</code> to enable continuous collision detection to
 fast-moving rigid bodies.</p>
-</div><h4 id='method.add_ccd_to' class='method'><code>fn <a href='#method.add_ccd_to' class='fnname'>add_ccd_to</a>(&amp;mut self, body: <a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>, motion_threshold: <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>)</code></h4>
+</div><h4 id='method.add_ccd_to' class='method'><code>fn <a href='#method.add_ccd_to' class='fnname'>add_ccd_to</a>(&amp;mut self, rigid_body: <a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;, motion_threshold: N, trigger_sensors: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)</code></h4>
 <div class='docblock'><p>Enables continuous collision for the given rigid body.</p>
-</div><h4 id='method.remove_ccd_from' class='method'><code>fn <a href='#method.remove_ccd_from' class='fnname'>remove_ccd_from</a>(&amp;mut self, body: &amp;<a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>)</code></h4>
-<div class='docblock'><p>Remove continuous collision from the given rigid body.</p>
-</div><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, cw: &amp;mut <a class='type' href='../../nphysics3d/world/type.RigidBodyCollisionWorld.html' title='nphysics3d::world::RigidBodyCollisionWorld'>RigidBodyCollisionWorld</a>)</code></h4>
+</div><h4 id='method.remove_ccd_from' class='method'><code>fn <a href='#method.remove_ccd_from' class='fnname'>remove_ccd_from</a>(&amp;mut self, rigid_body: &amp;<a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;)</code></h4>
+<div class='docblock'><p>Enables continuous collision for the given rigid body.</p>
+</div><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, cw: &amp;mut <a class='type' href='../../nphysics3d/world/type.RigidBodyCollisionWorld.html' title='nphysics3d::world::RigidBodyCollisionWorld'>RigidBodyCollisionWorld</a>&lt;N&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Update the time of impacts and apply motion clamping when necessary.</p>
+
+<p>Returns <code>false</code> if no clamping was done. If at least one clamping was performed, the
+collision word will be updated by this method once all the clamping have been performed.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -82,6 +87,8 @@ fast-moving rigid bodies.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2474' class='srclink' href='../../src/nphysics2d/up/up/src/volumetric/volumetric_convex.rs.html#282-303' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn convex_hull_center_of_mass&lt;P&gt;(dim: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, points: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>P<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; P <span class='where'>where P: Point, P::Vect: <a class='trait' href='http://nalgebra.org/doc/nalgebra/traits/operations/trait.Outer.html' title='nalgebra::traits::operations::Outer'>Outer</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;P::Vect::OuterProductType, Output=P::Vect&gt;, P::Vect::OuterProductType: <a class='trait' href='http://nalgebra.org/doc/nalgebra/traits/operations/trait.EigenQR.html' title='nalgebra::traits::operations::EigenQR'>EigenQR</a>&lt;P::Vect::Scalar, P::Vect&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;P, Output=P&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Add.html' title='core::ops::Add'>Add</a>&lt;P::Vect::OuterProductType, Output=P::Vect::OuterProductType&gt; + <a class='trait' href='http://rust-num.github.io/num/num/traits/trait.Zero.html' title='num::traits::Zero'>Zero</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a></span></pre><div class='docblock'><p>The center of mass of the convex hull of a set of points.</p>
+               </span><a id='src-2991' class='srclink' href='../../src/nphysics2d/up/up/src/volumetric/volumetric_convex.rs.html#302-324' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn convex_hull_center_of_mass&lt;P&gt;(dimension: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, points: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>P<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; P <span class='where'>where P: Point, P::Vect: <a class='trait' href='http://nalgebra.org/doc/nalgebra/traits/operations/trait.Outer.html' title='nalgebra::traits::operations::Outer'>Outer</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;P::Vect::OuterProductType,&nbsp;Output=P::Vect&gt;, P::Vect::OuterProductType: <a class='trait' href='http://nalgebra.org/doc/nalgebra/traits/operations/trait.EigenQR.html' title='nalgebra::traits::operations::EigenQR'>EigenQR</a>&lt;P::Vect::Scalar,&nbsp;P::Vect&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;P,&nbsp;Output=P&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Add.html' title='core::ops::Add'>Add</a>&lt;P::Vect::OuterProductType,&nbsp;Output=P::Vect::OuterProductType&gt; + <a class='trait' href='http://rust-num.github.io/num/num/traits/trait.Zero.html' title='num::traits::Zero'>Zero</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a></span></pre><div class='docblock'><p>The center of mass of the convex hull of a set of points.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -71,6 +72,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

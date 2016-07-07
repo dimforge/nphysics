@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../main.css">
+    
 
     
     
@@ -203,33 +204,6 @@
 <span id="160">160</span>
 <span id="161">161</span>
 <span id="162">162</span>
-<span id="163">163</span>
-<span id="164">164</span>
-<span id="165">165</span>
-<span id="166">166</span>
-<span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
-<span id="176">176</span>
-<span id="177">177</span>
-<span id="178">178</span>
-<span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
 </pre><pre class='rust '>
 <span class='doccomment'>/*!
 nphysics
@@ -240,11 +214,11 @@ It uses [ncollide](http://ncollide.org) for collision detection, and
 implementations both share the same code!
 
 
-Examples are available in the `examples` directory. There is also a short
-(outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).  An on-line
-version of this documentation is available [here](http://nphysics.org).  Feel
-free to ask for help and discuss features on the official [user
-forum](http://users.nphysics.org).
+Examples are available in the `examples2d` and `examples3d` directories. There
+is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
+An on-line version of this documentation is available
+[here](http://nphysics.org). Feel free to ask for help and discuss features on
+the official [user forum](http://users.nphysics.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
@@ -279,29 +253,20 @@ For the 3D version, add the crate named `nphysics3d`:
 nphysics3d = &quot;0.1.*&quot;
 ```
 
-By default, 32-bit floating point numbers are used by the library. If you need
-more accuracy, use either version of nphysics with the feature `f64` enabled.
-For example:
-
-```ignore
-[dependencies.nphysics2d]
-version  = &quot;0.1.*&quot;
-features = &quot;f64&quot;
-```
-
 Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
 to see all the cool stuffs you can do.
 
 ## Features
-- static and dynamic rigid bodies
-- common convex primitives: cone, box, ball, cylinder
-- concave geometries build from convex primitives (aka. compound geometries)
-- stable stacking
-- island based sleeping (objects deactivation)
-- ray casting
-- swept sphere based continuous collision detection
-- ball-in-socket joint
-- fixed joint
+- Static and dynamic rigid bodies.
+- Common convex primitives: cone, box, ball, cylinder.
+- Concave geometries build from convex primitives (aka. compound geometries).
+- Stable stacking.
+- Island based sleeping (objects deactivation).
+- Ray casting.
+- Swept sphere based continuous collision detection.
+- Ball-in-socket joint.
+- Fixed joint.
+- Sensors.
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
@@ -324,8 +289,6 @@ The libraries needed to compile the physics engine are:
 
 The libraries needed to compile the examples are:
 
-* [kiss3d](http://kiss3d.org): the 3d graphics engine.
-* [rust-sfml](http://www.rust-sfml.org): the 2D graphics engine. See [windows installation instructions](https://github.com/jeremyletang/rust-sfml/wiki/How-to-use-rust-sfml-on-Windows).
 */</span>
 
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>non_camel_case_types</span>)]</span>
@@ -360,65 +323,49 @@ The libraries needed to compile the examples are:
 <span class='doccomment'>/// Compilation flags dependent aliases for mathematical types.</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;dim3&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>math</span> {
-    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Pnt3</span>, <span class='ident'>Vec3</span>, <span class='ident'>Mat3</span>, <span class='ident'>Rot3</span>, <span class='ident'>Iso3</span>};
-
-    <span class='doccomment'>/// The scalar type.</span>
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;f32&quot;</span>, <span class='ident'>not</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;f64&quot;</span>)))]</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>f32</span>;
-
-    <span class='doccomment'>/// The scalar type.</span>
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;f64&quot;</span>)]</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>f64</span>;
+    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Point3</span>, <span class='ident'>Vector3</span>, <span class='ident'>Matrix3</span>, <span class='ident'>Rotation3</span>, <span class='ident'>Isometry3</span>};
 
     <span class='doccomment'>/// The point type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Point</span> <span class='op'>=</span> <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Point3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The vector type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Vect</span> <span class='op'>=</span> <span class='ident'>Vec3</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vector3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The orientation type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Orientation</span> <span class='op'>=</span> <span class='ident'>Vec3</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vector3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The transformation matrix type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Matrix</span> <span class='op'>=</span> <span class='ident'>Iso3</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Isometry3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The rotation matrix type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RotationMatrix</span> <span class='op'>=</span> <span class='ident'>Rot3</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RotationMatrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Rotation3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The inertia tensor type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>AngularInertia</span> <span class='op'>=</span> <span class='ident'>Mat3</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>AngularInertia</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Matrix3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 }
 
 <span class='doccomment'>/// Compilation flags dependent aliases for mathematical types.</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;dim2&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>math</span> {
-    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Pnt2</span>, <span class='ident'>Vec1</span>, <span class='ident'>Vec2</span>, <span class='ident'>Mat1</span>, <span class='ident'>Rot2</span>, <span class='ident'>Iso2</span>};
-
-    <span class='doccomment'>/// The scalar type.</span>
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;f32&quot;</span>, <span class='ident'>not</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;f64&quot;</span>)))]</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>f32</span>;
-
-    <span class='doccomment'>/// The scalar type.</span>
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;f64&quot;</span>)]</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>f64</span>;
+    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Point2</span>, <span class='ident'>Vector1</span>, <span class='ident'>Vector2</span>, <span class='ident'>Matrix1</span>, <span class='ident'>Rotation2</span>, <span class='ident'>Isometry2</span>};
 
     <span class='doccomment'>/// The point type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Point</span> <span class='op'>=</span> <span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Point2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The vector type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Vect</span> <span class='op'>=</span> <span class='ident'>Vec2</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vector2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The orientation type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Orientation</span> <span class='op'>=</span> <span class='ident'>Vec1</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vector1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The transformation matrix type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Matrix</span> <span class='op'>=</span> <span class='ident'>Iso2</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Isometry2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The rotation matrix type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RotationMatrix</span> <span class='op'>=</span> <span class='ident'>Rot2</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>RotationMatrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Rotation2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// The inertia tensor type.</span>
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>AngularInertia</span> <span class='op'>=</span> <span class='ident'>Mat1</span><span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>AngularInertia</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Matrix1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>;
 }
 </pre>
 </section>
@@ -444,6 +391,8 @@ The libraries needed to compile the examples are:
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

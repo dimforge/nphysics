@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,13 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-522' class='srclink' href='../../src/nphysics3d/up/up/src/detection/activation_manager.rs.html#17-22' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct ActivationManager {
+               </span><a id='src-538' class='srclink' href='../../src/nphysics3d/up/up/src/detection/activation_manager.rs.html#17-22' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ActivationManager&lt;N:&nbsp;Scalar&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Structure that monitors island-based activation/deactivation of objects.</p>
 
 <p>It is responsible for making objects sleep or wake up.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics3d/detection/struct.ActivationManager.html' title='nphysics3d::detection::ActivationManager'>ActivationManager</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(mix_factor: <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>) -&gt; <a class='struct' href='../../nphysics3d/detection/struct.ActivationManager.html' title='nphysics3d::detection::ActivationManager'>ActivationManager</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics3d/detection/struct.ActivationManager.html' title='nphysics3d::detection::ActivationManager'>ActivationManager</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-544' class='srclink' href='../../src/nphysics3d/up/up/src/detection/activation_manager.rs.html#24-196' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(mix_factor: N) -&gt; <a class='struct' href='../../nphysics3d/detection/struct.ActivationManager.html' title='nphysics3d::detection::ActivationManager'>ActivationManager</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>ActivationManager</code>.</p>
 
 <h1 id='arguments' class='section-header'><a href='#arguments'>Arguments:</a></h1>
@@ -60,9 +62,9 @@
 <li><code>thresold</code>   - the minimum energy required to keep an object awake.</li>
 <li><code>mix_factor</code> - the ratio of energy to keep between two frames.</li>
 </ul>
-</div><h4 id='method.deferred_activate' class='method'><code>fn <a href='#method.deferred_activate' class='fnname'>deferred_activate</a>(&amp;mut self, b: &amp;<a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>)</code></h4>
+</div><h4 id='method.deferred_activate' class='method'><code>fn <a href='#method.deferred_activate' class='fnname'>deferred_activate</a>(&amp;mut self, b: &amp;<a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;)</code></h4>
 <div class='docblock'><p>Notify the <code>ActivationManager</code> that is has to activate an object at the next update.</p>
-</div><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, world: &amp;mut <a class='type' href='../../nphysics3d/world/type.RigidBodyCollisionWorld.html' title='nphysics3d::world::RigidBodyCollisionWorld'>RigidBodyCollisionWorld</a>, joints: &amp;<a class='struct' href='../../nphysics3d/detection/joint/struct.JointManager.html' title='nphysics3d::detection::joint::JointManager'>JointManager</a>, bodies: &amp;<a class='struct' href='http://ncollide.org/doc/ncollide_utils/data/hash_map/struct.HashMap.html' title='ncollide_utils::data::hash_map::HashMap'>HashMap</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>, <a class='struct' href='http://ncollide.org/doc/ncollide_utils/data/hash/struct.UintTWHash.html' title='ncollide_utils::data::hash::UintTWHash'>UintTWHash</a>&gt;)</code></h4>
+</div><h4 id='method.update' class='method'><code>fn <a href='#method.update' class='fnname'>update</a>(&amp;mut self, world: &amp;mut <a class='type' href='../../nphysics3d/world/type.RigidBodyCollisionWorld.html' title='nphysics3d::world::RigidBodyCollisionWorld'>RigidBodyCollisionWorld</a>&lt;N&gt;, joints: &amp;<a class='struct' href='../../nphysics3d/detection/joint/struct.JointManager.html' title='nphysics3d::detection::joint::JointManager'>JointManager</a>&lt;N&gt;, bodies: &amp;<a class='struct' href='http://ncollide.org/rustdoc/ncollide_utils/data/hash_map/struct.HashMap.html' title='ncollide_utils::data::hash_map::HashMap'>HashMap</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,&nbsp;<a class='type' href='../../nphysics3d/object/type.RigidBodyHandle.html' title='nphysics3d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;,&nbsp;<a class='struct' href='http://ncollide.org/rustdoc/ncollide_utils/data/hash/struct.UintTWHash.html' title='ncollide_utils::data::hash::UintTWHash'>UintTWHash</a>&gt;)</code></h4>
 <div class='docblock'><p>Update the activation manager, activating and deactivating objects when needed.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -87,6 +89,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

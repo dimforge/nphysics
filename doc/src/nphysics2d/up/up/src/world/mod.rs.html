@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -46,10 +47,12 @@
 <span id="3">3</span>
 <span id="4">4</span>
 <span id="5">5</span>
+<span id="6">6</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! The physics world.</span>
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>world</span>::<span class='ident'>world</span>::{<span class='ident'>World</span>, <span class='ident'>WorldBroadPhase</span>, <span class='ident'>RigidBodyCollisionWorld</span><span class='comment'>/*, RigidBodies*/</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>world</span>::<span class='ident'>world</span>::{<span class='ident'>World</span>, <span class='ident'>WorldBroadPhase</span>, <span class='ident'>RigidBodies</span>, <span class='ident'>RigidBodyCollisionWorld</span>,
+                       <span class='ident'>WorldCollisionObject</span>};
 
 <span class='kw'>mod</span> <span class='ident'>world</span>;
 </pre>
@@ -76,6 +79,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

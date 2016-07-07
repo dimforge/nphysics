@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,11 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-734' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/accumulated_impulse_solver.rs.html#23-31' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct AccumulatedImpulseSolver {
+               </span><a id='src-739' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/accumulated_impulse_solver.rs.html#23-31' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct AccumulatedImpulseSolver&lt;N:&nbsp;Scalar&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Constraint solver using the projected gauss seidel algorithm and warm-starting.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics2d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(step: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>, correction_mode: <a class='enum' href='../../nphysics2d/resolution/enum.CorrectionMode.html' title='nphysics2d::resolution::CorrectionMode'>CorrectionMode</a>, joint_corr_factor: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>, rest_eps: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>, num_first_order_iter: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, num_second_order_iter: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics2d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-748' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/accumulated_impulse_solver.rs.html#33-259' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(step: N, correction_mode: <a class='enum' href='../../nphysics2d/resolution/enum.CorrectionMode.html' title='nphysics2d::resolution::CorrectionMode'>CorrectionMode</a>&lt;N&gt;, joint_corr_factor: N, rest_eps: N, num_first_order_iter: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, num_second_order_iter: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>AccumulatedImpulseSolver</code>.</p>
 </div><h4 id='method.num_first_order_iter' class='method'><code>fn <a href='#method.num_first_order_iter' class='fnname'>num_first_order_iter</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Gets the number of iteration done by the penetration depth correction solver.</p>
@@ -60,8 +62,10 @@
 <div class='docblock'><p>Gets the number of iteration done by the velocity constraint solver.</p>
 </div><h4 id='method.set_num_second_order_iter' class='method'><code>fn <a href='#method.set_num_second_order_iter' class='fnname'>set_num_second_order_iter</a>(&amp;mut self, num: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
 <div class='docblock'><p>Sets the number of iteration done by the velocity constraint solver.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../nphysics2d/resolution/solver/trait.Solver.html' title='nphysics2d::resolution::solver::Solver'>Solver</a>&lt;<a class='enum' href='../../nphysics2d/detection/constraint/enum.Constraint.html' title='nphysics2d::detection::constraint::Constraint'>Constraint</a>&gt; for <a class='struct' href='../../nphysics2d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></h3><div class='impl-items'><h4 id='method.solve' class='method'><code>fn <a href='../../nphysics2d/resolution/solver/trait.Solver.html#method.solve' class='fnname'>solve</a>(&amp;mut self, dt: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>, constraints: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='enum' href='../../nphysics2d/detection/constraint/enum.Constraint.html' title='nphysics2d::detection::constraint::Constraint'>Constraint</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='trait' href='../../nphysics2d/resolution/solver/trait.Solver.html' title='nphysics2d::resolution::solver::Solver'>Solver</a>&lt;N,&nbsp;<a class='enum' href='../../nphysics2d/detection/constraint/enum.Constraint.html' title='nphysics2d::detection::constraint::Constraint'>Constraint</a>&lt;N&gt;&gt; for <a class='struct' href='../../nphysics2d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics2d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-820' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/accumulated_impulse_solver.rs.html#261-393' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.solve' class='method'><code>fn <a href='../../nphysics2d/resolution/solver/trait.Solver.html#tymethod.solve' class='fnname'>solve</a>(&amp;mut self, dt: N, constraints: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='enum' href='../../nphysics2d/detection/constraint/enum.Constraint.html' title='nphysics2d::detection::constraint::Constraint'>Constraint</a>&lt;N&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h4>
+<div class='docblock'><p>Solve the set of constraints of type <code>I</code>.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -84,6 +88,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

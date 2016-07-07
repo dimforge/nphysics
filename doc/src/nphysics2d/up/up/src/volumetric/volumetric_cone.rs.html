@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -164,7 +165,7 @@
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::<span class='ident'>IndexMut</span>;
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Zero</span>;
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>BaseFloat</span>, <span class='ident'>Orig</span>, <span class='ident'>Pnt2</span>, <span class='ident'>Pnt3</span>, <span class='ident'>Mat1</span>, <span class='ident'>Mat3</span>};
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>BaseFloat</span>, <span class='ident'>Origin</span>, <span class='ident'>Point2</span>, <span class='ident'>Point3</span>, <span class='ident'>Matrix1</span>, <span class='ident'>Matrix3</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::{<span class='ident'>Cone2</span>, <span class='ident'>Cone3</span>};
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
@@ -173,10 +174,10 @@
 
 <span class='doccomment'>/// The volume of a cone.</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_volume</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>half_height</span>: <span class='ident'>N</span>, <span class='ident'>radius</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_volume</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>half_height</span>: <span class='ident'>N</span>, <span class='ident'>radius</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
             <span class='ident'>radius</span> <span class='op'>*</span> <span class='ident'>half_height</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0f64</span>)
         }
@@ -187,12 +188,12 @@
     }
 }
 
-<span class='doccomment'>/// The surface of a cone.</span>
+<span class='doccomment'>/// The area of a cone.</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_surface</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>half_height</span>: <span class='ident'>N</span>, <span class='ident'>radius</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_area</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>half_height</span>: <span class='ident'>N</span>, <span class='ident'>radius</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>height</span> <span class='op'>=</span> <span class='ident'>half_height</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0f64</span>);
             <span class='kw'>let</span> <span class='ident'>side</span>   <span class='op'>=</span> (<span class='ident'>height</span> <span class='op'>*</span> <span class='ident'>height</span> <span class='op'>+</span> <span class='ident'>radius</span> <span class='op'>*</span> <span class='ident'>radius</span>).<span class='ident'>sqrt</span>();
@@ -214,8 +215,8 @@
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_center_of_mass</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>half_height</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>P</span>
     <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
-          <span class='ident'>P</span>: <span class='ident'>Orig</span> <span class='op'>+</span> <span class='ident'>IndexMut</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>N</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>com</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>orig</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
+          <span class='ident'>P</span>: <span class='ident'>Origin</span> <span class='op'>+</span> <span class='ident'>IndexMut</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>com</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>origin</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
     <span class='ident'>com</span>[<span class='number'>1</span>] <span class='op'>=</span> <span class='op'>-</span><span class='ident'>half_height</span> <span class='op'>/</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0f64</span>);
 
     <span class='ident'>com</span>
@@ -223,12 +224,12 @@
 
 <span class='doccomment'>/// The unit angular inertia of a cone.</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_unit_angular_inertia</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>I</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>half_height</span>: <span class='ident'>N</span>, <span class='ident'>radius</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>I</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cone_unit_angular_inertia</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>I</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>half_height</span>: <span class='ident'>N</span>, <span class='ident'>radius</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>I</span>
     <span class='kw'>where</span> <span class='ident'>N</span>: <span class='ident'>Scalar</span>,
           <span class='ident'>I</span>: <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>N</span><span class='op'>&gt;</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
             <span class='comment'>// FIXME: not sure about that…</span>
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span>();
@@ -259,14 +260,14 @@
 }
 
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>impl_volumetric_cone</span>(
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dim</span>: <span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>p</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>i</span>: <span class='ident'>ident</span>) <span class='op'>=&gt;</span> (
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dimension</span>: <span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>p</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>i</span>: <span class='ident'>ident</span>) <span class='op'>=&gt;</span> (
         <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>p</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>i</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-            <span class='kw'>fn</span> <span class='ident'>surface</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
-                <span class='ident'>cone_surface</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dim</span>, <span class='self'>self</span>.<span class='ident'>half_height</span>(), <span class='self'>self</span>.<span class='ident'>radius</span>())
+            <span class='kw'>fn</span> <span class='ident'>area</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
+                <span class='ident'>cone_area</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dimension</span>, <span class='self'>self</span>.<span class='ident'>half_height</span>(), <span class='self'>self</span>.<span class='ident'>radius</span>())
             }
 
             <span class='kw'>fn</span> <span class='ident'>volume</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
-                <span class='ident'>cone_volume</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dim</span>, <span class='self'>self</span>.<span class='ident'>half_height</span>(), <span class='self'>self</span>.<span class='ident'>radius</span>())
+                <span class='ident'>cone_volume</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dimension</span>, <span class='self'>self</span>.<span class='ident'>half_height</span>(), <span class='self'>self</span>.<span class='ident'>radius</span>())
             }
 
             <span class='kw'>fn</span> <span class='ident'>center_of_mass</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>p</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
@@ -274,14 +275,14 @@
             }
 
             <span class='kw'>fn</span> <span class='ident'>unit_angular_inertia</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>i</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-                <span class='ident'>cone_unit_angular_inertia</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dim</span>, <span class='self'>self</span>.<span class='ident'>half_height</span>(), <span class='self'>self</span>.<span class='ident'>radius</span>())
+                <span class='ident'>cone_unit_angular_inertia</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>dimension</span>, <span class='self'>self</span>.<span class='ident'>half_height</span>(), <span class='self'>self</span>.<span class='ident'>radius</span>())
             }
         }
     )
 );
 
-<span class='macro'>impl_volumetric_cone</span><span class='macro'>!</span>(<span class='ident'>Cone2</span>, <span class='number'>2</span>, <span class='ident'>Pnt2</span>, <span class='ident'>Mat1</span>);
-<span class='macro'>impl_volumetric_cone</span><span class='macro'>!</span>(<span class='ident'>Cone3</span>, <span class='number'>3</span>, <span class='ident'>Pnt3</span>, <span class='ident'>Mat3</span>);
+<span class='macro'>impl_volumetric_cone</span><span class='macro'>!</span>(<span class='ident'>Cone2</span>, <span class='number'>2</span>, <span class='ident'>Point2</span>, <span class='ident'>Matrix1</span>);
+<span class='macro'>impl_volumetric_cone</span><span class='macro'>!</span>(<span class='ident'>Cone3</span>, <span class='number'>3</span>, <span class='ident'>Point3</span>, <span class='ident'>Matrix3</span>);
 </pre>
 </section>
     <section id='search' class="content hidden"></section>
@@ -306,6 +307,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

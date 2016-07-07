@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -46,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-214' class='srclink' href='../../../src/nphysics3d/up/up/src/integration/euler.rs.html#48-55' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn displacement(dt: <a class='type' href='../../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, _: &amp;<a class='type' href='../../../nphysics3d/math/type.Matrix.html' title='nphysics3d::math::Matrix'>Matrix</a>, center_of_mass: &amp;<a class='type' href='../../../nphysics3d/math/type.Point.html' title='nphysics3d::math::Point'>Point</a>, lin_vel: &amp;<a class='type' href='../../../nphysics3d/math/type.Vect.html' title='nphysics3d::math::Vect'>Vect</a>, ang_vel: &amp;<a class='type' href='../../../nphysics3d/math/type.Orientation.html' title='nphysics3d::math::Orientation'>Orientation</a>) -&gt; <a class='type' href='../../../nphysics3d/math/type.Matrix.html' title='nphysics3d::math::Matrix'>Matrix</a></pre><div class='docblock'><p>Computes the transformation matrix required to move an object with a <code>lin_vel</code> linear velocity,
+               </span><a id='src-226' class='srclink' href='../../../src/nphysics3d/up/up/src/integration/euler.rs.html#58-66' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn displacement&lt;N:&nbsp;Scalar&gt;(dt: N, _: &amp;<a class='type' href='../../../nphysics3d/math/type.Matrix.html' title='nphysics3d::math::Matrix'>Matrix</a>&lt;N&gt;, center_of_mass: &amp;<a class='type' href='../../../nphysics3d/math/type.Point.html' title='nphysics3d::math::Point'>Point</a>&lt;N&gt;, lin_vel: &amp;<a class='type' href='../../../nphysics3d/math/type.Vector.html' title='nphysics3d::math::Vector'>Vector</a>&lt;N&gt;, ang_vel: &amp;<a class='type' href='../../../nphysics3d/math/type.Orientation.html' title='nphysics3d::math::Orientation'>Orientation</a>&lt;N&gt;) -&gt; <a class='type' href='../../../nphysics3d/math/type.Matrix.html' title='nphysics3d::math::Matrix'>Matrix</a>&lt;N&gt;</pre><div class='docblock'><p>Computes the transformation matrix required to move an object with a <code>lin_vel</code> linear velocity,
 a <code>ang_vil</code> angular velocity, and a center of mass <code>center_of_mass</code>, during the time step <code>dt</code>.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -72,6 +73,8 @@ a <code>ang_vil</code> angular velocity, and a center of mass <code>center_of_ma
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

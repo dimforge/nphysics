@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,66 +47,74 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-974' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/velocity_constraint.rs.html#6-44' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct VelocityConstraint {
-    pub normal: <a class='type' href='../../nphysics2d/math/type.Vect.html' title='nphysics2d::math::Vect'>Vect</a>,
-    pub weighted_normal1: <a class='type' href='../../nphysics2d/math/type.Vect.html' title='nphysics2d::math::Vect'>Vect</a>,
-    pub weighted_normal2: <a class='type' href='../../nphysics2d/math/type.Vect.html' title='nphysics2d::math::Vect'>Vect</a>,
-    pub rot_axis1: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>,
-    pub weighted_rot_axis1: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>,
-    pub rot_axis2: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>,
-    pub weighted_rot_axis2: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>,
-    pub inv_projected_mass: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>,
-    pub impulse: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>,
-    pub lobound: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>,
-    pub hibound: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>,
-    pub objective: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>,
+               </span><a id='src-1069' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/velocity_constraint.rs.html#7-45' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct VelocityConstraint&lt;N:&nbsp;Scalar&gt; {
+    pub normal: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;,
+    pub weighted_normal1: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;,
+    pub weighted_normal2: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;,
+    pub rot_axis1: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;,
+    pub weighted_rot_axis1: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;,
+    pub rot_axis2: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;,
+    pub weighted_rot_axis2: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;,
+    pub inv_projected_mass: N,
+    pub impulse: N,
+    pub lobound: N,
+    pub hibound: N,
+    pub objective: N,
     pub id1: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.isize.html'>isize</a>,
     pub id2: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.isize.html'>isize</a>,
     pub friction_limit_id: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,
-    pub friction_coeff: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>,
+    pub friction_coeff: N,
 }</pre><div class='docblock'><p>A constraint of velocity at a point of contact.</p>
-</div><h2 class='fields'>Fields</h2>
-<table><tr class='stab '>
-                             <td id='structfield.normal'><code>normal</code></td><td><div class='docblock'><p>The contact normal.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.weighted_normal1'><code>weighted_normal1</code></td><td><div class='docblock'><p>The contact normal multiplied by the first body&#39;s inverse mass.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.weighted_normal2'><code>weighted_normal2</code></td><td><div class='docblock'><p>The contact normal multiplied by the second body&#39;s inverse mass.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.rot_axis1'><code>rot_axis1</code></td><td><div class='docblock'><p>The first body rotation axis.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.weighted_rot_axis1'><code>weighted_rot_axis1</code></td><td><div class='docblock'><p>The first body rotation axis multiplied by its inverse inertia.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.rot_axis2'><code>rot_axis2</code></td><td><div class='docblock'><p>The second body rotation axis.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.weighted_rot_axis2'><code>weighted_rot_axis2</code></td><td><div class='docblock'><p>The second body rotation axis multiplied by its inverse inertia.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.inv_projected_mass'><code>inv_projected_mass</code></td><td><div class='docblock'><p>The inverse of the sum of linear and angular inertia of both bodies.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.impulse'><code>impulse</code></td><td><div class='docblock'><p>The total impulse applied.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.lobound'><code>lobound</code></td><td><div class='docblock'><p>The lower bound of the impulse.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.hibound'><code>hibound</code></td><td><div class='docblock'><p>The upper bound of the impulse.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.objective'><code>objective</code></td><td><div class='docblock'><p>The target delta velocity.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.id1'><code>id1</code></td><td><div class='docblock'><p>The id of the first body.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.id2'><code>id2</code></td><td><div class='docblock'><p>The id of the second body.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.friction_limit_id'><code>friction_limit_id</code></td><td><div class='docblock'><p>The id of the friction constraint.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.friction_coeff'><code>friction_coeff</code></td><td><div class='docblock'><p>The friction coefficient on this contact.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a></code></h4>
+</div><h2 class='fields'>Fields</h2><span id='structfield.normal' class='structfield'><code>normal: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The contact normal.</p>
+</div><span id='structfield.weighted_normal1' class='structfield'><code>weighted_normal1: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The contact normal multiplied by the first body&#39;s inverse mass.</p>
+</div><span id='structfield.weighted_normal2' class='structfield'><code>weighted_normal2: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The contact normal multiplied by the second body&#39;s inverse mass.</p>
+</div><span id='structfield.rot_axis1' class='structfield'><code>rot_axis1: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The first body rotation axis.</p>
+</div><span id='structfield.weighted_rot_axis1' class='structfield'><code>weighted_rot_axis1: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The first body rotation axis multiplied by its inverse inertia.</p>
+</div><span id='structfield.rot_axis2' class='structfield'><code>rot_axis2: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The second body rotation axis.</p>
+</div><span id='structfield.weighted_rot_axis2' class='structfield'><code>weighted_rot_axis2: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The second body rotation axis multiplied by its inverse inertia.</p>
+</div><span id='structfield.inv_projected_mass' class='structfield'><code>inv_projected_mass: N</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The inverse of the sum of linear and angular inertia of both bodies.</p>
+</div><span id='structfield.impulse' class='structfield'><code>impulse: N</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The total impulse applied.</p>
+</div><span id='structfield.lobound' class='structfield'><code>lobound: N</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The lower bound of the impulse.</p>
+</div><span id='structfield.hibound' class='structfield'><code>hibound: N</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The upper bound of the impulse.</p>
+</div><span id='structfield.objective' class='structfield'><code>objective: N</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The target delta velocity.</p>
+</div><span id='structfield.id1' class='structfield'><code>id1: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.isize.html'>isize</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>The id of the first body.</p>
+</div><span id='structfield.id2' class='structfield'><code>id2: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.isize.html'>isize</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>The id of the second body.</p>
+</div><span id='structfield.friction_limit_id' class='structfield'><code>friction_limit_id: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>The id of the friction constraint.</p>
+</div><span id='structfield.friction_coeff' class='structfield'><code>friction_coeff: N</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The friction coefficient on this contact.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1087' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/velocity_constraint.rs.html#47-74' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>Creates a new velocity constraint with all terms initialized to zero.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a></code></h4>
-<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + Scalar&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-955' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/velocity_constraint.rs.html#5' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + Scalar&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-975' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/velocity_constraint.rs.html#5' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> + Scalar&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-997' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/velocity_constraint.rs.html#5' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
+</div><h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../nphysics2d/resolution/struct.VelocityConstraint.html' title='nphysics2d::resolution::VelocityConstraint'>VelocityConstraint</a>&lt;N&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>This method tests for <code>!=</code>.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -128,6 +137,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../main.css">
+    
 
     
     
@@ -541,7 +542,7 @@
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;dim2&quot;</span>)]</span>
     <span class='kw'>use</span> <span class='ident'>na</span>;
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;dim2&quot;</span>)]</span>
-    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Vec1</span>, <span class='ident'>Vec2</span>, <span class='ident'>Iso2</span>};
+    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Vector1</span>, <span class='ident'>Vector2</span>, <span class='ident'>Isometry2</span>};
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;dim2&quot;</span>)]</span>
     <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::<span class='ident'>Cuboid</span>;
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;dim2&quot;</span>)]</span>
@@ -557,18 +558,18 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>world</span> <span class='op'>=</span> <span class='ident'>World</span>::<span class='ident'>new</span>();
 
         <span class='comment'>// rigidbody with side length 2, area 4 and mass 4</span>
-        <span class='kw'>let</span> <span class='ident'>geom</span>   <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='kw'>let</span> <span class='ident'>geom</span>   <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
         <span class='kw'>let</span> <span class='ident'>rb</span> <span class='op'>=</span> <span class='ident'>RigidBody</span>::<span class='ident'>new_dynamic</span>(<span class='ident'>geom</span>, <span class='number'>1.0</span>, <span class='number'>0.3</span>, <span class='number'>0.6</span>);
-        <span class='kw'>let</span> <span class='ident'>rb_handle</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_body</span>(<span class='ident'>rb</span>.<span class='ident'>clone</span>());
+        <span class='kw'>let</span> <span class='ident'>rb_handle</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_rigid_body</span>(<span class='ident'>rb</span>.<span class='ident'>clone</span>());
 
         <span class='comment'>// ensure it&#39;s at the origin</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>), 
-                <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Initial position should be at zero. Actual: {:?}, Expected: {:?}&quot;</span>, 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>),
+                <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Initial position should be at zero. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
         <span class='comment'>// set gravity</span>
-        <span class='kw'>let</span> <span class='ident'>gravity</span> <span class='op'>=</span> <span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>);
+        <span class='kw'>let</span> <span class='ident'>gravity</span> <span class='op'>=</span> <span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>);
         <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>gravity</span>);
 
         <span class='comment'>// remove body and trigger a rust panic</span>
@@ -577,7 +578,7 @@
 
         <span class='comment'>// add another body in same position triggers a panic in ncollide</span>
         <span class='comment'>// 	let mut rb3 = rb.clone();</span>
-        <span class='comment'>// 	rb3.append_translation(&amp;Vec2::new(0.0, 0.0));</span>
+        <span class='comment'>// 	rb3.append_translation(&amp;Vector2::new(0.0, 0.0));</span>
         <span class='comment'>// 	let rb_handle3 = world.add_body(rb3);</span>
 
         <span class='comment'>// simulate a huge time step</span>
@@ -586,70 +587,70 @@
         <span class='comment'>// terminal velocity for the entire time duration. Therefore it moves farther</span>
         <span class='comment'>// than it actually should. Use smaller time intervals to approximate more</span>
         <span class='comment'>// realistic values (see below).</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>1.0</span>);
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>), 
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Gravity did not pull object correctly (large time step). Actual: {:?}, Expected: {:?}&quot;</span>,
                 <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset the body</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
 
         <span class='comment'>// simulate small time steps</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.01</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.01</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Gravity did not pull object correctly (small time steps). Actual: {:?}, Expected: {:?}&quot;</span>,
                 <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset the body</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
 
-        <span class='comment'>// Switch off gravity globally	</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='comment'>// Switch off gravity globally</span>
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.001</span>), 
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.001</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Gravity did not correctly switch off (global). Actual: {:?}, Expected: {:?}&quot;</span>,
                 <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset the body</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
 
         <span class='comment'>// Wait until body deactivates</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
 
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>activation_state</span>() <span class='op'>==</span> <span class='ident'>ActivationState</span>::<span class='ident'>Inactive</span>, 
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>activation_state</span>() <span class='op'>==</span> <span class='ident'>ActivationState</span>::<span class='ident'>Inactive</span>,
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Body should be inactive by now, but is {:?}&quot;</span>, <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>activation_state</span>()));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>activation_state</span>() <span class='op'>!=</span> <span class='ident'>ActivationState</span>::<span class='ident'>Inactive</span>, 
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>activation_state</span>() <span class='op'>!=</span> <span class='ident'>ActivationState</span>::<span class='ident'>Inactive</span>,
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Body should be active by now, but is {:?}&quot;</span>, <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>activation_state</span>()));
 
         <span class='comment'>// Changing gravity has to work</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>));
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>20.0</span>));
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
 
-        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='op'>-</span><span class='number'>20.0</span>));
+        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='op'>-</span><span class='number'>20.0</span>));
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>2000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
 
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.02</span>), 
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.02</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Gravity did not change correctly. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
     }
@@ -663,24 +664,24 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>world</span> <span class='op'>=</span> <span class='ident'>World</span>::<span class='ident'>new</span>();
 
         <span class='comment'>// rigidbody with side length 2, area 4 and mass 4</span>
-        <span class='kw'>let</span> <span class='ident'>geom</span>   <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='kw'>let</span> <span class='ident'>geom</span>   <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
         <span class='kw'>let</span> <span class='ident'>rb</span> <span class='op'>=</span> <span class='ident'>RigidBody</span>::<span class='ident'>new_dynamic</span>(<span class='ident'>geom</span>.<span class='ident'>clone</span>(), <span class='number'>1.0</span>, <span class='number'>0.3</span>, <span class='number'>0.6</span>);
-        <span class='kw'>let</span> <span class='ident'>rb_handle</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_body</span>(<span class='ident'>rb</span>.<span class='ident'>clone</span>());
+        <span class='kw'>let</span> <span class='ident'>rb_handle</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_rigid_body</span>(<span class='ident'>rb</span>.<span class='ident'>clone</span>());
 
         <span class='comment'>// add another body with double the density</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rb2</span> <span class='op'>=</span> <span class='ident'>RigidBody</span>::<span class='ident'>new_dynamic</span>(<span class='ident'>geom</span>.<span class='ident'>clone</span>(), <span class='number'>2.0</span>, <span class='number'>0.3</span>, <span class='number'>0.6</span>);
-        <span class='ident'>rb2</span>.<span class='ident'>append_translation</span>(<span class='kw-2'>&amp;</span><span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>));
-        <span class='kw'>let</span> <span class='ident'>rb_handle2</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_body</span>(<span class='ident'>rb2</span>);
+        <span class='ident'>rb2</span>.<span class='ident'>append_translation</span>(<span class='kw-2'>&amp;</span><span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>));
+        <span class='kw'>let</span> <span class='ident'>rb_handle2</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_rigid_body</span>(<span class='ident'>rb2</span>);
 
         <span class='comment'>// switch off gravity</span>
-        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
 
         <span class='comment'>// Force has to work for different masses</span>
         <span class='comment'>// apply force</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_deactivation_threshold</span>( <span class='prelude-val'>None</span> );
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_deactivation_threshold</span>( <span class='prelude-val'>None</span> );
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_deactivation_threshold</span>(<span class='prelude-val'>None</span>);
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_deactivation_threshold</span>(<span class='prelude-val'>None</span>);
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>2000</span> {
@@ -688,21 +689,21 @@
         }
         <span class='comment'>// mass of 4 (kg), force of 10 (N) =&gt; acc = force/mass = 2.5 (m/s^2)</span>
         <span class='comment'>// distance after 2 secs: x = 1/2 * acc * t^2 = 5 (m)</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>5.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>5.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Force did not properly pull first body. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
         <span class='comment'>// mass of 8 (kg), force of 10 (N)=&gt; acc = force/mass = 1.25 (m/s^2)</span>
         <span class='comment'>// distance after 2 secs: x = 1/2 * acc * t^2 = 2.5 (m)</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>2.5</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>2.5</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Force did not properly pull second body. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>deactivate</span>();
 
         <span class='comment'>// clearing forces has to work</span>
@@ -711,38 +712,38 @@
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Force should have been cleared. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// adding forces has to work</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>5.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>10.0</span>, <span class='number'>5.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>5.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>10.0</span>, <span class='number'>5.0</span>));
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>2000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>5.0</span>, <span class='number'>5.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>5.0</span>, <span class='number'>5.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Forces did not properly add up. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// angular force has to work correctly for different inertias and types</span>
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
 
         <span class='comment'>// add angular forces</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
@@ -751,23 +752,23 @@
         <span class='comment'>// expected angle</span>
         <span class='comment'>// force of force of 10 (N), inertia of 2.67 =&gt; acc = force/inertia = 3.75 rad/s^2</span>
         <span class='comment'>// 1 sec acceleration =&gt; angle = 1/2 * acc * t^2 = 1.875</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Rotation did not properly work. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
         <span class='comment'>// expected angle</span>
         <span class='comment'>// force of force of 10 (N), inertia of 5.33 =&gt; acc = force/inertia = 1.875 rad/s^2</span>
         <span class='comment'>// 1 sec acceleration =&gt; angle = 1/2 * acc * t^2 = 0.9375</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.9375</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.9375</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Rotation2 did not properly work. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
         <span class='comment'>// clear angular forces</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_angular_force</span>();
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_angular_force</span>();
 
@@ -776,26 +777,26 @@
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
         <span class='comment'>// expected angle</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Rotation did not properly stop. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
         <span class='comment'>// expected angle</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Rotation2 did not properly stop. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_angular_force</span>();
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>deactivate</span>();
 
         <span class='comment'>// add angular forces</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>20.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>20.0</span>));
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
@@ -804,20 +805,20 @@
         <span class='comment'>// expected angle</span>
         <span class='comment'>// resulting force of force of -10 (N), inertia of 2.67 =&gt; acc = force/inertia = -3.75 rad/s^2</span>
         <span class='comment'>// 1 sec acceleration =&gt; angle = 1/2 * acc * t^2 = -1.875</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>1.875</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='number'>1.875</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Combined forces rotation did not properly work. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_angular_force</span>();
 
         <span class='comment'>// set and clear both linear and angular forces</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
 
         <span class='comment'>// simulate</span>
@@ -825,19 +826,19 @@
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
         <span class='comment'>// expected result, body remains in the origin as all forces got cleared</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Cleared forces shouldn&#39;t work anymore. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_angular_force</span>();
 
         <span class='comment'>// only clear angular force</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_angular_force</span>();
 
         <span class='comment'>// simulate</span>
@@ -845,21 +846,21 @@
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
         <span class='comment'>// expected result, body moves but doesn&#39;t rotate</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>5.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>5.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Only linear movement is expected. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
 
         <span class='comment'>// only clear linear force</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_lin_force</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_ang_force</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_linear_force</span>();
 
         <span class='comment'>// simulate</span>
@@ -867,27 +868,27 @@
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
         <span class='comment'>// expected result, body rotates but doesn&#39;t move</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Only rotation is expected. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
 
         <span class='comment'>// apply force on point</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_force_wrt_point</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_force_wrt_point</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_force_wrt_point</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>append_force_wrt_point</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
@@ -896,15 +897,15 @@
         <span class='comment'>// expected result</span>
         <span class='comment'>// linear displacement 1.25</span>
         <span class='comment'>// angular rotation: -1.875</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>1.25</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>1.25</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Only rotation is expected on body 1. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
         <span class='comment'>// expected result</span>
         <span class='comment'>// linear displacement 1.25</span>
         <span class='comment'>// angular rotation: -1.875</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.625</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>0.9375</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.625</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>0.9375</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Only rotation is expected on body 2. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
     }
@@ -917,59 +918,59 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>world</span> <span class='op'>=</span> <span class='ident'>World</span>::<span class='ident'>new</span>();
 
         <span class='comment'>// rigidbody with side length 2, area 4 and mass 4</span>
-        <span class='kw'>let</span> <span class='ident'>geom</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='kw'>let</span> <span class='ident'>geom</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
         <span class='kw'>let</span> <span class='ident'>rb</span> <span class='op'>=</span> <span class='ident'>RigidBody</span>::<span class='ident'>new_dynamic</span>(<span class='ident'>geom</span>.<span class='ident'>clone</span>(), <span class='number'>1.0</span>, <span class='number'>0.3</span>, <span class='number'>0.6</span>);
-        <span class='kw'>let</span> <span class='ident'>rb_handle</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_body</span>(<span class='ident'>rb</span>.<span class='ident'>clone</span>());
+        <span class='kw'>let</span> <span class='ident'>rb_handle</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_rigid_body</span>(<span class='ident'>rb</span>.<span class='ident'>clone</span>());
 
         <span class='comment'>// add another body with double the density</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rb2</span> <span class='op'>=</span> <span class='ident'>RigidBody</span>::<span class='ident'>new_dynamic</span>(<span class='ident'>geom</span>.<span class='ident'>clone</span>(), <span class='number'>2.0</span>, <span class='number'>0.3</span>, <span class='number'>0.6</span>);
-        <span class='ident'>rb2</span>.<span class='ident'>append_translation</span>(<span class='kw-2'>&amp;</span><span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>));
-        <span class='kw'>let</span> <span class='ident'>rb_handle2</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_body</span>(<span class='ident'>rb2</span>);
+        <span class='ident'>rb2</span>.<span class='ident'>append_translation</span>(<span class='kw-2'>&amp;</span><span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>));
+        <span class='kw'>let</span> <span class='ident'>rb_handle2</span> <span class='op'>=</span> <span class='ident'>world</span>.<span class='ident'>add_rigid_body</span>(<span class='ident'>rb2</span>);
 
         <span class='comment'>// switch off gravity</span>
-        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
+        <span class='ident'>world</span>.<span class='ident'>set_gravity</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>));
 
         <span class='comment'>// impulses have to work for different masses</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_central_impulse</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_central_impulse</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_central_impulse</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_central_impulse</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>));
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
         <span class='comment'>// expected result</span>
-        <span class='comment'>// impulse of 10 N*s on body with mass 4 (kg) results in </span>
+        <span class='comment'>// impulse of 10 N*s on body with mass 4 (kg) results in</span>
         <span class='comment'>// velocity = impulse/mass = 10 N*s / 4 kg = 2.5 m/s</span>
         <span class='comment'>// distance = velocity * time = 2.5 m/s * 1 s = 2.5 m</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>2.5</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>2.5</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Different impulse result is expected on body 1. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
         <span class='comment'>// expected result</span>
-        <span class='comment'>// impulse of 10 N*s on body with mass 8 (kg) results in </span>
+        <span class='comment'>// impulse of 10 N*s on body with mass 8 (kg) results in</span>
         <span class='comment'>// velocity = impulse/mass = 10 N*s / 8 kg = 1.25 m/s</span>
         <span class='comment'>// distance = velocity * time = 1.25 m/s * 1 s = 1.25 m</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>1.25</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>1.25</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Different impulse result is expected on body 2. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
 
         <span class='comment'>// torques have to work for different inertias</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_angular_momentum</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_angular_momentum</span>(<span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_angular_momentum</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_angular_momentum</span>(<span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>10.0</span>));
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
@@ -979,53 +980,53 @@
         <span class='comment'>// expected result</span>
         <span class='comment'>// torque of 10 N*m*s on body with inertia of 2.67 kg*m^2 results in</span>
         <span class='comment'>// rotation speed of rvel = 10 N*m*s / 2.67 kg*m^2 = 3.75 1/s</span>
-        <span class='comment'>// angle after 1s: 3.75 </span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>3.75</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='comment'>// angle after 1s: 3.75</span>
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>3.75</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Different torque result is expected on body 1. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
         <span class='comment'>// expected result</span>
         <span class='comment'>// torque of 10 N*m*s on body with inertia of 5.33 kg*m^2 results in</span>
         <span class='comment'>// rotation speed of rvel = 10 N*m*s / 5.33 kg*m^2 = 1.875 1/s</span>
         <span class='comment'>// angle after 1s: 1.875</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Different torque result is expected on body 2. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
 
         <span class='comment'>// reset bodies</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
         <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_transformation</span>(<span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>0.0</span>), <span class='ident'>na</span>::<span class='ident'>zero</span>()));
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_lin_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>set_ang_vel</span>(<span class='ident'>na</span>::<span class='ident'>zero</span>());
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>clear_forces</span>();
         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>activate</span>(<span class='number'>1.0</span>);
 
         <span class='comment'>// nudge</span>
-        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_impulse_wrt_point</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
-        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_impulse_wrt_point</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='ident'>rb_handle</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_impulse_wrt_point</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
+        <span class='ident'>rb_handle2</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>apply_impulse_wrt_point</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>10.0</span>), <span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>1.0</span>, <span class='number'>1.0</span>));
 
         <span class='comment'>// simulate</span>
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span> .. <span class='number'>1000</span> {
             <span class='ident'>world</span>.<span class='ident'>step</span>(<span class='number'>0.001</span>);
         }
 
-        <span class='comment'>// expected values are the combination of the values in the two previous tests, </span>
+        <span class='comment'>// expected values are the combination of the values in the two previous tests,</span>
         <span class='comment'>// except with opposite rotation direction</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>2.5</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>3.75</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span>, <span class='number'>2.5</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>3.75</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Different torque result is expected on body 1. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
 
-        <span class='comment'>// expected values are the combination of the values in the two previous tests, </span>
+        <span class='comment'>// expected values are the combination of the values in the two previous tests,</span>
         <span class='comment'>// except with opposite rotation direction</span>
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Iso2</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>1.25</span>), <span class='ident'>Vec1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>), 
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>Isometry2</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='number'>5.0</span>, <span class='number'>1.25</span>), <span class='ident'>Vector1</span>::<span class='ident'>new</span>(<span class='number'>1.875</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq_eps</span>(<span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>, <span class='kw-2'>&amp;</span><span class='number'>0.01</span>),
                 <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Different torque result is expected on body 2. Actual: {:?}, Expected: {:?}&quot;</span>,
                         <span class='ident'>rb_handle2</span>.<span class='ident'>borrow</span>().<span class='ident'>position</span>(), <span class='ident'>expected</span>));
     }
@@ -1054,6 +1055,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

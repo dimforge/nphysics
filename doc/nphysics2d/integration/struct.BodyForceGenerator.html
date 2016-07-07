@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,11 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-77' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_force_generator.rs.html#8-11' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct BodyForceGenerator {
+               </span><a id='src-76' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_force_generator.rs.html#9-12' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct BodyForceGenerator&lt;N:&nbsp;Scalar&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A constant linear and angular force generator.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(lin_acc: <a class='type' href='../../nphysics2d/math/type.Vect.html' title='nphysics2d::math::Vect'>Vect</a>, ang_acc: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>) -&gt; <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-80' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_force_generator.rs.html#14-27' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(lin_acc: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;, ang_acc: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;) -&gt; <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>BodyForceGenerator</code>.</p>
 
 <h1 id='arguments' class='section-header'><a href='#arguments'>Arguments:</a></h1>
@@ -58,16 +60,19 @@
 <li><code>lin_acc</code> - the linear acceleration to apply to every body on the scene.</li>
 <li><code>ang_acc</code> - the angular acceleration to apply to every body on the scene.</li>
 </ul>
-</div></div><h3 class='impl'><code>impl <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a></code></h3><div class='impl-items'><h4 id='method.lin_acc' class='method'><code>fn <a href='#method.lin_acc' class='fnname'>lin_acc</a>(&amp;self) -&gt; <a class='type' href='../../nphysics2d/math/type.Vect.html' title='nphysics2d::math::Vect'>Vect</a></code></h4>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-85' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_force_generator.rs.html#29-53' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.lin_acc' class='method'><code>fn <a href='#method.lin_acc' class='fnname'>lin_acc</a>(&amp;self) -&gt; <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>The linear acceleration applied by this force generator.</p>
-</div><h4 id='method.set_lin_acc' class='method'><code>fn <a href='#method.set_lin_acc' class='fnname'>set_lin_acc</a>(&amp;mut self, lin_acc: <a class='type' href='../../nphysics2d/math/type.Vect.html' title='nphysics2d::math::Vect'>Vect</a>)</code></h4>
+</div><h4 id='method.set_lin_acc' class='method'><code>fn <a href='#method.set_lin_acc' class='fnname'>set_lin_acc</a>(&amp;mut self, lin_acc: <a class='type' href='../../nphysics2d/math/type.Vector.html' title='nphysics2d::math::Vector'>Vector</a>&lt;N&gt;)</code></h4>
 <div class='docblock'><p>Sets the linear acceleration applied by this force generator.</p>
-</div><h4 id='method.ang_acc' class='method'><code>fn <a href='#method.ang_acc' class='fnname'>ang_acc</a>(&amp;self) -&gt; <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a></code></h4>
+</div><h4 id='method.ang_acc' class='method'><code>fn <a href='#method.ang_acc' class='fnname'>ang_acc</a>(&amp;self) -&gt; <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>The angular acceleration applied by this force generator.</p>
-</div><h4 id='method.set_ang_acc' class='method'><code>fn <a href='#method.set_ang_acc' class='fnname'>set_ang_acc</a>(&amp;mut self, ang_acc: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>)</code></h4>
+</div><h4 id='method.set_ang_acc' class='method'><code>fn <a href='#method.set_ang_acc' class='fnname'>set_ang_acc</a>(&amp;mut self, ang_acc: <a class='type' href='../../nphysics2d/math/type.Orientation.html' title='nphysics2d::math::Orientation'>Orientation</a>&lt;N&gt;)</code></h4>
 <div class='docblock'><p>Sets the angular acceleration applied by this force generator.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../nphysics2d/integration/integrator/trait.Integrator.html' title='nphysics2d::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a></code></h3><div class='impl-items'><h4 id='method.update' class='method'><code>fn <a href='../../nphysics2d/integration/integrator/trait.Integrator.html#method.update' class='fnname'>update</a>(&amp;mut self, _: <a class='type' href='../../nphysics2d/math/type.Scalar.html' title='nphysics2d::math::Scalar'>Scalar</a>, rb: &amp;mut <a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='trait' href='../../nphysics2d/integration/integrator/trait.Integrator.html' title='nphysics2d::integration::integrator::Integrator'>Integrator</a>&lt;N,&nbsp;<a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt; for <a class='struct' href='../../nphysics2d/integration/struct.BodyForceGenerator.html' title='nphysics2d::integration::BodyForceGenerator'>BodyForceGenerator</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-97' class='srclink' href='../../src/nphysics2d/up/up/src/integration/body_force_generator.rs.html#55-61' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.update' class='method'><code>fn <a href='../../nphysics2d/integration/integrator/trait.Integrator.html#tymethod.update' class='fnname'>update</a>(&amp;mut self, _: N, rb: &amp;mut <a class='struct' href='../../nphysics2d/object/struct.RigidBody.html' title='nphysics2d::object::RigidBody'>RigidBody</a>&lt;N&gt;)</code></h4>
+<div class='docblock'><p>Updates the position and orientation of the object <code>o</code> after a time step of <code>dt</code>.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -90,6 +95,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

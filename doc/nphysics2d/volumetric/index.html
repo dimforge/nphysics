@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1856' class='srclink' href='../../src/nphysics2d/up/up/src/volumetric/mod.rs.html#1-28' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2405' class='srclink' href='../../src/nphysics2d/up/up/src/volumetric/mod.rs.html#1-31' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Volume and inertia tensor computation.</p>
 </div><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
@@ -66,17 +67,17 @@
                        </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                        <tr class=' module-item'>
+                           <td><a class='fn' href='fn.ball_area.html'
+                                  title='nphysics2d::volumetric::ball_area'>ball_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a ball.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='fn' href='fn.ball_center_of_mass.html'
                                   title='nphysics2d::volumetric::ball_center_of_mass'>ball_center_of_mass</a></td>
                            <td class='docblock short'>
                                 <p>The center of mass of a ball.</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.ball_surface.html'
-                                  title='nphysics2d::volumetric::ball_surface'>ball_surface</a></td>
-                           <td class='docblock short'>
-                                <p>The surface of a ball.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -94,17 +95,17 @@
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='fn' href='fn.cone_area.html'
+                                  title='nphysics2d::volumetric::cone_area'>cone_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a cone.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='fn' href='fn.cone_center_of_mass.html'
                                   title='nphysics2d::volumetric::cone_center_of_mass'>cone_center_of_mass</a></td>
                            <td class='docblock short'>
                                 <p>The center of mass of a cone.</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.cone_surface.html'
-                                  title='nphysics2d::volumetric::cone_surface'>cone_surface</a></td>
-                           <td class='docblock short'>
-                                <p>The surface of a cone.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -122,17 +123,17 @@
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='fn' href='fn.convex_hull_area.html'
+                                  title='nphysics2d::volumetric::convex_hull_area'>convex_hull_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a convex hull.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='fn' href='fn.convex_hull_center_of_mass.html'
                                   title='nphysics2d::volumetric::convex_hull_center_of_mass'>convex_hull_center_of_mass</a></td>
                            <td class='docblock short'>
                                 <p>The center of mass of the convex hull of a set of points.</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.convex_hull_surface.html'
-                                  title='nphysics2d::volumetric::convex_hull_surface'>convex_hull_surface</a></td>
-                           <td class='docblock short'>
-                                <p>The surface of a convex hull.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -150,17 +151,17 @@
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='fn' href='fn.convex_mesh_area.html'
+                                  title='nphysics2d::volumetric::convex_mesh_area'>convex_mesh_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a convex mesh.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='fn' href='fn.convex_mesh_mass_properties.html'
                                   title='nphysics2d::volumetric::convex_mesh_mass_properties'>convex_mesh_mass_properties</a></td>
                            <td class='docblock short'>
                                 <p>The mass properties of a convex mesh.</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.convex_mesh_surface.html'
-                                  title='nphysics2d::volumetric::convex_mesh_surface'>convex_mesh_surface</a></td>
-                           <td class='docblock short'>
-                                <p>The surface of a convex mesh.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -171,17 +172,38 @@
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='fn' href='fn.convex_polyline_area.html'
+                                  title='nphysics2d::volumetric::convex_polyline_area'>convex_polyline_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a convex polyline.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.convex_polyline_area_and_center_of_mass.html'
+                                  title='nphysics2d::volumetric::convex_polyline_area_and_center_of_mass'>convex_polyline_area_and_center_of_mass</a></td>
+                           <td class='docblock short'>
+                                <p>The area and center of mass of a 2D convex Polyline.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.convex_polyline_mass_properties.html'
+                                  title='nphysics2d::volumetric::convex_polyline_mass_properties'>convex_polyline_mass_properties</a></td>
+                           <td class='docblock short'>
+                                <p>The mass properties of a 2D convex Polyline.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.cuboid_area.html'
+                                  title='nphysics2d::volumetric::cuboid_area'>cuboid_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a cuboid.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='fn' href='fn.cuboid_center_of_mass.html'
                                   title='nphysics2d::volumetric::cuboid_center_of_mass'>cuboid_center_of_mass</a></td>
                            <td class='docblock short'>
                                 <p>The center of mass of a cuboid.</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.cuboid_surface.html'
-                                  title='nphysics2d::volumetric::cuboid_surface'>cuboid_surface</a></td>
-                           <td class='docblock short'>
-                                <p>The surface of a cuboid.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -199,17 +221,17 @@
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='fn' href='fn.cylinder_area.html'
+                                  title='nphysics2d::volumetric::cylinder_area'>cylinder_area</a></td>
+                           <td class='docblock short'>
+                                <p>The area of a cylinder.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='fn' href='fn.cylinder_center_of_mass.html'
                                   title='nphysics2d::volumetric::cylinder_center_of_mass'>cylinder_center_of_mass</a></td>
                            <td class='docblock short'>
                                 <p>The center of mass of a cylinder.</p>
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class='fn' href='fn.cylinder_surface.html'
-                                  title='nphysics2d::volumetric::cylinder_surface'>cylinder_surface</a></td>
-                           <td class='docblock short'>
-                                <p>The surface of a cylinder.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -248,6 +270,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../../main.css">
+    
 
     
     
@@ -319,31 +320,31 @@
 <span id="276">276</span>
 <span id="277">277</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> <span class='ident'>na</span>::<span class='ident'>Bounded</span>;
-<span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Float</span>;
-<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>geometry</span>::<span class='ident'>Contact</span>;
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='self'>self</span>, <span class='ident'>Bounded</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>query</span>::<span class='ident'>Contact</span>;
 <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>InertiaTensor</span>;
 <span class='kw'>use</span> <span class='ident'>resolution</span>::<span class='ident'>constraint</span>::<span class='ident'>velocity_constraint</span>::<span class='ident'>VelocityConstraint</span>;
 <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>RigidBody</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>, <span class='ident'>Orientation</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Point</span>, <span class='ident'>Vector</span>, <span class='ident'>Orientation</span>};
 
 <span class='doccomment'>/// The correction coefficient used by the constraint solver.</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>CorrectionMode</span> {
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>CorrectionMode</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Penetration are solved by the penalty method.</span>
-    <span class='ident'>Velocity</span>(<span class='ident'>Scalar</span>),
+    <span class='ident'>Velocity</span>(<span class='ident'>N</span>),
     <span class='doccomment'>/// Penetration are solved by the penalty method together with a hard repositioning.</span>
-    <span class='ident'>VelocityAndPosition</span>(<span class='ident'>Scalar</span>, <span class='ident'>Scalar</span>, <span class='ident'>Scalar</span>),
+    <span class='ident'>VelocityAndPosition</span>(<span class='ident'>N</span>, <span class='ident'>N</span>, <span class='ident'>N</span>),
     <span class='doccomment'>/// Penetration are solved by the penalty method together with a hard repositioning.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// The amount of velocity correction is bounded by threshold.</span>
-    <span class='ident'>VelocityAndPositionThresold</span>(<span class='ident'>Scalar</span>, <span class='ident'>Scalar</span>, <span class='ident'>Scalar</span>)
+    <span class='ident'>VelocityAndPositionThresold</span>(<span class='ident'>N</span>, <span class='ident'>N</span>, <span class='ident'>N</span>)
 }
 
-<span class='kw'>impl</span> <span class='ident'>CorrectionMode</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>CorrectionMode</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='doccomment'>/// The velocity correction coefficient.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>vel_corr_factor</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Scalar</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>vel_corr_factor</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>CorrectionMode</span>::<span class='ident'>Velocity</span>(<span class='kw-2'>ref</span> <span class='ident'>v</span>)                          <span class='op'>=&gt;</span> <span class='ident'>v</span>.<span class='ident'>clone</span>(),
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPosition</span>(<span class='kw-2'>ref</span> <span class='ident'>v</span>, _, _)         <span class='op'>=&gt;</span> <span class='ident'>v</span>.<span class='ident'>clone</span>(),
@@ -353,7 +354,7 @@
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='doccomment'>/// The position correction coefficient.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>pos_corr_factor</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Scalar</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>pos_corr_factor</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPosition</span>(_, <span class='kw-2'>ref</span> <span class='ident'>p</span>, _)         <span class='op'>=&gt;</span> <span class='ident'>p</span>.<span class='ident'>clone</span>(),
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPositionThresold</span>(_, <span class='kw-2'>ref</span> <span class='ident'>p</span>, _) <span class='op'>=&gt;</span> <span class='ident'>p</span>.<span class='ident'>clone</span>(),
@@ -363,7 +364,7 @@
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='doccomment'>/// The minimum penetration depth required to switch on the hard repositioning based method.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>min_depth_for_pos_corr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Scalar</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>min_depth_for_pos_corr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPosition</span>(_, _, <span class='kw-2'>ref</span> <span class='ident'>t</span>)         <span class='op'>=&gt;</span> <span class='ident'>t</span>.<span class='ident'>clone</span>(),
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPositionThresold</span>(_, _, <span class='kw-2'>ref</span> <span class='ident'>t</span>) <span class='op'>=&gt;</span> <span class='ident'>t</span>.<span class='ident'>clone</span>(),
@@ -373,7 +374,7 @@
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='doccomment'>/// The max penetration depth the velocity correction will attempt to correct.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>max_depth_for_vel_corr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Scalar</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>max_depth_for_vel_corr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPosition</span>(_, _, _)             <span class='op'>=&gt;</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>(),
             <span class='ident'>CorrectionMode</span>::<span class='ident'>VelocityAndPositionThresold</span>(_, _, <span class='kw-2'>ref</span> <span class='ident'>t</span>) <span class='op'>=&gt;</span> <span class='ident'>t</span>.<span class='ident'>clone</span>(),
@@ -382,16 +383,16 @@
     }
 }
 
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>CorrectionParameters</span> {
-    <span class='kw'>pub</span> <span class='ident'>corr_mode</span>:       <span class='ident'>CorrectionMode</span>,
-    <span class='kw'>pub</span> <span class='ident'>joint_corr</span>:      <span class='ident'>Scalar</span>,
-    <span class='kw'>pub</span> <span class='ident'>rest_eps</span>:        <span class='ident'>Scalar</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>CorrectionParameters</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='ident'>corr_mode</span>:       <span class='ident'>CorrectionMode</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>joint_corr</span>:      <span class='ident'>N</span>,
+    <span class='kw'>pub</span> <span class='ident'>rest_eps</span>:        <span class='ident'>N</span>
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reinit_to_first_order_equation</span>(<span class='ident'>dt</span>:         <span class='ident'>Scalar</span>,
-                                      <span class='ident'>coll</span>:       <span class='kw-2'>&amp;</span><span class='ident'>Contact</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;</span>,
-                                      <span class='ident'>constraint</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span>,
-                                      <span class='ident'>correction</span>: <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span>) {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reinit_to_first_order_equation</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dt</span>:         <span class='ident'>N</span>,
+                                                 <span class='ident'>coll</span>:       <span class='kw-2'>&amp;</span><span class='ident'>Contact</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
+                                                 <span class='ident'>constraint</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                                 <span class='ident'>correction</span>: <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
     <span class='comment'>/*
      * Fill b
      */</span>
@@ -408,16 +409,16 @@
     <span class='ident'>constraint</span>.<span class='ident'>impulse</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fill_second_order_equation</span>(<span class='ident'>dt</span>:           <span class='ident'>Scalar</span>,
-                                  <span class='ident'>coll</span>:         <span class='kw-2'>&amp;</span><span class='ident'>Contact</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&gt;</span>,
-                                  <span class='ident'>rb1</span>:          <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span>,
-                                  <span class='ident'>rb2</span>:          <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span>,
-                                  <span class='ident'>rconstraint</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span>,
-                                  <span class='ident'>idr</span>:          <span class='ident'>usize</span>,
-                                  <span class='ident'>fconstraints</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>VelocityConstraint</span>],
-                                  <span class='ident'>idf</span>:          <span class='ident'>usize</span>,
-                                  <span class='ident'>cache</span>:        <span class='kw-2'>&amp;</span>[<span class='ident'>Scalar</span>],
-                                  <span class='ident'>correction</span>:   <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span>) {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fill_second_order_equation</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dt</span>:           <span class='ident'>N</span>,
+                                             <span class='ident'>coll</span>:         <span class='kw-2'>&amp;</span><span class='ident'>Contact</span><span class='op'>&lt;</span><span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
+                                             <span class='ident'>rb1</span>:          <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                             <span class='ident'>rb2</span>:          <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                             <span class='ident'>rconstraint</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                             <span class='ident'>idr</span>:          <span class='ident'>usize</span>,
+                                             <span class='ident'>fconstraints</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>],
+                                             <span class='ident'>idf</span>:          <span class='ident'>usize</span>,
+                                             <span class='ident'>cache</span>:        <span class='kw-2'>&amp;</span>[<span class='ident'>N</span>],
+                                             <span class='ident'>correction</span>:   <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
     <span class='kw'>let</span> <span class='ident'>restitution</span> <span class='op'>=</span> <span class='ident'>rb1</span>.<span class='ident'>restitution</span>() <span class='op'>*</span> <span class='ident'>rb2</span>.<span class='ident'>restitution</span>();
 
     <span class='kw'>let</span> <span class='ident'>center</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>center</span>(<span class='kw-2'>&amp;</span><span class='ident'>coll</span>.<span class='ident'>world1</span>, <span class='kw-2'>&amp;</span><span class='ident'>coll</span>.<span class='ident'>world2</span>);
@@ -463,16 +464,16 @@
         <span class='ident'>constraint</span>.<span class='ident'>friction_limit_id</span> <span class='op'>=</span> <span class='ident'>idr</span>;
         <span class='ident'>i</span> <span class='op'>=</span> <span class='ident'>i</span> <span class='op'>+</span> <span class='number'>1</span>;
 
-        <span class='boolval'>true</span>
+        <span class='bool-val'>true</span>
     })
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fill_constraint_geometry</span>(<span class='ident'>normal</span>:     <span class='ident'>Vect</span>,
-                                <span class='ident'>rot_axis1</span>:  <span class='ident'>Orientation</span>,
-                                <span class='ident'>rot_axis2</span>:  <span class='ident'>Orientation</span>,
-                                <span class='ident'>rb1</span>:        <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span>,
-                                <span class='ident'>rb2</span>:        <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span>,
-                                <span class='ident'>constraint</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span>) {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fill_constraint_geometry</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>normal</span>:     <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                           <span class='ident'>rot_axis1</span>:  <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                           <span class='ident'>rot_axis2</span>:  <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                           <span class='ident'>rb1</span>:        <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
+                                           <span class='ident'>rb2</span>:        <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
+                                           <span class='ident'>constraint</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
     <span class='ident'>constraint</span>.<span class='ident'>normal</span>             <span class='op'>=</span> <span class='ident'>normal</span>;
     <span class='ident'>constraint</span>.<span class='ident'>inv_projected_mass</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
 
@@ -506,22 +507,22 @@
         <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> { }
     }
 
-    <span class='kw'>let</span> <span class='ident'>_1</span>: <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>();
+    <span class='kw'>let</span> <span class='ident'>_1</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>();
     <span class='ident'>constraint</span>.<span class='ident'>inv_projected_mass</span> <span class='op'>=</span> <span class='ident'>_1</span> <span class='op'>/</span> <span class='ident'>constraint</span>.<span class='ident'>inv_projected_mass</span>;
 }
 
-<span class='kw'>fn</span> <span class='ident'>fill_velocity_constraint</span>(<span class='ident'>dt</span>:              <span class='ident'>Scalar</span>,
-                            <span class='ident'>normal</span>:          <span class='ident'>Vect</span>,
-                            <span class='ident'>center</span>:          <span class='ident'>Point</span>,
-                            <span class='ident'>restitution</span>:     <span class='ident'>Scalar</span>,
-                            <span class='ident'>depth</span>:           <span class='ident'>Scalar</span>,
-                            <span class='ident'>initial_impulse</span>: <span class='ident'>Scalar</span>,
-                            <span class='ident'>lobound</span>:         <span class='ident'>Scalar</span>,
-                            <span class='ident'>hibound</span>:         <span class='ident'>Scalar</span>,
-                            <span class='ident'>rb1</span>:             <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span>,
-                            <span class='ident'>rb2</span>:             <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span>,
-                            <span class='ident'>constraint</span>:      <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span>,
-                            <span class='ident'>correction</span>:      <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span>) {
+<span class='kw'>fn</span> <span class='ident'>fill_velocity_constraint</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dt</span>:              <span class='ident'>N</span>,
+                                       <span class='ident'>normal</span>:          <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                       <span class='ident'>center</span>:          <span class='ident'>Point</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                       <span class='ident'>restitution</span>:     <span class='ident'>N</span>,
+                                       <span class='ident'>depth</span>:           <span class='ident'>N</span>,
+                                       <span class='ident'>initial_impulse</span>: <span class='ident'>N</span>,
+                                       <span class='ident'>lobound</span>:         <span class='ident'>N</span>,
+                                       <span class='ident'>hibound</span>:         <span class='ident'>N</span>,
+                                       <span class='ident'>rb1</span>:             <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                       <span class='ident'>rb2</span>:             <span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                       <span class='ident'>constraint</span>:      <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                       <span class='ident'>correction</span>:      <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
     <span class='kw'>let</span> <span class='ident'>rot_axis1</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cross</span>(<span class='kw-2'>&amp;</span>(<span class='ident'>center</span> <span class='op'>-</span> <span class='op'>*</span><span class='ident'>rb1</span>.<span class='ident'>center_of_mass</span>()), <span class='kw-2'>&amp;</span><span class='op'>-</span><span class='ident'>normal</span>);
     <span class='kw'>let</span> <span class='ident'>rot_axis2</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cross</span>(<span class='kw-2'>&amp;</span>(<span class='ident'>center</span> <span class='op'>-</span> <span class='op'>*</span><span class='ident'>rb2</span>.<span class='ident'>center_of_mass</span>()), <span class='kw-2'>&amp;</span><span class='ident'>normal</span>);
 
@@ -552,7 +553,7 @@
 
     <span class='ident'>constraint</span>.<span class='ident'>objective</span> <span class='op'>=</span> <span class='op'>-</span><span class='ident'>constraint</span>.<span class='ident'>objective</span>;
 
-    <span class='kw'>if</span> <span class='ident'>depth</span> <span class='op'>&lt;</span> <span class='ident'>na</span>::<span class='ident'>zero</span>() {
+    <span class='kw'>if</span> <span class='bool-val'>false</span> { <span class='comment'>// depth &lt; na::zero() {</span>
         <span class='ident'>constraint</span>.<span class='ident'>objective</span> <span class='op'>=</span> <span class='ident'>constraint</span>.<span class='ident'>objective</span> <span class='op'>+</span> <span class='ident'>depth</span> <span class='op'>/</span> <span class='ident'>dt</span>
     }
     <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>depth</span> <span class='op'>&lt;</span> <span class='ident'>correction</span>.<span class='ident'>corr_mode</span>.<span class='ident'>max_depth_for_vel_corr</span>() {
@@ -569,14 +570,14 @@
     <span class='ident'>constraint</span>.<span class='ident'>hibound</span> <span class='op'>=</span> <span class='ident'>hibound</span>;
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>relative_velocity</span>(<span class='ident'>rb1</span>:       <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span>,
-                         <span class='ident'>rb2</span>:       <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span>,
-                         <span class='ident'>normal</span>:    <span class='kw-2'>&amp;</span><span class='ident'>Vect</span>,
-                         <span class='ident'>rot_axis1</span>: <span class='kw-2'>&amp;</span><span class='ident'>Orientation</span>,
-                         <span class='ident'>rot_axis2</span>: <span class='kw-2'>&amp;</span><span class='ident'>Orientation</span>,
-                         <span class='ident'>dt</span>:        <span class='kw-2'>&amp;</span><span class='ident'>Scalar</span>)
-                         <span class='op'>-&gt;</span> <span class='ident'>Scalar</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dvel</span>: <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>relative_velocity</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>rb1</span>:       <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
+                                    <span class='ident'>rb2</span>:       <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
+                                    <span class='ident'>normal</span>:    <span class='kw-2'>&amp;</span><span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                    <span class='ident'>rot_axis1</span>: <span class='kw-2'>&amp;</span><span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                    <span class='ident'>rot_axis2</span>: <span class='kw-2'>&amp;</span><span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                    <span class='ident'>dt</span>:        <span class='kw-2'>&amp;</span><span class='ident'>N</span>)
+                                    <span class='op'>-&gt;</span> <span class='ident'>N</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dvel</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
 
     <span class='kw'>match</span> <span class='op'>*</span><span class='ident'>rb1</span> {
         <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>rb</span>) <span class='op'>=&gt;</span> {
@@ -620,6 +621,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

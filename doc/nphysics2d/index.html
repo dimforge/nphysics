@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -46,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/nphysics2d/up/up/src/lib.rs.html#1-189' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/nphysics2d/up/up/src/lib.rs.html#1-162' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id='nphysics' class='section-header'><a href='#nphysics'>nphysics</a></h1>
 <p><strong>nphysics</strong> is a 2 and 3-dimensional physics engine for games and animations.
@@ -54,11 +55,11 @@ It uses <a href="http://ncollide.org">ncollide</a> for collision detection, and
 <a href="http://nalgebra.org">nalgebra</a> for vector/matrix math. 2D and 3D
 implementations both share the same code!</p>
 
-<p>Examples are available in the <code>examples</code> directory. There is also a short
-(outdated) <a href="http://youtu.be/CANjXZ5rocI">demonstration video</a>.  An on-line
-version of this documentation is available <a href="http://nphysics.org">here</a>.  Feel
-free to ask for help and discuss features on the official <a href="http://users.nphysics.org">user
-forum</a>.</p>
+<p>Examples are available in the <code>examples2d</code> and <code>examples3d</code> directories. There
+is also a short (outdated) <a href="http://youtu.be/CANjXZ5rocI">demonstration video</a>.
+An on-line version of this documentation is available
+<a href="http://nphysics.org">here</a>. Feel free to ask for help and discuss features on
+the official <a href="http://users.nphysics.org">user forum</a>.</p>
 
 <h2 id='why-another-physics-engine' class='section-header'><a href='#why-another-physics-engine'>Why another physics engine?</a></h2>
 <p>There are a lot of physics engine out there.
@@ -93,29 +94,21 @@ and the official package manager: <a href="https://github.com/rust-lang/cargo">C
 [<span class='ident'>dependencies</span>]
 <span class='ident'>nphysics3d</span> <span class='op'>=</span> <span class='string'>&quot;0.1.*&quot;</span></pre>
 
-<p>By default, 32-bit floating point numbers are used by the library. If you need
-more accuracy, use either version of nphysics with the feature <code>f64</code> enabled.
-For example:</p>
-
-<pre class='rust rust-example-rendered'>
-[<span class='ident'>dependencies</span>.<span class='ident'>nphysics2d</span>]
-<span class='ident'>version</span>  <span class='op'>=</span> <span class='string'>&quot;0.1.*&quot;</span>
-<span class='ident'>features</span> <span class='op'>=</span> <span class='string'>&quot;f64&quot;</span></pre>
-
 <p>Use <code>make examples</code> to build the demos and execute <code>./your_favorite_example_here --help</code>
 to see all the cool stuffs you can do.</p>
 
 <h2 id='features' class='section-header'><a href='#features'>Features</a></h2>
 <ul>
-<li>static and dynamic rigid bodies</li>
-<li>common convex primitives: cone, box, ball, cylinder</li>
-<li>concave geometries build from convex primitives (aka. compound geometries)</li>
-<li>stable stacking</li>
-<li>island based sleeping (objects deactivation)</li>
-<li>ray casting</li>
-<li>swept sphere based continuous collision detection</li>
-<li>ball-in-socket joint</li>
-<li>fixed joint</li>
+<li>Static and dynamic rigid bodies.</li>
+<li>Common convex primitives: cone, box, ball, cylinder.</li>
+<li>Concave geometries build from convex primitives (aka. compound geometries).</li>
+<li>Stable stacking.</li>
+<li>Island based sleeping (objects deactivation).</li>
+<li>Ray casting.</li>
+<li>Swept sphere based continuous collision detection.</li>
+<li>Ball-in-socket joint.</li>
+<li>Fixed joint.</li>
+<li>Sensors.</li>
 </ul>
 
 <h2 id='what-is-missing' class='section-header'><a href='#what-is-missing'>What is missing?</a></h2>
@@ -142,11 +135,6 @@ The libraries needed to compile the physics engine are:</p>
 </ul>
 
 <p>The libraries needed to compile the examples are:</p>
-
-<ul>
-<li><a href="http://kiss3d.org">kiss3d</a>: the 3d graphics engine.</li>
-<li><a href="http://www.rust-sfml.org">rust-sfml</a>: the 2D graphics engine. See <a href="https://github.com/jeremyletang/rust-sfml/wiki/How-to-use-rust-sfml-on-Windows">windows installation instructions</a>.</li>
-</ul>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                        <tr class=' module-item'>
@@ -181,7 +169,7 @@ The libraries needed to compile the physics engine are:</p>
                            <td><a class='mod' href='object/index.html'
                                   title='nphysics2d::object'>object</a></td>
                            <td class='docblock short'>
-                                <p>Rigid bodies.</p>
+                                <p>Objects that may be added to the physical world.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -234,6 +222,8 @@ The libraries needed to compile the physics engine are:</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

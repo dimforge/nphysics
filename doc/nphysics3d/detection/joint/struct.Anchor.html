@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -46,22 +47,23 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-406' class='srclink' href='../../../src/nphysics3d/up/up/src/detection/joint/anchor.rs.html#8-13' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct Anchor&lt;P&gt; {
-    pub body: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&gt;&gt;&gt;,
+               </span><a id='src-413' class='srclink' href='../../../src/nphysics3d/up/up/src/detection/joint/anchor.rs.html#9-14' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Anchor&lt;N:&nbsp;Scalar,&nbsp;P&gt; {
+    pub body: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt;&gt;&gt;,
     pub position: P,
 }</pre><div class='docblock'><p>One of the two end points of a joint.</p>
-</div><h2 class='fields'>Fields</h2>
-<table><tr class='stab '>
-                             <td id='structfield.body'><code>body</code></td><td><div class='docblock'><p>The body attached to this anchor.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.position'><code>position</code></td><td><div class='docblock'><p>The attach position, in local coordinates of the attached body.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;P&gt; <a class='struct' href='../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(body: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&gt;&gt;&gt;, position: P) -&gt; <a class='struct' href='../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h4>
+</div><h2 class='fields'>Fields</h2><span id='structfield.body' class='structfield'><code>body: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt;&gt;&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The body attached to this anchor.</p>
+</div><span id='structfield.position' class='structfield'><code>position: P</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The attach position, in local coordinates of the attached body.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar,&nbsp;P&gt; <a class='struct' href='../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;P&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-418' class='srclink' href='../../../src/nphysics3d/up/up/src/detection/joint/anchor.rs.html#16-27' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(body: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.RefCell.html' title='core::cell::RefCell'>RefCell</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt;&gt;&gt;, position: P) -&gt; <a class='struct' href='../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;P&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>Anchor</code> at a given <code>position</code> on a <code>body</code> local space.</p>
 
 <p>If <code>body</code> is <code>None</code>, the anchor is concidered to be attached to the ground and <code>position</code>
 is the attach point in global coordinates.</p>
-</div></div><h3 class='impl'><code>impl&lt;P&gt; <a class='struct' href='../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;P&gt;</code></h3><div class='impl-items'><h4 id='method.center_of_mass' class='method'><code>fn <a href='#method.center_of_mass' class='fnname'>center_of_mass</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics3d/math/type.Point.html' title='nphysics3d::math::Point'>Point</a></code></h4>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar,&nbsp;P&gt; <a class='struct' href='../../../nphysics3d/detection/joint/struct.Anchor.html' title='nphysics3d::detection::joint::Anchor'>Anchor</a>&lt;N,&nbsp;P&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-424' class='srclink' href='../../../src/nphysics3d/up/up/src/detection/joint/anchor.rs.html#29-43' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.center_of_mass' class='method'><code>fn <a href='#method.center_of_mass' class='fnname'>center_of_mass</a>(&amp;self) -&gt; <a class='type' href='../../../nphysics3d/math/type.Point.html' title='nphysics3d::math::Point'>Point</a>&lt;N&gt;</code></h4>
 <div class='docblock'><p>The center of mass of the body attached to this anchor.</p>
 
 <p>Returns the zero vector if no body is attached.</p>
@@ -88,6 +90,8 @@ is the attach point in global coordinates.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

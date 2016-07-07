@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -46,18 +47,18 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-613' class='srclink' href='../../../src/nphysics3d/up/up/src/resolution/solver.rs.html#4-7' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait Solver&lt;I&gt; {
-    fn <a href='#tymethod.solve' class='fnname'>solve</a>(&amp;mut self, <a class='type' href='../../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>I<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>);
+               </span><a id='src-616' class='srclink' href='../../../src/nphysics3d/up/up/src/resolution/solver.rs.html#4-7' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Solver&lt;N:&nbsp;<a class='trait' href='http://nalgebra.org/doc/nalgebra/traits/structure/trait.BaseFloat.html' title='nalgebra::traits::structure::BaseFloat'>BaseFloat</a>,&nbsp;I&gt; {
+    fn <a href='#tymethod.solve' class='fnname'>solve</a>(&amp;mut self, N, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>I<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>);
 }</pre><div class='docblock'><p>Trait implemented by constraint solvers.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.solve' class='method stab '><code>fn <a href='#tymethod.solve' class='fnname'>solve</a>(&amp;mut self, <a class='type' href='../../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>I<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h3><div class='docblock'><p>Solve the set of constraints of type <code>I</code>.</p>
+        <h3 id='tymethod.solve' class='method stab '><code>fn <a href='#tymethod.solve' class='fnname'>solve</a>(&amp;mut self, N, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>I<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h3><div class='docblock'><p>Solve the set of constraints of type <code>I</code>.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../nphysics3d/resolution/solver/trait.Solver.html' title='nphysics3d::resolution::solver::Solver'>Solver</a>&lt;<a class='enum' href='../../../nphysics3d/detection/constraint/enum.Constraint.html' title='nphysics3d::detection::constraint::Constraint'>Constraint</a>&gt; for <a class='struct' href='../../../nphysics3d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics3d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a></code></li>
+    <li><code>impl&lt;N:&nbsp;Scalar&gt; Solver&lt;N,&nbsp;<a class='enum' href='../../../nphysics3d/detection/constraint/enum.Constraint.html' title='nphysics3d::detection::constraint::Constraint'>Constraint</a>&lt;N&gt;&gt; for <a class='struct' href='../../../nphysics3d/resolution/struct.AccumulatedImpulseSolver.html' title='nphysics3d::resolution::AccumulatedImpulseSolver'>AccumulatedImpulseSolver</a>&lt;N&gt;</code></li>
 </ul><script type="text/javascript" async
                          src="../../../implementors/nphysics3d/resolution/solver/trait.Solver.js">
                  </script></section>
@@ -83,6 +84,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

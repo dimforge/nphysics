@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -46,23 +47,23 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-28' class='srclink' href='../../../src/nphysics3d/up/up/src/integration/integrator.rs.html#8-11' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait Integrator&lt;O&gt; {
-    fn <a href='#tymethod.update' class='fnname'>update</a>(&amp;mut self, dt: <a class='type' href='../../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, o: &amp;mut O);
+               </span><a id='src-26' class='srclink' href='../../../src/nphysics3d/up/up/src/integration/integrator.rs.html#8-11' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Integrator&lt;N:&nbsp;Scalar,&nbsp;O&gt; {
+    fn <a href='#tymethod.update' class='fnname'>update</a>(&amp;mut self, dt: N, o: &amp;mut O);
 }</pre><div class='docblock'><p>Trait implemented by every integrator.</p>
 
 <p>An integrator is a structure capable of updating a dynamic body position and orientation after a given time-step.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.update' class='method stab '><code>fn <a href='#tymethod.update' class='fnname'>update</a>(&amp;mut self, dt: <a class='type' href='../../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, o: &amp;mut O)</code></h3><div class='docblock'><p>Updates the position and orientation of the object <code>o</code> after a time step of <code>dt</code>.</p>
+        <h3 id='tymethod.update' class='method stab '><code>fn <a href='#tymethod.update' class='fnname'>update</a>(&amp;mut self, dt: N, o: &amp;mut O)</code></h3><div class='docblock'><p>Updates the position and orientation of the object <code>o</code> after a time step of <code>dt</code>.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../nphysics3d/integration/integrator/trait.Integrator.html' title='nphysics3d::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodyExpEulerIntegrator.html' title='nphysics3d::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></li>
-<li><code>impl <a class='trait' href='../../../nphysics3d/integration/integrator/trait.Integrator.html' title='nphysics3d::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics3d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></li>
-<li><code>impl <a class='trait' href='../../../nphysics3d/integration/integrator/trait.Integrator.html' title='nphysics3d::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodyForceGenerator.html' title='nphysics3d::integration::BodyForceGenerator'>BodyForceGenerator</a></code></li>
-<li><code>impl <a class='trait' href='../../../nphysics3d/integration/integrator/trait.Integrator.html' title='nphysics3d::integration::integrator::Integrator'>Integrator</a>&lt;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodyDamping.html' title='nphysics3d::integration::BodyDamping'>BodyDamping</a></code></li>
+    <li><code>impl&lt;N:&nbsp;Scalar&gt; Integrator&lt;N,&nbsp;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodyExpEulerIntegrator.html' title='nphysics3d::integration::BodyExpEulerIntegrator'>BodyExpEulerIntegrator</a></code></li>
+<li><code>impl&lt;N:&nbsp;Scalar&gt; Integrator&lt;N,&nbsp;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodySmpEulerIntegrator.html' title='nphysics3d::integration::BodySmpEulerIntegrator'>BodySmpEulerIntegrator</a></code></li>
+<li><code>impl&lt;N:&nbsp;Scalar&gt; Integrator&lt;N,&nbsp;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodyForceGenerator.html' title='nphysics3d::integration::BodyForceGenerator'>BodyForceGenerator</a>&lt;N&gt;</code></li>
+<li><code>impl&lt;N:&nbsp;Scalar&gt; Integrator&lt;N,&nbsp;<a class='struct' href='../../../nphysics3d/object/struct.RigidBody.html' title='nphysics3d::object::RigidBody'>RigidBody</a>&lt;N&gt;&gt; for <a class='struct' href='../../../nphysics3d/integration/struct.BodyDamping.html' title='nphysics3d::integration::BodyDamping'>BodyDamping</a>&lt;N&gt;</code></li>
 </ul><script type="text/javascript" async
                          src="../../../implementors/nphysics3d/integration/integrator/trait.Integrator.js">
                  </script></section>
@@ -88,6 +89,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

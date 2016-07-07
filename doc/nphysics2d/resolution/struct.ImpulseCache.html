@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,10 +47,21 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-672' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/impulse_cache.rs.html#47-55' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct ImpulseCache {
+               </span><a id='src-678' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/impulse_cache.rs.html#48-56' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ImpulseCache&lt;N:&nbsp;Scalar&gt; {
     // some fields omitted
-}</pre></section>
+}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics2d/resolution/struct.ImpulseCache.html' title='nphysics2d::resolution::ImpulseCache'>ImpulseCache</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-686' class='srclink' href='../../src/nphysics2d/up/up/src/resolution/constraint/impulse_cache.rs.html#58-130' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(step: N, impulse_per_contact: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../nphysics2d/resolution/struct.ImpulseCache.html' title='nphysics2d::resolution::ImpulseCache'>ImpulseCache</a>&lt;N&gt;</code></h4>
+<h4 id='method.insert' class='method'><code>fn <a href='#method.insert' class='fnname'>insert</a>(&amp;mut self, cid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, obj1: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, obj2: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, center: <a class='type' href='../../nphysics2d/math/type.Point.html' title='nphysics2d::math::Point'>Point</a>&lt;N&gt;)</code></h4>
+<h4 id='method.hash' class='method'><code>fn <a href='#method.hash' class='fnname'>hash</a>(&amp;self) -&gt; &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;<a class='struct' href='../../nphysics2d/resolution/struct.ContactIdentifier.html' title='nphysics2d::resolution::ContactIdentifier'>ContactIdentifier</a>&lt;N&gt;,&nbsp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>,&nbsp;<a class='struct' href='../../nphysics2d/utils/struct.DeterministicState.html' title='nphysics2d::utils::DeterministicState'>DeterministicState</a>&gt;</code></h4>
+<h4 id='method.hash_mut' class='method'><code>fn <a href='#method.hash_mut' class='fnname'>hash_mut</a>(&amp;mut self) -&gt; &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;<a class='struct' href='../../nphysics2d/resolution/struct.ContactIdentifier.html' title='nphysics2d::resolution::ContactIdentifier'>ContactIdentifier</a>&lt;N&gt;,&nbsp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>,&nbsp;<a class='struct' href='../../nphysics2d/utils/struct.DeterministicState.html' title='nphysics2d::utils::DeterministicState'>DeterministicState</a>&gt;</code></h4>
+<h4 id='method.push_impulsions' class='method'><code>fn <a href='#method.push_impulsions' class='fnname'>push_impulsions</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [</a>N<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+<h4 id='method.reserved_impulse_offset' class='method'><code>fn <a href='#method.reserved_impulse_offset' class='fnname'>reserved_impulse_offset</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.impulsions_at' class='method'><code>fn <a href='#method.impulsions_at' class='fnname'>impulsions_at</a>(&amp;self, at: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a>N<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+<h4 id='method.len' class='method'><code>fn <a href='#method.len' class='fnname'>len</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.clear' class='method'><code>fn <a href='#method.clear' class='fnname'>clear</a>(&amp;mut self)</code></h4>
+<h4 id='method.swap' class='method'><code>fn <a href='#method.swap' class='fnname'>swap</a>(&amp;mut self)</code></h4>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -72,6 +84,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

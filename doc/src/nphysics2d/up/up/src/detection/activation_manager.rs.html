@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -235,37 +236,39 @@
 <span id="192">192</span>
 <span id="193">193</span>
 <span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>;
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Float</span>;
 <span class='kw'>use</span> <span class='ident'>na</span>;
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>hash_map</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>utils</span>::<span class='ident'>data</span>::<span class='ident'>hash</span>::<span class='ident'>UintTWHash</span>;
 <span class='kw'>use</span> <span class='ident'>world</span>::<span class='ident'>RigidBodyCollisionWorld</span>;
 <span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>constraint</span>::<span class='ident'>Constraint</span>;
 <span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>joint</span>::{<span class='ident'>JointManager</span>, <span class='ident'>Joint</span>};
-<span class='kw'>use</span> <span class='ident'>object</span>::{<span class='ident'>RigidBody</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>ActivationState</span>};
+<span class='kw'>use</span> <span class='ident'>object</span>::{<span class='ident'>WorldObject</span>, <span class='ident'>RigidBody</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>ActivationState</span>};
 <span class='kw'>use</span> <span class='ident'>utils</span>::<span class='ident'>union_find</span>::<span class='ident'>UnionFindSet</span>;
 <span class='kw'>use</span> <span class='ident'>utils</span>::<span class='ident'>union_find</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 
 <span class='doccomment'>/// Structure that monitors island-based activation/deactivation of objects.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// It is responsible for making objects sleep or wake up.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ActivationManager</span> {
-    <span class='ident'>mix_factor</span>:     <span class='ident'>Scalar</span>,
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ActivationManager</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='ident'>mix_factor</span>:     <span class='ident'>N</span>,
     <span class='ident'>ufind</span>:          <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>UnionFindSet</span><span class='op'>&gt;</span>,
     <span class='ident'>can_deactivate</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>bool</span><span class='op'>&gt;</span>,
-    <span class='ident'>to_activate</span>:    <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&gt;</span>,
+    <span class='ident'>to_activate</span>:    <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>,
 }
 
-<span class='kw'>impl</span> <span class='ident'>ActivationManager</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>ActivationManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new `ActivationManager`.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// # Arguments:</span>
     <span class='doccomment'>/// * `thresold`   - the minimum energy required to keep an object awake.</span>
     <span class='doccomment'>/// * `mix_factor` - the ratio of energy to keep between two frames.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>mix_factor</span>: <span class='ident'>Scalar</span>) <span class='op'>-&gt;</span> <span class='ident'>ActivationManager</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>mix_factor</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>ActivationManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>mix_factor</span> <span class='op'>&gt;=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='string'>&quot;The energy mixing factor must be between 0.0 and 1.0.&quot;</span>);
 
         <span class='ident'>ActivationManager</span> {
@@ -278,21 +281,21 @@
 
     <span class='doccomment'>/// Notify the `ActivationManager` that is has to activate an object at the next update.</span>
     <span class='comment'>// FIXME: this is not a very good name</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>deferred_activate</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>deferred_activate</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='kw'>if</span> <span class='ident'>b</span>.<span class='ident'>borrow</span>().<span class='ident'>can_move</span>() <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ident'>b</span>.<span class='ident'>borrow</span>().<span class='ident'>is_active</span>() {
             <span class='self'>self</span>.<span class='ident'>to_activate</span>.<span class='ident'>push</span>(<span class='ident'>b</span>.<span class='ident'>clone</span>());
         }
     }
 
-    <span class='kw'>fn</span> <span class='ident'>update_energy</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span>) {
+    <span class='kw'>fn</span> <span class='ident'>update_energy</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='kw'>match</span> <span class='ident'>b</span>.<span class='ident'>deactivation_threshold</span>() {
             <span class='prelude-val'>Some</span>(<span class='ident'>threshold</span>) <span class='op'>=&gt;</span> {
                 <span class='comment'>// FIXME: take the time in account (to make a true RWA)</span>
-                <span class='kw'>let</span> <span class='ident'>_1</span>         <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;</span><span class='ident'>Scalar</span><span class='op'>&gt;</span>();
+                <span class='kw'>let</span> <span class='ident'>_1</span>         <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>();
                 <span class='kw'>let</span> <span class='ident'>new_energy</span> <span class='op'>=</span> (<span class='ident'>_1</span> <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>mix_factor</span>) <span class='op'>*</span> <span class='ident'>b</span>.<span class='ident'>activation_state</span>().<span class='ident'>energy</span>() <span class='op'>+</span>
-                    <span class='self'>self</span>.<span class='ident'>mix_factor</span> <span class='op'>*</span> (<span class='ident'>na</span>::<span class='ident'>sqnorm</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>.<span class='ident'>lin_vel</span>()) <span class='op'>+</span> <span class='ident'>na</span>::<span class='ident'>sqnorm</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>.<span class='ident'>ang_vel</span>()));
+                    <span class='self'>self</span>.<span class='ident'>mix_factor</span> <span class='op'>*</span> (<span class='ident'>na</span>::<span class='ident'>norm_squared</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>.<span class='ident'>lin_vel</span>()) <span class='op'>+</span> <span class='ident'>na</span>::<span class='ident'>norm_squared</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>.<span class='ident'>ang_vel</span>()));
 
-                <span class='ident'>b</span>.<span class='ident'>activate</span>(<span class='ident'>new_energy</span>.<span class='ident'>min</span>(<span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>::<span class='op'>&lt;</span><span class='ident'>f64</span>, <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='number'>4.0f64</span>)));
+                <span class='ident'>b</span>.<span class='ident'>activate</span>(<span class='ident'>new_energy</span>.<span class='ident'>min</span>(<span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>::<span class='op'>&lt;</span><span class='ident'>f64</span>, <span class='ident'>N</span><span class='op'>&gt;</span>(<span class='number'>4.0f64</span>)));
             },
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> { }
         }
@@ -300,9 +303,9 @@
 
     <span class='doccomment'>/// Update the activation manager, activating and deactivating objects when needed.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                  <span class='ident'>world</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBodyCollisionWorld</span>,
-                  <span class='ident'>joints</span>: <span class='kw-2'>&amp;</span><span class='ident'>JointManager</span>,
-                  <span class='ident'>bodies</span>: <span class='kw-2'>&amp;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>UintTWHash</span><span class='op'>&gt;</span>) {
+                  <span class='ident'>world</span>:  <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBodyCollisionWorld</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                  <span class='ident'>joints</span>: <span class='kw-2'>&amp;</span><span class='ident'>JointManager</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                  <span class='ident'>bodies</span>: <span class='kw-2'>&amp;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>UintTWHash</span><span class='op'>&gt;</span>) {
         <span class='comment'>/*
          *
          * Update bodies energy
@@ -328,7 +331,7 @@
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rb</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>borrow_mut</span>();
 
             <span class='kw'>match</span> <span class='ident'>rb</span>.<span class='ident'>deactivation_threshold</span>() {
-                <span class='prelude-val'>Some</span>(<span class='ident'>threshold</span>) <span class='op'>=&gt;</span> <span class='ident'>rb</span>.<span class='ident'>activate</span>(<span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>::<span class='op'>&lt;</span><span class='ident'>f64</span>, <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='number'>2.0f64</span>)),
+                <span class='prelude-val'>Some</span>(<span class='ident'>threshold</span>) <span class='op'>=&gt;</span> <span class='ident'>rb</span>.<span class='ident'>activate</span>(<span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>::<span class='op'>&lt;</span><span class='ident'>f64</span>, <span class='ident'>N</span><span class='op'>&gt;</span>(<span class='number'>2.0f64</span>)),
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> { }
             }
         }
@@ -344,7 +347,7 @@
         <span class='kw'>if</span> <span class='ident'>bodies</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>ufind</span>.<span class='ident'>len</span>() {
             <span class='kw'>let</span> <span class='ident'>to_add</span> <span class='op'>=</span> <span class='ident'>bodies</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>ufind</span>.<span class='ident'>len</span>();
             <span class='self'>self</span>.<span class='ident'>ufind</span>.<span class='ident'>extend</span>(<span class='ident'>iter</span>::<span class='ident'>repeat</span>(<span class='ident'>UnionFindSet</span>::<span class='ident'>new</span>(<span class='number'>0</span>)).<span class='ident'>take</span>(<span class='ident'>to_add</span>));
-            <span class='self'>self</span>.<span class='ident'>can_deactivate</span>.<span class='ident'>extend</span>(<span class='ident'>iter</span>::<span class='ident'>repeat</span>(<span class='boolval'>false</span>).<span class='ident'>take</span>(<span class='ident'>to_add</span>));
+            <span class='self'>self</span>.<span class='ident'>can_deactivate</span>.<span class='ident'>extend</span>(<span class='ident'>iter</span>::<span class='ident'>repeat</span>(<span class='bool-val'>false</span>).<span class='ident'>take</span>(<span class='ident'>to_add</span>));
         }
         <span class='kw'>else</span> {
             <span class='self'>self</span>.<span class='ident'>ufind</span>.<span class='ident'>truncate</span>(<span class='ident'>bodies</span>.<span class='ident'>len</span>());
@@ -357,11 +360,11 @@
         }
 
         <span class='kw'>for</span> <span class='ident'>d</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>can_deactivate</span>.<span class='ident'>iter_mut</span>() {
-            <span class='op'>*</span><span class='ident'>d</span> <span class='op'>=</span> <span class='boolval'>true</span>
+            <span class='op'>*</span><span class='ident'>d</span> <span class='op'>=</span> <span class='bool-val'>true</span>
         }
 
         <span class='comment'>// Run the union-find.</span>
-        <span class='kw'>fn</span> <span class='ident'>make_union</span>(<span class='ident'>b1</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>, <span class='ident'>b2</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span>, <span class='ident'>ufs</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>UnionFindSet</span>]) {
+        <span class='kw'>fn</span> <span class='ident'>make_union</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>b1</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>b2</span>: <span class='kw-2'>&amp;</span><span class='ident'>RigidBodyHandle</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>ufs</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>UnionFindSet</span>]) {
             <span class='kw'>let</span> <span class='ident'>rb1</span> <span class='op'>=</span> <span class='ident'>b1</span>.<span class='ident'>borrow</span>();
             <span class='kw'>let</span> <span class='ident'>rb2</span> <span class='op'>=</span> <span class='ident'>b2</span>.<span class='ident'>borrow</span>();
 
@@ -371,8 +374,10 @@
         }
 
         <span class='kw'>for</span> (<span class='ident'>b1</span>, <span class='ident'>b2</span>, <span class='ident'>cd</span>) <span class='kw'>in</span> <span class='ident'>world</span>.<span class='ident'>contact_pairs</span>() {
-            <span class='kw'>if</span> <span class='ident'>cd</span>.<span class='ident'>num_colls</span>() <span class='op'>!=</span> <span class='number'>0</span> {
-                <span class='ident'>make_union</span>(<span class='kw-2'>&amp;</span><span class='ident'>b1</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='ident'>b2</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>ufind</span>[..])
+            <span class='kw'>if</span> <span class='kw'>let</span> (<span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb1</span>), <span class='kw-2'>&amp;</span><span class='ident'>WorldObject</span>::<span class='ident'>RigidBody</span>(<span class='kw-2'>ref</span> <span class='ident'>rb2</span>)) <span class='op'>=</span> (<span class='kw-2'>&amp;</span><span class='ident'>b1</span>.<span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='ident'>b2</span>.<span class='ident'>data</span>) {
+                <span class='kw'>if</span> <span class='ident'>cd</span>.<span class='ident'>num_contacts</span>() <span class='op'>!=</span> <span class='number'>0</span> {
+                    <span class='ident'>make_union</span>(<span class='kw-2'>&amp;</span><span class='ident'>rb1</span>, <span class='kw-2'>&amp;</span><span class='ident'>rb2</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>ufind</span>[..])
+                }
             }
         }
 
@@ -407,7 +412,7 @@
                     <span class='prelude-val'>Some</span>(<span class='ident'>threshold</span>) <span class='op'>=&gt;</span> {
                         <span class='self'>self</span>.<span class='ident'>can_deactivate</span>[<span class='ident'>root</span>] <span class='op'>&amp;&amp;</span> <span class='ident'>b</span>.<span class='ident'>activation_state</span>().<span class='ident'>energy</span>() <span class='op'>&lt;</span> <span class='ident'>threshold</span>
                     },
-                    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+                    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
                 };
         }
 
@@ -422,7 +427,7 @@
             <span class='kw'>else</span> { <span class='comment'>// Everybody in this set must be reactivated.</span>
                 <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>b</span>.<span class='ident'>is_active</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>b</span>.<span class='ident'>can_move</span>() {
                     <span class='kw'>match</span> <span class='ident'>b</span>.<span class='ident'>deactivation_threshold</span>() {
-                        <span class='prelude-val'>Some</span>(<span class='ident'>threshold</span>) <span class='op'>=&gt;</span> <span class='ident'>b</span>.<span class='ident'>activate</span>(<span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>::<span class='op'>&lt;</span><span class='ident'>f64</span>, <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='number'>2.0f64</span>)),
+                        <span class='prelude-val'>Some</span>(<span class='ident'>threshold</span>) <span class='op'>=&gt;</span> <span class='ident'>b</span>.<span class='ident'>activate</span>(<span class='ident'>threshold</span> <span class='op'>*</span> <span class='ident'>na</span>::<span class='ident'>cast</span>::<span class='op'>&lt;</span><span class='ident'>f64</span>, <span class='ident'>N</span><span class='op'>&gt;</span>(<span class='number'>2.0f64</span>)),
                         <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> { }
                     }
                 }
@@ -454,6 +459,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -85,7 +86,7 @@
 </pre><pre class='rust '>
 <span class='doccomment'>//! Linear and angular velocity damping.</span>
 
-<span class='kw'>use</span> <span class='ident'>math</span>::<span class='ident'>Scalar</span>;
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 <span class='kw'>use</span> <span class='ident'>integration</span>::<span class='ident'>Integrator</span>;
 <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>RigidBody</span>;
 
@@ -93,12 +94,12 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This will remove a part of the linear and angular velocity of every rigid body at each frame.</span>
 <span class='doccomment'>/// Do not use unless you are experiencing unrealistic vibrations or very unstable joints.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BodyDamping</span> {
-    <span class='ident'>linear_damping</span>:  <span class='ident'>Scalar</span>,
-    <span class='ident'>angular_damping</span>: <span class='ident'>Scalar</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BodyDamping</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='ident'>linear_damping</span>:  <span class='ident'>N</span>,
+    <span class='ident'>angular_damping</span>: <span class='ident'>N</span>
 }
 
-<span class='kw'>impl</span> <span class='ident'>BodyDamping</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>BodyDamping</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new `BodyDamping`.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// # Arguments:</span>
@@ -107,7 +108,7 @@
     <span class='doccomment'>/// * `linear_damping` - coefficient in [0, 1] the angular velocity of each rigid body is</span>
     <span class='doccomment'>///                      multiplied at each update.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>linear_damping</span>: <span class='ident'>Scalar</span>, <span class='ident'>angular_damping</span>: <span class='ident'>Scalar</span>) <span class='op'>-&gt;</span> <span class='ident'>BodyDamping</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>linear_damping</span>: <span class='ident'>N</span>, <span class='ident'>angular_damping</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> <span class='ident'>BodyDamping</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>BodyDamping</span> {
             <span class='ident'>linear_damping</span>:  <span class='ident'>linear_damping</span>,
             <span class='ident'>angular_damping</span>: <span class='ident'>angular_damping</span>,
@@ -115,8 +116,8 @@
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>Integrator</span><span class='op'>&lt;</span><span class='ident'>RigidBody</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>BodyDamping</span> {
-    <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>Scalar</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span>) {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Integrator</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>BodyDamping</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>N</span>, <span class='ident'>rb</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RigidBody</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> <span class='ident'>new_lin</span> <span class='op'>=</span> <span class='ident'>rb</span>.<span class='ident'>lin_vel</span>() <span class='op'>*</span> <span class='self'>self</span>.<span class='ident'>linear_damping</span>;
 
         <span class='ident'>rb</span>.<span class='ident'>set_lin_vel</span>(<span class='ident'>new_lin</span>);
@@ -148,6 +149,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

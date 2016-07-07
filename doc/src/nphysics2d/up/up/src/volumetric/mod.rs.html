@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -69,23 +70,29 @@
 <span id="26">26</span>
 <span id="27">27</span>
 <span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Volume and inertia tensor computation.</span>
 
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>inline</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric</span>::{<span class='ident'>Volumetric</span>, <span class='ident'>InertiaTensor</span>};
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_ball</span>::{<span class='ident'>ball_volume</span>, <span class='ident'>ball_surface</span>, <span class='ident'>ball_center_of_mass</span>,
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_ball</span>::{<span class='ident'>ball_volume</span>, <span class='ident'>ball_area</span>, <span class='ident'>ball_center_of_mass</span>,
                                       <span class='ident'>ball_unit_angular_inertia</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_cylinder</span>::{<span class='ident'>cylinder_volume</span>, <span class='ident'>cylinder_surface</span>,
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_cylinder</span>::{<span class='ident'>cylinder_volume</span>, <span class='ident'>cylinder_area</span>,
                                           <span class='ident'>cylinder_center_of_mass</span>, <span class='ident'>cylinder_unit_angular_inertia</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_cone</span>::{<span class='ident'>cone_volume</span>, <span class='ident'>cone_surface</span>,
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_cone</span>::{<span class='ident'>cone_volume</span>, <span class='ident'>cone_area</span>,
                                       <span class='ident'>cone_center_of_mass</span>, <span class='ident'>cone_unit_angular_inertia</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_cuboid</span>::{<span class='ident'>cuboid_volume</span>, <span class='ident'>cuboid_surface</span>,
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_cuboid</span>::{<span class='ident'>cuboid_volume</span>, <span class='ident'>cuboid_area</span>,
                                         <span class='ident'>cuboid_center_of_mass</span>, <span class='ident'>cuboid_unit_angular_inertia</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_convex</span>::{<span class='ident'>convex_mesh_surface</span>, <span class='ident'>convex_mesh_volume_and_center_of_mass</span>,
-                                        <span class='ident'>convex_mesh_mass_properties</span>, <span class='ident'>convex_hull_surface</span>,
-                                        <span class='ident'>convex_hull_volume</span>, <span class='ident'>convex_hull_center_of_mass</span>,
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>volumetric_convex</span>::{<span class='ident'>convex_polyline_area</span>, <span class='ident'>convex_mesh_area</span>,
+                                        <span class='ident'>convex_polyline_area_and_center_of_mass</span>,
+                                        <span class='ident'>convex_mesh_volume_and_center_of_mass</span>,
+                                        <span class='ident'>convex_polyline_mass_properties</span>,
+                                        <span class='ident'>convex_mesh_mass_properties</span>,
+                                        <span class='ident'>convex_hull_area</span>, <span class='ident'>convex_hull_volume</span>, <span class='ident'>convex_hull_center_of_mass</span>,
                                         <span class='ident'>convex_hull_unit_angular_inertia</span>};
 
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
@@ -122,6 +129,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

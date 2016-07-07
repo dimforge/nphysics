@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -41,17 +42,37 @@
         </form>
     </nav>
 
-    <section id='main' class="content source"><pre class="line-numbers"><span id="1">1</span>
-<span id="2">2</span>
-<span id="3">3</span>
-<span id="4">4</span>
-<span id="5">5</span>
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
 </pre><pre class='rust '>
-<span class='doccomment'>//! Rigid bodies.</span>
+<span class='doccomment'>//! Objects that may be added to the physical world.</span>
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>object</span>::<span class='ident'>rigid_body</span>::{<span class='ident'>RigidBody</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>ActivationState</span>, <span class='ident'>RigidBodyState</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>rigid_body</span>::{<span class='ident'>RigidBody</span>, <span class='ident'>RigidBodyHandle</span>, <span class='ident'>ActivationState</span>, <span class='ident'>RigidBodyState</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>sensor</span>::{<span class='ident'>Sensor</span>, <span class='ident'>SensorHandle</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>world_object</span>::{<span class='ident'>WorldObject</span>, <span class='ident'>WorldObjectBorrowed</span>, <span class='ident'>WorldObjectBorrowedMut</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>rigid_body_collision_groups</span>::<span class='ident'>RigidBodyCollisionGroups</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>sensor_collision_groups</span>::<span class='ident'>SensorCollisionGroups</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>collision_groups_wrapper_impl</span>::{<span class='ident'>STATIC_GROUP_ID</span>, <span class='ident'>SENSOR_GROUP_ID</span>};
 
 <span class='kw'>mod</span> <span class='ident'>rigid_body</span>;
+<span class='kw'>mod</span> <span class='ident'>sensor</span>;
+<span class='kw'>mod</span> <span class='ident'>world_object</span>;
+<span class='kw'>mod</span> <span class='ident'>collision_groups_wrapper_impl</span>;
+<span class='kw'>mod</span> <span class='ident'>rigid_body_collision_groups</span>;
+<span class='kw'>mod</span> <span class='ident'>sensor_collision_groups</span>;
 </pre>
 </section>
     <section id='search' class="content hidden"></section>
@@ -76,6 +97,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

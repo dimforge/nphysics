@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../../main.css">
+    
 
     
     
@@ -119,26 +120,26 @@
 <span id="76">76</span>
 <span id="77">77</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Translate</span>, <span class='ident'>Rotation</span>, <span class='ident'>Bounded</span>};
-<span class='kw'>use</span> <span class='ident'>na</span>;
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='self'>self</span>, <span class='ident'>Translate</span>, <span class='ident'>Rotation</span>, <span class='ident'>Bounded</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
 <span class='kw'>use</span> <span class='ident'>detection</span>::<span class='ident'>joint</span>::{<span class='ident'>Fixed</span>, <span class='ident'>Anchor</span>, <span class='ident'>Joint</span>};
 <span class='kw'>use</span> <span class='ident'>resolution</span>::<span class='ident'>constraint</span>::<span class='ident'>ball_in_socket_equation</span>;
 <span class='kw'>use</span> <span class='ident'>resolution</span>::<span class='ident'>constraint</span>::<span class='ident'>velocity_constraint</span>::<span class='ident'>VelocityConstraint</span>;
 <span class='kw'>use</span> <span class='ident'>resolution</span>::<span class='ident'>constraint</span>::<span class='ident'>contact_equation</span>::<span class='ident'>CorrectionParameters</span>;
 <span class='kw'>use</span> <span class='ident'>resolution</span>::<span class='ident'>constraint</span>::<span class='ident'>contact_equation</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Vect</span>, <span class='ident'>Orientation</span>, <span class='ident'>Matrix</span>};
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Vector</span>, <span class='ident'>Orientation</span>, <span class='ident'>Matrix</span>};
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fill_second_order_equation</span>(<span class='ident'>dt</span>:          <span class='ident'>Scalar</span>,
-                                  <span class='ident'>joint</span>:       <span class='kw-2'>&amp;</span><span class='ident'>Fixed</span>,
-                                  <span class='ident'>constraints</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>VelocityConstraint</span>],
-                                  <span class='ident'>correction</span>:  <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span>) {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fill_second_order_equation</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span>(<span class='ident'>dt</span>:          <span class='ident'>N</span>,
+                                             <span class='ident'>joint</span>:       <span class='kw-2'>&amp;</span><span class='ident'>Fixed</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                             <span class='ident'>constraints</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>],
+                                             <span class='ident'>correction</span>:  <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
     <span class='kw'>let</span> <span class='ident'>ref1</span> <span class='op'>=</span> <span class='ident'>joint</span>.<span class='ident'>anchor1_pos</span>();
     <span class='kw'>let</span> <span class='ident'>ref2</span> <span class='op'>=</span> <span class='ident'>joint</span>.<span class='ident'>anchor2_pos</span>();
 
     <span class='ident'>ball_in_socket_equation</span>::<span class='ident'>cancel_relative_linear_motion</span>(
         <span class='ident'>dt</span>.<span class='ident'>clone</span>(),
-        <span class='kw-2'>&amp;</span><span class='ident'>ref1</span>.<span class='ident'>translate</span>(<span class='kw-2'>&amp;</span><span class='ident'>na</span>::<span class='ident'>orig</span>()),
-        <span class='kw-2'>&amp;</span><span class='ident'>ref2</span>.<span class='ident'>translate</span>(<span class='kw-2'>&amp;</span><span class='ident'>na</span>::<span class='ident'>orig</span>()),
+        <span class='kw-2'>&amp;</span><span class='ident'>ref1</span>.<span class='ident'>translate</span>(<span class='kw-2'>&amp;</span><span class='ident'>na</span>::<span class='ident'>origin</span>()),
+        <span class='kw-2'>&amp;</span><span class='ident'>ref2</span>.<span class='ident'>translate</span>(<span class='kw-2'>&amp;</span><span class='ident'>na</span>::<span class='ident'>origin</span>()),
         <span class='ident'>joint</span>.<span class='ident'>anchor1</span>(),
         <span class='ident'>joint</span>.<span class='ident'>anchor2</span>(),
         <span class='ident'>constraints</span>,
@@ -150,22 +151,22 @@
         <span class='kw-2'>&amp;</span><span class='ident'>ref2</span>,
         <span class='ident'>joint</span>.<span class='ident'>anchor1</span>(),
         <span class='ident'>joint</span>.<span class='ident'>anchor2</span>(),
-        <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>constraints</span>[<span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>Vect</span><span class='op'>&gt;</span>() ..],
+        <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>constraints</span>[<span class='ident'>na</span>::<span class='ident'>dimension</span>::<span class='op'>&lt;</span><span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span>() ..],
         <span class='ident'>correction</span>);
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cancel_relative_angular_motion</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dt</span>:          <span class='ident'>Scalar</span>,
-                                         <span class='ident'>ref1</span>:        <span class='kw-2'>&amp;</span><span class='ident'>Matrix</span>,
-                                         <span class='ident'>ref2</span>:        <span class='kw-2'>&amp;</span><span class='ident'>Matrix</span>,
-                                         <span class='ident'>anchor1</span>:     <span class='kw-2'>&amp;</span><span class='ident'>Anchor</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
-                                         <span class='ident'>anchor2</span>:     <span class='kw-2'>&amp;</span><span class='ident'>Anchor</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
-                                         <span class='ident'>constraints</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>VelocityConstraint</span>],
-                                         <span class='ident'>correction</span>:  <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span>) {
-    <span class='kw'>let</span> <span class='ident'>delta</span>     <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>inv</span>(<span class='ident'>ref2</span>).<span class='ident'>expect</span>(<span class='string'>&quot;ref2 must be inversible.&quot;</span>) <span class='op'>*</span> <span class='op'>*</span><span class='ident'>ref1</span>;
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cancel_relative_angular_motion</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span>, <span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dt</span>:          <span class='ident'>N</span>,
+                                                    <span class='ident'>ref1</span>:        <span class='kw-2'>&amp;</span><span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                                    <span class='ident'>ref2</span>:        <span class='kw-2'>&amp;</span><span class='ident'>Matrix</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
+                                                    <span class='ident'>anchor1</span>:     <span class='kw-2'>&amp;</span><span class='ident'>Anchor</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>,
+                                                    <span class='ident'>anchor2</span>:     <span class='kw-2'>&amp;</span><span class='ident'>Anchor</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>P</span><span class='op'>&gt;</span>,
+                                                    <span class='ident'>constraints</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>],
+                                                    <span class='ident'>correction</span>:  <span class='kw-2'>&amp;</span><span class='ident'>CorrectionParameters</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
+    <span class='kw'>let</span> <span class='ident'>delta</span>     <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>inverse</span>(<span class='ident'>ref2</span>).<span class='ident'>expect</span>(<span class='string'>&quot;ref2 must be inversible.&quot;</span>) <span class='op'>*</span> <span class='op'>*</span><span class='ident'>ref1</span>;
     <span class='kw'>let</span> <span class='ident'>delta_rot</span> <span class='op'>=</span> <span class='ident'>delta</span>.<span class='ident'>rotation</span>();
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='number'>0</span>;
-    <span class='ident'>na</span>::<span class='ident'>canonical_basis</span>(<span class='op'>|</span><span class='ident'>rot_axis</span>: <span class='ident'>Orientation</span><span class='op'>|</span> {
+    <span class='ident'>na</span>::<span class='ident'>canonical_basis</span>(<span class='op'>|</span><span class='ident'>rot_axis</span>: <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span><span class='op'>|</span> {
         <span class='kw'>let</span> <span class='ident'>constraint</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>constraints</span>[<span class='ident'>i</span>];
 
         <span class='kw'>let</span> <span class='ident'>opt_rb1</span> <span class='op'>=</span> <span class='ident'>ball_in_socket_equation</span>::<span class='ident'>write_anchor_id</span>(<span class='ident'>anchor1</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>constraint</span>.<span class='ident'>id1</span>);
@@ -183,7 +184,7 @@
         <span class='kw'>let</span> <span class='ident'>ang_vel1</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>opt_rb1</span> { <span class='prelude-val'>Some</span>(<span class='ident'>rb</span>) <span class='op'>=&gt;</span> <span class='ident'>rb</span>.<span class='ident'>ang_vel</span>(), <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>na</span>::<span class='ident'>zero</span>() };
         <span class='kw'>let</span> <span class='ident'>ang_vel2</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>opt_rb2</span> { <span class='prelude-val'>Some</span>(<span class='ident'>rb</span>) <span class='op'>=&gt;</span> <span class='ident'>rb</span>.<span class='ident'>ang_vel</span>(), <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>na</span>::<span class='ident'>zero</span>() };
 
-        <span class='kw'>let</span> <span class='ident'>_max</span>: <span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>();
+        <span class='kw'>let</span> <span class='ident'>_max</span>: <span class='ident'>N</span> <span class='op'>=</span> <span class='ident'>Bounded</span>::<span class='ident'>max_value</span>();
         <span class='ident'>constraint</span>.<span class='ident'>lobound</span>   <span class='op'>=</span> <span class='op'>-</span><span class='ident'>_max</span>;
         <span class='ident'>constraint</span>.<span class='ident'>hibound</span>   <span class='op'>=</span> <span class='ident'>_max</span>;
         <span class='comment'>// FIXME: dont compute the difference at each iteration</span>
@@ -193,7 +194,7 @@
 
         <span class='ident'>i</span> <span class='op'>=</span> <span class='ident'>i</span> <span class='op'>+</span> <span class='number'>1</span>;
 
-        <span class='boolval'>true</span>
+        <span class='bool-val'>true</span>
     })
 }
 </pre>
@@ -220,6 +221,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

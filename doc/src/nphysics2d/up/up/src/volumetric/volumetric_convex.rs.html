@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../main.css">
+    
 
     
     
@@ -554,34 +555,55 @@
 <span id="511">511</span>
 <span id="512">512</span>
 <span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
 </pre><pre class='rust '>
 <span class='comment'>// XXX: implement this for 2d too.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Add</span>, <span class='ident'>Mul</span>, <span class='ident'>IndexMut</span>};
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>Zero</span>;
-<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Outer</span>, <span class='ident'>EigenQR</span>, <span class='ident'>Pnt3</span>, <span class='ident'>Mat3</span>, <span class='ident'>Mat1</span>, <span class='ident'>Pnt2</span>};
+<span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Outer</span>, <span class='ident'>EigenQR</span>, <span class='ident'>Point3</span>, <span class='ident'>Matrix3</span>, <span class='ident'>Matrix1</span>, <span class='ident'>Point2</span>};
 <span class='kw'>use</span> <span class='ident'>na</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>utils</span>;
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>procedural</span>::{<span class='ident'>Polyline</span>, <span class='ident'>TriMesh</span>, <span class='ident'>IndexBuffer</span>};
 <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>transformation</span>;
-<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vect</span>};
-<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::{<span class='ident'>Convex3</span>, <span class='ident'>Convex2</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Point</span>, <span class='ident'>Vector</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::{<span class='ident'>ConvexHull3</span>, <span class='ident'>ConvexHull2</span>};
 <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>Volumetric</span>;
 
 
 <span class='kw'>fn</span> <span class='ident'>tetrahedron_unit_inertia_tensor_wrt_point</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span><span class='op'>&gt;</span>(<span class='ident'>point</span>: <span class='kw-2'>&amp;</span><span class='ident'>P</span>, <span class='ident'>p1</span>: <span class='kw-2'>&amp;</span><span class='ident'>P</span>, <span class='ident'>p2</span>: <span class='kw-2'>&amp;</span><span class='ident'>P</span>, <span class='ident'>p3</span>: <span class='kw-2'>&amp;</span><span class='ident'>P</span>, <span class='ident'>p4</span>: <span class='kw-2'>&amp;</span><span class='ident'>P</span>) <span class='op'>-&gt;</span> <span class='ident'>I</span>
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
-          <span class='ident'>I</span>: <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>==</span> <span class='number'>3</span>);
+          <span class='ident'>I</span>: <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>dimension</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>==</span> <span class='number'>3</span>);
 
     <span class='kw'>let</span> <span class='ident'>p1</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>p1</span> <span class='op'>-</span> <span class='op'>*</span><span class='ident'>point</span>;
     <span class='kw'>let</span> <span class='ident'>p2</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>p2</span> <span class='op'>-</span> <span class='op'>*</span><span class='ident'>point</span>;
     <span class='kw'>let</span> <span class='ident'>p3</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>p3</span> <span class='op'>-</span> <span class='op'>*</span><span class='ident'>point</span>;
     <span class='kw'>let</span> <span class='ident'>p4</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>p4</span> <span class='op'>-</span> <span class='op'>*</span><span class='ident'>point</span>;
 
-    <span class='kw'>let</span> <span class='ident'>_frac_10</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.1f64</span>);
-    <span class='kw'>let</span> <span class='ident'>_frac_20</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.05f64</span>);
-    <span class='kw'>let</span> <span class='ident'>_2</span>      : <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0f64</span>);
+    <span class='kw'>let</span> <span class='ident'>_frac_10</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.1f64</span>);
+    <span class='kw'>let</span> <span class='ident'>_frac_20</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.05f64</span>);
+    <span class='kw'>let</span> <span class='ident'>_2</span>      : <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>2.0f64</span>);
 
     <span class='comment'>// Just for readability.</span>
     <span class='kw'>let</span> <span class='ident'>x1</span> <span class='op'>=</span> <span class='ident'>p1</span>[<span class='number'>0</span>]; <span class='kw'>let</span> <span class='ident'>y1</span> <span class='op'>=</span> <span class='ident'>p1</span>[<span class='number'>1</span>]; <span class='kw'>let</span> <span class='ident'>z1</span> <span class='op'>=</span> <span class='ident'>p1</span>[<span class='number'>2</span>];
@@ -622,12 +644,12 @@
 <span class='doccomment'>/// The volume and center of mass of a convex mesh.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This is unsafe as the mesh is not checked to be actually convex.</span>
-<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_volume_and_center_of_mass</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>)
+<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_volume_and_center_of_mass</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>)
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
     <span class='kw'>let</span> <span class='ident'>geometric_center</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>center</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>[..]);
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>orig</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>vol</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>origin</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>vol</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
 
     <span class='kw'>match</span> <span class='ident'>convex_mesh</span>.<span class='ident'>indices</span> {
         <span class='ident'>IndexBuffer</span>::<span class='ident'>Unified</span>(<span class='kw-2'>ref</span> <span class='ident'>idx</span>) <span class='op'>=&gt;</span> {
@@ -639,7 +661,7 @@
                 <span class='kw'>let</span> <span class='ident'>volume</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>tetrahedron_volume</span>(<span class='kw-2'>&amp;</span><span class='ident'>geometric_center</span>, <span class='ident'>p2</span>, <span class='ident'>p3</span>, <span class='ident'>p4</span>);
                 <span class='kw'>let</span> <span class='ident'>center</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>tetrahedron_center</span>(<span class='kw-2'>&amp;</span><span class='ident'>geometric_center</span>, <span class='ident'>p2</span>, <span class='ident'>p3</span>, <span class='ident'>p4</span>);
 
-                <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>res</span> <span class='op'>+</span> <span class='op'>*</span><span class='ident'>center</span>.<span class='ident'>as_vec</span>() <span class='op'>*</span> <span class='ident'>volume</span>;
+                <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>res</span> <span class='op'>+</span> <span class='op'>*</span><span class='ident'>center</span>.<span class='ident'>as_vector</span>() <span class='op'>*</span> <span class='ident'>volume</span>;
                 <span class='ident'>vol</span> <span class='op'>=</span> <span class='ident'>vol</span> <span class='op'>+</span> <span class='ident'>volume</span>;
             }
         },
@@ -657,19 +679,19 @@
 <span class='doccomment'>/// The area and center of mass of a 2D convex Polyline.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This is unsafe as the mesh is not checked to be actually convex.</span>
-<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_area_and_center_of_mass2</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>)
+<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_polyline_area_and_center_of_mass</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>)
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
-    <span class='kw'>let</span> <span class='ident'>geometric_center</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>center</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>[..]);
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>orig</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>areasum</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='ident'>geometric_center</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>center</span>(<span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>());
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span>          <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>origin</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>areasum</span>      <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>iterpeek</span> <span class='op'>=</span> <span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>.<span class='ident'>iter</span>().<span class='ident'>peekable</span>();
-    <span class='kw'>let</span> <span class='ident'>firstelement</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap</span>(); <span class='comment'>// store first element to close the cycle in the end with unwrap_or</span>
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>iterpeek</span> <span class='op'>=</span> <span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>().<span class='ident'>iter</span>().<span class='ident'>peekable</span>();
+    <span class='kw'>let</span> <span class='ident'>firstelement</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap</span>(); <span class='comment'>// Stores first element to close the cycle in the end with unwrap_or.</span>
     <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>elem</span>) <span class='op'>=</span> <span class='ident'>iterpeek</span>.<span class='ident'>next</span>() {
-        <span class='kw'>let</span> <span class='ident'>area</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>triangle_area</span>(<span class='ident'>elem</span>, <span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap_or</span>(<span class='kw-2'>&amp;</span><span class='ident'>firstelement</span>), <span class='kw-2'>&amp;</span><span class='ident'>geometric_center</span>);
+        <span class='kw'>let</span> <span class='ident'>area</span>   <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>triangle_area</span>(<span class='ident'>elem</span>, <span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap_or</span>(<span class='kw-2'>&amp;</span><span class='ident'>firstelement</span>), <span class='kw-2'>&amp;</span><span class='ident'>geometric_center</span>);
         <span class='kw'>let</span> <span class='ident'>center</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>triangle_center</span>(<span class='ident'>elem</span>, <span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap_or</span>(<span class='kw-2'>&amp;</span><span class='ident'>firstelement</span>), <span class='kw-2'>&amp;</span><span class='ident'>geometric_center</span>);
 
-        <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>res</span> <span class='op'>+</span> <span class='op'>*</span><span class='ident'>center</span>.<span class='ident'>as_vec</span>() <span class='op'>*</span> <span class='ident'>area</span>;
+        <span class='ident'>res</span>     <span class='op'>=</span> <span class='ident'>res</span> <span class='op'>+</span> <span class='op'>*</span><span class='ident'>center</span>.<span class='ident'>as_vector</span>() <span class='op'>*</span> <span class='ident'>area</span>;
         <span class='ident'>areasum</span> <span class='op'>=</span> <span class='ident'>areasum</span> <span class='op'>+</span> <span class='ident'>area</span>;
     }
 
@@ -685,14 +707,14 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This is unsafe as the mesh is not checked to be actually convex.</span>
 <span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_mass_properties</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
-                                                <span class='ident'>density</span>:     <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)
-                                                <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>, <span class='ident'>I</span>)
+                                                <span class='ident'>density</span>:     <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)
+                                                <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>, <span class='ident'>I</span>)
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>I</span>: <span class='ident'>Zero</span> <span class='op'>+</span>
              <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>I</span><span class='op'>&gt;</span> <span class='op'>+</span>
-             <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>I</span><span class='op'>&gt;</span> <span class='op'>+</span>
-             <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>==</span> <span class='number'>3</span>);
+             <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>I</span><span class='op'>&gt;</span> <span class='op'>+</span>
+             <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span> {
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>dimension</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>==</span> <span class='number'>3</span>);
 
     <span class='kw'>let</span> (<span class='ident'>volume</span>, <span class='ident'>com</span>) <span class='op'>=</span> <span class='ident'>convex_mesh_volume_and_center_of_mass</span>(<span class='ident'>convex_mesh</span>);
 
@@ -724,22 +746,22 @@
 <span class='doccomment'>/// The mass properties of a 2D convex Polyline.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This is unsafe as the mesh is not checked to be actually convex.</span>
-<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_mass_properties2</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
-                                              <span class='ident'>density</span>:     <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)
-                                              <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>, <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)
+<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_polyline_mass_properties</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>,
+                                                 <span class='ident'>density</span>:     <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)
+                                                 <span class='op'>-&gt;</span> (<span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>, <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>)
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>dim</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>==</span> <span class='number'>2</span>);
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>dimension</span>::<span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>() <span class='op'>==</span> <span class='number'>2</span>);
 
-    <span class='kw'>let</span> (<span class='ident'>area</span>, <span class='ident'>com</span>) <span class='op'>=</span> <span class='ident'>convex_mesh_area_and_center_of_mass2</span>(<span class='ident'>convex_mesh</span>);
+    <span class='kw'>let</span> (<span class='ident'>area</span>, <span class='ident'>com</span>) <span class='op'>=</span> <span class='ident'>convex_polyline_area_and_center_of_mass</span>(<span class='ident'>convex_mesh</span>);
 
     <span class='kw'>if</span> <span class='ident'>na</span>::<span class='ident'>is_zero</span>(<span class='kw-2'>&amp;</span><span class='ident'>area</span>) {
         <span class='kw'>return</span> (<span class='ident'>na</span>::<span class='ident'>zero</span>(), <span class='ident'>com</span>, <span class='ident'>na</span>::<span class='ident'>zero</span>());
     }
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>itot</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
-    <span class='kw'>let</span> <span class='ident'>factor</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.5</span> <span class='op'>*</span> <span class='number'>1.0</span><span class='op'>/</span><span class='number'>3.0</span>);
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>itot</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='ident'>factor</span>: <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>cast</span>(<span class='number'>0.5</span> <span class='op'>*</span> <span class='number'>1.0</span><span class='op'>/</span><span class='number'>3.0</span>);
 
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>iterpeek</span> <span class='op'>=</span> <span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>.<span class='ident'>iter</span>().<span class='ident'>peekable</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>iterpeek</span> <span class='op'>=</span> <span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>().<span class='ident'>iter</span>().<span class='ident'>peekable</span>();
     <span class='kw'>let</span> <span class='ident'>firstelement</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap</span>(); <span class='comment'>// store first element to close the cycle in the end with unwrap_or</span>
     <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span> (<span class='ident'>elem</span>) <span class='op'>=</span> <span class='ident'>iterpeek</span>.<span class='ident'>next</span>() {
         <span class='kw'>let</span> <span class='ident'>area</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>triangle_area</span>(<span class='kw-2'>&amp;</span><span class='ident'>com</span>, <span class='ident'>elem</span>, <span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap_or</span>(<span class='kw-2'>&amp;</span><span class='ident'>firstelement</span>));
@@ -764,12 +786,31 @@
     (<span class='ident'>area</span> <span class='op'>*</span> <span class='ident'>density</span>, <span class='ident'>com</span>, <span class='ident'>itot</span> <span class='op'>*</span> <span class='ident'>density</span>)
 }
 
-<span class='doccomment'>/// The surface of a convex mesh.</span>
+<span class='doccomment'>/// The area of a convex polyline.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// This is unsafe as the polyline is not checked to be actually convex.</span>
+<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_polyline_area</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_polyline</span>: <span class='kw-2'>&amp;</span><span class='ident'>Polyline</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
+    <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
+    <span class='kw'>let</span> <span class='ident'>geometric_center</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>center</span>(<span class='ident'>convex_polyline</span>.<span class='ident'>coords</span>());
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>areasum</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
+
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>iterpeek</span> <span class='op'>=</span> <span class='ident'>convex_polyline</span>.<span class='ident'>coords</span>().<span class='ident'>iter</span>().<span class='ident'>peekable</span>();
+    <span class='kw'>let</span> <span class='ident'>firstelement</span> <span class='op'>=</span> <span class='op'>*</span><span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap</span>(); <span class='comment'>// Store first element to close the cycle in the end with unwrap_or.</span>
+    <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>elem</span>) <span class='op'>=</span> <span class='ident'>iterpeek</span>.<span class='ident'>next</span>() {
+        <span class='kw'>let</span> <span class='ident'>area</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>triangle_area</span>(<span class='ident'>elem</span>, <span class='ident'>iterpeek</span>.<span class='ident'>peek</span>().<span class='ident'>unwrap_or</span>(<span class='kw-2'>&amp;</span><span class='ident'>firstelement</span>), <span class='kw-2'>&amp;</span><span class='ident'>geometric_center</span>);
+
+        <span class='ident'>areasum</span> <span class='op'>=</span> <span class='ident'>areasum</span> <span class='op'>+</span> <span class='ident'>area</span>;
+    }
+
+    <span class='ident'>areasum</span>
+}
+
+<span class='doccomment'>/// The area of a convex mesh.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This is unsafe as the mesh is not checked to be actually convex.</span>
-<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_surface</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
+<span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>convex_mesh_area</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>convex_mesh</span>: <span class='kw-2'>&amp;</span><span class='ident'>TriMesh</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>surface</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>area</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>();
 
     <span class='kw'>match</span> <span class='ident'>convex_mesh</span>.<span class='ident'>indices</span> {
         <span class='ident'>IndexBuffer</span>::<span class='ident'>Unified</span>(<span class='kw-2'>ref</span> <span class='ident'>idx</span>) <span class='op'>=&gt;</span> {
@@ -778,32 +819,33 @@
                 <span class='kw'>let</span> <span class='ident'>p2</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>[<span class='ident'>t</span>.<span class='ident'>y</span> <span class='kw'>as</span> <span class='ident'>usize</span>];
                 <span class='kw'>let</span> <span class='ident'>p3</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>.<span class='ident'>coords</span>[<span class='ident'>t</span>.<span class='ident'>z</span> <span class='kw'>as</span> <span class='ident'>usize</span>];
 
-                <span class='ident'>surface</span> <span class='op'>=</span> <span class='ident'>surface</span> <span class='op'>+</span> <span class='ident'>utils</span>::<span class='ident'>triangle_area</span>(<span class='ident'>p1</span>, <span class='ident'>p2</span>, <span class='ident'>p3</span>);
+                <span class='ident'>area</span> <span class='op'>=</span> <span class='ident'>area</span> <span class='op'>+</span> <span class='ident'>utils</span>::<span class='ident'>triangle_area</span>(<span class='ident'>p1</span>, <span class='ident'>p2</span>, <span class='ident'>p3</span>);
             }
         },
         <span class='ident'>IndexBuffer</span>::<span class='ident'>Split</span>(_) <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>()
     }
 
-    <span class='ident'>surface</span>
+    <span class='ident'>area</span>
 }
 
-<span class='doccomment'>/// The surface of a convex hull.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_surface</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
+<span class='doccomment'>/// The area of a convex hull.</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_area</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>P</span>::<span class='ident'>Vect</span>: <span class='ident'>Outer</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>,
-          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
+          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Add</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>Copy</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
-            <span class='macro'>unimplemented</span><span class='macro'>!</span>()
+            <span class='kw'>let</span> <span class='ident'>convex_polyline</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull2</span>(<span class='ident'>points</span>);
+            <span class='kw'>unsafe</span> { <span class='ident'>convex_polyline_area</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_polyline</span>) }
         }
         <span class='number'>3</span> <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>convex_mesh</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull3</span>(<span class='ident'>points</span>);
-            <span class='kw'>unsafe</span> { <span class='ident'>convex_mesh_surface</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>) }
+            <span class='kw'>unsafe</span> { <span class='ident'>convex_mesh_area</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>) }
         }
         _ <span class='op'>=&gt;</span> {
             <span class='macro'>unimplemented</span><span class='macro'>!</span>()
@@ -812,18 +854,18 @@
 }
 
 <span class='doccomment'>/// The volume of the convex hull of a set of points.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_volume</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_volume</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>P</span>::<span class='ident'>Vect</span>: <span class='ident'>Outer</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>,
-          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
+          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Add</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>Copy</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
-            <span class='macro'>unimplemented</span><span class='macro'>!</span>()
+            <span class='ident'>convex_hull_area</span>(<span class='ident'>dimension</span>, <span class='ident'>points</span>)
         }
         <span class='number'>3</span> <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>convex_mesh</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull3</span>(<span class='ident'>points</span>);
@@ -836,18 +878,19 @@
 }
 
 <span class='doccomment'>/// The center of mass of the convex hull of a set of points.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_center_of_mass</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>P</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_center_of_mass</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>P</span>
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>P</span>::<span class='ident'>Vect</span>: <span class='ident'>Outer</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>,
-          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
+          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Add</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>Copy</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
-            <span class='macro'>unimplemented</span><span class='macro'>!</span>()
+            <span class='kw'>let</span> <span class='ident'>convex_polyline</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull2</span>(<span class='ident'>points</span>);
+            <span class='kw'>unsafe</span> { <span class='ident'>convex_polyline_area_and_center_of_mass</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_polyline</span>).<span class='number'>1</span> }
         }
         <span class='number'>3</span> <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>convex_mesh</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull3</span>(<span class='ident'>points</span>);
@@ -860,26 +903,26 @@
 }
 
 <span class='doccomment'>/// The angular inertia of the convex hull of a set of points.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_unit_angular_inertia</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span><span class='op'>&gt;</span>(<span class='ident'>dim</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>I</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>convex_hull_unit_angular_inertia</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>I</span><span class='op'>&gt;</span>(<span class='ident'>dimension</span>: <span class='ident'>usize</span>, <span class='ident'>points</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>]) <span class='op'>-&gt;</span> <span class='ident'>I</span>
     <span class='kw'>where</span> <span class='ident'>P</span>: <span class='ident'>Point</span>,
           <span class='ident'>I</span>: <span class='ident'>Zero</span> <span class='op'>+</span>
              <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>I</span><span class='op'>&gt;</span> <span class='op'>+</span>
-             <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>I</span><span class='op'>&gt;</span> <span class='op'>+</span>
-             <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>,
+             <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>I</span><span class='op'>&gt;</span> <span class='op'>+</span>
+             <span class='ident'>IndexMut</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>), <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>,
           <span class='ident'>P</span>::<span class='ident'>Vect</span>: <span class='ident'>Outer</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;&lt;</span><span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span> <span class='kw'>as</span> <span class='ident'>Point</span><span class='op'>&gt;</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span>,
-          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
+          <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>: <span class='ident'>EigenQR</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>, <span class='ident'>P</span>::<span class='ident'>Vect</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Add</span><span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span>, <span class='ident'>Output</span> <span class='op'>=</span> <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Outer</span><span class='op'>&gt;</span>::<span class='ident'>OuterProductType</span><span class='op'>&gt;</span> <span class='op'>+</span>
                                                 <span class='ident'>Zero</span> <span class='op'>+</span> <span class='ident'>Copy</span> {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dim</span> <span class='op'>==</span> <span class='number'>3</span>);
+    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>||</span> <span class='ident'>dimension</span> <span class='op'>==</span> <span class='number'>3</span>);
 
-    <span class='kw'>match</span> <span class='ident'>dim</span> {
+    <span class='kw'>match</span> <span class='ident'>dimension</span> {
         <span class='number'>2</span> <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>convex_mesh</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull2</span>(<span class='ident'>points</span>);
-            <span class='kw'>let</span> (<span class='ident'>area</span>, _, <span class='ident'>i</span>): (_, _, <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>) <span class='op'>=</span>
-                               <span class='kw'>unsafe</span> { <span class='ident'>convex_mesh_mass_properties2</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>, <span class='ident'>na</span>::<span class='ident'>one</span>()) };
+            <span class='kw'>let</span> (<span class='ident'>area</span>, _, <span class='ident'>i</span>): (_, _, <span class='op'>&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span>) <span class='op'>=</span>
+                               <span class='kw'>unsafe</span> { <span class='ident'>convex_polyline_mass_properties</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>, <span class='ident'>na</span>::<span class='ident'>one</span>()) };
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>tensor</span>: <span class='ident'>I</span> <span class='op'>=</span> <span class='ident'>na</span>::<span class='ident'>zero</span>();
-            <span class='ident'>tensor</span>[(<span class='number'>0</span>, <span class='number'>0</span>)] <span class='op'>=</span> <span class='ident'>i</span> <span class='op'>*</span> (<span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>() <span class='op'>/</span> <span class='ident'>area</span>);
+            <span class='ident'>tensor</span>[(<span class='number'>0</span>, <span class='number'>0</span>)] <span class='op'>=</span> <span class='ident'>i</span> <span class='op'>*</span> (<span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>() <span class='op'>/</span> <span class='ident'>area</span>);
 
             <span class='ident'>tensor</span>
         }
@@ -888,7 +931,7 @@
             <span class='kw'>unsafe</span> {
                 <span class='kw'>let</span> (<span class='ident'>vol</span>, _, <span class='ident'>i</span>): (_, _, <span class='ident'>I</span>) <span class='op'>=</span> <span class='ident'>convex_mesh_mass_properties</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>, <span class='ident'>na</span>::<span class='ident'>one</span>());
 
-                <span class='ident'>i</span> <span class='op'>*</span> (<span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vect</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>() <span class='op'>/</span> <span class='ident'>vol</span>)
+                <span class='ident'>i</span> <span class='op'>*</span> (<span class='ident'>na</span>::<span class='ident'>one</span>::<span class='op'>&lt;&lt;</span><span class='ident'>P</span>::<span class='ident'>Vect</span> <span class='kw'>as</span> <span class='ident'>Vector</span><span class='op'>&gt;</span>::<span class='ident'>Scalar</span><span class='op'>&gt;</span>() <span class='op'>/</span> <span class='ident'>vol</span>)
             }
         }
         _ <span class='op'>=&gt;</span> {
@@ -897,58 +940,58 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Mat3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>Convex3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>surface</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
-        <span class='ident'>convex_hull_surface</span>(<span class='number'>3</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>Point3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>ConvexHull3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>area</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
+        <span class='ident'>convex_hull_area</span>(<span class='number'>3</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
     <span class='kw'>fn</span> <span class='ident'>volume</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
         <span class='ident'>convex_hull_volume</span>(<span class='number'>3</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>center_of_mass</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>center_of_mass</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Point3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>convex_hull_center_of_mass</span>(<span class='number'>3</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>unit_angular_inertia</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Mat3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>unit_angular_inertia</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Matrix3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>convex_hull_unit_angular_inertia</span>(<span class='number'>3</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>mass_properties</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>density</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> (<span class='ident'>N</span>, <span class='ident'>Pnt3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Mat3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
+    <span class='kw'>fn</span> <span class='ident'>mass_properties</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>density</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> (<span class='ident'>N</span>, <span class='ident'>Point3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix3</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> <span class='ident'>convex_mesh</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull3</span>(<span class='self'>self</span>.<span class='ident'>points</span>());
         <span class='kw'>unsafe</span> { <span class='ident'>convex_mesh_mass_properties</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>, <span class='ident'>density</span>) }
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Mat1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>Convex2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>surface</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
-        <span class='ident'>convex_hull_surface</span>(<span class='number'>2</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>Volumetric</span><span class='op'>&lt;</span><span class='ident'>N</span>, <span class='ident'>Point2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>ConvexHull2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>area</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
+        <span class='ident'>convex_hull_area</span>(<span class='number'>2</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
     <span class='kw'>fn</span> <span class='ident'>volume</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>N</span> {
         <span class='ident'>convex_hull_volume</span>(<span class='number'>2</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>center_of_mass</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>center_of_mass</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Point2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>convex_hull_center_of_mass</span>(<span class='number'>2</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>unit_angular_inertia</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Mat1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>unit_angular_inertia</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Matrix1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>convex_hull_unit_angular_inertia</span>(<span class='number'>2</span>, <span class='self'>self</span>.<span class='ident'>points</span>())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>mass_properties</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>density</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> (<span class='ident'>N</span>, <span class='ident'>Pnt2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Mat1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
+    <span class='kw'>fn</span> <span class='ident'>mass_properties</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>density</span>: <span class='ident'>N</span>) <span class='op'>-&gt;</span> (<span class='ident'>N</span>, <span class='ident'>Point2</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>, <span class='ident'>Matrix1</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> <span class='ident'>convex_mesh</span> <span class='op'>=</span> <span class='ident'>transformation</span>::<span class='ident'>convex_hull2</span>(<span class='self'>self</span>.<span class='ident'>points</span>());
-        <span class='kw'>let</span> (<span class='ident'>r1</span>, <span class='ident'>r2</span>, <span class='ident'>r3</span>) <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>convex_mesh_mass_properties2</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>, <span class='ident'>density</span>) };
-        (<span class='ident'>r1</span>, <span class='ident'>r2</span>, <span class='ident'>Mat1</span>::<span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>r3</span>))
+        <span class='kw'>let</span> (<span class='ident'>r1</span>, <span class='ident'>r2</span>, <span class='ident'>r3</span>) <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>convex_polyline_mass_properties</span>(<span class='kw-2'>&amp;</span><span class='ident'>convex_mesh</span>, <span class='ident'>density</span>) };
+        (<span class='ident'>r1</span>, <span class='ident'>r2</span>, <span class='ident'>Matrix1</span>::<span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>r3</span>))
     }
 }
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Vec2</span>, <span class='ident'>Vec3</span>, <span class='ident'>Mat1</span>, <span class='ident'>Pnt2</span>};
+    <span class='kw'>use</span> <span class='ident'>na</span>::{<span class='ident'>Vector2</span>, <span class='ident'>Vector3</span>, <span class='ident'>Matrix1</span>, <span class='ident'>Point2</span>};
     <span class='kw'>use</span> <span class='ident'>na</span>;
-    <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::{<span class='ident'>Convex</span>, <span class='ident'>Cuboid</span>};
+    <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>shape</span>::{<span class='ident'>ConvexHull</span>, <span class='ident'>Cuboid</span>};
     <span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>procedural</span>;
     <span class='kw'>use</span> <span class='ident'>volumetric</span>::<span class='ident'>Volumetric</span>;
 
@@ -956,7 +999,7 @@
     <span class='kw'>fn</span> <span class='ident'>test_inertia_tensor</span>() {
         <span class='kw'>let</span> <span class='ident'>excentricity</span> <span class='op'>=</span> <span class='number'>10.0</span>;
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>shape</span> <span class='op'>=</span> <span class='ident'>procedural</span>::<span class='ident'>cuboid</span>(<span class='kw-2'>&amp;</span><span class='ident'>Vec3</span>::<span class='ident'>new</span>(<span class='number'>2.0f64</span> <span class='op'>-</span> <span class='number'>0.08</span>, <span class='number'>2.0</span> <span class='op'>-</span> <span class='number'>0.08</span>, <span class='number'>2.0</span> <span class='op'>-</span> <span class='number'>0.08</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>shape</span> <span class='op'>=</span> <span class='ident'>procedural</span>::<span class='ident'>cuboid</span>(<span class='kw-2'>&amp;</span><span class='ident'>Vector3</span>::<span class='ident'>new</span>(<span class='number'>2.0f64</span> <span class='op'>-</span> <span class='number'>0.08</span>, <span class='number'>2.0</span> <span class='op'>-</span> <span class='number'>0.08</span>, <span class='number'>2.0</span> <span class='op'>-</span> <span class='number'>0.08</span>));
 
         <span class='kw'>for</span> <span class='ident'>c</span> <span class='kw'>in</span> <span class='ident'>shape</span>.<span class='ident'>coords</span>.<span class='ident'>iter_mut</span>() {
             <span class='ident'>c</span>.<span class='ident'>x</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>x</span> <span class='op'>+</span> <span class='ident'>excentricity</span>;
@@ -964,8 +1007,8 @@
             <span class='ident'>c</span>.<span class='ident'>z</span> <span class='op'>=</span> <span class='ident'>c</span>.<span class='ident'>z</span> <span class='op'>+</span> <span class='ident'>excentricity</span>;
         }
 
-        <span class='kw'>let</span> <span class='ident'>convex</span> <span class='op'>=</span> <span class='ident'>Convex</span>::<span class='ident'>new</span>(<span class='ident'>shape</span>.<span class='ident'>coords</span>);
-        <span class='kw'>let</span> <span class='ident'>cuboid</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vec3</span>::<span class='ident'>new</span>(<span class='number'>0.96f64</span>, <span class='number'>0.96</span>, <span class='number'>0.96</span>));
+        <span class='kw'>let</span> <span class='ident'>convex</span> <span class='op'>=</span> <span class='ident'>ConvexHull</span>::<span class='ident'>new</span>(<span class='ident'>shape</span>.<span class='ident'>coords</span>);
+        <span class='kw'>let</span> <span class='ident'>cuboid</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vector3</span>::<span class='ident'>new</span>(<span class='number'>0.96f64</span>, <span class='number'>0.96</span>, <span class='number'>0.96</span>));
 
         <span class='kw'>let</span> <span class='ident'>actual</span>   <span class='op'>=</span> <span class='ident'>convex</span>.<span class='ident'>unit_angular_inertia</span>();
         <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>cuboid</span>.<span class='ident'>unit_angular_inertia</span>();
@@ -994,10 +1037,10 @@
 
         <span class='comment'>// real moment of inertia but divided by the area of the square</span>
         <span class='kw'>let</span> <span class='ident'>real_moi</span> <span class='op'>=</span> <span class='ident'>a</span>.<span class='ident'>powf</span>(<span class='number'>2.0</span>) <span class='op'>/</span> <span class='number'>6.0</span>;
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>Mat1</span>::<span class='ident'>new</span>(<span class='ident'>real_moi</span>);
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>Matrix1</span>::<span class='ident'>new</span>(<span class='ident'>real_moi</span>);
 
         <span class='comment'>// standard cuboid</span>
-        <span class='kw'>let</span> <span class='ident'>cube</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='ident'>half_a</span>));
+        <span class='kw'>let</span> <span class='ident'>cube</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='ident'>half_a</span>));
     
         <span class='kw'>let</span> <span class='ident'>actual</span> <span class='op'>=</span> <span class='ident'>cube</span>.<span class='ident'>unit_angular_inertia</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>actual</span>, <span class='kw-2'>&amp;</span><span class='ident'>expected</span>),
@@ -1005,9 +1048,9 @@
 
         <span class='comment'>// convex shape</span>
         <span class='kw'>let</span> <span class='ident'>geom</span> <span class='op'>=</span> {
-            <span class='kw'>let</span> <span class='ident'>points</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>,  <span class='ident'>half_a</span>), <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>,  <span class='ident'>half_a</span>),
-                              <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_a</span>), <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_a</span>) ];
-            <span class='ident'>Convex</span>::<span class='ident'>new</span>(<span class='ident'>points</span>)
+            <span class='kw'>let</span> <span class='ident'>points</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>,  <span class='ident'>half_a</span>), <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>,  <span class='ident'>half_a</span>),
+                              <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_a</span>), <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_a</span>) ];
+            <span class='ident'>ConvexHull</span>::<span class='ident'>new</span>(<span class='ident'>points</span>)
         };
         <span class='kw'>let</span> <span class='ident'>actual</span> <span class='op'>=</span> <span class='ident'>geom</span>.<span class='ident'>unit_angular_inertia</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>actual</span>, <span class='kw-2'>&amp;</span><span class='ident'>expected</span>),
@@ -1021,10 +1064,10 @@
 
         <span class='comment'>// real moment of inertia but divided by the area of the rectangle</span>
         <span class='kw'>let</span> <span class='ident'>real_moi</span> <span class='op'>=</span> (<span class='number'>1.0</span> <span class='op'>/</span> <span class='number'>12.0</span>) <span class='op'>*</span> (<span class='ident'>a</span>.<span class='ident'>powf</span>(<span class='number'>2.0</span>) <span class='op'>+</span> <span class='ident'>b</span>.<span class='ident'>powf</span>(<span class='number'>2.0</span>));
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>Mat1</span>::<span class='ident'>new</span>(<span class='ident'>real_moi</span>);
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>Matrix1</span>::<span class='ident'>new</span>(<span class='ident'>real_moi</span>);
     
         <span class='comment'>// standard cuboid</span>
-        <span class='kw'>let</span> <span class='ident'>cube</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vec2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='ident'>half_b</span>));
+        <span class='kw'>let</span> <span class='ident'>cube</span> <span class='op'>=</span> <span class='ident'>Cuboid</span>::<span class='ident'>new</span>(<span class='ident'>Vector2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='ident'>half_b</span>));
     
         <span class='kw'>let</span> <span class='ident'>actual</span> <span class='op'>=</span> <span class='ident'>cube</span>.<span class='ident'>unit_angular_inertia</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>actual</span>, <span class='kw-2'>&amp;</span><span class='ident'>expected</span>),
@@ -1032,9 +1075,9 @@
 
         <span class='comment'>// convex shape</span>
         <span class='kw'>let</span> <span class='ident'>geom</span> <span class='op'>=</span> {
-            <span class='kw'>let</span> <span class='ident'>points</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>,  <span class='ident'>half_b</span>), <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>,  <span class='ident'>half_b</span>),
-                              <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_b</span>), <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_b</span>) ];
-            <span class='ident'>Convex</span>::<span class='ident'>new</span>(<span class='ident'>points</span>)
+            <span class='kw'>let</span> <span class='ident'>points</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>,  <span class='ident'>half_b</span>), <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>,  <span class='ident'>half_b</span>),
+                              <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='op'>-</span><span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_b</span>), <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='ident'>half_a</span>, <span class='op'>-</span><span class='ident'>half_b</span>) ];
+            <span class='ident'>ConvexHull</span>::<span class='ident'>new</span>(<span class='ident'>points</span>)
         };
         <span class='kw'>let</span> <span class='ident'>actual</span> <span class='op'>=</span> <span class='ident'>geom</span>.<span class='ident'>unit_angular_inertia</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>actual</span>, <span class='kw-2'>&amp;</span><span class='ident'>expected</span>),
@@ -1055,13 +1098,13 @@
         <span class='comment'>// formula taken from http://www.efunda.com/math/areas/triangle.cfm</span>
         <span class='kw'>let</span> <span class='ident'>area</span> <span class='op'>=</span> <span class='ident'>b</span> <span class='op'>*</span> <span class='ident'>h</span> <span class='op'>/</span> <span class='number'>2.0</span>;
         <span class='kw'>let</span> <span class='ident'>real_moi</span> <span class='op'>=</span> (<span class='ident'>b</span>.<span class='ident'>powf</span>(<span class='number'>3.0</span>) <span class='op'>*</span> <span class='ident'>h</span> <span class='op'>-</span> <span class='ident'>b</span>.<span class='ident'>powf</span>(<span class='number'>2.0</span>) <span class='op'>*</span> <span class='ident'>h</span> <span class='op'>*</span> <span class='ident'>a</span> <span class='op'>+</span> <span class='ident'>b</span> <span class='op'>*</span> <span class='ident'>h</span> <span class='op'>*</span> <span class='ident'>a</span>.<span class='ident'>powf</span>(<span class='number'>2.0</span>) <span class='op'>+</span> <span class='ident'>b</span> <span class='op'>*</span> <span class='ident'>h</span>.<span class='ident'>powf</span>(<span class='number'>3.0</span>)) <span class='op'>/</span> (<span class='number'>36.0</span> <span class='op'>*</span> <span class='ident'>area</span>);
-        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>Mat1</span>::<span class='ident'>new</span>(<span class='ident'>real_moi</span>);
+        <span class='kw'>let</span> <span class='ident'>expected</span> <span class='op'>=</span> <span class='ident'>Matrix1</span>::<span class='ident'>new</span>(<span class='ident'>real_moi</span>);
 
         <span class='comment'>// convex shape</span>
         <span class='kw'>let</span> <span class='ident'>geom</span> <span class='op'>=</span> {
-            <span class='kw'>let</span> <span class='ident'>points</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span> <span class='op'>-</span> <span class='ident'>c_x</span>, <span class='number'>0.0</span> <span class='op'>-</span> <span class='ident'>c_y</span>), <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>b</span> <span class='op'>-</span> <span class='ident'>c_x</span>, <span class='number'>0.0</span> <span class='op'>-</span> <span class='ident'>c_y</span>),
-                              <span class='ident'>Pnt2</span>::<span class='ident'>new</span>(<span class='ident'>a</span> <span class='op'>-</span> <span class='ident'>c_x</span>, <span class='ident'>h</span> <span class='op'>-</span> <span class='ident'>c_y</span>) ];
-            <span class='ident'>Convex</span>::<span class='ident'>new</span>(<span class='ident'>points</span>)
+            <span class='kw'>let</span> <span class='ident'>points</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='number'>0.0</span> <span class='op'>-</span> <span class='ident'>c_x</span>, <span class='number'>0.0</span> <span class='op'>-</span> <span class='ident'>c_y</span>), <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='ident'>b</span> <span class='op'>-</span> <span class='ident'>c_x</span>, <span class='number'>0.0</span> <span class='op'>-</span> <span class='ident'>c_y</span>),
+                              <span class='ident'>Point2</span>::<span class='ident'>new</span>(<span class='ident'>a</span> <span class='op'>-</span> <span class='ident'>c_x</span>, <span class='ident'>h</span> <span class='op'>-</span> <span class='ident'>c_y</span>) ];
+            <span class='ident'>ConvexHull</span>::<span class='ident'>new</span>(<span class='ident'>points</span>)
         };
         <span class='kw'>let</span> <span class='ident'>actual</span> <span class='op'>=</span> <span class='ident'>geom</span>.<span class='ident'>unit_angular_inertia</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>na</span>::<span class='ident'>approx_eq</span>(<span class='kw-2'>&amp;</span><span class='ident'>actual</span>, <span class='kw-2'>&amp;</span><span class='ident'>expected</span>),
@@ -1092,6 +1135,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

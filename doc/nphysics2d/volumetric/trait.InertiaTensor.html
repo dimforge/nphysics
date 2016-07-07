@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1870' class='srclink' href='../../src/nphysics2d/up/up/src/volumetric/volumetric.rs.html#9-20' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait InertiaTensor&lt;N, P, AV, M&gt; {
+               </span><a id='src-2417' class='srclink' href='../../src/nphysics2d/up/up/src/volumetric/volumetric.rs.html#9-20' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait InertiaTensor&lt;N,&nbsp;P,&nbsp;AV,&nbsp;M&gt; {
     fn <a href='#tymethod.apply' class='fnname'>apply</a>(&amp;self, a: &amp;AV) -&gt; AV;
     fn <a href='#tymethod.to_world_space' class='fnname'>to_world_space</a>(&amp;self, &amp;M) -&gt; Self;
     fn <a href='#tymethod.to_relative_wrt_point' class='fnname'>to_relative_wrt_point</a>(&amp;self, N, &amp;P) -&gt; Self;
@@ -63,7 +64,9 @@
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    </ul><script type="text/javascript" async
+    <li><code>impl&lt;N:&nbsp;Scalar&gt; InertiaTensor&lt;N,&nbsp;<a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/point/struct.Point2.html' title='nalgebra::structs::point::Point2'>Point2</a>&lt;N&gt;,&nbsp;<a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/vector/struct.Vector1.html' title='nalgebra::structs::vector::Vector1'>Vector1</a>&lt;N&gt;,&nbsp;<a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/isometry/struct.Isometry2.html' title='nalgebra::structs::isometry::Isometry2'>Isometry2</a>&lt;N&gt;&gt; for <a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/matrix/struct.Matrix1.html' title='nalgebra::structs::matrix::Matrix1'>Matrix1</a>&lt;N&gt;</code></li>
+<li><code>impl&lt;N:&nbsp;Scalar&gt; InertiaTensor&lt;N,&nbsp;<a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/point/struct.Point3.html' title='nalgebra::structs::point::Point3'>Point3</a>&lt;N&gt;,&nbsp;<a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/vector/struct.Vector3.html' title='nalgebra::structs::vector::Vector3'>Vector3</a>&lt;N&gt;,&nbsp;<a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/isometry/struct.Isometry3.html' title='nalgebra::structs::isometry::Isometry3'>Isometry3</a>&lt;N&gt;&gt; for <a class='struct' href='http://nalgebra.org/doc/nalgebra/structs/matrix/struct.Matrix3.html' title='nalgebra::structs::matrix::Matrix3'>Matrix3</a>&lt;N&gt;</code></li>
+</ul><script type="text/javascript" async
                          src="../../implementors/nphysics2d/volumetric/trait.InertiaTensor.js">
                  </script></section>
     <section id='search' class="content hidden"></section>
@@ -88,6 +91,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

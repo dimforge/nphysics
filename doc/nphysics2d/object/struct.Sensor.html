@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Sensor` struct in crate `nphysics2d`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Sensor">
+
+    <title>nphysics2d::object::Sensor - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>nphysics2d</a>::<wbr><a href='index.html'>object</a></p><script>window.sidebarCurrent = {name: 'Sensor', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>nphysics2d</a>::<wbr><a href='index.html'>object</a>::<wbr><a class='struct' href=''>Sensor</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1923' class='srclink' href='../../src/nphysics2d/up/up/src/object/sensor.rs.html#15-25' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Sensor&lt;N:&nbsp;Scalar&gt; {
+    // some fields omitted
+}</pre><div class='docblock'><p>An object capable of detecting interferances with other entities without interacting with them.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='struct' href='../../nphysics2d/object/struct.Sensor.html' title='nphysics2d::object::Sensor'>Sensor</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1934' class='srclink' href='../../src/nphysics2d/up/up/src/object/sensor.rs.html#27-181' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>&lt;G&gt;(shape: G, parent: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../nphysics2d/object/type.RigidBodyHandle.html' title='nphysics2d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;&gt;) -&gt; <a class='struct' href='../../nphysics2d/object/struct.Sensor.html' title='nphysics2d::object::Sensor'>Sensor</a>&lt;N&gt; <span class='where'>where G: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + <a class='trait' href='http://ncollide.org/rustdoc/ncollide_geometry/shape/shape/trait.Shape.html' title='ncollide_geometry::shape::shape::Shape'>Shape</a>&lt;<a class='type' href='../../nphysics2d/math/type.Point.html' title='nphysics2d::math::Point'>Point</a>&lt;N&gt;,&nbsp;<a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;</span></code></h4>
+<div class='docblock'><p>Creates a new sensor.</p>
+
+<p>A sensor may either be attached to the rigid body <code>parent</code>, or be attached to the ground.
+If it has a parent, it will have a position relative to it. If the parent moves, the sensor
+will automatically move as well. By default, a sensor does not trigger any proximity event
+when it intersects its own parent.</p>
+
+<p>A sensor has a default margin equal to zero.</p>
+</div><h4 id='method.new_with_shared_shape' class='method'><code>fn <a href='#method.new_with_shared_shape' class='fnname'>new_with_shared_shape</a>(shape: <a class='struct' href='http://ncollide.org/rustdoc/ncollide_geometry/shape/shape/struct.ShapeHandle.html' title='ncollide_geometry::shape::shape::ShapeHandle'>ShapeHandle</a>&lt;<a class='type' href='../../nphysics2d/math/type.Point.html' title='nphysics2d::math::Point'>Point</a>&lt;N&gt;,&nbsp;<a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;, parent: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../nphysics2d/object/type.RigidBodyHandle.html' title='nphysics2d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;&gt;) -&gt; <a class='struct' href='../../nphysics2d/object/struct.Sensor.html' title='nphysics2d::object::Sensor'>Sensor</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>Creates a new senson with a given shared shape.</p>
+</div><h4 id='method.user_data' class='method'><code>fn <a href='#method.user_data' class='fnname'>user_data</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Reference to user-defined data attached to this sensor.</p>
+</div><h4 id='method.user_data_mut' class='method'><code>fn <a href='#method.user_data_mut' class='fnname'>user_data_mut</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Mutable reference to user-defined data attached to this sensor.</p>
+</div><h4 id='method.set_user_data' class='method'><code>fn <a href='#method.set_user_data' class='fnname'>set_user_data</a>(&amp;mut self, user_data: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a>&gt;&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Attach some user-defined data to this sensor and return the old one.</p>
+</div><h4 id='method.interfering_bodies' class='method'><code>fn <a href='#method.interfering_bodies' class='fnname'>interfering_bodies</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='type' href='../../nphysics2d/object/type.RigidBodyHandle.html' title='nphysics2d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+<div class='docblock'><p>List of rigid bodies geometrically intersecting this sensor.</p>
+</div><h4 id='method.interfering_sensors' class='method'><code>fn <a href='#method.interfering_sensors' class='fnname'>interfering_sensors</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='type' href='../../nphysics2d/object/type.SensorHandle.html' title='nphysics2d::object::SensorHandle'>SensorHandle</a>&lt;N&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+<div class='docblock'><p>List of sensors geometrically intersecting this sensor.</p>
+</div><h4 id='method.relative_position' class='method'><code>fn <a href='#method.relative_position' class='fnname'>relative_position</a>(&amp;self) -&gt; &amp;<a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>This sensor&#39;s position relative to <code>self.parent()</code>.</p>
+
+<p>If this sensor has no parent, then this relative position is actually the sensor absolute
+position.</p>
+</div><h4 id='method.set_relative_position' class='method'><code>fn <a href='#method.set_relative_position' class='fnname'>set_relative_position</a>(&amp;mut self, rel_pos: <a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;)</code></h4>
+<div class='docblock'><p>Sets the sensor position relative to <code>self.parent()</code>.</p>
+
+<p>If <code>self.parent()</code> is <code>None</code>, then this sets the sensor&#39;s absolute position.</p>
+</div><h4 id='method.position' class='method'><code>fn <a href='#method.position' class='fnname'>position</a>(&amp;self) -&gt; <a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>This sensor&#39;s absolute position.</p>
+</div><h4 id='method.set_position' class='method'><code>fn <a href='#method.set_position' class='fnname'>set_position</a>(&amp;mut self, abs_pos: <a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;)</code></h4>
+<div class='docblock'><p>Sets the sensor absolute position.</p>
+
+<p>If <code>self.parent()</code> is not <code>None</code>, then this automatically computes the relevant relative
+position and updates it.</p>
+</div><h4 id='method.center' class='method'><code>fn <a href='#method.center' class='fnname'>center</a>(&amp;self) -&gt; <a class='type' href='../../nphysics2d/math/type.Point.html' title='nphysics2d::math::Point'>Point</a>&lt;N&gt;</code></h4>
+<div class='docblock'><p>This sensor position&#39;s translational component.</p>
+</div><h4 id='method.margin' class='method'><code>fn <a href='#method.margin' class='fnname'>margin</a>(&amp;self) -&gt; N</code></h4>
+<div class='docblock'><p>The collision margin of this sensor&#39;s shape.</p>
+
+<p>This is set to zero by default.</p>
+</div><h4 id='method.proximity_with_parent_enabled' class='method'><code>fn <a href='#method.proximity_with_parent_enabled' class='fnname'>proximity_with_parent_enabled</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Whether or not proximity detection between this sensor and its parent is enabled.</p>
+</div><h4 id='method.enable_proximity_with_parent' class='method'><code>fn <a href='#method.enable_proximity_with_parent' class='fnname'>enable_proximity_with_parent</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>Enables proximity detection between this sensor and its parent if it has one.</p>
+</div><h4 id='method.disable_proximity_with_parent' class='method'><code>fn <a href='#method.disable_proximity_with_parent' class='fnname'>disable_proximity_with_parent</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>Disables proximity detection between this sensor and its parent if it has one.</p>
+</div><h4 id='method.parent' class='method'><code>fn <a href='#method.parent' class='fnname'>parent</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='type' href='../../nphysics2d/object/type.RigidBodyHandle.html' title='nphysics2d::object::RigidBodyHandle'>RigidBodyHandle</a>&lt;N&gt;&gt;</code></h4>
+<div class='docblock'><p>The rigid body to which this sensor is kinematically attached.</p>
+
+<p>Returns <code>None</code> if this sensor is directly attached to the scene.</p>
+</div><h4 id='method.shape' class='method'><code>fn <a href='#method.shape' class='fnname'>shape</a>(&amp;self) -&gt; &amp;<a class='struct' href='http://ncollide.org/rustdoc/ncollide_geometry/shape/shape/struct.ShapeHandle.html' title='ncollide_geometry::shape::shape::ShapeHandle'>ShapeHandle</a>&lt;<a class='type' href='../../nphysics2d/math/type.Point.html' title='nphysics2d::math::Point'>Point</a>&lt;N&gt;,&nbsp;<a class='type' href='../../nphysics2d/math/type.Matrix.html' title='nphysics2d::math::Matrix'>Matrix</a>&lt;N&gt;&gt;</code></h4>
+<div class='docblock'><p>A reference of this sensor&#39;s shared shape.</p>
+</div><h4 id='method.collision_groups' class='method'><code>fn <a href='#method.collision_groups' class='fnname'>collision_groups</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../nphysics2d/object/struct.SensorCollisionGroups.html' title='nphysics2d::object::SensorCollisionGroups'>SensorCollisionGroups</a></code></h4>
+<div class='docblock'><p>This sensor&#39;s collision groups.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "nphysics2d";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

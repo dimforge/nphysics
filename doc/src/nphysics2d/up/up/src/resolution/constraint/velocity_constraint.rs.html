@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../../../main.css">
+    
 
     
     
@@ -114,42 +115,44 @@
 <span id="71">71</span>
 <span id="72">72</span>
 <span id="73">73</span>
+<span id="74">74</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>na</span>;
-<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Scalar</span>, <span class='ident'>Vect</span>, <span class='ident'>Orientation</span>};
+<span class='kw'>use</span> <span class='ident'>ncollide</span>::<span class='ident'>math</span>::<span class='ident'>Scalar</span>;
+<span class='kw'>use</span> <span class='ident'>math</span>::{<span class='ident'>Vector</span>, <span class='ident'>Orientation</span>};
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
 <span class='doccomment'>/// A constraint of velocity at a point of contact.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>VelocityConstraint</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// The contact normal.</span>
-    <span class='kw'>pub</span> <span class='ident'>normal</span>:             <span class='ident'>Vect</span>,
+    <span class='kw'>pub</span> <span class='ident'>normal</span>:             <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// The contact normal multiplied by the first body&#39;s inverse mass.</span>
-    <span class='kw'>pub</span> <span class='ident'>weighted_normal1</span>:   <span class='ident'>Vect</span>,
+    <span class='kw'>pub</span> <span class='ident'>weighted_normal1</span>:   <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
     <span class='doccomment'>/// The contact normal multiplied by the second body&#39;s inverse mass.</span>
-    <span class='kw'>pub</span> <span class='ident'>weighted_normal2</span>:   <span class='ident'>Vect</span>,
+    <span class='kw'>pub</span> <span class='ident'>weighted_normal2</span>:   <span class='ident'>Vector</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// The first body rotation axis.</span>
-    <span class='kw'>pub</span> <span class='ident'>rot_axis1</span>:          <span class='ident'>Orientation</span>,
+    <span class='kw'>pub</span> <span class='ident'>rot_axis1</span>:          <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
     <span class='doccomment'>/// The first body rotation axis multiplied by its inverse inertia.</span>
-    <span class='kw'>pub</span> <span class='ident'>weighted_rot_axis1</span>: <span class='ident'>Orientation</span>,
+    <span class='kw'>pub</span> <span class='ident'>weighted_rot_axis1</span>: <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// The second body rotation axis.</span>
-    <span class='kw'>pub</span> <span class='ident'>rot_axis2</span>:          <span class='ident'>Orientation</span>,
+    <span class='kw'>pub</span> <span class='ident'>rot_axis2</span>:          <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
     <span class='doccomment'>/// The second body rotation axis multiplied by its inverse inertia.</span>
-    <span class='kw'>pub</span> <span class='ident'>weighted_rot_axis2</span>: <span class='ident'>Orientation</span>,
+    <span class='kw'>pub</span> <span class='ident'>weighted_rot_axis2</span>: <span class='ident'>Orientation</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// The inverse of the sum of linear and angular inertia of both bodies.</span>
-    <span class='kw'>pub</span> <span class='ident'>inv_projected_mass</span>: <span class='ident'>Scalar</span>,
+    <span class='kw'>pub</span> <span class='ident'>inv_projected_mass</span>: <span class='ident'>N</span>,
 
     <span class='doccomment'>/// The total impulse applied.</span>
-    <span class='kw'>pub</span> <span class='ident'>impulse</span>:            <span class='ident'>Scalar</span>,
+    <span class='kw'>pub</span> <span class='ident'>impulse</span>:            <span class='ident'>N</span>,
     <span class='doccomment'>/// The lower bound of the impulse.</span>
-    <span class='kw'>pub</span> <span class='ident'>lobound</span>:            <span class='ident'>Scalar</span>,
+    <span class='kw'>pub</span> <span class='ident'>lobound</span>:            <span class='ident'>N</span>,
     <span class='doccomment'>/// The upper bound of the impulse.</span>
-    <span class='kw'>pub</span> <span class='ident'>hibound</span>:            <span class='ident'>Scalar</span>,
+    <span class='kw'>pub</span> <span class='ident'>hibound</span>:            <span class='ident'>N</span>,
     <span class='doccomment'>/// The target delta velocity.</span>
-    <span class='kw'>pub</span> <span class='ident'>objective</span>:          <span class='ident'>Scalar</span>,
+    <span class='kw'>pub</span> <span class='ident'>objective</span>:          <span class='ident'>N</span>,
     <span class='doccomment'>/// The id of the first body.</span>
     <span class='kw'>pub</span> <span class='ident'>id1</span>:                <span class='ident'>isize</span>,
     <span class='doccomment'>/// The id of the second body.</span>
@@ -157,12 +160,12 @@
     <span class='doccomment'>/// The id of the friction constraint.</span>
     <span class='kw'>pub</span> <span class='ident'>friction_limit_id</span>:  <span class='ident'>usize</span>,
     <span class='doccomment'>/// The friction coefficient on this contact.</span>
-    <span class='kw'>pub</span> <span class='ident'>friction_coeff</span>:     <span class='ident'>Scalar</span>
+    <span class='kw'>pub</span> <span class='ident'>friction_coeff</span>:     <span class='ident'>N</span>
 }
 
-<span class='kw'>impl</span> <span class='ident'>VelocityConstraint</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>N</span>: <span class='ident'>Scalar</span><span class='op'>&gt;</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Creates a new velocity constraint with all terms initialized to zero.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>VelocityConstraint</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>VelocityConstraint</span><span class='op'>&lt;</span><span class='ident'>N</span><span class='op'>&gt;</span> {
         <span class='ident'>VelocityConstraint</span> {
             <span class='ident'>normal</span>:             <span class='ident'>na</span>::<span class='ident'>zero</span>(),
 
@@ -212,6 +215,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

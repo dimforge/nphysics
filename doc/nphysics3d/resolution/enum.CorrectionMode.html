@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -46,25 +47,26 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1114' class='srclink' href='../../src/nphysics3d/up/up/src/resolution/constraint/contact_equation.rs.html#11-20' title='goto source code'>[src]</a></span></h1>
-<pre class='rust enum'>pub enum CorrectionMode {
-    Velocity(<a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>),
-    VelocityAndPosition(<a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>),
-    VelocityAndPositionThresold(<a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>, <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a>),
+               </span><a id='src-1099' class='srclink' href='../../src/nphysics3d/up/up/src/resolution/constraint/contact_equation.rs.html#11-20' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum CorrectionMode&lt;N:&nbsp;Scalar&gt; {
+    Velocity(N),
+    VelocityAndPosition(N,&nbsp;N,&nbsp;N),
+    VelocityAndPositionThresold(N,&nbsp;N,&nbsp;N),
 }</pre><div class='docblock'><p>The correction coefficient used by the constraint solver.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Velocity'><code>Velocity</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method.</p>
-</div></td><td></td></tr><tr><td id='variant.VelocityAndPosition'><code>VelocityAndPosition</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
-</div></td><td></td></tr><tr><td id='variant.VelocityAndPositionThresold'><code>VelocityAndPositionThresold</code></td><td><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
+<span id='variant.Velocity' class='variant'><code>Velocity(N)</code></span><div class='docblock'><p>Penetration are solved by the penalty method.</p>
+</div><span id='variant.VelocityAndPosition' class='variant'><code>VelocityAndPosition(N,&nbsp;N,&nbsp;N)</code></span><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
+</div><span id='variant.VelocityAndPositionThresold' class='variant'><code>VelocityAndPositionThresold(N,&nbsp;N,&nbsp;N)</code></span><div class='docblock'><p>Penetration are solved by the penalty method together with a hard repositioning.</p>
 
 <p>The amount of velocity correction is bounded by threshold.</p>
-</div></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../../nphysics3d/resolution/enum.CorrectionMode.html' title='nphysics3d::resolution::CorrectionMode'>CorrectionMode</a></code></h3><div class='impl-items'><h4 id='method.vel_corr_factor' class='method'><code>fn <a href='#method.vel_corr_factor' class='fnname'>vel_corr_factor</a>(&amp;self) -&gt; <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;N:&nbsp;Scalar&gt; <a class='enum' href='../../nphysics3d/resolution/enum.CorrectionMode.html' title='nphysics3d::resolution::CorrectionMode'>CorrectionMode</a>&lt;N&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1111' class='srclink' href='../../src/nphysics3d/up/up/src/resolution/constraint/contact_equation.rs.html#22-62' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.vel_corr_factor' class='method'><code>fn <a href='#method.vel_corr_factor' class='fnname'>vel_corr_factor</a>(&amp;self) -&gt; N</code></h4>
 <div class='docblock'><p>The velocity correction coefficient.</p>
-</div><h4 id='method.pos_corr_factor' class='method'><code>fn <a href='#method.pos_corr_factor' class='fnname'>pos_corr_factor</a>(&amp;self) -&gt; <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a></code></h4>
+</div><h4 id='method.pos_corr_factor' class='method'><code>fn <a href='#method.pos_corr_factor' class='fnname'>pos_corr_factor</a>(&amp;self) -&gt; N</code></h4>
 <div class='docblock'><p>The position correction coefficient.</p>
-</div><h4 id='method.min_depth_for_pos_corr' class='method'><code>fn <a href='#method.min_depth_for_pos_corr' class='fnname'>min_depth_for_pos_corr</a>(&amp;self) -&gt; <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a></code></h4>
+</div><h4 id='method.min_depth_for_pos_corr' class='method'><code>fn <a href='#method.min_depth_for_pos_corr' class='fnname'>min_depth_for_pos_corr</a>(&amp;self) -&gt; N</code></h4>
 <div class='docblock'><p>The minimum penetration depth required to switch on the hard repositioning based method.</p>
-</div><h4 id='method.max_depth_for_vel_corr' class='method'><code>fn <a href='#method.max_depth_for_vel_corr' class='fnname'>max_depth_for_vel_corr</a>(&amp;self) -&gt; <a class='type' href='../../nphysics3d/math/type.Scalar.html' title='nphysics3d::math::Scalar'>Scalar</a></code></h4>
+</div><h4 id='method.max_depth_for_vel_corr' class='method'><code>fn <a href='#method.max_depth_for_vel_corr' class='fnname'>max_depth_for_vel_corr</a>(&amp;self) -&gt; N</code></h4>
 <div class='docblock'><p>The max penetration depth the velocity correction will attempt to correct.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -89,6 +91,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 
