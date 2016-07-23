@@ -4,8 +4,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use num::Float;
-use na::{Point3, Vector3, Translation};
+use na::{Point3, Vector3};
 use ncollide::shape::{Ball, Plane};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;

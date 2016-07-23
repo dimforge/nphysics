@@ -6,8 +6,7 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use rand::random;
-use num::Float;
-use na::{Vector2, Point2, Translation};
+use na::{Vector2, Point2};
 use ncollide::shape::{Plane, ConvexHull};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;

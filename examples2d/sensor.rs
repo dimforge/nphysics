@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Point2, Vector2, Point3, Isometry2, Translation};
+use na::{Point2, Vector2, Point3, Isometry2};
 use ncollide::shape::{Plane, Cuboid, Ball};
 use ncollide::query::Proximity;
 use ncollide::narrow_phase::ProximityHandler;

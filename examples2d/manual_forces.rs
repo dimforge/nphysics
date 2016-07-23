@@ -5,8 +5,7 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
-use num::Float;
-use na::{Vector1, Vector2, Translation};
+use na::{Vector1, Vector2};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
