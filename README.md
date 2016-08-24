@@ -1,4 +1,17 @@
-[![Build Status](https://travis-ci.org/sebcrozet/nphysics.svg)](https://travis-ci.org/sebcrozet/nphysics)
+<p align="center">
+    <a href="https://crates.io/crates/nphysics">
+         <img src="http://meritbadge.herokuapp.com/nphysics?style=flat-square" alt="crates.io">
+    </a>
+    <a href="https://travis-ci.org/sebcrozet/nphysics">
+        <img src="https://travis-ci.org/sebcrozet/nphysics.svg?branch=master" alt="Build status">
+    </a>
+</p>
+<p align = "center">
+    <strong>
+        <a href="http://nphysics.org/doc/nphysics2d">2D Documentation</a> | <a href="http://nphysics.org/doc/nphysics3d">3D Documentation</a> | <a href="http://users.nphysics.org">Forum</a>
+    </strong>
+</p>
+
 
 nphysics
 ========
@@ -37,14 +50,14 @@ If you want to use the 2D version of `nphysics`, add the crate named
 
 ```ignore
 [dependencies]
-nphysics2d = "0.1.*"
+nphysics2d = "0.5.*"
 ```
 
 For the 3D version, add the crate named `nphysics3d`:
 
 ```ignore
 [dependencies]
-nphysics3d = "0.1.*"
+nphysics3d = "0.5.*"
 ```
 
 Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
