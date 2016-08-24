@@ -36,7 +36,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3, Translation};
+use na::{Point3, Vector3};
 use ncollide::shape::{Plane, ConvexHull};
 use ncollide::procedural;
 use nphysics3d::world::World;

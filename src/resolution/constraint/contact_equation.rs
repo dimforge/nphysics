@@ -231,7 +231,7 @@ fn fill_velocity_constraint<N: Scalar>(dt:              N,
 
     constraint.objective = -constraint.objective;
 
-    if depth < na::zero() {
+    if false { // depth < na::zero() {
         constraint.objective = constraint.objective + depth / dt
     }
     else if depth < correction.corr_mode.max_depth_for_vel_corr() {

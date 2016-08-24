@@ -7,10 +7,10 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 name = "nphysics_testbed3d"
 
 [dependencies]
-nalgebra = "0.8.*"
+nalgebra = "0.9.*"
 time = "0.1.*"
 rand = "0.3.*"
-glfw = "0.2.*"
+glfw = "0.8.*"
 ncollide = "*"
 kiss3d = "*"
 

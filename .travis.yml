@@ -11,7 +11,7 @@ matrix:
 addons:
   apt:
     sources:
-      - kalakris-cmake
+      - kubuntu-backports
     packages:
       - cmake
       - libxxf86vm-dev

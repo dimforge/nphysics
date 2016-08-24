@@ -8,7 +8,7 @@ extern crate nphysics_testbed2d;
 use std::sync::Arc;
 use num::Float;
 use rand::{StdRng, SeedableRng, Rng};
-use na::{Point2, Vector2, Translation};
+use na::{Point2, Vector2};
 use ncollide::shape::{Cuboid, Polyline};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;

@@ -70,7 +70,7 @@ become a grown up. Many missing features are because of missing features on
 - Kinematic bodies.
 - Efficient signaling system.
 - More joints, joint limits, joint motors and breakable joints.
-- Soft-bodies (see https://github.com/natal/roft for a draft).
+- Soft-bodies.
 - Parallel pipeline.
 - GPU-based pipeline.
 

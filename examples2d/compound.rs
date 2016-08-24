@@ -4,8 +4,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use num::Float;
-use na::{Vector2, Isometry2, Translation};
+use na::{Vector2, Isometry2};
 use ncollide::shape::{Plane, Cuboid, Compound, ShapeHandle};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;

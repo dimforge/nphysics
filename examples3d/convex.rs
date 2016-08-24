@@ -5,7 +5,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use rand::random;
-use na::{Point3, Vector3, Translation};
+use na::{Point3, Vector3};
 use ncollide::shape::{Plane, ConvexHull};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;

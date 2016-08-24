@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Point3, Translation};
+use na::{Vector2, Point3};
 use ncollide::shape::{Ball, Plane};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;

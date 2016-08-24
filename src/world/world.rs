@@ -187,10 +187,10 @@ impl<N: Scalar> World<N> {
         let uid = WorldObject::rigid_body_uid(&handle);
 
         self.rigid_bodies.insert(uid, handle.clone());
-        self.cworld.add(uid, position, shape, groups,
-                        GeometricQueryType::Contacts(collision_object_prediction),
-                        WorldObject::RigidBody(handle.clone()));
-        self.cworld.perform_removals_and_broad_phase();
+        self.cworld.deferred_add(uid, position, shape, groups,
+                                 GeometricQueryType::Contacts(collision_object_prediction),
+                                 WorldObject::RigidBody(handle.clone()));
+        self.cworld.perform_additions_removals_and_broad_phase();
 
         handle
     }
@@ -205,10 +205,10 @@ impl<N: Scalar> World<N> {
         let uid      = &*handle as *const RefCell<Sensor<N>> as usize;
 
         self.sensors.insert(uid, handle.clone());
-        self.cworld.add(uid, position, shape, groups,
-                        GeometricQueryType::Proximity(margin),
-                        WorldObject::Sensor(handle.clone()));
-        self.cworld.perform_removals_and_broad_phase();
+        self.cworld.deferred_add(uid, position, shape, groups,
+                                 GeometricQueryType::Proximity(margin),
+                                 WorldObject::Sensor(handle.clone()));
+        self.cworld.perform_additions_removals_and_broad_phase();
 
         handle
     }
@@ -217,7 +217,7 @@ impl<N: Scalar> World<N> {
     pub fn remove_rigid_body(&mut self, rb: &RigidBodyHandle<N>) {
         let uid = WorldObject::rigid_body_uid(rb);
         self.cworld.deferred_remove(uid);
-        self.cworld.perform_removals_and_broad_phase();
+        self.cworld.perform_additions_removals_and_broad_phase();
         self.joints.remove(rb, &mut *self.sleep.borrow_mut());
         self.ccd.remove_ccd_from(rb);
         self.rigid_bodies.remove(&uid);
@@ -228,7 +228,7 @@ impl<N: Scalar> World<N> {
     pub fn remove_sensor(&mut self, sensor: &SensorHandle<N>) {
         let uid = WorldObject::sensor_uid(sensor);
         self.cworld.deferred_remove(uid);
-        self.cworld.perform_removals_and_broad_phase();
+        self.cworld.perform_additions_removals_and_broad_phase();
         self.sensors.remove(&uid);
     }
 

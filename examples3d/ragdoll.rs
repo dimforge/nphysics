@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nalgebra as na;
 
 use std::f32;
-use na::{Point3, Vector3, Translation, Rotation};
+use na::{Point3, Vector3};
 use ncollide::shape::{Plane, Ball, Cylinder};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
