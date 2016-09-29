@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
-num = "*"
+num = "0.1.*"
 rand = "*"
-nalgebra = "*"
-ncollide = "*"
+nalgebra = "0.9.*"
+ncollide = "0.10.*"
 
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"
