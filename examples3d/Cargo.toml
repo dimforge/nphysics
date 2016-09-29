@@ -5,9 +5,9 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
 rand = "*"
-num = "*"
-nalgebra = "*"
-ncollide = "*"
+num = "0.1.*"
+nalgebra = "0.9.*"
+ncollide = "0.10.*"
 kiss3d = "*"
 
 [dependencies.nphysics3d]
