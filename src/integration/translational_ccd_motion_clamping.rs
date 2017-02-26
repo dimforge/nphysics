@@ -1,20 +1,18 @@
 use std::cell::RefCell;
-use na::{self, Translation};
-use ncollide::math::Scalar;
+use na;
+use alga::general::Real;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
-use ncollide::broad_phase::BroadPhase;
 use ncollide::bounding_volume::BoundingVolume;
 use ncollide::query;
 use ncollide::bounding_volume;
-use ncollide::math::FloatError;
 use ncollide::world::CollisionGroups;
 use world::RigidBodyCollisionWorld;
 use object::{RigidBodyHandle, SensorHandle, RigidBody};
-use math::Point;
+use math::{Point, Translation};
 
 
-struct CCDRigidBody<N: Scalar> {
+struct CCDRigidBody<N: Real> {
     rigid_body:      RigidBodyHandle<N>,
     sqthreshold:     N,
     last_center:     Point<N>,
@@ -22,9 +20,9 @@ struct CCDRigidBody<N: Scalar> {
     accept_zero:     bool
 }
 
-impl<N: Scalar> CCDRigidBody<N> {
+impl<N: Real> CCDRigidBody<N> {
     fn new(rigid_body: RigidBodyHandle<N>, threshold: N, trigger_sensors: bool) -> CCDRigidBody<N> {
-        let last_center = rigid_body.borrow().position().translation().to_point();
+        let last_center = rigid_body.borrow().position_center();
 
         CCDRigidBody {
             sqthreshold:     threshold * threshold,
@@ -37,12 +35,12 @@ impl<N: Scalar> CCDRigidBody<N> {
 }
 
 /// Handles Continuous Collision Detection.
-pub struct TranslationalCCDMotionClamping<N: Scalar> {
+pub struct TranslationalCCDMotionClamping<N: Real> {
     objects: HashMap<usize, CCDRigidBody<N>, UintTWHash>,
     intersected_sensors_cache: Vec<(N, SensorHandle<N>)>
 }
 
-impl<N: Scalar> TranslationalCCDMotionClamping<N> {
+impl<N: Real> TranslationalCCDMotionClamping<N> {
     /// Creates a new `TranslationalCCDMotionClamping` to enable continuous collision detection to
     /// fast-moving rigid bodies.
     pub fn new() -> TranslationalCCDMotionClamping<N> {
@@ -78,13 +76,13 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
         for co1 in self.objects.elements_mut().iter_mut() {
             let mut obj1 = co1.value.rigid_body.borrow_mut();
 
-            let movement = *obj1.position().translation().as_point() - co1.value.last_center;
+            let movement = obj1.position_center() - co1.value.last_center;
 
             if na::norm_squared(&movement) > co1.value.sqthreshold {
                 // Use CCD for this object.
                 let obj1_uid = &*co1.value.rigid_body as *const RefCell<RigidBody<N>> as usize;
 
-                let last_transform = na::append_translation(obj1.position(), &-movement);
+                let last_transform = Translation::from_vector(-movement) * obj1.position();
                 let begin_aabb     = bounding_volume::aabb(obj1.shape().as_ref(), &last_transform);
                 let end_aabb       = bounding_volume::aabb(obj1.shape().as_ref(), obj1.position());
                 let swept_aabb     = begin_aabb.merged(&end_aabb);
@@ -96,7 +94,7 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                 let mut toi_found = false;
                 let dir = movement.clone();
 
-                let _eps: N = FloatError::epsilon();
+                let _eps = N::default_epsilon();
 
                 // XXX: handle groups.
                 let all_groups = CollisionGroups::new();
@@ -139,7 +137,7 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                  * Revert the object translation at the toi.
                  */
                 if toi_found {
-                    obj1.append_translation(&(-dir * (na::one::<N>() - min_toi)));
+                    obj1.append_translation(&Translation::from_vector(-dir * (na::one::<N>() - min_toi)));
                     co1.value.accept_zero = false;
 
                     // We moved the object: ensure the broad phase takes that in account.
@@ -177,7 +175,7 @@ impl<N: Scalar> TranslationalCCDMotionClamping<N> {
                 // }
             }
 
-            co1.value.last_center = obj1.position().translation().to_point();
+            co1.value.last_center = obj1.position_center();
             self.intersected_sensors_cache.clear();
         }
 

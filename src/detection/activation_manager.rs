@@ -1,7 +1,6 @@
 use std::iter;
-use num::Float;
 use na;
-use ncollide::math::Scalar;
+use alga::general::Real;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use world::RigidBodyCollisionWorld;
@@ -14,14 +13,14 @@ use utils::union_find;
 /// Structure that monitors island-based activation/deactivation of objects.
 ///
 /// It is responsible for making objects sleep or wake up.
-pub struct ActivationManager<N: Scalar> {
+pub struct ActivationManager<N: Real> {
     mix_factor:     N,
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
     to_activate:    Vec<RigidBodyHandle<N>>,
 }
 
-impl<N: Scalar> ActivationManager<N> {
+impl<N: Real> ActivationManager<N> {
     /// Creates a new `ActivationManager`.
     ///
     /// # Arguments:
@@ -54,7 +53,7 @@ impl<N: Scalar> ActivationManager<N> {
                 let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
                     self.mix_factor * (na::norm_squared(&b.lin_vel()) + na::norm_squared(&b.ang_vel()));
 
-                b.activate(new_energy.min(threshold * na::cast::<f64, N>(4.0f64)));
+                b.activate(new_energy.min(threshold * na::convert::<f64, N>(4.0f64)));
             },
             None => { }
         }
@@ -90,7 +89,7 @@ impl<N: Scalar> ActivationManager<N> {
             let mut rb = b.borrow_mut();
 
             match rb.deactivation_threshold() {
-                Some(threshold) => rb.activate(threshold * na::cast::<f64, N>(2.0f64)),
+                Some(threshold) => rb.activate(threshold * na::convert::<f64, N>(2.0f64)),
                 None => { }
             }
         }
@@ -123,7 +122,7 @@ impl<N: Scalar> ActivationManager<N> {
         }
 
         // Run the union-find.
-        fn make_union<N: Scalar>(b1: &RigidBodyHandle<N>, b2: &RigidBodyHandle<N>, ufs: &mut [UnionFindSet]) {
+        fn make_union<N: Real>(b1: &RigidBodyHandle<N>, b2: &RigidBodyHandle<N>, ufs: &mut [UnionFindSet]) {
             let rb1 = b1.borrow();
             let rb2 = b2.borrow();
 
@@ -186,7 +185,7 @@ impl<N: Scalar> ActivationManager<N> {
             else { // Everybody in this set must be reactivated.
                 if !b.is_active() && b.can_move() {
                     match b.deactivation_threshold() {
-                        Some(threshold) => b.activate(threshold * na::cast::<f64, N>(2.0f64)),
+                        Some(threshold) => b.activate(threshold * na::convert::<f64, N>(2.0f64)),
                         None => { }
                     }
                 }

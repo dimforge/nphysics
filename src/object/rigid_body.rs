@@ -3,11 +3,14 @@ use std::any::Any;
 use std::ops::Mul;
 use std::rc::Rc;
 use std::cell::RefCell;
-use na::{self, Transformation, Transform, Translation, Rotation, Bounded, Cross};
+use num::Bounded;
+
+use alga::general::Real;
+use na;
 use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
 use ncollide::shape::{Shape, ShapeHandle};
-use ncollide::math::Scalar;
-use math::{Point, Vector, Orientation, Matrix, AngularInertia};
+use utils::GeneralizedCross;
+use math::{Point, Vector, Orientation, Rotation, Translation, Isometry, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
 use object::RigidBodyCollisionGroups;
 
@@ -26,7 +29,7 @@ pub enum RigidBodyState { // FIXME: rename this to "RigidBodyKind"?
 
 #[derive(Debug, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 /// The activation state of a rigid body.
-pub enum ActivationState<N: Scalar> {
+pub enum ActivationState<N: Real> {
     /// The rigid body is active with a not-zero energy.
     Active(N),
     /// The rigid body is inactive.
@@ -35,7 +38,7 @@ pub enum ActivationState<N: Scalar> {
     Deleted
 }
 
-impl<N: Scalar> ActivationState<N> {
+impl<N: Real> ActivationState<N> {
     /// The energy accumulated other several frames.
     pub fn energy(&self) -> N {
         match *self {
@@ -49,10 +52,10 @@ impl<N: Scalar> ActivationState<N> {
 /// The rigid body structure.
 ///
 /// This is the structure describing an object on the physics world.
-pub struct RigidBody<N: Scalar> {
+pub struct RigidBody<N: Real> {
     state:                RigidBodyState,
-    shape:                ShapeHandle<Point<N>, Matrix<N>>,
-    local_to_world:       Matrix<N>,
+    shape:                ShapeHandle<Point<N>, Isometry<N>>,
+    local_to_world:       Isometry<N>,
     lin_vel:              Vector<N>,
     ang_vel:              Orientation<N>,
     inv_mass:             N,
@@ -77,7 +80,7 @@ pub struct RigidBody<N: Scalar> {
     user_data:            Option<Box<Any>>
 }
 
-impl<N: Scalar> Clone for RigidBody<N> {
+impl<N: Real> Clone for RigidBody<N> {
     /// Clones this rigid body but not its associated user-data.
     fn clone(&self) -> RigidBody<N> {
         RigidBody {
@@ -111,7 +114,7 @@ impl<N: Scalar> Clone for RigidBody<N> {
 }
 
 
-impl<N: Scalar> RigidBody<N> {
+impl<N: Real> RigidBody<N> {
     #[doc(hidden)]
     #[inline]
     pub fn deactivate(&mut self) {
@@ -136,18 +139,26 @@ impl<N: Scalar> RigidBody<N> {
     /// Updates the center of mass of this rigid body.
     #[inline]
     fn update_center_of_mass(&mut self) {
-        self.center_of_mass = self.local_to_world.transform(&self.ls_center_of_mass);
+        self.center_of_mass = self.local_to_world * self.ls_center_of_mass;
     }
 
     /// Gets a reference to this body's transform.
     #[inline]
-    pub fn position(&self) -> &Matrix<N> {
+    pub fn position(&self) -> &Isometry<N> {
         &self.local_to_world
+    }
+
+    /// The center given by this object's position. May not be the same as its center of mass.
+    ///
+    /// This is the point with coordinates `self.position().translation.vector`.
+    #[inline]
+    pub fn position_center(&self) -> Point<N> {
+        Point::from_coordinates(self.local_to_world.translation.vector)
     }
 
     /// A reference to this body's shape handle.
     #[inline]
-    pub fn shape(&self) -> &ShapeHandle<Point<N>, Matrix<N>> {
+    pub fn shape(&self) -> &ShapeHandle<Point<N>, Isometry<N>> {
         &self.shape
     }
 
@@ -259,7 +270,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Creates a new rigid body that can move.
     pub fn new_dynamic<G>(shape: G, density: N, restitution: N, friction: N) -> RigidBody<N>
-        where G: Send + Sync + Shape<Point<N>, Matrix<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
+        where G: Send + Sync + Shape<Point<N>, Isometry<N>> + Volumetric<N, Point<N>, AngularInertia<N>> {
         let props = shape.mass_properties(density);
 
         RigidBody::new(ShapeHandle::new(shape), Some(props), restitution, friction)
@@ -267,7 +278,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Creates a new rigid body that cannot move.
     pub fn new_static<G>(shape: G, restitution: N, friction: N) -> RigidBody<N>
-        where G: Send + Sync + Shape<Point<N>, Matrix<N>> {
+        where G: Send + Sync + Shape<Point<N>, Isometry<N>> {
 
         RigidBody::new(ShapeHandle::new(shape), None, restitution, friction)
     }
@@ -276,29 +287,33 @@ impl<N: Scalar> RigidBody<N> {
     ///
     /// Use this if the shape is shared by multiple rigid bodies.
     /// Set `mass_properties` to `None` if the rigid body is to be static.
-    pub fn new(shape:           ShapeHandle<Point<N>, Matrix<N>>,
+    pub fn new(shape:           ShapeHandle<Point<N>, Isometry<N>>,
                mass_properties: Option<(N, Point<N>, AngularInertia<N>)>,
                restitution:     N,
                friction:        N)
                -> RigidBody<N> {
         let (inv_mass, center_of_mass, inv_inertia, active, state, groups) =
             match mass_properties {
-                None => (na::zero(), na::origin(), na::zero(), ActivationState::Inactive, RigidBodyState::Static, RigidBodyCollisionGroups::new_static()),
+                None => (na::zero(), na::origin(), na::zero(),
+                         ActivationState::Inactive, RigidBodyState::Static,
+                         RigidBodyCollisionGroups::new_static()),
                 Some((mass, com, inertia)) => {
-                    if na::is_zero(&mass) {
+                    if mass.is_zero() {
                         panic!("A dynamic body must not have a zero volume.")
                     }
 
                     let ii: AngularInertia<N>;
 
-                    match na::inverse(&inertia) {
+                    match inertia.try_inverse() {
                         Some(i) => ii = i,
                         None    => ii = na::zero()
                     }
 
+                    let active = ActivationState::Active(Bounded::max_value());
+                    let groups = RigidBodyCollisionGroups::new_dynamic();
                     let _1: N = na::one();
 
-                    (_1 / mass, com, ii, ActivationState::Active(Bounded::max_value()), RigidBodyState::Dynamic, RigidBodyCollisionGroups::new_dynamic())
+                    (_1 / mass, com, ii, active, RigidBodyState::Dynamic, groups)
                 },
             };
 
@@ -323,10 +338,10 @@ impl<N: Scalar> RigidBody<N> {
                 restitution:       restitution,
                 index:             0,
                 activation_state:  active,
-                sleep_threshold:   Some(na::cast(0.1f64)),
-                lin_acc_scale:     na::one(),
-                ang_acc_scale:     na::one(),
-                margin:            na::cast(0.04f64), // FIXME: do not hard-code this.
+                sleep_threshold:   Some(na::convert(0.1f64)),
+                lin_acc_scale:     Vector::from_element(N::one()),
+                ang_acc_scale:     Orientation::from_element(N::one()),
+                margin:            na::convert(0.04f64), // FIXME: do not hard-code this.
                 collision_groups:  groups,
                 user_data:         None
             };
@@ -475,7 +490,7 @@ impl<N: Scalar> RigidBody<N> {
     #[inline]
     pub fn append_force_wrt_point(&mut self, force: Vector<N>, pnt_to_com: Vector<N>) {
         self.append_lin_force(force);
-        self.append_ang_force(pnt_to_com.cross(&force));
+        self.append_ang_force(pnt_to_com.gcross(&force));
     }
 
     /// Update the linear and angular acceleraction from the applied forces.
@@ -487,12 +502,12 @@ impl<N: Scalar> RigidBody<N> {
     /// Update the linear acceleraction from the applied forces.
     #[inline]
     fn update_lin_acc(&mut self) {
-        self.lin_acc = (self.lin_force * self.inv_mass + self.gravity) * self.lin_acc_scale;
+        self.lin_acc = (self.lin_force * self.inv_mass + self.gravity).component_mul(&self.lin_acc_scale);
     }
     /// Update the angular acceleraction from the applied forces.
     #[inline]
     fn update_ang_acc(&mut self) {
-        self.ang_acc = (self.ang_force * self.inv_inertia) * self.ang_acc_scale;
+        self.ang_acc = (self.inv_inertia * self.ang_force).component_mul(&self.ang_acc_scale);
     }
 
     /// Applies a one-time central impulse.
@@ -513,12 +528,12 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Applies a one-time impulse to a point relative to the center of mass.
     ///
-    /// The ```pnt_to_com``` vector has to point from the center of mass to the
+    /// The `pnt_to_com` vector has to point from the center of mass to the
     /// point where the impulse acts.
     #[inline]
     pub fn apply_impulse_wrt_point(&mut self, impulse: Vector<N>, pnt_to_com: Vector<N>){
         self.apply_central_impulse(impulse);
-        self.apply_angular_momentum(pnt_to_com.cross(&impulse));
+        self.apply_angular_momentum(pnt_to_com.gcross(&impulse));
     }
 
     /// Gets the inverse mass of this rigid body.
@@ -549,8 +564,8 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Appends a transformation to this rigid body.
     #[inline]
-    pub fn append_transformation(&mut self, to_append: &Matrix<N>) {
-        self.local_to_world.append_transformation_mut(to_append);
+    pub fn append_transformation(&mut self, to_append: &Isometry<N>) {
+        self.local_to_world = to_append * self.local_to_world;
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -558,8 +573,8 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Prepends a transformation to this rigid body.
     #[inline]
-    pub fn prepend_transformation(&mut self, to_prepend: &Matrix<N>) {
-        self.local_to_world.prepend_transformation_mut(to_prepend);
+    pub fn prepend_transformation(&mut self, to_prepend: &Isometry<N>) {
+        self.local_to_world *= to_prepend;
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -567,7 +582,7 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Sets the transformation of this rigid body.
     #[inline]
-    pub fn set_transformation(&mut self, m: Matrix<N>) {
+    pub fn set_transformation(&mut self, m: Isometry<N>) {
         self.local_to_world = m;
 
         self.update_center_of_mass();
@@ -576,31 +591,31 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Appends a translation to this rigid body.
     #[inline]
-    pub fn append_translation(&mut self, t: &Vector<N>) {
-        self.local_to_world.append_translation_mut(t);
+    pub fn append_translation(&mut self, t: &Translation<N>) {
+        self.local_to_world.translation = t * self.local_to_world.translation;
         self.update_center_of_mass();
     }
 
     /// Prepends a translation to this rigid body.
     #[inline]
-    pub fn prepend_translation(&mut self, t: &Vector<N>) {
-        self.local_to_world.prepend_translation_mut(t);
+    pub fn prepend_translation(&mut self, t: &Translation<N>) {
+        self.local_to_world.translation *= t;
         self.update_center_of_mass();
     }
 
 
     /// Stes the translation of this rigid body.
     #[inline]
-    pub fn set_translation(&mut self, t: Vector<N>) {
-        self.local_to_world.set_translation(t);
+    pub fn set_translation(&mut self, t: Translation<N>) {
+        self.local_to_world.translation = t;
 
         self.update_center_of_mass();
     }
 
     /// Appends a rotation to this rigid body.
     #[inline]
-    pub fn append_rotation(&mut self, rot: &Orientation<N>) {
-        self.local_to_world.append_rotation_mut(rot);
+    pub fn append_rotation(&mut self, rot: &Rotation<N>) {
+        self.local_to_world.rotation = rot * self.local_to_world.rotation;
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -608,8 +623,8 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Prepends a rotation to this rigid body.
     #[inline]
-    pub fn prepend_rotation(&mut self, rot: &Orientation<N>) {
-        self.local_to_world.prepend_rotation_mut(rot);
+    pub fn prepend_rotation(&mut self, rot: &Rotation<N>) {
+        self.local_to_world.rotation *= rot;
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -617,8 +632,8 @@ impl<N: Scalar> RigidBody<N> {
 
     /// Sets the rotation of this rigid body.
     #[inline]
-    pub fn set_rotation(&mut self, r: Orientation<N>) {
-        self.local_to_world.set_rotation(r);
+    pub fn set_rotation(&mut self, rot: Rotation<N>) {
+        self.local_to_world.rotation = rot;
 
         self.update_center_of_mass();
         self.update_inertia_tensor();
@@ -664,16 +679,16 @@ impl<N: Scalar> RigidBody<N> {
 }
 
 impl<N, M> HasBoundingVolume<M, BoundingSphere<Point<N>>> for RigidBody<N>
-    where N: Scalar,
-          M: Copy + Mul<Matrix<N>, Output = Matrix<N>> { // FIXME: avoiding `Copy` would be great.
+    where N: Real,
+          M: Copy + Mul<Isometry<N>, Output = Isometry<N>> { // FIXME: avoiding `Copy` would be great.
     fn bounding_volume(&self, m: &M) -> BoundingSphere<Point<N>> {
         bounding_volume::bounding_sphere(self.shape.as_ref(), &(*m * self.local_to_world)).loosened(self.margin())
     }
 }
 
 impl<N, M> HasBoundingVolume<M, AABB<Point<N>>> for RigidBody<N>
-    where N: Scalar,
-          M: Copy + Mul<Matrix<N>, Output = Matrix<N>> { // FIXME: avoiding `Copy` would be great.
+    where N: Real,
+          M: Copy + Mul<Isometry<N>, Output = Isometry<N>> { // FIXME: avoiding `Copy` would be great.
     fn bounding_volume(&self, m: &M) -> AABB<Point<N>> {
         bounding_volume::aabb(self.shape.as_ref(), &(*m * self.local_to_world)).loosened(self.margin())
     }

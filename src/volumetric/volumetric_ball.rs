@@ -1,34 +1,36 @@
 use std::ops::IndexMut;
-use num::{Float, Zero};
-use na::{Origin, BaseFloat, Point2, Point3, Matrix1, Matrix3};
+use num::Zero;
+
+use alga::general::Real;
+use na::{Point2, Point3, Matrix1, Matrix3};
 use na;
-use ncollide::math::Scalar;
 use ncollide::shape::{Ball2, Ball3};
 use volumetric::Volumetric;
+use ncollide::math::Point;
 
 
 /// The volume of a ball.
 #[inline]
-pub fn ball_volume<N: Scalar>(dimension: usize, radius: N) -> N {
+pub fn ball_volume<N: Real>(dimension: usize, radius: N) -> N {
     assert!(dimension == 2 || dimension == 3);
 
-    let _pi: N = BaseFloat::pi();
+    let _pi = N::pi();
     _pi * radius.powi(dimension as i32)
 }
 
 /// The area of a ball.
 #[inline]
-pub fn ball_area<N: Scalar>(dimension: usize, radius: N) -> N {
+pub fn ball_area<N: Real>(dimension: usize, radius: N) -> N {
     assert!(dimension == 2 || dimension == 3);
 
     match dimension {
         2 => {
-            let _pi: N = BaseFloat::pi();
-            _pi * radius * na::cast(2.0f64)
+            let _pi = N::pi();
+            _pi * radius * na::convert(2.0f64)
         }
         3 => {
-            let _pi: N = BaseFloat::pi();
-            _pi * radius * radius * na::cast(4.0f64)
+            let _pi = N::pi();
+            _pi * radius * radius * na::convert(4.0f64)
         }
         _ => unreachable!()
     }
@@ -36,29 +38,29 @@ pub fn ball_area<N: Scalar>(dimension: usize, radius: N) -> N {
 
 /// The center of mass of a ball.
 #[inline]
-pub fn ball_center_of_mass<P: Origin>() -> P {
-    na::origin()
+pub fn ball_center_of_mass<P: Point>() -> P {
+    P::origin()
 }
 
 /// The unit angular inertia of a ball.
 #[inline]
 pub fn ball_unit_angular_inertia<N, I>(dimension: usize, radius: N) -> I
-    where N: Scalar,
+    where N: Real,
           I: Zero + IndexMut<(usize, usize), Output = N> {
     assert!(dimension == 2 || dimension == 3);
 
     match dimension {
         2 => {
-            let diag = radius * radius / na::cast(2.0f64);
-            let mut res = na::zero::<I>();
+            let diag = radius * radius / na::convert(2.0f64);
+            let mut res = I::zero();
 
             res[(0, 0)] = diag;
 
             res
         }
         3 => {
-            let diag: N = radius * radius * na::cast(2.0f64 / 5.0);
-            let mut res = na::zero::<I>();
+            let diag: N = radius * radius * na::convert(2.0f64 / 5.0);
+            let mut res = I::zero();
 
             res[(0, 0)] = diag.clone();
             res[(1, 1)] = diag.clone();
@@ -72,7 +74,7 @@ pub fn ball_unit_angular_inertia<N, I>(dimension: usize, radius: N) -> I
 
 macro_rules! impl_volumetric_ball(
     ($t: ident, $dimension: expr, $p: ident, $i: ident) => {
-        impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
+        impl<N: Real> Volumetric<N, $p<N>, $i<N>> for $t<N> {
             fn area(&self) -> N {
                 ball_area($dimension, self.radius())
             }

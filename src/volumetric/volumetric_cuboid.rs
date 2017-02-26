@@ -1,23 +1,23 @@
-use std::ops::{Index, IndexMut};
+use std::ops::IndexMut;
 use num::Zero;
-use na::{Point2, Point3, Matrix1, Matrix3, Origin, Iterable};
+
+use alga::general::Real;
+use na::{Point2, Point3, Matrix1, Matrix3};
 use na;
 use ncollide::shape::{Cuboid2, Cuboid3};
-use ncollide::math::Scalar;
+use ncollide::math::{Point, Vector};
 use volumetric::Volumetric;
 
 
 /// The volume of a cuboid.
 #[inline]
-pub fn cuboid_volume<N, V>(dimension: usize, half_extents: &V) -> N
-    where N: Scalar,
-          V: Iterable<N> {
-    assert!(dimension == 2 || dimension == 3);
+pub fn cuboid_volume<V: Vector>(half_extents: &V) -> V::Real {
+    assert!(na::dimension::<V>() == 2 || na::dimension::<V>() == 3);
 
-    let mut res: N = na::one();
+    let mut res: V::Real = na::one();
 
-    for half_extent in half_extents.iter() {
-        res = res * *half_extent * na::cast(2.0f64)
+    for i in 0 .. na::dimension::<V>() {
+        res = res * half_extents[i] * na::convert(2.0f64)
     }
 
     res
@@ -25,14 +25,12 @@ pub fn cuboid_volume<N, V>(dimension: usize, half_extents: &V) -> N
 
 /// The area of a cuboid.
 #[inline]
-pub fn cuboid_area<N, V>(dimension: usize, half_extents: &V) -> N
-    where N: Scalar,
-          V: Index<usize, Output = N> {
-    assert!(dimension == 2 || dimension == 3);
+pub fn cuboid_area<V: Vector>(half_extents: &V) -> V::Real {
+    assert!(na::dimension::<V>() == 2 || na::dimension::<V>() == 3);
 
-    match dimension {
+    match na::dimension::<V>() {
         2 => {
-            (half_extents[0] + half_extents[1]) * na::cast(4.0f64)
+            (half_extents[0] + half_extents[1]) * na::convert(4.0f64)
         }
         3 => {
             let he = half_extents;
@@ -44,7 +42,7 @@ pub fn cuboid_area<N, V>(dimension: usize, half_extents: &V) -> N
             let side_xz = xx * zz;
             let side_yz = yy * zz;
 
-            (side_xy + side_xz + side_yz) * na::cast(2.0f64)
+            (side_xy + side_xz + side_yz) * na::convert(2.0f64)
         }
         _ => unreachable!()
     }
@@ -52,42 +50,41 @@ pub fn cuboid_area<N, V>(dimension: usize, half_extents: &V) -> N
 
 /// The center of mass of a cuboid.
 #[inline]
-pub fn cuboid_center_of_mass<P: Origin>() -> P {
-    na::origin()
+pub fn cuboid_center_of_mass<P: Point>() -> P {
+    P::origin()
 }
 
 /// The unit angular inertia of a cuboid.
 #[inline]
-pub fn cuboid_unit_angular_inertia<N, V, I>(dimension: usize, half_extents: &V) -> I
-    where N: Scalar,
-          V: Index<usize, Output = N>,
-          I: Zero + IndexMut<(usize, usize), Output = N> {
-    assert!(dimension == 2 || dimension == 3);
+pub fn cuboid_unit_angular_inertia<V, I>(half_extents: &V) -> I
+    where V: Vector,
+          I: Zero + IndexMut<(usize, usize), Output = V::Real> {
+    assert!(na::dimension::<V>() == 2 || na::dimension::<V>() == 3);
 
-    match dimension {
+    match na::dimension::<V>() {
         2 => {
-            let _2: N   = na::cast(2.0f64);
-            let _i12: N = na::cast(1.0f64 / 12.0);
-            let w       = _i12 * _2 * _2;
-            let ix      = w * half_extents[0] * half_extents[0];
-            let iy      = w * half_extents[1] * half_extents[1];
+            let _2: V::Real   = na::convert(2.0f64);
+            let _i12: V::Real = na::convert(1.0f64 / 12.0);
+            let w  = _i12 * _2 * _2;
+            let ix = w * half_extents[0] * half_extents[0];
+            let iy = w * half_extents[1] * half_extents[1];
 
-            let mut res = na::zero::<I>();
+            let mut res = I::zero();
 
             res[(0, 0)] = ix + iy;
 
             res
         }
         3 => {
-            let _0: N   = na::zero();
-            let _2: N   = na::cast(2.0f64);
-            let _i12: N = na::cast(1.0f64 / 12.0);
-            let w       = _i12 * _2 * _2;
-            let ix      = w * half_extents[0] * half_extents[0];
-            let iy      = w * half_extents[1] * half_extents[1];
-            let iz      = w * half_extents[2] * half_extents[2];
+            let _0: V::Real   = na::zero();
+            let _2: V::Real   = na::convert(2.0f64);
+            let _i12: V::Real = na::convert(1.0f64 / 12.0);
+            let w  = _i12 * _2 * _2;
+            let ix = w * half_extents[0] * half_extents[0];
+            let iy = w * half_extents[1] * half_extents[1];
+            let iz = w * half_extents[2] * half_extents[2];
 
-            let mut res = na::zero::<I>();
+            let mut res = I::zero();
 
             res[(0, 0)] = iy + iz;
             res[(1, 1)] = ix + iz;
@@ -100,14 +97,14 @@ pub fn cuboid_unit_angular_inertia<N, V, I>(dimension: usize, half_extents: &V) 
 }
 
 macro_rules! impl_volumetric_cuboid(
-    ($t: ident, $dimension: expr, $p: ident, $i: ident) => (
-        impl<N: Scalar> Volumetric<N, $p<N>, $i<N>> for $t<N> {
+    ($t: ident, $p: ident, $i: ident) => (
+        impl<N: Real> Volumetric<N, $p<N>, $i<N>> for $t<N> {
             fn area(&self) -> N {
-                cuboid_area($dimension, self.half_extents())
+                cuboid_area(self.half_extents())
             }
 
             fn volume(&self) -> N {
-                cuboid_volume($dimension, self.half_extents())
+                cuboid_volume(self.half_extents())
             }
 
             fn center_of_mass(&self) -> $p<N> {
@@ -115,11 +112,11 @@ macro_rules! impl_volumetric_cuboid(
             }
 
             fn unit_angular_inertia(&self) -> $i<N> {
-                cuboid_unit_angular_inertia($dimension, self.half_extents())
+                cuboid_unit_angular_inertia(self.half_extents())
             }
         }
     )
 );
 
-impl_volumetric_cuboid!(Cuboid2, 2, Point2, Matrix1);
-impl_volumetric_cuboid!(Cuboid3, 3, Point3, Matrix3);
+impl_volumetric_cuboid!(Cuboid2, Point2, Matrix1);
+impl_volumetric_cuboid!(Cuboid3, Point3, Matrix3);

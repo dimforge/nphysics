@@ -1,7 +1,7 @@
 //! Explicit Euler integrator.
 
-use ncollide::math::Scalar;
-use na::Transformation;
+use alga::general::Real;
+
 use object::RigidBody;
 use integration::Integrator;
 use integration::euler;
@@ -19,7 +19,7 @@ impl BodyExpEulerIntegrator {
     }
 }
 
-impl<N: Scalar> Integrator<N, RigidBody<N>> for BodyExpEulerIntegrator {
+impl<N: Real> Integrator<N, RigidBody<N>> for BodyExpEulerIntegrator {
     #[inline]
     fn update(&mut self, dt: N, rb: &mut RigidBody<N>) {
         if rb.can_move() {

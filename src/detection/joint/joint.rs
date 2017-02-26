@@ -1,9 +1,9 @@
-use ncollide::math::Scalar;
+use alga::general::Real;
 use detection::joint::anchor::Anchor;
 
 // FIXME: this wont be very helpful to mix several joints.
 /// Trait implemented by every joint.
-pub trait Joint<N: Scalar, A> {
+pub trait Joint<N: Real, A> {
     /// The first anchor affected by this joint.
     fn anchor1(&self) -> &Anchor<N, A>;
     /// The second anchor affected by this joint.

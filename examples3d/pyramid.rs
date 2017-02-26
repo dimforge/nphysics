@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3};
+use na::{Point3, Vector3, Translation3};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -41,7 +41,7 @@ fn main() {
 
             let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector3::new(rad - 0.04, rad - 0.04, rad - 0.04)), 1.0, 0.3, 0.6);
 
-            rb.append_translation(&Vector3::new(x, y, 0.0));
+            rb.append_translation(&Translation3::new(x, y, 0.0));
 
             world.add_rigid_body(rb);
         }

@@ -1,11 +1,10 @@
-extern crate num;
 extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
-use na::{Vector1, Vector2};
+use na::{Vector1, Vector2, Translation2};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -25,7 +24,7 @@ fn main() {
      */
     let mut rb = RigidBody::new_static(Plane::new(Vector2::new(-1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vector2::new(0.0, 10.0));
+    rb.append_translation(&Translation2::new(0.0, 10.0));
 
     world.add_rigid_body(rb);
 
@@ -34,7 +33,7 @@ fn main() {
      */
     let mut rb = RigidBody::new_static(Plane::new(Vector2::new(1.0, -1.0)), 0.3, 0.6);
 
-    rb.append_translation(&Vector2::new(0.0, 10.0));
+    rb.append_translation(&Translation2::new(0.0, 10.0));
 
     world.add_rigid_body(rb);
     
@@ -67,7 +66,7 @@ fn main() {
 
             let geom = Cuboid::new(Vector2::new(0.5, 0.5));
             let mut rb = RigidBody::new_dynamic(geom, 0.1, 0.3, 0.6);
-            rb.append_translation(&Vector2::new(x, y));
+            rb.append_translation(&Translation2::new(x, y));
             let rb_handle = world.add_rigid_body(rb);
             
             handles.push(rb_handle);

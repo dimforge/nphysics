@@ -22,7 +22,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::Vector2;
+use na::{Vector2, Translation2};
 use ncollide::shape::Cuboid;
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -50,7 +50,7 @@ fn main() {
      * Create the box that will not be deactivated.
      */
     rb.set_deactivation_threshold(Some(0.5));
-    rb.append_translation(&Vector2::new(0.0, 3.0));
+    rb.append_translation(&Translation2::new(0.0, 3.0));
 
     world.add_rigid_body(rb);
 

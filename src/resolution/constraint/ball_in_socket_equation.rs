@@ -1,17 +1,20 @@
 use std::cell::Ref;
-use na::{self,  Row, Bounded};
-use ncollide::math::Scalar;
+use num::Bounded;
+
+use alga::general::Real;
+use na::{self, U1};
 use math::{Point, Vector};
+use utils::GeneralizedCross;
 use object::RigidBody;
 use detection::joint::{Anchor, BallInSocket, Joint};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
 
-pub fn fill_second_order_equation<N: Scalar>(dt:          N,
-                                             joint:       &BallInSocket<N>,
-                                             constraints: &mut [VelocityConstraint<N>],
-                                             correction:  &CorrectionParameters<N>) {
+pub fn fill_second_order_equation<N: Real>(dt:          N,
+                                           joint:       &BallInSocket<N>,
+                                           constraints: &mut [VelocityConstraint<N>],
+                                           correction:  &CorrectionParameters<N>) {
     cancel_relative_linear_motion(
         dt,
         &joint.anchor1_pos(),
@@ -23,7 +26,7 @@ pub fn fill_second_order_equation<N: Scalar>(dt:          N,
 }
 
 // FIXME: move this on another file. Something like "joint_equation_helper.rs"
-pub fn cancel_relative_linear_motion<N: Scalar, P>(
+pub fn cancel_relative_linear_motion<N: Real, P>(
                                      dt:          N,
                                      global1:     &Point<N>,
                                      global2:     &Point<N>,
@@ -32,8 +35,8 @@ pub fn cancel_relative_linear_motion<N: Scalar, P>(
                                      constraints: &mut [VelocityConstraint<N>],
                                      correction:  &CorrectionParameters<N>) {
     let error      = (*global2 - *global1) * correction.joint_corr;
-    let rot_axis1  = na::cross_matrix(&(*global1 - anchor1.center_of_mass()));
-    let rot_axis2  = na::cross_matrix(&(*global2 - anchor2.center_of_mass()));
+    let rot_axis1  = (*global1 - anchor1.center_of_mass()).gcross_matrix();
+    let rot_axis2  = (*global2 - anchor2.center_of_mass()).gcross_matrix();
 
     for i in 0usize .. na::dimension::<Vector<N>>() {
         let mut lin_axis: Vector<N> = na::zero();
@@ -44,19 +47,8 @@ pub fn cancel_relative_linear_motion<N: Scalar, P>(
         let opt_rb1 = write_anchor_id(anchor1, &mut constraint.id1);
         let opt_rb2 = write_anchor_id(anchor2, &mut constraint.id2);
 
-        // XXX:
-        // We use this dimension-dependent assignation.
-        // This is needed because nalgebra does not define the `column` operator for vectors.
-        // The true formula should be:
-        // let rot_axis1 = -rot_axis1.col(i);
-        // let rot_axis2 = rot_axis2.col(i);
-        let (rot_axis1, rot_axis2) =
-            if na::dimension::<Vector<N>>() == 2 {
-                (-rot_axis1.row(i), rot_axis2.row(i))
-            }
-            else { // == 3
-                (rot_axis1.row(i), -rot_axis2.row(i))
-            };
+        let rot_axis1 = -rot_axis1.fixed_columns::<U1>(i);
+        let rot_axis2 =  rot_axis2.fixed_columns::<U1>(i).into_owned();
 
         let dvel = contact_equation::relative_velocity(
             &opt_rb1.as_ref().map(|r| &**r),
@@ -84,7 +76,7 @@ pub fn cancel_relative_linear_motion<N: Scalar, P>(
 }
 
 #[inline]
-pub fn write_anchor_id<'a, N: Scalar, P>(anchor: &'a Anchor<N, P>, id: &mut isize) -> Option<Ref<'a, RigidBody<N>>> {
+pub fn write_anchor_id<'a, N: Real, P>(anchor: &'a Anchor<N, P>, id: &mut isize) -> Option<Ref<'a, RigidBody<N>>> {
     match anchor.body {
         Some(ref b) => {
             let rb = b.borrow();

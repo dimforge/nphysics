@@ -1,18 +1,18 @@
+use alga::general::Real;
 use na;
-use ncollide::math::Scalar;
 use math::{Vector, Orientation};
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 
 /// Structure holding the result of the projected gauss seidel solver.
 #[derive(PartialEq, Debug, Clone)]
-pub struct Velocities<N: Scalar> {
+pub struct Velocities<N: Real> {
     /// Linear velocity.
     pub lv: Vector<N>,
     /// Angular velocity.
     pub av: Orientation<N>
 }
 
-impl<N: Scalar> Velocities<N> {
+impl<N: Real> Velocities<N> {
     /// Creates a new `Velocities`.
     pub fn new() -> Velocities<N> {
         Velocities {
@@ -40,12 +40,12 @@ impl<N: Scalar> Velocities<N> {
 /// * `is_lambda_zero` - indicates whether or not the every element of `result` has been
 /// reinitialized. Set this to `false` if the `result` comes from a previous execution of
 /// `projected_gauss_seidel_solve`: this will perform warm-starting.
-pub fn projected_gauss_seidel_solve<N: Scalar>(restitution:    &mut [VelocityConstraint<N>],
-                                               friction:       &mut [VelocityConstraint<N>],
-                                               result:         &mut [Velocities<N>],
-                                               num_bodies:     usize,
-                                               num_iterations: usize,
-                                               is_lambda_zero: bool) {
+pub fn projected_gauss_seidel_solve<N: Real>(restitution:    &mut [VelocityConstraint<N>],
+                                             friction:       &mut [VelocityConstraint<N>],
+                                             result:         &mut [Velocities<N>],
+                                             num_bodies:     usize,
+                                             num_iterations: usize,
+                                             is_lambda_zero: bool) {
     // initialize the solution with zeros...
     // mj_lambda is result
     assert!(result.len() == num_bodies);
@@ -88,7 +88,7 @@ pub fn projected_gauss_seidel_solve<N: Scalar>(restitution:    &mut [VelocityCon
 }
 
 #[inline(always)]
-fn setup_warmstart_for_constraint<N: Scalar>(c: &VelocityConstraint<N>, mj_lambda: &mut [Velocities<N>]) {
+fn setup_warmstart_for_constraint<N: Real>(c: &VelocityConstraint<N>, mj_lambda: &mut [Velocities<N>]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
@@ -104,7 +104,7 @@ fn setup_warmstart_for_constraint<N: Scalar>(c: &VelocityConstraint<N>, mj_lambd
 }
 
 #[inline(always)]
-fn solve_velocity_constraint<N: Scalar>(c: &mut VelocityConstraint<N>, mj_lambda: &mut [Velocities<N>]) {
+fn solve_velocity_constraint<N: Real>(c: &mut VelocityConstraint<N>, mj_lambda: &mut [Velocities<N>]) {
     let id1 = c.id1;
     let id2 = c.id2;
 
@@ -126,7 +126,7 @@ fn solve_velocity_constraint<N: Scalar>(c: &mut VelocityConstraint<N>, mj_lambda
     // (this is the ``projected'' flavour of Gauss-Seidel
     let lambda_i_0 = c.impulse.clone();
 
-    c.impulse = na::clamp(lambda_i_0 + d_lambda_i, c.lobound, c.hibound);
+    c.impulse = *na::clamp(&(lambda_i_0 + d_lambda_i), &c.lobound, &c.hibound);
 
     d_lambda_i = c.impulse - lambda_i_0;
 

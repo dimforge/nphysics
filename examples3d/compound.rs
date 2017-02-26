@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3, Isometry3};
+use na::{Point3, Vector3, Isometry3, Translation3};
 use ncollide::shape::{Plane, Cuboid, Compound, ShapeHandle};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
@@ -61,7 +61,7 @@ fn main() {
 
                 let mut rb = RigidBody::new(cross.clone(), Some(mass), 0.3, 0.5);
 
-                rb.append_translation(&Vector3::new(x, y, z));
+                rb.append_translation(&Translation3::new(x, y, z));
 
                 world.add_rigid_body(rb);
             }

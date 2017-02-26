@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nalgebra as na;
 
 use std::f32;
-use na::{Point3, Vector3};
+use na::{Point3, Vector3, Translation3, UnitQuaternion};
 use ncollide::shape::{Plane, Ball, Cylinder};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -56,31 +56,31 @@ fn add_ragdoll(pos: Vector3<f32>, world: &mut World<f32>) {
     // head
     let     head_geom = Ball::new(0.8);
     let mut head      = RigidBody::new_dynamic(head_geom, 1.0, 0.3, 0.5);
-    head.append_translation(&(pos + Vector3::new(0.0, 2.4, 0.0)));
+    head.append_translation(&Translation3::from_vector(pos + Vector3::new(0.0, 2.4, 0.0)));
 
     // body
     let     body_geom = Cylinder::new(1.2, 0.5);
     let mut body      = RigidBody::new_dynamic(body_geom, 1.0, 0.3, 0.5);
-    body.append_translation(&pos);
+    body.append_translation(&Translation3::from_vector(pos));
 
     // right arm
     let     rarm_geom = Cylinder::new(1.6, 0.2);
     let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0, 0.3, 0.5);
-    rarm.append_rotation(&Vector3::new(f32::consts::FRAC_PI_2, 0.0, 0.0));
-    rarm.append_translation(&(pos + Vector3::new(0.0, 1.0, 2.4)));
+    rarm.append_rotation(&UnitQuaternion::from_scaled_axis(Vector3::x() * f32::consts::FRAC_PI_2));
+    rarm.append_translation(&Translation3::from_vector(pos + Vector3::new(0.0, 1.0, 2.4)));
 
     // left arm
     let mut larm      = rarm.clone();
-    larm.append_translation(&Vector3::new(0.0, 0.0, -4.8));
+    larm.append_translation(&Translation3::new(0.0, 0.0, -4.8));
 
     // right foot
     let     rfoot_geom = Cylinder::new(1.6, 0.2);
     let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0, 0.3, 0.5);
-    rfoot.append_translation(&(pos + Vector3::new(0.0, -3.0, 0.4)));
+    rfoot.append_translation(&Translation3::from_vector(pos + Vector3::new(0.0, -3.0, 0.4)));
 
     // left foot
     let mut lfoot      = rfoot.clone();
-    lfoot.append_translation(&Vector3::new(0.0, 0.0, -0.8));
+    lfoot.append_translation(&Translation3::new(0.0, 0.0, -0.8));
 
     let head  = world.add_rigid_body(head);
     let body  = world.add_rigid_body(body);

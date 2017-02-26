@@ -1,18 +1,18 @@
-use ncollide::math::Scalar;
-use math::Matrix;
+use alga::general::Real;
+use math::Isometry;
 use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;
 
 /// A joint that prevents any relative movement (linear and angular) between two objects.
-pub struct Fixed<N: Scalar> {
+pub struct Fixed<N: Real> {
     up_to_date: bool,
-    anchor1:    Anchor<N, Matrix<N>>,
-    anchor2:    Anchor<N, Matrix<N>>,
+    anchor1:    Anchor<N, Isometry<N>>,
+    anchor2:    Anchor<N, Isometry<N>>,
 }
 
-impl<N: Scalar> Fixed<N> {
+impl<N: Real> Fixed<N> {
     /// Creates a new `Fixed` joint.
-    pub fn new(anchor1: Anchor<N, Matrix<N>>, anchor2: Anchor<N, Matrix<N>>) -> Fixed<N> {
+    pub fn new(anchor1: Anchor<N, Isometry<N>>, anchor2: Anchor<N, Isometry<N>>) -> Fixed<N> {
         Fixed {
             up_to_date: false,
             anchor1:    anchor1,
@@ -33,7 +33,7 @@ impl<N: Scalar> Fixed<N> {
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
-    pub fn set_local1(&mut self, local1: Matrix<N>) {
+    pub fn set_local1(&mut self, local1: Isometry<N>) {
         if local1 != self.anchor1.position {
             self.up_to_date = false;
             self.anchor1.position = local1
@@ -43,7 +43,7 @@ impl<N: Scalar> Fixed<N> {
     /// Sets the the second anchor position.
     ///
     /// The position is expressed in the second attached body’s local coordinates.
-    pub fn set_local2(&mut self, local2: Matrix<N>) {
+    pub fn set_local2(&mut self, local2: Isometry<N>) {
         if local2 != self.anchor2.position {
             self.up_to_date = false;
             self.anchor2.position = local2
@@ -51,22 +51,22 @@ impl<N: Scalar> Fixed<N> {
     }
 }
 
-impl<N: Scalar> Joint<N, Matrix<N>> for Fixed<N> {
+impl<N: Real> Joint<N, Isometry<N>> for Fixed<N> {
     /// The first anchor affected by this joint.
     #[inline]
-    fn anchor1(&self) -> &Anchor<N, Matrix<N>> {
+    fn anchor1(&self) -> &Anchor<N, Isometry<N>> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
     #[inline]
-    fn anchor2(&self) -> &Anchor<N, Matrix<N>> {
+    fn anchor2(&self) -> &Anchor<N, Isometry<N>> {
         &self.anchor2
     }
 
     /// The first attach point in global coordinates.
     #[inline]
-    fn anchor1_pos(&self) -> Matrix<N> {
+    fn anchor1_pos(&self) -> Isometry<N> {
         match self.anchor1.body {
             Some(ref b) => {
                 *b.borrow().position() * self.anchor1.position
@@ -77,7 +77,7 @@ impl<N: Scalar> Joint<N, Matrix<N>> for Fixed<N> {
 
     /// The second attach point in global coordinates.
     #[inline]
-    fn anchor2_pos(&self) -> Matrix<N> {
+    fn anchor2_pos(&self) -> Isometry<N> {
         match self.anchor2.body {
             Some(ref b) => {
                 *b.borrow().position() * self.anchor2.position

@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
-use na::{Point3, Isometry3, Column, Translate};
+use na::{Point3, Isometry3};
 use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
@@ -201,8 +201,8 @@ impl GraphicsManager {
                  shape:  &Plane3<f32>,
                  color:  Point3<f32>,
                  out:    &mut Vec<Node>) {
-        let position = na::translation(&object.borrow().position()).translate(&na::origin());
-        let normal   = na::rotate(&object.borrow().position(), shape.normal());
+        let position = Point3::from_coordinates(object.borrow().position().translation.vector);
+        let normal   = object.borrow().position() * shape.normal();
 
         out.push(Node::Plane(Plane::new(object, &position, &normal, color, window)))
     }
@@ -215,7 +215,7 @@ impl GraphicsManager {
                 color:  Point3<f32>,
                 out:    &mut Vec<Node>) {
         let vertices = &**shape.vertices();
-        let indices = &**shape.indices();
+        let indices  = &**shape.indices();
 
         let is = indices.iter().map(|p| Point3::new(p.x as u32, p.y as u32, p.z as u32)).collect();
 
@@ -300,9 +300,10 @@ impl GraphicsManager {
                     let t      = rb.position();
                     let center = rb.center_of_mass();
 
-                    let x = t.rotation.column(0) * 0.25f32;
-                    let y = t.rotation.column(1) * 0.25f32;
-                    let z = t.rotation.column(2) * 0.25f32;
+                    let rotmat = t.rotation.to_rotation_matrix().unwrap();
+                    let x = rotmat.column(0) * 0.25f32;
+                    let y = rotmat.column(1) * 0.25f32;
+                    let z = rotmat.column(2) * 0.25f32;
 
                     window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
                     window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));

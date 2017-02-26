@@ -9,7 +9,6 @@ use sfml::window::{Key, MouseButton};
 use sfml::graphics::Color;
 use sfml::system::Vector2i;
 use na::{Point2, Point3, Isometry2};
-use na;
 use ncollide::world::CollisionGroups;
 use nphysics2d::world::World;
 use nphysics2d::object::{WorldObject, RigidBodyHandle, SensorHandle};
@@ -280,9 +279,8 @@ impl Testbed {
                             None        => { }
                         }
 
-                        let _1: Isometry2<f32> = na::one();
-                        let attach2 = na::append_translation(&_1, mapped_point.as_vector());
-                        let attach1 = na::inverse(&na::transformation(b.borrow().position())).unwrap() * attach2;
+                        let attach2 = Isometry2::new(mapped_point.coords, 0.0);
+                        let attach1 = b.borrow().position().inverse() * attach2;
                         let anchor1 = Anchor::new(Some(state.grabbed_object.as_ref().unwrap().clone()), attach1);
                         let anchor2 = Anchor::new(None, attach2);
                         let joint = Fixed::new(anchor1, anchor2);
@@ -329,9 +327,8 @@ impl Testbed {
 
     fn process_mouse_moved(&mut self, state: &mut TestbedState, x: i32, y: i32) {
         let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
-        let mapped_point = Point2::new(mapped_coords.x, mapped_coords.y);
-        let _1: Isometry2<f32> = na::one();
-        let attach2 = na::append_translation(&_1, (mapped_point).as_vector());
+        let mapped_point  = Point2::new(mapped_coords.x, mapped_coords.y);
+        let attach2 = Isometry2::new(mapped_point.coords, 0.0);
         match state.grabbed_object {
             Some(_) => {
                 let joint = state.grabbed_object_joint.as_ref().unwrap();

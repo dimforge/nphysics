@@ -1,7 +1,6 @@
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Point3, Isometry3};
-use na;
+use na::{Vector3, Point3, Isometry3};
 use ncollide::procedural::TriMesh;
 use nphysics3d::object::WorldObject;
 use objects::node;
@@ -28,7 +27,7 @@ impl Convex {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_trimesh(convex.clone(), na::one()),
+            gfx:        window.add_trimesh(convex.clone(), Vector3::from_element(1.0)),
             body:       body
         };
 

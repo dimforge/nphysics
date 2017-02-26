@@ -4,36 +4,35 @@ use std::iter;
 use std::mem;
 use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
-use num::Float;
-use ncollide::math::Scalar;
+
+use alga::general::Real;
 use na;
-use na::IterableMut;
 use math::Point;
 use ncollide::utils::AsBytes;
 use utils::DeterministicState;
 
 #[derive(PartialEq)]
 /// The identifier of a contact stored in the impulse cache.
-pub struct ContactIdentifier<N: Scalar> {
+pub struct ContactIdentifier<N: Real> {
     obj1:    usize,
     obj2:    usize,
     ccenter: Point<N>
 }
 
-impl<N: Scalar> Eq for ContactIdentifier<N> { } // NOTE: this is  wrong because of floats, but we dont care
+impl<N: Real> Eq for ContactIdentifier<N> { } // NOTE: this is  wrong because of floats, but we dont care
 
-impl<N: Scalar> Hash for ContactIdentifier<N> {
+impl<N: Real> Hash for ContactIdentifier<N> {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         state.write(self.ccenter.as_bytes())
     }
 }
 
-impl<N: Scalar> ContactIdentifier<N> {
+impl<N: Real> ContactIdentifier<N> {
     pub fn new(obj1: usize, obj2: usize, center: Point<N>, step: &N) -> ContactIdentifier<N> {
         let mut cell = center / *step;
 
-        for x in cell.iter_mut() {
+        for x in cell.coords.iter_mut() {
             *x = x.trunc()
         }
 
@@ -45,7 +44,7 @@ impl<N: Scalar> ContactIdentifier<N> {
     }
 }
 
-pub struct ImpulseCache<N: Scalar> {
+pub struct ImpulseCache<N: Real> {
     // XXX: simulations won't be reproductible because of the randomized HashMap.
     hash_prev:           HashMap<ContactIdentifier<N>, (usize, usize), DeterministicState>,
     cache_prev:          Vec<N>,
@@ -55,7 +54,7 @@ pub struct ImpulseCache<N: Scalar> {
     impulse_per_contact: usize
 }
 
-impl<N: Scalar> ImpulseCache<N> {
+impl<N: Real> ImpulseCache<N> {
     pub fn new(step: N, impulse_per_contact: usize) -> ImpulseCache<N> {
 
         ImpulseCache {

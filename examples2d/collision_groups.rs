@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Point3, Vector2};
+use na::{Point3, Vector2, Translation2};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::{RigidBody, RigidBodyCollisionGroups};
@@ -53,7 +53,7 @@ fn main() {
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
     rb.set_collision_groups(green_static_group);
-    rb.append_translation(&Vector2::new(0.0, -5.0));
+    rb.append_translation(&Translation2::new(0.0, -5.0));
 
     let handle = world.add_rigid_body(rb);
     testbed.set_rigid_body_color(&handle, Point3::new(0.0, 1.0, 0.0));
@@ -65,7 +65,7 @@ fn main() {
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
     rb.set_collision_groups(blue_static_group);
-    rb.append_translation(&Vector2::new(0.0, -10.0));
+    rb.append_translation(&Translation2::new(0.0, -10.0));
 
     let handle = world.add_rigid_body(rb);
     testbed.set_rigid_body_color(&handle, Point3::new(0.0, 0.0, 1.0));
@@ -87,7 +87,7 @@ fn main() {
             let geom   = Cuboid::new(Vector2::new(rad - 0.04, rad - 0.04));
             let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
-            rb.append_translation(&Vector2::new(x, -y));
+            rb.append_translation(&Translation2::new(x, -y));
 
             // Alternate between the GREEN and BLUE groups.
             if k % 2 == 0 {

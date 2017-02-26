@@ -1,5 +1,5 @@
 use sfml::system::{Vector2f, Vector2i};
-use sfml::graphics::{Font, Text, Color, RenderTarget, Drawable, Transformable};
+use sfml::graphics::{Font, Text, Color, RenderTarget, Transformable};
 use sfml::graphics;
 use time;
 

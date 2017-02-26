@@ -3,8 +3,7 @@ use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::resource;
-use na::{Point3, Isometry3};
-use na;
+use na::{Vector3, Point3, Isometry3};
 use nphysics3d::object::WorldObject;
 use objects::node;
 
@@ -34,7 +33,7 @@ impl Mesh {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_mesh(Rc::new(RefCell::new(mesh)), na::one()),
+            gfx:        window.add_mesh(Rc::new(RefCell::new(mesh)), Vector3::from_element(1.0)),
             body:       body
         };
 
