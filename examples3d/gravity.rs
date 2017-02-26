@@ -1,10 +1,9 @@
-extern crate num;
 extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3};
+use na::{Point3, Vector3, Translation3};
 use ncollide::shape::{Ball, Plane};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -29,7 +28,7 @@ fn main() {
     let geom   = Plane::new(Vector3::new(0.0, -1.0, 0.0));
     let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
-    rb.append_translation(&Vector3::new(0.0, 50.0, 0.0));
+    rb.append_translation(&Translation3::new(0.0, 50.0, 0.0));
 
     world.add_rigid_body(rb);
 
@@ -52,7 +51,7 @@ fn main() {
 
                 let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
 
-                rb.append_translation(&Vector3::new(x, y, z));
+                rb.append_translation(&Translation3::new(x, y, z));
 
                 let color;
 

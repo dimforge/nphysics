@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
-use na::{Point3, Isometry3};
+use na::{Vector3, Point3, Isometry3};
 use na;
 use nphysics::object::WorldObject;
 use ncollide::procedural;
@@ -30,7 +30,7 @@ impl ParametricSurface {
             color:      color,
             base_color: color,
             delta:      delta,
-            gfx:        window.add_trimesh(param, na::one()),
+            gfx:        window.add_trimesh(param, Vector3::from_element(1.0)),
             body:       body
         };
 

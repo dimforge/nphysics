@@ -7,7 +7,7 @@ extern crate nphysics_testbed3d;
 
 use std::path::Path;
 use rand::random;
-use na::{Point3, Vector3, Translation};
+use na::{Point3, Vector3, Translation3};
 use kiss3d::loader::obj;
 use ncollide::shape::{Plane, Compound, ConvexHull, ShapeHandle};
 use ncollide::procedural::TriMesh3;
@@ -49,7 +49,7 @@ fn main() {
         let geom = Plane::new(*normal);
         let mut rb = RigidBody::new_static(geom, 0.3, 0.6);
 
-        rb.append_translation(pos);
+        rb.append_translation(&Translation3::from_vector(*pos));
 
         world.add_rigid_body(rb);
     }
@@ -83,11 +83,11 @@ fn main() {
                 aabb.merge(&AABB::new(mins, maxs));
             }
 
-            let center = aabb.translation();
+            let center = aabb.center().coords;
             let diag = na::norm(&(*aabb.maxs() - *aabb.mins()));
 
             for mut trimesh in meshes.into_iter() {
-                trimesh.translate_by(&-center);
+                trimesh.translate_by(&Translation3::from_vector(-center));
                 trimesh.scale_by_scalar(6.0 / diag);
                 trimesh.split_index_buffer(true);
 
@@ -120,8 +120,8 @@ fn main() {
     for rb in bodies.iter() {
         for _ in 0 .. nreplicats {
             let mut rb = rb.clone();
-            let pos = random::<Vector3<f32>>() * 30.0+ Vector3::new(-15.0, 15.0, -15.0);
-            rb.append_translation(&pos);
+            let pos = random::<Vector3<f32>>() * 30.0 + Vector3::new(-15.0, 15.0, -15.0);
+            rb.append_translation(&Translation3::from_vector(pos));
 
             world.add_rigid_body(rb);
         }

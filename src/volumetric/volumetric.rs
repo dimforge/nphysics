@@ -1,9 +1,9 @@
 //! Traits to compute inertial properties.
 
 use std::ops::Mul;
+use alga::general::Real;
 use na;
 use na::{Point2, Point3, Vector1, Vector3, Isometry2, Isometry3, Matrix1, Matrix3};
-use ncollide::math::Scalar;
 
 /// Trait implemented by inertia tensors.
 pub trait InertiaTensor<N, P, AV, M> {
@@ -20,7 +20,7 @@ pub trait InertiaTensor<N, P, AV, M> {
 }
 
 /// Trait implemented by objects which have a mass, a center of mass, and an inertia tensor.
-pub trait Volumetric<N: Scalar, P, I: Mul<N, Output = I>> {
+pub trait Volumetric<N: Real, P, I: Mul<N, Output = I>> {
     /// Computes the area of this object.
     fn area(&self) -> N;
 
@@ -35,7 +35,7 @@ pub trait Volumetric<N: Scalar, P, I: Mul<N, Output = I>> {
 
     /// Given its density, this computes the mass of this object.
     fn mass(&self, density: N) -> N {
-        self.volume()  * density
+        self.volume() * density
     }
 
     /// Given its mass, this computes the angular inertia of this object.
@@ -54,7 +54,7 @@ pub trait Volumetric<N: Scalar, P, I: Mul<N, Output = I>> {
 
 }
 
-impl<N: Scalar> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<N> {
+impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<N> {
     #[inline]
     fn apply(&self, av: &Vector1<N>) -> Vector1<N> {
         *self * *av
@@ -67,11 +67,11 @@ impl<N: Scalar> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point2<N>) -> Matrix1<N> {
-        *self + Matrix1::new(mass * na::norm_squared(pt.as_vector()))
+        *self + Matrix1::new(mass * na::norm_squared(&pt.coords))
     }
 }
 
-impl<N: Scalar> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<N> {
+impl<N: Real> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<N> {
     #[inline]
     fn apply(&self, av: &Vector3<N>) -> Vector3<N> {
         *self * *av
@@ -79,19 +79,20 @@ impl<N: Scalar> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix
 
     #[inline]
     fn to_world_space(&self, t: &Isometry3<N>) -> Matrix3<N> {
-        let inverse = na::inverse(&t.rotation).unwrap();
-        *t.rotation.submatrix() * *self * *inverse.submatrix()
+        let rot  = t.rotation.to_rotation_matrix();
+        let irot = rot.inverse();
+        rot * *self * irot
     }
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point3<N>) -> Matrix3<N> {
-        let diag  = na::norm_squared(pt.as_vector());
+        let diag  = na::norm_squared(&pt.coords);
         let diagm = Matrix3::new(
             diag.clone(), na::zero(),   na::zero(),
             na::zero(),   diag.clone(), na::zero(),
             na::zero(),   na::zero(),   diag
         );
 
-        *self + (diagm - na::outer(pt.as_vector(), pt.as_vector())) * mass
+        *self + (diagm - pt.coords * pt.coords.transpose()) * mass
     }
 }

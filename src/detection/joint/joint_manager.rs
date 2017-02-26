@@ -1,11 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ptr;
-use ncollide::math::Scalar;
+
+use alga::general::Real;
 use ncollide::utils::data::hash_map::HashMap;
 use ncollide::utils::data::hash::UintTWHash;
 use detection::activation_manager::ActivationManager;
-use detection::detector::Detector;
 use detection::joint::ball_in_socket::BallInSocket;
 use detection::joint::fixed::Fixed;
 use detection::joint::joint::Joint;
@@ -13,12 +13,12 @@ use detection::constraint::Constraint;
 use object::RigidBody;
 
 /// Structure that handles creation and removal of joints.
-pub struct JointManager<N: Scalar> {
+pub struct JointManager<N: Real> {
     joints:      HashMap<usize, Constraint<N>, UintTWHash>,
     body2joints: HashMap<usize, Vec<Constraint<N>>, UintTWHash>
 }
 
-impl<N: Scalar> JointManager<N> {
+impl<N: Real> JointManager<N> {
     /// Creates a new `JointManager`.
     pub fn new() -> JointManager<N> {
         JointManager {
@@ -154,10 +154,10 @@ impl<N: Scalar> JointManager<N> {
     pub fn remove(&mut self, b: &Rc<RefCell<RigidBody<N>>>, activation: &mut ActivationManager<N>) {
         for joints in self.body2joints.get_and_remove(&(&**b as *const RefCell<RigidBody<N>> as usize)).iter() {
             for joint in joints.value.iter() {
-                fn do_remove<N: Scalar, T: Joint<N, M>, M>(_self:      &mut JointManager<N>,
-                                                           joint:      &Rc<RefCell<T>>,
-                                                           b:          &Rc<RefCell<RigidBody<N>>>,
-                                                           activation: &mut ActivationManager<N>) {
+                fn do_remove<N: Real, T: Joint<N, M>, M>(_self:      &mut JointManager<N>,
+                                                         joint:      &Rc<RefCell<T>>,
+                                                         b:          &Rc<RefCell<RigidBody<N>>>,
+                                                         activation: &mut ActivationManager<N>) {
                     let bj    = joint.borrow();
                     let body1 = bj.anchor1().body.as_ref();
                     let body2 = bj.anchor2().body.as_ref();

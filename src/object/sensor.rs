@@ -2,20 +2,21 @@ use std::mem;
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
+
+use alga::general::Real;
 use na;
-use ncollide::math::Scalar;
 use ncollide::shape::{Shape, ShapeHandle};
-use math::{Point, Matrix};
+use math::{Point, Isometry};
 use object::{RigidBodyHandle, SensorCollisionGroups};
 
 /// A shared, mutable, sensor.
 pub type SensorHandle<N> = Rc<RefCell<Sensor<N>>>;
 
 /// An object capable of detecting interferances with other entities without interacting with them.
-pub struct Sensor<N: Scalar> {
+pub struct Sensor<N: Real> {
     parent:              Option<RigidBodyHandle<N>>,
-    relative_position:   Matrix<N>,
-    shape:               ShapeHandle<Point<N>, Matrix<N>>,
+    relative_position:   Isometry<N>,
+    shape:               ShapeHandle<Point<N>, Isometry<N>>,
     margin:              N,
     collision_groups:    SensorCollisionGroups,
     parent_prox:         bool,
@@ -24,7 +25,7 @@ pub struct Sensor<N: Scalar> {
     interfering_sensors: Vec<SensorHandle<N>>
 }
 
-impl<N: Scalar> Sensor<N> {
+impl<N: Real> Sensor<N> {
     /// Creates a new sensor.
     ///
     /// A sensor may either be attached to the rigid body `parent`, or be attached to the ground.
@@ -34,12 +35,12 @@ impl<N: Scalar> Sensor<N> {
     ///
     /// A sensor has a default margin equal to zero.
     pub fn new<G>(shape: G, parent: Option<RigidBodyHandle<N>>) -> Sensor<N>
-        where G: Send + Sync + Shape<Point<N>, Matrix<N>> {
+        where G: Send + Sync + Shape<Point<N>, Isometry<N>> {
         Sensor::new_with_shared_shape(ShapeHandle::new(shape), parent)
     }
 
     /// Creates a new senson with a given shared shape.
-    pub fn new_with_shared_shape(shape:  ShapeHandle<Point<N>, Matrix<N>>,
+    pub fn new_with_shared_shape(shape:  ShapeHandle<Point<N>, Isometry<N>>,
                                  parent: Option<RigidBodyHandle<N>>)
                                  -> Sensor<N> {
         Sensor {
@@ -89,7 +90,7 @@ impl<N: Scalar> Sensor<N> {
     /// If this sensor has no parent, then this relative position is actually the sensor absolute
     /// position.
     #[inline]
-    pub fn relative_position(&self) -> &Matrix<N> {
+    pub fn relative_position(&self) -> &Isometry<N> {
         &self.relative_position
     }
 
@@ -97,13 +98,13 @@ impl<N: Scalar> Sensor<N> {
     ///
     /// If `self.parent()` is `None`, then this sets the sensor's absolute position.
     #[inline]
-    pub fn set_relative_position(&mut self, rel_pos: Matrix<N>) {
+    pub fn set_relative_position(&mut self, rel_pos: Isometry<N>) {
         self.relative_position = rel_pos
     }
 
     /// This sensor's absolute position.
     #[inline]
-    pub fn position(&self) -> Matrix<N> {
+    pub fn position(&self) -> Isometry<N> {
         match self.parent {
             Some(ref rb) => *rb.borrow().position() * self.relative_position,
             None         => self.relative_position.clone()
@@ -115,10 +116,10 @@ impl<N: Scalar> Sensor<N> {
     /// If `self.parent()` is not `None`, then this automatically computes the relevant relative
     /// position and updates it.
     #[inline]
-    pub fn set_position(&mut self, abs_pos: Matrix<N>) {
+    pub fn set_position(&mut self, abs_pos: Isometry<N>) {
         match self.parent {
             Some(ref rb) => {
-                self.relative_position = na::inverse(rb.borrow().position()).unwrap() * abs_pos
+                self.relative_position = rb.borrow().position().inverse() * abs_pos
             }
             None => self.relative_position = abs_pos
         }
@@ -129,8 +130,11 @@ impl<N: Scalar> Sensor<N> {
     #[inline]
     pub fn center(&self) -> Point<N> {
         match self.parent {
-            Some(ref rb) => *rb.borrow().position() * na::translation(&self.relative_position).to_point(),
-            None         => na::translation(&self.relative_position).to_point()
+            Some(ref rb) => {
+                let coords = self.relative_position.translation.vector;
+                *rb.borrow().position() * Point::from_coordinates(coords)
+            },
+            None => Point::from_coordinates(self.relative_position.translation.vector)
         }
     }
 
@@ -169,7 +173,7 @@ impl<N: Scalar> Sensor<N> {
 
     /// A reference of this sensor's shared shape.
     #[inline]
-    pub fn shape(&self) -> &ShapeHandle<Point<N>, Matrix<N>> {
+    pub fn shape(&self) -> &ShapeHandle<Point<N>, Isometry<N>> {
         &self.shape
     }
 

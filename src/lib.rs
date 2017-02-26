@@ -88,14 +88,18 @@ The libraries needed to compile the examples are:
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
 #![deny(unused_qualifications)]
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
-extern crate num;
+extern crate num_traits as num;
 extern crate rustc_serialize;
+#[cfg(test)]
+#[macro_use]
+extern crate approx;
+extern crate alga;
 extern crate nalgebra as na;
 extern crate ncollide;
 //#[cfg(test)]
@@ -110,13 +114,13 @@ pub mod world;
 pub mod object;
 pub mod utils;
 pub mod volumetric;
-mod tests;
+// mod tests;
 
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]
 pub mod math {
-    use na::{Point3, Vector3, Matrix3, Rotation3, Isometry3};
+    use na::{Point3, Vector3, Matrix3, UnitQuaternion, Translation3, Isometry3};
 
     /// The point type.
     pub type Point<N> = Point3<N>;
@@ -128,10 +132,13 @@ pub mod math {
     pub type Orientation<N> = Vector3<N>;
 
     /// The transformation matrix type.
-    pub type Matrix<N> = Isometry3<N>;
+    pub type Isometry<N> = Isometry3<N>;
 
     /// The rotation matrix type.
-    pub type RotationMatrix<N> = Rotation3<N>;
+    pub type Rotation<N> = UnitQuaternion<N>;
+
+    /// The translation type.
+    pub type Translation<N> = Translation3<N>;
 
     /// The inertia tensor type.
     pub type AngularInertia<N> = Matrix3<N>;
@@ -140,7 +147,7 @@ pub mod math {
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim2")]
 pub mod math {
-    use na::{Point2, Vector1, Vector2, Matrix1, Rotation2, Isometry2};
+    use na::{Point2, Vector1, Vector2, Matrix1, UnitComplex, Translation2, Isometry2};
 
     /// The point type.
     pub type Point<N> = Point2<N>;
@@ -152,10 +159,13 @@ pub mod math {
     pub type Orientation<N> = Vector1<N>;
 
     /// The transformation matrix type.
-    pub type Matrix<N> = Isometry2<N>;
+    pub type Isometry<N> = Isometry2<N>;
 
     /// The rotation matrix type.
-    pub type RotationMatrix<N> = Rotation2<N>;
+    pub type Rotation<N> = UnitComplex<N>;
+
+    /// The translation type.
+    pub type Translation<N> = Translation2<N>;
 
     /// The inertia tensor type.
     pub type AngularInertia<N> = Matrix1<N>;

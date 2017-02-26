@@ -1,17 +1,18 @@
 //! Constant linear and angular force generator.
 
-use ncollide::math::Scalar;
+use alga::general::Real;
+
 use math::{Vector, Orientation};
 use object::RigidBody;
 use integration::Integrator;
 
 /// A constant linear and angular force generator.
-pub struct BodyForceGenerator<N: Scalar> {
+pub struct BodyForceGenerator<N: Real> {
     lin_acc: Vector<N>,
     ang_acc: Orientation<N>
 }
 
-impl<N: Scalar> BodyForceGenerator<N> {
+impl<N: Real> BodyForceGenerator<N> {
     /// Creates a new `BodyForceGenerator`.
     ///
     /// # Arguments:
@@ -26,7 +27,7 @@ impl<N: Scalar> BodyForceGenerator<N> {
     }
 }
 
-impl<N: Scalar> BodyForceGenerator<N> {
+impl<N: Real> BodyForceGenerator<N> {
     /// The linear acceleration applied by this force generator.
     #[inline]
     pub fn lin_acc(&self) -> Vector<N> {
@@ -52,7 +53,7 @@ impl<N: Scalar> BodyForceGenerator<N> {
     }
 }
 
-impl<N: Scalar> Integrator<N, RigidBody<N>> for BodyForceGenerator<N> {
+impl<N: Real> Integrator<N, RigidBody<N>> for BodyForceGenerator<N> {
     #[inline]
     fn update(&mut self, _: N, rb: &mut RigidBody<N>) {
         rb.set_gravity(self.lin_acc.clone());

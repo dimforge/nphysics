@@ -1,14 +1,14 @@
-extern crate num;
 extern crate rand;
+extern crate alga;
 extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
+use alga::general::Real;
 use std::sync::Arc;
-use num::Float;
 use rand::{StdRng, SeedableRng, Rng};
-use na::{Point2, Vector2};
+use na::{Point2, Vector2, Translation2};
 use ncollide::shape::{Cuboid, Polyline};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -64,7 +64,7 @@ fn main() {
 
             let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector2::new(rad, rad)), 1.0, 0.3, 0.6);
 
-            rb.append_translation(&Vector2::new(x, y));
+            rb.append_translation(&Translation2::new(x, y));
 
             world.add_rigid_body(rb);
         }

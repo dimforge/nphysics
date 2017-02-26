@@ -1,10 +1,10 @@
+use alga::general::Real;
 use na;
-use ncollide::math::Scalar;
 use math::{Vector, Orientation};
 
 #[derive(PartialEq, Debug, Clone)]
 /// A constraint of velocity at a point of contact.
-pub struct VelocityConstraint<N: Scalar> {
+pub struct VelocityConstraint<N: Real> {
     /// The contact normal.
     pub normal:             Vector<N>,
 
@@ -44,7 +44,7 @@ pub struct VelocityConstraint<N: Scalar> {
     pub friction_coeff:     N
 }
 
-impl<N: Scalar> VelocityConstraint<N> {
+impl<N: Real> VelocityConstraint<N> {
     /// Creates a new velocity constraint with all terms initialized to zero.
     pub fn new() -> VelocityConstraint<N> {
         VelocityConstraint {

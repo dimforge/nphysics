@@ -1,5 +1,4 @@
-use na::Transform;
-use ncollide::math::Scalar;
+use alga::general::Real;
 use math::Point;
 use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;
@@ -7,13 +6,13 @@ use detection::joint::joint::Joint;
 /// A ball-in-socket joint.
 ///
 /// This is usually used to create ragdolls.
-pub struct BallInSocket<N: Scalar> {
+pub struct BallInSocket<N: Real> {
     up_to_date: bool,
     anchor1:    Anchor<N, Point<N>>,
     anchor2:    Anchor<N, Point<N>>,
 }
 
-impl<N: Scalar> BallInSocket<N> {
+impl<N: Real> BallInSocket<N> {
     /// Creates a ball-in-socket joint.
     pub fn new(anchor1: Anchor<N, Point<N>>, anchor2: Anchor<N, Point<N>>) -> BallInSocket<N> {
         BallInSocket {
@@ -55,7 +54,7 @@ impl<N: Scalar> BallInSocket<N> {
 }
 
 
-impl<N: Scalar> Joint<N, Point<N>> for BallInSocket<N> {
+impl<N: Real> Joint<N, Point<N>> for BallInSocket<N> {
     /// The first anchor affected by this joint.
     #[inline]
     fn anchor1(&self) -> &Anchor<N, Point<N>> {
@@ -73,7 +72,7 @@ impl<N: Scalar> Joint<N, Point<N>> for BallInSocket<N> {
     fn anchor1_pos(&self) -> Point<N> {
         match self.anchor1.body {
             Some(ref b) => {
-                b.borrow().position().transform(&self.anchor1.position)
+                b.borrow().position() * self.anchor1.position
             },
             None => self.anchor1.position.clone()
         }
@@ -84,7 +83,7 @@ impl<N: Scalar> Joint<N, Point<N>> for BallInSocket<N> {
     fn anchor2_pos(&self) -> Point<N> {
         match self.anchor2.body {
             Some(ref b) => {
-                b.borrow().position().transform(&self.anchor2.position)
+                b.borrow().position() * self.anchor2.position
             },
             None => self.anchor2.position.clone()
         }

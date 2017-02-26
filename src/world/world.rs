@@ -2,24 +2,25 @@ use std::slice::Iter;
 use std::iter::Map;
 use std::rc::Rc;
 use std::cell::RefCell;
+
+use alga::general::Real;
 use na;
-use ncollide::math::Scalar;
 use ncollide::bounding_volume::AABB;
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
-use ncollide::broad_phase::{BroadPhase, DBVTBroadPhase, BroadPhasePairFilter};
+use ncollide::broad_phase::{DBVTBroadPhase, BroadPhasePairFilter};
 use ncollide::narrow_phase::{ContactHandler, ProximityHandler, DefaultNarrowPhase,
                              DefaultContactDispatcher, DefaultProximityDispatcher,
                              ContactAlgorithm};
 use ncollide::world::{CollisionWorld, CollisionObject, GeometricQueryType};
 use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
                   TranslationalCCDMotionClamping};
-use detection::{ActivationManager, Detector};
+use detection::ActivationManager;
 use detection::constraint::Constraint;
 use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, CorrectionMode};
 use object::{WorldObject, RigidBody, RigidBodyHandle, Sensor, SensorHandle};
-use math::{Point, Vector, Matrix};
+use math::{Point, Vector, Isometry};
 
 /// The default broad phase.
 pub type WorldBroadPhase<N> = DBVTBroadPhase<Point<N>, WorldObject<N>, AABB<Point<N>>>;
@@ -31,16 +32,16 @@ pub type RigidBodies<'a, N> = Map<Iter<'a, Entry<usize, RigidBodyHandle<N>>>, fn
 pub type Sensors<'a, N> = Map<Iter<'a, Entry<usize, SensorHandle<N>>>, fn(&'a Entry<usize, SensorHandle<N>>) -> &'a SensorHandle<N>>;
 
 /// Type of the collision world containing rigid bodies.
-pub type RigidBodyCollisionWorld<N> = CollisionWorld<Point<N>, Matrix<N>, WorldObject<N>>;
+pub type RigidBodyCollisionWorld<N> = CollisionWorld<Point<N>, Isometry<N>, WorldObject<N>>;
 
 /// Type of a collision object containing `WorldObject` body as its data.
-pub type WorldCollisionObject<N> = CollisionObject<Point<N>, Matrix<N>, WorldObject<N>>;
+pub type WorldCollisionObject<N> = CollisionObject<Point<N>, Isometry<N>, WorldObject<N>>;
 
 
 /// The physical world.
 ///
 /// This is the main structure of the physics engine.
-pub struct World<N: Scalar> {
+pub struct World<N: Real> {
     cworld:       RigidBodyCollisionWorld<N>,
     rigid_bodies: HashMap<usize, RigidBodyHandle<N>, UintTWHash>,
     sensors:      HashMap<usize, SensorHandle<N>, UintTWHash>,
@@ -53,14 +54,14 @@ pub struct World<N: Scalar> {
     prediction:   N
 }
 
-impl<N: Scalar> World<N> {
+impl<N: Real> World<N> {
     /// Creates a new physics world.
     pub fn new() -> World<N> {
         /*
          * Setup the physics world
          */
 
-        let prediction = na::cast(0.02f64); // FIXME: do not hard-code the prediction margin.
+        let prediction = na::convert(0.02f64); // FIXME: do not hard-code the prediction margin.
 
         // For the intergration
         let forces     = BodyForceGenerator::new(na::zero(), na::zero());
@@ -82,7 +83,7 @@ impl<N: Scalar> World<N> {
         let ccd = TranslationalCCDMotionClamping::new();
 
         // Deactivation
-        let sleep = Rc::new(RefCell::new(ActivationManager::new(na::cast(0.01f64))));
+        let sleep = Rc::new(RefCell::new(ActivationManager::new(na::convert(0.01f64))));
 
         // Setup contact handler to reactivate sleeping objects that loose contact.
         let handler = ObjectActivationOnContactHandler { sleep: sleep.clone() };
@@ -101,10 +102,10 @@ impl<N: Scalar> World<N> {
          * For constraints resolution
          */
         let solver = AccumulatedImpulseSolver::new(
-            na::cast(0.1f64),
-            CorrectionMode::VelocityAndPosition(na::cast(0.2f64), na::cast(0.2f64), na::cast(0.08f64)),
-            na::cast(0.4f64),
-            na::cast(1.0f64),
+            na::convert(0.1f64),
+            CorrectionMode::VelocityAndPosition(na::convert(0.2f64), na::convert(0.2f64), na::convert(0.08f64)),
+            na::convert(0.4f64),
+            na::convert(1.0f64),
             10,
             10);
 
@@ -182,7 +183,7 @@ impl<N: Scalar> World<N> {
         let position = rb.position().clone();
         let shape = rb.shape().clone();
         let groups = rb.collision_groups().as_collision_groups().clone();
-        let collision_object_prediction = rb.margin() + self.prediction / na::cast(2.0f64);
+        let collision_object_prediction = rb.margin() + self.prediction / na::convert(2.0f64);
         let handle = Rc::new(RefCell::new(rb));
         let uid = WorldObject::rigid_body_uid(&handle);
 
@@ -343,7 +344,7 @@ impl<N: Scalar> World<N> {
 
     /// An iterator visiting all rigid bodies on this world.
     pub fn rigid_bodies(&self) -> RigidBodies<N> {
-        fn extract_value<N: Scalar>(e: &Entry<usize, RigidBodyHandle<N>>) -> &RigidBodyHandle<N> {
+        fn extract_value<N: Real>(e: &Entry<usize, RigidBodyHandle<N>>) -> &RigidBodyHandle<N> {
             &e.value
         }
 
@@ -353,7 +354,7 @@ impl<N: Scalar> World<N> {
 
     /// An iterator visiting all sensors on this world.
     pub fn sensors(&self) -> Sensors<N> {
-        fn extract_value<N: Scalar>(e: &Entry<usize, SensorHandle<N>>) -> &SensorHandle<N> {
+        fn extract_value<N: Real>(e: &Entry<usize, SensorHandle<N>>) -> &SensorHandle<N> {
             &e.value
         }
 
@@ -368,7 +369,7 @@ impl<N: Scalar> World<N> {
     /// a non-trivial overhead during the next update as it will force re-detection of all
     /// collision pairs.
     pub fn register_broad_phase_pair_filter<F>(&mut self, name: &str, filter: F)
-        where F: BroadPhasePairFilter<Point<N>, Matrix<N>, WorldObject<N>> + 'static {
+        where F: BroadPhasePairFilter<Point<N>, Isometry<N>, WorldObject<N>> + 'static {
         self.cworld.register_broad_phase_pair_filter(name, filter)
     }
 
@@ -379,7 +380,7 @@ impl<N: Scalar> World<N> {
 
     /// Registers a handler for contact start/stop events.
     pub fn register_contact_handler<H>(&mut self, name: &str, handler: H)
-        where H: ContactHandler<Point<N>, Matrix<N>, WorldObject<N>> + 'static {
+        where H: ContactHandler<Point<N>, Isometry<N>, WorldObject<N>> + 'static {
         self.cworld.register_contact_handler(name, handler)
     }
 
@@ -390,7 +391,7 @@ impl<N: Scalar> World<N> {
 
     /// Registers a handler for proximity status change events.
     pub fn register_proximity_handler<H>(&mut self, name: &str, handler: H)
-        where H: ProximityHandler<Point<N>, Matrix<N>, WorldObject<N>> + 'static {
+        where H: ProximityHandler<Point<N>, Isometry<N>, WorldObject<N>> + 'static {
         self.cworld.register_proximity_handler(name, handler);
     }
 
@@ -400,17 +401,17 @@ impl<N: Scalar> World<N> {
     }
 }
 
-struct ObjectActivationOnContactHandler<N: Scalar> {
+struct ObjectActivationOnContactHandler<N: Real> {
     sleep: Rc<RefCell<ActivationManager<N>>>
 }
 
-impl<N: Scalar> ContactHandler<Point<N>, Matrix<N>, WorldObject<N>>
+impl<N: Real> ContactHandler<Point<N>, Isometry<N>, WorldObject<N>>
 for ObjectActivationOnContactHandler<N> {
     #[inline]
     fn handle_contact_started(&mut self,
                               _: &WorldCollisionObject<N>,
                               _: &WorldCollisionObject<N>,
-                              _: &ContactAlgorithm<Point<N>, Matrix<N>>) {
+                              _: &ContactAlgorithm<Point<N>, Isometry<N>>) {
         // Do nothing.
     }
 
@@ -427,7 +428,7 @@ for ObjectActivationOnContactHandler<N> {
 
 struct SensorsNotCollidingTheirParentPairFilter;
 
-impl<N: Scalar> BroadPhasePairFilter<Point<N>, Matrix<N>, WorldObject<N>>
+impl<N: Real> BroadPhasePairFilter<Point<N>, Isometry<N>, WorldObject<N>>
 for SensorsNotCollidingTheirParentPairFilter {
     #[inline]
     fn is_pair_valid(&self, b1: &WorldCollisionObject<N>, b2: &WorldCollisionObject<N>) -> bool {

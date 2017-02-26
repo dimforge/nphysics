@@ -3,7 +3,7 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Point2, Vector2, Point3, Isometry2};
+use na::{Point2, Vector2, Point3, Translation2, Isometry2};
 use ncollide::shape::{Plane, Cuboid, Ball};
 use ncollide::query::Proximity;
 use ncollide::narrow_phase::ProximityHandler;
@@ -68,7 +68,7 @@ fn main() {
         let geom   = Cuboid::new(Vector2::new(rad - 0.04, rad - 0.04));
         let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.2, 0.5);
 
-        rb.append_translation(&Vector2::new(x, -1.0));
+        rb.append_translation(&Translation2::new(x, -1.0));
 
         let rb_handle = world.add_rigid_body(rb);
         testbed.set_rigid_body_color(&rb_handle, Point3::new(0.5, 0.5, 1.0));
@@ -79,7 +79,7 @@ fn main() {
      */
     let geom   = Cuboid::new(Vector2::new(0.5f32, 0.5));
     let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.2, 0.5);
-    rb.append_translation(&Vector2::new(0.0, -10.0));
+    rb.append_translation(&Translation2::new(0.0, -10.0));
     let rb_handle = world.add_rigid_body(rb);
     testbed.set_rigid_body_color(&rb_handle, Point3::new(0.5, 1.0, 1.0));
 

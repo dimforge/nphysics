@@ -1,7 +1,6 @@
 use sfml::graphics;
 use sfml::graphics::{Vertex, VertexArray, Color, RenderTarget};
 use sfml::system::Vector2f;
-use na::Translate;
 use na::Point2;
 use na;
 use nphysics2d::world::World;
@@ -50,8 +49,8 @@ pub fn draw_colls(window:  &mut graphics::RenderWindow,
             Constraint::Fixed(ref bis) => {
                 draw_line(
                     window,
-                    &na::translation(&bis.borrow().anchor1_pos()).translate(&na::origin()),
-                    &na::translation(&bis.borrow().anchor2_pos()).translate(&na::origin()),
+                    &Point2::from_coordinates(bis.borrow().anchor1_pos().translation.vector),
+                    &Point2::from_coordinates(bis.borrow().anchor2_pos().translation.vector),
                     &Color::new_rgb(255, 0, 0)
                 );
             }

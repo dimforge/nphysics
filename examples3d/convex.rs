@@ -5,7 +5,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use rand::random;
-use na::{Point3, Vector3};
+use na::{Point3, Vector3, Translation3};
 use ncollide::shape::{Plane, ConvexHull};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -22,7 +22,6 @@ fn main() {
      * Plane
      */
     let geom = Plane::new(Vector3::new(0.0, 1.0, 0.0));
-
     world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
 
     /*
@@ -51,7 +50,7 @@ fn main() {
                 let geom = ConvexHull::new(pts);
                 let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
 
-                rb.append_translation(&Vector3::new(x, y, z));
+                rb.append_translation(&Translation3::new(x, y, z));
 
                 world.add_rigid_body(rb);
             }

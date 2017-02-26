@@ -1,12 +1,13 @@
 use std::cell::{RefCell, Ref, RefMut};
-use ncollide::math::Scalar;
+
+use alga::general::Real;
 use ncollide::shape::ShapeHandle;
 use object::{RigidBody, Sensor, RigidBodyHandle, SensorHandle};
-use math::{Matrix, Point};
+use math::{Isometry, Point};
 
 /// An object that has been added to a World.
 #[derive(Clone)]
-pub enum WorldObject<N: Scalar> {
+pub enum WorldObject<N: Real> {
     /// A rigid body handle.
     RigidBody(RigidBodyHandle<N>),
     /// A sensor handle.
@@ -14,7 +15,7 @@ pub enum WorldObject<N: Scalar> {
 }
 
 /// Reference to a world object.
-pub enum WorldObjectBorrowed<'a, N: Scalar> {
+pub enum WorldObjectBorrowed<'a, N: Real> {
     /// A borrowed rigid body handle.
     RigidBody(Ref<'a, RigidBody<N>>),
     /// A borrowed sensor handle.
@@ -22,14 +23,14 @@ pub enum WorldObjectBorrowed<'a, N: Scalar> {
 }
 
 /// Mutable reference to a world object.
-pub enum WorldObjectBorrowedMut<'a, N: Scalar> {
+pub enum WorldObjectBorrowedMut<'a, N: Real> {
     /// A mutably borrowed rigid body handle.
     RigidBody(RefMut<'a, RigidBody<N>>),
     /// A mutably borrowed sensor handle.
     Sensor(RefMut<'a, Sensor<N>>)
 }
 
-impl<N: Scalar> WorldObject<N> {
+impl<N: Real> WorldObject<N> {
     /// The unique identifier a rigid body would have if it was wrapped on a `WorldObject`.
     ///
     /// This identifier remains unique and will not change as long as `rb` is kept alive in memory.
@@ -148,10 +149,10 @@ impl<N: Scalar> WorldObject<N> {
 
 macro_rules! impl_getters(
     ($t: ident) => (
-        impl<'a, N: Scalar> $t<'a, N> {
+        impl<'a, N: Real> $t<'a, N> {
             /// This object's position.
             #[inline]
-            pub fn position(&self) -> Matrix<N> {
+            pub fn position(&self) -> Isometry<N> {
                 match *self {
                     $t::RigidBody(ref rb) => rb.position().clone(),
                     $t::Sensor(ref s)     => s.position()
@@ -160,7 +161,7 @@ macro_rules! impl_getters(
 
             /// A reference to this object geometrical shape.
             #[inline]
-            pub fn shape(&self) -> &ShapeHandle<Point<N>, Matrix<N>> {
+            pub fn shape(&self) -> &ShapeHandle<Point<N>, Isometry<N>> {
                 match *self {
                     $t::RigidBody(ref rb) => rb.shape(),
                     $t::Sensor(ref s)     => s.shape()

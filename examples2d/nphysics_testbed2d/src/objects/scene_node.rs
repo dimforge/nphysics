@@ -1,7 +1,7 @@
 use std::f32;
 use sfml::graphics::{Color, Shape, Transformable};
 use sfml::system::Vector2f;
-use na::{self, Point3, Isometry2};
+use na::{Point3, Isometry2};
 use nphysics2d::object::{WorldObject, WorldObjectBorrowed};
 use objects::{Ball, Box, Lines, Segment};
 use draw_helper::DRAW_SCALE;
@@ -49,11 +49,11 @@ pub fn update_scene_node<'a, T>(node:   &mut T,
         where T: Transformable + Shape<'a> {
     let bobject   = object.borrow();
     let transform = bobject.position() * *delta;
-    let pos       = na::translation(&transform);
-    let rot       = na::rotation(&transform);
+    let pos       = transform.translation.vector;
+    let rot       = transform.rotation.angle();
 
     node.set_position(&Vector2f::new(pos.x as f32 * DRAW_SCALE, pos.y as f32 * DRAW_SCALE));
-    node.set_rotation(rot.x * 180.0 / f32::consts::PI as f32);
+    node.set_rotation(rot * 180.0 / f32::consts::PI as f32);
 
     match bobject {
         WorldObjectBorrowed::Sensor(_) => {

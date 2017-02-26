@@ -1,14 +1,17 @@
-use num::Float;
-use na::{self, Bounded};
-use ncollide::math::Scalar;
+use num::Bounded;
+
+use alga::general::Real;
+use alga::linear::FiniteDimInnerSpace;
+use na;
 use ncollide::query::Contact;
 use volumetric::InertiaTensor;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use object::RigidBody;
+use utils::GeneralizedCross;
 use math::{Point, Vector, Orientation};
 
 /// The correction coefficient used by the constraint solver.
-pub enum CorrectionMode<N: Scalar> {
+pub enum CorrectionMode<N: Real> {
     /// Penetration are solved by the penalty method.
     Velocity(N),
     /// Penetration are solved by the penalty method together with a hard repositioning.
@@ -19,7 +22,7 @@ pub enum CorrectionMode<N: Scalar> {
     VelocityAndPositionThresold(N, N, N)
 }
 
-impl<N: Scalar> CorrectionMode<N> {
+impl<N: Real> CorrectionMode<N> {
     #[inline]
     /// The velocity correction coefficient.
     pub fn vel_corr_factor(&self) -> N {
@@ -61,16 +64,16 @@ impl<N: Scalar> CorrectionMode<N> {
     }
 }
 
-pub struct CorrectionParameters<N: Scalar> {
-    pub corr_mode:       CorrectionMode<N>,
-    pub joint_corr:      N,
-    pub rest_eps:        N
+pub struct CorrectionParameters<N: Real> {
+    pub corr_mode:  CorrectionMode<N>,
+    pub joint_corr: N,
+    pub rest_eps:   N
 }
 
-pub fn reinit_to_first_order_equation<N: Scalar>(dt:         N,
-                                                 coll:       &Contact<Point<N>>,
-                                                 constraint: &mut VelocityConstraint<N>,
-                                                 correction: &CorrectionParameters<N>) {
+pub fn reinit_to_first_order_equation<N: Real>(dt:         N,
+                                               coll:       &Contact<Point<N>>,
+                                               constraint: &mut VelocityConstraint<N>,
+                                               correction: &CorrectionParameters<N>) {
     /*
      * Fill b
      */
@@ -87,16 +90,16 @@ pub fn reinit_to_first_order_equation<N: Scalar>(dt:         N,
     constraint.impulse = na::zero();
 }
 
-pub fn fill_second_order_equation<N: Scalar>(dt:           N,
-                                             coll:         &Contact<Point<N>>,
-                                             rb1:          &RigidBody<N>,
-                                             rb2:          &RigidBody<N>,
-                                             rconstraint:  &mut VelocityConstraint<N>,
-                                             idr:          usize,
-                                             fconstraints: &mut [VelocityConstraint<N>],
-                                             idf:          usize,
-                                             cache:        &[N],
-                                             correction:   &CorrectionParameters<N>) {
+pub fn fill_second_order_equation<N: Real>(dt:           N,
+                                           coll:         &Contact<Point<N>>,
+                                           rb1:          &RigidBody<N>,
+                                           rb2:          &RigidBody<N>,
+                                           rconstraint:  &mut VelocityConstraint<N>,
+                                           idr:          usize,
+                                           fconstraints: &mut [VelocityConstraint<N>],
+                                           idf:          usize,
+                                           cache:        &[N],
+                                           correction:   &CorrectionParameters<N>) {
     let restitution = rb1.restitution() * rb2.restitution();
 
     let center = na::center(&coll.world1, &coll.world2);
@@ -122,11 +125,11 @@ pub fn fill_second_order_equation<N: Scalar>(dt:           N,
 
     let mut i = 0;
 
-    na::orthonormal_subspace_basis(&coll.normal, |friction_axis| {
+    Vector::orthonormal_subspace_basis(&[ coll.normal ], |friction_axis| {
         let constraint = &mut fconstraints[idf + i];
 
         fill_velocity_constraint(dt.clone(),
-                                 friction_axis,
+                                 *friction_axis,
                                  center.clone(),
                                  na::zero(),
                                  na::zero(),
@@ -146,12 +149,12 @@ pub fn fill_second_order_equation<N: Scalar>(dt:           N,
     })
 }
 
-pub fn fill_constraint_geometry<N: Scalar>(normal:     Vector<N>,
-                                           rot_axis1:  Orientation<N>,
-                                           rot_axis2:  Orientation<N>,
-                                           rb1:        &Option<&RigidBody<N>>,
-                                           rb2:        &Option<&RigidBody<N>>,
-                                           constraint: &mut VelocityConstraint<N>) {
+pub fn fill_constraint_geometry<N: Real>(normal:     Vector<N>,
+                                         rot_axis1:  Orientation<N>,
+                                         rot_axis2:  Orientation<N>,
+                                         rb1:        &Option<&RigidBody<N>>,
+                                         rb2:        &Option<&RigidBody<N>>,
+                                         constraint: &mut VelocityConstraint<N>) {
     constraint.normal             = normal;
     constraint.inv_projected_mass = na::zero();
 
@@ -189,20 +192,20 @@ pub fn fill_constraint_geometry<N: Scalar>(normal:     Vector<N>,
     constraint.inv_projected_mass = _1 / constraint.inv_projected_mass;
 }
 
-fn fill_velocity_constraint<N: Scalar>(dt:              N,
-                                       normal:          Vector<N>,
-                                       center:          Point<N>,
-                                       restitution:     N,
-                                       depth:           N,
-                                       initial_impulse: N,
-                                       lobound:         N,
-                                       hibound:         N,
-                                       rb1:             &RigidBody<N>,
-                                       rb2:             &RigidBody<N>,
-                                       constraint:      &mut VelocityConstraint<N>,
-                                       correction:      &CorrectionParameters<N>) {
-    let rot_axis1 = na::cross(&(center - *rb1.center_of_mass()), &-normal);
-    let rot_axis2 = na::cross(&(center - *rb2.center_of_mass()), &normal);
+fn fill_velocity_constraint<N: Real>(dt:              N,
+                                     normal:          Vector<N>,
+                                     center:          Point<N>,
+                                     restitution:     N,
+                                     depth:           N,
+                                     initial_impulse: N,
+                                     lobound:         N,
+                                     hibound:         N,
+                                     rb1:             &RigidBody<N>,
+                                     rb2:             &RigidBody<N>,
+                                     constraint:      &mut VelocityConstraint<N>,
+                                     correction:      &CorrectionParameters<N>) {
+    let rot_axis1 = (center - *rb1.center_of_mass()).gcross(&-normal);
+    let rot_axis2 = (center - *rb2.center_of_mass()).gcross(&normal);
 
     let opt_rb1 = if rb1.can_move() { Some(rb1) } else { None };
     let opt_rb2 = if rb2.can_move() { Some(rb2) } else { None };
@@ -248,13 +251,13 @@ fn fill_velocity_constraint<N: Scalar>(dt:              N,
     constraint.hibound = hibound;
 }
 
-pub fn relative_velocity<N: Scalar>(rb1:       &Option<&RigidBody<N>>,
-                                    rb2:       &Option<&RigidBody<N>>,
-                                    normal:    &Vector<N>,
-                                    rot_axis1: &Orientation<N>,
-                                    rot_axis2: &Orientation<N>,
-                                    dt:        &N)
-                                    -> N {
+pub fn relative_velocity<N: Real>(rb1:       &Option<&RigidBody<N>>,
+                                  rb2:       &Option<&RigidBody<N>>,
+                                  normal:    &Vector<N>,
+                                  rot_axis1: &Orientation<N>,
+                                  rot_axis2: &Orientation<N>,
+                                  dt:        &N)
+                                  -> N {
     let mut dvel: N = na::zero();
 
     match *rb1 {

@@ -4,11 +4,11 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
-rand = "*"
-num = "0.1.*"
-nalgebra = "0.9.*"
-ncollide = "0.10.*"
-kiss3d = "*"
+rand       = "0.3"
+num-traits = "0.1"
+nalgebra   = "0.11"
+ncollide   = "0.11"
+kiss3d     = "0.8"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

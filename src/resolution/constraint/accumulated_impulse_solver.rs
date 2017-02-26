@@ -2,9 +2,9 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::iter;
 // use rand::RngUtil;
-use na::{self, Translation, Transformation, RotationWithTranslation};
-use ncollide::math::Scalar;
-use math::{Vector, Orientation, Matrix};
+use alga::general::Real;
+use na;
+use math::{Vector, Orientation, Rotation, Translation, Isometry};
 use detection::constraint::Constraint;
 use detection::joint::Joint;
 use object::RigidBody;
@@ -20,7 +20,7 @@ use resolution::constraint::impulse_cache::ImpulseCache;
 
 
 /// Constraint solver using the projected gauss seidel algorithm and warm-starting.
-pub struct AccumulatedImpulseSolver<N: Scalar> {
+pub struct AccumulatedImpulseSolver<N: Real> {
     correction:              CorrectionParameters<N>,
     cache:                   ImpulseCache<N>,
     num_first_order_iter:    usize,
@@ -30,7 +30,7 @@ pub struct AccumulatedImpulseSolver<N: Scalar> {
     mj_lambda:               Vec<Velocities<N>>
 }
 
-impl<N: Scalar> AccumulatedImpulseSolver<N> {
+impl<N: Real> AccumulatedImpulseSolver<N> {
     /// Creates a new `AccumulatedImpulseSolver`.
     pub fn new(step:                  N,
                correction_mode:       CorrectionMode<N>,
@@ -104,7 +104,9 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                     num_joint_equations = num_joint_equations + na::dimension::<Vector<N>>()
                 },
                 Constraint::Fixed(_) => {
-                    num_joint_equations = num_joint_equations + na::dimension::<Vector<N>>() + na::dimension::<Orientation<N>>()
+                    num_joint_equations = num_joint_equations +
+                                          na::dimension::<Vector<N>>() +
+                                          na::dimension::<Orientation<N>>()
                 },
                 Constraint::RBRB(_, _, _) => { }
             }
@@ -189,11 +191,11 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {
             let imps = self.cache.push_impulsions();
-            imps[0]  = dv.impulse * na::cast::<f64, N>(0.85f64);
+            imps[0]  = dv.impulse * na::convert::<f64, N>(0.85f64);
 
             for j in 0usize .. na::dimension::<Vector<N>>() - 1 {
                 let fc = &self.friction_constraints[i * (na::dimension::<Vector<N>>() - 1) + j];
-                imps[1 + j] = fc.impulse * na::cast::<f64, N>(0.85f64);
+                imps[1 + j] = fc.impulse * na::convert::<f64, N>(0.85f64);
             }
         }
 
@@ -205,7 +207,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
         /*
          * first order resolution
          */
-        let needs_correction = !na::is_zero(&self.correction.corr_mode.pos_corr_factor()) &&
+        let needs_correction = !self.correction.corr_mode.pos_corr_factor().is_zero() &&
             constraints.iter().any(|constraint| {
             match *constraint {
                 Constraint::RBRB(_, _, ref c) =>
@@ -243,13 +245,13 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
                 let mut rb = b.borrow_mut();
                 let i      = rb.index();
 
-                let translation = self.mj_lambda[i as usize].lv * dt;
-                let rotation    = self.mj_lambda[i as usize].av * dt;
+                let translation = Translation::from_vector(self.mj_lambda[i as usize].lv * dt);
+                let rotation    = Rotation::from_scaled_axis(self.mj_lambda[i as usize].av * dt);
 
-                let center = &rb.center_of_mass().clone();
+                let center = *rb.center_of_mass();
 
-                let mut delta: Matrix<N> = na::one();
-                delta.append_rotation_wrt_point_mut(&rotation, center.as_vector());
+                let mut delta: Isometry<N> = na::one();
+                delta.append_rotation_wrt_point_mut(&rotation, &center);
                 delta.append_translation_mut(&translation);
 
                 rb.append_transformation(&delta);
@@ -258,7 +260,7 @@ impl<N: Scalar> AccumulatedImpulseSolver<N> {
     }
 }
 
-impl<N: Scalar> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
+impl<N: Real> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
     fn solve(&mut self, dt: N, constraints: &[Constraint<N>]) {
         // FIXME: bodies index assignment is very ugly
         let mut bodies = Vec::new();
@@ -333,9 +335,9 @@ impl<N: Scalar> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
 
             let mut id = 0;
 
-            fn set_body_index<N: Scalar>(a:      &Rc<RefCell<RigidBody<N>>>,
-                                         bodies: &mut Vec<Rc<RefCell<RigidBody<N>>>>,
-                                         id:     &mut isize) {
+            fn set_body_index<N: Real>(a:      &Rc<RefCell<RigidBody<N>>>,
+                                       bodies: &mut Vec<Rc<RefCell<RigidBody<N>>>>,
+                                       id:     &mut isize) {
                 let mut ba = a.borrow_mut();
                 if ba.index() == -2 {
                     if ba.can_move() {

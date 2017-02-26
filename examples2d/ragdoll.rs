@@ -1,9 +1,11 @@
+extern crate alga;
 extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Point2, Vector1, Vector2, BaseFloat};
+use alga::general::Real;
+use na::{Point2, Vector2, Translation2, UnitComplex};
 use ncollide::shape::{Plane, Cuboid, Ball};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
@@ -51,32 +53,32 @@ fn add_ragdoll(pos: Vector2<f32>, world: &mut World<f32>) {
     // head
     let     head_geom = Ball::new(0.8);
     let mut head      = RigidBody::new_dynamic(head_geom, 1.0, 0.3, 0.5);
-    head.append_translation(&(pos + Vector2::new(0.0, -2.4)));
+    head.append_translation(&Translation2::from_vector(pos + Vector2::new(0.0, -2.4)));
 
     // body
     let     body_geom = Cuboid::new(Vector2::new(1.2, 0.5));
     let mut body      = RigidBody::new_dynamic(body_geom, 1.0, 0.3, 0.5);
-    body.append_rotation(&-Vector1::new(BaseFloat::frac_pi_2()));
-    body.append_translation(&pos);
+    body.append_rotation(&UnitComplex::new(-f32::frac_pi_2()));
+    body.append_translation(&Translation2::from_vector(pos));
 
     // right arm
     let     rarm_geom = Cuboid::new(Vector2::new(1.6, 0.2));
     let mut rarm      = RigidBody::new_dynamic(rarm_geom, 1.0, 0.3, 0.5);
-    rarm.append_translation(&(pos + Vector2::new(2.4, -1.0)));
+    rarm.append_translation(&Translation2::from_vector(pos + Vector2::new(2.4, -1.0)));
 
     // left arm
     let mut larm      = rarm.clone();
-    larm.append_translation(&Vector2::new(-4.8, 0.0));
+    larm.append_translation(&Translation2::new(-4.8, 0.0));
 
     // right foot
     let     rfoot_geom = Cuboid::new(Vector2::new(1.6, 0.2));
     let mut rfoot      = RigidBody::new_dynamic(rfoot_geom, 1.0, 0.3, 0.5);
-    rfoot.append_rotation(&-Vector1::new(BaseFloat::frac_pi_2()));
-    rfoot.append_translation(&(pos + Vector2::new(0.4, 3.0)));
+    rfoot.append_rotation(&UnitComplex::new(-f32::frac_pi_2()));
+    rfoot.append_translation(&Translation2::from_vector(pos + Vector2::new(0.4, 3.0)));
 
     // left foot
     let mut lfoot      = rfoot.clone();
-    lfoot.append_translation(&Vector2::new(-0.8, 0.0));
+    lfoot.append_translation(&Translation2::new(-0.8, 0.0));
 
     let head  = world.add_rigid_body(head);
     let body  = world.add_rigid_body(body);

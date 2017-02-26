@@ -24,7 +24,7 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3};
+use na::{Point3, Vector3, Translation3};
 use ncollide::shape::{Plane, Cuboid};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
@@ -54,14 +54,14 @@ fn main() {
     let z     = shift / 2.0;
 
     let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector3::new(0.21, 4.96, 0.21)), 1.0, 0.3, 0.5);
-    rb.append_translation(&Vector3::new(x, y, z));
+    rb.append_translation(&Translation3::new(x, y, z));
     world.add_rigid_body(rb);
 
     /*
      * Create the ccd-enabled cube.
      */
     let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector3::new(0.5, 0.5, 0.5)), 1.0, 0.3, 0.5);
-    rb.append_translation(&Vector3::new(x - 1.0, y + 2.0, z - 1.0));
+    rb.append_translation(&Translation3::new(x - 1.0, y + 2.0, z - 1.0));
     rb.set_lin_vel(Vector3::new(10.0, 0.0, 10.0));
     let body_handle = world.add_rigid_body(rb);
     world.add_ccd_to(&body_handle, 0.0, false);
