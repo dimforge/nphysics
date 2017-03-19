@@ -309,6 +309,7 @@ impl<N: Real> RigidBody<N> {
                         None    => ii = na::zero()
                     }
 
+                    // Will be set to a sensible value later.
                     let active = ActivationState::Active(Bounded::max_value());
                     let groups = RigidBodyCollisionGroups::new_dynamic();
                     let _1: N = na::one();
@@ -372,6 +373,7 @@ impl<N: Real> RigidBody<N> {
     pub fn set_lin_acc_scale(&mut self, scale: Vector<N>) {
         self.lin_acc_scale = scale;
         self.update_lin_acc();
+        self.wake_up();
     }
 
     /// Gets the angular acceleration scale of this rigid body.
@@ -385,6 +387,7 @@ impl<N: Real> RigidBody<N> {
     pub fn set_ang_acc_scale(&mut self, scale: Orientation<N>) {
         self.ang_acc_scale = scale;
         self.update_ang_acc();
+        self.wake_up();
     }
 
     /// Get the linear velocity of this rigid body.
@@ -396,6 +399,14 @@ impl<N: Real> RigidBody<N> {
     /// Sets the linear velocity of this rigid body.
     #[inline]
     pub fn set_lin_vel(&mut self, lv: Vector<N>) {
+        self.set_lin_vel_internal(lv);
+        self.wake_up();
+    }
+
+    /// Sets the linear velocity of this rigid body but does not wake it up.
+    #[doc(hidden)]
+    #[inline]
+    pub fn set_lin_vel_internal(&mut self, lv: Vector<N>) {
         self.lin_vel = lv
     }
 
@@ -409,6 +420,7 @@ impl<N: Real> RigidBody<N> {
     ///
     /// Note that this might be reset by the physics engine automatically.
     #[doc(hidden)]
+    #[inline]
     pub fn set_lin_acc(&mut self, lf: Vector<N>) {
         self.lin_acc = lf
     }
@@ -422,6 +434,14 @@ impl<N: Real> RigidBody<N> {
     /// Sets the angular velocity of this rigid body.
     #[inline]
     pub fn set_ang_vel(&mut self, av: Orientation<N>) {
+        self.set_ang_vel_internal(av);
+        self.wake_up();
+    }
+
+    /// Sets the angular velocity of this rigid body but does not wake it up.
+    #[inline]
+    #[doc(hidden)]
+    pub fn set_ang_vel_internal(&mut self, av: Orientation<N>) {
         self.ang_vel = av
     }
 
@@ -460,6 +480,7 @@ impl<N: Real> RigidBody<N> {
     pub fn clear_linear_force(&mut self) {
         self.lin_force = na::zero();
         self.update_lin_acc();
+        self.wake_up();
     }
 
     /// Resets angular force.
@@ -467,13 +488,15 @@ impl<N: Real> RigidBody<N> {
     pub fn clear_angular_force(&mut self) {
         self.ang_force = na::zero();
         self.update_ang_acc();
+        self.wake_up();
     }
 
     /// Adds an additional linear force.
     #[inline]
     pub fn append_lin_force(&mut self, force: Vector<N>) {
         self.lin_force = self.lin_force + force;
-        self.update_acc();
+        self.update_lin_acc();
+        self.wake_up();
     }
 
     /// Adds an additional angular force.
@@ -481,6 +504,7 @@ impl<N: Real> RigidBody<N> {
     pub fn append_ang_force(&mut self, force: Orientation<N>) {
         self.ang_force = self.ang_force + force;
         self.update_ang_acc();
+        self.wake_up();
     }
 
     /// Adds an additional force acting at a point different to the center of mass.
@@ -493,12 +517,6 @@ impl<N: Real> RigidBody<N> {
         self.append_ang_force(pnt_to_com.gcross(&force));
     }
 
-    /// Update the linear and angular acceleraction from the applied forces.
-    #[inline]
-    fn update_acc(&mut self) {
-        self.update_lin_acc();
-        self.update_ang_acc();
-    }
     /// Update the linear acceleraction from the applied forces.
     #[inline]
     fn update_lin_acc(&mut self) {
@@ -513,29 +531,25 @@ impl<N: Real> RigidBody<N> {
     /// Forces the body to respond to any impulses before the next tick.
     #[inline]
     pub fn wake_up(&mut self) {
-        if &ActivationState::Inactive == self.activation_state() {
-            self.activate(na::Cast::from(1.));
+        if self.deactivation_threshold().is_some() {
+            self.activate(Bounded::max_value())
         }
     }
 
     /// Applies a one-time central impulse.
     #[inline]
     pub fn apply_central_impulse(&mut self, impulse: Vector<N>){
-        self.wake_up();
-
         let current_velocity = self.lin_vel();
-        let inverted_mass = self.inv_mass();
+        let inverted_mass    = self.inv_mass();
         self.set_lin_vel(current_velocity + impulse * inverted_mass);
     }
 
     /// Applies a one-time angular impulse.
     #[inline]
     pub fn apply_angular_momentum(&mut self, ang_moment: Orientation<N>){
-        self.wake_up();
-
         let current_ang_velocity = self.ang_vel();
         let inverted_tensor = self.inv_inertia().clone();
-        self.set_ang_vel(current_ang_velocity + inverted_tensor*ang_moment);
+        self.set_ang_vel(current_ang_velocity + inverted_tensor * ang_moment);
     }
 
     /// Applies a one-time impulse to a point relative to the center of mass.

@@ -185,8 +185,8 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
             let curr_lin_vel = rb.lin_vel();
             let curr_ang_vel = rb.ang_vel();
 
-            rb.set_lin_vel(curr_lin_vel + self.mj_lambda[i as usize].lv);
-            rb.set_ang_vel(curr_ang_vel + self.mj_lambda[i as usize].av);
+            rb.set_lin_vel_internal(curr_lin_vel + self.mj_lambda[i as usize].lv);
+            rb.set_ang_vel_internal(curr_ang_vel + self.mj_lambda[i as usize].av);
         }
 
         for (i, dv) in self.restitution_constraints.iter().enumerate() {

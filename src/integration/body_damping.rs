@@ -35,8 +35,8 @@ impl<N: Real> Integrator<N, RigidBody<N>> for BodyDamping<N> {
     fn update(&mut self, _: N, rb: &mut RigidBody<N>) {
         let new_lin = rb.lin_vel() * self.linear_damping;
 
-        rb.set_lin_vel(new_lin);
+        rb.set_lin_vel_internal(new_lin);
         let new_ang = rb.ang_vel() * self.angular_damping;
-        rb.set_ang_vel(new_ang);
+        rb.set_ang_vel_internal(new_ang);
     }
 }

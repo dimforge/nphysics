@@ -53,7 +53,7 @@ impl<N: Real> ActivationManager<N> {
                 let new_energy = (_1 - self.mix_factor) * b.activation_state().energy() +
                     self.mix_factor * (na::norm_squared(&b.lin_vel()) + na::norm_squared(&b.ang_vel()));
 
-                b.activate(new_energy.min(threshold * na::convert::<f64, N>(4.0f64)));
+                b.activate(new_energy.min(threshold * na::convert(4.0f64)));
             },
             None => { }
         }
@@ -89,7 +89,7 @@ impl<N: Real> ActivationManager<N> {
             let mut rb = b.borrow_mut();
 
             match rb.deactivation_threshold() {
-                Some(threshold) => rb.activate(threshold * na::convert::<f64, N>(2.0f64)),
+                Some(threshold) => rb.activate(threshold * na::convert(2.0f64)),
                 None => { }
             }
         }
