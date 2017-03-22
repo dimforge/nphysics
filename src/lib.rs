@@ -36,14 +36,14 @@ If you want to use the 2D version of `nphysics`, add the crate named
 
 ```ignore
 [dependencies]
-nphysics2d = "0.5.*"
+nphysics2d = "0.6"
 ```
 
 For the 3D version, add the crate named `nphysics3d`:
 
 ```ignore
 [dependencies]
-nphysics3d = "0.5.*"
+nphysics3d = "0.6"
 ```
 
 Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
