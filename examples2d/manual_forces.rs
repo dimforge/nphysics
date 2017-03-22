@@ -105,8 +105,6 @@ fn main() {
                     handles.iter().zip(forces.iter()).map(
                         |(object, force)| {
                             let mut obj = object.borrow_mut();
-                            let thr = obj.deactivation_threshold().unwrap_or(0.0);
-                            obj.activate(thr*4.0);
                             obj.append_lin_force(force.clone());
                         }
                         ).last();
@@ -128,8 +126,6 @@ fn main() {
                     ang_handles.iter().zip(ang_forces.iter()).map(
                         |(object, force)| {
                             let mut obj = object.borrow_mut();
-                            let thr = obj.deactivation_threshold().unwrap_or(0.0);
-                            obj.activate(thr * 4.0);
                             obj.append_ang_force(force.clone());
                         }
                         ).last();
