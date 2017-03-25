@@ -536,9 +536,19 @@ impl<N: Real> RigidBody<N> {
         }
     }
 
+    /// Forces the body to respond to any impulses before the next tick.
+    #[inline]
+    pub fn wake_up(&mut self) {
+        if &ActivationState::Inactive == self.activation_state() {
+            self.activate(na::Cast::from(1.));
+        }
+    }
+
     /// Applies a one-time central impulse.
     #[inline]
     pub fn apply_central_impulse(&mut self, impulse: Vector<N>){
+        self.wake_up();
+
         let current_velocity = self.lin_vel();
         let inverted_mass    = self.inv_mass();
         self.set_lin_vel(current_velocity + impulse * inverted_mass);
@@ -547,6 +557,8 @@ impl<N: Real> RigidBody<N> {
     /// Applies a one-time angular impulse.
     #[inline]
     pub fn apply_angular_momentum(&mut self, ang_moment: Orientation<N>){
+        self.wake_up();
+
         let current_ang_velocity = self.ang_vel();
         let inverted_tensor = self.inv_inertia().clone();
         self.set_ang_vel(current_ang_velocity + inverted_tensor * ang_moment);
