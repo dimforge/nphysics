@@ -1,5 +1,3 @@
-use std::cell::{RefCell, Ref, RefMut};
-
 use alga::general::Real;
 use ncollide::shape::ShapeHandle;
 use object::{RigidBody, Sensor, RigidBodyHandle, SensorHandle};
@@ -17,17 +15,17 @@ pub enum WorldObject<N: Real> {
 /// Reference to a world object.
 pub enum WorldObjectBorrowed<'a, N: Real> {
     /// A borrowed rigid body handle.
-    RigidBody(Ref<'a, RigidBody<N>>),
+    RigidBody(::Ref<'a, RigidBody<N>>),
     /// A borrowed sensor handle.
-    Sensor(Ref<'a, Sensor<N>>)
+    Sensor(::Ref<'a, Sensor<N>>)
 }
 
 /// Mutable reference to a world object.
 pub enum WorldObjectBorrowedMut<'a, N: Real> {
     /// A mutably borrowed rigid body handle.
-    RigidBody(RefMut<'a, RigidBody<N>>),
+    RigidBody(::RefMut<'a, RigidBody<N>>),
     /// A mutably borrowed sensor handle.
-    Sensor(RefMut<'a, Sensor<N>>)
+    Sensor(::RefMut<'a, Sensor<N>>)
 }
 
 impl<N: Real> WorldObject<N> {
@@ -36,7 +34,7 @@ impl<N: Real> WorldObject<N> {
     /// This identifier remains unique and will not change as long as `rb` is kept alive in memory.
     #[inline]
     pub fn rigid_body_uid(rb: &RigidBodyHandle<N>) -> usize {
-        &**rb as *const RefCell<RigidBody<N>> as usize
+        rb.ptr() as usize
     }
 
     /// The unique identifier a sensor would have if it was wrapped on a `WorldObject`.
@@ -44,7 +42,7 @@ impl<N: Real> WorldObject<N> {
     /// This identifier remains unique and will not change as long as `s` is kept alive in memory.
     #[inline]
     pub fn sensor_uid(s: &SensorHandle<N>) -> usize {
-        &**s  as *const RefCell<Sensor<N>> as usize
+        s.ptr() as usize
     }
 
     /// Whether or not this is a rigid body.
@@ -103,7 +101,7 @@ impl<N: Real> WorldObject<N> {
 
     /// Borrows this world object as a sensor.
     #[inline]
-    pub fn borrow_sensor(&self) -> Ref<Sensor<N>> {
+    pub fn borrow_sensor(&self) -> ::Ref<Sensor<N>> {
         match *self {
             WorldObject::Sensor(ref s) => s.borrow(),
             _                          => panic!("This world object is not a sensor.")
@@ -112,7 +110,7 @@ impl<N: Real> WorldObject<N> {
 
     /// Borrows this world object as a rigid body.
     #[inline]
-    pub fn borrow_rigid_body(&self) -> Ref<RigidBody<N>> {
+    pub fn borrow_rigid_body(&self) -> ::Ref<RigidBody<N>> {
         match *self {
             WorldObject::RigidBody(ref rb) => rb.borrow(),
             _                              => panic!("This world object is not a rigid body.")
@@ -130,7 +128,7 @@ impl<N: Real> WorldObject<N> {
 
     /// Mutably borrows this world object as a sensor.
     #[inline]
-    pub fn borrow_mut_sensor(&mut self) -> RefMut<Sensor<N>> {
+    pub fn borrow_mut_sensor(&mut self) -> ::RefMut<Sensor<N>> {
         match *self {
             WorldObject::Sensor(ref mut s) => s.borrow_mut(),
             _                              => panic!("This world object is not a sensor.")
@@ -139,7 +137,7 @@ impl<N: Real> WorldObject<N> {
 
     /// Mutably borrows this world object as a rigid body.
     #[inline]
-    pub fn borrow_mut_rigid_body(&mut self) -> RefMut<RigidBody<N>> {
+    pub fn borrow_mut_rigid_body(&mut self) -> ::RefMut<RigidBody<N>> {
         match *self {
             WorldObject::RigidBody(ref mut rb) => rb.borrow_mut(),
             _                                  => panic!("This world object is not a rigid body.")

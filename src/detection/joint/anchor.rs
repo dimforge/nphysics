@@ -1,6 +1,3 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-
 use alga::general::Real;
 use na;
 use object::RigidBody;
@@ -9,7 +6,7 @@ use math::Point;
 /// One of the two end points of a joint.
 pub struct Anchor<N: Real, P> {
     /// The body attached to this anchor.
-    pub body:     Option<Rc<RefCell<RigidBody<N>>>>,
+    pub body:     Option<::Rc<RigidBody<N>>>,
     /// The attach position, in local coordinates of the attached body.
     pub position: P
 }
@@ -19,7 +16,7 @@ impl<N: Real, P> Anchor<N, P> {
     ///
     /// If `body` is `None`, the anchor is concidered to be attached to the ground and `position`
     /// is the attach point in global coordinates.
-    pub fn new(body: Option<Rc<RefCell<RigidBody<N>>>>, position: P) -> Anchor<N, P> {
+    pub fn new(body: Option<::Rc<RigidBody<N>>>, position: P) -> Anchor<N, P> {
         Anchor {
             body:     body,
             position: position

@@ -1,8 +1,6 @@
 use std::mem;
 use std::any::Any;
 use std::ops::Mul;
-use std::rc::Rc;
-use std::cell::RefCell;
 use num::Bounded;
 
 use alga::general::Real;
@@ -15,7 +13,10 @@ use volumetric::{InertiaTensor, Volumetric};
 use object::RigidBodyCollisionGroups;
 
 /// A shared, mutable, rigid body.
-pub type RigidBodyHandle<N> = Rc<RefCell<RigidBody<N>>>;
+pub type RigidBodyHandle<N> = ::Rc<RigidBody<N>>;
+
+/// User-defined data attached to a `RigidBody`
+pub type UserData = Box<Any + Send + Sync>;
 
 // FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?
 #[derive(Debug, PartialEq, Clone, RustcEncodable, RustcDecodable)]
@@ -77,7 +78,7 @@ pub struct RigidBody<N: Real> {
     ang_acc_scale:        Orientation<N>, // FIXME: find a better way of doing that.
     margin:               N,
     collision_groups:     RigidBodyCollisionGroups,
-    user_data:            Option<Box<Any>>
+    user_data:            Option<UserData>
 }
 
 impl<N: Real> Clone for RigidBody<N> {
@@ -688,18 +689,18 @@ impl<N: Real> RigidBody<N> {
 
     /// Reference to user-defined data attached to this rigid body.
     #[inline]
-    pub fn user_data(&self) -> Option<&Box<Any>> {
+    pub fn user_data(&self) -> Option<&UserData> {
         self.user_data.as_ref()
     }
 
     /// Mutable reference to user-defined data attached to this rigid body.
     #[inline]
-    pub fn user_data_mut(&mut self) -> Option<&mut Box<Any>> {
+    pub fn user_data_mut(&mut self) -> Option<&mut UserData> {
         self.user_data.as_mut()
     }
 
     /// Attach some user-defined data to this rigid body and return the old one.
-    pub fn set_user_data(&mut self, user_data: Option<Box<Any>>) -> Option<Box<Any>> {
+    pub fn set_user_data(&mut self, user_data: Option<UserData>) -> Option<UserData> {
         mem::replace(&mut self.user_data, user_data)
     }
 }

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::iter;
 // use rand::RngUtil;
 use alga::general::Real;
@@ -93,7 +91,7 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
                 dt:          N,
                 constraints: &[Constraint<N>],
                 joints:      &[usize],
-                bodies:      &[Rc<RefCell<RigidBody<N>>>]) {
+                bodies:      &[::Rc<RigidBody<N>>]) {
         let num_friction_equations    = (na::dimension::<Vector<N>>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
@@ -273,8 +271,8 @@ impl<N: Real> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
                 match *cstr {
                     Constraint::RBRB(ref a, ref b, ref c) => {
                         self.cache.insert(i,
-                                          &**a as *const RefCell<RigidBody<N>> as usize,
-                                          &**b as *const RefCell<RigidBody<N>> as usize,
+                                          a.ptr() as usize,
+                                          b.ptr() as usize,
                                           na::center(&c.world1, &c.world2));
                     },
                     Constraint::BallInSocket(_) => {
@@ -335,8 +333,8 @@ impl<N: Real> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
 
             let mut id = 0;
 
-            fn set_body_index<N: Real>(a:      &Rc<RefCell<RigidBody<N>>>,
-                                       bodies: &mut Vec<Rc<RefCell<RigidBody<N>>>>,
+            fn set_body_index<N: Real>(a:      &::Rc<RigidBody<N>>,
+                                       bodies: &mut Vec<::Rc<RigidBody<N>>>,
                                        id:     &mut isize) {
                 let mut ba = a.borrow_mut();
                 if ba.index() == -2 {

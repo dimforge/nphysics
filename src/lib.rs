@@ -116,6 +116,9 @@ pub mod utils;
 pub mod volumetric;
 // mod tests;
 
+mod rc;
+
+pub use self::rc::{Rc, Ref, RefMut};
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]

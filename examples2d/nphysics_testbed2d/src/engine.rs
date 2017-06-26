@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::sync::Arc;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
@@ -7,12 +5,13 @@ use sfml::graphics::RenderWindow;
 use na::{Point2, Point3, Isometry2};
 use na;
 use nphysics2d::object::{WorldObject, RigidBodyHandle, SensorHandle};
+use nphysics2d::Rc;
 use ncollide::transformation;
 use ncollide::shape::{Shape2, Plane2, Ball2, Cuboid2, Compound2, Polyline2, ConvexHull2, Segment2};
 use camera::Camera;
 use objects::{SceneNode, Ball, Box, Lines, Segment};
 
-pub type GraphicsManagerHandle = Rc<RefCell<GraphicsManager<'static>>>;
+pub type GraphicsManagerHandle = Rc<GraphicsManager<'static>>;
 
 pub struct GraphicsManager<'a> {
     // NOTE: sensors and rigid bodies are not on the same hashmap because we want do draw sensors

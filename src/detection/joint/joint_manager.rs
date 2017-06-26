@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::ptr;
 
 use alga::general::Real;
@@ -35,22 +33,22 @@ impl<N: Real> JointManager<N> {
 
     /// List of joints attached to a specific body.
     #[inline]
-    pub fn joints_with_body(&self, body: &Rc<RefCell<RigidBody<N>>>) -> Option<&[Constraint<N>]> {
-        self.body2joints.find(&(&**body as *const RefCell<RigidBody<N>> as usize)).map(|v| &v[..])
+    pub fn joints_with_body(&self, body: &::Rc<RigidBody<N>>) -> Option<&[Constraint<N>]> {
+        self.body2joints.find(&(body.ptr() as usize)).map(|v| &v[..])
     }
 
     /// Add a `BallInSocket` joint to this manager.
     ///
     /// This will force the activation of the two objects attached to the joint.
     pub fn add_ball_in_socket(&mut self,
-                              joint:      Rc<RefCell<BallInSocket<N>>>,
+                              joint:      ::Rc<BallInSocket<N>>,
                               activation: &mut ActivationManager<N>) {
-        if self.joints.insert(&*joint as *const RefCell<BallInSocket<N>> as usize,
+        if self.joints.insert(joint.ptr() as usize,
                               Constraint::BallInSocket(joint.clone())) {
             match joint.borrow().anchor1().body.as_ref() {
                 Some(b) => {
                     activation.deferred_activate(b);
-                    let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody<N>> as usize,
+                    let js = self.body2joints.find_or_insert_lazy(b.ptr() as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::BallInSocket(joint.clone()));
                 },
@@ -60,7 +58,7 @@ impl<N: Real> JointManager<N> {
             match joint.borrow().anchor2().body.as_ref() {
                 Some(b) => {
                     activation.deferred_activate(b);
-                    let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody<N>> as usize,
+                    let js = self.body2joints.find_or_insert_lazy(b.ptr() as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::BallInSocket(joint.clone()));
                 },
@@ -72,8 +70,8 @@ impl<N: Real> JointManager<N> {
     /// Removes a `BallInSocket` joint from this manager.
     ///
     /// This will force the activation of the two objects attached to the joint.
-    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket<N>>>, activation: &mut ActivationManager<N>) {
-        if self.joints.remove(&(&**joint as *const RefCell<BallInSocket<N>> as usize)) {
+    pub fn remove_ball_in_socket(&mut self, joint: &::Rc<BallInSocket<N>>, activation: &mut ActivationManager<N>) {
+        if self.joints.remove(&(joint.ptr() as usize)) {
             let _  = joint.borrow().anchor1().body.as_ref().map(|b| activation.deferred_activate(b));
             let _  = joint.borrow().anchor2().body.as_ref().map(|b| activation.deferred_activate(b));
         }
@@ -82,12 +80,12 @@ impl<N: Real> JointManager<N> {
     /// Add a `Fixed` joint to this manager.
     ///
     /// This will force the activation of the two objects attached to the joint.
-    pub fn add_fixed(&mut self, joint: Rc<RefCell<Fixed<N>>>, activation: &mut ActivationManager<N>) {
-        if self.joints.insert(&*joint as *const RefCell<Fixed<N>> as usize, Constraint::Fixed(joint.clone())) {
+    pub fn add_fixed(&mut self, joint: ::Rc<Fixed<N>>, activation: &mut ActivationManager<N>) {
+        if self.joints.insert(joint.ptr() as usize, Constraint::Fixed(joint.clone())) {
             match joint.borrow().anchor1().body.as_ref() {
                 Some(b) => {
                     activation.deferred_activate(b);
-                    let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody<N>> as usize,
+                    let js = self.body2joints.find_or_insert_lazy(b.ptr() as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::Fixed(joint.clone()));
                 },
@@ -97,7 +95,7 @@ impl<N: Real> JointManager<N> {
             match joint.borrow().anchor2().body.as_ref() {
                 Some(b) => {
                     activation.deferred_activate(b);
-                    let js = self.body2joints.find_or_insert_lazy(&**b as *const RefCell<RigidBody<N>> as usize,
+                    let js = self.body2joints.find_or_insert_lazy(b.ptr() as usize,
                                                                   || Some(Vec::new()));
                     js.unwrap().push(Constraint::Fixed(joint.clone()));
                 },
@@ -110,32 +108,32 @@ impl<N: Real> JointManager<N> {
     ///
     /// This will force the activation of the two objects attached to the joint.
     pub fn remove_joint<T: Joint<N, M>, M>(&mut self,
-                                           joint:      &Rc<RefCell<T>>,
+                                           joint:      &::Rc<T>,
                                            activation: &mut ActivationManager<N>) {
-        if self.joints.remove(&(&**joint as *const RefCell<T> as usize)) {
+        if self.joints.remove(&(joint.ptr() as usize)) {
             self.remove_joint_for_body(joint, joint.borrow().anchor1().body.as_ref(), activation);
             self.remove_joint_for_body(joint, joint.borrow().anchor2().body.as_ref(), activation);
         }
     }
 
     fn remove_joint_for_body<T: Joint<N, M>, M>(&mut self,
-                                                joint:      &Rc<RefCell<T>>,
-                                                body:       Option<&Rc<RefCell<RigidBody<N>>>>,
+                                                joint:      &::Rc<T>,
+                                                body:       Option<&::Rc<RigidBody<N>>>,
                                                 activation: &mut ActivationManager<N>) {
         match body {
             Some(b) => {
                 activation.deferred_activate(b);
-                let key = &**b as *const RefCell<RigidBody<N>> as usize;
+                let key = b.ptr() as usize;
                 match self.body2joints.find_mut(&key) {
                     Some(ref mut js) => {
-                        let jkey = &**joint as *const RefCell<T>;
+                        let jkey = joint.ptr();
                         js.retain(|j| {
                             // we do not know the type of the joint, so cast it to usize for
                             // comparison.
                             let id = match *j {
                                 Constraint::RBRB(_, _, _) => ptr::null::<usize>() as usize,
-                                Constraint::BallInSocket(ref b) => &**b as *const RefCell<BallInSocket<N>> as usize,
-                                Constraint::Fixed(ref f) => &**f as *const RefCell<Fixed<N>> as usize
+                                Constraint::BallInSocket(ref b) => b.ptr() as usize,
+                                Constraint::Fixed(ref f) => f.ptr() as usize
                             };
 
                             id != jkey as usize
@@ -151,19 +149,19 @@ impl<N: Real> JointManager<N> {
     /// Removes every joint attached to a given rigid body.
     ///
     /// This will force the activation of every object attached to the deleted joints.
-    pub fn remove(&mut self, b: &Rc<RefCell<RigidBody<N>>>, activation: &mut ActivationManager<N>) {
-        for joints in self.body2joints.get_and_remove(&(&**b as *const RefCell<RigidBody<N>> as usize)).iter() {
+    pub fn remove(&mut self, b: &::Rc<RigidBody<N>>, activation: &mut ActivationManager<N>) {
+        for joints in self.body2joints.get_and_remove(&(b.ptr() as usize)).iter() {
             for joint in joints.value.iter() {
                 fn do_remove<N: Real, T: Joint<N, M>, M>(_self:      &mut JointManager<N>,
-                                                         joint:      &Rc<RefCell<T>>,
-                                                         b:          &Rc<RefCell<RigidBody<N>>>,
+                                                         joint:      &::Rc<T>,
+                                                         b:          &::Rc<RigidBody<N>>,
                                                          activation: &mut ActivationManager<N>) {
                     let bj    = joint.borrow();
                     let body1 = bj.anchor1().body.as_ref();
                     let body2 = bj.anchor2().body.as_ref();
 
                     for body in bj.anchor1().body.as_ref().iter() {
-                        if &**(*body) as *const RefCell<RigidBody<N>> == &**b as *const RefCell<RigidBody<N>> {
+                        if body.ptr() == b.ptr() {
                             _self.remove_joint_for_body(joint, body2, activation);
                         }
                         else {

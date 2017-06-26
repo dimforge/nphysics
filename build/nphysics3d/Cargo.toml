@@ -13,6 +13,7 @@ license = "BSD-3-Clause"
 [features]
 default = [ "dim3" ]
 dim3    = [ ]
+threadsafe = [ ]
 
 [lib]
 name = "nphysics3d"
