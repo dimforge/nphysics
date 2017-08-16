@@ -55,13 +55,13 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
                       rigid_body:       RigidBodyHandle<N>,
                       motion_threshold: N,
                       trigger_sensors:  bool) {
-        self.objects.insert(&*rigid_body as *const RefCell<RigidBody<N>> as usize,
-                            CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
+        let _ = self.objects.insert(&*rigid_body as *const RefCell<RigidBody<N>> as usize,
+                                    CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
     }
 
     /// Enables continuous collision for the given rigid body.
     pub fn remove_ccd_from(&mut self, rigid_body: &RigidBodyHandle<N>) {
-        self.objects.remove(&(&**rigid_body as *const RefCell<RigidBody<N>> as usize));
+        let _ = self.objects.remove(&(&**rigid_body as *const RefCell<RigidBody<N>> as usize));
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.

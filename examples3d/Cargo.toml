@@ -1,14 +1,14 @@
 [package]
-name    = "nphysics-examples"
+name    = "nphysics-examples-3d"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
 rand       = "0.3"
 num-traits = "0.1"
-nalgebra   = "0.11"
-ncollide   = "0.11"
-kiss3d     = "0.8"
+nalgebra   = "0.13"
+ncollide   = "0.13"
+kiss3d     = "0.10"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

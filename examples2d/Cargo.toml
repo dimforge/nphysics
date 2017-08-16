@@ -1,13 +1,13 @@
 [package]
-name    = "nphysics-examples"
+name    = "nphysics-examples-2d"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
 rand     = "0.3"
 alga     = "0.5"
-nalgebra = "0.11"
-ncollide = "0.11"
+nalgebra = "0.13"
+ncollide = "0.13"
 
 [dependencies.nphysics_testbed2d]
 path = "./nphysics_testbed2d"

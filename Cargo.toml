@@ -1,0 +1,3 @@
+[workspace]
+members = [ "build/nphysics2d", "examples2d/nphysics_testbed2d", "examples2d",
+            "build/nphysics3d", "examples3d/nphysics_testbed3d", "examples3d" ]

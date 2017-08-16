@@ -187,7 +187,7 @@ impl<N: Real> World<N> {
         let handle = Rc::new(RefCell::new(rb));
         let uid = WorldObject::rigid_body_uid(&handle);
 
-        self.rigid_bodies.insert(uid, handle.clone());
+        let _ = self.rigid_bodies.insert(uid, handle.clone());
         self.cworld.deferred_add(uid, position, shape, groups,
                                  GeometricQueryType::Contacts(collision_object_prediction),
                                  WorldObject::RigidBody(handle.clone()));
@@ -205,7 +205,7 @@ impl<N: Real> World<N> {
         let handle   = Rc::new(RefCell::new(sensor));
         let uid      = &*handle as *const RefCell<Sensor<N>> as usize;
 
-        self.sensors.insert(uid, handle.clone());
+        let _ = self.sensors.insert(uid, handle.clone());
         self.cworld.deferred_add(uid, position, shape, groups,
                                  GeometricQueryType::Proximity(margin),
                                  WorldObject::Sensor(handle.clone()));
@@ -221,7 +221,7 @@ impl<N: Real> World<N> {
         self.cworld.perform_additions_removals_and_broad_phase();
         self.joints.remove(rb, &mut *self.sleep.borrow_mut());
         self.ccd.remove_ccd_from(rb);
-        self.rigid_bodies.remove(&uid);
+        let _ = self.rigid_bodies.remove(&uid);
         rb.borrow_mut().delete();
     }
 
@@ -230,7 +230,7 @@ impl<N: Real> World<N> {
         let uid = WorldObject::sensor_uid(sensor);
         self.cworld.deferred_remove(uid);
         self.cworld.perform_additions_removals_and_broad_phase();
-        self.sensors.remove(&uid);
+        let _ = self.sensors.remove(&uid);
     }
 
     // XXX: keep this reference mutable?
