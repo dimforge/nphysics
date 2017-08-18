@@ -1,7 +1,7 @@
 //! Objects that may be added to the physical world.
 
 pub use self::rigid_body::{RigidBody, RigidBodyHandle, ActivationState, RigidBodyState};
-pub use self::sensor::{Sensor, SensorHandle};
+pub use self::sensor::{Sensor, SensorHandle, SensorProximityCollector};
 pub use self::world_object::{WorldObject, WorldObjectBorrowed, WorldObjectBorrowedMut};
 pub use self::rigid_body_collision_groups::RigidBodyCollisionGroups;
 pub use self::sensor_collision_groups::SensorCollisionGroups;
