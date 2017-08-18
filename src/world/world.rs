@@ -19,7 +19,7 @@ use detection::ActivationManager;
 use detection::constraint::Constraint;
 use detection::joint::{JointManager, BallInSocket, Fixed};
 use resolution::{Solver, AccumulatedImpulseSolver, CorrectionMode};
-use object::{WorldObject, RigidBody, RigidBodyHandle, Sensor, SensorHandle};
+use object::{WorldObject, RigidBody, RigidBodyHandle, Sensor, SensorHandle, SensorProximityCollector};
 use math::{Point, Vector, Isometry};
 
 /// The default broad phase.
@@ -94,6 +94,11 @@ impl<N: Real> World<N> {
         let filter      = SensorsNotCollidingTheirParentPairFilter;
         let filter_name = "__nphysics_internal_SensorsNotCollidingTheirParentPairFilter";
         cworld.register_broad_phase_pair_filter(filter_name, filter);
+
+        // Setup the proximity collector for sensors.
+        let collector      = SensorProximityCollector;
+        let collector_name = "__nphysics_internal_SensorProximityCollector";
+        cworld.register_proximity_handler(collector_name, collector);
 
         // Joints
         let joints = JointManager::new();
