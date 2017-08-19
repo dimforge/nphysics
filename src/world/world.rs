@@ -141,11 +141,17 @@ impl<N: Real> World<N> {
         }
 
         for e in self.sensors.elements_mut().iter_mut() {
-            let sensor = e.value.borrow_mut();
+            let mut sensor = e.value.borrow_mut();
 
-            if let Some(rb) = sensor.parent() {
-                if rb.borrow().is_active() {
-                    self.cworld.deferred_set_position(WorldObject::sensor_uid(&e.value), sensor.position());
+            if sensor.did_move_locally {
+                sensor.did_move_locally = false;
+                self.cworld.deferred_set_position(WorldObject::sensor_uid(&e.value), sensor.position());
+            }
+            else {
+                if let Some(rb) = sensor.parent() {
+                    if rb.borrow().is_active() {
+                        self.cworld.deferred_set_position(WorldObject::sensor_uid(&e.value), sensor.position());
+                    }
                 }
             }
         }
