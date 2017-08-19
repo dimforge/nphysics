@@ -27,7 +27,9 @@ pub struct Sensor<N: Real> {
     parent_prox:         bool,
     user_data:           Option<Box<Any>>,
     interfering_bodies:  Option<HashMap<usize, RigidBodyHandle<N>, UintTWHash>>,
-    interfering_sensors: Option<HashMap<usize, SensorHandle<N>, UintTWHash>>
+    interfering_sensors: Option<HashMap<usize, SensorHandle<N>, UintTWHash>>,
+    #[doc(hidden)]
+    pub did_move_locally:    bool
 }
 
 impl<N: Real> Sensor<N> {
@@ -51,6 +53,7 @@ impl<N: Real> Sensor<N> {
         Sensor {
             parent:              parent,
             relative_position:   na::one(),
+            did_move_locally:    true,
             shape:               shape,
             margin:              na::zero(),
             collision_groups:    SensorCollisionGroups::new(),
@@ -145,6 +148,7 @@ impl<N: Real> Sensor<N> {
     /// If `self.parent()` is `None`, then this sets the sensor's absolute position.
     #[inline]
     pub fn set_relative_position(&mut self, rel_pos: Isometry<N>) {
+        self.did_move_locally  = true;
         self.relative_position = rel_pos
     }
 
@@ -163,6 +167,7 @@ impl<N: Real> Sensor<N> {
     /// position and updates it.
     #[inline]
     pub fn set_position(&mut self, abs_pos: Isometry<N>) {
+        self.did_move_locally = true;
         match self.parent {
             Some(ref rb) => {
                 self.relative_position = rb.borrow().position().inverse() * abs_pos
