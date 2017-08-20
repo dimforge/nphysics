@@ -6,18 +6,23 @@ rust:
     - nightly
 matrix:
   allow_failures:
-    - rust: beta 
+    - rust: beta
     - rust: nightly
 addons:
   apt:
     sources:
+      - kalakris-cmake
       - kubuntu-backports
     packages:
       - cmake
+      - libxi-dev
+      - libxrandr-dev
       - libxxf86vm-dev
       - libglew-dev
       - libopenal-dev
       - libsndfile1-dev
+      - libxinerama-dev
+      - libxcursor-dev
 cache:
   apt: true
   directories:
