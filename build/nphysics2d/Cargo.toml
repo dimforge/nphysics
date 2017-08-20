@@ -1,6 +1,6 @@
 [package]
 name    = "nphysics2d"
-version = "0.7.0"
+version = "0.7.1"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "2-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/doc/nphysics2d"
