@@ -233,6 +233,12 @@ impl<N: Real> Sensor<N> {
     pub fn collision_groups(&self) -> &SensorCollisionGroups {
         &self.collision_groups
     }
+
+    /// This sensor's collision groups.
+    #[inline]
+    pub fn collision_groups_mut(&mut self) -> &mut SensorCollisionGroups {
+        &mut self.collision_groups
+    }
 }
 
 #[doc(hidden)]
