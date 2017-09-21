@@ -1,4 +1,5 @@
 sudo: false
+dist: trusty
 language: rust
 rust:
     - stable
@@ -6,7 +7,7 @@ rust:
     - nightly
 matrix:
   allow_failures:
-    - rust: beta 
+    - rust: beta
     - rust: nightly
 addons:
   apt:
@@ -18,6 +19,7 @@ addons:
       - libglew-dev
       - libopenal-dev
       - libsndfile1-dev
+      - xorg-dev
 cache:
   apt: true
   directories:
