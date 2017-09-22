@@ -1,7 +1,5 @@
 use std::mem;
 use std::any::Any;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use alga::general::Real;
 use na;
@@ -15,7 +13,7 @@ use object::{RigidBodyHandle, SensorCollisionGroups, WorldObject};
 use world::{WorldCollisionObject, RigidBodies, Sensors};
 
 /// A shared, mutable, sensor.
-pub type SensorHandle<N> = Rc<RefCell<Sensor<N>>>;
+pub type SensorHandle<N> = ::Rc<Sensor<N>>;
 
 /// An object capable of detecting interferances with other entities without interacting with them.
 pub struct Sensor<N: Real> {

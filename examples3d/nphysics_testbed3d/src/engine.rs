@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use rand::{SeedableRng, XorShiftRng, Rng};
 use na::{Point3, Isometry3};
@@ -9,7 +7,8 @@ use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use ncollide::shape::{Shape3, Plane3, Ball3, Cuboid3, Cylinder3, Cone3, Compound3, TriMesh3, ConvexHull3};
 use ncollide::transformation;
-use nphysics3d::object::{RigidBody, WorldObject, WorldObjectBorrowed, RigidBodyHandle, SensorHandle};
+use nphysics3d::object::{WorldObject, WorldObjectBorrowed, RigidBodyHandle, SensorHandle};
+use nphysics3d::Rc;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -19,7 +18,7 @@ use objects::plane::Plane;
 use objects::convex::Convex;
 use objects::node::Node;
 
-pub type GraphicsManagerHandle = Rc<RefCell<GraphicsManager>>;
+pub type GraphicsManagerHandle = Rc<GraphicsManager>;
 
 pub struct GraphicsManager {
     rand:             XorShiftRng,
@@ -122,7 +121,7 @@ impl GraphicsManager {
                     }
                     WorldObject::Sensor(ref sensor) => {
                         if let Some(parent) = sensor.borrow().parent() {
-                            let uid = &**parent as *const RefCell<RigidBody<f32>> as usize;
+                            let uid = parent.ptr() as usize;
                             if let Some(pcolor) = self.rb2color.get(&uid) {
                                 color = *pcolor;
                             }

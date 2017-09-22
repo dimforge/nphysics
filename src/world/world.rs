@@ -1,7 +1,5 @@
 use std::slice::Iter;
 use std::iter::Map;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use alga::general::Real;
 use na;
@@ -47,7 +45,7 @@ pub struct World<N: Real> {
     sensors:      HashMap<usize, SensorHandle<N>, UintTWHash>,
     forces:       BodyForceGenerator<N>,
     integrator:   BodySmpEulerIntegrator,
-    sleep:        Rc<RefCell<ActivationManager<N>>>, // FIXME: avoid sharing (needed for the contact signal handler)
+    sleep:        ::Rc<ActivationManager<N>>, // FIXME: avoid sharing (needed for the contact signal handler)
     ccd:          TranslationalCCDMotionClamping<N>,
     joints:       JointManager<N>,
     solver:       AccumulatedImpulseSolver<N>,
@@ -83,7 +81,7 @@ impl<N: Real> World<N> {
         let ccd = TranslationalCCDMotionClamping::new();
 
         // Deactivation
-        let sleep = Rc::new(RefCell::new(ActivationManager::new(na::convert(0.01f64))));
+        let sleep = ::Rc::new(ActivationManager::new(na::convert(0.01f64)));
 
         // Setup contact handler to reactivate sleeping objects that loose contact.
         let handler = ObjectActivationOnContactHandler { sleep: sleep.clone() };
@@ -195,7 +193,7 @@ impl<N: Real> World<N> {
         let shape = rb.shape().clone();
         let groups = rb.collision_groups().as_collision_groups().clone();
         let collision_object_prediction = rb.margin() + self.prediction / na::convert(2.0f64);
-        let handle = Rc::new(RefCell::new(rb));
+        let handle = ::Rc::new(rb);
         let uid = WorldObject::rigid_body_uid(&handle);
 
         let _ = self.rigid_bodies.insert(uid, handle.clone());
@@ -213,8 +211,8 @@ impl<N: Real> World<N> {
         let shape    = sensor.shape().clone();
         let groups   = sensor.collision_groups().as_collision_groups().clone();
         let margin   = sensor.margin();
-        let handle   = Rc::new(RefCell::new(sensor));
-        let uid      = &*handle as *const RefCell<Sensor<N>> as usize;
+        let handle   = ::Rc::new(sensor);
+        let uid      = handle.ptr() as usize;
 
         let _ = self.sensors.insert(uid, handle.clone());
         self.cworld.deferred_add(uid, position, shape, groups,
@@ -308,8 +306,8 @@ impl<N: Real> World<N> {
     }
 
     /// Adds a ball-in-socket joint to the world.
-    pub fn add_ball_in_socket(&mut self, joint: BallInSocket<N>) -> Rc<RefCell<BallInSocket<N>>> {
-        let res = Rc::new(RefCell::new(joint));
+    pub fn add_ball_in_socket(&mut self, joint: BallInSocket<N>) -> ::Rc<BallInSocket<N>> {
+        let res = ::Rc::new(joint);
 
         self.joints.add_ball_in_socket(res.clone(), &mut *self.sleep.borrow_mut());
 
@@ -317,13 +315,13 @@ impl<N: Real> World<N> {
     }
 
     /// Removes a ball-in-socket joint from the world.
-    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket<N>>>) {
+    pub fn remove_ball_in_socket(&mut self, joint: &::Rc<BallInSocket<N>>) {
         self.joints.remove_ball_in_socket(joint, &mut *self.sleep.borrow_mut())
     }
 
     /// Adds a fixed joint to the world.
-    pub fn add_fixed(&mut self, joint: Fixed<N>) -> Rc<RefCell<Fixed<N>>> {
-        let res = Rc::new(RefCell::new(joint));
+    pub fn add_fixed(&mut self, joint: Fixed<N>) -> ::Rc<Fixed<N>> {
+        let res = ::Rc::new(joint);
 
         self.joints.add_fixed(res.clone(), &mut *self.sleep.borrow_mut());
 
@@ -331,7 +329,7 @@ impl<N: Real> World<N> {
     }
 
     /// Removes a fixed joint from the world.
-    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed<N>>>) {
+    pub fn remove_fixed(&mut self, joint: &::Rc<Fixed<N>>) {
         self.joints.remove_joint(joint, &mut *self.sleep.borrow_mut())
     }
 
@@ -413,7 +411,7 @@ impl<N: Real> World<N> {
 }
 
 struct ObjectActivationOnContactHandler<N: Real> {
-    sleep: Rc<RefCell<ActivationManager<N>>>
+    sleep: ::Rc<ActivationManager<N>>
 }
 
 impl<N: Real> ContactHandler<Point<N>, Isometry<N>, WorldObject<N>>

@@ -1,4 +1,3 @@
-use std::cell::Ref;
 use num::Bounded;
 
 use alga::general::Real;
@@ -76,7 +75,7 @@ pub fn cancel_relative_linear_motion<N: Real, P>(
 }
 
 #[inline]
-pub fn write_anchor_id<'a, N: Real, P>(anchor: &'a Anchor<N, P>, id: &mut isize) -> Option<Ref<'a, RigidBody<N>>> {
+pub fn write_anchor_id<'a, N: Real, P>(anchor: &'a Anchor<N, P>, id: &mut isize) -> Option<::Ref<'a, RigidBody<N>>> {
     match anchor.body {
         Some(ref b) => {
             let rb = b.borrow();

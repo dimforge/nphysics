@@ -1,6 +1,4 @@
 use std::env;
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::path::Path;
 use time;
 use glfw::{self, MouseButton, Key, Action, WindowEvent};
@@ -18,6 +16,7 @@ use nphysics3d::detection::constraint::Constraint;
 use nphysics3d::detection::joint::{Anchor, Fixed, Joint};
 use nphysics3d::object::{RigidBody, RigidBodyHandle, SensorHandle, WorldObject};
 use nphysics3d::world::World;
+use nphysics3d::Rc;
 use engine::{GraphicsManager, GraphicsManagerHandle};
 
 
@@ -57,7 +56,7 @@ impl Testbed {
         Testbed {
             world:    World::new(),
             window:   window,
-            graphics: Rc::new(RefCell::new(graphics))
+            graphics: Rc::new(graphics)
         }
     }
 
@@ -153,7 +152,7 @@ impl Testbed {
 
         let mut cursor_pos = Point2::new(0.0f32, 0.0);
         let mut grabbed_object: Option<RigidBodyHandle<f32>> = None;
-        let mut grabbed_object_joint: Option<Rc<RefCell<Fixed<f32>>>> = None;
+        let mut grabbed_object_joint: Option<Rc<Fixed<f32>>> = None;
         let mut grabbed_object_plane: (Point3<f32>, Vector3<f32>) = (Point3::origin(), na::zero());
 
 

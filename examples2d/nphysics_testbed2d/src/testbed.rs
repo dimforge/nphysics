@@ -1,6 +1,4 @@
 use std::env;
-use std::rc::Rc;
-use std::cell::RefCell;
 use sfml::graphics::{RenderWindow, RenderTarget, Font};
 use sfml::window::{ContextSettings, VideoMode};
 use sfml::window::window_style;
@@ -13,6 +11,7 @@ use ncollide::world::CollisionGroups;
 use nphysics2d::world::World;
 use nphysics2d::object::{WorldObject, RigidBodyHandle, SensorHandle};
 use nphysics2d::detection::joint::{Fixed, Anchor};
+use nphysics2d::Rc;
 use camera::Camera;
 use fps::Fps;
 use engine::{GraphicsManager, GraphicsManagerHandle};
@@ -65,7 +64,7 @@ struct TestbedState<'a> {
     camera: Camera,
     fps: Fps<'a>,
     grabbed_object: Option<RigidBodyHandle<f32>>,
-    grabbed_object_joint: Option<Rc<RefCell<Fixed<f32>>>>,
+    grabbed_object_joint: Option<Rc<Fixed<f32>>>,
 }
 
 impl<'a> TestbedState<'a> {
@@ -94,7 +93,7 @@ impl Testbed {
             world:     World::new(),
             callbacks: [ None, None, None, None, None, None, None, None, None ],
             window:    window,
-            graphics:  Rc::new(RefCell::new(GraphicsManager::new()))
+            graphics:  Rc::new(GraphicsManager::new())
         }
     }
 

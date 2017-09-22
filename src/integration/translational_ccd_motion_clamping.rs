@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use na;
 use alga::general::Real;
 use ncollide::utils::data::hash_map::HashMap;
@@ -8,7 +7,7 @@ use ncollide::query;
 use ncollide::bounding_volume;
 use ncollide::world::CollisionGroups;
 use world::RigidBodyCollisionWorld;
-use object::{RigidBodyHandle, SensorHandle, RigidBody};
+use object::{RigidBodyHandle, SensorHandle};
 use math::{Point, Translation};
 
 
@@ -55,13 +54,13 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
                       rigid_body:       RigidBodyHandle<N>,
                       motion_threshold: N,
                       trigger_sensors:  bool) {
-        let _ = self.objects.insert(&*rigid_body as *const RefCell<RigidBody<N>> as usize,
-                                    CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
+        let _ = self.objects.insert(rigid_body.ptr() as usize,
+                            CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
     }
 
     /// Enables continuous collision for the given rigid body.
     pub fn remove_ccd_from(&mut self, rigid_body: &RigidBodyHandle<N>) {
-        let _ = self.objects.remove(&(&**rigid_body as *const RefCell<RigidBody<N>> as usize));
+        let _ = self.objects.remove(&(rigid_body.ptr() as usize));
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.
@@ -80,7 +79,7 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
 
             if na::norm_squared(&movement) > co1.value.sqthreshold {
                 // Use CCD for this object.
-                let obj1_uid = &*co1.value.rigid_body as *const RefCell<RigidBody<N>> as usize;
+                let obj1_uid = co1.value.rigid_body.ptr() as usize;
 
                 let last_transform = Translation::from_vector(-movement) * obj1.position();
                 let begin_aabb     = bounding_volume::aabb(obj1.shape().as_ref(), &last_transform);
