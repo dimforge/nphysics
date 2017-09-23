@@ -1,21 +1,16 @@
 use std::mem;
 use std::any::Any;
 use std::ops::Mul;
-use std::rc::Rc;
-use std::cell::RefCell;
 use num::Bounded;
 
 use alga::general::Real;
 use na;
 use ncollide::bounding_volume::{self, HasBoundingVolume, BoundingVolume, AABB, BoundingSphere};
 use ncollide::shape::{Shape, ShapeHandle};
-use utils::GeneralizedCross;
+use utils::{GeneralizedCross, Indexable};
 use math::{Point, Vector, Orientation, Rotation, Translation, Isometry, AngularInertia};
 use volumetric::{InertiaTensor, Volumetric};
 use object::RigidBodyCollisionGroups;
-
-/// A shared, mutable, rigid body.
-pub type RigidBodyHandle<N> = Rc<RefCell<RigidBody<N>>>;
 
 // FIXME: is this still useful (the same information is given by `self.inv_mass.is_zero()` ?
 #[derive(Debug, PartialEq, Clone, RustcEncodable, RustcDecodable)]
@@ -53,6 +48,7 @@ impl<N: Real> ActivationState<N> {
 ///
 /// This is the structure describing an object on the physics world.
 pub struct RigidBody<N: Real> {
+    uid:                  usize,
     state:                RigidBodyState,
     shape:                ShapeHandle<Point<N>, Isometry<N>>,
     local_to_world:       Isometry<N>,
@@ -77,13 +73,14 @@ pub struct RigidBody<N: Real> {
     ang_acc_scale:        Orientation<N>, // FIXME: find a better way of doing that.
     margin:               N,
     collision_groups:     RigidBodyCollisionGroups,
-    user_data:            Option<Box<Any>>
+    user_data:            Option<Box<Any + Send + Sync>>
 }
 
 impl<N: Real> Clone for RigidBody<N> {
     /// Clones this rigid body but not its associated user-data.
     fn clone(&self) -> RigidBody<N> {
         RigidBody {
+            uid:               self.uid.clone(),
             state:             self.state.clone(),
             shape:             self.shape.clone(),
             local_to_world:    self.local_to_world.clone(),
@@ -320,6 +317,7 @@ impl<N: Real> RigidBody<N> {
 
         let mut res =
             RigidBody {
+                uid:               0, // TODO: uid
                 state:             state,
                 shape:             shape,
                 local_to_world:    na::one(),
@@ -351,6 +349,11 @@ impl<N: Real> RigidBody<N> {
         res.update_inertia_tensor();
 
         res
+    }
+
+    #[inline]
+    pub fn uid(&self) -> usize {
+        self.uid
     }
 
     /// Indicates whether this rigid body is static or dynamic.
@@ -688,18 +691,18 @@ impl<N: Real> RigidBody<N> {
 
     /// Reference to user-defined data attached to this rigid body.
     #[inline]
-    pub fn user_data(&self) -> Option<&Box<Any>> {
+    pub fn user_data(&self) -> Option<&Box<Any + Send + Sync>> {
         self.user_data.as_ref()
     }
 
     /// Mutable reference to user-defined data attached to this rigid body.
     #[inline]
-    pub fn user_data_mut(&mut self) -> Option<&mut Box<Any>> {
+    pub fn user_data_mut(&mut self) -> Option<&mut Box<Any + Send + Sync>> {
         self.user_data.as_mut()
     }
 
     /// Attach some user-defined data to this rigid body and return the old one.
-    pub fn set_user_data(&mut self, user_data: Option<Box<Any>>) -> Option<Box<Any>> {
+    pub fn set_user_data(&mut self, user_data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
         mem::replace(&mut self.user_data, user_data)
     }
 }
@@ -717,5 +720,12 @@ impl<N, M> HasBoundingVolume<M, AABB<Point<N>>> for RigidBody<N>
           M: Copy + Mul<Isometry<N>, Output = Isometry<N>> { // FIXME: avoiding `Copy` would be great.
     fn bounding_volume(&self, m: &M) -> AABB<Point<N>> {
         bounding_volume::aabb(self.shape.as_ref(), &(*m * self.local_to_world)).loosened(self.margin())
+    }
+}
+
+impl<N: Real> Indexable for RigidBody<N> {
+    #[inline]
+    fn set_index(&mut self, index: usize) {
+        self.uid = index
     }
 }

@@ -6,15 +6,16 @@ use detection::joint::joint::Joint;
 /// A ball-in-socket joint.
 ///
 /// This is usually used to create ragdolls.
+#[derive(Clone)]
 pub struct BallInSocket<N: Real> {
     up_to_date: bool,
-    anchor1:    Anchor<N, Point<N>>,
-    anchor2:    Anchor<N, Point<N>>,
+    anchor1:    Anchor<Point<N>>,
+    anchor2:    Anchor<Point<N>>,
 }
 
 impl<N: Real> BallInSocket<N> {
     /// Creates a ball-in-socket joint.
-    pub fn new(anchor1: Anchor<N, Point<N>>, anchor2: Anchor<N, Point<N>>) -> BallInSocket<N> {
+    pub fn new(anchor1: Anchor<Point<N>>, anchor2: Anchor<Point<N>>) -> BallInSocket<N> {
         BallInSocket {
             up_to_date: false,
             anchor1:    anchor1,
@@ -54,38 +55,16 @@ impl<N: Real> BallInSocket<N> {
 }
 
 
-impl<N: Real> Joint<N, Point<N>> for BallInSocket<N> {
+impl<N: Real> Joint<Point<N>> for BallInSocket<N> {
     /// The first anchor affected by this joint.
     #[inline]
-    fn anchor1(&self) -> &Anchor<N, Point<N>> {
+    fn anchor1(&self) -> &Anchor<Point<N>> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
     #[inline]
-    fn anchor2(&self) -> &Anchor<N, Point<N>> {
+    fn anchor2(&self) -> &Anchor<Point<N>> {
         &self.anchor2
-    }
-
-    /// The first attach point in global coordinates.
-    #[inline]
-    fn anchor1_pos(&self) -> Point<N> {
-        match self.anchor1.body {
-            Some(ref b) => {
-                b.borrow().position() * self.anchor1.position
-            },
-            None => self.anchor1.position.clone()
-        }
-    }
-
-    /// The second attach point in global coordinates.
-    #[inline]
-    fn anchor2_pos(&self) -> Point<N> {
-        match self.anchor2.body {
-            Some(ref b) => {
-                b.borrow().position() * self.anchor2.position
-            },
-            None => self.anchor2.position.clone()
-        }
     }
 }

@@ -23,7 +23,8 @@ rustc-serialize = "0.3"
 num-traits = "0.1"
 alga       = "0.5"
 nalgebra   = "0.13"
-ncollide   = "0.13"
+ncollide   = { git = "https://github.com/thiolliere/ncollide/", branch = "send_sync_master" }
 
 [dev-dependencies]
 approx     = "0.1"
+

@@ -8,13 +8,15 @@ use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation::CorrectionParameters;
 use resolution::constraint::contact_equation;
 use math::{Vector, Point, Orientation, Isometry};
+use world::RigidBodyStorage;
 
 pub fn fill_second_order_equation<N: Real>(dt:          N,
                                            joint:       &Fixed<N>,
                                            constraints: &mut [VelocityConstraint<N>],
-                                           correction:  &CorrectionParameters<N>) {
-    let ref1 = joint.anchor1_pos();
-    let ref2 = joint.anchor2_pos();
+                                           correction:  &CorrectionParameters<N>,
+                                           bodies:      &RigidBodyStorage<N>) {
+    let ref1 = joint.anchor1().pos(bodies);
+    let ref2 = joint.anchor2().pos(bodies);
 
     ball_in_socket_equation::cancel_relative_linear_motion(
         dt,
@@ -23,7 +25,8 @@ pub fn fill_second_order_equation<N: Real>(dt:          N,
         joint.anchor1(),
         joint.anchor2(),
         constraints,
-        correction);
+        correction,
+        bodies);
 
     cancel_relative_angular_motion(
         dt,
@@ -32,16 +35,18 @@ pub fn fill_second_order_equation<N: Real>(dt:          N,
         joint.anchor1(),
         joint.anchor2(),
         &mut constraints[na::dimension::<Vector<N>>() ..],
-        correction);
+        correction,
+        bodies);
 }
 
 pub fn cancel_relative_angular_motion<N: Real, P>(dt:          N,
                                                   ref1:        &Isometry<N>,
                                                   ref2:        &Isometry<N>,
-                                                  anchor1:     &Anchor<N, P>,
-                                                  anchor2:     &Anchor<N, P>,
+                                                  anchor1:     &Anchor<P>,
+                                                  anchor2:     &Anchor<P>,
                                                   constraints: &mut [VelocityConstraint<N>],
-                                                  correction:  &CorrectionParameters<N>) {
+                                                  correction:  &CorrectionParameters<N>,
+                                                  bodies:      &RigidBodyStorage<N>) {
     let delta      = ref2.rotation.inverse() * ref1.rotation;
     let delta_axis = delta.scaled_axis();
 
@@ -49,8 +54,8 @@ pub fn cancel_relative_angular_motion<N: Real, P>(dt:          N,
     Orientation::canonical_basis(|rot_axis: &Orientation<N>| {
         let constraint = &mut constraints[i];
 
-        let opt_rb1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1);
-        let opt_rb2 = ball_in_socket_equation::write_anchor_id(anchor2, &mut constraint.id2);
+        let opt_rb1 = ball_in_socket_equation::write_anchor_id(anchor1, &mut constraint.id1, bodies);
+        let opt_rb2 = ball_in_socket_equation::write_anchor_id(anchor2, &mut constraint.id2, bodies);
 
         contact_equation::fill_constraint_geometry(
             na::zero(),

@@ -4,15 +4,16 @@ use detection::joint::anchor::Anchor;
 use detection::joint::joint::Joint;
 
 /// A joint that prevents any relative movement (linear and angular) between two objects.
+#[derive(Clone)]
 pub struct Fixed<N: Real> {
     up_to_date: bool,
-    anchor1:    Anchor<N, Isometry<N>>,
-    anchor2:    Anchor<N, Isometry<N>>,
+    anchor1:    Anchor<Isometry<N>>,
+    anchor2:    Anchor<Isometry<N>>,
 }
 
 impl<N: Real> Fixed<N> {
     /// Creates a new `Fixed` joint.
-    pub fn new(anchor1: Anchor<N, Isometry<N>>, anchor2: Anchor<N, Isometry<N>>) -> Fixed<N> {
+    pub fn new(anchor1: Anchor<Isometry<N>>, anchor2: Anchor<Isometry<N>>) -> Fixed<N> {
         Fixed {
             up_to_date: false,
             anchor1:    anchor1,
@@ -51,38 +52,16 @@ impl<N: Real> Fixed<N> {
     }
 }
 
-impl<N: Real> Joint<N, Isometry<N>> for Fixed<N> {
+impl<N: Real> Joint<Isometry<N>> for Fixed<N> {
     /// The first anchor affected by this joint.
     #[inline]
-    fn anchor1(&self) -> &Anchor<N, Isometry<N>> {
+    fn anchor1(&self) -> &Anchor<Isometry<N>> {
         &self.anchor1
     }
 
     /// The second anchor affected by this joint.
     #[inline]
-    fn anchor2(&self) -> &Anchor<N, Isometry<N>> {
+    fn anchor2(&self) -> &Anchor<Isometry<N>> {
         &self.anchor2
-    }
-
-    /// The first attach point in global coordinates.
-    #[inline]
-    fn anchor1_pos(&self) -> Isometry<N> {
-        match self.anchor1.body {
-            Some(ref b) => {
-                *b.borrow().position() * self.anchor1.position
-            },
-            None => self.anchor1.position.clone()
-        }
-    }
-
-    /// The second attach point in global coordinates.
-    #[inline]
-    fn anchor2_pos(&self) -> Isometry<N> {
-        match self.anchor2.body {
-            Some(ref b) => {
-                *b.borrow().position() * self.anchor2.position
-            },
-            None => self.anchor2.position.clone()
-        }
     }
 }

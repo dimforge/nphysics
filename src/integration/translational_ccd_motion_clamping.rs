@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use na;
 use alga::general::Real;
 use ncollide::utils::data::hash_map::HashMap;
@@ -7,13 +6,13 @@ use ncollide::bounding_volume::BoundingVolume;
 use ncollide::query;
 use ncollide::bounding_volume;
 use ncollide::world::CollisionGroups;
-use world::RigidBodyCollisionWorld;
-use object::{RigidBodyHandle, SensorHandle, RigidBody};
+use world::{RigidBodyCollisionWorld, RigidBodyStorage, SensorStorage};
+use object::{RigidBody, WorldObject};
 use math::{Point, Translation};
 
 
 struct CCDRigidBody<N: Real> {
-    rigid_body:      RigidBodyHandle<N>,
+    rigid_body:      usize,
     sqthreshold:     N,
     last_center:     Point<N>,
     trigger_sensors: bool,
@@ -21,13 +20,11 @@ struct CCDRigidBody<N: Real> {
 }
 
 impl<N: Real> CCDRigidBody<N> {
-    fn new(rigid_body: RigidBodyHandle<N>, threshold: N, trigger_sensors: bool) -> CCDRigidBody<N> {
-        let last_center = rigid_body.borrow().position_center();
-
+    fn new(rigid_body: RigidBody<N>, threshold: N, trigger_sensors: bool) -> CCDRigidBody<N> {
         CCDRigidBody {
             sqthreshold:     threshold * threshold,
-            last_center:     last_center,
-            rigid_body:      rigid_body,
+            last_center:     rigid_body.position_center(),
+            rigid_body:      rigid_body.uid(),
             trigger_sensors: trigger_sensors,
             accept_zero:     true
         }
@@ -37,7 +34,7 @@ impl<N: Real> CCDRigidBody<N> {
 /// Handles Continuous Collision Detection.
 pub struct TranslationalCCDMotionClamping<N: Real> {
     objects: HashMap<usize, CCDRigidBody<N>, UintTWHash>,
-    intersected_sensors_cache: Vec<(N, SensorHandle<N>)>
+    intersected_sensors_cache: Vec<(N, usize)>
 }
 
 impl<N: Real> TranslationalCCDMotionClamping<N> {
@@ -52,41 +49,34 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
 
     /// Enables continuous collision for the given rigid body.
     pub fn add_ccd_to(&mut self,
-                      rigid_body:       RigidBodyHandle<N>,
+                      rigid_body:       RigidBody<N>,
                       motion_threshold: N,
                       trigger_sensors:  bool) {
-        let _ = self.objects.insert(&*rigid_body as *const RefCell<RigidBody<N>> as usize,
-                                    CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
+        let _ = self.objects.insert(rigid_body.uid(), CCDRigidBody::new(rigid_body, motion_threshold, trigger_sensors));
     }
 
     /// Enables continuous collision for the given rigid body.
-    pub fn remove_ccd_from(&mut self, rigid_body: &RigidBodyHandle<N>) {
-        let _ = self.objects.remove(&(&**rigid_body as *const RefCell<RigidBody<N>> as usize));
+    pub fn remove_ccd_from(&mut self, rigid_body: usize) {
+        let _ = self.objects.remove(&rigid_body);
     }
 
     /// Update the time of impacts and apply motion clamping when necessary.
     ///
     /// Returns `false` if no clamping was done. If at least one clamping was performed, the
     /// collision word will be updated by this method once all the clamping have been performed.
-    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld<N>) -> bool {
+    pub fn update(&mut self, cw: &mut RigidBodyCollisionWorld<N>, bodies: &mut RigidBodyStorage<N>, sensors: &mut SensorStorage<N>) -> bool {
         let mut update_collision_world = false;
 
         // XXX: we should no do this in a sequential order because CCD between two fast
         // CCD-enabled objects will not work properly (it will be biased toward the first object).
         for co1 in self.objects.elements_mut().iter_mut() {
-            let mut obj1 = co1.value.rigid_body.borrow_mut();
 
-            let movement = obj1.position_center() - co1.value.last_center;
+            let movement = {
+                let obj1 = &bodies[co1.value.rigid_body];
+                obj1.position_center() - co1.value.last_center
+            };
 
             if na::norm_squared(&movement) > co1.value.sqthreshold {
-                // Use CCD for this object.
-                let obj1_uid = &*co1.value.rigid_body as *const RefCell<RigidBody<N>> as usize;
-
-                let last_transform = Translation::from_vector(-movement) * obj1.position();
-                let begin_aabb     = bounding_volume::aabb(obj1.shape().as_ref(), &last_transform);
-                let end_aabb       = bounding_volume::aabb(obj1.shape().as_ref(), obj1.position());
-                let swept_aabb     = begin_aabb.merged(&end_aabb);
-
                 /*
                  * Find the minimum TOI.
                  */
@@ -94,41 +84,54 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
                 let mut toi_found = false;
                 let dir = movement.clone();
 
-                let _eps = N::default_epsilon();
+                {
+                    // Use CCD for this object.
+                    let obj1 = &bodies[co1.value.rigid_body];
 
-                // XXX: handle groups.
-                let all_groups = CollisionGroups::new();
+                    let last_transform = Translation::from_vector(-movement) * obj1.position();
+                    let begin_aabb     = bounding_volume::aabb(obj1.shape().as_ref(), &last_transform);
+                    let end_aabb       = bounding_volume::aabb(obj1.shape().as_ref(), obj1.position());
+                    let swept_aabb     = begin_aabb.merged(&end_aabb);
 
-                // FIXME: performing a convex-cast here would be much more efficient.
-                for co2 in cw.interferences_with_aabb(&swept_aabb, &all_groups) {
-                    if co2.data.uid() != obj1_uid {
-                        let obj2 = co2.data.borrow();
+                    let _eps = N::default_epsilon();
 
-                        let toi = query::time_of_impact(
-                            &last_transform,
-                            &dir,
-                            obj1.shape().as_ref(),
-                            &obj2.position(),
-                            &na::zero(), // Assume the other object does not move.
-                            obj2.shape().as_ref());
+                    // XXX: handle groups.
+                    let all_groups = CollisionGroups::new();
 
-                        match toi {
-                            Some(t) => {
-                                if obj2.is_sensor() {
-                                    if co1.value.trigger_sensors {
-                                        self.intersected_sensors_cache.push((t, co2.data.clone().unwrap_sensor()));
-                                        unimplemented!();
+                    // FIXME: performing a convex-cast here would be much more efficient.
+                    for co2 in cw.interferences_with_aabb(&swept_aabb, &all_groups) {
+                        if co2.data.uid() != obj1.uid() {
+                            let (obj2_position, obj2_shape) = match co2.data {
+                                WorldObject::RigidBody(uid) => (bodies[uid].position().clone(), bodies[uid].shape().as_ref()),
+                                WorldObject::Sensor(uid) => (sensors[uid].position(bodies), sensors[uid].shape().as_ref()),
+                            };
+
+                            let toi = query::time_of_impact(
+                                &last_transform,
+                                &dir,
+                                obj1.shape().as_ref(),
+                                &obj2_position,
+                                &na::zero(), // Assume the other object does not move.
+                                obj2_shape);
+
+                            match toi {
+                                Some(t) => {
+                                    if co2.data.is_sensor() {
+                                        if co1.value.trigger_sensors {
+                                            self.intersected_sensors_cache.push((t, co2.data.clone().unwrap_sensor()));
+                                            unimplemented!();
+                                        }
                                     }
-                                }
-                                else if t <= min_toi { // we need the equality case to set the `toi_found` flag.
-                                    toi_found = true;
+                                    else if t <= min_toi { // we need the equality case to set the `toi_found` flag.
+                                        toi_found = true;
 
-                                    if t > _eps || co1.value.accept_zero {
-                                        min_toi = t;
+                                        if t > _eps || co1.value.accept_zero {
+                                            min_toi = t;
+                                        }
                                     }
-                                }
-                            },
-                            None => { }
+                                },
+                                None => { }
+                            }
                         }
                     }
                 }
@@ -136,12 +139,13 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
                 /*
                  * Revert the object translation at the toi.
                  */
+                let obj1 = &mut bodies[co1.value.rigid_body];
                 if toi_found {
                     obj1.append_translation(&Translation::from_vector(-dir * (na::one::<N>() - min_toi)));
                     co1.value.accept_zero = false;
 
                     // We moved the object: ensure the broad phase takes that in account.
-                    cw.deferred_set_position(obj1_uid, obj1.position().clone());
+                    cw.deferred_set_position(obj1.uid(), obj1.position().clone());
                     update_collision_world = true;
                 }
                 else {
@@ -175,12 +179,13 @@ impl<N: Real> TranslationalCCDMotionClamping<N> {
                 // }
             }
 
+            let obj1 = &bodies[co1.value.rigid_body];
             co1.value.last_center = obj1.position_center();
             self.intersected_sensors_cache.clear();
         }
 
         if update_collision_world {
-            cw.update();
+            cw.update(sensors);
             true
         }
         else {
