@@ -9,11 +9,11 @@ pub struct Ball {
     base_color: Point3<f32>,
     delta:      Isometry3<f32>,
     gfx:        SceneNode,
-    body:       WorldObject<f32>
+    body:       WorldObject,
 }
 
 impl Ball {
-    pub fn new(body:   WorldObject<f32>,
+    pub fn new(body:   WorldObject,
                delta:  Isometry3<f32>,
                radius: f32,
                color:  Point3<f32>,
@@ -67,7 +67,7 @@ impl Ball {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> &WorldObject<f32> {
+    pub fn object(&self) -> &WorldObject {
         &self.body
     }
 }

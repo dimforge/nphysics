@@ -10,11 +10,11 @@ pub struct Convex {
     base_color: Point3<f32>,
     delta:      Isometry3<f32>,
     gfx:        SceneNode,
-    body:       WorldObject<f32>
+    body:       WorldObject
 }
 
 impl Convex {
-    pub fn new(body:   WorldObject<f32>,
+    pub fn new(body:   WorldObject,
                delta:  Isometry3<f32>,
                convex: &TriMesh<Point3<f32>>,
                color:  Point3<f32>,
@@ -69,7 +69,7 @@ impl Convex {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> &WorldObject<f32> {
+    pub fn object(&self) -> &WorldObject {
         &self.body
     }
 }

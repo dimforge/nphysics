@@ -1,6 +1,6 @@
 use kiss3d::scene::SceneNode;
 use na::{Isometry3, Point3};
-use nphysics3d::object::{WorldObject, WorldObjectBorrowed};
+use nphysics3d::object::WorldObject;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -80,7 +80,7 @@ impl Node {
         }
     }
 
-    pub fn object<'a>(&'a self) -> &'a WorldObject<f32> {
+    pub fn object<'a>(&'a self) -> &'a WorldObject {
         match *self {
             Node::Plane(ref n)    => n.object(),
             Node::Ball(ref n)     => n.object(),
@@ -107,27 +107,28 @@ impl Node {
 
 
 pub fn update_scene_node(node:   &mut SceneNode,
-                         object: &WorldObject<f32>,
+                         object: &WorldObject,
                          color:  &Point3<f32>,
                          delta:  &Isometry3<f32>) {
-    let rb = object.borrow();
+    unimplemented!();
+    // let rb = object.borrow();
 
-    match rb {
-        WorldObjectBorrowed::RigidBody(rb) => {
-            if rb.is_active() {
-                node.set_local_transformation(*rb.position() * *delta);
-                node.set_color(color.x, color.y, color.z);
-            }
-            else {
-                node.set_color(color.x * 0.25, color.y * 0.25, color.z * 0.25);
-            }
-        },
-        WorldObjectBorrowed::Sensor(s) => {
-            if let Some(rb) = s.parent() {
-                if rb.borrow().is_active() {
-                    node.set_local_transformation(s.position() * *delta);
-                }
-            }
-        }
-    }
+    // match rb {
+    //     WorldObjectBorrowed::RigidBody(rb) => {
+    //         if rb.is_active() {
+    //             node.set_local_transformation(*rb.position() * *delta);
+    //             node.set_color(color.x, color.y, color.z);
+    //         }
+    //         else {
+    //             node.set_color(color.x * 0.25, color.y * 0.25, color.z * 0.25);
+    //         }
+    //     },
+    //     WorldObjectBorrowed::Sensor(s) => {
+    //         if let Some(rb) = s.parent() {
+    //             if rb.borrow().is_active() {
+    //                 node.set_local_transformation(s.position() * *delta);
+    //             }
+    //         }
+    //     }
+    // }
 }
