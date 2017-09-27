@@ -386,6 +386,14 @@ impl<N: Real> World<N> {
     pub fn mut_sensor(&mut self, sensor: usize) -> &mut Sensor<N> {
         &mut self.sensors[sensor]
     }
+
+    pub fn rigid_body(&self, rigid_body: usize) -> &RigidBody<N> {
+        &self.rigid_bodies[rigid_body]
+    }
+
+    pub fn mut_rigid_body(&mut self, rigid_body: usize) -> &mut RigidBody<N> {
+        &mut self.rigid_bodies[rigid_body]
+    }
 }
 
 struct SensorsNotCollidingTheirParentPairFilter;
