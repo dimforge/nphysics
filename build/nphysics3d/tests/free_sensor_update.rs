@@ -20,9 +20,9 @@ fn free_sensor_update() {
 
     let sensor = world.add_sensor(sensor);
     world.step(1.0);
-    assert_eq!(sensor.borrow().interfering_bodies().unwrap().len(), 0);
+    assert_eq!(world.sensor(sensor).interfering_bodies().unwrap().len(), 0);
 
-    sensor.borrow_mut().set_relative_position(na::Isometry3::from_parts(na::Translation3::new(1.0, 1.0, 1.0), na::one()));
+    world.mut_sensor(sensor).set_relative_position(na::Isometry3::from_parts(na::Translation3::new(1.0, 1.0, 1.0), na::one()));
     world.step(1.0);
-    assert_eq!(sensor.borrow().interfering_bodies().unwrap().len(), 1);
+    assert_eq!(world.sensor(sensor).interfering_bodies().unwrap().len(), 1);
 }

@@ -378,6 +378,14 @@ impl<N: Real> World<N> {
     pub fn unregister_broad_phase_pair_filter(&mut self, name: &str) {
         self.cworld.unregister_broad_phase_pair_filter(name)
     }
+
+    pub fn sensor(&self, sensor: usize) -> &Sensor<N> {
+        &self.sensors[sensor]
+    }
+
+    pub fn mut_sensor(&mut self, sensor: usize) -> &mut Sensor<N> {
+        &mut self.sensors[sensor]
+    }
 }
 
 struct SensorsNotCollidingTheirParentPairFilter;
