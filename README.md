@@ -34,12 +34,12 @@ writing bindings and has several advantages:
 
 - It shows that Rust is suitable for soft real-time applications.
 - It shows how well Rust behaves with highly generic code.
-- It shows that there is no need to write two separate engine for 2D and 3D:
+- It shows that there is no need to write two separate engines for 2D and 3D:
   genericity wrt the dimension is possible (modulo low level arithmetic
   specializations for each dimension).
 - In a not-that-near future, C++ will die of ugliness. Then, people will
   search for a physics engine and **nphysics** will be there, proudly
-  exhibiting its _Rusty_ sexyness.
+  exhibiting its _Rusty_ sexiness.
 
 ## Compilation
 You will need the latest release of the [Rust compiler](http://www.rust-lang.org)
@@ -66,7 +66,7 @@ to see all the cool stuffs you can do.
 ## Features
 - Static and dynamic rigid bodies.
 - Common convex primitives: cone, box, ball, cylinder.
-- Concave geometries build from convex primitives (aka. compound geometries).
+- Concave geometries built from convex primitives (aka. compound geometries).
 - Stable stacking.
 - Island based sleeping (objects deactivation).
 - Ray casting.
