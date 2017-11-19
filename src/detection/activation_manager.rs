@@ -97,15 +97,8 @@ impl<N: Real> ActivationManager<N> {
          *
          */
         // Resize buffers.
-        if bodies.len() > self.ufind.len() {
-            let to_add = bodies.len() - self.ufind.len();
-            self.ufind.extend(iter::repeat(UnionFindSet::new(0)).take(to_add));
-            self.can_deactivate.extend(iter::repeat(false).take(to_add));
-        }
-        else {
-            self.ufind.truncate(bodies.len());
-            self.can_deactivate.truncate(bodies.len());
-        }
+        self.ufind.resize(bodies.len(), UnionFindSet::new(0));
+        self.can_deactivate.resize(bodies.len(), false);
 
         // Init the union find.
         for (i, u) in self.ufind.iter_mut().enumerate() {
