@@ -152,12 +152,12 @@ impl<N: Real> World<N> {
         // reactivate sleeping objects that loose contact.
         for contact_event in self.cworld.contact_events() {
             if let &ContactEvent::Started(obj1, obj2) = contact_event {
-                let data_obj1 = &self.cworld.collision_object(obj1).unwrap().data;
-                let data_obj2 = &self.cworld.collision_object(obj2).unwrap().data;
-
-                if let (&WorldObject::RigidBody(rb1), &WorldObject::RigidBody(rb2)) = (data_obj1, data_obj2){
-                    self.sleep.deferred_activate(&self.rigid_bodies[rb1]);
-                    self.sleep.deferred_activate(&self.rigid_bodies[rb2]);
+                for &obj in [obj1, obj2].iter() {
+                    if let Some(obj) = self.cworld.collision_object(obj) {
+                        if let WorldObject::RigidBody(rb) = obj.data {
+                            self.sleep.deferred_activate(&self.rigid_bodies[rb]);
+                        }
+                    }
                 }
             }
         }
