@@ -144,9 +144,8 @@ impl<N: Real> ActivationManager<N> {
          * Body activation/deactivation.
          */
         // Find deactivable islands.
-        for i in 0usize .. self.ufind.len() {
+        for (i, b) in bodies.iter().enumerate() {
             let root = union_find::find(i, &mut self.ufind[..]);
-            let b    = &bodies[i];
 
             self.can_deactivate[root] =
                 match b.deactivation_threshold() {
@@ -158,9 +157,8 @@ impl<N: Real> ActivationManager<N> {
         }
 
         // Activate/deactivate islands.
-        for i in 0usize .. self.ufind.len() {
+        for (i, b) in bodies.iter_mut().enumerate() {
             let root = union_find::find(i, &mut self.ufind[..]);
-            let b = &mut bodies[i];
 
             if self.can_deactivate[root] { // Everybody in this set can be deactivacted.
                 b.deactivate();
