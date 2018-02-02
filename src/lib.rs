@@ -58,7 +58,7 @@ to see all the cool stuffs you can do.
 - Ray casting.
 - Swept sphere based continuous collision detection.
 - Ball-in-socket joint.
-- Fixed joint.
+- FixedJoint joint.
 - Sensors.
 
 ## What is missing?
@@ -88,85 +88,177 @@ The libraries needed to compile the examples are:
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
 #![deny(unused_qualifications)]
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
-extern crate num_traits as num;
-extern crate rustc_serialize;
-#[cfg(test)]
 #[macro_use]
-extern crate approx;
+extern crate downcast;
+
 extern crate alga;
+extern crate approx;
 extern crate nalgebra as na;
 extern crate ncollide;
+extern crate num_traits as num;
+extern crate rustc_serialize;
+extern crate slab;
+extern crate time;
 //#[cfg(test)]
 //extern crate test;
 
-pub mod aliases;
-
-pub mod integration;
 pub mod detection;
-pub mod resolution;
+pub mod solver;
 pub mod world;
 pub mod object;
+pub mod joint;
 pub mod utils;
 pub mod volumetric;
+pub mod algebra;
+pub mod counters;
 // mod tests;
-
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]
 pub mod math {
-    use na::{Point3, Vector3, Matrix3, UnitQuaternion, Translation3, Isometry3};
+  use na::{Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX,
+           Point3, Translation3, U3, U6, UnitQuaternion, Vector3, Vector6};
+  use algebra::{Force3, Inertia3, Velocity3};
 
-    /// The point type.
-    pub type Point<N> = Point3<N>;
+  pub const SPATIAL_DIM: usize = 6;
+  pub const ANGULAR_DIM: usize = 3;
+  pub const DIM: usize = 3;
 
-    /// The vector type.
-    pub type Vector<N> = Vector3<N>;
+  /// The dimension of the ambiant space.
+  pub type Dim = U3;
 
-    /// The orientation type.
-    pub type Orientation<N> = Vector3<N>;
+  /// The dimension of a spatial vector.
+  pub type SpatialDim = U6;
 
-    /// The transformation matrix type.
-    pub type Isometry<N> = Isometry3<N>;
+  /// The dimension of the rotations.
+  pub type AngularDim = U3;
 
-    /// The rotation matrix type.
-    pub type Rotation<N> = UnitQuaternion<N>;
+  /// The point type.
+  pub type Point<N> = Point3<N>;
 
-    /// The translation type.
-    pub type Translation<N> = Translation3<N>;
+  /// The angular vector type.
+  pub type AngularVector<N> = Vector3<N>;
 
-    /// The inertia tensor type.
-    pub type AngularInertia<N> = Matrix3<N>;
+  /// The vector type.
+  pub type Vector<N> = Vector3<N>;
+
+  /// The vector type with dimension `SpatialDim × 1`.
+  pub type SpatialVector<N> = Vector6<N>;
+
+  /// The orientation type.
+  pub type Orientation<N> = Vector3<N>;
+
+  /// The transformation matrix type.
+  pub type Isometry<N> = Isometry3<N>;
+
+  /// The rotation matrix type.
+  pub type Rotation<N> = UnitQuaternion<N>;
+
+  /// The translation type.
+  pub type Translation<N> = Translation3<N>;
+
+  /// The velocity type combining the linear velocity and the angular velocity.
+  pub type Velocity<N> = Velocity3<N>;
+
+  /// The force type combining a linear force and a torque.
+  pub type Force<N> = Force3<N>;
+
+  /// The inertia tensor type.
+  pub type AngularInertia<N> = Matrix3<N>;
+
+  /// The inertia type.
+  pub type Inertia<N> = Inertia3<N>;
+
+  /// The inertia matrix type.
+  pub type InertiaMatrix<N> = Matrix6<N>;
+
+  /// Square matrix with dimension `SpatialDim × SpatialDim`.
+  pub type SpatialMatrix<N> = Matrix6<N>;
+
+  /// The type of a constraint jacobian in twist coordinates.
+  pub type Jacobian<N> = MatrixMN<N, U6, Dynamic>;
+
+  /// The type of a slice of the constraint jacobian in twist coordinates.
+  pub type JacobianSlice<'a, N> = MatrixSlice6xX<'a, N>;
+
+  /// The type of a mutable slice of the constraint jacobian in twist coordinates.
+  pub type JacobianSliceMut<'a, N> = MatrixSliceMut6xX<'a, N>;
 }
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim2")]
 pub mod math {
-    use na::{Point2, Vector1, Vector2, Matrix1, UnitComplex, Translation2, Isometry2};
+  use na::{Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX,
+           Point2, Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3};
+  use algebra::{Force2, Inertia2, Velocity2};
 
-    /// The point type.
-    pub type Point<N> = Point2<N>;
+  pub const SPATIAL_DIM: usize = 3;
+  pub const ANGULAR_DIM: usize = 1;
+  pub const DIM: usize = 2;
 
-    /// The vector type.
-    pub type Vector<N> = Vector2<N>;
+  /// The dimension of the ambiant space.
+  pub type Dim = U2;
 
-    /// The orientation type.
-    pub type Orientation<N> = Vector1<N>;
+  /// The dimension of the rotation.
+  pub type AngularDim = U1;
 
-    /// The transformation matrix type.
-    pub type Isometry<N> = Isometry2<N>;
+  /// The dimension of a spatial vector.
+  pub type SpatialDim = U3;
 
-    /// The rotation matrix type.
-    pub type Rotation<N> = UnitComplex<N>;
+  /// The point type.
+  pub type Point<N> = Point2<N>;
 
-    /// The translation type.
-    pub type Translation<N> = Translation2<N>;
+  /// The vector type with dimension `SpatialDim × 1`.
+  pub type SpatialVector<N> = Vector3<N>;
 
-    /// The inertia tensor type.
-    pub type AngularInertia<N> = Matrix1<N>;
+  /// The angular vector type.
+  pub type AngularVector<N> = Vector1<N>;
+
+  /// The vector type.
+  pub type Vector<N> = Vector2<N>;
+
+  /// The orientation type.
+  pub type Orientation<N> = Vector1<N>;
+
+  /// The transformation matrix type.
+  pub type Isometry<N> = Isometry2<N>;
+
+  /// The rotation matrix type.
+  pub type Rotation<N> = UnitComplex<N>;
+
+  /// The translation type.
+  pub type Translation<N> = Translation2<N>;
+
+  /// The velocity type combining the linear velocity and the angular velocity.
+  pub type Velocity<N> = Velocity2<N>;
+
+  /// The force type combining a linear force and a torque.
+  pub type Force<N> = Force2<N>;
+
+  /// The inertia tensor type.
+  pub type AngularInertia<N> = Matrix1<N>;
+
+  /// The inertia type.
+  pub type Inertia<N> = Inertia2<N>;
+
+  /// The inertia matrix type.
+  pub type InertiaMatrix<N> = Matrix3<N>;
+
+  /// Square matrix with dimension `SpatialDim × SpatialDim`.
+  pub type SpatialMatrix<N> = Matrix3<N>;
+
+  /// The type of a constraint jacobian in twist coordinates.
+  pub type Jacobian<N> = MatrixMN<N, U3, Dynamic>;
+
+  /// The type of a slice of the constraint jacobian in twist coordinates.
+  pub type JacobianSlice<'a, N> = MatrixSlice3xX<'a, N>;
+
+  /// The type of a mutable slice of the constraint jacobian in twist coordinates.
+  pub type JacobianSliceMut<'a, N> = MatrixSliceMut3xX<'a, N>;
 }

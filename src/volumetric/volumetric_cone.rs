@@ -1,7 +1,7 @@
 use std::ops::IndexMut;
 use num::Zero;
 
-use alga::general::Real;
+use na::Real;
 use na::{Point2, Point3, Matrix1, Matrix3};
 use na;
 use ncollide::shape::{Cone2, Cone3};

@@ -1,0 +1,19 @@
+[package]
+name    = "nphysics_testbed3d"
+version = "0.1.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+
+[lib]
+name = "nphysics_testbed3d"
+
+[dependencies]
+num-traits = "0.1"
+time       = "0.1"
+rand       = "0.3"
+glfw       = "0.19"
+nalgebra   = "0.13"
+ncollide   = "0.13"
+kiss3d     = "0.12"
+
+[dependencies.nphysics3d]
+path = "../build/nphysics3d"

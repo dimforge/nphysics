@@ -1,7 +1,7 @@
 tmp=_git_distcheck
 
 all:
-	make -C build/nphysics2d
+	# make -C build/nphysics2d
 	make -C build/nphysics3d
 
 examples:

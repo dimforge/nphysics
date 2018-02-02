@@ -1,6 +1,5 @@
 //! The physics world.
 
-pub use world::world::{World, WorldBroadPhase, RigidBodies, Sensors, RigidBodyCollisionWorld,
-                       WorldCollisionObject};
+pub use self::world::{CollisionWorld, World};
 
 mod world;

@@ -10,63 +10,79 @@ nalgebra = "0.13"
 ncollide = "0.13"
 
 [dependencies.nphysics_testbed2d]
-path = "./nphysics_testbed2d"
+path = "../nphysics_testbed2d"
 
 [dependencies.nphysics2d]
 path = "../build/nphysics2d"
 
-[[bin]]
-name = "ball_vee"
-path = "./balls_vee.rs"
+# [[bin]]
+# name = "ball_vee2"
+# path = "./balls_vee2.rs"
 
 [[bin]]
-name = "boxes_vee"
-path = "./boxes_vee.rs"
+name = "boxes2"
+path = "./boxes2.rs"
 
-[[bin]]
-name = "convex_vee"
-path = "./convex_vee.rs"
+# [[bin]]
+# name = "convex_vee2"
+# path = "./convex_vee2.rs"
+# 
+# [[bin]]
+# name = "compound2"
+# path = "./compound2.rs"
+# 
+# [[bin]]
+# name = "cross2"
+# path = "./cross2.rs"
+# 
+# [[bin]]
+# name = "mesh2"
+# path = "./mesh2.rs"
+# 
+# [[bin]]
+# name = "pyramid2"
+# path = "./pyramid2.rs"
+# 
+# [[bin]]
+# name = "ragdoll2"
+# path = "./ragdoll2.rs"
+# 
+# [[bin]]
+# name = "wall2"
+# path = "./wall2.rs"
+# 
+# [[bin]]
+# name = "gravity2"
+# path = "./gravity2.rs"
+# 
+# [[bin]]
+# name = "fixed_bug_11"
+# path = "./fixed_bug_11.rs"
+# 
+# [[bin]]
+# name = "manual_forces2"
+# path = "./manual_forces2.rs"
+# 
+# [[bin]]
+# name = "collision_groups2"
+# path = "./collision_groups2.rs"
 
-[[bin]]
-name = "compound"
-path = "./compound.rs"
+## [[bin]]
+## name = "sensor2"
+## path = "./sensor2.rs"
 
-[[bin]]
-name = "cross"
-path = "./cross.rs"
+## [[bin]]
+## name = "constraints2"
+## path = "./constraints2.rs"
 
-[[bin]]
-name = "mesh"
-path = "./mesh.rs"
+## [[bin]]
+## name = "multibody2"
+## path = "./multibody2.rs"
 
-[[bin]]
-name = "pyramid"
-path = "./pyramid.rs"
+## [[bin]]
+## name = "multibody_limits2"
+## path = "./multibody_limits2.rs"
 
-[[bin]]
-name = "ragdoll"
-path = "./ragdoll.rs"
-
-[[bin]]
-name = "wall"
-path = "./wall.rs"
-
-[[bin]]
-name = "gravity"
-path = "./gravity.rs"
-
-[[bin]]
-name = "fixed_bug_11"
-path = "./fixed_bug_11.rs"
-
-[[bin]]
-name = "manual_forces"
-path = "./manual_forces.rs"
-
-[[bin]]
-name = "collision_groups"
-path = "./collision_groups.rs"
-
-[[bin]]
-name = "sensor"
-path = "./sensor.rs"
+## [[bin]]
+## name = "body_status2"
+## path = "./body_status2.rs"

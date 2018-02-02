@@ -1,9 +1,8 @@
 //! Traits to compute inertial properties.
 
-use std::ops::Mul;
-use alga::general::Real;
-use na;
-use na::{Point2, Point3, Vector1, Vector3, Isometry2, Isometry3, Matrix1, Matrix3};
+use na::{self, Real};
+use na::{Isometry2, Isometry3, Matrix1, Matrix3, Point2, Point3, Vector1, Vector3};
+use math::{AngularInertia, Inertia, Point};
 
 /// Trait implemented by inertia tensors.
 pub trait InertiaTensor<N, P, AV, M> {
@@ -20,7 +19,7 @@ pub trait InertiaTensor<N, P, AV, M> {
 }
 
 /// Trait implemented by objects which have a mass, a center of mass, and an inertia tensor.
-pub trait Volumetric<N: Real, P, I: Mul<N, Output = I>> {
+pub trait Volumetric<N: Real> {
     /// Computes the area of this object.
     fn area(&self) -> N;
 
@@ -28,10 +27,10 @@ pub trait Volumetric<N: Real, P, I: Mul<N, Output = I>> {
     fn volume(&self) -> N;
 
     /// Computes the center of mass of this object.
-    fn center_of_mass(&self) -> P;
+    fn center_of_mass(&self) -> Point<N>;
 
     /// Computes the angular inertia tensor of this object.
-    fn unit_angular_inertia(&self) -> I;
+    fn unit_angular_inertia(&self) -> AngularInertia<N>;
 
     /// Given its density, this computes the mass of this object.
     fn mass(&self, density: N) -> N {
@@ -39,19 +38,23 @@ pub trait Volumetric<N: Real, P, I: Mul<N, Output = I>> {
     }
 
     /// Given its mass, this computes the angular inertia of this object.
-    fn angular_inertia(&self, mass: N) -> I {
+    fn angular_inertia(&self, mass: N) -> AngularInertia<N> {
         self.unit_angular_inertia() * mass
     }
 
     /// Given its density, this computes the mass, center of mass, and inertia tensor of this object.
-    fn mass_properties(&self, density: N) -> (N, P, I) {
+    fn mass_properties(&self, density: N) -> (N, Point<N>, AngularInertia<N>) {
         let mass = self.mass(density);
-        let com  = self.center_of_mass();
-        let ai   = self.angular_inertia(mass);
+        let com = self.center_of_mass();
+        let ai = self.angular_inertia(mass);
 
         (mass, com, ai)
     }
 
+    fn inertia(&self, density: N) -> Inertia<N> {
+        let (mass, _, ai) = self.mass_properties(density);
+        Inertia::new_with_angular_matrix(mass, ai)
+    }
 }
 
 impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<N> {
@@ -79,18 +82,24 @@ impl<N: Real> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<
 
     #[inline]
     fn to_world_space(&self, t: &Isometry3<N>) -> Matrix3<N> {
-        let rot  = t.rotation.to_rotation_matrix();
+        let rot = t.rotation.to_rotation_matrix();
         let irot = rot.inverse();
         rot * *self * irot
     }
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point3<N>) -> Matrix3<N> {
-        let diag  = na::norm_squared(&pt.coords);
+        let diag = na::norm_squared(&pt.coords);
         let diagm = Matrix3::new(
-            diag.clone(), na::zero(),   na::zero(),
-            na::zero(),   diag.clone(), na::zero(),
-            na::zero(),   na::zero(),   diag
+            diag.clone(),
+            na::zero(),
+            na::zero(),
+            na::zero(),
+            diag.clone(),
+            na::zero(),
+            na::zero(),
+            na::zero(),
+            diag,
         );
 
         *self + (diagm - pt.coords * pt.coords.transpose()) * mass
