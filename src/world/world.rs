@@ -1,462 +1,475 @@
-use std::slice::Iter;
-use std::iter::Map;
-use std::rc::Rc;
-use std::cell::RefCell;
+use std::f64;
+use slab::Slab;
 
-use alga::general::Real;
-use na;
-use ncollide::bounding_volume::AABB;
-use ncollide::utils::data::hash_map::{HashMap, Entry};
-use ncollide::utils::data::hash::UintTWHash;
-use ncollide::broad_phase::{DBVTBroadPhase, BroadPhasePairFilter};
-use ncollide::narrow_phase::{ContactHandler, ProximityHandler, DefaultNarrowPhase,
-                             DefaultContactDispatcher, DefaultProximityDispatcher,
-                             ContactAlgorithm};
-use ncollide::world::{CollisionWorld, CollisionObject, GeometricQueryType};
-use integration::{Integrator, BodySmpEulerIntegrator, BodyForceGenerator,
-                  TranslationalCCDMotionClamping};
-use detection::ActivationManager;
-use detection::constraint::Constraint;
-use detection::joint::{JointManager, BallInSocket, Fixed};
-use resolution::{Solver, AccumulatedImpulseSolver, CorrectionMode};
-use object::{WorldObject, RigidBody, RigidBodyHandle, Sensor, SensorHandle, SensorProximityCollector};
-use math::{Point, Vector, Isometry};
+use na::{self, Real};
+use ncollide;
+use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
+use ncollide::events::{ContactEvents, ProximityEvents};
+use ncollide::shape::ShapeHandle;
 
-/// The default broad phase.
-pub type WorldBroadPhase<N> = DBVTBroadPhase<Point<N>, WorldObject<N>, AABB<Point<N>>>;
+use counters::Counters;
+use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
+             ColliderHandle, Colliders, Multibody, MultibodyLinkMut, MultibodyLinkRef,
+             MultibodyWorkspace, RigidBody, SensorHandle};
+use joint::{ConstraintGenerator, ConstraintHandle, Joint};
+use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
+use detection::{ActivationManager, ContactConstraint};
+use math::{Inertia, Isometry, Point, Vector};
 
-/// An iterator visiting rigid bodies.
-pub type RigidBodies<'a, N> = Map<Iter<'a, Entry<usize, RigidBodyHandle<N>>>, fn(&'a Entry<usize, RigidBodyHandle<N>>) -> &'a RigidBodyHandle<N>>;
+pub type CollisionWorld<N> =
+    ncollide::world::CollisionWorld<Point<N>, Isometry<N>, ColliderData<N>>;
 
-/// An iterator visiting sensors.
-pub type Sensors<'a, N> = Map<Iter<'a, Entry<usize, SensorHandle<N>>>, fn(&'a Entry<usize, SensorHandle<N>>) -> &'a SensorHandle<N>>;
-
-/// Type of the collision world containing rigid bodies.
-pub type RigidBodyCollisionWorld<N> = CollisionWorld<Point<N>, Isometry<N>, WorldObject<N>>;
-
-/// Type of a collision object containing `WorldObject` body as its data.
-pub type WorldCollisionObject<N> = CollisionObject<Point<N>, Isometry<N>, WorldObject<N>>;
-
-
-/// The physical world.
-///
-/// This is the main structure of the physics engine.
 pub struct World<N: Real> {
-    cworld:       RigidBodyCollisionWorld<N>,
-    rigid_bodies: HashMap<usize, RigidBodyHandle<N>, UintTWHash>,
-    sensors:      HashMap<usize, SensorHandle<N>, UintTWHash>,
-    forces:       BodyForceGenerator<N>,
-    integrator:   BodySmpEulerIntegrator,
-    sleep:        Rc<RefCell<ActivationManager<N>>>, // FIXME: avoid sharing (needed for the contact signal handler)
-    ccd:          TranslationalCCDMotionClamping<N>,
-    joints:       JointManager<N>,
-    solver:       AccumulatedImpulseSolver<N>,
-    prediction:   N
+    counters: Counters,
+    bodies: BodySet<N>,
+    active_bodies: Vec<BodyHandle>,
+    colliders_w_parent: Vec<ColliderHandle>, // The set of colliders that have a parent.
+    cworld: CollisionWorld<N>,
+    solver: MoreauJeanSolver<N>,
+    activation_manager: ActivationManager<N>,
+    // FIXME: set those two parameters per-collider?
+    prediction: N,
+    angular_prediction: N,
+    gravity: Vector<N>,
+    contacts: Vec<ContactConstraint<N>>,
+    constraints: Slab<Box<ConstraintGenerator<N>>>,
+    params: IntegrationParameters<N>,
+    contact_model: Box<ContactModel<N>>,
+    workspace: MultibodyWorkspace<N>,
 }
 
 impl<N: Real> World<N> {
-    /// Creates a new physics world.
-    pub fn new() -> World<N> {
-        /*
-         * Setup the physics world
-         */
-
-        let prediction = na::convert(0.02f64); // FIXME: do not hard-code the prediction margin.
-
-        // For the intergration
-        let forces     = BodyForceGenerator::new(na::zero(), na::zero());
-        let integrator = BodySmpEulerIntegrator::new();
-
-        /*
-         * For the collision detection
-         */
-        // Collision world
-        let mut cworld = CollisionWorld::new(prediction, false);
-
-        // Custom narrow phase.
-        let disp = DefaultContactDispatcher::new();
-        let prox = DefaultProximityDispatcher::new();
-        let nf   = DefaultNarrowPhase::new(Box::new(disp), Box::new(prox));
-        let _    = cworld.set_narrow_phase(Box::new(nf));
-
-        // CCD handler
-        let ccd = TranslationalCCDMotionClamping::new();
-
-        // Deactivation
-        let sleep = Rc::new(RefCell::new(ActivationManager::new(na::convert(0.01f64))));
-
-        // Setup contact handler to reactivate sleeping objects that loose contact.
-        let handler = ObjectActivationOnContactHandler { sleep: sleep.clone() };
-        cworld.register_contact_handler("__nphysics_internal_ObjectActivationOnContactHandler", handler);
-
-        // Setup the broad phase pair filter that will prevent sensors from colliding with their
-        // parent.
-        let filter      = SensorsNotCollidingTheirParentPairFilter;
-        let filter_name = "__nphysics_internal_SensorsNotCollidingTheirParentPairFilter";
-        cworld.register_broad_phase_pair_filter(filter_name, filter);
-
-        // Setup the proximity collector for sensors.
-        let collector      = SensorProximityCollector;
-        let collector_name = "__nphysics_internal_SensorProximityCollector";
-        cworld.register_proximity_handler(collector_name, collector);
-
-        // Joints
-        let joints = JointManager::new();
-
-        /*
-         * For constraints resolution
-         */
-        let solver = AccumulatedImpulseSolver::new(
-            na::convert(0.1f64),
-            CorrectionMode::VelocityAndPosition(na::convert(0.2f64), na::convert(0.2f64), na::convert(0.08f64)),
-            na::convert(0.4f64),
-            na::convert(1.0f64),
-            10,
-            10);
+    pub fn new() -> Self {
+        let counters = Counters::new(false);
+        let prediction = na::convert(0.02f64);
+        let angular_prediction = na::convert(f64::consts::PI / 180.0);
+        let bodies = BodySet::new();
+        let active_bodies = Vec::new();
+        let colliders_w_parent = Vec::new();
+        let contacts = Vec::new();
+        let constraints = Slab::new();
+        let cworld = CollisionWorld::new(prediction);
+        let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
+        let solver = MoreauJeanSolver::new();
+        let activation_manager = ActivationManager::new(na::convert(0.01f64));
+        let gravity = Vector::zeros();
+        let params = IntegrationParameters::default();
+        let workspace = MultibodyWorkspace::new();
 
         World {
-            cworld:       cworld,
-            rigid_bodies: HashMap::new(UintTWHash::new()),
-            sensors:      HashMap::new(UintTWHash::new()),
-            forces:       forces,
-            integrator:   integrator,
-            sleep:        sleep,
-            ccd:          ccd,
-            joints:       joints,
-            solver:       solver,
-            prediction:   prediction
+            counters,
+            bodies,
+            active_bodies,
+            colliders_w_parent,
+            cworld,
+            solver,
+            activation_manager,
+            prediction,
+            angular_prediction,
+            gravity,
+            contacts,
+            constraints,
+            params,
+            contact_model,
+            workspace,
         }
     }
 
-    /// Updates the physics world.
-    pub fn step(&mut self, dt: N) {
-        for e in self.rigid_bodies.elements_mut().iter_mut() {
-            let mut rb = e.value.borrow_mut();
+    pub fn disable_performance_counters(&mut self) {
+        self.counters.disable();
+    }
 
-            if rb.is_active() {
-                self.forces.update(dt.clone(), &mut *rb);
-                self.integrator.update(dt.clone(), &mut *rb);
-                self.cworld.deferred_set_position(WorldObject::rigid_body_uid(&e.value), rb.position().clone());
-            }
+    pub fn enable_performance_counters(&mut self) {
+        self.counters.enable();
+    }
+
+    pub fn performance_counters(&self) -> &Counters {
+        &self.counters
+    }
+
+    pub fn set_contact_model<C: ContactModel<N>>(&mut self, model: C) {
+        self.contact_model = Box::new(model)
+    }
+
+    pub fn integration_parameters(&self) -> &IntegrationParameters<N> {
+        &self.params
+    }
+
+    pub fn set_erp(&mut self, erp: N) {
+        self.params.erp = erp;
+    }
+
+    pub fn timestep(&self) -> N {
+        self.params.dt
+    }
+
+    pub fn set_timestep(&mut self, dt: N) {
+        self.params.dt = dt;
+    }
+
+    pub fn set_niter(&mut self, niter: usize) {
+        self.params.niter = niter;
+    }
+
+    pub fn activate_body(&mut self, handle: BodyHandle) {
+        Self::activate_body_at(&mut self.bodies, handle)
+    }
+
+    // NOTE: static method used to avoid borrowing issues.
+    fn activate_body_at(bodies: &mut BodySet<N>, handle: BodyHandle) {
+        let mut body = bodies.body_mut(handle);
+        if body.status_dependent_ndofs() != 0 {
+            body.activate();
         }
+    }
 
-        for e in self.sensors.elements_mut().iter_mut() {
-            let mut sensor = e.value.borrow_mut();
+    pub fn add_constraint<C: ConstraintGenerator<N>>(&mut self, constraint: C) -> ConstraintHandle {
+        let (anchor1, anchor2) = constraint.anchors();
+        self.activate_body(anchor1);
+        self.activate_body(anchor2);
+        self.constraints.insert(Box::new(constraint))
+    }
 
-            if sensor.did_move_locally {
-                sensor.did_move_locally = false;
-                self.cworld.deferred_set_position(WorldObject::sensor_uid(&e.value), sensor.position());
-            }
-            else {
-                if let Some(rb) = sensor.parent() {
-                    if rb.borrow().is_active() {
-                        self.cworld.deferred_set_position(WorldObject::sensor_uid(&e.value), sensor.position());
-                    }
+    pub fn constraint(&self, handle: ConstraintHandle) -> &ConstraintGenerator<N> {
+        &*self.constraints[handle]
+    }
+
+    pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut ConstraintGenerator<N> {
+        let (anchor1, anchor2) = self.constraints[handle].anchors();
+        self.activate_body(anchor1);
+        self.activate_body(anchor2);
+        &mut *self.constraints[handle]
+    }
+
+    pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<ConstraintGenerator<N>> {
+        let constraint = self.constraints.remove(handle);
+        let (anchor1, anchor2) = constraint.anchors();
+        self.activate_body(anchor1);
+        self.activate_body(anchor2);
+
+        constraint
+    }
+
+    pub fn set_gravity(&mut self, gravity: Vector<N>) {
+        self.gravity = gravity
+    }
+
+    pub fn step(&mut self) {
+        self.counters.step_started();
+        self.counters.update_started();
+        self.bodies.update_kinematics();
+        self.bodies
+            .update_dynamics(&self.gravity, &self.params, &mut self.workspace);
+        self.counters.update_completed();
+
+        self.counters.collision_detection_started();
+        for collider_id in &self.colliders_w_parent {
+            let new_pos;
+            {
+                // FIXME: update only if the position changed (especially for static bodies).
+                let collider = self.cworld
+                    .collision_object(*collider_id)
+                    .expect("Internal error: collider not found.");
+                let parent = self.bodies.body_part(collider.data().body());
+
+                if !parent.is_active() {
+                    continue;
                 }
+
+                let parent_pos = parent.position();
+                new_pos = parent_pos * collider.data().position_wrt_parent()
             }
+
+            self.cworld.set_position(*collider_id, new_pos);
         }
 
-        self.cworld.perform_position_update();
+        self.cworld.clear_events();
+        self.counters.broad_phase_started();
         self.cworld.perform_broad_phase();
-        if !self.ccd.update(&mut self.cworld) {
-            self.cworld.perform_narrow_phase();
+        self.counters.broad_phase_completed();
+        self.counters.narrow_phase_started();
+        self.cworld.perform_narrow_phase();
+        self.counters.narrow_phase_completed();
+        self.counters.collision_detection_completed();
+
+        if self.counters.enabled() {
+            let npairs = self.cworld.contact_pairs().count();
+            self.counters.set_ncontact_pairs(npairs);
         }
 
-        self.joints.update(&mut *self.sleep.borrow_mut());
-        self.sleep.borrow_mut().update(&mut self.cworld, &self.joints, &self.rigid_bodies);
+        // FIXME: for now, no island is built.
+        self.counters.island_construction_started();
+        self.active_bodies.clear();
+        self.activation_manager.update(
+            &mut self.bodies,
+            &self.cworld,
+            &self.constraints,
+            &mut self.active_bodies,
+        );
+        self.counters.island_construction_completed();
 
-        // XXX: use `self.collector` instead to avoid allocation.
-        let mut collector = Vec::new();
+        self.contacts.clear();
+        for (coll1, coll2, c) in self.cworld.contacts() {
+            assert!(coll1.data().body() != coll2.data().body());
 
-        for (b1, b2, c) in self.cworld.contacts() {
-            if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&b1.data, &b2.data) {
-                if rb1.borrow().is_active() || rb2.borrow().is_active() {
-                    let m1 = rb1.borrow().margin();
-                    let m2 = rb2.borrow().margin();
+            let b1 = self.bodies.body(coll1.data().body());
+            let b2 = self.bodies.body(coll2.data().body());
 
-                    let mut c = c.clone();
-                    c.depth = c.depth + m1 + m2;
+            if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
+                && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
+                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+            {
+                let m1 = coll1.data().margin();
+                let m2 = coll2.data().margin();
 
-                    collector.push(Constraint::RBRB(rb1.clone(), rb2.clone(), c));
-                }
+                let mut c = c.clone();
+                c.depth += m1 + m2;
+
+                self.contacts.push(ContactConstraint::new(
+                    coll1.data().body(),
+                    coll2.data().body(),
+                    c,
+                ));
             }
         }
 
-        self.joints.constraints(&mut collector);
+        self.counters.solver_started();
+        self.solver.step(
+            &mut self.counters,
+            &mut self.bodies,
+            &self.constraints,
+            &self.contacts[..],
+            &self.active_bodies[..],
+            &*self.contact_model,
+            &self.params,
+        );
 
-        self.solver.solve(dt, &collector[..]);
-
-        collector.clear();
+        // FIXME: not sure what is the most pretty/efficient way of doing this.
+        for rb in self.bodies.rigid_bodies_mut() {
+            if rb.status() == BodyStatus::Kinematic {
+                rb.apply_displacements(&self.params)
+            }
+        }
+        for mb in self.bodies.multibodies_mut() {
+            if mb.status() == BodyStatus::Kinematic {
+                mb.apply_displacements(&self.params)
+            }
+        }
+        self.counters.solver_completed();
+        self.counters.step_completed();
     }
 
-    /// Adds a rigid body to the physics world.
-    pub fn add_rigid_body(&mut self, rb: RigidBody<N>) -> RigidBodyHandle<N> {
-        let position = rb.position().clone();
-        let shape = rb.shape().clone();
-        let groups = rb.collision_groups().as_collision_groups().clone();
-        let collision_object_prediction = rb.margin() + self.prediction / na::convert(2.0f64);
-        let handle = Rc::new(RefCell::new(rb));
-        let uid = WorldObject::rigid_body_uid(&handle);
+    /// Remove the specified bodies.
+    pub fn remove_bodies(&mut self, bodies: &[BodyHandle]) {
+        for body in bodies {
+            self.bodies.remove_body(*body);
+        }
 
-        let _ = self.rigid_bodies.insert(uid, handle.clone());
-        self.cworld.deferred_add(uid, position, shape, groups,
-                                 GeometricQueryType::Contacts(collision_object_prediction),
-                                 WorldObject::RigidBody(handle.clone()));
-        self.cworld.perform_additions_removals_and_broad_phase();
+        self.cleanup_after_body_removal();
+    }
+
+    /// Remove several links of a single multibody.
+    ///
+    /// Panics if not all links belong to the same multibody.
+    pub fn remove_multibody_links(&mut self, links: &[BodyHandle]) {
+        self.bodies.remove_multibody_links(links);
+        self.cleanup_after_body_removal();
+    }
+
+    fn cleanup_after_body_removal(&mut self) {
+        self.activate_bodies_touching_deleted_bodies();
+        self.cleanup_colliders_with_deleted_parents();
+        self.cleanup_contacts_with_deleted_bodies();
+        self.cleanup_constraints_with_deleted_anchors();
+    }
+
+    fn activate_bodies_touching_deleted_bodies(&mut self) {
+        let bodies = &mut self.bodies;
+
+        for (co1, co2, detector) in self.cworld.contact_pairs() {
+            if detector.num_contacts() != 0 {
+                let b1_exists = bodies.contains(co1.data().body());
+                let b2_exists = bodies.contains(co2.data().body());
+
+                if !b1_exists {
+                    if b2_exists {
+                        Self::activate_body_at(bodies, co2.data().body());
+                    }
+                } else if !b2_exists {
+                    Self::activate_body_at(bodies, co1.data().body());
+                }
+            }
+        }
+    }
+
+    fn cleanup_colliders_with_deleted_parents(&mut self) {
+        let mut i = 0;
+
+        while i < self.colliders_w_parent.len() {
+            let cid = self.colliders_w_parent[i];
+            let parent = self.collider(cid)
+                .expect("Internal error: collider not present")
+                .data()
+                .body();
+
+            if !self.bodies.contains(parent) {
+                self.cworld.remove(&[cid]);
+                let _ = self.colliders_w_parent.swap_remove(i);
+            } else {
+                i += 1;
+            }
+        }
+    }
+
+    fn cleanup_constraints_with_deleted_anchors(&mut self) {
+        let bodies = &mut self.bodies;
+
+        self.constraints.retain(|_, constraint| {
+            let (b1, b2) = constraint.anchors();
+            let b1_exists = bodies.contains(b1);
+            let b2_exists = bodies.contains(b2);
+
+            if !b1_exists {
+                if b2_exists {
+                    Self::activate_body_at(bodies, b2);
+                }
+            } else if !b2_exists {
+                Self::activate_body_at(bodies, b1);
+            }
+
+            b1_exists && b2_exists
+        })
+    }
+
+    fn cleanup_contacts_with_deleted_bodies(&mut self) {
+        let bodies = &self.bodies;
+        self.contacts
+            .retain(|contact| bodies.contains(contact.b1) && bodies.contains(contact.b2))
+    }
+
+    pub fn add_rigid_body(
+        &mut self,
+        position: Isometry<N>,
+        local_inertia: Inertia<N>,
+    ) -> BodyHandle {
+        self.bodies.add_rigid_body(position, local_inertia)
+    }
+
+    pub fn add_multibody_link<J: Joint<N>>(
+        &mut self,
+        parent: BodyHandle,
+        joint: J,
+        parent_shift: Vector<N>,
+        body_shift: Vector<N>,
+        inertia: Inertia<N>,
+    ) -> BodyHandle {
+        self.bodies
+            .add_multibody_link(parent, joint, parent_shift, body_shift, inertia)
+    }
+
+    pub fn add_collider(
+        &mut self,
+        margin: N,
+        shape: ShapeHandle<Point<N>, Isometry<N>>,
+        parent: BodyHandle,
+        to_parent: Isometry<N>,
+    ) -> ColliderHandle {
+        let query = GeometricQueryType::Contacts(margin + self.prediction * na::convert(0.5f64), self.angular_prediction);
+        self.add_collision_object(query, margin, shape, parent, to_parent)
+    }
+
+    pub fn add_sensor(
+        &mut self,
+        shape: ShapeHandle<Point<N>, Isometry<N>>,
+        parent: BodyHandle,
+        to_parent: Isometry<N>,
+    ) -> SensorHandle {
+        let query = GeometricQueryType::Proximity(self.prediction * na::convert(0.5f64));
+        self.add_collision_object(query, N::zero(), shape, parent, to_parent)
+    }
+
+    fn add_collision_object(
+        &mut self,
+        query: GeometricQueryType<N>,
+        margin: N,
+        shape: ShapeHandle<Point<N>, Isometry<N>>,
+        parent: BodyHandle,
+        to_parent: Isometry<N>,
+    ) -> CollisionObjectHandle {
+        let pos = if parent.is_ground() {
+            to_parent
+        } else {
+            self.bodies.body_part(parent).position() * to_parent
+        };
+
+        let data = ColliderData::new(margin, parent, to_parent);
+        let groups = CollisionGroups::new();
+        let handle = self.cworld.add(pos, shape, groups, query, data);
+
+        if !parent.is_ground() {
+            self.colliders_w_parent.push(handle);
+        }
 
         handle
     }
 
-    /// Adds a sensor to the physics world.
-    pub fn add_sensor(&mut self, sensor: Sensor<N>) -> SensorHandle<N> {
-        let position = sensor.position().clone();
-        let shape    = sensor.shape().clone();
-        let groups   = sensor.collision_groups().as_collision_groups().clone();
-        let margin   = sensor.margin();
-        let handle   = Rc::new(RefCell::new(sensor));
-        let uid      = &*handle as *const RefCell<Sensor<N>> as usize;
-
-        let _ = self.sensors.insert(uid, handle.clone());
-        self.cworld.deferred_add(uid, position, shape, groups,
-                                 GeometricQueryType::Proximity(margin),
-                                 WorldObject::Sensor(handle.clone()));
-        self.cworld.perform_additions_removals_and_broad_phase();
-
-        handle
+    pub fn body_part(&self, handle: BodyHandle) -> BodyPart<N> {
+        self.bodies.body_part(handle)
     }
 
-    /// Remove a rigid body from the physics world.
-    pub fn remove_rigid_body(&mut self, rb: &RigidBodyHandle<N>) {
-        let uid = WorldObject::rigid_body_uid(rb);
-        self.cworld.deferred_remove(uid);
-        self.cworld.perform_additions_removals_and_broad_phase();
-        self.joints.remove(rb, &mut *self.sleep.borrow_mut());
-        self.ccd.remove_ccd_from(rb);
-        let _ = self.rigid_bodies.remove(&uid);
-        rb.borrow_mut().delete();
+    pub fn body(&self, handle: BodyHandle) -> Body<N> {
+        self.bodies.body(handle)
     }
 
-    /// Remove a sensor from the physics world.
-    pub fn remove_sensor(&mut self, sensor: &SensorHandle<N>) {
-        let uid = WorldObject::sensor_uid(sensor);
-        self.cworld.deferred_remove(uid);
-        self.cworld.perform_additions_removals_and_broad_phase();
-        let _ = self.sensors.remove(&uid);
+    pub fn body_mut(&mut self, handle: BodyHandle) -> BodyMut<N> {
+        self.bodies.body_mut(handle)
     }
 
-    // XXX: keep this reference mutable?
-    /// Gets a mutable reference to the force generator.
-    pub fn forces_generator(&mut self) -> &mut BodyForceGenerator<N> {
-        &mut self.forces
+    pub fn multibody(&self, handle: BodyHandle) -> Option<&Multibody<N>> {
+        self.bodies.multibody(handle)
     }
 
-    // XXX: keep this reference mutable?
-    /// Gets a mutable reference to the position and orientation integrator.
-    pub fn integrator(&mut self) -> &mut BodySmpEulerIntegrator {
-        &mut self.integrator
+    pub fn multibody_mut(&mut self, handle: BodyHandle) -> Option<&mut Multibody<N>> {
+        self.bodies.multibody_mut(handle)
     }
 
-    // XXX: keep this reference mutable?
-    /// Gets a mutable reference to the CCD manager.
-    pub fn ccd_manager(&mut self) -> &mut TranslationalCCDMotionClamping<N> {
-        &mut self.ccd
+    pub fn multibody_link(&self, handle: BodyHandle) -> Option<MultibodyLinkRef<N>> {
+        self.bodies.multibody_link(handle)
     }
 
-    // XXX: keep this reference mutable?
-    /// Gets a mutable reference to the joint manager.
-    pub fn joint_manager(&mut self) -> &mut JointManager<N> {
-        &mut self.joints
+    pub fn multibody_link_mut(&mut self, handle: BodyHandle) -> Option<MultibodyLinkMut<N>> {
+        self.bodies.multibody_link_mut(handle)
     }
 
-    // XXX: keep this reference mutable?
-    /// Gets a mutable reference to the constraint solver.
-    pub fn constraints_solver(&mut self) -> &mut AccumulatedImpulseSolver<N> {
-        &mut self.solver
+    pub fn rigid_body(&self, handle: BodyHandle) -> Option<&RigidBody<N>> {
+        self.bodies.rigid_body(handle)
     }
 
-    /// Gets the underlying collision world.
-    pub fn collision_world(&self) -> &RigidBodyCollisionWorld<N> {
+    pub fn rigid_body_mut(&mut self, handle: BodyHandle) -> Option<&mut RigidBody<N>> {
+        self.bodies.rigid_body_mut(handle)
+    }
+
+    pub fn collision_world(&self) -> &CollisionWorld<N> {
         &self.cworld
     }
 
-    /// Sets the linear acceleration afecting every dynamic rigid body.
-    pub fn set_gravity(&mut self, gravity: Vector<N>) {
-        self.forces.set_lin_acc(gravity);
+    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
+        self.cworld.collision_object(handle)
     }
 
-    /*/// Sets the angular acceleration afecting every dynamic rigid body.
-    pub fn set_angular_acceleration(&mut self, accel: Orientation) {
-        self.forces.set_ang_acc(accel)
-    }*/
-
-    /// Gets the linear acceleration afecting every dynamic rigid body.
-    pub fn gravity(&self) -> Vector<N> {
-        self.forces.lin_acc()
+    pub fn colliders(&self) -> Colliders<N> {
+        self.cworld.collision_objects()
     }
 
-    /*/// Gets the angular acceleration afecting every dynamic rigid body.
-    pub fn angular_acceleration(&self) -> Orientation {
-        self.forces.ang_acc()
-    }*/
-
-    /// Adds continuous collision detection to the given rigid body.
-    ///
-    /// Set `trigger_sensor` to `true` if the rigid body should active the sensors that would have
-    /// been missed without CCD enabled.
-    pub fn add_ccd_to(&mut self, body: &RigidBodyHandle<N>, motion_thresold: N, trigger_sensors: bool) {
-        self.ccd.add_ccd_to(body.clone(), motion_thresold, trigger_sensors)
+    pub fn active_contacts(&self) -> &[ContactConstraint<N>] {
+        &self.contacts
     }
 
-    /// Adds a ball-in-socket joint to the world.
-    pub fn add_ball_in_socket(&mut self, joint: BallInSocket<N>) -> Rc<RefCell<BallInSocket<N>>> {
-        let res = Rc::new(RefCell::new(joint));
-
-        self.joints.add_ball_in_socket(res.clone(), &mut *self.sleep.borrow_mut());
-
-        res
+    pub fn contact_events(&self) -> &ContactEvents {
+        self.cworld.contact_events()
     }
 
-    /// Removes a ball-in-socket joint from the world.
-    pub fn remove_ball_in_socket(&mut self, joint: &Rc<RefCell<BallInSocket<N>>>) {
-        self.joints.remove_ball_in_socket(joint, &mut *self.sleep.borrow_mut())
-    }
-
-    /// Adds a fixed joint to the world.
-    pub fn add_fixed(&mut self, joint: Fixed<N>) -> Rc<RefCell<Fixed<N>>> {
-        let res = Rc::new(RefCell::new(joint));
-
-        self.joints.add_fixed(res.clone(), &mut *self.sleep.borrow_mut());
-
-        res
-    }
-
-    /// Removes a fixed joint from the world.
-    pub fn remove_fixed(&mut self, joint: &Rc<RefCell<Fixed<N>>>) {
-        self.joints.remove_joint(joint, &mut *self.sleep.borrow_mut())
-    }
-
-    /// Collects every constraincts detected since the last update.
-    pub fn constraints(&mut self, out: &mut Vec<Constraint<N>>) {
-        // FIXME: ugly.
-        for (b1, b2, c) in self.cworld.contacts() {
-            if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&b1.data, &b2.data) {
-                let m1 = rb1.borrow().margin();
-                let m2 = rb2.borrow().margin();
-
-                let mut c = c.clone();
-                c.depth = c.depth + m1 + m2;
-
-                out.push(Constraint::RBRB(rb1.clone(), rb2.clone(), c));
-            }
-        }
-
-        self.joints.constraints(out);
-    }
-
-    /// An iterator visiting all rigid bodies on this world.
-    pub fn rigid_bodies(&self) -> RigidBodies<N> {
-        fn extract_value<N: Real>(e: &Entry<usize, RigidBodyHandle<N>>) -> &RigidBodyHandle<N> {
-            &e.value
-        }
-
-        let extract_value_fn: fn(_) -> _ = extract_value;
-        self.rigid_bodies.elements().iter().map(extract_value_fn)
-    }
-
-    /// An iterator visiting all sensors on this world.
-    pub fn sensors(&self) -> Sensors<N> {
-        fn extract_value<N: Real>(e: &Entry<usize, SensorHandle<N>>) -> &SensorHandle<N> {
-            &e.value
-        }
-
-        let extract_value_fn: fn(_) -> _ = extract_value;
-        self.sensors.elements().iter().map(extract_value_fn)
-    }
-
-    /// Adds a filter that tells if a potential collision pair should be ignored or not.
-    ///
-    /// The proximity filter returns `false` for a given pair of collision objects if they should
-    /// be ignored by the narrow phase. Keep in mind that modifying the proximity filter will have
-    /// a non-trivial overhead during the next update as it will force re-detection of all
-    /// collision pairs.
-    pub fn register_broad_phase_pair_filter<F>(&mut self, name: &str, filter: F)
-        where F: BroadPhasePairFilter<Point<N>, Isometry<N>, WorldObject<N>> + 'static {
-        self.cworld.register_broad_phase_pair_filter(name, filter)
-    }
-
-    /// Removes the pair filter named `name`.
-    pub fn unregister_broad_phase_pair_filter(&mut self, name: &str) {
-        self.cworld.unregister_broad_phase_pair_filter(name)
-    }
-
-    /// Registers a handler for contact start/stop events.
-    pub fn register_contact_handler<H>(&mut self, name: &str, handler: H)
-        where H: ContactHandler<Point<N>, Isometry<N>, WorldObject<N>> + 'static {
-        self.cworld.register_contact_handler(name, handler)
-    }
-
-    /// Unregisters a handler for contact start/stop events.
-    pub fn unregister_contact_handler(&mut self, name: &str) {
-        self.cworld.unregister_contact_handler(name)
-    }
-
-    /// Registers a handler for proximity status change events.
-    pub fn register_proximity_handler<H>(&mut self, name: &str, handler: H)
-        where H: ProximityHandler<Point<N>, Isometry<N>, WorldObject<N>> + 'static {
-        self.cworld.register_proximity_handler(name, handler);
-    }
-
-    /// Unregisters a handler for proximity status change events.
-    pub fn unregister_proximity_handler(&mut self, name: &str) {
-        self.cworld.unregister_proximity_handler(name);
-    }
-}
-
-struct ObjectActivationOnContactHandler<N: Real> {
-    sleep: Rc<RefCell<ActivationManager<N>>>
-}
-
-impl<N: Real> ContactHandler<Point<N>, Isometry<N>, WorldObject<N>>
-for ObjectActivationOnContactHandler<N> {
-    #[inline]
-    fn handle_contact_started(&mut self,
-                              _: &WorldCollisionObject<N>,
-                              _: &WorldCollisionObject<N>,
-                              _: &ContactAlgorithm<Point<N>, Isometry<N>>) {
-        // Do nothing.
-    }
-
-    fn handle_contact_stopped(&mut self, obj1: &WorldCollisionObject<N>, obj2: &WorldCollisionObject<N>) {
-        // Wake up on collision lost.
-
-        // There is no need to wake up anything if a rigid-body intersects a sensor.
-        if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&obj1.data, &obj2.data) {
-            self.sleep.borrow_mut().deferred_activate(rb1);
-            self.sleep.borrow_mut().deferred_activate(rb2);
-        }
-    }
-}
-
-struct SensorsNotCollidingTheirParentPairFilter;
-
-impl<N: Real> BroadPhasePairFilter<Point<N>, Isometry<N>, WorldObject<N>>
-for SensorsNotCollidingTheirParentPairFilter {
-    #[inline]
-    fn is_pair_valid(&self, b1: &WorldCollisionObject<N>, b2: &WorldCollisionObject<N>) -> bool {
-        match (&b1.data, &b2.data) {
-            (&WorldObject::RigidBody(ref rb), &WorldObject::Sensor(ref s)) |
-            (&WorldObject::Sensor(ref s), &WorldObject::RigidBody(ref rb)) => {
-                let bs = s.borrow();
-
-                if let Some(parent) = bs.parent() {
-                    WorldObject::rigid_body_uid(rb) != WorldObject::rigid_body_uid(parent) ||
-                    bs.proximity_with_parent_enabled()
-                }
-                else {
-                    true
-                }
-            },
-            _ => true
-        }
+    pub fn proximity_events(&self) -> &ProximityEvents {
+        self.cworld.proximity_events()
     }
 }

@@ -1,6 +1,6 @@
 use num::Zero;
 
-use alga::general::Real;
+use na::Real;
 use na::{Point3, Matrix3};
 use na;
 use ncollide::utils;
