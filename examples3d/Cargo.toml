@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
-rand       = "0.3"
+rand       = "0.4"
 num-traits = "0.1"
-nalgebra   = "0.13"
+nalgebra   = "0.14"
 ncollide   = "0.13"
 kiss3d     = "0.12"
 

@@ -102,7 +102,6 @@ extern crate approx;
 extern crate nalgebra as na;
 extern crate ncollide;
 extern crate num_traits as num;
-extern crate rustc_serialize;
 extern crate slab;
 extern crate time;
 //#[cfg(test)]

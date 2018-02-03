@@ -19,12 +19,11 @@ name = "nphysics3d"
 path = "../../src/lib.rs"
 
 [dependencies]
-rustc-serialize = "0.3"
 time       = "0.1"
 num-traits = "0.1"
 slab       = "0.4"
 alga       = "0.5"
-nalgebra   = "0.13"
+nalgebra   = "0.14"
 ncollide   = "0.13"
 approx     = "0.1"
 downcast   = "0.9"
