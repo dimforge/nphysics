@@ -7,7 +7,7 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 rand     = "0.4"
 alga     = "0.5"
 nalgebra = "0.14"
-ncollide = "0.13"
+ncollide = "0.14"
 
 [dependencies.nphysics_testbed2d]
 path = "../nphysics_testbed2d"
