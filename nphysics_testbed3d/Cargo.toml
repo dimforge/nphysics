@@ -12,8 +12,8 @@ time       = "0.1"
 rand       = "0.4"
 glfw       = "0.19"
 nalgebra   = "0.14"
-ncollide   = "0.13"
-kiss3d     = "0.12"
+ncollide   = "0.14"
+kiss3d     = "0.13"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"
