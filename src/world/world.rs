@@ -163,14 +163,17 @@ impl<N: Real> World<N> {
         }
 
         for proximity_event in self.cworld.proximity_events() {
-            let o1 = &self.cworld.collision_object(proximity_event.co1).unwrap().data;
-            let o2 = &self.cworld.collision_object(proximity_event.co2).unwrap().data;
-            sensor_handle_proximity(
-                o1, o2,
-                proximity_event.prev_status,
-                proximity_event.new_status,
-                &mut self.sensors
-            )
+            let o1 = self.cworld.collision_object(proximity_event.co1);
+            let o2 = self.cworld.collision_object(proximity_event.co2);
+            match (o1, o2) {
+                (Some(o1), Some(o2)) => sensor_handle_proximity(
+                    &o1.data, &o2.data,
+                    proximity_event.prev_status,
+                    proximity_event.new_status,
+                    &mut self.sensors
+                ),
+                _ => (),
+            }
         }
 
         self.joints.update(&mut self.sleep, &self.rigid_bodies);
