@@ -12,11 +12,11 @@ pub struct Mesh {
     base_color: Point3<f32>,
     delta:      Isometry3<f32>,
     gfx:        SceneNode,
-    body:       WorldObject<f32>
+    body:       WorldObject
 }
 
 impl Mesh {
-    pub fn new(body:     WorldObject<f32>,
+    pub fn new(body:     WorldObject,
                delta:    Isometry3<f32>,
                vertices: Vec<Point3<f32>>,
                indices:  Vec<Point3<u32>>,
@@ -76,7 +76,7 @@ impl Mesh {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> &WorldObject<f32> {
+    pub fn object(&self) -> &WorldObject {
         &self.body
     }
 }

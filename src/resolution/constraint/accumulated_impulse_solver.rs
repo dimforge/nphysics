@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::iter;
 // use rand::RngUtil;
 use alga::general::Real;
@@ -7,7 +5,7 @@ use na;
 use math::{Vector, Orientation, Rotation, Translation, Isometry};
 use detection::constraint::Constraint;
 use detection::joint::Joint;
-use object::RigidBody;
+use world::RigidBodyStorage;
 use resolution::constraint::velocity_constraint::VelocityConstraint;
 use resolution::constraint::contact_equation;
 use resolution::constraint::contact_equation::{CorrectionMode, CorrectionParameters};
@@ -92,14 +90,15 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
     fn do_solve(&mut self,
                 dt:          N,
                 constraints: &[Constraint<N>],
-                joints:      &[usize],
-                bodies:      &[Rc<RefCell<RigidBody<N>>>]) {
+                constrained_bodies: &[usize],
+                bodies:      &mut RigidBodyStorage<N>) {
         let num_friction_equations    = (na::dimension::<Vector<N>>() - 1) * self.cache.len();
         let num_restitution_equations = self.cache.len();
         let mut num_joint_equations = 0;
 
-        for i in joints.iter() {
-            match constraints[*i] {
+        // TODO: maybe cache joint indexes or ask for it in argument
+        for constraint in constraints.iter() {
+            match *constraint {
                 Constraint::BallInSocket(_) => {
                     num_joint_equations = num_joint_equations + na::dimension::<Vector<N>>()
                 },
@@ -118,11 +117,11 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
 
         for (i, (_, &(ci, imp))) in self.cache.hash().iter().enumerate() {
             match constraints[ci] {
-                Constraint::RBRB(ref rb1, ref rb2, ref c) => {
+                Constraint::RBRB(rb1_uid, rb2_uid, ref c) => {
                     contact_equation::fill_second_order_equation(
                         dt.clone(),
                         c,
-                        &*rb1.borrow(), &*rb2.borrow(),
+                        &bodies[rb1_uid], &bodies[rb2_uid],
                         &mut self.restitution_constraints[i],
                         i,
                         &mut self.friction_constraints[..],
@@ -137,15 +136,17 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
         }
 
         let mut joint_offset = num_restitution_equations;
-        for i in joints.iter() {
+        // TODO: maybe cache joint indexes
+        for constraint in constraints.iter() {
             let nconstraints = self.restitution_constraints.len();
-            match constraints[*i] {
+            match *constraint {
                 Constraint::BallInSocket(ref bis) => {
                     ball_in_socket_equation::fill_second_order_equation(
                         dt.clone(),
-                        &*bis.borrow(),
+                        bis,
                         &mut self.restitution_constraints[joint_offset .. nconstraints], // XXX
-                        &self.correction
+                        &self.correction,
+                        bodies,
                     );
 
                     joint_offset = joint_offset + na::dimension::<Vector<N>>();
@@ -153,9 +154,10 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
                 Constraint::Fixed(ref f) => {
                     fixed_equation::fill_second_order_equation(
                         dt.clone(),
-                        &*f.borrow(),
+                        f,
                         &mut self.restitution_constraints[joint_offset .. nconstraints], // XXX
-                        &self.correction
+                        &self.correction,
+                        bodies
                     );
 
                     joint_offset = joint_offset + na::dimension::<Vector<N>>() + na::dimension::<Orientation<N>>();
@@ -164,22 +166,22 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
             }
         }
 
-        resize_buffer(&mut self.mj_lambda, bodies.len(), Velocities::new());
+        resize_buffer(&mut self.mj_lambda, constrained_bodies.len(), Velocities::new());
 
         // FIXME: parametrize by the resolution algorithm?
         pgs::projected_gauss_seidel_solve(
             &mut self.restitution_constraints[..],
             &mut self.friction_constraints[..],
             &mut self.mj_lambda[..],
-            bodies.len(),
+            constrained_bodies.len(),
             self.num_second_order_iter,
             false);
 
         // FIXME: this is _so_ ugly!
         self.resize_buffers(num_restitution_equations, num_friction_equations);
 
-        for b in bodies.iter() {
-            let mut rb = b.borrow_mut();
+        for &uid in constrained_bodies.iter() {
+            let rb = &mut bodies[uid];
             let i      = rb.index();
 
             let curr_lin_vel = rb.lin_vel();
@@ -237,12 +239,12 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
                 &mut self.restitution_constraints[..],
                 &mut [][..],
                 &mut self.mj_lambda[..],
-                bodies.len(),
+                constrained_bodies.len(),
                 self.num_first_order_iter,
                 true);
 
-            for b in bodies.iter() {
-                let mut rb = b.borrow_mut();
+            for &uid in constrained_bodies.iter() {
+                let rb = &mut bodies[uid];
                 let i      = rb.index();
 
                 let translation = Translation::from_vector(self.mj_lambda[i as usize].lv * dt);
@@ -261,21 +263,17 @@ impl<N: Real> AccumulatedImpulseSolver<N> {
 }
 
 impl<N: Real> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
-    fn solve(&mut self, dt: N, constraints: &[Constraint<N>]) {
-        // FIXME: bodies index assignment is very ugly
-        let mut bodies = Vec::new();
-
+    fn solve(&mut self, dt: N, constraints: &[Constraint<N>], bodies: &mut RigidBodyStorage<N>) {
+        // TODO: does this should be made in the function do_solve ?
+        //       does the do_solve have sense to be called without that requirement ?
         if constraints.len() != 0 {
             /*
              * Associate the constraints with the cached impulse.
              */
             for (i, cstr) in constraints.iter().enumerate() {
                 match *cstr {
-                    Constraint::RBRB(ref a, ref b, ref c) => {
-                        self.cache.insert(i,
-                                          &**a as *const RefCell<RigidBody<N>> as usize,
-                                          &**b as *const RefCell<RigidBody<N>> as usize,
-                                          na::center(&c.world1, &c.world2));
+                    Constraint::RBRB(a, b, ref c) => {
+                        self.cache.insert(i, a, b, na::center(&c.world1, &c.world2));
                     },
                     Constraint::BallInSocket(_) => {
                         // XXX: cache for ball in socket?
@@ -294,101 +292,76 @@ impl<N: Real> Solver<N, Constraint<N>> for AccumulatedImpulseSolver<N> {
             // of all rigid bodies.
             for c in constraints.iter() {
                 match *c {
-                    Constraint::RBRB(ref a, ref b, _) => {
-                        a.borrow_mut().set_index(-2);
-                        b.borrow_mut().set_index(-2)
+                    Constraint::RBRB(a, b, _) => {
+                        bodies[a].set_index(-2);
+                        bodies[b].set_index(-2)
                     },
                     Constraint::BallInSocket(ref bis) => {
-                        let bbis = bis.borrow();
-                        match bbis.anchor1().body {
-                            Some(ref b) => {
-                                b.borrow_mut().set_index(-2)
-                            },
-                            None    => { }
-                        };
-
-                        match bbis.anchor2().body {
-                            Some(ref b) => {
-                                b.borrow_mut().set_index(-2)
-                            },
-                            None    => { }
+                        if let Some(b) = bis.anchor1().body {
+                            bodies[b].set_index(-2)
+                        }
+                        if let Some(b) = bis.anchor2().body {
+                            bodies[b].set_index(-2)
                         }
                     }
                     Constraint::Fixed(ref f) => { // FIXME: code duplication from BallInSocket
-                        let bf = f.borrow();
-                        match bf.anchor1().body {
-                            Some(ref b) => {
-                                b.borrow_mut().set_index(-2)
-                            },
-                            None    => { }
-                        };
-
-                        match bf.anchor2().body {
-                            Some(ref b) => {
-                                b.borrow_mut().set_index(-2)
-                            },
-                            None    => { }
+                        if let Some(b) = f.anchor1().body {
+                            bodies[b].set_index(-2)
+                        }
+                        if let Some(b) = f.anchor2().body {
+                            bodies[b].set_index(-2)
                         }
                     }
                 }
             }
 
-            let mut id = 0;
+            // FIXME: bodies index assignment is very ugly
+            let mut constrained_bodies = Vec::new();
 
-            fn set_body_index<N: Real>(a:      &Rc<RefCell<RigidBody<N>>>,
-                                       bodies: &mut Vec<Rc<RefCell<RigidBody<N>>>>,
-                                       id:     &mut isize) {
-                let mut ba = a.borrow_mut();
-                if ba.index() == -2 {
-                    if ba.can_move() {
-                        ba.set_index(*id);
-                        bodies.push(a.clone());
-                        *id = *id + 1;
+            {
+                let mut id = 0;
+                let mut set_body_index = |uid: usize| {
+                    let b = &mut bodies[uid];
+                    if b.index() == -2 {
+                        if b.can_move() {
+                            b.set_index(id);
+                            constrained_bodies.push(b.uid());
+                            id += 1;
+                        }
+                        else {
+                            b.set_index(-1)
+                        }
                     }
-                    else {
-                        ba.set_index(-1)
-                    }
-                }
-            }
+                };
 
-            // FIXME: avoid allocation
-            let mut joints = Vec::new();
-            for (i, c) in constraints.iter().enumerate() {
-                match *c {
-                    Constraint::RBRB(ref a, ref b, _) => {
-                        set_body_index(a, &mut bodies, &mut id);
-                        set_body_index(b, &mut bodies, &mut id);
-                    },
-                    Constraint::BallInSocket(ref bis) => {
-                        joints.push(i);
-                        let bbis = bis.borrow();
-                        match bbis.anchor1().body {
-                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
-                            None        => { }
-                        }
-
-                        match bbis.anchor2().body {
-                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
-                            None        => { }
-                        }
-                    },
-                    Constraint::Fixed(ref f) => { // FIXME: code duplication from BallInSocket
-                        joints.push(i);
-                        let bf = f.borrow();
-                        match bf.anchor1().body {
-                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
-                            None        => { }
-                        }
-
-                        match bf.anchor2().body {
-                            Some(ref b) => set_body_index(b, &mut bodies, &mut id),
-                            None        => { }
+                // FIXME: avoid allocation
+                for c in constraints.iter() {
+                    match *c {
+                        Constraint::RBRB(a, b, _) => {
+                            set_body_index(a);
+                            set_body_index(b);
+                        },
+                        Constraint::BallInSocket(ref bis) => {
+                            if let Some(b) = bis.anchor1().body {
+                                set_body_index(b);
+                            }
+                            if let Some(b) = bis.anchor2().body {
+                                set_body_index(b);
+                            }
+                        },
+                        Constraint::Fixed(ref f) => { // FIXME: code duplication from BallInSocket
+                            if let Some(b) = f.anchor1().body {
+                                set_body_index(b);
+                            }
+                            if let Some(b) = f.anchor2().body {
+                                set_body_index(b);
+                            }
                         }
                     }
                 }
             }
 
-            self.do_solve(dt.clone(), constraints, &joints[..], &bodies[..]);
+            self.do_solve(dt.clone(), constraints, &*constrained_bodies, bodies);
             self.cache.swap();
         }
     }

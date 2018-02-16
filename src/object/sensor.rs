@@ -1,33 +1,31 @@
 use std::mem;
 use std::any::Any;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use alga::general::Real;
 use na;
 use ncollide::utils::data::hash_map::{HashMap, Entry};
 use ncollide::utils::data::hash::UintTWHash;
 use ncollide::shape::{Shape, ShapeHandle};
-use ncollide::narrow_phase::ProximityHandler;
 use ncollide::query::Proximity;
 use math::{Point, Isometry};
-use object::{RigidBodyHandle, SensorCollisionGroups, WorldObject};
-use world::{WorldCollisionObject, RigidBodies, Sensors};
-
-/// A shared, mutable, sensor.
-pub type SensorHandle<N> = Rc<RefCell<Sensor<N>>>;
+use object::{SensorCollisionGroups, WorldObject};
+use world::{RigidBodies, Sensors, RigidBodyStorage, SensorStorage};
+use utils::Indexable;
 
 /// An object capable of detecting interferances with other entities without interacting with them.
 pub struct Sensor<N: Real> {
-    parent:              Option<RigidBodyHandle<N>>,
+    uid:                 usize,
+    parent:              Option<usize>,
     relative_position:   Isometry<N>,
     shape:               ShapeHandle<Point<N>, Isometry<N>>,
     margin:              N,
     collision_groups:    SensorCollisionGroups,
     parent_prox:         bool,
-    user_data:           Option<Box<Any>>,
-    interfering_bodies:  Option<HashMap<usize, RigidBodyHandle<N>, UintTWHash>>,
-    interfering_sensors: Option<HashMap<usize, SensorHandle<N>, UintTWHash>>,
+    user_data:           Option<Box<Any + Send + Sync>>,
+    // TODO: use hashset
+    interfering_bodies:  Option<HashMap<usize, (), UintTWHash>>,
+    // TODO: use hashset
+    interfering_sensors: Option<HashMap<usize, (), UintTWHash>>,
     #[doc(hidden)]
     pub did_move_locally:    bool
 }
@@ -41,16 +39,17 @@ impl<N: Real> Sensor<N> {
     /// when it intersects its own parent.
     ///
     /// A sensor has a default margin equal to zero.
-    pub fn new<G>(shape: G, parent: Option<RigidBodyHandle<N>>) -> Sensor<N>
+    pub fn new<G>(shape: G, parent: Option<usize>) -> Sensor<N>
         where G: Send + Sync + Shape<Point<N>, Isometry<N>> {
         Sensor::new_with_shared_shape(ShapeHandle::new(shape), parent)
     }
 
     /// Creates a new senson with a given shared shape.
     pub fn new_with_shared_shape(shape:  ShapeHandle<Point<N>, Isometry<N>>,
-                                 parent: Option<RigidBodyHandle<N>>)
+                                 parent: Option<usize>)
                                  -> Sensor<N> {
         Sensor {
+            uid:                 0, //TODO
             parent:              parent,
             relative_position:   na::one(),
             did_move_locally:    true,
@@ -64,20 +63,25 @@ impl<N: Real> Sensor<N> {
         }
     }
 
+    #[inline]
+    pub fn uid(&self) -> usize {
+        self.uid
+    }
+
     /// Reference to user-defined data attached to this sensor.
     #[inline]
-    pub fn user_data(&self) -> Option<&Box<Any>> {
+    pub fn user_data(&self) -> Option<&Box<Any + Send + Sync>> {
         self.user_data.as_ref()
     }
 
     /// Mutable reference to user-defined data attached to this sensor.
     #[inline]
-    pub fn user_data_mut(&mut self) -> Option<&mut Box<Any>> {
+    pub fn user_data_mut(&mut self) -> Option<&mut Box<Any + Send + Sync>> {
         self.user_data.as_mut()
     }
 
     /// Attach some user-defined data to this sensor and return the old one.
-    pub fn set_user_data(&mut self, user_data: Option<Box<Any>>) -> Option<Box<Any>> {
+    pub fn set_user_data(&mut self, user_data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
         mem::replace(&mut self.user_data, user_data)
     }
 
@@ -107,12 +111,11 @@ impl<N: Real> Sensor<N> {
 
     /// List of rigid bodies geometrically intersecting this sensor.
     #[inline]
-    pub fn interfering_bodies(&self) -> Option<RigidBodies<N>> {
+    pub fn interfering_bodies(&self) -> Option<RigidBodies> {
         // XXX: duplicate code from World.
         // This should actually be a method on the HashMap.
-        fn extract_value<N: Real>(e: &Entry<usize, RigidBodyHandle<N>>)
-            -> &RigidBodyHandle<N> {
-            &e.value
+        fn extract_value(e: &Entry<usize, ()>) -> usize {
+            e.key
         }
 
         let extract_value_fn: fn(_) -> _ = extract_value;
@@ -122,12 +125,11 @@ impl<N: Real> Sensor<N> {
 
     /// List of sensors geometrically intersecting this sensor.
     #[inline]
-    pub fn interfering_sensors(&self) -> Option<Sensors<N>> {
+    pub fn interfering_sensors(&self) -> Option<Sensors> {
         // XXX: duplicate code from World.
         // This should actually be a method on the HashMap.
-        fn extract_value<N: Real>(e: &Entry<usize, SensorHandle<N>>)
-            -> &SensorHandle<N> {
-            &e.value
+        fn extract_value(e: &Entry<usize, ()>) -> usize {
+            e.key
         }
 
         let extract_value_fn: fn(_) -> _ = extract_value;
@@ -154,10 +156,10 @@ impl<N: Real> Sensor<N> {
 
     /// This sensor's absolute position.
     #[inline]
-    pub fn position(&self) -> Isometry<N> {
+    pub fn position(&self, bodies: &RigidBodyStorage<N>) -> Isometry<N> {
         match self.parent {
-            Some(ref rb) => *rb.borrow().position() * self.relative_position,
-            None         => self.relative_position.clone()
+            Some(rb) => bodies[rb].position() * self.relative_position,
+            None     => self.relative_position.clone()
         }
     }
 
@@ -166,11 +168,11 @@ impl<N: Real> Sensor<N> {
     /// If `self.parent()` is not `None`, then this automatically computes the relevant relative
     /// position and updates it.
     #[inline]
-    pub fn set_position(&mut self, abs_pos: Isometry<N>) {
+    pub fn set_position(&mut self, abs_pos: Isometry<N>, bodies: &RigidBodyStorage<N>) {
         self.did_move_locally = true;
         match self.parent {
-            Some(ref rb) => {
-                self.relative_position = rb.borrow().position().inverse() * abs_pos
+            Some(rb) => {
+                self.relative_position = bodies[rb].position().inverse() * abs_pos
             }
             None => self.relative_position = abs_pos
         }
@@ -179,11 +181,11 @@ impl<N: Real> Sensor<N> {
     /// This sensor position's translational component.
     /// 
     #[inline]
-    pub fn center(&self) -> Point<N> {
+    pub fn center(&self, bodies: &RigidBodyStorage<N>) -> Point<N> {
         match self.parent {
-            Some(ref rb) => {
+            Some(rb) => {
                 let coords = self.relative_position.translation.vector;
-                *rb.borrow().position() * Point::from_coordinates(coords)
+                bodies[rb].position() * Point::from_coordinates(coords)
             },
             None => Point::from_coordinates(self.relative_position.translation.vector)
         }
@@ -218,7 +220,7 @@ impl<N: Real> Sensor<N> {
     ///
     /// Returns `None` if this sensor is directly attached to the scene.
     #[inline]
-    pub fn parent(&self) -> Option<&RigidBodyHandle<N>> {
+    pub fn parent(&self) -> Option<&usize> {
         self.parent.as_ref()
     }
 
@@ -241,73 +243,53 @@ impl<N: Real> Sensor<N> {
     }
 }
 
+impl<N: Real> Indexable for Sensor<N> {
+    #[inline]
+    fn set_index(&mut self, index: usize) {
+        self.uid = index
+    }
+}
+
 #[doc(hidden)]
-pub struct SensorProximityCollector;
-
-impl<N: Real> ProximityHandler<Point<N>, Isometry<N>, WorldObject<N>> for SensorProximityCollector {
-    fn handle_proximity(&mut self,
-                        o1: &WorldCollisionObject<N>, o2: &WorldCollisionObject<N>,
-                        _: Proximity, new_proximity: Proximity) {
-
-        if new_proximity == Proximity::Intersecting {
-            match (&o1.data, &o2.data) {
-                (&WorldObject::RigidBody(ref rb1), &WorldObject::Sensor(ref s2)) => {
-                    let mut s2 = s2.borrow_mut();
-                    if let Some(ref mut ib) = s2.interfering_bodies {
-                        let _ = ib.insert(WorldObject::rigid_body_uid(rb1), rb1.clone());
-                    }
-                },
-                (&WorldObject::Sensor(ref s1), &WorldObject::RigidBody(ref rb2)) => {
-                    let mut s1 = s1.borrow_mut();
-                    if let Some(ref mut ib) = s1.interfering_bodies {
-                        let _ = ib.insert(WorldObject::rigid_body_uid(rb2), rb2.clone());
-                    }
-                },
-                (&WorldObject::Sensor(ref s1), &WorldObject::Sensor(ref s2)) => {
-                    {
-                        let mut s1 = s1.borrow_mut();
-                        if let Some(ref mut ib) = s1.interfering_sensors {
-                            let _ = ib.insert(WorldObject::sensor_uid(s2), s2.clone());
-                        }
-                    }
-
-                    let mut s2 = s2.borrow_mut();
-                    if let Some(ref mut ib) = s2.interfering_sensors {
-                        let _ = ib.insert(WorldObject::sensor_uid(s1), s1.clone());
-                    }
-                },
-                (&WorldObject::RigidBody(_), &WorldObject::RigidBody(_)) => { }
-            }
+pub fn sensor_handle_proximity<N: Real>(o1: &WorldObject, o2: &WorldObject,
+                                        _: Proximity, new_proximity: Proximity,
+                                        sensors: &mut SensorStorage<N>) {
+    if new_proximity == Proximity::Intersecting {
+        match (o1, o2) {
+            (&WorldObject::RigidBody(rb), &WorldObject::Sensor(s))
+            | (&WorldObject::Sensor(s), &WorldObject::RigidBody(rb)) => {
+                if let Some(ref mut ib) = sensors[s].interfering_bodies {
+                    let _ = ib.insert(rb, ());
+                }
+            },
+            (&WorldObject::Sensor(s1), &WorldObject::Sensor(s2)) => {
+                if let Some(ref mut ib) = sensors[s1].interfering_sensors {
+                    let _ = ib.insert(s2, ());
+                }
+                if let Some(ref mut ib) = sensors[s2].interfering_sensors {
+                    let _ = ib.insert(s1, ());
+                }
+            },
+            (&WorldObject::RigidBody(_), &WorldObject::RigidBody(_)) => { }
         }
-        else {
-            match (&o1.data, &o2.data) {
-                (&WorldObject::RigidBody(ref rb1), &WorldObject::Sensor(ref s2)) => {
-                    let mut s2 = s2.borrow_mut();
-                    if let Some(ref mut ib) = s2.interfering_bodies {
-                        let _ = ib.remove(&WorldObject::rigid_body_uid(rb1));
-                    }
-                },
-                (&WorldObject::Sensor(ref s1), &WorldObject::RigidBody(ref rb2)) => {
-                    let mut s1 = s1.borrow_mut();
-                    if let Some(ref mut ib) = s1.interfering_bodies {
-                        let _ = ib.remove(&WorldObject::rigid_body_uid(rb2));
-                    }
-                },
-                (&WorldObject::Sensor(ref s1), &WorldObject::Sensor(ref s2)) => {
-                    {
-                        let mut s1 = s1.borrow_mut();
-                        if let Some(ref mut ib) = s1.interfering_sensors {
-                            let _ = ib.remove(&WorldObject::sensor_uid(s2));
-                        }
-                    }
-
-                    let mut s2 = s2.borrow_mut();
-                    if let Some(ref mut ib) = s2.interfering_sensors {
-                        let _ = ib.remove(&WorldObject::sensor_uid(s1));
-                    }
-                },
-                (&WorldObject::RigidBody(_), &WorldObject::RigidBody(_)) => { }
-            }
+    }
+    else {
+        match (o1, o2) {
+            (&WorldObject::RigidBody(rb), &WorldObject::Sensor(s))
+            | (&WorldObject::Sensor(s), &WorldObject::RigidBody(rb)) => {
+                if let Some(ref mut ib) = sensors[s].interfering_bodies {
+                    let _ = ib.remove(&rb);
+                }
+            },
+            (&WorldObject::Sensor(s1), &WorldObject::Sensor(s2)) => {
+                if let Some(ref mut ib) = sensors[s1].interfering_sensors {
+                    let _ = ib.remove(&s2);
+                }
+                if let Some(ref mut ib) = sensors[s2].interfering_sensors {
+                    let _ = ib.remove(&s1);
+                }
+            },
+            (&WorldObject::RigidBody(_), &WorldObject::RigidBody(_)) => { }
         }
     }
 }

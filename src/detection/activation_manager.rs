@@ -1,12 +1,10 @@
 use std::iter;
 use na;
 use alga::general::Real;
-use ncollide::utils::data::hash_map::HashMap;
-use ncollide::utils::data::hash::UintTWHash;
-use world::RigidBodyCollisionWorld;
+use world::{RigidBodyCollisionWorld, RigidBodyStorage};
 use detection::constraint::Constraint;
 use detection::joint::{JointManager, Joint};
-use object::{WorldObject, RigidBody, RigidBodyHandle, ActivationState};
+use object::{WorldObject, RigidBody, ActivationState};
 use utils::union_find::UnionFindSet;
 use utils::union_find;
 
@@ -17,7 +15,7 @@ pub struct ActivationManager<N: Real> {
     mix_factor:     N,
     ufind:          Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
-    to_activate:    Vec<RigidBodyHandle<N>>,
+    to_activate:    Vec<usize>,
 }
 
 impl<N: Real> ActivationManager<N> {
@@ -39,9 +37,9 @@ impl<N: Real> ActivationManager<N> {
 
     /// Notify the `ActivationManager` that is has to activate an object at the next update.
     // FIXME: this is not a very good name
-    pub fn deferred_activate(&mut self, b: &RigidBodyHandle<N>) {
-        if b.borrow().can_move() && !b.borrow().is_active() {
-            self.to_activate.push(b.clone());
+    pub fn deferred_activate(&mut self, b: &RigidBody<N>) {
+        if b.can_move() && !b.is_active() {
+            self.to_activate.push(b.uid());
         }
     }
 
@@ -63,18 +61,16 @@ impl<N: Real> ActivationManager<N> {
     pub fn update(&mut self,
                   world:  &mut RigidBodyCollisionWorld<N>,
                   joints: &JointManager<N>,
-                  bodies: &HashMap<usize, RigidBodyHandle<N>, UintTWHash>) {
+                  bodies: &mut RigidBodyStorage<N>) {
         /*
          *
          * Update bodies energy
          *
          */
-        for (i, b) in bodies.elements().iter().enumerate() {
-            let mut b = b.value.borrow_mut();
-
+        for (i, b) in bodies.iter_mut().enumerate() {
             assert!(*b.activation_state() != ActivationState::Deleted);
             if b.is_active() {
-                self.update_energy(&mut *b);
+                self.update_energy(b);
             }
 
             b.set_index(i as isize);
@@ -85,12 +81,11 @@ impl<N: Real> ActivationManager<N> {
          * Activate bodies that need it.
          *
          */
-        for b in self.to_activate.iter() {
-            let mut rb = b.borrow_mut();
+        for &b in &self.to_activate {
+            let rb = &mut bodies[b];
 
-            match rb.deactivation_threshold() {
-                Some(threshold) => rb.activate(threshold * na::convert(2.0f64)),
-                None => { }
+            if let Some(threshold) = rb.deactivation_threshold() {
+                rb.activate(threshold * na::convert(2.0f64));
             }
         }
 
@@ -102,15 +97,8 @@ impl<N: Real> ActivationManager<N> {
          *
          */
         // Resize buffers.
-        if bodies.len() > self.ufind.len() {
-            let to_add = bodies.len() - self.ufind.len();
-            self.ufind.extend(iter::repeat(UnionFindSet::new(0)).take(to_add));
-            self.can_deactivate.extend(iter::repeat(false).take(to_add));
-        }
-        else {
-            self.ufind.truncate(bodies.len());
-            self.can_deactivate.truncate(bodies.len());
-        }
+        self.ufind.resize(bodies.len(), UnionFindSet::new(0));
+        self.can_deactivate.resize(bodies.len(), false);
 
         // Init the union find.
         for (i, u) in self.ufind.iter_mut().enumerate() {
@@ -122,38 +110,33 @@ impl<N: Real> ActivationManager<N> {
         }
 
         // Run the union-find.
-        fn make_union<N: Real>(b1: &RigidBodyHandle<N>, b2: &RigidBodyHandle<N>, ufs: &mut [UnionFindSet]) {
-            let rb1 = b1.borrow();
-            let rb2 = b2.borrow();
-
+        fn make_union<N: Real>(rb1: &RigidBody<N>, rb2: &RigidBody<N>, ufs: &mut [UnionFindSet]) {
             if rb1.can_move() && rb2.can_move() {
                 union_find::union(rb1.index() as usize, rb2.index() as usize, ufs)
             }
         }
 
         for (b1, b2, cd) in world.contact_pairs() {
-            if let (&WorldObject::RigidBody(ref rb1), &WorldObject::RigidBody(ref rb2)) = (&b1.data, &b2.data) {
+            if let (&WorldObject::RigidBody(rb1), &WorldObject::RigidBody(rb2)) = (&b1.data, &b2.data) {
                 if cd.num_contacts() != 0 {
-                    make_union(&rb1, &rb2, &mut self.ufind[..])
+                    make_union(&bodies[rb1], &bodies[rb2], &mut self.ufind[..])
                 }
             }
         }
 
-        for e in joints.joints().elements().iter() {
-            match e.value {
-                Constraint::RBRB(ref b1, ref b2, _) => make_union(b1, b2, &mut self.ufind[..]),
+        for e in joints.joints().iter() {
+            match *e {
+                Constraint::RBRB(b1, b2, _) => make_union(&bodies[b1], &bodies[b2], &mut self.ufind[..]),
                 Constraint::BallInSocket(ref b)   => {
-                    match (b.borrow().anchor1().body.as_ref(), b.borrow().anchor2().body.as_ref()) {
-                        (Some(b1), Some(b2)) => make_union(b1, b2, &mut self.ufind[..]),
-                        _ => { }
+                    if let (Some(b1), Some(b2)) = (b.anchor1().body, b.anchor2().body) {
+                        make_union(&bodies[b1], &bodies[b2], &mut self.ufind[..]);
                     }
                 },
                 Constraint::Fixed(ref f)   => {
-                    match (f.borrow().anchor1().body.as_ref(), f.borrow().anchor2().body.as_ref()) {
-                        (Some(b1), Some(b2)) => make_union(b1, b2, &mut self.ufind[..]),
-                        _ => { }
+                    if let (Some(b1), Some(b2)) = (f.anchor1().body, f.anchor2().body) {
+                        make_union(&bodies[b1], &bodies[b2], &mut self.ufind[..]);
                     }
-                }
+                },
             }
         }
 
@@ -161,9 +144,8 @@ impl<N: Real> ActivationManager<N> {
          * Body activation/deactivation.
          */
         // Find deactivable islands.
-        for i in 0usize .. self.ufind.len() {
+        for (i, b) in bodies.iter().enumerate() {
             let root = union_find::find(i, &mut self.ufind[..]);
-            let b    = bodies.elements()[i].value.borrow();
 
             self.can_deactivate[root] =
                 match b.deactivation_threshold() {
@@ -175,9 +157,8 @@ impl<N: Real> ActivationManager<N> {
         }
 
         // Activate/deactivate islands.
-        for i in 0usize .. self.ufind.len() {
+        for (i, b) in bodies.iter_mut().enumerate() {
             let root = union_find::find(i, &mut self.ufind[..]);
-            let mut b = bodies.elements()[i].value.borrow_mut();
 
             if self.can_deactivate[root] { // Everybody in this set can be deactivacted.
                 b.deactivate();

@@ -9,7 +9,7 @@ use kiss3d::scene::SceneNode;
 use kiss3d::camera::{Camera, ArcBall, FirstPerson};
 use ncollide::shape::{Shape3, Plane3, Ball3, Cuboid3, Cylinder3, Cone3, Compound3, TriMesh3, ConvexHull3};
 use ncollide::transformation;
-use nphysics3d::object::{RigidBody, WorldObject, WorldObjectBorrowed, RigidBodyHandle, SensorHandle};
+use nphysics3d::object::{RigidBody, WorldObject};
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::cylinder::Cylinder;
@@ -69,7 +69,7 @@ impl GraphicsManager {
         self.aabbs.clear();
     }
 
-    pub fn remove(&mut self, window: &mut Window, object: &WorldObject<f32>) {
+    pub fn remove(&mut self, window: &mut Window, object: &WorldObject) {
         let key = object.uid();
 
         match self.rb2sn.get(&key) {
@@ -84,58 +84,61 @@ impl GraphicsManager {
         self.rb2sn.remove(&key);
     }
 
-    pub fn set_rigid_body_color(&mut self, rb: &RigidBodyHandle<f32>, color: Point3<f32>) {
-        let key = WorldObject::rigid_body_uid(rb);
+    // TODO
+    // pub fn set_rigid_body_color(&mut self, rb: &RigidBodyHandle<f32>, color: Point3<f32>) {
+    //     let key = WorldObject::rigid_body_uid(rb);
 
-        self.rb2color.insert(key, color);
+    //     self.rb2color.insert(key, color);
 
-        if let Some(ns) = self.rb2sn.get_mut(&key) {
-            for n in ns.iter_mut() {
-                n.set_color(color)
-            }
-        }
+    //     if let Some(ns) = self.rb2sn.get_mut(&key) {
+    //         for n in ns.iter_mut() {
+    //             n.set_color(color)
+    //         }
+    //     }
+    // }
+
+    // TODO
+    // pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
+    //     let key = WorldObject::sensor_uid(sensor);
+
+    //     self.rb2color.insert(key, color);
+
+    //     if let Some(ns) = self.rb2sn.get_mut(&key) {
+    //         for n in ns.iter_mut() {
+    //             n.set_color(color)
+    //         }
+    //     }
+    // }
+
+    pub fn add(&mut self, window: &mut Window, object: WorldObject) {
+        unimplemented!();
+        // let mut color = Point3::new(0.5, 0.5, 0.5);
+
+        // match self.rb2color.get(&object.uid()) {
+        //     Some(c) => color = *c,
+        //     None    => {
+        //         match object {
+        //             WorldObject::RigidBody(ref rb) => {
+        //                 if rb.borrow().can_move() {
+        //                     color = self.rand.gen();
+        //                 }
+        //             }
+        //             WorldObject::Sensor(ref sensor) => {
+        //                 if let Some(parent) = sensor.borrow().parent() {
+        //                     let uid = &**parent as *const RefCell<RigidBody<f32>> as usize;
+        //                     if let Some(pcolor) = self.rb2color.get(&uid) {
+        //                         color = *pcolor;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // self.add_with_color(window, object, color)
     }
 
-    pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
-        let key = WorldObject::sensor_uid(sensor);
-
-        self.rb2color.insert(key, color);
-
-        if let Some(ns) = self.rb2sn.get_mut(&key) {
-            for n in ns.iter_mut() {
-                n.set_color(color)
-            }
-        }
-    }
-
-    pub fn add(&mut self, window: &mut Window, object: WorldObject<f32>) {
-        let mut color = Point3::new(0.5, 0.5, 0.5);
-
-        match self.rb2color.get(&object.uid()) {
-            Some(c) => color = *c,
-            None    => {
-                match object {
-                    WorldObject::RigidBody(ref rb) => {
-                        if rb.borrow().can_move() {
-                            color = self.rand.gen();
-                        }
-                    }
-                    WorldObject::Sensor(ref sensor) => {
-                        if let Some(parent) = sensor.borrow().parent() {
-                            let uid = &**parent as *const RefCell<RigidBody<f32>> as usize;
-                            if let Some(pcolor) = self.rb2color.get(&uid) {
-                                color = *pcolor;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        self.add_with_color(window, object, color)
-    }
-
-    pub fn add_with_color(&mut self, window: &mut Window, object: WorldObject<f32>, color: Point3<f32>) {
+    pub fn add_with_color(&mut self, window: &mut Window, object: WorldObject, color: Point3<f32>) {
         let nodes = {
             let mut nodes = Vec::new();
 
@@ -158,7 +161,7 @@ impl GraphicsManager {
 
     fn add_shape(&mut self,
                 window: &mut Window,
-                object: WorldObject<f32>,
+                object: WorldObject,
                 delta:  Isometry3<f32>,
                 shape:  &Shape3<f32>,
                 color:  Point3<f32>,
@@ -197,7 +200,7 @@ impl GraphicsManager {
 
     fn add_plane(&mut self,
                  window: &mut Window,
-                 object: WorldObject<f32>,
+                 object: WorldObject,
                  shape:  &Plane3<f32>,
                  color:  Point3<f32>,
                  out:    &mut Vec<Node>) {
@@ -209,7 +212,7 @@ impl GraphicsManager {
 
     fn add_mesh(&mut self,
                 window: &mut Window,
-                object: WorldObject<f32>,
+                object: WorldObject,
                 delta:  Isometry3<f32>,
                 shape:   &TriMesh3<f32>,
                 color:  Point3<f32>,
@@ -224,7 +227,7 @@ impl GraphicsManager {
 
     fn add_ball(&mut self,
                 window: &mut Window,
-                object: WorldObject<f32>,
+                object: WorldObject,
                 delta:  Isometry3<f32>,
                 shape:   &Ball3<f32>,
                 color:  Point3<f32>,
@@ -235,7 +238,7 @@ impl GraphicsManager {
 
     fn add_box(&mut self,
                window: &mut Window,
-               object: WorldObject<f32>,
+               object: WorldObject,
                delta:  Isometry3<f32>,
                shape:  &Cuboid3<f32>,
                color:  Point3<f32>,
@@ -249,7 +252,7 @@ impl GraphicsManager {
 
     fn add_convex(&mut self,
                   window: &mut Window,
-                  object: WorldObject<f32>,
+                  object: WorldObject,
                   delta:  Isometry3<f32>,
                   shape:  &ConvexHull3<f32>,
                   color:  Point3<f32>,
@@ -259,7 +262,7 @@ impl GraphicsManager {
 
     fn add_cylinder(&mut self,
                     window: &mut Window,
-                    object: WorldObject<f32>,
+                    object: WorldObject,
                     delta:  Isometry3<f32>,
                     shape:   &Cylinder3<f32>,
                     color:  Point3<f32>,
@@ -272,7 +275,7 @@ impl GraphicsManager {
 
     fn add_cone(&mut self,
                 window: &mut Window,
-                object: WorldObject<f32>,
+                object: WorldObject,
                 delta:  Isometry3<f32>,
                 shape:  &Cone3<f32>,
                 color:  Point3<f32>,
@@ -292,25 +295,26 @@ impl GraphicsManager {
     }
 
     pub fn draw_positions(&mut self, window: &mut Window) {
-        for (_, ns) in self.rb2sn.iter_mut() {
-            for n in ns.iter_mut() {
-                let object = n.object().borrow();
+        unimplemented!();
+        // for (_, ns) in self.rb2sn.iter_mut() {
+        //     for n in ns.iter_mut() {
+        //         let object = n.object().borrow();
 
-                if let WorldObjectBorrowed::RigidBody(rb) = object {
-                    let t      = rb.position();
-                    let center = rb.center_of_mass();
+        //         if let WorldObjectBorrowed::RigidBody(rb) = object {
+        //             let t      = rb.position();
+        //             let center = rb.center_of_mass();
 
-                    let rotmat = t.rotation.to_rotation_matrix().unwrap();
-                    let x = rotmat.column(0) * 0.25f32;
-                    let y = rotmat.column(1) * 0.25f32;
-                    let z = rotmat.column(2) * 0.25f32;
+        //             let rotmat = t.rotation.to_rotation_matrix().unwrap();
+        //             let x = rotmat.column(0) * 0.25f32;
+        //             let y = rotmat.column(1) * 0.25f32;
+        //             let z = rotmat.column(2) * 0.25f32;
 
-                    window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
-                    window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
-                    window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
-                }
-            }
-        }
+        //             window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
+        //             window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
+        //             window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
+        //         }
+        //     }
+        // }
     }
 
     pub fn switch_cameras(&mut self) {
@@ -347,19 +351,23 @@ impl GraphicsManager {
         self.first_person.look_at(eye, at);
     }
 
-    pub fn rigid_body_nodes(&self, rb: &RigidBodyHandle<f32>) -> Option<&Vec<Node>> {
-        self.rb2sn.get(&WorldObject::rigid_body_uid(rb))
-    }
+    // TODO
+    // pub fn rigid_body_nodes(&self, rb: &RigidBodyHandle<f32>) -> Option<&Vec<Node>> {
+    //     self.rb2sn.get(&WorldObject::rigid_body_uid(rb))
+    // }
 
-    pub fn sensor_nodes(&self, sensor: &SensorHandle<f32>) -> Option<&Vec<Node>> {
-        self.rb2sn.get(&WorldObject::sensor_uid(sensor))
-    }
+    // TODO
+    // pub fn sensor_nodes(&self, sensor: &SensorHandle<f32>) -> Option<&Vec<Node>> {
+    //     self.rb2sn.get(&WorldObject::sensor_uid(sensor))
+    // }
 
-    pub fn rigid_body_nodes_mut(&mut self, rb: &RigidBodyHandle<f32>) -> Option<&mut Vec<Node>> {
-        self.rb2sn.get_mut(&WorldObject::rigid_body_uid(rb))
-    }
+    // TODO
+    // pub fn rigid_body_nodes_mut(&mut self, rb: &RigidBodyHandle<f32>) -> Option<&mut Vec<Node>> {
+    //     self.rb2sn.get_mut(&WorldObject::rigid_body_uid(rb))
+    // }
 
-    pub fn sensor_nodes_mut(&mut self, sensor: &SensorHandle<f32>) -> Option<&mut Vec<Node>> {
-        self.rb2sn.get_mut(&WorldObject::sensor_uid(sensor))
-    }
+    // TODO
+    // pub fn sensor_nodes_mut(&mut self, sensor: &SensorHandle<f32>) -> Option<&mut Vec<Node>> {
+    //     self.rb2sn.get_mut(&WorldObject::sensor_uid(sensor))
+    // }
 }

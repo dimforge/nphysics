@@ -6,11 +6,11 @@ use nphysics3d::object::WorldObject;
 
 pub struct Plane {
     gfx:  SceneNode,
-    body: WorldObject<f32>
+    body: WorldObject
 }
 
 impl Plane {
-    pub fn new(body:         WorldObject<f32>,
+    pub fn new(body:         WorldObject,
                world_pos:    &Point3<f32>,
                world_normal: &Vector3<f32>,
                color:        Point3<f32>,
@@ -67,7 +67,7 @@ impl Plane {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> &WorldObject<f32> {
+    pub fn object(&self) -> &WorldObject {
         &self.body
     }
 }
