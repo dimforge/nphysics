@@ -137,6 +137,7 @@ impl Testbed {
         let mut state = TestbedState::new(&fnt, &self.window);
 
         let mut args = env::args();
+        self.world.enable_performance_counters();
 
         if args.len() > 1 {
             let exname = args.next().unwrap();
@@ -326,6 +327,7 @@ impl Testbed {
                 f(&mut self.world, self.time)
             }
             self.world.step();
+            println!("{}", *self.world.performance_counters());
             self.time += self.world.timestep();
         }
 
