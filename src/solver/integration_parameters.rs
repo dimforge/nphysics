@@ -14,6 +14,6 @@ impl<N: Real> IntegrationParameters<N> {
 
 impl<N: Real> Default for IntegrationParameters<N> {
     fn default() -> Self {
-        Self::new(na::convert(1.0 / 60.0), na::convert(0.5), 10)
+        Self::new(na::convert(1.0 / 60.0), na::convert(0.2), 10)
     }
 }

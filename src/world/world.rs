@@ -42,7 +42,7 @@ impl<N: Real> World<N> {
     pub fn new() -> Self {
         let counters = Counters::new(false);
         let prediction = na::convert(0.02f64);
-        let angular_prediction = na::convert(f64::consts::PI / 180.0);
+        let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
         let bodies = BodySet::new();
         let active_bodies = Vec::new();
         let colliders_w_parent = Vec::new();
@@ -374,7 +374,10 @@ impl<N: Real> World<N> {
         parent: BodyHandle,
         to_parent: Isometry<N>,
     ) -> ColliderHandle {
-        let query = GeometricQueryType::Contacts(margin + self.prediction * na::convert(0.5f64), self.angular_prediction);
+        let query = GeometricQueryType::Contacts(
+            margin + self.prediction * na::convert(0.5f64),
+            self.angular_prediction,
+        );
         self.add_collision_object(query, margin, shape, parent, to_parent)
     }
 
