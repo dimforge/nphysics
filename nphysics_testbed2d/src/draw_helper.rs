@@ -7,13 +7,15 @@ use nphysics2d::world::World;
 pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window: &mut graphics::RenderWindow, world: &World<f32>) {
-    for c in world.active_contacts() {
-        draw_line(
-            window,
-            &c.contact.world1,
-            &c.contact.world2,
-            &Color::new_rgb(255, 0, 0),
-        );
+    for (_, _, manifold) in world.collision_world().contact_manifolds() {
+        for c in manifold.contacts() {
+            draw_line(
+                window,
+                &c.contact.world1,
+                &c.contact.world2,
+                &Color::new_rgb(255, 0, 0),
+            );
+        }
     }
 }
 

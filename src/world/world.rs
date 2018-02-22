@@ -13,7 +13,7 @@ use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider,
              MultibodyWorkspace, RigidBody, SensorHandle};
 use joint::{ConstraintGenerator, ConstraintHandle, Joint};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
-use detection::{ActivationManager, ContactConstraint};
+use detection::{ActivationManager, BodyContactManifold};
 use math::{Inertia, Isometry, Point, Vector};
 
 pub type CollisionWorld<N> =
@@ -31,7 +31,6 @@ pub struct World<N: Real> {
     prediction: N,
     angular_prediction: N,
     gravity: Vector<N>,
-    contacts: Vec<ContactConstraint<N>>,
     constraints: Slab<Box<ConstraintGenerator<N>>>,
     params: IntegrationParameters<N>,
     contact_model: Box<ContactModel<N>>,
@@ -46,7 +45,6 @@ impl<N: Real> World<N> {
         let bodies = BodySet::new();
         let active_bodies = Vec::new();
         let colliders_w_parent = Vec::new();
-        let contacts = Vec::new();
         let constraints = Slab::new();
         let cworld = CollisionWorld::new(prediction);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
@@ -67,7 +65,6 @@ impl<N: Real> World<N> {
             prediction,
             angular_prediction,
             gravity,
-            contacts,
             constraints,
             params,
             contact_model,
@@ -208,8 +205,8 @@ impl<N: Real> World<N> {
         );
         self.counters.island_construction_completed();
 
-        self.contacts.clear();
-        for (coll1, coll2, c) in self.cworld.contacts() {
+        let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
+        for (coll1, coll2, c) in self.cworld.contact_manifolds() {
             assert!(coll1.data().body() != coll2.data().body());
 
             let b1 = self.bodies.body(coll1.data().body());
@@ -219,13 +216,7 @@ impl<N: Real> World<N> {
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
                     || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
             {
-                let m1 = coll1.data().margin();
-                let m2 = coll2.data().margin();
-
-                let mut c = c.clone();
-                c.depth += m1 + m2;
-
-                self.contacts.push(ContactConstraint::new(
+                contact_manifolds.push(BodyContactManifold::new(
                     coll1.data().body(),
                     coll2.data().body(),
                     c,
@@ -238,7 +229,7 @@ impl<N: Real> World<N> {
             &mut self.counters,
             &mut self.bodies,
             &self.constraints,
-            &self.contacts[..],
+            &contact_manifolds[..],
             &self.active_bodies[..],
             &*self.contact_model,
             &self.params,
@@ -279,7 +270,6 @@ impl<N: Real> World<N> {
     fn cleanup_after_body_removal(&mut self) {
         self.activate_bodies_touching_deleted_bodies();
         self.cleanup_colliders_with_deleted_parents();
-        self.cleanup_contacts_with_deleted_bodies();
         self.cleanup_constraints_with_deleted_anchors();
     }
 
@@ -339,12 +329,6 @@ impl<N: Real> World<N> {
 
             b1_exists && b2_exists
         })
-    }
-
-    fn cleanup_contacts_with_deleted_bodies(&mut self) {
-        let bodies = &self.bodies;
-        self.contacts
-            .retain(|contact| bodies.contains(contact.b1) && bodies.contains(contact.b2))
     }
 
     pub fn add_rigid_body(
@@ -462,10 +446,6 @@ impl<N: Real> World<N> {
 
     pub fn colliders(&self) -> Colliders<N> {
         self.cworld.collision_objects()
-    }
-
-    pub fn active_contacts(&self) -> &[ContactConstraint<N>] {
-        &self.contacts
     }
 
     pub fn contact_events(&self) -> &ContactEvents {
