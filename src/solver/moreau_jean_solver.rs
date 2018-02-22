@@ -6,8 +6,8 @@ use counters::Counters;
 use detection::BodyContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::ConstraintGenerator;
-use solver::{BilateralConstraint2, BilateralGroundConstraint, ContactModel, IntegrationParameters,
-             SORProx, UnilateralConstraint2, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, ContactModel, IntegrationParameters,
+             SORProx, UnilateralConstraint, UnilateralGroundConstraint};
 use math::Point;
 
 /// Moreau-Jean time-stepping scheme.
@@ -16,9 +16,9 @@ pub struct MoreauJeanSolver<N: Real> {
     mj_lambda: DVector<N>,
     ext_vels: DVector<N>,
     unilateral_ground_constraints: Vec<UnilateralGroundConstraint<N>>,
-    unilateral_constraints: Vec<UnilateralConstraint2<N>>,
+    unilateral_constraints: Vec<UnilateralConstraint<N>>,
     bilateral_ground_constraints: Vec<BilateralGroundConstraint<N>>,
-    bilateral_constraints: Vec<BilateralConstraint2<N>>,
+    bilateral_constraints: Vec<BilateralConstraint<N>>,
 }
 
 impl<N: Real> MoreauJeanSolver<N> {

@@ -1,8 +1,8 @@
 use std::ops::Neg;
 use alga::linear::FiniteDimVectorSpace;
-use na::{Unit, DVector, DVectorSlice, Real};
+use na::{DVector, DVectorSlice, Real, Unit};
 
-use solver::{BilateralConstraint2, BilateralGroundConstraint, ConstraintGeometry, ImpulseLimits,
+use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ImpulseLimits,
              IntegrationParameters};
 use object::BodyPart;
 use math::{AngularVector, Force, Point, Rotation, Vector};
@@ -198,7 +198,7 @@ pub fn cancel_relative_linear_motion<N: Real>(
     jacobian_id: &mut usize,
     jacobians: &mut [N],
     out_ground_constraints: &mut Vec<BilateralGroundConstraint<N>>,
-    out_constraints: &mut Vec<BilateralConstraint2<N>>,
+    out_constraints: &mut Vec<BilateralConstraint<N>>,
 ) {
     let error = anchor1 - anchor2;
     let limits = ImpulseLimits::Independent {
@@ -228,7 +228,7 @@ pub fn cancel_relative_linear_motion<N: Real>(
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
                 out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits));
             } else {
-                out_constraints.push(BilateralConstraint2::new(geom, limits));
+                out_constraints.push(BilateralConstraint::new(geom, limits));
             }
         }
 
@@ -251,7 +251,7 @@ pub fn cancel_relative_angular_motion<N: Real>(
     jacobian_id: &mut usize,
     jacobians: &mut [N],
     out_ground_constraints: &mut Vec<BilateralGroundConstraint<N>>,
-    out_constraints: &mut Vec<BilateralConstraint2<N>>,
+    out_constraints: &mut Vec<BilateralConstraint<N>>,
 ) {
     let error = (orientation1 / orientation2).scaled_axis();
     let limits = ImpulseLimits::Independent {
@@ -281,7 +281,7 @@ pub fn cancel_relative_angular_motion<N: Real>(
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
                 out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits));
             } else {
-                out_constraints.push(BilateralConstraint2::new(geom, limits));
+                out_constraints.push(BilateralConstraint::new(geom, limits));
             }
         }
 
@@ -305,7 +305,7 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
     jacobian_id: &mut usize,
     jacobians: &mut [N],
     out_ground_constraints: &mut Vec<BilateralGroundConstraint<N>>,
-    out_constraints: &mut Vec<BilateralConstraint2<N>>,
+    out_constraints: &mut Vec<BilateralConstraint<N>>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -346,7 +346,7 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
                 out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits));
             } else {
-                out_constraints.push(BilateralConstraint2::new(geom, limits));
+                out_constraints.push(BilateralConstraint::new(geom, limits));
             }
         }
 

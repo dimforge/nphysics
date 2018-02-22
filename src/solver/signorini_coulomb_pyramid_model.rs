@@ -3,8 +3,8 @@ use na::{self, DVector, Real, Unit};
 
 use detection::BodyContactManifold;
 use solver::helper;
-use solver::{BilateralConstraint2, BilateralGroundConstraint, ContactModel, ForceDirection,
-             ImpulseLimits, IntegrationParameters, SignoriniModel, UnilateralConstraint2,
+use solver::{BilateralConstraint, BilateralGroundConstraint, ContactModel, ForceDirection,
+             ImpulseLimits, IntegrationParameters, SignoriniModel, UnilateralConstraint,
              UnilateralGroundConstraint};
 use object::BodySet;
 use math::{Vector, DIM};
@@ -36,9 +36,9 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         jacobian_id: &mut usize,
         jacobians: &mut [N],
         out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint2<N>>,
+        out_contacts: &mut Vec<UnilateralConstraint<N>>,
         out_ground_frictions: &mut Vec<BilateralGroundConstraint<N>>,
-        out_frictions: &mut Vec<BilateralConstraint2<N>>,
+        out_frictions: &mut Vec<BilateralConstraint<N>>,
     ) {
         let b1 = bodies.body_part(manifold.b1);
         let b2 = bodies.body_part(manifold.b2);
@@ -100,7 +100,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         let constraint = BilateralGroundConstraint::new(geom, limits);
                         out_ground_frictions.push(constraint);
                     } else {
-                        let constraint = BilateralConstraint2::new(geom, limits);
+                        let constraint = BilateralConstraint::new(geom, limits);
                         out_frictions.push(constraint);
                     }
                 }

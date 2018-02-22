@@ -33,7 +33,7 @@ impl<N: Real> ConstraintGeometry<N> {
     }
 }
 
-pub struct UnilateralConstraint2<N: Real> {
+pub struct UnilateralConstraint<N: Real> {
     pub impulse: N,
 
     pub r: N,
@@ -52,11 +52,11 @@ pub struct UnilateralConstraint2<N: Real> {
     pub ndofs2: usize,
 }
 
-impl<N: Real> UnilateralConstraint2<N> {
+impl<N: Real> UnilateralConstraint<N> {
     #[inline]
     pub fn new(geom: ConstraintGeometry<N>) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
-        UnilateralConstraint2 {
+        UnilateralConstraint {
             impulse: N::zero(),
             r: geom.r,
             rhs: geom.rhs,
@@ -119,7 +119,7 @@ pub enum ImpulseLimits<N: Real> {
     Dependent { dependency: usize, coeff: N },
 }
 
-pub struct BilateralConstraint2<N: Real> {
+pub struct BilateralConstraint<N: Real> {
     pub impulse: N,
 
     pub r: N,
@@ -140,11 +140,11 @@ pub struct BilateralConstraint2<N: Real> {
     pub ndofs2: usize,
 }
 
-impl<N: Real> BilateralConstraint2<N> {
+impl<N: Real> BilateralConstraint<N> {
     #[inline]
     pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
-        BilateralConstraint2 {
+        BilateralConstraint {
             impulse: N::zero(),
             r: geom.r,
             rhs: geom.rhs,

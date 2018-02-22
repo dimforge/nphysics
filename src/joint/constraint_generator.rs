@@ -2,8 +2,8 @@ use downcast::Any;
 use na::{DVector, Real};
 
 use object::{BodyHandle, BodySet};
-use solver::{BilateralConstraint2, BilateralGroundConstraint, IntegrationParameters,
-             UnilateralConstraint2, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, IntegrationParameters,
+             UnilateralConstraint, UnilateralGroundConstraint};
 
 pub type ConstraintHandle = usize;
 
@@ -20,9 +20,9 @@ pub trait ConstraintGenerator<N: Real>: Any {
         jacobian_id: &mut usize,
         jacobians: &mut [N],
         out_unilateral_ground: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_unilateral: &mut Vec<UnilateralConstraint2<N>>,
+        out_unilateral: &mut Vec<UnilateralConstraint<N>>,
         out_bilateral_ground: &mut Vec<BilateralGroundConstraint<N>>,
-        out_bilateral: &mut Vec<BilateralConstraint2<N>>,
+        out_bilateral: &mut Vec<BilateralConstraint<N>>,
     );
 }
 
