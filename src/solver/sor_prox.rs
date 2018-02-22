@@ -4,8 +4,8 @@ use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN};
 
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
-use solver::{BilateralConstraint2, BilateralGroundConstraint, ImpulseLimits,
-             UnilateralConstraint2, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
+             UnilateralGroundConstraint};
 use math::{SpatialDim, SPATIAL_DIM};
 
 pub struct SORProx<N: Real> {
@@ -22,9 +22,9 @@ impl<N: Real> SORProx<N> {
     pub fn solve(
         &self,
         unilateral_ground_constraints: &mut [UnilateralGroundConstraint<N>],
-        unilateral_constraints: &mut [UnilateralConstraint2<N>],
+        unilateral_constraints: &mut [UnilateralConstraint<N>],
         bilateral_ground_constraints: &mut [BilateralGroundConstraint<N>],
-        bilateral_constraints: &mut [BilateralConstraint2<N>],
+        bilateral_constraints: &mut [BilateralConstraint<N>],
         mj_lambda: &mut DVector<N>,
         jacobians: &[N],
         max_iter: usize,
@@ -44,9 +44,9 @@ impl<N: Real> SORProx<N> {
     pub fn step(
         &self,
         unilateral_ground_constraints: &mut [UnilateralGroundConstraint<N>],
-        unilateral_constraints: &mut [UnilateralConstraint2<N>],
+        unilateral_constraints: &mut [UnilateralConstraint<N>],
         bilateral_ground_constraints: &mut [BilateralGroundConstraint<N>],
-        bilateral_constraints: &mut [BilateralConstraint2<N>],
+        bilateral_constraints: &mut [BilateralConstraint<N>],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {
@@ -123,7 +123,7 @@ impl<N: Real> SORProx<N> {
 
     pub fn solve_contact_constraint<D1: Dim, D2: Dim>(
         &self,
-        c: &mut UnilateralConstraint2<N>,
+        c: &mut UnilateralConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
         dim1: D1,
@@ -178,8 +178,8 @@ impl<N: Real> SORProx<N> {
 
     pub fn solve_bilateral_constraint<D1: Dim, D2: Dim>(
         &self,
-        c: &mut BilateralConstraint2<N>,
-        unilateral_constraints: &[UnilateralConstraint2<N>],
+        c: &mut BilateralConstraint<N>,
+        unilateral_constraints: &[UnilateralConstraint<N>],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
         dim1: D1,

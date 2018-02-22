@@ -1,8 +1,8 @@
 //! Constraint solver.
 
 pub use self::moreau_jean_solver::MoreauJeanSolver;
-pub use self::velocity_constraint::{BilateralConstraint2, BilateralGroundConstraint,
-                                    ConstraintGeometry, ImpulseLimits, UnilateralConstraint2,
+pub use self::velocity_constraint::{BilateralConstraint, BilateralGroundConstraint,
+                                    ConstraintGeometry, ImpulseLimits, UnilateralConstraint,
                                     UnilateralGroundConstraint};
 pub use self::contact_model::ContactModel;
 pub use self::signorini_coulomb_pyramid_model::SignoriniCoulombPyramidModel;

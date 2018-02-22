@@ -1,8 +1,8 @@
 use na::{DVector, Real, Unit};
 
 use object::{BodyHandle, BodySet};
-use solver::{BilateralConstraint2, BilateralGroundConstraint, IntegrationParameters,
-             UnilateralConstraint2, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, IntegrationParameters,
+             UnilateralConstraint, UnilateralGroundConstraint};
 use solver::helper;
 use joint::ConstraintGenerator;
 use math::{AngularVector, Point, SPATIAL_DIM};
@@ -115,9 +115,9 @@ impl<N: Real> ConstraintGenerator<N> for RevoluteConstraint<N> {
         jacobian_id: &mut usize,
         jacobians: &mut [N],
         _: &mut Vec<UnilateralGroundConstraint<N>>,
-        _: &mut Vec<UnilateralConstraint2<N>>,
+        _: &mut Vec<UnilateralConstraint<N>>,
         out_bilateral_ground: &mut Vec<BilateralGroundConstraint<N>>,
-        out_bilateral: &mut Vec<BilateralConstraint2<N>>,
+        out_bilateral: &mut Vec<BilateralConstraint<N>>,
     ) {
         let b1 = bodies.body_part(self.b1);
         let b2 = bodies.body_part(self.b2);

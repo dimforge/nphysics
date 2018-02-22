@@ -1,8 +1,8 @@
 use na::{DVector, Real};
 
 use detection::BodyContactManifold;
-use solver::{BilateralConstraint2, BilateralGroundConstraint, IntegrationParameters,
-             UnilateralConstraint2, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, IntegrationParameters,
+             UnilateralConstraint, UnilateralGroundConstraint};
 use object::BodySet;
 
 pub trait ContactModel<N: Real>: 'static {
@@ -17,8 +17,8 @@ pub trait ContactModel<N: Real>: 'static {
         jacobian_id: &mut usize,
         jacobians: &mut [N],
         out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint2<N>>,
+        out_contacts: &mut Vec<UnilateralConstraint<N>>,
         out_ground_friction: &mut Vec<BilateralGroundConstraint<N>>,
-        out_friction: &mut Vec<BilateralConstraint2<N>>,
+        out_friction: &mut Vec<BilateralConstraint<N>>,
     );
 }

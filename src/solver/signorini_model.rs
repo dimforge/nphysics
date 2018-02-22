@@ -4,19 +4,19 @@ use na::{self, DVector, Real};
 use ncollide::query::Contact;
 use detection::BodyContactManifold;
 use solver::helper;
-use solver::{BilateralConstraint2, BilateralGroundConstraint, ContactModel, ForceDirection,
-             IntegrationParameters, UnilateralConstraint2, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, ContactModel, ForceDirection,
+             IntegrationParameters, UnilateralConstraint, UnilateralGroundConstraint};
 use object::{BodyHandle, BodySet};
 use math::Point;
 
 pub struct SignoriniModel<N: Real> {
-    _phantom: PhantomData<N>,
+    impulses: Vec<N>,
 }
 
 impl<N: Real> SignoriniModel<N> {
     pub fn new() -> Self {
         SignoriniModel {
-            _phantom: PhantomData,
+            impulses: Vec::new(),
         }
     }
 
@@ -32,7 +32,7 @@ impl<N: Real> SignoriniModel<N> {
         jacobian_id: &mut usize,
         jacobians: &mut [N],
         out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint2<N>>,
+        out_contacts: &mut Vec<UnilateralConstraint<N>>,
     ) -> bool {
         let b1 = bodies.body_part(b1);
         let b2 = bodies.body_part(b2);
@@ -67,7 +67,7 @@ impl<N: Real> SignoriniModel<N> {
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
                 out_ground_contacts.push(UnilateralGroundConstraint::new(geom));
             } else {
-                out_contacts.push(UnilateralConstraint2::new(geom));
+                out_contacts.push(UnilateralConstraint::new(geom));
             }
 
             true
@@ -92,9 +92,9 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         jacobian_id: &mut usize,
         jacobians: &mut [N],
         out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint2<N>>,
+        out_contacts: &mut Vec<UnilateralConstraint<N>>,
         _: &mut Vec<BilateralGroundConstraint<N>>,
-        _: &mut Vec<BilateralConstraint2<N>>,
+        _: &mut Vec<BilateralConstraint<N>>,
     ) {
         for c in manifold.contacts() {
             let _ = self.build_constraint(
