@@ -12,7 +12,7 @@ pub trait ContactModel<N: Real>: 'static {
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
-        manifold: &BodyContactManifold<N>,
+        manifolds: &[BodyContactManifold<N>],
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
@@ -20,5 +20,15 @@ pub trait ContactModel<N: Real>: 'static {
         out_contacts: &mut Vec<UnilateralConstraint<N>>,
         out_ground_friction: &mut Vec<BilateralGroundConstraint<N>>,
         out_friction: &mut Vec<BilateralConstraint<N>>,
+    );
+
+    fn cache_impulses(
+        &mut self,
+        bodies: &BodySet<N>,
+        manifolds: &[BodyContactManifold<N>],
+        ground_contacts: &[UnilateralGroundConstraint<N>],
+        contacts: &[UnilateralConstraint<N>],
+        ground_friction: &[BilateralGroundConstraint<N>],
+        friction: &[BilateralConstraint<N>],
     );
 }

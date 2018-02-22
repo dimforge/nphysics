@@ -33,7 +33,6 @@ pub struct World<N: Real> {
     gravity: Vector<N>,
     constraints: Slab<Box<ConstraintGenerator<N>>>,
     params: IntegrationParameters<N>,
-    contact_model: Box<ContactModel<N>>,
     workspace: MultibodyWorkspace<N>,
 }
 
@@ -48,7 +47,7 @@ impl<N: Real> World<N> {
         let constraints = Slab::new();
         let cworld = CollisionWorld::new(prediction);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
-        let solver = MoreauJeanSolver::new();
+        let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
         let gravity = Vector::zeros();
         let params = IntegrationParameters::default();
@@ -67,7 +66,6 @@ impl<N: Real> World<N> {
             gravity,
             constraints,
             params,
-            contact_model,
             workspace,
         }
     }
@@ -85,7 +83,7 @@ impl<N: Real> World<N> {
     }
 
     pub fn set_contact_model<C: ContactModel<N>>(&mut self, model: C) {
-        self.contact_model = Box::new(model)
+        self.solver.set_contact_model(Box::new(model))
     }
 
     pub fn integration_parameters(&self) -> &IntegrationParameters<N> {
@@ -219,6 +217,7 @@ impl<N: Real> World<N> {
                 contact_manifolds.push(BodyContactManifold::new(
                     coll1.data().body(),
                     coll2.data().body(),
+                    coll1.data().margin() + coll2.data().margin(),
                     c,
                 ));
             }
@@ -231,7 +230,6 @@ impl<N: Real> World<N> {
             &self.constraints,
             &contact_manifolds[..],
             &self.active_bodies[..],
-            &*self.contact_model,
             &self.params,
         );
 

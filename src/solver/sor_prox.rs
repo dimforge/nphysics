@@ -29,6 +29,33 @@ impl<N: Real> SORProx<N> {
         jacobians: &[N],
         max_iter: usize,
     ) {
+        /*
+         * Setup constraints.
+         */
+        for c in unilateral_constraints.iter_mut() {
+            let dim1 = Dynamic::new(c.ndofs1);
+            let dim2 = Dynamic::new(c.ndofs2);
+            self.setup_unilateral_constraint(c, jacobians, mj_lambda, dim1, dim2)
+        }
+
+        for c in unilateral_ground_constraints.iter_mut() {
+            let dim = Dynamic::new(c.ndofs);
+            self.setup_unilateral_ground_constraint(c, jacobians, mj_lambda, dim)
+        }
+
+        for c in bilateral_constraints.iter_mut() {
+            let dim1 = Dynamic::new(c.ndofs1);
+            let dim2 = Dynamic::new(c.ndofs2);
+            self.setup_bilateral_constraint(c, jacobians, mj_lambda, dim1, dim2)
+        }
+
+        for c in bilateral_ground_constraints.iter_mut() {
+            self.setup_bilateral_ground_constraint(c, jacobians, mj_lambda, Dynamic::new(c.ndofs))
+        }
+
+        /*
+         * Solve.
+         */
         for _ in 0..max_iter {
             self.step(
                 unilateral_ground_constraints,
@@ -53,11 +80,17 @@ impl<N: Real> SORProx<N> {
         for c in unilateral_constraints.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
-                self.solve_contact_constraint(c, jacobians, mj_lambda, SpatialDim {}, SpatialDim {})
+                self.solve_unilateral_constraint(
+                    c,
+                    jacobians,
+                    mj_lambda,
+                    SpatialDim {},
+                    SpatialDim {},
+                )
             } else {
                 let dim1 = Dynamic::new(c.ndofs1);
                 let dim2 = Dynamic::new(c.ndofs2);
-                self.solve_contact_constraint(c, jacobians, mj_lambda, dim1, dim2)
+                self.solve_unilateral_constraint(c, jacobians, mj_lambda, dim1, dim2)
             }
         }
 
@@ -66,10 +99,10 @@ impl<N: Real> SORProx<N> {
                 // Most common case (with one free rigid body).
                 // NOTE: it's weird that the compiler requires the { } even thouh SpatialDim is the
                 // alias of a marker type.
-                self.solve_ground_contact_constraint(c, jacobians, mj_lambda, SpatialDim {})
+                self.solve_unilateral_ground_constraint(c, jacobians, mj_lambda, SpatialDim {})
             } else {
                 let dim = Dynamic::new(c.ndofs);
-                self.solve_ground_contact_constraint(c, jacobians, mj_lambda, dim)
+                self.solve_unilateral_ground_constraint(c, jacobians, mj_lambda, dim)
             }
         }
 
@@ -121,7 +154,7 @@ impl<N: Real> SORProx<N> {
         }
     }
 
-    pub fn solve_contact_constraint<D1: Dim, D2: Dim>(
+    pub fn solve_unilateral_constraint<D1: Dim, D2: Dim>(
         &self,
         c: &mut UnilateralConstraint<N>,
         jacobians: &[N],
@@ -154,7 +187,7 @@ impl<N: Real> SORProx<N> {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_ground_contact_constraint<D: Dim>(
+    pub fn solve_unilateral_ground_constraint<D: Dim>(
         &self,
         c: &mut UnilateralGroundConstraint<N>,
         jacobians: &[N],
@@ -301,5 +334,95 @@ impl<N: Real> SORProx<N> {
         mj_lambda
             .rows_generic_mut(c.assembly_id, dim)
             .axpy(dlambda, &weighted_jacobian, N::one());
+    }
+
+    pub fn setup_unilateral_constraint<D1: Dim, D2: Dim>(
+        &self,
+        c: &UnilateralConstraint<N>,
+        jacobians: &[N],
+        mj_lambda: &mut DVector<N>,
+        dim1: D1,
+        dim2: D2,
+    ) {
+        if c.impulse.is_zero() {
+            let id1 = c.assembly_id1;
+            let id2 = c.assembly_id2;
+
+            let weighted_jacobian1 =
+                VectorSliceN::new_generic(&jacobians[c.weighted_jacobian_id1..], dim1, U1);
+            let weighted_jacobian2 =
+                VectorSliceN::new_generic(&jacobians[c.weighted_jacobian_id2..], dim2, U1);
+
+            mj_lambda
+                .rows_generic_mut(id1, dim1)
+                .axpy(c.impulse, &weighted_jacobian1, N::one());
+            mj_lambda
+                .rows_generic_mut(id2, dim2)
+                .axpy(c.impulse, &weighted_jacobian2, N::one());
+        }
+    }
+
+    pub fn setup_unilateral_ground_constraint<D: Dim>(
+        &self,
+        c: &UnilateralGroundConstraint<N>,
+        jacobians: &[N],
+        mj_lambda: &mut DVector<N>,
+        dim: D,
+    ) {
+        if !c.impulse.is_zero() {
+            let weighted_jacobian =
+                VectorSliceN::new_generic(&jacobians[c.weighted_jacobian_id..], dim, U1);
+
+            mj_lambda.rows_generic_mut(c.assembly_id, dim).axpy(
+                c.impulse,
+                &weighted_jacobian,
+                N::one(),
+            );
+        }
+    }
+
+    pub fn setup_bilateral_constraint<D1: Dim, D2: Dim>(
+        &self,
+        c: &BilateralConstraint<N>,
+        jacobians: &[N],
+        mj_lambda: &mut DVector<N>,
+        dim1: D1,
+        dim2: D2,
+    ) {
+        if !c.impulse.is_zero() {
+            let id1 = c.assembly_id1;
+            let id2 = c.assembly_id2;
+
+            let weighted_jacobian1 =
+                VectorSliceN::new_generic(&jacobians[c.weighted_jacobian_id1..], dim1, U1);
+            let weighted_jacobian2 =
+                VectorSliceN::new_generic(&jacobians[c.weighted_jacobian_id2..], dim2, U1);
+
+            mj_lambda
+                .rows_generic_mut(id1, dim1)
+                .axpy(c.impulse, &weighted_jacobian1, N::one());
+            mj_lambda
+                .rows_generic_mut(id2, dim2)
+                .axpy(c.impulse, &weighted_jacobian2, N::one());
+        }
+    }
+
+    pub fn setup_bilateral_ground_constraint<D: Dim>(
+        &self,
+        c: &BilateralGroundConstraint<N>,
+        jacobians: &[N],
+        mj_lambda: &mut DVector<N>,
+        dim: D,
+    ) {
+        if !c.impulse.is_zero() {
+            let weighted_jacobian =
+                VectorSliceN::new_generic(&jacobians[c.weighted_jacobian_id..], dim, U1);
+
+            mj_lambda.rows_generic_mut(c.assembly_id, dim).axpy(
+                c.impulse,
+                &weighted_jacobian,
+                N::one(),
+            );
+        }
     }
 }

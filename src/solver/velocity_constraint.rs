@@ -31,6 +31,11 @@ impl<N: Real> ConstraintGeometry<N> {
             r: N::zero(),
         }
     }
+
+    #[inline]
+    pub fn is_ground_constraint(&self) -> bool {
+        self.ndofs1 == 0 || self.ndofs2 == 0
+    }
 }
 
 pub struct UnilateralConstraint<N: Real> {
@@ -54,10 +59,10 @@ pub struct UnilateralConstraint<N: Real> {
 
 impl<N: Real> UnilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, impulse: N) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
-            impulse: N::zero(),
+            impulse: impulse,
             r: geom.r,
             rhs: geom.rhs,
             assembly_id1: geom.assembly_id1,
@@ -88,10 +93,10 @@ pub struct UnilateralGroundConstraint<N: Real> {
 
 impl<N: Real> UnilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, impulse: N) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
-                impulse: N::zero(),
+                impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
                 assembly_id: geom.assembly_id2,
@@ -101,7 +106,7 @@ impl<N: Real> UnilateralGroundConstraint<N> {
             }
         } else {
             UnilateralGroundConstraint {
-                impulse: N::zero(),
+                impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
                 assembly_id: geom.assembly_id1,
@@ -142,10 +147,10 @@ pub struct BilateralConstraint<N: Real> {
 
 impl<N: Real> BilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>, impulse: N) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         BilateralConstraint {
-            impulse: N::zero(),
+            impulse: impulse,
             r: geom.r,
             rhs: geom.rhs,
             limits: limits,
@@ -178,10 +183,10 @@ pub struct BilateralGroundConstraint<N: Real> {
 
 impl<N: Real> BilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>, impulse: N) -> Self {
         if geom.ndofs1 == 0 {
             BilateralGroundConstraint {
-                impulse: N::zero(),
+                impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
                 limits: limits,
@@ -192,7 +197,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
             }
         } else {
             BilateralGroundConstraint {
-                impulse: N::zero(),
+                impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
                 limits: limits,
