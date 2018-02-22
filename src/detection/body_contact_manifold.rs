@@ -9,12 +9,23 @@ use math::Point;
 pub struct BodyContactManifold<'a, N: Real> {
     pub b1: BodyHandle,
     pub b2: BodyHandle,
+    pub margin: N,
     pub manifold: &'a ContactManifold<Point<N>>,
 }
 
 impl<'a, N: Real> BodyContactManifold<'a, N> {
-    pub fn new(b1: BodyHandle, b2: BodyHandle, manifold: &'a ContactManifold<Point<N>>) -> Self {
-        BodyContactManifold { b1, b2, manifold }
+    pub fn new(
+        b1: BodyHandle,
+        b2: BodyHandle,
+        margin: N,
+        manifold: &'a ContactManifold<Point<N>>,
+    ) -> Self {
+        BodyContactManifold {
+            b1,
+            b2,
+            margin,
+            manifold,
+        }
     }
 
     pub fn len(&self) -> usize {

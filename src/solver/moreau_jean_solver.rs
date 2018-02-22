@@ -10,28 +10,54 @@ use solver::{BilateralConstraint, BilateralGroundConstraint, ContactModel, Integ
              SORProx, UnilateralConstraint, UnilateralGroundConstraint};
 use math::Point;
 
+struct ConstraintIndices {
+    first_contact_constraint: usize,
+    first_ground_contact_constraint: usize,
+    first_bilateral_contact_constraint: usize,
+    first_bilateral_ground_contact_constraint: usize,
+}
+
+impl ConstraintIndices {
+    pub fn new() -> Self {
+        ConstraintIndices {
+            first_contact_constraint: 0,
+            first_ground_contact_constraint: 0,
+            first_bilateral_contact_constraint: 0,
+            first_bilateral_ground_contact_constraint: 0,
+        }
+    }
+}
+
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
     jacobians: Vec<N>, // FIXME: use a Vec or a DVector?
     mj_lambda: DVector<N>,
     ext_vels: DVector<N>,
+    contact_model: Box<ContactModel<N>>,
     unilateral_ground_constraints: Vec<UnilateralGroundConstraint<N>>,
     unilateral_constraints: Vec<UnilateralConstraint<N>>,
     bilateral_ground_constraints: Vec<BilateralGroundConstraint<N>>,
     bilateral_constraints: Vec<BilateralConstraint<N>>,
+    indices: ConstraintIndices,
 }
 
 impl<N: Real> MoreauJeanSolver<N> {
-    pub fn new() -> Self {
+    pub fn new(contact_model: Box<ContactModel<N>>) -> Self {
         MoreauJeanSolver {
             jacobians: Vec::new(),
             mj_lambda: DVector::zeros(0),
             ext_vels: DVector::zeros(0),
+            contact_model: contact_model,
             unilateral_constraints: Vec::new(),
             unilateral_ground_constraints: Vec::new(),
             bilateral_constraints: Vec::new(),
             bilateral_ground_constraints: Vec::new(),
+            indices: ConstraintIndices::new(),
         }
+    }
+
+    pub fn set_contact_model(&mut self, model: Box<ContactModel<N>>) {
+        self.contact_model = model
     }
 
     pub fn step(
@@ -41,11 +67,10 @@ impl<N: Real> MoreauJeanSolver<N> {
         gens: &Slab<Box<ConstraintGenerator<N>>>,
         manifolds: &[BodyContactManifold<N>],
         island: &[BodyHandle],
-        contact_model: &ContactModel<N>,
         params: &IntegrationParameters<N>,
     ) {
         counters.assembly_started();
-        self.assemble_system(bodies, gens, manifolds, island, contact_model, params);
+        self.assemble_system(bodies, gens, manifolds, island, params);
         counters.assembly_completed();
 
         counters.set_nconstraints(
@@ -56,6 +81,7 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         counters.resolution_started();
         self.solve_constraints(params);
+        self.save_cache(bodies, manifolds);
         counters.resolution_completed();
 
         counters.position_update_started();
@@ -69,7 +95,6 @@ impl<N: Real> MoreauJeanSolver<N> {
         gens: &Slab<Box<ConstraintGenerator<N>>>,
         manifolds: &[BodyContactManifold<N>],
         island: &[BodyHandle],
-        contact_model: &ContactModel<N>,
         params: &IntegrationParameters<N>,
     ) {
         let mut system_ndofs = 0;
@@ -142,7 +167,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         for c in manifolds {
             let ndofs1 = bodies.body(c.b1).status_dependent_ndofs();
             let ndofs2 = bodies.body(c.b2).status_dependent_ndofs();
-            let sz = contact_model.nconstraints(c) * (ndofs1 + ndofs2) * 2;
+            let sz = self.contact_model.nconstraints(c) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {
                 ground_jacobian_sz += sz;
@@ -217,21 +242,25 @@ impl<N: Real> MoreauJeanSolver<N> {
             }
         }
 
-        for c in manifolds {
-            contact_model.build_constraints(
-                params,
-                bodies,
-                &self.ext_vels,
-                c,
-                &mut ground_jacobian_id,
-                &mut jacobian_id,
-                &mut self.jacobians,
-                &mut self.unilateral_ground_constraints,
-                &mut self.unilateral_constraints,
-                &mut self.bilateral_ground_constraints,
-                &mut self.bilateral_constraints,
-            );
-        }
+        self.indices.first_contact_constraint = self.unilateral_constraints.len();
+        self.indices.first_ground_contact_constraint = self.unilateral_ground_constraints.len();
+        self.indices.first_bilateral_contact_constraint = self.bilateral_constraints.len();
+        self.indices.first_bilateral_ground_contact_constraint =
+            self.bilateral_ground_constraints.len();
+
+        self.contact_model.build_constraints(
+            params,
+            bodies,
+            &self.ext_vels,
+            manifolds,
+            &mut ground_jacobian_id,
+            &mut jacobian_id,
+            &mut self.jacobians,
+            &mut self.unilateral_ground_constraints,
+            &mut self.unilateral_constraints,
+            &mut self.bilateral_ground_constraints,
+            &mut self.bilateral_constraints,
+        );
     }
 
     fn solve_constraints(&mut self, params: &IntegrationParameters<N>) {
@@ -246,6 +275,18 @@ impl<N: Real> MoreauJeanSolver<N> {
             &self.jacobians,
             params.niter,
         );
+    }
+
+    fn save_cache(&mut self, bodies: &BodySet<N>, manifolds: &[BodyContactManifold<N>]) {
+        self.contact_model.cache_impulses(
+            bodies,
+            manifolds,
+            &self.unilateral_ground_constraints[self.indices.first_ground_contact_constraint..],
+            &self.unilateral_constraints[self.indices.first_contact_constraint..],
+            &self.bilateral_ground_constraints
+                [self.indices.first_bilateral_ground_contact_constraint..],
+            &self.bilateral_constraints[self.indices.first_bilateral_contact_constraint..],
+        )
     }
 
     fn resize_buffers(&mut self, ndofs: usize) {

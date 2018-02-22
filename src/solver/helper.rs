@@ -1,6 +1,6 @@
 use std::ops::Neg;
 use alga::linear::FiniteDimVectorSpace;
-use na::{DVector, DVectorSlice, Real, Unit};
+use na::{self, DVector, DVectorSlice, Real, Unit};
 
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ImpulseLimits,
              IntegrationParameters};
@@ -9,8 +9,6 @@ use math::{AngularVector, Force, Point, Rotation, Vector};
 
 #[cfg(feature = "dim3")]
 use alga::linear::FiniteDimInnerSpace;
-#[cfg(feature = "dim3")]
-use na;
 
 #[derive(Copy, Clone, Debug)]
 pub enum ForceDirection<N: Real> {
@@ -70,6 +68,11 @@ fn fill_constraint_geometry<N: Real>(
     *rhs += j.dot(&body.parent_generalized_velocity()) + j.dot(&ext_vels.rows(assembly_id, ndofs));
 }
 
+#[inline]
+pub fn constraints_are_ground_constraints<N: Real>(b1: &BodyPart<N>, b2: &BodyPart<N>) -> bool {
+    b1.status_dependent_parent_ndofs() == 0 || b2.status_dependent_parent_ndofs() == 0
+}
+
 // FIXME: take a Unit for the normal.
 #[inline]
 pub fn constraint_pair_geometry<N: Real>(
@@ -84,7 +87,7 @@ pub fn constraint_pair_geometry<N: Real>(
     ground_jacobian_id: &mut usize,
     jacobian_id: &mut usize,
     jacobians: &mut [N],
-) -> Option<ConstraintGeometry<N>> {
+) -> ConstraintGeometry<N> {
     let mut res = ConstraintGeometry::new();
 
     res.ndofs1 = b1.status_dependent_parent_ndofs();
@@ -178,11 +181,12 @@ pub fn constraint_pair_geometry<N: Real>(
 
     if !inv_r.is_zero() {
         res.r = N::one() / inv_r;
-        *out_jacobian_id += (res.ndofs1 + res.ndofs2) * 2;
-        Some(res)
     } else {
-        None
+        res.r = N::one()
     }
+
+    *out_jacobian_id += (res.ndofs1 + res.ndofs2) * 2;
+    res
 }
 
 pub fn cancel_relative_linear_motion<N: Real>(
@@ -207,7 +211,7 @@ pub fn cancel_relative_linear_motion<N: Real>(
     };
 
     Vector::canonical_basis(|dir| {
-        let geom = constraint_pair_geometry(
+        let mut geom = constraint_pair_geometry(
             b1,
             b2,
             assembly_id1,
@@ -221,15 +225,13 @@ pub fn cancel_relative_linear_motion<N: Real>(
             jacobians,
         );
 
-        if let Some(mut geom) = geom {
-            let stabilization = -dir.dot(&error) / params.dt * params.erp;
-            geom.rhs += stabilization;
+        let stabilization = -dir.dot(&error) / params.dt * params.erp;
+        geom.rhs += stabilization;
 
-            if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-                out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits));
-            } else {
-                out_constraints.push(BilateralConstraint::new(geom, limits));
-            }
+        if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
+            out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits, na::zero()));
+        } else {
+            out_constraints.push(BilateralConstraint::new(geom, limits, na::zero()));
         }
 
         true
@@ -260,7 +262,7 @@ pub fn cancel_relative_angular_motion<N: Real>(
     };
 
     AngularVector::canonical_basis(|dir| {
-        let geom = constraint_pair_geometry(
+        let mut geom = constraint_pair_geometry(
             b1,
             b2,
             assembly_id1,
@@ -274,15 +276,13 @@ pub fn cancel_relative_angular_motion<N: Real>(
             jacobians,
         );
 
-        if let Some(mut geom) = geom {
-            let stabilization = -dir.dot(&error) / params.dt * params.erp;
-            geom.rhs += stabilization;
+        let stabilization = -dir.dot(&error) / params.dt * params.erp;
+        geom.rhs += stabilization;
 
-            if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-                out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits));
-            } else {
-                out_constraints.push(BilateralConstraint::new(geom, limits));
-            }
+        if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
+            out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits, na::zero()));
+        } else {
+            out_constraints.push(BilateralConstraint::new(geom, limits, na::zero()));
         }
 
         true
@@ -325,7 +325,7 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
     }
 
     AngularVector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
-        let geom = constraint_pair_geometry(
+        let mut geom = constraint_pair_geometry(
             b1,
             b2,
             assembly_id1,
@@ -339,15 +339,13 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
             jacobians,
         );
 
-        if let Some(mut geom) = geom {
-            let stabilization = -dir.dot(&error) / params.dt * params.erp;
-            geom.rhs += stabilization;
+        let stabilization = -dir.dot(&error) / params.dt * params.erp;
+        geom.rhs += stabilization;
 
-            if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-                out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits));
-            } else {
-                out_constraints.push(BilateralConstraint::new(geom, limits));
-            }
+        if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
+            out_ground_constraints.push(BilateralGroundConstraint::new(geom, limits, na::zero()));
+        } else {
+            out_constraints.push(BilateralConstraint::new(geom, limits, na::zero()));
         }
 
         true
