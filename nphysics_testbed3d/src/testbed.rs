@@ -422,8 +422,7 @@ impl Testbed {
                         draw_colls = !draw_colls;
                         for co in self.world.colliders() {
                             // FIXME: ugly clone.
-                            if let Some(ns) =
-                                graphics.body_nodes_mut(&self.world, co.data().body())
+                            if let Some(ns) = graphics.body_nodes_mut(&self.world, co.data().body())
                             {
                                 for n in ns.iter_mut() {
                                     if draw_colls {
@@ -531,14 +530,16 @@ impl Testbed {
 }
 
 fn draw_collisions(window: &mut Window, world: &World<f32>) {
-    for c in world.active_contacts() {
-        window.draw_line(
-            &c.contact.world1,
-            &c.contact.world2,
-            &Point3::new(1.0, 0.0, 0.0),
-        );
-        // let center = na::center(&c.world1, &c.world2);
-        // let end    = center + c.normal * 0.4f32;
-        // window.draw_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
+    for (_, _, manifold) in world.collision_world().contact_manifolds() {
+        for c in manifold.contacts() {
+            window.draw_line(
+                &c.contact.world1,
+                &c.contact.world2,
+                &Point3::new(1.0, 0.0, 0.0),
+            );
+            // let center = na::center(&c.world1, &c.world2);
+            // let end    = center + c.normal * 0.4f32;
+            // window.draw_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
+        }
     }
 }

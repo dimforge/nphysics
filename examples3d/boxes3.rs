@@ -18,12 +18,18 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    // world.set_niter(20);
 
     /*
      * Ground.
      */
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(50.0, 50.0, 50.0)));
-    let ground_pos = Isometry3::new(Vector3::y() * -50.0, na::zero());
+    let ground_size = 50.0;
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(
+        ground_size,
+        ground_size,
+        ground_size,
+    )));
+    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -35,7 +41,7 @@ fn main() {
      * Create the boxes
      */
     let num = 8;
-    let rad = 0.2;
+    let rad = 0.1;
     let shift   = rad * 2.0 /*+ 1.0e-4*/;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 0.04;
@@ -64,6 +70,10 @@ fn main() {
             }
         }
     }
+
+    // let pos = Isometry3::new(Vector3::new(0.0, centery - 0.1, 0.0), Vector3::y() * 0.75);
+    // let handle = world.add_rigid_body(pos, inertia);
+    // world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
 
     /*
      * Set up the testbed.

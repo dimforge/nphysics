@@ -3,11 +3,12 @@ use slab::Slab;
 use na::{DVector, Real};
 
 use counters::Counters;
-use detection::ContactConstraint;
+use detection::BodyContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::ConstraintGenerator;
 use solver::{BilateralConstraint2, BilateralGroundConstraint, ContactModel, IntegrationParameters,
              SORProx, UnilateralConstraint2, UnilateralGroundConstraint};
+use math::Point;
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -38,13 +39,13 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters: &mut Counters,
         bodies: &mut BodySet<N>,
         gens: &Slab<Box<ConstraintGenerator<N>>>,
-        contacts: &[ContactConstraint<N>],
+        manifolds: &[BodyContactManifold<N>],
         island: &[BodyHandle],
         contact_model: &ContactModel<N>,
         params: &IntegrationParameters<N>,
     ) {
         counters.assembly_started();
-        self.assemble_system(bodies, gens, contacts, island, contact_model, params);
+        self.assemble_system(bodies, gens, manifolds, island, contact_model, params);
         counters.assembly_completed();
 
         counters.set_nconstraints(
@@ -66,7 +67,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         &mut self,
         bodies: &mut BodySet<N>,
         gens: &Slab<Box<ConstraintGenerator<N>>>,
-        contacts: &[ContactConstraint<N>],
+        manifolds: &[BodyContactManifold<N>],
         island: &[BodyHandle],
         contact_model: &ContactModel<N>,
         params: &IntegrationParameters<N>,
@@ -138,10 +139,10 @@ impl<N: Real> MoreauJeanSolver<N> {
             }
         }
 
-        for c in contacts {
+        for c in manifolds {
             let ndofs1 = bodies.body(c.b1).status_dependent_ndofs();
             let ndofs2 = bodies.body(c.b2).status_dependent_ndofs();
-            let sz = contact_model.nconstraints() * (ndofs1 + ndofs2) * 2;
+            let sz = contact_model.nconstraints(c) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {
                 ground_jacobian_sz += sz;
@@ -216,15 +217,15 @@ impl<N: Real> MoreauJeanSolver<N> {
             }
         }
 
-        for c in contacts {
-            let _ = contact_model.build_constraints(
+        for c in manifolds {
+            contact_model.build_constraints(
                 params,
                 bodies,
                 &self.ext_vels,
+                c,
                 &mut ground_jacobian_id,
                 &mut jacobian_id,
                 &mut self.jacobians,
-                c,
                 &mut self.unilateral_ground_constraints,
                 &mut self.unilateral_constraints,
                 &mut self.bilateral_ground_constraints,

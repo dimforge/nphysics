@@ -22,8 +22,9 @@ fn main() {
     /*
      * Plane
      */
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(50.0, 50.0)));
-    let ground_pos = Isometry2::new(Vector2::y() * 50.0, na::zero());
+    let ground_radius = 50.0; // 0.2;
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_radius, ground_radius)));
+    let ground_pos = Isometry2::new(Vector2::y() * ground_radius, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -34,7 +35,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 50;
+    let num = 20;
     let rad = 0.2;
     let shift   = rad * 2.0 /*+ 1.0e-4*/;
     let centerx = shift * (num as f32) / 2.0;
