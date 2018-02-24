@@ -14,7 +14,7 @@ use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider,
 use joint::{ConstraintGenerator, ConstraintHandle, Joint};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use detection::{ActivationManager, BodyContactManifold};
-use math::{Inertia, Isometry, Point, Vector};
+use math::{Inertia, Isometry, Point, Vector, Velocity};
 
 pub type CollisionWorld<N> =
     ncollide::world::CollisionWorld<Point<N>, Isometry<N>, ColliderData<N>>;
@@ -102,8 +102,12 @@ impl<N: Real> World<N> {
         self.params.dt = dt;
     }
 
-    pub fn set_niter(&mut self, niter: usize) {
-        self.params.niter = niter;
+    pub fn set_max_velocity_iterations(&mut self, niter: usize) {
+        self.params.max_velocity_iterations = niter;
+    }
+
+    pub fn set_max_position_iterations(&mut self, niter: usize) {
+        self.params.max_position_iterations = niter;
     }
 
     pub fn activate_body(&mut self, handle: BodyHandle) {
@@ -236,12 +240,12 @@ impl<N: Real> World<N> {
         // FIXME: not sure what is the most pretty/efficient way of doing this.
         for rb in self.bodies.rigid_bodies_mut() {
             if rb.status() == BodyStatus::Kinematic {
-                rb.apply_displacements(&self.params)
+                rb.integrate(&self.params, &Velocity::zero())
             }
         }
         for mb in self.bodies.multibodies_mut() {
             if mb.status() == BodyStatus::Kinematic {
-                mb.apply_displacements(&self.params)
+                mb.integrate(&self.params, None)
             }
         }
         self.counters.solver_completed();

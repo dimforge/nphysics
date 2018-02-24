@@ -74,8 +74,8 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
         self.revo.jacobian_dot_mul_coordinates(vels)
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.revo.apply_displacement(params, vels)
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+        self.revo.integrate(params, vels)
     }
 
     fn nconstraints(&self) -> usize {

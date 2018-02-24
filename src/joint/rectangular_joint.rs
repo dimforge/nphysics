@@ -63,9 +63,9 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
         Velocity::zero()
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.prism1.apply_displacement(params, vels);
-        self.prism2.apply_displacement(params, &[vels[1]]);
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+        self.prism1.integrate(params, vels);
+        self.prism2.integrate(params, &[vels[1]]);
     }
 
     fn nconstraints(&self) -> usize {

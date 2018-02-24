@@ -154,7 +154,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     ) {
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.offset += vels[0] * params.dt
     }
 

@@ -102,7 +102,7 @@ impl<N: Real> Ground<N> {
     }
 
     #[inline]
-    pub fn apply_displacements(&mut self, _: &IntegrationParameters<N>) {}
+    pub fn integrate(&mut self, _: &IntegrationParameters<N>) {}
 
     #[inline]
     pub fn center_of_mass(&self) -> Point<N> {

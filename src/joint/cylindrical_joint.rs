@@ -76,9 +76,9 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         self.revo.jacobian_dot_mul_coordinates(&[vels[1]])
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.prism.apply_displacement(params, vels);
-        self.revo.apply_displacement(params, &[vels[1]]);
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+        self.prism.integrate(params, vels);
+        self.revo.integrate(params, &[vels[1]]);
     }
 
     fn nconstraints(&self) -> usize {

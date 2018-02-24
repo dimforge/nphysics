@@ -51,7 +51,7 @@ impl<N: Real> Joint<N> for CartesianJoint<N> {
         Velocity::zero()
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.position += Vector::from_row_slice(&vels[..DIM]) * params.dt;
     }
 }

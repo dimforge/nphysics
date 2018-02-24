@@ -97,9 +97,9 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
                 .rotated(&rot1) + self.coupling_dot * vels[1]
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.revo1.apply_displacement(params, vels);
-        self.revo2.apply_displacement(params, &[vels[1]]);
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+        self.revo1.integrate(params, vels);
+        self.revo2.integrate(params, &[vels[1]]);
     }
 
     fn nconstraints(&self) -> usize {

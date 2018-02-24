@@ -12,7 +12,7 @@ pub trait Joint<N: Real>: Any + Send + Sync {
     fn ndofs(&self) -> usize;
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N>;
     fn update_jacobians(&mut self, body_shift: &Vector<N>, vels: &[N]);
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]);
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]);
 
     // FIXME: rename those "copy_jacobian_to" ?
     fn jacobian(&self, transform: &Isometry<N>, out: &mut JacobianSliceMut<N>);

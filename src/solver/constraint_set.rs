@@ -50,7 +50,7 @@ impl<N: Real> ConstraintSet<N> {
     }
 
     pub fn clear(&mut self) {
-        self.position.clear();
         self.velocity.clear();
+        self.position.clear();
     }
 }
