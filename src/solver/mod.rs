@@ -11,7 +11,7 @@ pub use self::sor_prox::SORProx;
 pub use self::integration_parameters::IntegrationParameters;
 pub use self::helper::ForceDirection;
 pub use self::impulse_cache::ImpulseCache;
-pub use self::constraint_set::{ConstraintSet, ConstraintSetIndices};
+pub use self::constraint_set::ConstraintSet;
 
 pub mod helper;
 mod impulse_cache;

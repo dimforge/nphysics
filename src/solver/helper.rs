@@ -201,7 +201,7 @@ pub fn cancel_relative_linear_motion<N: Real>(
     ground_jacobian_id: &mut usize,
     jacobian_id: &mut usize,
     jacobians: &mut [N],
-    vel_constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N>,
 ) {
     let error = anchor1 - anchor2;
     let limits = ImpulseLimits::Independent {
@@ -228,13 +228,15 @@ pub fn cancel_relative_linear_motion<N: Real>(
         geom.rhs += stabilization;
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-            vel_constraints
-                .bilateral_ground_constraints
-                .push(BilateralGroundConstraint::new(geom, limits, na::zero()));
+            constraints
+                .velocity
+                .bilateral_ground
+                .push(BilateralGroundConstraint::new(geom, limits, na::zero(), 0));
         } else {
-            vel_constraints
-                .bilateral_constraints
-                .push(BilateralConstraint::new(geom, limits, na::zero()));
+            constraints
+                .velocity
+                .bilateral
+                .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
         }
 
         true
@@ -255,7 +257,7 @@ pub fn cancel_relative_angular_motion<N: Real>(
     ground_jacobian_id: &mut usize,
     jacobian_id: &mut usize,
     jacobians: &mut [N],
-    vel_constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N>,
 ) {
     let error = (orientation1 / orientation2).scaled_axis();
     let limits = ImpulseLimits::Independent {
@@ -282,13 +284,15 @@ pub fn cancel_relative_angular_motion<N: Real>(
         geom.rhs += stabilization;
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-            vel_constraints
-                .bilateral_ground_constraints
-                .push(BilateralGroundConstraint::new(geom, limits, na::zero()));
+            constraints
+                .velocity
+                .bilateral_ground
+                .push(BilateralGroundConstraint::new(geom, limits, na::zero(), 0));
         } else {
-            vel_constraints
-                .bilateral_constraints
-                .push(BilateralConstraint::new(geom, limits, na::zero()));
+            constraints
+                .velocity
+                .bilateral
+                .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
         }
 
         true
@@ -310,7 +314,7 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
     ground_jacobian_id: &mut usize,
     jacobian_id: &mut usize,
     jacobians: &mut [N],
-    vel_constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -348,13 +352,15 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
         geom.rhs += stabilization;
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-            vel_constraints
-                .bilateral_ground_constraints
-                .push(BilateralGroundConstraint::new(geom, limits, na::zero()));
+            constraints
+                .velocity
+                .bilateral_ground
+                .push(BilateralGroundConstraint::new(geom, limits, na::zero(), 0));
         } else {
-            vel_constraints
-                .bilateral_constraints
-                .push(BilateralConstraint::new(geom, limits, na::zero()));
+            constraints
+                .velocity
+                .bilateral
+                .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
         }
 
         true

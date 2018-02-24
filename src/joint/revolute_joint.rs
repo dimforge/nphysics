@@ -238,7 +238,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
         ext_vels: &[N],
         ground_jacobian_id: &mut usize,
         jacobians: &mut [N],
-        vel_constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N>,
     ) {
         joint::build_unit_joint_constraints(
             self,
@@ -250,7 +250,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
             ext_vels,
             ground_jacobian_id,
             jacobians,
-            vel_constraints,
+            constraints,
         )
     }
 }

@@ -95,7 +95,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         ext_vels: &[N],
         ground_jacobian_id: &mut usize,
         jacobians: &mut [N],
-        vel_constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N>,
     ) {
         self.prism.build_constraints(
             params,
@@ -106,7 +106,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
             ext_vels,
             ground_jacobian_id,
             jacobians,
-            vel_constraints,
+            constraints,
         );
         self.revo.build_constraints(
             params,
@@ -117,7 +117,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
             ext_vels,
             ground_jacobian_id,
             jacobians,
-            vel_constraints,
+            constraints,
         );
     }
 }

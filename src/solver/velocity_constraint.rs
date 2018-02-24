@@ -44,6 +44,8 @@ pub struct UnilateralConstraint<N: Real> {
     pub r: N,
     pub rhs: N,
 
+    pub cache_id: usize,
+
     pub assembly_id1: usize,
     pub assembly_id2: usize,
 
@@ -59,12 +61,13 @@ pub struct UnilateralConstraint<N: Real> {
 
 impl<N: Real> UnilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, impulse: N) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, impulse: N, cache_id: usize) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
             impulse: impulse,
             r: geom.r,
             rhs: geom.rhs,
+            cache_id: cache_id,
             assembly_id1: geom.assembly_id1,
             assembly_id2: geom.assembly_id2,
             jacobian_id1: geom.jacobian_id1,
@@ -85,6 +88,7 @@ pub struct UnilateralGroundConstraint<N: Real> {
     pub r: N,
     pub rhs: N,
 
+    pub cache_id: usize,
     pub assembly_id: usize,
     pub jacobian_id: usize,
     pub weighted_jacobian_id: usize,
@@ -93,12 +97,13 @@ pub struct UnilateralGroundConstraint<N: Real> {
 
 impl<N: Real> UnilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, impulse: N) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, impulse: N, cache_id: usize) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
+                cache_id: cache_id,
                 assembly_id: geom.assembly_id2,
                 jacobian_id: geom.jacobian_id2,
                 weighted_jacobian_id: geom.weighted_jacobian_id2,
@@ -109,6 +114,7 @@ impl<N: Real> UnilateralGroundConstraint<N> {
                 impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
+                cache_id: cache_id,
                 assembly_id: geom.assembly_id1,
                 jacobian_id: geom.jacobian_id1,
                 weighted_jacobian_id: geom.weighted_jacobian_id1,
@@ -132,6 +138,8 @@ pub struct BilateralConstraint<N: Real> {
 
     pub limits: ImpulseLimits<N>,
 
+    pub cache_id: usize,
+
     pub assembly_id1: usize,
     pub assembly_id2: usize,
 
@@ -147,13 +155,19 @@ pub struct BilateralConstraint<N: Real> {
 
 impl<N: Real> BilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>, impulse: N) -> Self {
+    pub fn new(
+        geom: ConstraintGeometry<N>,
+        limits: ImpulseLimits<N>,
+        impulse: N,
+        cache_id: usize,
+    ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         BilateralConstraint {
             impulse: impulse,
             r: geom.r,
             rhs: geom.rhs,
             limits: limits,
+            cache_id: cache_id,
             assembly_id1: geom.assembly_id1,
             assembly_id2: geom.assembly_id2,
             jacobian_id1: geom.jacobian_id1,
@@ -175,6 +189,7 @@ pub struct BilateralGroundConstraint<N: Real> {
 
     pub limits: ImpulseLimits<N>,
 
+    pub cache_id: usize,
     pub assembly_id: usize,
     pub jacobian_id: usize,
     pub weighted_jacobian_id: usize,
@@ -183,13 +198,19 @@ pub struct BilateralGroundConstraint<N: Real> {
 
 impl<N: Real> BilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, limits: ImpulseLimits<N>, impulse: N) -> Self {
+    pub fn new(
+        geom: ConstraintGeometry<N>,
+        limits: ImpulseLimits<N>,
+        impulse: N,
+        cache_id: usize,
+    ) -> Self {
         if geom.ndofs1 == 0 {
             BilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
                 rhs: geom.rhs,
                 limits: limits,
+                cache_id: cache_id,
                 assembly_id: geom.assembly_id2,
                 jacobian_id: geom.jacobian_id2,
                 weighted_jacobian_id: geom.weighted_jacobian_id2,
@@ -201,6 +222,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 r: geom.r,
                 rhs: geom.rhs,
                 limits: limits,
+                cache_id: cache_id,
                 assembly_id: geom.assembly_id1,
                 jacobian_id: geom.jacobian_id1,
                 weighted_jacobian_id: geom.weighted_jacobian_id1,

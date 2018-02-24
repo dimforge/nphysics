@@ -55,7 +55,7 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        vel_constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N>,
     ) {
         let b1 = bodies.body_part(self.b1);
         let b2 = bodies.body_part(self.b2);
@@ -84,7 +84,7 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
             ground_jacobian_id,
             jacobian_id,
             jacobians,
-            vel_constraints,
+            constraints,
         );
         helper::cancel_relative_angular_motion(
             params,
@@ -100,7 +100,7 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
             ground_jacobian_id,
             jacobian_id,
             jacobians,
-            vel_constraints,
+            constraints,
         );
     }
 }

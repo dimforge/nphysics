@@ -8,7 +8,7 @@ use object::BodySet;
 pub trait ContactModel<N: Real>: 'static {
     fn nconstraints(&self, manifold: &BodyContactManifold<N>) -> usize;
     fn build_constraints(
-        &self,
+        &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
@@ -16,16 +16,8 @@ pub trait ContactModel<N: Real>: 'static {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        velocity_constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N>,
     );
 
-    fn cache_impulses(
-        &mut self,
-        bodies: &BodySet<N>,
-        manifolds: &[BodyContactManifold<N>],
-        ground_contacts: &[UnilateralGroundConstraint<N>],
-        contacts: &[UnilateralConstraint<N>],
-        ground_friction: &[BilateralGroundConstraint<N>],
-        friction: &[BilateralConstraint<N>],
-    );
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>);
 }
