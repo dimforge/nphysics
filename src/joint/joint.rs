@@ -90,7 +90,7 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
     ext_vels: &[N],
     ground_jacobian_id: &mut usize,
     jacobians: &mut [N],
-    vel_constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N>,
 ) {
     let mut is_min_constraint_active = false;
 
@@ -116,15 +116,14 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
             r: N::one() / inv_r,
             rhs: rhs,
             limits: limits,
+            cache_id: 0,
             assembly_id: assembly_id,
             jacobian_id: *ground_jacobian_id,
             weighted_jacobian_id: *ground_jacobian_id + mb.ndofs(),
             ndofs: mb.ndofs(),
         };
 
-        vel_constraints
-            .bilateral_ground_constraints
-            .push(constraint);
+        constraints.velocity.bilateral_ground.push(constraint);
         *ground_jacobian_id += 2 * mb.ndofs();
     }
 
@@ -159,15 +158,14 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
                 impulse: N::zero(),
                 r: N::one() / inv_r,
                 rhs: rhs,
+                cache_id: 0,
                 assembly_id: assembly_id,
                 jacobian_id: *ground_jacobian_id,
                 weighted_jacobian_id: *ground_jacobian_id + mb.ndofs(),
                 ndofs: mb.ndofs(),
             };
 
-            vel_constraints
-                .unilateral_ground_constraints
-                .push(constraint);
+            constraints.velocity.unilateral_ground.push(constraint);
             *ground_jacobian_id += 2 * mb.ndofs();
         }
     }
@@ -210,15 +208,14 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
                 impulse: N::zero(),
                 r: N::one() / inv_r,
                 rhs: rhs,
+                cache_id: 0,
                 assembly_id: assembly_id,
                 jacobian_id: *ground_jacobian_id,
                 weighted_jacobian_id: *ground_jacobian_id + mb.ndofs(),
                 ndofs: mb.ndofs(),
             };
 
-            vel_constraints
-                .unilateral_ground_constraints
-                .push(constraint);
+            constraints.velocity.unilateral_ground.push(constraint);
             *ground_jacobian_id += 2 * mb.ndofs();
         }
     }

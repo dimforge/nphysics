@@ -6,10 +6,7 @@ use counters::Counters;
 use detection::BodyContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::ConstraintGenerator;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ConstraintSetIndices,
-             ContactModel, IntegrationParameters, SORProx, UnilateralConstraint,
-             UnilateralGroundConstraint};
-use math::Point;
+use solver::{ConstraintSet, ContactModel, IntegrationParameters, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -17,8 +14,7 @@ pub struct MoreauJeanSolver<N: Real> {
     mj_lambda: DVector<N>,
     ext_vels: DVector<N>,
     contact_model: Box<ContactModel<N>>,
-    velocity_indices: ConstraintSetIndices,
-    velocity_constraints: ConstraintSet<N>,
+    constraints: ConstraintSet<N>,
 }
 
 impl<N: Real> MoreauJeanSolver<N> {
@@ -30,8 +26,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             mj_lambda: DVector::zeros(0),
             ext_vels: DVector::zeros(0),
             contact_model: contact_model,
-            velocity_indices: constraints.current_indices(),
-            velocity_constraints: constraints,
+            constraints: constraints,
         }
     }
 
@@ -52,11 +47,11 @@ impl<N: Real> MoreauJeanSolver<N> {
         self.assemble_system(bodies, gens, manifolds, island, params);
         counters.assembly_completed();
 
-        counters.set_nconstraints(self.velocity_constraints.len());
+        counters.set_nconstraints(self.constraints.velocity.len());
 
         counters.resolution_started();
         self.solve_constraints(params);
-        self.save_cache(bodies, manifolds);
+        self.save_cache();
         counters.resolution_completed();
 
         counters.position_update_started();
@@ -104,7 +99,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         /*
          * Setup contact contsraints.
          */
-        self.velocity_constraints.clear();
+        self.constraints.velocity.clear();
 
         /*
          *
@@ -186,7 +181,7 @@ impl<N: Real> MoreauJeanSolver<N> {
                 &mut ground_jacobian_id,
                 &mut jacobian_id,
                 &mut self.jacobians,
-                &mut self.velocity_constraints,
+                &mut self.constraints,
             );
         }
 
@@ -204,13 +199,12 @@ impl<N: Real> MoreauJeanSolver<N> {
                         &self.ext_vels.as_slice(),
                         &mut ground_jacobian_id,
                         &mut self.jacobians,
-                        &mut self.velocity_constraints,
+                        &mut self.constraints,
                     );
                 }
             }
         }
 
-        self.velocity_indices = self.velocity_constraints.current_indices();
         self.contact_model.build_constraints(
             params,
             bodies,
@@ -219,7 +213,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             &mut ground_jacobian_id,
             &mut jacobian_id,
             &mut self.jacobians,
-            &mut self.velocity_constraints,
+            &mut self.constraints,
         );
     }
 
@@ -227,30 +221,18 @@ impl<N: Real> MoreauJeanSolver<N> {
         let solver = SORProx::new();
 
         solver.solve(
-            &mut self.velocity_constraints.unilateral_ground_constraints,
-            &mut self.velocity_constraints.unilateral_constraints,
-            &mut self.velocity_constraints.bilateral_ground_constraints,
-            &mut self.velocity_constraints.bilateral_constraints,
+            &mut self.constraints.velocity.unilateral_ground,
+            &mut self.constraints.velocity.unilateral,
+            &mut self.constraints.velocity.bilateral_ground,
+            &mut self.constraints.velocity.bilateral,
             &mut self.mj_lambda,
             &self.jacobians,
             params.niter,
         );
     }
 
-    fn save_cache(&mut self, bodies: &BodySet<N>, manifolds: &[BodyContactManifold<N>]) {
-        // XXX: add slicing operators to ConstraintSet.
-        self.contact_model.cache_impulses(
-            bodies,
-            manifolds,
-            &self.velocity_constraints.unilateral_ground_constraints
-                [self.velocity_indices.first_unilateral_ground_constraint..],
-            &self.velocity_constraints.unilateral_constraints
-                [self.velocity_indices.first_unilateral_constraint..],
-            &self.velocity_constraints.bilateral_ground_constraints
-                [self.velocity_indices.first_bilateral_ground_constraint..],
-            &self.velocity_constraints.bilateral_constraints
-                [self.velocity_indices.first_bilateral_constraint..],
-        )
+    fn save_cache(&mut self) {
+        self.contact_model.cache_impulses(&self.constraints)
     }
 
     fn resize_buffers(&mut self, ndofs: usize) {

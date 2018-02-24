@@ -18,12 +18,17 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
+    // world.set_niter(100);
 
     /*
      * Plane
      */
     let ground_radius = 50.0; // 0.2;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_radius, ground_radius)));
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+        ground_radius - COLLIDER_MARGIN,
+        ground_radius - COLLIDER_MARGIN,
+    )));
+
     let ground_pos = Isometry2::new(Vector2::y() * ground_radius, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
@@ -33,16 +38,32 @@ fn main() {
     );
 
     /*
+    let wall_radius = 50.0; // 0.2;
+    let wall_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+        wall_radius - COLLIDER_MARGIN,
+        wall_radius - COLLIDER_MARGIN,
+    )));
+    let wall_pos = Isometry2::new(Vector2::x() * (wall_radius + 5.0), na::zero());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        wall_shape.clone(),
+        BodyHandle::ground(),
+        wall_pos,
+    );
+
+    let wall_pos = Isometry2::new(Vector2::x() * (-wall_radius - 5.0), na::zero());
+    world.add_collider(COLLIDER_MARGIN, wall_shape, BodyHandle::ground(), wall_pos);*/
+
+    /*
      * Create the boxes
      */
-    let num = 20;
+    let num = 50;
     let rad = 0.2;
-    let shift   = rad * 2.0 /*+ 1.0e-4*/;
+    let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0 + 0.04;
+    let centery = shift / 2.0;
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
-    // let geom    = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
     let inertia = geom.inertia(1.0);
 
     for i in 0usize..num {

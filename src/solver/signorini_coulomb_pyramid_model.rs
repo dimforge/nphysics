@@ -1,22 +1,30 @@
+use std::ops::Range;
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, Real, Unit};
 
 use detection::BodyContactManifold;
 use solver::helper;
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel,
-             ForceDirection, ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel,
-             UnilateralConstraint, UnilateralGroundConstraint};
+             ForceDirection, ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel};
 use object::BodySet;
 use math::{Vector, DIM};
 
 pub struct SignoriniCoulombPyramidModel<N: Real> {
     impulses: ImpulseCache<Vector<N>>,
+    vel_ground_rng: Range<usize>,
+    vel_rng: Range<usize>,
+    friction_ground_rng: Range<usize>,
+    friction_rng: Range<usize>,
 }
 
 impl<N: Real> SignoriniCoulombPyramidModel<N> {
     pub fn new() -> Self {
         SignoriniCoulombPyramidModel {
             impulses: ImpulseCache::new(),
+            vel_ground_rng: 0..0,
+            vel_rng: 0..0,
+            friction_ground_rng: 0..0,
+            friction_rng: 0..0,
         }
     }
 }
@@ -27,7 +35,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
     }
 
     fn build_constraints(
-        &self,
+        &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
@@ -35,14 +43,18 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        vel_constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N>,
     ) {
+        let id_vel_ground = constraints.velocity.unilateral_ground.len();
+        let id_vel = constraints.velocity.unilateral.len();
+
         for manifold in manifolds {
             let b1 = bodies.body_part(manifold.b1);
             let b2 = bodies.body_part(manifold.b2);
 
             for c in manifold.contacts() {
                 let impulse = self.impulses.get(c.id);
+                let impulse_id = self.impulses.entry_id(c.id);
 
                 let ground_constraint = SignoriniModel::build_constraint(
                     params,
@@ -53,21 +65,22 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     c,
                     manifold.margin,
                     impulse[0],
+                    impulse_id,
                     ground_jacobian_id,
                     jacobian_id,
                     jacobians,
-                    vel_constraints,
+                    constraints,
                 );
 
                 let dependency;
                 let warmstart_enabled;
 
                 if ground_constraint {
-                    let constraints = &vel_constraints.unilateral_ground_constraints;
+                    let constraints = &constraints.velocity.unilateral_ground;
                     dependency = constraints.len() - 1;
                     warmstart_enabled = !constraints[dependency].impulse.is_zero();
                 } else {
-                    let constraints = &vel_constraints.unilateral_constraints;
+                    let constraints = &constraints.velocity.unilateral;
                     dependency = constraints.len() - 1;
                     warmstart_enabled = !constraints[dependency].impulse.is_zero();
                 }
@@ -105,13 +118,13 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     };
 
                     if geom.is_ground_constraint() {
-                        let constraint = BilateralGroundConstraint::new(geom, limits, warmstart);
-                        vel_constraints
-                            .bilateral_ground_constraints
-                            .push(constraint);
+                        let constraint =
+                            BilateralGroundConstraint::new(geom, limits, warmstart, impulse_id + i);
+                        constraints.velocity.bilateral_ground.push(constraint);
                     } else {
-                        let constraint = BilateralConstraint::new(geom, limits, warmstart);
-                        vel_constraints.bilateral_constraints.push(constraint);
+                        let constraint =
+                            BilateralConstraint::new(geom, limits, warmstart, impulse_id + i);
+                        constraints.velocity.bilateral.push(constraint);
                     }
 
                     i += 1;
@@ -120,52 +133,32 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 });
             }
         }
+
+        self.vel_ground_rng = id_vel_ground..constraints.velocity.unilateral_ground.len();
+        self.vel_rng = id_vel..constraints.velocity.unilateral.len();
     }
 
-    fn cache_impulses(
-        &mut self,
-        bodies: &BodySet<N>,
-        manifolds: &[BodyContactManifold<N>],
-        ground_contacts: &[UnilateralGroundConstraint<N>],
-        contacts: &[UnilateralConstraint<N>],
-        friction_ground_constraints: &[BilateralGroundConstraint<N>],
-        friction_constraints: &[BilateralConstraint<N>],
-    ) {
-        let mut curr_contact = 0;
-        let mut curr_ground_contact = 0;
-        const DIM_FRICTION: usize = DIM - 1;
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+        let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
+        let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
+        let ground_friction =
+            &constraints.velocity.unilateral_ground[self.friction_ground_rng.clone()];
+        let friction = &constraints.velocity.unilateral[self.friction_rng.clone()];
 
-        for m in manifolds {
-            let b1 = bodies.body_part(m.b1);
-            let b2 = bodies.body_part(m.b2);
+        for c in ground_contacts {
+            self.impulses[c.cache_id][0] = c.impulse;
+        }
 
-            if helper::constraints_are_ground_constraints(&b1, &b2) {
-                for c in m.contacts() {
-                    let mut impulse = Vector::zeros();
-                    impulse[0] = ground_contacts[curr_ground_contact].impulse;
+        for c in contacts {
+            self.impulses[c.cache_id][0] = c.impulse;
+        }
 
-                    for i in 0..DIM_FRICTION {
-                        let constraint_id = curr_ground_contact * DIM_FRICTION + i;
-                        impulse[i + 1] = friction_ground_constraints[constraint_id].impulse;
-                    }
+        for c in ground_friction {
+            self.impulses[c.cache_id / DIM][c.cache_id % DIM] = c.impulse;
+        }
 
-                    self.impulses.set(c.id, impulse);
-                    curr_ground_contact += 1;
-                }
-            } else {
-                for c in m.contacts() {
-                    let mut impulse = Vector::zeros();
-                    impulse[0] = contacts[curr_contact].impulse;
-
-                    for i in 0..DIM - 1 {
-                        let constraint_id = curr_contact * DIM_FRICTION + i;
-                        impulse[i + 1] = friction_constraints[constraint_id].impulse;
-                    }
-
-                    self.impulses.set(c.id, impulse);
-                    curr_contact += 1;
-                }
-            }
+        for c in friction {
+            self.impulses[c.cache_id / DIM][c.cache_id % DIM] = c.impulse;
         }
     }
 }
