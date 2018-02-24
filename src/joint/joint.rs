@@ -3,7 +3,8 @@ use downcast::Any;
 use na::{DVectorSliceMut, Real};
 
 use joint::JointMotor;
-use solver::{BilateralGroundConstraint, IntegrationParameters, UnilateralGroundConstraint};
+use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
+             UnilateralGroundConstraint};
 use object::{Multibody, MultibodyLinkRef};
 use math::{Isometry, JacobianSliceMut, Vector, Velocity};
 
@@ -40,8 +41,7 @@ pub trait Joint<N: Real>: Any + Send + Sync {
         _ext_vels: &[N],
         _ground_jacobian_id: &mut usize,
         _jacobians: &mut [N],
-        _out_unilateral: &mut Vec<UnilateralGroundConstraint<N>>,
-        _out_bilateral: &mut Vec<BilateralGroundConstraint<N>>,
+        _velocity_constraints: &mut ConstraintSet<N>,
     ) {
     }
 }
@@ -90,8 +90,7 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
     ext_vels: &[N],
     ground_jacobian_id: &mut usize,
     jacobians: &mut [N],
-    out_unilateral: &mut Vec<UnilateralGroundConstraint<N>>,
-    out_bilateral: &mut Vec<BilateralGroundConstraint<N>>,
+    vel_constraints: &mut ConstraintSet<N>,
 ) {
     let mut is_min_constraint_active = false;
 
@@ -123,7 +122,9 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
             ndofs: mb.ndofs(),
         };
 
-        out_bilateral.push(constraint);
+        vel_constraints
+            .bilateral_ground_constraints
+            .push(constraint);
         *ground_jacobian_id += 2 * mb.ndofs();
     }
 
@@ -164,7 +165,9 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
                 ndofs: mb.ndofs(),
             };
 
-            out_unilateral.push(constraint);
+            vel_constraints
+                .unilateral_ground_constraints
+                .push(constraint);
             *ground_jacobian_id += 2 * mb.ndofs();
         }
     }
@@ -213,7 +216,9 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
                 ndofs: mb.ndofs(),
             };
 
-            out_unilateral.push(constraint);
+            vel_constraints
+                .unilateral_ground_constraints
+                .push(constraint);
             *ground_jacobian_id += 2 * mb.ndofs();
         }
     }

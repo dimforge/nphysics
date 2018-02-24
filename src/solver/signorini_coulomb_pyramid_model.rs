@@ -3,8 +3,8 @@ use na::{self, DVector, Real, Unit};
 
 use detection::BodyContactManifold;
 use solver::helper;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ContactModel, ForceDirection,
-             ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel,
+use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel,
+             ForceDirection, ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel,
              UnilateralConstraint, UnilateralGroundConstraint};
 use object::BodySet;
 use math::{Vector, DIM};
@@ -35,10 +35,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint<N>>,
-        out_ground_frictions: &mut Vec<BilateralGroundConstraint<N>>,
-        out_frictions: &mut Vec<BilateralConstraint<N>>,
+        vel_constraints: &mut ConstraintSet<N>,
     ) {
         for manifold in manifolds {
             let b1 = bodies.body_part(manifold.b1);
@@ -46,9 +43,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
             for c in manifold.contacts() {
                 let impulse = self.impulses.get(c.id);
-                let nctcts = out_contacts.len();
 
-                SignoriniModel::build_constraint(
+                let ground_constraint = SignoriniModel::build_constraint(
                     params,
                     bodies,
                     ext_vels,
@@ -60,26 +56,27 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     ground_jacobian_id,
                     jacobian_id,
                     jacobians,
-                    out_ground_contacts,
-                    out_contacts,
+                    vel_constraints,
                 );
 
                 let dependency;
                 let warmstart_enabled;
 
-                if out_contacts.len() == nctcts {
-                    dependency = out_ground_contacts.len() - 1;
-                    warmstart_enabled = !out_ground_contacts[dependency].impulse.is_zero();
+                if ground_constraint {
+                    let constraints = &vel_constraints.unilateral_ground_constraints;
+                    dependency = constraints.len() - 1;
+                    warmstart_enabled = !constraints[dependency].impulse.is_zero();
                 } else {
-                    dependency = out_contacts.len() - 1;
-                    warmstart_enabled = !out_contacts[dependency].impulse.is_zero();
+                    let constraints = &vel_constraints.unilateral_constraints;
+                    dependency = constraints.len() - 1;
+                    warmstart_enabled = !constraints[dependency].impulse.is_zero();
                 }
 
                 let assembly_id1 = b1.parent_companion_id();
                 let assembly_id2 = b2.parent_companion_id();
 
                 // Generate friction constraints.
-                let friction_coeff = na::convert(0.5); // XXX hard-coded friction coefficient.
+                let friction_coeff = na::convert(0.3); // XXX hard-coded friction coefficient.
                 let limits = ImpulseLimits::Dependent {
                     dependency: dependency,
                     coeff: friction_coeff,
@@ -109,10 +106,12 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                     if geom.is_ground_constraint() {
                         let constraint = BilateralGroundConstraint::new(geom, limits, warmstart);
-                        out_ground_frictions.push(constraint);
+                        vel_constraints
+                            .bilateral_ground_constraints
+                            .push(constraint);
                     } else {
                         let constraint = BilateralConstraint::new(geom, limits, warmstart);
-                        out_frictions.push(constraint);
+                        vel_constraints.bilateral_constraints.push(constraint);
                     }
 
                     i += 1;

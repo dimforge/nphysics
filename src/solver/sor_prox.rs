@@ -32,25 +32,38 @@ impl<N: Real> SORProx<N> {
         /*
          * Setup constraints.
          */
+        let mut warmstarted = 0;
         for c in unilateral_constraints.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
-            self.setup_unilateral_constraint(c, jacobians, mj_lambda, dim1, dim2)
+            self.setup_unilateral_constraint(c, jacobians, mj_lambda, dim1, dim2);
+            if c.impulse != N::zero() {
+                warmstarted += 1;
+            }
         }
 
         for c in unilateral_ground_constraints.iter_mut() {
             let dim = Dynamic::new(c.ndofs);
-            self.setup_unilateral_ground_constraint(c, jacobians, mj_lambda, dim)
+            self.setup_unilateral_ground_constraint(c, jacobians, mj_lambda, dim);
+            if c.impulse != N::zero() {
+                warmstarted += 1;
+            }
         }
 
         for c in bilateral_constraints.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
-            self.setup_bilateral_constraint(c, jacobians, mj_lambda, dim1, dim2)
+            self.setup_bilateral_constraint(c, jacobians, mj_lambda, dim1, dim2);
+            if c.impulse != N::zero() {
+                warmstarted += 1;
+            }
         }
 
         for c in bilateral_ground_constraints.iter_mut() {
-            self.setup_bilateral_ground_constraint(c, jacobians, mj_lambda, Dynamic::new(c.ndofs))
+            self.setup_bilateral_ground_constraint(c, jacobians, mj_lambda, Dynamic::new(c.ndofs));
+            if c.impulse != N::zero() {
+                warmstarted += 1;
+            }
         }
 
         /*
@@ -344,7 +357,7 @@ impl<N: Real> SORProx<N> {
         dim1: D1,
         dim2: D2,
     ) {
-        if c.impulse.is_zero() {
+        if !c.impulse.is_zero() {
             let id1 = c.assembly_id1;
             let id2 = c.assembly_id2;
 

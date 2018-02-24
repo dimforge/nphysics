@@ -4,8 +4,9 @@ use na::{self, DVector, Real};
 use ncollide::query::TrackedContact;
 use detection::BodyContactManifold;
 use solver::helper;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ContactModel, ForceDirection,
-             ImpulseCache, IntegrationParameters, UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel,
+             ForceDirection, ImpulseCache, IntegrationParameters, UnilateralConstraint,
+             UnilateralGroundConstraint};
 use object::{BodyHandle, BodySet};
 use math::Point;
 
@@ -32,9 +33,8 @@ impl<N: Real> SignoriniModel<N> {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint<N>>,
-    ) {
+        vel_constraints: &mut ConstraintSet<N>,
+    ) -> bool {
         let b1 = bodies.body_part(b1);
         let b2 = bodies.body_part(b2);
 
@@ -65,16 +65,18 @@ impl<N: Real> SignoriniModel<N> {
             geom.rhs += na::inf(&restitution, &stabilization);
         }
 
-        let warmstart = if geom.rhs < na::zero() {
-            impulse * params.warmstart_coeff
-        } else {
-            na::zero()
-        };
+        let warmstart = impulse * params.warmstart_coeff;
 
         if geom.is_ground_constraint() {
-            out_ground_contacts.push(UnilateralGroundConstraint::new(geom, warmstart));
+            vel_constraints
+                .unilateral_ground_constraints
+                .push(UnilateralGroundConstraint::new(geom, warmstart));
+            true
         } else {
-            out_contacts.push(UnilateralConstraint::new(geom, warmstart));
+            vel_constraints
+                .unilateral_constraints
+                .push(UnilateralConstraint::new(geom, warmstart));
+            false
         }
     }
 }
@@ -93,14 +95,11 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint<N>>,
-        _: &mut Vec<BilateralGroundConstraint<N>>,
-        _: &mut Vec<BilateralConstraint<N>>,
+        vel_constraints: &mut ConstraintSet<N>,
     ) {
         for manifold in manifolds {
             for c in manifold.contacts() {
-                Self::build_constraint(
+                let _ = Self::build_constraint(
                     params,
                     bodies,
                     ext_vels,
@@ -112,9 +111,8 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     ground_jacobian_id,
                     jacobian_id,
                     jacobians,
-                    out_ground_contacts,
-                    out_contacts,
-                )
+                    vel_constraints,
+                );
             }
         }
     }
