@@ -130,6 +130,17 @@ impl<'a, N: Real> BodyMut<'a, N> {
             BodyMut::Ground(_) => 0,
         }
     }
+
+    #[inline]
+    pub fn integrate(&mut self, params: &IntegrationParameters<N>, added_vel: &[N]) {
+        match *self {
+            BodyMut::RigidBody(ref mut rb) => {
+                rb.integrate(params, &Velocity::from_slice(added_vel))
+            }
+            BodyMut::Multibody(ref mut mb) => mb.integrate(params, Some(added_vel)),
+            BodyMut::Ground(_) => {}
+        }
+    }
 }
 
 macro_rules! dispatch(
@@ -190,7 +201,6 @@ dispatch!(
 dispatch_mut!(
     BodyMut::set_companion_id(id: usize) -> ();
     BodyMut::generalized_velocity_mut() -> DVectorSliceMut<N>;
-    BodyMut::apply_displacements(params: &IntegrationParameters<N>) -> ();
     // FIXME: should those directly be implemented only for bodies (to avoid duplicated code on
     // each body for activation)?
     BodyMut::activate() -> ();

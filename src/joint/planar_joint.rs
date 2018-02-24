@@ -104,10 +104,10 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         self.revo.jacobian_dot_mul_coordinates(&[vels[2]])
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.prism1.apply_displacement(params, vels);
-        self.prism2.apply_displacement(params, &[vels[1]]);
-        self.revo.apply_displacement(params, &[vels[2]]);
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+        self.prism1.integrate(params, vels);
+        self.prism2.integrate(params, &[vels[1]]);
+        self.revo.integrate(params, &[vels[2]]);
     }
 
     fn nconstraints(&self) -> usize {

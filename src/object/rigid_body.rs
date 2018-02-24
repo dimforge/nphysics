@@ -222,10 +222,10 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[inline]
-    pub fn apply_displacements(&mut self, params: &IntegrationParameters<N>) {
+    pub fn integrate(&mut self, params: &IntegrationParameters<N>, added_vel: &Velocity<N>) {
         let disp = Isometry::new(
-            self.velocity.linear * params.dt,
-            self.velocity.angular * params.dt,
+            (self.velocity.linear + added_vel.linear) * params.dt,
+            (self.velocity.angular + added_vel.angular) * params.dt,
         );
         self.local_to_world = Isometry::from_parts(
             disp.translation * self.local_to_world.translation,

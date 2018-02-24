@@ -42,7 +42,7 @@ impl<N: Real> Joint<N> for FixedJoint<N> {
     ) {
     }
 
-    fn apply_displacement(&mut self, _: &IntegrationParameters<N>, _: &[N]) {}
+    fn integrate(&mut self, _: &IntegrationParameters<N>, _: &[N]) {}
 
     fn jacobian_mul_coordinates(&self, _: &[N]) -> Velocity<N> {
         Velocity::zero()

@@ -80,7 +80,7 @@ impl<N: Real> Joint<N> for BallJoint<N> {
         Velocity::new(linvel, na::zero())
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         let angvel = Vector3::from_row_slice(&vels[..3]);
         let disp = UnitQuaternion::new(angvel * params.dt);
         self.rot = disp * self.rot;

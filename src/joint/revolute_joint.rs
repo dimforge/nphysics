@@ -74,14 +74,14 @@ impl<N: Real> RevoluteJoint<N> {
         self.update_rot();
     }
 
-    pub fn set_axis_and_apply_displacement(
+    pub fn set_axis_and_integrate(
         &mut self,
         axis: Unit<AngularVector<N>>,
         params: &IntegrationParameters<N>,
         vels: &[N],
     ) {
         self.axis = axis;
-        self.apply_displacement(params, vels)
+        self.integrate(params, vels)
     }
 
     pub fn angle(&self) -> N {
@@ -211,7 +211,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
         out.copy_from((self.jacobian_dot_veldiff.transformed(transform) * acc[0]).as_vector())
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.angle += vels[0] * params.dt;
         self.update_rot();
     }

@@ -1,6 +1,7 @@
 use std::iter;
 
 use na::{self, DMatrix, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
+use na::storage::Storage;
 use object::{ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId,
              MultibodyLinkMut, MultibodyLinkRef, MultibodyLinkVec};
 use joint::{FreeJoint, Joint};
@@ -347,10 +348,25 @@ impl<N: Real> Multibody<N> {
         multibodies
     }
 
-    pub fn apply_displacements(&mut self, params: &IntegrationParameters<N>) {
-        for rb in self.rbs.iter_mut() {
-            rb.dof
-                .apply_displacement(params, &self.velocities[rb.assembly_id..])
+    pub fn integrate(&mut self, params: &IntegrationParameters<N>, added_vel: Option<&[N]>) {
+        if let Some(added_vel) = added_vel {
+            let mut tmp = SpatialVector::zeros();
+
+            for rb in self.rbs.iter_mut() {
+                let ndofs = rb.dof.ndofs();
+
+                let mut tmp = tmp.rows_mut(ndofs, 0);
+                let vels = DVectorSlice::new(&self.velocities[rb.assembly_id..], ndofs);
+                let added_vels = DVectorSlice::new(&added_vel[rb.assembly_id..], ndofs);
+
+                tmp.copy_from(&vels);
+                tmp.axpy(N::one(), &added_vels, N::one());
+                rb.dof.integrate(params, vels.data.as_slice())
+            }
+        } else {
+            for rb in self.rbs.iter_mut() {
+                rb.dof.integrate(params, &self.velocities[rb.assembly_id..])
+            }
         }
     }
 

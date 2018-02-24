@@ -40,7 +40,7 @@ impl<N: Real> Joint<N> for FreeJoint<N> {
     ) {
     }
 
-    fn apply_displacement(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         let vel = Velocity::from_slice(vels);
         let disp = Isometry::new(vel.linear * params.dt, vel.angular * params.dt);
         self.position = Isometry::from_parts(

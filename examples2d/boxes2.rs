@@ -18,7 +18,8 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
-    // world.set_niter(100);
+    // world.set_max_velocity_iterations(100);
+    world.set_max_position_iterations(100);
 
     /*
      * Plane
@@ -57,7 +58,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 50;
+    let num = 2;
     let rad = 0.2;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;

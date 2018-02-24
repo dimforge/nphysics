@@ -15,8 +15,12 @@ impl<N: Copy + Zero> ImpulseCache<N> {
         self.cache.clear();
     }
 
+    pub fn contains(&self, contact_id: GenerationalId) -> bool {
+        contact_id.id < self.cache.len() && self.cache[contact_id.id].0 == contact_id
+    }
+
     pub fn get(&self, contact_id: GenerationalId) -> N {
-        if contact_id.id < self.cache.len() && self.cache[contact_id.id].0 == contact_id {
+        if self.contains(contact_id) {
             self.cache[contact_id.id].1
         } else {
             Zero::zero()

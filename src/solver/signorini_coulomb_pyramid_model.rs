@@ -47,14 +47,24 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
-
+        let id_friction_ground = constraints.velocity.bilateral_ground.len();
+        let id_friction = constraints.velocity.bilateral.len();
+        let mut in_cache = 0;
         for manifold in manifolds {
             let b1 = bodies.body_part(manifold.b1);
             let b2 = bodies.body_part(manifold.b2);
 
             for c in manifold.contacts() {
+                if self.impulses.contains(c.id) {
+                    in_cache += 1;
+                }
                 let impulse = self.impulses.get(c.id);
                 let impulse_id = self.impulses.entry_id(c.id);
+
+                let depth = c.contact.depth + manifold.margin;
+                if depth < N::zero() {
+                    continue;
+                }
 
                 let ground_constraint = SignoriniModel::build_constraint(
                     params,
@@ -73,23 +83,20 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 );
 
                 let dependency;
-                let warmstart_enabled;
 
                 if ground_constraint {
                     let constraints = &constraints.velocity.unilateral_ground;
                     dependency = constraints.len() - 1;
-                    warmstart_enabled = !constraints[dependency].impulse.is_zero();
                 } else {
                     let constraints = &constraints.velocity.unilateral;
                     dependency = constraints.len() - 1;
-                    warmstart_enabled = !constraints[dependency].impulse.is_zero();
                 }
 
                 let assembly_id1 = b1.parent_companion_id();
                 let assembly_id2 = b2.parent_companion_id();
 
                 // Generate friction constraints.
-                let friction_coeff = na::convert(0.3); // XXX hard-coded friction coefficient.
+                let friction_coeff = na::convert(0.5); // XXX hard-coded friction coefficient.
                 let limits = ImpulseLimits::Dependent {
                     dependency: dependency,
                     coeff: friction_coeff,
@@ -111,19 +118,19 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         jacobians,
                     );
 
-                    let warmstart = if warmstart_enabled {
-                        impulse[i] * params.warmstart_coeff
-                    } else {
-                        na::zero()
-                    };
+                    let warmstart = impulse[i] * params.warmstart_coeff;
 
                     if geom.is_ground_constraint() {
-                        let constraint =
-                            BilateralGroundConstraint::new(geom, limits, warmstart, impulse_id + i);
+                        let constraint = BilateralGroundConstraint::new(
+                            geom,
+                            limits,
+                            warmstart,
+                            impulse_id * DIM + i,
+                        );
                         constraints.velocity.bilateral_ground.push(constraint);
                     } else {
                         let constraint =
-                            BilateralConstraint::new(geom, limits, warmstart, impulse_id + i);
+                            BilateralConstraint::new(geom, limits, warmstart, impulse_id * DIM + i);
                         constraints.velocity.bilateral.push(constraint);
                     }
 
@@ -134,16 +141,20 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             }
         }
 
+        println!("Cached impulses: {}", in_cache * 2);
+
         self.vel_ground_rng = id_vel_ground..constraints.velocity.unilateral_ground.len();
         self.vel_rng = id_vel..constraints.velocity.unilateral.len();
+        self.friction_ground_rng = id_friction_ground..constraints.velocity.bilateral_ground.len();
+        self.friction_rng = id_friction..constraints.velocity.bilateral.len();
     }
 
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
         let ground_friction =
-            &constraints.velocity.unilateral_ground[self.friction_ground_rng.clone()];
-        let friction = &constraints.velocity.unilateral[self.friction_rng.clone()];
+            &constraints.velocity.bilateral_ground[self.friction_ground_rng.clone()];
+        let friction = &constraints.velocity.bilateral[self.friction_rng.clone()];
 
         for c in ground_contacts {
             self.impulses[c.cache_id][0] = c.impulse;

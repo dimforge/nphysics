@@ -32,38 +32,25 @@ impl<N: Real> SORProx<N> {
         /*
          * Setup constraints.
          */
-        let mut warmstarted = 0;
         for c in unilateral.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
             self.setup_unilateral(c, jacobians, mj_lambda, dim1, dim2);
-            if c.impulse != N::zero() {
-                warmstarted += 1;
-            }
         }
 
         for c in unilateral_ground.iter_mut() {
             let dim = Dynamic::new(c.ndofs);
             self.setup_unilateral_ground(c, jacobians, mj_lambda, dim);
-            if c.impulse != N::zero() {
-                warmstarted += 1;
-            }
         }
 
         for c in bilateral.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
             self.setup_bilateral(c, jacobians, mj_lambda, dim1, dim2);
-            if c.impulse != N::zero() {
-                warmstarted += 1;
-            }
         }
 
         for c in bilateral_ground.iter_mut() {
             self.setup_bilateral_ground(c, jacobians, mj_lambda, Dynamic::new(c.ndofs));
-            if c.impulse != N::zero() {
-                warmstarted += 1;
-            }
         }
 
         /*
@@ -90,29 +77,6 @@ impl<N: Real> SORProx<N> {
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {
-        for c in unilateral.iter_mut() {
-            if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
-                // Most common case (between two free rigid bodies).
-                self.solve_unilateral(c, jacobians, mj_lambda, SpatialDim {}, SpatialDim {})
-            } else {
-                let dim1 = Dynamic::new(c.ndofs1);
-                let dim2 = Dynamic::new(c.ndofs2);
-                self.solve_unilateral(c, jacobians, mj_lambda, dim1, dim2)
-            }
-        }
-
-        for c in unilateral_ground.iter_mut() {
-            if c.ndofs == SPATIAL_DIM {
-                // Most common case (with one free rigid body).
-                // NOTE: it's weird that the compiler requires the { } even thouh SpatialDim is the
-                // alias of a marker type.
-                self.solve_unilateral_ground(c, jacobians, mj_lambda, SpatialDim {})
-            } else {
-                let dim = Dynamic::new(c.ndofs);
-                self.solve_unilateral_ground(c, jacobians, mj_lambda, dim)
-            }
-        }
-
         for c in bilateral.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
@@ -144,6 +108,29 @@ impl<N: Real> SORProx<N> {
             } else {
                 let dim = Dynamic::new(c.ndofs);
                 self.solve_bilateral_ground(c, unilateral_ground, jacobians, mj_lambda, dim)
+            }
+        }
+
+        for c in unilateral.iter_mut() {
+            if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
+                // Most common case (between two free rigid bodies).
+                self.solve_unilateral(c, jacobians, mj_lambda, SpatialDim {}, SpatialDim {})
+            } else {
+                let dim1 = Dynamic::new(c.ndofs1);
+                let dim2 = Dynamic::new(c.ndofs2);
+                self.solve_unilateral(c, jacobians, mj_lambda, dim1, dim2)
+            }
+        }
+
+        for c in unilateral_ground.iter_mut() {
+            if c.ndofs == SPATIAL_DIM {
+                // Most common case (with one free rigid body).
+                // NOTE: it's weird that the compiler requires the { } even thouh SpatialDim is the
+                // alias of a marker type.
+                self.solve_unilateral_ground(c, jacobians, mj_lambda, SpatialDim {})
+            } else {
+                let dim = Dynamic::new(c.ndofs);
+                self.solve_unilateral_ground(c, jacobians, mj_lambda, dim)
             }
         }
     }

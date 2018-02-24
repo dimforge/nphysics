@@ -1,6 +1,7 @@
 use slab::Slab;
 
 use na::{DVector, Real};
+use na::storage::Storage;
 
 use counters::Counters;
 use detection::BodyContactManifold;
@@ -11,7 +12,8 @@ use solver::{ConstraintSet, ContactModel, IntegrationParameters, SORProx};
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
     jacobians: Vec<N>, // FIXME: use a Vec or a DVector?
-    mj_lambda: DVector<N>,
+    mj_lambda_vel: DVector<N>,
+    mj_lambda_pos: DVector<N>,
     ext_vels: DVector<N>,
     contact_model: Box<ContactModel<N>>,
     constraints: ConstraintSet<N>,
@@ -23,7 +25,8 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         MoreauJeanSolver {
             jacobians: Vec::new(),
-            mj_lambda: DVector::zeros(0),
+            mj_lambda_vel: DVector::zeros(0),
+            mj_lambda_pos: DVector::zeros(0),
             ext_vels: DVector::zeros(0),
             contact_model: contact_model,
             constraints: constraints,
@@ -50,7 +53,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters.set_nconstraints(self.constraints.velocity.len());
 
         counters.resolution_started();
-        self.solve_constraints(params);
+        self.solve_velocity_constraints(params);
+        self.solve_position_constraints(params);
         self.save_cache();
         counters.resolution_completed();
 
@@ -99,7 +103,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         /*
          * Setup contact contsraints.
          */
-        self.constraints.velocity.clear();
+        self.constraints.clear();
 
         /*
          *
@@ -217,7 +221,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         );
     }
 
-    fn solve_constraints(&mut self, params: &IntegrationParameters<N>) {
+    fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>) {
         let solver = SORProx::new();
 
         solver.solve(
@@ -225,10 +229,26 @@ impl<N: Real> MoreauJeanSolver<N> {
             &mut self.constraints.velocity.unilateral,
             &mut self.constraints.velocity.bilateral_ground,
             &mut self.constraints.velocity.bilateral,
-            &mut self.mj_lambda,
+            &mut self.mj_lambda_vel,
             &self.jacobians,
-            params.niter,
+            params.max_velocity_iterations,
         );
+    }
+
+    fn solve_position_constraints(&mut self, params: &IntegrationParameters<N>) {
+        let solver = SORProx::new();
+
+        solver.solve(
+            &mut self.constraints.position.unilateral_ground,
+            &mut self.constraints.position.unilateral,
+            &mut self.constraints.position.bilateral_ground,
+            &mut self.constraints.position.bilateral,
+            &mut self.mj_lambda_pos,
+            &self.jacobians,
+            params.max_position_iterations,
+        );
+
+        self.mj_lambda_pos /= params.dt;
     }
 
     fn save_cache(&mut self) {
@@ -237,7 +257,8 @@ impl<N: Real> MoreauJeanSolver<N> {
 
     fn resize_buffers(&mut self, ndofs: usize) {
         // XXX: use resize functions instead of reallocating.
-        self.mj_lambda = DVector::zeros(ndofs);
+        self.mj_lambda_vel = DVector::zeros(ndofs);
+        self.mj_lambda_pos = DVector::zeros(ndofs);
         self.ext_vels = DVector::zeros(ndofs);
     }
 
@@ -255,10 +276,10 @@ impl<N: Real> MoreauJeanSolver<N> {
             {
                 let mut mb_vels = body.generalized_velocity_mut();
                 mb_vels += self.ext_vels.rows(id, ndofs);
-                mb_vels += self.mj_lambda.rows(id, ndofs);
+                mb_vels += self.mj_lambda_vel.rows(id, ndofs);
             }
 
-            body.apply_displacements(params);
+            body.integrate(params, self.mj_lambda_pos.rows(id, ndofs).data.as_slice());
         }
     }
 }
