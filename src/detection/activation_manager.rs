@@ -178,7 +178,8 @@ impl<N: Real> ActivationManager<N> {
             let handle = self.id_to_body[i];
             let mut body = bodies.body_mut(handle);
 
-            if self.can_deactivate[root] {
+            if false {
+                // self.can_deactivate[root] {
                 // Everybody in this set can be deactivacted.
                 if body.is_active() {
                     body.deactivate();

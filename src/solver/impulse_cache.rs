@@ -1,5 +1,5 @@
-use num::Zero;
 use std::mem;
+use num::Zero;
 use ncollide::utils::GenerationalId;
 
 pub struct ImpulseCache<N> {

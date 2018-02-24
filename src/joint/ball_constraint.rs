@@ -1,7 +1,7 @@
 use na::{DVector, Real};
 
 use object::{BodyHandle, BodySet};
-use solver::{BilateralConstraint, BilateralGroundConstraint, IntegrationParameters,
+use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
              UnilateralConstraint, UnilateralGroundConstraint};
 use solver::helper;
 use joint::ConstraintGenerator;
@@ -50,10 +50,7 @@ impl<N: Real> ConstraintGenerator<N> for BallConstraint<N> {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        _: &mut Vec<UnilateralGroundConstraint<N>>,
-        _: &mut Vec<UnilateralConstraint<N>>,
-        out_bilateral_ground: &mut Vec<BilateralGroundConstraint<N>>,
-        out_bilateral: &mut Vec<BilateralConstraint<N>>,
+        vel_constraints: &mut ConstraintSet<N>,
     ) {
         let b1 = bodies.body_part(self.b1);
         let b2 = bodies.body_part(self.b2);
@@ -84,8 +81,7 @@ impl<N: Real> ConstraintGenerator<N> for BallConstraint<N> {
             ground_jacobian_id,
             jacobian_id,
             jacobians,
-            out_bilateral_ground,
-            out_bilateral,
+            vel_constraints,
         );
     }
 }

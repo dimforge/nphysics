@@ -205,7 +205,7 @@ impl<N: Real> World<N> {
 
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
         for (coll1, coll2, c) in self.cworld.contact_manifolds() {
-            assert!(coll1.data().body() != coll2.data().body());
+            // assert!(coll1.data().body() != coll2.data().body());
 
             let b1 = self.bodies.body(coll1.data().body());
             let b2 = self.bodies.body(coll2.data().body());

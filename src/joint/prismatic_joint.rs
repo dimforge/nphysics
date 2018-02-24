@@ -3,7 +3,8 @@
 use na::{self, Real, Unit};
 
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{BilateralGroundConstraint, IntegrationParameters, UnilateralGroundConstraint};
+use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
+             UnilateralGroundConstraint};
 use object::{Multibody, MultibodyLinkRef};
 use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 
@@ -179,8 +180,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         ext_vels: &[N],
         ground_jacobian_id: &mut usize,
         jacobians: &mut [N],
-        out_unilateral: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_bilateral: &mut Vec<BilateralGroundConstraint<N>>,
+        vel_constraints: &mut ConstraintSet<N>,
     ) {
         joint::build_unit_joint_constraints(
             self,
@@ -192,8 +192,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
             ext_vels,
             ground_jacobian_id,
             jacobians,
-            out_unilateral,
-            out_bilateral,
+            vel_constraints,
         );
     }
 }

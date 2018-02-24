@@ -1,7 +1,8 @@
 use na::{self, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint};
-use solver::{BilateralGroundConstraint, IntegrationParameters, UnilateralGroundConstraint};
+use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
+             UnilateralGroundConstraint};
 use object::{Multibody, MultibodyLinkRef};
 use math::{JacobianSliceMut, Velocity};
 
@@ -81,8 +82,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
         ext_vels: &[N],
         ground_jacobian_id: &mut usize,
         jacobians: &mut [N],
-        out_unilateral: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_bilateral: &mut Vec<BilateralGroundConstraint<N>>,
+        vel_constraints: &mut ConstraintSet<N>,
     ) {
         self.prism1.build_constraints(
             params,
@@ -93,8 +93,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
             ext_vels,
             ground_jacobian_id,
             jacobians,
-            out_unilateral,
-            out_bilateral,
+            vel_constraints,
         );
         self.prism2.build_constraints(
             params,
@@ -105,8 +104,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
             ext_vels,
             ground_jacobian_id,
             jacobians,
-            out_unilateral,
-            out_bilateral,
+            vel_constraints,
         );
     }
 }

@@ -1,7 +1,7 @@
 use na::{DVector, Real};
 
 use detection::BodyContactManifold;
-use solver::{BilateralConstraint, BilateralGroundConstraint, IntegrationParameters,
+use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
              UnilateralConstraint, UnilateralGroundConstraint};
 use object::BodySet;
 
@@ -16,10 +16,7 @@ pub trait ContactModel<N: Real>: 'static {
         ground_jacobian_id: &mut usize,
         jacobian_id: &mut usize,
         jacobians: &mut [N],
-        out_ground_contacts: &mut Vec<UnilateralGroundConstraint<N>>,
-        out_contacts: &mut Vec<UnilateralConstraint<N>>,
-        out_ground_friction: &mut Vec<BilateralGroundConstraint<N>>,
-        out_friction: &mut Vec<BilateralConstraint<N>>,
+        velocity_constraints: &mut ConstraintSet<N>,
     );
 
     fn cache_impulses(
