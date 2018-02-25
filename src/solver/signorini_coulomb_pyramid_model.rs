@@ -61,11 +61,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 let impulse = self.impulses.get(c.id);
                 let impulse_id = self.impulses.entry_id(c.id);
 
-                let depth = c.contact.depth + manifold.margin;
-                if depth < N::zero() {
-                    continue;
-                }
-
                 let ground_constraint = SignoriniModel::build_constraint(
                     params,
                     bodies,
@@ -141,7 +136,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             }
         }
 
-        println!("Cached impulses: {}", in_cache * 2);
+        println!("Cached impulses: {}", in_cache * DIM);
 
         self.vel_ground_rng = id_vel_ground..constraints.velocity.unilateral_ground.len();
         self.vel_rng = id_vel..constraints.velocity.unilateral.len();

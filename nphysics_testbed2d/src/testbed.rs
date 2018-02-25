@@ -71,15 +71,12 @@ impl<'a> TestbedState<'a> {
 impl Testbed {
     pub fn new_empty() -> Testbed {
         let mode = VideoMode::new_init(800, 600, 32);
-        let window = match RenderWindow::new(
-            mode,
-            "nphysics 2d demo",
-            window_style::CLOSE,
-            &ContextSettings::default(),
-        ) {
-            Some(rwindow) => rwindow,
-            None => panic!("Error on creating the sfml window."),
-        };
+        let style = window_style::CLOSE | window_style::RESIZE | window_style::CLOSE;
+        let window =
+            match RenderWindow::new(mode, "nphysics 2d demo", style, &ContextSettings::default()) {
+                Some(rwindow) => rwindow,
+                None => panic!("Error on creating the sfml window."),
+            };
         Testbed {
             world: World::new(),
             callbacks: Vec::new(),

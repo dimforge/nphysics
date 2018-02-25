@@ -1,6 +1,6 @@
 use slab::Slab;
 
-use na::{DVector, Real};
+use na::{self, DVector, DVectorSlice, Real};
 use na::storage::Storage;
 
 use counters::Counters;
@@ -54,12 +54,13 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         counters.resolution_started();
         self.solve_velocity_constraints(params);
+        self.update_velocities(bodies, island);
         self.solve_position_constraints(params);
+        self.update_positions(bodies, island, params);
         self.save_cache();
         counters.resolution_completed();
 
         counters.position_update_started();
-        self.update_positions(bodies, island, params);
         counters.position_update_completed();
     }
 
@@ -86,6 +87,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         }
 
         self.resize_buffers(system_ndofs);
+        self.constraints.clear();
 
         /*
          * Initialize M^{-1} h * dt
@@ -99,11 +101,6 @@ impl<N: Real> MoreauJeanSolver<N> {
                 .rows_mut(id, accs.len())
                 .axpy(params.dt, &accs, N::zero());
         }
-
-        /*
-         * Setup contact contsraints.
-         */
-        self.constraints.clear();
 
         /*
          *
@@ -247,8 +244,6 @@ impl<N: Real> MoreauJeanSolver<N> {
             &self.jacobians,
             params.max_position_iterations,
         );
-
-        self.mj_lambda_pos /= params.dt;
     }
 
     fn save_cache(&mut self) {
@@ -262,12 +257,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         self.ext_vels = DVector::zeros(ndofs);
     }
 
-    fn update_positions(
-        &self,
-        bodies: &mut BodySet<N>,
-        island: &[BodyHandle],
-        params: &IntegrationParameters<N>,
-    ) {
+    fn update_velocities(&mut self, bodies: &mut BodySet<N>, island: &[BodyHandle]) {
         for handle in island {
             let mut body = bodies.body_mut(*handle);
             let id = body.companion_id();
@@ -278,6 +268,60 @@ impl<N: Real> MoreauJeanSolver<N> {
                 mb_vels += self.ext_vels.rows(id, ndofs);
                 mb_vels += self.mj_lambda_vel.rows(id, ndofs);
             }
+        }
+
+        /*
+         * Update position contsraints with new velocities.
+         */
+        for c in &mut self.constraints.position.unilateral {
+            let j1 = DVectorSlice::new(&self.jacobians[c.jacobian_id1..], c.ndofs1);
+            let j2 = DVectorSlice::new(&self.jacobians[c.jacobian_id2..], c.ndofs2);
+            let ev1 = self.ext_vels.rows(c.assembly_id1, c.ndofs1);
+            let ev2 = self.ext_vels.rows(c.assembly_id2, c.ndofs2);
+            let mj1 = self.mj_lambda_vel.rows(c.assembly_id1, c.ndofs1);
+            let mj2 = self.mj_lambda_vel.rows(c.assembly_id2, c.ndofs2);
+
+            c.rhs += j1.dot(&ev1) + j2.dot(&ev2) + j1.dot(&mj1) + j2.dot(&mj2);
+        }
+
+        for c in &mut self.constraints.position.unilateral_ground {
+            let j = DVectorSlice::new(&self.jacobians[c.jacobian_id..], c.ndofs);
+            let ev = self.ext_vels.rows(c.assembly_id, c.ndofs);
+            let mj = self.mj_lambda_vel.rows(c.assembly_id, c.ndofs);
+
+            c.rhs += j.dot(&ev) + j.dot(&mj);
+        }
+
+        for c in &mut self.constraints.position.bilateral {
+            let j1 = DVectorSlice::new(&self.jacobians[c.jacobian_id1..], c.ndofs1);
+            let j2 = DVectorSlice::new(&self.jacobians[c.jacobian_id2..], c.ndofs2);
+            let ev1 = self.ext_vels.rows(c.assembly_id1, c.ndofs1);
+            let ev2 = self.ext_vels.rows(c.assembly_id2, c.ndofs2);
+            let mj1 = self.mj_lambda_vel.rows(c.assembly_id1, c.ndofs1);
+            let mj2 = self.mj_lambda_vel.rows(c.assembly_id2, c.ndofs2);
+
+            c.rhs += /*j1.dot(&ev1) + j2.dot(&ev2) +*/ j1.dot(&mj1) + j2.dot(&mj2);
+        }
+
+        for c in &mut self.constraints.position.bilateral_ground {
+            let j = DVectorSlice::new(&self.jacobians[c.jacobian_id..], c.ndofs);
+            let ev = self.ext_vels.rows(c.assembly_id, c.ndofs);
+            let mj = self.mj_lambda_vel.rows(c.assembly_id, c.ndofs);
+
+            c.rhs += /*j.dot(&ev) +*/ j.dot(&mj);
+        }
+    }
+
+    fn update_positions(
+        &self,
+        bodies: &mut BodySet<N>,
+        island: &[BodyHandle],
+        params: &IntegrationParameters<N>,
+    ) {
+        for handle in island {
+            let mut body = bodies.body_mut(*handle);
+            let id = body.companion_id();
+            let ndofs = body.ndofs();
 
             body.integrate(params, self.mj_lambda_pos.rows(id, ndofs).data.as_slice());
         }

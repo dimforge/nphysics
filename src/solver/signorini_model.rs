@@ -65,7 +65,7 @@ impl<N: Real> SignoriniModel<N> {
             geom.rhs += -depth / params.dt;
         } else {
             let restitution = N::zero(); // FIXME: (rb1.restitution() + rb2.restitution()) * na::convert(0.5) * dvel;
-            let stabilization = N::zero(); // -depth / params.dt * params.erp;
+            let stabilization = -depth * params.erp / params.dt;
 
             geom.rhs += na::inf(&restitution, &stabilization);
         }
@@ -78,46 +78,12 @@ impl<N: Real> SignoriniModel<N> {
                 .unilateral_ground
                 .push(UnilateralGroundConstraint::new(geom, warmstart, cache_id));
 
-            let limits = ImpulseLimits::Independent {
-                min: N::zero(),
-                max: na::convert(10000.2),
-            };
-
-            if depth > N::zero() {
-                geom.rhs = -depth; /*na::sup(
-                &((-depth + na::convert(0.005)) * params.erp),
-                &na::convert(-0.2),
-            );*/
-
-                constraints
-                    .position
-                    .bilateral_ground
-                    .push(BilateralGroundConstraint::new(geom, limits, N::zero(), 0));
-            }
             true
         } else {
             constraints
                 .velocity
                 .unilateral
                 .push(UnilateralConstraint::new(geom, warmstart, cache_id));
-
-            let limits = ImpulseLimits::Independent {
-                min: N::zero(),
-                max: na::convert(10000.2),
-            };
-
-            if depth > N::zero() {
-                geom.rhs = -depth;
-                /*
-                geom.rhs = na::sup(
-                    &((-depth + na::convert(0.005)) * params.erp),
-                    &na::convert(-0.2),
-                );*/
-                constraints
-                    .position
-                    .bilateral
-                    .push(BilateralConstraint::new(geom, limits, N::zero(), 0));
-            }
 
             false
         }
