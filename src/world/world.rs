@@ -110,6 +110,10 @@ impl<N: Real> World<N> {
         self.params.max_position_iterations = niter;
     }
 
+    pub fn set_warmstart_factor(&mut self, value: N) {
+        self.params.warmstart_coeff = value;
+    }
+
     pub fn activate_body(&mut self, handle: BodyHandle) {
         Self::activate_body_at(&mut self.bodies, handle)
     }
@@ -221,7 +225,8 @@ impl<N: Real> World<N> {
                 contact_manifolds.push(BodyContactManifold::new(
                     coll1.data().body(),
                     coll2.data().body(),
-                    coll1.data().margin() + coll2.data().margin(),
+                    coll1.data().margin(),
+                    coll2.data().margin(),
                     c,
                 ));
             }

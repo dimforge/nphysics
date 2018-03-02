@@ -1,8 +1,7 @@
 use na::{DVector, Real};
 
 use detection::BodyContactManifold;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::BodySet;
 
 pub trait ContactModel<N: Real>: 'static {

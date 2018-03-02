@@ -665,13 +665,13 @@ impl<N: Real> Multibody<N> {
                     rb.dof.jacobian(&parent_rb.local_to_world, &mut rb_joint_j);
 
                     let rb_joint_j_v = rb_joint_j.fixed_rows::<Dim>(0);
-                    let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
 
                     // JDot
                     coriolis_v_part.gemm(N::one(), &parent_w, &rb_joint_j_v, N::one());
 
                     #[cfg(feature = "dim3")]
                     {
+                        let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
                         let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
                         coriolis_w_part.gemm(N::one(), &parent_w, &rb_joint_j_w, N::one());
                     }
