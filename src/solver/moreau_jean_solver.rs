@@ -300,7 +300,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             let mj1 = self.mj_lambda_vel.rows(c.assembly_id1, c.ndofs1);
             let mj2 = self.mj_lambda_vel.rows(c.assembly_id2, c.ndofs2);
 
-            c.rhs += /*j1.dot(&ev1) + j2.dot(&ev2) +*/ j1.dot(&mj1) + j2.dot(&mj2);
+            c.rhs += j1.dot(&ev1) + j2.dot(&ev2) + j1.dot(&mj1) + j2.dot(&mj2);
         }
 
         for c in &mut self.constraints.position.bilateral_ground {
@@ -308,7 +308,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             let ev = self.ext_vels.rows(c.assembly_id, c.ndofs);
             let mj = self.mj_lambda_vel.rows(c.assembly_id, c.ndofs);
 
-            c.rhs += /*j.dot(&ev) +*/ j.dot(&mj);
+            c.rhs += j.dot(&ev) + j.dot(&mj);
         }
     }
 

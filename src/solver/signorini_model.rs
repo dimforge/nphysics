@@ -4,9 +4,8 @@ use na::{self, DVector, Real};
 use ncollide::query::TrackedContact;
 use detection::BodyContactManifold;
 use solver::helper;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel,
-             ForceDirection, ImpulseCache, ImpulseLimits, IntegrationParameters,
-             UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, ImpulseLimits,
+             IntegrationParameters, UnilateralConstraint, UnilateralGroundConstraint};
 use object::{BodyHandle, BodySet};
 use math::Point;
 
@@ -32,7 +31,8 @@ impl<N: Real> SignoriniModel<N> {
         b1: BodyHandle,
         b2: BodyHandle,
         c: &TrackedContact<Point<N>>,
-        margin: N,
+        margin1: N,
+        margin2: N,
         impulse: N,
         cache_id: usize,
         ground_jacobian_id: &mut usize,
@@ -51,8 +51,8 @@ impl<N: Real> SignoriniModel<N> {
             &b2,
             assembly_id1,
             assembly_id2,
-            &c.contact.world1,
-            &c.contact.world2,
+            &(c.contact.world1 + c.contact.normal.unwrap() * margin1),
+            &(c.contact.world2 - c.contact.normal.unwrap() * margin2),
             &ForceDirection::Linear(c.contact.normal),
             ext_vels,
             ground_jacobian_id,
@@ -60,7 +60,7 @@ impl<N: Real> SignoriniModel<N> {
             jacobians,
         );
 
-        let depth = c.contact.depth + margin;
+        let depth = c.contact.depth + margin1 + margin2;
         if depth < N::zero() {
             geom.rhs += -depth / params.dt;
         } else {
@@ -118,7 +118,8 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     manifold.b1,
                     manifold.b2,
                     c,
-                    manifold.margin,
+                    manifold.margin1,
+                    manifold.margin2,
                     self.impulses.get(c.id),
                     self.impulses.entry_id(c.id),
                     ground_jacobian_id,
