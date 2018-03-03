@@ -48,6 +48,11 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[inline]
+    pub fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
+        &mut self.activation
+    }
+
+    #[inline]
     pub fn activate(&mut self) {
         if let Some(threshold) = self.activation.deactivation_threshold() {
             self.activate_with_energy(threshold * na::convert(2.0));
@@ -222,11 +227,14 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[inline]
-    pub fn integrate(&mut self, params: &IntegrationParameters<N>, added_vel: &Velocity<N>) {
-        let disp = Isometry::new(
-            (self.velocity.linear + added_vel.linear) * params.dt,
-            (self.velocity.angular + added_vel.angular) * params.dt,
-        );
+    pub fn integrate(&mut self, params: &IntegrationParameters<N>) {
+        let disp = self.velocity * params.dt;
+        self.apply_displacement(&disp);
+    }
+
+    #[inline]
+    pub fn apply_displacement(&mut self, displacement: &Velocity<N>) {
+        let disp = Isometry::new(displacement.linear, displacement.angular);
         self.local_to_world = Isometry::from_parts(
             disp.translation * self.local_to_world.translation,
             disp.rotation * self.local_to_world.rotation,

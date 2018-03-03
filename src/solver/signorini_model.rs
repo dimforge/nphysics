@@ -1,13 +1,13 @@
 use std::ops::Range;
-use na::{self, DVector, Real};
+use na::{self, DVector, Real, Unit};
 
 use ncollide::query::TrackedContact;
 use detection::BodyContactManifold;
 use solver::helper;
-use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, ImpulseLimits,
-             IntegrationParameters, UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
+             UnilateralConstraint, UnilateralGroundConstraint};
 use object::{BodyHandle, BodySet};
-use math::Point;
+use math::{Point, Vector};
 
 pub struct SignoriniModel<N: Real> {
     impulses: ImpulseCache<N>,
@@ -31,6 +31,7 @@ impl<N: Real> SignoriniModel<N> {
         b1: BodyHandle,
         b2: BodyHandle,
         c: &TrackedContact<Point<N>>,
+        deepest_normal: &Unit<Vector<N>>,
         margin1: N,
         margin2: N,
         impulse: N,
@@ -46,21 +47,29 @@ impl<N: Real> SignoriniModel<N> {
         let assembly_id1 = b1.parent_companion_id();
         let assembly_id2 = b2.parent_companion_id();
 
+        let mut depth = c.contact.depth + margin1 + margin2;
+        let normal = if true {
+            // if depth >= N::zero() {
+            depth *= na::dot(deepest_normal.as_ref(), c.contact.normal.as_ref());
+            *deepest_normal
+        } else {
+            c.contact.normal
+        };
+
         let mut geom = helper::constraint_pair_geometry(
             &b1,
             &b2,
             assembly_id1,
             assembly_id2,
-            &(c.contact.world1 + c.contact.normal.unwrap() * margin1),
-            &(c.contact.world2 - c.contact.normal.unwrap() * margin2),
-            &ForceDirection::Linear(c.contact.normal),
+            &(c.contact.world1 + normal.unwrap() * margin1),
+            &(c.contact.world2 - normal.unwrap() * margin2),
+            &ForceDirection::Linear(normal),
             ext_vels,
             ground_jacobian_id,
             jacobian_id,
             jacobians,
         );
 
-        let depth = c.contact.depth + margin1 + margin2;
         if depth < N::zero() {
             geom.rhs += -depth / params.dt;
         } else {
@@ -110,6 +119,7 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         let id_vel = constraints.velocity.unilateral.len();
 
         for manifold in manifolds {
+            let deepest_contact_normal = &manifold.deepest_contact().contact.normal;
             for c in manifold.contacts() {
                 let _ = Self::build_constraint(
                     params,
@@ -118,6 +128,7 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     manifold.b1,
                     manifold.b2,
                     c,
+                    deepest_contact_normal,
                     manifold.margin1,
                     manifold.margin2,
                     self.impulses.get(c.id),

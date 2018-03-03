@@ -14,7 +14,7 @@ use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider,
 use joint::{ConstraintGenerator, ConstraintHandle, Joint};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use detection::{ActivationManager, BodyContactManifold};
-use math::{Inertia, Isometry, Point, Vector, Velocity};
+use math::{Inertia, Isometry, Point, Vector};
 
 pub type CollisionWorld<N> =
     ncollide::world::CollisionWorld<Point<N>, Isometry<N>, ColliderData<N>>;
@@ -245,12 +245,12 @@ impl<N: Real> World<N> {
         // FIXME: not sure what is the most pretty/efficient way of doing this.
         for rb in self.bodies.rigid_bodies_mut() {
             if rb.status() == BodyStatus::Kinematic {
-                rb.integrate(&self.params, &Velocity::zero())
+                rb.integrate(&self.params)
             }
         }
         for mb in self.bodies.multibodies_mut() {
             if mb.status() == BodyStatus::Kinematic {
-                mb.integrate(&self.params, None)
+                mb.integrate(&self.params)
             }
         }
         self.counters.solver_completed();

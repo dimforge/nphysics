@@ -3,8 +3,7 @@
 use na::{self, Real, Unit};
 
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 
@@ -156,6 +155,10 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.offset += vels[0] * params.dt
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        self.offset += disp[0]
     }
 
     fn jacobian_mul_coordinates(&self, acc: &[N]) -> Velocity<N> {

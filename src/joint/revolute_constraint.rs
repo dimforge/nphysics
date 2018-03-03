@@ -1,8 +1,7 @@
 use na::{DVector, Real, Unit};
 
 use object::{BodyHandle, BodySet};
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use solver::helper;
 use joint::ConstraintGenerator;
 use math::{AngularVector, Point, SPATIAL_DIM};

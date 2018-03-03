@@ -53,6 +53,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         for manifold in manifolds {
             let b1 = bodies.body_part(manifold.b1);
             let b2 = bodies.body_part(manifold.b2);
+            let deepest_contact_normal = &manifold.deepest_contact().contact.normal;
 
             for c in manifold.contacts() {
                 if self.impulses.contains(c.id) {
@@ -68,6 +69,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     manifold.b1,
                     manifold.b2,
                     c,
+                    deepest_contact_normal,
                     manifold.margin1,
                     manifold.margin2,
                     impulse[0],
@@ -99,7 +101,16 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 };
 
                 let mut i = 1;
-                Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
+
+                let depth = c.contact.depth + manifold.margin1 + manifold.margin2;
+                let normal = if true {
+                    // if depth >= N::zero() {
+                    *deepest_contact_normal
+                } else {
+                    c.contact.normal
+                };
+
+                Vector::orthonormal_subspace_basis(&[normal.unwrap()], |friction_dir| {
                     // FIXME: will this compute the momentum twice ?
                     // FIXME: this compute the contact point locations (with margins) several times,
                     // it was already computed for the signorini law.
@@ -108,8 +119,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         &b2,
                         assembly_id1,
                         assembly_id2,
-                        &(c.contact.world1 + c.contact.normal.unwrap() * manifold.margin1),
-                        &(c.contact.world2 - c.contact.normal.unwrap() * manifold.margin2),
+                        &(c.contact.world1 + normal.unwrap() * manifold.margin1),
+                        &(c.contact.world2 - normal.unwrap() * manifold.margin2),
                         &ForceDirection::Linear(Unit::new_unchecked(*friction_dir)),
                         ext_vels,
                         ground_jacobian_id,

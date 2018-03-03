@@ -1,8 +1,7 @@
 use na::{Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
-use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{JacobianSliceMut, Velocity};
 
@@ -87,6 +86,11 @@ impl<N: Real> Joint<N> for PinSlotJoint<N> {
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.prism.integrate(params, vels);
         self.revo.integrate(params, &[vels[1]]);
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        self.prism.apply_displacement(disp);
+        self.revo.apply_displacement(&[disp[1]]);
     }
 
     fn nconstraints(&self) -> usize {

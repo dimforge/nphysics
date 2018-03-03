@@ -2,6 +2,7 @@ use std::env;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::path::Path;
+use std::collections::HashMap;
 use time;
 use glfw::{Action, Key, Modifiers, MouseButton, WindowEvent};
 use num::Bounded;
@@ -13,6 +14,7 @@ use kiss3d::text::Font;
 use kiss3d::loader::obj;
 use ncollide::query::{self, Ray};
 use ncollide::world::CollisionGroups;
+use ncollide::utils::GenerationalId;
 use nphysics3d::object::BodyHandle;
 use nphysics3d::world::World;
 use nphysics3d::joint::{ConstraintHandle, FixedConstraint};
@@ -58,6 +60,7 @@ pub struct Testbed {
     time: f32,
     physics_timer: f64,
     hide_counters: bool,
+    persistant_contacts: HashMap<GenerationalId, bool>,
 }
 
 impl Testbed {
@@ -77,6 +80,7 @@ impl Testbed {
             time: 0.0,
             physics_timer: 0.0,
             hide_counters: false,
+            persistant_contacts: HashMap::new(),
         }
     }
 
@@ -499,13 +503,18 @@ impl Testbed {
                 self.graphics.borrow_mut().draw(&self.world);
             }
 
-            if running == RunMode::Step {
-                running = RunMode::Stop;
-            }
-
             if draw_colls {
                 // self.graphics.borrow_mut().draw_positions(&mut self.window, &self.world.rigid_bodies());
-                draw_collisions(&mut self.window, &mut self.world);
+                draw_collisions(
+                    &mut self.window,
+                    &mut self.world,
+                    &mut self.persistant_contacts,
+                    running != RunMode::Stop,
+                );
+            }
+
+            if running == RunMode::Step {
+                running = RunMode::Stop;
             }
 
             let color = Point3::new(0.0, 0.0, 0.0);
@@ -529,14 +538,29 @@ impl Testbed {
     }
 }
 
-fn draw_collisions(window: &mut Window, world: &World<f32>) {
+fn draw_collisions(
+    window: &mut Window,
+    world: &World<f32>,
+    existing: &mut HashMap<GenerationalId, bool>,
+    running: bool,
+) {
     for (_, _, manifold) in world.collision_world().contact_manifolds() {
         for c in manifold.contacts() {
-            window.draw_line(
-                &c.contact.world1,
-                &c.contact.world2,
-                &Point3::new(1.0, 0.0, 0.0),
-            );
+            if existing.contains_key(&c.id) {
+                if running {
+                    existing.insert(c.id, true);
+                }
+            } else {
+                existing.insert(c.id, false);
+            }
+
+            let color = if existing[&c.id] {
+                Point3::new(0.0, 0.0, 1.0)
+            } else {
+                Point3::new(1.0, 0.0, 0.0)
+            };
+
+            window.draw_line(&c.contact.world1, &c.contact.world2, &color);
             // let center = na::center(&c.world1, &c.world2);
             // let end    = center + c.normal * 0.4f32;
             // window.draw_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))

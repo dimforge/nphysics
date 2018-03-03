@@ -13,6 +13,14 @@ impl<N: Real> FreeJoint<N> {
     pub fn new(position: Isometry<N>) -> Self {
         FreeJoint { position }
     }
+
+    fn apply_displacement(&mut self, disp: &Velocity<N>) {
+        let disp = Isometry::new(disp.linear, disp.angular);
+        self.position = Isometry::from_parts(
+            disp.translation * self.position.translation,
+            disp.rotation * self.position.rotation,
+        )
+    }
 }
 
 impl<N: Real> Joint<N> for FreeJoint<N> {
@@ -41,12 +49,13 @@ impl<N: Real> Joint<N> for FreeJoint<N> {
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        let vel = Velocity::from_slice(vels);
-        let disp = Isometry::new(vel.linear * params.dt, vel.angular * params.dt);
-        self.position = Isometry::from_parts(
-            disp.translation * self.position.translation,
-            disp.rotation * self.position.rotation,
-        )
+        let disp = Velocity::from_slice(vels) * params.dt;
+        self.apply_displacement(&disp);
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        let disp = Velocity::from_slice(disp);
+        self.apply_displacement(&disp);
     }
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
