@@ -1,8 +1,7 @@
 use na::{Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
-use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{JacobianSliceMut, Velocity};
 
@@ -76,6 +75,10 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.revo.integrate(params, vels)
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        self.revo.apply_displacement(disp)
     }
 
     fn nconstraints(&self) -> usize {

@@ -19,7 +19,9 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
     // world.set_max_velocity_iterations(100);
-    world.set_max_position_iterations(100);
+    // world.set_max_position_iterations(100);
+    world.set_erp(0.0);
+    world.set_warmstart_factor(1.0);
 
     /*
      * Plane

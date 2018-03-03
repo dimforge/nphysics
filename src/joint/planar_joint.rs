@@ -1,8 +1,7 @@
 use na::{Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
-use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{JacobianSliceMut, Velocity};
 
@@ -108,6 +107,12 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         self.prism1.integrate(params, vels);
         self.prism2.integrate(params, &[vels[1]]);
         self.revo.integrate(params, &[vels[2]]);
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        self.prism1.apply_displacement(disp);
+        self.prism2.apply_displacement(&[disp[1]]);
+        self.revo.apply_displacement(&[disp[2]]);
     }
 
     fn nconstraints(&self) -> usize {

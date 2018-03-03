@@ -29,18 +29,15 @@ impl<N: Real> Neg for ForceDirection<N> {
 }
 
 #[inline]
-fn fill_constraint_geometry<N: Real>(
+pub fn fill_constraint_geometry<N: Real>(
     body: &BodyPart<N>,
     ndofs: usize,
     center: &Point<N>,
     dir: &ForceDirection<N>,
-    ext_vels: &DVector<N>,
     jacobian_id: usize,
     weighted_jacobian_id: usize,
-    assembly_id: usize,
     jacobians: &mut [N],
     inv_r: &mut N,
-    rhs: &mut N,
 ) {
     let force;
 
@@ -65,6 +62,19 @@ fn fill_constraint_geometry<N: Real>(
     let invm_j = DVectorSlice::new(&jacobians[weighted_jacobian_id..], ndofs);
 
     *inv_r += j.dot(&invm_j);
+}
+
+#[inline]
+fn velocity_constraint_rhs<N: Real>(
+    body: &BodyPart<N>,
+    ndofs: usize,
+    ext_vels: &DVector<N>,
+    jacobian_id: usize,
+    assembly_id: usize,
+    jacobians: &[N],
+    rhs: &mut N,
+) {
+    let j = DVectorSlice::new(&jacobians[jacobian_id..], ndofs);
     *rhs += j.dot(&body.parent_generalized_velocity()) + j.dot(&ext_vels.rows(assembly_id, ndofs));
 }
 
@@ -116,12 +126,18 @@ pub fn constraint_pair_geometry<N: Real>(
             res.ndofs1,
             center1,
             &dir.neg(),
-            ext_vels,
             res.jacobian_id1,
             res.weighted_jacobian_id1,
-            res.assembly_id1,
             jacobians,
             &mut inv_r,
+        );
+        velocity_constraint_rhs(
+            b1,
+            res.ndofs1,
+            ext_vels,
+            res.jacobian_id1,
+            res.assembly_id1,
+            jacobians,
             &mut res.rhs,
         );
     } else {
@@ -147,12 +163,18 @@ pub fn constraint_pair_geometry<N: Real>(
             res.ndofs2,
             center2,
             dir,
-            ext_vels,
             res.jacobian_id2,
             res.weighted_jacobian_id2,
-            res.assembly_id2,
             jacobians,
             &mut inv_r,
+        );
+        velocity_constraint_rhs(
+            b2,
+            res.ndofs2,
+            ext_vels,
+            res.jacobian_id2,
+            res.assembly_id2,
+            jacobians,
             &mut res.rhs,
         );
     } else {

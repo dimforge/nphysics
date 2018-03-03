@@ -38,4 +38,8 @@ impl<'a, N: Real> BodyContactManifold<'a, N> {
     pub fn contacts(&self) -> &[TrackedContact<Point<N>>] {
         self.manifold.contacts()
     }
+
+    pub fn deepest_contact(&self) -> &TrackedContact<Point<N>> {
+        self.manifold.deepest_contact()
+    }
 }

@@ -85,4 +85,10 @@ impl<N: Real> Joint<N> for BallJoint<N> {
         let disp = UnitQuaternion::new(angvel * params.dt);
         self.rot = disp * self.rot;
     }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        let angle = Vector3::from_row_slice(&disp[..3]);
+        let disp = UnitQuaternion::new(angle);
+        self.rot = disp * self.rot;
+    }
 }

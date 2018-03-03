@@ -48,6 +48,11 @@ impl<N: Real> ActivationStatus<N> {
     }
 
     #[inline]
+    pub fn set_deactivation_threshold(&mut self, threshold: Option<N>) {
+        self.threshold = threshold
+    }
+
+    #[inline]
     pub fn energy(&self) -> N {
         self.energy
     }
@@ -132,12 +137,10 @@ impl<'a, N: Real> BodyMut<'a, N> {
     }
 
     #[inline]
-    pub fn integrate(&mut self, params: &IntegrationParameters<N>, added_vel: &[N]) {
+    pub fn apply_displacement(&mut self, disp: &[N]) {
         match *self {
-            BodyMut::RigidBody(ref mut rb) => {
-                rb.integrate(params, &Velocity::from_slice(added_vel))
-            }
-            BodyMut::Multibody(ref mut mb) => mb.integrate(params, Some(added_vel)),
+            BodyMut::RigidBody(ref mut rb) => rb.apply_displacement(&Velocity::from_slice(disp)),
+            BodyMut::Multibody(ref mut mb) => mb.apply_displacement(disp),
             BodyMut::Ground(_) => {}
         }
     }
@@ -201,6 +204,7 @@ dispatch!(
 dispatch_mut!(
     BodyMut::set_companion_id(id: usize) -> ();
     BodyMut::generalized_velocity_mut() -> DVectorSliceMut<N>;
+    BodyMut::integrate(params: &IntegrationParameters<N>) -> ();
     // FIXME: should those directly be implemented only for bodies (to avoid duplicated code on
     // each body for activation)?
     BodyMut::activate() -> ();

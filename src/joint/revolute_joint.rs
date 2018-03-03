@@ -4,8 +4,7 @@ use na::{Real, Unit};
 
 use utils::GeneralizedCross;
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 
@@ -213,6 +212,11 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.angle += vels[0] * params.dt;
+        self.update_rot();
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        self.angle += disp[0];
         self.update_rot();
     }
 

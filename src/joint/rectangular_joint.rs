@@ -1,8 +1,7 @@
 use na::{self, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint};
-use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{JacobianSliceMut, Velocity};
 
@@ -66,6 +65,11 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.prism1.integrate(params, vels);
         self.prism2.integrate(params, &[vels[1]]);
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        self.prism1.apply_displacement(disp);
+        self.prism2.apply_displacement(&[disp[1]]);
     }
 
     fn nconstraints(&self) -> usize {
