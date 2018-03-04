@@ -5,8 +5,6 @@ use object::BodyHandle;
 use math::{Point, Vector};
 
 pub struct NonlinearUnilateralConstraint<N: Real> {
-    pub impulse: N,
-
     pub inv_r: N,
     pub rhs: N,
 
@@ -25,4 +23,39 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     pub local2: Point<N>,
     pub normal2: Unit<Vector<N>>,
     pub margin2: N,
+}
+
+impl<N: Real> NonlinearUnilateralConstraint<N> {
+    pub fn new(
+        body1: BodyHandle,
+        ndofs1: usize,
+        body2: BodyHandle,
+        ndofs2: usize,
+        local1: Point<N>,
+        normal1: Unit<Vector<N>>,
+        margin1: N,
+        local2: Point<N>,
+        normal2: Unit<Vector<N>>,
+        margin2: N,
+        kinematic: ContactKinematic<Vector<N>>,
+    ) -> Self {
+        let inv_r = N::zero();
+        let rhs = N::zero();
+
+        NonlinearUnilateralConstraint {
+            inv_r,
+            rhs,
+            ndofs1,
+            body1,
+            ndofs2,
+            body2,
+            kinematic,
+            local1,
+            normal1,
+            margin1,
+            local2,
+            normal2,
+            margin2,
+        }
+    }
 }
