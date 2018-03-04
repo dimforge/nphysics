@@ -5,7 +5,7 @@ use ncollide::query::TrackedContact;
 use detection::BodyContactManifold;
 use solver::helper;
 use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
-             UnilateralConstraint, UnilateralGroundConstraint};
+             NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
 use object::{BodyHandle, BodySet};
 use math::{Point, Vector};
 
@@ -79,8 +79,24 @@ impl<N: Real> SignoriniModel<N> {
             geom.rhs += na::inf(&restitution, &stabilization);
         }
 
-        let warmstart = impulse * params.warmstart_coeff;
+        constraints
+            .position
+            .unilateral
+            .push(NonlinearUnilateralConstraint::new(
+                b1.handle(),
+                geom.ndofs1,
+                b2.handle(),
+                geom.ndofs2,
+                c.local1,
+                c.normal1,
+                margin1,
+                c.local2,
+                c.normal2,
+                margin2,
+                c.kinematic,
+            ));
 
+        let warmstart = impulse * params.warmstart_coeff;
         if geom.is_ground_constraint() {
             constraints
                 .velocity

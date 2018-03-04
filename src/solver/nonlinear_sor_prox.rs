@@ -78,16 +78,17 @@ impl<N: Real> NonlinearSORProx<N> {
 
         let mut world1 = m1.transform_point(&constraint.local1);
         let mut world2 = m2.transform_point(&constraint.local2);
-        let mut normal1 = Unit::new_unchecked(m1.transform_vector(constraint.normal1.as_ref()));
-        let mut normal2 = Unit::new_unchecked(m2.transform_vector(constraint.normal2.as_ref()));
+        let normal;
         let depth;
 
         match constraint.kinematic {
             ContactKinematic::PlanePoint => {
-                depth = na::dot(normal1.as_ref(), &(world2 - world1));
-                world1 = world2 - normal1.as_ref() * depth;
+                normal = Unit::new_unchecked(m1.transform_vector(constraint.normal1.as_ref()));
+                depth = na::dot(normal.as_ref(), &(world2 - world1));
+                world1 = world2 - normal.as_ref() * depth;
             }
             ContactKinematic::PointPlane => {
+                let normal2 = Unit::new_unchecked(m2.transform_vector(constraint.normal2.as_ref()));
                 depth = na::dot(normal2.as_ref(), &(world1 - world2));
                 world2 = world1 - normal2.as_ref() * depth;
             }
@@ -108,10 +109,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 world2 = world1 - shift;
                 depth = na::norm(&shift);
             }
-            ContactKinematic::LineLine(dir1, dir2) => {
-                let a = N::zero();
-                depth = N::zero();
-            }
+            ContactKinematic::LineLine(dir1, dir2) => unimplemented!(),
             ContactKinematic::Unknown => {
                 let a = N::zero();
                 depth = N::zero();

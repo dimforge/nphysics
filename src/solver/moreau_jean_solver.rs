@@ -7,7 +7,7 @@ use counters::Counters;
 use detection::BodyContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::ConstraintGenerator;
-use solver::{ConstraintSet, ContactModel, IntegrationParameters, SORProx};
+use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -54,12 +54,12 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         counters.resolution_started();
         self.solve_velocity_constraints(params);
-        self.update_velocities_and_integrate(bodies, island, params);
-        self.solve_position_constraints(params);
         self.save_cache();
         counters.resolution_completed();
 
         counters.position_update_started();
+        self.update_velocities_and_integrate(bodies, island, params);
+        self.solve_position_constraints(bodies, params);
         counters.position_update_completed();
     }
 
@@ -231,19 +231,20 @@ impl<N: Real> MoreauJeanSolver<N> {
         );
     }
 
-    fn solve_position_constraints(&mut self, params: &IntegrationParameters<N>) {
-        /*
-        let solver = SORProx::new();
+    fn solve_position_constraints(
+        &mut self,
+        bodies: &mut BodySet<N>,
+        params: &IntegrationParameters<N>,
+    ) {
+        let solver = NonlinearSORProx::new();
 
         solver.solve(
-            &mut self.constraints.position.unilateral_ground,
+            bodies,
             &mut self.constraints.position.unilateral,
-            &mut self.constraints.position.bilateral_ground,
-            &mut self.constraints.position.bilateral,
             &mut self.mj_lambda_pos,
-            &self.jacobians,
+            &mut self.jacobians,
             params.max_position_iterations,
-        );*/
+        );
     }
 
     fn save_cache(&mut self) {
