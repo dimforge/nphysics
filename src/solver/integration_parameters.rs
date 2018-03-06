@@ -31,8 +31,8 @@ impl<N: Real> Default for IntegrationParameters<N> {
         Self::new(
             na::convert(1.0 / 60.0),
             na::convert(0.2),
-            na::convert(0.5),
-            10,
+            na::convert(1.0),
+            8,
             3,
         )
     }

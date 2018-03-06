@@ -103,14 +103,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 let mut i = 1;
 
                 let depth = c.contact.depth + manifold.margin1 + manifold.margin2;
-                let normal = if true {
-                    // if depth >= N::zero() {
-                    *deepest_contact_normal
-                } else {
-                    c.contact.normal
-                };
 
-                Vector::orthonormal_subspace_basis(&[normal.unwrap()], |friction_dir| {
+                Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
                     // FIXME: will this compute the momentum twice ?
                     // FIXME: this compute the contact point locations (with margins) several times,
                     // it was already computed for the signorini law.
@@ -119,8 +113,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         &b2,
                         assembly_id1,
                         assembly_id2,
-                        &(c.contact.world1 + normal.unwrap() * manifold.margin1),
-                        &(c.contact.world2 - normal.unwrap() * manifold.margin2),
+                        &(c.contact.world1 + c.contact.normal.unwrap() * manifold.margin1),
+                        &(c.contact.world2 - c.contact.normal.unwrap() * manifold.margin2),
                         &ForceDirection::Linear(Unit::new_unchecked(*friction_dir)),
                         ext_vels,
                         ground_jacobian_id,
