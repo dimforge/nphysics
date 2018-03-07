@@ -59,3 +59,42 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
         }
     }
 }
+
+pub struct NormalConeConsraint<V: Vector> {
+    pub inv_r: V::Real,
+    pub rhs: V::Real,
+
+    pub ndofs1: usize,
+    pub body1: BodyHandle,
+
+    pub ndofs2: usize,
+    pub body2: BodyHandle,
+
+    pub ncone1: PolyhedralCone<Vector>,
+    pub ncone2: PolyhedralCone<Vector>,
+}
+
+impl<V: Vector> NormalConeConsraint<V> {
+    pub fn new(
+        body1: BodyHandle,
+        ndofs1: usize,
+        body2: BodyHandle,
+        ndofs2: usize,
+        ncone1: PolyhedralCone<Vector>,
+        ncone2: PolyhedralCone<Vector>,
+    ) -> Self {
+        let inv_r = na::zero();
+        let rhs = na::zero();
+
+        NormalConeConsraint {
+            inv_r,
+            rhs,
+            body1,
+            ndofs1,
+            body2,
+            ndofs2,
+            ncone1,
+            ncone2,
+        }
+    }
+}
