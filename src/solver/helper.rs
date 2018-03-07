@@ -32,6 +32,8 @@ impl<N: Real> Neg for ForceDirection<N> {
 pub fn fill_constraint_geometry<N: Real>(
     body: &BodyPart<N>,
     ndofs: usize,
+    // FIXME: center is used only with ForceDirection::Linear.
+    // Add it to the enum variant instead?
     center: &Point<N>,
     dir: &ForceDirection<N>,
     jacobian_id: usize,

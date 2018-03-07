@@ -48,7 +48,7 @@ impl<N: Real> NonlinearSORProx<N> {
         dim1: D1,
         dim2: D2,
     ) {
-        self.update_constraint(bodies, constraint, jacobians);
+        self.update_contact_constraint(bodies, constraint, jacobians);
 
         let impulse = -constraint.rhs / constraint.inv_r;
 
@@ -66,7 +66,44 @@ impl<N: Real> NonlinearSORProx<N> {
         }
     }
 
-    fn update_constraint(
+    fn update_normal_cone_consraint(
+        &self,
+        bodies: &BodySet<N>,
+        constraint: &mut NonlinearUnilateralConstraint<N>,
+        jacobians: &mut [N],
+    ) {
+        // FIXME: for 2D rigid bodies, there is no need to recompute the
+        // constraint geometry at each frame because the jacobians will
+        // always be the same.
+        helper::fill_constraint_geometry(
+            &body1,
+            constraint.ndofs1,
+            &P::origin(),
+            &ForceDirection::Angular(-axis),
+            constraint.ndofs1 + constraint.ndofs2,
+            0,
+            jacobians,
+            &mut constraint.inv_r,
+        );
+
+        helper::fill_constraint_geometry(
+            &body2,
+            constraint.ndofs2,
+            &P::origin(),
+            &ForceDirection::Angular(axis),
+            (constraint.ndofs1 * 2) + constraint.ndofs2,
+            constraint.ndofs1,
+            jacobians,
+            &mut constraint.inv_r,
+        );
+
+        // May happen sometimes for self-collisions (e.g. a multibody with itself).
+        if constraint.inv_r.is_zero() {
+            constraint.inv_r = N::one();
+        }
+    }
+
+    fn update_contact_constraint(
         &self,
         bodies: &BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
