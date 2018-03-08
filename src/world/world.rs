@@ -160,6 +160,8 @@ impl<N: Real> World<N> {
     pub fn step(&mut self) {
         self.counters.step_started();
         self.counters.update_started();
+        // FIXME: objects involeved in a non-linear position stabilization elready
+        // updated their kinematics.
         self.bodies.update_kinematics();
         self.bodies
             .update_dynamics(&self.gravity, &self.params, &mut self.workspace);

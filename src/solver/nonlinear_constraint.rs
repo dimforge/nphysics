@@ -9,6 +9,8 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     pub inv_r: N,
     pub rhs: N,
 
+    pub normal_constraint_id: usize,
+
     pub ndofs1: usize,
     pub body1: BodyHandle,
 
@@ -28,6 +30,7 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
 
 impl<N: Real> NonlinearUnilateralConstraint<N> {
     pub fn new(
+        normal_constraint_id: usize,
         body1: BodyHandle,
         ndofs1: usize,
         body2: BodyHandle,
@@ -44,6 +47,7 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
         let rhs = N::zero();
 
         NonlinearUnilateralConstraint {
+            normal_constraint_id,
             inv_r,
             rhs,
             ndofs1,
