@@ -1,6 +1,6 @@
 use na::Real;
-use solver::{BilateralConstraint, BilateralGroundConstraint, NonlinearUnilateralConstraint,
-             UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{BilateralConstraint, BilateralGroundConstraint, NonlinearNormalConeConstraint,
+             NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
 
 pub struct Constraints<N: Real> {
     pub unilateral_ground: Vec<UnilateralGroundConstraint<N>>,
@@ -34,21 +34,24 @@ impl<N: Real> Constraints<N> {
 
 pub struct NonlinearConstraints<N: Real> {
     pub unilateral: Vec<NonlinearUnilateralConstraint<N>>,
+    pub normal: Vec<NonlinearNormalConeConstraint<N>>,
 }
 
 impl<N: Real> NonlinearConstraints<N> {
     pub fn new() -> Self {
         NonlinearConstraints {
             unilateral: Vec::new(),
+            normal: Vec::new(),
         }
     }
 
     pub fn len(&self) -> usize {
-        self.unilateral.len()
+        self.unilateral.len() + self.normal.len()
     }
 
     pub fn clear(&mut self) {
         self.unilateral.clear();
+        self.normal.clear();
     }
 }
 

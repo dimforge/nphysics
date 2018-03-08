@@ -18,8 +18,8 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
-    // world.set_max_velocity_iterations(100);
-    // world.set_max_position_iterations(100);
+    // world.set_max_velocity_iterations(0);
+    // world.set_max_position_iterations(1);
     world.set_erp(0.0);
     world.set_warmstart_factor(1.0);
 
@@ -60,7 +60,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 50;
+    let num = 20;
     let rad = 0.2;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
@@ -70,7 +70,7 @@ fn main() {
     let inertia = geom.inertia(1.0);
 
     for i in 0usize..num {
-        for j in 0usize..num {
+        for j in 0..num {
             let x = i as f32 * shift - centerx;
             let y = -(j as f32 * shift + centery);
 
