@@ -124,11 +124,13 @@ impl<N: Real> SignoriniModel<N> {
             -Unit::new_unchecked(pos2.inverse_transform_vector(c.contact.normal.as_ref()));
 
         let contact_id = constraints.position.unilateral.len();
+        let normal_id = constraints.position.normal.len();
 
         constraints
             .position
             .unilateral
             .push(NonlinearUnilateralConstraint::new(
+                normal_id,
                 b1,
                 body1.status_dependent_parent_ndofs(),
                 b2,

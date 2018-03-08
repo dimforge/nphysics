@@ -36,9 +36,20 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                self.solve_unilateral(bodies, constraint, mj_lambda, jacobians, dim1, dim2)
+                self.solve_unilateral(bodies, constraint, mj_lambda, jacobians, dim1, dim2);
+
+                self.solve_normal(
+                    bodies,
+                    constraint,
+                    &mut ncone_constraints[constraint.normal_constraint_id],
+                    mj_lambda,
+                    jacobians,
+                    dim1,
+                    dim2,
+                );
             }
 
+            /*
             for constraint in ncone_constraints.iter_mut() {
                 // FIXME: specialize for SPATIAL_DIM.
                 let contact = &constraints[constraint.contact_id];
@@ -54,7 +65,7 @@ impl<N: Real> NonlinearSORProx<N> {
                     dim1,
                     dim2,
                 );
-            }
+            }*/
         }
     }
 
@@ -292,7 +303,11 @@ impl<N: Real> NonlinearSORProx<N> {
             world_axis = Unit::new_unchecked(m.transform_vector(axis.as_ref()));
         }
 
-        constraint.rhs = -ang;
+        constraint.rhs = -ang; // na::sup(&-ang, &na::convert(-0.02));
+                               // println!("Angular stabilization: {}", ang);
+        if constraint.rhs >= N::zero() {
+            return false;
+        }
 
         // FIXME: for 2D rigid bodies, there is no need to recompute the
         // constraint geometry at each frame because the jacobians will
