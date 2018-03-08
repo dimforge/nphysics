@@ -53,16 +53,28 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         for manifold in manifolds {
             let b1 = bodies.body_part(manifold.b1);
             let b2 = bodies.body_part(manifold.b2);
-            let deepest_contact_normal = &manifold.deepest_contact().contact.normal;
+            let deepest_contact = manifold.deepest_contact();
+            let deepest_contact_normal = &deepest_contact.contact.normal;
+
+            SignoriniModel::build_position_constraint(
+                bodies,
+                manifold.b1,
+                manifold.b2,
+                deepest_contact,
+                manifold.margin1,
+                manifold.margin2,
+                constraints,
+            );
 
             for c in manifold.contacts() {
                 if self.impulses.contains(c.id) {
                     in_cache += 1;
                 }
+
                 let impulse = self.impulses.get(c.id);
                 let impulse_id = self.impulses.entry_id(c.id);
 
-                let ground_constraint = SignoriniModel::build_constraint(
+                let ground_constraint = SignoriniModel::build_velocity_constraint(
                     params,
                     bodies,
                     ext_vels,

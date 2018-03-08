@@ -241,6 +241,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         solver.solve(
             bodies,
             &mut self.constraints.position.unilateral,
+            &mut self.constraints.position.normal,
             &mut self.mj_lambda_pos,
             &mut self.jacobians,
             params.max_position_iterations,

@@ -9,11 +9,13 @@ pub static DRAW_SCALE: f32 = 20.0;
 
 pub fn draw_colls(window: &mut graphics::RenderWindow, world: &World<f32>) {
     for (_, _, manifold) in world.collision_world().contact_manifolds() {
-        for c in manifold.contacts() {
-            let color = if c.kinematic == ContactKinematic::PointPoint {
+        for (i, c) in manifold.contacts().iter().enumerate() {
+            let color = if i == manifold.deepest_contact_id() {
+                Color::new_rgb(255, 0, 0)
+            } else if c.kinematic == ContactKinematic::PointPoint {
                 Color::new_rgb(0, 255, 0)
             } else {
-                Color::new_rgb(255, 0, 0)
+                Color::new_rgb(0, 0, 255)
             };
             draw_line(window, &c.contact.world1, &c.contact.world2, &color);
         }

@@ -19,8 +19,9 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
     // world.set_max_velocity_iterations(40);
-    // world.set_erp(0.0);
-    // world.set_warmstart_factor(1.0);
+    world.set_erp(0.2);
+    world.set_warmstart_factor(0.5);
+    world.set_max_position_iterations(0);
 
     /*
      * Ground.
@@ -53,7 +54,7 @@ fn main() {
         for j in 0usize..num {
             for k in 0usize..num {
                 let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery;
+                let y = j as f32 * shift + centery + 0.3;
                 let z = k as f32 * shift - centerz;
 
                 /*
