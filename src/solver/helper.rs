@@ -32,8 +32,6 @@ impl<N: Real> Neg for ForceDirection<N> {
 pub fn fill_constraint_geometry<N: Real>(
     body: &BodyPart<N>,
     ndofs: usize,
-    // FIXME: center is used only with ForceDirection::Linear.
-    // Add it to the enum variant instead?
     center: &Point<N>,
     dir: &ForceDirection<N>,
     jacobian_id: usize,
@@ -42,14 +40,14 @@ pub fn fill_constraint_geometry<N: Real>(
     inv_r: &mut N,
 ) {
     let force;
+    let pos = center - body.center_of_mass().coords;
 
     match *dir {
         ForceDirection::Linear(normal) => {
-            let pos = center - body.center_of_mass();
-            force = Force::shifted_linear_force(*normal, pos);
+            force = Force::linear_force_at_point(*normal, &pos);
         }
         ForceDirection::Angular(axis) => {
-            force = Force::torque_from_vector(*axis);
+            force = Force::torque_from_vector_at_point(*axis, &pos);
         }
     }
 
@@ -152,6 +150,7 @@ pub fn constraint_pair_geometry<N: Real>(
                 res.rhs -= vel.shift(&dpos).linear.dot(normal);
             }
             ForceDirection::Angular(ref axis) => {
+                // FIXME: do we have to take dpos into account here?
                 res.rhs -= vel.angular_vector().dot(axis);
             }
         }

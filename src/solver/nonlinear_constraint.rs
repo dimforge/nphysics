@@ -21,10 +21,12 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
 
     pub local1: Point<N>,
     pub normal1: Unit<Vector<N>>,
+    pub ncone1: PolyhedralCone<Vector<N>>,
     pub margin1: N,
 
     pub local2: Point<N>,
     pub normal2: Unit<Vector<N>>,
+    pub ncone2: PolyhedralCone<Vector<N>>,
     pub margin2: N,
 }
 
@@ -37,9 +39,11 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
         ndofs2: usize,
         local1: Point<N>,
         normal1: Unit<Vector<N>>,
+        ncone1: PolyhedralCone<Vector<N>>,
         margin1: N,
         local2: Point<N>,
         normal2: Unit<Vector<N>>,
+        ncone2: PolyhedralCone<Vector<N>>,
         margin2: N,
         kinematic: ContactKinematic<Vector<N>>,
     ) -> Self {
@@ -57,9 +61,11 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
             kinematic,
             local1,
             normal1,
+            ncone1,
             margin1,
             local2,
             normal2,
+            ncone2,
             margin2,
         }
     }

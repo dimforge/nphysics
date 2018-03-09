@@ -18,7 +18,7 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
-    // world.set_max_velocity_iterations(0);
+    world.set_max_velocity_iterations(50);
     // world.set_max_position_iterations(1);
     world.set_erp(0.0);
     world.set_warmstart_factor(1.0);
@@ -26,7 +26,7 @@ fn main() {
     /*
      * Plane
      */
-    let ground_radius = 50.0; // 0.2;
+    let ground_radius = 100.0; // 0.2;
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
         ground_radius - COLLIDER_MARGIN,
         ground_radius - COLLIDER_MARGIN,
@@ -60,24 +60,29 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 20;
-    let rad = 0.2;
-    let shift = rad * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
+    let num = 25;
+    let radx = 10.0;
+    let rady = 0.1;
+    let shiftx = radx * 2.0;
+    let shifty = rady * 2.0;
+    let centerx = shiftx * (num as f32) / 2.0;
+    let centery = shifty / 2.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
+    let geom = ShapeHandle::new(Cuboid::new(Vector2::new(
+        radx - COLLIDER_MARGIN,
+        rady - COLLIDER_MARGIN,
+    )));
     let inertia = geom.inertia(1.0);
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * shift - centerx;
-            let y = -(j as f32 * shift + centery);
+            let x = i as f32 * shiftx - centerx;
+            let y = -(j as f32 * shifty + centery);
 
             /*
              * Create the rigid body.
              */
-            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
+            let pos = Isometry2::new(Vector2::new(x, y - 5.0), 0.0);
             let handle = world.add_rigid_body(pos, inertia);
 
             /*

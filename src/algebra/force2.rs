@@ -1,6 +1,6 @@
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
-use na::{self, Real, U3, Vector, Vector1, Vector2, Vector3};
+use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3};
 use na::storage::Storage;
 
 #[derive(Copy, Clone, Debug)]
@@ -41,8 +41,18 @@ impl<N: Real> Force2<N> {
     }
 
     #[inline]
-    pub fn shifted_linear_force(linear: Vector2<N>, shift: Vector2<N>) -> Self {
-        Self::new(linear, shift.perp(&linear))
+    pub fn linear_force_at_point(linear: Vector2<N>, point: &Point2<N>) -> Self {
+        Self::new(linear, point.coords.perp(&linear))
+    }
+
+    #[inline]
+    pub fn torque_at_point(torque: N, point: &Point2<N>) -> Self {
+        Self::new(point.coords * -torque, torque)
+    }
+
+    #[inline]
+    pub fn torque_from_vector_at_point(torque: Vector1<N>, point: &Point2<N>) -> Self {
+        Self::torque_at_point(torque.x, point)
     }
 
     /// This twist seen as a slice.
