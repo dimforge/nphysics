@@ -56,16 +56,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             let deepest_contact = manifold.deepest_contact();
             let deepest_contact_normal = &deepest_contact.contact.normal;
 
-            SignoriniModel::build_position_constraint(
-                bodies,
-                manifold.b1,
-                manifold.b2,
-                deepest_contact,
-                manifold.margin1,
-                manifold.margin2,
-                constraints,
-            );
-
             for c in manifold.contacts() {
                 if self.impulses.contains(c.id) {
                     in_cache += 1;
@@ -89,6 +79,16 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     ground_jacobian_id,
                     jacobian_id,
                     jacobians,
+                    constraints,
+                );
+
+                SignoriniModel::build_position_constraint(
+                    bodies,
+                    manifold.b1,
+                    manifold.b2,
+                    c,
+                    manifold.margin1,
+                    manifold.margin2,
                     constraints,
                 );
 

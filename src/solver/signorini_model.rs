@@ -126,6 +126,12 @@ impl<N: Real> SignoriniModel<N> {
         let contact_id = constraints.position.unilateral.len();
         let normal_id = constraints.position.normal.len();
 
+        // XXX: we have to change the coordinate system
+        // if the collider orientation is not the same
+        // as the body's.
+        let ncone1 = c.normals1.clone();
+        let ncone2 = c.normals2.clone();
+
         constraints
             .position
             .unilateral
@@ -137,9 +143,11 @@ impl<N: Real> SignoriniModel<N> {
                 body2.status_dependent_parent_ndofs(),
                 local1,
                 normal1,
+                ncone1,
                 margin1,
                 local2,
                 normal2,
+                ncone2,
                 margin2,
                 c.kinematic,
             ));
