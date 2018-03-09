@@ -5,6 +5,7 @@ use alga::linear::Transformation;
 use alga::linear::ProjectiveTransformation;
 use na::{self, DVector, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN};
 use ncollide::query::ContactKinematic;
+use ncollide::query::closest_points_internal;
 
 use object::{BodyHandle, BodyPart, BodySet};
 use solver::helper;
@@ -211,11 +212,12 @@ impl<N: Real> NonlinearSORProx<N> {
                 unimplemented!()
             }
             ContactKinematic::LineLine(dir1, dir2) => {
-                let world_dir1 = m1 * dir1;
-                let world_dir2 = m2 * dir2;
-                // let (pt1, pt2) = closest_points(world1, world_dir1, world2, world_dir2);
-                // world1 = pt1;
-                // world2 = pt2;
+                let world_dir1 = m1 * dir1.unwrap();
+                let world_dir2 = m2 * dir2.unwrap();
+                let (pt1, pt2) = closest_points_internal::line_against_line(
+                    &world1, &world_dir1, &world2, &world_dir2);
+                world1 = pt1;
+                world2 = pt2;
 
                 if let Some((n, d)) = Unit::try_new_and_get(world2 - world1, N::zero()) {
                     let local_n1 = m1.inverse_transform_vector(n.as_ref());
