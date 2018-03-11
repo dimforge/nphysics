@@ -7,7 +7,8 @@ use counters::Counters;
 use detection::BodyContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::ConstraintGenerator;
-use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
+use solver::{ConstraintSet, ContactModel, IntegrationParameters,
+             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearSORProx, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -201,6 +202,11 @@ impl<N: Real> MoreauJeanSolver<N> {
                         &mut self.jacobians,
                         &mut self.constraints,
                     );
+
+                    if link.joint().nconstraints() != 0 {
+                        let generator = MultibodyJointLimitsNonlinearConstraintGenerator::new(link.handle());
+                        self.constraints.position.multibody_limits.push(generator)
+                    }
                 }
             }
         }
