@@ -3,7 +3,7 @@
 use na::{self, Real, Unit};
 
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{ConstraintSet, IntegrationParameters};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 
@@ -197,6 +197,23 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
             jacobians,
             constraints,
         );
+    }
+
+    fn nposition_constraints(&self) -> usize {
+        if self.min_position.is_some() || self.max_position.is_some() {
+            1
+        } else {
+            0
+        }
+    }
+
+    fn position_constraint(
+        &self,
+        _: usize,
+        link: &MultibodyLinkRef<N>,
+        jacobians: &mut [N]
+    ) -> Option<GenericNonlinearConstraint<N>> {
+        unit_joint_position_constraint(self, mb, link, 0, jacobians)
     }
 }
 

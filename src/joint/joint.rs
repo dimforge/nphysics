@@ -1,10 +1,11 @@
+
 use downcast::Any;
 
 use na::{DVectorSliceMut, Real};
 
 use joint::JointMotor;
 use solver::{BilateralGroundConstraint, ConstraintSet, IntegrationParameters,
-             UnilateralGroundConstraint};
+             UnilateralGroundConstraint, GenericNonlinearConstraint};
 use object::{Multibody, MultibodyLinkRef};
 use math::{Isometry, JacobianSliceMut, Vector, Velocity};
 
@@ -45,6 +46,17 @@ pub trait Joint<N: Real>: Any + Send + Sync {
         _velocity_constraints: &mut ConstraintSet<N>,
     ) {
     }
+
+    fn nposition_constraints(&self) -> usize {
+        0
+    }
+
+    fn position_constraint(
+        &self,
+        _i: usize,
+        _link: &MultibodyLinkRef<N>,
+        _jacobians: &mut [N]
+    ) -> Option<GenericNonlinearConstraint<N>> {}
 }
 
 downcast!(<N> Joint<N> where N: Real);
@@ -220,4 +232,59 @@ pub fn build_unit_joint_constraints<N: Real, J: UnitJoint<N>>(
             *ground_jacobian_id += 2 * mb.ndofs();
         }
     }
+}
+
+pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
+    joint: &J,
+    link: &MultibodyLinkRef<N>,
+    dof_id: usize,
+    jacobians: &mut [N],
+) -> Option<GenericNonlinearConstraint<N>> {
+
+    let mut sign = N::one();
+    let mut rhs = None;
+
+    if let Some(min_position) = joint.min_position() {
+        let err = min_position - joint.position();
+        if err >= N::zero() {
+            rhs = Some(-err);
+        }
+    }
+
+    if rhs.is_none() {
+        if let Some(max_position) = joint.max_position() {
+            let err = -(max_position - joint.position());
+            if err >= N::zero() {
+                rhs = Some(-err);
+                sign = -N::one();
+            }
+        }
+    }
+
+    if let Some(rhs) = rhs {
+        let mb = link.multibody();
+        DVectorSliceMut::new(jacobians, mb.ndofs()).fill(N::zero());
+        jacobians[link.assembly_id() + dof_id] = sign;
+        let weighted_jacobian_id = mb.ndofs();
+
+        link.inv_mass_mul_unit_joint_force(
+            dof_id,
+            sign,
+            &mut jacobians[weighted_jacobian_id..],
+        );
+
+        let inv_r = sign * jacobians[weighted_jacobian_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
+        let rhs = -err;
+
+        return Some(GenericNonlinearConstraint {
+            body1: mb.handle(),
+            body2: BodyHandle::ground(),
+            dim1: mb.ndofs(),
+            dim2: 0,
+            rhs,
+            inv_r
+        });
+    }
+
+    None
 }

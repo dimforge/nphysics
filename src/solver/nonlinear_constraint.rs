@@ -5,6 +5,21 @@ use ncollide::query::ContactKinematic;
 use object::BodyHandle;
 use math::{Point, Vector};
 
+
+pub struct GenericNonlinearConstraint<N: Real> {
+    body1: BodyHandle,
+    body2: BodyHandle,
+    dim1: usize,
+    dim2: usize,
+    rhs: N,
+    inv_r: N
+}
+
+pub trait NonlinearConstraintGenerator<N: Real> {
+    fn nconstraints(&self) -> usize;
+    fn constraint(&self, i: usize, bodies: &mut BodySet<N>, jacobians: &mut [N]) -> GenericNonlinearConstraint<N>;
+}
+
 pub struct NonlinearUnilateralConstraint<N: Real> {
     pub inv_r: N,
     pub rhs: N,
@@ -96,6 +111,34 @@ impl<N: Real> NonlinearNormalConeConstraint<N> {
             contact_id,
             ncone1,
             ncone2,
+        }
+    }
+}
+
+pub struct MultibodyJointLimitsNonlinearConstraintGenerator<N: Real> {
+    link: BodyHandle,
+}
+
+impl<N: Real> MultibodyJointLimitsNonlinearConstraintGenerator<N> {
+    pub fn new(link: BodyHandle) -> Self {
+        MultibodyJointLimitsNonlinearConstraintGenerator { link }
+    }
+}
+
+impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator<N> {
+    fn nconstraints(&self, bodies: &BodySet<N>) -> usize {
+        if let Some(link) = bodies.multibody_link(self.link) {
+            link.dof.nposition_constraints()
+        } else {
+            0
+        }
+    }
+
+    fn constraint(&self, i: usize, bodies: &mut BodySet<N>, jacobians: &mut [N]) -> Option<GenericNonlinearConstraint<N>> {
+        if let Some(link) = bodies.multibody_link(self.link) {
+            link.joint().position_constraint(&self, i, mb, link, jacobians)
+        } else {
+            None
         }
     }
 }
