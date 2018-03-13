@@ -4,7 +4,7 @@ use na::{Real, Unit};
 
 use utils::GeneralizedCross;
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{ConstraintSet, IntegrationParameters};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use object::{Multibody, MultibodyLinkRef};
 use math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 
@@ -216,6 +216,12 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
+        // println!("Applying displacement: {}", disp[0]);
+        // println!(
+        //     "Previous angle: {}, new: {}",
+        //     self.angle,
+        //     self.angle + disp[0]
+        // );
         self.angle += disp[0];
         self.update_rot();
     }
@@ -235,7 +241,6 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     fn build_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        mb: &Multibody<N>,
         link: &MultibodyLinkRef<N>,
         assembly_id: usize,
         dof_id: usize,
@@ -247,7 +252,6 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
         joint::build_unit_joint_constraints(
             self,
             params,
-            mb,
             link,
             assembly_id,
             dof_id,
@@ -256,6 +260,24 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
             jacobians,
             constraints,
         )
+    }
+
+    fn nposition_constraints(&self) -> usize {
+        if self.min_angle.is_some() || self.max_angle.is_some() {
+            1
+        } else {
+            0
+        }
+    }
+
+    fn position_constraint(
+        &self,
+        _: usize,
+        link: &MultibodyLinkRef<N>,
+        dof_id: usize,
+        jacobians: &mut [N],
+    ) -> Option<GenericNonlinearConstraint<N>> {
+        joint::unit_joint_position_constraint(self, link, dof_id, jacobians)
     }
 }
 

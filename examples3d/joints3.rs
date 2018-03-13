@@ -21,6 +21,8 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    world.set_erp(0.0);
+    world.set_warmstart_factor(1.0);
 
     /*
      * Geometries that will be re-used for several multibody links..

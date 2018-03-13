@@ -9,7 +9,9 @@ use ncollide::query::closest_points_internal;
 
 use object::{BodyHandle, BodyPart, BodySet};
 use solver::helper;
-use solver::{ForceDirection, NonlinearNormalConeConstraint, NonlinearUnilateralConstraint};
+use solver::{ForceDirection, MultibodyJointLimitsNonlinearConstraintGenerator,
+             NonlinearConstraintGenerator, NonlinearNormalConeConstraint,
+             NonlinearUnilateralConstraint};
 use math::{Isometry, Point, Rotation, Vector};
 
 struct ContactGeometry<N: Real> {
@@ -57,8 +59,7 @@ impl<N: Real> NonlinearSORProx<N> {
         bodies: &mut BodySet<N>,
         constraints: &mut [NonlinearUnilateralConstraint<N>],
         ncone_constraints: &mut [NonlinearNormalConeConstraint<N>],
-        multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator<N>],
-        mj_lambda: &mut DVector<N>,
+        multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator],
         jacobians: &mut [N],
         max_iter: usize,
     ) {
@@ -67,21 +68,20 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                self.solve_unilateral(bodies, constraint, jacobians, mj_lambda, dim1, dim2);
+                self.solve_unilateral(bodies, constraint, jacobians, dim1, dim2);
 
                 // self.solve_normal(
                 //     bodies,
                 //     constraint,
                 //     &mut ncone_constraints[constraint.normal_constraint_id],
                 //     jacobians,
-                //     mj_lambda,
                 //     dim1,
                 //     dim2,
                 // );
             }
 
             for generator in multibody_limits {
-                self.solve_generic(bodies, generator, jacobians, mj_lambda, dim1, dim2)
+                self.solve_generic(bodies, generator, jacobians)
             }
         }
     }
@@ -91,23 +91,36 @@ impl<N: Real> NonlinearSORProx<N> {
         bodies: &mut BodySet<N>,
         generator: &Gen,
         jacobians: &mut [N],
-        mj_lambda: &mut [N],
     ) {
-        let nconstraints = generator.nconstraints();
+        let nconstraints = generator.nconstraints(bodies);
 
-        for i in 0 .. nconstraints {
-            if let Some(constraint) = constraint.constraint(i, bodies, jacobians) {
-                let impulse = -rhs / inv_r;
-                VectorSliceMutN::new_generic_mut(jacobians, constraint.dim1, U1).mul_assign(constraint.impulse);
-                VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.dim1..], constraint.dim2, U1)
-                    .mul_assign(constraint.impulse);
+        for i in 0..nconstraints {
+            if let Some(constraint) = generator.constraint(i, bodies, jacobians) {
+                let dim1 = Dynamic::new(constraint.dim1);
+                let dim2 = Dynamic::new(constraint.dim2);
 
+                let erp: N = na::convert(0.2); // XXX: don't hard-code this.s
+                let allowed_error: N = na::convert(0.005); // XXX don't hard-code this.
+                let max_correction: N = na::convert(0.2); // XXX don't hard-code this.
+                let rhs = na::inf(&(-constraint.rhs * erp), &max_correction) - allowed_error;
+                let impulse = na::sup(&rhs, &N::zero()) / constraint.inv_r;
+
+                {
+                    let mut vs = VectorSliceMutN::new_generic_mut(jacobians, dim1, U1);
+                    vs.mul_assign(impulse);
+                }
+                VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.dim1..], dim2, U1)
+                    .mul_assign(impulse);
+
+                // FIXME: the body update should be performed lazily, especially because
+                // we dont actually need to update the kinematic of a multibody until
+                // we have to solve a contact involvoing one of its links.
                 bodies
                     .body_mut(constraint.body1)
                     .apply_displacement(&jacobians[0..constraint.dim1]);
-                bodies
-                    .body_mut(constraint.body2)
-                    .apply_displacement(&jacobians[constraint.dim1..constraint.dim1 + constraint.dim2]);
+                bodies.body_mut(constraint.body2).apply_displacement(
+                    &jacobians[constraint.dim1..constraint.dim1 + constraint.dim2],
+                );
             }
         }
     }
@@ -117,7 +130,6 @@ impl<N: Real> NonlinearSORProx<N> {
         bodies: &mut BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
-        mj_lambda: &mut DVector<N>,
         dim1: D1,
         dim2: D2,
     ) {
@@ -145,7 +157,6 @@ impl<N: Real> NonlinearSORProx<N> {
         contact: &NonlinearUnilateralConstraint<N>,
         constraint: &mut NonlinearNormalConeConstraint<N>,
         jacobians: &mut [N],
-        mj_lambda: &mut DVector<N>,
         dim1: D1,
         dim2: D2,
     ) {
@@ -246,7 +257,11 @@ impl<N: Real> NonlinearSORProx<N> {
                 let world_dir1 = m1 * dir1.unwrap();
                 let world_dir2 = m2 * dir2.unwrap();
                 let (pt1, pt2) = closest_points_internal::line_against_line(
-                    &world1, &world_dir1, &world2, &world_dir2);
+                    &world1,
+                    &world_dir1,
+                    &world2,
+                    &world_dir2,
+                );
                 world1 = pt1;
                 world2 = pt2;
 

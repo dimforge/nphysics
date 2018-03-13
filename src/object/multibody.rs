@@ -1,11 +1,12 @@
 use std::iter;
+use std::ops::Range;
 
-use na::{self, DMatrix, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
+use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use na::storage::Storage;
 use object::{ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId,
              MultibodyLinkMut, MultibodyLinkRef, MultibodyLinkVec};
 use joint::{FreeJoint, Joint};
-use solver::IntegrationParameters;
+use solver::{IntegrationParameters, ConstraintSet, MultibodyJointLimitsNonlinearConstraintGenerator};
 use utils::{GeneralizedCross, IndexMut2};
 use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, SpatialMatrix, SpatialVector,
            Vector, Velocity, DIM};
@@ -15,6 +16,7 @@ pub struct Multibody<N: Real> {
     velocities: Vec<N>,
     damping: Vec<N>,
     accelerations: Vec<N>,
+    impulses: Vec<N>,
     body_jacobians: Vec<Jacobian<N>>, // FIXME: use sparse matrices.
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: LU<N, Dynamic, Dynamic>,
@@ -22,6 +24,8 @@ pub struct Multibody<N: Real> {
     activation: ActivationStatus<N>,
     ndofs: usize,
     companion_id: usize,
+    unilateral_ground_rng: Range<usize>,
+    bilateral_ground_rng: Range<usize>,
 
     /*
      * Workspaces.
@@ -39,6 +43,7 @@ impl<N: Real> Multibody<N> {
             velocities: Vec::new(),
             damping: Vec::new(),
             accelerations: Vec::new(),
+            impulses: Vec::new(),
             body_jacobians: Vec::new(),
             augmented_mass: DMatrix::zeros(0, 0),
             inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
@@ -46,6 +51,8 @@ impl<N: Real> Multibody<N> {
             activation: ActivationStatus::new_active(),
             ndofs: 0,
             companion_id: 0,
+            unilateral_ground_rng: 0..0,
+            bilateral_ground_rng: 0..0,
             coriolis_v: Vec::new(),
             coriolis_w: Vec::new(),
             i_coriolis_dt: Jacobian::zeros(0),
@@ -186,6 +193,11 @@ impl<N: Real> Multibody<N> {
     pub fn damping(&self) -> DVectorSlice<N> {
         DVectorSlice::new(&self.damping, self.ndofs)
     }
+    
+    #[inline]
+    pub fn impulses(&self) -> DVectorSlice<N> {
+        DVectorSlice::new(&self.impulses, self.impulses.len())
+    }
 
     #[inline]
     pub fn damping_mut(&mut self) -> DVectorSliceMut<N> {
@@ -210,13 +222,15 @@ impl<N: Real> Multibody<N> {
          * Compute the indices.
          */
         let assembly_id = self.velocities.len();
+        let impulse_id = self.impulses.len();
         let internal_id = self.rbs.len();
 
         /*
          * Grow the buffers.
          */
         let ndofs = dof.ndofs();
-        self.grow_buffers(ndofs);
+        let nimpulses = dof.nimpulses();
+        self.grow_buffers(ndofs, nimpulses);
         self.ndofs += ndofs;
 
         /*
@@ -240,6 +254,7 @@ impl<N: Real> Multibody<N> {
         let rb = MultibodyLink::new(
             handle,
             assembly_id,
+            impulse_id,
             parent,
             Box::new(dof),
             parent_shift,
@@ -254,12 +269,15 @@ impl<N: Real> Multibody<N> {
         MultibodyLinkMut::new(MultibodyLinkId::new(internal_id), self)
     }
 
-    fn grow_buffers(&mut self, ndofs: usize) {
+    fn grow_buffers(&mut self, ndofs: usize, nimpulses: usize) {
         let len = self.velocities.len();
         self.velocities.resize(len + ndofs, N::zero());
         self.damping.resize(len + ndofs, N::zero());
         self.accelerations.resize(len + ndofs, N::zero());
         self.body_jacobians.push(Jacobian::zeros(0));
+
+        let len = self.impulses.len();
+        self.impulses.resize(len + nimpulses, N::zero());
     }
 
     fn take_link(
@@ -269,10 +287,11 @@ impl<N: Real> Multibody<N> {
         damping: &[N],
     ) -> MultibodyLinkId {
         let ndofs = link.dof.ndofs();
+        let nimpulses = link.dof.nimpulses();
         let assembly_id = self.velocities.len();
         let internal_id = self.rbs.len();
         self.ndofs += ndofs;
-        self.grow_buffers(ndofs);
+        self.grow_buffers(ndofs, nimpulses);
         self.velocities[assembly_id..].copy_from_slice(vels);
         self.damping[assembly_id..].copy_from_slice(damping);
 
@@ -790,6 +809,50 @@ impl<N: Real> Multibody<N> {
 
     pub fn augmented_mass(&self) -> &DMatrix<N> {
         &self.augmented_mass
+    }
+
+    pub fn build_constraints(
+        &mut self,
+        params: &IntegrationParameters<N>,
+        ext_vels: &DVector<N>,
+        ground_jacobian_id: &mut usize,
+        jacobians: &mut [N],
+        constraints: &mut ConstraintSet<N>,
+    ) {
+        let first_unilateral = constraints.velocity.unilateral_ground.len();
+        let first_bilateral = constraints.velocity.bilateral_ground.len();
+
+        for link in self.links() {
+            link.joint().build_constraints(
+                params,
+                &link,
+                self.companion_id,
+                0,
+                ext_vels.as_slice(),
+                ground_jacobian_id,
+                jacobians,
+                constraints,
+            );
+
+            if link.joint().nconstraints() != 0 {
+                let generator =
+                    MultibodyJointLimitsNonlinearConstraintGenerator::new(link.handle());
+                constraints.position.multibody_limits.push(generator)
+            }
+        }
+
+        self.unilateral_ground_rng = first_unilateral .. constraints.velocity.unilateral_ground.len();
+        self.bilateral_ground_rng = first_bilateral .. constraints.velocity.bilateral_ground.len();
+    }
+
+    pub fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+        for constraint in &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()] {
+            self.impulses[constraint.cache_id] = constraint.impulse;
+        }
+
+        for constraint in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+            self.impulses[constraint.cache_id] = constraint.impulse;
+        }
     }
 }
 
