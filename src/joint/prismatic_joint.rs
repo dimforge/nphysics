@@ -176,7 +176,6 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     fn build_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        mb: &Multibody<N>,
         link: &MultibodyLinkRef<N>,
         assembly_id: usize,
         dof_id: usize,
@@ -188,7 +187,6 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         joint::build_unit_joint_constraints(
             self,
             params,
-            mb,
             link,
             assembly_id,
             dof_id,
@@ -200,7 +198,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     }
 
     fn nposition_constraints(&self) -> usize {
-        if self.min_position.is_some() || self.max_position.is_some() {
+        if self.min_offset.is_some() || self.max_offset.is_some() {
             1
         } else {
             0
@@ -211,9 +209,10 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         &self,
         _: usize,
         link: &MultibodyLinkRef<N>,
-        jacobians: &mut [N]
+        dof_id: usize,
+        jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        unit_joint_position_constraint(self, mb, link, 0, jacobians)
+        joint::unit_joint_position_constraint(self, link, dof_id, jacobians)
     }
 }
 

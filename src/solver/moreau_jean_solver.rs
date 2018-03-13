@@ -14,7 +14,6 @@ use solver::{ConstraintSet, ContactModel, IntegrationParameters,
 pub struct MoreauJeanSolver<N: Real> {
     jacobians: Vec<N>, // FIXME: use a Vec or a DVector?
     mj_lambda_vel: DVector<N>,
-    mj_lambda_pos: DVector<N>,
     ext_vels: DVector<N>,
     contact_model: Box<ContactModel<N>>,
     constraints: ConstraintSet<N>,
@@ -27,7 +26,6 @@ impl<N: Real> MoreauJeanSolver<N> {
         MoreauJeanSolver {
             jacobians: Vec::new(),
             mj_lambda_vel: DVector::zeros(0),
-            mj_lambda_pos: DVector::zeros(0),
             ext_vels: DVector::zeros(0),
             contact_model: contact_model,
             constraints: constraints,
@@ -55,7 +53,7 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         counters.resolution_started();
         self.solve_velocity_constraints(params);
-        self.save_cache();
+        self.save_cache(bodies, island);
         counters.resolution_completed();
 
         counters.position_update_started();
@@ -187,27 +185,14 @@ impl<N: Real> MoreauJeanSolver<N> {
         }
 
         for handle in island {
-            if let Some(mb) = bodies.multibody(*handle) {
-                let assembly_id = mb.companion_id();
-
-                for link in mb.links() {
-                    link.joint().build_constraints(
-                        params,
-                        mb,
-                        &link,
-                        assembly_id,
-                        0,
-                        &self.ext_vels.as_slice(),
-                        &mut ground_jacobian_id,
-                        &mut self.jacobians,
-                        &mut self.constraints,
-                    );
-
-                    if link.joint().nconstraints() != 0 {
-                        let generator = MultibodyJointLimitsNonlinearConstraintGenerator::new(link.handle());
-                        self.constraints.position.multibody_limits.push(generator)
-                    }
-                }
+            if let Some(mb) = bodies.multibody_mut(*handle) {
+                mb.build_constraints(
+                    params,
+                    &self.ext_vels,
+                    &mut ground_jacobian_id,
+                    &mut self.jacobians,
+                    &mut self.constraints,
+                );
             }
         }
 
@@ -248,20 +233,25 @@ impl<N: Real> MoreauJeanSolver<N> {
             bodies,
             &mut self.constraints.position.unilateral,
             &mut self.constraints.position.normal,
-            &mut self.mj_lambda_pos,
+            &mut self.constraints.position.multibody_limits,
             &mut self.jacobians,
             params.max_position_iterations,
         );
     }
 
-    fn save_cache(&mut self) {
+    fn save_cache(&mut self, bodies: &mut BodySet<N>, island: &[BodyHandle]) {
+        for handle in island {
+            if let Some(mb) = bodies.multibody_mut(*handle) {
+                mb.cache_impulses(&self.constraints)
+            }
+        }
+
         self.contact_model.cache_impulses(&self.constraints)
     }
 
     fn resize_buffers(&mut self, ndofs: usize) {
         // XXX: use resize functions instead of reallocating.
         self.mj_lambda_vel = DVector::zeros(ndofs);
-        self.mj_lambda_pos = DVector::zeros(ndofs);
         self.ext_vels = DVector::zeros(ndofs);
     }
 

@@ -1,4 +1,5 @@
-pub use self::joint::{build_unit_joint_constraints, unit_joint_nconstraints, Joint, UnitJoint};
+pub use self::joint::{build_unit_joint_constraints, unit_joint_nconstraints,
+                      unit_joint_position_constraint, Joint, UnitJoint};
 pub use self::free_joint::FreeJoint;
 pub use self::fixed_joint::FixedJoint;
 pub use self::revolute_joint::RevoluteJoint;

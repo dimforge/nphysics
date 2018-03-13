@@ -1,8 +1,8 @@
 use na::{Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
-use solver::{ConstraintSet, IntegrationParameters};
-use object::{Multibody, MultibodyLinkRef};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
 
 #[derive(Copy, Clone, Debug)]
@@ -88,7 +88,6 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
     fn build_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        mb: &Multibody<N>,
         link: &MultibodyLinkRef<N>,
         assembly_id: usize,
         dof_id: usize,
@@ -97,9 +96,9 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
+        // XXX: is this correct even though we don't have the same jacobian?
         self.revo.build_constraints(
             params,
-            mb,
             link,
             assembly_id,
             dof_id,
@@ -108,6 +107,22 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
             jacobians,
             constraints,
         );
+    }
+
+    fn nposition_constraints(&self) -> usize {
+        // NOTE: we don't test if constraints exist to simplify indexing.
+        1
+    }
+
+    fn position_constraint(
+        &self,
+        i: usize,
+        link: &MultibodyLinkRef<N>,
+        dof_id: usize,
+        jacobians: &mut [N],
+    ) -> Option<GenericNonlinearConstraint<N>> {
+        // XXX: is this correct even though we don't have the same jacobian?
+        self.revo.position_constraint(0, link, dof_id, jacobians)
     }
 }
 

@@ -36,6 +36,7 @@ impl MultibodyLinkId {
 pub struct MultibodyLink<N: Real> {
     pub handle: BodyHandle,
     pub assembly_id: usize,
+    pub impulse_id: usize,
     pub is_leaf: bool,
 
     // XXX: rename to "joint".
@@ -67,6 +68,7 @@ impl<N: Real> MultibodyLink<N> {
     pub fn new(
         handle: BodyHandle,
         assembly_id: usize,
+        impulse_id: usize,
         parent: MultibodyLinkId,
         dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
@@ -86,6 +88,7 @@ impl<N: Real> MultibodyLink<N> {
         MultibodyLink {
             handle,
             assembly_id,
+            impulse_id,
             is_leaf,
             parent,
             dof,
@@ -199,6 +202,11 @@ impl<'a, N: Real> MultibodyLinkRef<'a, N> {
     #[inline]
     pub fn assembly_id(&self) -> usize {
         self.link.assembly_id
+    }
+
+    #[inline]
+    pub fn impulse_id(&self) -> usize {
+        self.link.impulse_id
     }
 
     #[inline]

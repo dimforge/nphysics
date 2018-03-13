@@ -2,22 +2,46 @@ use na::{Real, Unit};
 use ncollide::bounding_volume::PolyhedralCone;
 use ncollide::query::ContactKinematic;
 
-use object::BodyHandle;
+use object::{BodyHandle, BodySet};
 use math::{Point, Vector};
 
-
 pub struct GenericNonlinearConstraint<N: Real> {
-    body1: BodyHandle,
-    body2: BodyHandle,
-    dim1: usize,
-    dim2: usize,
-    rhs: N,
-    inv_r: N
+    pub body1: BodyHandle,
+    pub body2: BodyHandle,
+    pub dim1: usize,
+    pub dim2: usize,
+    pub rhs: N,
+    pub inv_r: N,
+}
+
+impl<N: Real> GenericNonlinearConstraint<N> {
+    pub fn new(
+        body1: BodyHandle,
+        body2: BodyHandle,
+        dim1: usize,
+        dim2: usize,
+        rhs: N,
+        inv_r: N,
+    ) -> Self {
+        GenericNonlinearConstraint {
+            body1,
+            body2,
+            dim1,
+            dim2,
+            rhs,
+            inv_r,
+        }
+    }
 }
 
 pub trait NonlinearConstraintGenerator<N: Real> {
-    fn nconstraints(&self) -> usize;
-    fn constraint(&self, i: usize, bodies: &mut BodySet<N>, jacobians: &mut [N]) -> GenericNonlinearConstraint<N>;
+    fn nconstraints(&self, bodies: &BodySet<N>) -> usize;
+    fn constraint(
+        &self,
+        i: usize,
+        bodies: &mut BodySet<N>,
+        jacobians: &mut [N],
+    ) -> Option<GenericNonlinearConstraint<N>>;
 }
 
 pub struct NonlinearUnilateralConstraint<N: Real> {
@@ -115,28 +139,33 @@ impl<N: Real> NonlinearNormalConeConstraint<N> {
     }
 }
 
-pub struct MultibodyJointLimitsNonlinearConstraintGenerator<N: Real> {
+pub struct MultibodyJointLimitsNonlinearConstraintGenerator {
     link: BodyHandle,
 }
 
-impl<N: Real> MultibodyJointLimitsNonlinearConstraintGenerator<N> {
+impl MultibodyJointLimitsNonlinearConstraintGenerator {
     pub fn new(link: BodyHandle) -> Self {
         MultibodyJointLimitsNonlinearConstraintGenerator { link }
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator<N> {
+impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
     fn nconstraints(&self, bodies: &BodySet<N>) -> usize {
         if let Some(link) = bodies.multibody_link(self.link) {
-            link.dof.nposition_constraints()
+            link.joint().nposition_constraints()
         } else {
             0
         }
     }
 
-    fn constraint(&self, i: usize, bodies: &mut BodySet<N>, jacobians: &mut [N]) -> Option<GenericNonlinearConstraint<N>> {
+    fn constraint(
+        &self,
+        i: usize,
+        bodies: &mut BodySet<N>,
+        jacobians: &mut [N],
+    ) -> Option<GenericNonlinearConstraint<N>> {
         if let Some(link) = bodies.multibody_link(self.link) {
-            link.joint().position_constraint(&self, i, mb, link, jacobians)
+            link.joint().position_constraint(i, &link, 0, jacobians)
         } else {
             None
         }
