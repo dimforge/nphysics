@@ -18,7 +18,7 @@ pub trait UnitJoint<N: Real>: Joint<N> {
 
 downcast!(<N> UnitJoint<N> where N: Real);
 
-pub fn unit_joint_nconstraints<N: Real, J: UnitJoint<N>>(joint: &J) -> usize {
+pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) -> usize {
     // FIXME: don't always keep the constraints active.
     let mut nconstraints = 0;
 
@@ -62,14 +62,14 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
         let inv_r = jacobians[wj_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
         let rhs = dvel - joint.motor().desired_velocity;
         let limits = joint.motor().impulse_limits();
-        let cache_id = link.impulse_id() + dof_id * 3;
+        let impulse_id = link.impulse_id() + dof_id * 3;
 
         let constraint = BilateralGroundConstraint {
-            impulse: impulses[cache_id] * params.warmstart_coeff,
+            impulse: impulses[impulse_id] * params.warmstart_coeff,
             r: N::one() / inv_r,
             rhs: rhs,
             limits: limits,
-            cache_id: cache_id,
+            impulse_id: impulse_id,
             assembly_id: assembly_id,
             j_id: *ground_j_id,
             wj_id: *ground_j_id + ndofs,
@@ -103,12 +103,12 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
                 rhs = -err / params.dt;
             }
 
-            let cache_id = link.impulse_id() + dof_id * 3 + 1;
+            let impulse_id = link.impulse_id() + dof_id * 3 + 1;
             let constraint = UnilateralGroundConstraint {
-                impulse: impulses[cache_id] * params.warmstart_coeff,
+                impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs,
-                cache_id,
+                impulse_id,
                 assembly_id,
                 j_id: *ground_j_id,
                 wj_id: *ground_j_id + ndofs,
@@ -149,12 +149,12 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
                 rhs = -err / params.dt;
             }
 
-            let cache_id = link.impulse_id() + dof_id * 3 + 2;
+            let impulse_id = link.impulse_id() + dof_id * 3 + 2;
             let constraint = UnilateralGroundConstraint {
-                impulse: impulses[cache_id] * params.warmstart_coeff,
+                impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: rhs,
-                cache_id: cache_id,
+                impulse_id: impulse_id,
                 assembly_id: assembly_id,
                 j_id: *ground_j_id,
                 wj_id: *ground_j_id + ndofs,

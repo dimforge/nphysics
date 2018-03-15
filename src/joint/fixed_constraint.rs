@@ -1,16 +1,18 @@
 use na::{DVector, Real};
 
 use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, IntegrationParameters};
+use solver::{ConstraintSet, IntegrationParameters, GenericNonlinearConstraint, NonlinearConstraintGenerator};
 use solver::helper;
-use joint::ConstraintGenerator;
-use math::{Isometry, Point, SPATIAL_DIM};
+use joint::JointConstraint;
+use math::{Isometry, Point, Vector, AngularVector, SPATIAL_DIM};
 
 pub struct FixedConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
     joint_to_b1: Isometry<N>,
     joint_to_b2: Isometry<N>,
+    lin_impulses: Vector<N>,
+    ang_impulses: AngularVector<N>
 }
 
 impl<N: Real> FixedConstraint<N> {
@@ -25,6 +27,8 @@ impl<N: Real> FixedConstraint<N> {
             b2,
             joint_to_b1,
             joint_to_b2,
+            lin_impulses: Vector::zeros(),
+            ang_impulses: AngularVector::zeros()
         }
     }
 
@@ -37,8 +41,8 @@ impl<N: Real> FixedConstraint<N> {
     }
 }
 
-impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
-    fn nconstraints(&self) -> usize {
+impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
+    fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM
     }
 
@@ -46,8 +50,8 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
         (self.b1, self.b2)
     }
 
-    fn build_constraints(
-        &self,
+    fn velocity_constraints(
+        &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
@@ -80,6 +84,8 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
             &anchor1,
             &anchor2,
             ext_vels,
+            &self.lin_impulses,
+            0,
             ground_j_id,
             j_id,
             jacobians,
@@ -96,10 +102,32 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
             &anchor1,
             &anchor2,
             ext_vels,
+            &self.ang_impulses,
+            3,
             ground_j_id,
             j_id,
             jacobians,
             constraints,
         );
+    }
+
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+    }
+}
+
+
+impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
+    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
+        0
+    }
+
+    fn position_constraint(
+        &self,
+        params: &IntegrationParameters<N>,
+        i: usize,
+        bodies: &mut BodySet<N>,
+        jacobians: &mut [N],
+    ) -> Option<GenericNonlinearConstraint<N>> {
+        None
     }
 }

@@ -37,7 +37,7 @@ pub struct UnilateralConstraint<N: Real> {
     pub r: N,
     pub rhs: N,
 
-    pub cache_id: usize,
+    pub impulse_id: usize,
 
     pub assembly_id1: usize,
     pub assembly_id2: usize,
@@ -54,13 +54,13 @@ pub struct UnilateralConstraint<N: Real> {
 
 impl<N: Real> UnilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, assembly_id1: usize, assembly_id2: usize, rhs: N, impulse: N, cache_id: usize) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, assembly_id1: usize, assembly_id2: usize, rhs: N, impulse: N, impulse_id: usize) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
             impulse: impulse,
             r: geom.r,
             rhs: rhs,
-            cache_id: cache_id,
+            impulse_id: impulse_id,
             assembly_id1: assembly_id1,
             assembly_id2: assembly_id2,
             j_id1: geom.j_id1,
@@ -81,7 +81,7 @@ pub struct UnilateralGroundConstraint<N: Real> {
     pub r: N,
     pub rhs: N,
 
-    pub cache_id: usize,
+    pub impulse_id: usize,
     pub assembly_id: usize,
     pub j_id: usize,
     pub wj_id: usize,
@@ -90,13 +90,13 @@ pub struct UnilateralGroundConstraint<N: Real> {
 
 impl<N: Real> UnilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, assembly_id1: usize, assembly_id2: usize, rhs: N, impulse: N, cache_id: usize) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, assembly_id1: usize, assembly_id2: usize, rhs: N, impulse: N, impulse_id: usize) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
                 rhs: rhs,
-                cache_id: cache_id,
+                impulse_id: impulse_id,
                 assembly_id: assembly_id2,
                 j_id: geom.j_id2,
                 wj_id: geom.wj_id2,
@@ -107,7 +107,7 @@ impl<N: Real> UnilateralGroundConstraint<N> {
                 impulse: impulse,
                 r: geom.r,
                 rhs: rhs,
-                cache_id: cache_id,
+                impulse_id: impulse_id,
                 assembly_id: assembly_id1,
                 j_id: geom.j_id1,
                 wj_id: geom.wj_id1,
@@ -131,7 +131,7 @@ pub struct BilateralConstraint<N: Real> {
 
     pub limits: ImpulseLimits<N>,
 
-    pub cache_id: usize,
+    pub impulse_id: usize,
 
     pub assembly_id1: usize,
     pub assembly_id2: usize,
@@ -155,7 +155,7 @@ impl<N: Real> BilateralConstraint<N> {
         limits: ImpulseLimits<N>,
         rhs: N,
         impulse: N,
-        cache_id: usize,
+        impulse_id: usize,
     ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         BilateralConstraint {
@@ -163,7 +163,7 @@ impl<N: Real> BilateralConstraint<N> {
             r: geom.r,
             rhs: rhs,
             limits: limits,
-            cache_id: cache_id,
+            impulse_id: impulse_id,
             assembly_id1: assembly_id1,
             assembly_id2: assembly_id2,
             j_id1: geom.j_id1,
@@ -185,7 +185,7 @@ pub struct BilateralGroundConstraint<N: Real> {
 
     pub limits: ImpulseLimits<N>,
 
-    pub cache_id: usize,
+    pub impulse_id: usize,
     pub assembly_id: usize,
     pub j_id: usize,
     pub wj_id: usize,
@@ -201,7 +201,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
         limits: ImpulseLimits<N>,
         rhs: N,
         impulse: N,
-        cache_id: usize,
+        impulse_id: usize,
     ) -> Self {
         if geom.ndofs1 == 0 {
             BilateralGroundConstraint {
@@ -209,7 +209,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 r: geom.r,
                 rhs: rhs,
                 limits: limits,
-                cache_id: cache_id,
+                impulse_id: impulse_id,
                 assembly_id: assembly_id2,
                 j_id: geom.j_id2,
                 wj_id: geom.wj_id2,
@@ -221,7 +221,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 r: geom.r,
                 rhs: rhs,
                 limits: limits,
-                cache_id: cache_id,
+                impulse_id: impulse_id,
                 assembly_id: assembly_id1,
                 j_id: geom.j_id1,
                 wj_id: geom.wj_id1,

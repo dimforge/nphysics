@@ -812,7 +812,7 @@ impl<N: Real> Multibody<N> {
         &self.augmented_mass
     }
 
-    pub fn build_constraints(
+    pub fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
         ext_vels: &DVector<N>,
@@ -824,7 +824,7 @@ impl<N: Real> Multibody<N> {
         let first_bilateral = constraints.velocity.bilateral_ground.len();
 
         for link in self.links() {
-            link.joint().build_constraints(
+            link.joint().velocity_constraints(
                 params,
                 &link,
                 self.companion_id,
@@ -835,7 +835,7 @@ impl<N: Real> Multibody<N> {
                 constraints,
             );
 
-            if link.joint().nconstraints() != 0 {
+            if link.joint().num_position_constraints() != 0 {
                 let generator =
                     MultibodyJointLimitsNonlinearConstraintGenerator::new(link.handle());
                 constraints.position.multibody_limits.push(generator)
@@ -850,12 +850,12 @@ impl<N: Real> Multibody<N> {
         for constraint in
             &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()]
         {
-            self.impulses[constraint.cache_id] = constraint.impulse;
+            self.impulses[constraint.impulse_id] = constraint.impulse;
         }
 
         for constraint in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()]
         {
-            self.impulses[constraint.cache_id] = constraint.impulse;
+            self.impulses[constraint.impulse_id] = constraint.impulse;
         }
     }
 }

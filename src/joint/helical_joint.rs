@@ -81,11 +81,11 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
         self.revo.apply_displacement(disp)
     }
 
-    fn nconstraints(&self) -> usize {
-        self.revo.nconstraints()
+    fn num_velocity_constraints(&self) -> usize {
+        self.revo.num_velocity_constraints()
     }
 
-    fn build_constraints(
+    fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
         link: &MultibodyLinkRef<N>,
@@ -97,7 +97,7 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
         constraints: &mut ConstraintSet<N>,
     ) {
         // XXX: is this correct even though we don't have the same jacobian?
-        self.revo.build_constraints(
+        self.revo.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -109,7 +109,7 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
         );
     }
 
-    fn nposition_constraints(&self) -> usize {
+    fn num_position_constraints(&self) -> usize {
         // NOTE: we don't test if constraints exist to simplify indexing.
         1
     }

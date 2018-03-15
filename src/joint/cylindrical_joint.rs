@@ -85,11 +85,11 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         self.revo.apply_displacement(&[disp[1]]);
     }
 
-    fn nconstraints(&self) -> usize {
-        self.prism.nconstraints() + self.revo.nconstraints()
+    fn num_velocity_constraints(&self) -> usize {
+        self.prism.num_velocity_constraints() + self.revo.num_velocity_constraints()
     }
 
-    fn build_constraints(
+    fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
         link: &MultibodyLinkRef<N>,
@@ -100,7 +100,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        self.prism.build_constraints(
+        self.prism.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -110,7 +110,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
             jacobians,
             constraints,
         );
-        self.revo.build_constraints(
+        self.revo.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -122,7 +122,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         );
     }
 
-    fn nposition_constraints(&self) -> usize {
+    fn num_position_constraints(&self) -> usize {
         // NOTE: we don't test if constraints exist to simplify indexing.
         2
     }
