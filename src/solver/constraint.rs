@@ -1,6 +1,5 @@
 use na::Real;
 
-// NOTE: strictly speaking, this is not only the geometry since it contains teh relative velocity as well.
 #[derive(Copy, Clone, Debug)]
 pub struct ConstraintGeometry<N: Real> {
     pub jacobian_id1: usize,
@@ -11,7 +10,6 @@ pub struct ConstraintGeometry<N: Real> {
     pub assembly_id2: usize,
     pub ndofs1: usize,
     pub ndofs2: usize,
-    pub rhs: N,
     pub r: N,
 }
 
@@ -27,7 +25,6 @@ impl<N: Real> ConstraintGeometry<N> {
             assembly_id2: usize::max_value(),
             ndofs1: 0,
             ndofs2: 0,
-            rhs: N::zero(),
             r: N::zero(),
         }
     }
@@ -61,12 +58,12 @@ pub struct UnilateralConstraint<N: Real> {
 
 impl<N: Real> UnilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, impulse: N, cache_id: usize) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, rhs: N, impulse: N, cache_id: usize) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
             impulse: impulse,
             r: geom.r,
-            rhs: geom.rhs,
+            rhs: rhs,
             cache_id: cache_id,
             assembly_id1: geom.assembly_id1,
             assembly_id2: geom.assembly_id2,
@@ -97,12 +94,12 @@ pub struct UnilateralGroundConstraint<N: Real> {
 
 impl<N: Real> UnilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, impulse: N, cache_id: usize) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, rhs: N, impulse: N, cache_id: usize) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
-                rhs: geom.rhs,
+                rhs: rhs,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id2,
                 jacobian_id: geom.jacobian_id2,
@@ -113,7 +110,7 @@ impl<N: Real> UnilateralGroundConstraint<N> {
             UnilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
-                rhs: geom.rhs,
+                rhs: rhs,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id1,
                 jacobian_id: geom.jacobian_id1,
@@ -158,6 +155,7 @@ impl<N: Real> BilateralConstraint<N> {
     pub fn new(
         geom: ConstraintGeometry<N>,
         limits: ImpulseLimits<N>,
+        rhs: N,
         impulse: N,
         cache_id: usize,
     ) -> Self {
@@ -165,7 +163,7 @@ impl<N: Real> BilateralConstraint<N> {
         BilateralConstraint {
             impulse: impulse,
             r: geom.r,
-            rhs: geom.rhs,
+            rhs: rhs,
             limits: limits,
             cache_id: cache_id,
             assembly_id1: geom.assembly_id1,
@@ -201,6 +199,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
     pub fn new(
         geom: ConstraintGeometry<N>,
         limits: ImpulseLimits<N>,
+        rhs: N,
         impulse: N,
         cache_id: usize,
     ) -> Self {
@@ -208,7 +207,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
             BilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
-                rhs: geom.rhs,
+                rhs: rhs,
                 limits: limits,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id2,
@@ -220,7 +219,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
             BilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
-                rhs: geom.rhs,
+                rhs: rhs,
                 limits: limits,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id1,
