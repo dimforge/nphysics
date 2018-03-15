@@ -68,12 +68,9 @@ pub fn fill_constraint_geometry<N: Real>(
 pub fn constraint_pair_geometry<N: Real>(
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
-    assembly_id1: usize,
-    assembly_id2: usize,
     center1: &Point<N>,
     center2: &Point<N>,
     dir: &ForceDirection<N>,
-    ext_vels: &DVector<N>,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
@@ -99,8 +96,6 @@ pub fn constraint_pair_geometry<N: Real>(
     let mut inv_r = N::zero();
 
     if res.ndofs1 != 0 {
-        res.assembly_id1 = assembly_id1;
-
         fill_constraint_geometry(
             body1,
             res.ndofs1,
@@ -114,8 +109,6 @@ pub fn constraint_pair_geometry<N: Real>(
     }
 
     if res.ndofs2 != 0 {
-        res.assembly_id2 = assembly_id2;
-
         fill_constraint_geometry(
             body2,
             res.ndofs2,
@@ -128,7 +121,7 @@ pub fn constraint_pair_geometry<N: Real>(
         );
     }
 
-    if res.assembly_id1 == res.assembly_id2 {
+    if body1.handle() == body2.handle() {
         let j1 = DVectorSlice::new(&jacobians[res.j_id1..], res.ndofs1);
         let j2 = DVectorSlice::new(&jacobians[res.j_id2..], res.ndofs2);
         let invm_j1 = DVectorSlice::new(&jacobians[res.wj_id1..], res.ndofs1);
@@ -151,6 +144,8 @@ pub fn constraint_pair_geometry<N: Real>(
 pub fn constraint_pair_velocity<N: Real>(
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
     center1: &Point<N>,
     center2: &Point<N>,
     dir: &ForceDirection<N>,
@@ -163,7 +158,7 @@ pub fn constraint_pair_velocity<N: Real>(
     if geom.ndofs1 != 0 {
         let j = DVectorSlice::new(&jacobians[geom.j_id1..], geom.ndofs1);
         vel += j.dot(&body1.parent_generalized_velocity())
-            + j.dot(&ext_vels.rows(geom.assembly_id1, geom.ndofs1));
+            + j.dot(&ext_vels.rows(assembly_id1, geom.ndofs1));
     } else {
         // Adjust the rhs for kinematic bodies.
         let vel1 = body1.status_dependent_velocity();
@@ -182,7 +177,7 @@ pub fn constraint_pair_velocity<N: Real>(
     if geom.ndofs2 != 0 {
         let j = DVectorSlice::new(&jacobians[geom.j_id2..], geom.ndofs2);
         vel += j.dot(&body2.parent_generalized_velocity())
-            + j.dot(&ext_vels.rows(geom.assembly_id2, geom.ndofs2));
+            + j.dot(&ext_vels.rows(assembly_id2, geom.ndofs2));
     } else {
         // Adjust the rhs for kinematic bodies.
         let vel2 = body2.status_dependent_velocity();
@@ -233,12 +228,9 @@ pub fn cancel_relative_linear_velocity<N: Real>(
         let geom = constraint_pair_geometry(
             body1,
             body2,
-            assembly_id1,
-            assembly_id2,
             anchor1,
             anchor2,
             &dir,
-            ext_vels,
             ground_j_id,
             j_id,
             jacobians,
@@ -247,6 +239,8 @@ pub fn cancel_relative_linear_velocity<N: Real>(
         let rhs = constraint_pair_velocity(
             &body1,
             &body2,
+            assembly_id1,
+            assembly_id2,
             anchor1,
             anchor2,
             &dir,
@@ -261,6 +255,8 @@ pub fn cancel_relative_linear_velocity<N: Real>(
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
+                    assembly_id1,
+                    assembly_id2,
                     limits,
                     rhs,
                     na::zero(),
@@ -270,7 +266,7 @@ pub fn cancel_relative_linear_velocity<N: Real>(
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, limits, rhs, na::zero(), 0));
+                .push(BilateralConstraint::new(geom, assembly_id1, assembly_id2, limits, rhs, na::zero(), 0));
         }
 
         true
@@ -281,13 +277,9 @@ pub fn cancel_relative_translation<N: Real>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
-    assembly_id1: usize,
-    assembly_id2: usize,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
-    ext_vels: &DVector<N>,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
 ) -> Option<GenericNonlinearConstraint<N>> {
     let error = anchor2 - anchor1;
 
@@ -298,12 +290,9 @@ pub fn cancel_relative_translation<N: Real>(
         let geom = constraint_pair_geometry(
             body1,
             body2,
-            assembly_id1,
-            assembly_id2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
-            ext_vels,
             &mut ground_j_id,
             &mut j_id,
             jacobians,
@@ -352,12 +341,9 @@ pub fn cancel_relative_angular_velocity<N: Real>(
         let geom = constraint_pair_geometry(
             body1,
             body2,
-            assembly_id1,
-            assembly_id2,
             anchor1,
             anchor2,
             &dir,
-            ext_vels,
             ground_j_id,
             j_id,
             jacobians,
@@ -366,6 +352,8 @@ pub fn cancel_relative_angular_velocity<N: Real>(
         let rhs = constraint_pair_velocity(
             &body1,
             &body2,
+            assembly_id1,
+            assembly_id2,
             anchor1,
             anchor2,
             &dir,
@@ -380,6 +368,8 @@ pub fn cancel_relative_angular_velocity<N: Real>(
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
+                    assembly_id1,
+                    assembly_id2,
                     limits,
                     rhs,
                     na::zero(),
@@ -389,7 +379,7 @@ pub fn cancel_relative_angular_velocity<N: Real>(
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, limits, rhs, na::zero(), 0));
+                .push(BilateralConstraint::new(geom, assembly_id1, assembly_id2, limits, rhs, na::zero(), 0));
         }
 
         true
@@ -401,7 +391,7 @@ pub fn cancel_relative_angular_velocity<N: Real>(
 // let stabilization = -dir.dot(&error) / params.dt * params.erp;
 
 #[cfg(feature = "dim3")]
-pub fn restrict_relative_angular_motion_to_axis<N: Real>(
+pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
@@ -427,12 +417,9 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
         let geom = constraint_pair_geometry(
             body1,
             body2,
-            assembly_id1,
-            assembly_id2,
             anchor1,
             anchor2,
             &dir,
-            ext_vels,
             ground_j_id,
             j_id,
             jacobians,
@@ -441,6 +428,8 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
         let rhs = constraint_pair_velocity(
             &body1,
             &body2,
+            assembly_id1,
+            assembly_id2,
             anchor1,
             anchor2,
             &dir,
@@ -455,6 +444,8 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
+                    assembly_id1,
+                    assembly_id2,
                     limits,
                     rhs,
                     na::zero(),
@@ -464,7 +455,7 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, limits, rhs, na::zero(), 0));
+                .push(BilateralConstraint::new(geom, assembly_id1, assembly_id2, limits, rhs, na::zero(), 0));
         }
 
         true

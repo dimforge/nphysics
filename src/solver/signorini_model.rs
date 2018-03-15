@@ -56,12 +56,9 @@ impl<N: Real> SignoriniModel<N> {
         let geom = helper::constraint_pair_geometry(
             &body1,
             &body2,
-            assembly_id1,
-            assembly_id2,
             &center1,
             &center2,
             &dir,
-            ext_vels,
             ground_j_id,
             j_id,
             jacobians,
@@ -70,6 +67,8 @@ impl<N: Real> SignoriniModel<N> {
         let mut rhs = helper::constraint_pair_velocity(
             &body1,
             &body2,
+            assembly_id1,
+            assembly_id2,
             &center1,
             &center2,
             &dir,
@@ -91,6 +90,8 @@ impl<N: Real> SignoriniModel<N> {
                 .unilateral_ground
                 .push(UnilateralGroundConstraint::new(
                     geom,
+                    assembly_id1,
+                    assembly_id2,
                     rhs,
                     warmstart,
                     cache_id,
@@ -101,7 +102,7 @@ impl<N: Real> SignoriniModel<N> {
             constraints
                 .velocity
                 .unilateral
-                .push(UnilateralConstraint::new(geom, rhs, warmstart, cache_id));
+                .push(UnilateralConstraint::new(geom, assembly_id1, assembly_id2, rhs, warmstart, cache_id));
 
             false
         }
