@@ -5,8 +5,8 @@ use solver::{ConstraintSet, IntegrationParameters};
 use object::BodySet;
 
 pub trait ContactModel<N: Real>: 'static {
-    fn nconstraints(&self, manifold: &BodyContactManifold<N>) -> usize;
-    fn build_constraints(
+    fn num_velocity_constraints(&self, manifold: &BodyContactManifold<N>) -> usize;
+    fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,

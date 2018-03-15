@@ -1,10 +1,10 @@
 use na::{DVector, Real, Unit};
 
 use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, IntegrationParameters};
+use solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator, GenericNonlinearConstraint};
 use solver::helper;
-use joint::ConstraintGenerator;
-use math::{AngularVector, Point, SPATIAL_DIM};
+use joint::JointConstraint;
+use math::{AngularVector, Point, Vector, SPATIAL_DIM};
 
 pub struct RevoluteConstraint<N: Real> {
     b1: BodyHandle,
@@ -13,6 +13,7 @@ pub struct RevoluteConstraint<N: Real> {
     anchor2: Point<N>,
     axis1: Unit<AngularVector<N>>, // FIXME: not needed in 2D.
     axis2: Unit<AngularVector<N>>, // FIXME: not needed in 2D.
+    lin_impulses: Vector<N>,
 
     min_angle: Option<N>,
     max_angle: Option<N>,
@@ -37,6 +38,7 @@ impl<N: Real> RevoluteConstraint<N> {
             anchor2,
             axis1,
             axis2,
+            lin_impulses: Vector::zeros(),
             min_angle,
             max_angle,
         }
@@ -56,6 +58,7 @@ impl<N: Real> RevoluteConstraint<N> {
             anchor2,
             axis1,
             axis2,
+            lin_impulses: Vector::zeros(),
             min_angle,
             max_angle,
         }
@@ -96,8 +99,8 @@ impl<N: Real> RevoluteConstraint<N> {
     }
 }
 
-impl<N: Real> ConstraintGenerator<N> for RevoluteConstraint<N> {
-    fn nconstraints(&self) -> usize {
+impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
+    fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 1
     }
 
@@ -105,8 +108,8 @@ impl<N: Real> ConstraintGenerator<N> for RevoluteConstraint<N> {
         (self.b1, self.b2)
     }
 
-    fn build_constraints(
-        &self,
+    fn velocity_constraints(
+        &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
@@ -141,6 +144,8 @@ impl<N: Real> ConstraintGenerator<N> for RevoluteConstraint<N> {
             &anchor1,
             &anchor2,
             ext_vels,
+            &self.lin_impulses,
+            0,
             ground_j_id,
             j_id,
             jacobians,
@@ -175,5 +180,26 @@ impl<N: Real> ConstraintGenerator<N> for RevoluteConstraint<N> {
          * Limit constraints.
          *
          */
+    }
+        
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+    }
+}
+
+
+
+impl<N: Real> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
+    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
+        0
+    }
+
+    fn position_constraint(
+        &self,
+        params: &IntegrationParameters<N>,
+        i: usize,
+        bodies: &mut BodySet<N>,
+        jacobians: &mut [N],
+    ) -> Option<GenericNonlinearConstraint<N>> {
+        None
     }
 }

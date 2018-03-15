@@ -100,7 +100,7 @@ pub fn constraint_pair_geometry<N: Real>(
             body1,
             res.ndofs1,
             center1,
-            &dir.neg(),
+            dir,
             res.j_id1,
             res.wj_id1,
             jacobians,
@@ -113,7 +113,7 @@ pub fn constraint_pair_geometry<N: Real>(
             body2,
             res.ndofs2,
             center2,
-            dir,
+            &dir.neg(),
             res.j_id2,
             res.wj_id2,
             jacobians,
@@ -165,11 +165,11 @@ pub fn constraint_pair_velocity<N: Real>(
         match *dir {
             ForceDirection::Linear(ref normal) => {
                 let dpos = center1 - body1.center_of_mass();
-                vel -= vel1.shift(&dpos).linear.dot(normal);
+                vel += vel1.shift(&dpos).linear.dot(normal);
             }
             ForceDirection::Angular(ref axis) => {
                 // FIXME: do we have to take dpos into account here?
-                vel -= vel1.angular_vector().dot(axis);
+                vel += vel1.angular_vector().dot(axis);
             }
         }
     }
@@ -185,10 +185,10 @@ pub fn constraint_pair_velocity<N: Real>(
         match *dir {
             ForceDirection::Linear(ref normal) => {
                 let dpos = center2 - body2.center_of_mass();
-                vel += vel2.shift(&dpos).linear.dot(normal);
+                vel -= vel2.shift(&dpos).linear.dot(normal);
             }
             ForceDirection::Angular(ref axis) => {
-                vel += vel2.angular_vector().dot(axis);
+                vel -= vel2.angular_vector().dot(axis);
             }
         }
     }
@@ -213,6 +213,8 @@ pub fn cancel_relative_linear_velocity<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
+    impulses: &Vector<N>,
+    impulse_id: usize,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
@@ -223,6 +225,7 @@ pub fn cancel_relative_linear_velocity<N: Real>(
         max: N::max_value(),
     };
 
+    let mut i = 0;
     Vector::canonical_basis(|dir| {
         let dir = ForceDirection::Linear(Unit::new_unchecked(*dir));
         let geom = constraint_pair_geometry(
@@ -259,15 +262,25 @@ pub fn cancel_relative_linear_velocity<N: Real>(
                     assembly_id2,
                     limits,
                     rhs,
-                    na::zero(),
-                    0,
+                    impulses[i],
+                    impulse_id + i,
                 ));
         } else {
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, assembly_id1, assembly_id2, limits, rhs, na::zero(), 0));
+                .push(BilateralConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    limits,
+                    rhs,
+                    impulses[i],
+                    impulse_id + i,
+                ));
         }
+
+        i += 1;
 
         true
     });
@@ -298,6 +311,7 @@ pub fn cancel_relative_translation<N: Real>(
             jacobians,
         );
 
+        let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
             body1.handle(),
             body2.handle(),
@@ -305,7 +319,7 @@ pub fn cancel_relative_translation<N: Real>(
             geom.ndofs2,
             geom.wj_id1,
             geom.wj_id2,
-            depth,
+            rhs,
             geom.r,
         );
 
@@ -326,6 +340,8 @@ pub fn cancel_relative_angular_velocity<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
+    impulses: &AngularVector<N>,
+    impulse_id: usize,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
@@ -336,6 +352,7 @@ pub fn cancel_relative_angular_velocity<N: Real>(
         max: N::max_value(),
     };
 
+    let mut i = 0;
     AngularVector::canonical_basis(|dir| {
         let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
         let geom = constraint_pair_geometry(
@@ -372,15 +389,25 @@ pub fn cancel_relative_angular_velocity<N: Real>(
                     assembly_id2,
                     limits,
                     rhs,
-                    na::zero(),
-                    0,
+                    impulses[i],
+                    impulse_id + i,
                 ));
         } else {
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, assembly_id1, assembly_id2, limits, rhs, na::zero(), 0));
+                .push(BilateralConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    limits,
+                    rhs,
+                    impulses[i],
+                    impulse_id + i,
+                ));
         }
+
+        i += 1;
 
         true
     });
@@ -455,7 +482,15 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, assembly_id1, assembly_id2, limits, rhs, na::zero(), 0));
+                .push(BilateralConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    limits,
+                    rhs,
+                    na::zero(),
+                    0,
+                ));
         }
 
         true

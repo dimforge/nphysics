@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::ops::MulAssign;
 use approx::ApproxEq;
+use slab::Slab;
 use alga::linear::Transformation;
 use alga::linear::ProjectiveTransformation;
 use na::{self, DVector, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN};
@@ -8,9 +9,11 @@ use ncollide::query::ContactKinematic;
 use ncollide::query::closest_points_internal;
 
 use object::{BodyHandle, BodyPart, BodySet};
+use joint::JointConstraint;
 use solver::helper;
-use solver::{ForceDirection, MultibodyJointLimitsNonlinearConstraintGenerator,
-             NonlinearConstraintGenerator, NonlinearUnilateralConstraint};
+use solver::{ForceDirection, IntegrationParameters,
+             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
+             NonlinearUnilateralConstraint};
 use math::{Isometry, Point, Rotation, Vector};
 
 struct ContactGeometry<N: Real> {
@@ -55,9 +58,11 @@ impl<N: Real> NonlinearSORProx<N> {
 
     pub fn solve(
         &self,
+        params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         constraints: &mut [NonlinearUnilateralConstraint<N>],
         multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator],
+        joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
         jacobians: &mut [N],
         max_iter: usize,
     ) {
@@ -70,21 +75,26 @@ impl<N: Real> NonlinearSORProx<N> {
             }
 
             for generator in multibody_limits {
-                self.solve_generic(bodies, generator, jacobians)
+                self.solve_generic(params, bodies, generator, jacobians)
+            }
+
+            for joint in &*joints_constraints {
+                self.solve_generic(params, bodies, &**joint.1, jacobians)
             }
         }
     }
 
-    fn solve_generic<Gen: NonlinearConstraintGenerator<N>>(
+    fn solve_generic<Gen: ?Sized + NonlinearConstraintGenerator<N>>(
         &self,
+        params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         generator: &Gen,
         jacobians: &mut [N],
     ) {
-        let nconstraints = generator.nconstraints(bodies);
+        let nconstraints = generator.num_position_constraints(bodies);
 
         for i in 0..nconstraints {
-            if let Some(constraint) = generator.constraint(i, bodies, jacobians) {
+            if let Some(constraint) = generator.position_constraint(params, i, bodies, jacobians) {
                 let dim1 = Dynamic::new(constraint.dim1);
                 let dim2 = Dynamic::new(constraint.dim2);
 

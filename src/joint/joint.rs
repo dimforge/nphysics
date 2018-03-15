@@ -35,11 +35,11 @@ pub trait Joint<N: Real>: Any + Send + Sync {
         self.ndofs() * 3
     }
 
-    fn nconstraints(&self) -> usize {
+    fn num_velocity_constraints(&self) -> usize {
         0
     }
 
-    fn build_constraints(
+    fn velocity_constraints(
         &self,
         _params: &IntegrationParameters<N>,
         _link: &MultibodyLinkRef<N>,
@@ -52,7 +52,7 @@ pub trait Joint<N: Real>: Any + Send + Sync {
     ) {
     }
 
-    fn nposition_constraints(&self) -> usize {
+    fn num_position_constraints(&self) -> usize {
         0
     }
 

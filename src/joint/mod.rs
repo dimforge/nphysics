@@ -1,5 +1,5 @@
 pub use self::joint::Joint;
-pub use self::unit_joint::{unit_joint_nconstraints, unit_joint_position_constraint,
+pub use self::unit_joint::{unit_joint_num_velocity_constraints, unit_joint_position_constraint,
                            unit_joint_velocity_constraints, UnitJoint};
 pub use self::free_joint::FreeJoint;
 pub use self::fixed_joint::FixedJoint;
@@ -23,7 +23,7 @@ pub use self::universal_joint::UniversalJoint;
 pub use self::rectangular_joint::RectangularJoint;
 
 pub use self::joint_motor::JointMotor;
-pub use self::constraint_generator::{ConstraintGenerator, ConstraintHandle};
+pub use self::joint_constraint::{JointConstraint, ConstraintHandle};
 pub use self::fixed_constraint::FixedConstraint;
 pub use self::revolute_constraint::RevoluteConstraint;
 pub use self::ball_constraint::BallConstraint;
@@ -52,7 +52,7 @@ mod universal_joint;
 mod rectangular_joint;
 
 mod joint_motor;
-mod constraint_generator;
+mod joint_constraint;
 mod fixed_constraint;
 mod revolute_constraint;
 mod ball_constraint;

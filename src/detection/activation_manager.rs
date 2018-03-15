@@ -3,7 +3,7 @@ use slab::Slab;
 use na::{self, Real};
 use world::CollisionWorld;
 use object::{BodyHandle, BodyMut, BodySet};
-use joint::ConstraintGenerator;
+use joint::JointConstraint;
 use utils::union_find::UnionFindSet;
 use utils::union_find;
 
@@ -63,7 +63,7 @@ impl<N: Real> ActivationManager<N> {
         &mut self,
         bodies: &mut BodySet<N>,
         cworld: &CollisionWorld<N>,
-        constraints: &Slab<Box<ConstraintGenerator<N>>>,
+        constraints: &Slab<Box<JointConstraint<N>>>,
         active_bodies: &mut Vec<BodyHandle>,
     ) {
         /*

@@ -30,11 +30,11 @@ impl<N: Real> SignoriniCoulombPyramidModel<N> {
 }
 
 impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
-    fn nconstraints(&self, c: &BodyContactManifold<N>) -> usize {
+    fn num_velocity_constraints(&self, c: &BodyContactManifold<N>) -> usize {
         DIM * c.len()
     }
 
-    fn build_constraints(
+    fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
@@ -199,19 +199,19 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let friction = &constraints.velocity.bilateral[self.friction_rng.clone()];
 
         for c in ground_contacts {
-            self.impulses[c.cache_id][0] = c.impulse;
+            self.impulses[c.impulse_id][0] = c.impulse;
         }
 
         for c in contacts {
-            self.impulses[c.cache_id][0] = c.impulse;
+            self.impulses[c.impulse_id][0] = c.impulse;
         }
 
         for c in ground_friction {
-            self.impulses[c.cache_id / DIM][c.cache_id % DIM] = c.impulse;
+            self.impulses[c.impulse_id / DIM][c.impulse_id % DIM] = c.impulse;
         }
 
         for c in friction {
-            self.impulses[c.cache_id / DIM][c.cache_id % DIM] = c.impulse;
+            self.impulses[c.impulse_id / DIM][c.impulse_id % DIM] = c.impulse;
         }
     }
 }

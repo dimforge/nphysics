@@ -115,11 +115,11 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         self.revo.apply_displacement(&[disp[2]]);
     }
 
-    fn nconstraints(&self) -> usize {
-        self.prism1.nconstraints() + self.prism2.nconstraints() + self.revo.nconstraints()
+    fn num_velocity_constraints(&self) -> usize {
+        self.prism1.num_velocity_constraints() + self.prism2.num_velocity_constraints() + self.revo.num_velocity_constraints()
     }
 
-    fn build_constraints(
+    fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
         link: &MultibodyLinkRef<N>,
@@ -130,7 +130,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        self.prism1.build_constraints(
+        self.prism1.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -140,7 +140,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
             jacobians,
             constraints,
         );
-        self.prism2.build_constraints(
+        self.prism2.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -150,7 +150,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
             jacobians,
             constraints,
         );
-        self.revo.build_constraints(
+        self.revo.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -162,7 +162,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         );
     }
 
-    fn nposition_constraints(&self) -> usize {
+    fn num_position_constraints(&self) -> usize {
         // NOTE: we don't test if constraints exist to simplify indexing.
         3
     }

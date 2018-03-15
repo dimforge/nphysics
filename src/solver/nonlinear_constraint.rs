@@ -3,6 +3,7 @@ use ncollide::bounding_volume::PolyhedralCone;
 use ncollide::query::ContactKinematic;
 
 use object::{BodyHandle, BodySet};
+use solver::IntegrationParameters;
 use math::{Point, Vector};
 
 pub struct GenericNonlinearConstraint<N: Real> {
@@ -41,9 +42,10 @@ impl<N: Real> GenericNonlinearConstraint<N> {
 }
 
 pub trait NonlinearConstraintGenerator<N: Real> {
-    fn nconstraints(&self, bodies: &BodySet<N>) -> usize;
-    fn constraint(
+    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize;
+    fn position_constraint(
         &self,
+        params: &IntegrationParameters<N>,
         i: usize,
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
@@ -123,16 +125,17 @@ impl MultibodyJointLimitsNonlinearConstraintGenerator {
 }
 
 impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
-    fn nconstraints(&self, bodies: &BodySet<N>) -> usize {
+    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         if let Some(link) = bodies.multibody_link(self.link) {
-            link.joint().nposition_constraints()
+            link.joint().num_position_constraints()
         } else {
             0
         }
     }
 
-    fn constraint(
+    fn position_constraint(
         &self,
+        params: &IntegrationParameters<N>,
         i: usize,
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],

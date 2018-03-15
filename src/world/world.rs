@@ -11,7 +11,7 @@ use counters::Counters;
 use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
              ColliderHandle, Colliders, Multibody, MultibodyLinkMut, MultibodyLinkRef,
              MultibodyWorkspace, RigidBody, SensorHandle};
-use joint::{ConstraintGenerator, ConstraintHandle, Joint};
+use joint::{JointConstraint, ConstraintHandle, Joint};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use detection::{ActivationManager, BodyContactManifold};
 use math::{Inertia, Isometry, Point, Vector};
@@ -31,7 +31,7 @@ pub struct World<N: Real> {
     prediction: N,
     angular_prediction: N,
     gravity: Vector<N>,
-    constraints: Slab<Box<ConstraintGenerator<N>>>,
+    constraints: Slab<Box<JointConstraint<N>>>,
     params: IntegrationParameters<N>,
     workspace: MultibodyWorkspace<N>,
 }
@@ -126,25 +126,25 @@ impl<N: Real> World<N> {
         }
     }
 
-    pub fn add_constraint<C: ConstraintGenerator<N>>(&mut self, constraint: C) -> ConstraintHandle {
+    pub fn add_constraint<C: JointConstraint<N>>(&mut self, constraint: C) -> ConstraintHandle {
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1);
         self.activate_body(anchor2);
         self.constraints.insert(Box::new(constraint))
     }
 
-    pub fn constraint(&self, handle: ConstraintHandle) -> &ConstraintGenerator<N> {
+    pub fn constraint(&self, handle: ConstraintHandle) -> &JointConstraint<N> {
         &*self.constraints[handle]
     }
 
-    pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut ConstraintGenerator<N> {
+    pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut JointConstraint<N> {
         let (anchor1, anchor2) = self.constraints[handle].anchors();
         self.activate_body(anchor1);
         self.activate_body(anchor2);
         &mut *self.constraints[handle]
     }
 
-    pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<ConstraintGenerator<N>> {
+    pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<JointConstraint<N>> {
         let constraint = self.constraints.remove(handle);
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1);
@@ -238,7 +238,7 @@ impl<N: Real> World<N> {
         self.solver.step(
             &mut self.counters,
             &mut self.bodies,
-            &self.constraints,
+            &mut self.constraints,
             &contact_manifolds[..],
             &self.active_bodies[..],
             &self.params,

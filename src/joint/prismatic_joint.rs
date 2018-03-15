@@ -169,11 +169,11 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         Velocity::zero()
     }
 
-    fn nconstraints(&self) -> usize {
-        joint::unit_joint_nconstraints(self)
+    fn num_velocity_constraints(&self) -> usize {
+        joint::unit_joint_num_velocity_constraints(self)
     }
 
-    fn build_constraints(
+    fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
         link: &MultibodyLinkRef<N>,
@@ -197,7 +197,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         );
     }
 
-    fn nposition_constraints(&self) -> usize {
+    fn num_position_constraints(&self) -> usize {
         if self.min_offset.is_some() || self.max_offset.is_some() {
             1
         } else {

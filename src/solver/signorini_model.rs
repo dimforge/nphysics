@@ -36,7 +36,7 @@ impl<N: Real> SignoriniModel<N> {
         margin1: N,
         margin2: N,
         impulse: N,
-        cache_id: usize,
+        impulse_id: usize,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
@@ -51,7 +51,7 @@ impl<N: Real> SignoriniModel<N> {
         let mut depth = c.contact.depth + margin1 + margin2;
         let center1 = c.contact.world1 + c.contact.normal.unwrap() * margin1;
         let center2 = c.contact.world2 - c.contact.normal.unwrap() * margin2;
-        let dir = ForceDirection::Linear(c.contact.normal);
+        let dir = ForceDirection::Linear(-c.contact.normal);
 
         let geom = helper::constraint_pair_geometry(
             &body1,
@@ -94,7 +94,7 @@ impl<N: Real> SignoriniModel<N> {
                     assembly_id2,
                     rhs,
                     warmstart,
-                    cache_id,
+                    impulse_id,
                 ));
 
             true
@@ -102,7 +102,14 @@ impl<N: Real> SignoriniModel<N> {
             constraints
                 .velocity
                 .unilateral
-                .push(UnilateralConstraint::new(geom, assembly_id1, assembly_id2, rhs, warmstart, cache_id));
+                .push(UnilateralConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    rhs,
+                    warmstart,
+                    impulse_id,
+                ));
 
             false
         }
@@ -165,11 +172,11 @@ impl<N: Real> SignoriniModel<N> {
 }
 
 impl<N: Real> ContactModel<N> for SignoriniModel<N> {
-    fn nconstraints(&self, c: &BodyContactManifold<N>) -> usize {
+    fn num_velocity_constraints(&self, c: &BodyContactManifold<N>) -> usize {
         c.manifold.len()
     }
 
-    fn build_constraints(
+    fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
@@ -227,11 +234,11 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
 
         for c in ground_contacts {
-            self.impulses[c.cache_id] = c.impulse;
+            self.impulses[c.impulse_id] = c.impulse;
         }
 
         for c in contacts {
-            self.impulses[c.cache_id] = c.impulse;
+            self.impulses[c.impulse_id] = c.impulse;
         }
     }
 }

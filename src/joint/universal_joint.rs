@@ -106,11 +106,11 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
         self.revo2.apply_displacement(&[disp[1]]);
     }
 
-    fn nconstraints(&self) -> usize {
-        self.revo1.nconstraints() + self.revo2.nconstraints()
+    fn num_velocity_constraints(&self) -> usize {
+        self.revo1.num_velocity_constraints() + self.revo2.num_velocity_constraints()
     }
 
-    fn build_constraints(
+    fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
         link: &MultibodyLinkRef<N>,
@@ -121,7 +121,7 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        self.revo1.build_constraints(
+        self.revo1.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -131,7 +131,7 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
             jacobians,
             constraints,
         );
-        self.revo2.build_constraints(
+        self.revo2.velocity_constraints(
             params,
             link,
             assembly_id,
@@ -143,7 +143,7 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
         );
     }
 
-    fn nposition_constraints(&self) -> usize {
+    fn num_position_constraints(&self) -> usize {
         // NOTE: we don't test if constraints exist to simplify indexing.
         2
     }
