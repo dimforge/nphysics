@@ -3,8 +3,9 @@
 pub use self::moreau_jean_solver::MoreauJeanSolver;
 pub use self::constraint::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry,
                            ImpulseLimits, UnilateralConstraint, UnilateralGroundConstraint};
-pub use self::nonlinear_constraint::{GenericNonlinearConstraint, MultibodyJointLimitsNonlinearConstraintGenerator,
-                                     NonlinearConstraintGenerator, NonlinearNormalConeConstraint, NonlinearUnilateralConstraint};
+pub use self::nonlinear_constraint::{GenericNonlinearConstraint,
+                                     MultibodyJointLimitsNonlinearConstraintGenerator,
+                                     NonlinearConstraintGenerator, NonlinearUnilateralConstraint};
 pub use self::contact_model::ContactModel;
 pub use self::signorini_coulomb_pyramid_model::SignoriniCoulombPyramidModel;
 pub use self::signorini_model::SignoriniModel;

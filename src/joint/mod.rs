@@ -1,5 +1,6 @@
-pub use self::joint::{build_unit_joint_constraints, unit_joint_nconstraints,
-                      unit_joint_position_constraint, Joint, UnitJoint};
+pub use self::joint::Joint;
+pub use self::unit_joint::{unit_joint_nconstraints, unit_joint_position_constraint,
+                           unit_joint_velocity_constraints, UnitJoint};
 pub use self::free_joint::FreeJoint;
 pub use self::fixed_joint::FixedJoint;
 pub use self::revolute_joint::RevoluteJoint;
@@ -28,6 +29,7 @@ pub use self::revolute_constraint::RevoluteConstraint;
 pub use self::ball_constraint::BallConstraint;
 
 mod joint;
+mod unit_joint;
 mod free_joint;
 mod fixed_joint;
 mod revolute_joint;

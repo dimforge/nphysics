@@ -2,10 +2,10 @@ use na::Real;
 
 #[derive(Copy, Clone, Debug)]
 pub struct ConstraintGeometry<N: Real> {
-    pub jacobian_id1: usize,
-    pub jacobian_id2: usize,
-    pub weighted_jacobian_id1: usize,
-    pub weighted_jacobian_id2: usize,
+    pub j_id1: usize,
+    pub j_id2: usize,
+    pub wj_id1: usize,
+    pub wj_id2: usize,
     pub assembly_id1: usize,
     pub assembly_id2: usize,
     pub ndofs1: usize,
@@ -17,10 +17,10 @@ impl<N: Real> ConstraintGeometry<N> {
     #[inline]
     pub fn new() -> Self {
         ConstraintGeometry {
-            jacobian_id1: 0,
-            jacobian_id2: 0,
-            weighted_jacobian_id1: 0,
-            weighted_jacobian_id2: 0,
+            j_id1: 0,
+            j_id2: 0,
+            wj_id1: 0,
+            wj_id2: 0,
             assembly_id1: usize::max_value(),
             assembly_id2: usize::max_value(),
             ndofs1: 0,
@@ -46,11 +46,11 @@ pub struct UnilateralConstraint<N: Real> {
     pub assembly_id1: usize,
     pub assembly_id2: usize,
 
-    pub jacobian_id1: usize,
-    pub jacobian_id2: usize,
+    pub j_id1: usize,
+    pub j_id2: usize,
 
-    pub weighted_jacobian_id1: usize,
-    pub weighted_jacobian_id2: usize,
+    pub wj_id1: usize,
+    pub wj_id2: usize,
 
     pub ndofs1: usize,
     pub ndofs2: usize,
@@ -67,10 +67,10 @@ impl<N: Real> UnilateralConstraint<N> {
             cache_id: cache_id,
             assembly_id1: geom.assembly_id1,
             assembly_id2: geom.assembly_id2,
-            jacobian_id1: geom.jacobian_id1,
-            jacobian_id2: geom.jacobian_id2,
-            weighted_jacobian_id1: geom.weighted_jacobian_id1,
-            weighted_jacobian_id2: geom.weighted_jacobian_id2,
+            j_id1: geom.j_id1,
+            j_id2: geom.j_id2,
+            wj_id1: geom.wj_id1,
+            wj_id2: geom.wj_id2,
             ndofs1: geom.ndofs1,
             ndofs2: geom.ndofs2,
         }
@@ -87,8 +87,8 @@ pub struct UnilateralGroundConstraint<N: Real> {
 
     pub cache_id: usize,
     pub assembly_id: usize,
-    pub jacobian_id: usize,
-    pub weighted_jacobian_id: usize,
+    pub j_id: usize,
+    pub wj_id: usize,
     pub ndofs: usize,
 }
 
@@ -102,8 +102,8 @@ impl<N: Real> UnilateralGroundConstraint<N> {
                 rhs: rhs,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id2,
-                jacobian_id: geom.jacobian_id2,
-                weighted_jacobian_id: geom.weighted_jacobian_id2,
+                j_id: geom.j_id2,
+                wj_id: geom.wj_id2,
                 ndofs: geom.ndofs2,
             }
         } else {
@@ -113,8 +113,8 @@ impl<N: Real> UnilateralGroundConstraint<N> {
                 rhs: rhs,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id1,
-                jacobian_id: geom.jacobian_id1,
-                weighted_jacobian_id: geom.weighted_jacobian_id1,
+                j_id: geom.j_id1,
+                wj_id: geom.wj_id1,
                 ndofs: geom.ndofs1,
             }
         }
@@ -140,11 +140,11 @@ pub struct BilateralConstraint<N: Real> {
     pub assembly_id1: usize,
     pub assembly_id2: usize,
 
-    pub jacobian_id1: usize,
-    pub jacobian_id2: usize,
+    pub j_id1: usize,
+    pub j_id2: usize,
 
-    pub weighted_jacobian_id1: usize,
-    pub weighted_jacobian_id2: usize,
+    pub wj_id1: usize,
+    pub wj_id2: usize,
 
     pub ndofs1: usize,
     pub ndofs2: usize,
@@ -168,10 +168,10 @@ impl<N: Real> BilateralConstraint<N> {
             cache_id: cache_id,
             assembly_id1: geom.assembly_id1,
             assembly_id2: geom.assembly_id2,
-            jacobian_id1: geom.jacobian_id1,
-            jacobian_id2: geom.jacobian_id2,
-            weighted_jacobian_id1: geom.weighted_jacobian_id1,
-            weighted_jacobian_id2: geom.weighted_jacobian_id2,
+            j_id1: geom.j_id1,
+            j_id2: geom.j_id2,
+            wj_id1: geom.wj_id1,
+            wj_id2: geom.wj_id2,
             ndofs1: geom.ndofs1,
             ndofs2: geom.ndofs2,
         }
@@ -189,8 +189,8 @@ pub struct BilateralGroundConstraint<N: Real> {
 
     pub cache_id: usize,
     pub assembly_id: usize,
-    pub jacobian_id: usize,
-    pub weighted_jacobian_id: usize,
+    pub j_id: usize,
+    pub wj_id: usize,
     pub ndofs: usize,
 }
 
@@ -211,8 +211,8 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 limits: limits,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id2,
-                jacobian_id: geom.jacobian_id2,
-                weighted_jacobian_id: geom.weighted_jacobian_id2,
+                j_id: geom.j_id2,
+                wj_id: geom.wj_id2,
                 ndofs: geom.ndofs2,
             }
         } else {
@@ -223,8 +223,8 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 limits: limits,
                 cache_id: cache_id,
                 assembly_id: geom.assembly_id1,
-                jacobian_id: geom.jacobian_id1,
-                weighted_jacobian_id: geom.weighted_jacobian_id1,
+                j_id: geom.j_id1,
+                wj_id: geom.wj_id1,
                 ndofs: geom.ndofs1,
             }
         }

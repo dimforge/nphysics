@@ -126,7 +126,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
-        ground_jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
@@ -136,7 +136,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
             assembly_id,
             dof_id,
             ext_vels,
-            ground_jacobian_id,
+            ground_j_id,
             jacobians,
             constraints,
         );
@@ -146,7 +146,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
             assembly_id,
             dof_id + 1,
             ext_vels,
-            ground_jacobian_id,
+            ground_j_id,
             jacobians,
             constraints,
         );
@@ -156,7 +156,7 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
             assembly_id,
             dof_id + 2,
             ext_vels,
-            ground_jacobian_id,
+            ground_j_id,
             jacobians,
             constraints,
         );
