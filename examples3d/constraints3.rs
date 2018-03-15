@@ -21,16 +21,17 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    world.set_max_velocity_iterations(10);
 
     /*
      * Create the boxes
      */
-    let num = 10;
+    let num = 3;
     let rad = 0.2;
     let mut parent = BodyHandle::ground();
 
-    // let geom   = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad, rad)));
-    let geom = ShapeHandle::new(Ball::new(rad));
+    let geom   = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad, rad)));
+    // let geom = ShapeHandle::new(Ball::new(rad));
     let inertia = geom.inertia(1.0);
 
     for j in 0usize..num {
@@ -40,24 +41,34 @@ fn main() {
         let pos = Isometry3::new(-Vector3::z() * (j + 1) as f32 * rad * 3.0, na::zero());
         let rb = world.add_rigid_body(pos, inertia);
 
-        // let constraint = RevoluteConstraint::new(
-        //     parent,
-        //     rb,
-        //     // FIXME: unify the API regarding the choice of coordinate systems (what is relative to
-        //     // what). For example, it seems weird to have a '-' here.
-        //     na::origin(),
-        //     Vector3::x_axis(),
-        //     Point3::new(0.0, 0.0, rad * 3.0),
-        //     Vector3::x_axis(),
-        // );
-        let constraint = BallConstraint::new(
+        let constraint = RevoluteConstraint::new(
             parent,
             rb,
             // FIXME: unify the API regarding the choice of coordinate systems (what is relative to
             // what). For example, it seems weird to have a '-' here.
             na::origin(),
+            Vector3::y_axis(),
             Point3::new(0.0, 0.0, rad * 3.0),
+            Vector3::y_axis(),
         );
+
+        // let constraint = BallConstraint::new(
+        //     parent,
+        //     rb,
+        //     // FIXME: unify the API regarding the choice of coordinate systems (what is relative to
+        //     // what). For example, it seems weird to have a '-' here.
+        //     na::origin(),
+        //     Point3::new(0.0, 0.0, rad * 3.0),
+        // );
+
+        // let constraint = FixedConstraint::new(
+        //     parent,
+        //     rb,
+        //     // FIXME: unify the API regarding the choice of coordinate systems (what is relative to
+        //     // what). For example, it seems weird to have a '-' here.
+        //     na::one(),
+        //     Isometry3::new(Vector3::z() * rad * 3.0, na::zero()),
+        // );
 
         world.add_constraint(constraint);
 

@@ -109,24 +109,22 @@ impl<N: Real> MoreauJeanSolver<N> {
         let mut ground_jacobian_sz = 0;
 
         for (_, g) in joints.iter() {
-            let (b1, b2) = g.anchors();
-            let body1 = bodies.body(b1);
-            let body2 = bodies.body(b2);
+            if g.is_active(bodies) {
+                let (b1, b2) = g.anchors();
+                let body1 = bodies.body(b1);
+                let body2 = bodies.body(b2);
 
-            let ndofs1 = body1.status_dependent_ndofs();
-            let ndofs2 = body2.status_dependent_ndofs();
+                let ndofs1 = body1.status_dependent_ndofs();
+                let ndofs2 = body2.status_dependent_ndofs();
 
-            if (ndofs1 == 0 || !body1.is_active()) && (ndofs2 == 0 || !body2.is_active()) {
-                continue;
-            }
+                let nconstraints = g.num_velocity_constraints();
+                let sz = nconstraints * 2 * (ndofs1 + ndofs2);
 
-            let nconstraints = g.num_velocity_constraints();
-            let sz = nconstraints * 2 * (ndofs1 + ndofs2);
-
-            if ndofs1 == 0 || ndofs2 == 0 {
-                ground_jacobian_sz += sz;
-            } else {
-                jacobian_sz += sz;
+                if ndofs1 == 0 || ndofs2 == 0 {
+                    ground_jacobian_sz += sz;
+                } else {
+                    jacobian_sz += sz;
+                }
             }
         }
 

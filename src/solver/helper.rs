@@ -40,14 +40,14 @@ pub fn fill_constraint_geometry<N: Real>(
     inv_r: &mut N,
 ) {
     let force;
-    let pos = center - body.center_of_mass().coords;
 
     match *dir {
         ForceDirection::Linear(normal) => {
+            let pos = center - body.center_of_mass().coords;
             force = Force::linear_force_at_point(*normal, &pos);
         }
         ForceDirection::Angular(axis) => {
-            force = Force::torque_from_vector_at_point(*axis, &pos);
+            force = Force::torque_from_vector(*axis);
         }
     }
 
@@ -413,9 +413,50 @@ pub fn cancel_relative_angular_velocity<N: Real>(
     });
 }
 
-// Full angular stabilization
-// let error = (orientation1 / orientation2).scaled_axis();
-// let stabilization = -dir.dot(&error) / params.dt * params.erp;
+pub fn cancel_relative_rotation<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    rotation1: &Rotation<N>,
+    rotation2: &Rotation<N>,
+    jacobians: &mut [N],
+) -> Option<GenericNonlinearConstraint<N>> {
+    let error = (rotation2 / rotation1).scaled_axis();
+
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_rotation_error) {
+        let mut j_id = 0;
+        let mut ground_j_id = 0;
+
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            &ForceDirection::Angular(dir),
+            &mut ground_j_id,
+            &mut j_id,
+            jacobians,
+        );
+
+        let rhs = -depth;
+        let constraint = GenericNonlinearConstraint::new(
+            body1.handle(),
+            body2.handle(),
+            geom.ndofs1,
+            geom.ndofs2,
+            geom.wj_id1,
+            geom.wj_id2,
+            rhs,
+            geom.r,
+        );
+
+        Some(constraint)
+    } else {
+        None
+    }
+}
 
 #[cfg(feature = "dim3")]
 pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
@@ -429,6 +470,8 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
+    impulses: &[N],
+    impulse_id: usize,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
@@ -439,6 +482,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
         max: N::max_value(),
     };
 
+    let mut i = 0;
     AngularVector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
         let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
         let geom = constraint_pair_geometry(
@@ -475,8 +519,8 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
                     assembly_id2,
                     limits,
                     rhs,
-                    na::zero(),
-                    0,
+                    impulses[i],
+                    impulse_id + i,
                 ));
         } else {
             constraints
@@ -488,23 +532,69 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
                     assembly_id2,
                     limits,
                     rhs,
-                    na::zero(),
-                    0,
+                    impulses[i],
+                    impulse_id + i,
                 ));
         }
+
+        i += 1;
 
         true
     });
 }
 
-// Angular regularization for two coincident axis.
-// let mut error;
-// if let Some(error_rot) = Rotation::rotation_between_axis(&axis2, &axis1) {
-//     error = error_rot.scaled_axis();
-// } else {
-//     // Error equal to Pi, select one orthogonal direction.
-//     let imin = axis1.iamin();
-//     error = Vector::zeros();
-//     error[imin] = N::one();
-//     error = na::normalize(&error.cross(&axis1)) * N::pi();
-// }
+#[cfg(feature = "dim3")]
+pub fn align_axis<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis1: &Unit<Vector<N>>,
+    axis2: &Unit<Vector<N>>,
+    jacobians: &mut [N],
+) -> Option<GenericNonlinearConstraint<N>> {
+    // Angular regularization for two coincident axis.
+    let mut error;
+    if let Some(error_rot) = Rotation::rotation_between_axis(&axis1, &axis2) {
+        error = error_rot.scaled_axis();
+    } else {
+        // Error equal to Pi, select one orthogonal direction.
+        let imin = axis1.iamin();
+        error = Vector::zeros();
+        error[imin] = N::one();
+        error = na::normalize(&error.cross(&axis1)) * N::pi();
+    }
+
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_rotation_error) {
+        let mut j_id = 0;
+        let mut ground_j_id = 0;
+
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            &ForceDirection::Angular(dir),
+            &mut ground_j_id,
+            &mut j_id,
+            jacobians,
+        );
+
+        let rhs = -depth;
+        let constraint = GenericNonlinearConstraint::new(
+            body1.handle(),
+            body2.handle(),
+            geom.ndofs1,
+            geom.ndofs2,
+            geom.wj_id1,
+            geom.wj_id2,
+            rhs,
+            geom.r,
+        );
+
+        Some(constraint)
+    } else {
+        None
+    }
+}

@@ -1,10 +1,12 @@
+use std::ops::Range;
 use na::{DVector, Real};
 
 use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, IntegrationParameters, GenericNonlinearConstraint, NonlinearConstraintGenerator};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+             NonlinearConstraintGenerator};
 use solver::helper;
 use joint::JointConstraint;
-use math::{Isometry, Point, Vector, AngularVector, SPATIAL_DIM};
+use math::{AngularVector, Isometry, Point, Vector, DIM, SPATIAL_DIM};
 
 pub struct FixedConstraint<N: Real> {
     b1: BodyHandle,
@@ -12,7 +14,9 @@ pub struct FixedConstraint<N: Real> {
     joint_to_b1: Isometry<N>,
     joint_to_b2: Isometry<N>,
     lin_impulses: Vector<N>,
-    ang_impulses: AngularVector<N>
+    ang_impulses: AngularVector<N>,
+    bilateral_ground_rng: Range<usize>,
+    bilateral_rng: Range<usize>,
 }
 
 impl<N: Real> FixedConstraint<N> {
@@ -28,7 +32,9 @@ impl<N: Real> FixedConstraint<N> {
             joint_to_b1,
             joint_to_b2,
             lin_impulses: Vector::zeros(),
-            ang_impulses: AngularVector::zeros()
+            ang_impulses: AngularVector::zeros(),
+            bilateral_ground_rng: 0..0,
+            bilateral_rng: 0..0,
         }
     }
 
@@ -75,6 +81,9 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
         let assembly_id1 = b1.parent_companion_id();
         let assembly_id2 = b2.parent_companion_id();
 
+        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
+        let first_bilateral = constraints.velocity.bilateral.len();
+
         helper::cancel_relative_linear_velocity(
             params,
             &b1,
@@ -91,6 +100,7 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
             jacobians,
             constraints,
         );
+
         helper::cancel_relative_angular_velocity(
             params,
             &b1,
@@ -103,22 +113,45 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
             &anchor2,
             ext_vels,
             &self.ang_impulses,
-            3,
+            DIM,
             ground_j_id,
             j_id,
             jacobians,
             constraints,
         );
+
+        self.bilateral_ground_rng =
+            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
     }
 
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+            if c.impulse_id < DIM {
+                self.lin_impulses[c.impulse_id] = c.impulse;
+            } else {
+                self.ang_impulses[c.impulse_id - DIM] = c.impulse;
+            }
+        }
+
+        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+            if c.impulse_id < DIM {
+                self.lin_impulses[c.impulse_id] = c.impulse;
+            } else {
+                self.ang_impulses[c.impulse_id - DIM] = c.impulse;
+            }
+        }
     }
 }
 
-
 impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
-    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
-        0
+    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+        // FIXME: calling this at each iteration of the non-linear resolution is costly.
+        if self.is_active(bodies) {
+            2
+        } else {
+            0
+        }
     }
 
     fn position_constraint(
@@ -128,6 +161,40 @@ impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        None
+        let body1 = bodies.body_part(self.b1);
+        let body2 = bodies.body_part(self.b2);
+
+        let pos1 = body1.position() * self.joint_to_b1;
+        let pos2 = body2.position() * self.joint_to_b2;
+
+        let anchor1 = Point::from_coordinates(pos1.translation.vector);
+        let anchor2 = Point::from_coordinates(pos2.translation.vector);
+
+        if i == 0 {
+            let rotation1 = pos1.rotation;
+            let rotation2 = pos2.rotation;
+
+            helper::cancel_relative_rotation(
+                params,
+                &body1,
+                &body2,
+                &anchor1,
+                &anchor2,
+                &rotation1,
+                &rotation2,
+                jacobians,
+            )
+        } else if i == 1 {
+            helper::cancel_relative_translation(
+                params,
+                &body1,
+                &body2,
+                &anchor1,
+                &anchor2,
+                jacobians,
+            )
+        } else {
+            None
+        }
     }
 }
