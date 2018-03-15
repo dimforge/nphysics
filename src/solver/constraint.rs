@@ -6,8 +6,6 @@ pub struct ConstraintGeometry<N: Real> {
     pub j_id2: usize,
     pub wj_id1: usize,
     pub wj_id2: usize,
-    pub assembly_id1: usize,
-    pub assembly_id2: usize,
     pub ndofs1: usize,
     pub ndofs2: usize,
     pub r: N,
@@ -21,8 +19,6 @@ impl<N: Real> ConstraintGeometry<N> {
             j_id2: 0,
             wj_id1: 0,
             wj_id2: 0,
-            assembly_id1: usize::max_value(),
-            assembly_id2: usize::max_value(),
             ndofs1: 0,
             ndofs2: 0,
             r: N::zero(),
@@ -58,15 +54,15 @@ pub struct UnilateralConstraint<N: Real> {
 
 impl<N: Real> UnilateralConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, rhs: N, impulse: N, cache_id: usize) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, assembly_id1: usize, assembly_id2: usize, rhs: N, impulse: N, cache_id: usize) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
             impulse: impulse,
             r: geom.r,
             rhs: rhs,
             cache_id: cache_id,
-            assembly_id1: geom.assembly_id1,
-            assembly_id2: geom.assembly_id2,
+            assembly_id1: assembly_id1,
+            assembly_id2: assembly_id2,
             j_id1: geom.j_id1,
             j_id2: geom.j_id2,
             wj_id1: geom.wj_id1,
@@ -94,14 +90,14 @@ pub struct UnilateralGroundConstraint<N: Real> {
 
 impl<N: Real> UnilateralGroundConstraint<N> {
     #[inline]
-    pub fn new(geom: ConstraintGeometry<N>, rhs: N, impulse: N, cache_id: usize) -> Self {
+    pub fn new(geom: ConstraintGeometry<N>, assembly_id1: usize, assembly_id2: usize, rhs: N, impulse: N, cache_id: usize) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
                 impulse: impulse,
                 r: geom.r,
                 rhs: rhs,
                 cache_id: cache_id,
-                assembly_id: geom.assembly_id2,
+                assembly_id: assembly_id2,
                 j_id: geom.j_id2,
                 wj_id: geom.wj_id2,
                 ndofs: geom.ndofs2,
@@ -112,7 +108,7 @@ impl<N: Real> UnilateralGroundConstraint<N> {
                 r: geom.r,
                 rhs: rhs,
                 cache_id: cache_id,
-                assembly_id: geom.assembly_id1,
+                assembly_id: assembly_id1,
                 j_id: geom.j_id1,
                 wj_id: geom.wj_id1,
                 ndofs: geom.ndofs1,
@@ -154,6 +150,8 @@ impl<N: Real> BilateralConstraint<N> {
     #[inline]
     pub fn new(
         geom: ConstraintGeometry<N>,
+        assembly_id1: usize,
+        assembly_id2: usize,
         limits: ImpulseLimits<N>,
         rhs: N,
         impulse: N,
@@ -166,8 +164,8 @@ impl<N: Real> BilateralConstraint<N> {
             rhs: rhs,
             limits: limits,
             cache_id: cache_id,
-            assembly_id1: geom.assembly_id1,
-            assembly_id2: geom.assembly_id2,
+            assembly_id1: assembly_id1,
+            assembly_id2: assembly_id2,
             j_id1: geom.j_id1,
             j_id2: geom.j_id2,
             wj_id1: geom.wj_id1,
@@ -198,6 +196,8 @@ impl<N: Real> BilateralGroundConstraint<N> {
     #[inline]
     pub fn new(
         geom: ConstraintGeometry<N>,
+        assembly_id1: usize,
+        assembly_id2: usize,
         limits: ImpulseLimits<N>,
         rhs: N,
         impulse: N,
@@ -210,7 +210,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 rhs: rhs,
                 limits: limits,
                 cache_id: cache_id,
-                assembly_id: geom.assembly_id2,
+                assembly_id: assembly_id2,
                 j_id: geom.j_id2,
                 wj_id: geom.wj_id2,
                 ndofs: geom.ndofs2,
@@ -222,7 +222,7 @@ impl<N: Real> BilateralGroundConstraint<N> {
                 rhs: rhs,
                 limits: limits,
                 cache_id: cache_id,
-                assembly_id: geom.assembly_id1,
+                assembly_id: assembly_id1,
                 j_id: geom.j_id1,
                 wj_id: geom.wj_id1,
                 ndofs: geom.ndofs1,

@@ -152,7 +152,7 @@ impl<N: Real> ConstraintGenerator<N> for RevoluteConstraint<N> {
             let axis1 = pos1 * self.axis1;
             let axis2 = pos2 * self.axis2;
 
-            helper::restrict_relative_angular_motion_to_axis(
+            helper::restrict_relative_angular_velocity_to_axis(
                 params,
                 &b1,
                 &b2,

@@ -92,10 +92,38 @@ impl<N: Real> ConstraintGenerator<N> for BallConstraint<N> {
 
 //     fn constraint(
 //         &self,
+//         params: &IntegrationParameters<N>,
 //         i: usize,
 //         bodies: &mut BodySet<N>,
 //         jacobians: &mut [N],
 //     ) -> Option<GenericNonlinearConstraint<N>> {
+//         let body1 = bodies.body_part(self.b1);
+//         let body2 = bodies.body_part(self.b2);
 
+//         /*
+//          *
+//          * Joint constraints.
+//          *
+//          */
+//         let pos1 = body1.position();
+//         let pos2 = body2.position();
+
+//         let anchor1 = pos1 * self.anchor1;
+//         let anchor2 = pos2 * self.anchor2;
+
+//         let assembly_id1 = body1.parent_companion_id();
+//         let assembly_id2 = body2.parent_companion_id();
+
+//         cancel_relative_translation<N: Real>(
+//             params,
+//             &body1,
+//             &body2,
+//             assembly_id1: usize,
+//             assembly_id2: usize,
+//             anchor1: &Point<N>,
+//             anchor2: &Point<N>,
+//             ext_vels: &DVector<N>,
+//             jacobians: &mut [N],
+//         )
 //     }
 // }

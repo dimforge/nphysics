@@ -50,6 +50,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction_ground = constraints.velocity.bilateral_ground.len();
         let id_friction = constraints.velocity.bilateral.len();
         let mut in_cache = 0;
+
         for manifold in manifolds {
             let body1 = bodies.body_part(manifold.b1);
             let body2 = bodies.body_part(manifold.b2);
@@ -128,12 +129,9 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     let geom = helper::constraint_pair_geometry(
                         &body1,
                         &body2,
-                        assembly_id1,
-                        assembly_id2,
                         &center1,
                         &center2,
                         &dir,
-                        ext_vels,
                         ground_j_id,
                         j_id,
                         jacobians,
@@ -142,6 +140,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     let rhs = helper::constraint_pair_velocity(
                         &body1,
                         &body2,
+                        assembly_id1,
+                        assembly_id2,
                         &center1,
                         &center2,
                         &dir,
@@ -155,6 +155,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     if geom.is_ground_constraint() {
                         let constraint = BilateralGroundConstraint::new(
                             geom,
+                            assembly_id1,
+                            assembly_id2,
                             limits,
                             rhs,
                             warmstart,
@@ -164,6 +166,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     } else {
                         let constraint = BilateralConstraint::new(
                             geom,
+                            assembly_id1,
+                            assembly_id2,
                             limits,
                             rhs,
                             warmstart,
