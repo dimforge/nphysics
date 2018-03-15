@@ -180,18 +180,18 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
-        ground_jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        joint::build_unit_joint_constraints(
+        joint::unit_joint_velocity_constraints(
             self,
             params,
             link,
             assembly_id,
             dof_id,
             ext_vels,
-            ground_jacobian_id,
+            ground_j_id,
             jacobians,
             constraints,
         );

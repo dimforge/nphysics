@@ -10,8 +10,10 @@ pub struct GenericNonlinearConstraint<N: Real> {
     pub body2: BodyHandle,
     pub dim1: usize,
     pub dim2: usize,
+    pub wj_id1: usize,
+    pub wj_id2: usize,
     pub rhs: N,
-    pub inv_r: N,
+    pub r: N,
 }
 
 impl<N: Real> GenericNonlinearConstraint<N> {
@@ -20,16 +22,20 @@ impl<N: Real> GenericNonlinearConstraint<N> {
         body2: BodyHandle,
         dim1: usize,
         dim2: usize,
+        wj_id1: usize,
+        wj_id2: usize,
         rhs: N,
-        inv_r: N,
+        r: N,
     ) -> Self {
         GenericNonlinearConstraint {
             body1,
             body2,
             dim1,
             dim2,
+            wj_id1,
+            wj_id2,
             rhs,
-            inv_r,
+            r,
         }
     }
 }
@@ -45,10 +51,8 @@ pub trait NonlinearConstraintGenerator<N: Real> {
 }
 
 pub struct NonlinearUnilateralConstraint<N: Real> {
-    pub inv_r: N,
+    pub r: N,
     pub rhs: N,
-
-    pub normal_constraint_id: usize,
 
     pub ndofs1: usize,
     pub body1: BodyHandle,
@@ -71,7 +75,6 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
 
 impl<N: Real> NonlinearUnilateralConstraint<N> {
     pub fn new(
-        normal_constraint_id: usize,
         body1: BodyHandle,
         ndofs1: usize,
         body2: BodyHandle,
@@ -86,12 +89,11 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
         margin2: N,
         kinematic: ContactKinematic<Vector<N>>,
     ) -> Self {
-        let inv_r = N::zero();
+        let r = N::zero();
         let rhs = N::zero();
 
         NonlinearUnilateralConstraint {
-            normal_constraint_id,
-            inv_r,
+            r,
             rhs,
             ndofs1,
             body1,
@@ -106,35 +108,6 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
             normal2,
             ncone2,
             margin2,
-        }
-    }
-}
-
-pub struct NonlinearNormalConeConstraint<N: Real> {
-    pub inv_r: N,
-    pub rhs: N,
-
-    pub contact_id: usize,
-
-    pub ncone1: PolyhedralCone<Vector<N>>,
-    pub ncone2: PolyhedralCone<Vector<N>>,
-}
-
-impl<N: Real> NonlinearNormalConeConstraint<N> {
-    pub fn new(
-        contact_id: usize,
-        ncone1: PolyhedralCone<Vector<N>>,
-        ncone2: PolyhedralCone<Vector<N>>,
-    ) -> Self {
-        let inv_r = N::zero();
-        let rhs = N::zero();
-
-        NonlinearNormalConeConstraint {
-            inv_r,
-            rhs,
-            contact_id,
-            ncone1,
-            ncone2,
         }
     }
 }

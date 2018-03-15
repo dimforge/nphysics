@@ -1,7 +1,7 @@
 use na::{DVector, Real};
 
 use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, IntegrationParameters};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use solver::helper;
 use joint::ConstraintGenerator;
 use math::{Point, DIM};
@@ -46,8 +46,8 @@ impl<N: Real> ConstraintGenerator<N> for BallConstraint<N> {
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
-        ground_jacobian_id: &mut usize,
-        jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
+        j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
@@ -68,7 +68,7 @@ impl<N: Real> ConstraintGenerator<N> for BallConstraint<N> {
         let assembly_id1 = b1.parent_companion_id();
         let assembly_id2 = b2.parent_companion_id();
 
-        helper::cancel_relative_linear_motion(
+        helper::cancel_relative_linear_velocity(
             params,
             &b1,
             &b2,
@@ -77,10 +77,25 @@ impl<N: Real> ConstraintGenerator<N> for BallConstraint<N> {
             &anchor1,
             &anchor2,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
             constraints,
         );
     }
 }
+
+// impl<N: Real> NonlinearConstraintGenerator<N> for BallConstraint<N> {
+//     fn nconstraints(&self, bodies: &BodySet<N>) -> usize {
+//         1
+//     }
+
+//     fn constraint(
+//         &self,
+//         i: usize,
+//         bodies: &mut BodySet<N>,
+//         jacobians: &mut [N],
+//     ) -> Option<GenericNonlinearConstraint<N>> {
+
+//     }
+// }

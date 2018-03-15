@@ -1,7 +1,7 @@
 use na::Real;
 use solver::{BilateralConstraint, BilateralGroundConstraint,
-             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearNormalConeConstraint,
-             NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
+             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearUnilateralConstraint,
+             UnilateralConstraint, UnilateralGroundConstraint};
 
 pub struct Constraints<N: Real> {
     pub unilateral_ground: Vec<UnilateralGroundConstraint<N>>,
@@ -35,7 +35,6 @@ impl<N: Real> Constraints<N> {
 
 pub struct NonlinearConstraints<N: Real> {
     pub unilateral: Vec<NonlinearUnilateralConstraint<N>>,
-    pub normal: Vec<NonlinearNormalConeConstraint<N>>,
     pub multibody_limits: Vec<MultibodyJointLimitsNonlinearConstraintGenerator>,
 }
 
@@ -43,18 +42,16 @@ impl<N: Real> NonlinearConstraints<N> {
     pub fn new() -> Self {
         NonlinearConstraints {
             unilateral: Vec::new(),
-            normal: Vec::new(),
             multibody_limits: Vec::new(),
         }
     }
 
     pub fn len(&self) -> usize {
-        self.unilateral.len() + self.normal.len() + self.multibody_limits.len()
+        self.unilateral.len() + self.multibody_limits.len()
     }
 
     pub fn clear(&mut self) {
         self.unilateral.clear();
-        self.normal.clear();
         self.multibody_limits.clear();
     }
 }

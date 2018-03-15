@@ -40,7 +40,6 @@ pub struct MultibodyLink<N: Real> {
     pub is_leaf: bool,
 
     // XXX: rename to "joint".
-    // + rename Joint to Joint
     // (And rename the full-coordinates joint contsraints JointConstraint).
     pub parent: MultibodyLinkId,
     pub dof: Box<Joint<N>>,

@@ -40,8 +40,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         manifolds: &[BodyContactManifold<N>],
-        ground_jacobian_id: &mut usize,
-        jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
+        j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
@@ -76,8 +76,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     manifold.margin2,
                     impulse[0],
                     impulse_id,
-                    ground_jacobian_id,
-                    jacobian_id,
+                    ground_j_id,
+                    j_id,
                     jacobians,
                     constraints,
                 );
@@ -134,8 +134,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         &center2,
                         &dir,
                         ext_vels,
-                        ground_jacobian_id,
-                        jacobian_id,
+                        ground_j_id,
+                        j_id,
                         jacobians,
                     );
 

@@ -3,7 +3,7 @@ use alga::linear::FiniteDimVectorSpace;
 use na::{self, DVector, DVectorSlice, Real, Unit};
 
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
-             ImpulseLimits, IntegrationParameters};
+             GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 use object::BodyPart;
 use math::{AngularVector, Force, Point, Rotation, Vector};
 
@@ -34,8 +34,8 @@ pub fn fill_constraint_geometry<N: Real>(
     ndofs: usize,
     center: &Point<N>,
     dir: &ForceDirection<N>,
-    jacobian_id: usize,
-    weighted_jacobian_id: usize,
+    j_id: usize,
+    wj_id: usize,
     jacobians: &mut [N],
     inv_r: &mut N,
 ) {
@@ -51,15 +51,15 @@ pub fn fill_constraint_geometry<N: Real>(
         }
     }
 
-    body.body_jacobian_mul_force(&force, &mut jacobians[jacobian_id..]);
+    body.body_jacobian_mul_force(&force, &mut jacobians[j_id..]);
     // FIXME: this could be optimized with a copy_nonoverlapping.
     for i in 0..ndofs {
-        jacobians[weighted_jacobian_id + i] = jacobians[jacobian_id + i];
+        jacobians[wj_id + i] = jacobians[j_id + i];
     }
-    body.inv_mass_mul_generalized_forces(&mut jacobians[weighted_jacobian_id..]);
+    body.inv_mass_mul_generalized_forces(&mut jacobians[wj_id..]);
 
-    let j = DVectorSlice::new(&jacobians[jacobian_id..], ndofs);
-    let invm_j = DVectorSlice::new(&jacobians[weighted_jacobian_id..], ndofs);
+    let j = DVectorSlice::new(&jacobians[j_id..], ndofs);
+    let invm_j = DVectorSlice::new(&jacobians[wj_id..], ndofs);
 
     *inv_r += j.dot(&invm_j);
 }
@@ -74,8 +74,8 @@ pub fn constraint_pair_geometry<N: Real>(
     center2: &Point<N>,
     dir: &ForceDirection<N>,
     ext_vels: &DVector<N>,
-    ground_jacobian_id: &mut usize,
-    jacobian_id: &mut usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
     jacobians: &mut [N],
 ) -> ConstraintGeometry<N> {
     let mut res = ConstraintGeometry::new();
@@ -83,18 +83,18 @@ pub fn constraint_pair_geometry<N: Real>(
     res.ndofs1 = body1.status_dependent_parent_ndofs();
     res.ndofs2 = body2.status_dependent_parent_ndofs();
 
-    let out_jacobian_id;
+    let out_j_id;
     if res.ndofs1 == 0 || res.ndofs2 == 0 {
-        res.jacobian_id1 = *ground_jacobian_id;
-        out_jacobian_id = ground_jacobian_id;
+        res.j_id1 = *ground_j_id;
+        out_j_id = ground_j_id;
     } else {
-        res.jacobian_id1 = *jacobian_id;
-        out_jacobian_id = jacobian_id;
+        res.j_id1 = *j_id;
+        out_j_id = j_id;
     }
 
-    res.jacobian_id2 = res.jacobian_id1 + res.ndofs1;
-    res.weighted_jacobian_id1 = res.jacobian_id2 + res.ndofs2;
-    res.weighted_jacobian_id2 = res.weighted_jacobian_id1 + res.ndofs1;
+    res.j_id2 = res.j_id1 + res.ndofs1;
+    res.wj_id1 = res.j_id2 + res.ndofs2;
+    res.wj_id2 = res.wj_id1 + res.ndofs1;
 
     let mut inv_r = N::zero();
 
@@ -106,8 +106,8 @@ pub fn constraint_pair_geometry<N: Real>(
             res.ndofs1,
             center1,
             &dir.neg(),
-            res.jacobian_id1,
-            res.weighted_jacobian_id1,
+            res.j_id1,
+            res.wj_id1,
             jacobians,
             &mut inv_r,
         );
@@ -121,18 +121,18 @@ pub fn constraint_pair_geometry<N: Real>(
             res.ndofs2,
             center2,
             dir,
-            res.jacobian_id2,
-            res.weighted_jacobian_id2,
+            res.j_id2,
+            res.wj_id2,
             jacobians,
             &mut inv_r,
         );
     }
 
     if res.assembly_id1 == res.assembly_id2 {
-        let j1 = DVectorSlice::new(&jacobians[res.jacobian_id1..], res.ndofs1);
-        let j2 = DVectorSlice::new(&jacobians[res.jacobian_id2..], res.ndofs2);
-        let invm_j1 = DVectorSlice::new(&jacobians[res.weighted_jacobian_id1..], res.ndofs1);
-        let invm_j2 = DVectorSlice::new(&jacobians[res.weighted_jacobian_id2..], res.ndofs2);
+        let j1 = DVectorSlice::new(&jacobians[res.j_id1..], res.ndofs1);
+        let j2 = DVectorSlice::new(&jacobians[res.j_id2..], res.ndofs2);
+        let invm_j1 = DVectorSlice::new(&jacobians[res.wj_id1..], res.ndofs1);
+        let invm_j2 = DVectorSlice::new(&jacobians[res.wj_id2..], res.ndofs2);
 
         inv_r += j2.dot(&invm_j1) + j1.dot(&invm_j2);
     }
@@ -143,7 +143,7 @@ pub fn constraint_pair_geometry<N: Real>(
         res.r = N::one()
     }
 
-    *out_jacobian_id += (res.ndofs1 + res.ndofs2) * 2;
+    *out_j_id += (res.ndofs1 + res.ndofs2) * 2;
     res
 }
 
@@ -161,7 +161,7 @@ pub fn constraint_pair_velocity<N: Real>(
     let mut vel = N::zero();
 
     if geom.ndofs1 != 0 {
-        let j = DVectorSlice::new(&jacobians[geom.jacobian_id1..], geom.ndofs1);
+        let j = DVectorSlice::new(&jacobians[geom.j_id1..], geom.ndofs1);
         vel += j.dot(&body1.parent_generalized_velocity())
             + j.dot(&ext_vels.rows(geom.assembly_id1, geom.ndofs1));
     } else {
@@ -180,7 +180,7 @@ pub fn constraint_pair_velocity<N: Real>(
     }
 
     if geom.ndofs2 != 0 {
-        let j = DVectorSlice::new(&jacobians[geom.jacobian_id2..], geom.ndofs2);
+        let j = DVectorSlice::new(&jacobians[geom.j_id2..], geom.ndofs2);
         vel += j.dot(&body2.parent_generalized_velocity())
             + j.dot(&ext_vels.rows(geom.assembly_id2, geom.ndofs2));
     } else {
@@ -209,7 +209,7 @@ pub fn constraints_are_ground_constraints<N: Real>(
     body1.status_dependent_parent_ndofs() == 0 || body2.status_dependent_parent_ndofs() == 0
 }
 
-pub fn cancel_relative_linear_motion<N: Real>(
+pub fn cancel_relative_linear_velocity<N: Real>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
@@ -218,8 +218,8 @@ pub fn cancel_relative_linear_motion<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
-    ground_jacobian_id: &mut usize,
-    jacobian_id: &mut usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
@@ -239,8 +239,8 @@ pub fn cancel_relative_linear_motion<N: Real>(
             anchor2,
             &dir,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
         );
 
@@ -277,53 +277,56 @@ pub fn cancel_relative_linear_motion<N: Real>(
     });
 }
 
-// pub fn cancel_relative_translation<N: Real>(
-//     params: &IntegrationParameters<N>,
-//     body1: &BodyPart<N>,
-//     body2: &BodyPart<N>,
-//     assembly_id1: usize,
-//     assembly_id2: usize,
-//     anchor1: &Point<N>,
-//     anchor2: &Point<N>,
-//     ext_vels: &DVector<N>,
-//     ground_jacobian_id: &mut usize,
-//     jacobian_id: &mut usize,
-//     jacobians: &mut [N],
-//     constraints: &mut ConstraintSet<N>,
-// ) {
-//     let geom = constraint_pair_geometry(
-//         body1,
-//         body2,
-//         assembly_id1,
-//         assembly_id2,
-//         anchor1,
-//         anchor2,
-//         &ForceDirection::Linear(Unit::new_unchecked(*dir)),
-//         ext_vels,
-//         ground_jacobian_id,
-//         jacobian_id,
-//         jacobians,
-//     );
+pub fn cancel_relative_translation<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    ext_vels: &DVector<N>,
+    jacobians: &mut [N],
+    constraints: &mut ConstraintSet<N>,
+) -> Option<GenericNonlinearConstraint<N>> {
+    let error = anchor2 - anchor1;
 
-//     let stabilization = -dir.dot(&error);
-//     let rhs = stabilization;
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_translation_error) {
+        let mut j_id = 0;
+        let mut ground_j_id = 0;
 
-//     constraints
-//         .velocity
-//         .bilateral
-//         .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            assembly_id1,
+            assembly_id2,
+            anchor1,
+            anchor2,
+            &ForceDirection::Linear(dir),
+            ext_vels,
+            &mut ground_j_id,
+            &mut j_id,
+            jacobians,
+        );
 
-//     GenericNonlinearConstraint::new(
-//         body1,
-//         body2,
-//         dim1: usize,
-//         dim2: usize,
-//         rhs,
-//         inv_r: geom.inv_r,
-//     ) -> Self {
-// }
+        let constraint = GenericNonlinearConstraint::new(
+            body1.handle(),
+            body2.handle(),
+            geom.ndofs1,
+            geom.ndofs2,
+            geom.wj_id1,
+            geom.wj_id2,
+            depth,
+            geom.r,
+        );
 
-pub fn cancel_relative_angular_motion<N: Real>(
+        Some(constraint)
+    } else {
+        None
+    }
+}
+
+pub fn cancel_relative_angular_velocity<N: Real>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
@@ -334,8 +337,8 @@ pub fn cancel_relative_angular_motion<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
-    ground_jacobian_id: &mut usize,
-    jacobian_id: &mut usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
@@ -355,8 +358,8 @@ pub fn cancel_relative_angular_motion<N: Real>(
             anchor2,
             &dir,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
         );
 
@@ -409,8 +412,8 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
-    ground_jacobian_id: &mut usize,
-    jacobian_id: &mut usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
@@ -430,8 +433,8 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
             anchor2,
             &dir,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
         );
 

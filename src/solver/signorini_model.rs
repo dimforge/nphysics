@@ -6,8 +6,7 @@ use ncollide::query::TrackedContact;
 use detection::BodyContactManifold;
 use solver::helper;
 use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
-             NonlinearNormalConeConstraint, NonlinearUnilateralConstraint, UnilateralConstraint,
-             UnilateralGroundConstraint};
+             NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
 use object::{BodyHandle, BodySet};
 use math::{Point, Vector};
 
@@ -38,8 +37,8 @@ impl<N: Real> SignoriniModel<N> {
         margin2: N,
         impulse: N,
         cache_id: usize,
-        ground_jacobian_id: &mut usize,
-        jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
+        j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) -> bool {
@@ -63,8 +62,8 @@ impl<N: Real> SignoriniModel<N> {
             &center2,
             &dir,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
         );
 
@@ -136,7 +135,6 @@ impl<N: Real> SignoriniModel<N> {
             -Unit::new_unchecked(pos2.inverse_transform_vector(c.contact.normal.as_ref()));
 
         let contact_id = constraints.position.unilateral.len();
-        let normal_id = constraints.position.normal.len();
 
         // XXX: we have to change the coordinate system
         // if the collider orientation is not the same
@@ -148,7 +146,6 @@ impl<N: Real> SignoriniModel<N> {
             .position
             .unilateral
             .push(NonlinearUnilateralConstraint::new(
-                normal_id,
                 b1,
                 body1.status_dependent_parent_ndofs(),
                 b2,
@@ -163,18 +160,6 @@ impl<N: Real> SignoriniModel<N> {
                 margin2,
                 c.kinematic,
             ));
-
-        constraints
-            .position
-            .normal
-            .push(NonlinearNormalConeConstraint::new(
-                contact_id,
-                // XXX: we have to change the coordinate system
-                // if the collider orientation is not the same
-                // as the body's.
-                c.normals1.clone(),
-                c.normals2.clone(),
-            ))
     }
 }
 
@@ -189,8 +174,8 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         manifolds: &[BodyContactManifold<N>],
-        ground_jacobian_id: &mut usize,
-        jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
+        j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
@@ -214,8 +199,8 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     manifold.margin2,
                     self.impulses.get(c.id),
                     self.impulses.entry_id(c.id),
-                    ground_jacobian_id,
-                    jacobian_id,
+                    ground_j_id,
+                    j_id,
                     jacobians,
                     constraints,
                 );

@@ -12,8 +12,8 @@ pub trait ContactModel<N: Real>: 'static {
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         manifolds: &[BodyContactManifold<N>],
-        ground_jacobian_id: &mut usize,
-        jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
+        j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     );

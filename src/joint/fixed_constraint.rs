@@ -51,8 +51,8 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
-        ground_jacobian_id: &mut usize,
-        jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
+        j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
@@ -71,7 +71,7 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
         let assembly_id1 = b1.parent_companion_id();
         let assembly_id2 = b2.parent_companion_id();
 
-        helper::cancel_relative_linear_motion(
+        helper::cancel_relative_linear_velocity(
             params,
             &b1,
             &b2,
@@ -80,12 +80,12 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
             &anchor1,
             &anchor2,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
             constraints,
         );
-        helper::cancel_relative_angular_motion(
+        helper::cancel_relative_angular_velocity(
             params,
             &b1,
             &b2,
@@ -96,8 +96,8 @@ impl<N: Real> ConstraintGenerator<N> for FixedConstraint<N> {
             &anchor1,
             &anchor2,
             ext_vels,
-            ground_jacobian_id,
-            jacobian_id,
+            ground_j_id,
+            j_id,
             jacobians,
             constraints,
         );

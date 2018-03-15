@@ -6,7 +6,8 @@ use na::storage::Storage;
 use object::{ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId,
              MultibodyLinkMut, MultibodyLinkRef, MultibodyLinkVec};
 use joint::{FreeJoint, Joint};
-use solver::{IntegrationParameters, ConstraintSet, MultibodyJointLimitsNonlinearConstraintGenerator};
+use solver::{ConstraintSet, IntegrationParameters,
+             MultibodyJointLimitsNonlinearConstraintGenerator};
 use utils::{GeneralizedCross, IndexMut2};
 use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, SpatialMatrix, SpatialVector,
            Vector, Velocity, DIM};
@@ -193,7 +194,7 @@ impl<N: Real> Multibody<N> {
     pub fn damping(&self) -> DVectorSlice<N> {
         DVectorSlice::new(&self.damping, self.ndofs)
     }
-    
+
     #[inline]
     pub fn impulses(&self) -> DVectorSlice<N> {
         DVectorSlice::new(&self.impulses, self.impulses.len())
@@ -815,7 +816,7 @@ impl<N: Real> Multibody<N> {
         &mut self,
         params: &IntegrationParameters<N>,
         ext_vels: &DVector<N>,
-        ground_jacobian_id: &mut usize,
+        ground_j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
@@ -829,7 +830,7 @@ impl<N: Real> Multibody<N> {
                 self.companion_id,
                 0,
                 ext_vels.as_slice(),
-                ground_jacobian_id,
+                ground_j_id,
                 jacobians,
                 constraints,
             );
@@ -841,16 +842,19 @@ impl<N: Real> Multibody<N> {
             }
         }
 
-        self.unilateral_ground_rng = first_unilateral .. constraints.velocity.unilateral_ground.len();
-        self.bilateral_ground_rng = first_bilateral .. constraints.velocity.bilateral_ground.len();
+        self.unilateral_ground_rng = first_unilateral..constraints.velocity.unilateral_ground.len();
+        self.bilateral_ground_rng = first_bilateral..constraints.velocity.bilateral_ground.len();
     }
 
     pub fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
-        for constraint in &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()] {
+        for constraint in
+            &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()]
+        {
             self.impulses[constraint.cache_id] = constraint.impulse;
         }
 
-        for constraint in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+        for constraint in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()]
+        {
             self.impulses[constraint.cache_id] = constraint.impulse;
         }
     }

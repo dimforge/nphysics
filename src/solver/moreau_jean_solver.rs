@@ -158,8 +158,8 @@ impl<N: Real> MoreauJeanSolver<N> {
          * Initialize constraints.
          *
          */
-        let mut jacobian_id = 0;
-        let mut ground_jacobian_id = jacobian_sz;
+        let mut j_id = 0;
+        let mut ground_j_id = jacobian_sz;
 
         for (_, g) in gens {
             let (b1, b2) = g.anchors();
@@ -177,8 +177,8 @@ impl<N: Real> MoreauJeanSolver<N> {
                 params,
                 bodies,
                 &self.ext_vels,
-                &mut ground_jacobian_id,
-                &mut jacobian_id,
+                &mut ground_j_id,
+                &mut j_id,
                 &mut self.jacobians,
                 &mut self.constraints,
             );
@@ -189,7 +189,7 @@ impl<N: Real> MoreauJeanSolver<N> {
                 mb.build_constraints(
                     params,
                     &self.ext_vels,
-                    &mut ground_jacobian_id,
+                    &mut ground_j_id,
                     &mut self.jacobians,
                     &mut self.constraints,
                 );
@@ -201,8 +201,8 @@ impl<N: Real> MoreauJeanSolver<N> {
             bodies,
             &self.ext_vels,
             manifolds,
-            &mut ground_jacobian_id,
-            &mut jacobian_id,
+            &mut ground_j_id,
+            &mut j_id,
             &mut self.jacobians,
             &mut self.constraints,
         );
@@ -232,7 +232,6 @@ impl<N: Real> MoreauJeanSolver<N> {
         solver.solve(
             bodies,
             &mut self.constraints.position.unilateral,
-            &mut self.constraints.position.normal,
             &mut self.constraints.position.multibody_limits,
             &mut self.jacobians,
             params.max_position_iterations,
