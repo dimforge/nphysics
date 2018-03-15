@@ -113,25 +113,25 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
 }
 
 impl<N: Real> NonlinearConstraintGenerator<N> for BallConstraint<N> {
-    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
-        1
+    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+        // FIXME: calling this at each iteration of the non-linear resolution is costly.
+        if self.is_active(bodies) {
+            1
+        } else {
+            0
+        }
     }
 
     fn position_constraint(
         &self,
         params: &IntegrationParameters<N>,
-        i: usize,
+        _: usize,
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         let body1 = bodies.body_part(self.b1);
         let body2 = bodies.body_part(self.b2);
 
-        /*
-         *
-         * Joint constraints.
-         *
-         */
         let pos1 = body1.position();
         let pos2 = body2.position();
 
