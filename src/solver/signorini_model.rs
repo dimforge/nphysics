@@ -50,32 +50,39 @@ impl<N: Real> SignoriniModel<N> {
         let assembly_id2 = body2.parent_companion_id();
 
         let mut depth = c.contact.depth + margin1 + margin2;
+        let center1 = c.contact.world1 + c.contact.normal.unwrap() * margin1;
+        let center2 = c.contact.world2 - c.contact.normal.unwrap() * margin2;
+        let dir = ForceDirection::Linear(c.contact.normal);
 
-        let mut geom = helper::constraint_pair_geometry(
+        let geom = helper::constraint_pair_geometry(
             &body1,
             &body2,
             assembly_id1,
             assembly_id2,
-            &(c.contact.world1 + c.contact.normal.unwrap() * margin1),
-            &(c.contact.world2 - c.contact.normal.unwrap() * margin2),
-            &ForceDirection::Linear(c.contact.normal),
+            &center1,
+            &center2,
+            &dir,
             ext_vels,
             ground_jacobian_id,
             jacobian_id,
             jacobians,
         );
 
-        if depth < N::zero() {
-            geom.rhs += -depth / params.dt;
-        } else {
-            let restitution = N::zero(); // FIXME: (rb1.restitution() + rb2.restitution()) * na::convert(0.5) * dvel;
-            let stabilization = if depth > na::convert(0.005) {
-                -depth * params.erp / params.dt
-            } else {
-                N::zero()
-            };
+        let mut rhs = helper::constraint_pair_velocity(
+            &body1,
+            &body2,
+            &center1,
+            &center2,
+            &dir,
+            ext_vels,
+            jacobians,
+            &geom,
+        );
 
-            geom.rhs += na::inf(&restitution, &stabilization);
+        if depth < N::zero() {
+            rhs += -depth / params.dt;
+        } else {
+            rhs += N::zero(); // FIXME: (rb1.restitution() + rb2.restitution()) * na::convert(0.5) * dvel;
         }
 
         let warmstart = impulse * params.warmstart_coeff;
@@ -83,14 +90,19 @@ impl<N: Real> SignoriniModel<N> {
             constraints
                 .velocity
                 .unilateral_ground
-                .push(UnilateralGroundConstraint::new(geom, warmstart, cache_id));
+                .push(UnilateralGroundConstraint::new(
+                    geom,
+                    rhs,
+                    warmstart,
+                    cache_id,
+                ));
 
             true
         } else {
             constraints
                 .velocity
                 .unilateral
-                .push(UnilateralConstraint::new(geom, warmstart, cache_id));
+                .push(UnilateralConstraint::new(geom, rhs, warmstart, cache_id));
 
             false
         }

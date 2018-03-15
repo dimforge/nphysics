@@ -51,8 +51,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
         let mut in_cache = 0;
         for manifold in manifolds {
-            let b1 = bodies.body_part(manifold.b1);
-            let b2 = bodies.body_part(manifold.b2);
+            let body1 = bodies.body_part(manifold.b1);
+            let body2 = bodies.body_part(manifold.b2);
             let deepest_contact = manifold.deepest_contact();
             let deepest_contact_normal = &deepest_contact.contact.normal;
 
@@ -102,8 +102,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     dependency = constraints.len() - 1;
                 }
 
-                let assembly_id1 = b1.parent_companion_id();
-                let assembly_id2 = b2.parent_companion_id();
+                let assembly_id1 = body1.parent_companion_id();
+                let assembly_id2 = body2.parent_companion_id();
 
                 // Generate friction constraints.
                 let friction_coeff = na::convert(0.5); // XXX hard-coded friction coefficient.
@@ -116,22 +116,38 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 let depth = c.contact.depth + manifold.margin1 + manifold.margin2;
 
+                // FIXME: this compute the contact point locations (with margins) several times,
+                // it was already computed for the signorini law.
+                let center1 = c.contact.world1 + c.contact.normal.unwrap() * manifold.margin1;
+                let center2 = c.contact.world2 - c.contact.normal.unwrap() * manifold.margin2;
+
                 Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
+                    let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
+
                     // FIXME: will this compute the momentum twice ?
-                    // FIXME: this compute the contact point locations (with margins) several times,
-                    // it was already computed for the signorini law.
                     let geom = helper::constraint_pair_geometry(
-                        &b1,
-                        &b2,
+                        &body1,
+                        &body2,
                         assembly_id1,
                         assembly_id2,
-                        &(c.contact.world1 + c.contact.normal.unwrap() * manifold.margin1),
-                        &(c.contact.world2 - c.contact.normal.unwrap() * manifold.margin2),
-                        &ForceDirection::Linear(Unit::new_unchecked(*friction_dir)),
+                        &center1,
+                        &center2,
+                        &dir,
                         ext_vels,
                         ground_jacobian_id,
                         jacobian_id,
                         jacobians,
+                    );
+
+                    let rhs = helper::constraint_pair_velocity(
+                        &body1,
+                        &body2,
+                        &center1,
+                        &center2,
+                        &dir,
+                        ext_vels,
+                        jacobians,
+                        &geom,
                     );
 
                     let warmstart = impulse[i] * params.warmstart_coeff;
@@ -140,13 +156,19 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         let constraint = BilateralGroundConstraint::new(
                             geom,
                             limits,
+                            rhs,
                             warmstart,
                             impulse_id * DIM + i,
                         );
                         constraints.velocity.bilateral_ground.push(constraint);
                     } else {
-                        let constraint =
-                            BilateralConstraint::new(geom, limits, warmstart, impulse_id * DIM + i);
+                        let constraint = BilateralConstraint::new(
+                            geom,
+                            limits,
+                            rhs,
+                            warmstart,
+                            impulse_id * DIM + i,
+                        );
                         constraints.velocity.bilateral.push(constraint);
                     }
 

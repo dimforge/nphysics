@@ -65,29 +65,9 @@ pub fn fill_constraint_geometry<N: Real>(
 }
 
 #[inline]
-fn velocity_constraint_rhs<N: Real>(
-    body: &BodyPart<N>,
-    ndofs: usize,
-    ext_vels: &DVector<N>,
-    jacobian_id: usize,
-    assembly_id: usize,
-    jacobians: &[N],
-    rhs: &mut N,
-) {
-    let j = DVectorSlice::new(&jacobians[jacobian_id..], ndofs);
-    *rhs += j.dot(&body.parent_generalized_velocity()) + j.dot(&ext_vels.rows(assembly_id, ndofs));
-}
-
-#[inline]
-pub fn constraints_are_ground_constraints<N: Real>(b1: &BodyPart<N>, b2: &BodyPart<N>) -> bool {
-    b1.status_dependent_parent_ndofs() == 0 || b2.status_dependent_parent_ndofs() == 0
-}
-
-// FIXME: take a Unit for the normal.
-#[inline]
 pub fn constraint_pair_geometry<N: Real>(
-    b1: &BodyPart<N>,
-    b2: &BodyPart<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     center1: &Point<N>,
@@ -100,8 +80,8 @@ pub fn constraint_pair_geometry<N: Real>(
 ) -> ConstraintGeometry<N> {
     let mut res = ConstraintGeometry::new();
 
-    res.ndofs1 = b1.status_dependent_parent_ndofs();
-    res.ndofs2 = b2.status_dependent_parent_ndofs();
+    res.ndofs1 = body1.status_dependent_parent_ndofs();
+    res.ndofs2 = body2.status_dependent_parent_ndofs();
 
     let out_jacobian_id;
     if res.ndofs1 == 0 || res.ndofs2 == 0 {
@@ -122,7 +102,7 @@ pub fn constraint_pair_geometry<N: Real>(
         res.assembly_id1 = assembly_id1;
 
         fill_constraint_geometry(
-            b1,
+            body1,
             res.ndofs1,
             center1,
             &dir.neg(),
@@ -131,36 +111,13 @@ pub fn constraint_pair_geometry<N: Real>(
             jacobians,
             &mut inv_r,
         );
-        velocity_constraint_rhs(
-            b1,
-            res.ndofs1,
-            ext_vels,
-            res.jacobian_id1,
-            res.assembly_id1,
-            jacobians,
-            &mut res.rhs,
-        );
-    } else {
-        // Adjust the rhs for kinematic bodies.
-        let vel = b1.status_dependent_velocity();
-
-        match *dir {
-            ForceDirection::Linear(ref normal) => {
-                let dpos = center1 - b1.center_of_mass();
-                res.rhs -= vel.shift(&dpos).linear.dot(normal);
-            }
-            ForceDirection::Angular(ref axis) => {
-                // FIXME: do we have to take dpos into account here?
-                res.rhs -= vel.angular_vector().dot(axis);
-            }
-        }
     }
 
     if res.ndofs2 != 0 {
         res.assembly_id2 = assembly_id2;
 
         fill_constraint_geometry(
-            b2,
+            body2,
             res.ndofs2,
             center2,
             dir,
@@ -169,28 +126,6 @@ pub fn constraint_pair_geometry<N: Real>(
             jacobians,
             &mut inv_r,
         );
-        velocity_constraint_rhs(
-            b2,
-            res.ndofs2,
-            ext_vels,
-            res.jacobian_id2,
-            res.assembly_id2,
-            jacobians,
-            &mut res.rhs,
-        );
-    } else {
-        // Adjust the rhs for kinematic bodies.
-        let vel = b2.status_dependent_velocity();
-
-        match *dir {
-            ForceDirection::Linear(ref normal) => {
-                let dpos = center2 - b2.center_of_mass();
-                res.rhs += vel.shift(&dpos).linear.dot(normal);
-            }
-            ForceDirection::Angular(ref axis) => {
-                res.rhs += vel.angular_vector().dot(axis);
-            }
-        }
     }
 
     if res.assembly_id1 == res.assembly_id2 {
@@ -212,10 +147,72 @@ pub fn constraint_pair_geometry<N: Real>(
     res
 }
 
+#[inline]
+pub fn constraint_pair_velocity<N: Real>(
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    center1: &Point<N>,
+    center2: &Point<N>,
+    dir: &ForceDirection<N>,
+    ext_vels: &DVector<N>,
+    jacobians: &[N],
+    geom: &ConstraintGeometry<N>,
+) -> N {
+    let mut vel = N::zero();
+
+    if geom.ndofs1 != 0 {
+        let j = DVectorSlice::new(&jacobians[geom.jacobian_id1..], geom.ndofs1);
+        vel += j.dot(&body1.parent_generalized_velocity())
+            + j.dot(&ext_vels.rows(geom.assembly_id1, geom.ndofs1));
+    } else {
+        // Adjust the rhs for kinematic bodies.
+        let vel1 = body1.status_dependent_velocity();
+        match *dir {
+            ForceDirection::Linear(ref normal) => {
+                let dpos = center1 - body1.center_of_mass();
+                vel -= vel1.shift(&dpos).linear.dot(normal);
+            }
+            ForceDirection::Angular(ref axis) => {
+                // FIXME: do we have to take dpos into account here?
+                vel -= vel1.angular_vector().dot(axis);
+            }
+        }
+    }
+
+    if geom.ndofs2 != 0 {
+        let j = DVectorSlice::new(&jacobians[geom.jacobian_id2..], geom.ndofs2);
+        vel += j.dot(&body2.parent_generalized_velocity())
+            + j.dot(&ext_vels.rows(geom.assembly_id2, geom.ndofs2));
+    } else {
+        // Adjust the rhs for kinematic bodies.
+        let vel2 = body2.status_dependent_velocity();
+
+        match *dir {
+            ForceDirection::Linear(ref normal) => {
+                let dpos = center2 - body2.center_of_mass();
+                vel += vel2.shift(&dpos).linear.dot(normal);
+            }
+            ForceDirection::Angular(ref axis) => {
+                vel += vel2.angular_vector().dot(axis);
+            }
+        }
+    }
+
+    vel
+}
+
+#[inline]
+pub fn constraints_are_ground_constraints<N: Real>(
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+) -> bool {
+    body1.status_dependent_parent_ndofs() == 0 || body2.status_dependent_parent_ndofs() == 0
+}
+
 pub fn cancel_relative_linear_motion<N: Real>(
     params: &IntegrationParameters<N>,
-    b1: &BodyPart<N>,
-    b2: &BodyPart<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -226,50 +223,110 @@ pub fn cancel_relative_linear_motion<N: Real>(
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
-    let error = anchor1 - anchor2;
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
         max: N::max_value(),
     };
 
     Vector::canonical_basis(|dir| {
-        let mut geom = constraint_pair_geometry(
-            b1,
-            b2,
+        let dir = ForceDirection::Linear(Unit::new_unchecked(*dir));
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
             assembly_id1,
             assembly_id2,
             anchor1,
             anchor2,
-            &ForceDirection::Linear(Unit::new_unchecked(*dir)),
+            &dir,
             ext_vels,
             ground_jacobian_id,
             jacobian_id,
             jacobians,
         );
 
-        let stabilization = -dir.dot(&error) / params.dt * params.erp;
-        geom.rhs += stabilization;
+        let rhs = constraint_pair_velocity(
+            &body1,
+            &body2,
+            anchor1,
+            anchor2,
+            &dir,
+            ext_vels,
+            jacobians,
+            &geom,
+        );
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
                 .velocity
                 .bilateral_ground
-                .push(BilateralGroundConstraint::new(geom, limits, na::zero(), 0));
+                .push(BilateralGroundConstraint::new(
+                    geom,
+                    limits,
+                    rhs,
+                    na::zero(),
+                    0,
+                ));
         } else {
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
+                .push(BilateralConstraint::new(geom, limits, rhs, na::zero(), 0));
         }
 
         true
     });
 }
 
+// pub fn cancel_relative_translation<N: Real>(
+//     params: &IntegrationParameters<N>,
+//     body1: &BodyPart<N>,
+//     body2: &BodyPart<N>,
+//     assembly_id1: usize,
+//     assembly_id2: usize,
+//     anchor1: &Point<N>,
+//     anchor2: &Point<N>,
+//     ext_vels: &DVector<N>,
+//     ground_jacobian_id: &mut usize,
+//     jacobian_id: &mut usize,
+//     jacobians: &mut [N],
+//     constraints: &mut ConstraintSet<N>,
+// ) {
+//     let geom = constraint_pair_geometry(
+//         body1,
+//         body2,
+//         assembly_id1,
+//         assembly_id2,
+//         anchor1,
+//         anchor2,
+//         &ForceDirection::Linear(Unit::new_unchecked(*dir)),
+//         ext_vels,
+//         ground_jacobian_id,
+//         jacobian_id,
+//         jacobians,
+//     );
+
+//     let stabilization = -dir.dot(&error);
+//     let rhs = stabilization;
+
+//     constraints
+//         .velocity
+//         .bilateral
+//         .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
+
+//     GenericNonlinearConstraint::new(
+//         body1,
+//         body2,
+//         dim1: usize,
+//         dim2: usize,
+//         rhs,
+//         inv_r: geom.inv_r,
+//     ) -> Self {
+// }
+
 pub fn cancel_relative_angular_motion<N: Real>(
     params: &IntegrationParameters<N>,
-    b1: &BodyPart<N>,
-    b2: &BodyPart<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     orientation1: &Rotation<N>,
@@ -282,51 +339,69 @@ pub fn cancel_relative_angular_motion<N: Real>(
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
-    let error = (orientation1 / orientation2).scaled_axis();
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
         max: N::max_value(),
     };
 
     AngularVector::canonical_basis(|dir| {
-        let mut geom = constraint_pair_geometry(
-            b1,
-            b2,
+        let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
             assembly_id1,
             assembly_id2,
             anchor1,
             anchor2,
-            &ForceDirection::Angular(Unit::new_unchecked(*dir)),
+            &dir,
             ext_vels,
             ground_jacobian_id,
             jacobian_id,
             jacobians,
         );
 
-        let stabilization = -dir.dot(&error) / params.dt * params.erp;
-        geom.rhs += stabilization;
+        let rhs = constraint_pair_velocity(
+            &body1,
+            &body2,
+            anchor1,
+            anchor2,
+            &dir,
+            ext_vels,
+            jacobians,
+            &geom,
+        );
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
                 .velocity
                 .bilateral_ground
-                .push(BilateralGroundConstraint::new(geom, limits, na::zero(), 0));
+                .push(BilateralGroundConstraint::new(
+                    geom,
+                    limits,
+                    rhs,
+                    na::zero(),
+                    0,
+                ));
         } else {
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
+                .push(BilateralConstraint::new(geom, limits, rhs, na::zero(), 0));
         }
 
         true
     });
 }
 
+// Full angular stabilization
+// let error = (orientation1 / orientation2).scaled_axis();
+// let stabilization = -dir.dot(&error) / params.dt * params.erp;
+
 #[cfg(feature = "dim3")]
 pub fn restrict_relative_angular_motion_to_axis<N: Real>(
     params: &IntegrationParameters<N>,
-    b1: &BodyPart<N>,
-    b2: &BodyPart<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     axis1: &Unit<AngularVector<N>>,
@@ -344,48 +419,63 @@ pub fn restrict_relative_angular_motion_to_axis<N: Real>(
         max: N::max_value(),
     };
 
-    // NOTE: error equal to Pi won't be corrected.
-    let mut error;
-    if let Some(error_rot) = Rotation::rotation_between_axis(&axis2, &axis1) {
-        error = error_rot.scaled_axis();
-    } else {
-        // Error equal to Pi, select one orthogonal direction.
-        let imin = axis1.iamin();
-        error = Vector::zeros();
-        error[imin] = N::one();
-        error = na::normalize(&error.cross(&axis1)) * N::pi();
-    }
-
     AngularVector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
-        let mut geom = constraint_pair_geometry(
-            b1,
-            b2,
+        let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
             assembly_id1,
             assembly_id2,
             anchor1,
             anchor2,
-            &ForceDirection::Angular(Unit::new_unchecked(*dir)),
+            &dir,
             ext_vels,
             ground_jacobian_id,
             jacobian_id,
             jacobians,
         );
 
-        let stabilization = -dir.dot(&error) / params.dt * params.erp;
-        geom.rhs += stabilization;
+        let rhs = constraint_pair_velocity(
+            &body1,
+            &body2,
+            anchor1,
+            anchor2,
+            &dir,
+            ext_vels,
+            jacobians,
+            &geom,
+        );
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
                 .velocity
                 .bilateral_ground
-                .push(BilateralGroundConstraint::new(geom, limits, na::zero(), 0));
+                .push(BilateralGroundConstraint::new(
+                    geom,
+                    limits,
+                    rhs,
+                    na::zero(),
+                    0,
+                ));
         } else {
             constraints
                 .velocity
                 .bilateral
-                .push(BilateralConstraint::new(geom, limits, na::zero(), 0));
+                .push(BilateralConstraint::new(geom, limits, rhs, na::zero(), 0));
         }
 
         true
     });
 }
+
+// Angular regularization for two coincident axis.
+// let mut error;
+// if let Some(error_rot) = Rotation::rotation_between_axis(&axis2, &axis1) {
+//     error = error_rot.scaled_axis();
+// } else {
+//     // Error equal to Pi, select one orthogonal direction.
+//     let imin = axis1.iamin();
+//     error = Vector::zeros();
+//     error[imin] = N::one();
+//     error = na::normalize(&error.cross(&axis1)) * N::pi();
+// }
