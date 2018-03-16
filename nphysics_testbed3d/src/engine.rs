@@ -309,9 +309,9 @@ impl GraphicsManager {
         out: &mut Vec<Node>,
     ) {
         let margin = world.collider(object).unwrap().data().margin();
-        let rx = shape.half_extents().x; // + margin;
-        let ry = shape.half_extents().y; // + margin;
-        let rz = shape.half_extents().z; // + margin;
+        let rx = shape.half_extents().x + margin;
+        let ry = shape.half_extents().y + margin;
+        let rz = shape.half_extents().z + margin;
 
         out.push(Node::Box(Box::new(
             object,

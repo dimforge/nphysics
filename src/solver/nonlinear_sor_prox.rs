@@ -19,8 +19,6 @@ use math::{Isometry, Point, Rotation, Vector};
 struct ContactGeometry<N: Real> {
     world1: Point<N>,
     world2: Point<N>,
-    normal1: Unit<Vector<N>>,
-    normal2: Unit<Vector<N>>,
     normal: Unit<Vector<N>>,
     depth: N,
 }
@@ -29,16 +27,12 @@ impl<N: Real> ContactGeometry<N> {
     pub fn new(
         world1: Point<N>,
         world2: Point<N>,
-        normal1: Unit<Vector<N>>,
-        normal2: Unit<Vector<N>>,
         normal: Unit<Vector<N>>,
         depth: N,
     ) -> Self {
         ContactGeometry {
             world1,
             world2,
-            normal1,
-            normal2,
             normal,
             depth,
         }
@@ -161,8 +155,6 @@ impl<N: Real> NonlinearSORProx<N> {
         let mut world1 = m1.transform_point(&constraint.local1);
         let mut world2 = m2.transform_point(&constraint.local2);
         let normal;
-        let normal1;
-        let normal2;
         let mut depth;
 
         match constraint.kinematic {
@@ -170,16 +162,12 @@ impl<N: Real> NonlinearSORProx<N> {
                 normal = m1 * constraint.normal1;
                 depth = -na::dot(normal.as_ref(), &(world2 - world1));
                 world1 = world2 + normal.as_ref() * depth;
-                normal1 = constraint.normal1;
-                normal2 = -Unit::new_unchecked(m2.inverse_transform_vector(normal.as_ref()));
             }
             ContactKinematic::PointPlane => {
                 let world_normal2 = m2 * constraint.normal2.as_ref();
                 depth = -na::dot(&world_normal2, &(world1 - world2));
                 world2 = world1 + &world_normal2 * depth;
                 normal = Unit::new_unchecked(-world_normal2);
-                normal1 = Unit::new_unchecked(m1.inverse_transform_vector(normal.as_ref()));
-                normal2 = constraint.normal2;
             }
             ContactKinematic::PointPoint => {
                 if let Some((n, d)) = Unit::try_new_and_get(world2 - world1, N::default_epsilon()) {
@@ -189,8 +177,6 @@ impl<N: Real> NonlinearSORProx<N> {
                     depth = -constraint.margin1 - constraint.margin2;
                     normal = m1 * constraint.normal1;
                 }
-                normal1 = Unit::new_unchecked(m1.inverse_transform_vector(normal.as_ref()));
-                normal2 = -Unit::new_unchecked(m2.inverse_transform_vector(normal.as_ref()));
             }
             ContactKinematic::LinePoint(dir1) => {
                 /*
@@ -242,28 +228,23 @@ impl<N: Real> NonlinearSORProx<N> {
                     let local_n1 = m1.inverse_transform_vector(n.as_ref());
                     let local_n2 = m2.inverse_transform_vector(&-*n);
 
-                    if constraint.ncone1.contains(&local_n1)
-                        && constraint.ncone2.contains(&local_n2)
+                    if constraint.ncone1.contains_dir(&-Unit::new_unchecked(local_n1))
+                        && constraint.ncone2.contains_dir(&-Unit::new_unchecked(local_n2))
                     {
                         depth = d;
-                        normal = n;
+                        normal = -n;
                     } else {
                         depth = -d;
-                        normal = -n;
+                        normal = n;
                     }
                 } else {
                     depth = na::zero();
-                    normal = Unit::new_unchecked(m1.transform_vector(constraint.normal1.as_ref()));
+                    normal = m1 * constraint.normal1;
                 }
-
-                normal1 = Unit::new_unchecked(m1.inverse_transform_vector(normal.as_ref()));
-                normal2 = -Unit::new_unchecked(m2.inverse_transform_vector(normal.as_ref()));
             }
             ContactKinematic::Unknown => {
                 depth = N::zero();
                 normal = m1 * constraint.normal1;
-                normal1 = constraint.normal1;
-                normal2 = -Unit::new_unchecked(m2.inverse_transform_vector(normal.as_ref()));
             }
         }
 
@@ -271,7 +252,7 @@ impl<N: Real> NonlinearSORProx<N> {
         world2 -= normal.unwrap() * constraint.margin2;
         depth += constraint.margin1 + constraint.margin2;
 
-        ContactGeometry::new(world1, world2, normal1, normal2, normal, depth)
+        ContactGeometry::new(world1, world2, normal, depth)
     }
 
     fn update_contact_constraint(
@@ -286,7 +267,7 @@ impl<N: Real> NonlinearSORProx<N> {
         let geom = self.compute_contact_geometry(&body1, &body2, constraint);
 
         let erp: N = na::convert(0.2); // XXX: don't hard-code this.s
-        let allowed_error: N = na::convert(0.005); // XXX don't hard-code this.
+        let allowed_error: N = na::convert(0.001); // XXX don't hard-code this.
         let max_correction: N = na::convert(0.2); // XXX don't hard-code this.
         constraint.rhs = na::sup(&(-geom.depth * erp), &(-max_correction)) + allowed_error;
 

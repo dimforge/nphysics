@@ -147,6 +147,8 @@ impl<N: Real> SignoriniModel<N> {
         // XXX: we have to change the coordinate system
         // if the collider orientation is not the same
         // as the body's.
+        // XXX: the same remark applies to the contact kinematic
+        // information (e.g. for the line directions).
         let ncone1 = c.normals1.clone();
         let ncone2 = c.normals2.clone();
 
