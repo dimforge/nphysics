@@ -18,10 +18,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    // world.set_max_velocity_iterations(40);
-    world.set_erp(0.0);
-    world.set_warmstart_factor(1.0);
-    // world.set_max_position_iterations(3);
 
     /*
      * Ground.
@@ -62,11 +58,6 @@ fn main() {
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
                 let handle = world.add_rigid_body(pos, inertia);
-                world
-                    .rigid_body_mut(handle)
-                    .unwrap()
-                    .activation_status_mut()
-                    .set_deactivation_threshold(None);
 
                 /*
                  * Create the collider.

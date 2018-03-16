@@ -40,14 +40,15 @@ pub fn fill_constraint_geometry<N: Real>(
     inv_r: &mut N,
 ) {
     let force;
+    let pos = center - body.center_of_mass().coords;
 
     match *dir {
         ForceDirection::Linear(normal) => {
-            let pos = center - body.center_of_mass().coords;
             force = Force::linear_force_at_point(*normal, &pos);
         }
         ForceDirection::Angular(axis) => {
             force = Force::torque_from_vector(*axis);
+            // force = Force::torque_from_vector_at_point(*axis, &pos);
         }
     }
 
