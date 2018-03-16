@@ -11,7 +11,7 @@ use counters::Counters;
 use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
              ColliderHandle, Colliders, Multibody, MultibodyLinkMut, MultibodyLinkRef,
              MultibodyWorkspace, RigidBody, SensorHandle};
-use joint::{JointConstraint, ConstraintHandle, Joint};
+use joint::{ConstraintHandle, Joint, JointConstraint};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use detection::{ActivationManager, BodyContactManifold};
 use math::{Inertia, Isometry, Point, Vector};
@@ -90,8 +90,8 @@ impl<N: Real> World<N> {
         &self.params
     }
 
-    pub fn set_erp(&mut self, erp: N) {
-        self.params.erp = erp;
+    pub fn integration_parameters_mut(&mut self) -> &mut IntegrationParameters<N> {
+        &mut self.params
     }
 
     pub fn timestep(&self) -> N {
@@ -100,18 +100,6 @@ impl<N: Real> World<N> {
 
     pub fn set_timestep(&mut self, dt: N) {
         self.params.dt = dt;
-    }
-
-    pub fn set_max_velocity_iterations(&mut self, niter: usize) {
-        self.params.max_velocity_iterations = niter;
-    }
-
-    pub fn set_max_position_iterations(&mut self, niter: usize) {
-        self.params.max_position_iterations = niter;
-    }
-
-    pub fn set_warmstart_factor(&mut self, value: N) {
-        self.params.warmstart_coeff = value;
     }
 
     pub fn activate_body(&mut self, handle: BodyHandle) {

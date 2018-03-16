@@ -24,12 +24,7 @@ struct ContactGeometry<N: Real> {
 }
 
 impl<N: Real> ContactGeometry<N> {
-    pub fn new(
-        world1: Point<N>,
-        world2: Point<N>,
-        normal: Unit<Vector<N>>,
-        depth: N,
-    ) -> Self {
+    pub fn new(world1: Point<N>, world2: Point<N>, normal: Unit<Vector<N>>, depth: N) -> Self {
         ContactGeometry {
             world1,
             world2,
@@ -65,7 +60,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                self.solve_unilateral(bodies, constraint, jacobians, dim1, dim2);
+                self.solve_unilateral(params, bodies, constraint, jacobians, dim1, dim2);
             }
 
             for generator in multibody_limits {
@@ -92,44 +87,53 @@ impl<N: Real> NonlinearSORProx<N> {
                 let dim1 = Dynamic::new(constraint.dim1);
                 let dim2 = Dynamic::new(constraint.dim2);
 
-                let erp: N = na::convert(0.2); // XXX: don't hard-code this.s
-                let allowed_error: N = na::convert(0.005); // XXX don't hard-code this.
-                let max_correction: N = na::convert(0.2); // XXX don't hard-code this.
-                let rhs = na::inf(&(-constraint.rhs * erp), &max_correction) - allowed_error;
-                let impulse = na::sup(&rhs, &N::zero()) * constraint.r;
+                let rhs = if constraint.is_angular {
+                    na::sup(
+                        &((constraint.rhs + params.allowed_angular_error) * params.erp),
+                        &(-params.max_angular_correction),
+                    )
+                } else {
+                    na::sup(
+                        &((constraint.rhs + params.allowed_linear_error) * params.erp),
+                        &(-params.max_linear_correction),
+                    )
+                };
 
-                VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.wj_id1..], dim1, U1)
-                    .mul_assign(impulse);
+                if rhs < N::zero() {
+                    let impulse = -rhs * constraint.r;
 
-                VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.wj_id2..], dim2, U1)
-                    .mul_assign(impulse);
+                    VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.wj_id1..], dim1, U1)
+                        .mul_assign(impulse);
 
-                // FIXME: the body update should be performed lazily, especially because
-                // we dont actually need to update the kinematic of a multibody until
-                // we have to solve a contact involvoing one of its links.
-                bodies.body_mut(constraint.body1).apply_displacement(
-                    &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
-                );
-                bodies.body_mut(constraint.body2).apply_displacement(
-                    &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
-                );
+                    VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.wj_id2..], dim2, U1)
+                        .mul_assign(impulse);
+
+                    // FIXME: the body update should be performed lazily, especially because
+                    // we dont actually need to update the kinematic of a multibody until
+                    // we have to solve a contact involvoing one of its links.
+                    bodies.body_mut(constraint.body1).apply_displacement(
+                        &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
+                    );
+                    bodies.body_mut(constraint.body2).apply_displacement(
+                        &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
+                    );
+                }
             }
         }
     }
 
     fn solve_unilateral<D1: Dim, D2: Dim>(
         &self,
+        params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
     ) {
-        self.update_contact_constraint(bodies, constraint, jacobians);
+        if self.update_contact_constraint(params, bodies, constraint, jacobians) {
+            let impulse = -constraint.rhs * constraint.r;
 
-        let impulse = -constraint.rhs * constraint.r;
-
-        if impulse > N::zero() {
             VectorSliceMutN::new_generic_mut(jacobians, dim1, U1).mul_assign(impulse);
             VectorSliceMutN::new_generic_mut(&mut jacobians[dim1.value()..], dim2, U1)
                 .mul_assign(impulse);
@@ -228,8 +232,12 @@ impl<N: Real> NonlinearSORProx<N> {
                     let local_n1 = m1.inverse_transform_vector(n.as_ref());
                     let local_n2 = m2.inverse_transform_vector(&-*n);
 
-                    if constraint.ncone1.contains_dir(&-Unit::new_unchecked(local_n1))
-                        && constraint.ncone2.contains_dir(&-Unit::new_unchecked(local_n2))
+                    if constraint
+                        .ncone1
+                        .contains_dir(&-Unit::new_unchecked(local_n1))
+                        && constraint
+                            .ncone2
+                            .contains_dir(&-Unit::new_unchecked(local_n2))
                     {
                         depth = d;
                         normal = -n;
@@ -257,19 +265,24 @@ impl<N: Real> NonlinearSORProx<N> {
 
     fn update_contact_constraint(
         &self,
+        params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
-    ) {
+    ) -> bool {
         let body1 = bodies.body_part(constraint.body1);
         let body2 = bodies.body_part(constraint.body2);
 
         let geom = self.compute_contact_geometry(&body1, &body2, constraint);
 
-        let erp: N = na::convert(0.2); // XXX: don't hard-code this.s
-        let allowed_error: N = na::convert(0.001); // XXX don't hard-code this.
-        let max_correction: N = na::convert(0.2); // XXX don't hard-code this.
-        constraint.rhs = na::sup(&(-geom.depth * erp), &(-max_correction)) + allowed_error;
+        constraint.rhs = na::sup(
+            &((-geom.depth + params.allowed_linear_error) * params.erp),
+            &(-params.max_linear_correction),
+        );
+
+        if constraint.rhs >= N::zero() {
+            return false;
+        }
 
         // XXX: should use constraint_pair_geometry to properly handle multibodies.
         let mut inv_r = N::zero();
@@ -301,5 +314,7 @@ impl<N: Real> NonlinearSORProx<N> {
         } else {
             constraint.r = N::one() / inv_r
         }
+
+        true
     }
 }

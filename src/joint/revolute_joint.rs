@@ -277,7 +277,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        joint::unit_joint_position_constraint(self, link, dof_id, jacobians)
+        joint::unit_joint_position_constraint(self, link, dof_id, true, jacobians)
     }
 }
 

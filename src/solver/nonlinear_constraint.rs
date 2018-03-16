@@ -9,6 +9,7 @@ use math::{Point, Vector};
 pub struct GenericNonlinearConstraint<N: Real> {
     pub body1: BodyHandle,
     pub body2: BodyHandle,
+    pub is_angular: bool,
     pub dim1: usize,
     pub dim2: usize,
     pub wj_id1: usize,
@@ -21,6 +22,7 @@ impl<N: Real> GenericNonlinearConstraint<N> {
     pub fn new(
         body1: BodyHandle,
         body2: BodyHandle,
+        is_angular: bool,
         dim1: usize,
         dim2: usize,
         wj_id1: usize,
@@ -31,6 +33,7 @@ impl<N: Real> GenericNonlinearConstraint<N> {
         GenericNonlinearConstraint {
             body1,
             body2,
+            is_angular,
             dim1,
             dim2,
             wj_id1,

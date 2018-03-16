@@ -32,7 +32,6 @@ impl<N: Real> SignoriniModel<N> {
         b1: BodyHandle,
         b2: BodyHandle,
         c: &TrackedContact<Point<N>>,
-        deepest_normal: &Unit<Vector<N>>,
         margin1: N,
         margin2: N,
         impulse: N,
@@ -48,7 +47,6 @@ impl<N: Real> SignoriniModel<N> {
         let assembly_id1 = body1.parent_companion_id();
         let assembly_id2 = body2.parent_companion_id();
 
-        let mut depth = c.contact.depth + margin1 + margin2;
         let center1 = c.contact.world1 + c.contact.normal.unwrap() * margin1;
         let center2 = c.contact.world2 - c.contact.normal.unwrap() * margin2;
         let dir = ForceDirection::Linear(-c.contact.normal);
@@ -76,12 +74,8 @@ impl<N: Real> SignoriniModel<N> {
             jacobians,
             &geom,
         );
-
-        if depth < N::zero() {
-            rhs += -depth / params.dt;
-        } else {
-            rhs += N::zero(); // FIXME: (rb1.restitution() + rb2.restitution()) * na::convert(0.5) * dvel;
-        }
+        
+        rhs += N::zero(); // FIXME: (rb1.restitution() + rb2.restitution()) * na::convert(0.5) * dvel;
 
         let warmstart = impulse * params.warmstart_coeff;
         if geom.is_ground_constraint() {
@@ -113,6 +107,14 @@ impl<N: Real> SignoriniModel<N> {
 
             false
         }
+    }
+
+    pub fn is_constraint_active(c: &TrackedContact<Point<N>>, manifold: &BodyContactManifold<N>) -> bool {
+        let depth = c.contact.depth + manifold.margin1 + manifold.margin2;
+
+        // NOTE: for now we consider non-penetrating
+        // constraints as inactive.
+        depth >= N::zero()
     }
 
     pub fn build_position_constraint(
@@ -193,10 +195,11 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         let id_vel = constraints.velocity.unilateral.len();
 
         for manifold in manifolds {
-            let deepest_contact = &manifold.deepest_contact();
-            let deepest_contact_normal = &deepest_contact.contact.normal;
-
             for c in manifold.contacts() {
+                if !Self::is_constraint_active(c, manifold) {
+                    continue;
+                }
+
                 let _ = Self::build_velocity_constraint(
                     params,
                     bodies,
@@ -204,7 +207,6 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     manifold.b1,
                     manifold.b2,
                     c,
-                    deepest_contact_normal,
                     manifold.margin1,
                     manifold.margin2,
                     self.impulses.get(c.id),
@@ -214,17 +216,18 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     jacobians,
                     constraints,
                 );
+
+                Self::build_position_constraint(
+                    bodies,
+                    manifold.b1,
+                    manifold.b2,
+                    c,
+                    manifold.margin1,
+                    manifold.margin2,
+                    constraints,
+                );
             }
 
-            Self::build_position_constraint(
-                bodies,
-                manifold.b1,
-                manifold.b2,
-                deepest_contact,
-                manifold.margin1,
-                manifold.margin2,
-                constraints,
-            );
         }
 
         self.vel_ground_rng = id_vel_ground..constraints.velocity.unilateral_ground.len();

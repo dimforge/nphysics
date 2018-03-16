@@ -21,7 +21,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    world.set_max_velocity_iterations(10);
 
     /*
      * Create the boxes
@@ -30,7 +29,7 @@ fn main() {
     let rad = 0.2;
     let mut parent = BodyHandle::ground();
 
-    let geom   = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad, rad)));
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad, rad)));
     // let geom = ShapeHandle::new(Ball::new(rad));
     let inertia = geom.inertia(1.0);
 

@@ -54,13 +54,16 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         for manifold in manifolds {
             let body1 = bodies.body_part(manifold.b1);
             let body2 = bodies.body_part(manifold.b2);
-            let deepest_contact = manifold.deepest_contact();
-            let deepest_contact_normal = &deepest_contact.contact.normal;
 
             for c in manifold.contacts() {
+                if !SignoriniModel::is_constraint_active(c, manifold) {
+                    continue;
+                }
+
                 if self.impulses.contains(c.id) {
                     in_cache += 1;
                 }
+
 
                 let impulse = self.impulses.get(c.id);
                 let impulse_id = self.impulses.entry_id(c.id);
@@ -72,7 +75,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     manifold.b1,
                     manifold.b2,
                     c,
-                    deepest_contact_normal,
                     manifold.margin1,
                     manifold.margin2,
                     impulse[0],
@@ -114,8 +116,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 };
 
                 let mut i = 1;
-
-                let depth = c.contact.depth + manifold.margin1 + manifold.margin2;
 
                 // FIXME: this compute the contact point locations (with margins) several times,
                 // it was already computed for the signorini law.

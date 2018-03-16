@@ -297,7 +297,7 @@ pub fn cancel_relative_translation<N: Real>(
 ) -> Option<GenericNonlinearConstraint<N>> {
     let error = anchor2 - anchor1;
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_translation_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -316,6 +316,7 @@ pub fn cancel_relative_translation<N: Real>(
         let constraint = GenericNonlinearConstraint::new(
             body1.handle(),
             body2.handle(),
+            false,
             geom.ndofs1,
             geom.ndofs2,
             geom.wj_id1,
@@ -426,7 +427,7 @@ pub fn cancel_relative_rotation<N: Real>(
 ) -> Option<GenericNonlinearConstraint<N>> {
     let error = (rotation2 / rotation1).scaled_axis();
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_rotation_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -445,6 +446,7 @@ pub fn cancel_relative_rotation<N: Real>(
         let constraint = GenericNonlinearConstraint::new(
             body1.handle(),
             body2.handle(),
+            true,
             geom.ndofs1,
             geom.ndofs2,
             geom.wj_id1,
@@ -567,7 +569,7 @@ pub fn align_axis<N: Real>(
         error = na::normalize(&error.cross(&axis1)) * N::pi();
     }
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_rotation_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -586,6 +588,7 @@ pub fn align_axis<N: Real>(
         let constraint = GenericNonlinearConstraint::new(
             body1.handle(),
             body2.handle(),
+            true,
             geom.ndofs1,
             geom.ndofs2,
             geom.wj_id1,
