@@ -212,7 +212,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        joint::unit_joint_position_constraint(self, link, dof_id, jacobians)
+        joint::unit_joint_position_constraint(self, link, dof_id, false, jacobians)
     }
 }
 

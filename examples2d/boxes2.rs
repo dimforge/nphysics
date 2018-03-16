@@ -18,15 +18,11 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
-    world.set_max_velocity_iterations(50);
-    // world.set_max_position_iterations(1);
-    world.set_erp(0.0);
-    world.set_warmstart_factor(1.0);
 
     /*
      * Plane
      */
-    let ground_radius = 100.0; // 0.2;
+    let ground_radius = 50.0;
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
         ground_radius - COLLIDER_MARGIN,
         ground_radius - COLLIDER_MARGIN,
@@ -41,27 +37,10 @@ fn main() {
     );
 
     /*
-    let wall_radius = 50.0; // 0.2;
-    let wall_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        wall_radius - COLLIDER_MARGIN,
-        wall_radius - COLLIDER_MARGIN,
-    )));
-    let wall_pos = Isometry2::new(Vector2::x() * (wall_radius + 5.0), na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        wall_shape.clone(),
-        BodyHandle::ground(),
-        wall_pos,
-    );
-
-    let wall_pos = Isometry2::new(Vector2::x() * (-wall_radius - 5.0), na::zero());
-    world.add_collider(COLLIDER_MARGIN, wall_shape, BodyHandle::ground(), wall_pos);*/
-
-    /*
      * Create the boxes
      */
-    let num = 25;
-    let radx = 10.0;
+    let num = 50;
+    let radx = 0.1;
     let rady = 0.1;
     let shiftx = radx * 2.0;
     let shifty = rady * 2.0;
@@ -82,7 +61,7 @@ fn main() {
             /*
              * Create the rigid body.
              */
-            let pos = Isometry2::new(Vector2::new(x, y - 5.0), 0.0);
+            let pos = Isometry2::new(Vector2::new(x, y), 0.0);
             let handle = world.add_rigid_body(pos, inertia);
 
             /*

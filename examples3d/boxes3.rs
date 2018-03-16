@@ -50,7 +50,7 @@ fn main() {
         for j in 0usize..num {
             for k in 0usize..num {
                 let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery + 0.3;
+                let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
                 /*

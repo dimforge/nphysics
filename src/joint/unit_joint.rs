@@ -171,6 +171,7 @@ pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
     joint: &J,
     link: &MultibodyLinkRef<N>,
     dof_id: usize,
+    is_angular: bool,
     jacobians: &mut [N],
 ) -> Option<GenericNonlinearConstraint<N>> {
     let mut sign = N::one();
@@ -204,6 +205,7 @@ pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
         return Some(GenericNonlinearConstraint::new(
             mb.handle(),
             BodyHandle::ground(),
+            is_angular,
             ndofs,
             0,
             0,
