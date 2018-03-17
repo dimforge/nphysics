@@ -183,38 +183,65 @@ impl<N: Real> NonlinearSORProx<N> {
                 }
             }
             ContactKinematic::LinePoint(dir1) => {
-                /*
+                let world_dir1 = m1 * dir1;                
                 let mut shift = world2 - world1;
-                let proj = na::dot(dir1.as_ref(), &shift);
+                let proj = na::dot(world_dir1.as_ref(), &shift);
                 shift -= dir1.as_ref() * proj;
-                world1 = world2 - shift;
 
                 if let Some((n, d)) = Unit::try_new_and_get(shift, N::zero()) {
-                    depth = d;
-                    normal = n;
+                    let local_n1 = m1.inverse_transform_vector(n.as_ref());
+                    let local_n2 = m2.inverse_transform_vector(&-*n);
+                    world1 = world2 - shift;
+
+                    if constraint
+                        .ncone1
+                        .contains_dir(&-Unit::new_unchecked(local_n1))
+                        && constraint
+                            .ncone2
+                            .contains_dir(&-Unit::new_unchecked(local_n2))
+                    {
+                        depth = d;
+                        normal = -n;
+                    } else {
+                        depth = -d;
+                        normal = n;
+                    }
                 } else {
                     depth = na::zero();
-                    normal = Unit::new_unchecked(m1.transform_vector(constraint.normal1.as_ref()));
+                    normal = m1 * constraint.normal1;
                 }
-                */
-                unimplemented!()
             }
             ContactKinematic::PointLine(dir2) => {
-                /*
+                let world_dir2 = m2 * dir2;                
                 let mut shift = world1 - world2;
-                let proj = na::dot(dir2.as_ref(), &shift);
+                let proj = na::dot(world_dir2.as_ref(), &shift);
                 shift -= dir2.as_ref() * proj;
-                world2 = world1 - shift;
+                // NOTE: we set:
+                // shift = world2 - world1
+                let shift = -shift;
 
                 if let Some((n, d)) = Unit::try_new_and_get(shift, N::zero()) {
-                    depth = d;
-                    normal = n;
+                    let local_n1 = m1.inverse_transform_vector(n.as_ref());
+                    let local_n2 = m2.inverse_transform_vector(&-*n);
+                    world2 = world1 + shift;
+
+                    if constraint
+                        .ncone1
+                        .contains_dir(&-Unit::new_unchecked(local_n1))
+                        && constraint
+                            .ncone2
+                            .contains_dir(&-Unit::new_unchecked(local_n2))
+                    {
+                        depth = d;
+                        normal = -n;
+                    } else {
+                        depth = -d;
+                        normal = n;
+                    }
                 } else {
                     depth = na::zero();
-                    normal = Unit::new_unchecked(m1.transform_vector(constraint.normal1.as_ref()));
+                    normal = m1 * constraint.normal1;
                 }
-                */
-                unimplemented!()
             }
             ContactKinematic::LineLine(dir1, dir2) => {
                 let world_dir1 = m1 * dir1.unwrap();
