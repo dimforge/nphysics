@@ -183,7 +183,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 }
             }
             ContactKinematic::LinePoint(dir1) => {
-                let world_dir1 = m1 * dir1;                
+                let world_dir1 = m1 * dir1;
                 let mut shift = world2 - world1;
                 let proj = na::dot(world_dir1.as_ref(), &shift);
                 shift -= dir1.as_ref() * proj;
@@ -212,7 +212,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 }
             }
             ContactKinematic::PointLine(dir2) => {
-                let world_dir2 = m2 * dir2;                
+                let world_dir2 = m2 * dir2;
                 let mut shift = world1 - world2;
                 let proj = na::dot(world_dir2.as_ref(), &shift);
                 shift -= dir2.as_ref() * proj;
