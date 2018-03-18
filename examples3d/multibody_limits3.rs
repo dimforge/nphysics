@@ -20,10 +20,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    world.set_erp(0.0);
-    // world.set_max_position_iterations(50);
-    // world.set_max_velocity_iterations(50);
-    world.set_warmstart_factor(1.0);
 
     /*
      * Setup the ground.

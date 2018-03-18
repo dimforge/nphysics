@@ -85,7 +85,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
         let dvel =
             link.joint_velocity()[dof_id] + ext_vels[assembly_id + link.assembly_id() + dof_id];
 
-        if err >= N::zero() || err <= dvel * params.dt {
+        if err >= N::zero() {
             is_min_constraint_active = true;
             DVectorSliceMut::new(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
             jacobians[*ground_j_id + link.assembly_id() + dof_id] = N::one();
@@ -95,19 +95,11 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
 
             let inv_r = jacobians[wj_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
 
-            let rhs;
-            if err >= N::zero() {
-                let stabilization = -err / params.dt * params.erp;
-                rhs = dvel + stabilization;
-            } else {
-                rhs = -err / params.dt;
-            }
-
             let impulse_id = link.impulse_id() + dof_id * 3 + 1;
             let constraint = UnilateralGroundConstraint {
                 impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
-                rhs,
+                rhs: dvel,
                 impulse_id,
                 assembly_id,
                 j_id: *ground_j_id,
@@ -125,7 +117,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
         let dvel =
             -link.joint_velocity()[dof_id] - ext_vels[assembly_id + link.assembly_id() + dof_id];
 
-        if err >= N::zero() || err <= dvel * params.dt {
+        if err >= N::zero() {
             DVectorSliceMut::new(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
             jacobians[*ground_j_id + link.assembly_id() + dof_id] = -N::one();
             let wj_id = *ground_j_id + ndofs;
@@ -141,19 +133,11 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
 
             let inv_r = -jacobians[wj_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
 
-            let rhs;
-            if err >= N::zero() {
-                let stabilization = -err / params.dt * params.erp;
-                rhs = dvel + stabilization;
-            } else {
-                rhs = -err / params.dt;
-            }
-
             let impulse_id = link.impulse_id() + dof_id * 3 + 2;
             let constraint = UnilateralGroundConstraint {
                 impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
-                rhs: rhs,
+                rhs: dvel,
                 impulse_id: impulse_id,
                 assembly_id: assembly_id,
                 j_id: *ground_j_id,
