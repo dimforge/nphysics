@@ -138,12 +138,16 @@ impl<N: Real> NonlinearSORProx<N> {
             VectorSliceMutN::new_generic_mut(&mut jacobians[dim1.value()..], dim2, U1)
                 .mul_assign(impulse);
 
-            bodies
-                .body_mut(constraint.body1)
-                .apply_displacement(&jacobians[0..dim1.value()]);
-            bodies
-                .body_mut(constraint.body2)
-                .apply_displacement(&jacobians[dim1.value()..dim1.value() + dim2.value()]);
+            if dim1.value() != 0 {
+                bodies
+                    .body_mut(constraint.body1)
+                    .apply_displacement(&jacobians[0..dim1.value()]);
+            }
+            if dim2.value() != 0 {
+                bodies
+                    .body_mut(constraint.body2)
+                    .apply_displacement(&jacobians[dim1.value()..dim1.value() + dim2.value()]);
+            }
         }
     }
 
@@ -195,10 +199,10 @@ impl<N: Real> NonlinearSORProx<N> {
 
                     if constraint
                         .ncone1
-                        .contains_dir(&-Unit::new_unchecked(local_n1))
-                        && constraint
+                        .polar_contains_dir(&Unit::new_unchecked(local_n1))
+                        || constraint
                             .ncone2
-                            .contains_dir(&-Unit::new_unchecked(local_n2))
+                            .polar_contains_dir(&Unit::new_unchecked(local_n2))
                     {
                         depth = d;
                         normal = -n;
@@ -227,10 +231,10 @@ impl<N: Real> NonlinearSORProx<N> {
 
                     if constraint
                         .ncone1
-                        .contains_dir(&-Unit::new_unchecked(local_n1))
-                        && constraint
+                        .polar_contains_dir(&Unit::new_unchecked(local_n1))
+                        || constraint
                             .ncone2
-                            .contains_dir(&-Unit::new_unchecked(local_n2))
+                            .polar_contains_dir(&Unit::new_unchecked(local_n2))
                     {
                         depth = d;
                         normal = -n;
@@ -261,10 +265,10 @@ impl<N: Real> NonlinearSORProx<N> {
 
                     if constraint
                         .ncone1
-                        .contains_dir(&-Unit::new_unchecked(local_n1))
-                        && constraint
+                        .polar_contains_dir(&Unit::new_unchecked(local_n1))
+                        || constraint
                             .ncone2
-                            .contains_dir(&-Unit::new_unchecked(local_n2))
+                            .polar_contains_dir(&Unit::new_unchecked(local_n2))
                     {
                         depth = d;
                         normal = -n;
@@ -313,27 +317,32 @@ impl<N: Real> NonlinearSORProx<N> {
 
         // XXX: should use constraint_pair_geometry to properly handle multibodies.
         let mut inv_r = N::zero();
-        helper::fill_constraint_geometry(
-            &body1,
-            constraint.ndofs1,
-            &geom.world1,
-            &ForceDirection::Linear(-geom.normal),
-            constraint.ndofs1 + constraint.ndofs2,
-            0,
-            jacobians,
-            &mut inv_r,
-        );
 
-        helper::fill_constraint_geometry(
-            &body2,
-            constraint.ndofs2,
-            &geom.world2,
-            &ForceDirection::Linear(geom.normal),
-            (constraint.ndofs1 * 2) + constraint.ndofs2,
-            constraint.ndofs1,
-            jacobians,
-            &mut inv_r,
-        );
+        if constraint.ndofs1 != 0 {
+            helper::fill_constraint_geometry(
+                &body1,
+                constraint.ndofs1,
+                &geom.world1,
+                &ForceDirection::Linear(-geom.normal),
+                constraint.ndofs1 + constraint.ndofs2,
+                0,
+                jacobians,
+                &mut inv_r,
+            );
+        }
+
+        if constraint.ndofs2 != 0 {
+            helper::fill_constraint_geometry(
+                &body2,
+                constraint.ndofs2,
+                &geom.world2,
+                &ForceDirection::Linear(geom.normal),
+                (constraint.ndofs1 * 2) + constraint.ndofs2,
+                constraint.ndofs1,
+                jacobians,
+                &mut inv_r,
+            );
+        }
 
         // May happen sometimes for self-collisions (e.g. a multibody with itself).
         if inv_r.is_zero() {

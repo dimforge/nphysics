@@ -190,7 +190,7 @@ impl<N: Real> World<N> {
             self.counters.set_ncontact_pairs(npairs);
         }
 
-        // FIXME: for now, no island is built.
+        // FIXME: for now, no island is built.
         self.counters.island_construction_started();
         self.active_bodies.clear();
         self.activation_manager.update(

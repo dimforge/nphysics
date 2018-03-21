@@ -98,26 +98,32 @@ fn main() {
         Isometry3::identity(),
     );
 
-    // /*
-    //  * Setup a kinematic multibody.
-    //  */
-    // let geom      = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
-    // let joint     = RevoluteJoint::new(Vector3::x_axis(), 0.0);
-    // let inertia   = Inertia::zero();
-    // let handle    = world.add_multibody_link(BodyHandle::ground(), joint, Vector3::new(0.0, 2.0, 5.0), Vector3::z() * 2.0, inertia);
+    /*
+     * Setup a kinematic multibody.
+     */
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN))); // Ball::new(rad - COLLIDER_MARGIN));
+    let joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
+    let inertia = Inertia::zero();
+    let handle = world.add_multibody_link(
+        BodyHandle::ground(),
+        joint,
+        Vector3::new(0.0, 2.0, 5.0),
+        Vector3::z() * 2.0,
+        inertia,
+    );
 
-    // {
-    //     let mut mb = world.multibody_mut(handle).unwrap();
-    //     mb.generalized_velocity_mut()[0] = 3.0;
-    //     mb.set_status(BodyStatus::Kinematic);
-    // }
+    {
+        let mut mb = world.multibody_mut(handle).unwrap();
+        mb.generalized_velocity_mut()[0] = 3.0;
+        mb.set_status(BodyStatus::Kinematic);
+    }
 
-    // world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
+    world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
 
     /*
      * Setup a motorized multibody.
      */
-    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN))); // Ball::new(rad - COLLIDER_MARGIN));
     let mut joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
     joint.set_desired_angular_motor_velocity(-2.0);
     joint.set_max_angular_motor_torque(1.0);
