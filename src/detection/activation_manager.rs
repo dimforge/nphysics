@@ -46,7 +46,7 @@ impl<N: Real> ActivationManager<N> {
     }
 
     fn update_energy(&self, body: &mut BodyMut<N>) {
-        // FIXME: avoid the Copy when NLL lands ?
+        // FIXME: avoid the Copy when NLL lands ?
         let status = *body.activation_status();
 
         if let Some(threshold) = status.deactivation_threshold() {
@@ -163,7 +163,7 @@ impl<N: Real> ActivationManager<N> {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
             let body = bodies.body(handle);
-            // FIXME: avoid the Copy when NLL lands ?
+            // FIXME: avoid the Copy when NLL lands ?
             let status = *body.activation_status();
 
             self.can_deactivate[root] = match status.deactivation_threshold() {
@@ -187,7 +187,7 @@ impl<N: Real> ActivationManager<N> {
                 // Everybody in this set must be reactivated.
                 active_bodies.push(handle);
 
-                // FIXME: avoid the Copy when NLL lands ?
+                // FIXME: avoid the Copy when NLL lands ?
                 let status = *body.activation_status();
 
                 if !status.is_active() && status.deactivation_threshold().is_some() {

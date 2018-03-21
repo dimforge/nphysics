@@ -226,7 +226,7 @@ impl Testbed {
             MouseButton::Left => {
                 let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
                 let mapped_point = Point2::new(mapped_coords.x, mapped_coords.y);
-                // FIXME: use the collision groups to filter out sensors.
+                // FIXME: use the collision groups to filter out sensors.
                 let all_groups = &CollisionGroups::new();
                 for b in self.world
                     .collision_world()

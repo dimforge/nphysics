@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide::shape::{Cuboid, ShapeHandle};
+use ncollide::shape::{Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::object::BodyHandle;
 use nphysics3d::volumetric::Volumetric;
@@ -26,6 +26,9 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
     let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+    // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
+    // let ground_pos = Isometry3::identity();
+
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
