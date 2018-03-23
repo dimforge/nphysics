@@ -135,19 +135,11 @@ impl<N: Real> SignoriniModel<N> {
         let body1 = bodies.body_part(b1);
         let body2 = bodies.body_part(b2);
 
-        // FIXME: the points must be expressed in the local space of the body.
-        // Thus, c.normal1/c.normal2 are not correct since they express the
-        // contact in the local space of the collider instead of the body itself.
-        // Could there be a way to design this differently in order to avoid this
-        // difference of local spaces?
         let pos1 = body1.position();
         let pos2 = body2.position();
         let normal1 = pos1.inverse_transform_unit_vector(&c.contact.normal);
         let normal2 = -pos2.inverse_transform_unit_vector(&c.contact.normal);
 
-        // XXX: we have to transform the contact kinematic
-        // if the collider orientation is not the same
-        // as the body's.
         let mut kinematic = c.kinematic.clone();
         let total_margin1 = kinematic.dilation1() + margin1;
         let total_margin2 = kinematic.dilation2() + margin2;
