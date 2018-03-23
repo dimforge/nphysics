@@ -16,24 +16,6 @@ use solver::{ForceDirection, IntegrationParameters,
              NonlinearUnilateralConstraint};
 use math::{Isometry, Point, Rotation, Vector};
 
-struct ContactGeometry<N: Real> {
-    world1: Point<N>,
-    world2: Point<N>,
-    normal: Unit<Vector<N>>,
-    depth: N,
-}
-
-impl<N: Real> ContactGeometry<N> {
-    pub fn new(world1: Point<N>, world2: Point<N>, normal: Unit<Vector<N>>, depth: N) -> Self {
-        ContactGeometry {
-            world1,
-            world2,
-            normal,
-            depth,
-        }
-    }
-}
-
 pub struct NonlinearSORProx<N: Real> {
     _phantom: PhantomData<N>,
 }
@@ -151,149 +133,6 @@ impl<N: Real> NonlinearSORProx<N> {
         }
     }
 
-    fn compute_contact_geometry(
-        &self,
-        body1: &BodyPart<N>,
-        body2: &BodyPart<N>,
-        constraint: &NonlinearUnilateralConstraint<N>,
-    ) -> ContactGeometry<N> {
-        let m1 = body1.position();
-        let m2 = body2.position();
-
-        let mut world1 = m1.transform_point(&constraint.local1);
-        let mut world2 = m2.transform_point(&constraint.local2);
-        let normal;
-        let mut depth;
-
-        match constraint.kinematic {
-            ContactKinematic::PlanePoint => {
-                normal = m1 * constraint.normal1;
-                depth = -na::dot(normal.as_ref(), &(world2 - world1));
-                world1 = world2 + normal.as_ref() * depth;
-            }
-            ContactKinematic::PointPlane => {
-                let world_normal2 = m2 * constraint.normal2.as_ref();
-                depth = -na::dot(&world_normal2, &(world1 - world2));
-                world2 = world1 + &world_normal2 * depth;
-                normal = Unit::new_unchecked(-world_normal2);
-            }
-            ContactKinematic::PointPoint => {
-                if let Some((n, d)) = Unit::try_new_and_get(world2 - world1, N::default_epsilon()) {
-                    depth = -d;
-                    normal = n;
-                } else {
-                    depth = -constraint.margin1 - constraint.margin2;
-                    normal = m1 * constraint.normal1;
-                }
-            }
-            ContactKinematic::LinePoint(dir1) => {
-                let world_dir1 = m1 * dir1;
-                let mut shift = world2 - world1;
-                let proj = na::dot(world_dir1.as_ref(), &shift);
-                shift -= dir1.as_ref() * proj;
-
-                if let Some((n, d)) = Unit::try_new_and_get(shift, N::zero()) {
-                    let local_n1 = m1.inverse_transform_vector(n.as_ref());
-                    let local_n2 = m2.inverse_transform_vector(&-*n);
-                    world1 = world2 - shift;
-
-                    if constraint
-                        .ncone1
-                        .polar_contains_dir(&Unit::new_unchecked(local_n1))
-                        || constraint
-                            .ncone2
-                            .polar_contains_dir(&Unit::new_unchecked(local_n2))
-                    {
-                        depth = d;
-                        normal = -n;
-                    } else {
-                        depth = -d;
-                        normal = n;
-                    }
-                } else {
-                    depth = na::zero();
-                    normal = m1 * constraint.normal1;
-                }
-            }
-            ContactKinematic::PointLine(dir2) => {
-                let world_dir2 = m2 * dir2;
-                let mut shift = world1 - world2;
-                let proj = na::dot(world_dir2.as_ref(), &shift);
-                shift -= dir2.as_ref() * proj;
-                // NOTE: we set:
-                // shift = world2 - world1
-                let shift = -shift;
-
-                if let Some((n, d)) = Unit::try_new_and_get(shift, N::zero()) {
-                    let local_n1 = m1.inverse_transform_vector(n.as_ref());
-                    let local_n2 = m2.inverse_transform_vector(&-*n);
-                    world2 = world1 + shift;
-
-                    if constraint
-                        .ncone1
-                        .polar_contains_dir(&Unit::new_unchecked(local_n1))
-                        || constraint
-                            .ncone2
-                            .polar_contains_dir(&Unit::new_unchecked(local_n2))
-                    {
-                        depth = d;
-                        normal = -n;
-                    } else {
-                        depth = -d;
-                        normal = n;
-                    }
-                } else {
-                    depth = na::zero();
-                    normal = m1 * constraint.normal1;
-                }
-            }
-            ContactKinematic::LineLine(dir1, dir2) => {
-                let world_dir1 = m1 * dir1.unwrap();
-                let world_dir2 = m2 * dir2.unwrap();
-                let (pt1, pt2) = closest_points_internal::line_against_line(
-                    &world1,
-                    &world_dir1,
-                    &world2,
-                    &world_dir2,
-                );
-                world1 = pt1;
-                world2 = pt2;
-
-                if let Some((n, d)) = Unit::try_new_and_get(world2 - world1, N::zero()) {
-                    let local_n1 = m1.inverse_transform_vector(n.as_ref());
-                    let local_n2 = m2.inverse_transform_vector(&-*n);
-
-                    if constraint
-                        .ncone1
-                        .polar_contains_dir(&Unit::new_unchecked(local_n1))
-                        || constraint
-                            .ncone2
-                            .polar_contains_dir(&Unit::new_unchecked(local_n2))
-                    {
-                        depth = d;
-                        normal = -n;
-                    } else {
-                        depth = -d;
-                        normal = n;
-                    }
-                } else {
-                    depth = na::zero();
-                    normal = m1 * constraint.normal1;
-                }
-            }
-            ContactKinematic::Unknown => {
-                depth = N::zero();
-                normal = m1 * constraint.normal1;
-            }
-        }
-
-        world1 += normal.unwrap() * constraint.margin1;
-        world2 -= normal.unwrap() * constraint.margin2;
-        depth += constraint.margin1 + constraint.margin2;
-
-        ContactGeometry::new(world1, world2, normal, depth)
-    }
-
     fn update_contact_constraint(
         &self,
         params: &IntegrationParameters<N>,
@@ -303,54 +142,59 @@ impl<N: Real> NonlinearSORProx<N> {
     ) -> bool {
         let body1 = bodies.body_part(constraint.body1);
         let body2 = bodies.body_part(constraint.body2);
+        let pos1 = body1.position();
+        let pos2 = body2.position();
 
-        let geom = self.compute_contact_geometry(&body1, &body2, constraint);
-
-        constraint.rhs = na::sup(
-            &((-geom.depth + params.allowed_linear_error) * params.erp),
-            &(-params.max_linear_correction),
-        );
-
-        if constraint.rhs >= N::zero() {
-            return false;
-        }
-
-        // XXX: should use constraint_pair_geometry to properly handle multibodies.
-        let mut inv_r = N::zero();
-
-        if constraint.ndofs1 != 0 {
-            helper::fill_constraint_geometry(
-                &body1,
-                constraint.ndofs1,
-                &geom.world1,
-                &ForceDirection::Linear(-geom.normal),
-                constraint.ndofs1 + constraint.ndofs2,
-                0,
-                jacobians,
-                &mut inv_r,
+        if let Some(contact) = constraint.kinematic.contact(&pos1, &pos2, &constraint.normal1) {
+            println!("Updated contact: {:?}", contact);
+            constraint.rhs = na::sup(
+                &((-contact.depth + params.allowed_linear_error) * params.erp),
+                &(-params.max_linear_correction),
             );
-        }
 
-        if constraint.ndofs2 != 0 {
-            helper::fill_constraint_geometry(
-                &body2,
-                constraint.ndofs2,
-                &geom.world2,
-                &ForceDirection::Linear(geom.normal),
-                (constraint.ndofs1 * 2) + constraint.ndofs2,
-                constraint.ndofs1,
-                jacobians,
-                &mut inv_r,
-            );
-        }
+            if constraint.rhs >= N::zero() {
+                return false;
+            }
 
-        // May happen sometimes for self-collisions (e.g. a multibody with itself).
-        if inv_r.is_zero() {
-            constraint.r = N::one();
+            // XXX: should use constraint_pair_geometry to properly handle multibodies.
+            let mut inv_r = N::zero();
+
+            if constraint.ndofs1 != 0 {
+                helper::fill_constraint_geometry(
+                    &body1,
+                    constraint.ndofs1,
+                    &contact.world1,
+                    &ForceDirection::Linear(-contact.normal),
+                    constraint.ndofs1 + constraint.ndofs2,
+                    0,
+                    jacobians,
+                    &mut inv_r,
+                );
+            }
+
+            if constraint.ndofs2 != 0 {
+                helper::fill_constraint_geometry(
+                    &body2,
+                    constraint.ndofs2,
+                    &contact.world2,
+                    &ForceDirection::Linear(contact.normal),
+                    (constraint.ndofs1 * 2) + constraint.ndofs2,
+                    constraint.ndofs1,
+                    jacobians,
+                    &mut inv_r,
+                );
+            }
+
+            // May happen sometimes for self-collisions (e.g. a multibody with itself).
+            if inv_r.is_zero() {
+                constraint.r = N::one();
+            } else {
+                constraint.r = N::one() / inv_r
+            }
+
+            true
         } else {
-            constraint.r = N::one() / inv_r
+            false
         }
-
-        true
     }
 }

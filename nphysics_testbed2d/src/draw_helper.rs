@@ -12,8 +12,6 @@ pub fn draw_colls(window: &mut graphics::RenderWindow, world: &World<f32>) {
         for (i, c) in manifold.contacts().iter().enumerate() {
             let color = if i == manifold.deepest_contact_id() {
                 Color::new_rgb(255, 0, 0)
-            } else if c.kinematic == ContactKinematic::PointPoint {
-                Color::new_rgb(0, 255, 0)
             } else {
                 Color::new_rgb(0, 0, 255)
             };
