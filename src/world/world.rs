@@ -215,6 +215,10 @@ impl<N: Real> World<N> {
                 contact_manifolds.push(BodyContactManifold::new(
                     coll1.data().body(),
                     coll2.data().body(),
+                    coll1.handle(),
+                    coll2.handle(),
+                    &coll1.data().position_wrt_parent(),
+                    &coll2.data().position_wrt_parent(),
                     coll1.data().margin(),
                     coll2.data().margin(),
                     c,

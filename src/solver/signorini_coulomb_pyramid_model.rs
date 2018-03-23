@@ -52,8 +52,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let mut in_cache = 0;
 
         for manifold in manifolds {
-            let body1 = bodies.body_part(manifold.b1);
-            let body2 = bodies.body_part(manifold.b2);
+            let body1 = bodies.body_part(manifold.body1);
+            let body2 = bodies.body_part(manifold.body2);
 
             for c in manifold.contacts() {
                 if !SignoriniModel::is_constraint_active(c, manifold) {
@@ -64,7 +64,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     in_cache += 1;
                 }
 
-
                 let impulse = self.impulses.get(c.id);
                 let impulse_id = self.impulses.entry_id(c.id);
 
@@ -72,8 +71,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     params,
                     bodies,
                     ext_vels,
-                    manifold.b1,
-                    manifold.b2,
+                    manifold.body1,
+                    manifold.body2,
                     c,
                     manifold.margin1,
                     manifold.margin2,
@@ -87,8 +86,10 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 SignoriniModel::build_position_constraint(
                     bodies,
-                    manifold.b1,
-                    manifold.b2,
+                    manifold.body1,
+                    manifold.body2,
+                    manifold.collider_pos_wrt_body1,
+                    manifold.collider_pos_wrt_body2,
                     c,
                     manifold.margin1,
                     manifold.margin2,
