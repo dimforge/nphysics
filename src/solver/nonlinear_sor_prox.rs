@@ -145,8 +145,10 @@ impl<N: Real> NonlinearSORProx<N> {
         let pos1 = body1.position();
         let pos2 = body2.position();
 
-        if let Some(contact) = constraint.kinematic.contact(&pos1, &pos2, &constraint.normal1) {
-            println!("Updated contact: {:?}", contact);
+        if let Some(contact) = constraint
+            .kinematic
+            .contact(&pos1, &pos2, &constraint.normal1)
+        {
             constraint.rhs = na::sup(
                 &((-contact.depth + params.allowed_linear_error) * params.erp),
                 &(-params.max_linear_correction),
