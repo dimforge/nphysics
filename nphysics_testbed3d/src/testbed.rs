@@ -522,7 +522,7 @@ impl Testbed {
             if true {
                 //running != RunMode::Stop {
                 self.window.draw_text(
-                    &format!("Time: {:.*}sec.", 4, self.physics_timer)[..],
+                    &format!("Time: {:.*}sec.", 4, self.world.performance_counters().step_time())[..],
                     &Point2::origin(),
                     &font,
                     &color,

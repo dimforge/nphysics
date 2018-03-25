@@ -53,6 +53,10 @@ impl Counters {
         }
     }
 
+    pub fn step_time(&self) -> f64 {
+        self.step_time.time()
+    }
+
     pub fn set_nconstraints(&mut self, n: usize) {
         self.solver.nconstraints = n;
     }
@@ -63,7 +67,7 @@ impl Counters {
 }
 
 macro_rules! measure_method {
-($started: ident, $stopped: ident, $info: ident.$timer: ident) => {
+($started: ident, $stopped: ident, $time: ident, $info: ident.$timer: ident) => {
     impl Counters {
         pub fn $started(&mut self) {
             if self.enabled {
@@ -76,47 +80,62 @@ macro_rules! measure_method {
                 self.$info.$timer.pause()
             }
         }
+
+        pub fn $time(&self) -> f64 {
+            if self.enabled {
+                self.$info.$timer.time()
+            } else {
+                0.0
+            }
+        }
     }
 }
 }
 
-measure_method!(update_started, update_completed, stages.update_time);
+measure_method!(update_started, update_completed, update_time, stages.update_time);
 measure_method!(
     collision_detection_started,
     collision_detection_completed,
+    collision_detection_time,
     stages.collision_detection_time
 );
 measure_method!(
     island_construction_started,
     island_construction_completed,
+    island_construction_time,
     stages.island_construction_time
 );
-measure_method!(solver_started, solver_completed, stages.solver_time);
+measure_method!(solver_started, solver_completed, solver_time, stages.solver_time);
 
-measure_method!(assembly_started, assembly_completed, solver.assembly_time);
+measure_method!(assembly_started, assembly_completed, assembly_time, solver.assembly_time);
 measure_method!(
     resolution_started,
     resolution_completed,
+    resolution_time,
     solver.resolution_time
 );
 measure_method!(
     position_update_started,
     position_update_completed,
+    positon_update_time,
     solver.position_update_time
 );
 measure_method!(
     broad_phase_started,
     broad_phase_completed,
+    broad_phase_time,
     cd.broad_phase_time
 );
 measure_method!(
     narrow_phase_started,
     narrow_phase_completed,
+    narrow_phase_time,
     cd.narrow_phase_time
 );
 
 impl Display for Counters {
     fn fmt(&self, f: &mut Formatter) -> Result {
+        writeln!(f, "Total timestep time: {}", self.step_time)?;
         self.stages.fmt(f)?;
         self.cd.fmt(f)?;
         self.solver.fmt(f)
