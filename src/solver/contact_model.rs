@@ -1,17 +1,17 @@
 use na::{DVector, Real};
 
-use detection::BodyContactManifold;
+use detection::ColliderContactManifold;
 use solver::{ConstraintSet, IntegrationParameters};
 use object::BodySet;
 
 pub trait ContactModel<N: Real>: 'static {
-    fn num_velocity_constraints(&self, manifold: &BodyContactManifold<N>) -> usize;
+    fn num_velocity_constraints(&self, manifold: &ColliderContactManifold<N>) -> usize;
     fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
-        manifolds: &[BodyContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],

@@ -4,11 +4,11 @@ use na::{self, DVector, Real, Unit};
 
 use ncollide::query::TrackedContact;
 use ncollide::math::Isometry as NCollideIsometry;
-use detection::BodyContactManifold;
+use detection::ColliderContactManifold;
 use solver::helper;
 use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
              NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
-use object::{BodyHandle, BodySet};
+use object::{BodyHandle, BodySet, Material};
 use math::{Isometry, Point};
 
 pub struct SignoriniModel<N: Real> {
@@ -29,12 +29,9 @@ impl<N: Real> SignoriniModel<N> {
     pub fn build_velocity_constraint(
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
+        manifold: &ColliderContactManifold<N>,
         ext_vels: &DVector<N>,
-        b1: BodyHandle,
-        b2: BodyHandle,
         c: &TrackedContact<Point<N>>,
-        margin1: N,
-        margin2: N,
         impulse: N,
         impulse_id: usize,
         ground_j_id: &mut usize,
@@ -42,14 +39,20 @@ impl<N: Real> SignoriniModel<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) -> bool {
+        let data1 = manifold.collider1.data();
+        let data2 = manifold.collider2.data();
+
+        let b1 = data1.body();
+        let b2 = data2.body();
+
         let body1 = bodies.body_part(b1);
         let body2 = bodies.body_part(b2);
 
         let assembly_id1 = body1.parent_companion_id();
         let assembly_id2 = body2.parent_companion_id();
 
-        let center1 = c.contact.world1 + c.contact.normal.unwrap() * margin1;
-        let center2 = c.contact.world2 - c.contact.normal.unwrap() * margin2;
+        let center1 = c.contact.world1 + c.contact.normal.unwrap() * data1.margin();
+        let center2 = c.contact.world2 - c.contact.normal.unwrap() * data2.margin();
         let dir = ForceDirection::Linear(-c.contact.normal);
 
         let geom = helper::constraint_pair_geometry(
@@ -76,7 +79,17 @@ impl<N: Real> SignoriniModel<N> {
             &geom,
         );
 
-        rhs += N::zero(); // FIXME: (rb1.restitution() + rb2.restitution()) * na::convert(0.5) * dvel;
+        if rhs > -params.restitution_velocity_threshold {
+            let depth = c.contact.depth + data1.margin() + data2.margin();
+            // No penetration, use predective contact.
+            if depth < N::zero() {
+                rhs += (-depth) / params.dt;
+            }
+        } else {
+            let rest1 = data1.material().restitution;
+            let rest2 = data2.material().restitution;
+            rhs += (rest1 + rest2) * na::convert(0.5) * rhs;
+        }
 
         let warmstart = impulse * params.warmstart_coeff;
         if geom.is_ground_constraint() {
@@ -112,9 +125,9 @@ impl<N: Real> SignoriniModel<N> {
 
     pub fn is_constraint_active(
         c: &TrackedContact<Point<N>>,
-        manifold: &BodyContactManifold<N>,
+        manifold: &ColliderContactManifold<N>,
     ) -> bool {
-        let depth = c.contact.depth + manifold.margin1 + manifold.margin2;
+        let depth = c.contact.depth + manifold.collider1.data().margin() + manifold.collider2.data().margin();
 
         // NOTE: for now we consider non-penetrating
         // constraints as inactive.
@@ -123,15 +136,16 @@ impl<N: Real> SignoriniModel<N> {
 
     pub fn build_position_constraint(
         bodies: &BodySet<N>,
-        b1: BodyHandle,
-        b2: BodyHandle,
-        collider_pos_wrt_body1: &Isometry<N>,
-        collider_pos_wrt_body2: &Isometry<N>,
+        manifold: &ColliderContactManifold<N>,
         c: &TrackedContact<Point<N>>,
-        margin1: N,
-        margin2: N,
         constraints: &mut ConstraintSet<N>,
     ) {
+        let data1 = manifold.collider1.data();
+        let data2 = manifold.collider2.data();
+
+        let b1 = data1.body();
+        let b2 = data2.body();
+
         let body1 = bodies.body_part(b1);
         let body2 = bodies.body_part(b2);
 
@@ -141,12 +155,12 @@ impl<N: Real> SignoriniModel<N> {
         let normal2 = -pos2.inverse_transform_unit_vector(&c.contact.normal);
 
         let mut kinematic = c.kinematic.clone();
-        let total_margin1 = kinematic.dilation1() + margin1;
-        let total_margin2 = kinematic.dilation2() + margin2;
+        let total_margin1 = kinematic.dilation1() + data1.margin();
+        let total_margin2 = kinematic.dilation2() + data2.margin();
         kinematic.set_dilation1(total_margin1);
         kinematic.set_dilation2(total_margin2);
-        kinematic.transform1(collider_pos_wrt_body1);
-        kinematic.transform2(collider_pos_wrt_body2);
+        kinematic.transform1(data1.position_wrt_parent());
+        kinematic.transform2(data2.position_wrt_parent());
 
         constraints
             .position
@@ -164,7 +178,7 @@ impl<N: Real> SignoriniModel<N> {
 }
 
 impl<N: Real> ContactModel<N> for SignoriniModel<N> {
-    fn num_velocity_constraints(&self, c: &BodyContactManifold<N>) -> usize {
+    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
         c.manifold.len()
     }
 
@@ -173,7 +187,7 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
-        manifolds: &[BodyContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
@@ -191,12 +205,9 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                 let _ = Self::build_velocity_constraint(
                     params,
                     bodies,
+                    manifold,
                     ext_vels,
-                    manifold.body1,
-                    manifold.body2,
                     c,
-                    manifold.margin1,
-                    manifold.margin2,
                     self.impulses.get(c.id),
                     self.impulses.entry_id(c.id),
                     ground_j_id,
@@ -207,13 +218,8 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
 
                 Self::build_position_constraint(
                     bodies,
-                    manifold.body1,
-                    manifold.body2,
-                    manifold.collider_pos_wrt_body1,
-                    manifold.collider_pos_wrt_body2,
+                    manifold,
                     c,
-                    manifold.margin1,
-                    manifold.margin2,
                     constraints,
                 );
             }

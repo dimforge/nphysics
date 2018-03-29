@@ -1,7 +1,7 @@
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
-use object::BodyHandle;
+use object::{BodyHandle, Material};
 use math::{Isometry, Point};
 
 pub type Colliders<'a, N> = CollisionObjects<'a, Point<N>, Isometry<N>, ColliderData<N>>;
@@ -16,14 +16,21 @@ pub struct ColliderData<N: Real> {
     margin: N,
     body: BodyHandle,
     position_wrt_parent: Isometry<N>,
+    material: Material<N>,
 }
 
 impl<N: Real> ColliderData<N> {
-    pub fn new(margin: N, body: BodyHandle, position_wrt_parent: Isometry<N>) -> Self {
+    pub fn new(
+        margin: N,
+        body: BodyHandle,
+        position_wrt_parent: Isometry<N>,
+        material: Material<N>,
+    ) -> Self {
         ColliderData {
             margin,
             body,
             position_wrt_parent,
+            material,
         }
     }
 
@@ -40,5 +47,10 @@ impl<N: Real> ColliderData<N> {
     #[inline]
     pub fn position_wrt_parent(&self) -> &Isometry<N> {
         &self.position_wrt_parent
+    }
+
+    #[inline]
+    pub fn material(&self) -> &Material<N> {
+        &self.material
     }
 }
