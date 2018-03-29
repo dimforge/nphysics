@@ -3,11 +3,15 @@ extern crate ncollide;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Translation2};
-use ncollide::shape::{Ball, Plane};
+use na::{Unit, Point2, Vector2, Isometry2};
+use ncollide::shape::{Ball, Plane, ShapeHandle};
+use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
-use nphysics2d::object::RigidBody;
+use nphysics2d::object::{Collider, BodyHandle, Material};
 use nphysics_testbed2d::Testbed;
+
+
+const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     let mut world = create_the_world();
@@ -28,36 +32,65 @@ fn create_the_walls(world: &mut World<f32>) {
     /*
      * First plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(-1.0, -1.0)), 0.3, 0.6);
-    rb.append_translation(&Translation2::new(0.0, 10.0));
-    world.add_rigid_body(rb);
+    let n = Unit::new_normalize(Vector2::new(-1.0, -1.0));
+    let ground_shape = ShapeHandle::new(Plane::new(n));
+
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        Isometry2::new(Vector2::y() * 10.0, na::zero()),
+        Material::default(),
+    );
 
     /*
      * Second plane
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(1.0, -1.0)), 0.3, 0.6);
-    rb.append_translation(&Translation2::new(0.0, 10.0));
-    world.add_rigid_body(rb);
+    let n = Unit::new_normalize(Vector2::new(1.0, -1.0));    
+    let ground_shape = ShapeHandle::new(Plane::new(n));
+
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        Isometry2::new(Vector2::y() * 10.0, na::zero()),
+        Material::default(),
+    );
 }
 
 
 fn create_the_balls(world: &mut World<f32>) {
-    let num     = (4000.0f32.sqrt()) as usize;
-    let rad     = 0.5;
+    let num     = (2000.0f32.sqrt()) as usize;
+    let rad     = 0.1;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
+    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
+    let inertia = geom.inertia(1.0);
+    let material = Material::default();
+
     for i in 0usize .. num {
         for j in 0usize .. num {
             let x = i as f32 * 2.5 * rad - centerx;
-            let y = j as f32 * 2.5 * rad - centery * 2.0 - 20.0;
+            let y = j as f32 * 2.5 * rad - centery * 2.0 - 2.0;
 
-            let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
+            /*
+             * Create the rigid body.
+             */
+            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
+            let handle = world.add_rigid_body(pos, inertia);
 
-            rb.append_translation(&Translation2::new(x, y));
-
-            world.add_rigid_body(rb);
+            /*
+             * Create the collider.
+             */
+            world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                material.clone(),
+            );
         }
     }
 }

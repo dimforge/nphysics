@@ -7,7 +7,7 @@ use std::f32::consts::PI;
 use na::{Isometry3, Point3, Translation3, Vector3};
 use ncollide::shape::{Ball, Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, BodyStatus};
+use nphysics3d::object::{BodyHandle, BodyStatus, Material};
 use nphysics3d::joint::RevoluteJoint;
 use nphysics3d::math::{Inertia, Velocity};
 use nphysics3d::volumetric::Volumetric;
@@ -22,6 +22,9 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
+    // Materials.
+    let material = Material::default();
+
     /*
      * Plane
      */
@@ -34,6 +37,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
+        material.clone()
     );
 
     /*
@@ -75,7 +79,7 @@ fn main() {
                 /*
                  * Create the collider.
                  */
-                world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
+                world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity(), material.clone());
             }
         }
     }
@@ -96,6 +100,7 @@ fn main() {
         geom.clone(),
         platform_handle,
         Isometry3::identity(),
+        material.clone()
     );
 
     /*
@@ -118,7 +123,7 @@ fn main() {
         mb.set_status(BodyStatus::Kinematic);
     }
 
-    world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
+    world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity(), material.clone());
 
     /*
      * Setup a motorized multibody.
@@ -137,7 +142,7 @@ fn main() {
         inertia,
     );
 
-    world.add_collider(COLLIDER_MARGIN, geom, handle, Isometry3::identity());
+    world.add_collider(COLLIDER_MARGIN, geom, handle, Isometry3::identity(), material.clone());
 
     /*
      * Setup a callback to control the platform.

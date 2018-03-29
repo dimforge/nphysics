@@ -3,11 +3,14 @@ extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3, Translation3};
-use ncollide::shape::{Ball, Plane};
+use na::{Unit, Point3, Vector3, Isometry3};
+use ncollide::shape::{Ball, Plane, ShapeHandle};
+use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
-use nphysics3d::object::RigidBody;
+use nphysics3d::object::{Collider, BodyHandle, Material};
 use nphysics_testbed3d::Testbed;
+
+const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -16,42 +19,66 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
+    // Material.
+    let material = Material::default();
+
     /*
      * Planes
      */
     let normals = [
-        Vector3::new(-1.0, 1.0, -1.0 ),
-        Vector3::new(1.0, 1.0, -1.0 ),
-        Vector3::new(-1.0, 1.0, 1.0 ),
-        Vector3::new(1.0, 1.0, 1.0 )
+        Unit::new_normalize(Vector3::new(-1.0, 1.0, -1.0)),
+        Unit::new_normalize(Vector3::new(1.0, 1.0, -1.0)),
+        Unit::new_normalize(Vector3::new(-1.0, 1.0, 1.0)),
+        Unit::new_normalize(Vector3::new(1.0, 1.0, 1.0))
     ];
     for n in normals.iter() {
-        let rb   = RigidBody::new_static(Plane::new(*n), 0.3, 0.6);
+        let ground_shape = ShapeHandle::new(Plane::new(*n));
+        let ground_pos = Isometry3::identity();
 
-        world.add_rigid_body(rb);
+        world.add_collider(
+            COLLIDER_MARGIN,
+            ground_shape,
+            BodyHandle::ground(),
+            ground_pos,
+            material.clone(),
+        );
     }
 
     /*
      * Create the balls
      */
     let num     = 1500.0f32.powf(1.0f32 / 3.0) as usize;
-    let rad     = 0.5;
+    let rad     = 0.1;
     let shift   = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
+
+    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
+    let inertia = geom.inertia(1.0);
 
     for i in 0usize .. num {
         for j in 0usize .. num {
             for k in 0usize .. num {
                 let x = i as f32 * 2.5 * rad - centerx;
-                let y = 10.0 + j as f32 * 2.5 * rad + centery * 2.0;
+                let y = 3.0 + j as f32 * 2.5 * rad + centery * 2.0;
                 let z = k as f32 * 2.5 * rad - centerx;
 
-                let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
+                /*
+                 * Create the rigid body.
+                 */
+                let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
+                let handle = world.add_rigid_body(pos, inertia);
 
-                rb.append_translation(&Translation3::new(x, y, z));
-
-                world.add_rigid_body(rb);
+                /*
+                 * Create the collider.
+                 */
+                world.add_collider(
+                    COLLIDER_MARGIN,
+                    geom.clone(),
+                    handle,
+                    Isometry3::identity(),
+                    material.clone(),
+                );
             }
         }
     }
@@ -61,6 +88,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Point3::new(-10.0, 50.0, -10.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-1.0, 15.0, -1.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use na::{Isometry2, Vector2};
 use ncollide::shape::{Cuboid, ShapeHandle};
 use nphysics2d::world::World;
-use nphysics2d::object::BodyHandle;
+use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics_testbed2d::Testbed;
 
@@ -18,6 +18,9 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
+
+    // Materials.
+    let material = Material::default();
 
     /*
      * Plane
@@ -34,6 +37,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
+        material.clone(),
     );
 
     /*
@@ -67,7 +71,7 @@ fn main() {
             /*
              * Create the collider.
              */
-            world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry2::identity());
+            world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry2::identity(), material.clone());
         }
     }
 
