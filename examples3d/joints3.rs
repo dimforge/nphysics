@@ -7,7 +7,7 @@ use std::f32::consts::PI;
 use na::{Isometry3, Point3, Unit, Vector3};
 use ncollide::shape::{Cuboid, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::BodyHandle;
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::joint::{BallJoint, FixedJoint, HelicalJoint, Joint, PinSlotJoint, PlanarJoint,
                         PrismaticJoint, RectangularJoint, RevoluteJoint, UniversalJoint};
 use nphysics3d::volumetric::Volumetric;
@@ -21,6 +21,9 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+
+    // Material.
+    let material = Material::default();
 
     /*
      * Geometries that will be re-used for several multibody links..
@@ -51,6 +54,7 @@ fn main() {
             cuboid.clone(),
             parent,
             Isometry3::identity(),
+            material.clone(),
         );
     }
 
@@ -78,6 +82,7 @@ fn main() {
             cuboid.clone(),
             parent,
             Isometry3::identity(),
+            material.clone()
         );
     }
 
@@ -104,6 +109,7 @@ fn main() {
             cuboid.clone(),
             parent,
             Isometry3::identity(),
+            material.clone()
         );
     }
     // Setup damping for the whole multibody.
@@ -134,6 +140,7 @@ fn main() {
         cuboid.clone(),
         parent,
         Isometry3::identity(),
+        material.clone()
     );
 
     parent = world.add_multibody_link(parent, uni, na::zero(), body_shift, cuboid_inertia);
@@ -142,6 +149,7 @@ fn main() {
         cuboid.clone(),
         parent,
         Isometry3::identity(),
+        material.clone()
     );
 
     /*
@@ -168,6 +176,7 @@ fn main() {
         cuboid.clone(),
         hel_handle,
         Isometry3::identity(),
+        material.clone()
     );
 
     /*
@@ -202,6 +211,7 @@ fn main() {
                 cuboid.clone(),
                 handle,
                 Isometry3::identity(),
+                material.clone()
             );
         }
     }
@@ -238,6 +248,7 @@ fn main() {
                 cuboid.clone(),
                 handle,
                 Isometry3::identity(),
+                material.clone()
             );
         }
     }
@@ -265,6 +276,7 @@ fn main() {
         cuboid.clone(),
         pin_handle,
         Isometry3::identity(),
+        material.clone()
     );
 
     /*

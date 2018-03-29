@@ -57,7 +57,7 @@ fn main() {
         for j in 0usize..num {
             for k in 0usize..num {
                 let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery;
+                let y = j as f32 * shift + centery + 3.0;
                 let z = k as f32 * shift - centerz;
 
                 /*
@@ -70,6 +70,7 @@ fn main() {
                 //     .unwrap()
                 //     .activation_status_mut()
                 //     .set_deactivation_threshold(None);
+
                 /*
                  * Create the collider.
                  */
