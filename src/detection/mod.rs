@@ -1,7 +1,7 @@
 //! Collision detection and joints.
 
 pub use self::activation_manager::ActivationManager;
-pub use self::body_contact_manifold::BodyContactManifold;
+pub use self::collider_contact_manifold::ColliderContactManifold;
 
-mod body_contact_manifold;
+mod collider_contact_manifold;
 mod activation_manager;

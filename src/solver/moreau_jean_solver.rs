@@ -4,7 +4,7 @@ use na::{DVector, DVectorSlice, Real};
 use na::storage::Storage;
 
 use counters::Counters;
-use detection::BodyContactManifold;
+use detection::ColliderContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::JointConstraint;
 use solver::{ConstraintSet, ContactModel, IntegrationParameters,
@@ -41,7 +41,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters: &mut Counters,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
-        manifolds: &[BodyContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
     ) {
@@ -67,7 +67,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
-        manifolds: &[BodyContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
     ) {
         let mut system_ndofs = 0;
@@ -128,10 +128,10 @@ impl<N: Real> MoreauJeanSolver<N> {
             }
         }
 
-        for c in manifolds {
-            let ndofs1 = bodies.body(c.body1).status_dependent_ndofs();
-            let ndofs2 = bodies.body(c.body2).status_dependent_ndofs();
-            let sz = self.contact_model.num_velocity_constraints(c) * (ndofs1 + ndofs2) * 2;
+        for m in manifolds {
+            let ndofs1 = bodies.body(m.body1()).status_dependent_ndofs();
+            let ndofs2 = bodies.body(m.body2()).status_dependent_ndofs();
+            let sz = self.contact_model.num_velocity_constraints(m) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {
                 ground_jacobian_sz += sz;

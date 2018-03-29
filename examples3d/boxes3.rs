@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use na::{Isometry3, Point3, Vector3};
 use ncollide::shape::{Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::BodyHandle;
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
@@ -18,6 +18,9 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+
+    // Material for all objects.
+    let material = Material::default();
 
     /*
      * Ground.
@@ -34,6 +37,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
+        material.clone(),
     );
 
     /*
@@ -61,11 +65,21 @@ fn main() {
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
                 let handle = world.add_rigid_body(pos, inertia);
-
+                // world
+                //     .rigid_body_mut(handle)
+                //     .unwrap()
+                //     .activation_status_mut()
+                //     .set_deactivation_threshold(None);
                 /*
                  * Create the collider.
                  */
-                world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
+                world.add_collider(
+                    COLLIDER_MARGIN,
+                    geom.clone(),
+                    handle,
+                    Isometry3::identity(),
+                    material.clone(),
+                );
             }
         }
     }

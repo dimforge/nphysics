@@ -9,11 +9,11 @@ use ncollide::shape::ShapeHandle;
 
 use counters::Counters;
 use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
-             ColliderHandle, Colliders, Multibody, MultibodyLinkMut, MultibodyLinkRef,
+             ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
              MultibodyWorkspace, RigidBody, SensorHandle};
 use joint::{ConstraintHandle, Joint, JointConstraint};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
-use detection::{ActivationManager, BodyContactManifold};
+use detection::{ActivationManager, ColliderContactManifold};
 use math::{Inertia, Isometry, Point, Vector};
 
 pub type CollisionWorld<N> =
@@ -39,13 +39,14 @@ pub struct World<N: Real> {
 impl<N: Real> World<N> {
     pub fn new() -> Self {
         let counters = Counters::new(false);
-        let prediction = na::convert(0.02f64);
+        let bv_margin = na::convert(0.1f64);
+        let prediction = na::convert(0.002);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
         let bodies = BodySet::new();
         let active_bodies = Vec::new();
         let colliders_w_parent = Vec::new();
         let constraints = Slab::new();
-        let cworld = CollisionWorld::new(prediction);
+        let cworld = CollisionWorld::new(bv_margin);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
@@ -212,15 +213,9 @@ impl<N: Real> World<N> {
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
                     || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
             {
-                contact_manifolds.push(BodyContactManifold::new(
-                    coll1.data().body(),
-                    coll2.data().body(),
-                    coll1.handle(),
-                    coll2.handle(),
-                    &coll1.data().position_wrt_parent(),
-                    &coll2.data().position_wrt_parent(),
-                    coll1.data().margin(),
-                    coll2.data().margin(),
+                contact_manifolds.push(ColliderContactManifold::new(
+                    coll1,
+                    coll2,
                     c,
                 ));
             }
@@ -358,12 +353,13 @@ impl<N: Real> World<N> {
         shape: ShapeHandle<Point<N>, Isometry<N>>,
         parent: BodyHandle,
         to_parent: Isometry<N>,
+        material: Material<N>,
     ) -> ColliderHandle {
         let query = GeometricQueryType::Contacts(
             margin + self.prediction * na::convert(0.5f64),
             self.angular_prediction,
         );
-        self.add_collision_object(query, margin, shape, parent, to_parent)
+        self.add_collision_object(query, margin, shape, parent, to_parent, material)
     }
 
     pub fn add_sensor(
@@ -373,7 +369,14 @@ impl<N: Real> World<N> {
         to_parent: Isometry<N>,
     ) -> SensorHandle {
         let query = GeometricQueryType::Proximity(self.prediction * na::convert(0.5f64));
-        self.add_collision_object(query, N::zero(), shape, parent, to_parent)
+        self.add_collision_object(
+            query,
+            N::zero(),
+            shape,
+            parent,
+            to_parent,
+            Material::default(),
+        )
     }
 
     fn add_collision_object(
@@ -383,6 +386,7 @@ impl<N: Real> World<N> {
         shape: ShapeHandle<Point<N>, Isometry<N>>,
         parent: BodyHandle,
         to_parent: Isometry<N>,
+        material: Material<N>,
     ) -> CollisionObjectHandle {
         let pos = if parent.is_ground() {
             to_parent
@@ -390,7 +394,7 @@ impl<N: Real> World<N> {
             self.bodies.body_part(parent).position() * to_parent
         };
 
-        let data = ColliderData::new(margin, parent, to_parent);
+        let data = ColliderData::new(margin, parent, to_parent, material);
         let groups = CollisionGroups::new();
         let handle = self.cworld.add(pos, shape, groups, query, data);
 

@@ -4,6 +4,8 @@ pub use self::rigid_body_collision_groups::RigidBodyCollisionGroups;
 pub use self::sensor_collision_groups::SensorCollisionGroups;
 pub use self::collision_groups_wrapper_impl::{SENSOR_GROUP_ID, STATIC_GROUP_ID};
 
+pub use self::material::Material;
+
 pub use self::ground::Ground;
 pub use self::body::{ActivationStatus, Body, BodyMut, BodyPart, BodyStatus};
 pub use self::body_set::{BodyHandle, BodySet};
@@ -16,6 +18,8 @@ pub use self::collider::{Collider, ColliderData, ColliderHandle, Colliders, Sens
 mod collision_groups_wrapper_impl;
 mod rigid_body_collision_groups;
 mod sensor_collision_groups;
+
+mod material;
 
 mod body;
 mod body_set;
