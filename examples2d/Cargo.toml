@@ -23,6 +23,10 @@ path = "../build/nphysics2d"
 name = "boxes2"
 path = "./boxes2.rs"
 
+[[bin]]
+name = "balls2"
+path = "./balls2.rs"
+
 # [[bin]]
 # name = "convex_vee2"
 # path = "./convex_vee2.rs"

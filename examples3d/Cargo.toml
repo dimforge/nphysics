@@ -28,6 +28,10 @@ path = "./body_status3.rs"
 name = "boxes3"
 path = "boxes3.rs"
 
+[[bin]]
+name = "balls3"
+path = "balls3.rs"
+
 ## [[bin]]
 ## name = "boxes_as_multibody3"
 ## path = "./boxes_as_multibody3.rs"

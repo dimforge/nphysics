@@ -73,7 +73,7 @@ fn create_the_balls(world: &mut World<f32>) {
     for i in 0usize .. num {
         for j in 0usize .. num {
             let x = i as f32 * 2.5 * rad - centerx;
-            let y = j as f32 * 2.5 * rad - centery * 2.0 - 2.0;
+            let y = j as f32 * 2.5 * rad - centery * 2.0 - 0.5;
 
             /*
              * Create the rigid body.
