@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide::shape::{Cuboid, Plane, ShapeHandle};
+use ncollide::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
@@ -29,8 +29,6 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
     let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
-    // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
-    // let ground_pos = Isometry3::identity();
 
     world.add_collider(
         COLLIDER_MARGIN,
@@ -45,13 +43,13 @@ fn main() {
      */
     let num = 8;
     let rad = 0.1;
-    let shift = rad * 2.0;
+    let shift = rad * 2.0 + 0.002;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
     let height = 3.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
+    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
     let inertia = geom.inertia(1.0);
 
     for i in 0usize..num {
@@ -66,11 +64,6 @@ fn main() {
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
                 let handle = world.add_rigid_body(pos, inertia);
-                // world
-                //     .rigid_body_mut(handle)
-                //     .unwrap()
-                //     .activation_status_mut()
-                //     .set_deactivation_threshold(None);
 
                 /*
                  * Create the collider.
