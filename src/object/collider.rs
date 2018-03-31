@@ -44,6 +44,7 @@ impl<N: Real> ColliderData<N> {
         self.margin
     }
 
+    // XXX: rename this "position_wrt_body".
     #[inline]
     pub fn position_wrt_parent(&self) -> &Isometry<N> {
         &self.position_wrt_parent

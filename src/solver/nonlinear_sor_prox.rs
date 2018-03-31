@@ -116,9 +116,13 @@ impl<N: Real> NonlinearSORProx<N> {
         if self.update_contact_constraint(params, bodies, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
+            println!("rhs: {}, impulse: {}, r: {}", constraint.rhs, impulse, constraint.r);
+
             VectorSliceMutN::new_generic_mut(jacobians, dim1, U1).mul_assign(impulse);
             VectorSliceMutN::new_generic_mut(&mut jacobians[dim1.value()..], dim2, U1)
                 .mul_assign(impulse);
+
+                println!("Displacement: {}, {}", jacobians[0], jacobians[dim1.value()]);
 
             if dim1.value() != 0 {
                 bodies

@@ -49,7 +49,7 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-    let height = 3.0;
+    let height = 0.0; // 3.0;
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);

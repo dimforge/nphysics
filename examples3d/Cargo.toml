@@ -36,14 +36,14 @@ path = "balls3.rs"
 ## name = "boxes_as_multibody3"
 ## path = "./boxes_as_multibody3.rs"
 
-# [[bin]]
-# name = "compound3"
-# path = "./compound3.rs"
-# 
-# [[bin]]
-# name = "cross3"
-# path = "./cross3.rs"
-# 
+[[bin]]
+name = "compound3"
+path = "./compound3.rs"
+ 
+[[bin]]
+name = "cross3"
+path = "./cross3.rs"
+
 # [[bin]]
 # name = "mesh3"
 # path = "./mesh3.rs"
