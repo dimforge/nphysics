@@ -81,7 +81,8 @@ impl<N: Real> SignoriniModel<N> {
 
         if rhs > -params.restitution_velocity_threshold {
             let depth = c.contact.depth + data1.margin() + data2.margin();
-            // No penetration, use predective contact.
+
+            // No penetration, use predictive contact.
             if depth < N::zero() {
                 rhs += (-depth) / params.dt;
             }
@@ -159,8 +160,8 @@ impl<N: Real> SignoriniModel<N> {
         let total_margin2 = kinematic.dilation2() + data2.margin();
         kinematic.set_dilation1(total_margin1);
         kinematic.set_dilation2(total_margin2);
-        kinematic.transform1(data1.position_wrt_parent());
-        kinematic.transform2(data2.position_wrt_parent());
+        kinematic.transform1(&manifold.pos_wrt_body1);
+        kinematic.transform2(&manifold.pos_wrt_body2);
 
         constraints
             .position
@@ -198,9 +199,9 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
 
         for manifold in manifolds {
             for c in manifold.contacts() {
-                if !Self::is_constraint_active(c, manifold) {
-                    continue;
-                }
+                // if !Self::is_constraint_active(c, manifold) {
+                //     continue;
+                // }
 
                 let _ = Self::build_velocity_constraint(
                     params,

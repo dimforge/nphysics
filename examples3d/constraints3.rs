@@ -7,7 +7,7 @@ use std::sync::Arc;
 use na::{Isometry3, Point3, Real, Translation3, Vector3};
 use ncollide::shape::{Ball, Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::BodyHandle;
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::joint::{BallConstraint, FixedConstraint, FixedJoint, FreeJoint, Joint,
                         RevoluteConstraint, RevoluteJoint};
 use nphysics3d::volumetric::Volumetric;
@@ -25,7 +25,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 3;
+    let num = 5;
     let rad = 0.2;
     let mut parent = BodyHandle::ground();
 
@@ -74,7 +74,7 @@ fn main() {
         /*
          * Create the collider.
          */
-        world.add_collider(COLLIDER_MARGIN, geom.clone(), rb, Isometry3::identity());
+        world.add_collider(COLLIDER_MARGIN, geom.clone(), rb, Isometry3::identity(), Material::default());
 
         /*
          * Parent for the next constraint.
