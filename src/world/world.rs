@@ -39,7 +39,7 @@ pub struct World<N: Real> {
 impl<N: Real> World<N> {
     pub fn new() -> Self {
         let counters = Counters::new(false);
-        let bv_margin = na::convert(0.02f64);
+        let bv_margin = na::convert(0.1f64);
         let prediction = na::convert(0.002);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
         let bodies = BodySet::new();
@@ -213,11 +213,7 @@ impl<N: Real> World<N> {
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
                     || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
             {
-                contact_manifolds.push(ColliderContactManifold::new(
-                    coll1,
-                    coll2,
-                    c,
-                ));
+                contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, c));
             }
         }
 

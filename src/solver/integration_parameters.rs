@@ -9,6 +9,7 @@ pub struct IntegrationParameters<N: Real> {
     pub allowed_angular_error: N,
     pub max_linear_correction: N,
     pub max_angular_correction: N,
+    pub max_stabilization_multiplier: N,
     pub max_velocity_iterations: usize,
     pub max_position_iterations: usize,
 }
@@ -23,6 +24,7 @@ impl<N: Real> IntegrationParameters<N> {
         allowed_angular_error: N,
         max_linear_correction: N,
         max_angular_correction: N,
+        max_stabilization_multiplier: N,
         max_velocity_iterations: usize,
         max_position_iterations: usize,
     ) -> Self {
@@ -35,6 +37,7 @@ impl<N: Real> IntegrationParameters<N> {
             allowed_angular_error,
             max_linear_correction,
             max_angular_correction,
+            max_stabilization_multiplier,
             max_velocity_iterations,
             max_position_iterations,
         }
@@ -50,6 +53,7 @@ impl<N: Real> Default for IntegrationParameters<N> {
             na::convert(1.0),
             na::convert(0.001),
             na::convert(0.001),
+            na::convert(100.0),
             na::convert(0.2),
             na::convert(0.2),
             8,
