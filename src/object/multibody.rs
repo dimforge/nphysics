@@ -408,7 +408,6 @@ impl<N: Real> Multibody<N> {
          * Compute body jacobians.
          */
         self.update_body_jacobians();
-        println!("body jacobian: {}", self.body_jacobians[0]);
     }
 
     /// Computes the constant terms of the dynamics.

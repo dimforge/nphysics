@@ -61,7 +61,6 @@ pub fn fill_constraint_geometry<N: Real>(
 
     let j = DVectorSlice::new(&jacobians[j_id..], ndofs);
     let invm_j = DVectorSlice::new(&jacobians[wj_id..], ndofs);
-    println!("force: {:?}, j: {}, invm_j: {}", force, j, invm_j);
 
     *inv_r += j.dot(&invm_j);
 }
