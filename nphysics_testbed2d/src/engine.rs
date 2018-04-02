@@ -174,8 +174,8 @@ impl<'a> GraphicsManager<'a> {
             id,
             world,
             delta,
-            rx, /* + margin */
-            ry, /* + margin */
+            rx + margin,
+            ry + margin,
             color,
         )))
     }

@@ -28,22 +28,21 @@ fn main() {
     /*
      * Plane
      */
-    // let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(10.0, 10.0, 10.0)));
-    // let ground_pos = Isometry3::new(Vector3::y() * -10.0, na::zero());
-    // // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y()));
-    // // let ground_pos   = Isometry3::identity();
-    // world.add_collider(
-    //     COLLIDER_MARGIN,
-    //     ground_shape,
-    //     BodyHandle::ground(),
-    //     ground_pos,
-    //     material.clone()
-    // );
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(10.0, 10.0, 10.0)));
+    let ground_pos = Isometry3::new(Vector3::y() * -10.0, na::zero());
+
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        ground_pos,
+        material.clone(),
+    );
 
     /*
      * Create the boxes
      */
-    let num = 0;
+    let num = 8;
     let rad = 0.2;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
@@ -79,7 +78,13 @@ fn main() {
                 /*
                  * Create the collider.
                  */
-                world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity(), material.clone());
+                world.add_collider(
+                    COLLIDER_MARGIN,
+                    geom.clone(),
+                    handle,
+                    Isometry3::identity(),
+                    material.clone(),
+                );
             }
         }
     }
@@ -100,13 +105,13 @@ fn main() {
         geom.clone(),
         platform_handle,
         Isometry3::identity(),
-        material.clone()
+        material.clone(),
     );
 
     /*
      * Setup a kinematic multibody.
      */
-    // let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN))); // Ball::new(rad - COLLIDER_MARGIN));
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN))); // Ball::new(rad - COLLIDER_MARGIN));
     let joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
     let inertia = Inertia::zero();
     let handle = world.add_multibody_link(
@@ -123,7 +128,13 @@ fn main() {
         mb.set_status(BodyStatus::Kinematic);
     }
 
-    // world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity(), material.clone());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        geom.clone(),
+        handle,
+        Isometry3::identity(),
+        material.clone(),
+    );
 
     /*
      * Setup a motorized multibody.
@@ -142,7 +153,13 @@ fn main() {
         inertia,
     );
 
-    world.add_collider(COLLIDER_MARGIN, geom, handle, Isometry3::identity(), material.clone());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        geom,
+        handle,
+        Isometry3::identity(),
+        material.clone(),
+    );
 
     /*
      * Setup a callback to control the platform.

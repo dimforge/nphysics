@@ -65,7 +65,9 @@ impl<N: Real> NonlinearSORProx<N> {
         let nconstraints = generator.num_position_constraints(bodies);
 
         for i in 0..nconstraints {
-            if let Some(constraint) = generator.position_constraint(params, i, bodies, jacobians) {
+            if let Some(mut constraint) =
+                generator.position_constraint(params, i, bodies, jacobians)
+            {
                 let dim1 = Dynamic::new(constraint.dim1);
                 let dim2 = Dynamic::new(constraint.dim2);
 
@@ -80,6 +82,15 @@ impl<N: Real> NonlinearSORProx<N> {
                         &(-params.max_linear_correction),
                     )
                 };
+
+                // Avoid overshoot when the penetration vector is close to the null-space
+                // of a multibody link jacobian.
+                // FIXME: will this cause issue with very light objects?
+                // Should this be done depending on the jacobian magnitude instead
+                // (instead of JM-1J)?
+                if constraint.r > params.max_stabilization_multiplier {
+                    constraint.r = params.max_stabilization_multiplier;
+                }
 
                 if rhs < N::zero() {
                     let impulse = -rhs * constraint.r;
@@ -189,13 +200,12 @@ impl<N: Real> NonlinearSORProx<N> {
                 );
             }
 
-            // May happen sometimes for self-collisions (e.g. a multibody with itself).
+            // Avoid overshoot when the penetration vector is close to the null-space
+            // of a multibody link jacobian.
+            // FIXME: will this cause issue with very light objects?
+            // Should this be done depending on the jacobian magnitude instead
+            // (instead of JM-1J)?
             if inv_r < N::one() / params.max_stabilization_multiplier {
-                // Avoid overshoot when the penetration vector is close to the null-space
-                // of a multibody link jacobian.
-                // FIXME: will this cause issue with very light objects?
-                // Should this be done depending on the jacobian magnitude instead
-                // (instead of JM-1J)?
                 constraint.r = params.max_stabilization_multiplier;
             } else {
                 constraint.r = N::one() / inv_r
