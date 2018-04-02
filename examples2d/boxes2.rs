@@ -25,13 +25,14 @@ fn main() {
     /*
      * Plane
      */
-    let ground_radius = 50.0;
+    let ground_radx = 25.0;
+    let ground_rady = 1.0;
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        ground_radius - COLLIDER_MARGIN,
-        ground_radius - COLLIDER_MARGIN,
+        ground_radx - COLLIDER_MARGIN,
+        ground_rady - COLLIDER_MARGIN,
     )));
 
-    let ground_pos = Isometry2::new(Vector2::y() * ground_radius, na::zero());
+    let ground_pos = Isometry2::new(Vector2::y() * ground_rady, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -71,7 +72,13 @@ fn main() {
             /*
              * Create the collider.
              */
-            world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry2::identity(), material.clone());
+            world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                material.clone(),
+            );
         }
     }
 
