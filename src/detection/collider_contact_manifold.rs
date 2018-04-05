@@ -20,15 +20,23 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         collider2: &'a Collider<N>,
         manifold: &'a ContactManifold<Point<N>>,
     ) -> Self {
-        let deepest = manifold.deepest_contact().unwrap();
-        let deepest_fid1 = deepest.kinematic.feature1();
-        let deepest_fid2 = deepest.kinematic.feature2();
+        let id1 = manifold.subshape_id1();
+        let id2 = manifold.subshape_id2();
 
-        let dpos1 = collider1.shape().subshape_transform(deepest_fid1);
-        let dpos2 = collider2.shape().subshape_transform(deepest_fid2);
+        let pos_wrt_body1;
+        let pos_wrt_body2;
 
-        let pos_wrt_body1 = collider1.data().position_wrt_parent() * dpos1;
-        let pos_wrt_body2 = collider2.data().position_wrt_parent() * dpos2;
+        if let Some(dpos1) = collider1.shape().subshape_transform(id1) {
+            pos_wrt_body1 = collider1.data().position_wrt_parent() * dpos1;
+        } else {
+            pos_wrt_body1 = *collider1.data().position_wrt_parent()
+        }
+
+        if let Some(dpos2) = collider2.shape().subshape_transform(id2) {
+            pos_wrt_body2 = collider2.data().position_wrt_parent() * dpos2;
+        } else {
+            pos_wrt_body2 = *collider2.data().position_wrt_parent()
+        }
 
         ColliderContactManifold {
             collider1,
