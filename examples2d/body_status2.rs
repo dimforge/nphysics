@@ -32,6 +32,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
+        Material::default(),
     );
 
     /*

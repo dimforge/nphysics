@@ -10,7 +10,7 @@ use solver::{ConstraintSet, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator};
 use utils::{GeneralizedCross, IndexMut2};
 use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, SpatialMatrix, SpatialVector,
-           Vector, Velocity, DIM};
+           Vector, Velocity, Point, DIM};
 
 pub struct Multibody<N: Real> {
     rbs: MultibodyLinkVec<N>,
@@ -212,7 +212,8 @@ impl<N: Real> Multibody<N> {
         mut dof: J,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
-        inertia: Inertia<N>,
+        local_inertia: Inertia<N>,
+        local_com: Point<N>,
     ) -> MultibodyLinkMut<N> {
         assert!(
             parent.is_ground() || !self.rbs.is_empty(),
@@ -263,7 +264,8 @@ impl<N: Real> Multibody<N> {
             parent_to_world,
             local_to_world,
             local_to_parent,
-            inertia,
+            local_inertia,
+            local_com,
         );
         self.rbs.push(rb);
 
@@ -391,6 +393,7 @@ impl<N: Real> Multibody<N> {
             rb.dof.update_jacobians(&rb.body_shift, &self.velocities);
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = rb.local_to_parent;
+            rb.com = rb.local_to_world * rb.local_com;
         }
 
         // Handle the children. They all have a parent within this multibody.
@@ -402,6 +405,7 @@ impl<N: Real> Multibody<N> {
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = parent_rb.local_to_world * rb.local_to_parent;
             rb.parent_to_world = parent_rb.local_to_world;
+            rb.com = rb.local_to_world * rb.local_com;            
         }
 
         /*

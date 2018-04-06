@@ -2,7 +2,7 @@ use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
 use object::{ActivationStatus, BodyHandle, BodyStatus};
 use solver::IntegrationParameters;
-use math::{Force, Inertia, Isometry, Point, Vector, Velocity, SPATIAL_DIM};
+use math::{Force, Inertia, Isometry, Point, Vector, Velocity, Translation, Rotation, SPATIAL_DIM};
 
 #[cfg(feature = "dim3")]
 use math::AngularVector;
@@ -15,6 +15,8 @@ pub struct RigidBody<N: Real> {
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     inertia: Inertia<N>,
+    local_com: Point<N>,
+    com: Point<N>,
     augmented_mass: Inertia<N>,
     inv_augmented_mass: Inertia<N>,
     acceleration: Velocity<N>,
@@ -24,15 +26,18 @@ pub struct RigidBody<N: Real> {
 }
 
 impl<N: Real> RigidBody<N> {
-    pub fn new(handle: BodyHandle, position: Isometry<N>, local_inertia: Inertia<N>) -> Self {
+    pub fn new(handle: BodyHandle, position: Isometry<N>, local_inertia: Inertia<N>, local_com: Point<N>) -> Self {
         let inertia = local_inertia.transformed(&position);
+        let com = position * local_com;
 
         RigidBody {
-            handle: handle,
+            handle,
             local_to_world: position,
             velocity: Velocity::zero(),
-            local_inertia: local_inertia,
-            inertia: inertia,
+            local_inertia,
+            inertia,
+            local_com,
+            com,
             augmented_mass: inertia,
             inv_augmented_mass: inertia.inverse(),
             acceleration: Velocity::zero(),
@@ -117,7 +122,7 @@ impl<N: Real> RigidBody<N> {
 
     #[inline]
     pub fn center_of_mass(&self) -> Point<N> {
-        Point::from_coordinates(self.local_to_world.translation.vector)
+        self.com
     }
 
     /// The velocity of this rigid body.
@@ -234,11 +239,12 @@ impl<N: Real> RigidBody<N> {
 
     #[inline]
     pub fn apply_displacement(&mut self, displacement: &Velocity<N>) {
-        let disp = Isometry::new(displacement.linear, displacement.angular);
-        self.local_to_world = Isometry::from_parts(
-            disp.translation * self.local_to_world.translation,
-            disp.rotation * self.local_to_world.rotation,
-        )
+        let rotation = Rotation::new(displacement.angular);
+        let translation = Translation::from_vector(displacement.linear);
+        let shift = Translation::from_vector(self.com.coords);
+        let disp = translation * shift * rotation * shift.inverse();
+        self.local_to_world = disp * self.local_to_world;
+        self.com = self.local_to_world * self.local_com;
     }
 
     #[inline]
