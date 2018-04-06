@@ -24,7 +24,7 @@ fn main() {
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
-     * Plane
+     * Ground
      */
     let ground_size = 50.0;
     let ground_shape =
