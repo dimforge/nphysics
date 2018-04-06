@@ -30,8 +30,6 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
     let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
-    // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
-    // let ground_pos = Isometry3::identity();
 
     world.add_collider(
         COLLIDER_MARGIN,
@@ -70,14 +68,6 @@ fn main() {
                     .map(|i| i as usize)
                     .collect();
                 let vertices = hull.coords;
-
-                // let vertices = vec![
-                //     Point3::new(0.0, 0.0, 0.0),
-                //     Point3::new(0.0, 0.0, 5.0),
-                //     Point3::new(5.0, 0.0, 0.0),
-                //     Point3::new(0.0, 5.0, 0.0),
-                // ];
-                // let indices = vec![1, 2, 3, 2, 0, 3, 0, 2, 1, 0, 1, 3];
 
                 let geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
                 let inertia = geom.inertia(1.0);
