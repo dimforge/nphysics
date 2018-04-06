@@ -1,15 +1,20 @@
-extern crate rand;
 extern crate nalgebra as na;
 extern crate ncollide;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
+extern crate rand;
 
 use rand::random;
-use na::{Point3, Vector3, Translation3};
-use ncollide::shape::{Plane, ConvexHull};
+
+use na::{Isometry3, Point3, Vector3};
+use ncollide::shape::{ConvexHull, Cuboid, Plane, ShapeHandle};
+use ncollide::transformation;
 use nphysics3d::world::World;
-use nphysics3d::object::RigidBody;
+use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
+
+const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -21,38 +26,76 @@ fn main() {
     /*
      * Plane
      */
-    let geom = Plane::new(Vector3::new(0.0, 1.0, 0.0));
-    world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
+    let ground_size = 50.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
+    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+    // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
+    // let ground_pos = Isometry3::identity();
+
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        ground_pos,
+        Material::default(),
+    );
 
     /*
      * Create the convex geometries.
      */
-    let npts    = 10usize;
-    let num     = 8;
-    let shift   = 2.0;
+    let npts = 10usize;
+    let num = 8;
+    let shift = 0.4;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
 
-    for i in 0usize .. num {
-        for j in 0usize .. num {
-            for k in 0usize .. num {
+    for i in 0usize..num {
+        for j in 0usize..num {
+            for k in 0usize..num {
                 let x = i as f32 * shift - centerx;
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
                 let mut pts = Vec::with_capacity(npts);
 
-                for _ in 0 .. npts {
-                    pts.push(random::<Point3<f32>>() * 2.0 + Vector3::new(5.0, 5.0, 5.0));
+                for _ in 0..npts {
+                    pts.push(random::<Point3<f32>>() * 0.4);
                 }
 
-                let geom = ConvexHull::new(pts);
-                let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
+                let hull = transformation::convex_hull3(&pts);
+                let indices: Vec<usize> = hull.flat_indices()
+                    .into_iter()
+                    .map(|i| i as usize)
+                    .collect();
+                let vertices = hull.coords;
 
-                rb.append_translation(&Translation3::new(x, y, z));
+                // let vertices = vec![
+                //     Point3::new(0.0, 0.0, 0.0),
+                //     Point3::new(0.0, 0.0, 5.0),
+                //     Point3::new(5.0, 0.0, 0.0),
+                //     Point3::new(0.0, 5.0, 0.0),
+                // ];
+                // let indices = vec![1, 2, 3, 2, 0, 3, 0, 2, 1, 0, 1, 3];
 
-                world.add_rigid_body(rb);
+                let geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
+                let inertia = geom.inertia(1.0);
+                let center_of_mass = geom.center_of_mass();
+
+                let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
+                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
+
+                /*
+                 * Create the collider.
+                 */
+                world.add_collider(
+                    COLLIDER_MARGIN,
+                    geom.clone(),
+                    handle,
+                    Isometry3::identity(),
+                    Material::default(),
+                );
             }
         }
     }
@@ -62,6 +105,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-10.0, 10.0, -10.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

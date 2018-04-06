@@ -55,10 +55,11 @@ pub struct MultibodyLink<N: Real> {
     pub velocity_wrt_joint: Velocity<N>,     // J  q' in world space.
     pub velocity: Velocity<N>,
     pub external_forces: Force<N>,
-
-    // Contants.
-    pub local_inertia: Inertia<N>,
     pub inertia: Inertia<N>,
+    pub com: Point<N>,
+
+    pub local_inertia: Inertia<N>,
+    pub local_com: Point<N>,
     // TODO: User-defined data
     // user_data:       T
 }
@@ -76,6 +77,7 @@ impl<N: Real> MultibodyLink<N> {
         local_to_world: Isometry<N>,
         local_to_parent: Isometry<N>,
         local_inertia: Inertia<N>,
+        local_com: Point<N>,
     ) -> Self {
         let is_leaf = true;
         let velocity = Velocity::zero();
@@ -83,6 +85,7 @@ impl<N: Real> MultibodyLink<N> {
         let velocity_wrt_joint = Velocity::zero();
         let external_forces = Force::zero();
         let inertia = local_inertia.transformed(&local_to_world);
+        let com = local_to_world * local_com;
 
         MultibodyLink {
             handle,
@@ -101,12 +104,14 @@ impl<N: Real> MultibodyLink<N> {
             velocity,
             external_forces,
             local_inertia,
+            local_com,
             inertia,
+            com,
         }
     }
 
     pub fn center_of_mass(&self) -> Point<N> {
-        Point::from_coordinates(self.local_to_world.translation.vector)
+        self.com
     }
 }
 

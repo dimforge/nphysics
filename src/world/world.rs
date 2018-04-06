@@ -327,8 +327,9 @@ impl<N: Real> World<N> {
         &mut self,
         position: Isometry<N>,
         local_inertia: Inertia<N>,
+        local_center_of_mass: Point<N>,
     ) -> BodyHandle {
-        self.bodies.add_rigid_body(position, local_inertia)
+        self.bodies.add_rigid_body(position, local_inertia, local_center_of_mass)
     }
 
     pub fn add_multibody_link<J: Joint<N>>(
@@ -337,10 +338,11 @@ impl<N: Real> World<N> {
         joint: J,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
-        inertia: Inertia<N>,
+        local_inertia: Inertia<N>,
+        local_center_of_mass: Point<N>
     ) -> BodyHandle {
         self.bodies
-            .add_multibody_link(parent, joint, parent_shift, body_shift, inertia)
+            .add_multibody_link(parent, joint, parent_shift, body_shift, local_inertia, local_center_of_mass)
     }
 
     pub fn add_collider(

@@ -335,11 +335,15 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
+        let mut chull = transformation::convex_hull3(shape.points());
+        chull.replicate_vertices();
+        chull.recompute_normals();
+
         out.push(Node::Convex(Convex::new(
             object,
             world,
             delta,
-            &transformation::convex_hull3(shape.points()),
+            &chull,
             color,
             window,
         )))

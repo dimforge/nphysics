@@ -1,5 +1,5 @@
 use na::Real;
-use ncollide::shape::{Ball, Compound, Cuboid, Cylinder, Shape};
+use ncollide::shape::{Ball, Compound, ConvexHull, Cuboid, Cylinder, Shape};
 use volumetric::Volumetric;
 use math::{AngularInertia, Isometry, Point, Vector};
 
@@ -15,9 +15,9 @@ macro_rules! dispatch(
             // else if let Some(c) = $sself.as_shape::<Cone<N>>() {
             //     (c as &Volumetric<N, $p, $i>).$name($($argN,)*)
             // }
-            // else if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>() {
-            //     c.$name($($argN,)*)
-            // }
+            else if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>>() {
+                c.$name($($argN,)*)
+            }
             else if let Some(c) = $sself.as_shape::<Cuboid<Vector<N>>>() {
                 c.$name($($argN,)*)
             }

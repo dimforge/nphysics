@@ -6,7 +6,7 @@ use object::{Body, BodyMut, BodyPart, Ground, Multibody, MultibodyLinkId, Multib
              MultibodyLinkRef, MultibodyWorkspace, RigidBody};
 use joint::Joint;
 use solver::IntegrationParameters;
-use math::{Inertia, Isometry, Vector};
+use math::{Inertia, Isometry, Vector, Point};
 
 // FIXME: remove the pub(crate) after this is replaced by -> impl Iterator
 pub(crate) type RigidBodies<'a, N> =
@@ -118,12 +118,13 @@ impl<N: Real> BodySet<N> {
         &mut self,
         position: Isometry<N>,
         local_inertia: Inertia<N>,
+        local_com: Point<N>,
     ) -> BodyHandle {
         let rb_entry = self.rbs.vacant_entry();
         let rb_id = rb_entry.key();
         let rb_handle = BodyHandle::new(self.ids.insert(BodyId::RigidBodyId(rb_id)));
 
-        let _ = rb_entry.insert(RigidBody::new(rb_handle, position, local_inertia));
+        let _ = rb_entry.insert(RigidBody::new(rb_handle, position, local_inertia, local_com));
         rb_handle
     }
 
@@ -133,7 +134,8 @@ impl<N: Real> BodySet<N> {
         joint: J,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
-        inertia: Inertia<N>,
+        local_inertia: Inertia<N>,
+        local_com: Point<N>,
     ) -> BodyHandle {
         if parent.is_ground() {
             let mb_entry = self.mbs.vacant_entry();
@@ -149,7 +151,8 @@ impl<N: Real> BodySet<N> {
                 joint,
                 parent_shift,
                 body_shift,
-                inertia,
+                local_inertia,
+                local_com,
             ).id();
             self.ids[mb_handle.handle] = BodyId::MultibodyLinkId(mb_id, id);
             mb_handle
@@ -166,7 +169,8 @@ impl<N: Real> BodySet<N> {
                         joint,
                         parent_shift,
                         body_shift,
-                        inertia,
+                        local_inertia,
+                        local_com,
                     )
                     .id();
                 self.ids[mb_handle.handle] = BodyId::MultibodyLinkId(mb_id, id);
