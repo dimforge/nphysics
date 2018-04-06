@@ -6,10 +6,9 @@ extern crate nphysics_testbed3d;
 extern crate rand;
 
 use std::path::Path;
-use rand::random;
 use na::{Isometry3, Point3, Translation3, Vector3};
 use kiss3d::loader::obj;
-use ncollide::shape::{Compound, ConvexHull, Cuboid, Plane, ShapeHandle};
+use ncollide::shape::{Compound, ConvexHull, Cuboid, ShapeHandle};
 use ncollide::procedural::TriMesh3;
 use ncollide::transformation;
 use ncollide::bounding_volume::{BoundingVolume, AABB};
