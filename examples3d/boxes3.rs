@@ -53,6 +53,7 @@ fn main() {
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -65,7 +66,7 @@ fn main() {
                  * Create the rigid body.
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia);
+                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
                 // world
                 //     .rigid_body_mut(handle)
                 //     .unwrap()

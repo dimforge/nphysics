@@ -33,7 +33,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
-        Material::default()
+        Material::default(),
     );
 
     /*
@@ -69,7 +69,7 @@ fn main() {
             cuboid.clone(),
             parent,
             Isometry3::identity(),
-            Material::default()
+            Material::default(),
         );
     }
 
