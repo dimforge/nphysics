@@ -5,19 +5,10 @@
  * It seems to behave as expected if the excentricity is not too big (tested with 10 and 100).
  *
  * # Symptoms:
- * Some object just fall through the ground, missing any collison. Then, after a while they seem
- * to notice that they are deep into the plane, and "jump" due to penetration resolution.
- * Thus, some collision are missed.
- * Identically, some boxes just dont collide to each other some times.
+ * Some objets jitter when they touch the ground.
  *
  * # Cause:
- * Not sure, but this seems to be an accuracy limitation of the contact manifold generators
- * (OneShotContactManifoldGenerator and IncrementalContactManifoldGenerator). The repetitive
- * transformations of the saved contact might invalidate them.
- *
- * However, this might be a real bug for some other non-accuracy-related reasons. For example, when
- * a box is deep on the plane without contact why does the one-shot contact manifold generator
- * fails? Something wrong with the perturbation?
+ * Not sure, but this seems to be an accuracy limitation of the contact manifold generators.
  *
  * This might be (but it is very unlikely) a problem with the DBVT that might become invalid.
  * Though this seems very unlikely as the AABBs seem to be fine and the plane has an infinite aabb
@@ -25,9 +16,6 @@
  *
  *
  * # Solution:
- *
- *
- * # Limitations of the solution:
  *
  */
 
@@ -73,13 +61,14 @@ fn main() {
      * Create the convex geometries.
      */
     let num = 8;
-    let shift = 2.0;
-    let excentricity = 5000.0f32;
+    let rad = 0.1;
+    let shift = rad * 2.0;
+    let excentricity = 1000.0f32;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
 
-    let mut cuboid_mesh = procedural::cuboid(&Vector3::new(2.0 - 0.08, 2.0 - 0.08, 2.0 - 0.08));
+    let mut cuboid_mesh = procedural::cuboid(&Vector3::repeat(2.0 * (rad - COLLIDER_MARGIN)));
 
     for c in cuboid_mesh.coords.iter_mut() {
         *c = *c + Vector3::new(excentricity, excentricity, excentricity);
@@ -90,15 +79,6 @@ fn main() {
         .map(|i| i as usize)
         .collect();
     let vertices = cuboid_mesh.coords;
-
-    for v in &vertices {
-        println!("Vertex: {}", *v)
-    }
-
-    for i in indices.chunks(3) {
-        println!("Index: {}, {}, {}", i[0], i[1], i[2])
-    }
-    println!("Original indices: {:?}", cuboid_mesh.indices);
 
     let geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
     let inertia = geom.inertia(1.0);
@@ -136,6 +116,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-10.0, 10.0, -10.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }
