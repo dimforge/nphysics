@@ -35,8 +35,8 @@ macro_rules! dispatch(
             }
 
             /*
-                * XXX: dispatch by custom type.
-                */
+             * XXX: dispatch by custom type.
+             */
             panic!("The `Volumetric` is not implemented by the given shape.")
         }
     }
