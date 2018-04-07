@@ -9,7 +9,8 @@ use na;
 use nphysics2d::world::World;
 use nphysics2d::object::{Body, BodyHandle, ColliderHandle};
 use ncollide::transformation;
-use ncollide::shape::{Ball2, Compound2, ConvexHull2, Cuboid2, Plane2, Polyline2, Segment2, Shape2};
+use ncollide::shape::{Ball2, Compound2, ConvexPolygon2, Cuboid2, Plane2, Polyline2, Segment2,
+                      Shape2};
 use camera::Camera;
 use objects::{Ball, Box, Lines, SceneNode, Segment};
 
@@ -58,7 +59,7 @@ impl<'a> GraphicsManager<'a> {
             self.add_ball(id, world, delta, s, out)
         } else if let Some(s) = shape.as_shape::<Cuboid2<f32>>() {
             self.add_box(id, world, delta, s, out)
-        } else if let Some(s) = shape.as_shape::<ConvexHull2<f32>>() {
+        } else if let Some(s) = shape.as_shape::<ConvexPolygon2<f32>>() {
             self.add_convex(id, world, delta, s, out)
         } else if let Some(s) = shape.as_shape::<Segment2<f32>>() {
             self.add_segment(id, world, delta, s, out)
@@ -107,7 +108,7 @@ impl<'a> GraphicsManager<'a> {
         id: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &ConvexHull2<f32>,
+        shape: &ConvexPolygon2<f32>,
         out: &mut Vec<SceneNode>,
     ) {
         let color = self.body_color(world, world.collider(id).unwrap().data().body());
