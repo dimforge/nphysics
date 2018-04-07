@@ -49,7 +49,7 @@ fn main() {
     let geoms = models();
     let ngeoms = geoms.len();
     let width = (ngeoms as f32).sqrt() as usize;
-    let height = 3;
+    let num_duplications = 4;
     let shift = 5.0f32;
 
     for (igeom, obj_path) in geoms.into_iter().enumerate() {
@@ -104,7 +104,7 @@ fn main() {
             let inertia = geom.inertia(1.0);
             let center_of_mass = geom.center_of_mass();
 
-            for k in 1..=height {
+            for k in 1..=num_duplications {
                 let i = igeom % width;
                 let j = igeom / width;
                 let shift = Vector3::new(i as f32, k as f32, j as f32) * shift;

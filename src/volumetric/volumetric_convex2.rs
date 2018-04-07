@@ -6,7 +6,7 @@ use na;
 use ncollide::utils;
 use ncollide::procedural::Polyline;
 use ncollide::transformation;
-use ncollide::shape::ConvexHull2;
+use ncollide::shape::ConvexPolygon2;
 use volumetric::Volumetric;
 use math::{AngularInertia, Point};
 
@@ -137,7 +137,7 @@ pub fn convex_hull_unit_angular_inertia<N: Real>(points: &[Point<N>]) -> Angular
     tensor
 }
 
-impl<N: Real> Volumetric<N> for ConvexHull2<N> {
+impl<N: Real> Volumetric<N> for ConvexPolygon2<N> {
     fn area(&self) -> N {
         convex_hull_area(self.points())
     }
@@ -166,7 +166,7 @@ mod test {
     #![allow(unused_imports)]
     use na::{Matrix1, Point2, Vector2, Vector3};
     use na;
-    use ncollide::shape::{ConvexHull2, ConvexHull3, Cuboid};
+    use ncollide::shape::{ConvexPolygon2, ConvexHull3, Cuboid};
     use ncollide::procedural;
     use volumetric::Volumetric;
 
@@ -256,7 +256,7 @@ mod test {
                 Point2::new(-half_a, -half_a),
                 Point2::new(half_a, -half_a),
             ];
-            ConvexHull2::new(points)
+            ConvexPolygon2::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(
@@ -297,7 +297,7 @@ mod test {
                 Point2::new(-half_a, -half_b),
                 Point2::new(half_a, -half_b),
             ];
-            ConvexHull2::new(points)
+            ConvexPolygon2::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(
@@ -332,7 +332,7 @@ mod test {
                 Point2::new(b - c_x, 0.0 - c_y),
                 Point2::new(a - c_x, h - c_y),
             ];
-            ConvexHull2::new(points)
+            ConvexPolygon2::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(

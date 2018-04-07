@@ -1,5 +1,5 @@
 use na::Real;
-use ncollide::shape::{Ball, Compound, ConvexHull, Cuboid, Cylinder, Shape};
+use ncollide::shape::{Ball, Compound, ConvexHull, ConvexPolygon, Cuboid, Cylinder, Shape};
 use volumetric::Volumetric;
 use math::{AngularInertia, Isometry, Point, Vector};
 
@@ -7,29 +7,37 @@ macro_rules! dispatch(
     ($p: ty, $i: ty, $sself: ident.$name: ident($($argN: ident),*)) => {
         {
             if let Some(b) = $sself.as_shape::<Ball<N>>() {
-                b.$name($($argN,)*)
+                return b.$name($($argN,)*)
             }
-            else if let Some(c) = $sself.as_shape::<Compound<Point<N>, Isometry<N>>>() {
-                c.$name($($argN,)*)
+            if let Some(c) = $sself.as_shape::<Compound<Point<N>, Isometry<N>>>() {
+                return c.$name($($argN,)*)
             }
             // else if let Some(c) = $sself.as_shape::<Cone<N>>() {
             //     (c as &Volumetric<N, $p, $i>).$name($($argN,)*)
             // }
-            else if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>>() {
-                c.$name($($argN,)*)
+            #[cfg(feature = "dim3")]
+            {
+                if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>>() {
+                    return c.$name($($argN,)*)
+                }
             }
-            else if let Some(c) = $sself.as_shape::<Cuboid<Vector<N>>>() {
-                c.$name($($argN,)*)
+            #[cfg(feature = "dim2")]
+            {
+                if let Some(c) = $sself.as_shape::<ConvexPolygon<Point<N>>>() {
+                    return c.$name($($argN,)*)
+                }
             }
-            else if let Some(c) = $sself.as_shape::<Cylinder<N>>() {
-                c.$name($($argN,)*)
+            if let Some(c) = $sself.as_shape::<Cuboid<Vector<N>>>() {
+                return c.$name($($argN,)*)
             }
-            else {
-                /*
-                 * XXX: dispatch by custom type.
-                 */
-                panic!("The `Volumetric` is not implemented by the given shape.")
+            if let Some(c) = $sself.as_shape::<Cylinder<N>>() {
+                return c.$name($($argN,)*)
             }
+
+            /*
+                * XXX: dispatch by custom type.
+                */
+            panic!("The `Volumetric` is not implemented by the given shape.")
         }
     }
 );
