@@ -7,9 +7,8 @@ use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{ArcBall, Camera, FirstPerson};
-use ncollide::shape::{Ball3, Compound3, Cone3, ConvexHull3, Cuboid3, Cylinder3, Plane3, Shape3,
-                      TriMesh3};
-use ncollide::transformation;
+use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape};
+use ncollide3d::transformation;
 use nphysics3d::world::World;
 use nphysics3d::object::{Body, BodyHandle, ColliderHandle};
 use objects::ball::Ball;
@@ -198,28 +197,29 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &Shape3<f32>,
+        shape: &Shape<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        if let Some(s) = shape.as_shape::<Plane3<f32>>() {
+        /*if let Some(s) = shape.as_shape::<Plane<f32>>() {
             self.add_plane(window, object, world, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Ball3<f32>>() {
+        } else*/
+        if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
             self.add_ball(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Cuboid3<f32>>() {
+        } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<ConvexHull3<f32>>() {
+        /*} else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
             self.add_convex(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Cylinder3<f32>>() {
+        } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
             self.add_cylinder(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Cone3<f32>>() {
-            self.add_cone(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<Compound3<f32>>() {
+        } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
+            self.add_cone(window, object, world, delta, s, color, out)*/
+        } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, world, delta * t, s.as_ref(), color, out)
             }
-        } else if let Some(s) = shape.as_shape::<TriMesh3<f32>>() {
-            self.add_mesh(window, object, world, delta, s, color, out);
+        /*} else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
+            self.add_mesh(window, object, world, delta, s, color, out);*/
         } else {
             panic!("Not yet implemented.")
         }
@@ -230,7 +230,7 @@ impl GraphicsManager {
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        shape: &Plane3<f32>,
+        shape: &shape::Plane<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -248,13 +248,14 @@ impl GraphicsManager {
         )))
     }
 
+    /*
     fn add_mesh(
         &mut self,
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &TriMesh3<f32>,
+        shape: &TriMesh<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -275,7 +276,7 @@ impl GraphicsManager {
             color,
             window,
         )))
-    }
+    }*/
 
     fn add_ball(
         &mut self,
@@ -283,7 +284,7 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &Ball3<f32>,
+        shape: &shape::Ball<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -304,7 +305,7 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &Cuboid3<f32>,
+        shape: &Cuboid<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -331,11 +332,11 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &ConvexHull3<f32>,
+        shape: &ConvexHull<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let mut chull = transformation::convex_hull3(shape.points());
+        let mut chull = transformation::convex_hull(shape.points());
         chull.replicate_vertices();
         chull.recompute_normals();
 
@@ -355,7 +356,7 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &Cylinder3<f32>,
+        shape: &shape::Cylinder<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -379,7 +380,7 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &Cone3<f32>,
+        shape: &shape::Cone<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {

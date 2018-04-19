@@ -1,5 +1,5 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
@@ -7,8 +7,8 @@ extern crate rand;
 use rand::random;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide::shape::{ConvexHull, Cuboid, Plane, ShapeHandle};
-use ncollide::transformation;
+use ncollide3d::shape::{Ball, ConvexHull, Cuboid, ShapeHandle};
+use ncollide3d::transformation;
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
@@ -56,20 +56,27 @@ fn main() {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let mut pts = Vec::with_capacity(npts);
+                let geom;
 
-                for _ in 0..npts {
-                    pts.push(random::<Point3<f32>>() * 0.4);
+                if j % 2 == 0 {
+                    let mut pts = Vec::with_capacity(npts);
+
+                    for _ in 0..npts {
+                        pts.push(random::<Point3<f32>>() * 0.4);
+                    }
+
+                    let hull = transformation::convex_hull3(&pts);
+                    let indices: Vec<usize> = hull.flat_indices()
+                        .into_iter()
+                        .map(|i| i as usize)
+                        .collect();
+                    let vertices = hull.coords;
+
+                    geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
+                } else {
+                    geom = ShapeHandle::new(Ball::new(0.1 - COLLIDER_MARGIN));
                 }
 
-                let hull = transformation::convex_hull3(&pts);
-                let indices: Vec<usize> = hull.flat_indices()
-                    .into_iter()
-                    .map(|i| i as usize)
-                    .collect();
-                let vertices = hull.coords;
-
-                let geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
                 let inertia = geom.inertia(1.0);
                 let center_of_mass = geom.center_of_mass();
 

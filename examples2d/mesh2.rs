@@ -1,6 +1,6 @@
 extern crate alga;
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
@@ -9,7 +9,7 @@ use na::Real;
 use std::sync::Arc;
 use rand::{Rng, SeedableRng, StdRng};
 use na::{Isometry2, Point2, Vector2};
-use ncollide::shape::{Cuboid, Polyline, ShapeHandle};
+use ncollide2d::shape::{Cuboid, Polyline, ShapeHandle};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};

@@ -4,13 +4,13 @@ use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 use object::{BodyHandle, Material};
 use math::{Isometry, Point};
 
-pub type Colliders<'a, N> = CollisionObjects<'a, Point<N>, Isometry<N>, ColliderData<N>>;
+pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
 
 pub type ColliderHandle = CollisionObjectHandle;
-pub type Collider<N> = CollisionObject<Point<N>, Isometry<N>, ColliderData<N>>;
+pub type Collider<N> = CollisionObject<N, ColliderData<N>>;
 
 pub type SensorHandle = CollisionObjectHandle;
-pub type Sensor<N> = CollisionObject<Point<N>, Isometry<N>, ColliderData<N>>;
+pub type Sensor<N> = CollisionObject<N, ColliderData<N>>;
 
 pub struct ColliderData<N: Real> {
     margin: N,

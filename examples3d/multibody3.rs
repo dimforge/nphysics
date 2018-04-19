@@ -1,12 +1,12 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::f32::consts::PI;
 use std::sync::Arc;
 use na::{Unit, Real, Vector2, Point3, Vector3, Translation3, Isometry3};
-use ncollide::shape::{ShapeHandle, Plane, Ball, Cuboid};
+use ncollide3d::shape::{ShapeHandle, Plane, Ball, Cuboid};
 use nphysics3d::world::World;
 use nphysics3d::object::BodyHandle;
 use nphysics3d::joint::{FreeJoint, FixedJoint, Joint, RevoluteJoint, PrismaticJoint, BallJoint,

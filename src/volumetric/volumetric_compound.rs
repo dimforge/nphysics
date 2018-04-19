@@ -5,7 +5,7 @@ use ncollide::shape::Compound;
 use volumetric::{InertiaTensor, Volumetric};
 use math::{AngularInertia, Isometry, Point};
 
-impl<N: Real> Volumetric<N> for Compound<Point<N>, Isometry<N>> {
+impl<N: Real> Volumetric<N> for Compound<N> {
     fn area(&self) -> N {
         let mut stot: N = na::zero();
 
@@ -57,10 +57,9 @@ impl<N: Real> Volumetric<N> for Compound<Point<N>, Isometry<N>> {
         for &(ref m, ref s) in shapes.iter() {
             let (mpart, cpart, ipart) = s.mass_properties(na::one());
 
-            itot = itot
-                + ipart
-                    .to_world_space(m)
-                    .to_relative_wrt_point(mpart, &(*m * cpart + (-com.coords)));
+            itot = itot + ipart
+                .to_world_space(m)
+                .to_relative_wrt_point(mpart, &(*m * cpart + (-com.coords)));
         }
 
         itot
@@ -95,10 +94,9 @@ impl<N: Real> Volumetric<N> for Compound<Point<N>, Isometry<N>> {
         }
 
         for (&(ref m, _), &(ref mpart, ref cpart, ref ipart)) in shapes.iter().zip(props.iter()) {
-            itot = itot
-                + ipart
-                    .to_world_space(m)
-                    .to_relative_wrt_point(*mpart, &(*m * *cpart + (-ctot.coords)));
+            itot = itot + ipart
+                .to_world_space(m)
+                .to_relative_wrt_point(*mpart, &(*m * *cpart + (-ctot.coords)));
         }
 
         (mtot * density, ctot, itot * density)

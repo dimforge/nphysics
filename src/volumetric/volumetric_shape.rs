@@ -1,5 +1,5 @@
 use na::Real;
-use ncollide::shape::{Ball, Compound, ConvexHull, ConvexPolygon, Cuboid, Cylinder, Shape};
+use ncollide::shape::{Ball, Compound, Cuboid, Shape};
 use volumetric::Volumetric;
 use math::{AngularInertia, Isometry, Point, Vector};
 
@@ -9,30 +9,30 @@ macro_rules! dispatch(
             if let Some(b) = $sself.as_shape::<Ball<N>>() {
                 return b.$name($($argN,)*)
             }
-            if let Some(c) = $sself.as_shape::<Compound<Point<N>, Isometry<N>>>() {
+            if let Some(c) = $sself.as_shape::<Compound<N>>() {
                 return c.$name($($argN,)*)
             }
             // else if let Some(c) = $sself.as_shape::<Cone<N>>() {
             //     (c as &Volumetric<N, $p, $i>).$name($($argN,)*)
             // }
-            #[cfg(feature = "dim3")]
-            {
-                if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>>() {
-                    return c.$name($($argN,)*)
-                }
-            }
-            #[cfg(feature = "dim2")]
-            {
-                if let Some(c) = $sself.as_shape::<ConvexPolygon<Point<N>>>() {
-                    return c.$name($($argN,)*)
-                }
-            }
-            if let Some(c) = $sself.as_shape::<Cuboid<Vector<N>>>() {
+            // #[cfg(feature = "dim3")]
+            // {
+            //     if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>>() {
+            //         return c.$name($($argN,)*)
+            //     }
+            // }
+            // #[cfg(feature = "dim2")]
+            // {
+            //     if let Some(c) = $sself.as_shape::<ConvexPolygon<Point<N>>>() {
+            //         return c.$name($($argN,)*)
+            //     }
+            // }
+            if let Some(c) = $sself.as_shape::<Cuboid<N>>() {
                 return c.$name($($argN,)*)
             }
-            if let Some(c) = $sself.as_shape::<Cylinder<N>>() {
-                return c.$name($($argN,)*)
-            }
+            // if let Some(c) = $sself.as_shape::<Cylinder<N>>() {
+            //     return c.$name($($argN,)*)
+            // }
 
             /*
              * XXX: dispatch by custom type.
@@ -42,7 +42,7 @@ macro_rules! dispatch(
     }
 );
 
-impl<N: Real> Volumetric<N> for Shape<Point<N>, Isometry<N>> {
+impl<N: Real> Volumetric<N> for Shape<N> {
     fn area(&self) -> N {
         dispatch!(Point<N>, AngularInertia<N>, self.area())
     }

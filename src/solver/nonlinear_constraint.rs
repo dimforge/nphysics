@@ -65,7 +65,7 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     pub ndofs2: usize,
     pub body2: BodyHandle,
 
-    pub kinematic: ContactKinematic<Point<N>>,
+    pub kinematic: ContactKinematic<N>,
 
     pub normal1: Unit<Vector<N>>,
     pub normal2: Unit<Vector<N>>,
@@ -79,7 +79,7 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
         ndofs2: usize,
         normal1: Unit<Vector<N>>,
         normal2: Unit<Vector<N>>,
-        kinematic: ContactKinematic<Point<N>>,
+        kinematic: ContactKinematic<N>,
     ) -> Self {
         let r = N::zero();
         let rhs = N::zero();

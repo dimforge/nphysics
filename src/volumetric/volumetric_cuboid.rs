@@ -76,7 +76,7 @@ pub fn cuboid_unit_angular_inertia<N: Real>(half_extents: &Vector<N>) -> Angular
     }
 }
 
-impl<N: Real> Volumetric<N> for Cuboid<Vector<N>> {
+impl<N: Real> Volumetric<N> for Cuboid<N> {
     fn area(&self) -> N {
         cuboid_area(self.half_extents())
     }

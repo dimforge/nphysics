@@ -11,14 +11,14 @@ pub struct ColliderContactManifold<'a, N: Real> {
     pub collider2: &'a Collider<N>,
     pub pos_wrt_body1: Isometry<N>,
     pub pos_wrt_body2: Isometry<N>,
-    pub manifold: &'a ContactManifold<Point<N>>,
+    pub manifold: &'a ContactManifold<N>,
 }
 
 impl<'a, N: Real> ColliderContactManifold<'a, N> {
     pub fn new(
         collider1: &'a Collider<N>,
         collider2: &'a Collider<N>,
-        manifold: &'a ContactManifold<Point<N>>,
+        manifold: &'a ContactManifold<N>,
     ) -> Self {
         let id1 = manifold.subshape_id1();
         let id2 = manifold.subshape_id2();
@@ -51,11 +51,11 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         self.manifold.len()
     }
 
-    pub fn contacts(&self) -> &[TrackedContact<Point<N>>] {
+    pub fn contacts(&self) -> &[TrackedContact<N>] {
         self.manifold.contacts()
     }
 
-    pub fn deepest_contact(&self) -> Option<&TrackedContact<Point<N>>> {
+    pub fn deepest_contact(&self) -> Option<&TrackedContact<N>> {
         self.manifold.deepest_contact()
     }
 

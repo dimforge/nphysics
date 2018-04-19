@@ -4,7 +4,7 @@ use approx::ApproxEq;
 use slab::Slab;
 use alga::linear::Transformation;
 use alga::linear::ProjectiveTransformation;
-use na::{self, DVector, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN};
+use na::{self, DVector, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN, DVectorSlice};
 use ncollide::query::ContactKinematic;
 use ncollide::query::closest_points_internal;
 
@@ -88,7 +88,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: will this cause issue with very light objects?
                 // Should this be done depending on the jacobian magnitude instead
                 // (instead of JM-1J)?
-                if constraint.r > params.max_stabilization_multiplier {
+                if false { // constraint.r > params.max_stabilization_multiplier {
                     constraint.r = params.max_stabilization_multiplier;
                 }
 
@@ -202,10 +202,14 @@ impl<N: Real> NonlinearSORProx<N> {
 
             // Avoid overshoot when the penetration vector is close to the null-space
             // of a multibody link jacobian.
-            // FIXME: will this cause issue with very light objects?
+            // FIXME: will this cause issue with very heavy objects?
             // Should this be done depending on the jacobian magnitude instead
             // (instead of JM-1J)?
-            if inv_r < N::one() / params.max_stabilization_multiplier {
+
+            // let j1 = DVectorSlice::new(&jacobians[j_id1..], constraint.ndofs1);
+            // let j2 = DVectorSlice::new(&jacobians[j_id2..], constraint.ndofs2);
+
+            if false { // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
                 constraint.r = params.max_stabilization_multiplier;
             } else {
                 constraint.r = N::one() / inv_r

@@ -9,7 +9,7 @@ use sfml::window::{Key, MouseButton};
 use sfml::graphics::Color;
 use sfml::system::Vector2i;
 use na::{Isometry2, Point2, Point3};
-use ncollide::world::CollisionGroups;
+use ncollide2d::world::CollisionGroups;
 use nphysics2d::world::World;
 use nphysics2d::object::BodyHandle;
 use nphysics2d::joint::{ConstraintHandle, FixedConstraint};

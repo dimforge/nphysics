@@ -3,7 +3,7 @@ use alga::linear::ProjectiveTransformation;
 use na::{self, DVector, Real, Unit};
 
 use ncollide::query::TrackedContact;
-use ncollide::math::Isometry as NCollideIsometry;
+use ncollide::utils::IsometryOps;
 use detection::ColliderContactManifold;
 use solver::helper;
 use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
@@ -31,7 +31,7 @@ impl<N: Real> SignoriniModel<N> {
         bodies: &BodySet<N>,
         manifold: &ColliderContactManifold<N>,
         ext_vels: &DVector<N>,
-        c: &TrackedContact<Point<N>>,
+        c: &TrackedContact<N>,
         impulse: N,
         impulse_id: usize,
         ground_j_id: &mut usize,
@@ -125,10 +125,11 @@ impl<N: Real> SignoriniModel<N> {
     }
 
     pub fn is_constraint_active(
-        c: &TrackedContact<Point<N>>,
+        c: &TrackedContact<N>,
         manifold: &ColliderContactManifold<N>,
     ) -> bool {
-        let depth = c.contact.depth + manifold.collider1.data().margin() + manifold.collider2.data().margin();
+        let depth = c.contact.depth + manifold.collider1.data().margin()
+            + manifold.collider2.data().margin();
 
         // NOTE: for now we consider non-penetrating
         // constraints as inactive.
@@ -138,7 +139,7 @@ impl<N: Real> SignoriniModel<N> {
     pub fn build_position_constraint(
         bodies: &BodySet<N>,
         manifold: &ColliderContactManifold<N>,
-        c: &TrackedContact<Point<N>>,
+        c: &TrackedContact<N>,
         constraints: &mut ConstraintSet<N>,
     ) {
         let data1 = manifold.collider1.data();
@@ -217,12 +218,7 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
                     constraints,
                 );
 
-                Self::build_position_constraint(
-                    bodies,
-                    manifold,
-                    c,
-                    constraints,
-                );
+                Self::build_position_constraint(bodies, manifold, c, constraints);
             }
         }
 

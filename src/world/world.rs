@@ -16,8 +16,7 @@ use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCou
 use detection::{ActivationManager, ColliderContactManifold};
 use math::{Inertia, Isometry, Point, Vector};
 
-pub type CollisionWorld<N> =
-    ncollide::world::CollisionWorld<Point<N>, Isometry<N>, ColliderData<N>>;
+pub type CollisionWorld<N> = ncollide::world::CollisionWorld<N, ColliderData<N>>;
 
 pub struct World<N: Real> {
     counters: Counters,
@@ -329,7 +328,8 @@ impl<N: Real> World<N> {
         local_inertia: Inertia<N>,
         local_center_of_mass: Point<N>,
     ) -> BodyHandle {
-        self.bodies.add_rigid_body(position, local_inertia, local_center_of_mass)
+        self.bodies
+            .add_rigid_body(position, local_inertia, local_center_of_mass)
     }
 
     pub fn add_multibody_link<J: Joint<N>>(
@@ -339,16 +339,22 @@ impl<N: Real> World<N> {
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
-        local_center_of_mass: Point<N>
+        local_center_of_mass: Point<N>,
     ) -> BodyHandle {
-        self.bodies
-            .add_multibody_link(parent, joint, parent_shift, body_shift, local_inertia, local_center_of_mass)
+        self.bodies.add_multibody_link(
+            parent,
+            joint,
+            parent_shift,
+            body_shift,
+            local_inertia,
+            local_center_of_mass,
+        )
     }
 
     pub fn add_collider(
         &mut self,
         margin: N,
-        shape: ShapeHandle<Point<N>, Isometry<N>>,
+        shape: ShapeHandle<N>,
         parent: BodyHandle,
         to_parent: Isometry<N>,
         material: Material<N>,
@@ -362,7 +368,7 @@ impl<N: Real> World<N> {
 
     pub fn add_sensor(
         &mut self,
-        shape: ShapeHandle<Point<N>, Isometry<N>>,
+        shape: ShapeHandle<N>,
         parent: BodyHandle,
         to_parent: Isometry<N>,
     ) -> SensorHandle {
@@ -381,7 +387,7 @@ impl<N: Real> World<N> {
         &mut self,
         query: GeometricQueryType<N>,
         margin: N,
-        shape: ShapeHandle<Point<N>, Isometry<N>>,
+        shape: ShapeHandle<N>,
         parent: BodyHandle,
         to_parent: Isometry<N>,
         material: Material<N>,

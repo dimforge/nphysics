@@ -1,10 +1,10 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Vector2};
-use ncollide::shape::{Ball, Cuboid, ShapeHandle};
+use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;

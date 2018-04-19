@@ -4,9 +4,7 @@ use na::Real;
 use na::{Matrix1, Point2};
 use na;
 use ncollide::utils;
-use ncollide::procedural::Polyline;
-use ncollide::transformation;
-use ncollide::shape::ConvexPolygon2;
+use ncollide::shape::ConvexPolygon;
 use volumetric::Volumetric;
 use math::{AngularInertia, Point};
 
@@ -14,13 +12,13 @@ use math::{AngularInertia, Point};
 ///
 /// The polyline is not checked to be actually convex.
 pub fn convex_polyline_area_and_center_of_mass_unchecked<N: Real>(
-    convex_polyline: &Polyline<Point<N>>,
+    convex_polyline: &[Point<N>],
 ) -> (N, Point<N>) {
-    let geometric_center = utils::center(convex_polyline.coords());
+    let geometric_center = utils::center(convex_polyline);
     let mut res = Point::origin();
     let mut areasum = N::zero();
 
-    let mut iterpeek = convex_polyline.coords().iter().peekable();
+    let mut iterpeek = convex_polyline.iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // Stores first element to close the cycle in the end with unwrap_or.
     while let Some(elem) = iterpeek.next() {
         let area = utils::triangle_area(
@@ -49,7 +47,7 @@ pub fn convex_polyline_area_and_center_of_mass_unchecked<N: Real>(
 ///
 /// The polyline is not checked to be actually convex.
 pub fn convex_polyline_mass_properties_unchecked<N: Real>(
-    convex_polyline: &Polyline<Point<N>>,
+    convex_polyline: &[Point<N>],
     density: N,
 ) -> (N, Point<N>, N) {
     let (area, com) = convex_polyline_area_and_center_of_mass_unchecked(convex_polyline);
@@ -61,7 +59,7 @@ pub fn convex_polyline_mass_properties_unchecked<N: Real>(
     let mut itot = N::zero();
     let factor: N = na::convert(0.5 * 1.0 / 3.0);
 
-    let mut iterpeek = convex_polyline.coords().iter().peekable();
+    let mut iterpeek = convex_polyline.iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // store first element to close the cycle in the end with unwrap_or
     while let Some(elem) = iterpeek.next() {
         let area = utils::triangle_area(&com, elem, iterpeek.peek().unwrap_or(&firstelement));
@@ -89,11 +87,11 @@ pub fn convex_polyline_mass_properties_unchecked<N: Real>(
 /// The area of a convex polyline.
 ///
 /// The polyline is not checked to be actually convex.
-pub fn convex_polyline_area_unchecked<N: Real>(convex_polyline: &Polyline<Point<N>>) -> N {
-    let geometric_center = utils::center(convex_polyline.coords());
+pub fn convex_polyline_area_unchecked<N: Real>(convex_polyline: &[Point<N>]) -> N {
+    let geometric_center = utils::center(convex_polyline);
     let mut areasum = N::zero();
 
-    let mut iterpeek = convex_polyline.coords().iter().peekable();
+    let mut iterpeek = convex_polyline.iter().peekable();
     let firstelement = *iterpeek.peek().unwrap(); // Store first element to close the cycle in the end with unwrap_or.
     while let Some(elem) = iterpeek.next() {
         let area = utils::triangle_area(
@@ -110,8 +108,7 @@ pub fn convex_polyline_area_unchecked<N: Real>(convex_polyline: &Polyline<Point<
 
 /// The area of a convex hull.
 pub fn convex_hull_area<N: Real>(points: &[Point<N>]) -> N {
-    let convex_polyline = transformation::convex_hull2(points);
-    convex_polyline_area_unchecked(&convex_polyline)
+    convex_polyline_area_unchecked(points)
 }
 
 /// The volume of the convex hull of a set of points.
@@ -121,15 +118,12 @@ pub fn convex_hull_volume<N: Real>(points: &[Point<N>]) -> N {
 
 /// The center of mass of the convex hull of a set of points.
 pub fn convex_hull_center_of_mass<N: Real>(points: &[Point<N>]) -> Point<N> {
-    let convex_polyline = transformation::convex_hull2(points);
-    convex_polyline_area_and_center_of_mass_unchecked(&convex_polyline).1
+    convex_polyline_area_and_center_of_mass_unchecked(points).1
 }
 
 /// The angular inertia of the convex hull of a set of points.
 pub fn convex_hull_unit_angular_inertia<N: Real>(points: &[Point<N>]) -> AngularInertia<N> {
-    let convex_polyline = transformation::convex_hull2(points);
-    let (area, _, i): (_, _, N) =
-        convex_polyline_mass_properties_unchecked(&convex_polyline, na::one());
+    let (area, _, i): (_, _, N) = convex_polyline_mass_properties_unchecked(points, na::one());
 
     let mut tensor = AngularInertia::zero();
     tensor[(0, 0)] = i * (N::one() / area);
@@ -137,7 +131,7 @@ pub fn convex_hull_unit_angular_inertia<N: Real>(points: &[Point<N>]) -> Angular
     tensor
 }
 
-impl<N: Real> Volumetric<N> for ConvexPolygon2<N> {
+impl<N: Real> Volumetric<N> for ConvexPolygon<N> {
     fn area(&self) -> N {
         convex_hull_area(self.points())
     }
@@ -155,8 +149,7 @@ impl<N: Real> Volumetric<N> for ConvexPolygon2<N> {
     }
 
     fn mass_properties(&self, density: N) -> (N, Point2<N>, Matrix1<N>) {
-        let convex_polyline = transformation::convex_hull2(self.points());
-        let (r1, r2, r3) = convex_polyline_mass_properties_unchecked(&convex_polyline, density);
+        let (r1, r2, r3) = convex_polyline_mass_properties_unchecked(self.points(), density);
         (r1, r2, Matrix1::<N>::new(r3))
     }
 }
@@ -166,7 +159,7 @@ mod test {
     #![allow(unused_imports)]
     use na::{Matrix1, Point2, Vector2, Vector3};
     use na;
-    use ncollide::shape::{ConvexPolygon2, ConvexHull3, Cuboid};
+    use ncollide::shape::{ConvexHull3, ConvexPolygon, Cuboid};
     use ncollide::procedural;
     use volumetric::Volumetric;
 
@@ -256,7 +249,7 @@ mod test {
                 Point2::new(-half_a, -half_a),
                 Point2::new(half_a, -half_a),
             ];
-            ConvexPolygon2::new(points)
+            ConvexPolygon::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(
@@ -297,7 +290,7 @@ mod test {
                 Point2::new(-half_a, -half_b),
                 Point2::new(half_a, -half_b),
             ];
-            ConvexPolygon2::new(points)
+            ConvexPolygon::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(
@@ -332,7 +325,7 @@ mod test {
                 Point2::new(b - c_x, 0.0 - c_y),
                 Point2::new(a - c_x, h - c_y),
             ];
-            ConvexPolygon2::new(points)
+            ConvexPolygon::new(points)
         };
         let actual = geom.unit_angular_inertia();
         assert!(

@@ -1,5 +1,5 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
@@ -7,8 +7,8 @@ extern crate rand;
 use rand::random;
 
 use na::{Isometry2, Point2, Vector2};
-use ncollide::shape::{ConvexPolygon, Cuboid, Plane, ShapeHandle};
-use ncollide::transformation;
+use ncollide2d::shape::{ConvexPolygon, Cuboid, Plane, ShapeHandle, Ball};
+use ncollide2d::transformation;
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
@@ -53,17 +53,24 @@ fn main() {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
-            let mut pts = Vec::with_capacity(npts);
+            let geom;
 
-            for _ in 0..npts {
-                pts.push(random::<Point2<f32>>() * 0.4);
+            if j % 2 == 0 {
+                let mut pts = Vec::with_capacity(npts);
+
+                for _ in 0..npts {
+                    pts.push(random::<Point2<f32>>() * 0.4);
+                }
+
+                let hull = transformation::convex_hull2(&pts);
+                let mut vertices = hull.unwrap().0;
+                vertices.reverse();
+
+                geom = ShapeHandle::new(ConvexPolygon::try_new(vertices).unwrap());
+            } else {
+                geom = ShapeHandle::new(Ball::new(0.1 - COLLIDER_MARGIN));
             }
 
-            let hull = transformation::convex_hull2(&pts);
-            let mut vertices = hull.unwrap().0;
-            vertices.reverse();
-
-            let geom = ShapeHandle::new(ConvexPolygon::try_new(vertices).unwrap());
             let inertia = geom.inertia(1.0);
             let center_of_mass = geom.center_of_mass();
 

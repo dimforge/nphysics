@@ -1,11 +1,11 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use std::sync::Arc;
 use na::{Real, Point2, Vector2, Translation2, Isometry2};
-use ncollide::shape::{ShapeHandle, Plane, Ball, Cuboid};
+use ncollide2d::shape::{ShapeHandle, Plane, Ball, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::BodyHandle;
 use nphysics2d::joint::{FreeJoint, FixedJoint, Joint, RevoluteJoint};

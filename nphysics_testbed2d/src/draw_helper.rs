@@ -2,7 +2,7 @@ use sfml::graphics;
 use sfml::graphics::{Color, RenderTarget, Vertex, VertexArray};
 use sfml::system::Vector2f;
 use na::Point2;
-use ncollide::query::ContactKinematic;
+use ncollide2d::query::ContactKinematic;
 use nphysics2d::world::World;
 
 pub static DRAW_SCALE: f32 = 20.0;

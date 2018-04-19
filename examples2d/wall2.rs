@@ -1,10 +1,10 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use na::{Vector2, Translation2};
-use ncollide::shape::{Plane, Cuboid};
+use ncollide2d::shape::{Plane, Cuboid};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
 use nphysics_testbed2d::Testbed;

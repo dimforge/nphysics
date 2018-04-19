@@ -8,9 +8,8 @@ use na::{Isometry2, Point2, Point3};
 use na;
 use nphysics2d::world::World;
 use nphysics2d::object::{Body, BodyHandle, ColliderHandle};
-use ncollide::transformation;
-use ncollide::shape::{Ball2, Compound2, ConvexPolygon2, Cuboid2, Plane2, Polyline2, Segment2,
-                      Shape2};
+use ncollide2d::transformation;
+use ncollide2d::shape::{self, Compound, ConvexPolygon, Cuboid, Plane, Shape};
 use camera::Camera;
 use objects::{Ball, Box, Lines, SceneNode, Segment};
 
@@ -50,25 +49,25 @@ impl<'a> GraphicsManager<'a> {
         id: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &Shape2<f32>,
+        shape: &Shape<f32>,
         out: &mut Vec<SceneNode<'a>>,
     ) {
-        if let Some(s) = shape.as_shape::<Plane2<f32>>() {
+        if let Some(s) = shape.as_shape::<Plane<f32>>() {
             self.add_plane(id, world, s, out)
-        } else if let Some(s) = shape.as_shape::<Ball2<f32>>() {
+        } else if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
             self.add_ball(id, world, delta, s, out)
-        } else if let Some(s) = shape.as_shape::<Cuboid2<f32>>() {
+        } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(id, world, delta, s, out)
-        } else if let Some(s) = shape.as_shape::<ConvexPolygon2<f32>>() {
-            self.add_convex(id, world, delta, s, out)
-        } else if let Some(s) = shape.as_shape::<Segment2<f32>>() {
+        /*} else if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
+            self.add_convex(id, world, delta, s, out)*/
+        } else if let Some(s) = shape.as_shape::<shape::Segment<f32>>() {
             self.add_segment(id, world, delta, s, out)
-        } else if let Some(s) = shape.as_shape::<Compound2<f32>>() {
+        } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(id, world.clone(), delta * t, s.as_ref(), out)
             }
-        } else if let Some(s) = shape.as_shape::<Polyline2<f32>>() {
-            self.add_lines(id, world, delta, s, out)
+        /*} else if let Some(s) = shape.as_shape::<Polyline<f32>>() {
+            self.add_lines(id, world, delta, s, out)*/
         } else {
             panic!("Not yet implemented.")
         }
@@ -78,7 +77,7 @@ impl<'a> GraphicsManager<'a> {
         &mut self,
         _: ColliderHandle,
         _: &World<f32>,
-        _: &Plane2<f32>,
+        _: &Plane<f32>,
         _: &mut Vec<SceneNode>,
     ) {
     }
@@ -88,7 +87,7 @@ impl<'a> GraphicsManager<'a> {
         id: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &Ball2<f32>,
+        shape: &shape::Ball<f32>,
         out: &mut Vec<SceneNode>,
     ) {
         let collider = world.collider(id).unwrap();
@@ -108,11 +107,11 @@ impl<'a> GraphicsManager<'a> {
         id: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &ConvexPolygon2<f32>,
+        shape: &ConvexPolygon<f32>,
         out: &mut Vec<SceneNode>,
     ) {
         let color = self.body_color(world, world.collider(id).unwrap().data().body());
-        let vs = Arc::new(transformation::convex_hull2(shape.points()).unwrap().0);
+        let vs = Arc::new(transformation::convex_hull(shape.points()).unwrap().0);
 
         let is = {
             let limit = vs.len();
@@ -133,35 +132,35 @@ impl<'a> GraphicsManager<'a> {
         )))
     }
 
-    fn add_lines(
-        &mut self,
-        id: ColliderHandle,
-        world: &World<f32>,
-        delta: Isometry2<f32>,
-        shape: &Polyline2<f32>,
-        out: &mut Vec<SceneNode>,
-    ) {
-        let color = self.body_color(world, world.collider(id).unwrap().data().body());
+    // fn add_lines(
+    //     &mut self,
+    //     id: ColliderHandle,
+    //     world: &World<f32>,
+    //     delta: Isometry2<f32>,
+    //     shape: &Polyline<f32>,
+    //     out: &mut Vec<SceneNode>,
+    // ) {
+    //     let color = self.body_color(world, world.collider(id).unwrap().data().body());
 
-        let vs = shape.vertices().clone();
-        let is = shape.indices().clone();
+    //     let vs = shape.vertices().clone();
+    //     let is = shape.indices().clone();
 
-        out.push(SceneNode::LinesNode(Lines::new(
-            id,
-            world,
-            delta,
-            vs,
-            is,
-            color,
-        )))
-    }
+    //     out.push(SceneNode::LinesNode(Lines::new(
+    //         id,
+    //         world,
+    //         delta,
+    //         vs,
+    //         is,
+    //         color,
+    //     )))
+    // }
 
     fn add_box(
         &mut self,
         id: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &Cuboid2<f32>,
+        shape: &Cuboid<f32>,
         out: &mut Vec<SceneNode>,
     ) {
         let rx = shape.half_extents().x;
@@ -186,7 +185,7 @@ impl<'a> GraphicsManager<'a> {
         id: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &Segment2<f32>,
+        shape: &shape::Segment<f32>,
         out: &mut Vec<SceneNode>,
     ) {
         let a = shape.a();
