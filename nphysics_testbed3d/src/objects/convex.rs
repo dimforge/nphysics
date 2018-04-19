@@ -1,7 +1,7 @@
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use na::{Isometry3, Point3, Vector3};
-use ncollide::procedural::TriMesh;
+use ncollide3d::procedural::TriMesh;
 use nphysics3d::world::World;
 use nphysics3d::object::ColliderHandle;
 use objects::node;
@@ -19,7 +19,7 @@ impl Convex {
         collider: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        convex: &TriMesh<Point3<f32>>,
+        convex: &TriMesh<f32>,
         color: Point3<f32>,
         window: &mut Window,
     ) -> Convex {

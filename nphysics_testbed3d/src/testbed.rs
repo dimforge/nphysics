@@ -12,9 +12,9 @@ use kiss3d::window::Window;
 use kiss3d::light::Light;
 use kiss3d::text::Font;
 use kiss3d::loader::obj;
-use ncollide::query::{self, Ray};
-use ncollide::world::CollisionGroups;
-use ncollide::utils::GenerationalId;
+use ncollide3d::query::{self, Ray};
+use ncollide3d::world::CollisionGroups;
+use ncollide3d::utils::GenerationalId;
 use nphysics3d::object::BodyHandle;
 use nphysics3d::world::World;
 use nphysics3d::joint::{ConstraintHandle, FixedConstraint};
@@ -522,7 +522,11 @@ impl Testbed {
             if true {
                 //running != RunMode::Stop {
                 self.window.draw_text(
-                    &format!("Time: {:.*}sec.", 4, self.world.performance_counters().step_time())[..],
+                    &format!(
+                        "Time: {:.*}sec.",
+                        4,
+                        self.world.performance_counters().step_time()
+                    )[..],
                     &Point2::origin(),
                     &font,
                     &color,

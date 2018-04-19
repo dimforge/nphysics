@@ -100,7 +100,10 @@ extern crate downcast;
 extern crate alga;
 extern crate approx;
 extern crate nalgebra as na;
-extern crate ncollide;
+#[cfg(feature = "dim2")]
+extern crate ncollide2d as ncollide;
+#[cfg(feature = "dim3")]
+extern crate ncollide3d as ncollide;
 extern crate num_traits as num;
 extern crate slab;
 extern crate time;

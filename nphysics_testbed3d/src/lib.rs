@@ -1,7 +1,7 @@
 extern crate glfw;
 extern crate kiss3d;
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate num_traits as num;
 extern crate rand;

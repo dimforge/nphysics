@@ -1,12 +1,12 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use std::f32::consts::PI;
 use na::{Point2, Point3, Vector2, Translation2, Isometry2};
-use ncollide::query::Proximity;
-use ncollide::shape::{ShapeHandle, Plane, Cuboid, Ball};
+use ncollide2d::query::Proximity;
+use ncollide2d::shape::{ShapeHandle, Plane, Cuboid, Ball};
 use nphysics2d::world::World;
 use nphysics2d::object::BodyHandle;
 use nphysics2d::joint::FreeJoint;

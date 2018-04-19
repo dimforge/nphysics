@@ -1,7 +1,7 @@
 #![warn(non_camel_case_types)]
 
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate num_traits as num;
 extern crate rand;

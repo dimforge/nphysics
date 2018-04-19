@@ -1,10 +1,10 @@
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Point3, Vector3, Translation3};
-use ncollide::shape::{Plane, Cuboid, Cone, Cylinder, Ball};
+use ncollide3d::shape::{Plane, Cuboid, Cone, Cylinder, Ball};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;

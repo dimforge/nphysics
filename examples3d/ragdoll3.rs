@@ -1,11 +1,11 @@
 extern crate nphysics_testbed3d;
-extern crate ncollide;
+extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nalgebra as na;
 
 use std::f32;
 use na::{Point3, Vector3, Translation3, UnitQuaternion};
-use ncollide::shape::{Plane, Ball, Cylinder};
+use ncollide3d::shape::{Plane, Ball, Cylinder};
 use nphysics3d::world::World;
 use nphysics3d::object::RigidBody;
 use nphysics3d::detection::joint::{Anchor2, BallInSocket2};

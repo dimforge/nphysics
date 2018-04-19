@@ -1,12 +1,12 @@
 extern crate alga;
 extern crate nalgebra as na;
-extern crate ncollide;
+extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
 use na::Real;
 use na::{Point2, Vector2, Translation2, UnitComplex};
-use ncollide::shape::{Plane, Cuboid, Ball};
+use ncollide2d::shape::{Plane, Cuboid, Ball};
 use nphysics2d::world::World;
 use nphysics2d::object::RigidBody;
 use nphysics2d::detection::joint::{Anchor, BallInSocket};
