@@ -21,7 +21,7 @@ impl ParametricSurface {
     pub fn new<S: parametric::ParametricSurface>(collider: ColliderHandle,
                                                  world:   &World<f32>,
                                                  delta:   Isometry3<f32>,
-                                                 surface: &S,
+                                                 surface: &VoronoiSimplex<N>,
                                                  color:   Point3<f32>,
                                                  window:  &mut Window)
                                                  -> ParametricSurface {

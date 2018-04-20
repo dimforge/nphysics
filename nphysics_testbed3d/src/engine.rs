@@ -208,8 +208,8 @@ impl GraphicsManager {
             self.add_ball(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(window, object, world, delta, s, color, out)
-        /*} else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
-            self.add_convex(window, object, world, delta, s, color, out)
+        } else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
+            self.add_convex(window, object, world, delta, s, color, out)/*
         } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
             self.add_cylinder(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {

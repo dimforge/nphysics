@@ -1,7 +1,11 @@
 use na::Real;
 use ncollide::shape::{Ball, Compound, Cuboid, Shape};
+#[cfg(feature = "dim3")]
+use ncollide::shape::ConvexHull;
+#[cfg(feature = "dim2")]
+use ncollide::shape::ConvexPolygon;
 use volumetric::Volumetric;
-use math::{AngularInertia, Isometry, Point, Vector};
+use math::{AngularInertia, Point, Vector};
 
 macro_rules! dispatch(
     ($p: ty, $i: ty, $sself: ident.$name: ident($($argN: ident),*)) => {
@@ -15,18 +19,18 @@ macro_rules! dispatch(
             // else if let Some(c) = $sself.as_shape::<Cone<N>>() {
             //     (c as &Volumetric<N, $p, $i>).$name($($argN,)*)
             // }
-            // #[cfg(feature = "dim3")]
-            // {
-            //     if let Some(c) = $sself.as_shape::<ConvexHull<Point<N>>>() {
-            //         return c.$name($($argN,)*)
-            //     }
-            // }
-            // #[cfg(feature = "dim2")]
-            // {
-            //     if let Some(c) = $sself.as_shape::<ConvexPolygon<Point<N>>>() {
-            //         return c.$name($($argN,)*)
-            //     }
-            // }
+            #[cfg(feature = "dim3")]
+            {
+                if let Some(c) = $sself.as_shape::<ConvexHull<N>>() {
+                    return c.$name($($argN,)*)
+                }
+            }
+            #[cfg(feature = "dim2")]
+            {
+                if let Some(c) = $sself.as_shape::<ConvexPolygon<N>>() {
+                    return c.$name($($argN,)*)
+                }
+            }
             if let Some(c) = $sself.as_shape::<Cuboid<N>>() {
                 return c.$name($($argN,)*)
             }
