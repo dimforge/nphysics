@@ -6,7 +6,7 @@ use na;
 use ncollide::utils;
 use ncollide::procedural::{IndexBuffer, TriMesh};
 use ncollide::transformation;
-use ncollide::shape::ConvexHull3;
+use ncollide::shape::ConvexHull;
 use volumetric::Volumetric;
 use math::{AngularInertia, Point};
 
@@ -80,7 +80,7 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<N: Real>(
 ///
 /// The mesh is not checked to be actually convex.
 pub fn convex_mesh_volume_and_center_of_mass_unchecked<N: Real>(
-    convex_mesh: &TriMesh<Point<N>>,
+    convex_mesh: &TriMesh<N>,
 ) -> (N, Point<N>) {
     let geometric_center = utils::center(&convex_mesh.coords[..]);
 
@@ -113,7 +113,7 @@ pub fn convex_mesh_volume_and_center_of_mass_unchecked<N: Real>(
 ///
 /// The mesh is not checked to be actually convex.
 pub fn convex_mesh_mass_properties_unchecked<N: Real>(
-    convex_mesh: &TriMesh<Point<N>>,
+    convex_mesh: &TriMesh<N>,
     density: N,
 ) -> (N, Point<N>, AngularInertia<N>) {
     let (volume, com) = convex_mesh_volume_and_center_of_mass_unchecked(convex_mesh);
@@ -144,7 +144,7 @@ pub fn convex_mesh_mass_properties_unchecked<N: Real>(
 /// The area of a convex mesh.
 ///
 /// The mesh is not checked to be actually convex.
-pub fn convex_mesh_area_unchecked<N: Real>(convex_mesh: &TriMesh<Point<N>>) -> N {
+pub fn convex_mesh_area_unchecked<N: Real>(convex_mesh: &TriMesh<N>) -> N {
     let mut area = N::zero();
 
     match convex_mesh.indices {
@@ -163,31 +163,31 @@ pub fn convex_mesh_area_unchecked<N: Real>(convex_mesh: &TriMesh<Point<N>>) -> N
 
 /// The area of a convex hull.
 pub fn convex_hull_area<N: Real>(points: &[Point<N>]) -> N {
-    let convex_mesh = transformation::convex_hull3(points);
+    let convex_mesh = transformation::convex_hull(points);
     convex_mesh_area_unchecked(&convex_mesh)
 }
 
 /// The volume of the convex hull of a set of points.
 pub fn convex_hull_volume<N: Real>(points: &[Point<N>]) -> N {
-    let convex_mesh = transformation::convex_hull3(points);
+    let convex_mesh = transformation::convex_hull(points);
     convex_mesh_volume_and_center_of_mass_unchecked(&convex_mesh).0
 }
 
 /// The center of mass of the convex hull of a set of points.
 pub fn convex_hull_center_of_mass<N: Real>(points: &[Point<N>]) -> Point<N> {
-    let convex_mesh = transformation::convex_hull3(points);
+    let convex_mesh = transformation::convex_hull(points);
     convex_mesh_volume_and_center_of_mass_unchecked(&convex_mesh).1
 }
 
 /// The angular inertia of the convex hull of a set of points.
 pub fn convex_hull_unit_angular_inertia<N: Real>(points: &[Point<N>]) -> AngularInertia<N> {
-    let convex_mesh = transformation::convex_hull3(points);
+    let convex_mesh = transformation::convex_hull(points);
     let (vol, _, i) = convex_mesh_mass_properties_unchecked(&convex_mesh, na::one());
 
     i * (N::one() / vol)
 }
 
-impl<N: Real> Volumetric<N> for ConvexHull3<N> {
+impl<N: Real> Volumetric<N> for ConvexHull<N> {
     fn area(&self) -> N {
         convex_hull_area(self.points())
     }
@@ -205,7 +205,7 @@ impl<N: Real> Volumetric<N> for ConvexHull3<N> {
     }
 
     fn mass_properties(&self, density: N) -> (N, Point3<N>, Matrix3<N>) {
-        let convex_mesh = transformation::convex_hull3(self.points());
+        let convex_mesh = transformation::convex_hull(self.points());
         convex_mesh_mass_properties_unchecked(&convex_mesh, density)
     }
 }

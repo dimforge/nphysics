@@ -35,18 +35,14 @@ fn main() {
     let mut vertices: Vec<Point2<f32>> = (0..num_split + 2)
         .map(|i| Point2::new(begin + (i as f32) * step, 0.0))
         .collect();
-    let mut indices = Vec::new();
     let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4][..]);
 
     for i in 0usize..num_split {
         let h: f32 = rng.gen();
         vertices[i + 1].y = begin_h - h * max_h;
-
-        indices.push(Point2::new(i, i + 1));
     }
-    indices.push(Point2::new(num_split, num_split + 1));
 
-    let mesh = Polyline::new(Arc::new(vertices), Arc::new(indices), None, None);
+    let mesh = Polyline::new(vertices);
     world.add_collider(
         COLLIDER_MARGIN,
         ShapeHandle::new(mesh),

@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use rand::random;
+use rand::{XorShiftRng, Rand};
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Ball, ConvexHull, Cuboid, ShapeHandle};
@@ -48,6 +48,7 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
+    let mut rng = XorShiftRng::new_unseeded();
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -62,10 +63,10 @@ fn main() {
                     let mut pts = Vec::with_capacity(npts);
 
                     for _ in 0..npts {
-                        pts.push(random::<Point3<f32>>() * 0.4);
+                        pts.push(Point3::rand(&mut rng) * 0.4);
                     }
 
-                    let hull = transformation::convex_hull3(&pts);
+                    let hull = transformation::convex_hull(&pts);
                     let indices: Vec<usize> = hull.flat_indices()
                         .into_iter()
                         .map(|i| i as usize)

@@ -23,7 +23,7 @@ fn main() {
     let material = Material::default();
 
     /*
-     * Plane
+     * Ground
      */
     let ground_radx = 25.0;
     let ground_rady = 1.0;

@@ -11,8 +11,7 @@ pub struct Lines {
     base_color: Point3<u8>,
     delta: Isometry2<f32>,
     collider: ColliderHandle,
-    indices: Arc<Vec<Point2<usize>>>,
-    vertices: Arc<Vec<Point2<f32>>>,
+    vertices: Vec<Point2<f32>>,
 }
 
 impl Lines {
@@ -20,8 +19,7 @@ impl Lines {
         collider: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        vertices: Arc<Vec<Point2<f32>>>,
-        indices: Arc<Vec<Point2<usize>>>,
+        vertices: Vec<Point2<f32>>,
         color: Point3<u8>,
     ) -> Lines {
         Lines {
@@ -30,7 +28,6 @@ impl Lines {
             delta: delta,
             collider: collider,
             vertices: vertices,
-            indices: indices,
         }
     }
 }
@@ -54,11 +51,9 @@ impl Lines {
             Color::new_rgb(self.color.x / 4, self.color.y / 4, self.color.z / 4)
         };
 
-        let vs = &*self.vertices;
-
-        for is in self.indices.iter() {
-            let gsv0 = pos * vs[is.x];
-            let gsv1 = pos * vs[is.y];
+        for vts in self.vertices.windows(2) {
+            let gsv0 = pos * vts[0];
+            let gsv1 = pos * vts[1];
             draw_line(rw, &gsv0, &gsv1, &color);
         }
     }

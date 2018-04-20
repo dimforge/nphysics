@@ -57,6 +57,7 @@ fn main() {
     let compound = Compound::new(cross_geoms);
     let cross = ShapeHandle::new(compound);
     let inertia = cross.inertia(1.0);
+    let center_of_mass = cross.center_of_mass();
 
     /*
      * Create the crosses
@@ -78,7 +79,7 @@ fn main() {
                  * Create the rigid body.
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia);
+                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
                 /*
                  * Create the collider.

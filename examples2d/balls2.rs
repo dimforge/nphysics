@@ -51,6 +51,7 @@ fn main() {
 
     let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for j in 0..num {
@@ -61,7 +62,7 @@ fn main() {
              * Create the rigid body.
              */
             let pos = Isometry2::new(Vector2::new(x, y), 0.0);
-            let handle = world.add_rigid_body(pos, inertia);
+            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
             /*
              * Create the collider.

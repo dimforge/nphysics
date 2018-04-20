@@ -9,7 +9,7 @@ use na;
 use nphysics2d::world::World;
 use nphysics2d::object::{Body, BodyHandle, ColliderHandle};
 use ncollide2d::transformation;
-use ncollide2d::shape::{self, Compound, ConvexPolygon, Cuboid, Plane, Shape};
+use ncollide2d::shape::{self, Compound, ConvexPolygon, Polyline, Cuboid, Plane, Shape};
 use camera::Camera;
 use objects::{Ball, Box, Lines, SceneNode, Segment};
 
@@ -58,16 +58,16 @@ impl<'a> GraphicsManager<'a> {
             self.add_ball(id, world, delta, s, out)
         } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(id, world, delta, s, out)
-        /*} else if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
-            self.add_convex(id, world, delta, s, out)*/
+        } else if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
+            self.add_convex(id, world, delta, s, out)
         } else if let Some(s) = shape.as_shape::<shape::Segment<f32>>() {
             self.add_segment(id, world, delta, s, out)
         } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(id, world.clone(), delta * t, s.as_ref(), out)
             }
-        /*} else if let Some(s) = shape.as_shape::<Polyline<f32>>() {
-            self.add_lines(id, world, delta, s, out)*/
+        } else if let Some(s) = shape.as_shape::<Polyline<f32>>() {
+            self.add_lines(id, world, delta, s, out)
         } else {
             panic!("Not yet implemented.")
         }
@@ -111,49 +111,38 @@ impl<'a> GraphicsManager<'a> {
         out: &mut Vec<SceneNode>,
     ) {
         let color = self.body_color(world, world.collider(id).unwrap().data().body());
-        let vs = Arc::new(transformation::convex_hull(shape.points()).unwrap().0);
-
-        let is = {
-            let limit = vs.len();
-            Arc::new(
-                (0..limit as usize)
-                    .map(|x| Point2::new(x, (x + (1 as usize)) % limit))
-                    .collect(),
-            )
-        };
+        let mut vertices = transformation::convex_hull(shape.points()).unwrap().0;
+        let first_pt = vertices[0];
+        vertices.push(first_pt); // so it appears closed.
 
         out.push(SceneNode::LinesNode(Lines::new(
             id,
             world,
             delta,
-            vs,
-            is,
+            vertices,
             color,
         )))
     }
 
-    // fn add_lines(
-    //     &mut self,
-    //     id: ColliderHandle,
-    //     world: &World<f32>,
-    //     delta: Isometry2<f32>,
-    //     shape: &Polyline<f32>,
-    //     out: &mut Vec<SceneNode>,
-    // ) {
-    //     let color = self.body_color(world, world.collider(id).unwrap().data().body());
+    fn add_lines(
+        &mut self,
+        id: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry2<f32>,
+        shape: &Polyline<f32>,
+        out: &mut Vec<SceneNode>,
+    ) {
+        let color = self.body_color(world, world.collider(id).unwrap().data().body());
+        let vertices = shape.vertices().to_vec();
 
-    //     let vs = shape.vertices().clone();
-    //     let is = shape.indices().clone();
-
-    //     out.push(SceneNode::LinesNode(Lines::new(
-    //         id,
-    //         world,
-    //         delta,
-    //         vs,
-    //         is,
-    //         color,
-    //     )))
-    // }
+        out.push(SceneNode::LinesNode(Lines::new(
+            id,
+            world,
+            delta,
+            vertices,
+            color,
+        )))
+    }
 
     fn add_box(
         &mut self,

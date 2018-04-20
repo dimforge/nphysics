@@ -4,10 +4,10 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
-use rand::random;
+use rand::{XorShiftRng, Rand};
 
 use na::{Isometry2, Point2, Vector2};
-use ncollide2d::shape::{ConvexPolygon, Cuboid, Plane, ShapeHandle, Ball};
+use ncollide2d::shape::{Ball, ConvexPolygon, Cuboid, Plane, ShapeHandle};
 use ncollide2d::transformation;
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};
@@ -47,6 +47,7 @@ fn main() {
     let shift = 0.4;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift;
+    let mut rng = XorShiftRng::new_unseeded();
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -59,10 +60,10 @@ fn main() {
                 let mut pts = Vec::with_capacity(npts);
 
                 for _ in 0..npts {
-                    pts.push(random::<Point2<f32>>() * 0.4);
+                    pts.push(Point2::rand(&mut rng) * 0.4);
                 }
 
-                let hull = transformation::convex_hull2(&pts);
+                let hull = transformation::convex_hull(&pts);
                 let mut vertices = hull.unwrap().0;
                 vertices.reverse();
 
