@@ -179,8 +179,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             }
         }
 
-        println!("Cached impulses: {}", in_cache * DIM);
-
         self.vel_ground_rng = id_vel_ground..constraints.velocity.unilateral_ground.len();
         self.vel_rng = id_vel..constraints.velocity.unilateral.len();
         self.friction_ground_rng = id_friction_ground..constraints.velocity.bilateral_ground.len();
