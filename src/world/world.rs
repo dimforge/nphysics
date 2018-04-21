@@ -4,6 +4,7 @@ use slab::Slab;
 use na::{self, Real};
 use ncollide;
 use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
+use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
 use ncollide::shape::ShapeHandle;
 
@@ -48,13 +49,14 @@ impl<N: Real> World<N> {
         let colliders_w_parent = Vec::new();
         let constraints = Slab::new();
         let forces = Slab::new();
-        let cworld = CollisionWorld::new(bv_margin);
+        let mut cworld = CollisionWorld::new(bv_margin);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
         let gravity = Vector::zeros();
         let params = IntegrationParameters::default();
         let workspace = MultibodyWorkspace::new();
+        cworld.register_broad_phase_pair_filter("__nphysics_internal_body_status_collision_filter", BodyStatusCollisionFilter);
 
         World {
             counters,
@@ -193,16 +195,17 @@ impl<N: Real> World<N> {
             {
                 // FIXME: update only if the position changed (especially for static bodies).
                 let collider = self.cworld
-                    .collision_object(*collider_id)
+                    .collision_object_mut(*collider_id)
                     .expect("Internal error: collider not found.");
-                let parent = self.bodies.body_part(collider.data().body());
+                let body = self.bodies.body_part(collider.data_mut().body());
+                collider.data_mut().set_body_status_dependent_ndofs(body.status_dependent_parent_ndofs());
 
-                if !parent.is_active() {
+                if !body.is_active() {
                     continue;
                 }
 
-                let parent_pos = parent.position();
-                new_pos = parent_pos * collider.data().position_wrt_parent()
+                let body_pos = body.position();
+                new_pos = body_pos * collider.data_mut().position_wrt_body()
             }
 
             self.cworld.set_position(*collider_id, new_pos);
@@ -424,13 +427,14 @@ impl<N: Real> World<N> {
         to_parent: Isometry<N>,
         material: Material<N>,
     ) -> CollisionObjectHandle {
-        let pos = if parent.is_ground() {
-            to_parent
+        let (pos, ndofs) = if parent.is_ground() {
+            (to_parent, 0)
         } else {
-            self.bodies.body_part(parent).position() * to_parent
+            let parent = self.bodies.body_part(parent);
+            (parent.position() * to_parent, parent.status_dependent_parent_ndofs())
         };
 
-        let data = ColliderData::new(margin, parent, to_parent, material);
+        let data = ColliderData::new(margin, parent, ndofs, to_parent, material);
         let groups = CollisionGroups::new();
         let handle = self.cworld.add(pos, shape, groups, query, data);
 
@@ -495,5 +499,14 @@ impl<N: Real> World<N> {
 
     pub fn proximity_events(&self) -> &ProximityEvents {
         self.cworld.proximity_events()
+    }
+}
+
+struct BodyStatusCollisionFilter;
+impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
+    /// Activate an action for when two objects start or stop to be close to each other.
+    fn is_pair_valid(&self, b1: &Collider<N>, b2: &Collider<N>) -> bool {
+        b1.data().body_status_dependent_ndofs() != 0 ||
+        b2.data().body_status_dependent_ndofs() != 0
     }
 }

@@ -1,7 +1,7 @@
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
-use object::{BodyHandle, Material};
+use object::{BodyHandle, Material, BodyStatus};
 use math::{Isometry, Point};
 
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
@@ -15,7 +15,9 @@ pub type Sensor<N> = CollisionObject<N, ColliderData<N>>;
 pub struct ColliderData<N: Real> {
     margin: N,
     body: BodyHandle,
-    position_wrt_parent: Isometry<N>,
+    // NOTE: needed for the collision filter.
+    body_status_dependent_ndofs: usize,
+    position_wrt_body: Isometry<N>,
     material: Material<N>,
 }
 
@@ -23,13 +25,15 @@ impl<N: Real> ColliderData<N> {
     pub fn new(
         margin: N,
         body: BodyHandle,
-        position_wrt_parent: Isometry<N>,
+        body_status_dependent_ndofs: usize,
+        position_wrt_body: Isometry<N>,
         material: Material<N>,
     ) -> Self {
         ColliderData {
             margin,
             body,
-            position_wrt_parent,
+            body_status_dependent_ndofs,
+            position_wrt_body,
             material,
         }
     }
@@ -46,12 +50,22 @@ impl<N: Real> ColliderData<N> {
 
     // XXX: rename this "position_wrt_body".
     #[inline]
-    pub fn position_wrt_parent(&self) -> &Isometry<N> {
-        &self.position_wrt_parent
+    pub fn position_wrt_body(&self) -> &Isometry<N> {
+        &self.position_wrt_body
     }
 
     #[inline]
     pub fn material(&self) -> &Material<N> {
         &self.material
+    }
+
+    #[inline]
+    pub(crate) fn body_status_dependent_ndofs(&self) -> usize {
+        self.body_status_dependent_ndofs
+    }
+
+    #[inline]
+    pub(crate) fn set_body_status_dependent_ndofs(&mut self, ndofs: usize) {
+        self.body_status_dependent_ndofs = ndofs
     }
 }

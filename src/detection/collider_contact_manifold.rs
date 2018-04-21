@@ -27,15 +27,15 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         let pos_wrt_body2;
 
         if let Some(dpos1) = collider1.shape().subshape_transform(id1) {
-            pos_wrt_body1 = collider1.data().position_wrt_parent() * dpos1;
+            pos_wrt_body1 = collider1.data().position_wrt_body() * dpos1;
         } else {
-            pos_wrt_body1 = *collider1.data().position_wrt_parent()
+            pos_wrt_body1 = *collider1.data().position_wrt_body()
         }
 
         if let Some(dpos2) = collider2.shape().subshape_transform(id2) {
-            pos_wrt_body2 = collider2.data().position_wrt_parent() * dpos2;
+            pos_wrt_body2 = collider2.data().position_wrt_body() * dpos2;
         } else {
-            pos_wrt_body2 = *collider2.data().position_wrt_parent()
+            pos_wrt_body2 = *collider2.data().position_wrt_body()
         }
 
         ColliderContactManifold {
