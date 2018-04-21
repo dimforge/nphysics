@@ -44,7 +44,7 @@ pub fn fill_constraint_geometry<N: Real>(
 
     match *dir {
         ForceDirection::Linear(normal) => {
-            force = Force::linear_force_at_point(*normal, &pos);
+            force = Force::linear_at_point(*normal, &pos);
         }
         ForceDirection::Angular(axis) => {
             force = Force::torque_from_vector(*axis);

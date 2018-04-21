@@ -2,15 +2,14 @@ use std::iter;
 use std::ops::Range;
 
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
-use na::storage::Storage;
 use object::{ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId,
              MultibodyLinkMut, MultibodyLinkRef, MultibodyLinkVec};
 use joint::{FreeJoint, Joint};
 use solver::{ConstraintSet, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator};
 use utils::{GeneralizedCross, IndexMut2};
-use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, SpatialMatrix, SpatialVector,
-           Vector, Velocity, Point, DIM};
+use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
+           SpatialVector, Vector, Velocity, DIM};
 
 pub struct Multibody<N: Real> {
     rbs: MultibodyLinkVec<N>,
@@ -384,6 +383,16 @@ impl<N: Real> Multibody<N> {
         self.update_kinematics();
     }
 
+    pub fn clear_dynamics(&mut self) {
+        self.augmented_mass.fill(N::zero());
+        let mut accs = DVectorSliceMut::new(&mut self.accelerations, self.ndofs);
+        accs.fill(N::zero());
+
+        for rb in &mut *self.rbs {
+            rb.external_forces = Force::zero();
+        }
+    }
+
     // FIXME: keep this name?
     /// Updates the positions of the rigid bodies.
     pub fn update_kinematics(&mut self) {
@@ -405,7 +414,7 @@ impl<N: Real> Multibody<N> {
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = parent_rb.local_to_world * rb.local_to_parent;
             rb.parent_to_world = parent_rb.local_to_world;
-            rb.com = rb.local_to_world * rb.local_com;            
+            rb.com = rb.local_to_world * rb.local_com;
         }
 
         /*
@@ -522,7 +531,7 @@ impl<N: Real> Multibody<N> {
                     N::one(),
                 );
             }
-            self.rbs[i].external_forces = external_forces;
+            self.rbs[i].external_forces += external_forces;
         }
 
         let damping = DVectorSlice::new(&self.damping, self.ndofs);
@@ -608,21 +617,12 @@ impl<N: Real> Multibody<N> {
 
             // FIXME: optimize that (knowing the structure of the augmented inertia matrix).
             // FIXME: this could be better optimized in 2D.
-            if i == 0 {
-                self.augmented_mass.quadform(
-                    N::one(),
-                    &augmented_inertia.to_matrix(),
-                    body_jacobian,
-                    N::zero(),
-                );
-            } else {
-                self.augmented_mass.quadform(
-                    N::one(),
-                    &augmented_inertia.to_matrix(),
-                    body_jacobian,
-                    N::one(),
-                );
-            }
+            self.augmented_mass.quadform(
+                N::one(),
+                &augmented_inertia.to_matrix(),
+                body_jacobian,
+                N::one(),
+            );
 
             /*
              *

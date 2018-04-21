@@ -51,6 +51,7 @@ fn main() {
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -63,7 +64,7 @@ fn main() {
                  * Create the rigid body.
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia);
+                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
                 // if j == 5 {
                 //     let mut rb = world.rigid_body_mut(handle).unwrap();
@@ -94,7 +95,7 @@ fn main() {
      */
     let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 10.0, rad, rad * 10.0)));
     let pos = Isometry3::new(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad), na::zero());
-    let platform_handle = world.add_rigid_body(pos, Inertia::zero());
+    let platform_handle = world.add_rigid_body(pos, Inertia::zero(), Point3::origin());
     {
         let rb = world.rigid_body_mut(platform_handle).unwrap();
         rb.set_status(BodyStatus::Kinematic);
@@ -114,12 +115,14 @@ fn main() {
     let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN))); // Ball::new(rad - COLLIDER_MARGIN));
     let joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
     let inertia = Inertia::zero();
+    let center_of_mass = geom.center_of_mass();
     let handle = world.add_multibody_link(
         BodyHandle::ground(),
         joint,
         Vector3::new(0.0, 2.0, 5.0),
         Vector3::z() * 2.0,
         inertia,
+        center_of_mass,
     );
 
     {
@@ -145,12 +148,14 @@ fn main() {
     joint.set_max_angular_motor_torque(1.0);
     joint.enable_angular_motor();
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
     let handle = world.add_multibody_link(
         BodyHandle::ground(),
         joint,
         Vector3::new(0.0, 3.0, -4.0),
         Vector3::z() * 2.0,
         inertia,
+        center_of_mass,
     );
 
     world.add_collider(

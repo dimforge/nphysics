@@ -2,11 +2,11 @@ use std::iter::Map;
 use slab::{Iter, IterMut, Slab};
 
 use na::Real;
-use object::{Body, BodyMut, BodyPart, Ground, Multibody, MultibodyLinkId, MultibodyLinkMut,
-             MultibodyLinkRef, MultibodyWorkspace, RigidBody};
+use object::{Body, BodyMut, BodyPart, BodyPartMut, Ground, Multibody, MultibodyLinkId,
+             MultibodyLinkMut, MultibodyLinkRef, MultibodyWorkspace, RigidBody};
 use joint::Joint;
 use solver::IntegrationParameters;
-use math::{Inertia, Isometry, Vector, Point};
+use math::{Inertia, Isometry, Point, Vector};
 
 // FIXME: remove the pub(crate) after this is replaced by -> impl Iterator
 pub(crate) type RigidBodies<'a, N> =
@@ -99,6 +99,16 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    pub fn clear_dynamics(&mut self) {
+        for (_, mb) in &mut self.mbs {
+            mb.clear_dynamics();
+        }
+
+        for (_, rb) in &mut self.rbs {
+            rb.clear_dynamics()
+        }
+    }
+
     pub fn update_dynamics(
         &mut self,
         gravity: &Vector<N>,
@@ -124,7 +134,12 @@ impl<N: Real> BodySet<N> {
         let rb_id = rb_entry.key();
         let rb_handle = BodyHandle::new(self.ids.insert(BodyId::RigidBodyId(rb_id)));
 
-        let _ = rb_entry.insert(RigidBody::new(rb_handle, position, local_inertia, local_com));
+        let _ = rb_entry.insert(RigidBody::new(
+            rb_handle,
+            position,
+            local_inertia,
+            local_com,
+        ));
         rb_handle
     }
 
@@ -271,6 +286,20 @@ impl<N: Real> BodySet<N> {
                     BodyPart::MultibodyLink(self.mbs[mb_id].link(link_id))
                 }
                 BodyId::RigidBodyId(id) => BodyPart::RigidBody(&self.rbs[id]),
+            }
+        }
+    }
+
+    #[inline]
+    pub fn body_part_mut(&mut self, body: BodyHandle) -> BodyPartMut<N> {
+        if body.is_ground() {
+            BodyPartMut::Ground(&mut self.ground)
+        } else {
+            match self.ids[body.handle] {
+                BodyId::MultibodyLinkId(mb_id, link_id) => {
+                    BodyPartMut::MultibodyLink(self.mbs[mb_id].link_mut(link_id))
+                }
+                BodyId::RigidBodyId(id) => BodyPartMut::RigidBody(&mut self.rbs[id]),
             }
         }
     }

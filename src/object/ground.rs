@@ -127,4 +127,7 @@ impl<N: Real> Ground<N> {
 
     #[inline]
     pub fn inv_mass_mul_force(&self, _: &Force<N>, _: &mut [N]) {}
+
+    #[inline]
+    pub fn apply_force(&mut self, _: &Force<N>) {}
 }

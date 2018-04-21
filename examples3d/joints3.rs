@@ -31,6 +31,7 @@ fn main() {
     let rad = 0.2;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let cuboid_inertia = cuboid.inertia(1.0);
+    let cuboid_center_of_mass = cuboid.center_of_mass();
 
     /*
      * Revolute joints.
@@ -48,7 +49,7 @@ fn main() {
             parent_shift = Vector3::new(0.0, 5.0, 11.0);
         }
 
-        parent = world.add_multibody_link(parent, revo, parent_shift, body_shift, cuboid_inertia);
+        parent = world.add_multibody_link(parent, revo, parent_shift, body_shift, cuboid_inertia, cuboid_center_of_mass);
         world.add_collider(
             COLLIDER_MARGIN,
             cuboid.clone(),
@@ -76,7 +77,7 @@ fn main() {
             Vector3::z() * rad * 3.0
         };
 
-        parent = world.add_multibody_link(parent, prism, parent_shift, na::zero(), cuboid_inertia);
+        parent = world.add_multibody_link(parent, prism, parent_shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
         world.add_collider(
             COLLIDER_MARGIN,
             cuboid.clone(),
@@ -103,7 +104,7 @@ fn main() {
 
         let spherical = BallJoint::new(na::zero());
         parent =
-            world.add_multibody_link(parent, spherical, parent_shift, body_shift, cuboid_inertia);
+            world.add_multibody_link(parent, spherical, parent_shift, body_shift, cuboid_inertia, cuboid_center_of_mass);
         world.add_collider(
             COLLIDER_MARGIN,
             cuboid.clone(),
@@ -134,6 +135,7 @@ fn main() {
         parent_shift,
         na::zero(),
         cuboid_inertia,
+        cuboid_center_of_mass
     );
     world.add_collider(
         COLLIDER_MARGIN,
@@ -143,13 +145,13 @@ fn main() {
         material.clone()
     );
 
-    parent = world.add_multibody_link(parent, uni, na::zero(), body_shift, cuboid_inertia);
+    parent = world.add_multibody_link(parent, uni, na::zero(), body_shift, cuboid_inertia, cuboid_center_of_mass);
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
         parent,
         Isometry3::identity(),
-        material.clone()
+        material.clone(),
     );
 
     /*
@@ -170,6 +172,7 @@ fn main() {
         parent_shift,
         na::zero(),
         cuboid_inertia,
+        cuboid_center_of_mass
     );
     world.add_collider(
         COLLIDER_MARGIN,
@@ -205,6 +208,7 @@ fn main() {
                 shift,
                 na::zero(),
                 cuboid_inertia,
+                cuboid_center_of_mass
             );
             world.add_collider(
                 COLLIDER_MARGIN,
@@ -242,6 +246,7 @@ fn main() {
                 shift,
                 na::zero(),
                 cuboid_inertia,
+                cuboid_center_of_mass
             );
             world.add_collider(
                 COLLIDER_MARGIN,
@@ -270,6 +275,7 @@ fn main() {
         shift,
         na::zero(),
         cuboid_inertia,
+        cuboid_center_of_mass
     );
     world.add_collider(
         COLLIDER_MARGIN,

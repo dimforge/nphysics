@@ -12,6 +12,7 @@ use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider,
              ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
              MultibodyWorkspace, RigidBody, SensorHandle};
 use joint::{ConstraintHandle, Joint, JointConstraint};
+use force_generator::{ForceGenerator, ForceGeneratorHandle};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use detection::{ActivationManager, ColliderContactManifold};
 use math::{Inertia, Isometry, Point, Vector};
@@ -31,6 +32,7 @@ pub struct World<N: Real> {
     angular_prediction: N,
     gravity: Vector<N>,
     constraints: Slab<Box<JointConstraint<N>>>,
+    forces: Slab<Box<ForceGenerator<N>>>,
     params: IntegrationParameters<N>,
     workspace: MultibodyWorkspace<N>,
 }
@@ -45,6 +47,7 @@ impl<N: Real> World<N> {
         let active_bodies = Vec::new();
         let colliders_w_parent = Vec::new();
         let constraints = Slab::new();
+        let forces = Slab::new();
         let cworld = CollisionWorld::new(bv_margin);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
@@ -65,6 +68,7 @@ impl<N: Real> World<N> {
             angular_prediction,
             gravity,
             constraints,
+            forces,
             params,
             workspace,
         }
@@ -141,6 +145,28 @@ impl<N: Real> World<N> {
         constraint
     }
 
+    pub fn add_force_generator<G: ForceGenerator<N>>(
+        &mut self,
+        force_generator: G,
+    ) -> ForceGeneratorHandle {
+        self.forces.insert(Box::new(force_generator))
+    }
+
+    pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &ForceGenerator<N> {
+        &*self.forces[handle]
+    }
+
+    pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut ForceGenerator<N> {
+        &mut *self.forces[handle]
+    }
+
+    pub fn remove_force_generator(
+        &mut self,
+        handle: ForceGeneratorHandle,
+    ) -> Box<ForceGenerator<N>> {
+        self.forces.remove(handle)
+    }
+
     pub fn set_gravity(&mut self, gravity: Vector<N>) {
         self.gravity = gravity
     }
@@ -150,7 +176,13 @@ impl<N: Real> World<N> {
         self.counters.update_started();
         // FIXME: objects involeved in a non-linear position stabilization elready
         // updated their kinematics.
+        self.bodies.clear_dynamics();
         self.bodies.update_kinematics();
+
+        for gen in &mut self.forces {
+            let _ = gen.1.apply(&self.params, &mut self.bodies);
+        }
+
         self.bodies
             .update_dynamics(&self.gravity, &self.params, &mut self.workspace);
         self.counters.update_completed();

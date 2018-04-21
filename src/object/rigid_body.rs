@@ -2,7 +2,7 @@ use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
 use object::{ActivationStatus, BodyHandle, BodyStatus};
 use solver::IntegrationParameters;
-use math::{Force, Inertia, Isometry, Point, Vector, Velocity, Translation, Rotation, SPATIAL_DIM};
+use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 
 #[cfg(feature = "dim3")]
 use math::AngularVector;
@@ -19,6 +19,7 @@ pub struct RigidBody<N: Real> {
     com: Point<N>,
     augmented_mass: Inertia<N>,
     inv_augmented_mass: Inertia<N>,
+    external_forces: Force<N>,
     acceleration: Velocity<N>,
     status: BodyStatus,
     activation: ActivationStatus<N>,
@@ -26,7 +27,12 @@ pub struct RigidBody<N: Real> {
 }
 
 impl<N: Real> RigidBody<N> {
-    pub fn new(handle: BodyHandle, position: Isometry<N>, local_inertia: Inertia<N>, local_com: Point<N>) -> Self {
+    pub fn new(
+        handle: BodyHandle,
+        position: Isometry<N>,
+        local_inertia: Inertia<N>,
+        local_com: Point<N>,
+    ) -> Self {
         let inertia = local_inertia.transformed(&position);
         let com = position * local_com;
 
@@ -40,6 +46,7 @@ impl<N: Real> RigidBody<N> {
             com,
             augmented_mass: inertia,
             inv_augmented_mass: inertia.inverse(),
+            external_forces: Force::zero(),
             acceleration: Velocity::zero(),
             status: BodyStatus::Dynamic,
             activation: ActivationStatus::new_active(),
@@ -157,6 +164,12 @@ impl<N: Real> RigidBody<N> {
         self.velocity.angular = vel
     }
 
+    pub fn clear_dynamics(&mut self) {
+        self.augmented_mass = Inertia::zero();
+        self.acceleration = Velocity::zero();
+        self.external_forces = Force::zero();
+    }
+
     pub fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         match self.status {
             BodyStatus::Dynamic => {
@@ -164,7 +177,7 @@ impl<N: Real> RigidBody<N> {
                 #[cfg(feature = "dim3")]
                 {
                     self.inertia = self.local_inertia.transformed(&self.local_to_world);
-                    self.augmented_mass = self.inertia;
+                    self.augmented_mass += self.inertia;
 
                     let i = &self.inertia.angular;
                     let w = &self.velocity.angular;
@@ -182,10 +195,11 @@ impl<N: Real> RigidBody<N> {
                      * Compute acceleration due to gyroscopic forces.
                      */
                     let gyroscopic = -w.cross(&iw);
-                    self.acceleration.angular = self.inv_augmented_mass.angular * gyroscopic;
+                    self.acceleration.angular += self.inv_augmented_mass.angular * gyroscopic;
                 }
 
-                self.acceleration.linear = *gravity;
+                self.acceleration.linear += *gravity;
+                self.acceleration += self.inv_augmented_mass * self.external_forces
             }
             _ => {}
         }
@@ -245,6 +259,12 @@ impl<N: Real> RigidBody<N> {
         let disp = translation * shift * rotation * shift.inverse();
         self.local_to_world = disp * self.local_to_world;
         self.com = self.local_to_world * self.local_com;
+    }
+
+    #[inline]
+    pub fn apply_force(&mut self, force: &Force<N>) {
+        self.external_forces.linear += force.linear;
+        self.external_forces.angular += force.angular;
     }
 
     #[inline]

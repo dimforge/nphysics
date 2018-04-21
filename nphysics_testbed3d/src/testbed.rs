@@ -17,7 +17,7 @@ use ncollide3d::world::CollisionGroups;
 use ncollide3d::utils::GenerationalId;
 use nphysics3d::object::BodyHandle;
 use nphysics3d::world::World;
-use nphysics3d::joint::{ConstraintHandle, FixedConstraint};
+use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
 use engine::{GraphicsManager, GraphicsManagerHandle};
 
 #[derive(PartialEq)]
@@ -198,7 +198,7 @@ impl Testbed {
 
         let mut cursor_pos = Point2::new(0.0f32, 0.0);
         let mut grabbed_object: Option<BodyHandle> = None;
-        let mut grabbed_object_joint: Option<ConstraintHandle> = None;
+        let mut grabbed_object_constraint: Option<ConstraintHandle> = None;
         let mut grabbed_object_plane: (Point3<f32>, Vector3<f32>) = (Point3::origin(), na::zero());
 
         self.window.set_framerate_limit(Some(60));
@@ -320,24 +320,23 @@ impl Testbed {
                                         .unwrap()
                                         .iter_mut()
                                     {
-                                        if let Some(joint) = grabbed_object_joint {
+                                        if let Some(joint) = grabbed_object_constraint {
                                             self.world.remove_constraint(joint);
                                         }
 
                                         let body_pos = self.world.body_part(body).position();
-                                        let attach1_pos = ray.origin + ray.dir * mintoi;
-                                        let attach1 =
-                                            Isometry3::new(attach1_pos.coords, na::zero());
+                                        let attach1 = ray.origin + ray.dir * mintoi;
                                         let attach2 = body_pos.inverse() * attach1;
-                                        let joint = FixedConstraint::new(
+                                        let constraint = MouseConstraint::new(
                                             BodyHandle::ground(),
                                             body,
                                             attach1,
                                             attach2,
+                                            1.0,
                                         );
-                                        grabbed_object_plane = (attach1_pos, -ray.dir);
-                                        grabbed_object_joint =
-                                            Some(self.world.add_constraint(joint));
+                                        grabbed_object_plane = (attach1, -ray.dir);
+                                        grabbed_object_constraint =
+                                            Some(self.world.add_constraint(constraint));
                                         n.select()
                                     }
                                 }
@@ -358,19 +357,19 @@ impl Testbed {
                             }
                         }
 
-                        if let Some(joint) = grabbed_object_joint {
+                        if let Some(joint) = grabbed_object_constraint {
                             let _ = self.world.remove_constraint(joint);
                         }
 
                         grabbed_object = None;
-                        grabbed_object_joint = None;
+                        grabbed_object_constraint = None;
                     }
                     WindowEvent::CursorPos(x, y) => {
                         cursor_pos.x = x as f32;
                         cursor_pos.y = y as f32;
 
                         // update the joint
-                        if let Some(joint) = grabbed_object_joint {
+                        if let Some(joint) = grabbed_object_constraint {
                             let size = self.window.size();
                             let (pos, dir) = self.graphics
                                 .borrow()
@@ -385,12 +384,9 @@ impl Testbed {
                             ) {
                                 let joint = self.world
                                     .constraint_mut(joint)
-                                    .downcast_mut::<FixedConstraint<f32>>()
+                                    .downcast_mut::<MouseConstraint<f32>>()
                                     .unwrap();
-                                joint.set_anchor_1(Isometry3::new(
-                                    (pos + dir * inter).coords,
-                                    na::zero(),
-                                ))
+                                joint.set_anchor_1(pos + dir * inter)
                             }
                         }
 

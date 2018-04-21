@@ -1,6 +1,6 @@
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
-use object::{BodyHandle, Ground, Multibody, MultibodyLinkRef, RigidBody};
+use object::{BodyHandle, Ground, Multibody, MultibodyLinkRef, MultibodyLinkMut, RigidBody};
 use solver::IntegrationParameters;
 use math::{Force, Isometry, Point, Velocity};
 
@@ -79,6 +79,12 @@ pub enum BodyPart<'a, N: Real> {
     RigidBody(&'a RigidBody<N>),
     MultibodyLink(MultibodyLinkRef<'a, N>),
     Ground(&'a Ground<N>),
+}
+
+pub enum BodyPartMut<'a, N: Real> {
+    RigidBody(&'a mut RigidBody<N>),
+    MultibodyLink(MultibodyLinkMut<'a, N>),
+    Ground(&'a mut Ground<N>),
 }
 
 impl<'a, N: Real> Body<'a, N> {
@@ -356,4 +362,25 @@ impl<'a, N: Real> BodyPart<'a, N> {
             BodyPart::Ground(ref g) => g.inv_mass_mul_force(force, out),
         }
     }
+}
+
+impl<'a, N: Real> BodyPartMut<'a, N> {
+    #[inline]
+    pub fn as_ref<'b>(&'b self) -> BodyPart<'b, N> {
+        match *self {
+            BodyPartMut::RigidBody(ref rb) => BodyPart::RigidBody(rb),
+            BodyPartMut::MultibodyLink(ref mb) => BodyPart::MultibodyLink(mb.as_ref()),
+            BodyPartMut::Ground(ref g) => BodyPart::Ground(g),
+        }
+    }
+
+    #[inline]
+    pub fn apply_force(&mut self, force: &Force<N>) {
+        match *self {
+            BodyPartMut::RigidBody(ref mut rb) => rb.apply_force(force),
+            BodyPartMut::MultibodyLink(ref mut mb) => mb.apply_force(force),
+            BodyPartMut::Ground(ref mut g) => g.apply_force(force),
+        }
+    }
+
 }
