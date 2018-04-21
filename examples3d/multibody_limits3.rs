@@ -45,11 +45,19 @@ fn main() {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let cuboid_inertia = cuboid.inertia(1.0);
+    let cuboid_center_of_mass = cuboid.center_of_mass();
 
     // Setup the first link with a free joint.
     let free = FreeJoint::new(Isometry3::new(Vector3::y() * 3.0, na::zero()));
     let mut parent = BodyHandle::ground();
-    parent = world.add_multibody_link(parent, free, na::zero(), na::zero(), cuboid_inertia);
+    parent = world.add_multibody_link(
+        parent,
+        free,
+        na::zero(),
+        na::zero(),
+        cuboid_inertia,
+        cuboid_center_of_mass,
+    );
 
     // Setup the other links with revolute joints.
     let mut revo = RevoluteJoint::new(axis, -3.14 / 10.0);
@@ -63,6 +71,7 @@ fn main() {
             na::zero(),
             Vector3::z() * (rad * 3.0),
             cuboid_inertia,
+            cuboid_center_of_mass,
         );
         world.add_collider(
             COLLIDER_MARGIN,

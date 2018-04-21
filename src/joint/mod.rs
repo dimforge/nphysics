@@ -23,10 +23,11 @@ pub use self::universal_joint::UniversalJoint;
 pub use self::rectangular_joint::RectangularJoint;
 
 pub use self::joint_motor::JointMotor;
-pub use self::joint_constraint::{JointConstraint, ConstraintHandle};
+pub use self::joint_constraint::{ConstraintHandle, JointConstraint};
 pub use self::fixed_constraint::FixedConstraint;
 pub use self::revolute_constraint::RevoluteConstraint;
 pub use self::ball_constraint::BallConstraint;
+pub use self::mouse_constraint::MouseConstraint;
 
 mod joint;
 mod unit_joint;
@@ -56,3 +57,4 @@ mod joint_constraint;
 mod fixed_constraint;
 mod revolute_constraint;
 mod ball_constraint;
+mod mouse_constraint;

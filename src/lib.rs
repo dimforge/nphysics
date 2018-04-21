@@ -119,6 +119,7 @@ pub mod utils;
 pub mod volumetric;
 pub mod algebra;
 pub mod counters;
+pub mod force_generator;
 // mod tests;
 
 /// Compilation flags dependent aliases for mathematical types.

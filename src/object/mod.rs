@@ -7,7 +7,7 @@ pub use self::collision_groups_wrapper_impl::{SENSOR_GROUP_ID, STATIC_GROUP_ID};
 pub use self::material::Material;
 
 pub use self::ground::Ground;
-pub use self::body::{ActivationStatus, Body, BodyMut, BodyPart, BodyStatus};
+pub use self::body::{ActivationStatus, Body, BodyMut, BodyPart, BodyPartMut, BodyStatus};
 pub use self::body_set::{BodyHandle, BodySet};
 pub use self::multibody_link::{MultibodyLink, MultibodyLinkId, MultibodyLinkMut, MultibodyLinkRef,
                                MultibodyLinkVec};

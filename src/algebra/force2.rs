@@ -1,5 +1,5 @@
 use std::mem;
-use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
+use std::ops::{Neg, Add, AddAssign, Mul, Sub, SubAssign};
 use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3};
 use na::storage::Storage;
 
@@ -39,9 +39,14 @@ impl<N: Real> Force2<N> {
     pub fn torque_from_vector(torque: Vector1<N>) -> Self {
         Self::new(na::zero(), torque.x)
     }
+    
+    #[inline]
+    pub fn linear(linear: Vector2<N>) -> Self {
+        Self::new(linear, na::zero())
+    }
 
     #[inline]
-    pub fn linear_force_at_point(linear: Vector2<N>, point: &Point2<N>) -> Self {
+    pub fn linear_at_point(linear: Vector2<N>, point: &Point2<N>) -> Self {
         Self::new(linear, point.coords.perp(&linear))
     }
 
@@ -114,5 +119,14 @@ impl<N: Real> Mul<N> for Force2<N> {
     #[inline]
     fn mul(self, rhs: N) -> Self {
         Force2::new(self.linear * rhs, self.angular * rhs)
+    }
+}
+
+impl<N: Real> Neg for Force2<N> {
+    type Output = Self;
+
+    #[inline]
+    fn neg(self) -> Self {
+        Force2::new(-self.linear, -self.angular)
     }
 }

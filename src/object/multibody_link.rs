@@ -130,6 +130,10 @@ impl<'a, N: Real> MultibodyLinkMut<'a, N> {
         self.multibody.rbs()[self.id.internal_id].handle
     }
 
+    pub fn as_ref<'b>(&'b self) -> MultibodyLinkRef<'b, N> {
+        MultibodyLinkRef::new(self.id, &*self.multibody)
+    }
+
     #[inline]
     pub(crate) fn id(&self) -> MultibodyLinkId {
         self.id
@@ -138,6 +142,13 @@ impl<'a, N: Real> MultibodyLinkMut<'a, N> {
     #[inline]
     pub fn joint_mut(&mut self) -> &mut Joint<N> {
         &mut *self.multibody.rbs_mut()[self.id.internal_id].dof
+    }
+    
+    #[inline]
+    pub fn apply_force(&mut self, force: &Force<N>) {
+        let rb = &mut self.multibody.rbs_mut()[self.id.internal_id];
+        rb.external_forces.linear += force.linear;
+        rb.external_forces.angular += force.angular;
     }
 
     // FIXME: add methods to modify velocities, forces, damping, etc.

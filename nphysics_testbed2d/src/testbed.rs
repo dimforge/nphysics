@@ -12,7 +12,7 @@ use na::{Isometry2, Point2, Point3};
 use ncollide2d::world::CollisionGroups;
 use nphysics2d::world::World;
 use nphysics2d::object::BodyHandle;
-use nphysics2d::joint::{ConstraintHandle, FixedConstraint};
+use nphysics2d::joint::{ConstraintHandle, MouseConstraint};
 use camera::Camera;
 use fps::Fps;
 use engine::{GraphicsManager, GraphicsManagerHandle};
@@ -243,9 +243,10 @@ impl Testbed {
                     }
 
                     let body_pos = self.world.body_part(body).position();
-                    let attach1 = Isometry2::new(mapped_point.coords, 0.0);
+                    let attach1 = mapped_point;
                     let attach2 = body_pos.inverse() * attach1;
-                    let joint = FixedConstraint::new(BodyHandle::ground(), body, attach1, attach2);
+                    let joint =
+                        MouseConstraint::new(BodyHandle::ground(), body, attach1, attach2, 1.0);
                     state.grabbed_object_joint = Some(self.world.add_constraint(joint));
 
                     for node in self.graphics
@@ -304,13 +305,13 @@ impl Testbed {
     fn process_mouse_moved(&mut self, state: &mut TestbedState, x: i32, y: i32) {
         let mapped_coords = state.camera.map_pixel_to_coords(Vector2i::new(x, y));
         let mapped_point = Point2::new(mapped_coords.x, mapped_coords.y);
-        let attach2 = Isometry2::new(mapped_point.coords, 0.0);
+        let attach2 = mapped_point;
         match state.grabbed_object {
             Some(_) => {
                 let joint = state.grabbed_object_joint.unwrap();
                 let joint = self.world
                     .constraint_mut(joint)
-                    .downcast_mut::<FixedConstraint<f32>>()
+                    .downcast_mut::<MouseConstraint<f32>>()
                     .unwrap();
                 joint.set_anchor_1(attach2);
             }
