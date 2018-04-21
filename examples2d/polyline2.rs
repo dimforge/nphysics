@@ -42,10 +42,10 @@ fn main() {
         vertices[i + 1].y = begin_h - h * max_h;
     }
 
-    let mesh = Polyline::new(vertices);
+    let polyline = Polyline::new(vertices);
     world.add_collider(
         COLLIDER_MARGIN,
-        ShapeHandle::new(mesh),
+        ShapeHandle::new(polyline),
         BodyHandle::ground(),
         Isometry2::identity(),
         Material::default(),

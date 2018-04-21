@@ -7,7 +7,7 @@ use na;
 use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
 use kiss3d::camera::{ArcBall, Camera, FirstPerson};
-use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape};
+use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
 use nphysics3d::world::World;
 use nphysics3d::object::{Body, BodyHandle, ColliderHandle};
@@ -218,8 +218,8 @@ impl GraphicsManager {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, world, delta * t, s.as_ref(), color, out)
             }
-        /*} else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
-            self.add_mesh(window, object, world, delta, s, color, out);*/
+        } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
+            self.add_mesh(window, object, world, delta, s, color, out);
         } else {
             panic!("Not yet implemented.")
         }
@@ -248,7 +248,6 @@ impl GraphicsManager {
         )))
     }
 
-    /*
     fn add_mesh(
         &mut self,
         window: &mut Window,
@@ -259,8 +258,8 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let vertices = &**shape.vertices();
-        let indices = &**shape.indices();
+        let vertices = shape.vertices();
+        let indices = shape.indices();
 
         let is = indices
             .iter()
@@ -276,7 +275,7 @@ impl GraphicsManager {
             color,
             window,
         )))
-    }*/
+    }
 
     fn add_ball(
         &mut self,
