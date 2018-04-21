@@ -8,8 +8,7 @@ use na::{Point2, Point3, Vector2, Translation2, Isometry2};
 use ncollide2d::query::Proximity;
 use ncollide2d::shape::{ShapeHandle, Plane, Cuboid, Ball};
 use nphysics2d::world::World;
-use nphysics2d::object::BodyHandle;
-use nphysics2d::joint::FreeJoint;
+use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics_testbed2d::Testbed;
 
@@ -27,9 +26,9 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(10.0, 10.0)));
-    let ground_pos   = Isometry2::new(Vector2::y() * 10.0, na::zero());
-    world.add_collider(COLLIDER_MARGIN, ground_shape, BodyHandle::ground(), ground_pos, false);
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(10.0, 1.0)));
+    let ground_pos   = Isometry2::new(Vector2::y() * 1.0, na::zero());
+    world.add_collider(COLLIDER_MARGIN, ground_shape, BodyHandle::ground(), ground_pos, Material::default());
 
     /*
      * Create some boxes.
@@ -38,10 +37,10 @@ fn main() {
     let rad     = 0.2;
     let shift   = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
-    let centerz = shift * (num as f32) / 2.0;
 
     let geom    = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize .. num {
         let x = i as f32 * shift - centerx;
@@ -50,24 +49,24 @@ fn main() {
          * Create the rigid body.
          */
         let pos    = Isometry2::new(Vector2::new(x, -2.0), na::zero());
-        let handle = world.add_rigid_body(pos, inertia);
+        let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
         /*
          * Create the collider.
          */
-        world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry2::identity(), true);
+        world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry2::identity(), Material::default());
         testbed.set_body_color(&world, handle, Point3::new(0.5, 0.5, 1.0));
     }
 
     /*
      * Create a box that will have a sensor attached.
      */
-    let pos         = Isometry2::new(Vector2::new(0.0, -10.0), na::zero());
-    let sensor_body = world.add_rigid_body(pos, inertia);
+    let pos         = Isometry2::new(Vector2::new(0.0, -4.0), na::zero());
+    let sensor_body = world.add_rigid_body(pos, inertia, center_of_mass);
     let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
 
-    world.add_collider(COLLIDER_MARGIN, geom, sensor_body, Isometry2::identity(), true);
-    world.add_sensor(sensor_geom, sensor_body, Isometry2::identity(), true);
+    world.add_collider(COLLIDER_MARGIN, geom, sensor_body, Isometry2::identity(), Material::default());
+    world.add_sensor(sensor_geom, sensor_body, Isometry2::identity());
     testbed.set_body_color(&world, sensor_body, Point3::new(0.5, 1.0, 1.0));
 
     // Callback that will be executed on the main loop to handle proximities.
@@ -79,8 +78,8 @@ fn main() {
                 Proximity::Disjoint                               => Point3::new(0.5, 0.5, 1.0)
             };
 
-            let body1 = world.collider(prox.collider1).data.body;
-            let body2 = world.collider(prox.collider2).data.body;
+            let body1 = world.collider(prox.collider1).unwrap().data().body();
+            let body2 = world.collider(prox.collider2).unwrap().data().body();
 
             if !body1.is_ground() && body1 != sensor_body {
                 graphics.borrow_mut().set_body_color(world, body1, color);

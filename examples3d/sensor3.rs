@@ -8,7 +8,7 @@ use na::{Isometry3, Point3, Translation3, Vector3};
 use ncollide3d::query::Proximity;
 use ncollide3d::shape::{Ball, Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::BodyHandle;
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::joint::FreeJoint;
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
@@ -34,6 +34,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
+        Material::default()
     );
 
     /*
@@ -47,6 +48,7 @@ fn main() {
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for k in 0usize..num {
@@ -57,12 +59,12 @@ fn main() {
              * Create the rigid body.
              */
             let pos = Isometry3::new(Vector3::new(x, 3.0, z), na::zero());
-            let handle = world.add_rigid_body(pos, inertia);
+            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
             /*
              * Create the collider.
              */
-            world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity());
+            world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry3::identity(), Material::default());
             testbed.set_body_color(&world, handle, Point3::new(0.5, 0.5, 1.0));
         }
     }
@@ -71,10 +73,10 @@ fn main() {
      * Create a box that will have a sensor attached.
      */
     let pos = Isometry3::new(Vector3::new(0.0, 10.0, 0.0), na::zero());
-    let sensor_body = world.add_rigid_body(pos, inertia);
+    let sensor_body = world.add_rigid_body(pos, inertia, center_of_mass);
     let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
 
-    world.add_collider(COLLIDER_MARGIN, geom, sensor_body, Isometry3::identity());
+    world.add_collider(COLLIDER_MARGIN, geom, sensor_body, Isometry3::identity(), Material::default());
     world.add_sensor(sensor_geom, sensor_body, Isometry3::identity());
     testbed.set_body_color(&world, sensor_body, Point3::new(0.5, 1.0, 1.0));
 
