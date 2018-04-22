@@ -3,15 +3,15 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use std::f32::consts::PI;
 use na::{Isometry2, Point2, Translation2, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, Plane, ShapeHandle};
-use nphysics2d::world::World;
-use nphysics2d::object::{BodyHandle, BodyStatus};
 use nphysics2d::joint::RevoluteJoint;
 use nphysics2d::math::{Inertia, Velocity};
+use nphysics2d::object::{BodyHandle, BodyStatus, Material};
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
+use std::f32::consts::PI;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -45,6 +45,7 @@ fn main() {
     let revo = RevoluteJoint::new(0.0);
     let geom = ShapeHandle::new(Ball::new(rad));
     let inertia = geom.inertia(5.0);
+    let center_of_mass = geom.center_of_mass();
 
     for j in 0usize..num {
         /*
@@ -61,12 +62,19 @@ fn main() {
             body_shift,
             Vector2::new(-rad * 3.0, 0.0),
             inertia,
+            center_of_mass,
         );
 
         /*
          * Create the collider.
          */
-        world.add_collider(COLLIDER_MARGIN, geom.clone(), parent, Isometry2::identity());
+        world.add_collider(
+            COLLIDER_MARGIN,
+            geom.clone(),
+            parent,
+            Isometry2::identity(),
+            Material::default(),
+        );
     }
 
     // Setup damping for the whole multibody.
@@ -84,6 +92,7 @@ fn main() {
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -94,7 +103,7 @@ fn main() {
              * Create the rigid body.
              */
             let pos = Isometry2::new(Vector2::new(x, -y), na::zero());
-            let handle = world.add_rigid_body(pos, inertia);
+            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
             // if j == 5 {
             //     let mut rb = world.rigid_body_mut(handle).unwrap();
@@ -109,7 +118,13 @@ fn main() {
             /*
              * Create the collider.
              */
-            world.add_collider(COLLIDER_MARGIN, geom.clone(), handle, Isometry2::identity());
+            world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                Material::default(),
+            );
         }
     }
 
@@ -118,7 +133,7 @@ fn main() {
      */
     let geom = ShapeHandle::new(Cuboid::new(Vector2::new(rad * 10.0, rad)));
     let pos = Isometry2::new(Vector2::new(0.0, -1.5), na::zero());
-    let platform_handle = world.add_rigid_body(pos, Inertia::zero());
+    let platform_handle = world.add_rigid_body(pos, Inertia::zero(), Point2::origin());
     {
         let rb = world.rigid_body_mut(platform_handle).unwrap();
         rb.set_status(BodyStatus::Kinematic);
@@ -129,6 +144,7 @@ fn main() {
         geom.clone(),
         platform_handle,
         Isometry2::identity(),
+        Material::default(),
     );
 
     // /*
@@ -157,15 +173,23 @@ fn main() {
     joint.set_max_angular_motor_torque(2.0);
     joint.enable_angular_motor();
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
     let handle = world.add_multibody_link(
         BodyHandle::ground(),
         joint,
         Vector2::new(-4.0, -3.0),
         Vector2::x() * 2.0,
         inertia,
+        center_of_mass,
     );
 
-    world.add_collider(COLLIDER_MARGIN, geom, handle, Isometry2::identity());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        geom,
+        handle,
+        Isometry2::identity(),
+        Material::default(),
+    );
 
     /*
      * Setup a callback to control the platform.
