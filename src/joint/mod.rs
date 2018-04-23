@@ -26,6 +26,7 @@ pub use self::joint_motor::JointMotor;
 pub use self::joint_constraint::{ConstraintHandle, JointConstraint};
 pub use self::fixed_constraint::FixedConstraint;
 pub use self::revolute_constraint::RevoluteConstraint;
+pub use self::prismatic_constraint::PrismaticConstraint;
 pub use self::ball_constraint::BallConstraint;
 pub use self::mouse_constraint::MouseConstraint;
 
@@ -56,5 +57,6 @@ mod joint_motor;
 mod joint_constraint;
 mod fixed_constraint;
 mod revolute_constraint;
+mod prismatic_constraint;
 mod ball_constraint;
 mod mouse_constraint;
