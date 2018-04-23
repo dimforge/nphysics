@@ -1,14 +1,11 @@
 use std::ops::Neg;
-use alga::linear::FiniteDimVectorSpace;
+use alga::linear::{FiniteDimInnerSpace, FiniteDimVectorSpace};
 use na::{self, DVector, DVectorSlice, Real, Unit};
 
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 use object::BodyPart;
 use math::{AngularVector, Force, Point, Rotation, Vector};
-
-#[cfg(feature = "dim3")]
-use alga::linear::FiniteDimInnerSpace;
 
 #[derive(Copy, Clone, Debug)]
 pub enum ForceDirection<N: Real> {
@@ -579,6 +576,139 @@ pub fn align_axis<N: Real>(
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
+            &mut ground_j_id,
+            &mut j_id,
+            jacobians,
+        );
+
+        let rhs = -depth;
+        let constraint = GenericNonlinearConstraint::new(
+            body1.handle(),
+            body2.handle(),
+            true,
+            geom.ndofs1,
+            geom.ndofs2,
+            geom.wj_id1,
+            geom.wj_id2,
+            rhs,
+            geom.r,
+        );
+
+        Some(constraint)
+    } else {
+        None
+    }
+}
+
+pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis1: &Unit<Vector<N>>,
+    axis2: &Unit<Vector<N>>,
+    ext_vels: &DVector<N>,
+    impulses: &[N],
+    impulse_id: usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
+    jacobians: &mut [N],
+    constraints: &mut ConstraintSet<N>,
+) {
+    let limits = ImpulseLimits::Independent {
+        min: -N::max_value(),
+        max: N::max_value(),
+    };
+
+    let mut i = 0;
+    Vector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
+        let dir = ForceDirection::Linear(Unit::new_unchecked(*dir));
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            &dir,
+            ground_j_id,
+            j_id,
+            jacobians,
+        );
+
+        let rhs = constraint_pair_velocity(
+            &body1,
+            &body2,
+            assembly_id1,
+            assembly_id2,
+            anchor1,
+            anchor2,
+            &dir,
+            ext_vels,
+            jacobians,
+            &geom,
+        );
+
+        if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
+            constraints
+                .velocity
+                .bilateral_ground
+                .push(BilateralGroundConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    limits,
+                    rhs,
+                    impulses[i],
+                    impulse_id + i,
+                ));
+        } else {
+            constraints
+                .velocity
+                .bilateral
+                .push(BilateralConstraint::new(
+                    geom,
+                    assembly_id1,
+                    assembly_id2,
+                    limits,
+                    rhs,
+                    impulses[i],
+                    impulse_id + i,
+                ));
+        }
+
+        i += 1;
+
+        true
+    });
+}
+
+pub fn project_anchor_to_axis<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis1: &Unit<Vector<N>>,
+    axis2: &Unit<Vector<N>>,
+    jacobians: &mut [N],
+) -> Option<GenericNonlinearConstraint<N>> {
+    // Linear regularization of a point on an axis.
+    let dpt = anchor2 - anchor1;
+    let proj = anchor1 + axis1.unwrap() * axis1.dot(&dpt);
+    let error = anchor2 - proj;
+
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
+        let mut j_id = 0;
+        let mut ground_j_id = 0;
+
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            &ForceDirection::Linear(dir),
             &mut ground_j_id,
             &mut j_id,
             jacobians,

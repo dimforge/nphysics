@@ -8,35 +8,35 @@ use solver::helper;
 use joint::JointConstraint;
 use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 
-pub struct RevoluteConstraint<N: Real> {
+pub struct PrismaticConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
-    axis1: Unit<AngularVector<N>>, // FIXME: not needed in 2D.
-    axis2: Unit<AngularVector<N>>, // FIXME: not needed in 2D.
+    axis1: Unit<Vector<N>>,
+    axis2: Unit<Vector<N>>,
     lin_impulses: Vector<N>,
-    ang_impulses: AngularVector<N>, // FIXME: not needed in 2D.
+    ang_impulses: AngularVector<N>,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 
-    min_angle: Option<N>,
-    max_angle: Option<N>,
+    min_offset: Option<N>,
+    max_offset: Option<N>,
 }
 
-impl<N: Real> RevoluteConstraint<N> {
-    #[cfg(feature = "dim3")]
+impl<N: Real> PrismaticConstraint<N> {
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
         anchor1: Point<N>,
-        axis1: Unit<AngularVector<N>>,
+        axis1: Unit<Vector<N>>,
         anchor2: Point<N>,
-        axis2: Unit<AngularVector<N>>,
+        axis2: Unit<Vector<N>>,
     ) -> Self {
-        let min_angle = None;
-        let max_angle = None;
-        RevoluteConstraint {
+        let min_offset = None;
+        let max_offset = None;
+
+        PrismaticConstraint {
             b1,
             b2,
             anchor1,
@@ -47,70 +47,47 @@ impl<N: Real> RevoluteConstraint<N> {
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
-            min_angle,
-            max_angle,
+            min_offset,
+            max_offset,
         }
     }
 
-    #[cfg(feature = "dim2")]
-    pub fn new(b1: BodyHandle, b2: BodyHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
-        let min_angle = None;
-        let max_angle = None;
-        let axis1 = AngularVector::x_axis();
-        let axis2 = AngularVector::x_axis();
-
-        RevoluteConstraint {
-            b1,
-            b2,
-            anchor1,
-            anchor2,
-            axis1,
-            axis2,
-            lin_impulses: Vector::zeros(),
-            ang_impulses: AngularVector::zeros(),
-            bilateral_ground_rng: 0..0,
-            bilateral_rng: 0..0,
-            min_angle,
-            max_angle,
-        }
+    pub fn min_offset(&self) -> Option<N> {
+        self.min_offset
     }
 
-    pub fn min_angle(&self) -> Option<N> {
-        self.min_angle
+    pub fn max_offset(&self) -> Option<N> {
+        self.max_offset
     }
 
-    pub fn max_angle(&self) -> Option<N> {
-        self.max_angle
+    pub fn disable_min_offset(&mut self) {
+        self.min_offset = None;
     }
 
-    pub fn disable_min_angle(&mut self) {
-        self.min_angle = None;
+    pub fn disable_max_offset(&mut self) {
+        self.max_offset = None;
     }
 
-    pub fn disable_max_angle(&mut self) {
-        self.max_angle = None;
-    }
-
-    pub fn enable_min_angle(&mut self, limit: N) {
-        self.min_angle = Some(limit);
+    pub fn enable_min_offset(&mut self, limit: N) {
+        self.min_offset = Some(limit);
         self.assert_limits();
     }
 
-    pub fn enable_max_angle(&mut self, limit: N) {
-        self.max_angle = Some(limit);
+    pub fn enable_max_offset(&mut self, limit: N) {
+        self.max_offset = Some(limit);
         self.assert_limits();
     }
 
     fn assert_limits(&self) {
-        if let (Some(min_angle), Some(max_angle)) = (self.min_angle, self.max_angle) {
+        if let (Some(min_offset), Some(max_offset)) = (self.min_offset, self.max_offset) {
             assert!(
-                min_angle <= max_angle,
+                min_offset <= max_offset,
                 "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
         }
     }
 }
 
-impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
+impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 1
     }
@@ -149,7 +126,10 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
 
-        helper::cancel_relative_linear_velocity(
+        let axis1 = pos1 * self.axis1;
+        let axis2 = pos2 * self.axis2;
+
+        helper::restrict_relative_linear_velocity_to_axis(
             params,
             &b1,
             &b2,
@@ -157,8 +137,10 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
             assembly_id2,
             &anchor1,
             &anchor2,
+            &axis1,
+            &axis2,
             ext_vels,
-            &self.lin_impulses,
+            self.lin_impulses.as_slice(),
             0,
             ground_j_id,
             j_id,
@@ -166,30 +148,24 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
             constraints,
         );
 
-        #[cfg(feature = "dim3")]
-        {
-            let axis1 = pos1 * self.axis1;
-            let axis2 = pos2 * self.axis2;
-
-            helper::restrict_relative_angular_velocity_to_axis(
-                params,
-                &b1,
-                &b2,
-                assembly_id1,
-                assembly_id2,
-                &axis1,
-                &axis2,
-                &anchor1,
-                &anchor2,
-                ext_vels,
-                self.ang_impulses.as_slice(),
-                DIM,
-                ground_j_id,
-                j_id,
-                jacobians,
-                constraints,
-            );
-        }
+        helper::cancel_relative_angular_velocity(
+            params,
+            &b1,
+            &b2,
+            assembly_id1,
+            assembly_id2,
+            &pos1.rotation,
+            &pos2.rotation,
+            &anchor1,
+            &anchor2,
+            ext_vels,
+            &self.ang_impulses,
+            DIM - 1,
+            ground_j_id,
+            j_id,
+            jacobians,
+            constraints,
+        );
 
         /*
          *
@@ -221,15 +197,11 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
+impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
-            if DIM == 3 {
-                2
-            } else {
-                1
-            }
+            2
         } else {
             0
         }
@@ -252,33 +224,32 @@ impl<N: Real> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
         let anchor2 = pos2 * self.anchor2;
 
         if i == 0 {
-            return helper::cancel_relative_translation(
+            return helper::cancel_relative_rotation(
                 params,
                 &body1,
                 &body2,
                 &anchor1,
                 &anchor2,
+                &pos1.rotation,
+                &pos2.rotation,
                 jacobians,
             );
         }
 
-        #[cfg(feature = "dim3")]
-        {
-            if i == 1 {
-                let axis1 = pos1 * self.axis1;
-                let axis2 = pos2 * self.axis2;
+        if i == 1 {
+            let axis1 = pos1 * self.axis1;
+            let axis2 = pos2 * self.axis2;
 
-                return helper::align_axis(
-                    params,
-                    &body1,
-                    &body2,
-                    &anchor1,
-                    &anchor2,
-                    &axis1,
-                    &axis2,
-                    jacobians,
-                );
-            }
+            return helper::project_anchor_to_axis(
+                params,
+                &body1,
+                &body2,
+                &anchor1,
+                &anchor2,
+                &axis1,
+                &axis2,
+                jacobians,
+            );
         }
 
         return None;
