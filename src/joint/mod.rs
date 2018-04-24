@@ -27,8 +27,14 @@ pub use self::joint_constraint::{ConstraintHandle, JointConstraint};
 pub use self::fixed_constraint::FixedConstraint;
 pub use self::revolute_constraint::RevoluteConstraint;
 pub use self::prismatic_constraint::PrismaticConstraint;
-pub use self::ball_constraint::BallConstraint;
 pub use self::mouse_constraint::MouseConstraint;
+
+#[cfg(feature = "dim3")]
+pub use self::ball_constraint::BallConstraint;
+#[cfg(feature = "dim3")]
+pub use self::cylindrical_constraint::CylindricalConstraint;
+#[cfg(feature = "dim3")]
+pub use self::pin_slot_constraint::PinSlotConstraint;
 
 mod joint;
 mod unit_joint;
@@ -58,5 +64,11 @@ mod joint_constraint;
 mod fixed_constraint;
 mod revolute_constraint;
 mod prismatic_constraint;
-mod ball_constraint;
 mod mouse_constraint;
+
+#[cfg(feature = "dim3")]
+mod ball_constraint;
+#[cfg(feature = "dim3")]
+mod cylindrical_constraint;
+#[cfg(feature = "dim3")]
+mod pin_slot_constraint;

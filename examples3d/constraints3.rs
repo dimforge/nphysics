@@ -8,7 +8,7 @@ use na::{Isometry3, Point3, Unit, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::joint::{BallConstraint, PrismaticConstraint, RevoluteConstraint};
+use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PrismaticConstraint, RevoluteConstraint};
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
@@ -23,6 +23,24 @@ fn main() {
 
     // Material.
     let material = Material::default();
+
+    /*
+     * Ground
+     */
+    let ground_size = 50.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
+    let ground_pos = Isometry3::new(Vector3::y() * (-ground_size - 5.0), na::zero());
+    // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
+    // let ground_pos = Isometry3::identity();
+
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        ground_pos,
+        material.clone(),
+    );
 
     /*
      * Geometries that will be re-used for several multibody links..
@@ -347,34 +365,36 @@ fn main() {
                 material.clone(),
             );
         }
-    }
+    }*/
 
     /*
      * Pin-slot joint.
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
     let cuboid_inertia = cuboid.inertia(1.0);
-    let axis_v = Vector3::y_axis();
-    let axis_w = Vector3::x_axis();
-    let shift = Vector3::z() * -1.5;
+    let cuboid_center_of_mass = cuboid.center_of_mass();
+    let rb = world.add_rigid_body(Isometry3::identity(), cuboid_inertia, cuboid_center_of_mass);
 
-    let mut pin_slot = PinSlotJoint::new(axis_v, axis_w, -10.0, 0.0);
-    pin_slot.set_desired_linear_motor_velocity(3.0);
-    let pin_handle = world.add_multibody_link(
-        BodyHandle::ground(),
-        pin_slot,
-        shift,
-        na::zero(),
-        cuboid_inertia,
-        cuboid_center_of_mass,
-    );
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
-        pin_handle,
+        rb,
         Isometry3::identity(),
         material.clone(),
-    );*/
+    );
+
+    let constraint = PinSlotConstraint::new(
+        BodyHandle::ground(),
+        rb,
+        Point3::origin(),
+        Vector3::y_axis(),
+        Vector3::x_axis(),
+        Point3::origin(),
+        Vector3::y_axis(),
+        Vector3::x_axis(),
+    );
+
+    world.add_constraint(constraint);
 
     /*
      * Set up the testbed.
