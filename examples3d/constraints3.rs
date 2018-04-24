@@ -97,7 +97,7 @@ fn main() {
     }
 
     /*
-     * Prismatic joint.
+     * Prismatic constraint.
      */
     let first_anchor = Point3::new(0.0, 5.0, 5.0);
     let mut pos = first_anchor.coords;
@@ -143,7 +143,7 @@ fn main() {
     }
 
     /*
-     * Ball joint.
+     * Ball constraint.
      */
     let first_anchor = Point3::new(0.0, 5.0, 0.0);
     let mut pos = first_anchor.coords;
@@ -184,7 +184,7 @@ fn main() {
 
     /*
     /*
-     * Ball joint.
+     * Ball constraint.
      */
     parent = BodyHandle::ground();
     for i in 0usize..num {
@@ -219,7 +219,7 @@ fn main() {
     world.multibody_mut(parent).unwrap().damping_mut().fill(0.1);
 
     /*
-     * Universal joint.
+     * Universal constraint.
      */
     let axis1 = Vector3::x_axis();
     let axis2 = Vector3::z_axis();
@@ -264,7 +264,7 @@ fn main() {
     );
 
     /*
-     * Helical joint.
+     * Helical constraint.
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let cuboid_inertia = cuboid.inertia(1.0);
@@ -292,7 +292,7 @@ fn main() {
     );
 
     /*
-     * Planar joint.
+     * Planar constraint.
      */
     let axis1 = Vector3::z_axis();
     let axis2 = Vector3::y_axis();
@@ -330,7 +330,7 @@ fn main() {
     }
 
     /*
-     * Rectangular joint.
+     * Rectangular constraint.
      */
     let axis1 = Vector3::z_axis();
     let axis2 = Vector3::y_axis();
@@ -368,7 +368,7 @@ fn main() {
     }*/
 
     /*
-     * Pin-slot joint.
+     * Pin-slot constraint.
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
     let cuboid_inertia = cuboid.inertia(1.0);
@@ -403,7 +403,7 @@ fn main() {
     /*
     testbed.add_callback(move |world, _| {
         /*
-         * Activate the helical joint motor if it is to low.
+         * Activate the helical constraint motor if it is to low.
          */
         // Might be None if the user interactively deleted the helical body.
         if let Some(mut helical) = world.multibody_link_mut(hel_handle) {
@@ -422,7 +422,7 @@ fn main() {
 
     testbed.add_callback(move |world, _| {
         /*
-         * Activate the pin-slot joint linear motor if it is to low.
+         * Activate the pin-slot constraint linear motor if it is to low.
          */
         // Might be None if the user interactively deleted the pin-slot body.
         if let Some(mut pin_slot) = world.multibody_link_mut(pin_handle) {
