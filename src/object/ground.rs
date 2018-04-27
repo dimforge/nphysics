@@ -1,8 +1,8 @@
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
+use math::{Force, Isometry, Point, Velocity};
 use object::{ActivationStatus, BodyHandle, BodyStatus};
 use solver::IntegrationParameters;
-use math::{Force, Isometry, Point, Velocity};
 
 pub struct Ground<N: Real> {
     companion_id: usize,
@@ -88,17 +88,17 @@ impl<N: Real> Ground<N> {
 
     #[inline]
     pub fn generalized_velocity(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(&self.data[..], 0)
+        DVectorSlice::from_slice(&self.data[..], 0)
     }
 
     #[inline]
     pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
-        DVectorSliceMut::new(&mut self.data[..], 0)
+        DVectorSliceMut::from_slice(&mut self.data[..], 0)
     }
 
     #[inline]
     pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(&self.data[..], 0)
+        DVectorSlice::from_slice(&self.data[..], 0)
     }
 
     #[inline]

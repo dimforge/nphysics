@@ -2,9 +2,9 @@ use std::ops::{Deref, DerefMut};
 
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
-use object::{BodyHandle, Multibody};
 use joint::Joint;
 use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use object::{BodyHandle, Multibody};
 
 #[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
 pub struct MultibodyLinkId {
@@ -143,7 +143,7 @@ impl<'a, N: Real> MultibodyLinkMut<'a, N> {
     pub fn joint_mut(&mut self) -> &mut Joint<N> {
         &mut *self.multibody.rbs_mut()[self.id.internal_id].dof
     }
-    
+
     #[inline]
     pub fn apply_force(&mut self, force: &Force<N>) {
         let rb = &mut self.multibody.rbs_mut()[self.id.internal_id];
@@ -158,7 +158,7 @@ impl<'a, N: Real> MultibodyLinkMut<'a, N> {
         let ndofs = self.multibody.rbs()[self.id.internal_id].dof.ndofs();
         let id = self.multibody.rbs()[self.id.internal_id].assembly_id;
         let vels = self.multibody.generalized_velocity_slice_mut();
-        DVectorSliceMut::new(&mut vels[id..id + ndofs], ndofs)
+        DVectorSliceMut::from_slice(&mut vels[id..id + ndofs], ndofs)
     }
 }
 
@@ -203,7 +203,7 @@ impl<'a, N: Real> MultibodyLinkRef<'a, N> {
     pub fn joint_velocity(&self) -> DVectorSlice<N> {
         let vels = self.multibody.generalized_velocity_slice();
         let ndofs = self.link.dof.ndofs();
-        DVectorSlice::new(
+        DVectorSlice::from_slice(
             &vels[self.link.assembly_id..self.link.assembly_id + ndofs],
             ndofs,
         )

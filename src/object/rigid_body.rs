@@ -1,8 +1,8 @@
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
+use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 use object::{ActivationStatus, BodyHandle, BodyStatus};
 use solver::IntegrationParameters;
-use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 
 #[cfg(feature = "dim3")]
 use math::AngularVector;
@@ -232,17 +232,17 @@ impl<N: Real> RigidBody<N> {
 
     #[inline]
     pub fn generalized_velocity(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(self.velocity.as_slice(), SPATIAL_DIM)
+        DVectorSlice::from_slice(self.velocity.as_slice(), SPATIAL_DIM)
     }
 
     #[inline]
     pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
-        DVectorSliceMut::new(self.velocity.as_mut_slice(), SPATIAL_DIM)
+        DVectorSliceMut::from_slice(self.velocity.as_mut_slice(), SPATIAL_DIM)
     }
 
     #[inline]
     pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(self.acceleration.as_slice(), SPATIAL_DIM)
+        DVectorSlice::from_slice(self.acceleration.as_slice(), SPATIAL_DIM)
     }
 
     #[inline]

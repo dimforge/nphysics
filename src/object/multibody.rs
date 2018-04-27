@@ -1,15 +1,15 @@
 use std::iter;
 use std::ops::Range;
 
+use joint::{FreeJoint, Joint};
+use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
+           SpatialVector, Vector, Velocity, DIM};
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use object::{ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId,
              MultibodyLinkMut, MultibodyLinkRef, MultibodyLinkVec};
-use joint::{FreeJoint, Joint};
 use solver::{ConstraintSet, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator};
 use utils::{GeneralizedCross, IndexMut2};
-use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
-           SpatialVector, Vector, Velocity, DIM};
 
 pub struct Multibody<N: Real> {
     rbs: MultibodyLinkVec<N>,
@@ -166,7 +166,7 @@ impl<N: Real> Multibody<N> {
     // FIXME: store derectly a DVector instead of a Vec).
     #[inline]
     pub fn generalized_velocity(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(&self.velocities, self.ndofs)
+        DVectorSlice::from_slice(&self.velocities, self.ndofs)
     }
 
     #[inline]
@@ -176,7 +176,7 @@ impl<N: Real> Multibody<N> {
 
     #[inline]
     pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
-        DVectorSliceMut::new(&mut self.velocities, self.ndofs)
+        DVectorSliceMut::from_slice(&mut self.velocities, self.ndofs)
     }
 
     #[inline]
@@ -186,22 +186,22 @@ impl<N: Real> Multibody<N> {
 
     #[inline]
     pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(&self.accelerations, self.ndofs)
+        DVectorSlice::from_slice(&self.accelerations, self.ndofs)
     }
 
     #[inline]
     pub fn damping(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(&self.damping, self.ndofs)
+        DVectorSlice::from_slice(&self.damping, self.ndofs)
     }
 
     #[inline]
     pub fn impulses(&self) -> DVectorSlice<N> {
-        DVectorSlice::new(&self.impulses, self.impulses.len())
+        DVectorSlice::from_slice(&self.impulses, self.impulses.len())
     }
 
     #[inline]
     pub fn damping_mut(&mut self) -> DVectorSliceMut<N> {
-        DVectorSliceMut::new(&mut self.damping, self.ndofs)
+        DVectorSliceMut::from_slice(&mut self.damping, self.ndofs)
     }
 
     pub(crate) fn add_link<J: Joint<N>>(
@@ -385,7 +385,7 @@ impl<N: Real> Multibody<N> {
 
     pub fn clear_dynamics(&mut self) {
         self.augmented_mass.fill(N::zero());
-        let mut accs = DVectorSliceMut::new(&mut self.accelerations, self.ndofs);
+        let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
         accs.fill(N::zero());
 
         for rb in &mut *self.rbs {
@@ -476,7 +476,7 @@ impl<N: Real> Multibody<N> {
          */
         workspace.resize(self.rbs.len());
 
-        let mut accs = DVectorSliceMut::new(&mut self.accelerations, self.ndofs);
+        let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
         accs.fill(N::zero());
 
         for i in 0..self.rbs.len() {
@@ -534,8 +534,8 @@ impl<N: Real> Multibody<N> {
             self.rbs[i].external_forces += external_forces;
         }
 
-        let damping = DVectorSlice::new(&self.damping, self.ndofs);
-        let vels = DVectorSlice::new(&self.velocities, self.ndofs);
+        let damping = DVectorSlice::from_slice(&self.damping, self.ndofs);
+        let vels = DVectorSlice::from_slice(&self.velocities, self.ndofs);
         accs.cmpy(-N::one(), &damping, &vels, N::one());
 
         assert!(self.inv_augmented_mass.solve_mut(&mut accs));
@@ -767,17 +767,17 @@ impl<N: Real> Multibody<N> {
     }
 
     pub fn body_jacobian_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
-        let mut out = DVectorSliceMut::new(out, self.ndofs);
+        let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
     }
 
     pub fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
-        let mut out = DVectorSliceMut::new(generalized_force, self.ndofs);
+        let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
         assert!(self.inv_augmented_mass.solve_mut(&mut out))
     }
 
     pub fn inv_mass_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
-        let mut out = DVectorSliceMut::new(out, self.ndofs);
+        let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
@@ -791,7 +791,7 @@ impl<N: Real> Multibody<N> {
     ) {
         let rb = &self.rbs[rb_id.internal_id];
 
-        let mut out = DVectorSliceMut::new(out, self.ndofs);
+        let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         out.fill(N::zero());
         out[rb.assembly_id + dof_id] = force;
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
@@ -806,7 +806,7 @@ impl<N: Real> Multibody<N> {
         let rb = &self.rbs[rb_id.internal_id];
         let ndofs = rb.dof.ndofs();
 
-        let mut out = DVectorSliceMut::new(out, self.ndofs);
+        let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         out.fill(N::zero());
         out.rows_mut(rb.assembly_id, ndofs).copy_from(&force);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));

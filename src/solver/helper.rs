@@ -1,11 +1,11 @@
-use std::ops::Neg;
 use alga::linear::{FiniteDimInnerSpace, FiniteDimVectorSpace};
 use na::{self, DVector, DVectorSlice, Real, Unit};
+use std::ops::Neg;
 
+use math::{AngularVector, Force, Point, Rotation, Vector};
+use object::BodyPart;
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
-use object::BodyPart;
-use math::{AngularVector, Force, Point, Rotation, Vector};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ForceDirection<N: Real> {
@@ -56,8 +56,8 @@ pub fn fill_constraint_geometry<N: Real>(
     }
     body.inv_mass_mul_generalized_forces(&mut jacobians[wj_id..]);
 
-    let j = DVectorSlice::new(&jacobians[j_id..], ndofs);
-    let invm_j = DVectorSlice::new(&jacobians[wj_id..], ndofs);
+    let j = DVectorSlice::from_slice(&jacobians[j_id..], ndofs);
+    let invm_j = DVectorSlice::from_slice(&jacobians[wj_id..], ndofs);
 
     *inv_r += j.dot(&invm_j);
 }
@@ -120,10 +120,10 @@ pub fn constraint_pair_geometry<N: Real>(
     }
 
     if body1.handle() == body2.handle() {
-        let j1 = DVectorSlice::new(&jacobians[res.j_id1..], res.ndofs1);
-        let j2 = DVectorSlice::new(&jacobians[res.j_id2..], res.ndofs2);
-        let invm_j1 = DVectorSlice::new(&jacobians[res.wj_id1..], res.ndofs1);
-        let invm_j2 = DVectorSlice::new(&jacobians[res.wj_id2..], res.ndofs2);
+        let j1 = DVectorSlice::from_slice(&jacobians[res.j_id1..], res.ndofs1);
+        let j2 = DVectorSlice::from_slice(&jacobians[res.j_id2..], res.ndofs2);
+        let invm_j1 = DVectorSlice::from_slice(&jacobians[res.wj_id1..], res.ndofs1);
+        let invm_j2 = DVectorSlice::from_slice(&jacobians[res.wj_id2..], res.ndofs2);
 
         inv_r += j2.dot(&invm_j1) + j1.dot(&invm_j2);
     }
@@ -154,7 +154,7 @@ pub fn constraint_pair_velocity<N: Real>(
     let mut vel = N::zero();
 
     if geom.ndofs1 != 0 {
-        let j = DVectorSlice::new(&jacobians[geom.j_id1..], geom.ndofs1);
+        let j = DVectorSlice::from_slice(&jacobians[geom.j_id1..], geom.ndofs1);
         vel += j.dot(&body1.parent_generalized_velocity())
             + j.dot(&ext_vels.rows(assembly_id1, geom.ndofs1));
     } else {
@@ -173,7 +173,7 @@ pub fn constraint_pair_velocity<N: Real>(
     }
 
     if geom.ndofs2 != 0 {
-        let j = DVectorSlice::new(&jacobians[geom.j_id2..], geom.ndofs2);
+        let j = DVectorSlice::from_slice(&jacobians[geom.j_id2..], geom.ndofs2);
         vel += j.dot(&body2.parent_generalized_velocity())
             + j.dot(&ext_vels.rows(assembly_id2, geom.ndofs2));
     } else {
