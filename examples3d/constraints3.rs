@@ -3,14 +3,15 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::f32::consts::PI;
 use na::{Isometry3, Point3, Unit, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::world::World;
+use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PlanarConstraint, PrismaticConstraint,
+                        RevoluteConstraint};
 use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PrismaticConstraint, RevoluteConstraint};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
+use std::f32::consts::PI;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -289,46 +290,52 @@ fn main() {
         hel_handle,
         Isometry3::identity(),
         material.clone(),
-    );
+    );*/
 
     /*
      * Planar constraint.
      */
-    let axis1 = Vector3::z_axis();
-    let axis2 = Vector3::y_axis();
+    let num = 5;
     let shift = Vector3::new(0.0, -2.0, 5.0);
     let width = 5.0 * rad * 4.0;
-    for i in 0..5 {
-        for j in 0..5 {
-            let mut x = i as f32 * rad * 4.0 - width / 2.0;
+
+    for i in 0..num {
+        for j in 0..num {
+            let mut z = i as f32 * rad * 4.0 - width / 2.0;
             let y = j as f32 * rad * 4.0 - width / 2.0;
 
             if j % 2 == 0 {
-                x += rad * 2.0;
+                z += rad * 2.0;
             }
 
-            let mut planar = PlanarJoint::new(axis1, axis2, x, y, 0.0);
-            planar.enable_min_offset_1(-width / 2.0);
-            planar.enable_max_offset_1(width / 2.0);
-            planar.enable_min_offset_2(-5.0);
-            let handle = world.add_multibody_link(
-                BodyHandle::ground(),
-                planar,
-                shift,
-                na::zero(),
+            let rb = world.add_rigid_body(
+                Isometry3::new(shift + Vector3::new(na::zero(), y, z), na::zero()),
                 cuboid_inertia,
                 cuboid_center_of_mass,
             );
+
             world.add_collider(
                 COLLIDER_MARGIN,
                 cuboid.clone(),
-                handle,
+                rb,
                 Isometry3::identity(),
                 material.clone(),
             );
+
+            let constraint = PlanarConstraint::new(
+                BodyHandle::ground(),
+                rb,
+                Point3::origin(),
+                Vector3::x_axis(),
+                Point3::origin(),
+                Vector3::x_axis(),
+            );
+
+            world.add_constraint(constraint);
         }
     }
 
+    /*
     /*
      * Rectangular constraint.
      */
