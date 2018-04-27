@@ -202,6 +202,82 @@ pub fn constraints_are_ground_constraints<N: Real>(
     body1.status_dependent_parent_ndofs() == 0 || body2.status_dependent_parent_ndofs() == 0
 }
 
+pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis: &Unit<Vector<N>>,
+    ext_vels: &DVector<N>,
+    impulse: N,
+    impulse_id: usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
+    jacobians: &mut [N],
+    constraints: &mut ConstraintSet<N>,
+) {
+    let limits = ImpulseLimits::Independent {
+        min: -N::max_value(),
+        max: N::max_value(),
+    };
+
+    let force = ForceDirection::Linear(*axis);
+    let geom = constraint_pair_geometry(
+        body1,
+        body2,
+        anchor1,
+        anchor2,
+        &force,
+        ground_j_id,
+        j_id,
+        jacobians,
+    );
+
+    let rhs = constraint_pair_velocity(
+        &body1,
+        &body2,
+        assembly_id1,
+        assembly_id2,
+        anchor1,
+        anchor2,
+        &force,
+        ext_vels,
+        jacobians,
+        &geom,
+    );
+
+    if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
+        constraints
+            .velocity
+            .bilateral_ground
+            .push(BilateralGroundConstraint::new(
+                geom,
+                assembly_id1,
+                assembly_id2,
+                limits,
+                rhs,
+                impulse,
+                impulse_id,
+            ));
+    } else {
+        constraints
+            .velocity
+            .bilateral
+            .push(BilateralConstraint::new(
+                geom,
+                assembly_id1,
+                assembly_id2,
+                limits,
+                rhs,
+                impulse,
+                impulse_id,
+            ));
+    }
+}
+
 pub fn cancel_relative_linear_velocity<N: Real>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
@@ -225,63 +301,79 @@ pub fn cancel_relative_linear_velocity<N: Real>(
 
     let mut i = 0;
     Vector::canonical_basis(|dir| {
-        let dir = ForceDirection::Linear(Unit::new_unchecked(*dir));
-        let geom = constraint_pair_geometry(
+        cancel_relative_linear_velocity_wrt_axis(
+            params,
             body1,
             body2,
-            anchor1,
-            anchor2,
-            &dir,
-            ground_j_id,
-            j_id,
-            jacobians,
-        );
-
-        let rhs = constraint_pair_velocity(
-            &body1,
-            &body2,
             assembly_id1,
             assembly_id2,
             anchor1,
             anchor2,
-            &dir,
+            &Unit::new_unchecked(*dir),
             ext_vels,
+            impulses[i],
+            impulse_id + i,
+            ground_j_id,
+            j_id,
             jacobians,
-            &geom,
+            constraints,
         );
-
-        if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-            constraints
-                .velocity
-                .bilateral_ground
-                .push(BilateralGroundConstraint::new(
-                    geom,
-                    assembly_id1,
-                    assembly_id2,
-                    limits,
-                    rhs,
-                    impulses[i],
-                    impulse_id + i,
-                ));
-        } else {
-            constraints
-                .velocity
-                .bilateral
-                .push(BilateralConstraint::new(
-                    geom,
-                    assembly_id1,
-                    assembly_id2,
-                    limits,
-                    rhs,
-                    impulses[i],
-                    impulse_id + i,
-                ));
-        }
 
         i += 1;
 
         true
     });
+}
+pub fn cancel_relative_translation_wrt_axis<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis: &Unit<Vector<N>>,
+    jacobians: &mut [N],
+) -> Option<GenericNonlinearConstraint<N>> {
+    let mut depth = axis.dot(&(anchor2 - anchor1));
+
+    let force = if depth < N::zero() {
+        depth = -depth;
+        ForceDirection::Linear(-*axis)
+    } else {
+        ForceDirection::Linear(*axis)
+    };
+
+    if depth > params.allowed_linear_error {
+        let mut j_id = 0;
+        let mut ground_j_id = 0;
+
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            &force,
+            &mut ground_j_id,
+            &mut j_id,
+            jacobians,
+        );
+
+        let rhs = -depth;
+        let constraint = GenericNonlinearConstraint::new(
+            body1.handle(),
+            body2.handle(),
+            false,
+            geom.ndofs1,
+            geom.ndofs2,
+            geom.wj_id1,
+            geom.wj_id2,
+            rhs,
+            geom.r,
+        );
+
+        Some(constraint)
+    } else {
+        None
+    }
 }
 
 pub fn cancel_relative_translation<N: Real>(
@@ -718,7 +810,7 @@ pub fn project_anchor_to_axis<N: Real>(
         let constraint = GenericNonlinearConstraint::new(
             body1.handle(),
             body2.handle(),
-            true,
+            false,
             geom.ndofs1,
             geom.ndofs2,
             geom.wj_id1,
