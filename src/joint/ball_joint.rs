@@ -1,9 +1,9 @@
 use na::{self, Isometry3, Matrix3, Real, Translation3, U3, UnitQuaternion, Vector3, VectorSlice3};
 
-use utils::GeneralizedCross;
 use joint::Joint;
-use solver::IntegrationParameters;
 use math::{JacobianSliceMut, Velocity};
+use solver::IntegrationParameters;
+use utils::GeneralizedCross;
 
 #[derive(Copy, Clone, Debug)]
 pub struct BallJoint<N: Real> {
@@ -36,7 +36,7 @@ impl<N: Real> Joint<N> for BallJoint<N> {
 
     fn update_jacobians(&mut self, body_shift: &Vector3<N>, vels: &[N]) {
         let shift = self.rot * -body_shift;
-        let angvel = VectorSlice3::new(vels);
+        let angvel = VectorSlice3::from_slice(vels);
 
         self.jacobian_v = shift.gcross_matrix_tr();
         self.jacobian_dot_v = angvel.cross(&shift).gcross_matrix_tr();

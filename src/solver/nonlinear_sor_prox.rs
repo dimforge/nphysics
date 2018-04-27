@@ -1,20 +1,20 @@
-use std::marker::PhantomData;
-use std::ops::MulAssign;
-use approx::ApproxEq;
-use slab::Slab;
-use alga::linear::Transformation;
 use alga::linear::ProjectiveTransformation;
-use na::{self, DVector, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN, DVectorSlice};
+use alga::linear::Transformation;
+use approx::ApproxEq;
+use na::{self, DVector, DVectorSlice, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN};
 use ncollide::query::ContactKinematic;
 use ncollide::query::closest_points_internal;
+use slab::Slab;
+use std::marker::PhantomData;
+use std::ops::MulAssign;
 
-use object::{BodyHandle, BodyPart, BodySet};
 use joint::JointConstraint;
+use math::{Isometry, Point, Rotation, Vector};
+use object::{BodyHandle, BodyPart, BodySet};
 use solver::helper;
 use solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
              NonlinearUnilateralConstraint};
-use math::{Isometry, Point, Rotation, Vector};
 
 pub struct NonlinearSORProx<N: Real> {
     _phantom: PhantomData<N>,
@@ -88,18 +88,25 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: will this cause issue with very light objects?
                 // Should this be done depending on the jacobian magnitude instead
                 // (instead of JM-1J)?
-                if false { // constraint.r > params.max_stabilization_multiplier {
+                if false {
+                    // constraint.r > params.max_stabilization_multiplier {
                     constraint.r = params.max_stabilization_multiplier;
                 }
 
                 if rhs < N::zero() {
                     let impulse = -rhs * constraint.r;
 
-                    VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.wj_id1..], dim1, U1)
-                        .mul_assign(impulse);
+                    VectorSliceMutN::from_slice_generic(
+                        &mut jacobians[constraint.wj_id1..],
+                        dim1,
+                        U1,
+                    ).mul_assign(impulse);
 
-                    VectorSliceMutN::new_generic_mut(&mut jacobians[constraint.wj_id2..], dim2, U1)
-                        .mul_assign(impulse);
+                    VectorSliceMutN::from_slice_generic(
+                        &mut jacobians[constraint.wj_id2..],
+                        dim2,
+                        U1,
+                    ).mul_assign(impulse);
 
                     // FIXME: the body update should be performed lazily, especially because
                     // we dont actually need to update the kinematic of a multibody until
@@ -127,8 +134,8 @@ impl<N: Real> NonlinearSORProx<N> {
         if self.update_contact_constraint(params, bodies, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
-            VectorSliceMutN::new_generic_mut(jacobians, dim1, U1).mul_assign(impulse);
-            VectorSliceMutN::new_generic_mut(&mut jacobians[dim1.value()..], dim2, U1)
+            VectorSliceMutN::from_slice_generic(jacobians, dim1, U1).mul_assign(impulse);
+            VectorSliceMutN::from_slice_generic(&mut jacobians[dim1.value()..], dim2, U1)
                 .mul_assign(impulse);
 
             if dim1.value() != 0 {
@@ -206,10 +213,11 @@ impl<N: Real> NonlinearSORProx<N> {
             // Should this be done depending on the jacobian magnitude instead
             // (instead of JM-1J)?
 
-            // let j1 = DVectorSlice::new(&jacobians[j_id1..], constraint.ndofs1);
-            // let j2 = DVectorSlice::new(&jacobians[j_id2..], constraint.ndofs2);
+            // let j1 = DVectorSlice::from_slice(&jacobians[j_id1..], constraint.ndofs1);
+            // let j2 = DVectorSlice::from_slice(&jacobians[j_id2..], constraint.ndofs2);
 
-            if false { // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
+            if false {
+                // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
                 constraint.r = params.max_stabilization_multiplier;
             } else {
                 constraint.r = N::one() / inv_r

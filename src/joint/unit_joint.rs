@@ -3,10 +3,10 @@ use downcast::Any;
 use na::{DVectorSliceMut, Real};
 
 use joint::{Joint, JointMotor};
+use math::{Isometry, JacobianSliceMut, Vector, Velocity};
+use object::{BodyHandle, Multibody, MultibodyLinkRef};
 use solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
              IntegrationParameters, UnilateralGroundConstraint};
-use object::{BodyHandle, Multibody, MultibodyLinkRef};
-use math::{Isometry, JacobianSliceMut, Vector, Velocity};
 
 // FIXME: move this to its own file.
 pub trait UnitJoint<N: Real>: Joint<N> {
@@ -53,7 +53,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     if joint.motor().enabled {
         let dvel = link.joint_velocity()[dof_id] + ext_vels[assembly_id + link.assembly_id()];
 
-        DVectorSliceMut::new(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
+        DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
         jacobians[*ground_j_id + link.assembly_id() + dof_id] = N::one();
 
         let wj_id = *ground_j_id + ndofs;
@@ -87,7 +87,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
 
         if err >= N::zero() {
             is_min_constraint_active = true;
-            DVectorSliceMut::new(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
+            DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
             jacobians[*ground_j_id + link.assembly_id() + dof_id] = N::one();
 
             let wj_id = *ground_j_id + ndofs;
@@ -118,7 +118,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
             -link.joint_velocity()[dof_id] - ext_vels[assembly_id + link.assembly_id() + dof_id];
 
         if err >= N::zero() {
-            DVectorSliceMut::new(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
+            DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
             jacobians[*ground_j_id + link.assembly_id() + dof_id] = -N::one();
             let wj_id = *ground_j_id + ndofs;
 
