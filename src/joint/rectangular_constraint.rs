@@ -1,95 +1,53 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, Real, Unit, Vector3};
 use std::ops::Range;
 
 use joint::JointConstraint;
-use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
+use math::{AngularVector, Point, Vector, DIM};
 use object::{BodyHandle, BodySet};
 use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
-pub struct PrismaticConstraint<N: Real> {
+pub struct RectangularConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
-    axis1: Unit<Vector<N>>,
-    axis2: Unit<Vector<N>>,
-    lin_impulses: Vector<N>,
-    ang_impulses: AngularVector<N>,
+    axis1: Unit<AngularVector<N>>,
+    axis2: Unit<AngularVector<N>>,
+    lin_impulse: N,
+    ang_impulses: Vector3<N>,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
-
-    min_offset: Option<N>,
-    max_offset: Option<N>,
 }
 
-impl<N: Real> PrismaticConstraint<N> {
+impl<N: Real> RectangularConstraint<N> {
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
         anchor1: Point<N>,
-        axis1: Unit<Vector<N>>,
+        axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
-        axis2: Unit<Vector<N>>,
+        axis2: Unit<AngularVector<N>>,
     ) -> Self {
-        let min_offset = None;
-        let max_offset = None;
-
-        PrismaticConstraint {
+        RectangularConstraint {
             b1,
             b2,
             anchor1,
             anchor2,
             axis1,
             axis2,
-            lin_impulses: Vector::zeros(),
-            ang_impulses: AngularVector::zeros(),
+            lin_impulse: N::zero(),
+            ang_impulses: Vector3::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
-            min_offset,
-            max_offset,
-        }
-    }
-
-    pub fn min_offset(&self) -> Option<N> {
-        self.min_offset
-    }
-
-    pub fn max_offset(&self) -> Option<N> {
-        self.max_offset
-    }
-
-    pub fn disable_min_offset(&mut self) {
-        self.min_offset = None;
-    }
-
-    pub fn disable_max_offset(&mut self) {
-        self.max_offset = None;
-    }
-
-    pub fn enable_min_offset(&mut self, limit: N) {
-        self.min_offset = Some(limit);
-        self.assert_limits();
-    }
-
-    pub fn enable_max_offset(&mut self, limit: N) {
-        self.max_offset = Some(limit);
-        self.assert_limits();
-    }
-
-    fn assert_limits(&self) {
-        if let (Some(min_offset), Some(max_offset)) = (self.min_offset, self.max_offset) {
-            assert!(
-                min_offset <= max_offset,
-                "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
         }
     }
 }
 
-impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
+impl<N: Real> JointConstraint<N> for RectangularConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
-        SPATIAL_DIM - 1
+        4
     }
 
     fn anchors(&self) -> (BodyHandle, BodyHandle) {
@@ -127,9 +85,8 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         let axis1 = pos1 * self.axis1;
-        let axis2 = pos2 * self.axis2;
 
-        helper::restrict_relative_linear_velocity_to_axis(
+        helper::cancel_relative_linear_velocity_wrt_axis(
             params,
             &b1,
             &b2,
@@ -138,9 +95,8 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
             &anchor1,
             &anchor2,
             &axis1,
-            &axis2,
             ext_vels,
-            self.lin_impulses.as_slice(),
+            self.lin_impulse,
             0,
             ground_j_id,
             j_id,
@@ -158,7 +114,7 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
             &anchor2,
             ext_vels,
             &self.ang_impulses,
-            DIM - 1,
+            1,
             ground_j_id,
             j_id,
             jacobians,
@@ -178,24 +134,24 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
 
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
-            if c.impulse_id < DIM {
-                self.lin_impulses[c.impulse_id] = c.impulse;
+            if c.impulse_id == 0 {
+                self.lin_impulse = c.impulse
             } else {
-                self.ang_impulses[c.impulse_id - DIM] = c.impulse;
+                self.ang_impulses[c.impulse_id - 1] = c.impulse;
             }
         }
 
         for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
-            if c.impulse_id < DIM {
-                self.lin_impulses[c.impulse_id] = c.impulse;
+            if c.impulse_id == 0 {
+                self.lin_impulse = c.impulse
             } else {
-                self.ang_impulses[c.impulse_id - DIM] = c.impulse;
+                self.ang_impulses[c.impulse_id - 1] = c.impulse;
             }
         }
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
+impl<N: Real> NonlinearConstraintGenerator<N> for RectangularConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -221,7 +177,23 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
         let anchor1 = pos1 * self.anchor1;
         let anchor2 = pos2 * self.anchor2;
 
+        let axis1 = pos1 * self.axis1;
+
         if i == 0 {
+            return helper::cancel_relative_translation_wrt_axis(
+                params,
+                &body1,
+                &body2,
+                &anchor1,
+                &anchor2,
+                &axis1,
+                jacobians,
+            );
+        }
+
+        if i == 1 {
+            let axis2 = pos2 * self.axis2;
+
             return helper::cancel_relative_rotation(
                 params,
                 &body1,
@@ -230,22 +202,6 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
                 &anchor2,
                 &pos1.rotation,
                 &pos2.rotation,
-                jacobians,
-            );
-        }
-
-        if i == 1 {
-            let axis1 = pos1 * self.axis1;
-            let axis2 = pos2 * self.axis2;
-
-            return helper::project_anchor_to_axis(
-                params,
-                &body1,
-                &body2,
-                &anchor1,
-                &anchor2,
-                &axis1,
-                &axis2,
                 jacobians,
             );
         }

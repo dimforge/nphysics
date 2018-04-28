@@ -22,6 +22,7 @@ pub use self::rectangular_joint::RectangularJoint;
 #[cfg(feature = "dim3")]
 pub use self::universal_joint::UniversalJoint;
 
+pub use self::cartesian_constraint::CartesianConstraint;
 pub use self::fixed_constraint::FixedConstraint;
 pub use self::joint_constraint::{ConstraintHandle, JointConstraint};
 pub use self::joint_motor::JointMotor;
@@ -37,6 +38,10 @@ pub use self::cylindrical_constraint::CylindricalConstraint;
 pub use self::pin_slot_constraint::PinSlotConstraint;
 #[cfg(feature = "dim3")]
 pub use self::planar_constraint::PlanarConstraint;
+#[cfg(feature = "dim3")]
+pub use self::rectangular_constraint::RectangularConstraint;
+#[cfg(feature = "dim3")]
+pub use self::universal_constraint::UniversalConstraint;
 
 mod cartesian_joint;
 mod fixed_joint;
@@ -61,6 +66,7 @@ mod rectangular_joint;
 #[cfg(feature = "dim3")]
 mod universal_joint;
 
+mod cartesian_constraint;
 mod fixed_constraint;
 mod joint_constraint;
 mod joint_motor;
@@ -76,3 +82,7 @@ mod cylindrical_constraint;
 mod pin_slot_constraint;
 #[cfg(feature = "dim3")]
 mod planar_constraint;
+#[cfg(feature = "dim3")]
+mod rectangular_constraint;
+#[cfg(feature = "dim3")]
+mod universal_constraint;
