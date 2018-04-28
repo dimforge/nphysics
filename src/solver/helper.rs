@@ -420,18 +420,17 @@ pub fn cancel_relative_translation<N: Real>(
     }
 }
 
-pub fn cancel_relative_angular_velocity<N: Real>(
+pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
-    orientation1: &Rotation<N>,
-    orientation2: &Rotation<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
+    axis: &Unit<AngularVector<N>>,
     ext_vels: &DVector<N>,
-    impulses: &AngularVector<N>,
+    impulse: N,
     impulse_id: usize,
     ground_j_id: &mut usize,
     j_id: &mut usize,
@@ -443,60 +442,95 @@ pub fn cancel_relative_angular_velocity<N: Real>(
         max: N::max_value(),
     };
 
+    let force = ForceDirection::Angular(*axis);
+    let geom = constraint_pair_geometry(
+        body1,
+        body2,
+        anchor1,
+        anchor2,
+        &force,
+        ground_j_id,
+        j_id,
+        jacobians,
+    );
+
+    let rhs = constraint_pair_velocity(
+        &body1,
+        &body2,
+        assembly_id1,
+        assembly_id2,
+        anchor1,
+        anchor2,
+        &force,
+        ext_vels,
+        jacobians,
+        &geom,
+    );
+
+    if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
+        constraints
+            .velocity
+            .bilateral_ground
+            .push(BilateralGroundConstraint::new(
+                geom,
+                assembly_id1,
+                assembly_id2,
+                limits,
+                rhs,
+                impulse,
+                impulse_id,
+            ));
+    } else {
+        constraints
+            .velocity
+            .bilateral
+            .push(BilateralConstraint::new(
+                geom,
+                assembly_id1,
+                assembly_id2,
+                limits,
+                rhs,
+                impulse,
+                impulse_id,
+            ));
+    }
+}
+
+pub fn cancel_relative_angular_velocity<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    ext_vels: &DVector<N>,
+    impulses: &AngularVector<N>,
+    impulse_id: usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
+    jacobians: &mut [N],
+    constraints: &mut ConstraintSet<N>,
+) {
     let mut i = 0;
     AngularVector::canonical_basis(|dir| {
-        let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
-        let geom = constraint_pair_geometry(
+        cancel_relative_angular_velocity_wrt_axis(
+            params,
             body1,
             body2,
-            anchor1,
-            anchor2,
-            &dir,
-            ground_j_id,
-            j_id,
-            jacobians,
-        );
-
-        let rhs = constraint_pair_velocity(
-            &body1,
-            &body2,
             assembly_id1,
             assembly_id2,
             anchor1,
             anchor2,
-            &dir,
+            &Unit::new_unchecked(*dir),
             ext_vels,
+            impulses[i],
+            impulse_id + i,
+            ground_j_id,
+            j_id,
             jacobians,
-            &geom,
+            constraints,
         );
-
-        if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
-            constraints
-                .velocity
-                .bilateral_ground
-                .push(BilateralGroundConstraint::new(
-                    geom,
-                    assembly_id1,
-                    assembly_id2,
-                    limits,
-                    rhs,
-                    impulses[i],
-                    impulse_id + i,
-                ));
-        } else {
-            constraints
-                .velocity
-                .bilateral
-                .push(BilateralConstraint::new(
-                    geom,
-                    assembly_id1,
-                    assembly_id2,
-                    limits,
-                    rhs,
-                    impulses[i],
-                    impulse_id + i,
-                ));
-        }
 
         i += 1;
 
@@ -811,6 +845,76 @@ pub fn project_anchor_to_axis<N: Real>(
             body1.handle(),
             body2.handle(),
             false,
+            geom.ndofs1,
+            geom.ndofs2,
+            geom.wj_id1,
+            geom.wj_id2,
+            rhs,
+            geom.r,
+        );
+
+        Some(constraint)
+    } else {
+        None
+    }
+}
+
+// FIXME: this could be useful in 2D too.
+#[cfg(feature = "dim3")]
+pub fn restore_angle_between_axis<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis1: &Unit<Vector<N>>,
+    axis2: &Unit<Vector<N>>,
+    angle: N,
+    jacobians: &mut [N],
+) -> Option<GenericNonlinearConstraint<N>> {
+    // Angular regularization for two coincident axis.
+    let mut separation;
+    if let Some(separation_rot) = Rotation::rotation_between_axis(&axis1, &axis2) {
+        separation = separation_rot.scaled_axis();
+    } else {
+        // Separation equal to Pi, select one orthogonal direction.
+        let imin = axis1.iamin();
+        separation = Vector::zeros();
+        separation[imin] = N::one();
+        separation = na::normalize(&separation.cross(&axis1)) * N::pi();
+    }
+
+    if let Some((mut dir, curr_ang)) = Unit::try_new_and_get(separation, N::default_epsilon()) {
+        let mut error = curr_ang - angle;
+
+        if error < N::zero() {
+            error = -error;
+            dir = -dir;
+        }
+
+        if error < params.allowed_angular_error {
+            return None;
+        }
+
+        let mut j_id = 0;
+        let mut ground_j_id = 0;
+
+        let geom = constraint_pair_geometry(
+            body1,
+            body2,
+            anchor1,
+            anchor2,
+            &ForceDirection::Angular(dir),
+            &mut ground_j_id,
+            &mut j_id,
+            jacobians,
+        );
+
+        let rhs = -error;
+        let constraint = GenericNonlinearConstraint::new(
+            body1.handle(),
+            body2.handle(),
+            true,
             geom.ndofs1,
             geom.ndofs2,
             geom.wj_id1,
