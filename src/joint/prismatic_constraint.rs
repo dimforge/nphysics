@@ -224,7 +224,11 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
-            3
+            if self.min_offset.is_some() || self.max_offset.is_some() {
+                2
+            } else {
+                3
+            }
         } else {
             0
         }
