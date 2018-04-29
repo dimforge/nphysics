@@ -100,17 +100,17 @@ fn main() {
     /*
      * Prismatic constraint.
      */
-    let first_anchor = Point3::new(0.0, 5.0, 5.0);
+    let first_anchor = Point3::new(0.0, 5.0, 4.0);
     let mut pos = first_anchor.coords;
     parent = BodyHandle::ground();
 
-    for i in 0usize..2 {
+    for i in 0usize..3 {
         let mut body_anchor = Point3::origin();
         let mut parent_anchor = Point3::origin();
         if i == 0 {
             parent_anchor = first_anchor;
         } else {
-            body_anchor = Point3::new(0.0, 0.0, 1.0) * (rad * 3.0);
+            body_anchor = Point3::new(0.0, 0.0, -1.0) * (rad * 3.0);
         }
 
         pos -= body_anchor.coords;
@@ -129,7 +129,7 @@ fn main() {
             material.clone(),
         );
 
-        let constraint = PrismaticConstraint::new(
+        let mut constraint = PrismaticConstraint::new(
             parent,
             rb,
             parent_anchor,
@@ -137,6 +137,8 @@ fn main() {
             body_anchor,
             Vector3::y_axis(),
         );
+
+        constraint.enable_min_offset(-rad * 2.0);
 
         world.add_constraint(constraint);
 
