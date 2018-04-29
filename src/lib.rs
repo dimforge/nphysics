@@ -95,10 +95,11 @@ The libraries needed to compile the examples are:
 #![doc(html_root_url = "http://nphysics-dev.org/doc")]
 
 #[macro_use]
+extern crate approx;
+#[macro_use]
 extern crate downcast;
 
 extern crate alga;
-extern crate approx;
 extern crate nalgebra as na;
 #[cfg(feature = "dim2")]
 extern crate ncollide2d as ncollide;
@@ -110,24 +111,24 @@ extern crate time;
 //#[cfg(test)]
 //extern crate test;
 
-pub mod detection;
-pub mod solver;
-pub mod world;
-pub mod object;
-pub mod joint;
-pub mod utils;
-pub mod volumetric;
 pub mod algebra;
 pub mod counters;
+pub mod detection;
 pub mod force_generator;
+pub mod joint;
+pub mod object;
+pub mod solver;
+pub mod utils;
+pub mod volumetric;
+pub mod world;
 // mod tests;
 
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim3")]
 pub mod math {
+  use algebra::{Force3, Inertia3, Velocity3};
   use na::{Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX,
            Point3, Translation3, U3, U6, UnitQuaternion, Vector3, Vector6};
-  use algebra::{Force3, Inertia3, Velocity3};
 
   pub const SPATIAL_DIM: usize = 6;
   pub const ANGULAR_DIM: usize = 3;
@@ -197,9 +198,9 @@ pub mod math {
 /// Compilation flags dependent aliases for mathematical types.
 #[cfg(feature = "dim2")]
 pub mod math {
+  use algebra::{Force2, Inertia2, Velocity2};
   use na::{Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX,
            Point2, Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3};
-  use algebra::{Force2, Inertia2, Velocity2};
 
   pub const SPATIAL_DIM: usize = 3;
   pub const ANGULAR_DIM: usize = 1;

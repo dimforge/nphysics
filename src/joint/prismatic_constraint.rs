@@ -1,7 +1,7 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, Real, Unit, Vector2};
 use std::ops::Range;
 
-use joint::JointConstraint;
+use joint::{unit_constraint, JointConstraint};
 use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 use object::{BodyHandle, BodySet};
 use solver::helper;
@@ -17,6 +17,7 @@ pub struct PrismaticConstraint<N: Real> {
     axis2: Unit<Vector<N>>,
     lin_impulses: Vector<N>,
     ang_impulses: AngularVector<N>,
+    limit_impulse: N,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 
@@ -45,6 +46,7 @@ impl<N: Real> PrismaticConstraint<N> {
             axis2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
+            limit_impulse: N::zero(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
             min_offset,
@@ -89,7 +91,7 @@ impl<N: Real> PrismaticConstraint<N> {
 
 impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
-        SPATIAL_DIM - 1
+        (SPATIAL_DIM - 1) + 2
     }
 
     fn anchors(&self) -> (BodyHandle, BodyHandle) {
@@ -170,6 +172,25 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
          * Limit constraints.
          *
          */
+        unit_constraint::build_linear_limits_velocity_constraint(
+            params,
+            &b1,
+            &b2,
+            assembly_id1,
+            assembly_id2,
+            &anchor1,
+            &anchor2,
+            &axis1,
+            self.min_offset,
+            self.max_offset,
+            ext_vels,
+            self.limit_impulse,
+            SPATIAL_DIM - 1,
+            ground_j_id,
+            j_id,
+            jacobians,
+            constraints,
+        );
 
         self.bilateral_ground_rng =
             first_bilateral_ground..constraints.velocity.bilateral_ground.len();
@@ -178,18 +199,22 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
 
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
-            if c.impulse_id < DIM {
+            if c.impulse_id < DIM - 1 {
                 self.lin_impulses[c.impulse_id] = c.impulse;
+            } else if c.impulse_id < SPATIAL_DIM - 1 {
+                self.ang_impulses[c.impulse_id - DIM + 1] = c.impulse;
             } else {
-                self.ang_impulses[c.impulse_id - DIM] = c.impulse;
+                self.limit_impulse = c.impulse
             }
         }
 
         for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
-            if c.impulse_id < DIM {
+            if c.impulse_id < DIM - 1 {
                 self.lin_impulses[c.impulse_id] = c.impulse;
+            } else if c.impulse_id < SPATIAL_DIM - 1 {
+                self.ang_impulses[c.impulse_id - DIM + 1] = c.impulse;
             } else {
-                self.ang_impulses[c.impulse_id - DIM] = c.impulse;
+                self.limit_impulse = c.impulse
             }
         }
     }
@@ -199,7 +224,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
-            2
+            3
         } else {
             0
         }
@@ -232,9 +257,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
                 &pos2.rotation,
                 jacobians,
             );
-        }
-
-        if i == 1 {
+        } else if i == 1 {
             let axis1 = pos1 * self.axis1;
             let axis2 = pos2 * self.axis2;
 
@@ -246,6 +269,20 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
                 &anchor2,
                 &axis1,
                 &axis2,
+                jacobians,
+            );
+        } else if i == 2 {
+            let axis1 = pos1 * self.axis1;
+
+            return unit_constraint::build_linear_limits_position_constraint(
+                params,
+                &body1,
+                &body2,
+                &anchor1,
+                &anchor2,
+                &axis1,
+                self.min_offset,
+                self.max_offset,
                 jacobians,
             );
         }

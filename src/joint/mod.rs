@@ -73,6 +73,7 @@ mod joint_motor;
 mod mouse_constraint;
 mod prismatic_constraint;
 mod revolute_constraint;
+mod unit_constraint;
 
 #[cfg(feature = "dim3")]
 mod ball_constraint;
