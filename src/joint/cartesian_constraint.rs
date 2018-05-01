@@ -56,7 +56,7 @@ impl<N: Real> JointConstraint<N> for CartesianConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -80,7 +80,6 @@ impl<N: Real> JointConstraint<N> for CartesianConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_angular_velocity(
-            params,
             &body1,
             &body2,
             assembly_id1,

@@ -4,7 +4,7 @@ pub use self::material::Material;
 
 pub use self::ground::Ground;
 pub use self::body::{ActivationStatus, Body, BodyMut, BodyPart, BodyPartMut, BodyStatus};
-pub use self::body_set::{BodyHandle, BodySet};
+pub use self::body_set::{Bodies, BodyHandle, BodySet};
 pub use self::multibody_link::{MultibodyLink, MultibodyLinkId, MultibodyLinkMut, MultibodyLinkRef,
                                MultibodyLinkVec};
 pub use self::rigid_body::RigidBody;

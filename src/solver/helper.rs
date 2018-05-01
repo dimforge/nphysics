@@ -1,5 +1,7 @@
 use alga::linear::{FiniteDimInnerSpace, FiniteDimVectorSpace};
-use na::{self, DVector, DVectorSlice, Real, Unit};
+#[cfg(feature = "dim3")]
+use na;
+use na::{DVector, DVectorSlice, Real, Unit};
 use std::ops::Neg;
 
 use math::{AngularVector, Force, Point, Rotation, Vector};
@@ -203,7 +205,6 @@ pub fn constraints_are_ground_constraints<N: Real>(
 }
 
 pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
@@ -279,7 +280,6 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
 }
 
 pub fn cancel_relative_linear_velocity<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
@@ -294,15 +294,9 @@ pub fn cancel_relative_linear_velocity<N: Real>(
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
-    let limits = ImpulseLimits::Independent {
-        min: -N::max_value(),
-        max: N::max_value(),
-    };
-
     let mut i = 0;
     Vector::canonical_basis(|dir| {
         cancel_relative_linear_velocity_wrt_axis(
-            params,
             body1,
             body2,
             assembly_id1,
@@ -421,7 +415,6 @@ pub fn cancel_relative_translation<N: Real>(
 }
 
 pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
@@ -497,7 +490,6 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
 }
 
 pub fn cancel_relative_angular_velocity<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
@@ -515,7 +507,6 @@ pub fn cancel_relative_angular_velocity<N: Real>(
     let mut i = 0;
     AngularVector::canonical_basis(|dir| {
         cancel_relative_angular_velocity_wrt_axis(
-            params,
             body1,
             body2,
             assembly_id1,
@@ -586,13 +577,11 @@ pub fn cancel_relative_rotation<N: Real>(
 
 #[cfg(feature = "dim3")]
 pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
-    axis1: &Unit<AngularVector<N>>,
-    axis2: &Unit<AngularVector<N>>,
+    axis: &Unit<AngularVector<N>>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     ext_vels: &DVector<N>,
@@ -609,7 +598,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
     };
 
     let mut i = 0;
-    AngularVector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
+    AngularVector::orthonormal_subspace_basis(&[axis.unwrap()], |dir| {
         let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
         let geom = constraint_pair_geometry(
             body1,
@@ -727,7 +716,6 @@ pub fn align_axis<N: Real>(
 }
 
 pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
@@ -735,7 +723,6 @@ pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
-    axis2: &Unit<Vector<N>>,
     ext_vels: &DVector<N>,
     impulses: &[N],
     impulse_id: usize,
@@ -817,7 +804,6 @@ pub fn project_anchor_to_axis<N: Real>(
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
-    axis2: &Unit<Vector<N>>,
     jacobians: &mut [N],
 ) -> Option<GenericNonlinearConstraint<N>> {
     // Linear regularization of a point on an axis.

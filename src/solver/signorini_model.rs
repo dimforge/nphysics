@@ -1,6 +1,5 @@
 use std::ops::Range;
-use alga::linear::ProjectiveTransformation;
-use na::{self, DVector, Real, Unit};
+use na::{self, DVector, Real};
 
 use ncollide::query::TrackedContact;
 use ncollide::utils::IsometryOps;
@@ -8,8 +7,7 @@ use detection::ColliderContactManifold;
 use solver::helper;
 use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
              NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
-use object::{BodyHandle, BodySet, Material};
-use math::{Isometry, Point};
+use object::BodySet;
 
 pub struct SignoriniModel<N: Real> {
     impulses: ImpulseCache<N>,

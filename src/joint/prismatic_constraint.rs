@@ -14,7 +14,6 @@ pub struct PrismaticConstraint<N: Real> {
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<Vector<N>>,
-    axis2: Unit<Vector<N>>,
     lin_impulses: Vector<N>,
     ang_impulses: AngularVector<N>,
     limit_impulse: N,
@@ -32,7 +31,6 @@ impl<N: Real> PrismaticConstraint<N> {
         anchor1: Point<N>,
         axis1: Unit<Vector<N>>,
         anchor2: Point<N>,
-        axis2: Unit<Vector<N>>,
     ) -> Self {
         let min_offset = None;
         let max_offset = None;
@@ -43,7 +41,6 @@ impl<N: Real> PrismaticConstraint<N> {
             anchor1,
             anchor2,
             axis1,
-            axis2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
             limit_impulse: N::zero(),
@@ -100,7 +97,7 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -128,19 +125,16 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
 
-        let axis1 = pos1 * self.axis1;
-        let axis2 = pos2 * self.axis2;
+        let axis = pos1 * self.axis1;
 
         helper::restrict_relative_linear_velocity_to_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
             &anchor2,
-            &axis1,
-            &axis2,
+            &axis,
             ext_vels,
             self.lin_impulses.as_slice(),
             0,
@@ -151,7 +145,6 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
         );
 
         helper::cancel_relative_angular_velocity(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -173,14 +166,13 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
          *
          */
         unit_constraint::build_linear_limits_velocity_constraint(
-            params,
             &b1,
             &b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
             &anchor2,
-            &axis1,
+            &axis,
             self.min_offset,
             self.max_offset,
             ext_vels,
@@ -262,8 +254,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
                 jacobians,
             );
         } else if i == 1 {
-            let axis1 = pos1 * self.axis1;
-            let axis2 = pos2 * self.axis2;
+            let axis = pos1 * self.axis1;
 
             return helper::project_anchor_to_axis(
                 params,
@@ -271,12 +262,11 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
                 &body2,
                 &anchor1,
                 &anchor2,
-                &axis1,
-                &axis2,
+                &axis,
                 jacobians,
             );
         } else if i == 2 {
-            let axis1 = pos1 * self.axis1;
+            let axis = pos1 * self.axis1;
 
             return unit_constraint::build_linear_limits_position_constraint(
                 params,
@@ -284,7 +274,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
                 &body2,
                 &anchor1,
                 &anchor2,
-                &axis1,
+                &axis,
                 self.min_offset,
                 self.max_offset,
                 jacobians,

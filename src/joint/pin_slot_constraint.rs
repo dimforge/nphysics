@@ -14,7 +14,6 @@ pub struct PinSlotConstraint<N: Real> {
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis_v1: Unit<Vector<N>>,
-    axis_v2: Unit<Vector<N>>,
     axis_w1: Unit<Vector<N>>,
     axis_w2: Unit<Vector<N>>,
     lin_impulses: Vector<N>,
@@ -34,7 +33,6 @@ impl<N: Real> PinSlotConstraint<N> {
         axis_v1: Unit<Vector<N>>,
         axis_w1: Unit<Vector<N>>,
         anchor2: Point<N>,
-        axis_v2: Unit<Vector<N>>,
         axis_w2: Unit<Vector<N>>,
     ) -> Self {
         let min_offset = None;
@@ -47,7 +45,6 @@ impl<N: Real> PinSlotConstraint<N> {
             anchor2,
             axis_v1,
             axis_w1,
-            axis_v2,
             axis_w2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
@@ -104,7 +101,7 @@ impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -133,13 +130,9 @@ impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         let axis_v1 = pos1 * self.axis_v1;
-        let axis_v2 = pos2 * self.axis_v2;
-
         let axis_w1 = pos1 * self.axis_w1;
-        let axis_w2 = pos2 * self.axis_w2;
 
         helper::restrict_relative_linear_velocity_to_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -147,7 +140,6 @@ impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {
             &anchor1,
             &anchor2,
             &axis_v1,
-            &axis_v2,
             ext_vels,
             self.lin_impulses.as_slice(),
             0,
@@ -158,13 +150,11 @@ impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {
         );
 
         helper::restrict_relative_angular_velocity_to_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
             assembly_id2,
             &axis_w1,
-            &axis_w2,
             &anchor1,
             &anchor2,
             ext_vels,
@@ -249,8 +239,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PinSlotConstraint<N> {
         }
 
         if i == 1 {
-            let axis1 = pos1 * self.axis_v1;
-            let axis2 = pos2 * self.axis_v2;
+            let axis = pos1 * self.axis_v1;
 
             return helper::project_anchor_to_axis(
                 params,
@@ -258,8 +247,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PinSlotConstraint<N> {
                 &body2,
                 &anchor1,
                 &anchor2,
-                &axis1,
-                &axis2,
+                &axis,
                 jacobians,
             );
         }

@@ -1,16 +1,10 @@
-use alga::linear::ProjectiveTransformation;
-use alga::linear::Transformation;
-use approx::ApproxEq;
-use na::{self, DVector, DVectorSlice, Dim, Dynamic, Real, U1, Unit, VectorSliceMutN};
-use ncollide::query::ContactKinematic;
-use ncollide::query::closest_points_internal;
+use na::{self, Dim, Dynamic, Real, U1, VectorSliceMutN};
 use slab::Slab;
 use std::marker::PhantomData;
 use std::ops::MulAssign;
 
 use joint::JointConstraint;
-use math::{Isometry, Point, Rotation, Vector};
-use object::{BodyHandle, BodyPart, BodySet};
+use object::BodySet;
 use solver::helper;
 use solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,

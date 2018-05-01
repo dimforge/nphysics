@@ -234,6 +234,7 @@ impl<N: Real> UnitJoint<N> for PrismaticJoint<N> {
     }
 }
 
+#[cfg(feature = "dim3")]
 macro_rules! prismatic_motor_limit_methods(
     ($ty: ident, $prism: ident) => {
         _prismatic_motor_limit_methods!(
@@ -255,6 +256,7 @@ macro_rules! prismatic_motor_limit_methods(
     }
 );
 
+#[cfg(feature = "dim3")]
 macro_rules! prismatic_motor_limit_methods_1(
     ($ty: ident, $prism: ident) => {
         _prismatic_motor_limit_methods!(
@@ -276,6 +278,7 @@ macro_rules! prismatic_motor_limit_methods_1(
     }
 );
 
+#[cfg(feature = "dim3")]
 macro_rules! prismatic_motor_limit_methods_2(
     ($ty: ident, $prism: ident) => {
         _prismatic_motor_limit_methods!(
@@ -297,6 +300,7 @@ macro_rules! prismatic_motor_limit_methods_2(
     }
 );
 
+#[cfg(feature = "dim3")]
 macro_rules! _prismatic_motor_limit_methods(
     ($ty: ident, $prism: ident,
      $min_offset:         ident,

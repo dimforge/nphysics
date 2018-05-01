@@ -1,10 +1,7 @@
-use downcast::Any;
-
 use na::{DVectorSliceMut, Real};
 
 use joint::{Joint, JointMotor};
-use math::{Isometry, JacobianSliceMut, Vector, Velocity};
-use object::{BodyHandle, Multibody, MultibodyLinkRef};
+use object::{BodyHandle, MultibodyLinkRef};
 use solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
              IntegrationParameters, UnilateralGroundConstraint};
 

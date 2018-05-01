@@ -3,11 +3,11 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Unit, Point3, Vector3, Isometry3};
+use na::{Isometry3, Point3, Unit, Vector3};
 use ncollide3d::shape::{Ball, Plane, ShapeHandle};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
-use nphysics3d::object::{Collider, BodyHandle, Material};
+use nphysics3d::object::{BodyHandle, Collider, Material};
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -29,7 +29,7 @@ fn main() {
         Unit::new_normalize(Vector3::new(-1.0, 1.0, -1.0)),
         Unit::new_normalize(Vector3::new(1.0, 1.0, -1.0)),
         Unit::new_normalize(Vector3::new(-1.0, 1.0, 1.0)),
-        Unit::new_normalize(Vector3::new(1.0, 1.0, 1.0))
+        Unit::new_normalize(Vector3::new(1.0, 1.0, 1.0)),
     ];
     for n in normals.iter() {
         let ground_shape = ShapeHandle::new(Plane::new(*n));
@@ -47,18 +47,19 @@ fn main() {
     /*
      * Create the balls
      */
-    let num     = 1500.0f32.powf(1.0f32 / 3.0) as usize;
-    let rad     = 0.1;
-    let shift   = 2.5 * rad;
+    let num = 1500.0f32.powf(1.0f32 / 3.0) as usize;
+    let rad = 0.1;
+    let shift = 2.5 * rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
     let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
-    for i in 0usize .. num {
-        for j in 0usize .. num {
-            for k in 0usize .. num {
+    for i in 0usize..num {
+        for j in 0usize..num {
+            for k in 0usize..num {
                 let x = i as f32 * 2.5 * rad - centerx;
                 let y = 3.0 + j as f32 * 2.5 * rad + centery * 2.0;
                 let z = k as f32 * 2.5 * rad - centerx;
@@ -67,7 +68,7 @@ fn main() {
                  * Create the rigid body.
                  */
                 let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia);
+                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
                 /*
                  * Create the collider.

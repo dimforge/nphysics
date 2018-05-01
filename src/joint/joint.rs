@@ -4,8 +4,7 @@ use na::Real;
 
 use math::{Isometry, JacobianSliceMut, Vector, Velocity};
 use object::MultibodyLinkRef;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
-             UnilateralGroundConstraint};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 pub trait Joint<N: Real>: Any + Send + Sync {
     fn ndofs(&self) -> usize;

@@ -98,7 +98,7 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -127,10 +127,8 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         let axis1 = pos1 * self.axis1;
-        let axis2 = pos2 * self.axis2;
 
         helper::restrict_relative_linear_velocity_to_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -138,7 +136,6 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
             &anchor1,
             &anchor2,
             &axis1,
-            &axis2,
             ext_vels,
             self.lin_impulses.as_slice(),
             0,
@@ -149,13 +146,11 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
         );
 
         helper::restrict_relative_angular_velocity_to_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
             assembly_id2,
             &axis1,
-            &axis2,
             &anchor1,
             &anchor2,
             ext_vels,
@@ -247,7 +242,6 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
                 &anchor1,
                 &anchor2,
                 &axis1,
-                &axis2,
                 jacobians,
             );
         }
