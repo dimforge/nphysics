@@ -1,12 +1,11 @@
 use downcast::Any;
 
-use na::{DVectorSliceMut, Real};
+use na::Real;
 
-use joint::JointMotor;
-use solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
-             IntegrationParameters, UnilateralGroundConstraint};
-use object::{BodyHandle, Multibody, MultibodyLinkRef};
 use math::{Isometry, JacobianSliceMut, Vector, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+             UnilateralGroundConstraint};
 
 pub trait Joint<N: Real>: Any + Send + Sync {
     fn ndofs(&self) -> usize;

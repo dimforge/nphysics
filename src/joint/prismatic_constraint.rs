@@ -1,4 +1,4 @@
-use na::{DVector, Real, Unit, Vector2};
+use na::{DVector, Real, Unit};
 use std::ops::Range;
 
 use joint::{unit_constraint, JointConstraint};

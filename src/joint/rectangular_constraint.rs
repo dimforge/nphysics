@@ -2,7 +2,7 @@ use na::{DVector, Real, Unit, Vector3};
 use std::ops::Range;
 
 use joint::JointConstraint;
-use math::{AngularVector, Point, Vector, DIM};
+use math::{AngularVector, Point};
 use object::{BodyHandle, BodySet};
 use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
@@ -192,8 +192,6 @@ impl<N: Real> NonlinearConstraintGenerator<N> for RectangularConstraint<N> {
         }
 
         if i == 1 {
-            let axis2 = pos2 * self.axis2;
-
             return helper::cancel_relative_rotation(
                 params,
                 &body1,

@@ -1,10 +1,9 @@
-use std::sync::Arc;
+use draw_helper::draw_line;
+use na::{Isometry2, Point2, Point3};
+use nphysics2d::object::ColliderHandle;
+use nphysics2d::world::World;
 use sfml::graphics;
 use sfml::graphics::Color;
-use na::{Isometry2, Point2, Point3};
-use nphysics2d::world::World;
-use nphysics2d::object::ColliderHandle;
-use draw_helper::draw_line;
 
 pub struct Lines {
     color: Point3<u8>,
@@ -17,7 +16,7 @@ pub struct Lines {
 impl Lines {
     pub fn new(
         collider: ColliderHandle,
-        world: &World<f32>,
+        _: &World<f32>,
         delta: Isometry2<f32>,
         vertices: Vec<Point2<f32>>,
         color: Point3<u8>,

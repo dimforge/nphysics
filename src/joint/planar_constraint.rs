@@ -2,7 +2,7 @@ use na::{DVector, Real, Unit};
 use std::ops::Range;
 
 use joint::JointConstraint;
-use math::{AngularVector, Point, Vector, DIM};
+use math::{AngularVector, Point};
 use object::{BodyHandle, BodySet};
 use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,

@@ -2,7 +2,7 @@ use na::{DVector, Real};
 use std::ops::Range;
 
 use joint::JointConstraint;
-use math::{AngularVector, Isometry, Point, Vector, ANGULAR_DIM, DIM, SPATIAL_DIM};
+use math::{AngularVector, Isometry, Point, ANGULAR_DIM};
 use object::{BodyHandle, BodySet};
 use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
@@ -73,9 +73,6 @@ impl<N: Real> JointConstraint<N> for CartesianConstraint<N> {
         let anchor1 = Point::from_coordinates(pos1.translation.vector);
         let anchor2 = Point::from_coordinates(pos2.translation.vector);
 
-        let rotation1 = pos1.rotation;
-        let rotation2 = pos2.rotation;
-
         let assembly_id1 = body1.parent_companion_id();
         let assembly_id2 = body2.parent_companion_id();
 
@@ -128,7 +125,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
     fn position_constraint(
         &self,
         params: &IntegrationParameters<N>,
-        i: usize,
+        _: usize,
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
