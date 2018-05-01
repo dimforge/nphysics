@@ -75,9 +75,6 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
         let anchor1 = Point::from_coordinates(pos1.translation.vector);
         let anchor2 = Point::from_coordinates(pos2.translation.vector);
 
-        let rotation1 = pos1.rotation;
-        let rotation2 = pos2.rotation;
-
         let assembly_id1 = b1.parent_companion_id();
         let assembly_id2 = b2.parent_companion_id();
 

@@ -3,9 +3,9 @@
 use na::{self, Real, Unit};
 
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::{Multibody, MultibodyLinkRef};
 use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 #[derive(Copy, Clone, Debug)]
 pub struct PrismaticJoint<N: Real> {

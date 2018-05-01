@@ -1,8 +1,8 @@
 use na::Real;
 use ncollide::query::{ContactManifold, TrackedContact};
 
-use object::{BodyHandle, Collider, ColliderHandle};
-use math::{Isometry, Point};
+use math::Isometry;
+use object::{BodyHandle, Collider};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]

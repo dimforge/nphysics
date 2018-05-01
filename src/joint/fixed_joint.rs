@@ -1,8 +1,8 @@
 use na::Real;
 
-use solver::IntegrationParameters;
 use joint::Joint;
 use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
+use solver::IntegrationParameters;
 
 #[derive(Copy, Clone, Debug)]
 pub struct FixedJoint<N: Real> {
@@ -43,7 +43,7 @@ impl<N: Real> Joint<N> for FixedJoint<N> {
     }
 
     fn integrate(&mut self, _: &IntegrationParameters<N>, _: &[N]) {}
-    fn apply_displacement(&mut self, disp: &[N]) {}
+    fn apply_displacement(&mut self, _: &[N]) {}
 
     fn jacobian_mul_coordinates(&self, _: &[N]) -> Velocity<N> {
         Velocity::zero()

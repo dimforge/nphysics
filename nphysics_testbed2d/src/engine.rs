@@ -1,17 +1,16 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::sync::Arc;
-use std::collections::HashMap;
+use camera::Camera;
+use na;
+use na::{Isometry2, Point3};
+use ncollide2d::shape::{self, Compound, ConvexPolygon, Cuboid, Plane, Polyline, Shape};
+use ncollide2d::transformation;
+use nphysics2d::object::{Body, BodyHandle, ColliderHandle};
+use nphysics2d::world::World;
+use objects::{Ball, Box, Lines, SceneNode, Segment};
 use rand::{Rng, SeedableRng, XorShiftRng};
 use sfml::graphics::RenderWindow;
-use na::{Isometry2, Point2, Point3};
-use na;
-use nphysics2d::world::World;
-use nphysics2d::object::{Body, BodyHandle, ColliderHandle};
-use ncollide2d::transformation;
-use ncollide2d::shape::{self, Compound, ConvexPolygon, Polyline, Cuboid, Plane, Shape};
-use camera::Camera;
-use objects::{Ball, Box, Lines, SceneNode, Segment};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 pub type GraphicsManagerHandle = Rc<RefCell<GraphicsManager<'static>>>;
 

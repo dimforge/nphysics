@@ -1,9 +1,9 @@
 use na::{Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 #[derive(Copy, Clone, Debug)]
 pub struct HelicalJoint<N: Real> {
@@ -116,7 +116,7 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
 
     fn position_constraint(
         &self,
-        i: usize,
+        _: usize,
         link: &MultibodyLinkRef<N>,
         dof_id: usize,
         jacobians: &mut [N],

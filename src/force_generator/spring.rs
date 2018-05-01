@@ -1,10 +1,9 @@
-use approx::ApproxEq;
 use na::{Real, Unit};
 
+use force_generator::ForceGenerator;
 use math::{Force, Point, Vector};
 use object::{BodyHandle, BodySet};
 use solver::IntegrationParameters;
-use force_generator::ForceGenerator;
 
 pub struct Spring<N: Real> {
     b1: BodyHandle,

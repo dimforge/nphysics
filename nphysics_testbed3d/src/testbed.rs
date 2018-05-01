@@ -1,24 +1,24 @@
-use std::env;
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::path::Path;
-use std::collections::HashMap;
-use time;
 use glfw::{Action, Key, Modifiers, MouseButton, WindowEvent};
 use num::Bounded;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::env;
+use std::path::Path;
+use std::rc::Rc;
+use time;
 
-use na::{self, Isometry3, Point2, Point3, Vector3};
-use kiss3d::window::Window;
+use engine::{GraphicsManager, GraphicsManagerHandle};
 use kiss3d::light::Light;
-use kiss3d::text::Font;
 use kiss3d::loader::obj;
+use kiss3d::text::Font;
+use kiss3d::window::Window;
+use na::{self, Point2, Point3, Vector3};
 use ncollide3d::query::{self, Ray};
-use ncollide3d::world::CollisionGroups;
 use ncollide3d::utils::GenerationalId;
+use ncollide3d::world::CollisionGroups;
+use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics3d::object::BodyHandle;
 use nphysics3d::world::World;
-use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
-use engine::{GraphicsManager, GraphicsManagerHandle};
 
 #[derive(PartialEq)]
 enum RunMode {

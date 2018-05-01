@@ -1,11 +1,11 @@
+use draw_helper::DRAW_SCALE;
+use na::{Isometry2, Point3};
+use nphysics2d::object::ColliderHandle;
+use nphysics2d::world::World;
+use objects;
 use sfml::graphics;
 use sfml::graphics::{CircleShape, Color, RenderTarget, Shape, Transformable};
 use sfml::system::Vector2f;
-use na::{Isometry2, Point3};
-use nphysics2d::world::World;
-use nphysics2d::object::ColliderHandle;
-use draw_helper::DRAW_SCALE;
-use objects;
 
 pub struct Ball<'a> {
     color: Point3<u8>,
@@ -18,7 +18,7 @@ pub struct Ball<'a> {
 impl<'a> Ball<'a> {
     pub fn new(
         collider: ColliderHandle,
-        world: &World<f32>,
+        _: &World<f32>,
         delta: Isometry2<f32>,
         radius: f32,
         color: Point3<u8>,

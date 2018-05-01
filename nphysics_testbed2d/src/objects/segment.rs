@@ -1,9 +1,9 @@
+use draw_helper::draw_line;
+use na::{Isometry2, Point2, Point3};
+use nphysics2d::object::ColliderHandle;
+use nphysics2d::world::World;
 use sfml::graphics;
 use sfml::graphics::Color;
-use na::{Isometry2, Point2, Point3};
-use nphysics2d::world::World;
-use nphysics2d::object::ColliderHandle;
-use draw_helper::draw_line;
 
 pub struct Segment {
     color: Point3<u8>,
@@ -17,7 +17,7 @@ pub struct Segment {
 impl Segment {
     pub fn new(
         collider: ColliderHandle,
-        world: &World<f32>,
+        _: &World<f32>,
         delta: Isometry2<f32>,
         a: Point2<f32>,
         b: Point2<f32>,
