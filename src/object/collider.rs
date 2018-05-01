@@ -1,8 +1,8 @@
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
-use object::{BodyHandle, Material, BodyStatus};
-use math::{Isometry, Point};
+use object::{BodyHandle, Material};
+use math::Isometry;
 
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
 

@@ -49,7 +49,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_vel = constraints.velocity.unilateral.len();
         let id_friction_ground = constraints.velocity.bilateral_ground.len();
         let id_friction = constraints.velocity.bilateral.len();
-        let mut in_cache = 0;
 
         for manifold in manifolds {
             let body1 = bodies.body_part(manifold.collider1.data().body());
@@ -63,10 +62,6 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
                 //     continue;
                 // }
-
-                if self.impulses.contains(c.id) {
-                    in_cache += 1;
-                }
 
                 let impulse = self.impulses.get(c.id);
                 let impulse_id = self.impulses.entry_id(c.id);
@@ -85,12 +80,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     constraints,
                 );
 
-                SignoriniModel::build_position_constraint(
-                    bodies,
-                    manifold,
-                    c,
-                    constraints,
-                );
+                SignoriniModel::build_position_constraint(bodies, manifold, c, constraints);
 
                 let dependency;
 
@@ -115,8 +105,10 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 // FIXME: this compute the contact point locations (with margins) several times,
                 // it was already computed for the signorini law.
-                let center1 = c.contact.world1 + c.contact.normal.unwrap() * manifold.collider1.data().margin();
-                let center2 = c.contact.world2 - c.contact.normal.unwrap() * manifold.collider2.data().margin();
+                let center1 = c.contact.world1
+                    + c.contact.normal.unwrap() * manifold.collider1.data().margin();
+                let center2 = c.contact.world2
+                    - c.contact.normal.unwrap() * manifold.collider2.data().margin();
 
                 Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
                     let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));

@@ -13,8 +13,6 @@ use nphysics3d::world::World;
 use nphysics3d::object::{Body, BodyHandle, ColliderHandle};
 use objects::ball::Ball;
 use objects::box_node::Box;
-use objects::cylinder::Cylinder;
-use objects::cone::Cone;
 use objects::mesh::Mesh;
 use objects::plane::Plane;
 use objects::convex::Convex;
@@ -201,15 +199,14 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        /*if let Some(s) = shape.as_shape::<Plane<f32>>() {
+        if let Some(s) = shape.as_shape::<shape::Plane<f32>>() {
             self.add_plane(window, object, world, s, color, out)
-        } else*/
-        if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
+        } else if let Some(s) = shape.as_shape::<shape::Ball<f32>>() {
             self.add_ball(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
-            self.add_convex(window, object, world, delta, s, color, out)/*
+            self.add_convex(window, object, world, delta, s, color, out) /*
         } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
             self.add_cylinder(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
@@ -344,54 +341,6 @@ impl GraphicsManager {
             world,
             delta,
             &chull,
-            color,
-            window,
-        )))
-    }
-
-    fn add_cylinder(
-        &mut self,
-        window: &mut Window,
-        object: ColliderHandle,
-        world: &World<f32>,
-        delta: Isometry3<f32>,
-        shape: &shape::Cylinder<f32>,
-        color: Point3<f32>,
-        out: &mut Vec<Node>,
-    ) {
-        let r = shape.radius();
-        let h = shape.half_height() * 2.0;
-
-        out.push(Node::Cylinder(Cylinder::new(
-            object,
-            world,
-            delta,
-            r,
-            h,
-            color,
-            window,
-        )))
-    }
-
-    fn add_cone(
-        &mut self,
-        window: &mut Window,
-        object: ColliderHandle,
-        world: &World<f32>,
-        delta: Isometry3<f32>,
-        shape: &shape::Cone<f32>,
-        color: Point3<f32>,
-        out: &mut Vec<Node>,
-    ) {
-        let r = shape.radius();
-        let h = shape.half_height() * 2.0;
-
-        out.push(Node::Cone(Cone::new(
-            object,
-            world,
-            delta,
-            r,
-            h,
             color,
             window,
         )))

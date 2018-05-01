@@ -1,15 +1,11 @@
-use alga::linear::{FiniteDimInnerSpace, FiniteDimVectorSpace};
-use na::{self, DVector, DVectorSlice, Real, Unit};
-use std::ops::Neg;
+use na::{DVector, Real, Unit};
 
-use math::{AngularVector, Force, Point, Rotation, Vector};
+use math::{Point, Vector};
 use object::BodyPart;
-use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry,
-             ConstraintSet, ForceDirection, GenericNonlinearConstraint, ImpulseLimits,
-             IntegrationParameters};
+use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
+             ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 pub fn build_linear_limits_velocity_constraint<N: Real>(
-    params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     assembly_id1: usize,
@@ -189,3 +185,28 @@ pub fn build_linear_limits_position_constraint<N: Real>(
         None
     }
 }
+
+/*
+pub fn build_angular_limit_velocity_constraint<N: Real>(
+    params: &IntegrationParameters<N>,
+    body1: &BodyPart<N>,
+    body2: &BodyPart<N>,
+    pos1: &Isometry<N>,
+    pos2: &Isometry<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
+    anchor1: &Point<N>,
+    anchor2: &Point<N>,
+    axis: &Unit<Vector<N>>,
+    min: Option<N>,
+    max: Option<N>,
+    ext_vels: &DVector<N>,
+    impulse: N,
+    impulse_id: usize,
+    ground_j_id: &mut usize,
+    j_id: &mut usize,
+    jacobians: &mut [N],
+    constraints: &mut ConstraintSet<N>,
+) {
+}
+*/

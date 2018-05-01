@@ -2,7 +2,7 @@ use na::{DVector, Real, Unit};
 use std::ops::Range;
 
 use joint::JointConstraint;
-use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
+use math::{AngularVector, Point, Vector, DIM};
 use object::{BodyHandle, BodySet};
 use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
@@ -59,7 +59,7 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -88,7 +88,6 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -108,7 +107,6 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
         let axis2 = pos2 * self.axis2;
         if let Some(orth) = Unit::try_new(axis1.cross(&*axis2), N::default_epsilon()) {
             helper::cancel_relative_angular_velocity_wrt_axis(
-                params,
                 &b1,
                 &b2,
                 assembly_id1,

@@ -1,10 +1,9 @@
 use na::{Real, Unit};
-use ncollide::bounding_volume::PolyhedralCone;
 use ncollide::query::ContactKinematic;
 
 use object::{BodyHandle, BodySet};
 use solver::IntegrationParameters;
-use math::{Point, Vector};
+use math::Vector;
 
 pub struct GenericNonlinearConstraint<N: Real> {
     pub body1: BodyHandle,
@@ -119,7 +118,7 @@ impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearC
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         i: usize,
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],

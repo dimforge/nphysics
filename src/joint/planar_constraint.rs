@@ -56,7 +56,7 @@ impl<N: Real> JointConstraint<N> for PlanarConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -87,7 +87,6 @@ impl<N: Real> JointConstraint<N> for PlanarConstraint<N> {
         let axis1 = pos1 * self.axis1;
 
         helper::cancel_relative_linear_velocity_wrt_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -104,16 +103,12 @@ impl<N: Real> JointConstraint<N> for PlanarConstraint<N> {
             constraints,
         );
 
-        let axis2 = pos2 * self.axis2;
-
         helper::restrict_relative_angular_velocity_to_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
             assembly_id2,
             &axis1,
-            &axis2,
             &anchor1,
             &anchor2,
             ext_vels,

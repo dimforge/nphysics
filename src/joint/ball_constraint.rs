@@ -51,7 +51,7 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -80,7 +80,6 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
-            params,
             &body1,
             &body2,
             assembly_id1,

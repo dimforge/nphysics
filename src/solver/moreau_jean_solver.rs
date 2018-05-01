@@ -1,14 +1,13 @@
 use slab::Slab;
 
-use na::{DVector, DVectorSlice, Real};
-use na::storage::Storage;
+use na::{DVector, Real};
 
 use counters::Counters;
 use detection::ColliderContactManifold;
 use object::{BodyHandle, BodySet};
 use joint::JointConstraint;
 use solver::{ConstraintSet, ContactModel, IntegrationParameters,
-             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearSORProx, SORProx};
+             NonlinearSORProx, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {

@@ -129,14 +129,8 @@ fn main() {
             material.clone(),
         );
 
-        let mut constraint = PrismaticConstraint::new(
-            parent,
-            rb,
-            parent_anchor,
-            Vector3::y_axis(),
-            body_anchor,
-            Vector3::y_axis(),
-        );
+        let mut constraint =
+            PrismaticConstraint::new(parent, rb, parent_anchor, Vector3::y_axis(), body_anchor);
 
         constraint.enable_min_offset(-rad * 2.0);
 
@@ -302,7 +296,6 @@ fn main() {
                 Point3::origin(),
                 Vector3::x_axis(),
                 Point3::origin(),
-                Vector3::x_axis(),
             );
 
             world.add_constraint(constraint);
@@ -332,7 +325,6 @@ fn main() {
         Vector3::y_axis(),
         Vector3::x_axis(),
         Point3::origin(),
-        Vector3::y_axis(),
         Vector3::x_axis(),
     );
 

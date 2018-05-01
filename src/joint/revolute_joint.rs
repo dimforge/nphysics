@@ -5,7 +5,7 @@ use na::{Real, Unit};
 use utils::GeneralizedCross;
 use joint::{self, Joint, JointMotor, UnitJoint};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::{Multibody, MultibodyLinkRef};
+use object::MultibodyLinkRef;
 use math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
 
 #[derive(Copy, Clone, Debug)]
@@ -299,6 +299,7 @@ impl<N: Real> UnitJoint<N> for RevoluteJoint<N> {
     }
 }
 
+#[cfg(feature = "dim3")]
 macro_rules! revolute_motor_limit_methods(
     ($ty: ident, $revo: ident) => {
         _revolute_motor_limit_methods!(
@@ -320,6 +321,7 @@ macro_rules! revolute_motor_limit_methods(
     }
 );
 
+#[cfg(feature = "dim3")]
 macro_rules! revolute_motor_limit_methods_1(
     ($ty: ident, $revo: ident) => {
         _revolute_motor_limit_methods!(
@@ -341,6 +343,7 @@ macro_rules! revolute_motor_limit_methods_1(
     }
 );
 
+#[cfg(feature = "dim3")]
 macro_rules! revolute_motor_limit_methods_2(
     ($ty: ident, $revo: ident) => {
         _revolute_motor_limit_methods!(
@@ -362,6 +365,7 @@ macro_rules! revolute_motor_limit_methods_2(
     }
 );
 
+#[cfg(feature = "dim3")]
 macro_rules! _revolute_motor_limit_methods(
     ($ty: ident, $revo: ident,
      $min_angle:         ident,

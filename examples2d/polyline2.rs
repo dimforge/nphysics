@@ -6,7 +6,6 @@ extern crate nphysics_testbed2d;
 extern crate rand;
 
 use na::Real;
-use std::sync::Arc;
 use rand::{Rng, SeedableRng, StdRng};
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, Polyline, ShapeHandle};

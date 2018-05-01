@@ -1,5 +1,7 @@
 use std::ops::Range;
-use na::{DVector, Real, Unit};
+#[cfg(feature = "dim3")]
+use na::Unit;
+use na::{DVector, Real};
 
 use object::{BodyHandle, BodySet};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
@@ -8,15 +10,31 @@ use solver::helper;
 use joint::JointConstraint;
 use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 
+#[cfg(feature = "dim2")]
 pub struct RevoluteConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
-    axis1: Unit<AngularVector<N>>, // FIXME: not needed in 2D.
-    axis2: Unit<AngularVector<N>>, // FIXME: not needed in 2D.
     lin_impulses: Vector<N>,
-    ang_impulses: AngularVector<N>, // FIXME: not needed in 2D.
+    ang_impulses: AngularVector<N>, // FIXME: not actually needed in 2D.
+    bilateral_ground_rng: Range<usize>,
+    bilateral_rng: Range<usize>,
+
+    min_angle: Option<N>,
+    max_angle: Option<N>,
+}
+
+#[cfg(feature = "dim3")]
+pub struct RevoluteConstraint<N: Real> {
+    b1: BodyHandle,
+    b2: BodyHandle,
+    anchor1: Point<N>,
+    anchor2: Point<N>,
+    axis1: Unit<AngularVector<N>>,
+    axis2: Unit<AngularVector<N>>,
+    lin_impulses: Vector<N>,
+    ang_impulses: AngularVector<N>,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 
@@ -56,16 +74,12 @@ impl<N: Real> RevoluteConstraint<N> {
     pub fn new(b1: BodyHandle, b2: BodyHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
         let min_angle = None;
         let max_angle = None;
-        let axis1 = AngularVector::x_axis();
-        let axis2 = AngularVector::x_axis();
 
         RevoluteConstraint {
             b1,
             b2,
             anchor1,
             anchor2,
-            axis1,
-            axis2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
@@ -121,7 +135,7 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -150,7 +164,6 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -169,16 +182,13 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
         #[cfg(feature = "dim3")]
         {
             let axis1 = pos1 * self.axis1;
-            let axis2 = pos2 * self.axis2;
 
             helper::restrict_relative_angular_velocity_to_axis(
-                params,
                 &b1,
                 &b2,
                 assembly_id1,
                 assembly_id2,
                 &axis1,
-                &axis2,
                 &anchor1,
                 &anchor2,
                 ext_vels,

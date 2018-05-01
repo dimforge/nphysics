@@ -3,7 +3,7 @@ use num::Zero;
 use na::{self, Real};
 use ncollide::shape::Compound;
 use volumetric::{InertiaTensor, Volumetric};
-use math::{AngularInertia, Isometry, Point};
+use math::{AngularInertia, Point};
 
 impl<N: Real> Volumetric<N> for Compound<N> {
     fn area(&self) -> N {

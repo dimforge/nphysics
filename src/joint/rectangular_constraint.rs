@@ -14,7 +14,6 @@ pub struct RectangularConstraint<N: Real> {
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<AngularVector<N>>,
-    axis2: Unit<AngularVector<N>>,
     lin_impulse: N,
     ang_impulses: Vector3<N>,
     bilateral_ground_rng: Range<usize>,
@@ -28,7 +27,6 @@ impl<N: Real> RectangularConstraint<N> {
         anchor1: Point<N>,
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
-        axis2: Unit<AngularVector<N>>,
     ) -> Self {
         RectangularConstraint {
             b1,
@@ -36,7 +34,6 @@ impl<N: Real> RectangularConstraint<N> {
             anchor1,
             anchor2,
             axis1,
-            axis2,
             lin_impulse: N::zero(),
             ang_impulses: Vector3::zeros(),
             bilateral_ground_rng: 0..0,
@@ -56,7 +53,7 @@ impl<N: Real> JointConstraint<N> for RectangularConstraint<N> {
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        _: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -87,7 +84,6 @@ impl<N: Real> JointConstraint<N> for RectangularConstraint<N> {
         let axis1 = pos1 * self.axis1;
 
         helper::cancel_relative_linear_velocity_wrt_axis(
-            params,
             &b1,
             &b2,
             assembly_id1,
@@ -105,7 +101,6 @@ impl<N: Real> JointConstraint<N> for RectangularConstraint<N> {
         );
 
         helper::cancel_relative_angular_velocity(
-            params,
             &b1,
             &b2,
             assembly_id1,

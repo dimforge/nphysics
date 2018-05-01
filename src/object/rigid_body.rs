@@ -170,6 +170,7 @@ impl<N: Real> RigidBody<N> {
         self.external_forces = Force::zero();
     }
 
+    #[allow(unused_variables)] // for params used only in 3D.
     pub fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         match self.status {
             BodyStatus::Dynamic => {
