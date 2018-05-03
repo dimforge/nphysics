@@ -3,8 +3,8 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Translation2, Isometry2};
-use ncollide2d::shape::{Plane, Cuboid, Compound, ShapeHandle};
+use na::{Vector2, Isometry2};
+use ncollide2d::shape::{Cuboid, Compound, ShapeHandle};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};

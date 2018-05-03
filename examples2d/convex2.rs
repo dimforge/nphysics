@@ -7,7 +7,7 @@ extern crate rand;
 use rand::{XorShiftRng, Rand};
 
 use na::{Isometry2, Point2, Vector2};
-use ncollide2d::shape::{Ball, ConvexPolygon, Cuboid, Plane, ShapeHandle};
+use ncollide2d::shape::{Ball, ConvexPolygon, Cuboid, ShapeHandle};
 use ncollide2d::transformation;
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};

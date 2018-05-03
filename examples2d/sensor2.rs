@@ -3,10 +3,9 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use std::f32::consts::PI;
-use na::{Point2, Point3, Vector2, Translation2, Isometry2};
+use na::{Point3, Vector2, Isometry2};
 use ncollide2d::query::Proximity;
-use ncollide2d::shape::{ShapeHandle, Plane, Cuboid, Ball};
+use ncollide2d::shape::{ShapeHandle, Cuboid, Ball};
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;

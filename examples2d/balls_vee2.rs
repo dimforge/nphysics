@@ -3,9 +3,9 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point2, Unit, Vector2};
+use na::{Isometry2, Unit, Vector2};
 use ncollide2d::shape::{Ball, Plane, ShapeHandle};
-use nphysics2d::object::{BodyHandle, Collider, Material};
+use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;

@@ -20,6 +20,7 @@ pub struct GraphicsManager<'a> {
     rand: XorShiftRng,
     rb2sn: HashMap<BodyHandle, Vec<SceneNode<'a>>>,
     obj2color: HashMap<BodyHandle, Point3<u8>>,
+    c2color: HashMap<ColliderHandle, Point3<u8>>,
 }
 
 impl<'a> GraphicsManager<'a> {
@@ -28,6 +29,7 @@ impl<'a> GraphicsManager<'a> {
             rand: SeedableRng::from_seed([0, 1, 2, 3]),
             rb2sn: HashMap::new(),
             obj2color: HashMap::new(),
+            c2color: HashMap::new(),
         }
     }
 
@@ -90,7 +92,7 @@ impl<'a> GraphicsManager<'a> {
         out: &mut Vec<SceneNode>,
     ) {
         let collider = world.collider(id).unwrap();
-        let color = self.body_color(world, collider.data().body());
+        let color = self.collider_color(world, id);
         let margin = collider.data().margin();
         out.push(SceneNode::BallNode(Ball::new(
             id,
@@ -109,7 +111,7 @@ impl<'a> GraphicsManager<'a> {
         shape: &ConvexPolygon<f32>,
         out: &mut Vec<SceneNode>,
     ) {
-        let color = self.body_color(world, world.collider(id).unwrap().data().body());
+        let color = self.collider_color(world, id);
         let mut vertices = transformation::convex_hull(shape.points()).unwrap().0;
         let first_pt = vertices[0];
         vertices.push(first_pt); // so it appears closed.
@@ -131,7 +133,7 @@ impl<'a> GraphicsManager<'a> {
         shape: &Polyline<f32>,
         out: &mut Vec<SceneNode>,
     ) {
-        let color = self.body_color(world, world.collider(id).unwrap().data().body());
+        let color = self.collider_color(world, id);
         let vertices = shape.vertices().to_vec();
 
         out.push(SceneNode::LinesNode(Lines::new(
@@ -156,7 +158,7 @@ impl<'a> GraphicsManager<'a> {
 
         let collider = world.collider(id).unwrap();
         let margin = collider.data().margin();
-        let color = self.body_color(world, collider.data().body());
+        let color = self.collider_color(world, id);
 
         out.push(SceneNode::BoxNode(Box::new(
             id,
@@ -179,7 +181,7 @@ impl<'a> GraphicsManager<'a> {
         let a = shape.a();
         let b = shape.b();
 
-        let color = self.body_color(world, world.collider(id).unwrap().data().body());
+        let color = self.collider_color(world, id);
 
         out.push(SceneNode::SegmentNode(Segment::new(
             id,
@@ -289,22 +291,36 @@ impl<'a> GraphicsManager<'a> {
         self.set_color(world, body, color)
     }
 
-    pub fn body_color(&mut self, world: &World<f32>, body: BodyHandle) -> Point3<u8> {
-        let color_key = Self::color_key(world, body);
-        match self.obj2color.get(&color_key) {
-            Some(color) => return *color,
-            None => {}
-        }
-
+    pub fn set_collider_color(&mut self, collider: ColliderHandle, color: Point3<f32>) {
         let color = Point3::new(
-            self.rand.gen_range(50usize, 256) as u8,
-            self.rand.gen_range(50usize, 256) as u8,
-            self.rand.gen_range(50usize, 256) as u8,
+            (color.x * 255.0) as u8,
+            (color.y * 255.0) as u8,
+            (color.z * 255.0) as u8,
         );
+        let _ = self.c2color.insert(collider, color);
+    }
 
-        self.obj2color.insert(color_key, color);
+    pub fn collider_color(&mut self, world: &World<f32>, collider: ColliderHandle) -> Point3<u8> {
+        if let Some(c) = self.c2color.get(&collider) {
+            *c
+        } else {
+            let body = world.collider(collider).unwrap().data().body();
 
-        color
+            let color_key = Self::color_key(world, body);
+            match self.obj2color.get(&color_key) {
+                Some(color) => return *color,
+                None => {}
+            }
+
+            let color = Point3::new(
+                self.rand.gen_range(50usize, 256) as u8,
+                self.rand.gen_range(50usize, 256) as u8,
+                self.rand.gen_range(50usize, 256) as u8,
+            );
+
+            self.obj2color.insert(color_key, color);
+            color
+        }
     }
 
     pub fn rigid_body_to_scene_node(
