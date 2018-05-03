@@ -3,11 +3,15 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Point3, Translation2};
-use ncollide2d::shape::{Ball, Plane};
+use na::{Isometry2, Point3, Vector2};
+use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::world::World;
-use nphysics2d::object::RigidBody;
+use nphysics2d::force_generator::ConstantAcceleration;
+use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::volumetric::Volumetric;
 use nphysics_testbed2d::Testbed;
+
+const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     let mut testbed = Testbed::new_empty();
@@ -16,64 +20,96 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+
+    // We setup two force generators that will replace the gravity.
+    let mut up_gravity = ConstantAcceleration::new(Vector2::y() * 9.81, 0.0);
+    let mut down_gravity = ConstantAcceleration::new(Vector2::y() * -9.81, 0.0);
 
     /*
-     * First plane
+     * Grouds
      */
-    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(0.0, 1.0)), 0.3, 0.6);
+    let ground_radx = 25.0;
+    let ground_rady = 1.0;
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+        ground_radx - COLLIDER_MARGIN,
+        ground_rady - COLLIDER_MARGIN,
+    )));
 
-    rb.append_translation(&Translation2::new(0.0, -10.0));
+    let ground_pos = Isometry2::new(Vector2::y() * 2.0, na::zero());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape.clone(),
+        BodyHandle::ground(),
+        ground_pos,
+        Material::default(),
+    );
 
-    world.add_rigid_body(rb);
-
-    /*
-     * Second plane
-     */
-    let mut rb = RigidBody::new_static(Plane::new(Vector2::new(0.0, -1.0)), 0.3, 0.6);
-
-    rb.append_translation(&Translation2::new(0.0, 10.0));
-
-    world.add_rigid_body(rb);
+    let ground_pos = Isometry2::new(Vector2::y() * -3.0, na::zero());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        ground_pos,
+        Material::default(),
+    );
 
     /*
      * Create the balls
      */
-    let num     = 1000usize;
-    let rad     = 0.5;
-    let shift   = 2.5 * rad;
+    let num = 100f64 as usize;
+    let rad = 0.2;
+    let shift = 2.0 * rad;
     let centerx = shift * (num as f32) / 2.0;
-    let centery = 2.0;
+    let centery = -rad * 4.0;
 
-    for i in 0usize .. num {
-        for j in 0usize .. 2 {
+    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
+    let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
+
+    for i in 0usize..num {
+        for j in 0usize..2 {
             let x = i as f32 * 2.5 * rad - centerx;
-            let y = j as f32 * 2.5 * rad - centery * 2.0;
+            let y = j as f32 * 2.5 * rad + centery;
 
-            let mut rb = RigidBody::new_dynamic(Ball::new(rad), 1.0, 0.3, 0.6);
+            /*
+             * Create the rigid body.
+             */
+            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
+            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
-            rb.append_translation(&Translation2::new(x, y));
+            /*
+             * Create the collider.
+             */
+            world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                Material::default(),
+            );
 
+            /*
+             * Set artifical gravity.
+             */
             let color;
 
-            if j == 0 {
-                // Invert the gravity for the blue balls.
-                rb.set_lin_acc_scale(Vector2::new(0.0, -1.0));
+            if j == 1 {
+                up_gravity.add_body_part(handle);
                 color = Point3::new(0.0, 0.0, 1.0);
-            }
-            else {
-                // Double the gravity for the green balls.
-                rb.set_lin_acc_scale(Vector2::new(0.0, 2.0));
+            } else {
+                down_gravity.add_body_part(handle);
                 color = Point3::new(0.0, 1.0, 0.0);
             }
 
-            let body = world.add_rigid_body(rb);
-            testbed.set_rigid_body_color(&body, color);
+            testbed.set_body_color(&world, handle, color);
         }
     }
 
+    world.add_force_generator(up_gravity);
+    world.add_force_generator(down_gravity);
+
     /*
-     * Run the simulation.
+     * Set up the testbed.
      */
     testbed.set_world(world);
     testbed.run();

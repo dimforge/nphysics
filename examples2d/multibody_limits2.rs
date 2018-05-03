@@ -3,12 +3,11 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use std::sync::Arc;
-use na::{Real, Point2, Vector2, Translation2, Isometry2};
-use ncollide2d::shape::{ShapeHandle, Plane, Ball, Cuboid};
+use na::{Isometry2, Vector2};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::world::World;
-use nphysics2d::object::BodyHandle;
-use nphysics2d::joint::{FreeJoint, FixedJoint, Joint, RevoluteJoint};
+use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::joint::{FreeJoint, RevoluteJoint};
 use nphysics2d::volumetric::Volumetric;
 use nphysics_testbed2d::Testbed;
 
@@ -24,32 +23,65 @@ fn main() {
     /*
      * Setup the ground.
      */
-    let plane     = ShapeHandle::new(Plane::new(Vector2::new(0.0, -1.0)));
-    let plane_pos = Isometry2::new(Vector2::y() * 5.0, na::zero());
-    world.add_collider(COLLIDER_MARGIN, plane, BodyHandle::ground(), plane_pos, false);
+    let ground_radx = 25.0;
+    let ground_rady = 1.0;
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+        ground_radx - COLLIDER_MARGIN,
+        ground_rady - COLLIDER_MARGIN,
+    )));
+
+    let ground_pos = Isometry2::new(Vector2::y() * ground_rady, na::zero());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        ground_pos,
+        Material::default(),
+    );
 
     /*
      * Setup the multibody.
      */
-    let rad  = 0.2;
-    let num  = 20;
+    let rad = 0.2;
+    let num = 20;
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     // Setup the first link with a free joint.
-    let free = FreeJoint::new(Isometry2::identity());
+    let free = FreeJoint::new(Isometry2::new(Vector2::y() * -1.0, na::zero()));
     let mut parent = BodyHandle::ground();
-    parent = world.add_multibody_link(parent, free, Isometry2::identity(), inertia);
+    parent = world.add_multibody_link(
+        parent,
+        free,
+        na::zero(),
+        na::zero(),
+        inertia,
+        center_of_mass,
+    );
 
     // Setup the other links with revolute joints.
-    let mut revo = RevoluteJoint::new(Point2::new(rad * 3.0, 0.0), -3.14 / 10.0);
+    let mut revo = RevoluteJoint::new(-3.14 / 10.0);
     revo.enable_min_angle(-3.14 / 10.0);
     revo.enable_max_angle(-3.14 / 10.0);
 
-    for j in 0usize .. num {
-        parent = world.add_multibody_link(parent, revo, Isometry2::identity(), inertia);
-        world.add_collider(COLLIDER_MARGIN, geom.clone(), parent, Isometry2::identity(), true);
+    for _ in 0usize..num {
+        parent = world.add_multibody_link(
+            parent,
+            revo,
+            Vector2::x() * rad * 3.0,
+            na::zero(),
+            inertia,
+            center_of_mass,
+        );
+        world.add_collider(
+            COLLIDER_MARGIN,
+            geom.clone(),
+            parent,
+            Isometry2::identity(),
+            Material::default(),
+        );
     }
 
     /*
