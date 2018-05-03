@@ -1,6 +1,6 @@
 #![macro_use]
 
-use na::{self, Real, Unit};
+use na::{self, DVectorSliceMut, Real, Unit};
 
 use joint::{self, Joint, JointMotor, UnitJoint};
 use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
@@ -152,6 +152,8 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         _: &mut JacobianSliceMut<N>,
     ) {
     }
+
+    fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.offset += vels[0] * params.dt

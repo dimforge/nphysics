@@ -1,6 +1,6 @@
 use downcast::Any;
 
-use na::Real;
+use na::{DVectorSliceMut, Real};
 
 use math::{Isometry, JacobianSliceMut, Vector, Velocity};
 use object::MultibodyLinkRef;
@@ -25,6 +25,8 @@ pub trait Joint<N: Real>: Any + Send + Sync {
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N>;
     fn jacobian_dot_mul_coordinates(&self, vels: &[N]) -> Velocity<N>;
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>);
 
     /// The maximum number of impulses needed by this joints for
     /// its constraints.

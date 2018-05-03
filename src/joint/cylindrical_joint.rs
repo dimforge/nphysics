@@ -1,4 +1,4 @@
-use na::{Isometry3, Real, Unit, Vector3};
+use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
@@ -73,6 +73,11 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         // NOTE: The following is zero.
         // self.prism.jacobian_dot_mul_coordinates(vels) +
         self.revo.jacobian_dot_mul_coordinates(&[vels[1]])
+    }
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        self.prism.default_damping(&mut out.rows_mut(0, 1));
+        self.revo.default_damping(&mut out.rows_mut(1, 1));
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {

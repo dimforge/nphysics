@@ -213,12 +213,4 @@ fn add_ragdoll(pos: Vector3<f32>, world: &mut World<f32>) {
         Isometry3::identity(),
         Material::default(),
     );
-
-    // Setup damping for the ball joints.
-    world
-        .multibody_mut(body)
-        .unwrap()
-        .damping_mut()
-        .rows_range_mut(6..)
-        .fill(0.1);
 }

@@ -1,4 +1,4 @@
-use na::{self, Real};
+use na::{self, DVectorSliceMut, Real};
 
 use joint::Joint;
 use solver::IntegrationParameters;
@@ -50,6 +50,8 @@ impl<N: Real> Joint<N> for CartesianJoint<N> {
     fn jacobian_dot_mul_coordinates(&self, _: &[N]) -> Velocity<N> {
         Velocity::zero()
     }
+
+    fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.position += Vector::from_row_slice(&vels[..DIM]) * params.dt;

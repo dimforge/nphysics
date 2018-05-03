@@ -1,4 +1,4 @@
-use na::{self, Isometry3, Real, Translation3, Unit, Vector3};
+use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, RevoluteJoint};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
@@ -94,6 +94,11 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
             + self.revo2
                 .jacobian_dot_mul_coordinates(&[vels[1]])
                 .rotated(&rot1) + self.coupling_dot * vels[1]
+    }
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        self.revo1.default_damping(&mut out.rows_mut(0, 1));
+        self.revo2.default_damping(&mut out.rows_mut(1, 1));
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {

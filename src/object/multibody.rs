@@ -240,6 +240,11 @@ impl<N: Real> Multibody<N> {
         self.ndofs += ndofs;
 
         /*
+         * Setup default damping.
+         */
+        dof.default_damping(&mut self.damping_mut().rows_mut(assembly_id, ndofs));
+
+        /*
          * Create the rigid body.
          */
         dof.update_jacobians(&body_shift, &self.velocities[assembly_id..]);

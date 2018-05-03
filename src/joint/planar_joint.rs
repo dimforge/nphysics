@@ -1,4 +1,4 @@
-use na::{Isometry3, Real, Unit, Vector3};
+use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
@@ -103,6 +103,12 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
         self.revo.jacobian_dot_mul_coordinates(&[vels[2]])
     }
 
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        self.prism1.default_damping(&mut out.rows_mut(0, 1));
+        self.prism2.default_damping(&mut out.rows_mut(1, 1));
+        self.revo.default_damping(&mut out.rows_mut(2, 1));
+    }
+
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.prism1.integrate(params, vels);
         self.prism2.integrate(params, &[vels[1]]);
@@ -116,7 +122,8 @@ impl<N: Real> Joint<N> for PlanarJoint<N> {
     }
 
     fn num_velocity_constraints(&self) -> usize {
-        self.prism1.num_velocity_constraints() + self.prism2.num_velocity_constraints() + self.revo.num_velocity_constraints()
+        self.prism1.num_velocity_constraints() + self.prism2.num_velocity_constraints()
+            + self.revo.num_velocity_constraints()
     }
 
     fn velocity_constraints(

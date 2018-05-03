@@ -1,4 +1,4 @@
-use na::Real;
+use na::{DVectorSliceMut, Real};
 
 use joint::Joint;
 use solver::IntegrationParameters;
@@ -66,4 +66,6 @@ impl<N: Real> Joint<N> for FreeJoint<N> {
         // The jacobian derivative is zero.
         Velocity::zero()
     }
+
+    fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 }

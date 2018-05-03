@@ -1,4 +1,4 @@
-use na::{self, Isometry3, Real, Translation3, Unit, Vector3};
+use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
@@ -60,6 +60,11 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
 
     fn jacobian_dot_mul_coordinates(&self, _: &[N]) -> Velocity<N> {
         Velocity::zero()
+    }
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        self.prism1.default_damping(&mut out.rows_mut(0, 1));
+        self.prism2.default_damping(&mut out.rows_mut(1, 1));
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {

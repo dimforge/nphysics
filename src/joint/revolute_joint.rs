@@ -1,6 +1,6 @@
 #![macro_use]
 
-use na::{Real, Unit};
+use na::{self, DVectorSliceMut, Real, Unit};
 
 use utils::GeneralizedCross;
 use joint::{self, Joint, JointMotor, UnitJoint};
@@ -213,6 +213,10 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         self.angle += vels[0] * params.dt;
         self.update_rot();
+    }
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        out.fill(na::convert(0.1f64))
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {

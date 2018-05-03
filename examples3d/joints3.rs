@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::f32::consts::PI;
-use na::{Isometry3, Point3};
+use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
@@ -65,9 +65,6 @@ fn main() {
             material.clone(),
         );
     }
-
-    // Setup damping for the whole multibody.
-    world.multibody_mut(parent).unwrap().damping_mut().fill(0.1);
 
     /*
      * Prismatic joint.
@@ -133,8 +130,6 @@ fn main() {
             material.clone(),
         );
     }
-    // Setup damping for the whole multibody.
-    world.multibody_mut(parent).unwrap().damping_mut().fill(0.1);
 
     /*
      * Universal joint.
@@ -180,6 +175,9 @@ fn main() {
         Isometry3::identity(),
         material.clone(),
     );
+
+    // Remove the default damping so that it balances indefinitely.
+    world.multibody_mut(parent).unwrap().damping_mut().fill(0.0);
 
     /*
      * Helical joint.
