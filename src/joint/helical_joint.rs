@@ -1,4 +1,4 @@
-use na::{Isometry3, Real, Translation3, Unit, Vector3};
+use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
 use math::{JacobianSliceMut, Velocity};
@@ -71,6 +71,10 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
 
     fn jacobian_dot_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
         self.revo.jacobian_dot_mul_coordinates(vels)
+    }
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        out.fill(na::convert(0.1f64))
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {

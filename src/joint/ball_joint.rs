@@ -1,4 +1,5 @@
-use na::{self, Isometry3, Matrix3, Real, Translation3, U3, UnitQuaternion, Vector3, VectorSlice3};
+use na::{self, DVectorSliceMut, Isometry3, Matrix3, Real, Translation3, U3, UnitQuaternion,
+         Vector3, VectorSlice3};
 
 use joint::Joint;
 use math::{JacobianSliceMut, Velocity};
@@ -78,6 +79,10 @@ impl<N: Real> Joint<N> for BallJoint<N> {
         let angvel = Vector3::from_row_slice(&acc[..3]);
         let linvel = self.jacobian_dot_v * angvel;
         Velocity::new(linvel, na::zero())
+    }
+
+    fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
+        out.fill(na::convert(0.1f64))
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {

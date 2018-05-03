@@ -77,9 +77,6 @@ fn main() {
         );
     }
 
-    // Setup damping for the whole multibody.
-    world.multibody_mut(parent).unwrap().damping_mut().fill(0.1);
-
     /*
      * Create the boxes
      */

@@ -51,9 +51,6 @@ fn main() {
         world.add_collider(COLLIDER_MARGIN, geom.clone(), parent, Isometry2::identity());
     }
 
-    // Setup damping for the whole multibody.
-    world.multibody_mut(parent).unwrap().damping_mut().fill(0.1);
-
     /*
      * PrismaticJoint joint.
      */

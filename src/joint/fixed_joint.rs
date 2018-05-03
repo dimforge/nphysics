@@ -1,4 +1,4 @@
-use na::Real;
+use na::{DVectorSliceMut, Real};
 
 use joint::Joint;
 use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
@@ -52,4 +52,6 @@ impl<N: Real> Joint<N> for FixedJoint<N> {
     fn jacobian_dot_mul_coordinates(&self, _: &[N]) -> Velocity<N> {
         Velocity::zero()
     }
+
+    fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 }
