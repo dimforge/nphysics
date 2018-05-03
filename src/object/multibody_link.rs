@@ -257,6 +257,16 @@ impl<'a, N: Real> MultibodyLinkRef<'a, N> {
     pub fn inv_mass_mul_force(&self, force: &Force<N>, out: &mut [N]) {
         self.multibody.inv_mass_mul_force(self.id, force, out)
     }
+
+    #[inline]
+    pub fn local_inertia(&self) -> &Inertia<N> {
+        &self.link.local_inertia
+    }
+
+    #[inline]
+    pub fn inertia(&self) -> &Inertia<N> {
+        &self.link.inertia
+    }
 }
 
 // FIXME: keep this even if we already have the Index2 traits?

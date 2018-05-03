@@ -25,11 +25,14 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3, Translation3};
-use ncollide3d::shape::{Plane, Cuboid};
+use na::{Isometry3, Point3, Vector3};
+use ncollide3d::shape::{Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::RigidBody;
+use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
+
+const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -41,24 +44,38 @@ fn main() {
     /*
      * Plane
      */
-    let geom = Plane::new(Vector3::new(0.0, 1.0, 0.0));
+    let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
 
-    world.add_rigid_body(RigidBody::new_static(geom, 0.3, 0.6));
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        Isometry3::identity(),
+        Material::default(),
+    );
 
     /*
      * Create the boxes
      */
-    let rad = 1.0;
-    let x   = rad;
-    let y   = rad + 10.0;
-    let z   = rad;
+    let rad = 0.1;
+    let x = rad;
+    let y = rad + 10.0;
+    let z = rad;
 
-    let geom   = Cuboid::new(Vector3::new(rad, rad * 10.0, rad));
-    let mut rb = RigidBody::new_dynamic(geom, 1.0, 0.3, 0.5);
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad * 10.0, rad)));
+    let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
-    rb.append_translation(&Translation3::new(x, y, z));
+    let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
+    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
-    world.add_rigid_body(rb);
+    world.add_collider(
+        COLLIDER_MARGIN,
+        geom.clone(),
+        handle,
+        Isometry3::identity(),
+        Material::default(),
+    );
 
     /*
      * Set up the testbed.

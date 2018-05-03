@@ -1,8 +1,8 @@
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
-use object::{BodyHandle, Ground, Multibody, MultibodyLinkRef, MultibodyLinkMut, RigidBody};
+use object::{BodyHandle, Ground, Multibody, MultibodyLinkMut, MultibodyLinkRef, RigidBody};
 use solver::IntegrationParameters;
-use math::{Force, Isometry, Point, Velocity};
+use math::{Force, Inertia, Isometry, Point, Velocity};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum BodyStatus {
@@ -320,6 +320,24 @@ impl<'a, N: Real> BodyPart<'a, N> {
     }
 
     #[inline]
+    pub fn inertia(&self) -> Inertia<N> {
+        match *self {
+            BodyPart::RigidBody(ref rb) => *rb.inertia(),
+            BodyPart::MultibodyLink(ref mb) => *mb.inertia(),
+            BodyPart::Ground(ref g) => g.inertia(),
+        }
+    }
+
+    #[inline]
+    pub fn local_inertia(&self) -> Inertia<N> {
+        match *self {
+            BodyPart::RigidBody(ref rb) => *rb.local_inertia(),
+            BodyPart::MultibodyLink(ref mb) => *mb.local_inertia(),
+            BodyPart::Ground(ref g) => g.local_inertia(),
+        }
+    }
+
+    #[inline]
     pub fn status_dependent_velocity(&self) -> Velocity<N> {
         match *self {
             BodyPart::RigidBody(ref rb) => if !rb.is_static() {
@@ -382,5 +400,4 @@ impl<'a, N: Real> BodyPartMut<'a, N> {
             BodyPartMut::Ground(ref mut g) => g.apply_force(force),
         }
     }
-
 }
