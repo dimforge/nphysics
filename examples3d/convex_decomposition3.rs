@@ -9,7 +9,7 @@ use std::path::Path;
 use na::{Isometry3, Point3, Translation3, Vector3};
 use kiss3d::loader::obj;
 use ncollide3d::shape::{Compound, ConvexHull, Cuboid, ShapeHandle};
-use ncollide3d::procedural::TriMesh3;
+use ncollide3d::procedural::TriMesh;
 use ncollide3d::transformation;
 use ncollide3d::bounding_volume::{BoundingVolume, AABB};
 use ncollide3d::bounding_volume;
@@ -61,7 +61,7 @@ fn main() {
         let obj = obj::parse_file(&Path::new(&obj_path), &mtl_path, "");
 
         if let Ok(model) = obj {
-            let meshes: Vec<TriMesh3<f32>> = model
+            let meshes: Vec<TriMesh<f32>> = model
                 .into_iter()
                 .map(|mesh| mesh.1.to_trimesh().unwrap())
                 .collect();
