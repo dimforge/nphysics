@@ -25,7 +25,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{ConvexHull, Cuboid, Plane, ShapeHandle};
+use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use ncollide3d::procedural;
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
@@ -74,7 +74,8 @@ fn main() {
         *c = *c + Vector3::new(excentricity, excentricity, excentricity);
     }
 
-    let indices: Vec<usize> = cuboid_mesh.flat_indices()
+    let indices: Vec<usize> = cuboid_mesh
+        .flat_indices()
         .into_iter()
         .map(|i| i as usize)
         .collect();

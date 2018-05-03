@@ -82,7 +82,7 @@ impl<N: Real> Joint<N> for BallJoint<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         let angvel = Vector3::from_row_slice(&vels[..3]);
-        let disp = UnitQuaternion::new(angvel * params.dt);
+        let disp = UnitQuaternion::new_eps(angvel * params.dt, N::zero());
         self.rot = disp * self.rot;
     }
 

@@ -101,10 +101,6 @@ path = "sensor3.rs"
 ## path = "constraints3.rs"
 
 ## [[bin]]
-## name = "multibody3"
-## path = "multibody3.rs"
-
-## [[bin]]
 ## name = "multibody_limits3"
 ## path = "multibody_limits3.rs"
 

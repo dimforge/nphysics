@@ -1,12 +1,12 @@
-extern crate rand;
 extern crate nalgebra as na;
 extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
+extern crate rand;
 
 use rand::{Rng, SeedableRng, StdRng};
-use na::{Vector3, Point3, Isometry3};
-use ncollide3d::shape::{Cuboid, Ball, TriMesh, ShapeHandle};
+use na::{Isometry3, Point3, Vector3};
+use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
@@ -26,9 +26,9 @@ fn main() {
      */
     let quad = ncollide3d::procedural::quad(10.0, 10.0, 10, 10);
     let indices = quad.flat_indices()
-                      .chunks(3)
-                      .map(|is| Point3::new(is[0] as usize, is[1] as usize, is[2] as usize))
-                      .collect();
+        .chunks(3)
+        .map(|is| Point3::new(is[0] as usize, is[1] as usize, is[2] as usize))
+        .collect();
     let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4][..]);
     let mut vertices = quad.coords;
 
@@ -37,7 +37,7 @@ fn main() {
     for p in &mut vertices {
         p.z = p.y;
         p.y = rng.gen::<f32>() * 1.5;
-    }              
+    }
 
     let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
     world.add_collider(

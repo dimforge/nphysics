@@ -70,6 +70,11 @@ impl<N: Real> Multibody<N> {
     }
 
     #[inline]
+    pub fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
+        &mut self.activation
+    }
+
+    #[inline]
     pub fn activate(&mut self) {
         if let Some(threshold) = self.activation.deactivation_threshold() {
             self.activate_with_energy(threshold * na::convert(2.0));
@@ -539,6 +544,21 @@ impl<N: Real> Multibody<N> {
         accs.cmpy(-N::one(), &damping, &vels, N::one());
 
         assert!(self.inv_augmented_mass.solve_mut(&mut accs));
+        // if accs.nrows() > 20 {
+        //     println!(
+        //         "Mass matrix: {}",
+        //         self.augmented_mass
+        //             .slice_with_steps((0, 0), (20, 20), (2, 2))
+        //             .into_owned()
+        //     );
+        //     println!(
+        //         "Accelerations: {}",
+        //         accs.rows_with_step(0, 20, 2).into_owned()
+        //     );
+        // } else {
+        //     println!("Mass matrix: {}", self.augmented_mass);
+        //     println!("Accelerations: {}", accs);
+        // }
     }
 
     fn update_body_jacobians(&mut self) {

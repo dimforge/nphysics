@@ -4,11 +4,11 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::f32::consts::PI;
-use na::{Isometry3, Point3, Unit, Vector3};
+use na::{Isometry3, Point3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::joint::{BallJoint, FixedJoint, HelicalJoint, Joint, PinSlotJoint, PlanarJoint,
+use nphysics3d::joint::{BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint,
                         PrismaticJoint, RectangularJoint, RevoluteJoint, UniversalJoint};
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
@@ -49,7 +49,14 @@ fn main() {
             parent_shift = Vector3::new(0.0, 5.0, 11.0);
         }
 
-        parent = world.add_multibody_link(parent, revo, parent_shift, body_shift, cuboid_inertia, cuboid_center_of_mass);
+        parent = world.add_multibody_link(
+            parent,
+            revo,
+            parent_shift,
+            body_shift,
+            cuboid_inertia,
+            cuboid_center_of_mass,
+        );
         world.add_collider(
             COLLIDER_MARGIN,
             cuboid.clone(),
@@ -77,13 +84,20 @@ fn main() {
             Vector3::z() * rad * 3.0
         };
 
-        parent = world.add_multibody_link(parent, prism, parent_shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
+        parent = world.add_multibody_link(
+            parent,
+            prism,
+            parent_shift,
+            na::zero(),
+            cuboid_inertia,
+            cuboid_center_of_mass,
+        );
         world.add_collider(
             COLLIDER_MARGIN,
             cuboid.clone(),
             parent,
             Isometry3::identity(),
-            material.clone()
+            material.clone(),
         );
     }
 
@@ -103,14 +117,20 @@ fn main() {
         }
 
         let spherical = BallJoint::new(na::zero());
-        parent =
-            world.add_multibody_link(parent, spherical, parent_shift, body_shift, cuboid_inertia, cuboid_center_of_mass);
+        parent = world.add_multibody_link(
+            parent,
+            spherical,
+            parent_shift,
+            body_shift,
+            cuboid_inertia,
+            cuboid_center_of_mass,
+        );
         world.add_collider(
             COLLIDER_MARGIN,
             cuboid.clone(),
             parent,
             Isometry3::identity(),
-            material.clone()
+            material.clone(),
         );
     }
     // Setup damping for the whole multibody.
@@ -135,17 +155,24 @@ fn main() {
         parent_shift,
         na::zero(),
         cuboid_inertia,
-        cuboid_center_of_mass
+        cuboid_center_of_mass,
     );
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
         parent,
         Isometry3::identity(),
-        material.clone()
+        material.clone(),
     );
 
-    parent = world.add_multibody_link(parent, uni, na::zero(), body_shift, cuboid_inertia, cuboid_center_of_mass);
+    parent = world.add_multibody_link(
+        parent,
+        uni,
+        na::zero(),
+        body_shift,
+        cuboid_inertia,
+        cuboid_center_of_mass,
+    );
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
@@ -172,14 +199,14 @@ fn main() {
         parent_shift,
         na::zero(),
         cuboid_inertia,
-        cuboid_center_of_mass
+        cuboid_center_of_mass,
     );
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
         hel_handle,
         Isometry3::identity(),
-        material.clone()
+        material.clone(),
     );
 
     /*
@@ -208,14 +235,14 @@ fn main() {
                 shift,
                 na::zero(),
                 cuboid_inertia,
-                cuboid_center_of_mass
+                cuboid_center_of_mass,
             );
             world.add_collider(
                 COLLIDER_MARGIN,
                 cuboid.clone(),
                 handle,
                 Isometry3::identity(),
-                material.clone()
+                material.clone(),
             );
         }
     }
@@ -246,14 +273,14 @@ fn main() {
                 shift,
                 na::zero(),
                 cuboid_inertia,
-                cuboid_center_of_mass
+                cuboid_center_of_mass,
             );
             world.add_collider(
                 COLLIDER_MARGIN,
                 cuboid.clone(),
                 handle,
                 Isometry3::identity(),
-                material.clone()
+                material.clone(),
             );
         }
     }
@@ -275,14 +302,14 @@ fn main() {
         shift,
         na::zero(),
         cuboid_inertia,
-        cuboid_center_of_mass
+        cuboid_center_of_mass,
     );
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
         pin_handle,
         Isometry3::identity(),
-        material.clone()
+        material.clone(),
     );
 
     /*
