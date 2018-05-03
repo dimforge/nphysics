@@ -217,9 +217,9 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             if self.min_offset.is_some() || self.max_offset.is_some() {
-                2
-            } else {
                 3
+            } else {
+                2
             }
         } else {
             0
