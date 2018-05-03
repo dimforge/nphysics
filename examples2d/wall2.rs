@@ -3,11 +3,14 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Translation2};
-use ncollide2d::shape::{Plane, Cuboid};
+use na::{Isometry2, Vector2};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::world::World;
-use nphysics2d::object::RigidBody;
+use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::volumetric::Volumetric;
 use nphysics_testbed2d::Testbed;
+
+const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -17,20 +20,36 @@ fn main() {
     world.set_gravity(Vector2::new(0.0, 9.81));
 
     /*
-     * First plane
+     * Ground
      */
-    let rb = RigidBody::new_static(Plane::new(Vector2::new(0.0, -1.0)), 0.3, 0.6);
+    let ground_radx = 25.0;
+    let ground_rady = 1.0;
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+        ground_radx - COLLIDER_MARGIN,
+        ground_rady - COLLIDER_MARGIN,
+    )));
 
-    world.add_rigid_body(rb);
+    let ground_pos = Isometry2::new(Vector2::y() * ground_rady, na::zero());
+    world.add_collider(
+        COLLIDER_MARGIN,
+        ground_shape,
+        BodyHandle::ground(),
+        ground_pos,
+        Material::default(),
+    );
 
     /*
      * Create the boxes
      */
     let width   = 100;
     let height  = 20;
-    let rad     = 0.5;
+    let rad     = 0.1;
     let shift   = 2.0 * rad;
     let centerx = shift * (width as f32) / 2.0;
+
+    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
+    let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize .. height {
         for j in 0usize .. width {
@@ -39,11 +58,22 @@ fn main() {
             let x  = fj * 2.0 * rad - centerx;
             let y  = -fi * 2.0 * rad - 0.04 - rad;
 
-            let mut rb = RigidBody::new_dynamic(Cuboid::new(Vector2::new(rad - 0.04, rad - 0.04)), 1.0, 0.3, 0.6);
+            /*
+             * Create the rigid body.
+             */
+            let pos = Isometry2::new(Vector2::new(x, y), 0.0);
+            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
-            rb.append_translation(&Translation2::new(x, y));
-
-            world.add_rigid_body(rb);
+            /*
+             * Create the collider.
+             */
+            world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                Material::default(),
+            );
         }
     }
 

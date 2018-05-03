@@ -3,15 +3,14 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point2, Translation2, Vector2};
-use ncollide2d::shape::{Ball, Cuboid, Plane, ShapeHandle};
+use na::{Isometry2, Point2, Vector2};
+use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::joint::RevoluteJoint;
 use nphysics2d::math::{Inertia, Velocity};
 use nphysics2d::object::{BodyHandle, BodyStatus, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
-use std::f32::consts::PI;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -85,7 +84,6 @@ fn main() {
     let shift   = rad * 2.0 /*+ 1.0e-4*/;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 3.04;
-    let centerz = shift * (num as f32) / 2.0;
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
@@ -101,16 +99,6 @@ fn main() {
              */
             let pos = Isometry2::new(Vector2::new(x, -y), na::zero());
             let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-            // if j == 5 {
-            //     let mut rb = world.rigid_body_mut(handle).unwrap();
-            //     rb.set_status(BodyStatus::Disabled);
-            // }
-
-            // if j == 7 {
-            //     let mut rb = world.rigid_body_mut(handle).unwrap();
-            //     rb.set_status(BodyStatus::Static);
-            // }
 
             /*
              * Create the collider.

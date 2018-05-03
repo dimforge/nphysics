@@ -19,9 +19,6 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, 9.81));
 
-    // Materials.
-    let material = Material::default();
-
     /*
      * Ground
      */
@@ -38,7 +35,7 @@ fn main() {
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
-        material.clone(),
+        Material::default(),
     );
 
     /*
@@ -78,7 +75,7 @@ fn main() {
                 geom.clone(),
                 handle,
                 Isometry2::identity(),
-                material.clone(),
+                Material::default(),
             );
         }
     }

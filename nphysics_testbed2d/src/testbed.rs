@@ -5,7 +5,7 @@ use fps::Fps;
 use na::{Point2, Point3};
 use ncollide2d::world::CollisionGroups;
 use nphysics2d::joint::{ConstraintHandle, MouseConstraint};
-use nphysics2d::object::BodyHandle;
+use nphysics2d::object::{BodyHandle, ColliderHandle};
 use nphysics2d::world::World;
 use sfml::graphics::Color;
 use sfml::graphics::{Font, RenderTarget, RenderWindow};
@@ -119,6 +119,12 @@ impl Testbed {
             .set_body_color(world, body, color);
     }
 
+    pub fn set_collider_color(&mut self, collider: ColliderHandle, color: Point3<f32>) {
+        self.graphics
+            .borrow_mut()
+            .set_collider_color(collider, color);
+    }
+
     // pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
     //     self.graphics.borrow_mut().set_sensor_color(sensor, color);
     // }
@@ -161,11 +167,7 @@ impl Testbed {
 
             self.window.clear(&Color::new_rgb(250, 250, 250));
 
-            state.fps.reset();
-
             self.progress_world(&mut state);
-
-            state.fps.register_delta();
 
             self.graphics
                 .borrow_mut()
@@ -324,7 +326,10 @@ impl Testbed {
             for f in &self.callbacks {
                 f(&mut self.world, self.time)
             }
+
+            state.fps.reset();
             self.world.step();
+            state.fps.register_delta();
             println!("{}", *self.world.performance_counters());
             self.time += self.world.timestep();
         }
