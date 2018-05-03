@@ -32,6 +32,7 @@ fn main() {
     let revo = RevoluteJoint::new(0.0);
     let geom = ShapeHandle::new(Ball::new(rad));
     let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
 
     for j in 0usize..num {
         /*
@@ -43,6 +44,7 @@ fn main() {
             na::zero(),
             Vector2::new(-rad * 3.0, 0.0),
             inertia,
+            center_of_mass,
         );
 
         /*
@@ -68,6 +70,7 @@ fn main() {
             Vector2::new(-rad * 3.0, 0.0),
             na::zero(),
             inertia,
+            center_of_mass
         );
         world.add_collider(COLLIDER_MARGIN, geom.clone(), parent, Isometry2::identity());
     }

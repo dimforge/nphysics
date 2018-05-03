@@ -17,7 +17,7 @@ use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
 use ncollide3d::world::CollisionGroups;
 use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
-use nphysics3d::object::BodyHandle;
+use nphysics3d::object::{BodyHandle, ColliderHandle};
 use nphysics3d::world::World;
 
 #[derive(PartialEq)]
@@ -129,6 +129,12 @@ impl Testbed {
         self.graphics
             .borrow_mut()
             .set_body_color(world, body, color);
+    }
+
+    pub fn set_collider_color(&mut self, collider: ColliderHandle, color: Point3<f32>) {
+        self.graphics
+            .borrow_mut()
+            .set_collider_color(collider, color);
     }
 
     // pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {

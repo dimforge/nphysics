@@ -1,6 +1,6 @@
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
-use math::{Force, Isometry, Point, Velocity};
+use math::{Force, Inertia, Isometry, Point, Velocity};
 use object::{ActivationStatus, BodyHandle, BodyStatus};
 use solver::IntegrationParameters;
 
@@ -117,6 +117,16 @@ impl<N: Real> Ground<N> {
     #[inline]
     pub fn velocity(&self) -> Velocity<N> {
         Velocity::zero()
+    }
+
+    #[inline]
+    pub fn inertia(&self) -> Inertia<N> {
+        Inertia::zero()
+    }
+
+    #[inline]
+    pub fn local_inertia(&self) -> Inertia<N> {
+        Inertia::zero()
     }
 
     #[inline]

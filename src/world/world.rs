@@ -56,7 +56,10 @@ impl<N: Real> World<N> {
         let gravity = Vector::zeros();
         let params = IntegrationParameters::default();
         let workspace = MultibodyWorkspace::new();
-        cworld.register_broad_phase_pair_filter("__nphysics_internal_body_status_collision_filter", BodyStatusCollisionFilter);
+        cworld.register_broad_phase_pair_filter(
+            "__nphysics_internal_body_status_collision_filter",
+            BodyStatusCollisionFilter,
+        );
 
         World {
             counters,
@@ -198,7 +201,9 @@ impl<N: Real> World<N> {
                     .collision_object_mut(*collider_id)
                     .expect("Internal error: collider not found.");
                 let body = self.bodies.body_part(collider.data_mut().body());
-                collider.data_mut().set_body_status_dependent_ndofs(body.status_dependent_parent_ndofs());
+                collider
+                    .data_mut()
+                    .set_body_status_dependent_ndofs(body.status_dependent_parent_ndofs());
 
                 if !body.is_active() {
                     continue;
@@ -431,7 +436,10 @@ impl<N: Real> World<N> {
             (to_parent, 0)
         } else {
             let parent = self.bodies.body_part(parent);
-            (parent.position() * to_parent, parent.status_dependent_parent_ndofs())
+            (
+                parent.position() * to_parent,
+                parent.status_dependent_parent_ndofs(),
+            )
         };
 
         let data = ColliderData::new(margin, parent, ndofs, to_parent, material);
@@ -484,6 +492,9 @@ impl<N: Real> World<N> {
     pub fn collision_world(&self) -> &CollisionWorld<N> {
         &self.cworld
     }
+    pub fn collision_world_mut(&mut self) -> &mut CollisionWorld<N> {
+        &mut self.cworld
+    }
 
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
         self.cworld.collision_object(handle)
@@ -506,7 +517,6 @@ struct BodyStatusCollisionFilter;
 impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
     fn is_pair_valid(&self, b1: &Collider<N>, b2: &Collider<N>) -> bool {
-        b1.data().body_status_dependent_ndofs() != 0 ||
-        b2.data().body_status_dependent_ndofs() != 0
+        b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }

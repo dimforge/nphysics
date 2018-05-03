@@ -24,6 +24,7 @@ pub struct GraphicsManager {
     rand: XorShiftRng,
     b2sn: HashMap<BodyHandle, Vec<Node>>,
     b2color: HashMap<BodyHandle, Point3<f32>>,
+    c2color: HashMap<ColliderHandle, Point3<f32>>,
     arc_ball: ArcBall,
     first_person: FirstPerson,
     curr_is_arc_ball: bool,
@@ -50,6 +51,7 @@ impl GraphicsManager {
             rand: rng,
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
+            c2color: HashMap::new(),
             aabbs: Vec::new(),
         }
     }
@@ -135,6 +137,11 @@ impl GraphicsManager {
         }
     }
 
+    pub fn set_collider_color(&mut self, handle: ColliderHandle, color: Point3<f32>) {
+        println!("Registering color: {:?} {}", handle, color);
+        self.c2color.insert(handle, color);
+    }
+
     fn body_key(world: &World<f32>, handle: BodyHandle) -> BodyHandle {
         if let Body::Multibody(mb) = world.body(handle) {
             mb.handle()
@@ -147,19 +154,24 @@ impl GraphicsManager {
         let mut color = Point3::new(0.5, 0.5, 0.5);
         let collider = world.collider(id).unwrap();
 
-        let body_key = Self::body_key(world, collider.data().body());
-
-        match self.b2color.get(&body_key) {
-            Some(c) => color = *c,
-            None => {
-                if !collider.data().body().is_ground() {
-                    color = self.rand.gen();
-                    color *= 1.5;
-                    color.x = color.x.min(1.0);
-                    color.y = color.y.min(1.0);
-                    color.z = color.z.min(1.0);
+        if let Some(c) = self.c2color.get(&id).cloned() {
+            color = c
+        } else {
+            let body_key = Self::body_key(world, collider.data().body());
+            match self.b2color.get(&body_key) {
+                Some(c) => color = *c,
+                None => {
+                    if !collider.data().body().is_ground() {
+                        color = self.rand.gen();
+                        color *= 1.5;
+                        color.x = color.x.min(1.0);
+                        color.y = color.y.min(1.0);
+                        color.z = color.z.min(1.0);
+                    }
                 }
             }
+
+            self.set_body_color(world, collider.data().body(), color);
         }
 
         self.add_with_color(window, id, world, color)
@@ -185,8 +197,6 @@ impl GraphicsManager {
             let nodes = self.b2sn.entry(key).or_insert(Vec::new());
             nodes.append(&mut new_nodes);
         }
-
-        self.set_body_color(world, collider.data().body(), color);
     }
 
     fn add_shape(
