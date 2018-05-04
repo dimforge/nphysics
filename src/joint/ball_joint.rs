@@ -6,6 +6,7 @@ use math::{JacobianSliceMut, Velocity};
 use solver::IntegrationParameters;
 use utils::GeneralizedCross;
 
+/// A joint that allows only all rotational degrees of freedom between two body parts.
 #[derive(Copy, Clone, Debug)]
 pub struct BallJoint<N: Real> {
     rot: UnitQuaternion<N>,
@@ -15,6 +16,7 @@ pub struct BallJoint<N: Real> {
 }
 
 impl<N: Real> BallJoint<N> {
+    /// Create a ball joint with the an initial position given by a rotation in axis-angle form.
     pub fn new(axisangle: Vector3<N>) -> Self {
         BallJoint {
             rot: UnitQuaternion::new(axisangle),

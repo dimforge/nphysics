@@ -4,12 +4,14 @@ use joint::Joint;
 use solver::IntegrationParameters;
 use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
 
+/// A joint that allows only all the translational degrees of freedom between two body parts.
 #[derive(Copy, Clone, Debug)]
 pub struct CartesianJoint<N: Real> {
     position: Vector<N>,
 }
 
 impl<N: Real> CartesianJoint<N> {
+    /// Create a cartesian joint with an initial position given by `position`.
     pub fn new(position: Vector<N>) -> Self {
         CartesianJoint { position }
     }

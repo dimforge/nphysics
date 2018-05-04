@@ -1,4 +1,5 @@
 #![allow(missing_docs)] // for downcast.
+
 use downcast::Any;
 use na::Real;
 

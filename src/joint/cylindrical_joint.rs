@@ -5,6 +5,7 @@ use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
 
+/// A joint that allows one translational and one rotational degrees of freedom along a single axis.
 #[derive(Copy, Clone, Debug)]
 pub struct CylindricalJoint<N: Real> {
     prism: PrismaticJoint<N>,
@@ -12,6 +13,9 @@ pub struct CylindricalJoint<N: Real> {
 }
 
 impl<N: Real> CylindricalJoint<N> {
+    /// Create a cylindrical joint with the given axis and initial position of angle.
+    /// 
+    /// The axis is expressed in the local space of the multibody links attached to this joint.
     pub fn new(axis: Unit<Vector3<N>>, position: N, angle: N) -> Self {
         let prism = PrismaticJoint::new(axis, position);
         let revo = RevoluteJoint::new(axis, angle);

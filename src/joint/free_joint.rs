@@ -4,12 +4,16 @@ use joint::Joint;
 use solver::IntegrationParameters;
 use math::{Isometry, JacobianSliceMut, Vector, Velocity, SPATIAL_DIM};
 
+/// A joint that allows all the relative degrees of freedom between two body parts.
+/// 
+/// This joint can only be added between a `Ground` body (as parent) and any other body.
 #[derive(Copy, Clone, Debug)]
 pub struct FreeJoint<N: Real> {
     position: Isometry<N>,
 }
 
 impl<N: Real> FreeJoint<N> {
+    /// Creates a free joint with the given initial position of the descendent, relative to the ground.
     pub fn new(position: Isometry<N>) -> Self {
         FreeJoint { position }
     }

@@ -8,6 +8,7 @@ use solver::helper;
 use joint::JointConstraint;
 use math::{Point, Vector, DIM};
 
+/// A constraint that removes all relative linear motion between two body parts.
 pub struct BallConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -19,6 +20,10 @@ pub struct BallConstraint<N: Real> {
 }
 
 impl<N: Real> BallConstraint<N> {
+    /// Creates a ball constaint between two body parts.
+    /// 
+    /// This will ensure the two points identified by `anchor1` and `anchor2` will coincide.
+    /// Both are given in the local-space of their corresponding body part.
     pub fn new(b1: BodyHandle, b2: BodyHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
         BallConstraint {
             b1,
@@ -31,10 +36,12 @@ impl<N: Real> BallConstraint<N> {
         }
     }
 
+    /// Change the first anchor, expressed in the local space of the first body part.
     pub fn set_anchor_1(&mut self, anchor1: Point<N>) {
         self.anchor1 = anchor1;
     }
 
+    /// Change the second anchor, expressed in the local space of the second body part.
     pub fn set_anchor_2(&mut self, anchor2: Point<N>) {
         self.anchor2 = anchor2;
     }

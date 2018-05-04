@@ -8,6 +8,7 @@ use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
+/// A constraint that removes all degrees of freedom between two body parts.
 pub struct FixedConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -20,6 +21,10 @@ pub struct FixedConstraint<N: Real> {
 }
 
 impl<N: Real> FixedConstraint<N> {
+    /// Create a fixed constraint between two body parts.
+    /// 
+    /// This will ensure the frames `joint_to_b1` and `joint_to_b2` attached to the
+    /// body parts `b1` adn `b2` respectively always coincide.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -38,10 +43,12 @@ impl<N: Real> FixedConstraint<N> {
         }
     }
 
+    /// Changes the frame attached to the first body part.
     pub fn set_anchor_1(&mut self, local1: Isometry<N>) {
         self.joint_to_b1 = local1
     }
 
+    /// Changes the frame attached to the second body part.
     pub fn set_anchor_2(&mut self, local2: Isometry<N>) {
         self.joint_to_b2 = local2
     }
