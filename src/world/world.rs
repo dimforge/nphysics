@@ -520,3 +520,13 @@ impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFi
         b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }
+
+#[cfg(test)]
+mod test {
+    use world::World;
+
+    #[test]
+    fn world_is_send_sync() {
+        let _ = Box::new(World::<f32>::new()) as Box<Send + Sync>;
+    }
+}

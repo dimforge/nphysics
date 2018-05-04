@@ -7,7 +7,7 @@ use solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator}
 pub type ConstraintHandle = usize;
 
 // FIXME: keep this on this module?
-pub trait JointConstraint<N: Real>: NonlinearConstraintGenerator<N> + Any {
+pub trait JointConstraint<N: Real>: NonlinearConstraintGenerator<N> + Any + Send + Sync {
     fn is_active(&self, bodies: &BodySet<N>) -> bool {
         let (b1, b2) = self.anchors();
         let body1 = bodies.body(b1);

@@ -156,70 +156,12 @@ impl<N: Real> Volumetric<N> for ConvexPolygon<N> {
 
 #[cfg(test)]
 mod test {
-    #![allow(unused_imports)]
-    use na::{Matrix1, Point2, Vector2, Vector3};
-    use na;
-    use ncollide::shape::{ConvexHull3, ConvexPolygon, Cuboid};
+    use na::{self, Matrix1, Point2, Vector2, Vector3};
+    use ncollide::shape::{Cuboid, ConvexPolygon};
     use ncollide::procedural;
     use volumetric::Volumetric;
 
     #[test]
-    #[cfg(feature = "dim3")]
-    fn test_inertia_tensor3() {
-        let excentricity = 10.0;
-
-        let mut shape = procedural::cuboid(&Vector3::new(2.0f64 - 0.08, 2.0 - 0.08, 2.0 - 0.08));
-
-        for c in shape.coords.iter_mut() {
-            c.x = c.x + excentricity;
-            c.y = c.y + excentricity;
-            c.z = c.z + excentricity;
-        }
-
-        let convex = ConvexHull3::new(shape.coords);
-        let cuboid = Cuboid::new(Vector3::new(0.96f64, 0.96, 0.96));
-
-        let actual = convex.unit_angular_inertia();
-        let expected = cuboid.unit_angular_inertia();
-
-        assert!(
-            relative_eq!(actual, expected),
-            format!(
-                "Inertia tensors do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
-        );
-
-        let (actual_m, _, actual_i) = convex.mass_properties(2.37689);
-        let (expected_m, _, expected_i) = cuboid.mass_properties(2.37689);
-
-        assert!(
-            relative_eq!(&actual, &expected),
-            format!(
-                "Unit inertia tensors do not match: actual {:?}, expected: {:?}.",
-                actual, expected
-            )
-        );
-
-        assert!(
-            relative_eq!(actual_i, expected_i),
-            format!(
-                "Inertia tensors do not match: actual {:?}, expected: {:?}.",
-                actual_i, expected_i
-            )
-        );
-
-        assert!(
-            relative_eq!(actual_m, expected_m),
-            format!(
-                "Masses do not match: actual {}, expected: {}.",
-                actual_m, expected_m
-            )
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "dim2")]
     fn test_inertia_tensor2() {
         // square
         let a = 3.8f32; // some value for side length
@@ -249,7 +191,7 @@ mod test {
                 Point2::new(-half_a, -half_a),
                 Point2::new(half_a, -half_a),
             ];
-            ConvexPolygon::new(points)
+            ConvexPolygon::try_new(points).unwrap()
         };
         let actual = geom.unit_angular_inertia();
         assert!(
@@ -290,7 +232,7 @@ mod test {
                 Point2::new(-half_a, -half_b),
                 Point2::new(half_a, -half_b),
             ];
-            ConvexPolygon::new(points)
+            ConvexPolygon::try_new(points).unwrap()
         };
         let actual = geom.unit_angular_inertia();
         assert!(
@@ -325,7 +267,7 @@ mod test {
                 Point2::new(b - c_x, 0.0 - c_y),
                 Point2::new(a - c_x, h - c_y),
             ];
-            ConvexPolygon::new(points)
+            ConvexPolygon::try_new(points).unwrap()
         };
         let actual = geom.unit_angular_inertia();
         assert!(
