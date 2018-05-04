@@ -5,6 +5,10 @@ use math::{JacobianSliceMut, Velocity};
 use object::MultibodyLinkRef;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
+/// A joint that allows one degree of freedom between two body parts.
+/// 
+/// The degree of freedom is the combination of a rotation and a translation along the same axis.
+/// Both rotational and translational motions are coupled to generate a screw motion.
 #[derive(Copy, Clone, Debug)]
 pub struct HelicalJoint<N: Real> {
     revo: RevoluteJoint<N>,
@@ -12,6 +16,10 @@ pub struct HelicalJoint<N: Real> {
 }
 
 impl<N: Real> HelicalJoint<N> {
+    /// Create an helical joint with the given axis and initial angle.
+    /// 
+    /// The `pitch` controls how much translation is generated for how much rotation.
+    /// In particular, the translational displacement along `axis` is given by `angle * pitch`.
     pub fn new(axis: Unit<Vector3<N>>, pitch: N, angle: N) -> Self {
         HelicalJoint {
             revo: RevoluteJoint::new(axis, angle),
@@ -19,10 +27,12 @@ impl<N: Real> HelicalJoint<N> {
         }
     }
 
+    /// The translational displacement along the joint axis.
     pub fn offset(&self) -> N {
         self.revo.angle() * self.pitch
     }
 
+    /// The rotational displacement along the joint axis.
     pub fn angle(&self) -> N {
         self.revo.angle()
     }

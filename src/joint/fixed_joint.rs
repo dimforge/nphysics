@@ -4,12 +4,17 @@ use joint::Joint;
 use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
 use solver::IntegrationParameters;
 
+/// A joint that does not allow any relative degrees of freedom.
 #[derive(Copy, Clone, Debug)]
 pub struct FixedJoint<N: Real> {
     body_to_parent: Isometry<N>,
 }
 
 impl<N: Real> FixedJoint<N> {
+    /// Create a joint that does not a allow any degrees of freedom between two body parts.
+    /// 
+    /// The descendent attached to this joint will have a position maintained to `pos_wrt_pody`
+    /// relative to its parent.
     pub fn new(pos_wrt_body: Isometry<N>) -> Self {
         FixedJoint {
             body_to_parent: pos_wrt_body.inverse(),

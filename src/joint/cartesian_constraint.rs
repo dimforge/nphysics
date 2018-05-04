@@ -8,6 +8,7 @@ use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
+/// A constraint that removes all relative angular motion between two body parts.
 pub struct CartesianConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -19,6 +20,10 @@ pub struct CartesianConstraint<N: Real> {
 }
 
 impl<N: Real> CartesianConstraint<N> {
+    /// Creates a cartesian constaint between two body parts.
+    /// 
+    /// This will ensure the rotational parts of the frames given identified by `joint_to_b1` and
+    /// `joint_to_b2` and attached to the corrisponding bodies will coincide.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -36,10 +41,12 @@ impl<N: Real> CartesianConstraint<N> {
         }
     }
 
+    /// Changes the reference frame for the first body part.
     pub fn set_anchor_1(&mut self, local1: Isometry<N>) {
         self.joint_to_b1 = local1
     }
 
+    /// Changes the reference frame for the second body part.
     pub fn set_anchor_2(&mut self, local2: Isometry<N>) {
         self.joint_to_b2 = local2
     }

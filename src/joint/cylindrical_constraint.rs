@@ -8,6 +8,7 @@ use solver::helper;
 use joint::JointConstraint;
 use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 
+/// A constraint that removes all degrees of freedom (of one body part relative to a second one) except one translation along an axis and one rotation along the same axis.
 pub struct CylindricalConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -20,11 +21,15 @@ pub struct CylindricalConstraint<N: Real> {
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 
-    min_offset: Option<N>,
-    max_offset: Option<N>,
+    // min_offset: Option<N>,
+    // max_offset: Option<N>,
 }
 
 impl<N: Real> CylindricalConstraint<N> {
+    /// Creates a cartesian constaint between two body parts.
+    /// 
+    /// This will ensure `axis1` and `axis2` always coincide. All the axis and anchors
+    /// are provided on the local space of the corresponding body parts.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -33,8 +38,8 @@ impl<N: Real> CylindricalConstraint<N> {
         anchor2: Point<N>,
         axis2: Unit<Vector<N>>,
     ) -> Self {
-        let min_offset = None;
-        let max_offset = None;
+        // let min_offset = None;
+        // let max_offset = None;
 
         CylindricalConstraint {
             b1,
@@ -47,44 +52,44 @@ impl<N: Real> CylindricalConstraint<N> {
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
-            min_offset,
-            max_offset,
+            // min_offset,
+            // max_offset,
         }
     }
 
-    pub fn min_offset(&self) -> Option<N> {
-        self.min_offset
-    }
+    // pub fn min_offset(&self) -> Option<N> {
+    //     self.min_offset
+    // }
 
-    pub fn max_offset(&self) -> Option<N> {
-        self.max_offset
-    }
+    // pub fn max_offset(&self) -> Option<N> {
+    //     self.max_offset
+    // }
 
-    pub fn disable_min_offset(&mut self) {
-        self.min_offset = None;
-    }
+    // pub fn disable_min_offset(&mut self) {
+    //     self.min_offset = None;
+    // }
 
-    pub fn disable_max_offset(&mut self) {
-        self.max_offset = None;
-    }
+    // pub fn disable_max_offset(&mut self) {
+    //     self.max_offset = None;
+    // }
 
-    pub fn enable_min_offset(&mut self, limit: N) {
-        self.min_offset = Some(limit);
-        self.assert_limits();
-    }
+    // pub fn enable_min_offset(&mut self, limit: N) {
+    //     self.min_offset = Some(limit);
+    //     self.assert_limits();
+    // }
 
-    pub fn enable_max_offset(&mut self, limit: N) {
-        self.max_offset = Some(limit);
-        self.assert_limits();
-    }
+    // pub fn enable_max_offset(&mut self, limit: N) {
+    //     self.max_offset = Some(limit);
+    //     self.assert_limits();
+    // }
 
-    fn assert_limits(&self) {
-        if let (Some(min_offset), Some(max_offset)) = (self.min_offset, self.max_offset) {
-            assert!(
-                min_offset <= max_offset,
-                "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
-        }
-    }
+    // fn assert_limits(&self) {
+    //     if let (Some(min_offset), Some(max_offset)) = (self.min_offset, self.max_offset) {
+    //         assert!(
+    //             min_offset <= max_offset,
+    //             "Cylindrical constraint limits: the min angle must be larger than (or equal to) the max angle.");
+    //     }
+    // }
 }
 
 impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
