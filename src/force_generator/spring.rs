@@ -5,6 +5,7 @@ use math::{Force, Point, Vector};
 use object::{BodyHandle, BodySet};
 use solver::IntegrationParameters;
 
+/// Generator of a force proportional to the distance separating two bodies.
 pub struct Spring<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -15,6 +16,10 @@ pub struct Spring<N: Real> {
 }
 
 impl<N: Real> Spring<N> {
+    /// Initialize a spring attached to `b1` and `b2` at the points `anchor1` and `anchor2`.
+    /// 
+    /// Anchors are expressed in the local coordinates of the corresponding bodies.
+    /// The spring has a rest length of `length` and a stiffness of `stiffness`.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -33,10 +38,16 @@ impl<N: Real> Spring<N> {
         }
     }
 
+    /// Sets the attach point to the first body.
+    /// 
+    /// The anchor is expressed in the local coordinatse of the first body.
     pub fn set_anchor_1(&mut self, anchor: Point<N>) {
         self.anchor1 = anchor;
     }
 
+    /// Sets the attach point to the second body.
+    /// 
+    /// The anchor is expressed in the local coordinatse of the second body.
     pub fn set_anchor_2(&mut self, anchor: Point<N>) {
         self.anchor2 = anchor
     }

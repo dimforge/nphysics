@@ -35,6 +35,7 @@ impl<N: Real> ConstantAcceleration<N> {
         }
     }
 
+    /// Add a body part to be affected by this force generator.
     pub fn add_body_part(&mut self, body: BodyHandle) {
         self.parts.push(body)
     }
