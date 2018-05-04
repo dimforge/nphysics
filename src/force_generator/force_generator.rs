@@ -6,7 +6,7 @@ use solver::IntegrationParameters;
 
 pub type ForceGeneratorHandle = usize;
 
-pub trait ForceGenerator<N: Real>: Any {
+pub trait ForceGenerator<N: Real>: Any + Send + Sync {
     fn apply(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool;
 }
 

@@ -209,3 +209,70 @@ impl<N: Real> Volumetric<N> for ConvexHull<N> {
         convex_mesh_mass_properties_unchecked(&convex_mesh, density)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use na::Vector3;
+    use ncollide::shape::{ConvexHull, Cuboid};
+    use ncollide::procedural;
+    use volumetric::Volumetric;
+
+    #[test]
+    fn test_inertia_tensor3() {
+        let excentricity = 10.0;
+
+        let mut shape = procedural::cuboid(&Vector3::new(2.0f64 - 0.08, 2.0 - 0.08, 2.0 - 0.08));
+
+        for c in shape.coords.iter_mut() {
+            c.x = c.x + excentricity;
+            c.y = c.y + excentricity;
+            c.z = c.z + excentricity;
+        }
+
+        let indices: Vec<usize> = shape.flat_indices()
+            .into_iter()
+            .map(|i| i as usize)
+            .collect();
+
+        let convex = ConvexHull::try_new(shape.coords, &indices).unwrap();
+        let cuboid = Cuboid::new(Vector3::new(0.96f64, 0.96, 0.96));
+
+        let actual = convex.unit_angular_inertia();
+        let expected = cuboid.unit_angular_inertia();
+
+        assert!(
+            relative_eq!(actual, expected, epsilon = 1.0e-8),
+            format!(
+                "Inertia tensors do not match: actual {:?}, expected: {:?}.",
+                actual, expected
+            )
+        );
+
+        let (actual_m, _, actual_i) = convex.mass_properties(2.37689);
+        let (expected_m, _, expected_i) = cuboid.mass_properties(2.37689);
+
+        assert!(
+            relative_eq!(&actual, &expected, epsilon = 1.0e-8),
+            format!(
+                "Unit inertia tensors do not match: actual {:?}, expected: {:?}.",
+                actual, expected
+            )
+        );
+
+        assert!(
+            relative_eq!(actual_i, expected_i, epsilon = 1.0e-8),
+            format!(
+                "Inertia tensors do not match: actual {:?}, expected: {:?}.",
+                actual_i, expected_i
+            )
+        );
+
+        assert!(
+            relative_eq!(actual_m, expected_m, epsilon = 1.0e-8),
+            format!(
+                "Masses do not match: actual {}, expected: {}.",
+                actual_m, expected_m
+            )
+        );
+    }
+}
