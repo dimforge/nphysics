@@ -1,3 +1,5 @@
+/// Physics-specific algebraic entities: velocity, forces, and inertias.
+
 pub use self::velocity2::Velocity2;
 pub use self::velocity3::Velocity3;
 

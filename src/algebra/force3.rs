@@ -1,25 +1,31 @@
 use std::mem;
 use std::ops::{Neg, Add, AddAssign, Mul, Sub, SubAssign};
-use na::{self, Isometry3, Point3, Real, U6, Vector, Vector3, Vector6};
+use na::{self, Point3, Real, U6, Vector, Vector3, Vector6};
 use na::storage::Storage;
 
+/// A force with a linear and agular (torque) component.
 #[derive(Copy, Clone, Debug)]
 pub struct Force3<N: Real> {
+    /// The linear force.
     pub linear: Vector3<N>,
+    /// The linear force.
     pub angular: Vector3<N>,
 }
 
 impl<N: Real> Force3<N> {
+    /// Creates a force from its linear and angular components.
     #[inline]
     pub fn new(linear: Vector3<N>, angular: Vector3<N>) -> Self {
         Force3 { linear, angular }
     }
 
+    /// A zero force.
     #[inline]
     pub fn zero() -> Self {
         Self::new(na::zero(), na::zero())
     }
 
+    /// Create a force from a slice where the linear part are stored first.
     #[inline]
     pub fn from_slice(data: &[N]) -> Self {
         Self::new(
@@ -28,6 +34,7 @@ impl<N: Real> Force3<N> {
         )
     }
 
+    /// Create a force from a vector where the linear part are stored first.
     #[inline]
     pub fn from_vector<S: Storage<N, U6>>(data: &Vector<N, U6, S>) -> Self {
         Self::new(
@@ -36,79 +43,67 @@ impl<N: Real> Force3<N> {
         )
     }
 
+    /// Create a pure torque.   
     #[inline]
     pub fn torque(torque: Vector3<N>) -> Self {
         Self::new(na::zero(), torque)
     }
 
+    /// Create a pure torque.
     #[inline]
     pub fn torque_from_vector(torque: Vector3<N>) -> Self {
         Self::new(na::zero(), torque)
     }
 
+    /// Creates the resultant of a torque applied at the given point (relative to the center of mass).
     #[inline]
     pub fn torque_at_point(torque: Vector3<N>, point: &Point3<N>) -> Self {
         Self::new(-torque.cross(&point.coords), torque)
     }
 
+    /// Creates the resultant of a torque applied at the given point (relative to the center of mass).
     #[inline]
     pub fn torque_from_vector_at_point(torque: Vector3<N>, point: &Point3<N>) -> Self {
         Self::torque_at_point(torque, point)
     }
     
+    /// Create a pure linear force.
     #[inline]
     pub fn linear(linear: Vector3<N>) -> Self {
         Self::new(linear, na::zero())
     }
 
+    /// Creates the resultant of a linear force applied at the given point (relative to the center of mass).
     #[inline]
     pub fn linear_at_point(linear: Vector3<N>, point: &Point3<N>) -> Self {
         Self::new(linear, point.coords.cross(&linear))
     }
 
-    /// This twist seen as a slice.
+
+    /// This force seen as a slice.
+    /// 
+    /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_slice(&self) -> &[N] {
         self.as_vector().as_slice()
     }
 
-    /// This twist seen as a vector. The linear components are stored first.
+
+    /// This force seen as a vector.
+    /// 
+    /// The linear part of the force are stored first.
     #[inline]
     pub fn as_vector(&self) -> &Vector6<N> {
         unsafe { mem::transmute(self) }
     }
 
-    /// This twist seen as a mutable vector. The linear components are stored first.
+    /// This force seen as a mutable vector.
+    /// 
+    /// The linear part of the force are stored first.
     #[inline]
     pub fn as_vector_mut(&mut self) -> &mut Vector6<N> {
         unsafe { mem::transmute(self) }
     }
-
-    #[inline]
-    pub fn to_transform(&self) -> Isometry3<N> {
-        Isometry3::new(self.linear, self.angular)
-    }
-
-    // #[inline]
-    // pub fn frame_velocity(&self, frame: &Isometry3<N>) -> Self {
-    //     Self::new(self.linear + self.angular.cross(&frame.translation.vector), self.angular)
-    // }
-
-    // // XXX: not a good name
-    // #[inline]
-    // pub fn shift(&self, shift: &Vector3<N>) -> Self {
-    //     Self::new(self.linear + self.angular.cross(&shift), self.angular)
-    // }
-
-    // #[inline]
-    // pub fn rotated(&self, rot: &Rotation<N>) -> Self {
-    //     Self::new(rot * self.linear, rot * self.angular)
-    // }
-
-    // #[inline]
-    // pub fn transformed(&self, iso: &Isometry3<N>) -> Self {
-    //     Self::new(iso * self.linear, iso * self.angular)
-    // }
 }
 
 impl<N: Real> Add<Force3<N>> for Force3<N> {

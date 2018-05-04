@@ -3,76 +3,95 @@ use std::ops::{Neg, Add, AddAssign, Mul, Sub, SubAssign};
 use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3};
 use na::storage::Storage;
 
+/// A force with a linear and agular (torque) component.
 #[derive(Copy, Clone, Debug)]
 pub struct Force2<N: Real> {
+    /// The linear force.
     pub linear: Vector2<N>,
+    /// The torque.
     pub angular: N,
 }
 
 impl<N: Real> Force2<N> {
+    /// Creates a force from its linear and angular components.
     #[inline]
     pub fn new(linear: Vector2<N>, angular: N) -> Self {
         Force2 { linear, angular }
     }
 
+    /// A zero force.
     #[inline]
     pub fn zero() -> Self {
         Self::new(na::zero(), N::zero())
     }
 
+    /// Create a force from a slice where the entries 0 and 1 are for the linear part and 2 for the angular part.
     #[inline]
     pub fn from_slice(data: &[N]) -> Self {
         Self::new(Vector2::new(data[0], data[1]), data[2])
     }
 
+    /// Create a force from a vector where the entries 0 and 1 are for the linear part and 2 for the angular part.
     #[inline]
     pub fn from_vector<S: Storage<N, U3>>(data: &Vector<N, U3, S>) -> Self {
         Self::new(Vector2::new(data[0], data[1]), data[2])
     }
 
+    /// Create a pure torque.   
     #[inline]
     pub fn torque(torque: N) -> Self {
         Self::new(na::zero(), torque)
     }
 
+    /// Create a pure torque.
     #[inline]
     pub fn torque_from_vector(torque: Vector1<N>) -> Self {
         Self::new(na::zero(), torque.x)
     }
     
+    /// Create a pure linear force.
     #[inline]
     pub fn linear(linear: Vector2<N>) -> Self {
         Self::new(linear, na::zero())
     }
 
+    /// Creates the resultant of a linear force applied at the given point (relative to the center of mass).
     #[inline]
     pub fn linear_at_point(linear: Vector2<N>, point: &Point2<N>) -> Self {
         Self::new(linear, point.coords.perp(&linear))
     }
 
+    /// Creates the resultant of a torque applied at the given point (relative to the center of mass).
     #[inline]
     pub fn torque_at_point(torque: N, point: &Point2<N>) -> Self {
         Self::new(point.coords * -torque, torque)
     }
 
+    /// Creates the resultant of a torque applied at the given point (relative to the center of mass).
     #[inline]
     pub fn torque_from_vector_at_point(torque: Vector1<N>, point: &Point2<N>) -> Self {
         Self::torque_at_point(torque.x, point)
     }
 
-    /// This twist seen as a slice.
+    /// This force seen as a slice.
+    /// 
+    /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_slice(&self) -> &[N] {
         self.as_vector().as_slice()
     }
 
-    /// This twist seen as a vector. The linear components are stored first.
+    /// This force seen as a vector.
+    /// 
+    /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_vector(&self) -> &Vector3<N> {
         unsafe { mem::transmute(self) }
     }
 
-    /// This twist seen as a mutable vector. The linear components are stored first.
+    /// This force seen as a mutable vector.
+    /// 
+    /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_vector_mut(&mut self) -> &mut Vector3<N> {
         unsafe { mem::transmute(self) }
