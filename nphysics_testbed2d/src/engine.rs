@@ -313,9 +313,9 @@ impl<'a> GraphicsManager<'a> {
             }
 
             let color = Point3::new(
-                self.rand.gen_range(50usize, 256) as u8,
-                self.rand.gen_range(50usize, 256) as u8,
-                self.rand.gen_range(50usize, 256) as u8,
+                self.rand.gen_range(0usize, 200) as u8,
+                self.rand.gen_range(0usize, 200) as u8,
+                self.rand.gen_range(0usize, 200) as u8,
             );
 
             self.obj2color.insert(color_key, color);

@@ -22,9 +22,6 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
-    // Material.
-    let material = Material::default();
-
     /*
      * Ground
      */
@@ -32,15 +29,13 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
     let ground_pos = Isometry3::new(Vector3::y() * (-ground_size - 5.0), na::zero());
-    // let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
-    // let ground_pos = Isometry3::identity();
 
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
         BodyHandle::ground(),
         ground_pos,
-        material.clone(),
+        Material::default(),
     );
 
     /*
@@ -80,7 +75,7 @@ fn main() {
             cuboid.clone(),
             rb,
             Isometry3::identity(),
-            material.clone(),
+            Material::default(),
         );
 
         let constraint = RevoluteConstraint::new(
@@ -126,7 +121,7 @@ fn main() {
             cuboid.clone(),
             rb,
             Isometry3::identity(),
-            material.clone(),
+            Material::default(),
         );
 
         let mut constraint =
@@ -169,7 +164,7 @@ fn main() {
             cuboid.clone(),
             rb,
             Isometry3::identity(),
-            material.clone(),
+            Material::default(),
         );
 
         let constraint = BallConstraint::new(parent, rb, parent_anchor, body_anchor);
@@ -190,7 +185,7 @@ fn main() {
         cuboid.clone(),
         BodyHandle::ground(),
         Isometry3::new(parent_pos, na::zero()),
-        material.clone(),
+        Material::default(),
     );
 
     let rb = world.add_rigid_body(
@@ -204,7 +199,7 @@ fn main() {
         cuboid.clone(),
         rb,
         Isometry3::identity(),
-        material.clone(),
+        Material::default(),
     );
 
     let constraint = UniversalConstraint::new(
@@ -246,7 +241,7 @@ fn main() {
                 cuboid.clone(),
                 rb,
                 Isometry3::identity(),
-                material.clone(),
+                Material::default(),
             );
 
             let constraint = PlanarConstraint::new(
@@ -287,7 +282,7 @@ fn main() {
                 cuboid.clone(),
                 rb,
                 Isometry3::identity(),
-                material.clone(),
+                Material::default(),
             );
 
             let constraint = RectangularConstraint::new(
@@ -315,7 +310,7 @@ fn main() {
         cuboid.clone(),
         rb,
         Isometry3::identity(),
-        material.clone(),
+        Material::default(),
     );
 
     let constraint = PinSlotConstraint::new(
