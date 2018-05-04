@@ -7,7 +7,7 @@ use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};
-use nphysics2d::joint::{RevoluteConstraint, PrismaticConstraint};
+use nphysics2d::joint::{RevoluteConstraint, PrismaticConstraint, CartesianConstraint};
 use nphysics2d::volumetric::Volumetric;
 use nphysics_testbed2d::Testbed;
 
@@ -87,26 +87,22 @@ fn main() {
      * Prismatic constraints.
      */
     parent = BodyHandle::ground();
+    let first_anchor = Point2::new(-1.0, 0.0);
+    let other_anchor = Point2::new(-3.0 * rad, 0.0);
+    let mut pos = Isometry2::new(first_anchor.coords, na::zero());
 
     for j in 0usize..3 {
         /*
          * Create the rigid body.
          */
-        let shift = if j == 0 {
-            -Vector2::x()
-        } else {
-            na::zero()
-        };
-
-        let pos = Isometry2::new(Vector2::x() * ((j + 1) as f32 * rad * -3.0) + shift, na::zero());
         let rb = world.add_rigid_body(pos, inertia, center_of_mass);
 
         let mut constraint = PrismaticConstraint::new(
             parent,
             rb,
-            Point2::origin() + shift,
+            if j == 0 { first_anchor } else { other_anchor },
             -Vector2::y_axis(),
-            Point2::new(rad * 3.0, 0.0),
+            Point2::origin(),
         );
         
         constraint.enable_min_offset(-rad * 2.0);
@@ -126,8 +122,52 @@ fn main() {
         /*
          * Parent for the next constraint.
          */
+        pos.translation.vector += other_anchor.coords;
         parent = rb;
     }
+
+    /*
+     * Cartesian constraint.
+     */
+    let num = 10;
+    let shift = Vector2::new(0.0, -2.0);
+    let width = 20.0 * rad;
+
+    for i in 0..num {
+        for j in 0..num {
+            let mut x = i as f32 * rad * 3.0 - width / 2.0 + 5.0;
+            let y = j as f32 * rad * 3.0 - width / 2.0 - 4.0;
+
+            if j % 2 == 0 {
+                x += rad * 2.0;
+            }
+
+            let rb = world.add_rigid_body(
+                Isometry2::new(shift + Vector2::new(x, y), na::zero()),
+                inertia,
+                center_of_mass,
+            );
+
+            world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                rb,
+                Isometry2::identity(),
+                Material::default(),
+            );
+
+            let constraint = CartesianConstraint::new(
+                BodyHandle::ground(),
+                rb,
+                Isometry2::identity(),
+                Isometry2::identity(),
+            );
+
+            world.add_constraint(constraint);
+        }
+    }
+
+
     /*
      * Set up the testbed.
      */
