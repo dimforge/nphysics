@@ -1,10 +1,11 @@
 use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
+/// A joint that allows 1 rotational and 2 translational degrees of freedom.
 #[derive(Copy, Clone, Debug)]
 pub struct PlanarJoint<N: Real> {
     prism1: PrismaticJoint<N>,
@@ -13,6 +14,12 @@ pub struct PlanarJoint<N: Real> {
 }
 
 impl<N: Real> PlanarJoint<N> {
+    /// Create a new planar joint where both translational degrees of freedoms are along the provide axii.
+    ///
+    /// The rotational degree of freedom is along an axis orthogonal to `axis1` and `axis2`. Idealy, the two
+    /// provided axii should be orthogonal. All axis are in the local coordinate space of the attached multibody links.
+    ///
+    /// Panics if `axis1` and `axis2` are near-colinear.
     pub fn new(
         axis1: Unit<Vector3<N>>,
         axis2: Unit<Vector3<N>>,

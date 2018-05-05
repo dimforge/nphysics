@@ -8,6 +8,7 @@ use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
+/// A constraint that remove all relative rotations and one relative translation between two body parts.
 pub struct RectangularConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -21,6 +22,10 @@ pub struct RectangularConstraint<N: Real> {
 }
 
 impl<N: Real> RectangularConstraint<N> {
+    /// Create a new rectangular constraint that restrict `b1` and `b2` to move on a plane orthogonal to `axis1`.
+    ///
+    /// The `axis1` is expressed in the local coordinate system of `b1`.
+    /// Both anchors are expressed in the local coordinate system of their respective bodies.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,

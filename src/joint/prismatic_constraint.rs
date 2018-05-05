@@ -8,6 +8,7 @@ use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
+/// A constraint that remove all be one translational degrees of freedom.
 pub struct PrismaticConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -25,6 +26,9 @@ pub struct PrismaticConstraint<N: Real> {
 }
 
 impl<N: Real> PrismaticConstraint<N> {
+    /// Create a new prismatic constraint that ensures the relative motion between the two
+    /// body parts are restricted to a single translation along the `axis1` axis (expressed in
+    /// the local coordinates frame of `b1`).
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -51,27 +55,33 @@ impl<N: Real> PrismaticConstraint<N> {
         }
     }
 
+    /// The lower limit, if any, of the relative translation (along the joint axis) of the body parts attached to this joint.
     pub fn min_offset(&self) -> Option<N> {
         self.min_offset
     }
 
+    /// The upper limit, if any, of the relative translation (along the joint axis) of the body parts attached to this joint.
     pub fn max_offset(&self) -> Option<N> {
         self.max_offset
     }
 
+    /// Disable the lower limit of the relative translational motion along the joint axis.
     pub fn disable_min_offset(&mut self) {
         self.min_offset = None;
     }
 
+    /// Disable the upper limit of the relative translational motion along the joint axis.
     pub fn disable_max_offset(&mut self) {
         self.max_offset = None;
     }
 
+    /// Enables the lower limit of the relative translational motion along the joint axis.
     pub fn enable_min_offset(&mut self, limit: N) {
         self.min_offset = Some(limit);
         self.assert_limits();
     }
 
+    /// Disable the lower limit of the relative translational motion along the joint axis.
     pub fn enable_max_offset(&mut self, limit: N) {
         self.max_offset = Some(limit);
         self.assert_limits();

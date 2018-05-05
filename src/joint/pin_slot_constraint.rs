@@ -1,13 +1,17 @@
-use std::ops::Range;
 use na::{DVector, Real, Unit};
+use std::ops::Range;
 
-use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
-use solver::helper;
 use joint::JointConstraint;
 use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
+use object::{BodyHandle, BodySet};
+use solver::helper;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+             NonlinearConstraintGenerator};
 
+/// A constraint that removes two translational and two rotational degrees of freedoms.
+///
+/// This is different frmo the cylindrical constraint since the remaining rotation and translation
+/// are not restricted to be done wrt. the same axis.
 pub struct PinSlotConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -20,12 +24,17 @@ pub struct PinSlotConstraint<N: Real> {
     ang_impulses: AngularVector<N>,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
-
-    min_offset: Option<N>,
-    max_offset: Option<N>,
+    // min_offset: Option<N>,
+    // max_offset: Option<N>,
 }
 
 impl<N: Real> PinSlotConstraint<N> {
+    /// Creates a new pin-slot constraint.
+    ///
+    /// This will ensure the relative linear motions are always along `axis_v1` (here expressed
+    /// in the local coordinate frame of `b1`), and that `axis_w1` and `axis_w2` always coincide.
+    /// All axises and anchors are expressed in the local coordinate frame of their respective body
+    /// part.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -35,8 +44,8 @@ impl<N: Real> PinSlotConstraint<N> {
         anchor2: Point<N>,
         axis_w2: Unit<Vector<N>>,
     ) -> Self {
-        let min_offset = None;
-        let max_offset = None;
+        // let min_offset = None;
+        // let max_offset = None;
 
         PinSlotConstraint {
             b1,
@@ -50,44 +59,44 @@ impl<N: Real> PinSlotConstraint<N> {
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
-            min_offset,
-            max_offset,
+            // min_offset,
+            // max_offset,
         }
     }
 
-    pub fn min_offset(&self) -> Option<N> {
-        self.min_offset
-    }
+    // pub fn min_offset(&self) -> Option<N> {
+    //     self.min_offset
+    // }
 
-    pub fn max_offset(&self) -> Option<N> {
-        self.max_offset
-    }
+    // pub fn max_offset(&self) -> Option<N> {
+    //     self.max_offset
+    // }
 
-    pub fn disable_min_offset(&mut self) {
-        self.min_offset = None;
-    }
+    // pub fn disable_min_offset(&mut self) {
+    //     self.min_offset = None;
+    // }
 
-    pub fn disable_max_offset(&mut self) {
-        self.max_offset = None;
-    }
+    // pub fn disable_max_offset(&mut self) {
+    //     self.max_offset = None;
+    // }
 
-    pub fn enable_min_offset(&mut self, limit: N) {
-        self.min_offset = Some(limit);
-        self.assert_limits();
-    }
+    // pub fn enable_min_offset(&mut self, limit: N) {
+    //     self.min_offset = Some(limit);
+    //     self.assert_limits();
+    // }
 
-    pub fn enable_max_offset(&mut self, limit: N) {
-        self.max_offset = Some(limit);
-        self.assert_limits();
-    }
+    // pub fn enable_max_offset(&mut self, limit: N) {
+    //     self.max_offset = Some(limit);
+    //     self.assert_limits();
+    // }
 
-    fn assert_limits(&self) {
-        if let (Some(min_offset), Some(max_offset)) = (self.min_offset, self.max_offset) {
-            assert!(
-                min_offset <= max_offset,
-                "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
-        }
-    }
+    // fn assert_limits(&self) {
+    //     if let (Some(min_offset), Some(max_offset)) = (self.min_offset, self.max_offset) {
+    //         assert!(
+    //             min_offset <= max_offset,
+    //             "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
+    //     }
+    // }
 }
 
 impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {

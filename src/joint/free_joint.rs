@@ -1,11 +1,11 @@
 use na::{DVectorSliceMut, Real};
 
 use joint::Joint;
-use solver::IntegrationParameters;
 use math::{Isometry, JacobianSliceMut, Vector, Velocity, SPATIAL_DIM};
+use solver::IntegrationParameters;
 
-/// A joint that allows all the relative degrees of freedom between two body parts.
-/// 
+/// A joint that allows all the relative degrees of freedom between two multibody links.
+///
 /// This joint can only be added between a `Ground` body (as parent) and any other body.
 #[derive(Copy, Clone, Debug)]
 pub struct FreeJoint<N: Real> {
