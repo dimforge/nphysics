@@ -1,15 +1,22 @@
-use std::fmt::{Display, Formatter, Result};
 use counters::Timer;
+use std::fmt::{Display, Formatter, Result};
 
+/// Performance counters related to constraints resolution.
 pub struct SolverCounters {
+    /// Number of constraints generated.
     pub nconstraints: usize,
+    /// Number of contacts found.
     pub ncontacts: usize,
+    /// Time spent for the resolution of the constraints (force computation).
     pub resolution_time: Timer,
+    /// Time spent for the assembly of all the constraints into a linear complentarity problem.
     pub assembly_time: Timer,
+    /// Time spent for the update of the position of the bodies.
     pub position_update_time: Timer,
 }
 
 impl SolverCounters {
+    /// Creates a new counter initialized to zero.
     pub fn new() -> Self {
         SolverCounters {
             nconstraints: 0,

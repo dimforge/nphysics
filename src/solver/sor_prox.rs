@@ -8,17 +8,20 @@ use math::{SpatialDim, SPATIAL_DIM};
 use solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint};
 
+/// A SOR-Prox velocity-based constraints solver.
 pub struct SORProx<N: Real> {
     _phantom: PhantomData<N>,
 }
 
 impl<N: Real> SORProx<N> {
+    /// Initialize a new velocity-based constraints solver.
     pub fn new() -> Self {
         SORProx {
             _phantom: PhantomData,
         }
     }
 
+    /// Solve the given set of constraints.
     pub fn solve(
         &self,
         unilateral_ground: &mut [UnilateralGroundConstraint<N>],
@@ -68,7 +71,7 @@ impl<N: Real> SORProx<N> {
         }
     }
 
-    pub fn step(
+    fn step(
         &self,
         unilateral_ground: &mut [UnilateralGroundConstraint<N>],
         unilateral: &mut [UnilateralConstraint<N>],
@@ -135,7 +138,7 @@ impl<N: Real> SORProx<N> {
         }
     }
 
-    pub fn solve_unilateral<D1: Dim, D2: Dim>(
+    fn solve_unilateral<D1: Dim, D2: Dim>(
         &self,
         c: &mut UnilateralConstraint<N>,
         jacobians: &[N],
@@ -166,7 +169,7 @@ impl<N: Real> SORProx<N> {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_unilateral_ground<D: Dim>(
+    fn solve_unilateral_ground<D: Dim>(
         &self,
         c: &mut UnilateralGroundConstraint<N>,
         jacobians: &[N],
@@ -187,7 +190,7 @@ impl<N: Real> SORProx<N> {
             .axpy(dlambda, &weighted_jacobian, N::one());
     }
 
-    pub fn solve_bilateral<D1: Dim, D2: Dim>(
+    fn solve_bilateral<D1: Dim, D2: Dim>(
         &self,
         c: &mut BilateralConstraint<N>,
         unilateral: &[UnilateralConstraint<N>],
@@ -251,7 +254,7 @@ impl<N: Real> SORProx<N> {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_bilateral_ground<D: Dim>(
+    fn solve_bilateral_ground<D: Dim>(
         &self,
         c: &mut BilateralGroundConstraint<N>,
         unilateral: &[UnilateralGroundConstraint<N>],
@@ -301,7 +304,7 @@ impl<N: Real> SORProx<N> {
             .axpy(dlambda, &weighted_jacobian, N::one());
     }
 
-    pub fn setup_unilateral<D1: Dim, D2: Dim>(
+    fn setup_unilateral<D1: Dim, D2: Dim>(
         &self,
         c: &UnilateralConstraint<N>,
         jacobians: &[N],
@@ -327,7 +330,7 @@ impl<N: Real> SORProx<N> {
         }
     }
 
-    pub fn setup_unilateral_ground<D: Dim>(
+    fn setup_unilateral_ground<D: Dim>(
         &self,
         c: &UnilateralGroundConstraint<N>,
         jacobians: &[N],
@@ -346,7 +349,7 @@ impl<N: Real> SORProx<N> {
         }
     }
 
-    pub fn setup_bilateral<D1: Dim, D2: Dim>(
+    fn setup_bilateral<D1: Dim, D2: Dim>(
         &self,
         c: &BilateralConstraint<N>,
         jacobians: &[N],
@@ -372,7 +375,7 @@ impl<N: Real> SORProx<N> {
         }
     }
 
-    pub fn setup_bilateral_ground<D: Dim>(
+    fn setup_bilateral_ground<D: Dim>(
         &self,
         c: &BilateralGroundConstraint<N>,
         jacobians: &[N],

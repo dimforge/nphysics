@@ -1,20 +1,39 @@
 use na::{self, Real};
 
+/// Parameters for a time-step of the physics engine.
 pub struct IntegrationParameters<N: Real> {
+    /// The timestep (default: `1.0 / 60.0`)
     pub dt: N,
+    /// The Error Reduction Parameter in `[0, 1]` is the proportion of
+    /// the positional error to be corrected at each time step (default: `0.2`).
     pub erp: N,
+    /// Each cached impulse are multiplied by this coefficient in `[0, 1]`
+    /// when they are re-used to initialize the solver (default `1.0`).
     pub warmstart_coeff: N,
+    /// Contacts at points where the involved bodies have a relative
+    /// velocity smaller than this threshold wont be affected by the restitution force (default: `1.0`).
     pub restitution_velocity_threshold: N,
+    /// Ammount of penetration the engine wont attempt to correct (default: `0.001m`).
     pub allowed_linear_error: N,
+    /// Ammount of angular drift of joint limits the engine wont
+    /// attempt to correct (default: `0.001rad`).
     pub allowed_angular_error: N,
+    /// Maximum linear correction during one step of the non-linear position solver (default: `100.0`).
     pub max_linear_correction: N,
+    /// Maximum angular correction during one step of the non-linear position solver (default: `0.2`).
     pub max_angular_correction: N,
+    /// Maximum nonlinera SOR-prox scaling parameter when the constraint
+    /// correction direction is close to the kernel of the involved multibody's
+    /// jacobian (default: `0.2`).
     pub max_stabilization_multiplier: N,
+    /// Maximum number of iterations performed by the velocity constraints solver.
     pub max_velocity_iterations: usize,
+    /// Maximum number of iterations performed by the position-based constraints solver.
     pub max_position_iterations: usize,
 }
 
 impl<N: Real> IntegrationParameters<N> {
+    /// Creates a set of integration parameters with the given values.
     pub fn new(
         dt: N,
         erp: N,

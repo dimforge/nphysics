@@ -1,14 +1,17 @@
-use std::ops::Range;
 use na::{self, DVector, Real};
+use std::ops::Range;
 
+use detection::ColliderContactManifold;
 use ncollide::query::TrackedContact;
 use ncollide::utils::IsometryOps;
-use detection::ColliderContactManifold;
+use object::BodySet;
 use solver::helper;
 use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
              NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
-use object::BodySet;
 
+/// A contact model generating one non-penetration constraint per contact.
+///
+/// This is a frictionless contact model.
 pub struct SignoriniModel<N: Real> {
     impulses: ImpulseCache<N>,
     vel_ground_rng: Range<usize>,
@@ -16,6 +19,7 @@ pub struct SignoriniModel<N: Real> {
 }
 
 impl<N: Real> SignoriniModel<N> {
+    /// Create a new signorini contact model.
     pub fn new() -> Self {
         SignoriniModel {
             impulses: ImpulseCache::new(),
@@ -24,6 +28,7 @@ impl<N: Real> SignoriniModel<N> {
         }
     }
 
+    /// Build a non-penetration velocity-based constraint for the given contact.
     pub fn build_velocity_constraint(
         params: &IntegrationParameters<N>,
         bodies: &BodySet<N>,
@@ -122,6 +127,7 @@ impl<N: Real> SignoriniModel<N> {
         }
     }
 
+    /// Checks if the given constraint is active.
     pub fn is_constraint_active(
         c: &TrackedContact<N>,
         manifold: &ColliderContactManifold<N>,
@@ -134,6 +140,7 @@ impl<N: Real> SignoriniModel<N> {
         depth >= N::zero()
     }
 
+    /// Builds non-linear position-based non-penetration constraints for the given contact manifold.
     pub fn build_position_constraint(
         bodies: &BodySet<N>,
         manifold: &ColliderContactManifold<N>,

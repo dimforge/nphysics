@@ -1,14 +1,20 @@
-use std::fmt::{Display, Formatter, Result};
 use counters::Timer;
+use std::fmt::{Display, Formatter, Result};
 
+/// Performance counters related to each stage of the time step.
 pub struct StagesCounters {
+    /// Time spent for updating the kinematic and dynamics of every body.
     pub update_time: Timer,
+    /// Total time spent for the collision detection (including both broad- and narrow- phases).
     pub collision_detection_time: Timer,
+    /// Time spent for the computation of collision island and body activation/deactivation (sleeping).
     pub island_construction_time: Timer,
+    /// Total time spent for the constraints resolution and position update.t
     pub solver_time: Timer,
 }
 
 impl StagesCounters {
+    /// Create a new counter intialized to zero.
     pub fn new() -> Self {
         StagesCounters {
             update_time: Timer::new(),

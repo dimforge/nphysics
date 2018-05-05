@@ -1,14 +1,17 @@
-use std::ops::Range;
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, Real, Unit};
+use std::ops::Range;
 
 use detection::ColliderContactManifold;
+use math::{Vector, DIM};
+use object::BodySet;
 use solver::helper;
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel,
              ForceDirection, ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel};
-use object::BodySet;
-use math::{Vector, DIM};
 
+/// A contact model generating one non-penetration constraint and two friction constraints per contact.
+///
+/// This contact model approximates the friction cone at a contact with pyramid.
 pub struct SignoriniCoulombPyramidModel<N: Real> {
     impulses: ImpulseCache<Vector<N>>,
     vel_ground_rng: Range<usize>,
@@ -18,6 +21,7 @@ pub struct SignoriniCoulombPyramidModel<N: Real> {
 }
 
 impl<N: Real> SignoriniCoulombPyramidModel<N> {
+    /// Initialize a new signorini-coulomb-pyramid contact model.
     pub fn new() -> Self {
         SignoriniCoulombPyramidModel {
             impulses: ImpulseCache::new(),
