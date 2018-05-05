@@ -1,25 +1,27 @@
-use std::f64;
 use slab::Slab;
+use std::f64;
 
 use na::{self, Real};
 use ncollide;
-use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
 use ncollide::shape::ShapeHandle;
+use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
 
 use counters::Counters;
+use detection::{ActivationManager, ColliderContactManifold};
+use force_generator::{ForceGenerator, ForceGeneratorHandle};
+use joint::{ConstraintHandle, Joint, JointConstraint};
+use math::{Inertia, Isometry, Point, Vector};
 use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
              ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
              MultibodyWorkspace, RigidBody, SensorHandle};
-use joint::{ConstraintHandle, Joint, JointConstraint};
-use force_generator::{ForceGenerator, ForceGeneratorHandle};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
-use detection::{ActivationManager, ColliderContactManifold};
-use math::{Inertia, Isometry, Point, Vector};
 
+/// Type of the collision world used by nphysics.
 pub type CollisionWorld<N> = ncollide::world::CollisionWorld<N, ColliderData<N>>;
 
+/// The physics world.
 pub struct World<N: Real> {
     counters: Counters,
     bodies: BodySet<N>,
@@ -39,6 +41,9 @@ pub struct World<N: Real> {
 }
 
 impl<N: Real> World<N> {
+    /// Creates a new physics world with default parameters.
+    ///
+    /// The ground body is automatically created and added to the world without any colliders attached.
     pub fn new() -> Self {
         let counters = Counters::new(false);
         let bv_margin = na::convert(0.01f64);
@@ -79,38 +84,47 @@ impl<N: Real> World<N> {
         }
     }
 
+    /// Disable the perfomance counters that measure various times and statistics during a timestep.
     pub fn disable_performance_counters(&mut self) {
         self.counters.disable();
     }
 
+    /// Enable the perfomance counters that measure various times and statistics during a timestep.
     pub fn enable_performance_counters(&mut self) {
         self.counters.enable();
     }
 
+    /// Retrieve the perfomance counters that measure various times and statistics during a timestep.
     pub fn performance_counters(&self) -> &Counters {
         &self.counters
     }
 
+    /// Set the contact model for all contacts.
     pub fn set_contact_model<C: ContactModel<N>>(&mut self, model: C) {
         self.solver.set_contact_model(Box::new(model))
     }
 
+    /// Retrieve a reference to the parameters for the integration.
     pub fn integration_parameters(&self) -> &IntegrationParameters<N> {
         &self.params
     }
 
+    /// Retrieve a mutable reference to the parameters for the integration.
     pub fn integration_parameters_mut(&mut self) -> &mut IntegrationParameters<N> {
         &mut self.params
     }
 
+    /// Retrieve the timestep used for the integration.
     pub fn timestep(&self) -> N {
         self.params.dt
     }
 
+    /// Sets the timestep used for the integration.
     pub fn set_timestep(&mut self, dt: N) {
         self.params.dt = dt;
     }
 
+    /// Activate the given body.
     pub fn activate_body(&mut self, handle: BodyHandle) {
         Self::activate_body_at(&mut self.bodies, handle)
     }
@@ -123,6 +137,7 @@ impl<N: Real> World<N> {
         }
     }
 
+    /// Add a constraints to the physics world and retrieves its handle.
     pub fn add_constraint<C: JointConstraint<N>>(&mut self, constraint: C) -> ConstraintHandle {
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1);
@@ -130,10 +145,12 @@ impl<N: Real> World<N> {
         self.constraints.insert(Box::new(constraint))
     }
 
+    /// Get a reference to the specified constraint.
     pub fn constraint(&self, handle: ConstraintHandle) -> &JointConstraint<N> {
         &*self.constraints[handle]
     }
 
+    /// Get a mutable reference to the specified constraint.
     pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut JointConstraint<N> {
         let (anchor1, anchor2) = self.constraints[handle].anchors();
         self.activate_body(anchor1);
@@ -141,6 +158,7 @@ impl<N: Real> World<N> {
         &mut *self.constraints[handle]
     }
 
+    /// Remove the specified constraint from the world.
     pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<JointConstraint<N>> {
         let constraint = self.constraints.remove(handle);
         let (anchor1, anchor2) = constraint.anchors();
@@ -150,6 +168,7 @@ impl<N: Real> World<N> {
         constraint
     }
 
+    /// Add a force generator to the world.
     pub fn add_force_generator<G: ForceGenerator<N>>(
         &mut self,
         force_generator: G,
@@ -157,14 +176,17 @@ impl<N: Real> World<N> {
         self.forces.insert(Box::new(force_generator))
     }
 
+    /// Retrieve a reference to the specified force generator.
     pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &ForceGenerator<N> {
         &*self.forces[handle]
     }
 
+    /// Retrieve a mutable reference to the specified force generator.
     pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut ForceGenerator<N> {
         &mut *self.forces[handle]
     }
 
+    /// Remove the specified force generator from the world.
     pub fn remove_force_generator(
         &mut self,
         handle: ForceGeneratorHandle,
@@ -172,10 +194,12 @@ impl<N: Real> World<N> {
         self.forces.remove(handle)
     }
 
+    /// Set the gravity.
     pub fn set_gravity(&mut self, gravity: Vector<N>) {
         self.gravity = gravity
     }
 
+    /// Execute one time step of the physics simulation.
     pub fn step(&mut self) {
         self.counters.step_started();
         self.counters.update_started();
@@ -362,6 +386,7 @@ impl<N: Real> World<N> {
         })
     }
 
+    /// Add a rigid body to the world and retrieve its handle.
     pub fn add_rigid_body(
         &mut self,
         position: Isometry<N>,
@@ -372,6 +397,7 @@ impl<N: Real> World<N> {
             .add_rigid_body(position, local_inertia, local_center_of_mass)
     }
 
+    /// Add a multibody link to the world and retrieve its handle.
     pub fn add_multibody_link<J: Joint<N>>(
         &mut self,
         parent: BodyHandle,
@@ -391,6 +417,7 @@ impl<N: Real> World<N> {
         )
     }
 
+    /// Add a collider to the world and retrieve its handle.
     pub fn add_collider(
         &mut self,
         margin: N,
@@ -406,6 +433,7 @@ impl<N: Real> World<N> {
         self.add_collision_object(query, margin, shape, parent, to_parent, material)
     }
 
+    /// Add a sensor to the world and retrieve its handle.
     pub fn add_sensor(
         &mut self,
         shape: ShapeHandle<N>,
@@ -453,61 +481,90 @@ impl<N: Real> World<N> {
         handle
     }
 
+    /// Get a reference to the specified body part.
     pub fn body_part(&self, handle: BodyHandle) -> BodyPart<N> {
         self.bodies.body_part(handle)
     }
 
+    /// Get a reference to the specified body.
     pub fn body(&self, handle: BodyHandle) -> Body<N> {
         self.bodies.body(handle)
     }
 
+    /// Get a mutable reference to the specified body.
     pub fn body_mut(&mut self, handle: BodyHandle) -> BodyMut<N> {
         self.bodies.body_mut(handle)
     }
 
+    /// Get a reference to the multibody containing the specified multibody link.
+    ///
+    /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody(&self, handle: BodyHandle) -> Option<&Multibody<N>> {
         self.bodies.multibody(handle)
     }
 
+    /// Get a mutable reference to the multibody containing the specified multibody link.
+    ///
+    /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody_mut(&mut self, handle: BodyHandle) -> Option<&mut Multibody<N>> {
         self.bodies.multibody_mut(handle)
     }
 
+    /// Get a reference to the specified multibody link.
+    ///
+    /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody_link(&self, handle: BodyHandle) -> Option<MultibodyLinkRef<N>> {
         self.bodies.multibody_link(handle)
     }
 
+    /// Get a mutable reference to the specified multibody link.
+    ///
+    /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody_link_mut(&mut self, handle: BodyHandle) -> Option<MultibodyLinkMut<N>> {
         self.bodies.multibody_link_mut(handle)
     }
 
+    /// Get a reference to the specified rigid body.
+    ///
+    /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body(&self, handle: BodyHandle) -> Option<&RigidBody<N>> {
         self.bodies.rigid_body(handle)
     }
 
+    /// Get a mutable reference to the specified rigid body.
+    ///
+    /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body_mut(&mut self, handle: BodyHandle) -> Option<&mut RigidBody<N>> {
         self.bodies.rigid_body_mut(handle)
     }
 
+    /// Reference to the underlying collision world.
     pub fn collision_world(&self) -> &CollisionWorld<N> {
         &self.cworld
     }
+    /// Mutable reference to the underlying collision world.
     pub fn collision_world_mut(&mut self) -> &mut CollisionWorld<N> {
         &mut self.cworld
     }
 
+    /// Get a mutable reference to the specified collider.
+    ///
+    /// Returns `None` if the handle does not correspond to a collider in this world.
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
         self.cworld.collision_object(handle)
     }
 
+    /// An iterator through all the colliders on this collision world.
     pub fn colliders(&self) -> Colliders<N> {
         self.cworld.collision_objects()
     }
 
+    /// An iterator through all the contact events generated during the last execution of `self.step()`.
     pub fn contact_events(&self) -> &ContactEvents {
         self.cworld.contact_events()
     }
 
+    /// An iterator through all the proximity events generated during the last execution of `self.step()`.
     pub fn proximity_events(&self) -> &ProximityEvents {
         self.cworld.proximity_events()
     }

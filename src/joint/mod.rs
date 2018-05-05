@@ -1,3 +1,5 @@
+//! Joints using the reduced-coordinates formalism or using constraints.
+
 pub use self::cartesian_joint::CartesianJoint;
 pub use self::fixed_joint::FixedJoint;
 pub use self::free_joint::FreeJoint;

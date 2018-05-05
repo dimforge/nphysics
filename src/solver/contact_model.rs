@@ -1,12 +1,17 @@
+#![allow(missing_docs)]
+
 use downcast::Any;
 use na::{DVector, Real};
 
 use detection::ColliderContactManifold;
-use solver::{ConstraintSet, IntegrationParameters};
 use object::BodySet;
+use solver::{ConstraintSet, IntegrationParameters};
 
+/// The modeling of a contact.
 pub trait ContactModel<N: Real>: Any + Send + Sync {
+    /// Maximum number of velocity constraint to be generated for each contact.
     fn num_velocity_constraints(&self, manifold: &ColliderContactManifold<N>) -> usize;
+    /// Generate all constraints for the given contact manifolds.
     fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
@@ -19,6 +24,7 @@ pub trait ContactModel<N: Real>: Any + Send + Sync {
         constraints: &mut ConstraintSet<N>,
     );
 
+    /// Stores all the impulses found by the solver into a cache for warmstarting.
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>);
 }
 

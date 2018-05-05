@@ -1,16 +1,21 @@
-use std::fmt::{Display, Formatter, Result};
 use counters::Timer;
+use std::fmt::{Display, Formatter, Result};
 
+/// Performance counters related to collision detection.
 pub struct CollisionDetectionCounters {
+    /// Number of contact pairs detected.
     pub ncontact_pairs: usize,
+    /// Time spent for the broad-phase of the collision detection.
     pub broad_phase_time: Timer,
+    /// Time spent for the narrow-phase of the collision detection.
     pub narrow_phase_time: Timer,
 }
 
 impl CollisionDetectionCounters {
+    /// Creates a new counter initialized to zero.
     pub fn new() -> Self {
         CollisionDetectionCounters {
-            ncontact_pairs:  0,
+            ncontact_pairs: 0,
             broad_phase_time: Timer::new(),
             narrow_phase_time: Timer::new(),
         }

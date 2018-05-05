@@ -10,17 +10,20 @@ use solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
              NonlinearUnilateralConstraint};
 
+/// Non-linear position-based consraint solver using the SOR-Prox approach.
 pub struct NonlinearSORProx<N: Real> {
     _phantom: PhantomData<N>,
 }
 
 impl<N: Real> NonlinearSORProx<N> {
+    /// Initialize a new nonlinear SOR-Prox solver.
     pub fn new() -> Self {
         NonlinearSORProx {
             _phantom: PhantomData,
         }
     }
 
+    /// Solve a set of nonlinear position-based constraints.
     pub fn solve(
         &self,
         params: &IntegrationParameters<N>,

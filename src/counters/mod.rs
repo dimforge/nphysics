@@ -1,15 +1,18 @@
+//! Counters for benchmarking various parts of the physics engine.
+
 use std::fmt::{Display, Formatter, Result};
 
-pub use self::timer::Timer;
+pub use self::collision_detection_counters::CollisionDetectionCounters;
 pub use self::solver_counters::SolverCounters;
 pub use self::stages_counters::StagesCounters;
-pub use self::collision_detection_counters::CollisionDetectionCounters;
+pub use self::timer::Timer;
 
-mod timer;
+mod collision_detection_counters;
 mod solver_counters;
 mod stages_counters;
-mod collision_detection_counters;
+mod timer;
 
+/// Aggregation of all the performances counters tracked by nphysics.
 pub struct Counters {
     enabled: bool,
     step_time: Timer,
@@ -19,6 +22,7 @@ pub struct Counters {
 }
 
 impl Counters {
+    /// Create a new set of counters initialized to wero.
     pub fn new(enabled: bool) -> Self {
         Counters {
             enabled,
@@ -29,70 +33,83 @@ impl Counters {
         }
     }
 
+    /// Enable all the counters.
     pub fn enable(&mut self) {
         self.enabled = true;
     }
 
+    /// Return `true` if the counters are enabled.
     pub fn enabled(&self) -> bool {
         self.enabled
     }
 
+    /// Disable all the counters.
     pub fn disable(&mut self) {
         self.enabled = false;
     }
 
+    /// Notify that the time-step has started.
     pub fn step_started(&mut self) {
         if self.enabled {
             self.step_time.start();
         }
     }
 
+    /// Notfy that the time-step has finished.
     pub fn step_completed(&mut self) {
         if self.enabled {
             self.step_time.pause();
         }
     }
 
+    /// Total time spent for one step of the physics engine.
     pub fn step_time(&self) -> f64 {
         self.step_time.time()
     }
 
+    /// Set the number of constraints generated.
     pub fn set_nconstraints(&mut self, n: usize) {
         self.solver.nconstraints = n;
     }
 
+    /// Set the number of contact pairs generated.
     pub fn set_ncontact_pairs(&mut self, n: usize) {
         self.cd.ncontact_pairs = n;
     }
 }
 
 macro_rules! measure_method {
-($started: ident, $stopped: ident, $time: ident, $info: ident.$timer: ident) => {
-    impl Counters {
-        pub fn $started(&mut self) {
-            if self.enabled {
-                self.$info.$timer.start()
+    ($started:ident, $stopped:ident, $time:ident, $info:ident. $timer:ident) => {
+        impl Counters {
+            pub fn $started(&mut self) {
+                if self.enabled {
+                    self.$info.$timer.start()
+                }
             }
-        }
 
-        pub fn $stopped(&mut self) {
-            if self.enabled {
-                self.$info.$timer.pause()
+            pub fn $stopped(&mut self) {
+                if self.enabled {
+                    self.$info.$timer.pause()
+                }
             }
-        }
 
-        pub fn $time(&self) -> f64 {
-            if self.enabled {
-                self.$info.$timer.time()
-            } else {
-                0.0
+            pub fn $time(&self) -> f64 {
+                if self.enabled {
+                    self.$info.$timer.time()
+                } else {
+                    0.0
+                }
             }
         }
-    }
+    };
 }
-}
 
-measure_method!(update_started, update_completed, update_time, stages.update_time);
+measure_method!(
+    update_started,
+    update_completed,
+    update_time,
+    stages.update_time
+);
 measure_method!(
     collision_detection_started,
     collision_detection_completed,
@@ -105,9 +122,19 @@ measure_method!(
     island_construction_time,
     stages.island_construction_time
 );
-measure_method!(solver_started, solver_completed, solver_time, stages.solver_time);
+measure_method!(
+    solver_started,
+    solver_completed,
+    solver_time,
+    stages.solver_time
+);
 
-measure_method!(assembly_started, assembly_completed, assembly_time, solver.assembly_time);
+measure_method!(
+    assembly_started,
+    assembly_completed,
+    assembly_time,
+    solver.assembly_time
+);
 measure_method!(
     resolution_started,
     resolution_completed,

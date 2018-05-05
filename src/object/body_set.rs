@@ -1,12 +1,12 @@
-use std::iter::Map;
 use slab::{Iter, IterMut, Slab};
+use std::iter::Map;
 
+use joint::Joint;
+use math::{Inertia, Isometry, Point, Vector};
 use na::Real;
 use object::{Body, BodyMut, BodyPart, BodyPartMut, Ground, Multibody, MultibodyLinkId,
              MultibodyLinkMut, MultibodyLinkRef, MultibodyWorkspace, RigidBody};
-use joint::Joint;
 use solver::IntegrationParameters;
-use math::{Inertia, Isometry, Point, Vector};
 
 // FIXME: remove the pub(crate) after this is replaced by -> impl Iterator
 pub(crate) type RigidBodies<'a, N> =
@@ -18,6 +18,7 @@ pub(crate) type Multibodies<'a, N> =
 pub(crate) type MultibodiesMut<'a, N> =
     Map<IterMut<'a, Multibody<N>>, fn((usize, &mut Multibody<N>)) -> &mut Multibody<N>>;
 
+/// A unique identifier of a body added to the world.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BodyHandle {
     handle: usize,
@@ -32,10 +33,12 @@ impl BodyHandle {
         }
     }
 
+    /// The unique identifier of the ground.
     pub fn ground() -> Self {
         Self::new(usize::max_value())
     }
 
+    /// Tests if this handle corresponds to the ground.
     pub fn is_ground(&self) -> bool {
         self.handle == usize::max_value()
     }
@@ -59,6 +62,7 @@ impl BodyId {
     }
 }
 
+/// A set containing all the bodies added to the world.
 pub struct BodySet<N: Real> {
     ground: Ground<N>,
     ids: Slab<BodyId>,
@@ -67,6 +71,7 @@ pub struct BodySet<N: Real> {
 }
 
 impl<N: Real> BodySet<N> {
+    /// Create a new empty set of bodies.
     pub fn new() -> Self {
         BodySet {
             ground: Ground::new(),
@@ -76,10 +81,15 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// The number of bodies in this set.
     pub fn len(&self) -> usize {
         self.mbs.len() + self.rbs.len()
     }
 
+    /// Check if the two given handles identify the same body.
+    ///
+    /// In particular, returns `true` if both handles indentify multibody links belonging
+    /// to the same multibody.
     pub fn are_same_body(&self, body1: BodyHandle, body2: BodyHandle) -> bool {
         if body1.handle == body2.handle {
             return true;
@@ -93,12 +103,14 @@ impl<N: Real> BodySet<N> {
         false
     }
 
+    /// Update the kinematics of all the bodies.
     pub fn update_kinematics(&mut self) {
         for (_, mb) in &mut self.mbs {
             mb.update_kinematics();
         }
     }
 
+    /// Clear the dynamics of all the bodies.
     pub fn clear_dynamics(&mut self) {
         for (_, mb) in &mut self.mbs {
             mb.clear_dynamics();
@@ -109,6 +121,7 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Update the dynamics of all the bodies.
     pub fn update_dynamics(
         &mut self,
         gravity: &Vector<N>,
@@ -124,6 +137,7 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Add a rigid body to the set and return its handle.
     pub fn add_rigid_body(
         &mut self,
         position: Isometry<N>,
@@ -143,6 +157,7 @@ impl<N: Real> BodySet<N> {
         rb_handle
     }
 
+    /// Add a multibody link to the set and return its handle.
     pub fn add_multibody_link<J: Joint<N>>(
         &mut self,
         parent: BodyHandle,
@@ -196,6 +211,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Remove a body from this set.
+    ///
+    /// If `body` identify a mutibody link, the whole multibody is removed.
     pub fn remove_body(&mut self, body: BodyHandle) {
         if !body.is_ground() {
             let body_id = self.ids[body.handle];
@@ -213,6 +231,11 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Remove some multibody links.
+    ///
+    /// If a multibody link which has descendent is removed, its immediat descendent in
+    /// the kinematic tree becomes the root of a new multibody and its joint is replaced by
+    /// a free joint attached to the ground.
     pub fn remove_multibody_links(&mut self, body_parts: &[BodyHandle]) {
         if body_parts.len() != 0 {
             if let BodyId::MultibodyLinkId(parent_id, _) = self.ids[body_parts[0].handle] {
@@ -247,11 +270,17 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Checks that the given handle identifies a valid body part.
+    ///
+    /// Returns `true` if `body.is_ground()` too.
     pub fn contains(&self, body: BodyHandle) -> bool {
         // FIXME: do we have to take body.reserved into account?
         body.is_ground() || self.ids.contains(body.handle)
     }
 
+    /// Reference to the body identified by `body`.
+    ///
+    /// Panics if the body part is not found.
     #[inline]
     pub fn body(&self, body: BodyHandle) -> Body<N> {
         if body.is_ground() {
@@ -264,6 +293,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Mutable reference to the body identified by `body`.
+    ///
+    /// Panics if the body part is not found.
     #[inline]
     pub fn body_mut(&mut self, body: BodyHandle) -> BodyMut<N> {
         if body.is_ground() {
@@ -276,6 +308,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Reference to the body part identified by `body`.
+    ///
+    /// Panics if the body part is not found.
     #[inline]
     pub fn body_part(&self, body: BodyHandle) -> BodyPart<N> {
         if body.is_ground() {
@@ -290,6 +325,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Mutable reference to the body part identified by `body`.
+    ///
+    /// Panics if the body part is not found.
     #[inline]
     pub fn body_part_mut(&mut self, body: BodyHandle) -> BodyPartMut<N> {
         if body.is_ground() {
@@ -304,6 +342,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Reference to the multibody containing the multibody link identified by `body`.
+    ///
+    /// Returns `None` if it is not found or does not identify a multibody link.
     #[inline]
     pub fn multibody(&self, body: BodyHandle) -> Option<&Multibody<N>> {
         if let Some(&BodyId::MultibodyLinkId(mb_id, _)) = self.ids.get(body.handle) {
@@ -313,6 +354,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Mutable reference to the multibody containing the multibody link identified by `body`.
+    ///
+    /// Returns `None` if it is not found or does not identify a multibody link.
     #[inline]
     pub fn multibody_mut(&mut self, body: BodyHandle) -> Option<&mut Multibody<N>> {
         if let Some(&BodyId::MultibodyLinkId(mb_id, _)) = self.ids.get(body.handle) {
@@ -322,6 +366,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Reference to the multibody link identified by `body`.
+    ///
+    /// Returns `None` if it is not found or does not identify a multibody link.
     #[inline]
     pub fn multibody_link(&self, body: BodyHandle) -> Option<MultibodyLinkRef<N>> {
         if let Some(&BodyId::MultibodyLinkId(mb_id, link_id)) = self.ids.get(body.handle) {
@@ -331,6 +378,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Mutable reference to the multibody link identified by `body`.
+    ///
+    /// Returns `None` if it is not found or does not identify a multibody link.
     #[inline]
     pub fn multibody_link_mut(&mut self, body: BodyHandle) -> Option<MultibodyLinkMut<N>> {
         if let Some(&BodyId::MultibodyLinkId(mb_id, link_id)) = self.ids.get(body.handle) {
@@ -340,6 +390,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Reference to the rigid body identified by `body`.
+    ///
+    /// Returns `None` if it is not found or does not identify a rigid body.
     #[inline]
     pub fn rigid_body(&self, body: BodyHandle) -> Option<&RigidBody<N>> {
         if let Some(&BodyId::RigidBodyId(id)) = self.ids.get(body.handle) {
@@ -349,6 +402,9 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Mutable reference to the rigid body identified by `body`.
+    ///
+    /// Returns `None` if it is not found or does not identify a rigid body.
     #[inline]
     pub fn rigid_body_mut(&mut self, body: BodyHandle) -> Option<&mut RigidBody<N>> {
         if let Some(&BodyId::RigidBodyId(id)) = self.ids.get(body.handle) {
@@ -358,21 +414,25 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Iterator yielding all the rigid bodies on this set.
     #[inline]
     pub fn rigid_bodies(&self) -> RigidBodies<N> {
         self.rbs.iter().map(|e| e.1)
     }
 
+    /// Mutable iterator yielding all the rigid bodies on this set.
     #[inline]
     pub fn rigid_bodies_mut(&mut self) -> RigidBodiesMut<N> {
         self.rbs.iter_mut().map(|e| e.1)
     }
 
+    /// Iterator yielding all the multibodies on this set.
     #[inline]
     pub fn multibodies(&self) -> Multibodies<N> {
         self.mbs.iter().map(|e| e.1)
     }
 
+    /// Mutable iterator yielding all the multibodies on this set.
     #[inline]
     pub fn multibodies_mut(&mut self) -> MultibodiesMut<N> {
         self.mbs.iter_mut().map(|e| e.1)
@@ -388,6 +448,7 @@ impl<N: Real> BodySet<N> {
     }
     */
 
+    /// Mutable iterator yielding all the bodies on this set.
     #[inline]
     pub fn bodies_mut(&mut self) -> BodiesMut<N> {
         BodiesMut {
@@ -397,6 +458,7 @@ impl<N: Real> BodySet<N> {
     }
 }
 
+/// Iterator yielding all the bodies on a body set.
 pub struct Bodies<'a, N: Real> {
     rbs_iter: Iter<'a, RigidBody<N>>,
     mbs_iter: Iter<'a, Multibody<N>>,
@@ -419,6 +481,7 @@ impl<'a, N: Real> Iterator for Bodies<'a, N> {
     }
 }
 
+/// Mutable iterator yielding all the bodies on a body set.
 pub struct BodiesMut<'a, N: Real> {
     rbs_iter: IterMut<'a, RigidBody<N>>,
     mbs_iter: IterMut<'a, Multibody<N>>,

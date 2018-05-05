@@ -4,10 +4,9 @@ use na::{DVector, Real};
 
 use counters::Counters;
 use detection::ColliderContactManifold;
-use object::{BodyHandle, BodySet};
 use joint::JointConstraint;
-use solver::{ConstraintSet, ContactModel, IntegrationParameters,
-             NonlinearSORProx, SORProx};
+use object::{BodyHandle, BodySet};
+use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -19,6 +18,7 @@ pub struct MoreauJeanSolver<N: Real> {
 }
 
 impl<N: Real> MoreauJeanSolver<N> {
+    /// Create a new time-stepping scheme with the given contact model.
     pub fn new(contact_model: Box<ContactModel<N>>) -> Self {
         let constraints = ConstraintSet::new();
 
@@ -31,10 +31,12 @@ impl<N: Real> MoreauJeanSolver<N> {
         }
     }
 
+    /// Sets the contact model.
     pub fn set_contact_model(&mut self, model: Box<ContactModel<N>>) {
         self.contact_model = model
     }
 
+    /// Perform one step of the time-stepping scheme.
     pub fn step(
         &mut self,
         counters: &mut Counters,

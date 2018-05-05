@@ -130,8 +130,11 @@ pub mod math {
   use na::{Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX,
            Point3, Translation3, U3, U6, UnitQuaternion, Vector3, Vector6};
 
+  /// The maximum number of possible rotations and translations of a rigid body.
   pub const SPATIAL_DIM: usize = 6;
+  /// The maximum number of possible rotations of a rigid body.
   pub const ANGULAR_DIM: usize = 3;
+  /// The maximum number of possible translations of a rigid body.
   pub const DIM: usize = 3;
 
   /// The dimension of the ambiant space.
@@ -202,8 +205,11 @@ pub mod math {
   use na::{Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX,
            Point2, Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3};
 
+  /// The maximum number of possible rotations and translations of a rigid body.
   pub const SPATIAL_DIM: usize = 3;
+  /// The maximum number of possible rotations of a rigid body.
   pub const ANGULAR_DIM: usize = 1;
+  /// The maximum number of possible translations of a rigid body.
   pub const DIM: usize = 2;
 
   /// The dimension of the ambiant space.

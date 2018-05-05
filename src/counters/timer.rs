@@ -1,6 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 use time;
 
+/// A timer.
 #[derive(Copy, Clone, Debug)]
 pub struct Timer {
     time: f64,
@@ -8,7 +9,7 @@ pub struct Timer {
 }
 
 impl Timer {
-    // Creates a new timer.
+    /// Creates a new timer initialized to zero and not started.
     pub fn new() -> Self {
         Timer {
             time: 0.0,
@@ -16,13 +17,13 @@ impl Timer {
         }
     }
 
-    // Starts the timer.
+    /// Start the timer.
     pub fn start(&mut self) {
         self.time = 0.0;
         self.start = Some(time::precise_time_s());
     }
 
-    // Pauses the timer.
+    /// Pause the timer.
     pub fn pause(&mut self) {
         if let Some(start) = self.start {
             self.time += time::precise_time_s() - start;
@@ -30,12 +31,12 @@ impl Timer {
         self.start = None;
     }
 
-    // Resumes the timer.
+    /// Resume the timer.
     pub fn resume(&mut self) {
         self.start = Some(time::precise_time_s());
     }
 
-    /// The measured time.
+    /// The measured time between the last `.start()` and `.pause()` calls.
     pub fn time(&self) -> f64 {
         self.time
     }
