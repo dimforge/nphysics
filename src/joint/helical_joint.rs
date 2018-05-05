@@ -5,7 +5,7 @@ use math::{JacobianSliceMut, Velocity};
 use object::MultibodyLinkRef;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
-/// A joint that allows one degree of freedom between two body parts.
+/// A joint that allows one degree of freedom between two multibody links.
 /// 
 /// The degree of freedom is the combination of a rotation and a translation along the same axis.
 /// Both rotational and translational motions are coupled to generate a screw motion.

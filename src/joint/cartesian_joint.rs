@@ -1,10 +1,10 @@
 use na::{self, DVectorSliceMut, Real};
 
 use joint::Joint;
-use solver::IntegrationParameters;
 use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
+use solver::IntegrationParameters;
 
-/// A joint that allows only all the translational degrees of freedom between two body parts.
+/// A joint that allows only all the translational degrees of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
 pub struct CartesianJoint<N: Real> {
     position: Vector<N>,

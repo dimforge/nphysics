@@ -8,6 +8,7 @@ use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
+/// A constraint that removes all but two relative rotations along distinct axii.
 pub struct UniversalConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -23,6 +24,9 @@ pub struct UniversalConstraint<N: Real> {
 }
 
 impl<N: Real> UniversalConstraint<N> {
+    /// Create a new universal constraint that ensure the angle between `axis1` and `axis2` is always equal to `angle`.
+    ///
+    /// All anchors and axii are expressed in the local coordinate systems of the corresponding body parts.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,

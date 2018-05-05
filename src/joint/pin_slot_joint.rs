@@ -1,10 +1,13 @@
 use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
+/// A joint that allows one translational and one rotational degrees of freedom.
+///
+/// Both are not required to be along the same direction.
 #[derive(Copy, Clone, Debug)]
 pub struct PinSlotJoint<N: Real> {
     prism: PrismaticJoint<N>,
@@ -12,6 +15,8 @@ pub struct PinSlotJoint<N: Real> {
 }
 
 impl<N: Real> PinSlotJoint<N> {
+    /// Create a new pin-slot joint with axii expressed in the local coordinate frame of the attached bodies, and
+    /// with initial linear position and angle.
     pub fn new(axis_v: Unit<Vector3<N>>, axis_w: Unit<Vector3<N>>, position: N, angle: N) -> Self {
         let prism = PrismaticJoint::new(axis_v, position);
         let revo = RevoluteJoint::new(axis_w, angle);
@@ -19,10 +24,12 @@ impl<N: Real> PinSlotJoint<N> {
         PinSlotJoint { prism, revo }
     }
 
+    /// The linear displacement.
     pub fn offset(&self) -> N {
         self.prism.offset()
     }
 
+    /// The angular displacement.
     pub fn angle(&self) -> N {
         self.revo.angle()
     }

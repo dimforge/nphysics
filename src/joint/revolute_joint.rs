@@ -2,12 +2,13 @@
 
 use na::{self, DVectorSliceMut, Real, Unit};
 
-use utils::GeneralizedCross;
 use joint::{self, Joint, JointMotor, UnitJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
 use math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use utils::GeneralizedCross;
 
+/// A unit joint that allows only one relative rotational degree of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
 pub struct RevoluteJoint<N: Real> {
     axis: Unit<AngularVector<N>>,
@@ -24,6 +25,7 @@ pub struct RevoluteJoint<N: Real> {
 }
 
 impl<N: Real> RevoluteJoint<N> {
+    /// Create a new revolute joint with an initial angle.
     #[cfg(feature = "dim2")]
     pub fn new(angle: N) -> Self {
         RevoluteJoint {
@@ -39,6 +41,10 @@ impl<N: Real> RevoluteJoint<N> {
         }
     }
 
+    /// Create a new revolute joint with an axis and an initial angle.
+    ///
+    /// The axis along which the rotation can happen is expressed in the local coordinate
+    /// system of the attached multibody links.
     #[cfg(feature = "dim3")]
     pub fn new(axis: Unit<AngularVector<N>>, angle: N) -> Self {
         RevoluteJoint {
@@ -64,95 +70,99 @@ impl<N: Real> RevoluteJoint<N> {
         self.rot = Rotation::from_angle(self.angle);
     }
 
+    /// The axis of the rotational degree of freedom.
     pub fn axis(&self) -> Unit<AngularVector<N>> {
         self.axis
     }
 
-    pub fn set_axis(&mut self, axis: Unit<AngularVector<N>>) {
-        self.axis = axis;
-        self.update_rot();
-    }
-
-    pub fn set_axis_and_integrate(
-        &mut self,
-        axis: Unit<AngularVector<N>>,
-        params: &IntegrationParameters<N>,
-        vels: &[N],
-    ) {
-        self.axis = axis;
-        self.integrate(params, vels)
-    }
-
+    /// The angle of rotation.
     pub fn angle(&self) -> N {
         self.angle
     }
 
+    /// The rotation from an attached multibody link to its dependent.
     pub fn rotation(&self) -> &Rotation<N> {
         &self.rot
     }
 
+    /// The jacobian of this joint expressed in the local coordinate frame of the joint.
     pub fn local_jacobian(&self) -> &Velocity<N> {
         &self.jacobian
     }
 
+    /// The time-derivative of the jacobian of this joint expressed in the local coordinate frame of the joint.
     pub fn local_jacobian_dot(&self) -> &Velocity<N> {
         &self.jacobian_dot
     }
 
+    /// The velocity-derivative of the time-derivative of the jacobian of this joint expressed in the local coordinate frame of the joint.
     pub fn local_jacobian_dot_veldiff(&self) -> &Velocity<N> {
         &self.jacobian_dot_veldiff
     }
 
+    /// The lower limit of the rotation angle.
     pub fn min_angle(&self) -> Option<N> {
         self.min_angle
     }
 
+    /// The upper limit of the rotation angle.
     pub fn max_angle(&self) -> Option<N> {
         self.max_angle
     }
 
+    /// Disable the lower limit of the rotation angle.
     pub fn disable_min_angle(&mut self) {
         self.min_angle = None;
     }
 
+    /// Disable the upper limit of the rotation angle.
     pub fn disable_max_angle(&mut self) {
         self.max_angle = None;
     }
 
+    /// Enable and set the lower limit of the rotation angle.
     pub fn enable_min_angle(&mut self, limit: N) {
         self.min_angle = Some(limit);
         self.assert_limits();
     }
 
+    /// Enable and set the upper limit of the rotation angle.
     pub fn enable_max_angle(&mut self, limit: N) {
         self.max_angle = Some(limit);
         self.assert_limits();
     }
 
+    /// Return `true` if the angular motor of this joint is enabled.
     pub fn is_angular_motor_enabled(&self) -> bool {
         self.motor.enabled
     }
 
+    /// Enable the angular motor of this joint.
     pub fn enable_angular_motor(&mut self) {
         self.motor.enabled = true
     }
 
+    /// Disable the angular motor of this joint.
     pub fn disable_angular_motor(&mut self) {
         self.motor.enabled = false;
     }
 
+    /// The desired angular velocity of the joint motor.
     pub fn desired_angular_motor_velocity(&self) -> N {
         self.motor.desired_velocity
     }
 
+    /// Set the desired angular velocity of the joint motor.
     pub fn set_desired_angular_motor_velocity(&mut self, vel: N) {
         self.motor.desired_velocity = vel;
     }
 
+    /// The maximum torque that can be delivered by the joint motor.
     pub fn max_angular_motor_torque(&self) -> N {
         self.motor.max_force
     }
 
+    /// Set the maximum torque that can be delivered by the joint motor.
     pub fn set_max_angular_motor_torque(&mut self, torque: N) {
         self.motor.max_force = torque;
     }
@@ -387,54 +397,67 @@ macro_rules! _revolute_motor_limit_methods(
      $set_max_motor_torque:       ident
      ) => {
         impl<N: Real> $ty<N> {
+            /// The lower limit of the rotation angle.
             pub fn $min_angle(&self) -> Option<N> {
                 self.$revo.min_angle()
             }
 
+            /// The upper limit of the rotation angle.
             pub fn $max_angle(&self) -> Option<N> {
                 self.$revo.max_angle()
             }
 
+            /// Disable the lower limit of the rotation angle.
             pub fn $disable_min_angle(&mut self) {
                 self.$revo.disable_max_angle();
             }
 
+            /// Disable the upper limit of the rotation angle.
             pub fn $disable_max_angle(&mut self) {
                 self.$revo.disable_max_angle();
             }
 
+            /// Enable and set the lower limit of the rotation angle.
             pub fn $enable_min_angle(&mut self, limit: N) {
                 self.$revo.enable_min_angle(limit);
             }
 
+            /// Enable and set the upper limit of the rotation angle.
             pub fn $enable_max_angle(&mut self, limit: N) {
                 self.$revo.enable_max_angle(limit)
             }
 
+            /// Return `true` if the angular motor of this joint is enabled.
             pub fn $is_motor_enabled(&self) -> bool {
                 self.$revo.is_angular_motor_enabled()
             }
 
+            /// Enable the angular motor of this joint.
             pub fn $enable_motor(&mut self) {
                 self.$revo.enable_angular_motor()
             }
 
+            /// Disable the angular motor of this joint.
             pub fn $disable_motor(&mut self) {
                 self.$revo.disable_angular_motor()
             }
 
+            /// The desired angular velocity of the joint motor.
             pub fn $desired_motor_velocity(&self) -> N {
                 self.$revo.desired_angular_motor_velocity()
             }
 
+            /// Set the desired angular velocity of the joint motor.
             pub fn $set_desired_motor_velocity(&mut self, vel: N) {
                 self.$revo.set_desired_angular_motor_velocity(vel)
             }
 
+            /// The maximum torque that can be delivered by the joint motor.
             pub fn $max_motor_torque(&self) -> N {
                 self.$revo.max_angular_motor_torque()
             }
 
+            /// Set the maximum torque that can be delivered by the joint motor.
             pub fn $set_max_motor_torque(&mut self, torque: N) {
                 self.$revo.set_max_angular_motor_torque(torque)
             }

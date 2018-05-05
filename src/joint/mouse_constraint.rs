@@ -1,13 +1,14 @@
 use alga::linear::FiniteDimVectorSpace;
 use na::{DVector, Real, Unit};
 
-use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
-use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
 use joint::JointConstraint;
 use math::{Point, Vector, DIM};
+use object::{BodyHandle, BodySet};
+use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+             NonlinearConstraintGenerator};
 
+/// A spring-like constraint to be used to drag a body part with the mouse.
 pub struct MouseConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -17,6 +18,10 @@ pub struct MouseConstraint<N: Real> {
 }
 
 impl<N: Real> MouseConstraint<N> {
+    /// Initialize a mouse constraint between two bodies.BodyHandle
+    ///
+    /// Typically, `b1` will be the ground and the anchor the position of the mouse.
+    /// Both anchors are expressed in the local coordinate frames of the corresponding body parts.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,
@@ -33,10 +38,12 @@ impl<N: Real> MouseConstraint<N> {
         }
     }
 
+    /// Change the first anchor, expressed in the local space of the first body part.
     pub fn set_anchor_1(&mut self, anchor1: Point<N>) {
         self.anchor1 = anchor1;
     }
 
+    /// Change the first anchor, expressed in the local space of the second body part.
     pub fn set_anchor_2(&mut self, anchor2: Point<N>) {
         self.anchor2 = anchor2;
     }

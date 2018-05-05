@@ -7,6 +7,7 @@ use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Veloc
 use object::MultibodyLinkRef;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
+/// A unit joint that allows only one translational degree on freedom.
 #[derive(Copy, Clone, Debug)]
 pub struct PrismaticJoint<N: Real> {
     axis: Unit<Vector<N>>,
@@ -20,6 +21,9 @@ pub struct PrismaticJoint<N: Real> {
 }
 
 impl<N: Real> PrismaticJoint<N> {
+    /// Create a new prismatic joint where the allowed traslation is defined along the provided axis.
+    ///
+    /// The axis is expressed in the local coordinate system of the two multibody links attached to this joint.
     #[cfg(feature = "dim2")]
     pub fn new(axis: Unit<Vector<N>>, offset: N) -> Self {
         PrismaticJoint {
@@ -32,6 +36,9 @@ impl<N: Real> PrismaticJoint<N> {
         }
     }
 
+    /// Create a new prismatic joint where the allowed traslation is defined along the provided axis.
+    ///
+    /// The axis is expressed in the local coordinate system of the two multibody links attached to this joint.
     #[cfg(feature = "dim3")]
     pub fn new(axis: Unit<Vector<N>>, offset: N) -> Self {
         PrismaticJoint {
@@ -44,64 +51,79 @@ impl<N: Real> PrismaticJoint<N> {
         }
     }
 
+    /// The relative displacement of the attached multibody links along the joint axis.
     pub fn offset(&self) -> N {
         self.offset
     }
 
+    /// The relative translation of the attached multibody links along the joint axis.
     pub fn translation(&self) -> Translation<N> {
         Translation::from_vector(&*self.axis * self.offset)
     }
 
+    /// The lower limit of the relative displacement of the attached multibody links along the joint axis.
     pub fn min_offset(&self) -> Option<N> {
         self.min_offset
     }
 
+    /// The upper limit of the relative displacement of the attached multibody links along the joint axis.
     pub fn max_offset(&self) -> Option<N> {
         self.max_offset
     }
 
+    /// Disable the lower limit of the relative displacement of the attached multibody links along the joint axis.
     pub fn disable_min_offset(&mut self) {
         self.min_offset = None;
     }
 
+    /// Disable the upper limit of the relative displacement of the attached multibody links along the joint axis.
     pub fn disable_max_offset(&mut self) {
         self.max_offset = None;
     }
 
+    /// Set the lower limit of the relative displacement of the attached multibody links along the joint axis.
     pub fn enable_min_offset(&mut self, limit: N) {
         self.min_offset = Some(limit);
         self.assert_limits();
     }
 
+    /// Set the upper limit of the relative displacement of the attached multibody links along the joint axis.
     pub fn enable_max_offset(&mut self, limit: N) {
         self.max_offset = Some(limit);
         self.assert_limits();
     }
 
+    /// Returns `true` if the joint motor is enabled.
     pub fn is_linear_motor_enabled(&self) -> bool {
         self.motor.enabled
     }
 
+    /// Enable the joint motor.
     pub fn enable_linear_motor(&mut self) {
         self.motor.enabled = true
     }
 
+    /// Disable the joint motor.
     pub fn disable_linear_motor(&mut self) {
         self.motor.enabled = false;
     }
 
+    /// The desired relative velocity to be enforced by the joint motor.
     pub fn desired_linear_motor_velocity(&self) -> N {
         self.motor.desired_velocity
     }
 
+    /// Set the desired relative velocity to be enforced by the joint motor.
     pub fn set_desired_linear_motor_velocity(&mut self, vel: N) {
         self.motor.desired_velocity = vel;
     }
 
+    /// The maximum force that can be output by the joint motor.
     pub fn max_linear_motor_force(&self) -> N {
         self.motor.max_force
     }
 
+    /// Set the maximum force that can be output by the joint motor.
     pub fn set_max_linear_motor_force(&mut self, force: N) {
         self.motor.max_force = force;
     }
@@ -320,54 +342,67 @@ macro_rules! _prismatic_motor_limit_methods(
      $set_max_motor_force:       ident
      ) => {
         impl<N: Real> $ty<N> {
+            /// The lower limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $min_offset(&self) -> Option<N> {
                 self.$prism.min_offset()
             }
 
+            /// The upper limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $max_offset(&self) -> Option<N> {
                 self.$prism.max_offset()
             }
 
+            /// Disable the lower limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $disable_min_offset(&mut self) {
                 self.$prism.disable_max_offset();
             }
 
+            /// Disable the upper limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $disable_max_offset(&mut self) {
                 self.$prism.disable_max_offset();
             }
 
+            /// Set the lower limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $enable_min_offset(&mut self, limit: N) {
                 self.$prism.enable_min_offset(limit);
             }
 
+            /// Set the upper limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $enable_max_offset(&mut self, limit: N) {
                 self.$prism.enable_max_offset(limit)
             }
 
+            /// Returns `true` if the joint translational motor is enabled.
             pub fn $is_motor_enabled(&self) -> bool {
                 self.$prism.is_linear_motor_enabled()
             }
 
+            /// Enable the joint translational motor.
             pub fn $enable_motor(&mut self) {
                 self.$prism.enable_linear_motor()
             }
 
+            /// Disable the joint translational motor.
             pub fn $disable_motor(&mut self) {
                 self.$prism.disable_linear_motor()
             }
 
+            /// The desired relative translational velocity to be enforced by the joint motor.
             pub fn $desired_motor_velocity(&self) -> N {
                 self.$prism.desired_linear_motor_velocity()
             }
 
+            /// Set the desired relative translational velocity to be enforced by the joint motor.
             pub fn $set_desired_motor_velocity(&mut self, vel: N) {
                 self.$prism.set_desired_linear_motor_velocity(vel)
             }
 
+            /// The maximum force that can be output by the joint translational motor.
             pub fn $max_motor_force(&self) -> N {
                 self.$prism.max_linear_motor_force()
             }
 
+            /// Set the maximum force that can be output by the joint translational motor.
             pub fn $set_max_motor_force(&mut self, force: N) {
                 self.$prism.set_max_linear_motor_force(force)
             }

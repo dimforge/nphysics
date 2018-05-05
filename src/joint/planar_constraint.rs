@@ -8,6 +8,9 @@ use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
+/// A constraint that removes one relative translational degree of freedom, and all but one rotational degrees of freedom.
+///
+/// This ensures a body moves only on a plane wrt. its parent.
 pub struct PlanarConstraint<N: Real> {
     b1: BodyHandle,
     b2: BodyHandle,
@@ -22,6 +25,9 @@ pub struct PlanarConstraint<N: Real> {
 }
 
 impl<N: Real> PlanarConstraint<N> {
+    /// Create a new planar constraint which ensures the two provided axii always coincide.
+    ///
+    /// All anchros and axii are expressed in their corresponding body part local coordinate frame.
     pub fn new(
         b1: BodyHandle,
         b2: BodyHandle,

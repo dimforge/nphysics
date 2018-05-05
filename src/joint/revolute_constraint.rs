@@ -1,15 +1,16 @@
-use std::ops::Range;
 #[cfg(feature = "dim3")]
 use na::Unit;
 use na::{DVector, Real};
+use std::ops::Range;
 
-use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
-             NonlinearConstraintGenerator};
-use solver::helper;
 use joint::JointConstraint;
 use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
+use object::{BodyHandle, BodySet};
+use solver::helper;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+             NonlinearConstraintGenerator};
 
+/// A constraint that removes all relative motions except the rotation between two body parts.
 #[cfg(feature = "dim2")]
 pub struct RevoluteConstraint<N: Real> {
     b1: BodyHandle,
@@ -20,11 +21,11 @@ pub struct RevoluteConstraint<N: Real> {
     ang_impulses: AngularVector<N>, // FIXME: not actually needed in 2D.
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
-
-    min_angle: Option<N>,
-    max_angle: Option<N>,
+    // min_angle: Option<N>,
+    // max_angle: Option<N>,
 }
 
+/// A constraint that removes all relative motions except one rotation between two body parts.
 #[cfg(feature = "dim3")]
 pub struct RevoluteConstraint<N: Real> {
     b1: BodyHandle,
@@ -37,12 +38,14 @@ pub struct RevoluteConstraint<N: Real> {
     ang_impulses: AngularVector<N>,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
-
-    min_angle: Option<N>,
-    max_angle: Option<N>,
+    // min_angle: Option<N>,
+    // max_angle: Option<N>,
 }
 
 impl<N: Real> RevoluteConstraint<N> {
+    /// Create a new revolute constraint which ensures the provided axii and anchors always coincide.
+    ///
+    /// All axii and achors are expressed in the local coordinate system of the corresponding body parts.
     #[cfg(feature = "dim3")]
     pub fn new(
         b1: BodyHandle,
@@ -52,8 +55,8 @@ impl<N: Real> RevoluteConstraint<N> {
         anchor2: Point<N>,
         axis2: Unit<AngularVector<N>>,
     ) -> Self {
-        let min_angle = None;
-        let max_angle = None;
+        // let min_angle = None;
+        // let max_angle = None;
         RevoluteConstraint {
             b1,
             b2,
@@ -65,15 +68,18 @@ impl<N: Real> RevoluteConstraint<N> {
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
-            min_angle,
-            max_angle,
+            // min_angle,
+            // max_angle,
         }
     }
 
+    /// Create a new revolute constraint which ensures the provided anchors always coincide.
+    ///
+    /// Both achors are expressed in the local coordinate system of the corresponding body parts.
     #[cfg(feature = "dim2")]
     pub fn new(b1: BodyHandle, b2: BodyHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
-        let min_angle = None;
-        let max_angle = None;
+        // let min_angle = None;
+        // let max_angle = None;
 
         RevoluteConstraint {
             b1,
@@ -84,44 +90,44 @@ impl<N: Real> RevoluteConstraint<N> {
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
-            min_angle,
-            max_angle,
+            // min_angle,
+            // max_angle,
         }
     }
 
-    pub fn min_angle(&self) -> Option<N> {
-        self.min_angle
-    }
+    // pub fn min_angle(&self) -> Option<N> {
+    //     self.min_angle
+    // }
 
-    pub fn max_angle(&self) -> Option<N> {
-        self.max_angle
-    }
+    // pub fn max_angle(&self) -> Option<N> {
+    //     self.max_angle
+    // }
 
-    pub fn disable_min_angle(&mut self) {
-        self.min_angle = None;
-    }
+    // pub fn disable_min_angle(&mut self) {
+    //     self.min_angle = None;
+    // }
 
-    pub fn disable_max_angle(&mut self) {
-        self.max_angle = None;
-    }
+    // pub fn disable_max_angle(&mut self) {
+    //     self.max_angle = None;
+    // }
 
-    pub fn enable_min_angle(&mut self, limit: N) {
-        self.min_angle = Some(limit);
-        self.assert_limits();
-    }
+    // pub fn enable_min_angle(&mut self, limit: N) {
+    //     self.min_angle = Some(limit);
+    //     self.assert_limits();
+    // }
 
-    pub fn enable_max_angle(&mut self, limit: N) {
-        self.max_angle = Some(limit);
-        self.assert_limits();
-    }
+    // pub fn enable_max_angle(&mut self, limit: N) {
+    //     self.max_angle = Some(limit);
+    //     self.assert_limits();
+    // }
 
-    fn assert_limits(&self) {
-        if let (Some(min_angle), Some(max_angle)) = (self.min_angle, self.max_angle) {
-            assert!(
-                min_angle <= max_angle,
-                "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
-        }
-    }
+    // fn assert_limits(&self) {
+    //     if let (Some(min_angle), Some(max_angle)) = (self.min_angle, self.max_angle) {
+    //         assert!(
+    //             min_angle <= max_angle,
+    //             "RevoluteJoint constraint limits: the min angle must be larger than (or equal to) the max angle.");
+    //     }
+    // }
 }
 
 impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {

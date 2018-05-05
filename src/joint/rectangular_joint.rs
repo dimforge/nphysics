@@ -1,10 +1,11 @@
 use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
+/// A joint that allows two translational degrees of freedom.
 #[derive(Copy, Clone, Debug)]
 pub struct RectangularJoint<N: Real> {
     prism1: PrismaticJoint<N>,
@@ -12,6 +13,9 @@ pub struct RectangularJoint<N: Real> {
 }
 
 impl<N: Real> RectangularJoint<N> {
+    /// Creates a new rectangular joint allowing relative translations anlon the two provided axii.Isometry3
+    ///
+    /// Both axii are expressed in the local coordinate frame on the attached multibody links.
     pub fn new(axis1: Unit<Vector3<N>>, axis2: Unit<Vector3<N>>, offset1: N, offset2: N) -> Self {
         RectangularJoint {
             prism1: PrismaticJoint::new(axis1, offset1),

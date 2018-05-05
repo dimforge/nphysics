@@ -6,7 +6,7 @@ use math::{JacobianSliceMut, Velocity};
 use solver::IntegrationParameters;
 use utils::GeneralizedCross;
 
-/// A joint that allows only all rotational degrees of freedom between two body parts.
+/// A joint that allows only all rotational degrees of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
 pub struct BallJoint<N: Real> {
     rot: UnitQuaternion<N>,

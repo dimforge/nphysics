@@ -1,3 +1,5 @@
+#![allow(missing_docs)] // For downcast.
+
 use na::{DVectorSliceMut, Real};
 
 use joint::{Joint, JointMotor};
@@ -5,16 +7,21 @@ use object::{BodyHandle, MultibodyLinkRef};
 use solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
              IntegrationParameters, UnilateralGroundConstraint};
 
-// FIXME: move this to its own file.
+/// Trait implemented by joints using the reduced-coordinates approach and allowing only one degree of freedom.
 pub trait UnitJoint<N: Real>: Joint<N> {
+    /// The generalized coordinate of the unit joint.
     fn position(&self) -> N;
+    /// The motor applied to the degree of freedom of the unit joitn.
     fn motor(&self) -> &JointMotor<N, N>;
+    /// The lower limit, if any, set to the generalized coordinate of this unit joint.
     fn min_position(&self) -> Option<N>;
+    /// The upper limit, if any, set to the generalized coordinate of this unit joint.
     fn max_position(&self) -> Option<N>;
 }
 
 downcast!(<N> UnitJoint<N> where N: Real);
 
+/// Computes the maximum number of velocity constraints to be applied by the given unit joint.
 pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) -> usize {
     // FIXME: don't always keep the constraints active.
     let mut nconstraints = 0;
@@ -32,6 +39,8 @@ pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) 
     nconstraints
 }
 
+/// Initializes and generate the velocity constraints applicable to the multibody links attached
+/// to this joint.
 pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     joint: &J,
     params: &IntegrationParameters<N>,
@@ -148,6 +157,8 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     }
 }
 
+/// Initializes and generate the position constraints applicable to the multibody links attached
+/// to this joint.
 pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
     joint: &J,
     link: &MultibodyLinkRef<N>,

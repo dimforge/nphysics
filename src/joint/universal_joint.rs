@@ -1,10 +1,11 @@
 use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, RevoluteJoint};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
 use math::{JacobianSliceMut, Velocity};
+use object::MultibodyLinkRef;
+use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
+/// A joint that allows only two relative rotations between two multibody links.
 #[derive(Copy, Clone, Debug)]
 pub struct UniversalJoint<N: Real> {
     revo1: RevoluteJoint<N>,
@@ -15,6 +16,9 @@ pub struct UniversalJoint<N: Real> {
 }
 
 impl<N: Real> UniversalJoint<N> {
+    /// Creates an universal joint allowing rotations along `axis1` and `axis2`.
+    ///
+    /// The axii are expressed in the local coordinate systems of the attached multibody links.
     pub fn new(axis1: Unit<Vector3<N>>, axis2: Unit<Vector3<N>>, angle1: N, angle2: N) -> Self {
         UniversalJoint {
             revo1: RevoluteJoint::new(axis1, angle1),
