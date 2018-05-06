@@ -9,6 +9,7 @@ use math::AngularVector;
 #[cfg(feature = "dim3")]
 use utils::GeneralizedCross;
 
+/// A rigid body.
 pub struct RigidBody<N: Real> {
     handle: BodyHandle,
     local_to_world: Isometry<N>,
@@ -27,6 +28,7 @@ pub struct RigidBody<N: Real> {
 }
 
 impl<N: Real> RigidBody<N> {
+    /// Create a new rigid body with the specified handle and dynamic properties.
     pub fn new(
         handle: BodyHandle,
         position: Isometry<N>,
@@ -54,16 +56,19 @@ impl<N: Real> RigidBody<N> {
         }
     }
 
+    /// Informations regarding activation and deactivation (sleeping) of this rigid body.
     #[inline]
     pub fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }
 
+    /// Mutable informations regarding activation and deactivation (sleeping) of this rigid body.
     #[inline]
     pub fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
         &mut self.activation
     }
 
+    /// Force the activation of this rigid body.
     #[inline]
     pub fn activate(&mut self) {
         if let Some(threshold) = self.activation.deactivation_threshold() {
@@ -71,17 +76,20 @@ impl<N: Real> RigidBody<N> {
         }
     }
 
+    /// Force the activation of this rigid body with the given level of energy.
     #[inline]
     pub fn activate_with_energy(&mut self, energy: N) {
         self.activation.set_energy(energy)
     }
 
+    /// Put this rigid body to sleep.
     #[inline]
     pub fn deactivate(&mut self) {
         self.activation.set_energy(N::zero());
         self.velocity = Velocity::zero();
     }
 
+    /// Return `true` if this rigid body is kinematic or dynamic and awake.
     #[inline]
     pub fn is_active(&self) -> bool {
         match self.status {
@@ -92,41 +100,51 @@ impl<N: Real> RigidBody<N> {
         }
     }
 
+    /// The status of this rigid body.
     #[inline]
     pub fn status(&self) -> BodyStatus {
         self.status
     }
 
+    /// Set the status of this body.
     #[inline]
     pub fn set_status(&mut self, status: BodyStatus) {
         self.status = status
     }
 
+    /// The companion ID of this rigid body.
     #[inline]
     pub fn companion_id(&self) -> usize {
         self.companion_id
     }
 
+    /// Set the companion ID of this rigid body.
+    ///
+    /// This value may be overriden by nphysics during a timestep.
     #[inline]
     pub fn set_companion_id(&mut self, id: usize) {
         self.companion_id = id
     }
 
+    /// Whether or not the status of this rigid body is dynamic.
     #[inline]
     pub fn is_dynamic(&self) -> bool {
         self.status == BodyStatus::Dynamic
     }
 
+    /// Whether or not the status of this rigid body is static.
     #[inline]
     pub fn is_static(&self) -> bool {
         self.status == BodyStatus::Static
     }
 
+    /// Whether or not the status of this rigid body is kinematic.
     #[inline]
     pub fn is_kinematic(&self) -> bool {
         self.status == BodyStatus::Kinematic
     }
 
+    /// The center of mass of this rigid body.
     #[inline]
     pub fn center_of_mass(&self) -> Point<N> {
         self.com
@@ -138,38 +156,40 @@ impl<N: Real> RigidBody<N> {
         &self.velocity
     }
 
-    /// Sets the velocity of this rigid body.
+    /// Set the velocity of this rigid body.
     #[inline]
     pub fn set_velocity(&mut self, vel: Velocity<N>) {
         self.velocity = vel
     }
 
-    /// Sets the linear velocity of this rigid body.
+    /// Set the linear velocity of this rigid body.
     #[inline]
     pub fn set_linear_velocity(&mut self, vel: Vector<N>) {
         self.velocity.linear = vel
     }
 
     #[cfg(feature = "dim2")]
-    /// Sets the angular velocity of this rigid body.
+    /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: N) {
         self.velocity.angular = vel
     }
 
     #[cfg(feature = "dim3")]
-    /// Sets the angular velocity of this rigid body.
+    /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: AngularVector<N>) {
         self.velocity.angular = vel
     }
 
+    /// Reset the timestep-specific dynamic information of this rigid body.
     pub fn clear_dynamics(&mut self) {
         self.augmented_mass = Inertia::zero();
         self.acceleration = Velocity::zero();
         self.external_forces = Force::zero();
     }
 
+    /// Update the timestep-specific dynamic information of this rigid body.
     #[allow(unused_variables)] // for params used only in 3D.
     pub fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         match self.status {
@@ -206,52 +226,64 @@ impl<N: Real> RigidBody<N> {
         }
     }
 
+    /// The rigid body inertia in local-space.
     #[inline]
     pub fn local_inertia(&self) -> &Inertia<N> {
         &self.local_inertia
     }
 
+    /// The rigid body inertia in world-space.
     #[inline]
     pub fn inertia(&self) -> &Inertia<N> {
         &self.inertia
     }
 
+    /// The augmented mass (inluding gyroscropic terms) in world-space of this rigid body.
     #[inline]
     pub fn augmented_mass(&self) -> &Inertia<N> {
         &self.augmented_mass
     }
 
+    /// The handle of this rigid body.
     #[inline]
     pub fn handle(&self) -> BodyHandle {
         self.handle
     }
 
+    /// The number of degrees of freedom of this rigid body.
     #[inline]
     pub fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }
 
+    /// The generalized velocities of this rigid body.
     #[inline]
     pub fn generalized_velocity(&self) -> DVectorSlice<N> {
         DVectorSlice::from_slice(self.velocity.as_slice(), SPATIAL_DIM)
     }
 
+    /// The mutable generalized velocities of this rigid body.
     #[inline]
     pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
         DVectorSliceMut::from_slice(self.velocity.as_mut_slice(), SPATIAL_DIM)
     }
 
+    /// The generalized accelerations at each degree of freedom of this rigid body.
     #[inline]
     pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
         DVectorSlice::from_slice(self.acceleration.as_slice(), SPATIAL_DIM)
     }
 
+    /// Integrate the position of this rigid body.
     #[inline]
     pub fn integrate(&mut self, params: &IntegrationParameters<N>) {
         let disp = self.velocity * params.dt;
         self.apply_displacement(&disp);
     }
 
+    /// Apply a displacement to this rigid body.
+    ///
+    /// Note that the applied displacement is given by `displacement` multiplied by a time equal to `1.0`.
     #[inline]
     pub fn apply_displacement(&mut self, displacement: &Velocity<N>) {
         let rotation = Rotation::new(displacement.angular);
@@ -262,28 +294,33 @@ impl<N: Real> RigidBody<N> {
         self.com = self.local_to_world * self.local_com;
     }
 
+    /// Apply a force to this rigid body for the next timestep.
     #[inline]
     pub fn apply_force(&mut self, force: &Force<N>) {
         self.external_forces.linear += force.linear;
         self.external_forces.angular += force.angular;
     }
 
+    /// The position of this rigid body wrt. the ground.
     #[inline]
     pub fn position(&self) -> Isometry<N> {
         self.local_to_world
     }
 
+    /// Convert a force applied to this rigid body center of mass into generalized force.
     #[inline]
     pub fn body_jacobian_mul_force(&self, force: &Force<N>, out: &mut [N]) {
         out[..SPATIAL_DIM].copy_from_slice(force.as_slice());
     }
 
+    /// Convert generalized forces applied to this rigid body into generalized accelerations.
     #[inline]
     pub fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
         let force = Force::from_slice(out);
         self.inv_mass_mul_force(&force, out)
     }
 
+    /// Convert a force applied to this rigid body's center of mass into generalized accelerations.
     #[inline]
     pub fn inv_mass_mul_force(&self, force: &Force<N>, out: &mut [N]) {
         let acc = self.inv_augmented_mass * *force;

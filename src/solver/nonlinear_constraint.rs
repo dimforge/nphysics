@@ -1,23 +1,35 @@
 use na::{Real, Unit};
 use ncollide::query::ContactKinematic;
 
+use math::Vector;
 use object::{BodyHandle, BodySet};
 use solver::IntegrationParameters;
-use math::Vector;
 
+/// A generic non-linear position constraint.
 pub struct GenericNonlinearConstraint<N: Real> {
+    /// The first body affected by the constraint.
     pub body1: BodyHandle,
+    /// The second body affected by the constraint.
     pub body2: BodyHandle,
+    /// Whether this constraint affects the bodies translation or orientation.
     pub is_angular: bool,
+    //  FIXME: rename ndofs1?
+    /// Number of degree of freedom of the first body.
     pub dim1: usize,
+    /// Number of degree of freedom of the second body.
     pub dim2: usize,
+    /// Index of the first entry of the constraint jacobian multiplied by the inverse mass of the first body.
     pub wj_id1: usize,
+    /// Index of the first entry of the constraint jacobian multiplied by the inverse mass of the second body.
     pub wj_id2: usize,
+    /// The target position change this constraint must apply.
     pub rhs: N,
+    /// The scaling parameter of the SOR-prox method.
     pub r: N,
 }
 
 impl<N: Real> GenericNonlinearConstraint<N> {
+    /// Initialize a new nonlinear constraint.
     pub fn new(
         body1: BodyHandle,
         body2: BodyHandle,
@@ -43,8 +55,11 @@ impl<N: Real> GenericNonlinearConstraint<N> {
     }
 }
 
+/// Implemented by structures that generate non-linear constraints.
 pub trait NonlinearConstraintGenerator<N: Real> {
+    /// Maximum of non-linear position constraint this generater needs to output.
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize;
+    /// Generate the `i`-th position constraint of this generator.
     fn position_constraint(
         &self,
         params: &IntegrationParameters<N>,
@@ -54,23 +69,34 @@ pub trait NonlinearConstraintGenerator<N: Real> {
     ) -> Option<GenericNonlinearConstraint<N>>;
 }
 
+/// A non-linear position-based non-penetration constraint.
 pub struct NonlinearUnilateralConstraint<N: Real> {
+    /// The scaling parameter of the SOR-prox method.
     pub r: N,
+    /// The target position change this constraint must apply.
     pub rhs: N,
 
+    /// Number of degree of freedom of the first body.
     pub ndofs1: usize,
+    /// The first body affected by the constraint.
     pub body1: BodyHandle,
 
+    /// Number of degree of freedom of the second body.
     pub ndofs2: usize,
+    /// The second body affected by the constraint.
     pub body2: BodyHandle,
 
+    /// The kinematic information used to update the contact location.
     pub kinematic: ContactKinematic<N>,
 
+    /// The contact normal on the local space of `self.body1`.
     pub normal1: Unit<Vector<N>>,
+    /// The contact normal on the local space of `self.body1`.
     pub normal2: Unit<Vector<N>>,
 }
 
 impl<N: Real> NonlinearUnilateralConstraint<N> {
+    /// Create a new nonlinear position-based non-penetration constraint.
     pub fn new(
         body1: BodyHandle,
         ndofs1: usize,
@@ -97,11 +123,13 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
     }
 }
 
+/// A non-linear position constraint generator to enforce multibody joint limits.
 pub struct MultibodyJointLimitsNonlinearConstraintGenerator {
     link: BodyHandle,
 }
 
 impl MultibodyJointLimitsNonlinearConstraintGenerator {
+    /// Creates the constraint generator from the given multibody link.
     pub fn new(link: BodyHandle) -> Self {
         MultibodyJointLimitsNonlinearConstraintGenerator { link }
     }
