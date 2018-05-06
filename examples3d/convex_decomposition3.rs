@@ -104,7 +104,7 @@ fn main() {
             let inertia = geom.inertia(1.0);
             let center_of_mass = geom.center_of_mass();
 
-            for k in 1..=num_duplications {
+            for k in 1..num_duplications + 1 {
                 let i = igeom % width;
                 let j = igeom / width;
                 let shift = Vector3::new(i as f32, k as f32, j as f32) * shift;

@@ -15,4 +15,4 @@ time       = "0.1"
 num-traits = "0.1"
 rand       = "0.4"
 nalgebra   = "0.14"
-ncollide2d = { path = "../../ncollide-dev/build/ncollide2d" }
+ncollide2d = "0.15"
