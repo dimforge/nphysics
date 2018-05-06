@@ -37,8 +37,8 @@ name = "collision_groups3"
 path = "./collision_groups3.rs"
 
 [[bin]]
-name = "compuond3"
-path = "./compuond3.rs"
+name = "compound3"
+path = "./compound3.rs"
 
 [[bin]]
 name = "constraints3"
@@ -61,8 +61,8 @@ name = "dzhanibekov3"
 path = "./dzhanibekov3.rs"
 
 [[bin]]
-name = "fixed_bug_long_thin_box_on_shot_manifold3"
-path = "./fixed_bug_long_thin_box_on_shot_manifold3.rs"
+name = "fixed_bug_long_thin_box_one_shot_manifold3"
+path = "./fixed_bug_long_thin_box_one_shot_manifold3.rs"
 
 [[bin]]
 name = "gravity3"
@@ -80,9 +80,9 @@ path = "./known_bug_excentric_convex3.rs"
 name = "multibody_limits3"
 path = "./multibody_limits3.rs"
 
-[[bin]]
-name = "multibody3"
-path = "./multibody3.rs"
+# [[bin]]
+# name = "multibody3"
+# path = "./multibody3.rs"
 
 [[bin]]
 name = "pyramid3"
