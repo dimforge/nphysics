@@ -277,7 +277,7 @@ impl<N: Real> Multibody<N> {
         dof.default_damping(&mut self.damping_mut().rows_mut(assembly_id, ndofs));
 
         /*
-         * Create the rigid body.
+         * Create the multibody.
          */
         dof.update_jacobians(&body_shift, &self.velocities[assembly_id..]);
         let local_to_parent = dof.body_to_parent(&parent_shift, &body_shift);
@@ -833,13 +833,13 @@ impl<N: Real> Multibody<N> {
         self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
     }
 
-    /// Convert generalized forces applied to this rigid body into generalized accelerations.
+    /// Convert generalized forces applied to this multibody into generalized accelerations.
     pub fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
         assert!(self.inv_augmented_mass.solve_mut(&mut out))
     }
 
-    /// Convert a force applied to this rigid body's center of mass into generalized accelerations.
+    /// Convert a force applied to this multibody's link `rb_id` center of mass into generalized accelerations.
     pub fn inv_mass_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
@@ -880,7 +880,7 @@ impl<N: Real> Multibody<N> {
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
-    /// The augmented mass (inluding gyroscropic and coriolis terms) in world-space of this rigid body.
+    /// The augmented mass (inluding gyroscropic and coriolis terms) in world-space of this multibody.
     pub fn augmented_mass(&self) -> &DMatrix<N> {
         &self.augmented_mass
     }

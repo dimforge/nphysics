@@ -199,8 +199,9 @@ impl<'a, N: Real> BodyMut<'a, N> {
 }
 
 macro_rules! dispatch(
-    ($($body: ident :: $method: ident ( $($params: ident: $argty: ty),* ) -> $ret: ty;)*) => {$(
+    ($($body: ident :: $method: ident ( $($params: ident: $argty: ty),* ) -> $ret: ty | $doc: expr;)*) => {$(
         impl<'a, N: Real> $body<'a, N> {
+            #[doc = $doc]
             #[inline]
             pub fn $method(&self $($params: $argty),*) -> $ret {
                 match *self {
@@ -214,8 +215,9 @@ macro_rules! dispatch(
 );
 
 macro_rules! dispatch_mut(
-    ($($body: ident :: $method: ident ( $($params: ident: $argty: ty),* ) -> $ret: ty;)*) => {$(
+    ($($body: ident :: $method: ident ( $($params: ident: $argty: ty),* ) -> $ret: ty | $doc: expr;)*) => {$(
         impl<'a, N: Real> $body<'a, N> {
+            #[doc = $doc]
             #[inline]
             pub fn $method(&mut self $(, $params: $argty)*) -> $ret {
                 match *self {
@@ -229,42 +231,43 @@ macro_rules! dispatch_mut(
 );
 
 dispatch!(
-    Body::handle() -> BodyHandle;
-    Body::status() -> BodyStatus;
-    Body::activation_status() -> &ActivationStatus<N>;
-    Body::is_active() -> bool;
-    Body::is_dynamic() -> bool;
-    Body::is_kinematic() -> bool;
-    Body::is_static() -> bool;
-    Body::ndofs() -> usize;
-    Body::generalized_acceleration() -> DVectorSlice<N>;
-    Body::generalized_velocity() -> DVectorSlice<N>;
-    Body::companion_id() -> usize;
+    Body::handle() -> BodyHandle | "The handle of this body.";
+    Body::status() -> BodyStatus | "The status of this body.";
+    Body::activation_status() -> &ActivationStatus<N> | "Informations regarding activation and deactivation (sleeping) of this body.";
+    Body::is_active() -> bool | "Check if this body is active.";
+    Body::is_dynamic() -> bool | "Whether or not the status of this body is dynamic.";
+    Body::is_kinematic() -> bool | "Whether or not the status of this body is kinematic.";
+    Body::is_static() -> bool | "Whether or not the status of this body is static.";
+    Body::ndofs() -> usize | "The number of degrees of freedom of this body.";
+    Body::generalized_acceleration() -> DVectorSlice<N> | "The generalized accelerations at each degree of freedom of this body.";
+    Body::generalized_velocity() -> DVectorSlice<N> | "The generalized velocities of this body.";
+    Body::companion_id() -> usize | "The companion ID of this body.";
 
-    BodyMut::handle() -> BodyHandle;
-    BodyMut::status() -> BodyStatus;
-    BodyMut::activation_status() -> &ActivationStatus<N>;
-    BodyMut::is_active() -> bool;
-    BodyMut::is_kinematic() -> bool;
-    BodyMut::is_static() -> bool;
-    BodyMut::ndofs() -> usize;
-    BodyMut::generalized_acceleration() -> DVectorSlice<N>;
-    BodyMut::generalized_velocity() -> DVectorSlice<N>;
-    BodyMut::companion_id() -> usize;
+    BodyMut::handle() -> BodyHandle | "The handle of this body.";
+    BodyMut::status() -> BodyStatus | "The status of this body.";
+    BodyMut::activation_status() -> &ActivationStatus<N> | "Informations regarding activation and deactivation (sleeping) of this body.";
+    BodyMut::is_active() -> bool | "Check if this body is active.";
+    BodyMut::is_kinematic() -> bool | "Whether or not the status of this body is kinematic.";
+    BodyMut::is_static() -> bool | "Whether or not the status of this body is static.";
+    BodyMut::ndofs() -> usize | "The number of degrees of freedom of this body.";
+    BodyMut::generalized_acceleration() -> DVectorSlice<N> | "The generalized accelerations at each degree of freedom of this body.";
+    BodyMut::generalized_velocity() -> DVectorSlice<N> | "The generalized velocities of this body.";
+    BodyMut::companion_id() -> usize | "The companion ID of this body.";
 );
 
 dispatch_mut!(
-    BodyMut::set_companion_id(id: usize) -> ();
-    BodyMut::generalized_velocity_mut() -> DVectorSliceMut<N>;
-    BodyMut::integrate(params: &IntegrationParameters<N>) -> ();
+    BodyMut::set_companion_id(id: usize) -> () | "Set the companion ID of this body (may be reinitialized by nphysics).";
+    BodyMut::generalized_velocity_mut() -> DVectorSliceMut<N> | "The mutable generalized velocities of this body.";
+    BodyMut::integrate(params: &IntegrationParameters<N>) -> () | "Integrate the position of this body.";
     // FIXME: should those directly be implemented only for bodies (to avoid duplicated code on
     // each body for activation)?
-    BodyMut::activate() -> ();
-    BodyMut::activate_with_energy(energy: N) -> ();
-    BodyMut::deactivate() -> ();
+    BodyMut::activate() -> () | "Force the activation of this body.";
+    BodyMut::activate_with_energy(energy: N) -> () | "Force the activation of this body with the given level of energy.";
+    BodyMut::deactivate() -> () | "Put this body to sleep.";
 );
 
 impl<'a, N: Real> BodyPart<'a, N> {
+    /// Returns `true` if this body is the ground.
     #[inline]
     pub fn is_ground(&self) -> bool {
         if let BodyPart::Ground(_) = *self {
@@ -274,6 +277,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The handle of this body.
     #[inline]
     pub fn handle(&self) -> BodyHandle {
         match *self {
@@ -283,6 +287,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The number of degrees of freedom of the body containing this body part.
     #[inline]
     pub fn parent_ndofs(&self) -> usize {
         match *self {
@@ -292,6 +297,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The companion ID of the parent of this body part.
     #[inline]
     pub fn parent_companion_id(&self) -> usize {
         match *self {
@@ -301,6 +307,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// Check if this body part is active.
     #[inline]
     pub fn is_active(&self) -> bool {
         match *self {
@@ -310,6 +317,9 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The number of degrees of freedom (DOF) of the body containing this body part, taking its status into account.
+    ///
+    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
     #[inline]
     pub fn status_dependent_parent_ndofs(&self) -> usize {
         match *self {
@@ -327,8 +337,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
-    // FIXME: replace this by "generalized_velocity" when we can work
-    // with sparse matrices.
+    /// The generalized velocities of the body containing this body part.
     #[inline]
     pub fn parent_generalized_velocity(&self) -> DVectorSlice<N> {
         match *self {
@@ -338,6 +347,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The center of mass of this body part.
     #[inline]
     pub fn center_of_mass(&self) -> Point<N> {
         match *self {
@@ -347,6 +357,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The position of this body part wrt. the ground.
     #[inline]
     pub fn position(&self) -> Isometry<N> {
         match *self {
@@ -356,6 +367,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The velocity of this body part.
     #[inline]
     pub fn velocity(&self) -> Velocity<N> {
         match *self {
@@ -365,6 +377,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The world-space inertia of this body part.
     #[inline]
     pub fn inertia(&self) -> Inertia<N> {
         match *self {
@@ -374,6 +387,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The local-space inertia of this body part.
     #[inline]
     pub fn local_inertia(&self) -> Inertia<N> {
         match *self {
@@ -383,6 +397,9 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// The velocity of this body part, taking it status into account.
+    ///
+    /// This always return zero if the body part is static.
     #[inline]
     pub fn status_dependent_velocity(&self) -> Velocity<N> {
         match *self {
@@ -400,6 +417,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// Convert a force applied to the center of mass of this body part into generalized force.
     #[inline]
     pub fn body_jacobian_mul_force(&self, force: &Force<N>, out: &mut [N]) {
         match *self {
@@ -409,6 +427,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// Convert generalized forces applied to this body part into generalized accelerations.
     #[inline]
     pub fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
         match *self {
@@ -418,6 +437,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
         }
     }
 
+    /// Convert a force applied to this body part's center of mass into generalized accelerations.
     #[inline]
     pub fn inv_mass_mul_force(&self, force: &Force<N>, out: &mut [N]) {
         match *self {
@@ -429,6 +449,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
 }
 
 impl<'a, N: Real> BodyPartMut<'a, N> {
+    /// Retrieves an immutable reference to this body part.
     #[inline]
     pub fn as_ref<'b>(&'b self) -> BodyPart<'b, N> {
         match *self {
@@ -438,6 +459,7 @@ impl<'a, N: Real> BodyPartMut<'a, N> {
         }
     }
 
+    /// Apply a force to this body part at the next frame.
     #[inline]
     pub fn apply_force(&mut self, force: &Force<N>) {
         match *self {
