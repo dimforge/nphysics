@@ -3,13 +3,12 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::f32::consts::PI;
-use na::{Isometry3, Point3, Translation3, Vector3};
-use ncollide3d::shape::{Ball, Cuboid, Plane, ShapeHandle};
+use na::{Isometry3, Point3, Vector3};
+use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, BodyStatus, Material};
 use nphysics3d::joint::RevoluteJoint;
-use nphysics3d::math::{Inertia, Velocity};
+use nphysics3d::math::Inertia;
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
@@ -126,7 +125,7 @@ fn main() {
     );
 
     {
-        let mut mb = world.multibody_mut(handle).unwrap();
+        let mb = world.multibody_mut(handle).unwrap();
         mb.generalized_velocity_mut()[0] = 3.0;
         mb.set_status(BodyStatus::Kinematic);
     }
