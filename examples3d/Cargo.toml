@@ -7,8 +7,8 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 rand       = "0.4"
 num-traits = "0.1"
 nalgebra   = "0.14"
-ncollide   = "0.14"
-kiss3d     = "0.13"
+ncollide3d = "0.15"
+kiss3d     = "0.14"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"
@@ -16,9 +16,13 @@ path = "../build/nphysics3d"
 [dependencies.nphysics_testbed3d]
 path = "../nphysics_testbed3d"
 
-# [[bin]]
-# name = "ball_vee3"
-# path = "./balls_vee3.rs"
+[[bin]]
+name = "balls_vee3"
+path = "./balls_vee3.rs"
+
+[[bin]]
+name = "balls3"
+path = "./balls3.rs"
 
 [[bin]]
 name = "body_status3"
@@ -26,88 +30,77 @@ path = "./body_status3.rs"
 
 [[bin]]
 name = "boxes3"
-path = "boxes3.rs"
+path = "./boxes3.rs"
 
 [[bin]]
-name = "balls3"
-path = "balls3.rs"
-
-## [[bin]]
-## name = "boxes_as_multibody3"
-## path = "./boxes_as_multibody3.rs"
+name = "collision_groups3"
+path = "./collision_groups3.rs"
 
 [[bin]]
-name = "compound3"
-path = "./compound3.rs"
- 
+name = "compuond3"
+path = "./compuond3.rs"
+
+[[bin]]
+name = "constraints3"
+path = "./constraints3.rs"
+
+[[bin]]
+name = "convex_decomposition3"
+path = "./convex_decomposition3.rs"
+
+[[bin]]
+name = "convex3"
+path = "./convex3.rs"
+
 [[bin]]
 name = "cross3"
 path = "./cross3.rs"
 
-# [[bin]]
-# name = "mesh3"
-# path = "./mesh3.rs"
-# 
-# [[bin]]
-# name = "primitives3"
-# path = "./primitives3.rs"
-# 
-# [[bin]]
-# name = "pyramid3"
-# path = "./pyramid3.rs"
-
-# [[bin]]
-# name = "ragdoll3"
-# path = "./ragdoll3.rs"
-
-# [[bin]]
-# name = "wall3"
-# path = "./wall3.rs"
-# 
-# [[bin]]
-# name = "gravity3"
-# path = "./gravity3.rs"
-# 
-# [[bin]]
-# name = "convex3"
-# path = "./convex3.rs"
-# 
-# [[bin]]
-# name = "convex_decomposition3"
-# path = "./convex_decomposition3.rs"
-# 
-# [[bin]]
-# name = "collision_groups3"
-# path = "./collision_groups3.rs"
+[[bin]]
+name = "dzhanibekov3"
+path = "./dzhanibekov3.rs"
 
 [[bin]]
-name = "sensor3"
-path = "sensor3.rs"
+name = "fixed_bug_long_thin_box_on_shot_manifold3"
+path = "./fixed_bug_long_thin_box_on_shot_manifold3.rs"
 
-# [[bin]]
-# name = "fixed_bug_long_thin_box_one_shot_manifold3"
-# path = "fixed_bug_long_thin_box_one_shot_manifold3.rs"
-# 
-# [[bin]]
-# name = "fixed_bug_minkowski_sampling_fails_on_touching_objects3"
-# path = "fixed_bug_minkowski_sampling_fails_on_touching_objects3.rs"
-# 
-# [[bin]]
-# name = "known_bug_excentric_convex3"
-# path = "known_bug_excentric_convex3.rs"
-
-## [[bin]]
-## name = "constraints3"
-## path = "constraints3.rs"
-
-## [[bin]]
-## name = "multibody_limits3"
-## path = "multibody_limits3.rs"
-
-## [[bin]]
-## name = "dzhanibekov3"
-## path = "dzhanibekov3.rs"
+[[bin]]
+name = "gravity3"
+path = "./gravity3.rs"
 
 [[bin]]
 name = "joints3"
-path = "joints3.rs"
+path = "./joints3.rs"
+
+[[bin]]
+name = "known_bug_excentric_convex3"
+path = "./known_bug_excentric_convex3.rs"
+
+[[bin]]
+name = "multibody_limits3"
+path = "./multibody_limits3.rs"
+
+[[bin]]
+name = "multibody3"
+path = "./multibody3.rs"
+
+[[bin]]
+name = "pyramid3"
+path = "./pyramid3.rs"
+
+[[bin]]
+name = "ragdoll3"
+path = "./ragdoll3.rs"
+
+[[bin]]
+name = "sensor3"
+path = "./sensor3.rs"
+
+[[bin]]
+name = "trimesh3"
+path = "./trimesh3.rs"
+
+[[bin]]
+name = "wall3"
+path = "./wall3.rs"
+
