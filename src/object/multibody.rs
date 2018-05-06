@@ -11,6 +11,7 @@ use solver::{ConstraintSet, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator};
 use utils::{GeneralizedCross, IndexMut2};
 
+/// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: Real> {
     rbs: MultibodyLinkVec<N>,
     velocities: Vec<N>,
@@ -59,21 +60,28 @@ impl<N: Real> Multibody<N> {
         }
     }
 
+    /// The handle of this multibody.
+    ///
+    /// This is the same as the handle of the link
+    /// at the root of the multibody's kinematic tree.
     #[inline]
     pub fn handle(&self) -> BodyHandle {
         self.rbs[0].handle
     }
 
+    /// Informations regarding activation and deactivation (sleeping) of this multibody.
     #[inline]
     pub fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }
 
+    /// Mutable informations regarding activation and deactivation (sleeping) of this multibody.
     #[inline]
     pub fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
         &mut self.activation
     }
 
+    /// Force the activation of this multibody link.
     #[inline]
     pub fn activate(&mut self) {
         if let Some(threshold) = self.activation.deactivation_threshold() {
@@ -81,11 +89,13 @@ impl<N: Real> Multibody<N> {
         }
     }
 
+    /// Force the activation of this multibody link with the given level of energy.
     #[inline]
     pub fn activate_with_energy(&mut self, energy: N) {
         self.activation.set_energy(energy)
     }
 
+    /// Put this multibody to sleep.
     #[inline]
     pub fn deactivate(&mut self) {
         self.activation.set_energy(N::zero());
@@ -94,6 +104,7 @@ impl<N: Real> Multibody<N> {
         }
     }
 
+    /// Return `true` if this multibody is kinematic or dynamic and awake.
     #[inline]
     pub fn is_active(&self) -> bool {
         match self.status {
@@ -104,36 +115,45 @@ impl<N: Real> Multibody<N> {
         }
     }
 
+    /// The status of this multibody.
     #[inline]
     pub fn status(&self) -> BodyStatus {
         self.status
     }
 
+    /// Set the status of this body.
     #[inline]
     pub fn set_status(&mut self, status: BodyStatus) {
         self.status = status
     }
 
+    /// The companion ID of this multibody.
     #[inline]
     pub fn companion_id(&self) -> usize {
         self.companion_id
     }
 
+    /// Set the companion ID of this multibody.
+    ///
+    /// This value may be overriden by nphysics during a timestep.
     #[inline]
     pub fn set_companion_id(&mut self, id: usize) {
         self.companion_id = id
     }
 
+    /// Whether or not the status of this multibody is dynamic.
     #[inline]
     pub fn is_dynamic(&self) -> bool {
         self.status == BodyStatus::Dynamic
     }
 
+    /// Whether or not the status of this multibody is static.
     #[inline]
     pub fn is_static(&self) -> bool {
         self.status == BodyStatus::Static
     }
 
+    /// Whether or not the status of this multibody is kinematic.
     #[inline]
     pub fn is_kinematic(&self) -> bool {
         self.status == BodyStatus::Kinematic
@@ -153,6 +173,9 @@ impl<N: Real> Multibody<N> {
         &mut self.rbs
     }
 
+    /// Iterator through all the links of this multibody.alloc_jemalloc
+    ///
+    /// All link are guarenteed to be yielded before its descendet.
     pub fn links(&self) -> MultibodyLinks<N> {
         MultibodyLinks {
             mb: self,
@@ -160,53 +183,62 @@ impl<N: Real> Multibody<N> {
         }
     }
 
+    /// Get a reference to a specific multibody link.
     pub fn link(&self, rb_id: MultibodyLinkId) -> MultibodyLinkRef<N> {
         MultibodyLinkRef::new(rb_id, self)
     }
 
+    /// Get a mutable reference to a specific multibody link.
     pub fn link_mut(&mut self, rb_id: MultibodyLinkId) -> MultibodyLinkMut<N> {
         MultibodyLinkMut::new(rb_id, self)
     }
 
-    // FIXME: store derectly a DVector instead of a Vec).
+    /// The vector of generalized velocities of this multibody.
     #[inline]
     pub fn generalized_velocity(&self) -> DVectorSlice<N> {
         DVectorSlice::from_slice(&self.velocities, self.ndofs)
     }
 
+    /// The slice of generalized velocities of this multibody.
     #[inline]
     pub fn generalized_velocity_slice(&self) -> &[N] {
         &self.velocities
     }
 
+    /// The mutable vector of generalized velocities of this multibody.
     #[inline]
     pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
         DVectorSliceMut::from_slice(&mut self.velocities, self.ndofs)
     }
 
+    /// The mutable slice of generalized velocities of this multibody.
     #[inline]
     pub fn generalized_velocity_slice_mut(&mut self) -> &mut [N] {
         &mut self.velocities
     }
 
+    /// The vector of generalized accelerations of this multibody.
     #[inline]
     pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
         DVectorSlice::from_slice(&self.accelerations, self.ndofs)
     }
 
+    /// The vector of damping applied to this multibody.
     #[inline]
     pub fn damping(&self) -> DVectorSlice<N> {
         DVectorSlice::from_slice(&self.damping, self.ndofs)
     }
 
-    #[inline]
-    pub fn impulses(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.impulses, self.impulses.len())
-    }
-
+    /// Mutable vector of damping applied to this multibody.
     #[inline]
     pub fn damping_mut(&mut self) -> DVectorSliceMut<N> {
         DVectorSliceMut::from_slice(&mut self.damping, self.ndofs)
+    }
+
+    /// Generalized impulses applied to each degree of freedom.
+    #[inline]
+    pub fn impulses(&self) -> DVectorSlice<N> {
+        DVectorSlice::from_slice(&self.impulses, self.impulses.len())
     }
 
     pub(crate) fn add_link<J: Joint<N>>(
@@ -323,6 +355,7 @@ impl<N: Real> Multibody<N> {
         MultibodyLinkId::new(internal_id)
     }
 
+    /// Remove a set of links from this multibody.
     pub fn remove_links(self, links: &[MultibodyLinkId]) -> Vec<Multibody<N>> {
         // FIXME: this could be optimized.
         let mut rb2mb: Vec<_> = iter::repeat(0).take(self.rbs.len()).collect();
@@ -379,12 +412,14 @@ impl<N: Real> Multibody<N> {
         multibodies
     }
 
+    /// Integrate the position of all the links of this multibody.
     pub fn integrate(&mut self, params: &IntegrationParameters<N>) {
         for rb in self.rbs.iter_mut() {
             rb.dof.integrate(params, &self.velocities[rb.assembly_id..])
         }
     }
 
+    /// Apply a displacement to each degrees of freedom of this multibody.
     pub fn apply_displacement(&mut self, disp: &[N]) {
         for rb in self.rbs.iter_mut() {
             rb.dof.apply_displacement(&disp[rb.assembly_id..])
@@ -393,6 +428,7 @@ impl<N: Real> Multibody<N> {
         self.update_kinematics();
     }
 
+    /// Reset the timestep-specific dynamic information of this multibody.
     pub fn clear_dynamics(&mut self) {
         self.augmented_mass.fill(N::zero());
         let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
@@ -791,22 +827,28 @@ impl<N: Real> Multibody<N> {
         self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
     }
 
+    /// Convert a force applied to the center of mass of the link `rb_id` into generalized force.
     pub fn body_jacobian_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
     }
 
+    /// Convert generalized forces applied to this rigid body into generalized accelerations.
     pub fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
         assert!(self.inv_augmented_mass.solve_mut(&mut out))
     }
 
+    /// Convert a force applied to this rigid body's center of mass into generalized accelerations.
     pub fn inv_mass_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
+    /// Convert a generalized force applied to le link `rb_id`'s degrees of freedom into generalized accelerations.
+    ///
+    /// The joint attaching this link to its parent is assumed to be a unit joint.
     pub fn inv_mass_mul_unit_joint_force(
         &self,
         rb_id: MultibodyLinkId,
@@ -822,6 +864,7 @@ impl<N: Real> Multibody<N> {
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
+    /// Convert a generalized force applied to the link `rb_id`'s degrees of freedom into generalized accelerations.
     pub fn inv_mass_mul_joint_force(
         &self,
         rb_id: MultibodyLinkId,
@@ -837,10 +880,13 @@ impl<N: Real> Multibody<N> {
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
+    /// The augmented mass (inluding gyroscropic and coriolis terms) in world-space of this rigid body.
     pub fn augmented_mass(&self) -> &DMatrix<N> {
         &self.augmented_mass
     }
 
+    /// Generates the set of velocity and position constraints needed for joint limits and motors at each link
+    /// of this multibody.
     pub fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
@@ -875,6 +921,7 @@ impl<N: Real> Multibody<N> {
         self.bilateral_ground_rng = first_bilateral..constraints.velocity.bilateral_ground.len();
     }
 
+    /// Store impulses computed by the solver for joint limits and motors.
     pub fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
         for constraint in
             &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()]
@@ -889,6 +936,7 @@ impl<N: Real> Multibody<N> {
     }
 }
 
+/// Iterator through all the multibody links.
 pub struct MultibodyLinks<'a, N: Real> {
     mb: &'a Multibody<N>,
     curr: MultibodyLinkId,
@@ -909,15 +957,18 @@ impl<'a, N: Real> Iterator for MultibodyLinks<'a, N> {
     }
 }
 
+/// A temporary workspace for various updates of the multibody.
 pub struct MultibodyWorkspace<N: Real> {
     accs: Vec<Velocity<N>>,
 }
 
 impl<N: Real> MultibodyWorkspace<N> {
+    /// Create an empty workspace.
     pub fn new() -> Self {
         MultibodyWorkspace { accs: Vec::new() }
     }
 
+    /// Resize the workspace so it is enough for `nlinks` links.
     pub fn resize(&mut self, nlinks: usize) {
         self.accs.resize(nlinks, Velocity::zero());
     }

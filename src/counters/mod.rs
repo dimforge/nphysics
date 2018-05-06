@@ -81,18 +81,21 @@ impl Counters {
 macro_rules! measure_method {
     ($started:ident, $stopped:ident, $time:ident, $info:ident. $timer:ident) => {
         impl Counters {
+            /// Start this timer.
             pub fn $started(&mut self) {
                 if self.enabled {
                     self.$info.$timer.start()
                 }
             }
 
+            /// Stop this timer.
             pub fn $stopped(&mut self) {
                 if self.enabled {
                     self.$info.$timer.pause()
                 }
             }
 
+            /// Gets the time elapsed for this timer.
             pub fn $time(&self) -> f64 {
                 if self.enabled {
                     self.$info.$timer.time()

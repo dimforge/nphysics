@@ -251,7 +251,7 @@ impl<'a, N: Real> MultibodyLinkRef<'a, N> {
         self.multibody
     }
 
-    /// Converts a generalized force applied to this link degrees of freedom into generalized accelerations.
+    /// Convert a generalized force applied to this link degrees of freedom into generalized accelerations.
     ///
     /// The joint attaching this link to its parent is assumed to be a unit joint.
     pub fn inv_mass_mul_unit_joint_force(&self, dof_id: usize, force: N, out: &mut [N]) {
@@ -259,7 +259,7 @@ impl<'a, N: Real> MultibodyLinkRef<'a, N> {
             .inv_mass_mul_unit_joint_force(self.id, dof_id, force, out)
     }
 
-    /// Converts a generalized force applied to this link degrees of freedom into generalized accelerations.
+    /// Convert a generalized force applied to this link degrees of freedom into generalized accelerations.
     pub fn inv_mass_mul_joint_force(&self, force: DVectorSlice<N>, out: &mut [N]) {
         self.multibody.inv_mass_mul_joint_force(self.id, force, out)
     }
@@ -276,13 +276,13 @@ impl<'a, N: Real> MultibodyLinkRef<'a, N> {
         self.multibody.body_jacobian_mul_force(self.id, force, out)
     }
 
-    /// Converts generalized forces applied to the multibody containing this link into generalized accelerations.
+    /// Convert generalized forces applied to the multibody containing this link into generalized accelerations.
     #[inline]
     pub fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
         self.multibody.inv_mass_mul_generalized_forces(out)
     }
 
-    /// Converts a force applied to this link's center of mass into generalized accelerations.
+    /// Convert a force applied to this link's center of mass into generalized accelerations.
     #[inline]
     pub fn inv_mass_mul_force(&self, force: &Force<N>, out: &mut [N]) {
         self.multibody.inv_mass_mul_force(self.id, force, out)
