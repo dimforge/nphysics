@@ -5,8 +5,8 @@ all:
 	make -C build/nphysics3d
 
 examples:
-	cd examples3d; cargo build --release
-	cd examples2d; cargo build --release
+	cd examples3d; cargo build --release -v
+	cd examples2d; cargo build --release -v
 
 doc:
 	make doc -C build/nphysics2d
