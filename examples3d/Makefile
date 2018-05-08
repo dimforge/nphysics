@@ -1,5 +1,5 @@
 all:
-	cargo build --release
+	cargo build --release -v
 
 clean:
 	cargo clean
