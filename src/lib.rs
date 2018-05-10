@@ -107,7 +107,18 @@ extern crate ncollide2d as ncollide;
 extern crate ncollide3d as ncollide;
 extern crate num_traits as num;
 extern crate slab;
+
+/*
+ * The two following crates are pulled-in for
+ * measuring time.
+ */
+#[cfg(not(target_arch = "wasm32"))]
 extern crate time;
+
+#[cfg(target_arch = "wasm32")]
+#[macro_use]
+extern crate stdweb;
+
 //#[cfg(test)]
 //extern crate test;
 
