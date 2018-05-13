@@ -13,9 +13,11 @@ use detection::{ActivationManager, ColliderContactManifold};
 use force_generator::{ForceGenerator, ForceGeneratorHandle};
 use joint::{ConstraintHandle, Joint, JointConstraint};
 use math::{Inertia, Isometry, Point, Vector};
-use object::{Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
-             ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
-             MultibodyWorkspace, RigidBody, SensorHandle};
+use object::{
+    Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
+    ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
+    MultibodyWorkspace, RigidBody, SensorHandle,
+};
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 
 /// Type of the collision world used by nphysics.
@@ -197,6 +199,11 @@ impl<N: Real> World<N> {
     /// Set the gravity.
     pub fn set_gravity(&mut self, gravity: Vector<N>) {
         self.gravity = gravity
+    }
+
+    /// The gravity applied to all dynamic bodies.
+    pub fn gravity(&self) -> &Vector<N> {
+        &self.gravity
     }
 
     /// Execute one time step of the physics simulation.
