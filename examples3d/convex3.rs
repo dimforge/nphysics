@@ -4,14 +4,13 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use rand::{XorShiftRng, Rand};
+use rand::{Rand, XorShiftRng};
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Ball, ConvexHull, Cuboid, ShapeHandle};
-use ncollide3d::transformation;
-use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -66,14 +65,7 @@ fn main() {
                         pts.push(Point3::rand(&mut rng) * 0.4);
                     }
 
-                    let hull = transformation::convex_hull(&pts);
-                    let indices: Vec<usize> = hull.flat_indices()
-                        .into_iter()
-                        .map(|i| i as usize)
-                        .collect();
-                    let vertices = hull.coords;
-
-                    geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
+                    geom = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
                 } else {
                     geom = ShapeHandle::new(Ball::new(0.1 - COLLIDER_MARGIN));
                 }
