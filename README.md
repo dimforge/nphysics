@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://crates.io/crates/nphysics">
-         <img src="http://meritbadge.herokuapp.com/nphysics?style=flat-square" alt="crates.io">
+         <img src="http://meritbadge.herokuapp.com/nphysics3d?style=flat-square" alt="crates.io">
     </a>
     <a href="https://travis-ci.org/sebcrozet/nphysics">
         <img src="https://travis-ci.org/sebcrozet/nphysics.svg?branch=master" alt="Build status">
