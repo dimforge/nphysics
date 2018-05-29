@@ -104,3 +104,6 @@ path = "./trimesh3.rs"
 name = "wall3"
 path = "./wall3.rs"
 
+[[bin]]
+name = "fixed_bug_tree_like_multibody3"
+path = "./fixed_bug_tree_like_multibody3.rs"
