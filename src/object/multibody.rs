@@ -2,13 +2,18 @@ use std::iter;
 use std::ops::Range;
 
 use joint::{FreeJoint, Joint};
-use math::{AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
-           SpatialVector, Vector, Velocity, DIM};
+use math::{
+    AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
+    Vector, Velocity, DIM,
+};
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
-use object::{ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId,
-             MultibodyLinkMut, MultibodyLinkRef, MultibodyLinkVec};
-use solver::{ConstraintSet, IntegrationParameters,
-             MultibodyJointLimitsNonlinearConstraintGenerator};
+use object::{
+    ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId, MultibodyLinkMut,
+    MultibodyLinkRef, MultibodyLinkVec,
+};
+use solver::{
+    ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator,
+};
 use utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
@@ -481,9 +486,11 @@ impl<N: Real> Multibody<N> {
          */
         {
             let rb = &mut self.rbs[0];
-            let velocity_wrt_joint = rb.dof
+            let velocity_wrt_joint = rb
+                .dof
                 .jacobian_mul_coordinates(&self.velocities[rb.assembly_id..]);
-            let velocity_dot_wrt_joint = rb.dof
+            let velocity_dot_wrt_joint = rb
+                .dof
                 .jacobian_dot_mul_coordinates(&self.velocities[rb.assembly_id..]);
 
             rb.velocity_dot_wrt_joint = velocity_dot_wrt_joint;
@@ -494,9 +501,11 @@ impl<N: Real> Multibody<N> {
         for i in 1..self.rbs.len() {
             let (rb, parent_rb) = self.rbs.get_mut_with_parent(i);
 
-            let velocity_wrt_joint = rb.dof
+            let velocity_wrt_joint = rb
+                .dof
                 .jacobian_mul_coordinates(&self.velocities[rb.assembly_id..]);
-            let velocity_dot_wrt_joint = rb.dof
+            let velocity_dot_wrt_joint = rb
+                .dof
                 .jacobian_dot_mul_coordinates(&self.velocities[rb.assembly_id..]);
 
             rb.velocity_dot_wrt_joint =
@@ -560,7 +569,8 @@ impl<N: Real> Multibody<N> {
 
                 #[cfg(feature = "dim3")]
                 {
-                    gyroscopic = rb.velocity
+                    gyroscopic = rb
+                        .velocity
                         .angular
                         .cross(&(rb.inertia.angular * rb.velocity.angular));
                 }
@@ -650,11 +660,13 @@ impl<N: Real> Multibody<N> {
             rb.inertia = rb.local_inertia.transformed(&rb.local_to_world);
         }
 
-        if self.coriolis_v.len() != self.ndofs {
-            self.coriolis_v
-                .resize(self.ndofs, MatrixMN::<N, Dim, Dynamic>::zeros(self.ndofs));
+        if self.coriolis_v.len() != self.rbs.len() {
+            self.coriolis_v.resize(
+                self.rbs.len(),
+                MatrixMN::<N, Dim, Dynamic>::zeros(self.ndofs),
+            );
             self.coriolis_w.resize(
-                self.ndofs,
+                self.rbs.len(),
                 MatrixMN::<N, AngularDim, Dynamic>::zeros(self.ndofs),
             );
             self.i_coriolis_dt = Jacobian::zeros(self.ndofs);
