@@ -112,10 +112,10 @@ extern crate slab;
  * The two following crates are pulled-in for
  * measuring time.
  */
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 extern crate time;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(any(target_arch = "wasm32", target_arch = "asmjs"))]
 #[macro_use]
 extern crate stdweb;
 

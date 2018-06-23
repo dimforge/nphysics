@@ -4,11 +4,11 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide3d::world::CollisionGroups;
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::world::World;
+use ncollide3d::world::CollisionGroups;
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -145,6 +145,6 @@ fn main() {
      * Set up the testbed.
      */
     testbed.set_world(world);
-    testbed.look_at(Point3::new(-4.0, 4.0, -4.0), Point3::new(0.0, 0.3, 0.0));
+    testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }

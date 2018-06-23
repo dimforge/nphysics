@@ -5,9 +5,9 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
-use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -62,7 +62,7 @@ fn main() {
     /*
      * Create the crosses
      */
-    let num = 6;
+    let num = 5;
     let shift = (large_rad + 0.08) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = 3.0 + shift / 2.0;
@@ -99,6 +99,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    testbed.look_at(Point3::new(-10.0, 10.0, -10.0), Point3::origin());
+    testbed.look_at(Point3::new(-25.0, 10.0, -25.0), Point3::new(0.0, 3.0, 0.0));
     testbed.run();
 }

@@ -7,13 +7,12 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 name = "nphysics_testbed3d"
 
 [dependencies]
-num-traits = "0.1"
+num-traits = "0.2"
 time       = "0.1"
-rand       = "0.4"
-glfw       = "0.19"
-nalgebra   = "0.14"
+rand       = "0.5"
+nalgebra   = "0.15"
 kiss3d     = "0.14"
-ncollide3d = "0.15"
+ncollide3d = "0.16"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

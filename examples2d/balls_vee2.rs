@@ -21,7 +21,7 @@ fn main() {
 
 fn create_the_world() -> World<f32> {
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
     world
 }
 
@@ -29,28 +29,28 @@ fn create_the_walls(world: &mut World<f32>) {
     /*
      * First plane
      */
-    let n = Unit::new_normalize(Vector2::new(-1.0, -1.0));
+    let n = Unit::new_normalize(Vector2::new(-1.0, 1.0));
     let ground_shape = ShapeHandle::new(Plane::new(n));
 
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
         BodyHandle::ground(),
-        Isometry2::new(Vector2::y() * 10.0, na::zero()),
+        Isometry2::new(-Vector2::y() * 10.0, na::zero()),
         Material::default(),
     );
 
     /*
      * Second plane
      */
-    let n = Unit::new_normalize(Vector2::new(1.0, -1.0));
+    let n = Unit::new_normalize(Vector2::new(1.0, 1.0));
     let ground_shape = ShapeHandle::new(Plane::new(n));
 
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
         BodyHandle::ground(),
-        Isometry2::new(Vector2::y() * 10.0, na::zero()),
+        Isometry2::new(-Vector2::y() * 10.0, na::zero()),
         Material::default(),
     );
 }
@@ -69,7 +69,7 @@ fn create_the_balls(world: &mut World<f32>) {
     for i in 0usize..num {
         for j in 0usize..num {
             let x = i as f32 * 2.5 * rad - centerx;
-            let y = j as f32 * 2.5 * rad - centery * 2.0 - 0.5;
+            let y = j as f32 * 2.5 * rad + centery * 2.0 + 0.5;
 
             /*
              * Create the rigid body.
@@ -92,7 +92,6 @@ fn create_the_balls(world: &mut World<f32>) {
 }
 
 fn run_simulation(world: World<f32>) {
-    let mut testbed = Testbed::new(world);
-
+    let testbed = Testbed::new(world);
     testbed.run();
 }

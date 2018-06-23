@@ -41,13 +41,18 @@ impl Timer {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(any(any(target_arch = "wasm32", target_arch = "asmjs"), target_arch = "asmjs")))]
 fn now() -> f64 {
     use time;
     time::precise_time_s()
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(
+    any(
+        any(any(target_arch = "wasm32", target_arch = "asmjs"), target_arch = "asmjs"),
+        target_arch = "asmjs"
+    )
+)]
 #[allow(unused_results)] // Needed because the js macro triggers it.
 fn now() -> f64 {
     use stdweb::unstable::TryInto;

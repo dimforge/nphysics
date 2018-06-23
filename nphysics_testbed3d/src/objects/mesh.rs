@@ -1,12 +1,12 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-use kiss3d::window::Window;
-use kiss3d::scene::SceneNode;
 use kiss3d::resource;
-use na::{Isometry3, Point3, Vector3};
-use nphysics3d::world::World;
+use kiss3d::scene::SceneNode;
+use kiss3d::window::Window;
+use na::{self, Isometry3, Point3, Vector3};
 use nphysics3d::object::ColliderHandle;
+use nphysics3d::world::World;
 use objects::node;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct Mesh {
     color: Point3<f32>,
@@ -27,7 +27,7 @@ impl Mesh {
         window: &mut Window,
     ) -> Mesh {
         let vs = vertices;
-        let is = indices;
+        let is = indices.into_iter().map(|p| na::convert(p)).collect();
 
         let mesh = resource::Mesh::new(vs, is, None, None, false);
 

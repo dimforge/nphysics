@@ -1,17 +1,20 @@
-use glfw::{Action, Key, Modifiers, MouseButton, WindowEvent};
 use num::Bounded;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::env;
+use std::mem;
 use std::path::Path;
 use std::rc::Rc;
 use time;
 
-use engine::{GraphicsManager, GraphicsManagerHandle};
+use engine::GraphicsManager;
+use kiss3d::camera::{Camera, Camera2};
+use kiss3d::event::{Action, Key, Modifiers, MouseButton, WindowEvent};
 use kiss3d::light::Light;
 use kiss3d::loader::obj;
+use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
-use kiss3d::window::Window;
+use kiss3d::window::{State, Window};
 use na::{self, Point2, Point3, Vector3};
 use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
@@ -53,34 +56,52 @@ fn usage(exe_name: &str) {
 
 pub struct Testbed {
     world: World<f32>,
-    window: Window,
-    graphics: GraphicsManagerHandle,
+    window: Option<Box<Window>>,
+    graphics: GraphicsManager,
     nsteps: usize,
-    callbacks: Vec<Box<Fn(&mut World<f32>, f32)>>,
+    callbacks: Vec<Box<Fn(&mut World<f32>, &mut GraphicsManager, f32)>>,
     time: f32,
     physics_timer: f64,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
+
+    font: Rc<Font>,
+    running: RunMode,
+    draw_colls: bool,
+    cursor_pos: Point2<f32>,
+    grabbed_object: Option<BodyHandle>,
+    grabbed_object_constraint: Option<ConstraintHandle>,
+    grabbed_object_plane: (Point3<f32>, Vector3<f32>),
 }
 
 impl Testbed {
     pub fn new_empty() -> Testbed {
         let graphics = GraphicsManager::new();
-        let mut window = Window::new("nphysics: 3d demo");
         let world = World::new();
 
+        let mut window = Box::new(Window::new("nphysics: 3d demo"));
         window.set_background_color(0.9, 0.9, 0.9);
+        window.set_framerate_limit(Some(60));
+        window.set_light(Light::StickToCamera);
 
         Testbed {
             world: world,
             callbacks: Vec::new(),
-            window: window,
-            graphics: Rc::new(RefCell::new(graphics)),
+            window: Some(window),
+            graphics: graphics,
             nsteps: 1,
             time: 0.0,
             physics_timer: 0.0,
             hide_counters: false,
             persistant_contacts: HashMap::new(),
+
+            font: Font::default(),
+            running: RunMode::Running,
+            draw_colls: false,
+            cursor_pos: Point2::new(0.0f32, 0.0),
+            grabbed_object: None,
+            grabbed_object_constraint: None,
+            grabbed_object_plane: (Point3::origin(), na::zero()),
         }
     }
 
@@ -108,45 +129,32 @@ impl Testbed {
         self.world = world;
         self.world.enable_performance_counters();
 
-        self.graphics.borrow_mut().clear(&mut self.window);
+        self.graphics.clear(self.window.as_mut().unwrap());
 
         for co in self.world.colliders() {
             self.graphics
-                .borrow_mut()
-                .add(&mut self.window, co.handle(), &self.world);
+                .add(self.window.as_mut().unwrap(), co.handle(), &self.world);
         }
-
-        // for sensor in self.world.sensors() {
-        //     self.graphics.borrow_mut().add(&mut self.window, WorldObject::Sensor(sensor.clone()));
-        // }
     }
 
     pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {
-        self.graphics.borrow_mut().look_at(eye, at);
+        self.graphics.look_at(eye, at);
     }
 
     pub fn set_body_color(&mut self, world: &World<f32>, body: BodyHandle, color: Point3<f32>) {
-        self.graphics
-            .borrow_mut()
-            .set_body_color(world, body, color);
+        self.graphics.set_body_color(world, body, color);
     }
 
     pub fn set_collider_color(&mut self, collider: ColliderHandle, color: Point3<f32>) {
-        self.graphics
-            .borrow_mut()
-            .set_collider_color(collider, color);
+        self.graphics.set_collider_color(collider, color);
     }
-
-    // pub fn set_sensor_color(&mut self, sensor: &SensorHandle<f32>, color: Point3<f32>) {
-    //     self.graphics.borrow_mut().set_sensor_color(sensor, color);
-    // }
 
     pub fn world(&self) -> &World<f32> {
         &self.world
     }
 
-    pub fn graphics(&self) -> GraphicsManagerHandle {
-        self.graphics.clone()
+    pub fn graphics_mut(&mut self) -> &mut GraphicsManager {
+        &mut self.graphics
     }
 
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
@@ -178,13 +186,15 @@ impl Testbed {
         res
     }
 
-    pub fn add_callback<F: Fn(&mut World<f32>, f32) + 'static>(&mut self, callback: F) {
+    pub fn add_callback<F: Fn(&mut World<f32>, &mut GraphicsManager, f32) + 'static>(
+        &mut self,
+        callback: F,
+    ) {
         self.callbacks.push(Box::new(callback));
     }
 
-    pub fn run(&mut self) {
+    pub fn run(mut self) {
         let mut args = env::args();
-        let mut running = RunMode::Running;
 
         if args.len() > 1 {
             let exname = args.next().unwrap();
@@ -193,33 +203,37 @@ impl Testbed {
                     usage(&exname[..]);
                     return;
                 } else if &arg[..] == "--pause" {
-                    running = RunMode::Stop;
+                    self.running = RunMode::Stop;
                 }
             }
         }
 
-        let font_mem = include_bytes!("Inconsolata.otf");
-        let font = Font::from_memory(font_mem, 60);
-        let mut draw_colls = false;
+        let window = mem::replace(&mut self.window, None).unwrap();
+        window.render_loop(self);
+    }
+}
 
-        let mut cursor_pos = Point2::new(0.0f32, 0.0);
-        let mut grabbed_object: Option<BodyHandle> = None;
-        let mut grabbed_object_constraint: Option<ConstraintHandle> = None;
-        let mut grabbed_object_plane: (Point3<f32>, Vector3<f32>) = (Point3::origin(), na::zero());
+impl State for Testbed {
+    fn cameras_and_effect(
+        &mut self,
+    ) -> (
+        Option<&mut Camera>,
+        Option<&mut Camera2>,
+        Option<&mut PostProcessingEffect>,
+    ) {
+        (Some(self.graphics.camera_mut()), None, None)
+    }
 
-        self.window.set_framerate_limit(Some(60));
-        self.window.set_light(Light::StickToCamera);
-
-        while !self.window.should_close() {
-            for mut event in self.window.events().iter() {
-                match event.value {
-                    //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::LeftControl) |
-            //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::RightControl)  => {
-            //             let mut graphics = self.graphics.borrow_mut();
+    fn step(&mut self, window: &mut Window) {
+        for mut event in window.events().iter() {
+            match event.value {
+                //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::LControl) |
+            //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::RControl)  => {
+            //             let mut graphics = self.graphics;
             //             let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5f32, 0.5f32));
             //             let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
-            //             let size = self.window.size();
+            //             let size = window.size();
             //             let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
 
             //             rb.set_translation(Translation3::from_vector(pos.coords));
@@ -227,223 +241,214 @@ impl Testbed {
 
             //             let body = self.world.add_rigid_body(rb);
             //             self.world.add_ccd_to(&body, 1.0, false);
-            //             graphics.add(&mut self.window, WorldObject::RigidBody(body));
+            //             graphics.add(window, WorldObject::RigidBody(body));
             //         },
-                    WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
-                        if modifier.contains(Modifiers::Shift) {
-                            // XXX: huge and uggly code duplication for the ray cast.
-                            let size = self.window.size();
-                            let (pos, dir) = self.graphics
-                                .borrow()
-                                .camera()
-                                .unproject(&cursor_pos, &size);
-                            let ray = Ray::new(pos, dir);
+                WindowEvent::MouseButton(_, Action::Press, modifier) => {
+                    if modifier.contains(Modifiers::Shift) {
+                        // XXX: huge and uggly code duplication for the ray cast.
+                        let size = window.size();
+                        let (pos, dir) = self
+                            .graphics
+                            .camera()
+                            .unproject(&self.cursor_pos, &na::convert(size));
+                        let ray = Ray::new(pos, dir);
 
-                            // cast the ray
-                            let mut mintoi = Bounded::max_value();
-                            let mut minb = None;
+                        // cast the ray
+                        let mut mintoi = Bounded::max_value();
+                        let mut minb = None;
 
-                            let all_groups = CollisionGroups::new();
-                            for (b, inter) in self.world
-                                .collision_world()
-                                .interferences_with_ray(&ray, &all_groups)
-                            {
-                                if !b.query_type().is_proximity_query() && inter.toi < mintoi {
-                                    mintoi = inter.toi;
-                                    minb = Some(b.data().body());
-                                }
+                        let all_groups = CollisionGroups::new();
+                        for (b, inter) in self
+                            .world
+                            .collision_world()
+                            .interferences_with_ray(&ray, &all_groups)
+                        {
+                            if !b.query_type().is_proximity_query() && inter.toi < mintoi {
+                                mintoi = inter.toi;
+                                minb = Some(b.data().body());
                             }
-
-                            if let Some(body) = minb {
-                                if !body.is_ground() {
-                                    let mut bgraphics = self.graphics.borrow_mut();
-                                    if !modifier.contains(Modifiers::Control) {
-                                        bgraphics.remove_body_nodes(
-                                            &self.world,
-                                            &mut self.window,
-                                            body,
-                                        );
-                                        self.world.remove_bodies(&[body]);
-                                    } else {
-                                        if self.world.multibody_link(body).is_some() {
-                                            let key = bgraphics.remove_body_part_nodes(
-                                                &self.world,
-                                                &mut self.window,
-                                                body,
-                                            );
-                                            self.world.remove_multibody_links(&[body]);
-                                            // FIXME: this is a bit ugly.
-                                            bgraphics
-                                                .update_after_body_key_change(&self.world, key);
-                                        }
-                                    }
-                                }
-                            }
-
-                            event.inhibited = true;
-                        } else if modifier.contains(Modifiers::Control) {
-                            match grabbed_object {
-                                Some(body) => for n in self.graphics
-                                    .borrow_mut()
-                                    .body_nodes_mut(&self.world, body)
-                                    .unwrap()
-                                    .iter_mut()
-                                {
-                                    n.unselect()
-                                },
-                                None => {}
-                            }
-
-                            // XXX: huge and uggly code duplication for the ray cast.
-                            let size = self.window.size();
-                            let (pos, dir) = self.graphics
-                                .borrow()
-                                .camera()
-                                .unproject(&cursor_pos, &size);
-                            let ray = Ray::new(pos, dir);
-
-                            // cast the ray
-                            let mut mintoi = Bounded::max_value();
-                            let mut minb = None;
-
-                            let all_groups = CollisionGroups::new();
-                            for (b, inter) in self.world
-                                .collision_world()
-                                .interferences_with_ray(&ray, &all_groups)
-                            {
-                                if !b.query_type().is_proximity_query() && inter.toi < mintoi {
-                                    mintoi = inter.toi;
-                                    minb = Some(b.data().body());
-                                }
-                            }
-
-                            if let Some(body) = minb {
-                                if self.world.body(body).status_dependent_ndofs() != 0 {
-                                    grabbed_object = minb;
-                                    for n in self.graphics
-                                        .borrow_mut()
-                                        .body_nodes_mut(&self.world, body)
-                                        .unwrap()
-                                        .iter_mut()
-                                    {
-                                        if let Some(joint) = grabbed_object_constraint {
-                                            self.world.remove_constraint(joint);
-                                        }
-
-                                        let body_pos = self.world.body_part(body).position();
-                                        let attach1 = ray.origin + ray.dir * mintoi;
-                                        let attach2 = body_pos.inverse() * attach1;
-                                        let constraint = MouseConstraint::new(
-                                            BodyHandle::ground(),
-                                            body,
-                                            attach1,
-                                            attach2,
-                                            1.0,
-                                        );
-                                        grabbed_object_plane = (attach1, -ray.dir);
-                                        grabbed_object_constraint =
-                                            Some(self.world.add_constraint(constraint));
-                                        n.select()
-                                    }
-                                }
-                            }
-
-                            event.inhibited = true;
                         }
-                    }
-                    WindowEvent::MouseButton(_, Action::Release, _) => {
-                        let mut graphics = self.graphics.borrow_mut();
-                        if let Some(body) = grabbed_object {
-                            for n in graphics
+
+                        if let Some(body) = minb {
+                            if !body.is_ground() {
+                                if !modifier.contains(Modifiers::Control) {
+                                    self.graphics.remove_body_nodes(&self.world, window, body);
+                                    self.world.remove_bodies(&[body]);
+                                } else {
+                                    if self.world.multibody_link(body).is_some() {
+                                        let key = self.graphics.remove_body_part_nodes(
+                                            &self.world,
+                                            window,
+                                            body,
+                                        );
+                                        self.world.remove_multibody_links(&[body]);
+                                        // FIXME: this is a bit ugly.
+                                        self.graphics
+                                            .update_after_body_key_change(&self.world, key);
+                                    }
+                                }
+                            }
+                        }
+
+                        event.inhibited = true;
+                    } else if modifier.contains(Modifiers::Control) {
+                        match self.grabbed_object {
+                            Some(body) => for n in self
+                                .graphics
                                 .body_nodes_mut(&self.world, body)
                                 .unwrap()
                                 .iter_mut()
                             {
                                 n.unselect()
+                            },
+                            None => {}
+                        }
+
+                        // XXX: huge and uggly code duplication for the ray cast.
+                        let size = window.size();
+                        let (pos, dir) = self
+                            .graphics
+                            .camera()
+                            .unproject(&self.cursor_pos, &na::convert(size));
+                        let ray = Ray::new(pos, dir);
+
+                        // cast the ray
+                        let mut mintoi = Bounded::max_value();
+                        let mut minb = None;
+
+                        let all_groups = CollisionGroups::new();
+                        for (b, inter) in self
+                            .world
+                            .collision_world()
+                            .interferences_with_ray(&ray, &all_groups)
+                        {
+                            if !b.query_type().is_proximity_query() && inter.toi < mintoi {
+                                mintoi = inter.toi;
+                                minb = Some(b.data().body());
                             }
                         }
 
-                        if let Some(joint) = grabbed_object_constraint {
-                            let _ = self.world.remove_constraint(joint);
-                        }
-
-                        grabbed_object = None;
-                        grabbed_object_constraint = None;
-                    }
-                    WindowEvent::CursorPos(x, y) => {
-                        cursor_pos.x = x as f32;
-                        cursor_pos.y = y as f32;
-
-                        // update the joint
-                        if let Some(joint) = grabbed_object_constraint {
-                            let size = self.window.size();
-                            let (pos, dir) = self.graphics
-                                .borrow()
-                                .camera()
-                                .unproject(&cursor_pos, &size);
-                            let (ref ppos, ref pdir) = grabbed_object_plane;
-
-                            if let Some(inter) = query::ray_internal::plane_toi_with_ray(
-                                ppos,
-                                pdir,
-                                &Ray::new(pos, dir),
-                            ) {
-                                let joint = self.world
-                                    .constraint_mut(joint)
-                                    .downcast_mut::<MouseConstraint<f32>>()
-                                    .unwrap();
-                                joint.set_anchor_1(pos + dir * inter)
-                            }
-                        }
-
-                        event.inhibited = self.window.glfw_window().get_key(Key::RightShift)
-                            != Action::Release
-                            || self.window.glfw_window().get_key(Key::LeftShift) != Action::Release
-                            || self.window.glfw_window().get_key(Key::RightControl)
-                                != Action::Release
-                            || self.window.glfw_window().get_key(Key::LeftControl)
-                                != Action::Release;
-                    }
-                    //         WindowEvent::Key(Key::Tab, _, Action::Release, _) => self.graphics.borrow_mut().switch_cameras(),
-                    WindowEvent::Key(Key::T, _, Action::Release, _) => {
-                        if running == RunMode::Stop {
-                            running = RunMode::Running;
-                        } else {
-                            running = RunMode::Stop;
-                        }
-                    }
-                    WindowEvent::Key(Key::S, _, Action::Release, _) => running = RunMode::Step,
-                    //         WindowEvent::Key(Key::B, _, Action::Release, _) => {
-                    //             // XXX: there is a bug on kiss3d with the removal of objects.
-                    //             // draw_aabbs = !draw_aabbs;
-                    //             // if draw_aabbs {
-                    //             //     graphics.enable_aabb_draw(&mut self.window);
-                    //             // }
-                    //             // else {
-                    //             //     graphics.disable_aabb_draw(&mut self.window);
-                    //             // }
-                    //         },
-                    WindowEvent::Key(Key::Space, _, Action::Release, _) => {
-                        let mut graphics = self.graphics.borrow_mut();
-                        draw_colls = !draw_colls;
-                        for co in self.world.colliders() {
-                            // FIXME: ugly clone.
-                            if let Some(ns) = graphics.body_nodes_mut(&self.world, co.data().body())
-                            {
-                                for n in ns.iter_mut() {
-                                    if draw_colls {
-                                        n.scene_node_mut().set_lines_width(1.0);
-                                        n.scene_node_mut().set_surface_rendering_activation(false);
-                                    } else {
-                                        n.scene_node_mut().set_lines_width(0.0);
-                                        n.scene_node_mut().set_surface_rendering_activation(true);
+                        if let Some(body) = minb {
+                            if self.world.body(body).status_dependent_ndofs() != 0 {
+                                self.grabbed_object = minb;
+                                for n in self
+                                    .graphics
+                                    .body_nodes_mut(&self.world, body)
+                                    .unwrap()
+                                    .iter_mut()
+                                {
+                                    if let Some(joint) = self.grabbed_object_constraint {
+                                        self.world.remove_constraint(joint);
                                     }
+
+                                    let body_pos = self.world.body_part(body).position();
+                                    let attach1 = ray.origin + ray.dir * mintoi;
+                                    let attach2 = body_pos.inverse() * attach1;
+                                    let constraint = MouseConstraint::new(
+                                        BodyHandle::ground(),
+                                        body,
+                                        attach1,
+                                        attach2,
+                                        1.0,
+                                    );
+                                    self.grabbed_object_plane = (attach1, -ray.dir);
+                                    self.grabbed_object_constraint =
+                                        Some(self.world.add_constraint(constraint));
+                                    n.select()
+                                }
+                            }
+                        }
+
+                        event.inhibited = true;
+                    }
+                }
+                WindowEvent::MouseButton(_, Action::Release, _) => {
+                    if let Some(body) = self.grabbed_object {
+                        for n in self
+                            .graphics
+                            .body_nodes_mut(&self.world, body)
+                            .unwrap()
+                            .iter_mut()
+                        {
+                            n.unselect()
+                        }
+                    }
+
+                    if let Some(joint) = self.grabbed_object_constraint {
+                        let _ = self.world.remove_constraint(joint);
+                    }
+
+                    self.grabbed_object = None;
+                    self.grabbed_object_constraint = None;
+                }
+                WindowEvent::CursorPos(x, y, modifiers) => {
+                    self.cursor_pos.x = x as f32;
+                    self.cursor_pos.y = y as f32;
+
+                    // update the joint
+                    if let Some(joint) = self.grabbed_object_constraint {
+                        let size = window.size();
+                        let (pos, dir) = self
+                            .graphics
+                            .camera()
+                            .unproject(&self.cursor_pos, &na::convert(size));
+                        let (ref ppos, ref pdir) = self.grabbed_object_plane;
+
+                        if let Some(inter) =
+                            query::ray_internal::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir))
+                        {
+                            let joint = self
+                                .world
+                                .constraint_mut(joint)
+                                .downcast_mut::<MouseConstraint<f32>>()
+                                .unwrap();
+                            joint.set_anchor_1(pos + dir * inter)
+                        }
+                    }
+
+                    event.inhibited = modifiers.contains(Modifiers::Control)
+                        || modifiers.contains(Modifiers::Shift);
+                }
+                //         WindowEvent::Key(Key::Tab, Action::Release, _) => self.graphics.switch_cameras(),
+                WindowEvent::Key(Key::T, Action::Release, _) => {
+                    if self.running == RunMode::Stop {
+                        self.running = RunMode::Running;
+                    } else {
+                        self.running = RunMode::Stop;
+                    }
+                }
+                WindowEvent::Key(Key::S, Action::Release, _) => self.running = RunMode::Step,
+                //         WindowEvent::Key(Key::B, _, Action::Release, _) => {
+                //             // XXX: there is a bug on kiss3d with the removal of objects.
+                //             // draw_aabbs = !draw_aabbs;
+                //             // if draw_aabbs {
+                //             //     graphics.enable_aabb_draw(window);
+                //             // }
+                //             // else {
+                //             //     graphics.disable_aabb_draw(window);
+                //             // }
+                //         },
+                WindowEvent::Key(Key::Space, Action::Release, _) => {
+                    self.draw_colls = !self.draw_colls;
+                    for co in self.world.colliders() {
+                        // FIXME: ugly clone.
+                        if let Some(ns) =
+                            self.graphics.body_nodes_mut(&self.world, co.data().body())
+                        {
+                            for n in ns.iter_mut() {
+                                if self.draw_colls {
+                                    n.scene_node_mut().set_lines_width(1.0);
+                                    n.scene_node_mut().set_surface_rendering_activation(false);
+                                } else {
+                                    n.scene_node_mut().set_lines_width(0.0);
+                                    n.scene_node_mut().set_surface_rendering_activation(true);
                                 }
                             }
                         }
                     }
-                    //      WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
-            //          let mut graphics = self.graphics.borrow_mut();
+                }
+                //      WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
+            //          let mut graphics = self.graphics;
             //          let geom   = Ball::new(0.5f32);
             //          let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -461,10 +466,10 @@ impl Testbed {
             //          rb.set_lin_vel(front * 40.0f32);
 
             //          let body = self.world.add_rigid_body(rb);
-            //          graphics.add(&mut self.window, body, &self.world.rigid_bodies());
+            //          graphics.add(window, body, &self.world.rigid_bodies());
             //      },
             //      WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
-            //          let mut graphics = self.graphics.borrow_mut();
+            //          let mut graphics = self.graphics;
             //          let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5, 0.5));
             //          let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
@@ -482,67 +487,71 @@ impl Testbed {
             //          rb.set_lin_vel(front * 40.0f32);
 
             //          let body = self.world.add_rigid_body(rb);
-            //          graphics.add(&mut self.window, body, &self.world.rigid_bodies());
+            //          graphics.add(window, body, &self.world.rigid_bodies());
             //      }
-                    _ => {}
-                }
+                _ => {}
             }
-
-            if running != RunMode::Stop {
-                let before = time::precise_time_s();
-                for _ in 0..self.nsteps {
-                    for f in &self.callbacks {
-                        f(&mut self.world, self.time)
-                    }
-                    self.world.step();
-                    if !self.hide_counters {
-                        println!("{}", self.world.performance_counters());
-                    }
-                    self.time += self.world.timestep();
-                }
-                self.physics_timer = time::precise_time_s() - before;
-
-                self.graphics.borrow_mut().draw(&self.world);
-            }
-
-            if draw_colls {
-                // self.graphics.borrow_mut().draw_positions(&mut self.window, &self.world.rigid_bodies());
-                draw_collisions(
-                    &mut self.window,
-                    &mut self.world,
-                    &mut self.persistant_contacts,
-                    running != RunMode::Stop,
-                );
-            }
-
-            if running == RunMode::Step {
-                running = RunMode::Stop;
-            }
-
-            let color = Point3::new(0.0, 0.0, 0.0);
-
-            if true {
-                //running != RunMode::Stop {
-                self.window.draw_text(
-                    &format!(
-                        "Time: {:.*}sec.",
-                        4,
-                        self.world.performance_counters().step_time()
-                    )[..],
-                    &Point2::origin(),
-                    &font,
-                    &color,
-                );
-            } else {
-                self.window
-                    .draw_text("Paused", &Point2::origin(), &font, &color);
-            }
-
-            self.window
-                .render_with_camera(self.graphics.borrow_mut().camera_mut());
         }
+
+        if self.running != RunMode::Stop {
+            // let before = time::precise_time_s();
+            for _ in 0..self.nsteps {
+                for f in &self.callbacks {
+                    f(&mut self.world, &mut self.graphics, self.time)
+                }
+                self.world.step();
+                if !self.hide_counters {
+                    println!("{}", self.world.performance_counters());
+                }
+                self.time += self.world.timestep();
+            }
+            // self.physics_timer = time::precise_time_s() - before;
+
+            self.graphics.draw(&self.world);
+        }
+
+        if self.draw_colls {
+            draw_collisions(
+                window,
+                &mut self.world,
+                &mut self.persistant_contacts,
+                self.running != RunMode::Stop,
+            );
+        }
+
+        if self.running == RunMode::Step {
+            self.running = RunMode::Stop;
+        }
+
+        let color = Point3::new(0.0, 0.0, 0.0);
+
+        if true {
+            //running != RunMode::Stop {
+            window.draw_text(
+                &format!(
+                    "Simulation time: {:.*}sec.",
+                    4,
+                    self.world.performance_counters().step_time()
+                )[..],
+                &Point2::origin(),
+                60.0,
+                &self.font,
+                &color,
+            );
+        } else {
+            window.draw_text("Paused", &Point2::origin(), 60.0, &self.font, &color);
+        }
+        window.draw_text(CONTROLS, &Point2::new(0.0, 75.0), 40.0, &self.font, &color);
     }
 }
+
+const CONTROLS: &'static str = "Controls:
+    Ctrl + click + drag: select and move a solid.
+    Left click + drag: rotate the camera.
+    Right click + drag: pan the camera.
+    Mouse wheel: zoom in/zoom out.
+    T: pause/resume simulation.
+    S: step simulation.";
 
 fn draw_collisions(
     window: &mut Window,

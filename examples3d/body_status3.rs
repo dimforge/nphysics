@@ -5,11 +5,11 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, BodyStatus, Material};
 use nphysics3d::joint::RevoluteJoint;
 use nphysics3d::math::Inertia;
+use nphysics3d::object::{BodyHandle, BodyStatus, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -41,7 +41,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 8;
+    let num = 6;
     let rad = 0.2;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
@@ -169,7 +169,7 @@ fn main() {
      * Setup a callback to control the platform.
      */
     let mut testbed = Testbed::new(world);
-    testbed.add_callback(move |world, time| {
+    testbed.add_callback(move |world, _, time| {
         let platform = world.rigid_body_mut(platform_handle).unwrap();
         let platform_z = platform.position().translation.vector.z;
 
@@ -189,6 +189,6 @@ fn main() {
     /*
      * Run the simulation.
      */
-    testbed.look_at(Point3::new(-10.0, 10.0, -10.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-10.0, 5.0, -10.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

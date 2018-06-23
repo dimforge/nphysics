@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 
 [dependencies]
-rand       = "0.4"
+rand       = "0.5"
 alga       = "0.5"
-nalgebra   = "0.14"
+nalgebra   = "0.15"
 ncollide2d = "0.15"
 
 [dependencies.nphysics_testbed2d]

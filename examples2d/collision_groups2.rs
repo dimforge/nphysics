@@ -3,12 +3,12 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point3, Vector2};
-use ncollide2d::world::CollisionGroups;
+use na::{Isometry2, Point2, Point3, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::world::World;
+use ncollide2d::world::CollisionGroups;
 use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -20,7 +20,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
 
     /*
      * Setup groups.
@@ -45,7 +45,7 @@ fn main() {
         ground_rady - COLLIDER_MARGIN,
     )));
 
-    let ground_pos = Isometry2::new(Vector2::y() * ground_rady, na::zero());
+    let ground_pos = Isometry2::new(-Vector2::y() * ground_rady, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -62,7 +62,7 @@ fn main() {
         COLLIDER_MARGIN,
         geom,
         BodyHandle::ground(),
-        Isometry2::new(Vector2::y() * -1.0, na::zero()),
+        Isometry2::new(Vector2::y(), na::zero()),
         Material::default(),
     );
 
@@ -80,7 +80,7 @@ fn main() {
         COLLIDER_MARGIN,
         geom,
         BodyHandle::ground(),
-        Isometry2::new(Vector2::y() * -2.0, na::zero()),
+        Isometry2::new(Vector2::y() * 2.0, na::zero()),
         Material::default(),
     );
 
@@ -111,7 +111,7 @@ fn main() {
             /*
              * Create the rigid body.
              */
-            let pos = Isometry2::new(Vector2::new(x, -y), na::zero());
+            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
             let body_handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
             /*
@@ -144,5 +144,6 @@ fn main() {
      * Set up the testbed.
      */
     testbed.set_world(world);
+    testbed.look_at(Point2::new(0.0, -1.0), 100.0);
     testbed.run();
 }

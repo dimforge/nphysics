@@ -4,13 +4,13 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use rand::{Rng, SeedableRng, StdRng};
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, Material};
 use nphysics_testbed3d::Testbed;
+use rand::{Rng, SeedableRng, StdRng};
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -25,11 +25,12 @@ fn main() {
      * A tesselated Bézier surface for the ground.
      */
     let quad = ncollide3d::procedural::quad(10.0, 10.0, 10, 10);
-    let indices = quad.flat_indices()
+    let indices = quad
+        .flat_indices()
         .chunks(3)
-        .map(|is| Point3::new(is[0] as usize, is[1] as usize, is[2] as usize))
+        .map(|is| Point3::new(is[0] as usize, is[2] as usize, is[1] as usize))
         .collect();
-    let mut rng: StdRng = SeedableRng::from_seed(&[1, 2, 3, 4][..]);
+    let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
     let mut vertices = quad.coords;
 
     // ncollide generatse a quad with `z` as the normal.
@@ -51,7 +52,7 @@ fn main() {
     /*
      * Create some boxes and spheres.
      */
-    let num = 8;
+    let num = 7;
     let rad = 0.1;
     let shift = rad * 2.0 + 0.5;
     let centerx = shift * (num as f32) / 2.0;

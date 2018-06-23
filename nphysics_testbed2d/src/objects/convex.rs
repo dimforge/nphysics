@@ -1,11 +1,11 @@
 use kiss3d::scene::SceneNode2;
 use kiss3d::window::Window;
-use na::{Isometry2, Point3};
+use na::{Isometry2, Point2, Point3, Vector2};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
 use objects::node;
 
-pub struct Ball {
+pub struct Convex {
     color: Point3<f32>,
     base_color: Point3<f32>,
     delta: Isometry2<f32>,
@@ -13,20 +13,20 @@ pub struct Ball {
     collider: ColliderHandle,
 }
 
-impl Ball {
+impl Convex {
     pub fn new(
         collider: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        radius: f32,
+        vertices: Vec<Point2<f32>>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Ball {
-        let mut res = Ball {
+    ) -> Convex {
+        let mut res = Convex {
             color: color,
             base_color: color,
             delta: delta,
-            gfx: window.add_circle(radius),
+            gfx: window.add_convex_polygon(vertices, Vector2::from_element(1.0)),
             collider: collider,
         };
 
@@ -40,7 +40,6 @@ impl Ball {
             res.gfx.set_lines_width(1.0);
         }
 
-        // res.gfx.set_texture_from_file(&Path::new("media/kitten.png"), "kitten");
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
             .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);

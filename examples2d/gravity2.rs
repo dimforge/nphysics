@@ -5,10 +5,10 @@ extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Point3, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics2d::world::World;
 use nphysics2d::force_generator::ConstantAcceleration;
 use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -22,8 +22,8 @@ fn main() {
     let mut world = World::new();
 
     // We setup two force generators that will replace the gravity.
-    let mut up_gravity = ConstantAcceleration::new(Vector2::y() * 9.81, 0.0);
-    let mut down_gravity = ConstantAcceleration::new(Vector2::y() * -9.81, 0.0);
+    let mut up_gravity = ConstantAcceleration::new(Vector2::y() * -9.81, 0.0);
+    let mut down_gravity = ConstantAcceleration::new(Vector2::y() * 9.81, 0.0);
 
     /*
      * Grouds
@@ -35,7 +35,7 @@ fn main() {
         ground_rady - COLLIDER_MARGIN,
     )));
 
-    let ground_pos = Isometry2::new(Vector2::y() * 2.0, na::zero());
+    let ground_pos = Isometry2::new(-Vector2::y() * 2.0, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape.clone(),
@@ -44,7 +44,7 @@ fn main() {
         Material::default(),
     );
 
-    let ground_pos = Isometry2::new(Vector2::y() * -3.0, na::zero());
+    let ground_pos = Isometry2::new(Vector2::y() * 3.0, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -60,7 +60,7 @@ fn main() {
     let rad = 0.2;
     let shift = 2.0 * rad;
     let centerx = shift * (num as f32) / 2.0;
-    let centery = -rad * 4.0;
+    let centery = rad * 4.0;
 
     let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
     let inertia = geom.inertia(1.0);
@@ -69,7 +69,7 @@ fn main() {
     for i in 0usize..num {
         for j in 0usize..2 {
             let x = i as f32 * 2.5 * rad - centerx;
-            let y = j as f32 * 2.5 * rad + centery;
+            let y = j as f32 * 2.5 * -rad + centery;
 
             /*
              * Create the rigid body.

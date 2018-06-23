@@ -6,9 +6,9 @@ extern crate nphysics_testbed3d;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::query::Proximity;
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics3d::world::World;
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -91,8 +91,7 @@ fn main() {
     testbed.set_body_color(&world, sensor_body, Point3::new(0.5, 1.0, 1.0));
 
     // Callback that will be executed on the main loop to handle proximities.
-    let graphics = testbed.graphics();
-    testbed.add_callback(move |world, _| {
+    testbed.add_callback(move |world, graphics, _| {
         for prox in world.proximity_events() {
             let color = match prox.new_status {
                 Proximity::WithinMargin | Proximity::Intersecting => Point3::new(1.0, 1.0, 0.0),
@@ -103,10 +102,10 @@ fn main() {
             let body2 = world.collider(prox.collider2).unwrap().data().body();
 
             if !body1.is_ground() && body1 != sensor_body {
-                graphics.borrow_mut().set_body_color(world, body1, color);
+                graphics.set_body_color(world, body1, color);
             }
             if !body2.is_ground() && body2 != sensor_body {
-                graphics.borrow_mut().set_body_color(world, body2, color);
+                graphics.set_body_color(world, body2, color);
             }
         }
     });
@@ -115,6 +114,6 @@ fn main() {
      * Set up the testbed.
      */
     testbed.set_world(world);
-    testbed.look_at(Point3::new(-8.0, 8.0, -8.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-6.0, 4.0, -6.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }
