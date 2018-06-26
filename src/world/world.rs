@@ -577,6 +577,12 @@ impl<N: Real> World<N> {
     }
 }
 
+impl<N: Real> Default for World<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 struct BodyStatusCollisionFilter;
 impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
