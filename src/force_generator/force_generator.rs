@@ -9,7 +9,7 @@ use solver::IntegrationParameters;
 /// The handle of a force generator.
 pub type ForceGeneratorHandle = usize;
 
-/// A persistant force generator.
+/// A persistent force generator.
 /// 
 /// A force generator applies a force to one or several bodies at each step of the simulation.
 pub trait ForceGenerator<N: Real>: Any + Send + Sync {

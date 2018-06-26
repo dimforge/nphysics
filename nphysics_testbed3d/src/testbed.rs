@@ -60,7 +60,7 @@ pub struct Testbed {
     time: f32,
     physics_timer: f64,
     hide_counters: bool,
-    persistant_contacts: HashMap<GenerationalId, bool>,
+    persistent_contacts: HashMap<GenerationalId, bool>,
 }
 
 impl Testbed {
@@ -80,7 +80,7 @@ impl Testbed {
             time: 0.0,
             physics_timer: 0.0,
             hide_counters: false,
-            persistant_contacts: HashMap::new(),
+            persistent_contacts: HashMap::new(),
         }
     }
 
@@ -510,7 +510,7 @@ impl Testbed {
                 draw_collisions(
                     &mut self.window,
                     &mut self.world,
-                    &mut self.persistant_contacts,
+                    &mut self.persistent_contacts,
                     running != RunMode::Stop,
                 );
             }
