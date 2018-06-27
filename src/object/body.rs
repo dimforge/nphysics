@@ -153,6 +153,16 @@ impl<'a, N: Real> Body<'a, N> {
             Body::Ground(_) => 0,
         }
     }
+
+    /// The position of this body, relative to the ground.
+    #[inline]
+    pub fn position(&self) -> Isometry<N> {
+        match self {
+            Body::RigidBody(rb) => rb.position(),
+            Body::Multibody(mb) => mb.position(),
+            Body::Ground(g) => g.position(),
+        }
+    }
 }
 
 impl<'a, N: Real> BodyMut<'a, N> {
@@ -183,6 +193,16 @@ impl<'a, N: Real> BodyMut<'a, N> {
                 0
             },
             BodyMut::Ground(_) => 0,
+        }
+    }
+
+    /// The position of this body, relative to the ground.
+    #[inline]
+    pub fn position(&self) -> Isometry<N> {
+        match self {
+            BodyMut::RigidBody(rb) => rb.position(),
+            BodyMut::Multibody(mb) => mb.position(),
+            BodyMut::Ground(g) => g.position(),
         }
     }
 
