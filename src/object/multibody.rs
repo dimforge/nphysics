@@ -74,6 +74,15 @@ impl<N: Real> Multibody<N> {
         self.rbs[0].handle
     }
 
+    /// The position of this multibody's center of mass.
+    ///
+    /// This is the same as the center of mass of the link
+    /// at the root of the multibody's kinematic tree.
+    #[inline]
+    pub fn position(&self) -> Isometry<N> {
+        self.rbs[0].local_to_world
+    }
+
     /// Informations regarding activation and deactivation (sleeping) of this multibody.
     #[inline]
     pub fn activation_status(&self) -> &ActivationStatus<N> {
