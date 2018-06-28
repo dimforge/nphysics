@@ -14,7 +14,7 @@ use force_generator::{ForceGenerator, ForceGeneratorHandle};
 use joint::{ConstraintHandle, Joint, JointConstraint};
 use math::{Inertia, Isometry, Point, Vector};
 use object::{
-    Body, BodyHandle, BodyMut, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
+    Body, BodyHandle, BodyMut, BodyPart, BodyPartMut, BodySet, BodyStatus, Collider, ColliderData,
     ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
     MultibodyWorkspace, RigidBody, SensorHandle,
 };
@@ -489,8 +489,17 @@ impl<N: Real> World<N> {
     }
 
     /// Get a reference to the specified body part.
+    ///
+    /// Panics if a body part with the given handle was not found.
     pub fn body_part(&self, handle: BodyHandle) -> BodyPart<N> {
         self.bodies.body_part(handle)
+    }
+
+    /// Get a mutable reference to the specified body part.
+    ///
+    /// Panics if a body part with the given handle was not found.
+    pub fn body_part_mut(&mut self, handle: BodyHandle) -> BodyPartMut<N> {
+        self.bodies.body_part_mut(handle)
     }
 
     /// Get a reference to the specified body.
