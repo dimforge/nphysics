@@ -12,6 +12,17 @@
     </strong>
 </p>
 
+-----
+
+<p align = "center">
+  <i>Click one of those buttons if you wish to donate to support the development of</i> <b>nphysics</b>:
+</p>
+
+<p align = "center">
+<a href="https://www.patreon.com/bePatron?u=7111380" ><img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patron!" /></a>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://liberapay.com/sebcrozet/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a>
+</p>
 
 nphysics
 ========
@@ -21,11 +32,10 @@ It uses [ncollide](http://ncollide.org) for collision detection, and
 implementations both share the same code!
 
 
-Examples are available in the `examples2d` and `examples3d` directories. There
-is also a short (outdated) [demonstration video](http://youtu.be/CANjXZ5rocI).
-An on-line version of this documentation is available
-[here](http://nphysics.org). Feel free to ask for help and discuss features on
-the official [user forum](http://users.nphysics.org).
+Examples are available in the `examples2d` and `examples3d` directories. Interactive
+3D are available [there](http://demo.nphysics.org/). Because those demos are based on
+WASM and WebGl 1.0 they should work on most modern browsers. Feel free to ask for help
+and discuss features on the official [user forum](http://users.nphysics.org).
 
 ## Why another physics engine?
 There are a lot of physics engine out there.
@@ -33,7 +43,7 @@ However having a physics engine written in Rust is much more fun than
 writing bindings and has several advantages:
 
 - It shows that Rust is suitable for soft real-time applications.
-- It shows how well Rust behaves with highly generic code.
+− It features an efficient implementation of multibodies using the reduced-coordinates approach. Constraint-based joints are also supported.
 - It shows that there is no need to write two separate engines for 2D and 3D:
   genericity wrt the dimension is possible (modulo low level arithmetic
   specializations for each dimension).
@@ -60,35 +70,30 @@ For the 3D version, add the crate named `nphysics3d`:
 nphysics3d = "0.8"
 ```
 
-Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
-to see all the cool stuffs you can do.
-
 ## Features
-- Static and dynamic rigid bodies.
-- Common convex primitives: cone, box, ball, cylinder.
-- Concave geometries built from convex primitives (aka. compound geometries).
-- Stable stacking.
-- Island based sleeping (objects deactivation).
+- Static, dynamic, and kinematic rigid bodies.
+- Common convex primitives: box, ball, convex polyhedron.
+- Concave geometries built from convex primitives: compound geometries, trinangle mesh, polylines.
+- Multibodies using reduced-coordinates approaches or constraints-based joints.
+- Multibody joint limits and motors.
+- Stable stacking due to non-linear a position-based penetration correction and one-shot contact manifold generation.
+- Island based sleeping (objects deactivation when they are at rest).
 - Ray casting.
-- Swept sphere based continuous collision detection.
-- Ball-in-socket joint.
-- Fixed joint.
 - Sensors.
+- WASM support.
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
 become a grown up. Many missing features are because of missing features on
 **ncollide**. Features missing from **nphysics** itself include:
 
-- Kinematic bodies.
-- Efficient signaling system.
-- More joints, joint limits, joint motors and breakable joints.
+- Breakable joints.
 - Soft-bodies.
+- Fluids.
 - Parallel pipeline.
 - GPU-based pipeline.
 
 ## Dependencies
-All dependencies are automatically cloned with a recursive clone.
 The libraries needed to compile the physics engine are:
 
 * [ncollide](http://ncollide.org): the collision detection library.
