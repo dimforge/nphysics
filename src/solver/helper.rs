@@ -6,8 +6,8 @@ use na;
 use na::{DVector, DVectorSlice, Real, Unit};
 use std::ops::Neg;
 
-use math::{AngularVector, Force, Point, Rotation, Vector};
-use object::BodyPart;
+use math::{AngularVector, Force, Point, Rotation, Vector, SPATIAL_DIM};
+use object::{BodyPart, RigidBody};
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
@@ -48,6 +48,11 @@ pub fn fill_constraint_geometry<N: Real>(
     jacobians: &mut [N],
     inv_r: &mut N,
 ) {
+    if let BodyPart::RigidBody(rb) = *body {
+        fill_constraint_geometry_rigid_body(rb, ndofs, center, dir, j_id, wj_id, jacobians, inv_r);
+        return;
+    }
+
     let force;
     let pos = center - body.center_of_mass().coords;
 
@@ -72,6 +77,38 @@ pub fn fill_constraint_geometry<N: Real>(
     let invm_j = DVectorSlice::from_slice(&jacobians[wj_id..], ndofs);
 
     *inv_r += j.dot(&invm_j);
+}
+
+#[inline(never)]
+fn fill_constraint_geometry_rigid_body<N: Real>(
+    body: &RigidBody<N>,
+    ndofs: usize,
+    center: &Point<N>,
+    dir: &ForceDirection<N>,
+    j_id: usize,
+    wj_id: usize,
+    jacobians: &mut [N],
+    inv_r: &mut N,
+) {
+    let force;
+    let pos = center - body.center_of_mass().coords;
+
+    match *dir {
+        ForceDirection::Linear(normal) => {
+            force = Force::linear_at_point(*normal, &pos);
+        }
+        ForceDirection::Angular(axis) => {
+            force = Force::torque_from_vector(*axis);
+        }
+    }
+
+    jacobians[j_id..j_id + SPATIAL_DIM].copy_from_slice(force.as_slice());
+
+    let inv_mass = body.inv_augmented_mass();
+    let imf = *inv_mass * force;
+    jacobians[wj_id..wj_id + SPATIAL_DIM].copy_from_slice(imf.as_slice());
+
+    *inv_r += inv_mass.mass() + force.angular_vector().dot(&imf.angular_vector());
 }
 
 /// Fills all the jacobians (and the jacobians multiplied by the invers augmented mass matricxs) for a
