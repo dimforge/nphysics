@@ -86,6 +86,11 @@ impl<N: Real> World<N> {
         }
     }
 
+    /// Prediction distance used internally for collision detection.
+    pub fn prediction(&self) -> N {
+        self.prediction
+    }
+
     /// Disable the perfomance counters that measure various times and statistics during a timestep.
     pub fn disable_performance_counters(&mut self) {
         self.counters.disable();
@@ -568,6 +573,13 @@ impl<N: Real> World<N> {
     /// Returns `None` if the handle does not correspond to a collider in this world.
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
         self.cworld.collision_object(handle)
+    }
+
+    /// Gets the handle of the parent body the specified collider is attached to.
+    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<BodyHandle> {
+        self.cworld
+            .collision_object(handle)
+            .map(|co| co.data().body())
     }
 
     /// An iterator through all the colliders on this collision world.

@@ -37,7 +37,7 @@ impl<N: Real> Force2<N> {
         Self::new(Vector2::new(data[0], data[1]), data[2])
     }
 
-    /// Create a pure torque.   
+    /// Create a pure torque.
     #[inline]
     pub fn torque(torque: N) -> Self {
         Self::new(na::zero(), torque)
@@ -48,7 +48,7 @@ impl<N: Real> Force2<N> {
     pub fn torque_from_vector(torque: Vector1<N>) -> Self {
         Self::new(na::zero(), torque.x)
     }
-    
+
     /// Create a pure linear force.
     #[inline]
     pub fn linear(linear: Vector2<N>) -> Self {
@@ -73,8 +73,14 @@ impl<N: Real> Force2<N> {
         Self::torque_at_point(torque.x, point)
     }
 
+    /// The angular part of the force.
+    #[inline]
+    pub fn angular_vector(&self) -> Vector1<N> {
+        Vector1::new(self.angular)
+    }
+
     /// This force seen as a slice.
-    /// 
+    ///
     /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_slice(&self) -> &[N] {
@@ -82,7 +88,7 @@ impl<N: Real> Force2<N> {
     }
 
     /// This force seen as a vector.
-    /// 
+    ///
     /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_vector(&self) -> &Vector3<N> {
@@ -90,7 +96,7 @@ impl<N: Real> Force2<N> {
     }
 
     /// This force seen as a mutable vector.
-    /// 
+    ///
     /// The two first entries contain the linear part and the third entry contais the angular part.
     #[inline]
     pub fn as_vector_mut(&mut self) -> &mut Vector3<N> {

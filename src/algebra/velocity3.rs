@@ -50,7 +50,7 @@ impl<N: Real> Velocity3<N> {
     }
 
     /// This velocity seen as a slice.
-    /// 
+    ///
     /// The linear part is stored first.
     #[inline]
     pub fn as_slice(&self) -> &[N] {
@@ -58,7 +58,7 @@ impl<N: Real> Velocity3<N> {
     }
 
     /// This velocity seen as a mutable slice.
-    /// 
+    ///
     /// The linear part is stored first.
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [N] {
@@ -66,21 +66,21 @@ impl<N: Real> Velocity3<N> {
     }
 
     /// This velocity seen as a vector.
-    /// 
+    ///
     /// The linear part is stored first.    #[inline]
     pub fn as_vector(&self) -> &Vector6<N> {
         unsafe { mem::transmute(self) }
     }
 
     /// This velocity seen as a mutable vector.
-    /// 
+    ///
     /// The linear part is stored first.    #[inline]
     pub fn as_vector_mut(&mut self) -> &mut Vector6<N> {
         unsafe { mem::transmute(self) }
     }
 
     /// Create a velocity from a vector.
-    /// 
+    ///
     /// The linear part of the velocity is expected to be first inside of the input vector.
     #[inline]
     pub fn from_vector<S: Storage<N, U6>>(data: &Vector<N, U6, S>) -> Self {
@@ -91,7 +91,7 @@ impl<N: Real> Velocity3<N> {
     }
 
     /// Create a velocity from a slice.
-    /// 
+    ///
     /// The linear part of the velocity is expected to be first inside of the input slice.
     #[inline]
     pub fn from_slice(data: &[N]) -> Self {
