@@ -1,9 +1,10 @@
-use std::mem;
-use std::ops::{Neg, Add, AddAssign, Mul, Sub, SubAssign};
-use na::{self, Point3, Real, U6, Vector, Vector3, Vector6};
 use na::storage::Storage;
+use na::{self, Point3, Real, U6, Vector, Vector3, Vector6};
+use std::mem;
+use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
 /// A force with a linear and agular (torque) component.
+#[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Force3<N: Real> {
     /// The linear force.
@@ -92,7 +93,6 @@ impl<N: Real> Force3<N> {
     pub fn as_slice(&self) -> &[N] {
         self.as_vector().as_slice()
     }
-
 
     /// This force seen as a vector.
     ///

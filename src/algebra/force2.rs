@@ -1,9 +1,10 @@
-use std::mem;
-use std::ops::{Neg, Add, AddAssign, Mul, Sub, SubAssign};
-use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3};
 use na::storage::Storage;
+use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3};
+use std::mem;
+use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
 /// A force with a linear and agular (torque) component.
+#[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Force2<N: Real> {
     /// The linear force.

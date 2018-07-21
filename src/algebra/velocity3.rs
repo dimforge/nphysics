@@ -1,9 +1,10 @@
+use na::storage::Storage;
+use na::{self, Isometry3, Real, U6, UnitQuaternion, Vector, Vector3, Vector6};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
-use na::{self, Isometry3, Real, U6, UnitQuaternion, Vector, Vector3, Vector6};
-use na::storage::Storage;
 
 /// A velocity structure combining both the linear angular velocities of a point.
+#[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Velocity3<N: Real> {
     /// The linear velocity.
