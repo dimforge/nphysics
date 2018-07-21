@@ -29,15 +29,12 @@ ncollide2d = "0.17"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"
-nalgebra = { version = "0.16", features = [ "stdweb" ] }
 
 [target.wasm32-unknown-emscripten.dependencies]
 stdweb = "0.4"
-nalgebra = { version = "0.16", features = [ "stdweb" ] }
 
 [target.asmjs-unknown-emscripten.dependencies]
 stdweb = "0.4"
-nalgebra = { version = "0.16", features = [ "stdweb" ] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 time = "0.1"
