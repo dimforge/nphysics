@@ -6,9 +6,9 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [dependencies]
 rand       = { version = "0.5", features = [ "stdweb" ] }
 num-traits = "0.2"
-nalgebra   = "0.15"
-ncollide3d = "0.16"
-kiss3d     = "0.14"
+nalgebra   = "0.16"
+ncollide3d = "0.17"
+kiss3d     = "0.16"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

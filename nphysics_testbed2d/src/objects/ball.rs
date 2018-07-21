@@ -1,4 +1,4 @@
-use kiss3d::scene::SceneNode2;
+use kiss3d::scene::PlanarSceneNode;
 use kiss3d::window::Window;
 use na::{Isometry2, Point3};
 use nphysics2d::object::ColliderHandle;
@@ -9,7 +9,7 @@ pub struct Ball {
     color: Point3<f32>,
     base_color: Point3<f32>,
     delta: Isometry2<f32>,
-    gfx: SceneNode2,
+    gfx: PlanarSceneNode,
     collider: ColliderHandle,
 }
 
@@ -73,11 +73,11 @@ impl Ball {
         );
     }
 
-    pub fn scene_node(&self) -> &SceneNode2 {
+    pub fn scene_node(&self) -> &PlanarSceneNode {
         &self.gfx
     }
 
-    pub fn scene_node_mut(&mut self) -> &mut SceneNode2 {
+    pub fn scene_node_mut(&mut self) -> &mut PlanarSceneNode {
         &mut self.gfx
     }
 

@@ -1,10 +1,7 @@
-use kiss3d::resource;
-use kiss3d::scene::SceneNode2;
 use kiss3d::window::Window;
-use na::{self, Isometry2, Point2, Point3, Unit, Vector2, Vector3};
+use na::{Point2, Point3, Unit, Vector2};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
-use objects::node;
 
 pub struct Plane {
     color: Point3<f32>,
@@ -21,7 +18,7 @@ impl Plane {
         position: &Point2<f32>,
         normal: &Unit<Vector2<f32>>,
         color: Point3<f32>,
-        window: &mut Window,
+        _: &mut Window,
     ) -> Plane {
         let mut res = Plane {
             color,
@@ -48,7 +45,7 @@ impl Plane {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {}
+    pub fn update(&mut self, _: &World<f32>) {}
 
     pub fn object(&self) -> ColliderHandle {
         self.collider

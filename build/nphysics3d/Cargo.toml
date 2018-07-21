@@ -21,11 +21,11 @@ path = "../../src/lib.rs"
 [dependencies]
 num-traits = "0.2"
 slab       = "0.4"
-alga       = "0.6"
-nalgebra   = "0.15"
-approx     = "0.2"
+alga       = "0.7"
+nalgebra   = "0.16"
+approx     = "0.3"
 downcast   = "0.9"
-ncollide3d = "0.16"
+ncollide3d = "0.17"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = "0.4"

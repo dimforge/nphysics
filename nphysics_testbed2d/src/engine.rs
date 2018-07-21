@@ -1,10 +1,9 @@
-use kiss3d::camera::{Camera2, PlanarCamera};
-use kiss3d::scene::SceneNode2;
+use kiss3d::planar_camera::{PlanarCamera, Sidescroll};
+use kiss3d::scene::PlanarSceneNode;
 use kiss3d::window::Window;
 use na;
 use na::{Isometry2, Point2, Point3};
 use ncollide2d::shape::{self, Compound, ConvexPolygon, Cuboid, Shape};
-use ncollide2d::transformation;
 use nphysics2d::object::{Body, BodyHandle, ColliderHandle};
 use nphysics2d::world::World;
 use objects::ball::Ball;
@@ -15,24 +14,22 @@ use objects::polyline::Polyline;
 use objects::node::Node;
 use objects::plane::Plane;
 use rand::{Rng, SeedableRng, XorShiftRng};
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 pub struct GraphicsManager {
     rand: XorShiftRng,
     b2sn: HashMap<BodyHandle, Vec<Node>>,
     b2color: HashMap<BodyHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
-    camera: PlanarCamera,
-    aabbs: Vec<SceneNode2>,
+    camera: Sidescroll,
+    aabbs: Vec<PlanarSceneNode>,
 }
 
 impl GraphicsManager {
     pub fn new() -> GraphicsManager {
-        let mut rng: XorShiftRng = SeedableRng::from_seed([0; 16]);
+        let rng: XorShiftRng = SeedableRng::from_seed([0; 16]);
 
-        let mut camera = PlanarCamera::new();
+        let mut camera = Sidescroll::new();
         camera.set_zoom(50.0);
 
         GraphicsManager {
@@ -45,7 +42,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn camera(&self) -> &PlanarCamera {
+    pub fn camera(&self) -> &Sidescroll {
         &self.camera
     }
 
@@ -53,13 +50,13 @@ impl GraphicsManager {
         for sns in self.b2sn.values() {
             for sn in sns.iter() {
                 if let Some(node) = sn.scene_node() {
-                    window.remove2(&mut node.clone());
+                    window.remove_planar_node(&mut node.clone());
                 }
             }
         }
 
         for aabb in self.aabbs.iter_mut() {
-            window.remove2(aabb);
+            window.remove_planar_node(aabb);
         }
 
         self.b2sn.clear();
@@ -72,7 +69,7 @@ impl GraphicsManager {
         if let Some(sns) = self.b2sn.get(&body_key) {
             for sn in sns.iter() {
                 if let Some(node) = sn.scene_node() {
-                    window.remove2(&mut node.clone());
+                    window.remove_planar_node(&mut node.clone());
                 }
             }
         }
@@ -93,7 +90,7 @@ impl GraphicsManager {
             sns.retain(|sn| {
                 if world.collider(sn.collider()).unwrap().data().body() == body {
                     if let Some(node) = sn.scene_node() {
-                        window.remove2(&mut node.clone());
+                        window.remove_planar_node(&mut node.clone());
                     }
                     false
                 } else {
@@ -365,8 +362,8 @@ impl GraphicsManager {
     //     }
     // }
 
-    pub fn camera_mut<'a>(&'a mut self) -> &'a mut Camera2 {
-        &mut self.camera as &'a mut Camera2
+    pub fn camera_mut<'a>(&'a mut self) -> &'a mut PlanarCamera {
+        &mut self.camera as &'a mut PlanarCamera
     }
 
     pub fn look_at(&mut self, at: Point2<f32>, zoom: f32) {

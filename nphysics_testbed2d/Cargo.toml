@@ -10,9 +10,9 @@ name = "nphysics_testbed2d"
 num-traits = "0.2"
 time       = "0.1"
 rand       = "0.5"
-nalgebra   = "0.15"
-kiss3d     = "0.15"
-ncollide2d = "0.16"
+nalgebra   = "0.16"
+kiss3d     = "0.16"
+ncollide2d = "0.17"
 
 [dependencies.nphysics2d]
 path = "../build/nphysics2d"

@@ -1,4 +1,4 @@
-use kiss3d::scene::SceneNode2;
+use kiss3d::scene::PlanarSceneNode;
 use kiss3d::window::Window;
 use na::{Isometry2, Point3};
 use nphysics2d::object::ColliderHandle;
@@ -58,9 +58,9 @@ impl Node {
         }
     }
 
-    pub fn scene_node(&self) -> Option<&SceneNode2> {
+    pub fn scene_node(&self) -> Option<&PlanarSceneNode> {
         match *self {
-            Node::Plane(ref n) => None,
+            Node::Plane(_) => None,
             Node::Ball(ref n) => Some(n.scene_node()),
             Node::Box(ref n) => Some(n.scene_node()),
             Node::Polyline(_) => None,
@@ -68,9 +68,9 @@ impl Node {
         }
     }
 
-    pub fn scene_node_mut(&mut self) -> Option<&mut SceneNode2> {
+    pub fn scene_node_mut(&mut self) -> Option<&mut PlanarSceneNode> {
         match *self {
-            Node::Plane(ref mut n) => None,
+            Node::Plane(_) => None,
             Node::Ball(ref mut n) => Some(n.scene_node_mut()),
             Node::Box(ref mut n) => Some(n.scene_node_mut()),
             Node::Polyline(_) => None,
@@ -100,7 +100,7 @@ impl Node {
 }
 
 pub fn update_scene_node(
-    node: &mut SceneNode2,
+    node: &mut PlanarSceneNode,
     world: &World<f32>,
     coll: ColliderHandle,
     color: &Point3<f32>,

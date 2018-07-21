@@ -14,9 +14,7 @@ use objects::mesh::Mesh;
 use objects::node::Node;
 use objects::plane::Plane;
 use rand::{Rng, SeedableRng, XorShiftRng};
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 pub struct GraphicsManager {
     rand: XorShiftRng,
@@ -57,12 +55,12 @@ impl GraphicsManager {
     pub fn clear(&mut self, window: &mut Window) {
         for sns in self.b2sn.values() {
             for sn in sns.iter() {
-                window.remove(&mut sn.scene_node().clone());
+                window.remove_node(&mut sn.scene_node().clone());
             }
         }
 
         for aabb in self.aabbs.iter_mut() {
-            window.remove(aabb);
+            window.remove_node(aabb);
         }
 
         self.b2sn.clear();
@@ -74,7 +72,7 @@ impl GraphicsManager {
 
         if let Some(sns) = self.b2sn.get(&body_key) {
             for sn in sns.iter() {
-                window.remove(&mut sn.scene_node().clone());
+                window.remove_node(&mut sn.scene_node().clone());
             }
         }
 
@@ -93,7 +91,7 @@ impl GraphicsManager {
         if let Some(sns) = self.b2sn.get_mut(&body_key) {
             sns.retain(|sn| {
                 if world.collider(sn.collider()).unwrap().data().body() == body {
-                    window.remove(&mut sn.scene_node().clone());
+                    window.remove_node(&mut sn.scene_node().clone());
                     false
                 } else {
                     delete_array = false;

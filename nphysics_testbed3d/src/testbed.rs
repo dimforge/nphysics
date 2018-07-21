@@ -1,17 +1,16 @@
 use num::Bounded;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::env;
 use std::mem;
 use std::path::Path;
 use std::rc::Rc;
-use time;
 
 use engine::GraphicsManager;
-use kiss3d::camera::{Camera, Camera2};
-use kiss3d::event::{Action, Key, Modifiers, MouseButton, WindowEvent};
+use kiss3d::camera::Camera;
+use kiss3d::event::{Action, Key, Modifiers, WindowEvent};
 use kiss3d::light::Light;
 use kiss3d::loader::obj;
+use kiss3d::planar_camera::PlanarCamera;
 use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
@@ -61,7 +60,6 @@ pub struct Testbed {
     nsteps: usize,
     callbacks: Vec<Box<Fn(&mut World<f32>, &mut GraphicsManager, f32)>>,
     time: f32,
-    physics_timer: f64,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
 
@@ -91,7 +89,6 @@ impl Testbed {
             graphics: graphics,
             nsteps: 1,
             time: 0.0,
-            physics_timer: 0.0,
             hide_counters: false,
             persistant_contacts: HashMap::new(),
 
@@ -218,7 +215,7 @@ impl State for Testbed {
         &mut self,
     ) -> (
         Option<&mut Camera>,
-        Option<&mut Camera2>,
+        Option<&mut PlanarCamera>,
         Option<&mut PostProcessingEffect>,
     ) {
         (Some(self.graphics.camera_mut()), None, None)
@@ -505,7 +502,6 @@ impl State for Testbed {
                 }
                 self.time += self.world.timestep();
             }
-            // self.physics_timer = time::precise_time_s() - before;
 
             self.graphics.draw(&self.world);
         }

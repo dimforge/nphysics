@@ -1,15 +1,11 @@
-use kiss3d::resource;
-use kiss3d::scene::SceneNode2;
 use kiss3d::window::Window;
-use na::{self, Isometry2, Point2, Point3, Vector3};
+use na::{Isometry2, Point2, Point3};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
-use objects::node;
 
 pub struct Polyline {
     color: Point3<f32>,
     base_color: Point3<f32>,
-    delta: Isometry2<f32>,
     vertices: Vec<Point2<f32>>,
     collider: ColliderHandle,
 }
@@ -18,15 +14,14 @@ impl Polyline {
     pub fn new(
         collider: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry2<f32>,
+        _: Isometry2<f32>,
         vertices: Vec<Point2<f32>>,
         color: Point3<f32>,
-        window: &mut Window,
+        _: &mut Window,
     ) -> Polyline {
         let mut res = Polyline {
             color,
             base_color: color,
-            delta,
             vertices,
             collider,
         };
@@ -48,7 +43,7 @@ impl Polyline {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {}
+    pub fn update(&mut self, _: &World<f32>) {}
 
     pub fn object(&self) -> ColliderHandle {
         self.collider
