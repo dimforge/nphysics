@@ -47,24 +47,28 @@ impl<N: Real> MoreauJeanSolver<N> {
         params: &IntegrationParameters<N>,
     ) {
         counters.assembly_started();
-        self.assemble_system(params, bodies, joints, manifolds, island);
+        self.assemble_system(counters, params, bodies, joints, manifolds, island);
         counters.assembly_completed();
 
         counters.set_nconstraints(self.constraints.velocity.len());
 
-        counters.resolution_started();
+        counters.velocity_resolution_started();
         self.solve_velocity_constraints(params);
         self.save_cache(bodies, joints, island);
-        counters.resolution_completed();
+        counters.velocity_resolution_completed();
 
-        counters.position_update_started();
+        counters.velocity_update_started();
         self.update_velocities_and_integrate(params, bodies, island);
+        counters.velocity_update_completed();
+
+        counters.position_resolution_started();
         self.solve_position_constraints(params, bodies, joints);
-        counters.position_update_completed();
+        counters.position_resolution_completed();
     }
 
     fn assemble_system(
         &mut self,
+        counters: &mut Counters,
         params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
@@ -186,6 +190,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             }
         }
 
+        counters.custom_started();
         self.contact_model.constraints(
             params,
             bodies,
@@ -196,6 +201,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             &mut self.jacobians,
             &mut self.constraints,
         );
+        counters.custom_completed();
     }
 
     fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>) {

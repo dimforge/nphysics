@@ -1,5 +1,4 @@
 sudo: false
-dist: trusty
 language: rust
 rust:
     - stable
@@ -9,28 +8,6 @@ matrix:
   allow_failures:
     - rust: beta
     - rust: nightly
-addons:
-  apt:
-    sources:
-      - kubuntu-backports
-    packages:
-      - cmake
-      - libxxf86vm-dev
-      - libglew-dev
-      - libopenal-dev
-      - libsndfile1-dev
-      - xorg-dev
-cache:
-  apt: true
-  directories:
-  - $HOME/local
-install:
-  - export PATH="$PATH:$HOME/local/bin"
-  - export LIBRARY_PATH="$LIBRARY_PATH:$HOME/local/lib"
-  - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/local/lib"
-  - bash $TRAVIS_BUILD_DIR/.travis.payload/install-dependencies.sh
 script:
-  - cd $TRAVIS_BUILD_DIR
-  - make all
-  - make examples
-  - make test
+  - cargo build
+  - cargo test

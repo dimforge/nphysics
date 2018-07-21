@@ -5,9 +5,9 @@ extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::world::World;
 use nphysics2d::object::Material;
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -68,6 +68,6 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
+    let testbed = Testbed::new(world);
     testbed.run();
 }

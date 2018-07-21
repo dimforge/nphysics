@@ -3,17 +3,18 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::f32::consts::PI;
-use std::sync::Arc;
 use na::{Isometry3, Point3, Real, Translation3, Unit, Vector2, Vector3};
 use ncollide3d::shape::{Ball, Cuboid, Plane, ShapeHandle};
-use nphysics3d::world::World;
+use nphysics3d::joint::{
+    BallJoint, CartesianJoint, CylindricalJoint, FixedJoint, FreeJoint, HelicalJoint, Joint,
+    PinSlotJoint, PlanarJoint, PrismaticJoint, RectangularJoint, RevoluteJoint, UniversalJoint,
+};
 use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::joint::{BallJoint, CartesianJoint, CylindricalJoint, FixedJoint, FreeJoint,
-                        HelicalJoint, Joint, PinSlotJoint, PlanarJoint, PrismaticJoint,
-                        RectangularJoint, RevoluteJoint, UniversalJoint};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
+use std::f32::consts::PI;
+use std::sync::Arc;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -23,10 +24,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    // world.integration_parameters_mut().max_position_iterations = 0;
-    world.integration_parameters_mut().warmstart_coeff = 0.0;
-    world.integration_parameters_mut().max_velocity_iterations = 50;
-    world.integration_parameters_mut().dt = 0.0001;
 
     /*
      * Create a ground.
@@ -204,7 +201,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    testbed.set_number_of_steps_per_frame(160);
     testbed.look_at(Point3::new(30.0, -2.0, 0.0), Point3::new(0.0, -2.0, 0.0));
     testbed.run();
 }

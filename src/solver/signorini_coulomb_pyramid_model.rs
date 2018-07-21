@@ -6,8 +6,10 @@ use detection::ColliderContactManifold;
 use math::{Vector, DIM};
 use object::BodySet;
 use solver::helper;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel,
-             ForceDirection, ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel};
+use solver::{
+    BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel, ForceDirection,
+    ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel,
+};
 
 /// A contact model generating one non-penetration constraint and two friction constraints per contact.
 ///

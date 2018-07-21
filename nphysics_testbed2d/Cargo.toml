@@ -6,13 +6,13 @@ authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 [lib]
 name = "nphysics_testbed2d"
 
+[dependencies]
+num-traits = "0.2"
+time       = "0.1"
+rand       = "0.5"
+nalgebra   = "0.16"
+kiss3d     = "0.16"
+ncollide2d = "0.17"
+
 [dependencies.nphysics2d]
 path = "../build/nphysics2d"
-
-[dependencies]
-sfml       = "0.11"
-time       = "0.1"
-num-traits = "0.1"
-rand       = "0.4"
-nalgebra   = "0.14"
-ncollide2d = "0.15"

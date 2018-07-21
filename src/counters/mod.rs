@@ -16,6 +16,7 @@ mod timer;
 pub struct Counters {
     enabled: bool,
     step_time: Timer,
+    custom: Timer,
     stages: StagesCounters,
     cd: CollisionDetectionCounters,
     solver: SolverCounters,
@@ -27,6 +28,7 @@ impl Counters {
         Counters {
             enabled,
             step_time: Timer::new(),
+            custom: Timer::new(),
             stages: StagesCounters::new(),
             cd: CollisionDetectionCounters::new(),
             solver: SolverCounters::new(),
@@ -62,9 +64,28 @@ impl Counters {
         }
     }
 
-    /// Total time spent for one step of the physics engine.
+    /// Total time spent for one  of the physics engine.
     pub fn step_time(&self) -> f64 {
         self.step_time.time()
+    }
+
+    /// Notify that the custom operation has started.
+    pub fn custom_started(&mut self) {
+        if self.enabled {
+            self.custom.start();
+        }
+    }
+
+    /// Notfy that the custom operation has finished.
+    pub fn custom_completed(&mut self) {
+        if self.enabled {
+            self.custom.pause();
+        }
+    }
+
+    /// Total time of a custom event.
+    pub fn custom_time(&self) -> f64 {
+        self.custom.time()
     }
 
     /// Set the number of constraints generated.
@@ -139,16 +160,22 @@ measure_method!(
     solver.assembly_time
 );
 measure_method!(
-    resolution_started,
-    resolution_completed,
-    resolution_time,
-    solver.resolution_time
+    velocity_resolution_started,
+    velocity_resolution_completed,
+    velocity_resolution_time,
+    solver.velocity_resolution_time
 );
 measure_method!(
-    position_update_started,
-    position_update_completed,
-    positon_update_time,
-    solver.position_update_time
+    velocity_update_started,
+    velocity_update_completed,
+    velocity_update_time,
+    solver.velocity_update_time
+);
+measure_method!(
+    position_resolution_started,
+    position_resolution_completed,
+    position_resolution_time,
+    solver.position_resolution_time
 );
 measure_method!(
     broad_phase_started,
@@ -168,6 +195,7 @@ impl Display for Counters {
         writeln!(f, "Total timestep time: {}", self.step_time)?;
         self.stages.fmt(f)?;
         self.cd.fmt(f)?;
-        self.solver.fmt(f)
+        self.solver.fmt(f)?;
+        writeln!(f, "Custom timer: {}", self.custom)
     }
 }

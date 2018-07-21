@@ -3,12 +3,12 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Unit, Vector2};
+use na::{Isometry2, Point2, Unit, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::world::World;
+use nphysics2d::joint::{CartesianJoint, PrismaticJoint, RevoluteJoint};
 use nphysics2d::object::{BodyHandle, Material};
-use nphysics2d::joint::{PrismaticJoint, RevoluteJoint, CartesianJoint};
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -18,7 +18,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
 
     /*
      * Ground.
@@ -30,7 +30,7 @@ fn main() {
         ground_rady - COLLIDER_MARGIN,
     )));
 
-    let ground_pos = Isometry2::new(Vector2::y() * 5.0, na::zero());
+    let ground_pos = Isometry2::new(-Vector2::y() * 5.0, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -38,7 +38,6 @@ fn main() {
         ground_pos,
         Material::default(),
     );
-
 
     /*
      * Revolute joint.
@@ -107,7 +106,7 @@ fn main() {
     /*
      * Rectangular joint.
      */
-    let shift = Vector2::new(0.0, -2.0);
+    let shift = Vector2::new(0.0, 2.0);
     let width = 5.0 * rad * 4.0;
 
     for i in 0..5 {
@@ -142,6 +141,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-
+    testbed.look_at(Point2::new(1.0, 2.0), 130.0);
     testbed.run();
 }

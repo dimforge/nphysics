@@ -1,6 +1,6 @@
 #! /bin/bash
 
-tmp=`mktemp --directory`
+tmp=`mktemp -d`
 
 echo $tmp
 

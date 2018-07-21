@@ -112,10 +112,10 @@ extern crate slab;
  * The two following crates are pulled-in for
  * measuring time.
  */
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 extern crate time;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(any(target_arch = "wasm32", target_arch = "asmjs"))]
 #[macro_use]
 extern crate stdweb;
 
@@ -138,8 +138,10 @@ pub mod world;
 #[cfg(feature = "dim3")]
 pub mod math {
   use algebra::{Force3, Inertia3, Velocity3};
-  use na::{Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX,
-           Point3, Translation3, U3, U6, UnitQuaternion, Vector3, Vector6};
+  use na::{
+    Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX, Point3,
+    Translation3, U3, U6, UnitQuaternion, Vector3, Vector6,
+  };
 
   /// The maximum number of possible rotations and translations of a rigid body.
   pub const SPATIAL_DIM: usize = 6;
@@ -213,8 +215,10 @@ pub mod math {
 #[cfg(feature = "dim2")]
 pub mod math {
   use algebra::{Force2, Inertia2, Velocity2};
-  use na::{Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX,
-           Point2, Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3};
+  use na::{
+    Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX, Point2,
+    Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3,
+  };
 
   /// The maximum number of possible rotations and translations of a rigid body.
   pub const SPATIAL_DIM: usize = 3;

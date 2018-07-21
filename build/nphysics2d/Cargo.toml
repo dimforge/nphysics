@@ -19,15 +19,21 @@ name = "nphysics2d"
 path = "../../src/lib.rs"
 
 [dependencies]
-num-traits = "0.1"
+num-traits = "0.2"
 slab       = "0.4"
-alga       = "0.5"
-nalgebra   = "0.14"
-approx     = "0.1"
+alga       = "0.7"
+nalgebra   = "0.16"
+approx     = "0.3"
 downcast   = "0.9"
-ncollide2d = "0.15"
+ncollide2d = "0.17"
 
 [target.wasm32-unknown-unknown.dependencies]
+stdweb = "0.4"
+
+[target.wasm32-unknown-emscripten.dependencies]
+stdweb = "0.4"
+
+[target.asmjs-unknown-emscripten.dependencies]
 stdweb = "0.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

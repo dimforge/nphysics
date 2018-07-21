@@ -1,41 +1,32 @@
-use kiss3d::resource;
-use kiss3d::scene::SceneNode;
+use kiss3d::scene::PlanarSceneNode;
 use kiss3d::window::Window;
-use na::{self, Isometry3, Point3, Vector3};
-use nphysics3d::object::ColliderHandle;
-use nphysics3d::world::World;
+use na::{Isometry2, Point2, Point3, Vector2};
+use nphysics2d::object::ColliderHandle;
+use nphysics2d::world::World;
 use objects::node;
-use std::cell::RefCell;
-use std::rc::Rc;
 
-pub struct Mesh {
+pub struct Convex {
     color: Point3<f32>,
     base_color: Point3<f32>,
-    delta: Isometry3<f32>,
-    gfx: SceneNode,
+    delta: Isometry2<f32>,
+    gfx: PlanarSceneNode,
     collider: ColliderHandle,
 }
 
-impl Mesh {
+impl Convex {
     pub fn new(
         collider: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
-        vertices: Vec<Point3<f32>>,
-        indices: Vec<Point3<u32>>,
+        delta: Isometry2<f32>,
+        vertices: Vec<Point2<f32>>,
         color: Point3<f32>,
         window: &mut Window,
-    ) -> Mesh {
-        let vs = vertices;
-        let is = indices.into_iter().map(|p| na::convert(p)).collect();
-
-        let mesh = resource::Mesh::new(vs, is, None, None, false);
-
-        let mut res = Mesh {
+    ) -> Convex {
+        let mut res = Convex {
             color: color,
             base_color: color,
             delta: delta,
-            gfx: window.add_mesh(Rc::new(RefCell::new(mesh)), Vector3::from_element(1.0)),
+            gfx: window.add_convex_polygon(vertices, Vector2::from_element(1.0)),
             collider: collider,
         };
 
@@ -49,7 +40,6 @@ impl Mesh {
             res.gfx.set_lines_width(1.0);
         }
 
-        res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
             .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
@@ -82,11 +72,11 @@ impl Mesh {
         );
     }
 
-    pub fn scene_node(&self) -> &SceneNode {
+    pub fn scene_node(&self) -> &PlanarSceneNode {
         &self.gfx
     }
 
-    pub fn scene_node_mut(&mut self) -> &mut SceneNode {
+    pub fn scene_node_mut(&mut self) -> &mut PlanarSceneNode {
         &mut self.gfx
     }
 

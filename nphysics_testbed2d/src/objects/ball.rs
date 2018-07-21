@@ -1,76 +1,87 @@
-use draw_helper::DRAW_SCALE;
+use kiss3d::scene::PlanarSceneNode;
+use kiss3d::window::Window;
 use na::{Isometry2, Point3};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
-use objects;
-use sfml::graphics;
-use sfml::graphics::{CircleShape, Color, RenderTarget, Shape, Transformable};
-use sfml::system::Vector2f;
+use objects::node;
 
-pub struct Ball<'a> {
-    color: Point3<u8>,
-    base_color: Point3<u8>,
+pub struct Ball {
+    color: Point3<f32>,
+    base_color: Point3<f32>,
     delta: Isometry2<f32>,
+    gfx: PlanarSceneNode,
     collider: ColliderHandle,
-    gfx: CircleShape<'a>,
 }
 
-impl<'a> Ball<'a> {
+impl Ball {
     pub fn new(
         collider: ColliderHandle,
-        _: &World<f32>,
+        world: &World<f32>,
         delta: Isometry2<f32>,
         radius: f32,
-        color: Point3<u8>,
-    ) -> Ball<'a> {
-        let dradius = radius as f32 * DRAW_SCALE;
-
+        color: Point3<f32>,
+        window: &mut Window,
+    ) -> Ball {
         let mut res = Ball {
             color: color,
             base_color: color,
             delta: delta,
+            gfx: window.add_circle(radius),
             collider: collider,
-            gfx: CircleShape::new().unwrap(),
         };
 
+        if world
+            .collider(collider)
+            .unwrap()
+            .query_type()
+            .is_proximity_query()
+        {
+            res.gfx.set_surface_rendering_activation(false);
+            res.gfx.set_lines_width(1.0);
+        }
+
+        // res.gfx.set_texture_from_file(&Path::new("media/kitten.png"), "kitten");
+        res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
-            .set_fill_color(&Color::new_rgb(color.x, color.y, color.z));
-        res.gfx.set_radius(dradius);
-        res.gfx.set_origin(&Vector2f::new(dradius, dradius));
+            .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
+        res.update(world);
 
         res
     }
-}
-
-impl<'a> Ball<'a> {
-    pub fn collider(&self) -> ColliderHandle {
-        self.collider
-    }
-
-    pub fn update(&mut self, world: &World<f32>) {
-        objects::update_scene_node(
-            &mut self.gfx,
-            self.collider,
-            world,
-            &self.color,
-            &self.delta,
-        )
-    }
-
-    pub fn draw(&self, rw: &mut graphics::RenderWindow, _: &World<f32>) {
-        rw.draw(&self.gfx);
-    }
-
-    pub fn set_color(&mut self, color: Point3<u8>) {
-        self.color = color;
-        self.base_color = color;
-    }
 
     pub fn select(&mut self) {
-        self.color = Point3::new(200, 0, 0);
+        self.color = Point3::new(1.0, 0.0, 0.0);
     }
 
     pub fn unselect(&mut self) {
         self.color = self.base_color;
+    }
+
+    pub fn set_color(&mut self, color: Point3<f32>) {
+        self.gfx.set_color(color.x, color.y, color.z);
+        self.color = color;
+        self.base_color = color;
+    }
+
+    pub fn update(&mut self, world: &World<f32>) {
+        node::update_scene_node(
+            &mut self.gfx,
+            world,
+            self.collider,
+            &self.color,
+            &self.delta,
+        );
+    }
+
+    pub fn scene_node(&self) -> &PlanarSceneNode {
+        &self.gfx
+    }
+
+    pub fn scene_node_mut(&mut self) -> &mut PlanarSceneNode {
+        &mut self.gfx
+    }
+
+    pub fn object(&self) -> ColliderHandle {
+        self.collider
     }
 }

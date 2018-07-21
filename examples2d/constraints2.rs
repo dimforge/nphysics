@@ -5,10 +5,10 @@ extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::world::World;
+use nphysics2d::joint::{CartesianConstraint, PrismaticConstraint, RevoluteConstraint};
 use nphysics2d::object::{BodyHandle, Material};
-use nphysics2d::joint::{RevoluteConstraint, PrismaticConstraint, CartesianConstraint};
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -18,7 +18,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
 
     /*
      * Ground.
@@ -30,7 +30,7 @@ fn main() {
         ground_rady - COLLIDER_MARGIN,
     )));
 
-    let ground_pos = Isometry2::new(Vector2::y() * 10.0, na::zero());
+    let ground_pos = Isometry2::new(Vector2::y() * -10.0, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -57,12 +57,8 @@ fn main() {
         let pos = Isometry2::new(Vector2::x() * (j + 1) as f32 * rad * 3.0, na::zero());
         let rb = world.add_rigid_body(pos, inertia, center_of_mass);
 
-        let revolute_constraint = RevoluteConstraint::new(
-            parent,
-            rb,
-            na::origin(),
-            Point2::new(-rad * 3.0, 0.0),
-        );
+        let revolute_constraint =
+            RevoluteConstraint::new(parent, rb, na::origin(), Point2::new(-rad * 3.0, 0.0));
 
         world.add_constraint(revolute_constraint);
 
@@ -101,10 +97,10 @@ fn main() {
             parent,
             rb,
             if j == 0 { first_anchor } else { other_anchor },
-            -Vector2::y_axis(),
+            Vector2::y_axis(),
             Point2::origin(),
         );
-        
+
         constraint.enable_min_offset(-rad * 2.0);
         world.add_constraint(constraint);
 
@@ -130,13 +126,13 @@ fn main() {
      * Cartesian constraint.
      */
     let num = 10;
-    let shift = Vector2::new(0.0, -2.0);
+    let shift = Vector2::new(0.0, 2.0);
     let width = 20.0 * rad;
 
     for i in 0..num {
         for j in 0..num {
             let mut x = i as f32 * rad * 3.0 - width / 2.0 + 5.0;
-            let y = j as f32 * rad * 3.0 - width / 2.0 - 4.0;
+            let y = j as f32 * rad * -3.0 + width / 2.0 + 4.0;
 
             if j % 2 == 0 {
                 x += rad * 2.0;
@@ -167,11 +163,10 @@ fn main() {
         }
     }
 
-
     /*
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-
+    testbed.look_at(Point2::new(0.0, 4.0), 50.0);
     testbed.run();
 }

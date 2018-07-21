@@ -3,11 +3,11 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Vector2, Isometry2};
-use ncollide2d::shape::{Cuboid, Compound, ShapeHandle};
+use na::{Isometry2, Point2, Vector2};
+use ncollide2d::shape::{Compound, Cuboid, ShapeHandle};
+use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
-use nphysics2d::object::{BodyHandle, Material};
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -17,7 +17,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
 
     /*
      * Ground
@@ -53,22 +53,22 @@ fn main() {
     cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
 
     let compound = Compound::new(cross_geoms);
-    let cross    = ShapeHandle::new(compound);
-    let inertia  = cross.inertia(1.0);
+    let cross = ShapeHandle::new(compound);
+    let inertia = cross.inertia(1.0);
     let center_of_mass = cross.center_of_mass();
 
     /*
      * Create the boxes
      */
-    let num     = 15;
-    let shift   = 2.5 * large_rad;
+    let num = 15;
+    let shift = 2.5 * large_rad;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift * (num as f32) / 2.0;
 
-    for i in 0usize .. num {
-        for j in 0usize .. num {
+    for i in 0usize..num {
+        for j in 0usize..num {
             let x = i as f32 * 2.5 * large_rad - centerx;
-            let y = j as f32 * 2.5 * large_rad - centery * 2.0;
+            let y = j as f32 * 2.5 * -large_rad + centery * 2.0;
 
             /*
              * Create the rigid body.
@@ -93,6 +93,6 @@ fn main() {
      * Run the simulation.
      */
     let mut testbed = Testbed::new(world);
-
+    testbed.look_at(Point2::new(0.0, -8.0), 30.0);
     testbed.run();
 }

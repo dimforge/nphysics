@@ -5,10 +5,10 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::joint::{BallJoint, FreeJoint};
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -39,7 +39,7 @@ fn main() {
     /*
      * Create the ragdolls
      */
-    let n = 4;
+    let n = 3;
     let shift = 5.0;
     let shifty = 6.0;
 
@@ -60,7 +60,7 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Point3::new(-30.0, 30.0, -30.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-20.0, 10.0, -20.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }
 
@@ -77,14 +77,10 @@ fn add_ragdoll(pos: Vector3<f32>, world: &mut World<f32>) {
     let body_geom = ShapeHandle::new(Cuboid::new(Vector3::new(body_radx, body_rady, body_radz)));
     let head_geom = ShapeHandle::new(Ball::new(head_rad));
     let arm_geom = ShapeHandle::new(Cuboid::new(Vector3::new(
-        member_rad,
-        arm_length,
-        member_rad,
+        member_rad, arm_length, member_rad,
     )));
     let leg_geom = ShapeHandle::new(Cuboid::new(Vector3::new(
-        member_rad,
-        leg_length,
-        member_rad,
+        member_rad, leg_length, member_rad,
     )));
 
     let body_inertia = body_geom.inertia(0.3);

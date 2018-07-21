@@ -3,11 +3,11 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Vector2};
+use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics2d::world::World;
 use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
+use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -17,7 +17,7 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
 
     // Materials.
     let material = Material::default();
@@ -31,7 +31,7 @@ fn main() {
         ground_radius - COLLIDER_MARGIN,
     )));
 
-    let ground_pos = Isometry2::new(Vector2::y() * ground_radius, na::zero());
+    let ground_pos = Isometry2::new(-Vector2::y() * ground_radius, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -56,7 +56,7 @@ fn main() {
     for i in 0usize..num {
         for j in 0..num {
             let x = i as f32 * shift - centerx;
-            let y = -(j as f32 * shift + centery);
+            let y = j as f32 * shift + centery;
 
             /*
              * Create the rigid body.
@@ -81,5 +81,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
+    testbed.look_at(Point2::new(0.0, -2.5), 95.0);
     testbed.run();
 }

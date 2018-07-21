@@ -244,6 +244,12 @@ impl<N: Real> RigidBody<N> {
         &self.augmented_mass
     }
 
+    /// The inverse augmented mass (inluding gyroscropic terms) in world-space of this rigid body.
+    #[inline]
+    pub fn inv_augmented_mass(&self) -> &Inertia<N> {
+        &self.inv_augmented_mass
+    }
+
     /// The handle of this rigid body.
     #[inline]
     pub fn handle(&self) -> BodyHandle {

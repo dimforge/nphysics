@@ -19,13 +19,13 @@ fn main() {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, 9.81));
+    world.set_gravity(Vector2::new(0.0, -9.81));
 
     /*
      * Plane
      */
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(20.0, 20.0)));
-    let ground_pos = Isometry2::new(Vector2::y() * 20.0, na::zero());
+    let ground_pos = Isometry2::new(-Vector2::y() * 20.0, na::zero());
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
@@ -52,7 +52,7 @@ fn main() {
          */
         let mut body_shift = Vector2::zeros();
         if j == 0 {
-            body_shift.y = -8.0;
+            body_shift.y = 8.0;
         }
 
         parent = world.add_multibody_link(
@@ -97,7 +97,7 @@ fn main() {
             /*
              * Create the rigid body.
              */
-            let pos = Isometry2::new(Vector2::new(x, -y), na::zero());
+            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
             let handle = world.add_rigid_body(pos, inertia, center_of_mass);
 
             /*
@@ -117,7 +117,7 @@ fn main() {
      * Setup a kinematic rigid body.
      */
     let geom = ShapeHandle::new(Cuboid::new(Vector2::new(rad * 10.0, rad)));
-    let pos = Isometry2::new(Vector2::new(0.0, -1.5), na::zero());
+    let pos = Isometry2::new(Vector2::new(0.0, 1.5), na::zero());
     let platform_handle = world.add_rigid_body(pos, Inertia::zero(), Point2::origin());
     {
         let rb = world.rigid_body_mut(platform_handle).unwrap();
@@ -162,7 +162,7 @@ fn main() {
     let handle = world.add_multibody_link(
         BodyHandle::ground(),
         joint,
-        Vector2::new(-4.0, -3.0),
+        Vector2::new(-4.0, 3.0),
         Vector2::x() * 2.0,
         inertia,
         center_of_mass,
@@ -180,7 +180,7 @@ fn main() {
      * Setup a callback to control the platform.
      */
     let mut testbed = Testbed::new(world);
-    testbed.add_callback(move |world, time| {
+    testbed.add_callback(move |world, _, time| {
         let platform = world.rigid_body_mut(platform_handle).unwrap();
         let platform_x = platform.position().translation.vector.x;
 
@@ -200,5 +200,6 @@ fn main() {
     /*
      * Run the simulation.
      */
+    testbed.look_at(Point2::new(0.0, -5.0), 60.0);
     testbed.run();
 }

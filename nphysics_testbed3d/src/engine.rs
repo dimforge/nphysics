@@ -1,24 +1,20 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use rand::{Rng, SeedableRng, XorShiftRng};
-use na::{Isometry3, Point3};
-use na;
-use kiss3d::window::Window;
-use kiss3d::scene::SceneNode;
 use kiss3d::camera::{ArcBall, Camera, FirstPerson};
+use kiss3d::scene::SceneNode;
+use kiss3d::window::Window;
+use na;
+use na::{Isometry3, Point3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
-use nphysics3d::world::World;
 use nphysics3d::object::{Body, BodyHandle, ColliderHandle};
+use nphysics3d::world::World;
 use objects::ball::Ball;
 use objects::box_node::Box;
-use objects::mesh::Mesh;
-use objects::plane::Plane;
 use objects::convex::Convex;
+use objects::mesh::Mesh;
 use objects::node::Node;
-
-pub type GraphicsManagerHandle = Rc<RefCell<GraphicsManager>>;
+use objects::plane::Plane;
+use rand::{Rng, SeedableRng, XorShiftRng};
+use std::collections::HashMap;
 
 pub struct GraphicsManager {
     rand: XorShiftRng,
@@ -37,7 +33,7 @@ impl GraphicsManager {
         let first_person =
             FirstPerson::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
 
-        let mut rng: XorShiftRng = SeedableRng::from_seed([0, 2, 4, 8]);
+        let mut rng: XorShiftRng = SeedableRng::from_seed([0; 16]);
 
         // the first colors are boring.
         for _ in 0usize..100 {
@@ -59,12 +55,12 @@ impl GraphicsManager {
     pub fn clear(&mut self, window: &mut Window) {
         for sns in self.b2sn.values() {
             for sn in sns.iter() {
-                window.remove(&mut sn.scene_node().clone());
+                window.remove_node(&mut sn.scene_node().clone());
             }
         }
 
         for aabb in self.aabbs.iter_mut() {
-            window.remove(aabb);
+            window.remove_node(aabb);
         }
 
         self.b2sn.clear();
@@ -76,7 +72,7 @@ impl GraphicsManager {
 
         if let Some(sns) = self.b2sn.get(&body_key) {
             for sn in sns.iter() {
-                window.remove(&mut sn.scene_node().clone());
+                window.remove_node(&mut sn.scene_node().clone());
             }
         }
 
@@ -95,7 +91,7 @@ impl GraphicsManager {
         if let Some(sns) = self.b2sn.get_mut(&body_key) {
             sns.retain(|sn| {
                 if world.collider(sn.collider()).unwrap().data().body() == body {
-                    window.remove(&mut sn.scene_node().clone());
+                    window.remove_node(&mut sn.scene_node().clone());
                     false
                 } else {
                     delete_array = false;
@@ -138,7 +134,6 @@ impl GraphicsManager {
     }
 
     pub fn set_collider_color(&mut self, handle: ColliderHandle, color: Point3<f32>) {
-        println!("Registering color: {:?} {}", handle, color);
         self.c2color.insert(handle, color);
     }
 
@@ -246,12 +241,7 @@ impl GraphicsManager {
         let normal = pos * shape.normal();
 
         out.push(Node::Plane(Plane::new(
-            object,
-            world,
-            &position,
-            &normal,
-            color,
-            window,
+            object, world, &position, &normal, color, window,
         )))
     }
 
@@ -321,14 +311,7 @@ impl GraphicsManager {
         let rz = shape.half_extents().z + margin;
 
         out.push(Node::Box(Box::new(
-            object,
-            world,
-            delta,
-            rx,
-            ry,
-            rz,
-            color,
-            window,
+            object, world, delta, rx, ry, rz, color, window,
         )))
     }
 
@@ -347,12 +330,7 @@ impl GraphicsManager {
         chull.recompute_normals();
 
         out.push(Node::Convex(Convex::new(
-            object,
-            world,
-            delta,
-            &chull,
-            color,
-            window,
+            object, world, delta, &chull, color, window,
         )))
     }
 

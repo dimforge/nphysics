@@ -86,6 +86,11 @@ impl<N: Real> World<N> {
         }
     }
 
+    /// Prediction distance used internally for collision detection.
+    pub fn prediction(&self) -> N {
+        self.prediction
+    }
+
     /// Disable the perfomance counters that measure various times and statistics during a timestep.
     pub fn disable_performance_counters(&mut self) {
         self.counters.disable();
@@ -170,6 +175,13 @@ impl<N: Real> World<N> {
         constraint
     }
 
+    /// Remove the specified collider from the world.
+    pub fn remove_colliders(&mut self, handles: &[ColliderHandle]) {
+        self.cworld.remove(handles);
+        self.colliders_w_parent
+            .retain(|handle| !handles.contains(handle));
+    }
+
     /// Add a force generator to the world.
     pub fn add_force_generator<G: ForceGenerator<N>>(
         &mut self,
@@ -228,7 +240,8 @@ impl<N: Real> World<N> {
             let new_pos;
             {
                 // FIXME: update only if the position changed (especially for static bodies).
-                let collider = self.cworld
+                let collider = self
+                    .cworld
                     .collision_object_mut(*collider_id)
                     .expect("Internal error: collider not found.");
                 let body = self.bodies.body_part(collider.data_mut().body());
@@ -359,7 +372,8 @@ impl<N: Real> World<N> {
 
         while i < self.colliders_w_parent.len() {
             let cid = self.colliders_w_parent[i];
-            let parent = self.collider(cid)
+            let parent = self
+                .collider(cid)
                 .expect("Internal error: collider not present")
                 .data()
                 .body();
@@ -568,6 +582,13 @@ impl<N: Real> World<N> {
     /// Returns `None` if the handle does not correspond to a collider in this world.
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
         self.cworld.collision_object(handle)
+    }
+
+    /// Gets the handle of the parent body the specified collider is attached to.
+    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<BodyHandle> {
+        self.cworld
+            .collision_object(handle)
+            .map(|co| co.data().body())
     }
 
     /// An iterator through all the colliders on this collision world.

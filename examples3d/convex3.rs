@@ -42,7 +42,7 @@ fn main() {
      * Create the convex geometries.
      */
     let npts = 10usize;
-    let num = 8;
+    let num = 6;
     let shift = 0.4;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
@@ -58,7 +58,8 @@ fn main() {
 
                 let geom;
 
-                if j % 2 == 0 {
+                if true {
+                    // j % 2 == 0 {
                     let mut pts = Vec::with_capacity(npts);
 
                     for _ in 0..npts {
@@ -95,6 +96,6 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
 
-    testbed.look_at(Point3::new(-10.0, 10.0, -10.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }

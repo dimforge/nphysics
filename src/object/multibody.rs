@@ -338,6 +338,7 @@ impl<N: Real> Multibody<N> {
         let ndofs = link.dof.ndofs();
         let nimpulses = link.dof.nimpulses();
         let assembly_id = self.velocities.len();
+        let impulse_id = self.impulses.len();
         let internal_id = self.rbs.len();
         self.ndofs += ndofs;
         self.grow_buffers(ndofs, nimpulses);
@@ -345,6 +346,7 @@ impl<N: Real> Multibody<N> {
         self.damping[assembly_id..].copy_from_slice(damping);
 
         link.assembly_id = assembly_id;
+        link.impulse_id = impulse_id;
         link.is_leaf = true;
 
         if !link.parent.is_ground() {

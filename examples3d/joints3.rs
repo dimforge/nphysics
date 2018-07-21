@@ -3,15 +3,17 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::f32::consts::PI;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::world::World;
+use nphysics3d::joint::{
+    BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint, PrismaticJoint,
+    RectangularJoint, RevoluteJoint, UniversalJoint,
+};
 use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::joint::{BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint,
-                        PrismaticJoint, RectangularJoint, RevoluteJoint, UniversalJoint};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
+use std::f32::consts::PI;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -312,7 +314,7 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    testbed.add_callback(move |world, _| {
+    testbed.add_callback(move |world, _, _| {
         /*
          * Activate the helical joint motor if it is to low.
          */
@@ -331,7 +333,7 @@ fn main() {
         }
     });
 
-    testbed.add_callback(move |world, _| {
+    testbed.add_callback(move |world, _, _| {
         /*
          * Activate the pin-slot joint linear motor if it is to low.
          */
