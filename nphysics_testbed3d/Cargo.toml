@@ -2,6 +2,11 @@
 name    = "nphysics_testbed3d"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+description = "Testbed for the 2-dimensional physics engine in Rust."
+homepage = "http://nphysics.org"
+repository = "https://github.com/sebcrozet/nphysics"
+keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
+license = "BSD-3-Clause"
 
 [lib]
 name = "nphysics_testbed3d"
