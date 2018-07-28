@@ -16,3 +16,4 @@ ncollide2d = "0.17"
 
 [dependencies.nphysics2d]
 path = "../build/nphysics2d"
+version = "0.9"

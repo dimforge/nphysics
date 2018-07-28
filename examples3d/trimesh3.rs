@@ -94,7 +94,6 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
-
+    let testbed = Testbed::new(world);
     testbed.run();
 }
