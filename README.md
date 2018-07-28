@@ -1,4 +1,7 @@
 <p align="center">
+  <img src="http://nphysics.org/img/logo_nphysics_full.svg" alt="crates.io">
+</p>
+<p align="center">
     <a href="https://crates.io/crates/nphysics">
          <img src="http://meritbadge.herokuapp.com/nphysics3d?style=flat-square" alt="crates.io">
     </a>
@@ -8,7 +11,7 @@
 </p>
 <p align = "center">
     <strong>
-        <a href="http://nphysics.org/doc/nphysics2d">2D Documentation</a> | <a href="http://nphysics.org/doc/nphysics3d">3D Documentation</a> | <a href="https://discourse.nphysics.org">Forum</a>
+        <a href="http://nphysics.org">Users guide</a> | <a href="http://nphysics.org/doc/nphysics2d">2D Documentation</a> | <a href="http://nphysics.org/doc/nphysics3d">3D Documentation</a> | <a href="https://discourse.nphysics.org">Forum</a>
     </strong>
 </p>
 
@@ -60,14 +63,14 @@ If you want to use the 2D version of `nphysics`, add the crate named
 
 ```ignore
 [dependencies]
-nphysics2d = "0.8"
+nphysics2d = "0.9"
 ```
 
 For the 3D version, add the crate named `nphysics3d`:
 
 ```ignore
 [dependencies]
-nphysics3d = "0.8"
+nphysics3d = "0.9"
 ```
 
 ## Features
