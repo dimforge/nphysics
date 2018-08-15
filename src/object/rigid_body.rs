@@ -156,6 +156,13 @@ impl<N: Real> RigidBody<N> {
         &self.velocity
     }
 
+    /// Sets the position of this rigid body.
+    #[inline]
+    pub fn set_position(&mut self, pos: Isometry<N>) {
+        self.local_to_world = pos;
+        self.com = pos * self.local_com;
+    }
+
     /// Set the velocity of this rigid body.
     #[inline]
     pub fn set_velocity(&mut self, vel: Velocity<N>) {
@@ -296,8 +303,8 @@ impl<N: Real> RigidBody<N> {
         let translation = Translation::from_vector(displacement.linear);
         let shift = Translation::from_vector(self.com.coords);
         let disp = translation * shift * rotation * shift.inverse();
-        self.local_to_world = disp * self.local_to_world;
-        self.com = self.local_to_world * self.local_com;
+        let new_pos = disp * self.local_to_world;
+        self.set_position(new_pos);
     }
 
     /// Apply a force to this rigid body for the next timestep.
