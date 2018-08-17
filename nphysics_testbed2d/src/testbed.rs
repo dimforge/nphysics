@@ -17,6 +17,7 @@ use std::env;
 use std::mem;
 use std::path::Path;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 #[derive(PartialEq)]
 enum RunMode {
@@ -50,7 +51,7 @@ fn usage(exe_name: &str) {
 }
 
 pub struct Testbed {
-    world: World<f32>,
+    world: Rc<RefCell<World<f32>>>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
@@ -77,7 +78,7 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
 
         Testbed {
-            world: world,
+            world: Rc::new(RefCell::new(world)),
             callbacks: Vec::new(),
             window: Some(window),
             graphics: graphics,
@@ -116,14 +117,15 @@ impl Testbed {
     }
 
     pub fn set_world(&mut self, world: World<f32>) {
-        self.world = world;
-        self.world.enable_performance_counters();
+        self.world = Rc::new(RefCell::new(world));
+        let mut world = self.world.borrow_mut();
+        world.enable_performance_counters();
 
         self.graphics.clear(self.window.as_mut().unwrap());
 
-        for co in self.world.colliders() {
+        for co in world.colliders() {
             self.graphics
-                .add(self.window.as_mut().unwrap(), co.handle(), &self.world);
+                .add(self.window.as_mut().unwrap(), co.handle(), &world);
         }
     }
 
@@ -139,9 +141,9 @@ impl Testbed {
         self.graphics.set_collider_color(collider, color);
     }
 
-    pub fn world(&self) -> &World<f32> {
-        &self.world
-    }
+    /*pub fn world(&self) -> &World<f32> {
+        &self.world.borrow_mut()
+    }*/
 
     pub fn graphics_mut(&mut self) -> &mut GraphicsManager {
         &mut self.graphics
@@ -242,6 +244,7 @@ impl State for Testbed {
                     let all_groups = &CollisionGroups::new();
                     for b in self
                         .world
+                        .borrow_mut()
                         .collision_world()
                         .interferences_with_point(&mapped_point, all_groups)
                     {
@@ -254,19 +257,19 @@ impl State for Testbed {
                         if let Some(body) = self.grabbed_object {
                             if !body.is_ground() {
                                 if !modifier.contains(Modifiers::Control) {
-                                    self.graphics.remove_body_nodes(&self.world, window, body);
-                                    self.world.remove_bodies(&[body]);
+                                    self.graphics.remove_body_nodes(&self.world.borrow_mut(), window, body);
+                                    self.world.borrow_mut().remove_bodies(&[body]);
                                 } else {
-                                    if self.world.multibody_link(body).is_some() {
+                                    if self.world.borrow_mut().multibody_link(body).is_some() {
                                         let key = self.graphics.remove_body_part_nodes(
-                                            &self.world,
+                                            &self.world.borrow_mut(),
                                             window,
                                             body,
                                         );
-                                        self.world.remove_multibody_links(&[body]);
+                                        self.world.borrow_mut().remove_multibody_links(&[body]);
                                         // FIXME: this is a bit ugly.
                                         self.graphics
-                                            .update_after_body_key_change(&self.world, key);
+                                            .update_after_body_key_change(&self.world.borrow_mut(), key);
                                     }
                                 }
                             }
@@ -276,10 +279,10 @@ impl State for Testbed {
                     } else if modifier.contains(Modifiers::Control) {
                         if let Some(body) = self.grabbed_object {
                             if let Some(joint) = self.grabbed_object_constraint {
-                                let _ = self.world.remove_constraint(joint);
+                                let _ = self.world.borrow_mut().remove_constraint(joint);
                             }
 
-                            let body_pos = self.world.body_part(body).position();
+                            let body_pos = self.world.borrow_mut().body_part(body).position();
                             let attach1 = mapped_point;
                             let attach2 = body_pos.inverse() * attach1;
                             let joint = MouseConstraint::new(
@@ -289,11 +292,11 @@ impl State for Testbed {
                                 attach2,
                                 1.0,
                             );
-                            self.grabbed_object_constraint = Some(self.world.add_constraint(joint));
+                            self.grabbed_object_constraint = Some(self.world.borrow_mut().add_constraint(joint));
 
                             for node in self
                                 .graphics
-                                .body_nodes_mut(&self.world, body)
+                                .body_nodes_mut(&self.world.borrow_mut(), body)
                                 .unwrap()
                                 .iter_mut()
                             {
@@ -310,7 +313,7 @@ impl State for Testbed {
                     if let Some(body) = self.grabbed_object {
                         for n in self
                             .graphics
-                            .body_nodes_mut(&self.world, body)
+                            .body_nodes_mut(&self.world.borrow_mut(), body)
                             .unwrap()
                             .iter_mut()
                         {
@@ -319,7 +322,7 @@ impl State for Testbed {
                     }
 
                     if let Some(joint) = self.grabbed_object_constraint {
-                        let _ = self.world.remove_constraint(joint);
+                        let _ = self.world.borrow_mut().remove_constraint(joint);
                     }
 
                     self.grabbed_object = None;
@@ -335,10 +338,11 @@ impl State for Testbed {
                         .unproject(&self.cursor_pos, &na::convert(window.size()));
 
                     let attach2 = mapped_point;
+                    let mut world = self.world
+                            .borrow_mut();
                     if let Some(_) = self.grabbed_object {
                         let joint = self.grabbed_object_constraint.unwrap();
-                        let joint = self
-                            .world
+                        let joint = world
                             .constraint_mut(joint)
                             .downcast_mut::<MouseConstraint<f32>>()
                             .unwrap();
@@ -368,10 +372,10 @@ impl State for Testbed {
                 //         },
                 WindowEvent::Key(Key::Space, Action::Release, _) => {
                     self.draw_colls = !self.draw_colls;
-                    for co in self.world.colliders() {
+                    for co in self.world.borrow_mut().colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
-                            self.graphics.body_nodes_mut(&self.world, co.data().body())
+                            self.graphics.body_nodes_mut(&self.world.borrow_mut(), co.data().body())
                         {
                             for n in ns.iter_mut() {
                                 if let Some(node) = n.scene_node_mut() {
@@ -436,22 +440,22 @@ impl State for Testbed {
         if self.running != RunMode::Stop {
             for _ in 0..self.nsteps {
                 for f in &self.callbacks {
-                    f(&mut self.world, &mut self.graphics, self.time)
+                    f(&mut self.world.borrow_mut(), &mut self.graphics, self.time)
                 }
-                self.world.step();
+                self.world.borrow_mut().step();
                 if !self.hide_counters {
-                    println!("{}", self.world.performance_counters());
+                    println!("{}", self.world.borrow_mut().performance_counters());
                 }
-                self.time += self.world.timestep();
+                self.time += self.world.borrow_mut().timestep();
             }
 
-            self.graphics.draw(&self.world, window);
+            self.graphics.draw(&self.world.borrow_mut(), window);
         }
 
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world,
+                &mut self.world.borrow_mut(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );
@@ -469,7 +473,7 @@ impl State for Testbed {
                 &format!(
                     "Simulation time: {:.*}sec.",
                     4,
-                    self.world.performance_counters().step_time(),
+                    self.world.borrow_mut().performance_counters().step_time(),
                 )[..],
                 &Point2::origin(),
                 60.0,
