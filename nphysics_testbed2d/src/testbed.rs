@@ -237,15 +237,14 @@ impl State for Testbed {
             //             graphics.add(window, WorldObject::RigidBody(body));
             //         },
                 WindowEvent::MouseButton(_, Action::Press, modifier) => {
+                    let mut physics_world = &mut self.world.lock().unwrap();
                     let mapped_point = self
                         .graphics
                         .camera()
                         .unproject(&self.cursor_pos, &na::convert(window.size()));
 
                     let all_groups = &CollisionGroups::new();
-                    for b in self
-                        .world
-                        .lock().unwrap()
+                    for b in physics_world
                         .collision_world()
                         .interferences_with_point(&mapped_point, all_groups)
                     {
@@ -258,19 +257,19 @@ impl State for Testbed {
                         if let Some(body) = self.grabbed_object {
                             if !body.is_ground() {
                                 if !modifier.contains(Modifiers::Control) {
-                                    self.graphics.remove_body_nodes(&self.world.lock().unwrap(), window, body);
-                                    self.world.lock().unwrap().remove_bodies(&[body]);
+                                    self.graphics.remove_body_nodes(&physics_world, window, body);
+                                    physics_world.remove_bodies(&[body]);
                                 } else {
-                                    if self.world.lock().unwrap().multibody_link(body).is_some() {
+                                    if physics_world.multibody_link(body).is_some() {
                                         let key = self.graphics.remove_body_part_nodes(
-                                            &self.world.lock().unwrap(),
+                                            &physics_world,
                                             window,
                                             body,
                                         );
-                                        self.world.lock().unwrap().remove_multibody_links(&[body]);
+                                        physics_world.remove_multibody_links(&[body]);
                                         // FIXME: this is a bit ugly.
                                         self.graphics
-                                            .update_after_body_key_change(&self.world.lock().unwrap(), key);
+                                            .update_after_body_key_change(&physics_world, key);
                                     }
                                 }
                             }
@@ -280,10 +279,10 @@ impl State for Testbed {
                     } else if modifier.contains(Modifiers::Control) {
                         if let Some(body) = self.grabbed_object {
                             if let Some(joint) = self.grabbed_object_constraint {
-                                let _ = self.world.lock().unwrap().remove_constraint(joint);
+                                let _ = physics_world.remove_constraint(joint);
                             }
 
-                            let body_pos = self.world.lock().unwrap().body_part(body).position();
+                            let body_pos = physics_world.body_part(body).position();
                             let attach1 = mapped_point;
                             let attach2 = body_pos.inverse() * attach1;
                             let joint = MouseConstraint::new(
@@ -293,11 +292,11 @@ impl State for Testbed {
                                 attach2,
                                 1.0,
                             );
-                            self.grabbed_object_constraint = Some(self.world.lock().unwrap().add_constraint(joint));
+                            self.grabbed_object_constraint = Some(physics_world.add_constraint(joint));
 
                             for node in self
                                 .graphics
-                                .body_nodes_mut(&self.world.lock().unwrap(), body)
+                                .body_nodes_mut(physics_world, body)
                                 .unwrap()
                                 .iter_mut()
                             {
@@ -311,10 +310,11 @@ impl State for Testbed {
                     }
                 }
                 WindowEvent::MouseButton(_, Action::Release, _) => {
+                    let mut physics_world = &mut self.world.lock().unwrap();
                     if let Some(body) = self.grabbed_object {
                         for n in self
                             .graphics
-                            .body_nodes_mut(&self.world.lock().unwrap(), body)
+                            .body_nodes_mut(physics_world, body)
                             .unwrap()
                             .iter_mut()
                         {
@@ -323,13 +323,14 @@ impl State for Testbed {
                     }
 
                     if let Some(joint) = self.grabbed_object_constraint {
-                        let _ = self.world.lock().unwrap().remove_constraint(joint);
+                        let _ = physics_world.remove_constraint(joint);
                     }
 
                     self.grabbed_object = None;
                     self.grabbed_object_constraint = None;
                 }
                 WindowEvent::CursorPos(x, y, modifiers) => {
+                    let mut physics_world = &mut self.world.lock().unwrap();
                     self.cursor_pos.x = x as f32;
                     self.cursor_pos.y = y as f32;
 
@@ -339,11 +340,9 @@ impl State for Testbed {
                         .unproject(&self.cursor_pos, &na::convert(window.size()));
 
                     let attach2 = mapped_point;
-                    let mut world = self.world
-                            .lock().unwrap();
                     if let Some(_) = self.grabbed_object {
                         let joint = self.grabbed_object_constraint.unwrap();
-                        let joint = world
+                        let joint = physics_world
                             .constraint_mut(joint)
                             .downcast_mut::<MouseConstraint<f32>>()
                             .unwrap();
@@ -372,11 +371,12 @@ impl State for Testbed {
                 //             // }
                 //         },
                 WindowEvent::Key(Key::Space, Action::Release, _) => {
+                    let mut physics_world = &mut self.world.lock().unwrap();
                     self.draw_colls = !self.draw_colls;
-                    for co in self.world.lock().unwrap().colliders() {
+                    for co in physics_world.colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
-                            self.graphics.body_nodes_mut(&self.world.lock().unwrap(), co.data().body())
+                            self.graphics.body_nodes_mut(&physics_world, co.data().body())
                         {
                             for n in ns.iter_mut() {
                                 if let Some(node) = n.scene_node_mut() {
@@ -449,17 +449,27 @@ impl State for Testbed {
                 }
                 self.time += self.world.lock().unwrap().timestep();
             }
-
-            self.graphics.draw(&self.world.lock().unwrap(), window);
         }
 
-        if self.draw_colls {
-            draw_collisions(
-                window,
-                &mut self.world.lock().unwrap(),
-                &mut self.persistant_contacts,
-                self.running != RunMode::Stop,
-            );
+        // Draw scope
+        {
+            let mut physics_world = &mut self.world.lock().unwrap();
+
+            for co in physics_world.colliders() {
+                if self.graphics.body_nodes_mut(physics_world, co.data().body()).is_none() {
+                    self.graphics
+                        .add(window, co.handle(), &physics_world);
+                }
+            }
+            self.graphics.draw(&physics_world, window);
+            if self.draw_colls {
+                draw_collisions(
+                    window,
+                    &mut physics_world,
+                    &mut self.persistant_contacts,
+                    self.running != RunMode::Stop,
+                );
+            }
         }
 
         if self.running == RunMode::Step {
