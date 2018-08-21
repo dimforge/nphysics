@@ -449,10 +449,6 @@ impl State for Testbed {
                 }
                 self.time += self.world.lock().unwrap().timestep();
             }
-        }
-
-        // Draw scope
-        {
             let mut physics_world = &mut self.world.lock().unwrap();
 
             for co in physics_world.colliders() {
@@ -462,14 +458,15 @@ impl State for Testbed {
                 }
             }
             self.graphics.draw(&physics_world, window);
-            if self.draw_colls {
-                draw_collisions(
-                    window,
-                    &mut physics_world,
-                    &mut self.persistant_contacts,
-                    self.running != RunMode::Stop,
-                );
-            }
+        }
+
+        if self.draw_colls {
+            draw_collisions(
+                window,
+                &mut self.world.lock().unwrap(),
+                &mut self.persistant_contacts,
+                self.running != RunMode::Stop,
+            );
         }
 
         if self.running == RunMode::Step {
