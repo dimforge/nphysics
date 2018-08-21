@@ -8,6 +8,7 @@ extern crate time;
 
 pub use engine::GraphicsManager;
 pub use testbed::Testbed;
+pub use testbed::WorldOwner;
 pub use testbed::WorldOwnerShared;
 pub use testbed::WorldOwnerExclusive;
 
