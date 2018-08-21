@@ -11,7 +11,7 @@
 </p>
 <p align = "center">
     <strong>
-        <a href="http://nphysics.org">Users guide</a> | <a href="http://nphysics.org/doc/nphysics2d">2D Documentation</a> | <a href="http://nphysics.org/doc/nphysics3d">3D Documentation</a> | <a href="https://discourse.nphysics.org">Forum</a>
+        <a href="http://nphysics.org">Users guide</a> | <a href="http://nphysics.org/rustdoc/nphysics2d/index.html">2D Documentation</a> | <a href="http://nphysics.org/rustdoc/nphysics3d/index.html">3D Documentation</a> | <a href="https://discourse.nphysics.org">Forum</a>
     </strong>
 </p>
 
