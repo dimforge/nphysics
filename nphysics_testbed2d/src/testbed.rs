@@ -54,7 +54,7 @@ fn usage(exe_name: &str) {
 
 /// This trait is designed to allow choosing implementation of underlying storing of World: shared between threads or owned only by WorldOwner.
 pub trait WorldOwner {
-    fn get<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b>;
+    fn get_mut<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b>;
 }
 
 #[derive(Clone)]
@@ -69,7 +69,7 @@ impl WorldOwnerShared {
 }
 
 impl WorldOwner for WorldOwnerShared {
-    fn get<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b> {
+    fn get_mut<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b> {
         Box::new(self.world.lock().unwrap())
     }
 }
@@ -85,7 +85,7 @@ impl WorldOwnerExclusive {
 }
 
 impl WorldOwner for WorldOwnerExclusive {
-    fn get<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b> {
+    fn get_mut<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b> {
         Box::new(&mut self.world)
     }
 }
@@ -158,7 +158,7 @@ impl Testbed {
 
     pub fn set_world(&mut self, world: Box<WorldOwner>) {
         self.world = world;
-        let mut world = self.world.get();
+        let mut world = self.world.get_mut();
         world.enable_performance_counters();
 
         self.graphics.clear(self.window.as_mut().unwrap());
@@ -276,7 +276,7 @@ impl State for Testbed {
             //             graphics.add(window, WorldObject::RigidBody(body));
             //         },
                 WindowEvent::MouseButton(_, Action::Press, modifier) => {
-                    let mut physics_world = &mut self.world.get();
+                    let mut physics_world = &mut self.world.get_mut();
                     let mapped_point = self
                         .graphics
                         .camera()
@@ -349,7 +349,7 @@ impl State for Testbed {
                     }
                 }
                 WindowEvent::MouseButton(_, Action::Release, _) => {
-                    let mut physics_world = &mut self.world.get();
+                    let mut physics_world = &mut self.world.get_mut();
                     if let Some(body) = self.grabbed_object {
                         for n in self
                             .graphics
@@ -369,7 +369,7 @@ impl State for Testbed {
                     self.grabbed_object_constraint = None;
                 }
                 WindowEvent::CursorPos(x, y, modifiers) => {
-                    let mut physics_world = &mut self.world.get();
+                    let mut physics_world = &mut self.world.get_mut();
                     self.cursor_pos.x = x as f32;
                     self.cursor_pos.y = y as f32;
 
@@ -410,7 +410,7 @@ impl State for Testbed {
                 //             // }
                 //         },
                 WindowEvent::Key(Key::Space, Action::Release, _) => {
-                    let mut physics_world = &mut self.world.get();
+                    let mut physics_world = &mut self.world.get_mut();
                     self.draw_colls = !self.draw_colls;
                     for co in physics_world.colliders() {
                         // FIXME: ugly clone.
@@ -482,13 +482,13 @@ impl State for Testbed {
                 for f in &self.callbacks {
                     f(&mut self.graphics, self.time)
                 }
-                self.world.get().step();
+                self.world.get_mut().step();
                 if !self.hide_counters {
-                    println!("{}", self.world.get().performance_counters());
+                    println!("{}", self.world.get_mut().performance_counters());
                 }
-                self.time += self.world.get().timestep();
+                self.time += self.world.get_mut().timestep();
             }
-            let physics_world = &self.world.get();
+            let physics_world = &self.world.get_mut();
 
             for co in physics_world.colliders() {
                 if self.graphics.body_nodes_mut(physics_world, co.data().body()).is_none() {
@@ -502,7 +502,7 @@ impl State for Testbed {
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world.get(),
+                &mut self.world.get_mut(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );
@@ -520,7 +520,7 @@ impl State for Testbed {
                 &format!(
                     "Simulation time: {:.*}sec.",
                     4,
-                    self.world.get().performance_counters().step_time(),
+                    self.world.get_mut().performance_counters().step_time(),
                 )[..],
                 &Point2::origin(),
                 60.0,
