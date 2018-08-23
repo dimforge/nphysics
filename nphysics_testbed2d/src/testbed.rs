@@ -489,7 +489,7 @@ impl State for Testbed {
                 &format!(
                     "Simulation time: {:.*}sec.",
                     4,
-                    self.world.get_mut().performance_counters().step_time(),
+                    self.world.get().performance_counters().step_time(),
                 )[..],
                 &Point2::origin(),
                 60.0,
