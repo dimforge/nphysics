@@ -78,15 +78,15 @@ pub struct WorldOwnerExclusive {
     world: World<f32>
 }
 
-impl WorldOwnerExclusive {
-    pub fn new(world: World<f32>) -> WorldOwnerExclusive {
-        WorldOwnerExclusive {world}
-    }
-}
-
 impl WorldOwner for WorldOwnerExclusive {
     fn get_mut<'a: 'b, 'b>(&'a mut self) -> Box<DerefMut<Target = World<f32>> + 'b> {
         Box::new(&mut self.world)
+    }
+}
+
+impl From<World<f32>> for WorldOwnerExclusive {
+    fn from(world: World<f32>) -> Self {
+        WorldOwnerExclusive {world}
     }
 }
 
@@ -136,10 +136,13 @@ impl Testbed {
         }
     }
 
-    pub fn new(world: Box<WorldOwner>) -> Testbed {
+    pub fn new(world: World<f32>) -> Testbed {
+        Testbed::new_with_world_owner(Box::new(WorldOwnerExclusive::from(world)))
+    }
+    pub fn new_with_world_owner(world_owner: Box<WorldOwner>) -> Testbed {
         let mut res = Testbed::new_empty();
 
-        res.set_world(world);
+        res.set_world_owner(world_owner);
 
         res
     }
@@ -156,7 +159,11 @@ impl Testbed {
         self.hide_counters = false;
     }
 
-    pub fn set_world(&mut self, world: Box<WorldOwner>) {
+    pub fn set_world(&mut self, world: World<f32>) {
+        self.set_world_owner(Box::new(WorldOwnerExclusive::from(world)));
+    }
+
+    pub fn set_world_owner(&mut self, world: Box<WorldOwner>) {
         self.world = world;
         let mut world = self.world.get_mut();
         world.enable_performance_counters();
