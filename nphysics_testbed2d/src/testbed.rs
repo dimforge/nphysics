@@ -453,11 +453,11 @@ impl State for Testbed {
                 }
                 self.world.get_mut().step();
                 if !self.hide_counters {
-                    println!("{}", self.world.get_mut().performance_counters());
+                    println!("{}", self.world.get().performance_counters());
                 }
-                self.time += self.world.get_mut().timestep();
+                self.time += self.world.get().timestep();
             }
-            let physics_world = &self.world.get_mut();
+            let physics_world = &self.world.get();
 
             for co in physics_world.colliders() {
                 if self.graphics.body_nodes_mut(physics_world, co.data().body()).is_none() {
@@ -471,7 +471,7 @@ impl State for Testbed {
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world.get_mut(),
+                &mut self.world.get(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );
