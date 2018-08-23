@@ -188,8 +188,8 @@ impl Testbed {
     pub fn add_callback<F: Fn(&mut Box<WorldOwner>, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
-    ) 
-    where for<'r, 's> F: (Fn(&'r mut Box<WorldOwner + 'static>, &'s mut GraphicsManager, f32))
+    ) where
+        for<'r, 's> F: Fn(&'r mut Box<WorldOwner + 'static>, &'s mut GraphicsManager, f32),
     {
         self.callbacks.push(Box::new(callback));
     }
@@ -265,7 +265,8 @@ impl State for Testbed {
                         if let Some(body) = self.grabbed_object {
                             if !body.is_ground() {
                                 if !modifier.contains(Modifiers::Control) {
-                                    self.graphics.remove_body_nodes(&physics_world, window, body);
+                                    self.graphics
+                                        .remove_body_nodes(&physics_world, window, body);
                                     physics_world.remove_bodies(&[body]);
                                 } else {
                                     if physics_world.multibody_link(body).is_some() {
@@ -300,7 +301,8 @@ impl State for Testbed {
                                 attach2,
                                 1.0,
                             );
-                            self.grabbed_object_constraint = Some(physics_world.add_constraint(joint));
+                            self.grabbed_object_constraint =
+                                Some(physics_world.add_constraint(joint));
 
                             for node in self
                                 .graphics
@@ -383,8 +385,9 @@ impl State for Testbed {
                     self.draw_colls = !self.draw_colls;
                     for co in physics_world.colliders() {
                         // FIXME: ugly clone.
-                        if let Some(ns) =
-                            self.graphics.body_nodes_mut(&physics_world, co.data().body())
+                        if let Some(ns) = self
+                            .graphics
+                            .body_nodes_mut(&physics_world, co.data().body())
                         {
                             for n in ns.iter_mut() {
                                 if let Some(node) = n.scene_node_mut() {
@@ -460,9 +463,12 @@ impl State for Testbed {
             let physics_world = &self.world.get();
 
             for co in physics_world.colliders() {
-                if self.graphics.body_nodes_mut(physics_world, co.data().body()).is_none() {
-                    self.graphics
-                        .add(window, co.handle(), &physics_world);
+                if self
+                    .graphics
+                    .body_nodes_mut(physics_world, co.data().body())
+                    .is_none()
+                {
+                    self.graphics.add(window, co.handle(), &physics_world);
                 }
             }
             self.graphics.draw(&physics_world, window);
