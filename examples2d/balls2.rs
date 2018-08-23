@@ -9,7 +9,6 @@ use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
-use nphysics_testbed2d::WorldOwnerExclusive;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -81,7 +80,7 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(Box::new(WorldOwnerExclusive::new(world)));
+    let mut testbed = Testbed::new(world);
     testbed.look_at(Point2::new(0.0, -2.5), 95.0);
     testbed.run();
 }
