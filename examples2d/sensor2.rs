@@ -90,6 +90,7 @@ fn main() {
 
     // Callback that will be executed on the main loop to handle proximities.
     testbed.add_callback(move |world, graphics, _| {
+        let world = world.get();
         for prox in world.proximity_events() {
             let color = match prox.new_status {
                 Proximity::WithinMargin | Proximity::Intersecting => Point3::new(1.0, 1.0, 0.0),
@@ -100,10 +101,10 @@ fn main() {
             let body2 = world.collider(prox.collider2).unwrap().data().body();
 
             if !body1.is_ground() && body1 != sensor_body {
-                graphics.set_body_color(world, body1, color);
+                graphics.set_body_color(&world, body1, color);
             }
             if !body2.is_ground() && body2 != sensor_body {
-                graphics.set_body_color(world, body2, color);
+                graphics.set_body_color(&world, body2, color);
             }
         }
     });

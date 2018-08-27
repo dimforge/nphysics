@@ -183,6 +183,7 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
     testbed.add_callback(move |world, _, time| {
+        let mut world = world.get_mut();
         let platform = world.rigid_body_mut(platform_handle).unwrap();
         let platform_x = platform.position().translation.vector.x;
 
