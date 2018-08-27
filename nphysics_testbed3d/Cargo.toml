@@ -18,6 +18,7 @@ rand       = "0.5"
 nalgebra   = "0.16"
 kiss3d     = "0.16"
 ncollide3d = "0.17"
+log        = "0.4.3"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

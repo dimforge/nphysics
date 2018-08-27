@@ -19,6 +19,7 @@
  * # Limitations of the solution:
  */
 
+extern crate env_logger;
 extern crate nalgebra as na;
 extern crate ncollide3d;
 extern crate nphysics3d;
@@ -31,6 +32,7 @@ use nphysics3d::object::RigidBody;
 use nphysics_testbed3d::Testbed;
 
 fn main() {
+    env_logger::init();
     /*
      * World
      */

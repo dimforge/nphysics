@@ -1,4 +1,5 @@
 // Issue #110
+extern crate env_logger;
 extern crate nalgebra as na;
 extern crate ncollide3d;
 extern crate nphysics3d;
@@ -36,6 +37,7 @@ fn new_shape<J: Joint<f32>>(world: &mut World<f32>, joint: J, parent: BodyHandle
     handle
 }
 fn main() {
+    env_logger::init();
     let mut world: World<f32> = World::new();
     world.set_gravity(Vector3::y() * -9.81);
 
