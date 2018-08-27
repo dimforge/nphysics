@@ -219,7 +219,7 @@ impl GraphicsManager {
         } else if let Some(s) = shape.as_shape::<shape::Polyline<f32>>() {
             self.add_polyline(window, object, world, delta, s, color, out);
         } else {
-            println!("Unknown shapes found. It won't be displayed.");
+            debug!("Unknown shapes found. It won't be displayed.");
         }
     }
 

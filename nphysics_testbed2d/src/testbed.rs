@@ -27,27 +27,27 @@ enum RunMode {
 }
 
 fn usage(exe_name: &str) {
-    println!("Usage: {} [OPTION] ", exe_name);
-    println!("");
-    println!("Options:");
-    println!("    --help  - prints this help message and exits.");
-    println!("    --pause - do not start the simulation right away.");
-    println!("");
-    println!("The following keyboard commands are supported:");
-    println!("    t      - pause/continue the simulation.");
-    println!("    s      - pause then execute only one simulation step.");
-    println!("    1      - launch a ball.");
-    println!("    2      - launch a cube.");
-    println!("    3      - launch a fast cube using continuous collision detection.");
-    println!("    TAB    - switch camera mode (first-person or arc-ball).");
-    println!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
-    println!(
+    info!("Usage: {} [OPTION] ", exe_name);
+    info!("");
+    info!("Options:");
+    info!("    --help  - prints this help message and exits.");
+    info!("    --pause - do not start the simulation right away.");
+    info!("");
+    info!("The following keyboard commands are supported:");
+    info!("    t      - pause/continue the simulation.");
+    info!("    s      - pause then execute only one simulation step.");
+    info!("    1      - launch a ball.");
+    info!("    2      - launch a cube.");
+    info!("    3      - launch a fast cube using continuous collision detection.");
+    info!("    TAB    - switch camera mode (first-person or arc-ball).");
+    info!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
+    info!(
         "    CTRL + left click + drag - select and drag an object using a ball-in-socket joint."
     );
-    println!("    SHIFT + left click - remove an object.");
-    println!("    arrows - move around when in first-person camera mode.");
-    println!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
-    println!("    b      - draw the bounding boxes.");
+    info!("    SHIFT + left click - remove an object.");
+    info!("    arrows - move around when in first-person camera mode.");
+    info!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
+    info!("    b      - draw the bounding boxes.");
 }
 
 pub struct Testbed {
@@ -456,7 +456,7 @@ impl State for Testbed {
                 }
                 self.world.get_mut().step();
                 if !self.hide_counters {
-                    println!("{}", self.world.get().performance_counters());
+                    debug!("{}", self.world.get().performance_counters());
                 }
                 self.time += self.world.get().timestep();
             }

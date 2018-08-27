@@ -1,3 +1,4 @@
+extern crate env_logger;
 extern crate nalgebra as na;
 extern crate ncollide3d;
 extern crate nphysics3d;
@@ -16,6 +17,7 @@ use nphysics_testbed3d::Testbed;
 const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
+    env_logger::init();
     /*
      * World
      */
