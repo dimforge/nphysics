@@ -3,15 +3,15 @@ use std::ops::Range;
 
 use joint::JointConstraint;
 use math::{AngularVector, Isometry, Point, ANGULAR_DIM};
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodySet};
 use solver::helper;
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all relative angular motion between two body parts.
 pub struct CartesianConstraint<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
     joint_to_b1: Isometry<N>,
     joint_to_b2: Isometry<N>,
     ang_impulses: AngularVector<N>,
@@ -25,8 +25,8 @@ impl<N: Real> CartesianConstraint<N> {
     /// This will ensure the rotational parts of the frames given identified by `joint_to_b1` and
     /// `joint_to_b2` and attached to the corrisponding bodies will coincide.
     pub fn new(
-        b1: BodyHandle,
-        b2: BodyHandle,
+        b1: BodyPartHandle,
+        b2: BodyPartHandle,
         joint_to_b1: Isometry<N>,
         joint_to_b2: Isometry<N>,
     ) -> Self {
@@ -57,7 +57,7 @@ impl<N: Real> JointConstraint<N> for CartesianConstraint<N> {
         ANGULAR_DIM
     }
 
-    fn anchors(&self) -> (BodyHandle, BodyHandle) {
+    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
         (self.b1, self.b2)
     }
 
@@ -71,24 +71,29 @@ impl<N: Real> JointConstraint<N> for CartesianConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.body_handle);
+        let body2 = bodies.body(self.b2.body_handle);
 
-        let pos1 = body1.position() * self.joint_to_b1;
-        let pos2 = body2.position() * self.joint_to_b2;
+        let part1 = body1.part(self.b1);
+        let part2 = body2.part(self.b2);
+
+        let pos1 = part1.position() * self.joint_to_b1;
+        let pos2 = part2.position() * self.joint_to_b2;
 
         let anchor1 = Point::from_coordinates(pos1.translation.vector);
         let anchor2 = Point::from_coordinates(pos2.translation.vector);
 
-        let assembly_id1 = body1.parent_companion_id();
-        let assembly_id2 = body2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_angular_velocity(
-            &body1,
-            &body2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -135,11 +140,13 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.body_handle);
+        let body2 = bodies.body(self.b2.body_handle);
+        let part1 = body1.part(self.b1);
+        let part2 = body2.part(self.b2);
 
-        let pos1 = body1.position() * self.joint_to_b1;
-        let pos2 = body2.position() * self.joint_to_b2;
+        let pos1 = part1.position() * self.joint_to_b1;
+        let pos2 = part2.position() * self.joint_to_b2;
 
         let anchor1 = Point::from_coordinates(pos1.translation.vector);
         let anchor2 = Point::from_coordinates(pos2.translation.vector);
@@ -149,8 +156,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
 
         helper::cancel_relative_rotation(
             params,
-            &body1,
-            &body2,
+            body1,
+            part1,
+            body2,
+            part2,
             &anchor1,
             &anchor2,
             &rotation1,

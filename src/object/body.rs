@@ -1,7 +1,12 @@
+#![allow(missing_docs)] // For downcast.
+
+use std::fmt::Debug;
+use downcast::Any;
+
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
 use math::{Force, Inertia, Isometry, Point, Velocity};
-use object::{BodyHandle, Ground, Multibody, MultibodyLinkMut, MultibodyLinkRef, RigidBody};
+use object::{BodyPartHandle, BodyHandle};
 use solver::IntegrationParameters;
 
 /// The status of a body.
@@ -83,389 +88,151 @@ impl<N: Real> ActivationStatus<N> {
     }
 }
 
-/// A body contained by the physics world.
-pub enum Body<'a, N: Real> {
-    /// A rigid body.
-    RigidBody(&'a RigidBody<N>),
-    /// A multibody.
-    Multibody(&'a Multibody<N>),
-    /// The ground.
-    Ground(&'a Ground<N>),
-}
-
-/// A mutable body contained by the physics world.
-pub enum BodyMut<'a, N: Real> {
-    /// A rigid body.
-    RigidBody(&'a mut RigidBody<N>),
-    /// A multibody.
-    Multibody(&'a mut Multibody<N>),
-    /// The ground.
-    Ground(&'a mut Ground<N>),
-}
-
-/// A mutable body part contained by the physics world.
-pub enum BodyPart<'a, N: Real> {
-    /// A rigid body.
-    RigidBody(&'a RigidBody<N>),
-    /// A link of a multibody.
-    MultibodyLink(MultibodyLinkRef<'a, N>),
-    /// The ground.
-    Ground(&'a Ground<N>),
-}
-
-/// A mutable body part contained by the physics world.
-pub enum BodyPartMut<'a, N: Real> {
-    /// A rigid body.
-    RigidBody(&'a mut RigidBody<N>),
-    /// A link of a multibody.
-    MultibodyLink(MultibodyLinkMut<'a, N>),
-    /// The ground.
-    Ground(&'a mut Ground<N>),
-}
-
-impl<'a, N: Real> Body<'a, N> {
-    /// Checks if this body identifies the ground.
-    #[inline]
-    pub fn is_ground(&self) -> bool {
-        if let Body::Ground(_) = *self {
-            true
-        } else {
-            false
-        }
-    }
-
-    /// The number of degrees of freedom (DOF) of this body, taking its status into account.
-    ///
-    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
-    #[inline]
-    pub fn status_dependent_ndofs(&self) -> usize {
-        match *self {
-            Body::RigidBody(ref rb) => if rb.is_dynamic() {
-                rb.ndofs()
-            } else {
-                0
-            },
-            Body::Multibody(ref mb) => if mb.is_dynamic() {
-                mb.ndofs()
-            } else {
-                0
-            },
-            Body::Ground(_) => 0,
-        }
-    }
-}
-
-impl<'a, N: Real> BodyMut<'a, N> {
-    /// Checks if this body identifies the ground.
-    #[inline]
-    pub fn is_ground(&self) -> bool {
-        if let BodyMut::Ground(_) = *self {
-            true
-        } else {
-            false
-        }
-    }
-
-    /// The number of degrees of freedom (DOF) of this body, taking its status into account.
-    ///
-    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
-    #[inline]
-    pub fn status_dependent_ndofs(&self) -> usize {
-        match *self {
-            BodyMut::RigidBody(ref rb) => if rb.is_dynamic() {
-                rb.ndofs()
-            } else {
-                0
-            },
-            BodyMut::Multibody(ref mb) => if mb.is_dynamic() {
-                mb.ndofs()
-            } else {
-                0
-            },
-            BodyMut::Ground(_) => 0,
-        }
-    }
-
-    ///
-    /// Applies a displacement to all the degrees of freedom of this body.
-    #[inline]
-    pub fn apply_displacement(&mut self, disp: &[N]) {
-        match *self {
-            BodyMut::RigidBody(ref mut rb) => rb.apply_displacement(&Velocity::from_slice(disp)),
-            BodyMut::Multibody(ref mut mb) => mb.apply_displacement(disp),
-            BodyMut::Ground(_) => {}
-        }
-    }
-}
-
-macro_rules! dispatch(
-    ($($body: ident :: $method: ident ( $($params: ident: $argty: ty),* ) -> $ret: ty | $doc: expr;)*) => {$(
-        impl<'a, N: Real> $body<'a, N> {
-            #[doc = $doc]
-            #[inline]
-            pub fn $method(&self $($params: $argty),*) -> $ret {
-                match *self {
-                    $body::RigidBody(ref rb) => rb.$method($($params),*),
-                    $body::Multibody(ref mb) => mb.$method($($params),*),
-                    $body::Ground(ref g)     => g.$method($($params),*),
-                }
-            }
-        })*
-    }
-);
-
-macro_rules! dispatch_mut(
-    ($($body: ident :: $method: ident ( $($params: ident: $argty: ty),* ) -> $ret: ty | $doc: expr;)*) => {$(
-        impl<'a, N: Real> $body<'a, N> {
-            #[doc = $doc]
-            #[inline]
-            pub fn $method(&mut self $(, $params: $argty)*) -> $ret {
-                match *self {
-                    $body::RigidBody(ref mut rb) => rb.$method($($params),*),
-                    $body::Multibody(ref mut mb) => mb.$method($($params),*),
-                    $body::Ground(ref mut g)     => g.$method($($params),*),
-                }
-            }
-        })*
-    }
-);
-
-dispatch!(
-    Body::handle() -> BodyHandle | "The handle of this body.";
-    Body::status() -> BodyStatus | "The status of this body.";
-    Body::activation_status() -> &ActivationStatus<N> | "Informations regarding activation and deactivation (sleeping) of this body.";
-    Body::is_active() -> bool | "Check if this body is active.";
-    Body::is_dynamic() -> bool | "Whether or not the status of this body is dynamic.";
-    Body::is_kinematic() -> bool | "Whether or not the status of this body is kinematic.";
-    Body::is_static() -> bool | "Whether or not the status of this body is static.";
-    Body::ndofs() -> usize | "The number of degrees of freedom of this body.";
-    Body::generalized_acceleration() -> DVectorSlice<N> | "The generalized accelerations at each degree of freedom of this body.";
-    Body::generalized_velocity() -> DVectorSlice<N> | "The generalized velocities of this body.";
-    Body::companion_id() -> usize | "The companion ID of this body.";
-
-    BodyMut::handle() -> BodyHandle | "The handle of this body.";
-    BodyMut::status() -> BodyStatus | "The status of this body.";
-    BodyMut::activation_status() -> &ActivationStatus<N> | "Informations regarding activation and deactivation (sleeping) of this body.";
-    BodyMut::is_active() -> bool | "Check if this body is active.";
-    BodyMut::is_kinematic() -> bool | "Whether or not the status of this body is kinematic.";
-    BodyMut::is_static() -> bool | "Whether or not the status of this body is static.";
-    BodyMut::ndofs() -> usize | "The number of degrees of freedom of this body.";
-    BodyMut::generalized_acceleration() -> DVectorSlice<N> | "The generalized accelerations at each degree of freedom of this body.";
-    BodyMut::generalized_velocity() -> DVectorSlice<N> | "The generalized velocities of this body.";
-    BodyMut::companion_id() -> usize | "The companion ID of this body.";
-);
-
-dispatch_mut!(
-    BodyMut::set_companion_id(id: usize) -> () | "Set the companion ID of this body (may be reinitialized by nphysics).";
-    BodyMut::generalized_velocity_mut() -> DVectorSliceMut<N> | "The mutable generalized velocities of this body.";
-    BodyMut::integrate(params: &IntegrationParameters<N>) -> () | "Integrate the position of this body.";
-    // FIXME: should those directly be implemented only for bodies (to avoid duplicated code on
-    // each body for activation)?
-    BodyMut::activate() -> () | "Force the activation of this body.";
-    BodyMut::activate_with_energy(energy: N) -> () | "Force the activation of this body with the given level of energy.";
-    BodyMut::deactivate() -> () | "Put this body to sleep.";
-);
-
-impl<'a, N: Real> BodyPart<'a, N> {
+/// Trait implemented by all bodies supported by nphysics.
+pub trait Body<N: Real>: Any + Send + Sync {
     /// Returns `true` if this body is the ground.
+    fn is_ground(&self) -> bool {
+        false
+    }
+
+    /// Updates the kinematics, e.g., positions and jacobians, of this body.
+    fn update_kinematics(&mut self);
+
+    /// Reset the timestep-specific dynamic information of this body.
+    fn clear_dynamics(&mut self);
+
+    /// Applies a generalized displacement to this body.
+    fn apply_displacement(&mut self, disp: &[N]);
+
+    /// The number of degrees of freedom (DOF) of this body, taking its status into account.
+    ///
+    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
     #[inline]
-    pub fn is_ground(&self) -> bool {
-        if let BodyPart::Ground(_) = *self {
-            true
+    fn status_dependent_ndofs(&self) -> usize {
+        if self.is_dynamic() {
+            self.ndofs()
         } else {
-            false
+            0
         }
     }
+
+    /// The velocity of the specified body part, taking this body status into account.
+    ///
+    /// This will return a zero velocity for any body with a status different than `BodyStatus::Dynamic`.
+    fn status_dependent_body_part_velocity(&self, part: &BodyPart<N>) -> Velocity<N> {
+        if self.is_dynamic() {
+            part.velocity()
+        } else {
+            Velocity::zero()
+        }
+    }
+
+    /// Sets the tag associated to this body and its body parts.
+    ///
+    /// This is should not be called explicitly by user code. This is called
+    /// by the world when the body is added to the world.
+    /// If `tag` is `None`, all handles of this body and body parts should be
+    /// reset to `None` as well.
+    fn set_handle(&mut self, handle: Option<BodyHandle>);
 
     /// The handle of this body.
-    #[inline]
-    pub fn handle(&self) -> BodyHandle {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.handle(),
-            BodyPart::MultibodyLink(ref mb) => mb.handle(),
-            BodyPart::Ground(ref g) => g.handle(),
-        }
-    }
+    fn handle(&self) -> Option<BodyHandle>;
 
-    /// The number of degrees of freedom of the body containing this body part.
-    #[inline]
-    pub fn parent_ndofs(&self) -> usize {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.ndofs(),
-            BodyPart::MultibodyLink(ref mb) => mb.multibody().ndofs(),
-            BodyPart::Ground(ref g) => g.ndofs(),
-        }
-    }
+    /// The status of this body.
+    fn status(&self) -> BodyStatus;
 
-    /// The companion ID of the parent of this body part.
-    #[inline]
-    pub fn parent_companion_id(&self) -> usize {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.companion_id(),
-            BodyPart::MultibodyLink(ref mb) => mb.multibody().companion_id(),
-            BodyPart::Ground(ref g) => g.companion_id(),
-        }
-    }
+    /// Information regarding activation and deactivation (sleeping) of this body.
+    fn activation_status(&self) -> &ActivationStatus<N>;
 
-    /// Check if this body part is active.
-    #[inline]
-    pub fn is_active(&self) -> bool {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.is_active(),
-            BodyPart::MultibodyLink(ref mb) => mb.multibody().is_active(),
-            BodyPart::Ground(ref g) => g.is_active(),
-        }
-    }
+    /// Check if this body is active.
+    fn is_active(&self) -> bool;
 
-    /// The number of degrees of freedom (DOF) of the body containing this body part, taking its status into account.
-    ///
-    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
-    #[inline]
-    pub fn status_dependent_parent_ndofs(&self) -> usize {
-        match *self {
-            BodyPart::RigidBody(ref rb) => if rb.is_dynamic() {
-                rb.ndofs()
-            } else {
-                0
-            },
-            BodyPart::MultibodyLink(ref mb) => if mb.multibody().is_dynamic() {
-                mb.multibody().ndofs()
-            } else {
-                0
-            },
-            BodyPart::Ground(_) => 0,
-        }
-    }
+    /// Whether or not the status of this body is dynamic.
+    fn is_dynamic(&self) -> bool;
 
-    /// The generalized velocities of the body containing this body part.
-    #[inline]
-    pub fn parent_generalized_velocity(&self) -> DVectorSlice<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.generalized_velocity(),
-            BodyPart::MultibodyLink(ref mb) => mb.multibody().generalized_velocity(),
-            BodyPart::Ground(ref g) => g.generalized_velocity(),
-        }
-    }
+    /// Whether or not the status of this body is kinematic.
+    fn is_kinematic(&self) -> bool;
 
-    /// The center of mass of this body part.
-    #[inline]
-    pub fn center_of_mass(&self) -> Point<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.center_of_mass(),
-            BodyPart::MultibodyLink(ref mb) => mb.center_of_mass(),
-            BodyPart::Ground(ref g) => g.center_of_mass(),
-        }
-    }
+    /// Whether or not the status of this body is static.
+    fn is_static(&self) -> bool;
 
-    /// The position of this body part wrt. the ground.
-    #[inline]
-    pub fn position(&self) -> Isometry<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.position(),
-            BodyPart::MultibodyLink(ref mb) => mb.position(),
-            BodyPart::Ground(ref g) => g.position(),
-        }
-    }
+    /// The number of degrees of freedom of this body.
+    fn ndofs(&self) -> usize;
 
-    /// The velocity of this body part.
-    #[inline]
-    pub fn velocity(&self) -> Velocity<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => *rb.velocity(),
-            BodyPart::MultibodyLink(ref mb) => *mb.velocity(),
-            BodyPart::Ground(ref g) => g.velocity(),
-        }
-    }
+    /// The generalized accelerations at each degree of freedom of this body.
+    fn generalized_acceleration(&self) -> DVectorSlice<N>;
 
-    /// The world-space inertia of this body part.
-    #[inline]
-    pub fn inertia(&self) -> Inertia<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => *rb.inertia(),
-            BodyPart::MultibodyLink(ref mb) => *mb.inertia(),
-            BodyPart::Ground(ref g) => g.inertia(),
-        }
-    }
+    /// The generalized velocities of this body.
+    fn generalized_velocity(&self) -> DVectorSlice<N>;
 
-    /// The local-space inertia of this body part.
-    #[inline]
-    pub fn local_inertia(&self) -> Inertia<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => *rb.local_inertia(),
-            BodyPart::MultibodyLink(ref mb) => *mb.local_inertia(),
-            BodyPart::Ground(ref g) => g.local_inertia(),
-        }
-    }
+    /// The companion ID of this body.
+    fn companion_id(&self) -> usize;
 
-    /// The velocity of this body part, taking it status into account.
-    ///
-    /// This always return zero if the body part is static.
-    #[inline]
-    pub fn status_dependent_velocity(&self) -> Velocity<N> {
-        match *self {
-            BodyPart::RigidBody(ref rb) => if !rb.is_static() {
-                *rb.velocity()
-            } else {
-                Velocity::zero()
-            },
-            BodyPart::MultibodyLink(ref mb) => if mb.multibody().is_static() {
-                *mb.velocity()
-            } else {
-                Velocity::zero()
-            },
-            BodyPart::Ground(_) => Velocity::zero(),
-        }
-    }
+    /// Set the companion ID of this body (may be reinitialized by nphysics).
+    fn set_companion_id(&mut self, id: usize);
 
-    /// Convert a force applied to the center of mass of this body part into generalized force.
-    #[inline]
-    pub fn body_jacobian_mul_force(&self, force: &Force<N>, out: &mut [N]) {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.body_jacobian_mul_force(force, out),
-            BodyPart::MultibodyLink(ref mb) => mb.body_jacobian_mul_force(force, out),
-            BodyPart::Ground(ref g) => g.body_jacobian_mul_force(force, out),
-        }
-    }
+    /// The mutable generalized velocities of this body.
+    fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N>;
+
+    /// Integrate the position of this body.
+    fn integrate(&mut self, params: &IntegrationParameters<N>);
+
+    // FIXME: should those directly be implemented only for bodies (to avoid duplicated code on
+    // each body for activation)?
+    /// Force the activation of this body.
+    fn activate(&mut self);
+
+    /// Force the activation of this body with the given level of energy.
+    fn activate_with_energy(&mut self, energy: N);
+
+    /// Put this body to sleep.
+    fn deactivate(&mut self);
+
+    /// A reference to the specified body part.
+    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N>;
+
+    /// A mutable reference to the specified body part.
+    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N>;
+
+    /// Returns `true` if `handle` is a valid handle for one of this body's part.
+    fn contains_part(&self, handle: BodyPartHandle) -> bool;
 
     /// Convert generalized forces applied to this body part into generalized accelerations.
-    #[inline]
-    pub fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.inv_mass_mul_generalized_forces(out),
-            BodyPart::MultibodyLink(ref mb) => mb.inv_mass_mul_generalized_forces(out),
-            BodyPart::Ground(ref g) => g.inv_mass_mul_generalized_forces(out),
-        }
-    }
+    fn inv_mass_mul_generalized_forces(&self, out: &mut [N]);
+
+    /// Convert a force applied to the center of mass of this body part into generalized force.
+    fn body_part_jacobian_mul_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]);
 
     /// Convert a force applied to this body part's center of mass into generalized accelerations.
-    #[inline]
-    pub fn inv_mass_mul_force(&self, force: &Force<N>, out: &mut [N]) {
-        match *self {
-            BodyPart::RigidBody(ref rb) => rb.inv_mass_mul_force(force, out),
-            BodyPart::MultibodyLink(ref mb) => mb.inv_mass_mul_force(force, out),
-            BodyPart::Ground(ref g) => g.inv_mass_mul_force(force, out),
-        }
-    }
+    fn inv_mass_mul_body_part_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]);
 }
 
-impl<'a, N: Real> BodyPartMut<'a, N> {
-    /// Retrieves an immutable reference to this body part.
-    #[inline]
-    pub fn as_ref<'b>(&'b self) -> BodyPart<'b, N> {
-        match *self {
-            BodyPartMut::RigidBody(ref rb) => BodyPart::RigidBody(rb),
-            BodyPartMut::MultibodyLink(ref mb) => BodyPart::MultibodyLink(mb.as_ref()),
-            BodyPartMut::Ground(ref g) => BodyPart::Ground(g),
-        }
-    }
+/// Trait implemented by each part of a body supported by nphysics.
+pub trait BodyPart<N: Real>: Any + Send + Sync {
+    /// Returns `true` if this body part is the ground.
+    fn is_ground(&self) -> bool;
+
+    /// The handle of this body part.
+    fn handle(&self) -> Option<BodyPartHandle>;
+
+    /// The center of mass of this body part.
+    fn center_of_mass(&self) -> Point<N>;
+
+    /// The position of this body part wrt. the ground.
+    fn position(&self) -> Isometry<N>;
+
+    /// The velocity of this body part.
+    fn velocity(&self) -> Velocity<N>;
+
+    /// The world-space inertia of this body part.
+    fn inertia(&self) -> Inertia<N>;
+
+    /// The local-space inertia of this body part.
+    fn local_inertia(&self) -> Inertia<N>;
 
     /// Apply a force to this body part at the next frame.
-    #[inline]
-    pub fn apply_force(&mut self, force: &Force<N>) {
-        match *self {
-            BodyPartMut::RigidBody(ref mut rb) => rb.apply_force(force),
-            BodyPartMut::MultibodyLink(ref mut mb) => mb.apply_force(force),
-            BodyPartMut::Ground(ref mut g) => g.apply_force(force),
-        }
-    }
+    fn apply_force(&mut self, force: &Force<N>);
 }
+
+downcast!(<N> Body<N> where N: Real);
+downcast!(<N> BodyPart<N> where N: Real);

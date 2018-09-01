@@ -7,7 +7,7 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Ball, Plane, ShapeHandle};
 use nphysics3d::world::World;
 use nphysics3d::force_generator::ConstantAcceleration;
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
@@ -32,7 +32,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::identity(),
         Material::default(),
     );
@@ -41,7 +41,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::new(Vector3::y() * 20.0, na::zero()),
         Material::default(),
     );

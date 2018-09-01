@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::joint::{FreeJoint, RevoluteJoint};
-use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -34,7 +34,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -94,7 +94,7 @@ fn add_ragdoll(pos: Vector2<f32>, world: &mut World<f32>) {
      * Body.
      */
     let body = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         free,
         na::zero(),
         na::zero(),

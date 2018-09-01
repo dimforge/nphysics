@@ -45,22 +45,23 @@ impl<N: Real> SignoriniModel<N> {
         let data1 = manifold.collider1.data();
         let data2 = manifold.collider2.data();
 
-        let b1 = data1.body();
-        let b2 = data2.body();
+        let body1 = bodies.body(data1.body_part().body_handle);
+        let body2 = bodies.body(data2.body_part().body_handle);
+        let part1 = body1.part(data1.body_part());
+        let part2 = body2.part(data2.body_part());
 
-        let body1 = bodies.body_part(b1);
-        let body2 = bodies.body_part(b2);
-
-        let assembly_id1 = body1.parent_companion_id();
-        let assembly_id2 = body2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let center1 = c.contact.world1 + c.contact.normal.unwrap() * data1.margin();
         let center2 = c.contact.world2 - c.contact.normal.unwrap() * data2.margin();
         let dir = ForceDirection::Linear(-c.contact.normal);
 
         let geom = helper::constraint_pair_geometry(
-            &body1,
-            &body2,
+            body1,
+            part1,
+            body2,
+            part2,
             &center1,
             &center2,
             &dir,
@@ -70,8 +71,10 @@ impl<N: Real> SignoriniModel<N> {
         );
 
         let mut rhs = helper::constraint_pair_velocity(
-            &body1,
-            &body2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &center1,
@@ -150,14 +153,16 @@ impl<N: Real> SignoriniModel<N> {
         let data1 = manifold.collider1.data();
         let data2 = manifold.collider2.data();
 
-        let b1 = data1.body();
-        let b2 = data2.body();
+        let b1 = data1.body_part();
+        let b2 = data2.body_part();
 
-        let body1 = bodies.body_part(b1);
-        let body2 = bodies.body_part(b2);
+        let body1 = bodies.body(b1.body_handle);
+        let body2 = bodies.body(b2.body_handle);
+        let part1 = body1.part(b1);
+        let part2 = body2.part(b2);
 
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let pos1 = part1.position();
+        let pos2 = part2.position();
         let normal1 = pos1.inverse_transform_unit_vector(&c.contact.normal);
         let normal2 = -pos2.inverse_transform_unit_vector(&c.contact.normal);
 
@@ -174,9 +179,9 @@ impl<N: Real> SignoriniModel<N> {
             .unilateral
             .push(NonlinearUnilateralConstraint::new(
                 b1,
-                body1.status_dependent_parent_ndofs(),
+                body1.status_dependent_ndofs(),
                 b2,
-                body2.status_dependent_parent_ndofs(),
+                body2.status_dependent_ndofs(),
                 normal1,
                 normal2,
                 kinematic,

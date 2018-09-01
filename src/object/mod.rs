@@ -2,13 +2,13 @@
 
 pub use self::material::Material;
 
-pub use self::body::{ActivationStatus, Body, BodyMut, BodyPart, BodyPartMut, BodyStatus};
-pub use self::body_set::{Bodies, BodyHandle, BodySet};
+pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus};
+pub use self::body_set::{Bodies, BodyPartHandle, BodySet, BodyHandle};
 pub use self::collider::{Collider, ColliderData, ColliderHandle, Colliders, Sensor, SensorHandle};
 pub use self::ground::Ground;
 pub use self::multibody::{Multibody, MultibodyLinks, MultibodyWorkspace};
-pub(crate) use self::multibody_link::{MultibodyLink, MultibodyLinkVec};
-pub use self::multibody_link::{MultibodyLinkId, MultibodyLinkMut, MultibodyLinkRef};
+pub(crate) use self::multibody_link::MultibodyLinkVec;
+pub use self::multibody_link::MultibodyLink;
 pub use self::rigid_body::RigidBody;
 
 mod material;

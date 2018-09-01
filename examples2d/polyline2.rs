@@ -7,7 +7,7 @@ extern crate rand;
 use na::Real;
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, Polyline, ShapeHandle};
-use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -44,7 +44,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ShapeHandle::new(polyline),
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry2::identity(),
         Material::default(),
     );

@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
@@ -30,7 +30,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -38,9 +38,9 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num     = 30;
-    let rad     = 0.1;
-    let shift   = rad * 2.0;
+    let num = 30;
+    let rad = 0.1;
+    let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
 
@@ -48,8 +48,8 @@ fn main() {
     let inertia = geom.inertia(1.0);
     let center_of_mass = geom.center_of_mass();
 
-    for i in 0usize .. num {
-        for j in i .. num {
+    for i in 0usize..num {
+        for j in i..num {
             let fi = i as f32;
             let fj = (j - i) as f32;
             let x = (fi * shift / 2.0) + fj * shift - centerx;

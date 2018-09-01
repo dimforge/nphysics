@@ -63,59 +63,59 @@ impl<N: Real> NonlinearSORProx<N> {
 
         for i in 0..nconstraints {
             if let Some(mut constraint) =
-                generator.position_constraint(params, i, bodies, jacobians)
-            {
-                let dim1 = Dynamic::new(constraint.dim1);
-                let dim2 = Dynamic::new(constraint.dim2);
+            generator.position_constraint(params, i, bodies, jacobians)
+                {
+                    let dim1 = Dynamic::new(constraint.dim1);
+                    let dim2 = Dynamic::new(constraint.dim2);
 
-                let rhs = if constraint.is_angular {
-                    na::sup(
-                        &((constraint.rhs + params.allowed_angular_error) * params.erp),
-                        &(-params.max_angular_correction),
-                    )
-                } else {
-                    na::sup(
-                        &((constraint.rhs + params.allowed_linear_error) * params.erp),
-                        &(-params.max_linear_correction),
-                    )
-                };
+                    let rhs = if constraint.is_angular {
+                        na::sup(
+                            &((constraint.rhs + params.allowed_angular_error) * params.erp),
+                            &(-params.max_angular_correction),
+                        )
+                    } else {
+                        na::sup(
+                            &((constraint.rhs + params.allowed_linear_error) * params.erp),
+                            &(-params.max_linear_correction),
+                        )
+                    };
 
-                // Avoid overshoot when the penetration vector is close to the null-space
-                // of a multibody link jacobian.
-                // FIXME: will this cause issue with very light objects?
-                // Should this be done depending on the jacobian magnitude instead
-                // (instead of JM-1J)?
-                if false {
-                    // constraint.r > params.max_stabilization_multiplier {
-                    constraint.r = params.max_stabilization_multiplier;
+                    // Avoid overshoot when the penetration vector is close to the null-space
+                    // of a multibody link jacobian.
+                    // FIXME: will this cause issue with very light objects?
+                    // Should this be done depending on the jacobian magnitude instead
+                    // (instead of JM-1J)?
+                    if false {
+                        // constraint.r > params.max_stabilization_multiplier {
+                        constraint.r = params.max_stabilization_multiplier;
+                    }
+
+                    if rhs < N::zero() {
+                        let impulse = -rhs * constraint.r;
+
+                        VectorSliceMutN::from_slice_generic(
+                            &mut jacobians[constraint.wj_id1..],
+                            dim1,
+                            U1,
+                        ).mul_assign(impulse);
+
+                        VectorSliceMutN::from_slice_generic(
+                            &mut jacobians[constraint.wj_id2..],
+                            dim2,
+                            U1,
+                        ).mul_assign(impulse);
+
+                        // FIXME: the body update should be performed lazily, especially because
+                        // we dont actually need to update the kinematic of a multibody until
+                        // we have to solve a contact involvoing one of its links.
+                        bodies.body_mut(constraint.body1.body_handle).apply_displacement(
+                            &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
+                        );
+                        bodies.body_mut(constraint.body2.body_handle).apply_displacement(
+                            &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
+                        );
+                    }
                 }
-
-                if rhs < N::zero() {
-                    let impulse = -rhs * constraint.r;
-
-                    VectorSliceMutN::from_slice_generic(
-                        &mut jacobians[constraint.wj_id1..],
-                        dim1,
-                        U1,
-                    ).mul_assign(impulse);
-
-                    VectorSliceMutN::from_slice_generic(
-                        &mut jacobians[constraint.wj_id2..],
-                        dim2,
-                        U1,
-                    ).mul_assign(impulse);
-
-                    // FIXME: the body update should be performed lazily, especially because
-                    // we dont actually need to update the kinematic of a multibody until
-                    // we have to solve a contact involvoing one of its links.
-                    bodies.body_mut(constraint.body1).apply_displacement(
-                        &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
-                    );
-                    bodies.body_mut(constraint.body2).apply_displacement(
-                        &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
-                    );
-                }
-            }
         }
     }
 
@@ -137,12 +137,12 @@ impl<N: Real> NonlinearSORProx<N> {
 
             if dim1.value() != 0 {
                 bodies
-                    .body_mut(constraint.body1)
+                    .body_mut(constraint.body1.body_handle)
                     .apply_displacement(&jacobians[0..dim1.value()]);
             }
             if dim2.value() != 0 {
                 bodies
-                    .body_mut(constraint.body2)
+                    .body_mut(constraint.body2.body_handle)
                     .apply_displacement(&jacobians[dim1.value()..dim1.value() + dim2.value()]);
             }
         }
@@ -155,73 +155,77 @@ impl<N: Real> NonlinearSORProx<N> {
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
     ) -> bool {
-        let body1 = bodies.body_part(constraint.body1);
-        let body2 = bodies.body_part(constraint.body2);
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let body1 = bodies.body(constraint.body1.body_handle);
+        let body2 = bodies.body(constraint.body2.body_handle);
+        let part1 = body1.part(constraint.body1);
+        let part2 = body2.part(constraint.body2);
+        let pos1 = part1.position();
+        let pos2 = part2.position();
 
         if let Some(contact) = constraint
             .kinematic
             .contact(&pos1, &pos2, &constraint.normal1)
-        {
-            constraint.rhs = na::sup(
-                &((-contact.depth + params.allowed_linear_error) * params.erp),
-                &(-params.max_linear_correction),
-            );
-
-            if constraint.rhs >= N::zero() {
-                return false;
-            }
-
-            // XXX: should use constraint_pair_geometry to properly handle multibodies.
-            let mut inv_r = N::zero();
-            let j_id1 = constraint.ndofs1 + constraint.ndofs2;
-            let j_id2 = (constraint.ndofs1 * 2) + constraint.ndofs2;
-
-            if constraint.ndofs1 != 0 {
-                helper::fill_constraint_geometry(
-                    &body1,
-                    constraint.ndofs1,
-                    &contact.world1,
-                    &ForceDirection::Linear(-contact.normal),
-                    j_id1,
-                    0,
-                    jacobians,
-                    &mut inv_r,
+            {
+                constraint.rhs = na::sup(
+                    &((-contact.depth + params.allowed_linear_error) * params.erp),
+                    &(-params.max_linear_correction),
                 );
-            }
 
-            if constraint.ndofs2 != 0 {
-                helper::fill_constraint_geometry(
-                    &body2,
-                    constraint.ndofs2,
-                    &contact.world2,
-                    &ForceDirection::Linear(contact.normal),
-                    j_id2,
-                    constraint.ndofs1,
-                    jacobians,
-                    &mut inv_r,
-                );
-            }
+                if constraint.rhs >= N::zero() {
+                    return false;
+                }
 
-            // Avoid overshoot when the penetration vector is close to the null-space
-            // of a multibody link jacobian.
-            // FIXME: will this cause issue with very heavy objects?
-            // Should this be done depending on the jacobian magnitude instead
-            // (instead of JM-1J)?
+                // XXX: should use constraint_pair_geometry to properly handle multibodies.
+                let mut inv_r = N::zero();
+                let j_id1 = constraint.ndofs1 + constraint.ndofs2;
+                let j_id2 = (constraint.ndofs1 * 2) + constraint.ndofs2;
 
-            // let j1 = DVectorSlice::from_slice(&jacobians[j_id1..], constraint.ndofs1);
-            // let j2 = DVectorSlice::from_slice(&jacobians[j_id2..], constraint.ndofs2);
+                if constraint.ndofs1 != 0 {
+                    helper::fill_constraint_geometry(
+                        body1,
+                        part1,
+                        constraint.ndofs1,
+                        &contact.world1,
+                        &ForceDirection::Linear(-contact.normal),
+                        j_id1,
+                        0,
+                        jacobians,
+                        &mut inv_r,
+                    );
+                }
 
-            if false {
-                // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
-                constraint.r = params.max_stabilization_multiplier;
+                if constraint.ndofs2 != 0 {
+                    helper::fill_constraint_geometry(
+                        body2,
+                        part2,
+                        constraint.ndofs2,
+                        &contact.world2,
+                        &ForceDirection::Linear(contact.normal),
+                        j_id2,
+                        constraint.ndofs1,
+                        jacobians,
+                        &mut inv_r,
+                    );
+                }
+
+                // Avoid overshoot when the penetration vector is close to the null-space
+                // of a multibody link jacobian.
+                // FIXME: will this cause issue with very heavy objects?
+                // Should this be done depending on the jacobian magnitude instead
+                // (instead of JM-1J)?
+
+                // let j1 = DVectorSlice::from_slice(&jacobians[j_id1..], constraint.ndofs1);
+                // let j2 = DVectorSlice::from_slice(&jacobians[j_id2..], constraint.ndofs2);
+
+                if false {
+                    // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
+                    constraint.r = params.max_stabilization_multiplier;
+                } else {
+                    constraint.r = N::one() / inv_r
+                }
+
+                true
             } else {
-                constraint.r = N::one() / inv_r
-            }
-
-            true
-        } else {
             false
         }
     }

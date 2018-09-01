@@ -1,13 +1,14 @@
-use na::{self, DVectorSlice, DVectorSliceMut, Real};
+use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use math::{Force, Inertia, Isometry, Point, Velocity};
-use object::{ActivationStatus, BodyHandle, BodyStatus};
+use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
 use solver::IntegrationParameters;
 
 /// A singleton representing the ground.
 ///
 /// Most of its methods are useless but provided anyway to be
 /// similar to the other bodies.
+#[derive(Clone, Debug)]
 pub struct Ground<N: Real> {
     companion_id: usize,
     activation: ActivationStatus<N>,
@@ -22,156 +23,164 @@ impl<N: Real> Ground<N> {
             data: [],
         }
     }
+}
 
-    /// The handle of the ground.
+impl<N: Real> Body<N> for Ground<N> {
     #[inline]
-    pub fn handle(&self) -> BodyHandle {
-        BodyHandle::ground()
+    fn update_kinematics(&mut self) {}
+
+    #[inline]
+    fn clear_dynamics(&mut self) {}
+
+    #[inline]
+    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
+        self
     }
 
-    /// An inactive status.
     #[inline]
-    pub fn activation_status(&self) -> &ActivationStatus<N> {
-        &self.activation
+    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
+        self
     }
 
-    /// Does nothing.
     #[inline]
-    pub fn activate(&mut self) {
-        if let Some(threshold) = self.activation.deactivation_threshold() {
-            self.activate_with_energy(threshold * na::convert(2.0));
-        }
+    fn contains_part(&self, handle: BodyPartHandle) -> bool {
+        handle.is_ground()
     }
 
-    /// Does nothing.
     #[inline]
-    pub fn activate_with_energy(&mut self, energy: N) {
-        self.activation.set_energy(energy)
-    }
+    fn set_handle(&mut self, handle: Option<BodyHandle>) {}
 
-    /// Does nothing.
     #[inline]
-    pub fn deactivate(&mut self) {
-        self.activation.set_energy(N::zero());
-    }
-
-    /// Returns `false`.
-    #[inline]
-    pub fn is_active(&self) -> bool {
-        self.activation.is_active()
-    }
-
-    /// Returns `false`.
-    #[inline]
-    pub fn is_dynamic(&self) -> bool {
-        false
-    }
-
-    /// Returns `false`.
-    #[inline]
-    pub fn is_kinematic(&self) -> bool {
-        false
-    }
-
-    /// Returns `true`.
-    #[inline]
-    pub fn is_static(&self) -> bool {
+    fn is_ground(&self) -> bool {
         true
     }
 
-    /// Returns `BodyStatus::Static`.
     #[inline]
-    pub fn status(&self) -> BodyStatus {
+    fn apply_displacement(&mut self, _: &[N]) {}
+
+    #[inline]
+    fn handle(&self) -> Option<BodyHandle> {
+        Some(BodyHandle::ground())
+    }
+
+    #[inline]
+    fn status(&self) -> BodyStatus {
         BodyStatus::Static
     }
 
-    /// The companion ID of the ground.
-    ///
-    /// May change at each step of the physics engine.
     #[inline]
-    pub fn companion_id(&self) -> usize {
-        self.companion_id
+    fn activation_status(&self) -> &ActivationStatus<N> {
+        &self.activation
     }
 
-    /// Sets the companion ID of the ground.
-    ///
-    /// This may be reset by the physics engine at each step.
     #[inline]
-    pub fn set_companion_id(&mut self, id: usize) {
-        self.companion_id = id
+    fn is_active(&self) -> bool {
+        false
     }
 
-    /// Returns 0.
     #[inline]
-    pub fn ndofs(&self) -> usize {
+    fn is_dynamic(&self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_kinematic(&self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn is_static(&self) -> bool {
+        true
+    }
+
+    #[inline]
+    fn ndofs(&self) -> usize {
         0
     }
 
-    /// Returns an empty slice.
     #[inline]
-    pub fn generalized_velocity(&self) -> DVectorSlice<N> {
+    fn generalized_acceleration(&self) -> DVectorSlice<N> {
         DVectorSlice::from_slice(&self.data[..], 0)
     }
 
-    /// Returns an empty slice.
     #[inline]
-    pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
+    fn generalized_velocity(&self) -> DVectorSlice<N> {
+        DVectorSlice::from_slice(&self.data[..], 0)
+    }
+
+    #[inline]
+    fn companion_id(&self) -> usize {
+        self.companion_id
+    }
+
+    #[inline]
+    fn set_companion_id(&mut self, id: usize) {
+        self.companion_id = id
+    }
+
+    #[inline]
+    fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
         DVectorSliceMut::from_slice(&mut self.data[..], 0)
     }
 
-    /// Returns an empty slice.
     #[inline]
-    pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.data[..], 0)
+    fn integrate(&mut self, _: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn activate(&mut self) {}
+
+    #[inline]
+    fn activate_with_energy(&mut self, _: N) {}
+
+    #[inline]
+    fn deactivate(&mut self) {}
+
+    #[inline]
+    fn body_part_jacobian_mul_force(&self, _: &BodyPart<N>, _: &Force<N>, _: &mut [N]) {}
+
+    #[inline]
+    fn inv_mass_mul_generalized_forces(&self, _: &mut [N]) {}
+
+    #[inline]
+    fn inv_mass_mul_body_part_force(&self, _: &BodyPart<N>, _: &Force<N>, _: &mut [N]) {}
+}
+
+impl<N: Real> BodyPart<N> for Ground<N> {
+    #[inline]
+    fn is_ground(&self) -> bool {
+        true
     }
 
-    /// Does nothing.
     #[inline]
-    pub fn integrate(&mut self, _: &IntegrationParameters<N>) {}
+    fn handle(&self) -> Option<BodyPartHandle> {
+        Some(BodyPartHandle::ground())
+    }
 
-    /// Returns the origin.
     #[inline]
-    pub fn center_of_mass(&self) -> Point<N> {
+    fn center_of_mass(&self) -> Point<N> {
         Point::origin()
     }
 
-    /// Returns the identity.
     #[inline]
-    pub fn position(&self) -> Isometry<N> {
+    fn position(&self) -> Isometry<N> {
         Isometry::identity()
     }
 
-    /// Returns zero.
     #[inline]
-    pub fn velocity(&self) -> Velocity<N> {
+    fn velocity(&self) -> Velocity<N> {
         Velocity::zero()
     }
 
-    /// Returns zero.
     #[inline]
-    pub fn inertia(&self) -> Inertia<N> {
+    fn inertia(&self) -> Inertia<N> {
         Inertia::zero()
     }
 
-    /// Returns zero.
     #[inline]
-    pub fn local_inertia(&self) -> Inertia<N> {
+    fn local_inertia(&self) -> Inertia<N> {
         Inertia::zero()
     }
 
-    /// Does nothing.
     #[inline]
-    pub fn body_jacobian_mul_force(&self, _: &Force<N>, _: &mut [N]) {}
-
-    /// Does nothing.
-    #[inline]
-    pub fn inv_mass_mul_generalized_forces(&self, _: &mut [N]) {}
-
-    /// Does nothing.
-    #[inline]
-    pub fn inv_mass_mul_force(&self, _: &Force<N>, _: &mut [N]) {}
-
-    /// Does nothing.
-    #[inline]
-    pub fn apply_force(&mut self, _: &Force<N>) {}
+    fn apply_force(&mut self, _: &Force<N>) {}
 }

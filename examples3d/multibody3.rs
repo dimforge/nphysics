@@ -9,7 +9,7 @@ use nphysics3d::joint::{
     BallJoint, CartesianJoint, CylindricalJoint, FixedJoint, FreeJoint, HelicalJoint, Joint,
     PinSlotJoint, PlanarJoint, PrismaticJoint, RectangularJoint, RevoluteJoint, UniversalJoint,
 };
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -30,14 +30,14 @@ fn main() {
      */
     // let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(50.0, 50.0, 50.0)));
     // let ground_pos   = Isometry3::new(Vector3::y() * -57.0, na::zero());
-    // world.add_collider(COLLIDER_MARGIN, ground_shape, BodyHandle::ground(), ground_pos, Material::default());
+    // world.add_collider(COLLIDER_MARGIN, ground_shape, BodyPartHandle::ground(), ground_pos, Material::default());
 
     /*
      * Revolute joints.
      */
     let num = 20;
     let rad = 0.2;
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
 
     // let revo    = RevoluteJoint::new(Vector3::x_axis(), 0.0);
     let revo = BallJoint::new(na::zero());
@@ -67,7 +67,7 @@ fn main() {
     // /*
     //  * Prismatic joint.
     //  */
-    // parent = BodyHandle::ground();
+    // parent = BodyPartHandle::ground();
     // let mut prism = PrismaticJoint::new(Vector3::y_axis(), 0.0);
     // prism.enable_min_offset(-rad * 3.0);
 
@@ -80,7 +80,7 @@ fn main() {
     /*
      * Ball joint.
      */
-    // parent = BodyHandle::ground();
+    // parent = BodyPartHandle::ground();
     // for i in 0usize .. num {
     //     // The multibody links are initialized along a circle.
     //     let angle = i as f32 * 2.0 * PI / (num as f32);
@@ -112,7 +112,7 @@ fn main() {
     //         let x = i as f32 * rad * 4.0;
     //         let y = j as f32 * rad * 4.0;
     //         let planar = PlanarJoint::new(axis1, axis2, x, y, 0.4);
-    //         let handle = world.add_multibody_link(BodyHandle::ground(), planar, shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
+    //         let handle = world.add_multibody_link(BodyPartHandle::ground(), planar, shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
     //         world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
     //     }
     // }
@@ -130,7 +130,7 @@ fn main() {
     //         let x = i as f32 * rad * 4.0;
     //         let y = j as f32 * rad * 4.0 + 5.0;
     //         let planar = RectangularJoint::new(axis1, axis2, x, y);
-    //         let handle = world.add_multibody_link(BodyHandle::ground(), planar, shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
+    //         let handle = world.add_multibody_link(BodyPartHandle::ground(), planar, shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
     //         world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
     //     }
     // }
@@ -145,7 +145,7 @@ fn main() {
     // //         let x = i as f32 * rad * 4.0;
     // //         let z = j as f32 * rad * 4.0 + 2.0;
     // //         let planar = CartesianJoint::new(Vector3::new(x, 10.0, z));
-    // //         let handle = world.add_multibody_link(BodyHandle::ground(), planar,
+    // //         let handle = world.add_multibody_link(BodyPartHandle::ground(), planar,
     // //                                               na::zero(), na::zero(), cuboid_inertia);
     // //         world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
     // //     }
@@ -160,7 +160,7 @@ fn main() {
     // let axis           = -Vector3::z_axis();
 
     // let cyl    = CylindricalJoint::new(axis, 1.0, 0.0);
-    // let handle = world.add_multibody_link(BodyHandle::ground(), cyl, parent_shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
+    // let handle = world.add_multibody_link(BodyPartHandle::ground(), cyl, parent_shift, na::zero(), cuboid_inertia, cuboid_center_of_mass);
     // world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
 
     // /*
@@ -172,7 +172,7 @@ fn main() {
     // let axis_w         = Vector3::x_axis();
 
     // let pin_slot = PinSlotJoint::new(axis_v, axis_w, 5.0, 0.0);
-    // let handle   = world.add_multibody_link(BodyHandle::ground(), pin_slot, na::zero(), na::zero(), cuboid_inertia, cuboid_center_of_mass);
+    // let handle   = world.add_multibody_link(BodyPartHandle::ground(), pin_slot, na::zero(), na::zero(), cuboid_inertia, cuboid_center_of_mass);
     // world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
 
     // /*
@@ -183,7 +183,7 @@ fn main() {
     // let axis = Vector3::y_axis();
 
     // let hel = HelicalJoint::new(axis, 1.0, 10.0);
-    // let handle = world.add_multibody_link(BodyHandle::ground(), hel, na::zero(), na::zero(), cuboid_inertia, cuboid_center_of_mass);
+    // let handle = world.add_multibody_link(BodyPartHandle::ground(), hel, na::zero(), na::zero(), cuboid_inertia, cuboid_center_of_mass);
     // world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
 
     // /*
@@ -192,7 +192,7 @@ fn main() {
     // let axis1 = Vector3::x_axis();
     // let axis2 = Vector3::z_axis();
     // let uni = UniversalJoint::new(axis1, axis2, 0.0, 0.0);
-    // let handle = world.add_multibody_link(BodyHandle::ground(), uni, Vector3::new(0.0, 5.0, -3.0), -Vector3::z() * rad * 3.0, cuboid_inertia, cuboid_center_of_mass);
+    // let handle = world.add_multibody_link(BodyPartHandle::ground(), uni, Vector3::new(0.0, 5.0, -3.0), -Vector3::z() * rad * 3.0, cuboid_inertia, cuboid_center_of_mass);
     // world.add_collider(COLLIDER_MARGIN, cuboid.clone(), handle, Isometry3::identity(), Material::default());
 
     // world.multibody_link_mut(handle).unwrap().joint_velocity_mut()[1] = 10.0;

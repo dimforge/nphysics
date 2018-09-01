@@ -2,13 +2,13 @@ use na::Real;
 
 use solver::IntegrationParameters;
 use force_generator::ForceGenerator;
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodySet};
 use math::{Velocity, Vector};
 
 /// Force generator adding a constant acceleration
 /// at the center of mass of a set of body parts.
 pub struct ConstantAcceleration<N: Real> {
-    parts: Vec<BodyHandle>,
+    parts: Vec<BodyPartHandle>,
     acceleration: Velocity<N>,
 }
 
@@ -36,7 +36,7 @@ impl<N: Real> ConstantAcceleration<N> {
     }
 
     /// Add a body part to be affected by this force generator.
-    pub fn add_body_part(&mut self, body: BodyHandle) {
+    pub fn add_body_part(&mut self, body: BodyPartHandle) {
         self.parts.push(body)
     }
 }
@@ -46,11 +46,11 @@ impl<N: Real> ForceGenerator<N> for ConstantAcceleration<N> {
         let mut i = 0;
 
         while i < self.parts.len() {
-            let body = self.parts[i];
+            let part_handle = self.parts[i];
 
-            if bodies.contains(body) {
-                let mut part = bodies.body_part_mut(body);
-                let force = part.as_ref().inertia() * self.acceleration;
+            if bodies.contains_body_part(part_handle) {
+                let mut part = bodies.body_part_mut(part_handle);
+                let force = part.inertia() * self.acceleration;
                 part.apply_force(&force);
                 i += 1;
             } else {

@@ -1,5 +1,6 @@
 use std::iter;
 use std::ops::Range;
+use slab::Slab;
 
 use joint::{FreeJoint, Joint};
 use math::{
@@ -8,8 +9,8 @@ use math::{
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use object::{
-    ActivationStatus, BodyHandle, BodyStatus, MultibodyLink, MultibodyLinkId, MultibodyLinkMut,
-    MultibodyLinkRef, MultibodyLinkVec,
+    ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink,
+    MultibodyLinkVec, Body, BodyPart, BodyHandle, RigidBody, Ground,
 };
 use solver::{
     ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator,
@@ -18,12 +19,15 @@ use utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: Real> {
+    handle: Option<BodyHandle>,
+    ids: Slab<usize>,
     rbs: MultibodyLinkVec<N>,
     velocities: Vec<N>,
     damping: Vec<N>,
     accelerations: Vec<N>,
     impulses: Vec<N>,
-    body_jacobians: Vec<Jacobian<N>>, // FIXME: use sparse matrices.
+    body_jacobians: Vec<Jacobian<N>>,
+    // FIXME: use sparse matrices.
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: LU<N, Dynamic, Dynamic>,
     status: BodyStatus,
@@ -45,6 +49,8 @@ impl<N: Real> Multibody<N> {
     /// Creates a new multibody with no link.
     pub fn new() -> Self {
         Multibody {
+            handle: None,
+            ids: Slab::new(),
             rbs: MultibodyLinkVec(Vec::new()),
             velocities: Vec::new(),
             damping: Vec::new(),
@@ -65,111 +71,6 @@ impl<N: Real> Multibody<N> {
         }
     }
 
-    /// The handle of this multibody.
-    ///
-    /// This is the same as the handle of the link
-    /// at the root of the multibody's kinematic tree.
-    #[inline]
-    pub fn handle(&self) -> BodyHandle {
-        self.rbs[0].handle
-    }
-
-    /// Informations regarding activation and deactivation (sleeping) of this multibody.
-    #[inline]
-    pub fn activation_status(&self) -> &ActivationStatus<N> {
-        &self.activation
-    }
-
-    /// Mutable informations regarding activation and deactivation (sleeping) of this multibody.
-    #[inline]
-    pub fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
-        &mut self.activation
-    }
-
-    /// Force the activation of this multibody link.
-    #[inline]
-    pub fn activate(&mut self) {
-        if let Some(threshold) = self.activation.deactivation_threshold() {
-            self.activate_with_energy(threshold * na::convert(2.0));
-        }
-    }
-
-    /// Force the activation of this multibody link with the given level of energy.
-    #[inline]
-    pub fn activate_with_energy(&mut self, energy: N) {
-        self.activation.set_energy(energy)
-    }
-
-    /// Put this multibody to sleep.
-    #[inline]
-    pub fn deactivate(&mut self) {
-        self.activation.set_energy(N::zero());
-        for v in &mut self.velocities {
-            *v = N::zero()
-        }
-    }
-
-    /// Return `true` if this multibody is kinematic or dynamic and awake.
-    #[inline]
-    pub fn is_active(&self) -> bool {
-        match self.status {
-            BodyStatus::Dynamic => self.activation.is_active(),
-            BodyStatus::Kinematic => true,
-            BodyStatus::Static => false,
-            BodyStatus::Disabled => false,
-        }
-    }
-
-    /// The status of this multibody.
-    #[inline]
-    pub fn status(&self) -> BodyStatus {
-        self.status
-    }
-
-    /// Set the status of this body.
-    #[inline]
-    pub fn set_status(&mut self, status: BodyStatus) {
-        self.status = status
-    }
-
-    /// The companion ID of this multibody.
-    #[inline]
-    pub fn companion_id(&self) -> usize {
-        self.companion_id
-    }
-
-    /// Set the companion ID of this multibody.
-    ///
-    /// This value may be overriden by nphysics during a timestep.
-    #[inline]
-    pub fn set_companion_id(&mut self, id: usize) {
-        self.companion_id = id
-    }
-
-    /// Whether or not the status of this multibody is dynamic.
-    #[inline]
-    pub fn is_dynamic(&self) -> bool {
-        self.status == BodyStatus::Dynamic
-    }
-
-    /// Whether or not the status of this multibody is static.
-    #[inline]
-    pub fn is_static(&self) -> bool {
-        self.status == BodyStatus::Static
-    }
-
-    /// Whether or not the status of this multibody is kinematic.
-    #[inline]
-    pub fn is_kinematic(&self) -> bool {
-        self.status == BodyStatus::Kinematic
-    }
-
-    /// The total number of degrees of freedom of this multibody.
-    #[inline]
-    pub fn ndofs(&self) -> usize {
-        self.ndofs
-    }
-
     pub(crate) fn rbs(&self) -> &MultibodyLinkVec<N> {
         &self.rbs
     }
@@ -178,30 +79,40 @@ impl<N: Real> Multibody<N> {
         &mut self.rbs
     }
 
-    /// Iterator through all the links of this multibody.alloc_jemalloc
+    /// Reference to the multibody link with the given handle.
     ///
-    /// All link are guarenteed to be yielded before its descendet.
-    pub fn links(&self) -> MultibodyLinks<N> {
-        MultibodyLinks {
-            mb: self,
-            curr: MultibodyLinkId::new(0),
+    /// Return `None` if the given handle does not identifies a multibody link part of `self`.
+    #[inline]
+    pub fn link(&self, handle: BodyPartHandle) -> Option<&MultibodyLink<N>> {
+        if self.handle? == handle.body_handle {
+            let internal_id = *self.ids.get(handle.part_id)?;
+            Some(&self.rbs[internal_id])
+        } else {
+            None
         }
     }
 
-    /// Get a reference to a specific multibody link.
-    pub fn link(&self, rb_id: MultibodyLinkId) -> MultibodyLinkRef<N> {
-        MultibodyLinkRef::new(rb_id, self)
-    }
-
-    /// Get a mutable reference to a specific multibody link.
-    pub fn link_mut(&mut self, rb_id: MultibodyLinkId) -> MultibodyLinkMut<N> {
-        MultibodyLinkMut::new(rb_id, self)
-    }
-
-    /// The vector of generalized velocities of this multibody.
+    /// Mutable reference to the multibody link with the given handle.
+    ///
+    /// Return `None` if the given handle does not identifies a multibody link part of `self`.
     #[inline]
-    pub fn generalized_velocity(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.velocities, self.ndofs)
+    pub fn link_mut(&mut self, handle: BodyPartHandle) -> Option<&mut MultibodyLink<N>> {
+        if self.handle? == handle.body_handle {
+            let internal_id = *self.ids.get(handle.part_id)?;
+            Some(&mut self.rbs[internal_id])
+        } else {
+            None
+        }
+    }
+
+    /// Iterator through all the links of this multibody.alloc_jemalloc
+    ///
+    /// All link are guaranteed to be yielded before its descendant.
+    pub fn links(&self) -> MultibodyLinks<N> {
+        MultibodyLinks {
+            mb: self,
+            curr: 0,
+        }
     }
 
     /// The slice of generalized velocities of this multibody.
@@ -210,22 +121,22 @@ impl<N: Real> Multibody<N> {
         &self.velocities
     }
 
-    /// The mutable vector of generalized velocities of this multibody.
-    #[inline]
-    pub fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
-        DVectorSliceMut::from_slice(&mut self.velocities, self.ndofs)
-    }
-
     /// The mutable slice of generalized velocities of this multibody.
     #[inline]
     pub fn generalized_velocity_slice_mut(&mut self) -> &mut [N] {
         &mut self.velocities
     }
 
-    /// The vector of generalized accelerations of this multibody.
+    /// Mutable informations regarding activation and deactivation (sleeping) of this multibody.
     #[inline]
-    pub fn generalized_acceleration(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.accelerations, self.ndofs)
+    fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
+        &mut self.activation
+    }
+
+    /// Set the status of this body.
+    #[inline]
+    fn set_status(&mut self, status: BodyStatus) {
+        self.status = status
     }
 
     /// The vector of damping applied to this multibody.
@@ -248,14 +159,13 @@ impl<N: Real> Multibody<N> {
 
     pub(crate) fn add_link<J: Joint<N>>(
         &mut self,
-        handle: BodyHandle,
-        parent: MultibodyLinkId,
+        parent: BodyPartHandle,
         mut dof: J,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
         local_com: Point<N>,
-    ) -> MultibodyLinkMut<N> {
+    ) -> &mut MultibodyLink<N> {
         assert!(
             parent.is_ground() || !self.rbs.is_empty(),
             "Multibody::build_body: invalid parent id."
@@ -267,6 +177,7 @@ impl<N: Real> Multibody<N> {
         let assembly_id = self.velocities.len();
         let impulse_id = self.impulses.len();
         let internal_id = self.rbs.len();
+        let part_id = self.ids.insert(internal_id);
 
         /*
          * Grow the buffers.
@@ -289,21 +200,26 @@ impl<N: Real> Multibody<N> {
         let local_to_world;
         let parent_to_world;
 
+        let parent_internal_id;
         if !parent.is_ground() {
-            let parent_rb = &mut self.rbs[parent.internal_id];
+            parent_internal_id = *self.ids.get(parent.part_id).expect("Invalid parent handle.");
+            let parent_rb = &mut self.rbs[parent_internal_id];
             parent_rb.is_leaf = false;
             parent_to_world = parent_rb.local_to_world;
             local_to_world = parent_rb.local_to_world * local_to_parent;
         } else {
+            parent_internal_id = 0;
             parent_to_world = Isometry::identity();
             local_to_world = local_to_parent;
         }
 
-        let rb = MultibodyLink::new(
-            handle,
+        let mut rb = MultibodyLink::new(
+            part_id,
+            internal_id,
             assembly_id,
             impulse_id,
             parent,
+            parent_internal_id,
             Box::new(dof),
             parent_shift,
             body_shift,
@@ -313,9 +229,11 @@ impl<N: Real> Multibody<N> {
             local_inertia,
             local_com,
         );
+
+        rb.multibody_handle = self.handle;
         self.rbs.push(rb);
 
-        MultibodyLinkMut::new(MultibodyLinkId::new(internal_id), self)
+        &mut self.rbs[internal_id]
     }
 
     fn grow_buffers(&mut self, ndofs: usize, nimpulses: usize) {
@@ -334,12 +252,13 @@ impl<N: Real> Multibody<N> {
         mut link: MultibodyLink<N>,
         vels: &[N],
         damping: &[N],
-    ) -> MultibodyLinkId {
+    ) -> usize {
         let ndofs = link.dof.ndofs();
         let nimpulses = link.dof.nimpulses();
         let assembly_id = self.velocities.len();
         let impulse_id = self.impulses.len();
         let internal_id = self.rbs.len();
+
         self.ndofs += ndofs;
         self.grow_buffers(ndofs, nimpulses);
         self.velocities[assembly_id..].copy_from_slice(vels);
@@ -351,19 +270,20 @@ impl<N: Real> Multibody<N> {
 
         if !link.parent.is_ground() {
             assert!(
-                link.parent.internal_id < self.rbs.len(),
+                link.parent_internal_id < self.rbs.len(),
                 "Internal error: invalid parent."
             );
-            self.rbs[link.parent.internal_id].is_leaf = false;
+            self.rbs[link.parent_internal_id].is_leaf = false;
         }
 
         self.rbs.push(link);
 
-        MultibodyLinkId::new(internal_id)
+        internal_id
     }
 
     /// Remove a set of links from this multibody.
-    pub fn remove_links(self, links: &[MultibodyLinkId]) -> Vec<Multibody<N>> {
+    pub fn remove_links(self, links: &[BodyPartHandle]) -> Vec<Multibody<N>> {
+        /*
         // FIXME: this could be optimized.
         let mut rb2mb: Vec<_> = iter::repeat(0).take(self.rbs.len()).collect();
         let mut rb2id: Vec<_> = iter::repeat(MultibodyLinkId::ground())
@@ -417,63 +337,8 @@ impl<N: Real> Multibody<N> {
         }
 
         multibodies
-    }
-
-    /// Integrate the position of all the links of this multibody.
-    pub fn integrate(&mut self, params: &IntegrationParameters<N>) {
-        for rb in self.rbs.iter_mut() {
-            rb.dof.integrate(params, &self.velocities[rb.assembly_id..])
-        }
-    }
-
-    /// Apply a displacement to each degrees of freedom of this multibody.
-    pub fn apply_displacement(&mut self, disp: &[N]) {
-        for rb in self.rbs.iter_mut() {
-            rb.dof.apply_displacement(&disp[rb.assembly_id..])
-        }
-
-        self.update_kinematics();
-    }
-
-    /// Reset the timestep-specific dynamic information of this multibody.
-    pub fn clear_dynamics(&mut self) {
-        self.augmented_mass.fill(N::zero());
-        let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
-        accs.fill(N::zero());
-
-        for rb in &mut *self.rbs {
-            rb.external_forces = Force::zero();
-        }
-    }
-
-    // FIXME: keep this name?
-    /// Updates the positions of the rigid bodies.
-    pub fn update_kinematics(&mut self) {
-        // Special case for the root, which has no parent.
-        {
-            let rb = &mut self.rbs[0];
-            rb.dof.update_jacobians(&rb.body_shift, &self.velocities);
-            rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
-            rb.local_to_world = rb.local_to_parent;
-            rb.com = rb.local_to_world * rb.local_com;
-        }
-
-        // Handle the children. They all have a parent within this multibody.
-        for i in 1..self.rbs.len() {
-            let (rb, parent_rb) = self.rbs.get_mut_with_parent(i);
-
-            rb.dof
-                .update_jacobians(&rb.body_shift, &self.velocities[rb.assembly_id..]);
-            rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
-            rb.local_to_world = parent_rb.local_to_world * rb.local_to_parent;
-            rb.parent_to_world = parent_rb.local_to_world;
-            rb.com = rb.local_to_world * rb.local_com;
-        }
-
-        /*
-         * Compute body jacobians.
-         */
-        self.update_body_jacobians();
+        */
+        unimplemented!()
     }
 
     /// Computes the constant terms of the dynamics.
@@ -544,7 +409,7 @@ impl<N: Real> Multibody<N> {
                 let mut acc = rb.velocity_dot_wrt_joint;
 
                 if i != 0 {
-                    let parent_id = rb.parent.internal_id;
+                    let parent_id = rb.parent_internal_id;
                     let parent_rb = &self.rbs[parent_id];
                     let parent_vel = &parent_rb.velocity;
 
@@ -553,9 +418,9 @@ impl<N: Real> Multibody<N> {
                         .angular_vector()
                         .gcross(&rb.velocity_wrt_joint.linear);
                     #[cfg(feature = "dim3")]
-                    {
-                        acc.angular += parent_vel.angular.cross(&rb.velocity_wrt_joint.angular);
-                    }
+                        {
+                            acc.angular += parent_vel.angular.cross(&rb.velocity_wrt_joint.angular);
+                        }
 
                     let shift = rb.center_of_mass() - parent_rb.center_of_mass();
                     let dvel = rb.velocity.linear - parent_rb.velocity.linear;
@@ -570,16 +435,16 @@ impl<N: Real> Multibody<N> {
                 let gyroscopic;
 
                 #[cfg(feature = "dim3")]
-                {
-                    gyroscopic = rb
-                        .velocity
-                        .angular
-                        .cross(&(rb.inertia.angular * rb.velocity.angular));
-                }
+                    {
+                        gyroscopic = rb
+                            .velocity
+                            .angular
+                            .cross(&(rb.inertia.angular * rb.velocity.angular));
+                    }
                 #[cfg(feature = "dim2")]
-                {
-                    gyroscopic = N::zero();
-                }
+                    {
+                        gyroscopic = N::zero();
+                    }
 
                 external_forces = Force::new(gravity_force, -gyroscopic) - rb.inertia * acc;
                 accs.gemv_tr(
@@ -624,7 +489,7 @@ impl<N: Real> Multibody<N> {
             }
 
             if i != 0 {
-                let parent_id = rb.parent.internal_id;
+                let parent_id = rb.parent_internal_id;
                 let parent_rb = &self.rbs[parent_id];
                 let (rb_j, parent_j) = self.body_jacobians.index_mut_const(i, parent_id);
                 rb_j.copy_from(&parent_j);
@@ -681,14 +546,14 @@ impl<N: Real> Multibody<N> {
             let mut augmented_inertia = rb.inertia;
 
             #[cfg(feature = "dim3")]
-            {
-                // Derivative of gyroscopic forces.
-                let ang_inertia = rb.inertia.angular;
-                let gyroscopic_matrix = rb.velocity.angular.gcross_matrix() * ang_inertia
-                    - (ang_inertia * rb.velocity.angular).gcross_matrix();
+                {
+                    // Derivative of gyroscopic forces.
+                    let ang_inertia = rb.inertia.angular;
+                    let gyroscopic_matrix = rb.velocity.angular.gcross_matrix() * ang_inertia
+                        - (ang_inertia * rb.velocity.angular).gcross_matrix();
 
-                augmented_inertia.angular += gyroscopic_matrix * params.dt;
-            }
+                    augmented_inertia.angular += gyroscopic_matrix * params.dt;
+                }
 
             // FIXME: optimize that (knowing the structure of the augmented inertia matrix).
             // FIXME: this could be better optimized in 2D.
@@ -710,7 +575,7 @@ impl<N: Real> Multibody<N> {
             let ndofs = rb.dof.ndofs();
 
             if i != 0 {
-                let parent_id = rb.parent.internal_id;
+                let parent_id = rb.parent_internal_id;
                 let parent_rb = &self.rbs[parent_id];
                 let parent_j = &self.body_jacobians[parent_id];
                 let parent_j_v = parent_j.fixed_rows::<Dim>(0);
@@ -743,10 +608,10 @@ impl<N: Real> Multibody<N> {
                 coriolis_v.gemm(-N::one(), &parent_w, &parent_j_v, N::one());
 
                 #[cfg(feature = "dim3")]
-                {
-                    let vel_wrt_joint_w = rb.velocity_wrt_joint.angular_vector().gcross_matrix();
-                    coriolis_w.gemm(-N::one(), &vel_wrt_joint_w, &parent_j_w, N::one());
-                }
+                    {
+                        let vel_wrt_joint_w = rb.velocity_wrt_joint.angular_vector().gcross_matrix();
+                        coriolis_w.gemm(-N::one(), &vel_wrt_joint_w, &parent_j_w, N::one());
+                    }
 
                 {
                     let mut coriolis_v_part = coriolis_v.columns_mut(rb.assembly_id, ndofs);
@@ -761,11 +626,11 @@ impl<N: Real> Multibody<N> {
                     coriolis_v_part.gemm(N::one(), &parent_w, &rb_joint_j_v, N::one());
 
                     #[cfg(feature = "dim3")]
-                    {
-                        let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
-                        let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
-                        coriolis_w_part.gemm(N::one(), &parent_w, &rb_joint_j_w, N::one());
-                    }
+                        {
+                            let rb_joint_j_w = rb_joint_j.fixed_rows::<AngularDim>(DIM);
+                            let mut coriolis_w_part = coriolis_w.columns_mut(rb.assembly_id, ndofs);
+                            coriolis_w_part.gemm(N::one(), &parent_w, &rb_joint_j_w, N::one());
+                        }
                 }
             } else {
                 self.coriolis_v[i].fill(N::zero());
@@ -841,22 +706,26 @@ impl<N: Real> Multibody<N> {
         self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
     }
 
-    /// Convert a force applied to the center of mass of the link `rb_id` into generalized force.
-    pub fn body_jacobian_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
-        let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
-        self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
+    /// The generalized velocity at the joint of the given link.
+    #[inline]
+    pub fn joint_velocity(&self, link: &MultibodyLink<N>) -> DVectorSlice<N> {
+        let ndofs = link.dof.ndofs();
+        DVectorSlice::from_slice(
+            &self.velocities[link.assembly_id..link.assembly_id + ndofs],
+            ndofs,
+        )
     }
 
-    /// Convert generalized forces applied to this multibody into generalized accelerations.
-    pub fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
-        let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
-        assert!(self.inv_augmented_mass.solve_mut(&mut out))
+    /// Convert a force applied to the center of mass of the link `rb_id` into generalized force.
+    pub fn link_jacobian_mul_force(&self, link: &MultibodyLink<N>, force: &Force<N>, out: &mut [N]) {
+        let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
+        self.body_jacobians[link.internal_id].tr_mul_to(force.as_vector(), &mut out);
     }
 
     /// Convert a force applied to this multibody's link `rb_id` center of mass into generalized accelerations.
-    pub fn inv_mass_mul_force(&self, rb_id: MultibodyLinkId, force: &Force<N>, out: &mut [N]) {
+    pub fn inv_mass_mul_link_force(&self, link: &MultibodyLink<N>, force: &Force<N>, out: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
-        self.body_jacobians[rb_id.internal_id].tr_mul_to(force.as_vector(), &mut out);
+        self.body_jacobians[link.internal_id].tr_mul_to(force.as_vector(), &mut out);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
@@ -865,38 +734,49 @@ impl<N: Real> Multibody<N> {
     /// The joint attaching this link to its parent is assumed to be a unit joint.
     pub fn inv_mass_mul_unit_joint_force(
         &self,
-        rb_id: MultibodyLinkId,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         force: N,
         out: &mut [N],
     ) {
-        let rb = &self.rbs[rb_id.internal_id];
-
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         out.fill(N::zero());
-        out[rb.assembly_id + dof_id] = force;
+        out[link.assembly_id + dof_id] = force;
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
     /// Convert a generalized force applied to the link `rb_id`'s degrees of freedom into generalized accelerations.
     pub fn inv_mass_mul_joint_force(
         &self,
-        rb_id: MultibodyLinkId,
+        link: &MultibodyLink<N>,
         force: DVectorSlice<N>,
         out: &mut [N],
     ) {
-        let rb = &self.rbs[rb_id.internal_id];
-        let ndofs = rb.dof.ndofs();
+        let ndofs = link.dof.ndofs();
 
         let mut out = DVectorSliceMut::from_slice(out, self.ndofs);
         out.fill(N::zero());
-        out.rows_mut(rb.assembly_id, ndofs).copy_from(&force);
+        out.rows_mut(link.assembly_id, ndofs).copy_from(&force);
         assert!(self.inv_augmented_mass.solve_mut(&mut out));
     }
 
     /// The augmented mass (inluding gyroscropic and coriolis terms) in world-space of this multibody.
     pub fn augmented_mass(&self) -> &DMatrix<N> {
         &self.augmented_mass
+    }
+
+    /// Retrieve the mutable generalized velocities of this link.
+    #[inline]
+    pub fn joint_velocity_mut(&mut self, handle: BodyPartHandle) -> DVectorSliceMut<N> {
+        let ndofs;
+        let i;
+        {
+            let link = self.link(handle).expect("Invalid multibody link handle.");
+            ndofs = link.dof.ndofs();
+            i = link.assembly_id;
+        }
+
+        DVectorSliceMut::from_slice(&mut self.velocities[i..i + ndofs], ndofs)
     }
 
     /// Generates the set of velocity and position constraints needed for joint limits and motors at each link
@@ -915,6 +795,7 @@ impl<N: Real> Multibody<N> {
         for link in self.links() {
             link.joint().velocity_constraints(
                 params,
+                self,
                 &link,
                 self.companion_id,
                 0,
@@ -926,7 +807,7 @@ impl<N: Real> Multibody<N> {
 
             if link.joint().num_position_constraints() != 0 {
                 let generator =
-                    MultibodyJointLimitsNonlinearConstraintGenerator::new(link.handle());
+                    MultibodyJointLimitsNonlinearConstraintGenerator::new(link.handle().unwrap());
                 constraints.position.multibody_limits.push(generator)
             }
         }
@@ -939,31 +820,31 @@ impl<N: Real> Multibody<N> {
     pub fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
         for constraint in
             &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()]
-        {
-            self.impulses[constraint.impulse_id] = constraint.impulse;
-        }
+            {
+                self.impulses[constraint.impulse_id] = constraint.impulse;
+            }
 
         for constraint in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()]
-        {
-            self.impulses[constraint.impulse_id] = constraint.impulse;
-        }
+            {
+                self.impulses[constraint.impulse_id] = constraint.impulse;
+            }
     }
 }
 
 /// Iterator through all the multibody links.
 pub struct MultibodyLinks<'a, N: Real> {
     mb: &'a Multibody<N>,
-    curr: MultibodyLinkId,
+    curr: usize,
 }
 
 impl<'a, N: Real> Iterator for MultibodyLinks<'a, N> {
-    type Item = MultibodyLinkRef<'a, N>;
+    type Item = &'a MultibodyLink<N>;
 
     #[inline]
-    fn next(&mut self) -> Option<MultibodyLinkRef<'a, N>> {
-        if self.curr.internal_id < self.mb.rbs.len() {
-            let res = self.mb.link(self.curr);
-            self.curr.internal_id += 1;
+    fn next(&mut self) -> Option<&'a MultibodyLink<N>> {
+        if self.curr < self.mb.rbs.len() {
+            let res = &self.mb.rbs[self.curr];
+            self.curr += 1;
             Some(res)
         } else {
             None
@@ -985,5 +866,192 @@ impl<N: Real> MultibodyWorkspace<N> {
     /// Resize the workspace so it is enough for `nlinks` links.
     pub fn resize(&mut self, nlinks: usize) {
         self.accs.resize(nlinks, Velocity::zero());
+    }
+}
+
+impl<N: Real> Body<N> for Multibody<N> {
+    #[inline]
+    fn set_handle(&mut self, handle: Option<BodyHandle>) {
+        self.handle = handle;
+
+        for rb in &mut *self.rbs {
+            rb.multibody_handle = handle
+        }
+    }
+
+    #[inline]
+    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
+        self.link(handle).expect("Multibody part not found.")
+    }
+
+    #[inline]
+    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
+        self.link_mut(handle).expect("Multibody part not found.")
+    }
+
+    #[inline]
+    fn contains_part(&self, handle: BodyPartHandle) -> bool {
+        self.link(handle).is_some()
+    }
+
+    #[inline]
+    fn integrate(&mut self, params: &IntegrationParameters<N>) {
+        for rb in self.rbs.iter_mut() {
+            rb.dof.integrate(params, &self.velocities[rb.assembly_id..])
+        }
+    }
+
+    fn apply_displacement(&mut self, disp: &[N]) {
+        for rb in self.rbs.iter_mut() {
+            rb.dof.apply_displacement(&disp[rb.assembly_id..])
+        }
+
+        self.update_kinematics();
+    }
+
+    fn clear_dynamics(&mut self) {
+        self.augmented_mass.fill(N::zero());
+        let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
+        accs.fill(N::zero());
+
+        for rb in &mut *self.rbs {
+            rb.external_forces = Force::zero();
+        }
+    }
+
+    fn update_kinematics(&mut self) {
+        // Special case for the root, which has no parent.
+        {
+            let rb = &mut self.rbs[0];
+            rb.dof.update_jacobians(&rb.body_shift, &self.velocities);
+            rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
+            rb.local_to_world = rb.local_to_parent;
+            rb.com = rb.local_to_world * rb.local_com;
+        }
+
+        // Handle the children. They all have a parent within this multibody.
+        for i in 1..self.rbs.len() {
+            let (rb, parent_rb) = self.rbs.get_mut_with_parent(i);
+
+            rb.dof
+                .update_jacobians(&rb.body_shift, &self.velocities[rb.assembly_id..]);
+            rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
+            rb.local_to_world = parent_rb.local_to_world * rb.local_to_parent;
+            rb.parent_to_world = parent_rb.local_to_world;
+            rb.com = rb.local_to_world * rb.local_com;
+        }
+
+        /*
+         * Compute body jacobians.
+         */
+        self.update_body_jacobians();
+    }
+
+    #[inline]
+    fn generalized_acceleration(&self) -> DVectorSlice<N> {
+        DVectorSlice::from_slice(&self.accelerations, self.ndofs)
+    }
+
+    #[inline]
+    fn generalized_velocity(&self) -> DVectorSlice<N> {
+        DVectorSlice::from_slice(&self.velocities, self.ndofs)
+    }
+
+    #[inline]
+    fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
+        DVectorSliceMut::from_slice(&mut self.velocities, self.ndofs)
+    }
+
+    #[inline]
+    fn handle(&self) -> Option<BodyHandle> {
+        self.handle
+    }
+
+    #[inline]
+    fn activation_status(&self) -> &ActivationStatus<N> {
+        &self.activation
+    }
+
+    #[inline]
+    fn activate(&mut self) {
+        if let Some(threshold) = self.activation.deactivation_threshold() {
+            self.activate_with_energy(threshold * na::convert(2.0));
+        }
+    }
+
+    #[inline]
+    fn activate_with_energy(&mut self, energy: N) {
+        self.activation.set_energy(energy)
+    }
+
+    #[inline]
+    fn deactivate(&mut self) {
+        self.activation.set_energy(N::zero());
+        for v in &mut self.velocities {
+            *v = N::zero()
+        }
+    }
+
+    #[inline]
+    fn is_active(&self) -> bool {
+        match self.status {
+            BodyStatus::Dynamic => self.activation.is_active(),
+            BodyStatus::Kinematic => true,
+            BodyStatus::Static => false,
+            BodyStatus::Disabled => false,
+        }
+    }
+
+    #[inline]
+    fn status(&self) -> BodyStatus {
+        self.status
+    }
+
+    #[inline]
+    fn companion_id(&self) -> usize {
+        self.companion_id
+    }
+
+    #[inline]
+    fn set_companion_id(&mut self, id: usize) {
+        self.companion_id = id
+    }
+
+    #[inline]
+    fn is_dynamic(&self) -> bool {
+        self.status == BodyStatus::Dynamic
+    }
+
+    #[inline]
+    fn is_static(&self) -> bool {
+        self.status == BodyStatus::Static
+    }
+
+    #[inline]
+    fn is_kinematic(&self) -> bool {
+        self.status == BodyStatus::Kinematic
+    }
+
+    #[inline]
+    fn ndofs(&self) -> usize {
+        self.ndofs
+    }
+
+    #[inline]
+    fn body_part_jacobian_mul_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
+        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        self.link_jacobian_mul_force(link, force, out)
+    }
+
+    #[inline]
+    fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
+        let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
+        assert!(self.inv_augmented_mass.solve_mut(&mut out))
+    }
+
+    #[inline]
+    fn inv_mass_mul_body_part_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
+        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        self.inv_mass_mul_link_force(link, force, out)
     }
 }

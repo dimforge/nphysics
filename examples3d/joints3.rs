@@ -9,7 +9,7 @@ use nphysics3d::joint::{
     BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint, PrismaticJoint,
     RectangularJoint, RevoluteJoint, UniversalJoint,
 };
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -36,7 +36,7 @@ fn main() {
      * Revolute joints.
      */
     let num = 6;
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
 
     let revo = RevoluteJoint::new(Vector3::x_axis(), -0.1);
 
@@ -68,7 +68,7 @@ fn main() {
     /*
      * Prismatic joint.
      */
-    parent = BodyHandle::ground();
+    parent = BodyPartHandle::ground();
     let mut prism = PrismaticJoint::new(Vector3::y_axis(), 0.0);
     // Joint limit so that it does not fall indefinitely.
     prism.enable_min_offset(-rad * 2.0);
@@ -100,7 +100,7 @@ fn main() {
     /*
      * Ball joint.
      */
-    parent = BodyHandle::ground();
+    parent = BodyPartHandle::ground();
     for i in 0usize..num {
         // The multibody links are initialized along a circle.
         let angle = i as f32 * 2.0 * PI / (num as f32);
@@ -144,7 +144,7 @@ fn main() {
     let body_shift = -Vector3::z();
 
     parent = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         fixed,
         parent_shift,
         na::zero(),
@@ -176,7 +176,7 @@ fn main() {
     );
 
     // Remove the default damping so that it balances indefinitely.
-    world.multibody_mut(parent).unwrap().damping_mut().fill(0.0);
+    world.multibody_mut(parent.body_handle).unwrap().damping_mut().fill(0.0);
 
     /*
      * Helical joint.
@@ -191,7 +191,7 @@ fn main() {
     let parent_shift = Vector3::new(0.0, -2.0, 10.0);
 
     let hel_handle = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         hel,
         parent_shift,
         na::zero(),
@@ -227,7 +227,7 @@ fn main() {
             planar.enable_max_offset_1(width / 2.0);
             planar.enable_min_offset_2(-5.0);
             let handle = world.add_multibody_link(
-                BodyHandle::ground(),
+                BodyPartHandle::ground(),
                 planar,
                 shift,
                 na::zero(),
@@ -266,7 +266,7 @@ fn main() {
             rect.enable_max_offset_1(width / 2.0);
             rect.enable_min_offset_2(-5.0);
             let handle = world.add_multibody_link(
-                BodyHandle::ground(),
+                BodyPartHandle::ground(),
                 rect,
                 shift,
                 na::zero(),
@@ -295,7 +295,7 @@ fn main() {
     let mut pin_slot = PinSlotJoint::new(axis_v, axis_w, -10.0, 0.0);
     pin_slot.set_desired_linear_motor_velocity(3.0);
     let pin_handle = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         pin_slot,
         shift,
         na::zero(),
@@ -319,7 +319,7 @@ fn main() {
          * Activate the helical joint motor if it is to low.
          */
         // Might be None if the user interactively deleted the helical body.
-        if let Some(mut helical) = world.multibody_link_mut(hel_handle) {
+        if let Some(helical) = world.multibody_link_mut(hel_handle) {
             let dof = helical
                 .joint_mut()
                 .downcast_mut::<HelicalJoint<f32>>()
@@ -338,7 +338,7 @@ fn main() {
          * Activate the pin-slot joint linear motor if it is to low.
          */
         // Might be None if the user interactively deleted the pin-slot body.
-        if let Some(mut pin_slot) = world.multibody_link_mut(pin_handle) {
+        if let Some(pin_slot) = world.multibody_link_mut(pin_handle) {
             let dof = pin_slot
                 .joint_mut()
                 .downcast_mut::<PinSlotJoint<f32>>()

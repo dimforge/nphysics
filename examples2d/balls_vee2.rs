@@ -5,7 +5,7 @@ extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Unit, Vector2};
 use ncollide2d::shape::{Ball, Plane, ShapeHandle};
-use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -35,7 +35,7 @@ fn create_the_walls(world: &mut World<f32>) {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry2::new(-Vector2::y() * 10.0, na::zero()),
         Material::default(),
     );
@@ -49,7 +49,7 @@ fn create_the_walls(world: &mut World<f32>) {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry2::new(-Vector2::y() * 10.0, na::zero()),
         Material::default(),
     );

@@ -14,9 +14,9 @@ use force_generator::{ForceGenerator, ForceGeneratorHandle};
 use joint::{ConstraintHandle, Joint, JointConstraint};
 use math::{Inertia, Isometry, Point, Vector};
 use object::{
-    Body, BodyHandle, BodyMut, BodyPart, BodyPartMut, BodySet, BodyStatus, Collider, ColliderData,
-    ColliderHandle, Colliders, Material, Multibody, MultibodyLinkMut, MultibodyLinkRef,
-    MultibodyWorkspace, RigidBody, SensorHandle,
+    Body, BodyPartHandle, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
+    ColliderHandle, Colliders, Material, Multibody, MultibodyLink,
+    MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle,
 };
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 
@@ -28,7 +28,8 @@ pub struct World<N: Real> {
     counters: Counters,
     bodies: BodySet<N>,
     active_bodies: Vec<BodyHandle>,
-    colliders_w_parent: Vec<ColliderHandle>, // The set of colliders that have a parent.
+    colliders_w_parent: Vec<ColliderHandle>,
+    // The set of colliders that have a parent.
     cworld: CollisionWorld<N>,
     solver: MoreauJeanSolver<N>,
     activation_manager: ActivationManager<N>,
@@ -138,7 +139,7 @@ impl<N: Real> World<N> {
 
     // NOTE: static method used to avoid borrowing issues.
     fn activate_body_at(bodies: &mut BodySet<N>, handle: BodyHandle) {
-        let mut body = bodies.body_mut(handle);
+        let body = bodies.body_mut(handle);
         if body.status_dependent_ndofs() != 0 {
             body.activate();
         }
@@ -147,8 +148,8 @@ impl<N: Real> World<N> {
     /// Add a constraints to the physics world and retrieves its handle.
     pub fn add_constraint<C: JointConstraint<N>>(&mut self, constraint: C) -> ConstraintHandle {
         let (anchor1, anchor2) = constraint.anchors();
-        self.activate_body(anchor1);
-        self.activate_body(anchor2);
+        self.activate_body(anchor1.body_handle);
+        self.activate_body(anchor2.body_handle);
         self.constraints.insert(Box::new(constraint))
     }
 
@@ -160,8 +161,8 @@ impl<N: Real> World<N> {
     /// Get a mutable reference to the specified constraint.
     pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut JointConstraint<N> {
         let (anchor1, anchor2) = self.constraints[handle].anchors();
-        self.activate_body(anchor1);
-        self.activate_body(anchor2);
+        self.activate_body(anchor1.body_handle);
+        self.activate_body(anchor2.body_handle);
         &mut *self.constraints[handle]
     }
 
@@ -169,8 +170,8 @@ impl<N: Real> World<N> {
     pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<JointConstraint<N>> {
         let constraint = self.constraints.remove(handle);
         let (anchor1, anchor2) = constraint.anchors();
-        self.activate_body(anchor1);
-        self.activate_body(anchor2);
+        self.activate_body(anchor1.body_handle);
+        self.activate_body(anchor2.body_handle);
 
         constraint
     }
@@ -244,16 +245,18 @@ impl<N: Real> World<N> {
                     .cworld
                     .collision_object_mut(*collider_id)
                     .expect("Internal error: collider not found.");
-                let body = self.bodies.body_part(collider.data_mut().body());
+                let body = self.bodies.body(collider.data_mut().body_part().body_handle);
+
                 collider
                     .data_mut()
-                    .set_body_status_dependent_ndofs(body.status_dependent_parent_ndofs());
+                    .set_body_status_dependent_ndofs(body.status_dependent_ndofs());
 
                 if !body.is_active() {
                     continue;
                 }
 
-                let body_pos = body.position();
+                let part = body.part(collider.data_mut().body_part());
+                let body_pos = part.position();
                 new_pos = body_pos * collider.data_mut().position_wrt_body()
             }
 
@@ -287,17 +290,17 @@ impl<N: Real> World<N> {
 
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
         for (coll1, coll2, c) in self.cworld.contact_manifolds() {
-            // assert!(coll1.data().body() != coll2.data().body());
+            // assert!(coll1.data().body_part() != coll2.data().body());
 
-            let b1 = self.bodies.body(coll1.data().body());
-            let b2 = self.bodies.body(coll2.data().body());
+            let b1 = self.bodies.body(coll1.data().body_part().body_handle);
+            let b2 = self.bodies.body(coll2.data().body_part().body_handle);
 
             if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
-                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
-            {
-                contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, c));
-            }
+                || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+                {
+                    contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, c));
+                }
         }
 
         self.counters.solver_started();
@@ -326,9 +329,9 @@ impl<N: Real> World<N> {
     }
 
     /// Remove the specified bodies.
-    pub fn remove_bodies(&mut self, bodies: &[BodyHandle]) {
-        for body in bodies {
-            self.bodies.remove_body(*body);
+    pub fn remove_bodies(&mut self, handles: &[BodyHandle]) {
+        for handle in handles {
+            self.bodies.remove_body(*handle);
         }
 
         self.cleanup_after_body_removal();
@@ -337,7 +340,7 @@ impl<N: Real> World<N> {
     /// Remove several links of a single multibody.
     ///
     /// Panics if not all links belong to the same multibody.
-    pub fn remove_multibody_links(&mut self, links: &[BodyHandle]) {
+    pub fn remove_multibody_links(&mut self, links: &[BodyPartHandle]) {
         self.bodies.remove_multibody_links(links);
         self.cleanup_after_body_removal();
     }
@@ -353,15 +356,15 @@ impl<N: Real> World<N> {
 
         for (co1, co2, detector) in self.cworld.contact_pairs() {
             if detector.num_contacts() != 0 {
-                let b1_exists = bodies.contains(co1.data().body());
-                let b2_exists = bodies.contains(co2.data().body());
+                let b1_exists = bodies.contains_body(co1.data().body_part().body_handle);
+                let b2_exists = bodies.contains_body(co2.data().body_part().body_handle);
 
                 if !b1_exists {
                     if b2_exists {
-                        Self::activate_body_at(bodies, co2.data().body());
+                        Self::activate_body_at(bodies, co2.data().body_part().body_handle);
                     }
                 } else if !b2_exists {
-                    Self::activate_body_at(bodies, co1.data().body());
+                    Self::activate_body_at(bodies, co1.data().body_part().body_handle);
                 }
             }
         }
@@ -376,9 +379,9 @@ impl<N: Real> World<N> {
                 .collider(cid)
                 .expect("Internal error: collider not present")
                 .data()
-                .body();
+                .body_part();
 
-            if !self.bodies.contains(parent) {
+            if !self.bodies.contains_body_part(parent) {
                 self.cworld.remove(&[cid]);
                 let _ = self.colliders_w_parent.swap_remove(i);
             } else {
@@ -392,15 +395,15 @@ impl<N: Real> World<N> {
 
         self.constraints.retain(|_, constraint| {
             let (b1, b2) = constraint.anchors();
-            let b1_exists = bodies.contains(b1);
-            let b2_exists = bodies.contains(b2);
+            let b1_exists = bodies.contains_body_part(b1);
+            let b2_exists = bodies.contains_body_part(b2);
 
             if !b1_exists {
                 if b2_exists {
-                    Self::activate_body_at(bodies, b2);
+                    Self::activate_body_at(bodies, b2.body_handle);
                 }
             } else if !b2_exists {
-                Self::activate_body_at(bodies, b1);
+                Self::activate_body_at(bodies, b1.body_handle);
             }
 
             b1_exists && b2_exists
@@ -413,7 +416,7 @@ impl<N: Real> World<N> {
         position: Isometry<N>,
         local_inertia: Inertia<N>,
         local_center_of_mass: Point<N>,
-    ) -> BodyHandle {
+    ) -> BodyPartHandle {
         self.bodies
             .add_rigid_body(position, local_inertia, local_center_of_mass)
     }
@@ -421,13 +424,13 @@ impl<N: Real> World<N> {
     /// Add a multibody link to the world and retrieve its handle.
     pub fn add_multibody_link<J: Joint<N>>(
         &mut self,
-        parent: BodyHandle,
+        parent: BodyPartHandle,
         joint: J,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
         local_center_of_mass: Point<N>,
-    ) -> BodyHandle {
+    ) -> BodyPartHandle {
         self.bodies.add_multibody_link(
             parent,
             joint,
@@ -443,7 +446,7 @@ impl<N: Real> World<N> {
         &mut self,
         margin: N,
         shape: ShapeHandle<N>,
-        parent: BodyHandle,
+        parent: BodyPartHandle,
         to_parent: Isometry<N>,
         material: Material<N>,
     ) -> ColliderHandle {
@@ -458,7 +461,7 @@ impl<N: Real> World<N> {
     pub fn add_sensor(
         &mut self,
         shape: ShapeHandle<N>,
-        parent: BodyHandle,
+        parent: BodyPartHandle,
         to_parent: Isometry<N>,
     ) -> SensorHandle {
         let query = GeometricQueryType::Proximity(self.prediction * na::convert(0.5f64));
@@ -477,17 +480,18 @@ impl<N: Real> World<N> {
         query: GeometricQueryType<N>,
         margin: N,
         shape: ShapeHandle<N>,
-        parent: BodyHandle,
+        parent: BodyPartHandle,
         to_parent: Isometry<N>,
         material: Material<N>,
     ) -> CollisionObjectHandle {
         let (pos, ndofs) = if parent.is_ground() {
             (to_parent, 0)
         } else {
-            let parent = self.bodies.body_part(parent);
+            let parent_body = self.bodies.body(parent.body_handle);
+            let parent_part = parent_body.part(parent);
             (
-                parent.position() * to_parent,
-                parent.status_dependent_parent_ndofs(),
+                parent_part.position() * to_parent,
+                parent_body.status_dependent_ndofs(),
             )
         };
 
@@ -505,24 +509,24 @@ impl<N: Real> World<N> {
     /// Get a reference to the specified body part.
     ///
     /// Panics if a body part with the given handle was not found.
-    pub fn body_part(&self, handle: BodyHandle) -> BodyPart<N> {
+    pub fn body_part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
         self.bodies.body_part(handle)
     }
 
     /// Get a mutable reference to the specified body part.
     ///
     /// Panics if a body part with the given handle was not found.
-    pub fn body_part_mut(&mut self, handle: BodyHandle) -> BodyPartMut<N> {
+    pub fn body_part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
         self.bodies.body_part_mut(handle)
     }
 
     /// Get a reference to the specified body.
-    pub fn body(&self, handle: BodyHandle) -> Body<N> {
+    pub fn body(&self, handle: BodyHandle) -> &Body<N> {
         self.bodies.body(handle)
     }
 
     /// Get a mutable reference to the specified body.
-    pub fn body_mut(&mut self, handle: BodyHandle) -> BodyMut<N> {
+    pub fn body_mut(&mut self, handle: BodyHandle) -> &mut Body<N> {
         self.bodies.body_mut(handle)
     }
 
@@ -543,14 +547,14 @@ impl<N: Real> World<N> {
     /// Get a reference to the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
-    pub fn multibody_link(&self, handle: BodyHandle) -> Option<MultibodyLinkRef<N>> {
+    pub fn multibody_link(&self, handle: BodyPartHandle) -> Option<&MultibodyLink<N>> {
         self.bodies.multibody_link(handle)
     }
 
     /// Get a mutable reference to the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
-    pub fn multibody_link_mut(&mut self, handle: BodyHandle) -> Option<MultibodyLinkMut<N>> {
+    pub fn multibody_link_mut(&mut self, handle: BodyPartHandle) -> Option<&mut MultibodyLink<N>> {
         self.bodies.multibody_link_mut(handle)
     }
 
@@ -584,11 +588,11 @@ impl<N: Real> World<N> {
         self.cworld.collision_object(handle)
     }
 
-    /// Gets the handle of the parent body the specified collider is attached to.
-    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<BodyHandle> {
+    /// Gets the handle of the parent body part the specified collider is attached to.
+    pub fn collider_body_part_handle(&self, handle: ColliderHandle) -> Option<BodyPartHandle> {
         self.cworld
             .collision_object(handle)
-            .map(|co| co.data().body())
+            .map(|co| co.data().body_part())
     }
 
     /// An iterator through all the colliders on this collision world.
@@ -614,6 +618,7 @@ impl<N: Real> Default for World<N> {
 }
 
 struct BodyStatusCollisionFilter;
+
 impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
     fn is_pair_valid(&self, b1: &Collider<N>, b2: &Collider<N>) -> bool {

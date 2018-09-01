@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use na::{Isometry2, Point3, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::ConstantAcceleration;
-use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -39,7 +39,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape.clone(),
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -48,7 +48,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );

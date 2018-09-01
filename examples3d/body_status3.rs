@@ -7,7 +7,7 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::RevoluteJoint;
 use nphysics3d::math::Inertia;
-use nphysics3d::object::{BodyHandle, BodyStatus, Material};
+use nphysics3d::object::{BodyPartHandle, BodyStatus, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -33,7 +33,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         material.clone(),
     );
@@ -116,7 +116,7 @@ fn main() {
     let inertia = Inertia::zero();
     let center_of_mass = geom.center_of_mass();
     let handle = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         joint,
         Vector3::new(0.0, 2.0, 5.0),
         Vector3::z() * 2.0,
@@ -149,7 +149,7 @@ fn main() {
     let inertia = geom.inertia(1.0);
     let center_of_mass = geom.center_of_mass();
     let handle = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         joint,
         Vector3::new(0.0, 3.0, -4.0),
         Vector3::z() * 2.0,

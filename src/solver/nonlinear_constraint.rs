@@ -2,15 +2,15 @@ use na::{Real, Unit};
 use ncollide::query::ContactKinematic;
 
 use math::Vector;
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodySet};
 use solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
 pub struct GenericNonlinearConstraint<N: Real> {
     /// The first body affected by the constraint.
-    pub body1: BodyHandle,
+    pub body1: BodyPartHandle,
     /// The second body affected by the constraint.
-    pub body2: BodyHandle,
+    pub body2: BodyPartHandle,
     /// Whether this constraint affects the bodies translation or orientation.
     pub is_angular: bool,
     //  FIXME: rename ndofs1?
@@ -31,8 +31,8 @@ pub struct GenericNonlinearConstraint<N: Real> {
 impl<N: Real> GenericNonlinearConstraint<N> {
     /// Initialize a new nonlinear constraint.
     pub fn new(
-        body1: BodyHandle,
-        body2: BodyHandle,
+        body1: BodyPartHandle,
+        body2: BodyPartHandle,
         is_angular: bool,
         dim1: usize,
         dim2: usize,
@@ -79,12 +79,12 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     /// Number of degree of freedom of the first body.
     pub ndofs1: usize,
     /// The first body affected by the constraint.
-    pub body1: BodyHandle,
+    pub body1: BodyPartHandle,
 
     /// Number of degree of freedom of the second body.
     pub ndofs2: usize,
     /// The second body affected by the constraint.
-    pub body2: BodyHandle,
+    pub body2: BodyPartHandle,
 
     /// The kinematic information used to update the contact location.
     pub kinematic: ContactKinematic<N>,
@@ -98,9 +98,9 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
 impl<N: Real> NonlinearUnilateralConstraint<N> {
     /// Create a new nonlinear position-based non-penetration constraint.
     pub fn new(
-        body1: BodyHandle,
+        body1: BodyPartHandle,
         ndofs1: usize,
-        body2: BodyHandle,
+        body2: BodyPartHandle,
         ndofs2: usize,
         normal1: Unit<Vector<N>>,
         normal2: Unit<Vector<N>>,
@@ -125,12 +125,12 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
 
 /// A non-linear position constraint generator to enforce multibody joint limits.
 pub struct MultibodyJointLimitsNonlinearConstraintGenerator {
-    link: BodyHandle,
+    link: BodyPartHandle,
 }
 
 impl MultibodyJointLimitsNonlinearConstraintGenerator {
     /// Creates the constraint generator from the given multibody link.
-    pub fn new(link: BodyHandle) -> Self {
+    pub fn new(link: BodyPartHandle) -> Self {
         MultibodyJointLimitsNonlinearConstraintGenerator { link }
     }
 }
@@ -151,10 +151,8 @@ impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearC
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        if let Some(link) = bodies.multibody_link(self.link) {
-            link.joint().position_constraint(i, &link, 0, jacobians)
-        } else {
-            None
-        }
+        let mb = bodies.multibody(self.link.body_handle)?;
+        let link = mb.link(self.link)?;
+        link.joint().position_constraint(i, mb, link, 0, jacobians)
     }
 }

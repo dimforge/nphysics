@@ -3,28 +3,28 @@ use na::{DVector, Real, Unit};
 
 use joint::JointConstraint;
 use math::{Point, Vector, DIM};
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodySet};
 use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A spring-like constraint to be used to drag a body part with the mouse.
 pub struct MouseConstraint<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
     limit: N,
 }
 
 impl<N: Real> MouseConstraint<N> {
-    /// Initialize a mouse constraint between two bodies.BodyHandle
+    /// Initialize a mouse constraint between two bodies.BodyPartHandle
     ///
     /// Typically, `b1` will be the ground and the anchor the position of the mouse.
     /// Both anchors are expressed in the local coordinate frames of the corresponding body parts.
     pub fn new(
-        b1: BodyHandle,
-        b2: BodyHandle,
+        b1: BodyPartHandle,
+        b2: BodyPartHandle,
         anchor1: Point<N>,
         anchor2: Point<N>,
         limit: N,
@@ -54,7 +54,7 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         DIM
     }
 
-    fn anchors(&self) -> (BodyHandle, BodyHandle) {
+    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
         (self.b1, self.b2)
     }
 
@@ -68,22 +68,24 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.body_handle);
+        let body2 = bodies.body(self.b2.body_handle);
+        let part1 = body1.part(self.b1);
+        let part2 = body2.part(self.b2);
 
         /*
          *
          * Joint constraints.
          *
          */
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let pos1 = part1.position();
+        let pos2 = part2.position();
 
         let anchor1 = pos1 * self.anchor1;
         let anchor2 = pos2 * self.anchor2;
 
-        let assembly_id1 = body1.parent_companion_id();
-        let assembly_id2 = body2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let limits = ImpulseLimits::Independent {
             min: -self.limit,
@@ -96,8 +98,10 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         Vector::canonical_basis(|dir| {
             let fdir = ForceDirection::Linear(Unit::new_unchecked(*dir));
             let geom = helper::constraint_pair_geometry(
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 &fdir,
@@ -107,8 +111,10 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
             );
 
             let rhs = helper::constraint_pair_velocity(
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 assembly_id1,
                 assembly_id2,
                 &anchor1,

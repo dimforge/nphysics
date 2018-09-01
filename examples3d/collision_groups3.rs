@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use ncollide3d::world::CollisionGroups;
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -46,7 +46,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -58,7 +58,7 @@ fn main() {
     let handle = world.add_collider(
         COLLIDER_MARGIN,
         geom,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::new(Vector3::y() * 1.0, na::zero()),
         Material::default(),
     );
@@ -76,7 +76,7 @@ fn main() {
     let handle = world.add_collider(
         COLLIDER_MARGIN,
         geom,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::new(Vector3::y() * 2.0, na::zero()),
         Material::default(),
     );

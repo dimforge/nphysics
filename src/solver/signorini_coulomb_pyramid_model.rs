@@ -57,8 +57,10 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
 
         for manifold in manifolds {
-            let body1 = bodies.body_part(manifold.collider1.data().body());
-            let body2 = bodies.body_part(manifold.collider2.data().body());
+            let body1 = bodies.body(manifold.collider1.data().body_part().body_handle);
+            let body2 = bodies.body(manifold.collider2.data().body_part().body_handle);
+            let part1 = body1.part(manifold.collider1.data().body_part());
+            let part2 = body2.part(manifold.collider2.data().body_part());
 
             let friction1 = manifold.collider1.data().material().friction;
             let friction2 = manifold.collider2.data().material().friction;
@@ -98,8 +100,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     dependency = constraints.len() - 1;
                 }
 
-                let assembly_id1 = body1.parent_companion_id();
-                let assembly_id2 = body2.parent_companion_id();
+                let assembly_id1 = body1.companion_id();
+                let assembly_id2 = body2.companion_id();
 
                 // Generate friction constraints.
                 let limits = ImpulseLimits::Dependent {
@@ -121,8 +123,10 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                     // FIXME: will this compute the momentum twice ?
                     let geom = helper::constraint_pair_geometry(
-                        &body1,
-                        &body2,
+                        body1,
+                        part1,
+                        body2,
+                        part2,
                         &center1,
                         &center2,
                         &dir,
@@ -132,8 +136,10 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     );
 
                     let rhs = helper::constraint_pair_velocity(
-                        &body1,
-                        &body2,
+                        body1,
+                        part1,
+                        body2,
+                        part2,
                         assembly_id1,
                         assembly_id2,
                         &center1,

@@ -1,13 +1,15 @@
 use na::{DVector, Real, Unit};
 
 use math::{Point, Vector};
-use object::BodyPart;
+use object::{Body, BodyPart};
 use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 pub fn build_linear_limits_velocity_constraint<N: Real>(
-    body1: &BodyPart<N>,
-    body2: &BodyPart<N>,
+    body1: &Body<N>,
+    part1: &BodyPart<N>,
+    body2: &Body<N>,
+    part2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -61,7 +63,9 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
     let force = ForceDirection::Linear(dir);
     let geom = helper::constraint_pair_geometry(
         body1,
+        part1,
         body2,
+        part2,
         anchor1,
         anchor2,
         &force,
@@ -71,8 +75,10 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
     );
 
     let rhs = helper::constraint_pair_velocity(
-        &body1,
-        &body2,
+        body1,
+        part1,
+        body2,
+        part2,
         assembly_id1,
         assembly_id2,
         anchor1,
@@ -127,8 +133,10 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
 
 pub fn build_linear_limits_position_constraint<N: Real>(
     params: &IntegrationParameters<N>,
-    body1: &BodyPart<N>,
-    body2: &BodyPart<N>,
+    body1: &Body<N>,
+    part1: &BodyPart<N>,
+    body2: &Body<N>,
+    part2: &BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
@@ -158,7 +166,9 @@ pub fn build_linear_limits_position_constraint<N: Real>(
 
         let geom = helper::constraint_pair_geometry(
             body1,
+            part1,
             body2,
+            part2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -169,8 +179,8 @@ pub fn build_linear_limits_position_constraint<N: Real>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            body1.handle(),
-            body2.handle(),
+            part1.handle().unwrap(),
+            part2.handle().unwrap(),
             false,
             geom.ndofs1,
             geom.ndofs2,

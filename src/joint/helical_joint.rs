@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
 use math::{JacobianSliceMut, Velocity};
-use object::MultibodyLinkRef;
+use object::{Multibody, MultibodyLink};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one degree of freedom between two multibody links.
@@ -102,7 +102,8 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
     fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
@@ -113,6 +114,7 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id,
@@ -131,12 +133,13 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
     fn position_constraint(
         &self,
         _: usize,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         // XXX: is this correct even though we don't have the same jacobian?
-        self.revo.position_constraint(0, link, dof_id, jacobians)
+        self.revo.position_constraint(0, multibody, link, dof_id, jacobians)
     }
 }
 

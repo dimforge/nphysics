@@ -7,7 +7,7 @@ use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::joint::RevoluteJoint;
 use nphysics2d::math::{Inertia, Velocity};
-use nphysics2d::object::{BodyHandle, BodyStatus, Material};
+use nphysics2d::object::{BodyPartHandle, BodyStatus, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -29,7 +29,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -39,7 +39,7 @@ fn main() {
      */
     let num = 8;
     let rad = 0.2;
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
 
     let revo = RevoluteJoint::new(0.0);
     let geom = ShapeHandle::new(Ball::new(rad));
@@ -81,7 +81,7 @@ fn main() {
      */
     let num = 10;
     let rad = 0.2;
-    let shift   = rad * 2.0 /*+ 1.0e-4*/;
+    let shift = rad * 2.0 /*+ 1.0e-4*/;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 3.04;
 
@@ -139,7 +139,7 @@ fn main() {
     // let joint     = RevoluteJoint::new(0.0);
     // let inertia   = Inertia::zero();
     // let joint_pos = Isometry2::new(Vector2::new(5.0, -2.0), na::zero());
-    // let handle    = world.add_multibody_link(BodyHandle::ground(), joint, Vector2::new(2.0, 0.0), joint_pos, inertia);
+    // let handle    = world.add_multibody_link(BodyPartHandle::ground(), joint, Vector2::new(2.0, 0.0), joint_pos, inertia);
 
     // {
     //     let mut mb = world.multibody_mut(handle).unwrap();
@@ -160,7 +160,7 @@ fn main() {
     let inertia = geom.inertia(1.0);
     let center_of_mass = geom.center_of_mass();
     let handle = world.add_multibody_link(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         joint,
         Vector2::new(-4.0, 3.0),
         Vector2::x() * 2.0,

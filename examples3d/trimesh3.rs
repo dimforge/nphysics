@@ -6,7 +6,7 @@ extern crate rand;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -44,7 +44,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ShapeHandle::new(trimesh),
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::identity(),
         Material::default(),
     );

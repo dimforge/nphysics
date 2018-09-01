@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, Real, Unit};
 
 use joint::{self, Joint, JointMotor, UnitJoint};
 use math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use object::MultibodyLinkRef;
+use object::{MultibodyLink, Multibody};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use utils::GeneralizedCross;
 
@@ -255,7 +255,8 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
@@ -266,6 +267,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
         joint::unit_joint_velocity_constraints(
             self,
             params,
+            multibody,
             link,
             assembly_id,
             dof_id,
@@ -287,11 +289,12 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     fn position_constraint(
         &self,
         _: usize,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        joint::unit_joint_position_constraint(self, link, dof_id, true, jacobians)
+        joint::unit_joint_position_constraint(self, multibody, link, dof_id, true, jacobians)
     }
 }
 
@@ -314,7 +317,7 @@ impl<N: Real> UnitJoint<N> for RevoluteJoint<N> {
 }
 
 #[cfg(feature = "dim3")]
-macro_rules! revolute_motor_limit_methods(
+macro_rules! revolute_motor_limit_methods (
     ($ty: ident, $revo: ident) => {
         _revolute_motor_limit_methods!(
             $ty,
@@ -336,7 +339,7 @@ macro_rules! revolute_motor_limit_methods(
 );
 
 #[cfg(feature = "dim3")]
-macro_rules! revolute_motor_limit_methods_1(
+macro_rules! revolute_motor_limit_methods_1 (
     ($ty: ident, $revo: ident) => {
         _revolute_motor_limit_methods!(
             $ty,
@@ -358,7 +361,7 @@ macro_rules! revolute_motor_limit_methods_1(
 );
 
 #[cfg(feature = "dim3")]
-macro_rules! revolute_motor_limit_methods_2(
+macro_rules! revolute_motor_limit_methods_2 (
     ($ty: ident, $revo: ident) => {
         _revolute_motor_limit_methods!(
             $ty,
@@ -380,7 +383,7 @@ macro_rules! revolute_motor_limit_methods_2(
 );
 
 #[cfg(feature = "dim3")]
-macro_rules! _revolute_motor_limit_methods(
+macro_rules! _revolute_motor_limit_methods (
     ($ty: ident, $revo: ident,
      $min_angle:         ident,
      $max_angle:         ident,

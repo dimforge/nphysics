@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use na::{Isometry2, Point2, Unit, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::joint::{CartesianJoint, PrismaticJoint, RevoluteJoint};
-use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -34,7 +34,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -48,7 +48,7 @@ fn main() {
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
     let center_of_mass = geom.center_of_mass();
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
 
     for _ in 0usize..num {
         /*
@@ -79,7 +79,7 @@ fn main() {
      * Prismatic joint.
      */
     let ramp = Vector2::new(0.0, 1.0);
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
 
     let mut prism = PrismaticJoint::new(Unit::new_normalize(ramp), 0.0);
     prism.enable_max_offset(rad * 3.0);
@@ -120,7 +120,7 @@ fn main() {
 
             let mut rect = CartesianJoint::new(Vector2::new(x, y));
             let handle = world.add_multibody_link(
-                BodyHandle::ground(),
+                BodyPartHandle::ground(),
                 rect,
                 shift,
                 na::zero(),

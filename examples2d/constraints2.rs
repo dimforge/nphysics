@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::joint::{CartesianConstraint, PrismaticConstraint, RevoluteConstraint};
-use nphysics2d::object::{BodyHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -34,7 +34,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -44,7 +44,7 @@ fn main() {
      */
     let num = 10;
     let rad = 0.2;
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
 
     let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let inertia = geom.inertia(1.0);
@@ -82,7 +82,7 @@ fn main() {
     /*
      * Prismatic constraints.
      */
-    parent = BodyHandle::ground();
+    parent = BodyPartHandle::ground();
     let first_anchor = Point2::new(-1.0, 0.0);
     let other_anchor = Point2::new(-3.0 * rad, 0.0);
     let mut pos = Isometry2::new(first_anchor.coords, na::zero());
@@ -153,7 +153,7 @@ fn main() {
             );
 
             let constraint = CartesianConstraint::new(
-                BodyHandle::ground(),
+                BodyPartHandle::ground(),
                 rb,
                 Isometry2::identity(),
                 Isometry2::identity(),

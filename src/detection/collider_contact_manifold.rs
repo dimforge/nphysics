@@ -2,7 +2,7 @@ use na::Real;
 use ncollide::query::{ContactManifold, TrackedContact};
 
 use math::Isometry;
-use object::{BodyHandle, Collider};
+use object::{BodyPartHandle, Collider};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]
@@ -79,12 +79,12 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
     }
 
     /// The handle of the first body part involved in the contact.
-    pub fn body1(&self) -> BodyHandle {
-        self.collider1.data().body()
+    pub fn body1(&self) -> BodyPartHandle {
+        self.collider1.data().body_part()
     }
 
     /// The handle of the first body part involved in the contact.
-    pub fn body2(&self) -> BodyHandle {
-        self.collider2.data().body()
+    pub fn body2(&self) -> BodyPartHandle {
+        self.collider2.data().body_part()
     }
 }

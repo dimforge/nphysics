@@ -7,7 +7,7 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PlanarConstraint, PrismaticConstraint,
                         RectangularConstraint, RevoluteConstraint, UniversalConstraint};
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -33,7 +33,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -50,7 +50,7 @@ fn main() {
      * Revolute joints.
      */
     let num = 6;
-    let mut parent = BodyHandle::ground();
+    let mut parent = BodyPartHandle::ground();
     let first_anchor = Point3::new(0.0, 5.0, 11.0);
     let mut pos = first_anchor.coords;
 
@@ -97,7 +97,7 @@ fn main() {
      */
     let first_anchor = Point3::new(0.0, 5.0, 4.0);
     let mut pos = first_anchor.coords;
-    parent = BodyHandle::ground();
+    parent = BodyPartHandle::ground();
 
     for i in 0usize..3 {
         let mut body_anchor = Point3::origin();
@@ -139,7 +139,7 @@ fn main() {
      */
     let first_anchor = Point3::new(0.0, 5.0, 0.0);
     let mut pos = first_anchor.coords;
-    parent = BodyHandle::ground();
+    parent = BodyPartHandle::ground();
 
     for i in 0usize..num {
         let angle = i as f32 * 2.0 * PI / (num as f32);
@@ -183,7 +183,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         cuboid.clone(),
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::new(parent_pos, na::zero()),
         Material::default(),
     );
@@ -203,7 +203,7 @@ fn main() {
     );
 
     let constraint = UniversalConstraint::new(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         rb,
         Point3::from_coordinates(parent_pos),
         Vector3::x_axis(),
@@ -245,7 +245,7 @@ fn main() {
             );
 
             let constraint = PlanarConstraint::new(
-                BodyHandle::ground(),
+                BodyPartHandle::ground(),
                 rb,
                 Point3::origin(),
                 Vector3::x_axis(),
@@ -286,7 +286,7 @@ fn main() {
             );
 
             let constraint = RectangularConstraint::new(
-                BodyHandle::ground(),
+                BodyPartHandle::ground(),
                 rb,
                 Point3::origin(),
                 Vector3::x_axis(),
@@ -314,7 +314,7 @@ fn main() {
     );
 
     let constraint = PinSlotConstraint::new(
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         rb,
         Point3::origin(),
         Vector3::y_axis(),

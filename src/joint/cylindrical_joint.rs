@@ -2,7 +2,7 @@ use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
 
 use joint::{Joint, PrismaticJoint, RevoluteJoint};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use object::MultibodyLinkRef;
+use object::{Multibody, MultibodyLink};
 use math::{JacobianSliceMut, Velocity};
 
 /// A joint that allows one translational and one rotational degrees of freedom along a single axis.
@@ -101,7 +101,8 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
     fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
@@ -111,6 +112,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
     ) {
         self.prism.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id,
@@ -121,6 +123,7 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
         );
         self.revo.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id + 1,
@@ -139,15 +142,16 @@ impl<N: Real> Joint<N> for CylindricalJoint<N> {
     fn position_constraint(
         &self,
         i: usize,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         if i == 0 {
-            self.prism.position_constraint(0, link, dof_id, jacobians)
+            self.prism.position_constraint(0, multibody, link, dof_id, jacobians)
         } else {
             self.revo
-                .position_constraint(0, link, dof_id + 1, jacobians)
+                .position_constraint(0, multibody, link, dof_id + 1, jacobians)
         }
     }
 }

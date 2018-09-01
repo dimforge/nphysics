@@ -2,13 +2,13 @@ use na::{Real, Unit};
 
 use force_generator::ForceGenerator;
 use math::{Force, Point, Vector};
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodySet};
 use solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.
 pub struct Spring<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
     length: N,
@@ -21,8 +21,8 @@ impl<N: Real> Spring<N> {
     /// Anchors are expressed in the local coordinates of the corresponding bodies.
     /// The spring has a rest length of `length` and a stiffness of `stiffness`.
     pub fn new(
-        b1: BodyHandle,
-        b2: BodyHandle,
+        b1: BodyPartHandle,
+        b2: BodyPartHandle,
         anchor1: Point<N>,
         anchor2: Point<N>,
         length: N,
@@ -55,7 +55,7 @@ impl<N: Real> Spring<N> {
 
 impl<N: Real> ForceGenerator<N> for Spring<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
-        if !bodies.contains(self.b1) || !bodies.contains(self.b2) {
+        if !bodies.contains_body_part(self.b1) || !bodies.contains_body_part(self.b2) {
             return false;
         }
 
@@ -66,10 +66,10 @@ impl<N: Real> ForceGenerator<N> for Spring<N> {
         let delta_length;
 
         if let Some((dir, length)) = Unit::try_new_and_get(anchor2 - anchor1, N::default_epsilon())
-        {
-            force_dir = dir;
-            delta_length = length - self.length;
-        } else {
+            {
+                force_dir = dir;
+                delta_length = length - self.length;
+            } else {
             force_dir = Vector::y_axis();
             delta_length = -self.length;
         }

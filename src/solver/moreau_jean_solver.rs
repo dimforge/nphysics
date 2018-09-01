@@ -5,12 +5,13 @@ use na::{DVector, Real};
 use counters::Counters;
 use detection::ColliderContactManifold;
 use joint::JointConstraint;
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodyHandle, BodySet, Body};
 use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
-    jacobians: Vec<N>, // FIXME: use a Vec or a DVector?
+    jacobians: Vec<N>,
+    // FIXME: use a Vec or a DVector?
     mj_lambda_vel: DVector<N>,
     ext_vels: DVector<N>,
     contact_model: Box<ContactModel<N>>,
@@ -116,8 +117,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         for (_, g) in joints.iter() {
             if g.is_active(bodies) {
                 let (b1, b2) = g.anchors();
-                let body1 = bodies.body(b1);
-                let body2 = bodies.body(b2);
+                let body1 = bodies.body(b1.body_handle);
+                let body2 = bodies.body(b2.body_handle);
 
                 let ndofs1 = body1.status_dependent_ndofs();
                 let ndofs2 = body2.status_dependent_ndofs();
@@ -134,8 +135,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         }
 
         for m in manifolds {
-            let ndofs1 = bodies.body(m.body1()).status_dependent_ndofs();
-            let ndofs2 = bodies.body(m.body2()).status_dependent_ndofs();
+            let ndofs1 = bodies.body(m.body1().body_handle).status_dependent_ndofs();
+            let ndofs2 = bodies.body(m.body2().body_handle).status_dependent_ndofs();
             let sz = self.contact_model.num_velocity_constraints(m) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {

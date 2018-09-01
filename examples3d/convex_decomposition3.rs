@@ -15,7 +15,7 @@ use ncollide3d::bounding_volume::{BoundingVolume, AABB};
 use ncollide3d::bounding_volume;
 use nphysics3d::world::World;
 use nphysics3d::volumetric::Volumetric;
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -38,7 +38,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );

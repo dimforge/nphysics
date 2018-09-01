@@ -2,7 +2,7 @@ use slab::Slab;
 
 use na::{self, Real};
 use world::CollisionWorld;
-use object::{BodyHandle, BodyMut, BodySet};
+use object::{BodyHandle, Body, BodySet};
 use joint::JointConstraint;
 use utils::union_find::UnionFindSet;
 use utils::union_find;
@@ -45,7 +45,7 @@ impl<N: Real> ActivationManager<N> {
         self.to_activate.push(handle);
     }
 
-    fn update_energy(&self, body: &mut BodyMut<N>) {
+    fn update_energy(&self, body: &mut Body<N>) {
         // FIXME: avoid the Copy when NLL lands ?
         let status = *body.activation_status();
 
@@ -76,16 +76,16 @@ impl<N: Real> ActivationManager<N> {
         for mut body in bodies.bodies_mut() {
             if body.status_dependent_ndofs() != 0 {
                 if body.is_active() {
-                    self.update_energy(&mut body);
+                    self.update_energy(body);
                 }
 
                 body.set_companion_id(self.id_to_body.len());
-                self.id_to_body.push(body.handle());
+                self.id_to_body.push(body.handle().unwrap());
             }
 
             if body.is_kinematic() {
                 body.set_companion_id(self.id_to_body.len());
-                self.id_to_body.push(body.handle());
+                self.id_to_body.push(body.handle().unwrap());
             }
         }
 
@@ -136,14 +136,14 @@ impl<N: Real> ActivationManager<N> {
             let b2 = bodies.body(b2);
             if (b1.status_dependent_ndofs() != 0 || b1.is_kinematic())
                 && (b2.status_dependent_ndofs() != 0 || b2.is_kinematic())
-            {
-                union_find::union(b1.companion_id(), b2.companion_id(), ufs)
-            }
+                {
+                    union_find::union(b1.companion_id(), b2.companion_id(), ufs)
+                }
         }
 
         for (c1, c2, cd) in cworld.contact_pairs() {
-            let b1 = c1.data().body();
-            let b2 = c2.data().body();
+            let b1 = c1.data().body_part().body_handle;
+            let b2 = c2.data().body_part().body_handle;
 
             if cd.num_contacts() != 0 {
                 make_union(bodies, b1, b2, &mut self.ufind)
@@ -152,7 +152,7 @@ impl<N: Real> ActivationManager<N> {
 
         for (_, c) in constraints.iter() {
             let (b1, b2) = c.anchors();
-            make_union(bodies, b1, b2, &mut self.ufind);
+            make_union(bodies, b1.body_handle, b2.body_handle, &mut self.ufind);
         }
 
         /*

@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
 use joint::{Joint, RevoluteJoint};
 use math::{JacobianSliceMut, Velocity};
-use object::MultibodyLinkRef;
+use object::{Multibody, MultibodyLink};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows only two relative rotations between two multibody links.
@@ -96,8 +96,8 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
         let rot1 = self.revo1.rotation();
         self.revo1.jacobian_dot_mul_coordinates(vels)
             + self.revo2
-                .jacobian_dot_mul_coordinates(&[vels[1]])
-                .rotated(&rot1) + self.coupling_dot * vels[1]
+            .jacobian_dot_mul_coordinates(&[vels[1]])
+            .rotated(&rot1) + self.coupling_dot * vels[1]
     }
 
     fn default_damping(&self, out: &mut DVectorSliceMut<N>) {
@@ -122,7 +122,8 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
     fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
@@ -132,6 +133,7 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
     ) {
         self.revo1.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id,
@@ -142,6 +144,7 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
         );
         self.revo2.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id + 1,
@@ -160,15 +163,16 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
     fn position_constraint(
         &self,
         i: usize,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         if i == 0 {
-            self.revo1.position_constraint(0, link, dof_id, jacobians)
+            self.revo1.position_constraint(0, multibody, link, dof_id, jacobians)
         } else {
             self.revo2
-                .position_constraint(0, link, dof_id + 1, jacobians)
+                .position_constraint(0, multibody, link, dof_id + 1, jacobians)
         }
     }
 }

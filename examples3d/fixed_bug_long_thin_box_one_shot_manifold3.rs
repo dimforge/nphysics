@@ -28,7 +28,7 @@ extern crate nphysics_testbed3d;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, Plane, ShapeHandle};
 use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
@@ -49,7 +49,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         Isometry3::identity(),
         Material::default(),
     );

@@ -2,7 +2,7 @@ use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
 use math::Isometry;
-use object::{BodyHandle, Material};
+use object::{BodyPartHandle, Material};
 
 /// Type of a reference to a collider.
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
@@ -22,7 +22,7 @@ pub type Sensor<N> = CollisionObject<N, ColliderData<N>>;
 /// Those are needed by nphysics.
 pub struct ColliderData<N: Real> {
     margin: N,
-    body: BodyHandle,
+    body_part: BodyPartHandle,
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
     position_wrt_body: Isometry<N>,
@@ -33,14 +33,14 @@ impl<N: Real> ColliderData<N> {
     /// Initializes data for a collider.
     pub fn new(
         margin: N,
-        body: BodyHandle,
+        body_part: BodyPartHandle,
         body_status_dependent_ndofs: usize,
         position_wrt_body: Isometry<N>,
         material: Material<N>,
     ) -> Self {
         ColliderData {
             margin,
-            body,
+            body_part,
             body_status_dependent_ndofs,
             position_wrt_body,
             material,
@@ -49,8 +49,8 @@ impl<N: Real> ColliderData<N> {
 
     /// The handle of the body part this collider is attached to.
     #[inline]
-    pub fn body(&self) -> BodyHandle {
-        self.body
+    pub fn body_part(&self) -> BodyPartHandle {
+        self.body_part
     }
 
     /// The collision margin surrounding this collider.

@@ -1,7 +1,7 @@
 use std::ops::Range;
 use na::{DVector, Real, Unit};
 
-use object::{BodyHandle, BodySet};
+use object::{BodyPartHandle, BodySet};
 use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 use solver::helper;
@@ -10,8 +10,8 @@ use math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 
 /// A constraint that removes all degrees of freedom (of one body part relative to a second one) except one translation along an axis and one rotation along the same axis.
 pub struct CylindricalConstraint<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<Vector<N>>,
@@ -31,8 +31,8 @@ impl<N: Real> CylindricalConstraint<N> {
     /// This will ensure `axis1` and `axis2` always coincide. All the axis and anchors
     /// are provided on the local space of the corresponding body parts.
     pub fn new(
-        b1: BodyHandle,
-        b2: BodyHandle,
+        b1: BodyPartHandle,
+        b2: BodyPartHandle,
         anchor1: Point<N>,
         axis1: Unit<Vector<N>>,
         anchor2: Point<N>,
@@ -97,7 +97,7 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
         SPATIAL_DIM - 2
     }
 
-    fn anchors(&self) -> (BodyHandle, BodyHandle) {
+    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
         (self.b1, self.b2)
     }
 
@@ -111,22 +111,24 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let b1 = bodies.body_part(self.b1);
-        let b2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.body_handle);
+        let body2 = bodies.body(self.b2.body_handle);
+        let part1 = body1.part(self.b1);
+        let part2 = body2.part(self.b2);
 
         /*
          *
          * Joint constraints.
          *
          */
-        let pos1 = b1.position();
-        let pos2 = b2.position();
+        let pos1 = part1.position();
+        let pos2 = part2.position();
 
         let anchor1 = pos1 * self.anchor1;
         let anchor2 = pos2 * self.anchor2;
 
-        let assembly_id1 = b1.parent_companion_id();
-        let assembly_id2 = b2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
@@ -134,8 +136,10 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
         let axis1 = pos1 * self.axis1;
 
         helper::restrict_relative_linear_velocity_to_axis(
-            &b1,
-            &b2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -151,8 +155,10 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
         );
 
         helper::restrict_relative_angular_velocity_to_axis(
-            &b1,
-            &b2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &axis1,
@@ -214,11 +220,13 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.body_handle);
+        let body2 = bodies.body(self.b2.body_handle);
+        let part1 = body1.part(self.b1);
+        let part2 = body2.part(self.b2);
 
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let pos1 = part1.position();
+        let pos2 = part2.position();
 
         let anchor1 = pos1 * self.anchor1;
         let anchor2 = pos2 * self.anchor2;
@@ -229,8 +237,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
         if i == 0 {
             return helper::align_axis(
                 params,
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 &axis1,
@@ -242,8 +252,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
         if i == 1 {
             return helper::project_anchor_to_axis(
                 params,
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 &axis1,

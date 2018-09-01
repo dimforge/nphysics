@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::query::Proximity;
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics3d::object::{BodyHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -30,7 +30,7 @@ fn main() {
     world.add_collider(
         COLLIDER_MARGIN,
         ground_shape,
-        BodyHandle::ground(),
+        BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
     );
@@ -98,8 +98,8 @@ fn main() {
                 Proximity::Disjoint => Point3::new(0.5, 0.5, 1.0),
             };
 
-            let body1 = world.collider(prox.collider1).unwrap().data().body();
-            let body2 = world.collider(prox.collider2).unwrap().data().body();
+            let body1 = world.collider(prox.collider1).unwrap().data().body_part();
+            let body2 = world.collider(prox.collider2).unwrap().data().body_part();
 
             if !body1.is_ground() && body1 != sensor_body {
                 graphics.set_body_color(world, body1, color);
