@@ -973,13 +973,6 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn activate(&mut self) {
-        if let Some(threshold) = self.activation.deactivation_threshold() {
-            self.activate_with_energy(threshold * na::convert(2.0));
-        }
-    }
-
-    #[inline]
     fn activate_with_energy(&mut self, energy: N) {
         self.activation.set_energy(energy)
     }
@@ -989,16 +982,6 @@ impl<N: Real> Body<N> for Multibody<N> {
         self.activation.set_energy(N::zero());
         for v in &mut self.velocities {
             *v = N::zero()
-        }
-    }
-
-    #[inline]
-    fn is_active(&self) -> bool {
-        match self.status {
-            BodyStatus::Dynamic => self.activation.is_active(),
-            BodyStatus::Kinematic => true,
-            BodyStatus::Static => false,
-            BodyStatus::Disabled => false,
         }
     }
 
@@ -1015,21 +998,6 @@ impl<N: Real> Body<N> for Multibody<N> {
     #[inline]
     fn set_companion_id(&mut self, id: usize) {
         self.companion_id = id
-    }
-
-    #[inline]
-    fn is_dynamic(&self) -> bool {
-        self.status == BodyStatus::Dynamic
-    }
-
-    #[inline]
-    fn is_static(&self) -> bool {
-        self.status == BodyStatus::Static
-    }
-
-    #[inline]
-    fn is_kinematic(&self) -> bool {
-        self.status == BodyStatus::Kinematic
     }
 
     #[inline]

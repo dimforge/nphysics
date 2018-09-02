@@ -7,7 +7,6 @@ use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{BodyPartHandle, Body, BodyPart, BodyHandle};
 
 /// One link of a multibody.
-#[derive(Debug)]
 pub struct MultibodyLink<N: Real> {
     // FIXME: make all those private.
     pub(crate) multibody_handle: Option<BodyHandle>,
@@ -164,7 +163,7 @@ impl<N: Real> BodyPart<N> for MultibodyLink<N> {
 pub(crate) struct MultibodyLinkVec<N: Real>(pub Vec<MultibodyLink<N>>);
 
 impl<N: Real> MultibodyLinkVec<N> {
-    #[inline]
+    // #[inline]
     // pub fn get_with_parent(&self, i: usize) -> (&MultibodyLink<N>, &MultibodyLink<N>) {
     //     assert!(
     //         i != 0,

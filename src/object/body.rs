@@ -104,29 +104,6 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// Applies a generalized displacement to this body.
     fn apply_displacement(&mut self, disp: &[N]);
 
-    /// The number of degrees of freedom (DOF) of this body, taking its status into account.
-    ///
-    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
-    #[inline]
-    fn status_dependent_ndofs(&self) -> usize {
-        if self.is_dynamic() {
-            self.ndofs()
-        } else {
-            0
-        }
-    }
-
-    /// The velocity of the specified body part, taking this body status into account.
-    ///
-    /// This will return a zero velocity for any body with a status different than `BodyStatus::Dynamic`.
-    fn status_dependent_body_part_velocity(&self, part: &BodyPart<N>) -> Velocity<N> {
-        if self.is_dynamic() {
-            part.velocity()
-        } else {
-            Velocity::zero()
-        }
-    }
-
     /// Sets the tag associated to this body and its body parts.
     ///
     /// This is should not be called explicitly by user code. This is called
@@ -143,18 +120,6 @@ pub trait Body<N: Real>: Any + Send + Sync {
 
     /// Information regarding activation and deactivation (sleeping) of this body.
     fn activation_status(&self) -> &ActivationStatus<N>;
-
-    /// Check if this body is active.
-    fn is_active(&self) -> bool;
-
-    /// Whether or not the status of this body is dynamic.
-    fn is_dynamic(&self) -> bool;
-
-    /// Whether or not the status of this body is kinematic.
-    fn is_kinematic(&self) -> bool;
-
-    /// Whether or not the status of this body is static.
-    fn is_static(&self) -> bool;
 
     /// The number of degrees of freedom of this body.
     fn ndofs(&self) -> usize;
@@ -176,11 +141,6 @@ pub trait Body<N: Real>: Any + Send + Sync {
 
     /// Integrate the position of this body.
     fn integrate(&mut self, params: &IntegrationParameters<N>);
-
-    // FIXME: should those directly be implemented only for bodies (to avoid duplicated code on
-    // each body for activation)?
-    /// Force the activation of this body.
-    fn activate(&mut self);
 
     /// Force the activation of this body with the given level of energy.
     fn activate_with_energy(&mut self, energy: N);
@@ -205,12 +165,75 @@ pub trait Body<N: Real>: Any + Send + Sync {
 
     /// Convert a force applied to this body part's center of mass into generalized accelerations.
     fn inv_mass_mul_body_part_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]);
+
+    /// The number of degrees of freedom (DOF) of this body, taking its status into account.
+    ///
+    /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.
+    #[inline]
+    fn status_dependent_ndofs(&self) -> usize {
+        if self.is_dynamic() {
+            self.ndofs()
+        } else {
+            0
+        }
+    }
+
+    /// The velocity of the specified body part, taking this body status into account.
+    ///
+    /// This will return a zero velocity for any body with a status different than `BodyStatus::Dynamic`.
+    #[inline]
+    fn status_dependent_body_part_velocity(&self, part: &BodyPart<N>) -> Velocity<N> {
+        if self.is_dynamic() {
+            part.velocity()
+        } else {
+            Velocity::zero()
+        }
+    }
+
+    /// Check if this body is active.
+    #[inline]
+    fn is_active(&self) -> bool {
+        match self.status() {
+            BodyStatus::Dynamic => self.activation_status().is_active(),
+            BodyStatus::Kinematic => true,
+            BodyStatus::Static => false,
+            BodyStatus::Disabled => false,
+        }
+    }
+
+    /// Whether or not the status of this body is dynamic.
+    #[inline]
+    fn is_dynamic(&self) -> bool {
+        self.status() == BodyStatus::Dynamic
+    }
+
+    /// Whether or not the status of this body is kinematic.
+    #[inline]
+    fn is_kinematic(&self) -> bool {
+        self.status() == BodyStatus::Kinematic
+    }
+
+    /// Whether or not the status of this body is static.
+    #[inline]
+    fn is_static(&self) -> bool {
+        self.status() == BodyStatus::Static
+    }
+
+    /// Force the activation of this body.
+    #[inline]
+    fn activate(&mut self) {
+        if let Some(threshold) = self.activation_status().deactivation_threshold() {
+            self.activate_with_energy(threshold * na::convert(2.0));
+        }
+    }
 }
 
 /// Trait implemented by each part of a body supported by nphysics.
 pub trait BodyPart<N: Real>: Any + Send + Sync {
     /// Returns `true` if this body part is the ground.
-    fn is_ground(&self) -> bool;
+    fn is_ground(&self) -> bool {
+        false
+    }
 
     /// The handle of this body part.
     fn handle(&self) -> Option<BodyPartHandle>;
