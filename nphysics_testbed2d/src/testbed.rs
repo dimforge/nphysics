@@ -17,7 +17,8 @@ use std::env;
 use std::mem;
 use std::path::Path;
 use std::rc::Rc;
-use world_owner::{WorldOwner, WorldOwnerExclusive, WorldOwnerShared};
+use std::sync::{Arc, RwLock};
+use world_owner::WorldOwner;
 
 #[derive(PartialEq)]
 enum RunMode {
@@ -78,7 +79,7 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
 
         Testbed {
-            world: Box::new(WorldOwnerShared::new(world)),
+            world: Box::new(Arc::new(RwLock::new(world))),
             callbacks: Vec::new(),
             window: Some(window),
             graphics: graphics,
@@ -97,7 +98,7 @@ impl Testbed {
     }
 
     pub fn new(world: World<f32>) -> Testbed {
-        Testbed::new_with_world_owner(Box::new(WorldOwnerExclusive::from(world)))
+        Testbed::new_with_world_owner(Box::new(world))
     }
     pub fn new_with_world_owner(world_owner: Box<WorldOwner>) -> Testbed {
         let mut res = Testbed::new_empty();
@@ -120,7 +121,7 @@ impl Testbed {
     }
 
     pub fn set_world(&mut self, world: World<f32>) {
-        self.set_world_owner(Box::new(WorldOwnerExclusive::from(world)));
+        self.set_world_owner(Box::new(world));
     }
 
     pub fn set_world_owner(&mut self, world: Box<WorldOwner>) {
@@ -189,7 +190,7 @@ impl Testbed {
         &mut self,
         callback: F,
     ) where
-        for<'r, 's> F: Fn(&'r mut Box<WorldOwner + 'static>, &'s mut GraphicsManager, f32),
+            for<'r, 's> F: Fn(&'r mut Box<WorldOwner + 'static>, &'s mut GraphicsManager, f32),
     {
         self.callbacks.push(Box::new(callback));
     }
@@ -229,21 +230,21 @@ impl State for Testbed {
         for mut event in window.events().iter() {
             match event.value {
                 //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::LControl) |
-            //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::RControl)  => {
-            //             let mut graphics = self.graphics;
-            //             let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5f32, 0.5f32));
-            //             let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+                //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::RControl)  => {
+                //             let mut graphics = self.graphics;
+                //             let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5f32, 0.5f32));
+                //             let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
-            //             let size = window.size();
-            //             let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
+                //             let size = window.size();
+                //             let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
 
-            //             rb.set_translation(Translation3::from_vector(pos.coords));
-            //             rb.set_lin_vel(dir * 1000.0f32);
+                //             rb.set_translation(Translation3::from_vector(pos.coords));
+                //             rb.set_lin_vel(dir * 1000.0f32);
 
-            //             let body = self.world.add_rigid_body(rb);
-            //             self.world.add_ccd_to(&body, 1.0, false);
-            //             graphics.add(window, WorldObject::RigidBody(body));
-            //         },
+                //             let body = self.world.add_rigid_body(rb);
+                //             self.world.add_ccd_to(&body, 1.0, false);
+                //             graphics.add(window, WorldObject::RigidBody(body));
+                //         },
                 WindowEvent::MouseButton(_, Action::Press, modifier) => {
                     let mut physics_world = &mut self.world.get_mut();
                     let mapped_point = self
@@ -255,11 +256,11 @@ impl State for Testbed {
                     for b in physics_world
                         .collision_world()
                         .interferences_with_point(&mapped_point, all_groups)
-                    {
-                        if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
-                            self.grabbed_object = Some(b.data().body());
+                        {
+                            if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
+                                self.grabbed_object = Some(b.data().body());
+                            }
                         }
-                    }
 
                     if modifier.contains(Modifiers::Shift) {
                         if let Some(body) = self.grabbed_object {
@@ -309,9 +310,9 @@ impl State for Testbed {
                                 .body_nodes_mut(physics_world, body)
                                 .unwrap()
                                 .iter_mut()
-                            {
-                                node.select()
-                            }
+                                {
+                                    node.select()
+                                }
                         }
 
                         event.inhibited = true;
@@ -327,9 +328,9 @@ impl State for Testbed {
                             .body_nodes_mut(physics_world, body)
                             .unwrap()
                             .iter_mut()
-                        {
-                            n.unselect()
-                        }
+                            {
+                                n.unselect()
+                            }
                     }
 
                     if let Some(joint) = self.grabbed_object_constraint {
@@ -388,63 +389,63 @@ impl State for Testbed {
                         if let Some(ns) = self
                             .graphics
                             .body_nodes_mut(&physics_world, co.data().body())
-                        {
-                            for n in ns.iter_mut() {
-                                if let Some(node) = n.scene_node_mut() {
-                                    if self.draw_colls {
-                                        node.set_lines_width(1.0);
-                                        node.set_surface_rendering_activation(false);
-                                    } else {
-                                        node.set_lines_width(0.0);
-                                        node.set_surface_rendering_activation(true);
+                            {
+                                for n in ns.iter_mut() {
+                                    if let Some(node) = n.scene_node_mut() {
+                                        if self.draw_colls {
+                                            node.set_lines_width(1.0);
+                                            node.set_surface_rendering_activation(false);
+                                        } else {
+                                            node.set_lines_width(0.0);
+                                            node.set_surface_rendering_activation(true);
+                                        }
                                     }
                                 }
                             }
-                        }
                     }
                 }
                 //      WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
-            //          let mut graphics = self.graphics;
-            //          let geom   = Ball::new(0.5f32);
-            //          let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+                //          let mut graphics = self.graphics;
+                //          let geom   = Ball::new(0.5f32);
+                //          let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
-            //          let cam_transfom;
+                //          let cam_transfom;
 
-            //          {
-            //              let cam      = graphics.camera();
-            //              cam_transfom = cam.view_transform().inverse()
-            //          }
+                //          {
+                //              let cam      = graphics.camera();
+                //              cam_transfom = cam.view_transform().inverse()
+                //          }
 
-            //          rb.append_translation(&cam_transfom.translation);
+                //          rb.append_translation(&cam_transfom.translation);
 
-            //          let front = cam_transfom.rotation * -Vector3::z();
+                //          let front = cam_transfom.rotation * -Vector3::z();
 
-            //          rb.set_lin_vel(front * 40.0f32);
+                //          rb.set_lin_vel(front * 40.0f32);
 
-            //          let body = self.world.add_rigid_body(rb);
-            //          graphics.add(window, body, &self.world.rigid_bodies());
-            //      },
-            //      WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
-            //          let mut graphics = self.graphics;
-            //          let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5, 0.5));
-            //          let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
+                //          let body = self.world.add_rigid_body(rb);
+                //          graphics.add(window, body, &self.world.rigid_bodies());
+                //      },
+                //      WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
+                //          let mut graphics = self.graphics;
+                //          let geom   = Cuboid::new(Vector3::new(0.5f32, 0.5, 0.5));
+                //          let mut rb = RigidBody::new_dynamic(geom, 4.0f32, 0.3, 0.6);
 
-            //          let cam_transform;
+                //          let cam_transform;
 
-            //          {
-            //              let cam = graphics.camera();
-            //              cam_transform = cam.view_transform().inverse()
-            //          }
+                //          {
+                //              let cam = graphics.camera();
+                //              cam_transform = cam.view_transform().inverse()
+                //          }
 
-            //          rb.append_translation(&cam_transform.translation);
+                //          rb.append_translation(&cam_transform.translation);
 
-            //          let front = cam_transform.rotation * -Vector3::z();
+                //          let front = cam_transform.rotation * -Vector3::z();
 
-            //          rb.set_lin_vel(front * 40.0f32);
+                //          rb.set_lin_vel(front * 40.0f32);
 
-            //          let body = self.world.add_rigid_body(rb);
-            //          graphics.add(window, body, &self.world.rigid_bodies());
-            //      }
+                //          let body = self.world.add_rigid_body(rb);
+                //          graphics.add(window, body, &self.world.rigid_bodies());
+                //      }
                 _ => {}
             }
         }
@@ -467,9 +468,9 @@ impl State for Testbed {
                     .graphics
                     .body_nodes_mut(physics_world, co.data().body())
                     .is_none()
-                {
-                    self.graphics.add(window, co.handle(), &physics_world);
-                }
+                    {
+                        self.graphics.add(window, co.handle(), &physics_world);
+                    }
             }
             self.graphics.draw(&physics_world, window);
         }
