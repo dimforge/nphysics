@@ -16,7 +16,7 @@ use math::{Inertia, Isometry, Point, Vector};
 use object::{
     Body, BodyPartHandle, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
     ColliderHandle, Colliders, Material, Multibody, MultibodyLink,
-    MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle,
+    MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle, Bodies, BodiesMut,
 };
 use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 
@@ -410,6 +410,11 @@ impl<N: Real> World<N> {
         })
     }
 
+    /// Add an abstract body to the world.
+    pub fn add_body(&mut self, body: Box<Body<N>>) -> BodyHandle {
+        self.bodies.add_body(body)
+    }
+
     /// Add a rigid body to the world and retrieve its handle.
     pub fn add_rigid_body(
         &mut self,
@@ -599,6 +604,12 @@ impl<N: Real> World<N> {
     pub fn colliders(&self) -> Colliders<N> {
         self.cworld.collision_objects()
     }
+
+    /// An iterator through all the bodies on this world.
+    pub fn bodies(&self) -> Bodies<N> { self.bodies.bodies() }
+
+    /// A mutable iterator through all the bodies on this world.
+    pub fn bodies_mut(&mut self) -> BodiesMut<N> { self.bodies.bodies_mut() }
 
     /// An iterator through all the contact events generated during the last execution of `self.step()`.
     pub fn contact_events(&self) -> &ContactEvents {

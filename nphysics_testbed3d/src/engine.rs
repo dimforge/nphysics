@@ -5,13 +5,14 @@ use na;
 use na::{Isometry3, Point3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, DeformableVolume};
 use nphysics3d::world::World;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::convex::Convex;
 use objects::mesh::Mesh;
 use objects::node::Node;
+use objects::deformable_mesh::DeformableMesh;
 use objects::plane::Plane;
 use rand::{Rng, SeedableRng, XorShiftRng};
 use std::collections::HashMap;
@@ -133,28 +134,57 @@ impl GraphicsManager {
         self.c2color.insert(handle, color);
     }
 
-    pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
+    fn alloc_color(&mut self, handle: BodyHandle) -> Point3<f32> {
         let mut color = Point3::new(0.5, 0.5, 0.5);
-        let collider = world.collider(id).unwrap();
 
-        if let Some(c) = self.c2color.get(&id).cloned() {
-            color = c
-        } else {
-            let body_key = collider.data().body_part().body_handle;
-            match self.b2color.get(&body_key) {
-                Some(c) => color = *c,
-                None => {
-                    if !collider.data().body_part().is_ground() {
-                        color = self.rand.gen();
-                        color *= 1.5;
-                        color.x = color.x.min(1.0);
-                        color.y = color.y.min(1.0);
-                        color.z = color.z.min(1.0);
-                    }
+        match self.b2color.get(&handle) {
+            Some(c) => color = *c,
+            None => {
+                if !handle.is_ground() {
+                    color = self.rand.gen();
+                    color *= 1.5;
+                    color.x = color.x.min(1.0);
+                    color.y = color.y.min(1.0);
+                    color.z = color.z.min(1.0);
                 }
             }
+        }
 
-            self.set_body_color(body_key, color);
+        self.set_body_color(handle, color);
+
+        color
+    }
+
+    pub fn add_deformable_volume(&mut self, window: &mut Window, handle: BodyHandle, world: &World<f32>) {
+        if let Some(body) = world.body(handle).downcast_ref::<DeformableVolume<f32>>().ok() {
+            let color = self.alloc_color(handle);
+            let boundary = body.boundary();
+            let vertices = body.positions().as_slice().chunks(3).map(|p| Point3::new(p[0], p[1], p[2])).collect();
+            let indices = body.boundary().into_iter().map(|p| Point3::new((p.x / 3) as u16, (p.y / 3) as u16, (p.z / 3) as u16)).collect();
+
+            let node = Node::DeformableMesh(DeformableMesh::new(
+                handle,
+                world,
+                vertices,
+                indices,
+                color,
+                window,
+            ));
+
+            let nodes = self.b2sn.entry(handle).or_insert(Vec::new());
+            nodes.push(node);
+        }
+    }
+
+    pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
+        let collider = world.collider(id).unwrap();
+
+        let color;
+        if let Some(c) = self.c2color.get(&id).cloned() {
+            color = c;
+            self.set_body_color(collider.data().body_part().body_handle, color);
+        } else {
+            color = self.alloc_color(collider.data().body_part().body_handle)
         }
 
         self.add_with_color(window, id, world, color)

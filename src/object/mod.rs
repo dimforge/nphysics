@@ -3,7 +3,7 @@
 pub use self::material::Material;
 
 pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus};
-pub use self::body_set::{Bodies, BodyPartHandle, BodySet, BodyHandle};
+pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySet, BodyHandle};
 pub use self::collider::{Collider, ColliderData, ColliderHandle, Colliders, Sensor, SensorHandle};
 pub use self::ground::Ground;
 pub use self::multibody::{Multibody, MultibodyLinks, MultibodyWorkspace};

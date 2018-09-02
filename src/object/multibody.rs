@@ -342,7 +342,7 @@ impl<N: Real> Multibody<N> {
     }
 
     /// Computes the constant terms of the dynamics.
-    pub fn update_dynamics(
+    pub fn update_dynamics2(
         &mut self,
         gravity: &Vector<N>,
         params: &IntegrationParameters<N>,
@@ -945,6 +945,14 @@ impl<N: Real> Body<N> for Multibody<N> {
          * Compute body jacobians.
          */
         self.update_body_jacobians();
+    }
+
+    fn update_dynamics(
+        &mut self,
+        gravity: &Vector<N>,
+        params: &IntegrationParameters<N>,
+    ) {
+        // FIXME
     }
 
     #[inline]

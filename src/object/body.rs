@@ -5,7 +5,7 @@ use downcast::Any;
 
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 
-use math::{Force, Inertia, Isometry, Point, Velocity};
+use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{BodyPartHandle, BodyHandle};
 use solver::IntegrationParameters;
 
@@ -97,6 +97,9 @@ pub trait Body<N: Real>: Any + Send + Sync {
 
     /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);
+
+    /// Update the dynamics property of this body.
+    fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
 
     /// Reset the timestep-specific dynamic information of this body.
     fn clear_dynamics(&mut self);

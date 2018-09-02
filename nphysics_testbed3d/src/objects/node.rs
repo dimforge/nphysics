@@ -8,6 +8,7 @@ use objects::cone::Cone;
 use objects::convex::Convex;
 use objects::cylinder::Cylinder;
 use objects::mesh::Mesh;
+use objects::deformable_mesh::DeformableMesh;
 use objects::plane::Plane;
 
 pub enum Node {
@@ -18,6 +19,7 @@ pub enum Node {
     Cone(Cone),
     Mesh(Mesh),
     Convex(Convex),
+    DeformableMesh(DeformableMesh),
 }
 
 impl Node {
@@ -29,6 +31,7 @@ impl Node {
             Node::Cylinder(ref mut n) => n.select(),
             Node::Cone(ref mut n) => n.select(),
             Node::Mesh(ref mut n) => n.select(),
+            Node::DeformableMesh(ref mut n) => n.select(),
             Node::Convex(ref mut n) => n.select(),
         }
     }
@@ -41,6 +44,7 @@ impl Node {
             Node::Cylinder(ref mut n) => n.unselect(),
             Node::Cone(ref mut n) => n.unselect(),
             Node::Mesh(ref mut n) => n.unselect(),
+            Node::DeformableMesh(ref mut n) => n.unselect(),
             Node::Convex(ref mut n) => n.unselect(),
         }
     }
@@ -53,6 +57,7 @@ impl Node {
             Node::Cylinder(ref mut n) => n.update(world),
             Node::Cone(ref mut n) => n.update(world),
             Node::Mesh(ref mut n) => n.update(world),
+            Node::DeformableMesh(ref mut n) => n.update(world),
             Node::Convex(ref mut n) => n.update(world),
         }
     }
@@ -65,6 +70,7 @@ impl Node {
             Node::Cylinder(ref n) => n.scene_node(),
             Node::Cone(ref n) => n.scene_node(),
             Node::Mesh(ref n) => n.scene_node(),
+            Node::DeformableMesh(ref n) => n.scene_node(),
             Node::Convex(ref n) => n.scene_node(),
         }
     }
@@ -77,6 +83,7 @@ impl Node {
             Node::Cylinder(ref mut n) => n.scene_node_mut(),
             Node::Cone(ref mut n) => n.scene_node_mut(),
             Node::Mesh(ref mut n) => n.scene_node_mut(),
+            Node::DeformableMesh(ref mut n) => n.scene_node_mut(),
             Node::Convex(ref mut n) => n.scene_node_mut(),
         }
     }
@@ -89,6 +96,7 @@ impl Node {
             Node::Cylinder(ref n) => n.object(),
             Node::Cone(ref n) => n.object(),
             Node::Mesh(ref n) => n.object(),
+            Node::DeformableMesh(ref n) => unimplemented!(),
             Node::Convex(ref n) => n.object(),
         }
     }
@@ -101,6 +109,7 @@ impl Node {
             Node::Cylinder(ref mut n) => n.set_color(color),
             Node::Cone(ref mut n) => n.set_color(color),
             Node::Mesh(ref mut n) => n.set_color(color),
+            Node::DeformableMesh(ref mut n) => n.set_color(color),
             Node::Convex(ref mut n) => n.set_color(color),
         }
     }

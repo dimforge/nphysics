@@ -132,6 +132,10 @@ impl Testbed {
             self.graphics
                 .add(self.window.as_mut().unwrap(), co.handle(), &self.world);
         }
+
+        for b in self.world.bodies() {
+            self.graphics.add_deformable_volume(self.window.as_mut().unwrap(), b.handle().unwrap(), &self.world)
+        }
     }
 
     pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {

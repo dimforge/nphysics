@@ -1,6 +1,8 @@
 use std::ops::AddAssign;
+use std::collections::HashMap;
 use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix,
          DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3};
+use ncollide::utils;
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
 use solver::IntegrationParameters;
@@ -20,7 +22,7 @@ pub struct TetrahedralElement<N: Real> {
 /// A deformable volume using FEM to simulate linear elasticity.
 ///
 /// The volume is described by a set of tetrahedral elements. This
-/// implements an isoparametric approach where the intepolation is linear.
+/// implements an isoparametric approach where the interpolations are linear.
 pub struct DeformableVolume<N: Real> {
     handle: Option<BodyHandle>,
     elements: Vec<TetrahedralElement<N>>,
@@ -52,7 +54,7 @@ impl<N: Real> DeformableVolume<N> {
     pub fn new(vertices: &Vec<Point3<N>>, tetrahedra: &Vec<Point4<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let elements = tetrahedra.iter().map(|idx|
             TetrahedralElement {
-                indices: *idx,
+                indices: idx * 3,
                 com: Point3::origin(),
                 j: na::zero(),
                 j_inv: na::zero(),
@@ -63,51 +65,31 @@ impl<N: Real> DeformableVolume<N> {
         let ndofs = vertices.len() * 3;
         let rest_positions = DVector::from_iterator(ndofs, vertices.iter().flat_map(|p| p.iter().cloned()));
 
-        DeformableVolume
-            {
-                handle: None,
-                elements,
-                positions: rest_positions.clone(),
-                velocities: DVector::zeros(ndofs),
-                accelerations: DVector::zeros(ndofs),
-                damping: DMatrix::zeros(ndofs, ndofs),
-                stiffness: DMatrix::zeros(ndofs, ndofs),
-                augmented_mass: DMatrix::zeros(ndofs, ndofs),
-                inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
-                dpos: DVector::zeros(ndofs),
-                rest_positions,
-                damping_coeffs,
-                young_modulus,
-                poisson_ratio,
-                companion_id: 0,
-                activation: ActivationStatus::new_active(),
-                status: BodyStatus::Dynamic,
-            }
+        DeformableVolume {
+            handle: None,
+            elements,
+            positions: rest_positions.clone(),
+            velocities: DVector::zeros(ndofs),
+            accelerations: DVector::zeros(ndofs),
+            damping: DMatrix::zeros(ndofs, ndofs),
+            stiffness: DMatrix::zeros(ndofs, ndofs),
+            augmented_mass: DMatrix::zeros(ndofs, ndofs),
+            inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
+            dpos: DVector::zeros(ndofs),
+            rest_positions,
+            damping_coeffs,
+            young_modulus,
+            poisson_ratio,
+            companion_id: 0,
+            activation: ActivationStatus::new_active(),
+            status: BodyStatus::Dynamic,
+        }
     }
 
-    /// Update the dynamics property of this deformable volume.
-    pub fn update_dynamics(&mut self,
-                           gravity: &Vector3<N>,
-                           params: &IntegrationParameters<N>) {
-        self.assemble_stiffness();
-        self.assemble_mass();
-        self.assemble_damping();
-        self.assemble_forces(gravity, params);
-
-        // Finalize assembling the augmented mass.
-        {
-            let dt2 = params.dt * params.dt;
-            let d = self.damping.as_slice();
-            let m = self.augmented_mass.as_mut_slice();
-            let s = self.stiffness.as_slice();
-
-            for i in 0..d.len() {
-                m[i] += params.dt * d[i] + dt2 * s[i];
-            }
-        }
-
-        // FIXME: avoid allocation inside LU at each timestep.
-        self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
+    /// The position of this body in generalized coordinates.
+    #[inline]
+    pub fn positions(&self) -> &DVector<N> {
+        &self.positions
     }
 
     fn assemble_forces(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
@@ -115,7 +97,7 @@ impl<N: Real> DeformableVolume<N> {
             let contribution = gravity * (elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
             for k in 0..4 {
-                let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(elt.indices[k] * 3);
+                let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(elt.indices[k]);
                 forces_part += contribution;
             }
         }
@@ -142,8 +124,8 @@ impl<N: Real> DeformableVolume<N> {
                         mass_contribution = coeff_mass;
                     }
 
-                    let ia = elt.indices[a] * 3;
-                    let ib = elt.indices[b] * 3;
+                    let ia = elt.indices[a];
+                    let ib = elt.indices[b];
 
                     let mut node_mass = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
                     node_mass[(0, 0)] += mass_contribution;
@@ -210,14 +192,120 @@ impl<N: Real> DeformableVolume<N> {
                     ) * elt.volume;
 
 
-                    let ia = elt.indices[a] * 3;
-                    let ib = elt.indices[b] * 3;
+                    let ia = elt.indices[a];
+                    let ib = elt.indices[b];
 
                     // FIXME: meld it directly with the mass matrix?
                     self.stiffness.fixed_slice_mut::<U3, U3>(ia, ib).add_assign(&node_stiffness);
                 }
             }
         }
+    }
+
+    /// Returns the triangles at the boundary of this volume.
+    pub fn boundary(&self) -> Vec<Point3<usize>> {
+        fn key(a: usize, b: usize, c: usize) -> (usize, usize, usize) {
+            let (sa, sb, sc) = utils::sort3(&a, &b, &c);
+            (*sa, *sb, *sc)
+        }
+
+        let mut faces = HashMap::new();
+
+        for elt in &self.elements {
+            let k1 = key(elt.indices.x, elt.indices.y, elt.indices.z);
+            let k2 = key(elt.indices.y, elt.indices.z, elt.indices.w);
+            let k3 = key(elt.indices.z, elt.indices.w, elt.indices.x);
+            let k4 = key(elt.indices.w, elt.indices.x, elt.indices.y);
+
+            faces.entry(k1).or_insert(0).add_assign(1);
+            faces.entry(k2).or_insert(0).add_assign(1);
+            faces.entry(k3).or_insert(0).add_assign(1);
+            faces.entry(k4).or_insert(0).add_assign(1);
+        }
+
+        let mut boundary = faces.iter().filter_map(|(k, n)| {
+            if *n == 1 {
+                Some(Point3::new(k.0, k.1, k.2))
+            } else {
+                None
+            }
+        }).collect();
+
+        boundary
+    }
+
+    /// Constructs an axis-aligned cube with regular subdivisions along each axis.
+    ///
+    /// The cube is subdivided `nx` (resp. `ny` and `nz`) times along
+    /// the `x` (resp. `y` and `z`) axis.
+    pub fn cube(extents: Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+        let mut vertices = Vec::new();
+        let mut indices = Vec::new();
+
+        // First, generate the vertices.
+        let x_step: N = na::convert(1.0 / nx as f64);
+        let y_step: N = na::convert(1.0 / ny as f64);
+        let z_step: N = na::convert(1.0 / nz as f64);
+
+        for i in 0..=nx {
+            let x = x_step * na::convert(i as f64) - na::convert(0.5);
+
+            for j in 0..=ny {
+                let y = y_step * na::convert(j as f64) - na::convert(0.5);
+
+                for k in 0..=nz {
+                    let z = z_step * na::convert(k as f64) - na::convert(0.5);
+                    vertices.push(Point3::new(x * extents.x, y * extents.y, z * extents.z))
+                }
+            }
+        }
+
+        // Second, generate indices.
+        for i in 0..nx {
+            for j in 0..ny {
+                for k in 0..nz {
+                    // See https://www.ics.uci.edu/~eppstein/projects/tetra/
+                    // for the 5-elements tetrahedral decomposition where local
+                    // cube indices are as follows:
+                    //
+                    //     4 o----------o 7
+                    //       | 5 o----------o 6
+                    //       |   |      ·   |                y
+                    //       |   |      ·   |                ^
+                    //     0 o---|· · · · 3 |                |
+                    //           o----------o                 --> x
+                    //           1          2
+                    /* Local cubic indices:
+                    let a = Point4::new(0, 1, 2, 5);
+                    let b = Point4::new(2, 5, 6, 7);
+                    let c = Point4::new(2, 7, 3, 0);
+                    let d = Point4::new(7, 4, 0, 5);
+                    let e = Point4::new(0, 2, 7, 5);
+                    */
+                    fn shift(ny: usize, nz: usize, di: usize, dj: usize, dk: usize) -> usize {
+                        ((di * (ny + 1) + dj) * (nz + 1)) + dk
+                    }
+                    // _0 = node at (i, j, k)
+                    let _0 = (i * (ny + 1) + j) * (nz + 1) + k;
+                    let _1 = _0 + shift(ny, nz, 0, 0, 1);
+                    let _2 = _0 + shift(ny, nz, 1, 0, 1);
+                    let _3 = _0 + shift(ny, nz, 1, 0, 0);
+                    let _4 = _0 + shift(ny, nz, 0, 1, 0);
+                    let _5 = _0 + shift(ny, nz, 0, 1, 1);
+                    let _6 = _0 + shift(ny, nz, 1, 1, 1);
+                    let _7 = _0 + shift(ny, nz, 1, 1, 0);
+
+                    let ifirst = indices.len();
+                    indices.push(Point4::new(_0, _1, _2, _5));
+                    indices.push(Point4::new(_2, _5, _6, _7));
+                    indices.push(Point4::new(_2, _7, _3, _0));
+                    indices.push(Point4::new(_7, _4, _0, _5));
+                    indices.push(Point4::new(_0, _2, _7, _5));
+                }
+            }
+        }
+
+        Self::new(&vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
     }
 }
 
@@ -245,8 +333,35 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         }
     }
 
+    /// Update the dynamics property of this deformable volume.
+    fn update_dynamics(&mut self,
+                       gravity: &Vector3<N>,
+                       params: &IntegrationParameters<N>) {
+        self.assemble_stiffness();
+        self.assemble_mass();
+        self.assemble_damping();
+        self.assemble_forces(gravity, params);
+
+        // Finalize assembling the augmented mass.
+        {
+            let dt2 = params.dt * params.dt;
+            let d = self.damping.as_slice();
+            let m = self.augmented_mass.as_mut_slice();
+            let s = self.stiffness.as_slice();
+
+            for i in 0..d.len() {
+                m[i] += params.dt * d[i] + dt2 * s[i];
+            }
+        }
+
+        // FIXME: avoid allocation inside LU at each timestep.
+        self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
+        assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
+    }
+
     fn clear_dynamics(&mut self) {
         self.augmented_mass.fill(N::zero());
+        self.stiffness.fill(N::zero());
         self.accelerations.fill(N::zero());
     }
 

@@ -133,16 +133,27 @@ impl<N: Real> BodySet<N> {
         workspace: &mut MultibodyWorkspace<N>,
     ) {
         for (_, mb) in &mut self.mbs {
-            mb.update_dynamics(gravity, params, workspace);
+            mb.update_dynamics2(gravity, params, workspace); // XXX
         }
 
         for (_, rb) in &mut self.rbs {
             rb.update_dynamics(gravity, params)
         }
 
-//        for (_, b) in &mut self.bodies {
-//            b.update_dynamics(gravity, params, workspace)
-//        }
+        for (_, b) in &mut self.bodies {
+            b.update_dynamics(gravity, params)
+        }
+    }
+
+    /// Adds a body to the world.
+    pub fn add_body(&mut self, mut body: Box<Body<N>>) -> BodyHandle {
+        let b_entry = self.bodies.vacant_entry();
+        let b_id = b_entry.key();
+        let handle = BodyHandle(BodyVariant::AbstractBody(b_id));
+        body.set_handle(Some(handle));
+        let _ = b_entry.insert(body);
+
+        handle
     }
 
     /// Add a rigid body to the set and return its handle.
@@ -179,7 +190,7 @@ impl<N: Real> BodySet<N> {
         if parent.is_ground() {
             let mb_entry = self.mbs.vacant_entry();
             let mb_id = mb_entry.key();
-            let mut mb = mb_entry.insert(Multibody::new());
+            let mb = mb_entry.insert(Multibody::new());
             mb.set_handle(Some(BodyHandle(BodyVariant::Multibody(mb_id))));
 
             mb.add_link(
@@ -420,15 +431,15 @@ impl<N: Real> BodySet<N> {
         self.mbs.iter_mut().map(|e| e.1)
     }
 
-    /*
+    /// Iterator yielding all the bodies on this set.
     #[inline]
     pub fn bodies(&self) -> Bodies<N> {
         Bodies {
             rbs_iter: self.rbs.iter(),
-            mbs_iter: self.mbs.iter()
+            mbs_iter: self.mbs.iter(),
+            bs_iter: self.bodies.iter(),
         }
     }
-    */
 
     /// Mutable iterator yielding all the bodies on this set.
     #[inline]
@@ -436,6 +447,7 @@ impl<N: Real> BodySet<N> {
         BodiesMut {
             rbs_iter: self.rbs.iter_mut(),
             mbs_iter: self.mbs.iter_mut(),
+            bs_iter: self.bodies.iter_mut(),
         }
     }
 }
@@ -444,6 +456,7 @@ impl<N: Real> BodySet<N> {
 pub struct Bodies<'a, N: Real> {
     rbs_iter: Iter<'a, RigidBody<N>>,
     mbs_iter: Iter<'a, Multibody<N>>,
+    bs_iter: Iter<'a, Box<Body<N>>>,
 }
 
 impl<'a, N: Real> Iterator for Bodies<'a, N> {
@@ -459,6 +472,10 @@ impl<'a, N: Real> Iterator for Bodies<'a, N> {
             return Some(res.1);
         }
 
+        if let Some(res) = self.bs_iter.next() {
+            return Some(&**res.1);
+        }
+
         return None;
     }
 }
@@ -467,6 +484,7 @@ impl<'a, N: Real> Iterator for Bodies<'a, N> {
 pub struct BodiesMut<'a, N: Real> {
     rbs_iter: IterMut<'a, RigidBody<N>>,
     mbs_iter: IterMut<'a, Multibody<N>>,
+    bs_iter: IterMut<'a, Box<Body<N>>>,
 }
 
 impl<'a, N: Real> Iterator for BodiesMut<'a, N> {
@@ -480,6 +498,10 @@ impl<'a, N: Real> Iterator for BodiesMut<'a, N> {
 
         if let Some(res) = self.mbs_iter.next() {
             return Some(res.1);
+        }
+
+        if let Some(res) = self.bs_iter.next() {
+            return Some(&mut **res.1);
         }
 
         return None;

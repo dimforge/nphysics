@@ -1,6 +1,6 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
-use math::{Force, Inertia, Isometry, Point, Velocity};
+use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
 use solver::IntegrationParameters;
 
@@ -28,6 +28,9 @@ impl<N: Real> Ground<N> {
 impl<N: Real> Body<N> for Ground<N> {
     #[inline]
     fn update_kinematics(&mut self) {}
+
+    #[inline]
+    fn update_dynamics(&mut self, _: &Vector<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn clear_dynamics(&mut self) {}
