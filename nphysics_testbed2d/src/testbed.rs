@@ -55,7 +55,7 @@ pub struct Testbed {
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
-    callbacks: Vec<Box<Fn(&mut Box<WorldOwner>, &mut GraphicsManager, f32)>>,
+    callbacks: Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>,
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
@@ -186,11 +186,10 @@ impl Testbed {
         res
     }
 
-    pub fn add_callback<F: Fn(&mut Box<WorldOwner>, &mut GraphicsManager, f32) + 'static>(
+    pub fn add_callback<F: Fn(&mut WorldOwner, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
-    ) where
-            for<'r, 's> F: Fn(&'r mut Box<WorldOwner + 'static>, &'s mut GraphicsManager, f32),
+    )
     {
         self.callbacks.push(Box::new(callback));
     }
@@ -453,7 +452,7 @@ impl State for Testbed {
         if self.running != RunMode::Stop {
             for _ in 0..self.nsteps {
                 for f in &self.callbacks {
-                    f(&mut self.world, &mut self.graphics, self.time)
+                    f(&mut *self.world, &mut self.graphics, self.time)
                 }
                 self.world.get_mut().step();
                 if !self.hide_counters {
