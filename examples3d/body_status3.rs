@@ -169,7 +169,8 @@ fn main() {
      * Setup a callback to control the platform.
      */
     let mut testbed = Testbed::new(world);
-    testbed.add_callback(move |world, _, time| {
+    testbed.add_callback(move |world_owner, _, time| {
+        let mut world = world_owner.get_mut();
         let platform = world.rigid_body_mut(platform_handle).unwrap();
         let platform_z = platform.position().translation.vector.z;
 
