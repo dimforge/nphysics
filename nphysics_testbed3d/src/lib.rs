@@ -8,7 +8,9 @@ extern crate time;
 
 pub use engine::GraphicsManager;
 pub use testbed::Testbed;
+pub use world_owner::WorldOwner;
 
 mod engine;
 pub mod objects;
 mod testbed;
+mod world_owner;
