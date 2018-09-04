@@ -315,6 +315,8 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
     testbed.add_callback(move |world, _, _| {
+        let mut world = world.get_mut();
+
         /*
          * Activate the helical joint motor if it is to low.
          */
@@ -334,6 +336,8 @@ fn main() {
     });
 
     testbed.add_callback(move |world, _, _| {
+        let mut world = world.get_mut();
+
         /*
          * Activate the pin-slot joint linear motor if it is to low.
          */
