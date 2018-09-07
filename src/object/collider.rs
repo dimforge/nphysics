@@ -2,7 +2,7 @@ use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
 use math::Isometry;
-use object::{BodyPartHandle, Material};
+use object::{BodyPartHandle, BodyHandle, Material};
 
 /// Type of a reference to a collider.
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
@@ -17,15 +17,45 @@ pub type SensorHandle = CollisionObjectHandle;
 /// Type of a sensor.
 pub type Sensor<N> = CollisionObject<N, ColliderData<N>>;
 
+/// Description of the way a collider is attached to a body.
+pub enum ColliderAnchor<N: Real> {
+    /// Attach of a collider with a body part.
+    OnBodyPart {
+        /// The attached body part handle.
+        body_part: BodyPartHandle,
+        /// Relative position of the collider wrt. the body part.
+        position_wrt_body_part: Isometry<N>,
+    },
+    /// Attach of a collider with a deformable body.
+    OnDeformableBody {
+        /// The attached body handle.
+        body: BodyHandle,
+        /// The body deformation indices.
+        body_indices: Vec<usize>,
+        /// The collider deformation indices.
+        shape_indices: Vec<usize>,
+    },
+}
+
+impl<N: Real> ColliderAnchor<N> {
+    /// The body this anchor is attached to.
+    #[inline]
+    pub fn body(&self) -> BodyHandle {
+        match self {
+            ColliderAnchor::OnBodyPart { body_part, .. } => body_part.body_handle,
+            ColliderAnchor::OnDeformableBody { body, .. } => *body
+        }
+    }
+}
+
 /// Data stored into each collider.
 ///
 /// Those are needed by nphysics.
 pub struct ColliderData<N: Real> {
     margin: N,
-    body_part: BodyPartHandle,
+    anchor: ColliderAnchor<N>,
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
-    position_wrt_body: Isometry<N>,
     material: Material<N>,
 }
 
@@ -33,24 +63,16 @@ impl<N: Real> ColliderData<N> {
     /// Initializes data for a collider.
     pub fn new(
         margin: N,
-        body_part: BodyPartHandle,
+        anchor: ColliderAnchor<N>,
         body_status_dependent_ndofs: usize,
-        position_wrt_body: Isometry<N>,
         material: Material<N>,
     ) -> Self {
         ColliderData {
             margin,
-            body_part,
+            anchor,
             body_status_dependent_ndofs,
-            position_wrt_body,
             material,
         }
-    }
-
-    /// The handle of the body part this collider is attached to.
-    #[inline]
-    pub fn body_part(&self) -> BodyPartHandle {
-        self.body_part
     }
 
     /// The collision margin surrounding this collider.
@@ -59,10 +81,14 @@ impl<N: Real> ColliderData<N> {
         self.margin
     }
 
-    /// The position of the collider relative to the body it is attached to.
-    #[inline]
-    pub fn position_wrt_body(&self) -> &Isometry<N> {
-        &self.position_wrt_body
+    /// Handle to the body this collider is attached to.
+    pub fn body(&self) -> BodyHandle {
+        self.anchor.body()
+    }
+
+    /// The anchor attaching this collider with a body part or deformable body.
+    pub fn anchor(&self) -> &ColliderAnchor<N> {
+        &self.anchor
     }
 
     /// The material of this collider.

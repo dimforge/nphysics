@@ -19,7 +19,7 @@ use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
 use ncollide3d::world::CollisionGroups;
 use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
 
 #[derive(PartialEq)]
@@ -266,7 +266,14 @@ impl State for Testbed {
                             {
                                 if !b.query_type().is_proximity_query() && inter.toi < mintoi {
                                     mintoi = inter.toi;
-                                    minb = Some(b.data().body_part());
+
+                                    if
+                                        let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
+                                        {
+                                            minb = Some(*body_part)
+                                        } else {
+                                        unimplemented!()
+                                    }
                                 }
                             }
 
@@ -325,7 +332,12 @@ impl State for Testbed {
                             {
                                 if !b.query_type().is_proximity_query() && inter.toi < mintoi {
                                     mintoi = inter.toi;
-                                    minb = Some(b.data().body_part());
+
+                                    if
+                                        let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
+                                        {
+                                            minb = Some(*body_part);
+                                        } else { unimplemented!() }
                                 }
                             }
 
@@ -434,7 +446,7 @@ impl State for Testbed {
                     for co in self.world.colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
-                        self.graphics.body_nodes_mut(co.data().body_part().body_handle)
+                        self.graphics.body_nodes_mut(co.data().body())
                             {
                                 for n in ns.iter_mut() {
                                     if self.draw_colls {

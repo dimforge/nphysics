@@ -14,7 +14,7 @@ use force_generator::{ForceGenerator, ForceGeneratorHandle};
 use joint::{ConstraintHandle, Joint, JointConstraint};
 use math::{Inertia, Isometry, Point, Vector};
 use object::{
-    Body, BodyPartHandle, BodyPart, BodySet, BodyStatus, Collider, ColliderData,
+    Body, BodyPartHandle, BodyPart, BodySet, BodyStatus, Collider, ColliderData, ColliderAnchor,
     ColliderHandle, Colliders, Material, Multibody, MultibodyLink,
     MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle, Bodies, BodiesMut,
 };
@@ -245,7 +245,7 @@ impl<N: Real> World<N> {
                     .cworld
                     .collision_object_mut(*collider_id)
                     .expect("Internal error: collider not found.");
-                let body = self.bodies.body(collider.data_mut().body_part().body_handle);
+                let body = self.bodies.body(collider.data().body());
 
                 collider
                     .data_mut()
@@ -255,9 +255,16 @@ impl<N: Real> World<N> {
                     continue;
                 }
 
-                let part = body.part(collider.data_mut().body_part());
-                let body_pos = part.position();
-                new_pos = body_pos * collider.data_mut().position_wrt_body()
+                match collider.data().anchor() {
+                    ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
+                        let part = body.part(*body_part);
+                        let part_pos = part.position();
+                        new_pos = part_pos * position_wrt_body_part
+                    }
+                    ColliderAnchor::OnDeformableBody { .. } => {
+                        unimplemented!()
+                    }
+                }
             }
 
             self.cworld.set_position(*collider_id, new_pos);
@@ -292,8 +299,8 @@ impl<N: Real> World<N> {
         for (coll1, coll2, c) in self.cworld.contact_manifolds() {
             // assert!(coll1.data().body_part() != coll2.data().body());
 
-            let b1 = self.bodies.body(coll1.data().body_part().body_handle);
-            let b2 = self.bodies.body(coll2.data().body_part().body_handle);
+            let b1 = self.bodies.body(coll1.data().body());
+            let b2 = self.bodies.body(coll2.data().body());
 
             if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
@@ -356,15 +363,15 @@ impl<N: Real> World<N> {
 
         for (co1, co2, detector) in self.cworld.contact_pairs() {
             if detector.num_contacts() != 0 {
-                let b1_exists = bodies.contains_body(co1.data().body_part().body_handle);
-                let b2_exists = bodies.contains_body(co2.data().body_part().body_handle);
+                let b1_exists = bodies.contains_body(co1.data().body());
+                let b2_exists = bodies.contains_body(co2.data().body());
 
                 if !b1_exists {
                     if b2_exists {
-                        Self::activate_body_at(bodies, co2.data().body_part().body_handle);
+                        Self::activate_body_at(bodies, co2.data().body());
                     }
                 } else if !b2_exists {
-                    Self::activate_body_at(bodies, co1.data().body_part().body_handle);
+                    Self::activate_body_at(bodies, co1.data().body());
                 }
             }
         }
@@ -375,13 +382,22 @@ impl<N: Real> World<N> {
 
         while i < self.colliders_w_parent.len() {
             let cid = self.colliders_w_parent[i];
-            let parent = self
+            let do_remove;
+
+            match self
                 .collider(cid)
                 .expect("Internal error: collider not present")
                 .data()
-                .body_part();
+                .anchor() {
+                ColliderAnchor::OnBodyPart { body_part, .. } => {
+                    do_remove = !self.bodies.contains_body_part(*body_part)
+                }
+                ColliderAnchor::OnDeformableBody { body, .. } => {
+                    do_remove = !self.bodies.contains_body(*body)
+                }
+            };
 
-            if !self.bodies.contains_body_part(parent) {
+            if do_remove {
                 self.cworld.remove(&[cid]);
                 let _ = self.colliders_w_parent.swap_remove(i);
             } else {
@@ -446,6 +462,22 @@ impl<N: Real> World<N> {
         )
     }
 
+//    /// Add a deformable collider to the world and retrieve its handle.
+//    pub fn add_deformable_collider(
+//        &mut self,
+//        margin: N,
+//        shape: ShapeHandle<N>,
+//        parent: BodyHandle,
+//        to_parent: Isometry<N>,
+//        material: Material<N>,
+//    ) -> ColliderHandle {
+//        let query = GeometricQueryType::Contacts(
+//            margin + self.prediction * na::convert(0.5f64),
+//            self.angular_prediction,
+//        );
+//        self.add_deformable_collision_object(query, margin, shape, parent, to_parent, material)
+//    }
+
     /// Add a collider to the world and retrieve its handle.
     pub fn add_collider(
         &mut self,
@@ -500,7 +532,8 @@ impl<N: Real> World<N> {
             )
         };
 
-        let data = ColliderData::new(margin, parent, ndofs, to_parent, material);
+        let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: to_parent };
+        let data = ColliderData::new(margin, anchor, ndofs, material);
         let groups = CollisionGroups::new();
         let handle = self.cworld.add(pos, shape, groups, query, data);
 
@@ -510,6 +543,37 @@ impl<N: Real> World<N> {
 
         handle
     }
+
+//    fn add_deformable_collision_object(
+//        &mut self,
+//        query: GeometricQueryType<N>,
+//        margin: N,
+//        shape: ShapeHandle<N>,
+//        parent: BodyHandle,
+//        to_parent: Isometry<N>,
+//        material: Material<N>,
+//    ) -> CollisionObjectHandle {
+//        let (pos, ndofs) = if parent.is_ground() {
+//            (to_parent, 0)
+//        } else {
+//            let parent_body = self.bodies.body(parent);
+//            let parent_part = parent_body.part(parent);
+//            (
+//                parent_part.position() * to_parent,
+//                parent_body.status_dependent_ndofs(),
+//            )
+//        };
+//
+//        let data = ColliderData::new(margin, parent, ndofs, to_parent, material);
+//        let groups = CollisionGroups::new();
+//        let handle = self.cworld.add(pos, shape, groups, query, data);
+//
+//        if !parent.is_ground() {
+//            self.colliders_w_parent.push(handle);
+//        }
+//
+//        handle
+//    }
 
     /// Get a reference to the specified body part.
     ///
@@ -593,11 +657,16 @@ impl<N: Real> World<N> {
         self.cworld.collision_object(handle)
     }
 
-    /// Gets the handle of the parent body part the specified collider is attached to.
-    pub fn collider_body_part_handle(&self, handle: ColliderHandle) -> Option<BodyPartHandle> {
+    /// Gets the handle of the body the specified collider is attached to.
+    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<BodyHandle> {
+        self.collider_anchor(handle).map(|anchor| anchor.body())
+    }
+
+    /// Gets the anchor attaching this collider to a body or body part.
+    pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N>> {
         self.cworld
             .collision_object(handle)
-            .map(|co| co.data().body_part())
+            .map(|co| co.data().anchor())
     }
 
     /// An iterator through all the colliders on this collision world.

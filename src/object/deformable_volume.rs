@@ -223,7 +223,7 @@ impl<N: Real> DeformableVolume<N> {
             faces.entry(k4).or_insert(0).add_assign(1);
         }
 
-        let mut boundary = faces.iter().filter_map(|(k, n)| {
+        let boundary = faces.iter().filter_map(|(k, n)| {
             if *n == 1 {
                 Some(Point3::new(k.0, k.1, k.2))
             } else {

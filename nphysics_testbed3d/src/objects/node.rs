@@ -96,7 +96,7 @@ impl Node {
             Node::Cylinder(ref n) => n.object(),
             Node::Cone(ref n) => n.object(),
             Node::Mesh(ref n) => n.object(),
-            Node::DeformableMesh(ref n) => unimplemented!(),
+            Node::DeformableMesh(_) => unimplemented!(),
             Node::Convex(ref n) => n.object(),
         }
     }

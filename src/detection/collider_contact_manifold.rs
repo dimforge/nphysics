@@ -2,7 +2,7 @@ use na::Real;
 use ncollide::query::{ContactManifold, TrackedContact};
 
 use math::Isometry;
-use object::{BodyPartHandle, Collider};
+use object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]
@@ -39,20 +39,30 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         let id1 = manifold.subshape_id1();
         let id2 = manifold.subshape_id2();
 
-        let pos_wrt_body1;
-        let pos_wrt_body2;
-
-        if let Some(dpos1) = collider1.shape().subshape_transform(id1) {
-            pos_wrt_body1 = collider1.data().position_wrt_body() * dpos1;
+        let pos_wrt_body1 = if let Some(dpos1) = collider1.shape().subshape_transform(id1) {
+            match collider1.data().anchor() {
+                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => position_wrt_body_part * dpos1,
+                ColliderAnchor::OnDeformableBody { .. } => dpos1
+            }
         } else {
-            pos_wrt_body1 = *collider1.data().position_wrt_body()
-        }
+            match collider1.data().anchor() {
+                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => *position_wrt_body_part,
+                ColliderAnchor::OnDeformableBody { .. } => Isometry::identity()
+            }
+        };
 
-        if let Some(dpos2) = collider2.shape().subshape_transform(id2) {
-            pos_wrt_body2 = collider2.data().position_wrt_body() * dpos2;
+
+        let pos_wrt_body2 = if let Some(dpos2) = collider2.shape().subshape_transform(id2) {
+            match collider2.data().anchor() {
+                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => position_wrt_body_part * dpos2,
+                ColliderAnchor::OnDeformableBody { .. } => dpos2
+            }
         } else {
-            pos_wrt_body2 = *collider2.data().position_wrt_body()
-        }
+            match collider2.data().anchor() {
+                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => *position_wrt_body_part,
+                ColliderAnchor::OnDeformableBody { .. } => Isometry::identity()
+            }
+        };
 
         ColliderContactManifold {
             collider1,
@@ -78,13 +88,39 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         self.manifold.deepest_contact()
     }
 
-    /// The handle of the first body part involved in the contact.
-    pub fn body1(&self) -> BodyPartHandle {
-        self.collider1.data().body_part()
+    /// The handle of the first body involved in the contact.
+    pub fn body1(&self) -> BodyHandle {
+        self.collider1.data().body()
+    }
+
+    /// The handle of the first body involved in the contact.
+    pub fn body2(&self) -> BodyHandle {
+        self.collider2.data().body()
     }
 
     /// The handle of the first body part involved in the contact.
-    pub fn body2(&self) -> BodyPartHandle {
-        self.collider2.data().body_part()
+    pub fn body_part1(&self) -> BodyPartHandle {
+        match self.collider1.data().anchor() {
+            ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
+            ColliderAnchor::OnDeformableBody { .. } => BodyPartHandle::ground(), // XXX: handle deformables
+        }
+    }
+
+    /// The handle of the second body part involved in the contact.
+    pub fn body_part2(&self) -> BodyPartHandle {
+        match self.collider2.data().anchor() {
+            ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
+            ColliderAnchor::OnDeformableBody { .. } => BodyPartHandle::ground(), // XXX: handle deformables
+        }
+    }
+
+    /// The anchor between the fist collider and the body it is attached to.
+    pub fn anchor1(&self) -> &ColliderAnchor<N> {
+        self.collider1.data().anchor()
+    }
+
+    /// The anchor between the fist collider and the body it is attached to.
+    pub fn anchor2(&self) -> &ColliderAnchor<N> {
+        self.collider2.data().anchor()
     }
 }

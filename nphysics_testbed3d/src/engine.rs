@@ -5,7 +5,7 @@ use na;
 use na::{Isometry3, Point3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, DeformableVolume};
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor, DeformableVolume};
 use nphysics3d::world::World;
 use objects::ball::Ball;
 use objects::box_node::Box;
@@ -88,10 +88,18 @@ impl GraphicsManager {
 
         if let Some(sns) = self.b2sn.get_mut(&part.body_handle) {
             sns.retain(|sn| {
-                if world.collider(sn.collider()).unwrap().data().body_part() == part {
-                    window.remove_node(&mut sn.scene_node().clone());
-                    false
-                } else {
+                if let ColliderAnchor::OnBodyPart {
+                    body_part, ..
+                } = world.collider(sn.collider()).unwrap().data().anchor()
+                    {
+                        if *body_part == part {
+                            window.remove_node(&mut sn.scene_node().clone());
+                            false
+                        } else {
+                            delete_array = false;
+                            true
+                        }
+                    } else {
                     delete_array = false;
                     true
                 }
@@ -109,8 +117,7 @@ impl GraphicsManager {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
-                    let sn_body = world.collider(sn.collider()).unwrap().data().body_part();
-                    let sn_key = sn_body.body_handle;
+                    let sn_key = world.collider(sn.collider()).unwrap().data().body();
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
                     let new_sns = self.b2sn.entry(sn_key).or_insert(Vec::new());
@@ -158,7 +165,6 @@ impl GraphicsManager {
     pub fn add_deformable_volume(&mut self, window: &mut Window, handle: BodyHandle, world: &World<f32>) {
         if let Some(body) = world.body(handle).downcast_ref::<DeformableVolume<f32>>().ok() {
             let color = self.alloc_color(handle);
-            let boundary = body.boundary();
             let vertices = body.positions().as_slice().chunks(3).map(|p| Point3::new(p[0], p[1], p[2])).collect();
             let indices = body.boundary().into_iter().map(|p| Point3::new((p.x / 3) as u16, (p.y / 3) as u16, (p.z / 3) as u16)).collect();
 
@@ -182,9 +188,9 @@ impl GraphicsManager {
         let color;
         if let Some(c) = self.c2color.get(&id).cloned() {
             color = c;
-            self.set_body_color(collider.data().body_part().body_handle, color);
+            self.set_body_color(collider.data().body(), color);
         } else {
-            color = self.alloc_color(collider.data().body_part().body_handle)
+            color = self.alloc_color(collider.data().body())
         }
 
         self.add_with_color(window, id, world, color)
@@ -198,7 +204,7 @@ impl GraphicsManager {
         color: Point3<f32>,
     ) {
         let collider = world.collider(id).unwrap();
-        let parent = collider.data().body_part();
+        let key = collider.data().body();
         let shape = collider.shape().as_ref();
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
@@ -206,7 +212,6 @@ impl GraphicsManager {
         self.add_shape(window, id, world, na::one(), shape, color, &mut new_nodes);
 
         {
-            let key = parent.body_handle;
             let nodes = self.b2sn.entry(key).or_insert(Vec::new());
             nodes.append(&mut new_nodes);
         }
@@ -360,28 +365,28 @@ impl GraphicsManager {
         }
     }
 
-    // pub fn draw_positions(&mut self, window: &mut Window, rbs: &RigidBodies<f32>) {
-    //     for (_, ns) in self.b2sn.iter_mut() {
-    //         for n in ns.iter_mut() {
-    //             let object = n.object();
-    //             let rb = rbs.get(object).expect("Rigid body not found.");
+// pub fn draw_positions(&mut self, window: &mut Window, rbs: &RigidBodies<f32>) {
+//     for (_, ns) in self.b2sn.iter_mut() {
+//         for n in ns.iter_mut() {
+//             let object = n.object();
+//             let rb = rbs.get(object).expect("Rigid body not found.");
 
-    //             // if let WorldObjectBorrowed::RigidBody(rb) = object {
-    //                 let t      = rb.position();
-    //                 let center = rb.center_of_mass();
+//             // if let WorldObjectBorrowed::RigidBody(rb) = object {
+//                 let t      = rb.position();
+//                 let center = rb.center_of_mass();
 
-    //                 let rotmat = t.rotation.to_rotation_matrix().unwrap();
-    //                 let x = rotmat.column(0) * 0.25f32;
-    //                 let y = rotmat.column(1) * 0.25f32;
-    //                 let z = rotmat.column(2) * 0.25f32;
+//                 let rotmat = t.rotation.to_rotation_matrix().unwrap();
+//                 let x = rotmat.column(0) * 0.25f32;
+//                 let y = rotmat.column(1) * 0.25f32;
+//                 let z = rotmat.column(2) * 0.25f32;
 
-    //                 window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
-    //                 window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
-    //                 window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
-    //             // }
-    //         }
-    //     }
-    // }
+//                 window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
+//                 window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
+//                 window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
+//             // }
+//         }
+//     }
+// }
 
     pub fn switch_cameras(&mut self) {
         if self.curr_is_arc_ball {

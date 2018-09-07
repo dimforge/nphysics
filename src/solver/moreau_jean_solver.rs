@@ -135,8 +135,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         }
 
         for m in manifolds {
-            let ndofs1 = bodies.body(m.body1().body_handle).status_dependent_ndofs();
-            let ndofs2 = bodies.body(m.body2().body_handle).status_dependent_ndofs();
+            let ndofs1 = bodies.body(m.body1()).status_dependent_ndofs();
+            let ndofs2 = bodies.body(m.body2()).status_dependent_ndofs();
             let sz = self.contact_model.num_velocity_constraints(m) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {

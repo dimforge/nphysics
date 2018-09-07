@@ -57,10 +57,10 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
 
         for manifold in manifolds {
-            let body1 = bodies.body(manifold.collider1.data().body_part().body_handle);
-            let body2 = bodies.body(manifold.collider2.data().body_part().body_handle);
-            let part1 = body1.part(manifold.collider1.data().body_part());
-            let part2 = body2.part(manifold.collider2.data().body_part());
+            let body1 = bodies.body(manifold.body1());
+            let body2 = bodies.body(manifold.body2());
+            let part1 = body1.part(manifold.body_part1());
+            let part2 = body2.part(manifold.body_part2());
 
             let friction1 = manifold.collider1.data().material().friction;
             let friction2 = manifold.collider2.data().material().friction;

@@ -45,10 +45,10 @@ impl<N: Real> SignoriniModel<N> {
         let data1 = manifold.collider1.data();
         let data2 = manifold.collider2.data();
 
-        let body1 = bodies.body(data1.body_part().body_handle);
-        let body2 = bodies.body(data2.body_part().body_handle);
-        let part1 = body1.part(data1.body_part());
-        let part2 = body2.part(data2.body_part());
+        let body1 = bodies.body(manifold.body1());
+        let body2 = bodies.body(manifold.body2());
+        let part1 = body1.part(manifold.body_part1());
+        let part2 = body2.part(manifold.body_part2());
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -153,8 +153,8 @@ impl<N: Real> SignoriniModel<N> {
         let data1 = manifold.collider1.data();
         let data2 = manifold.collider2.data();
 
-        let b1 = data1.body_part();
-        let b2 = data2.body_part();
+        let b1 = manifold.body_part1();
+        let b2 = manifold.body_part2();
 
         let body1 = bodies.body(b1.body_handle);
         let body2 = bodies.body(b2.body_handle);
