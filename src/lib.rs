@@ -83,7 +83,13 @@ The libraries needed to compile the physics engine are:
 The libraries needed to compile the examples are:
 
 */
-
+#![cfg_attr(
+  all(
+    any(target_arch = "wasm32", target_arch = "asmjs"),
+    feature = "wasm-bindgen-no-stdweb",
+  ),
+  feature(custom_attribute)
+)]
 #![deny(non_camel_case_types)]
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
@@ -116,9 +122,18 @@ extern crate slab;
 #[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 extern crate time;
 
-#[cfg(any(target_arch = "wasm32", target_arch = "asmjs"))]
+#[cfg(all(
+  any(target_arch = "wasm32", target_arch = "asmjs"),
+  feature = "stdweb",
+))]
 #[macro_use]
 extern crate stdweb;
+
+#[cfg(all(
+  any(target_arch = "wasm32", target_arch = "asmjs"),
+  feature = "wasm-bindgen-no-std",
+))]
+extern crate wasm_bindgen;
 
 //#[cfg(test)]
 //extern crate test;
@@ -141,7 +156,7 @@ pub mod math {
   use algebra::{Force3, Inertia3, Velocity3};
   use na::{
     Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX, Point3,
-    Translation3, U3, U6, UnitQuaternion, Vector3, Vector6,
+    Translation3, UnitQuaternion, Vector3, Vector6, U3, U6,
   };
 
   /// The maximum number of possible rotations and translations of a rigid body.
@@ -218,7 +233,7 @@ pub mod math {
   use algebra::{Force2, Inertia2, Velocity2};
   use na::{
     Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX, Point2,
-    Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3,
+    Translation2, UnitComplex, Vector1, Vector2, Vector3, U1, U2, U3,
   };
 
   /// The maximum number of possible rotations and translations of a rigid body.
