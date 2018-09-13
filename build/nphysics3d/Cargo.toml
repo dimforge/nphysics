@@ -11,7 +11,8 @@ keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
 
 [features]
-default = [ "dim3" ]
+default = [ "dim3", "stdweb" ]
+use-wasm-bindgen = [ "dim3", "wasm-bindgen" ]
 dim3    = [ ]
 
 [lib]
@@ -28,13 +29,16 @@ downcast   = "0.9"
 ncollide3d = "0.17"
 
 [target.wasm32-unknown-unknown.dependencies]
-stdweb = "0.4"
+stdweb = {version = "0.4", optional = true}
+wasm-bindgen = {version = "0.2.21", optional = true}
 
 [target.wasm32-unknown-emscripten.dependencies]
-stdweb = "0.4"
+stdweb = {version = "0.4", optional = true}
+wasm-bindgen = {version = "0.2.21", optional = true}
 
 [target.asmjs-unknown-emscripten.dependencies]
-stdweb = "0.4"
+stdweb = {version = "0.4", optional = true}
+wasm-bindgen = {version = "0.2.21", optional = true}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 time = "0.1"
