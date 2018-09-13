@@ -77,7 +77,7 @@ mod js {
     feature = "wasm-bindgen-no-stdweb",
 ))]
 fn now() -> f64 {
-    js::performance.now() / 1000.0
+    js::performance::now() / 1000.0
 }
 
 impl Display for Timer {
