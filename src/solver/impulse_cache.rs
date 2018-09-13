@@ -18,6 +18,11 @@ impl<N: Copy + Zero> ImpulseCache<N> {
         self.cache.clear();
     }
 
+    /// The number of impulses on this cache.
+    pub fn len(&self) -> usize {
+        self.cache.len()
+    }
+
     /// Test if the cache already contains the specified contact.
     pub fn contains(&self, contact_id: GenerationalId) -> bool {
         contact_id.id < self.cache.len() && self.cache[contact_id.id].0 == contact_id

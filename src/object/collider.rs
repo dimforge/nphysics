@@ -1,8 +1,10 @@
+use std::sync::Arc;
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
 use math::Isometry;
 use object::{BodyPartHandle, BodyHandle, Material};
+use ncollide::shape::DeformationIndex;
 
 /// Type of a reference to a collider.
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
@@ -30,10 +32,11 @@ pub enum ColliderAnchor<N: Real> {
     OnDeformableBody {
         /// The attached body handle.
         body: BodyHandle,
-        /// The body deformation indices.
-        body_indices: Vec<usize>,
-        /// The collider deformation indices.
-        shape_indices: Vec<usize>,
+        /// Indices mapping degrees of freedom of the body with degrees of freedom of the collision object.
+        // NOTE: we made it an ARC mostly because ot avoids some borrowing issue on simulation steps to
+        // apply the deformation to attached colliders. Though it is still interesting per se to allow
+        // sharing deformation index buffers between deformable colliders.
+        indices: Arc<Vec<DeformationIndex>>,
     },
 }
 

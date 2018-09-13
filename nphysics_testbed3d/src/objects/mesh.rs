@@ -2,7 +2,8 @@ use kiss3d::resource;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, Vector3};
-use nphysics3d::object::ColliderHandle;
+use ncollide3d::shape::TriMesh;
+use nphysics3d::object::{ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
 use objects::node;
 use std::cell::RefCell;
@@ -44,10 +45,10 @@ impl Mesh {
             .unwrap()
             .query_type()
             .is_proximity_query()
-        {
-            res.gfx.set_surface_rendering_activation(false);
-            res.gfx.set_lines_width(1.0);
-        }
+            {
+                res.gfx.set_surface_rendering_activation(false);
+                res.gfx.set_lines_width(1.0);
+            }
 
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
@@ -80,6 +81,21 @@ impl Mesh {
             &self.color,
             &self.delta,
         );
+
+        // Update if some deformation occurred.
+        // FIXME: don't update if it did not move.
+        if let Some(c) = world.collider(self.collider) {
+            if let ColliderAnchor::OnDeformableBody { .. } = c.data().anchor() {
+                let shape = c.shape().as_shape::<TriMesh<f32>>().unwrap();
+                let vtx = shape.vertices();
+
+                self.gfx.modify_vertices(&mut |vertices| {
+                    for (v, new_v) in vertices.iter_mut().zip(vtx.iter()) {
+                        *v = *new_v
+                    }
+                });
+            }
+        }
     }
 
     pub fn scene_node(&self) -> &SceneNode {

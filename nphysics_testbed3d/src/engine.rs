@@ -5,14 +5,13 @@ use na;
 use na::{Isometry3, Point3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor, DeformableVolume};
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
 use objects::ball::Ball;
 use objects::box_node::Box;
 use objects::convex::Convex;
 use objects::mesh::Mesh;
 use objects::node::Node;
-use objects::deformable_mesh::DeformableMesh;
 use objects::plane::Plane;
 use rand::{Rng, SeedableRng, XorShiftRng};
 use std::collections::HashMap;
@@ -160,26 +159,6 @@ impl GraphicsManager {
         self.set_body_color(handle, color);
 
         color
-    }
-
-    pub fn add_deformable_volume(&mut self, window: &mut Window, handle: BodyHandle, world: &World<f32>) {
-        if let Some(body) = world.body(handle).downcast_ref::<DeformableVolume<f32>>().ok() {
-            let color = self.alloc_color(handle);
-            let vertices = body.positions().as_slice().chunks(3).map(|p| Point3::new(p[0], p[1], p[2])).collect();
-            let indices = body.boundary().into_iter().map(|p| Point3::new((p.x / 3) as u16, (p.y / 3) as u16, (p.z / 3) as u16)).collect();
-
-            let node = Node::DeformableMesh(DeformableMesh::new(
-                handle,
-                world,
-                vertices,
-                indices,
-                color,
-                window,
-            ));
-
-            let nodes = self.b2sn.entry(handle).or_insert(Vec::new());
-            nodes.push(node);
-        }
     }
 
     pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {

@@ -1,8 +1,9 @@
-use na::{self, DVectorSlice, DVectorSliceMut, Real};
+use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
 use solver::IntegrationParameters;
+use ncollide::shape::DeformationsType;
 
 #[cfg(feature = "dim3")]
 use math::AngularVector;
@@ -150,6 +151,16 @@ impl<N: Real> Body<N> for RigidBody<N> {
     #[inline]
     fn status(&self) -> BodyStatus {
         self.status
+    }
+
+    #[inline]
+    fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
+        None
+    }
+
+    #[inline]
+    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        None
     }
 
     #[inline]

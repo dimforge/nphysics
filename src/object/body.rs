@@ -1,9 +1,9 @@
 #![allow(missing_docs)] // For downcast.
 
-use std::fmt::Debug;
 use downcast::Any;
 
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
+use ncollide::shape::DeformationsType;
 
 use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{BodyPartHandle, BodyHandle};
@@ -159,6 +159,12 @@ pub trait Body<N: Real>: Any + Send + Sync {
 
     /// Returns `true` if `handle` is a valid handle for one of this body's part.
     fn contains_part(&self, handle: BodyPartHandle) -> bool;
+
+    /// If this is a deformable body, returns its deformed positions.
+    fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
+
+    /// If this is a deformable body, returns a mutable reference to its deformed positions.
+    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])>;
 
     /// Convert generalized forces applied to this body part into generalized accelerations.
     fn inv_mass_mul_generalized_forces(&self, out: &mut [N]);

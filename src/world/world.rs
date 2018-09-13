@@ -1,11 +1,13 @@
 use slab::Slab;
 use std::f64;
+use std::sync::Arc;
+use either::Either;
 
 use na::{self, Real};
 use ncollide;
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
-use ncollide::shape::ShapeHandle;
+use ncollide::shape::{ShapeHandle, Shape, DeformationIndex, DeformableShape};
 use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
 
 use counters::Counters;
@@ -238,14 +240,17 @@ impl<N: Real> World<N> {
 
         self.counters.collision_detection_started();
         for collider_id in &self.colliders_w_parent {
+            // FIXME: the new_pos trick will probably no longer be
+            // needed once NLL land.
             let new_pos;
+            let body;
             {
                 // FIXME: update only if the position changed (especially for static bodies).
                 let collider = self
                     .cworld
                     .collision_object_mut(*collider_id)
                     .expect("Internal error: collider not found.");
-                let body = self.bodies.body(collider.data().body());
+                body = self.bodies.body(collider.data().body());
 
                 collider
                     .data_mut()
@@ -259,15 +264,20 @@ impl<N: Real> World<N> {
                     ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
                         let part = body.part(*body_part);
                         let part_pos = part.position();
-                        new_pos = part_pos * position_wrt_body_part
+                        new_pos = Either::Left(part_pos * position_wrt_body_part)
                     }
-                    ColliderAnchor::OnDeformableBody { .. } => {
-                        unimplemented!()
+                    ColliderAnchor::OnDeformableBody { indices, .. } => {
+                        // FIXME: too bad we have to clone the indices here
+                        // (that's why this is an arc) to avoid borrowing issue.
+                        new_pos = Either::Right(indices.clone());
                     }
                 }
             }
 
-            self.cworld.set_position(*collider_id, new_pos);
+            match new_pos {
+                Either::Left(pos) => self.cworld.set_position(*collider_id, pos),
+                Either::Right(indices) => self.cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1, &*indices)
+            }
         }
 
         self.cworld.clear_events();
@@ -462,21 +472,21 @@ impl<N: Real> World<N> {
         )
     }
 
-//    /// Add a deformable collider to the world and retrieve its handle.
-//    pub fn add_deformable_collider(
-//        &mut self,
-//        margin: N,
-//        shape: ShapeHandle<N>,
-//        parent: BodyHandle,
-//        to_parent: Isometry<N>,
-//        material: Material<N>,
-//    ) -> ColliderHandle {
-//        let query = GeometricQueryType::Contacts(
-//            margin + self.prediction * na::convert(0.5f64),
-//            self.angular_prediction,
-//        );
-//        self.add_deformable_collision_object(query, margin, shape, parent, to_parent, material)
-//    }
+    /// Add a deformable collider to the world and retrieve its handle.
+    pub fn add_deformable_collider<S: Shape<N> + DeformableShape<N> + Clone>(
+        &mut self,
+        margin: N,
+        shape: S,
+        parent: BodyHandle,
+        dof_map: Arc<Vec<DeformationIndex>>,
+        material: Material<N>,
+    ) -> ColliderHandle {
+        let query = GeometricQueryType::Contacts(
+            margin + self.prediction * na::convert(0.5f64),
+            self.angular_prediction,
+        );
+        self.add_deformable_collision_object(query, margin, shape, parent, dof_map, material)
+    }
 
     /// Add a collider to the world and retrieve its handle.
     pub fn add_collider(
@@ -544,36 +554,37 @@ impl<N: Real> World<N> {
         handle
     }
 
-//    fn add_deformable_collision_object(
-//        &mut self,
-//        query: GeometricQueryType<N>,
-//        margin: N,
-//        shape: ShapeHandle<N>,
-//        parent: BodyHandle,
-//        to_parent: Isometry<N>,
-//        material: Material<N>,
-//    ) -> CollisionObjectHandle {
-//        let (pos, ndofs) = if parent.is_ground() {
-//            (to_parent, 0)
-//        } else {
-//            let parent_body = self.bodies.body(parent);
-//            let parent_part = parent_body.part(parent);
-//            (
-//                parent_part.position() * to_parent,
-//                parent_body.status_dependent_ndofs(),
-//            )
-//        };
-//
-//        let data = ColliderData::new(margin, parent, ndofs, to_parent, material);
-//        let groups = CollisionGroups::new();
-//        let handle = self.cworld.add(pos, shape, groups, query, data);
-//
-//        if !parent.is_ground() {
-//            self.colliders_w_parent.push(handle);
-//        }
-//
-//        handle
-//    }
+    fn add_deformable_collision_object<S: Shape<N> + DeformableShape<N> + Clone>(
+        &mut self,
+        query: GeometricQueryType<N>,
+        margin: N,
+        shape: S,
+        parent: BodyHandle,
+        dof_map: Arc<Vec<DeformationIndex>>,
+        material: Material<N>,
+    ) -> CollisionObjectHandle {
+        let parent_body = self.bodies.body(parent);
+        let parent_deformation_type = parent_body
+            .deformed_positions()
+            .expect("A deformable collider must be attached to a deformable body.")
+            .0;
+
+        assert_eq!(
+            parent_deformation_type,
+            shape.deformations_type(),
+            "Both the deformable shape and deformable body must support the same deformation types."
+        );
+
+        let anchor = ColliderAnchor::OnDeformableBody { body: parent, indices: dof_map };
+        let ndofs = parent_body.status_dependent_ndofs();
+        let data = ColliderData::new(margin, anchor, ndofs, material);
+        let groups = CollisionGroups::new();
+        let handle = self.cworld.add(Isometry::identity(), ShapeHandle::new(shape), groups, query, data);
+
+        self.colliders_w_parent.push(handle);
+
+        handle
+    }
 
     /// Get a reference to the specified body part.
     ///

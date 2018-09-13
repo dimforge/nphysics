@@ -1,7 +1,6 @@
 #![allow(missing_docs)] // For downcast.
 
 use downcast::Any;
-use std::fmt::Debug;
 use na::{DVectorSliceMut, Real};
 
 use object::{Multibody, MultibodyLink};

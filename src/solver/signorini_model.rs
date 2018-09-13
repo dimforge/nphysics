@@ -19,7 +19,7 @@ pub struct SignoriniModel<N: Real> {
 }
 
 impl<N: Real> SignoriniModel<N> {
-    /// Create a new signorini contact model.
+    /// Create a new Signorini contact model.
     pub fn new() -> Self {
         SignoriniModel {
             impulses: ImpulseCache::new(),

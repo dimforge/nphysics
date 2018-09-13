@@ -1,8 +1,10 @@
 use std::ops::AddAssign;
+use std::iter;
 use std::collections::HashMap;
 use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix,
          DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3};
 use ncollide::utils;
+use ncollide::shape::{TriMesh, DeformationsType, DeformationIndex};
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
 use solver::IntegrationParameters;
@@ -211,27 +213,77 @@ impl<N: Real> DeformableVolume<N> {
 
         let mut faces = HashMap::new();
 
-        for elt in &self.elements {
+        for (i, elt) in self.elements.iter().enumerate() {
             let k1 = key(elt.indices.x, elt.indices.y, elt.indices.z);
             let k2 = key(elt.indices.y, elt.indices.z, elt.indices.w);
             let k3 = key(elt.indices.z, elt.indices.w, elt.indices.x);
             let k4 = key(elt.indices.w, elt.indices.x, elt.indices.y);
 
-            faces.entry(k1).or_insert(0).add_assign(1);
-            faces.entry(k2).or_insert(0).add_assign(1);
-            faces.entry(k3).or_insert(0).add_assign(1);
-            faces.entry(k4).or_insert(0).add_assign(1);
+            faces.entry(k1).or_insert((0, elt.indices.w)).0.add_assign(1);
+            faces.entry(k2).or_insert((0, elt.indices.x)).0.add_assign(1);
+            faces.entry(k3).or_insert((0, elt.indices.y)).0.add_assign(1);
+            faces.entry(k4).or_insert((0, elt.indices.z)).0.add_assign(1);
         }
 
         let boundary = faces.iter().filter_map(|(k, n)| {
-            if *n == 1 {
-                Some(Point3::new(k.0, k.1, k.2))
+            if n.0 == 1 {
+                // Ensure the triangle has an outward normal.
+                // FIXME: there is a much more efficient way of doing this, given the
+                // tetrahedra orientations and the face.
+                let a = self.positions.fixed_rows::<U3>(k.0);
+                let b = self.positions.fixed_rows::<U3>(k.1);
+                let c = self.positions.fixed_rows::<U3>(k.2);
+                let d = self.positions.fixed_rows::<U3>(n.1);
+
+                let ab = b - a;
+                let ac = c - a;
+                let ad = d - a;
+
+                if ab.cross(&ac).dot(&ad) < N::zero() {
+                    Some(Point3::new(k.0, k.1, k.2))
+                } else {
+                    Some(Point3::new(k.0, k.2, k.1))
+                }
             } else {
                 None
             }
         }).collect();
 
         boundary
+    }
+
+    /// Returns a triangle mesh at the boundary of this volume as well as a mapping between the mesh
+    /// vertices and this volume degrees of freedom.
+    pub fn boundary_mesh(&self) -> (TriMesh<N>, Vec<DeformationIndex>) {
+        const INVALID: usize = usize::max_value();
+        let mut deformation_indices = Vec::new();
+        let mut indices = self.boundary();
+        let mut idx_remap: Vec<usize> = iter::repeat(INVALID).take(self.positions.len() / 3).collect();
+        let mut vertices = Vec::new();
+
+        for idx in &mut indices {
+            for i in 0..3 {
+                let idx_i = &mut idx[i];
+                if idx_remap[*idx_i / 3] == INVALID {
+                    let new_id = vertices.len();
+                    vertices.push(Point3::new(
+                        self.positions[*idx_i + 0],
+                        self.positions[*idx_i + 1],
+                        self.positions[*idx_i + 2])
+                    );
+                    deformation_indices.push(DeformationIndex {
+                        source: *idx_i,
+                        target: new_id,
+                    });
+                    idx_remap[*idx_i / 3] = new_id;
+                    *idx_i = new_id;
+                } else {
+                    *idx_i = idx_remap[*idx_i / 3];
+                }
+            }
+        }
+
+        (TriMesh::new(vertices, indices, None), deformation_indices)
     }
 
     /// Constructs an axis-aligned cube with regular subdivisions along each axis.
@@ -310,6 +362,16 @@ impl<N: Real> DeformableVolume<N> {
 }
 
 impl<N: Real> Body<N> for DeformableVolume<N> {
+    #[inline]
+    fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
+        Some((DeformationsType::Vectors, self.positions.as_slice()))
+    }
+
+    #[inline]
+    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
+    }
+
     fn update_kinematics(&mut self) {
         for elt in &mut self.elements {
             let a = self.positions.fixed_rows::<U3>(elt.indices.x);
@@ -329,7 +391,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             elt.volume = elt.j.determinant() * na::convert(1.0 / 6.0);
             elt.j_inv = elt.j.try_inverse().expect("Degenerate tetrahedral element found.");
             elt.com = Point3::from_coordinates((a + b + c + d) * na::convert::<_, N>(1.0 / 4.0));
-            // FIXME: update orientation for stiffness wrapping.
+// FIXME: update orientation for stiffness wrapping.
         }
     }
 
@@ -342,7 +404,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.assemble_damping();
         self.assemble_forces(gravity, params);
 
-        // Finalize assembling the augmented mass.
+// Finalize assembling the augmented mass.
         {
             let dt2 = params.dt * params.dt;
             let d = self.damping.as_slice();

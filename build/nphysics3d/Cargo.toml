@@ -19,6 +19,7 @@ name = "nphysics3d"
 path = "../../src/lib.rs"
 
 [dependencies]
+either     = "1.0"
 num-traits = "0.2"
 slab       = "0.4"
 alga       = "0.7"

@@ -1,8 +1,8 @@
-use std::iter;
 use std::ops::Range;
 use slab::Slab;
 
-use joint::{FreeJoint, Joint};
+use ncollide::shape::DeformationsType;
+use joint::Joint;
 use math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
     Vector, Velocity, DIM,
@@ -892,6 +892,16 @@ impl<N: Real> Body<N> for Multibody<N> {
     #[inline]
     fn contains_part(&self, handle: BodyPartHandle) -> bool {
         self.link(handle).is_some()
+    }
+
+    #[inline]
+    fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
+        None
+    }
+
+    #[inline]
+    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        None
     }
 
     #[inline]

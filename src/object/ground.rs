@@ -1,5 +1,6 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
+use ncollide::shape::DeformationsType;
 use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
 use solver::IntegrationParameters;
@@ -94,6 +95,16 @@ impl<N: Real> Body<N> for Ground<N> {
     #[inline]
     fn is_static(&self) -> bool {
         true
+    }
+
+    #[inline]
+    fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
+        None
+    }
+
+    #[inline]
+    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        None
     }
 
     #[inline]

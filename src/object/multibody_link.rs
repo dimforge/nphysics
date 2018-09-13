@@ -4,7 +4,7 @@ use na::Real;
 
 use joint::Joint;
 use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use object::{BodyPartHandle, Body, BodyPart, BodyHandle};
+use object::{BodyPartHandle, BodyPart, BodyHandle};
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: Real> {

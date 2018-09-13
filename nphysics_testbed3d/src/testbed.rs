@@ -132,10 +132,6 @@ impl Testbed {
             self.graphics
                 .add(self.window.as_mut().unwrap(), co.handle(), &self.world);
         }
-
-        for b in self.world.bodies() {
-            self.graphics.add_deformable_volume(self.window.as_mut().unwrap(), b.handle().unwrap(), &self.world)
-        }
     }
 
     pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {
@@ -160,7 +156,7 @@ impl Testbed {
 
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path = Path::new(path);
-        let empty = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
+        let empty = Path::new("_some_non_existent_folder"); // don't bother loading mtl files correctly
         let objects = obj::parse_file(&path, &empty, "")
             .ok()
             .expect("Unable to open the obj file.");

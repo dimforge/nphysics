@@ -5,7 +5,7 @@ use na::{DVector, Real};
 use counters::Counters;
 use detection::ColliderContactManifold;
 use joint::JointConstraint;
-use object::{BodyPartHandle, BodyHandle, BodySet, Body};
+use object::{BodyHandle, BodySet, Body};
 use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 
 /// Moreau-Jean time-stepping scheme.
