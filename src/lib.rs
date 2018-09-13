@@ -83,13 +83,6 @@ The libraries needed to compile the physics engine are:
 The libraries needed to compile the examples are:
 
 */
-#![cfg_attr(
-  all(
-    any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "wasm-bindgen-no-stdweb",
-  ),
-  feature(custom_attribute)
-)]
 #![deny(non_camel_case_types)]
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
