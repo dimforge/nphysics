@@ -77,7 +77,7 @@ mod js {
     feature = "wasm-bindgen-no-stdweb",
 ))] // Needed because the js macro triggers it.
 fn now() -> f64 {
-    js::performance.now()
+    js::performance.now() / 1000.0
 }
 
 impl Display for Timer {
