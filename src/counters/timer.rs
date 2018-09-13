@@ -63,12 +63,12 @@ fn now() -> f64 {
     any(target_arch = "wasm32", target_arch = "asmjs"),
     feature = "wasm-bindgen-no-stdweb",
 ))]
-mod js {
+mod performance {
     use wasm_bindgen::prelude::*;
     #[wasm_bindgen]
     extern "C" {
         #[wasm_bindgen(js_namespace = performance)]
-        fn now() -> f64;
+        pub fn now() -> f64;
     }
 }
 
@@ -77,7 +77,7 @@ mod js {
     feature = "wasm-bindgen-no-stdweb",
 ))]
 fn now() -> f64 {
-    js::performance::now() / 1000.0
+    performance::now() / 1000.0
 }
 
 impl Display for Timer {
