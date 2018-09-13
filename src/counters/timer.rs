@@ -64,7 +64,7 @@ fn now() -> f64 {
     feature = "wasm-bindgen-no-stdweb",
 ))]
 mod js {
-    wasm_bindgen::prelude::*;
+    use wasm_bindgen::prelude::*;
     #[wasm_bindgen]
     extern "C" {
         #[wasm_bindgen(js_namespace = performance)]
