@@ -75,7 +75,7 @@ mod js {
 #[cfg(all(
     any(target_arch = "wasm32", target_arch = "asmjs"),
     feature = "wasm-bindgen-no-stdweb",
-))] // Needed because the js macro triggers it.
+))]
 fn now() -> f64 {
     js::performance.now() / 1000.0
 }
