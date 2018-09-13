@@ -12,7 +12,7 @@ license = "BSD-3-Clause"
 
 [features]
 default = [ "dim2", "stdweb" ]
-wasm-bindgen-no-stdweb = [ "dim2", "wasm-bindgen" ]
+use-wasm-bindgen = [ "dim2", "wasm-bindgen" ]
 dim2    = [ ]
 
 [lib]
