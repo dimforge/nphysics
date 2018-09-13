@@ -61,7 +61,7 @@ fn now() -> f64 {
 }
 #[cfg(all(
     any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "wasm-bindgen-no-stdweb",
+    feature = "use-wasm-bindgen",
 ))]
 mod performance {
     use wasm_bindgen::prelude::*;
@@ -74,7 +74,7 @@ mod performance {
 
 #[cfg(all(
     any(target_arch = "wasm32", target_arch = "asmjs"),
-    feature = "wasm-bindgen-no-stdweb",
+    feature = "use-wasm-bindgen",
 ))]
 fn now() -> f64 {
     performance::now() / 1000.0

@@ -123,7 +123,7 @@ extern crate stdweb;
 
 #[cfg(all(
   any(target_arch = "wasm32", target_arch = "asmjs"),
-  feature = "wasm-bindgen-no-stdweb",
+  feature = "use-wasm-bindgen",
 ))]
 extern crate wasm_bindgen;
 
