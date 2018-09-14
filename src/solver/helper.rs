@@ -20,6 +20,21 @@ pub enum ForceDirection<N: Real> {
     Angular(Unit<AngularVector<N>>),
 }
 
+impl<N: Real> ForceDirection<N> {
+    /// The force (at the specified point) resulting from this unit force applied at the specified point.
+    #[inline]
+    pub fn at_point(&self, pt: &Point<N>) -> Force<N> {
+        match self {
+            ForceDirection::Linear(normal) => {
+                Force::linear_at_point(**normal, pt)
+            }
+            ForceDirection::Angular(axis) => {
+                Force::torque_from_vector(**axis)
+            }
+        }
+    }
+}
+
 impl<N: Real> Neg for ForceDirection<N> {
     type Output = Self;
 
@@ -49,20 +64,9 @@ pub fn fill_constraint_geometry<N: Real>(
     jacobians: &mut [N],
     inv_r: &mut N,
 ) {
-    let force;
-    let pos = center - part.center_of_mass().coords;
+    // XXX: all that should probably just be a call to the body trait-object.
+    body.body_part_jacobian_mul_unit_force(part, center, dir, &mut jacobians[j_id..]);
 
-    match *dir {
-        ForceDirection::Linear(normal) => {
-            force = Force::linear_at_point(*normal, &pos);
-        }
-        ForceDirection::Angular(axis) => {
-            force = Force::torque_from_vector(*axis);
-            // force = Force::torque_from_vector_at_point(*axis, &pos);
-        }
-    }
-
-    body.body_part_jacobian_mul_force(part, &force, &mut jacobians[j_id..]);
     // FIXME: this could be optimized with a copy_nonoverlapping.
     for i in 0..ndofs {
         jacobians[wj_id + i] = jacobians[j_id + i];
@@ -186,6 +190,7 @@ pub fn constraint_pair_velocity<N: Real>(
             + j.dot(&ext_vels.rows(assembly_id1, geom.ndofs1));
     } else {
         // Adjust the rhs for kinematic bodies.
+        // XXX: shouldn't this just be the j.dot(&body1.generalized_velocity())?
         let vel1 = body1.status_dependent_body_part_velocity(part1);
         match *dir {
             ForceDirection::Linear(ref normal) => {
@@ -205,6 +210,7 @@ pub fn constraint_pair_velocity<N: Real>(
             + j.dot(&ext_vels.rows(assembly_id2, geom.ndofs2));
     } else {
         // Adjust the rhs for kinematic bodies.
+        // XXX: shouldn't this just be the j.dot(&body1.generalized_velocity())?
         let vel2 = body2.status_dependent_body_part_velocity(part2);
 
         match *dir {
@@ -221,7 +227,7 @@ pub fn constraint_pair_velocity<N: Real>(
     vel
 }
 
-/// Test sif a constraint between the two given bodies should be a ground
+/// Test if a constraint between the two given bodies should be a ground
 /// constraint (a constraint between a dynamic body and one without any degree of freedom).
 #[inline]
 pub fn constraints_are_ground_constraints<N: Real>(

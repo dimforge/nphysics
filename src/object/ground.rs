@@ -3,7 +3,7 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 use ncollide::shape::DeformationsType;
 use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
-use solver::IntegrationParameters;
+use solver::{IntegrationParameters, ForceDirection};
 
 /// A singleton representing the ground.
 ///
@@ -150,13 +150,10 @@ impl<N: Real> Body<N> for Ground<N> {
     fn deactivate(&mut self) {}
 
     #[inline]
-    fn body_part_jacobian_mul_force(&self, _: &BodyPart<N>, _: &Force<N>, _: &mut [N]) {}
+    fn body_part_jacobian_mul_unit_force(&self, _: &BodyPart<N>, _: &Point<N>, _: &ForceDirection<N>, _: &mut [N]) {}
 
     #[inline]
     fn inv_mass_mul_generalized_forces(&self, _: &mut [N]) {}
-
-    #[inline]
-    fn inv_mass_mul_body_part_force(&self, _: &BodyPart<N>, _: &Force<N>, _: &mut [N]) {}
 }
 
 impl<N: Real> BodyPart<N> for Ground<N> {

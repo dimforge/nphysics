@@ -479,13 +479,14 @@ impl<N: Real> World<N> {
         shape: S,
         parent: BodyHandle,
         dof_map: Arc<Vec<DeformationIndex>>,
+        parts_map: Arc<Vec<usize>>,
         material: Material<N>,
     ) -> ColliderHandle {
         let query = GeometricQueryType::Contacts(
             margin + self.prediction * na::convert(0.5f64),
             self.angular_prediction,
         );
-        self.add_deformable_collision_object(query, margin, shape, parent, dof_map, material)
+        self.add_deformable_collision_object(query, margin, shape, parent, dof_map, parts_map, material)
     }
 
     /// Add a collider to the world and retrieve its handle.
@@ -561,6 +562,7 @@ impl<N: Real> World<N> {
         shape: S,
         parent: BodyHandle,
         dof_map: Arc<Vec<DeformationIndex>>,
+        parts_map: Arc<Vec<usize>>,
         material: Material<N>,
     ) -> CollisionObjectHandle {
         let parent_body = self.bodies.body(parent);
@@ -575,7 +577,7 @@ impl<N: Real> World<N> {
             "Both the deformable shape and deformable body must support the same deformation types."
         );
 
-        let anchor = ColliderAnchor::OnDeformableBody { body: parent, indices: dof_map };
+        let anchor = ColliderAnchor::OnDeformableBody { body: parent, indices: dof_map, body_parts: parts_map };
         let ndofs = parent_body.status_dependent_ndofs();
         let data = ColliderData::new(margin, anchor, ndofs, material);
         let groups = CollisionGroups::new();

@@ -13,7 +13,7 @@ use object::{
     MultibodyLinkVec, Body, BodyPart, BodyHandle, RigidBody, Ground,
 };
 use solver::{
-    ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator,
+    ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator, ForceDirection,
 };
 use utils::{GeneralizedCross, IndexMut2};
 
@@ -1024,20 +1024,17 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn body_part_jacobian_mul_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
-        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
-        self.link_jacobian_mul_force(link, force, out)
-    }
-
-    #[inline]
     fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
         assert!(self.inv_augmented_mass.solve_mut(&mut out))
     }
 
     #[inline]
-    fn inv_mass_mul_body_part_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
+    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
-        self.inv_mass_mul_link_force(link, force, out)
+        let pos = point - link.com.coords;
+        let force = force_dir.at_point(&pos);
+
+        self.link_jacobian_mul_force(link, &force, out)
     }
 }

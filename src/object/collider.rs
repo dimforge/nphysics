@@ -37,6 +37,10 @@ pub enum ColliderAnchor<N: Real> {
         // apply the deformation to attached colliders. Though it is still interesting per se to allow
         // sharing deformation index buffers between deformable colliders.
         indices: Arc<Vec<DeformationIndex>>,
+        /// A map between the collision objects parts and body part indices.
+        ///
+        /// The `i`-th part of the collision object corresponds to the `body_parts[i]`-th body part.
+        body_parts: Arc<Vec<usize>>,
     },
 }
 

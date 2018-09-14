@@ -7,7 +7,7 @@ use ncollide::shape::DeformationsType;
 
 use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use object::{BodyPartHandle, BodyHandle};
-use solver::IntegrationParameters;
+use solver::{IntegrationParameters, ForceDirection};
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -170,10 +170,7 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn inv_mass_mul_generalized_forces(&self, out: &mut [N]);
 
     /// Convert a force applied to the center of mass of this body part into generalized force.
-    fn body_part_jacobian_mul_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]);
-
-    /// Convert a force applied to this body part's center of mass into generalized accelerations.
-    fn inv_mass_mul_body_part_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]);
+    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]);
 
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.
     ///

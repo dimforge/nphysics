@@ -2,7 +2,7 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
-use solver::IntegrationParameters;
+use solver::{IntegrationParameters, ForceDirection};
 use ncollide::shape::DeformationsType;
 
 #[cfg(feature = "dim3")]
@@ -273,18 +273,16 @@ impl<N: Real> Body<N> for RigidBody<N> {
     #[inline]
     fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
         let force = Force::from_slice(out);
-        self.inv_mass_mul_body_part_force(self, &force, out)
-    }
-
-    #[inline]
-    fn body_part_jacobian_mul_force(&self, _: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
-        out[..SPATIAL_DIM].copy_from_slice(force.as_slice());
-    }
-
-    #[inline]
-    fn inv_mass_mul_body_part_force(&self, _: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
-        let acc = self.inv_augmented_mass * *force;
+        let acc = self.inv_augmented_mass * force;
         out[..SPATIAL_DIM].copy_from_slice(acc.as_slice());
+    }
+
+    #[inline]
+    fn body_part_jacobian_mul_unit_force(&self, _: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
+        let pos = point - self.com.coords;
+        let force = force_dir.at_point(&pos);
+
+        out[..SPATIAL_DIM].copy_from_slice(force.as_slice());
     }
 }
 

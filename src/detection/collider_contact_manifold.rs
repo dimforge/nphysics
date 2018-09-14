@@ -102,7 +102,9 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
     pub fn body_part1(&self) -> BodyPartHandle {
         match self.collider1.data().anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
-            ColliderAnchor::OnDeformableBody { .. } => BodyPartHandle::ground(), // XXX: handle deformables
+            ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+                BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id1()] }
+            }
         }
     }
 
@@ -110,7 +112,9 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
     pub fn body_part2(&self) -> BodyPartHandle {
         match self.collider2.data().anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
-            ColliderAnchor::OnDeformableBody { .. } => BodyPartHandle::ground(), // XXX: handle deformables
+            ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+                BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id2()] }
+            } // XXX: handle deformables
         }
     }
 

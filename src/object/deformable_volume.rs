@@ -1,22 +1,22 @@
 use std::ops::AddAssign;
 use std::iter;
 use std::collections::HashMap;
-use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix,
-         DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3};
+use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix, Isometry3,
+         DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3, VectorSliceMut3};
 use ncollide::utils;
 use ncollide::shape::{TriMesh, DeformationsType, DeformationIndex};
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
-use solver::IntegrationParameters;
-use math::Force;
+use solver::{IntegrationParameters, ForceDirection};
+use math::{Force, Inertia, Velocity};
 
 /// One element of a deformable volume.
 pub struct TetrahedralElement<N: Real> {
+    handle: Option<BodyPartHandle>,
     indices: Point4<usize>,
-    com: Point3<N>,
+    position: Isometry3<N>,
     j: Matrix3<N>,
     j_inv: Matrix3<N>,
-    // orientation: Rotation3<N>,
     volume: N,
     density: N,
 }
@@ -56,8 +56,9 @@ impl<N: Real> DeformableVolume<N> {
     pub fn new(vertices: &Vec<Point3<N>>, tetrahedra: &Vec<Point4<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let elements = tetrahedra.iter().map(|idx|
             TetrahedralElement {
+                handle: None,
                 indices: idx * 3,
-                com: Point3::origin(),
+                position: Isometry3::identity(),
                 j: na::zero(),
                 j_inv: na::zero(),
                 volume: na::zero(),
@@ -205,7 +206,10 @@ impl<N: Real> DeformableVolume<N> {
     }
 
     /// Returns the triangles at the boundary of this volume.
-    pub fn boundary(&self) -> Vec<Point3<usize>> {
+    ///
+    /// Each element of the returned `Vec` is a tuple containing the 3 indices of the triangle
+    /// vertices, and the index of the corresponding tetrahedral element.
+    pub fn boundary(&self) -> Vec<(Point3<usize>, usize)> {
         fn key(a: usize, b: usize, c: usize) -> (usize, usize, usize) {
             let (sa, sb, sc) = utils::sort3(&a, &b, &c);
             (*sa, *sb, *sc)
@@ -219,10 +223,10 @@ impl<N: Real> DeformableVolume<N> {
             let k3 = key(elt.indices.z, elt.indices.w, elt.indices.x);
             let k4 = key(elt.indices.w, elt.indices.x, elt.indices.y);
 
-            faces.entry(k1).or_insert((0, elt.indices.w)).0.add_assign(1);
-            faces.entry(k2).or_insert((0, elt.indices.x)).0.add_assign(1);
-            faces.entry(k3).or_insert((0, elt.indices.y)).0.add_assign(1);
-            faces.entry(k4).or_insert((0, elt.indices.z)).0.add_assign(1);
+            faces.entry(k1).or_insert((0, elt.indices.w, i)).0.add_assign(1);
+            faces.entry(k2).or_insert((0, elt.indices.x, i)).0.add_assign(1);
+            faces.entry(k3).or_insert((0, elt.indices.y, i)).0.add_assign(1);
+            faces.entry(k4).or_insert((0, elt.indices.z, i)).0.add_assign(1);
         }
 
         let boundary = faces.iter().filter_map(|(k, n)| {
@@ -240,9 +244,9 @@ impl<N: Real> DeformableVolume<N> {
                 let ad = d - a;
 
                 if ab.cross(&ac).dot(&ad) < N::zero() {
-                    Some(Point3::new(k.0, k.1, k.2))
+                    Some((Point3::new(k.0, k.1, k.2), n.2))
                 } else {
-                    Some(Point3::new(k.0, k.2, k.1))
+                    Some((Point3::new(k.0, k.2, k.1), n.2))
                 }
             } else {
                 None
@@ -253,15 +257,16 @@ impl<N: Real> DeformableVolume<N> {
     }
 
     /// Returns a triangle mesh at the boundary of this volume as well as a mapping between the mesh
-    /// vertices and this volume degrees of freedom.
-    pub fn boundary_mesh(&self) -> (TriMesh<N>, Vec<DeformationIndex>) {
+    /// vertices and this volume degrees of freedom and the mapping between the mesh triangles and
+    /// this volume body parts (the tetrahedral elements).
+    pub fn boundary_mesh(&self) -> (TriMesh<N>, Vec<DeformationIndex>, Vec<usize>) {
         const INVALID: usize = usize::max_value();
         let mut deformation_indices = Vec::new();
         let mut indices = self.boundary();
         let mut idx_remap: Vec<usize> = iter::repeat(INVALID).take(self.positions.len() / 3).collect();
         let mut vertices = Vec::new();
 
-        for idx in &mut indices {
+        for (idx, part_id) in &mut indices {
             for i in 0..3 {
                 let idx_i = &mut idx[i];
                 if idx_remap[*idx_i / 3] == INVALID {
@@ -283,14 +288,19 @@ impl<N: Real> DeformableVolume<N> {
             }
         }
 
-        (TriMesh::new(vertices, indices, None), deformation_indices)
+        let body_parts = indices.iter().map(|i| i.1).collect();
+        let indices = indices.into_iter().map(|i| i.0).collect();
+
+        (TriMesh::new(vertices, indices, None), deformation_indices, body_parts)
     }
+
+// FIXME: add a method to apply a transformation to the whole volume.
 
     /// Constructs an axis-aligned cube with regular subdivisions along each axis.
     ///
     /// The cube is subdivided `nx` (resp. `ny` and `nz`) times along
     /// the `x` (resp. `y` and `z`) axis.
-    pub fn cube(extents: Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn cube(pos: &Isometry3<N>, extents: &Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -307,7 +317,7 @@ impl<N: Real> DeformableVolume<N> {
 
                 for k in 0..=nz {
                     let z = z_step * na::convert(k as f64) - na::convert(0.5);
-                    vertices.push(Point3::new(x * extents.x, y * extents.y, z * extents.z))
+                    vertices.push(pos * Point3::new(x * extents.x, y * extents.y, z * extents.z))
                 }
             }
         }
@@ -390,7 +400,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             );
             elt.volume = elt.j.determinant() * na::convert(1.0 / 6.0);
             elt.j_inv = elt.j.try_inverse().expect("Degenerate tetrahedral element found.");
-            elt.com = Point3::from_coordinates((a + b + c + d) * na::convert::<_, N>(1.0 / 4.0));
+            elt.position.translation.vector = (a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
 // FIXME: update orientation for stiffness wrapping.
         }
     }
@@ -416,7 +426,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             }
         }
 
-        // FIXME: avoid allocation inside LU at each timestep.
+// FIXME: avoid allocation inside LU at each timestep.
         self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
         assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
     }
@@ -434,6 +444,10 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
 
     fn set_handle(&mut self, handle: Option<BodyHandle>) {
         self.handle = handle;
+
+        for (i, element) in self.elements.iter_mut().enumerate() {
+            element.handle = handle.map(|h| BodyPartHandle { body_handle: h, part_id: i })
+        }
     }
 
     fn handle(&self) -> Option<BodyHandle> {
@@ -489,44 +503,73 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     }
 
     fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
-        unimplemented!()
+        &self.elements[handle.part_id]
     }
 
     fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
-        unimplemented!()
+        &mut self.elements[handle.part_id]
     }
 
     fn contains_part(&self, handle: BodyPartHandle) -> bool {
-        unimplemented!()
+        if let Some(me) = self.handle {
+            handle.body_handle == me && handle.part_id < self.elements.len()
+        } else {
+            false
+        }
     }
 
-    fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
-        unimplemented!()
+    fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
+        let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
+        assert!(self.inv_augmented_mass.solve_mut(&mut out))
     }
 
-    fn body_part_jacobian_mul_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
-        unimplemented!()
-    }
+    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point3<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
+        if let ForceDirection::Linear(dir) = force_dir {
+            let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
+            let a = self.positions.fixed_rows::<U3>(elt.indices.x);
+            let pt_a = pt.coords - a;
+            let bcoords = elt.j_inv * pt_a;
 
-    fn inv_mass_mul_body_part_force(&self, part: &BodyPart<N>, force: &Force<N>, out: &mut [N]) {
-        unimplemented!()
+            let f1 = **dir * (N::one() - bcoords.x - bcoords.y - bcoords.z).max(N::zero()).min(N::one());
+            let f2 = **dir * bcoords.x.max(N::zero()).min(N::one());
+            let f3 = **dir * bcoords.y.max(N::zero()).min(N::one());
+            let f4 = **dir * bcoords.z.max(N::zero()).min(N::one());
+
+            VectorSliceMut3::from_slice(&mut out[elt.indices.x..]).copy_from(&f1);
+            VectorSliceMut3::from_slice(&mut out[elt.indices.y..]).copy_from(&f2);
+            VectorSliceMut3::from_slice(&mut out[elt.indices.z..]).copy_from(&f3);
+            VectorSliceMut3::from_slice(&mut out[elt.indices.w..]).copy_from(&f4);
+        }
     }
 }
 
-/*
+
 impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
-    fn handle(&self) -> Option<BodyPartHandle>;
+    fn handle(&self) -> Option<BodyPartHandle> {
+        self.handle
+    }
 
-    fn center_of_mass(&self) -> Point<N>;
+    fn center_of_mass(&self) -> Point3<N> {
+        Point3::from_coordinates(self.position.translation.vector)
+    }
 
-    fn position(&self) -> Isometry<N>;
+    fn position(&self) -> Isometry3<N> {
+        self.position
+    }
 
-    fn velocity(&self) -> Velocity<N>;
+    fn velocity(&self) -> Velocity<N> {
+        unimplemented!()
+    }
 
-    fn inertia(&self) -> Inertia<N>;
+    fn inertia(&self) -> Inertia<N> {
+        Inertia::new(self.volume * self.density, Matrix3::identity())
+    }
 
-    fn local_inertia(&self) -> Inertia<N>;
+    fn local_inertia(&self) -> Inertia<N> {
+        Inertia::new(self.volume * self.density, Matrix3::identity())
+    }
 
-    fn apply_force(&mut self, force: &Force<N>);
+    fn apply_force(&mut self, force: &Force<N>) {
+        unimplemented!()
+    }
 }
-*/
