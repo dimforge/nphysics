@@ -27,6 +27,7 @@ enum RunMode {
     Step,
 }
 
+#[cfg(not(feature = "log"))]
 fn usage(exe_name: &str) {
     println!("Usage: {} [OPTION] ", exe_name);
     println!("");
@@ -49,6 +50,31 @@ fn usage(exe_name: &str) {
     println!("    arrows - move around when in first-person camera mode.");
     println!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
     println!("    b      - draw the bounding boxes.");
+}
+
+#[cfg(feature = "log")]
+fn usage(exe_name: &str) {
+    info!("Usage: {} [OPTION] ", exe_name);
+    info!("");
+    info!("Options:");
+    info!("    --help  - prints this help message and exits.");
+    info!("    --pause - do not start the simulation right away.");
+    info!("");
+    info!("The following keyboard commands are supported:");
+    info!("    t      - pause/continue the simulation.");
+    info!("    s      - pause then execute only one simulation step.");
+    info!("    1      - launch a ball.");
+    info!("    2      - launch a cube.");
+    info!("    3      - launch a fast cube using continuous collision detection.");
+    info!("    TAB    - switch camera mode (first-person or arc-ball).");
+    info!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
+    info!(
+        "    CTRL + left click + drag - select and drag an object using a ball-in-socket joint."
+    );
+    info!("    SHIFT + left click - remove an object.");
+    info!("    arrows - move around when in first-person camera mode.");
+    info!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
+    info!("    b      - draw the bounding boxes.");
 }
 
 pub struct Testbed {
@@ -456,7 +482,10 @@ impl State for Testbed {
                 }
                 self.world.get_mut().step();
                 if !self.hide_counters {
-                    println!("{}", self.world.get().performance_counters());
+                    #[cfg(not(feature = "log"))]
+                        println!("{}", self.world.get().performance_counters());
+                    #[cfg(feature = "log")]
+                        debug!("{}", self.world.get().performance_counters());
                 }
                 self.time += self.world.get().timestep();
             }
