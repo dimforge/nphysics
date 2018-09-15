@@ -6,6 +6,10 @@ extern crate num_traits as num;
 extern crate rand;
 extern crate time;
 
+#[cfg(feature = "log")]
+#[macro_use]
+extern crate log;
+
 pub use engine::GraphicsManager;
 pub use testbed::Testbed;
 pub use world_owner::WorldOwner;
