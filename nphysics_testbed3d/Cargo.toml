@@ -1,8 +1,8 @@
 [package]
 name    = "nphysics_testbed3d"
-version = "0.1.0"
+version = "0.2.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
-description = "Testbed for the 2-dimensional physics engine in Rust."
+description = "Testbed for the 3-dimensional physics engine in Rust."
 homepage = "http://nphysics.org"
 repository = "https://github.com/rustsim/nphysics"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
