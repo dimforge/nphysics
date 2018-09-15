@@ -92,7 +92,8 @@ The libraries needed to compile the examples are:
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
-#![doc(html_root_url = "http://nphysics-dev.org/doc")]
+#![doc(html_root_url = "http://nphysics.org/rustdoc/")]
+
 
 #[macro_use]
 extern crate approx;
