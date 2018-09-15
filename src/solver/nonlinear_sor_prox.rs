@@ -159,6 +159,17 @@ impl<N: Real> NonlinearSORProx<N> {
         let body2 = bodies.body(constraint.body2.body_handle);
         let part1 = body1.part(constraint.body1);
         let part2 = body2.part(constraint.body2);
+
+        let collider1 = colliders.get(consraint.collider1);
+        let collider2 = colliders.get(consraint.collider2);
+
+        match collider1.data().anchor() {
+            ColliderAnchor::OnDeformableBody { dof_id, .. } => {
+                let pos = body1.generalized_position();
+                collider.shape().as_deformable().local_linear_approximation(pos, dof_id, kinematic.data1_mut();
+            }
+        }
+
         let pos1 = part1.position();
         let pos2 = part2.position();
 

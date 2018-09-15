@@ -458,6 +458,10 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.status
     }
 
+    fn set_status(&mut self, status: BodyStatus) {
+        self.status = status
+    }
+
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }

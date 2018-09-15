@@ -96,12 +96,6 @@ impl<N: Real> RigidBody<N> {
         self.velocity.angular = vel
     }
 
-    /// Set the status of this body.
-    #[inline]
-    pub fn set_status(&mut self, status: BodyStatus) {
-        self.status = status
-    }
-
     /// The augmented mass (inluding gyroscropic terms) in world-space of this rigid body.
     #[inline]
     pub fn augmented_mass(&self) -> &Inertia<N> {
@@ -151,6 +145,11 @@ impl<N: Real> Body<N> for RigidBody<N> {
     #[inline]
     fn status(&self) -> BodyStatus {
         self.status
+    }
+
+    #[inline]
+    fn set_status(&mut self, status: BodyStatus) {
+        self.status = status
     }
 
     #[inline]

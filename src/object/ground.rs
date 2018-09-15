@@ -73,6 +73,9 @@ impl<N: Real> Body<N> for Ground<N> {
     }
 
     #[inline]
+    fn set_status(&mut self, _: BodyStatus) {}
+
+    #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }

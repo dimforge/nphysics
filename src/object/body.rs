@@ -121,6 +121,9 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// The status of this body.
     fn status(&self) -> BodyStatus;
 
+    /// Set the status of this body.
+    fn set_status(&mut self, status: BodyStatus);
+
     /// Information regarding activation and deactivation (sleeping) of this body.
     fn activation_status(&self) -> &ActivationStatus<N>;
 

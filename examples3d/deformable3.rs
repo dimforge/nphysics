@@ -62,8 +62,8 @@ fn main() {
     let volume = DeformableVolume::cube(
         &Isometry3::new(Vector3::y() * 0.2, na::zero()),
         &Vector3::new(1.0, 0.05, 0.1),
-        8, 2, 2,
-        1.0, 1.0e3, 0.3,
+        6, 2, 2,
+        1.0, 1.0e2, 0.3,
         (0.4, 0.0));
     let (mesh, ids_map, parts_map) = volume.boundary_mesh();
 

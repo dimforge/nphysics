@@ -133,12 +133,6 @@ impl<N: Real> Multibody<N> {
         &mut self.activation
     }
 
-    /// Set the status of this body.
-    #[inline]
-    fn set_status(&mut self, status: BodyStatus) {
-        self.status = status
-    }
-
     /// The vector of damping applied to this multibody.
     #[inline]
     pub fn damping(&self) -> DVectorSlice<N> {
@@ -1002,6 +996,12 @@ impl<N: Real> Body<N> for Multibody<N> {
             *v = N::zero()
         }
     }
+
+    #[inline]
+    fn set_status(&mut self, status: BodyStatus) {
+        self.status = status
+    }
+
 
     #[inline]
     fn status(&self) -> BodyStatus {
