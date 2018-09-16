@@ -127,6 +127,11 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// Information regarding activation and deactivation (sleeping) of this body.
     fn activation_status(&self) -> &ActivationStatus<N>;
 
+    /// Sets the energy bellow which this body is put to sleep.
+    ///
+    /// If set to `None` the body will never sleep.
+    fn set_deactivation_threshold(&mut self, threshold: Option<N>);
+
     /// The number of degrees of freedom of this body.
     fn ndofs(&self) -> usize;
 
@@ -174,6 +179,9 @@ pub trait Body<N: Real>: Any + Send + Sync {
 
     /// Convert a force applied to the center of mass of this body part into generalized force.
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]);
+
+    /// The velocity of the this body part at the given point and along the given direction.
+    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N;
 
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.
     ///

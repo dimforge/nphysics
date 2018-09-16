@@ -1,20 +1,26 @@
 use std::ops::AddAssign;
 use std::iter;
 use std::collections::HashMap;
+
+use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix, Isometry3,
-         DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3, VectorSliceMut3};
+         DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3, VectorSliceMut3,
+         Rotation3};
 use ncollide::utils;
-use ncollide::shape::{TriMesh, DeformationsType};
+use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
+use ncollide::query::PointQueryWithLocation;
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity};
 
 /// One element of a deformable volume.
+#[derive(Clone)]
 pub struct TetrahedralElement<N: Real> {
     handle: Option<BodyPartHandle>,
     indices: Point4<usize>,
-    position: Isometry3<N>,
+    com: Point3<N>,
+    rot: Rotation3<N>,
     j: Matrix3<N>,
     j_inv: Matrix3<N>,
     volume: N,
@@ -25,6 +31,7 @@ pub struct TetrahedralElement<N: Real> {
 ///
 /// The volume is described by a set of tetrahedral elements. This
 /// implements an isoparametric approach where the interpolations are linear.
+#[derive(Clone)]
 pub struct DeformableVolume<N: Real> {
     handle: Option<BodyHandle>,
     elements: Vec<TetrahedralElement<N>>,
@@ -33,6 +40,7 @@ pub struct DeformableVolume<N: Real> {
     accelerations: DVector<N>,
     damping: DMatrix<N>,
     stiffness: DMatrix<N>,
+    stiffness2: DMatrix<N>,
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: LU<N, Dynamic, Dynamic>,
 
@@ -58,7 +66,8 @@ impl<N: Real> DeformableVolume<N> {
             TetrahedralElement {
                 handle: None,
                 indices: idx * 3,
-                position: Isometry3::identity(),
+                com: Point3::origin(),
+                rot: Rotation3::identity(),
                 j: na::zero(),
                 j_inv: na::zero(),
                 volume: na::zero(),
@@ -76,6 +85,7 @@ impl<N: Real> DeformableVolume<N> {
             accelerations: DVector::zeros(ndofs),
             damping: DMatrix::zeros(ndofs, ndofs),
             stiffness: DMatrix::zeros(ndofs, ndofs),
+            stiffness2: DMatrix::zeros(ndofs, ndofs),
             augmented_mass: DMatrix::zeros(ndofs, ndofs),
             inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
             dpos: DVector::zeros(ndofs),
@@ -95,6 +105,18 @@ impl<N: Real> DeformableVolume<N> {
         &self.positions
     }
 
+    /// The velocity of this body in generalized coordinates.
+    #[inline]
+    pub fn velocities(&self) -> &DVector<N> {
+        &self.velocities
+    }
+
+    /// The mutable velocity of this body in generalized coordinates.
+    #[inline]
+    pub fn velocities_mut(&mut self) -> &mut DVector<N> {
+        &mut self.velocities
+    }
+
     fn assemble_forces(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
         for elt in &self.elements {
             let contribution = gravity * (elt.volume * na::convert::<_, N>(1.0 / 4.0));
@@ -107,9 +129,9 @@ impl<N: Real> DeformableVolume<N> {
 
         // Compute: self.forces - self.stiffness * (pos - rest_pos + vel * dt) - self.damping * vel;
         self.dpos.copy_from(&self.positions);
-        self.dpos.axpy(-N::one(), &self.rest_positions, N::one());
         self.dpos.axpy(params.dt, &self.velocities, N::one());
         self.accelerations.gemv(-N::one(), &self.stiffness, &self.dpos, N::one());
+        self.accelerations.gemv(N::one(), &self.stiffness2, &self.rest_positions, N::one());
         self.accelerations.gemv(-N::one(), &self.damping, &self.velocities, N::one());
     }
 
@@ -149,11 +171,24 @@ impl<N: Real> DeformableVolume<N> {
         }
     }
 
-    fn assemble_stiffness(&mut self) {
+    fn assemble_stiffness_and_forces(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
         let _6: N = na::convert(6.0);
+        let dt = params.dt;
+        let dt2 = params.dt * params.dt;
 
+        // External forces.
+        for elt in &self.elements {
+            let contribution = gravity * (elt.volume * na::convert::<_, N>(1.0 / 4.0));
+
+            for k in 0..4 {
+                let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(elt.indices[k]);
+                forces_part += contribution;
+            }
+        }
+
+        /// Internal forces and stiffness.
         for elt in &self.elements {
             let d0 = (self.young_modulus * (_1 - self.poisson_ratio)) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
             let d1 = (self.young_modulus * self.poisson_ratio) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
@@ -194,12 +229,24 @@ impl<N: Real> DeformableVolume<N> {
                         d1 * dn * bm + d2 * bn * dm, d1 * dn * cm + d2 * cn * dm, d0 * dn * dm + d2 * (bn * bm + cn * cm),
                     ) * elt.volume;
 
+//                    println!("Element stiffness: {}", node_stiffness);
+
+                    let rot_stiffness = elt.rot * node_stiffness;
+                    let rot_tr = elt.rot.transpose();
+
 
                     let ia = elt.indices[a];
                     let ib = elt.indices[b];
 
-                    // FIXME: meld it directly with the mass matrix?
-                    self.stiffness.fixed_slice_mut::<U3, U3>(ia, ib).add_assign(&node_stiffness);
+                    let mut mass_part = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                    mass_part.gemm(dt2, &rot_stiffness, rot_tr.matrix(), N::one());
+
+                    let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
+                    let vel_part = self.velocities.fixed_rows::<U3>(ib);
+                    let pos_part = self.positions.fixed_rows::<U3>(ib);
+                    let ref_pos_part = self.rest_positions.fixed_rows::<U3>(ib);
+                    let dpos = rot_tr * (vel_part * dt + pos_part) - ref_pos_part;
+                    force_part.gemv(-N::one(), &rot_stiffness, &dpos, N::one());
                 }
             }
         }
@@ -288,6 +335,7 @@ impl<N: Real> DeformableVolume<N> {
         }
 
         let body_parts = indices.iter().map(|i| i.1).collect();
+//        println!("Number of trimesh triangles: {}", indices.len());
         let indices = indices.into_iter().map(|i| i.0).collect();
 
         (TriMesh::new(vertices, indices, None), deformation_indices, body_parts)
@@ -357,11 +405,21 @@ impl<N: Real> DeformableVolume<N> {
                     let _7 = _0 + shift(ny, nz, 1, 1, 0);
 
                     let ifirst = indices.len();
-                    indices.push(Point4::new(_0, _1, _2, _5));
-                    indices.push(Point4::new(_2, _5, _6, _7));
-                    indices.push(Point4::new(_2, _7, _3, _0));
-                    indices.push(Point4::new(_7, _4, _0, _5));
-                    indices.push(Point4::new(_0, _2, _7, _5));
+
+                    if (i % 2) == 0 && ((j % 2) == (k % 2)) ||
+                        (i % 2) == 1 && ((j % 2) != (k % 2)) {
+                        indices.push(Point4::new(_0, _1, _2, _5));
+                        indices.push(Point4::new(_2, _5, _6, _7));
+                        indices.push(Point4::new(_2, _7, _3, _0));
+                        indices.push(Point4::new(_7, _4, _0, _5));
+                        indices.push(Point4::new(_0, _2, _7, _5));
+                    } else {
+                        indices.push(Point4::new(_4, _6, _5, _1));
+                        indices.push(Point4::new(_6, _2, _1, _3));
+                        indices.push(Point4::new(_6, _7, _3, _4));
+                        indices.push(Point4::new(_3, _4, _0, _1));
+                        indices.push(Point4::new(_4, _3, _6, _1));
+                    }
                 }
             }
         }
@@ -399,8 +457,35 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             );
             elt.volume = elt.j.determinant() * na::convert(1.0 / 6.0);
             elt.j_inv = elt.j.try_inverse().expect("Degenerate tetrahedral element found.");
-            elt.position.translation.vector = (a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
-// FIXME: update orientation for stiffness wrapping.
+            elt.com = Point3::from_coordinates(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
+
+            /*
+             * Compute the orientation.
+             */
+            // Undeformed points.
+            let rest_a = self.rest_positions.fixed_rows::<U3>(elt.indices.x);
+            let rest_b = self.rest_positions.fixed_rows::<U3>(elt.indices.y);
+            let rest_c = self.rest_positions.fixed_rows::<U3>(elt.indices.z);
+            let rest_d = self.rest_positions.fixed_rows::<U3>(elt.indices.w);
+
+            let rest_ab = rest_b - rest_a;
+            let rest_ac = rest_c - rest_a;
+            let rest_ad = rest_d - rest_a;
+
+            let n1 = rest_ac.cross(&rest_ad);
+            let n2 = rest_ad.cross(&rest_ab);
+            let n3 = rest_ab.cross(&rest_ac);
+
+            // The transformation matrix from which we can get the rotation component.
+            let g = (Matrix3::from_columns(&[n1, n2, n3]) * elt.j).transpose();
+            // FIXME: optimize this.
+            let mut cols = [
+                g.column(0).into_owned(),
+                g.column(1).into_owned(),
+                g.column(2).into_owned(),
+            ];
+            let _ = Vector3::orthonormalize(&mut cols);
+            elt.rot = Rotation3::from_matrix_unchecked(Matrix3::from_columns(&cols));
         }
     }
 
@@ -408,8 +493,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     fn update_dynamics(&mut self,
                        gravity: &Vector3<N>,
                        params: &IntegrationParameters<N>) {
-        self.assemble_stiffness();
-        self.assemble_mass();
+        /*
         self.assemble_damping();
         self.assemble_forces(gravity, params);
 
@@ -418,21 +502,27 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             let dt2 = params.dt * params.dt;
             let d = self.damping.as_slice();
             let m = self.augmented_mass.as_mut_slice();
-            let s = self.stiffness.as_slice();
 
             for i in 0..d.len() {
-                m[i] += params.dt * d[i] + dt2 * s[i];
+                m[i] += params.dt * d[i];
             }
-        }
+        }*/
+
+        self.assemble_mass();
+        self.assemble_stiffness_and_forces(gravity, params);
 
 // FIXME: avoid allocation inside LU at each timestep.
+//        println!("Forces: {}", self.accelerations);
+
         self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
         assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
+//        println!("Accelerations: {}", self.accelerations);
     }
 
     fn clear_dynamics(&mut self) {
         self.augmented_mass.fill(N::zero());
         self.stiffness.fill(N::zero());
+        self.stiffness2.fill(N::zero());
         self.accelerations.fill(N::zero());
     }
 

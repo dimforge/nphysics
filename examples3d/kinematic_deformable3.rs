@@ -23,18 +23,24 @@ fn main() {
     /*
      * For the ground, create a kinematic deformable body and a collider for its contour.
      */
-    let volume = DeformableVolume::cube(
+    let mut volume = DeformableVolume::cube(
         &Isometry3::identity(),
         &Vector3::new(5.0, 0.2, 5.0),
         6, 2, 2,
         1.0, 1.0e2, 0.3,
         (0.4, 0.0));
     let (mesh, ids_map, parts_map) = volume.boundary_mesh();
+    let positions = volume.positions().clone();
+    for (v, pos) in volume.velocities_mut().iter_mut().zip(positions.iter()) {
+        if *pos != 0.0 {
+            *v = 0.01 * 1.0 / *pos;
+        }
+    }
 
     let handle = world.add_body(Box::new(volume));
 
     // Make it kinematic.
-    world.body_mut(handle).set_status(BodyStatus::Static);
+    world.body_mut(handle).set_status(BodyStatus::Kinematic);
     world.add_deformable_collider(
         COLLIDER_MARGIN,
         mesh,
@@ -47,7 +53,7 @@ fn main() {
     /*
      * Create boxes
      */
-    let num = 5;
+    let num = 1;
     let rad = 0.1;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
@@ -55,7 +61,7 @@ fn main() {
     let centerz = shift * (num as f32) / 2.0;
     let height = 2.0; // 3.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(1.0, 0.1, 1.0)));// Vector3::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);
     let center_of_mass = geom.center_of_mass();
 

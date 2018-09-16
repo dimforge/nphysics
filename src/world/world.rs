@@ -332,16 +332,12 @@ impl<N: Real> World<N> {
         );
 
         // FIXME: not sure what is the most pretty/efficient way of doing this.
-        for rb in self.bodies.rigid_bodies_mut() {
-            if rb.status() == BodyStatus::Kinematic {
-                rb.integrate(&self.params)
-            }
-        }
-        for mb in self.bodies.multibodies_mut() {
+        for mb in self.bodies.bodies_mut() {
             if mb.status() == BodyStatus::Kinematic {
                 mb.integrate(&self.params)
             }
         }
+
         self.counters.solver_completed();
         self.counters.step_completed();
     }

@@ -161,6 +161,7 @@ impl<N: Real> SignoriniModel<N> {
         let part1 = body1.part(b1);
         let part2 = body2.part(b2);
 
+        // XXX: don't do this with deformable.
         let pos1 = part1.position();
         let pos2 = part2.position();
         let normal1 = pos1.inverse_transform_unit_vector(&c.contact.normal);

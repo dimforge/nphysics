@@ -998,6 +998,11 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
+    fn set_deactivation_threshold(&mut self, threshold: Option<N>) {
+        self.activation.set_deactivation_threshold(threshold)
+    }
+
+    #[inline]
     fn set_status(&mut self, status: BodyStatus) {
         self.status = status
     }
@@ -1036,5 +1041,20 @@ impl<N: Real> Body<N> for Multibody<N> {
         let force = force_dir.at_point(&pos);
 
         self.link_jacobian_mul_force(link, &force, out)
+    }
+
+    #[inline]
+    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
+        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+
+        match *force_dir {
+            ForceDirection::Linear(ref normal) => {
+                let dpos = point - link.com;
+                link.velocity.shift(&dpos).linear.dot(normal)
+            }
+            ForceDirection::Angular(ref axis) => {
+                link.velocity.angular_vector().dot(axis)
+            }
+        }
     }
 }

@@ -143,6 +143,12 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
+    fn set_deactivation_threshold(&mut self, threshold: Option<N>) {
+        self.activation.set_deactivation_threshold(threshold)
+    }
+
+
+    #[inline]
     fn status(&self) -> BodyStatus {
         self.status
     }
@@ -282,6 +288,19 @@ impl<N: Real> Body<N> for RigidBody<N> {
         let force = force_dir.at_point(&pos);
 
         out[..SPATIAL_DIM].copy_from_slice(force.as_slice());
+    }
+
+    #[inline]
+    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
+        match *force_dir {
+            ForceDirection::Linear(ref normal) => {
+                let dpos = point - self.com;
+                self.velocity.shift(&dpos).linear.dot(normal)
+            }
+            ForceDirection::Angular(ref axis) => {
+                self.velocity.angular_vector().dot(axis)
+            }
+        }
     }
 }
 

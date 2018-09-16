@@ -7,7 +7,7 @@ use na::{DVector, DVectorSlice, Real, Unit};
 use std::ops::Neg;
 
 use math::{AngularVector, Force, Point, Rotation, Vector};
-use object::{Body, BodyPart};
+use object::{Body, BodyPart, BodyStatus};
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
@@ -188,40 +188,18 @@ pub fn constraint_pair_velocity<N: Real>(
         let j = DVectorSlice::from_slice(&jacobians[geom.j_id1..], geom.ndofs1);
         vel += j.dot(&body1.generalized_velocity())
             + j.dot(&ext_vels.rows(assembly_id1, geom.ndofs1));
-    } else {
+    } else if body1.status() == BodyStatus::Kinematic {
         // Adjust the rhs for kinematic bodies.
-        // XXX: shouldn't this just be the j.dot(&body1.generalized_velocity())?
-        let vel1 = body1.status_dependent_body_part_velocity(part1);
-        match *dir {
-            ForceDirection::Linear(ref normal) => {
-                let dpos = center1 - part1.center_of_mass();
-                vel += vel1.shift(&dpos).linear.dot(normal);
-            }
-            ForceDirection::Angular(ref axis) => {
-                // FIXME: do we have to take dpos into account here?
-                vel += vel1.angular_vector().dot(axis);
-            }
-        }
+        vel += body1.body_part_point_velocity(part1, center1, dir);
     }
 
     if geom.ndofs2 != 0 {
         let j = DVectorSlice::from_slice(&jacobians[geom.j_id2..], geom.ndofs2);
         vel += j.dot(&body2.generalized_velocity())
             + j.dot(&ext_vels.rows(assembly_id2, geom.ndofs2));
-    } else {
+    } else if body2.status() == BodyStatus::Kinematic {
         // Adjust the rhs for kinematic bodies.
-        // XXX: shouldn't this just be the j.dot(&body1.generalized_velocity())?
-        let vel2 = body2.status_dependent_body_part_velocity(part2);
-
-        match *dir {
-            ForceDirection::Linear(ref normal) => {
-                let dpos = center2 - part2.center_of_mass();
-                vel -= vel2.shift(&dpos).linear.dot(normal);
-            }
-            ForceDirection::Angular(ref axis) => {
-                vel -= vel2.angular_vector().dot(axis);
-            }
-        }
+        vel -= body2.body_part_point_velocity(part2, center2, dir);
     }
 
     vel
