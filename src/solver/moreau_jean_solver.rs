@@ -7,6 +7,7 @@ use detection::ColliderContactManifold;
 use joint::JointConstraint;
 use object::{BodyHandle, BodySet, Body};
 use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
+use world::CollisionWorld;
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -46,6 +47,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
+        cworld: &CollisionWorld<N>,
     ) {
         counters.assembly_started();
         self.assemble_system(counters, params, bodies, joints, manifolds, island);
@@ -63,7 +65,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters.velocity_update_completed();
 
         counters.position_resolution_started();
-        self.solve_position_constraints(params, bodies, joints);
+        self.solve_position_constraints(params, cworld, bodies, joints);
         counters.position_resolution_completed();
     }
 
@@ -222,6 +224,7 @@ impl<N: Real> MoreauJeanSolver<N> {
     fn solve_position_constraints(
         &mut self,
         params: &IntegrationParameters<N>,
+        cworld: &CollisionWorld<N>,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {
@@ -229,6 +232,7 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         solver.solve(
             params,
+            cworld,
             bodies,
             &mut self.constraints.position.unilateral,
             &mut self.constraints.position.multibody_limits,

@@ -4,7 +4,6 @@ use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 
 use math::Isometry;
 use object::{BodyPartHandle, BodyHandle, Material};
-use ncollide::shape::DeformationIndex;
 
 /// Type of a reference to a collider.
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
@@ -36,7 +35,7 @@ pub enum ColliderAnchor<N: Real> {
         // NOTE: we made it an ARC mostly because ot avoids some borrowing issue on simulation steps to
         // apply the deformation to attached colliders. Though it is still interesting per se to allow
         // sharing deformation index buffers between deformable colliders.
-        indices: Arc<Vec<DeformationIndex>>,
+        indices: Arc<Vec<usize>>,
         /// A map between the collision objects parts and body part indices.
         ///
         /// The `i`-th part of the collision object corresponds to the `body_parts[i]`-th body part.

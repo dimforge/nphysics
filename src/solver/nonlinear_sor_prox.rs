@@ -3,12 +3,14 @@ use slab::Slab;
 use std::marker::PhantomData;
 use std::ops::MulAssign;
 
+use world::CollisionWorld;
 use joint::JointConstraint;
-use object::BodySet;
+use object::{BodySet, ColliderAnchor};
 use solver::helper;
 use solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
              NonlinearUnilateralConstraint};
+use math::Isometry;
 
 /// Non-linear position-based consraint solver using the SOR-Prox approach.
 pub struct NonlinearSORProx<N: Real> {
@@ -27,6 +29,7 @@ impl<N: Real> NonlinearSORProx<N> {
     pub fn solve(
         &self,
         params: &IntegrationParameters<N>,
+        cworld: &CollisionWorld<N>,
         bodies: &mut BodySet<N>,
         constraints: &mut [NonlinearUnilateralConstraint<N>],
         multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator],
@@ -39,7 +42,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                self.solve_unilateral(params, bodies, constraint, jacobians, dim1, dim2);
+                self.solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
             }
 
             for generator in multibody_limits {
@@ -122,13 +125,14 @@ impl<N: Real> NonlinearSORProx<N> {
     fn solve_unilateral<D1: Dim, D2: Dim>(
         &self,
         params: &IntegrationParameters<N>,
+        cworld: &CollisionWorld<N>,
         bodies: &mut BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
     ) {
-        if self.update_contact_constraint(params, bodies, constraint, jacobians) {
+        if self.update_contact_constraint(params, cworld, bodies, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
             VectorSliceMutN::from_slice_generic(jacobians, dim1, U1).mul_assign(impulse);
@@ -151,6 +155,7 @@ impl<N: Real> NonlinearSORProx<N> {
     fn update_contact_constraint(
         &self,
         params: &IntegrationParameters<N>,
+        cworld: &CollisionWorld<N>,
         bodies: &BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
@@ -160,18 +165,44 @@ impl<N: Real> NonlinearSORProx<N> {
         let part1 = body1.part(constraint.body1);
         let part2 = body2.part(constraint.body2);
 
-        let collider1 = colliders.get(consraint.collider1);
-        let collider2 = colliders.get(consraint.collider2);
+        let collider1 = cworld.collision_object(constraint.collider1).unwrap();
+        let collider2 = cworld.collision_object(constraint.collider2).unwrap();
+
+        let pos1;
+        let pos2;
 
         match collider1.data().anchor() {
-            ColliderAnchor::OnDeformableBody { dof_id, .. } => {
-                let pos = body1.generalized_position();
-                collider.shape().as_deformable().local_linear_approximation(pos, dof_id, kinematic.data1_mut();
+            ColliderAnchor::OnDeformableBody { indices, .. } => {
+                let coords = body1.deformed_positions().unwrap().1;
+                collider1.shape().as_deformable_shape().unwrap().update_local_approximation(
+                    coords,
+                    indices,
+                    constraint.subshape_id1,
+                    constraint.kinematic.approx1_mut());
+                // FIXME: is this really the identity?
+                pos1 = Isometry::identity();
+            }
+            ColliderAnchor::OnBodyPart { .. } => {
+                pos1 = part1.position();
             }
         }
 
-        let pos1 = part1.position();
-        let pos2 = part2.position();
+        match collider2.data().anchor() {
+            ColliderAnchor::OnDeformableBody { indices, .. } => {
+                let coords = body2.deformed_positions().unwrap().1;
+                collider2.shape().as_deformable_shape().unwrap().update_local_approximation(
+                    coords,
+                    indices,
+                    constraint.subshape_id2,
+                    constraint.kinematic.approx2_mut());
+                // FIXME: is this really the identity?
+                pos2 = Isometry::identity();
+            }
+            ColliderAnchor::OnBodyPart { .. } => {
+                pos2 = part2.position();
+            }
+        }
+
 
         if let Some(contact) = constraint
             .kinematic

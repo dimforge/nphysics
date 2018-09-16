@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix, Isometry3,
          DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3, VectorSliceMut3};
 use ncollide::utils;
-use ncollide::shape::{TriMesh, DeformationsType, DeformationIndex};
+use ncollide::shape::{TriMesh, DeformationsType};
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
 use solver::{IntegrationParameters, ForceDirection};
@@ -259,7 +259,9 @@ impl<N: Real> DeformableVolume<N> {
     /// Returns a triangle mesh at the boundary of this volume as well as a mapping between the mesh
     /// vertices and this volume degrees of freedom and the mapping between the mesh triangles and
     /// this volume body parts (the tetrahedral elements).
-    pub fn boundary_mesh(&self) -> (TriMesh<N>, Vec<DeformationIndex>, Vec<usize>) {
+    ///
+    /// The output is (triangle mesh, deformation indices, element to body part map).
+    pub fn boundary_mesh(&self) -> (TriMesh<N>, Vec<usize>, Vec<usize>) {
         const INVALID: usize = usize::max_value();
         let mut deformation_indices = Vec::new();
         let mut indices = self.boundary();
@@ -276,10 +278,7 @@ impl<N: Real> DeformableVolume<N> {
                         self.positions[*idx_i + 1],
                         self.positions[*idx_i + 2])
                     );
-                    deformation_indices.push(DeformationIndex {
-                        source: *idx_i,
-                        target: new_id,
-                    });
+                    deformation_indices.push(*idx_i);
                     idx_remap[*idx_i / 3] = new_id;
                     *idx_i = new_id;
                 } else {

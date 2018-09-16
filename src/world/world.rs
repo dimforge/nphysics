@@ -7,7 +7,7 @@ use na::{self, Real};
 use ncollide;
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
-use ncollide::shape::{ShapeHandle, Shape, DeformationIndex, DeformableShape};
+use ncollide::shape::{ShapeHandle, Shape, DeformableShape};
 use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
 
 use counters::Counters;
@@ -328,6 +328,7 @@ impl<N: Real> World<N> {
             &contact_manifolds[..],
             &self.active_bodies[..],
             &self.params,
+            &self.cworld,
         );
 
         // FIXME: not sure what is the most pretty/efficient way of doing this.
@@ -478,7 +479,7 @@ impl<N: Real> World<N> {
         margin: N,
         shape: S,
         parent: BodyHandle,
-        dof_map: Arc<Vec<DeformationIndex>>,
+        dof_map: Arc<Vec<usize>>,
         parts_map: Arc<Vec<usize>>,
         material: Material<N>,
     ) -> ColliderHandle {
@@ -561,7 +562,7 @@ impl<N: Real> World<N> {
         margin: N,
         shape: S,
         parent: BodyHandle,
-        dof_map: Arc<Vec<DeformationIndex>>,
+        dof_map: Arc<Vec<usize>>,
         parts_map: Arc<Vec<usize>>,
         material: Material<N>,
     ) -> CollisionObjectHandle {

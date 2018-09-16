@@ -19,7 +19,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    world.integration_parameters_mut().max_position_iterations = 0;
 
     /*
      * For the ground, create a kinematic deformable body and a collider for its contour.

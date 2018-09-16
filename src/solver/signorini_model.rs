@@ -179,8 +179,12 @@ impl<N: Real> SignoriniModel<N> {
             .unilateral
             .push(NonlinearUnilateralConstraint::new(
                 b1,
+                manifold.collider1.handle(),
+                manifold.manifold.subshape_id1(),
                 body1.status_dependent_ndofs(),
                 b2,
+                manifold.collider2.handle(),
+                manifold.manifold.subshape_id2(),
                 body2.status_dependent_ndofs(),
                 normal1,
                 normal2,
