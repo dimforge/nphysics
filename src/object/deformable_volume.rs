@@ -505,6 +505,10 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         }
     }
 
+    fn set_deactivation_threshold(&mut self, threshold: Option<N>) {
+        self.activation.set_deactivation_threshold(threshold)
+    }
+
     fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
         &self.elements[handle.part_id]
     }
@@ -529,19 +533,91 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point3<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
         if let ForceDirection::Linear(dir) = force_dir {
             let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
-            let a = self.positions.fixed_rows::<U3>(elt.indices.x);
-            let pt_a = pt.coords - a;
-            let bcoords = elt.j_inv * pt_a;
 
-            let f1 = **dir * (N::one() - bcoords.x - bcoords.y - bcoords.z).max(N::zero()).min(N::one());
-            let f2 = **dir * bcoords.x.max(N::zero()).min(N::one());
-            let f3 = **dir * bcoords.y.max(N::zero()).min(N::one());
-            let f4 = **dir * bcoords.z.max(N::zero()).min(N::one());
+            let a = self.positions.fixed_rows::<U3>(elt.indices.x).into_owned();
+            let b = self.positions.fixed_rows::<U3>(elt.indices.y).into_owned();
+            let c = self.positions.fixed_rows::<U3>(elt.indices.z).into_owned();
+            let d = self.positions.fixed_rows::<U3>(elt.indices.w).into_owned();
 
-            VectorSliceMut3::from_slice(&mut out[elt.indices.x..]).copy_from(&f1);
-            VectorSliceMut3::from_slice(&mut out[elt.indices.y..]).copy_from(&f2);
-            VectorSliceMut3::from_slice(&mut out[elt.indices.z..]).copy_from(&f3);
-            VectorSliceMut3::from_slice(&mut out[elt.indices.w..]).copy_from(&f4);
+            let tetra = Tetrahedron::new(
+                Point3::from_coordinates(a),
+                Point3::from_coordinates(b),
+                Point3::from_coordinates(c),
+                Point3::from_coordinates(d),
+            );
+
+            // XXX: This is extremely costly!
+            let proj = tetra.project_point_with_location(&Isometry3::identity(), pt, true).1;
+
+            let bcoords = if let Some(b) = proj.barycentric_coordinates() {
+                b
+            } else {
+                let pt_a = pt.coords - a;
+                // XXX: we have to update j_inv to use the new positions here!
+                let b = elt.j_inv.tr_mul(&pt_a);
+                [(N::one() - b.x - b.y - b.z), b.x, b.y, b.z]
+            };
+
+
+            VectorSliceMut3::from_slice(&mut out[elt.indices.x..]).copy_from(&(**dir * bcoords[0]));
+            VectorSliceMut3::from_slice(&mut out[elt.indices.y..]).copy_from(&(**dir * bcoords[1]));
+            VectorSliceMut3::from_slice(&mut out[elt.indices.z..]).copy_from(&(**dir * bcoords[2]));
+            VectorSliceMut3::from_slice(&mut out[elt.indices.w..]).copy_from(&(**dir * bcoords[3]));
+        }
+    }
+
+    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point3<N>, force_dir: &ForceDirection<N>) -> N {
+        if let ForceDirection::Linear(dir) = force_dir {
+            let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
+
+            let a = self.positions.fixed_rows::<U3>(elt.indices.x).into_owned();
+            let b = self.positions.fixed_rows::<U3>(elt.indices.y).into_owned();
+            let c = self.positions.fixed_rows::<U3>(elt.indices.z).into_owned();
+            let d = self.positions.fixed_rows::<U3>(elt.indices.w).into_owned();
+
+            let vs = [
+                self.velocities.fixed_rows::<U3>(elt.indices.x).into_owned(),
+                self.velocities.fixed_rows::<U3>(elt.indices.y).into_owned(),
+                self.velocities.fixed_rows::<U3>(elt.indices.z).into_owned(),
+                self.velocities.fixed_rows::<U3>(elt.indices.w).into_owned()
+            ];
+
+            let tetra = Tetrahedron::new(
+                Point3::from_coordinates(a),
+                Point3::from_coordinates(b),
+                Point3::from_coordinates(c),
+                Point3::from_coordinates(d),
+            );
+
+            // XXX: This is extremely costly!
+            match tetra.project_point_with_location(&Isometry3::identity(), point, true).1 {
+                TetrahedronPointLocation::OnVertex(i) => {
+                    vs[i].dot(dir)
+                }
+                TetrahedronPointLocation::OnEdge(i, uv) => {
+                    let idx = Tetrahedron::<N>::edge_ids(i);
+                    vs[idx.0].dot(dir) * uv[0] + vs[idx.1].dot(dir) * uv[1]
+                }
+                TetrahedronPointLocation::OnFace(i, uvw) => {
+                    let idx = Tetrahedron::<N>::face_ids(i);
+                    vs[idx.0].dot(dir) * uvw[0] + vs[idx.1].dot(dir) * uvw[1] + vs[idx.2].dot(dir) * uvw[2]
+                }
+                TetrahedronPointLocation::OnSolid => {
+                    let pt_a = point.coords - a;
+                    // XXX: we have to update j_inv to use the new positions here!
+                    let bcoords = elt.j_inv.tr_mul(&pt_a);
+
+
+                    let f2 = bcoords.x;
+                    let f3 = bcoords.y;
+                    let f4 = bcoords.z;
+                    let f1 = N::one() - f2 - f3 - f4;
+
+                    vs[0].dot(dir) * f1 + vs[1].dot(dir) * f2 + vs[2].dot(dir) * f3 + vs[3].dot(dir) * f4
+                }
+            }
+        } else {
+            N::zero()
         }
     }
 }
@@ -553,11 +629,11 @@ impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
     }
 
     fn center_of_mass(&self) -> Point3<N> {
-        Point3::from_coordinates(self.position.translation.vector)
+        self.com
     }
 
     fn position(&self) -> Isometry3<N> {
-        self.position
+        Isometry3::new(self.com.coords, na::zero())
     }
 
     fn velocity(&self) -> Velocity<N> {
