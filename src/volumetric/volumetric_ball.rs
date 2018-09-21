@@ -7,8 +7,13 @@ use math::{AngularInertia, Point, DIM};
 /// The volume of a ball.
 #[inline]
 pub fn ball_volume<N: Real>(radius: N) -> N {
-    let _pi = N::pi();
-    _pi * radius.powi(DIM as i32)
+    if DIM == 2 {
+        let _pi = N::pi();
+        _pi * radius * radius
+    } else {
+        let _pi = N::pi();
+        _pi * radius * radius * radius * na::convert(4.0f64 / 3.0)
+    }
 }
 
 /// The area of a ball.
