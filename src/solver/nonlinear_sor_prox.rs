@@ -263,6 +263,9 @@ impl<N: Real> NonlinearSORProx<N> {
                     // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
                     constraint.r = params.max_stabilization_multiplier;
                 } else {
+                    if inv_r == N::zero() {
+                        return false;
+                    }
                     constraint.r = N::one() / inv_r
                 }
 

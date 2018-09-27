@@ -3,10 +3,10 @@ use std::iter;
 use std::collections::HashMap;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, Vector2};
+use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU, Dynamic, Vector2, Point3};
 use ncollide::utils;
 use ncollide::procedural::{self, IndexBuffer};
-use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
+use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Triangle};
 use ncollide::query::PointQueryWithLocation;
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
@@ -17,7 +17,7 @@ use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
 #[derive(Clone)]
 pub struct MassSpringElement<N: Real> {
     handle: Option<BodyPartHandle>,
-    indices: Point<usize>,
+    indices: Point3<usize>,
     surface: N,
 }
 
@@ -154,7 +154,7 @@ impl<N: Real> MassSpringSurface<N> {
     }
 
     fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        let split_mass = self.mass / na::convert(self.elements.len() as f64);
+        let split_mass = self.mass / na::convert((self.positions.len() / DIM) as f64);
         self.augmented_mass.fill_diagonal(split_mass);
 
 //        for spring in self.springs {
@@ -181,6 +181,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     fn apply_displacement(&mut self, disp: &[N]) {
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;
+        println!("Applying displacement: {}", disp)
     }
 
     fn set_handle(&mut self, handle: Option<BodyHandle>) {
@@ -220,7 +221,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     }
 
     fn generalized_velocity(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(self.velocities.as_slice(), self.accelerations.len())
+        DVectorSlice::from_slice(self.velocities.as_slice(), self.velocities.len())
     }
 
     fn companion_id(&self) -> usize {
@@ -232,7 +233,8 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     }
 
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
-        DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), self.accelerations.len())
+        let len = self.velocities.len();
+        DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), len)
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
@@ -277,10 +279,33 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
         assert!(self.inv_augmented_mass.solve_mut(&mut out))
     }
 
-    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {}
+    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
+        if let ForceDirection::Linear(dir) = force_dir {
+            let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+
+            let a = self.positions.fixed_rows::<Dim>(elt.indices.x).into_owned();
+            let b = self.positions.fixed_rows::<Dim>(elt.indices.y).into_owned();
+            let c = self.positions.fixed_rows::<Dim>(elt.indices.z).into_owned();
+
+            let tri = Triangle::new(
+                Point::from_coordinates(a),
+                Point::from_coordinates(b),
+                Point::from_coordinates(c),
+            );
+
+            // XXX: This is extremely costly!
+            let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
+            let bcoords = proj.barycentric_coordinates().unwrap();
+
+
+            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.x..]).copy_from(&(**dir * bcoords[0]));
+            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.y..]).copy_from(&(**dir * bcoords[1]));
+            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.z..]).copy_from(&(**dir * bcoords[2]));
+        }
+    }
 
     fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
-        N::zero()
+        unimplemented!()
     }
 }
 
@@ -291,13 +316,11 @@ impl<N: Real> BodyPart<N> for MassSpringElement<N> {
     }
 
     fn center_of_mass(&self) -> Point<N> {
-        // XXX
-        Point::origin()
+        unimplemented!()
     }
 
     fn position(&self) -> Isometry<N> {
-        // XXX
-        Isometry::identity()
+        Isometry::identity() // XXX
     }
 
     fn velocity(&self) -> Velocity<N> {
@@ -305,13 +328,11 @@ impl<N: Real> BodyPart<N> for MassSpringElement<N> {
     }
 
     fn inertia(&self) -> Inertia<N> {
-        // XXX
-        Inertia::zero()
+        unimplemented!()
     }
 
     fn local_inertia(&self) -> Inertia<N> {
-        // XXX
-        Inertia::zero()
+        unimplemented!()
     }
 
     fn apply_force(&mut self, force: &Force<N>) {
