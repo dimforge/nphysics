@@ -103,7 +103,11 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         match self.collider1.data().anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
-                BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id1()] }
+                if let Some(body_parts) = body_parts {
+                    BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id1()] }
+                } else {
+                    BodyPartHandle { body_handle: *body, part_id: self.manifold.subshape_id1() }
+                }
             }
         }
     }
@@ -113,7 +117,11 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         match self.collider2.data().anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
-                BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id2()] }
+                if let Some(body_parts) = body_parts {
+                    BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id2()] }
+                } else {
+                    BodyPartHandle { body_handle: *body, part_id: self.manifold.subshape_id2() }
+                }
             } // XXX: handle deformables
         }
     }

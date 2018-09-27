@@ -276,7 +276,7 @@ impl<N: Real> World<N> {
 
             match new_pos {
                 Either::Left(pos) => self.cworld.set_position(*collider_id, pos),
-                Either::Right(indices) => self.cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1, &*indices)
+                Either::Right(indices) => self.cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1, indices.as_ref().map(|idx| &idx[..]))
             }
         }
 
@@ -475,8 +475,8 @@ impl<N: Real> World<N> {
         margin: N,
         shape: S,
         parent: BodyHandle,
-        dof_map: Arc<Vec<usize>>,
-        parts_map: Arc<Vec<usize>>,
+        dof_map: Option<Arc<Vec<usize>>>,
+        parts_map: Option<Arc<Vec<usize>>>,
         material: Material<N>,
     ) -> ColliderHandle {
         let query = GeometricQueryType::Contacts(
@@ -558,8 +558,8 @@ impl<N: Real> World<N> {
         margin: N,
         shape: S,
         parent: BodyHandle,
-        dof_map: Arc<Vec<usize>>,
-        parts_map: Arc<Vec<usize>>,
+        dof_map: Option<Arc<Vec<usize>>>,
+        parts_map: Option<Arc<Vec<usize>>>,
         material: Material<N>,
     ) -> CollisionObjectHandle {
         let parent_body = self.bodies.body(parent);

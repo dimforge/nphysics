@@ -176,7 +176,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 let coords = body1.deformed_positions().unwrap().1;
                 collider1.shape().as_deformable_shape().unwrap().update_local_approximation(
                     coords,
-                    indices,
+                    indices.as_ref().map(|idx| &idx[..]),
                     constraint.subshape_id1,
                     constraint.kinematic.approx1_mut());
                 // FIXME: is this really the identity?
@@ -192,7 +192,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 let coords = body2.deformed_positions().unwrap().1;
                 collider2.shape().as_deformable_shape().unwrap().update_local_approximation(
                     coords,
-                    indices,
+                    indices.as_ref().map(|idx| &idx[..]),
                     constraint.subshape_id2,
                     constraint.kinematic.approx2_mut());
                 // FIXME: is this really the identity?

@@ -32,14 +32,17 @@ pub enum ColliderAnchor<N: Real> {
         /// The attached body handle.
         body: BodyHandle,
         /// Indices mapping degrees of freedom of the body with degrees of freedom of the collision object.
+        /// If set to `None`, the mapping is trivial, i.e., the i-th degree of freedom of the body corresponds to
+        /// the i-th degree of freedom of the collision object.
         // NOTE: we made it an ARC mostly because ot avoids some borrowing issue on simulation steps to
         // apply the deformation to attached colliders. Though it is still interesting per se to allow
         // sharing deformation index buffers between deformable colliders.
-        indices: Arc<Vec<usize>>,
+        indices: Option<Arc<Vec<usize>>>,
         /// A map between the collision objects parts and body part indices.
         ///
         /// The `i`-th part of the collision object corresponds to the `body_parts[i]`-th body part.
-        body_parts: Arc<Vec<usize>>,
+        /// If set to `None`, the mapping is trivial, i.e., `i`-th part of the collision object corresponds to the `i`-th body part.
+        body_parts: Option<Arc<Vec<usize>>>,
     },
 }
 

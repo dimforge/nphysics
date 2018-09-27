@@ -510,6 +510,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
 
         self.assemble_mass();
         self.assemble_stiffness_and_forces(gravity, params);
+        // FIXME: add damping.
 
 // FIXME: avoid allocation inside LU at each timestep.
 //        println!("Forces: {}", self.accelerations);
@@ -590,9 +591,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
 
     fn deactivate(&mut self) {
         self.activation.set_energy(N::zero());
-        for v in &mut self.velocities {
-            *v = N::zero()
-        }
+        self.velocities.fill(N::zero());
     }
 
     fn set_deactivation_threshold(&mut self, threshold: Option<N>) {
