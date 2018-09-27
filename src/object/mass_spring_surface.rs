@@ -1,4 +1,4 @@
-use std::ops::{AddAssign, Range};
+use std::ops::{AddAssign, SubAssign};
 use std::iter;
 use std::collections::HashMap;
 
@@ -64,13 +64,14 @@ pub struct MassSpringSurface<N: Real> {
     status: BodyStatus,
     stiffness: N,
     mass: N,
+    damping: N,
 }
 
 impl<N: Real> MassSpringSurface<N> {
     /// Creates a new deformable surface following the mass-spring model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
-    pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: N) -> Self {
+    pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: N, damping: N) -> Self {
         let ndofs = mesh.vertices().len() * DIM;
         let mut springs = HashMap::new();
         let mut elements = Vec::with_capacity(mesh.indices().len());
@@ -124,16 +125,17 @@ impl<N: Real> MassSpringSurface<N> {
             status: BodyStatus::Dynamic,
             stiffness,
             mass,
+            damping,
         }
     }
 
     /// Creates a rectangular-shaped quad.
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N) -> Self {
+    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping: N) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::new(&trimesh, mass, stiffness)
+        Self::new(&trimesh, mass, stiffness, damping)
     }
 
     /// The triangle mesh corresponding to this mass-spring-surface structural elements.
@@ -149,7 +151,8 @@ impl<N: Real> MassSpringSurface<N> {
         let gravity_force = gravity * split_mass;
 
         for i in 0..self.positions.len() / DIM {
-            self.accelerations.fixed_rows_mut::<Dim>(i * DIM).copy_from(&gravity_force)
+            let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
+            acc += gravity_force
         }
     }
 
@@ -157,8 +160,27 @@ impl<N: Real> MassSpringSurface<N> {
         let split_mass = self.mass / na::convert((self.positions.len() / DIM) as f64);
         self.augmented_mass.fill_diagonal(split_mass);
 
-//        for spring in self.springs {
-//        }
+        for spring in &self.springs {
+            let p0 = self.positions.fixed_rows::<Dim>(spring.elements.0);
+            let p1 = self.positions.fixed_rows::<Dim>(spring.elements.1);
+            let v0 = self.velocities.fixed_rows::<Dim>(spring.elements.0);
+            let v1 = self.velocities.fixed_rows::<Dim>(spring.elements.1);
+
+            let ldot = v1 - v0;
+            let mut l = p1 - p0;
+            let length = l.norm();
+
+            if length == N::zero() {
+                l = Vector::y();
+            } else {
+                l /= length;
+            }
+
+            let f0 = l * (self.stiffness * (length - spring.rest_length) + self.damping * ldot.dot(&l));
+
+            self.accelerations.fixed_rows_mut::<Dim>(spring.elements.0).add_assign(&f0);
+            self.accelerations.fixed_rows_mut::<Dim>(spring.elements.1).sub_assign(&f0);
+        }
 
         self.update_gravity_force(gravity);
         self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
