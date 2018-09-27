@@ -66,7 +66,6 @@ to see all the cool stuffs you can do.
 become a grown up. Many missing features are because of missing features on
 **ncollide**. Features missing from **nphysics** itself include:
 
-- kinematic bodies
 - efficient signaling system
 - more joints, joint limits, joint motors and breakable joints.
 - soft-bodies (see https://github.com/natal/roft for a draft)
