@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use std::sync::Arc;
 use std::f32;
 use na::{Isometry3, Point3, Vector3, Vector2};
-use ncollide3d::shape::{Cuboid, ShapeHandle};
+use ncollide3d::shape::{Cuboid, ShapeHandle, Ball};
 use nphysics3d::object::{BodyPartHandle, Material, MassSpringSurface};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -19,16 +19,19 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    world.integration_parameters_mut().max_position_iterations = 0;
-    world.integration_parameters_mut().max_velocity_iterations = 50;
-    world.set_timestep(0.001);
+//    world.set_timestep(0.001);
+//    world.integration_parameters_mut().max_position_iterations = 1;
+//    world.integration_parameters_mut().max_velocity_iterations = 0;
 
     /*
      * Ground.
      */
-    let ground_size = 50.0;
+//    let ground_size = 50.0;
+    let ground_size = 0.2;
+//    let ground_shape =
+//        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
+        ShapeHandle::new(Ball::new(ground_size - COLLIDER_MARGIN));
     let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
 
     world.add_collider(
@@ -78,10 +81,11 @@ fn main() {
      * Create the deformable body and a collider for its contour.
      */
     let volume = MassSpringSurface::quad(
-        &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * f32::consts::FRAC_PI_2),
+        &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
         &Vector2::new(1.0, 1.0),
         10, 10,
-        1.0, 1.0);
+        1.0, 2.0, 0.1);
+//        1.0, 0.0, 0.0);
     let mesh = volume.mesh();
 
     let handle = world.add_body(Box::new(volume));
@@ -91,7 +95,7 @@ fn main() {
         handle,
         None,
         None,
-        Material::default(),
+        Material::new(0.0, 0.0),
     );
     world.body_mut(handle).set_deactivation_threshold(None);
 

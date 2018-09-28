@@ -3,8 +3,9 @@ use std::iter;
 use std::collections::HashMap;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU, Dynamic, Vector2, Point3};
-use ncollide::utils;
+use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
+         Dynamic, Vector2, Point3, MatrixN};
+use ncollide::utils::{self, DeterministicState};
 use ncollide::procedural::{self, IndexBuffer};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Triangle};
 use ncollide::query::PointQueryWithLocation;
@@ -73,7 +74,7 @@ impl<N: Real> MassSpringSurface<N> {
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: N, damping: N) -> Self {
         let ndofs = mesh.vertices().len() * DIM;
-        let mut springs = HashMap::new();
+        let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.indices().len());
         let mut positions = DVector::zeros(ndofs);
 
@@ -176,10 +177,46 @@ impl<N: Real> MassSpringSurface<N> {
                 l /= length;
             }
 
-            let f0 = l * (self.stiffness * (length - spring.rest_length) + self.damping * ldot.dot(&l));
+            // Explicit elastic term.
+            let coeff = self.stiffness * (length - spring.rest_length) + self.damping * ldot.dot(&l);
+            let f0 = l * coeff;
 
             self.accelerations.fixed_rows_mut::<Dim>(spring.elements.0).add_assign(&f0);
             self.accelerations.fixed_rows_mut::<Dim>(spring.elements.1).sub_assign(&f0);
+
+            if length != N::zero() {
+                /*
+                 *
+                 * Stiffness matrix contribution: there are 4 terms.
+                 *
+                 */
+                // let contrib0 = MatrixN::<N, Dim>::from_diagonal_element(coeff / length);
+                // let contrib1 = l * (l.transpose() * (self.stiffness * spring.rest_length / length));
+                // let contrib2 = l * (ldot.transpose() * (self.damping / length));
+                // let contrib3 = -l * (l.transpose() * (self.damping / length * ldot.dot(&l) * na::convert(2.0)));
+                // let contrib = contrib0 + contrib1 + contrib2 + contrib3;
+                // More compact version bellow:
+                let contrib0 = MatrixN::<N, Dim>::from_diagonal_element(coeff / length);
+                let contrib1 = ldot * (self.damping / length);
+                let contrib23 = l * ((self.stiffness * spring.rest_length - self.damping * ldot.dot(&l) * na::convert(2.0)) / length);
+                let stiffness = contrib0 + l * (contrib1 + contrib23).transpose();
+
+                let forward_f0 = stiffness * (ldot * params.dt);
+
+                // Add the contributions to the forces.
+                self.accelerations.fixed_rows_mut::<Dim>(spring.elements.0).add_assign(&forward_f0);
+                self.accelerations.fixed_rows_mut::<Dim>(spring.elements.1).sub_assign(&forward_f0);
+
+                // Damping matrix contribution.
+                let damping_dt = (l * l.transpose()) * (self.damping * params.dt);
+
+                // Add to the mass matrix.
+                let damping_stiffness = damping_dt - stiffness * (params.dt * params.dt);
+                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.elements.0, spring.elements.0).add_assign(&damping_stiffness);
+                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.elements.1, spring.elements.1).add_assign(&damping_stiffness);
+                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.elements.0, spring.elements.1).sub_assign(&damping_stiffness);
+                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.elements.1, spring.elements.0).sub_assign(&damping_stiffness);
+            }
         }
 
         self.update_gravity_force(gravity);
@@ -192,7 +229,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     fn update_kinematics(&mut self) {}
 
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.update_augmented_mass_and_forces(gravity, params)
+        self.update_augmented_mass_and_forces(gravity, params);
     }
 
     fn clear_dynamics(&mut self) {
@@ -203,7 +240,6 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     fn apply_displacement(&mut self, disp: &[N]) {
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;
-        println!("Applying displacement: {}", disp)
     }
 
     fn set_handle(&mut self, handle: Option<BodyHandle>) {
@@ -302,6 +338,10 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     }
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
+        // Needed by the non-linear SOR-prox.
+        // FIXME: should this be done by the non-linear SOR-prox itself?
+        DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
+
         if let ForceDirection::Linear(dir) = force_dir {
             let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a triangular mass-spring element");
 
@@ -318,7 +358,6 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
             // XXX: This is extremely costly!
             let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
             let bcoords = proj.barycentric_coordinates().unwrap();
-
 
             VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.x..]).copy_from(&(**dir * bcoords[0]));
             VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.y..]).copy_from(&(**dir * bcoords[1]));
@@ -342,7 +381,7 @@ impl<N: Real> BodyPart<N> for MassSpringElement<N> {
     }
 
     fn position(&self) -> Isometry<N> {
-        Isometry::identity() // XXX
+        Isometry::new(Vector::<N>::y() * na::convert::<_, N>(100.0f64), na::zero()) // XXX
     }
 
     fn velocity(&self) -> Velocity<N> {

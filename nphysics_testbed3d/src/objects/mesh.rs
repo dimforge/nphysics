@@ -94,6 +94,7 @@ impl Mesh {
                         *v = *new_v
                     }
                 });
+                self.gfx.recompute_normals();
             }
         }
     }

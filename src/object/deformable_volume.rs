@@ -6,7 +6,7 @@ use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix, Isometry3,
          DVector, DVectorSlice, DVectorSliceMut, LU, Dynamic, U3, VectorSliceMut3,
          Rotation3};
-use ncollide::utils;
+use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
 use ncollide::query::PointQueryWithLocation;
 
@@ -262,7 +262,7 @@ impl<N: Real> DeformableVolume<N> {
             (*sa, *sb, *sc)
         }
 
-        let mut faces = HashMap::new();
+        let mut faces = HashMap::with_hasher(DeterministicState::new());
 
         for (i, elt) in self.elements.iter().enumerate() {
             let k1 = key(elt.indices.x, elt.indices.y, elt.indices.z);
@@ -620,6 +620,10 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     }
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point3<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
+        // Needed by the non-linear SOR-prox.
+        // FIXME: should this be done by the non-linear SOR-prox itself?
+        DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
+
         if let ForceDirection::Linear(dir) = force_dir {
             let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
 
