@@ -5,7 +5,7 @@ use std::ops::MulAssign;
 
 use world::CollisionWorld;
 use joint::JointConstraint;
-use object::{BodySet, ColliderAnchor};
+use object::{BodySet, ColliderAnchor, BodyHandle};
 use solver::helper;
 use solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
@@ -34,6 +34,7 @@ impl<N: Real> NonlinearSORProx<N> {
         constraints: &mut [NonlinearUnilateralConstraint<N>],
         multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator],
         joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
+        internal_constraints: &[BodyHandle],
         jacobians: &mut [N],
         max_iter: usize,
     ) {
@@ -51,6 +52,11 @@ impl<N: Real> NonlinearSORProx<N> {
 
             for joint in &*joints_constraints {
                 self.solve_generic(params, bodies, &**joint.1, jacobians)
+            }
+
+            for constraint in internal_constraints {
+                let body = bodies.body_mut(*constraint);
+                body.step_solve_internal_position_constraints(params);
             }
         }
     }

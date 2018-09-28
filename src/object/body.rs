@@ -183,6 +183,19 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// The velocity of the this body part at the given point and along the given direction.
     fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N;
 
+    /// Returns `true` if this bodies contains internal constraints that need to be solved.
+    fn has_active_internal_constraints(&mut self) -> bool;
+
+    /// For warmstarting the solver, initializes the delta velocity applied by the internal constraints of this body.
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
+
+    /// Execute one step for the iterative resolution of this body's internal velocity constraints.
+    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
+
+    /// Execute one step for the iterative resolution of this body's internal position constraints.
+    #[inline]
+    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>);
+
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.
     ///
     /// In particular, this returns 0 for any body with a status different than `BodyStatus::Dynamic`.

@@ -5,6 +5,7 @@ use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN};
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use math::{SpatialDim, SPATIAL_DIM};
+use object::{BodySet, BodyHandle, Body};
 use solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint};
 
@@ -24,10 +25,12 @@ impl<N: Real> SORProx<N> {
     /// Solve the given set of constraints.
     pub fn solve(
         &self,
+        bodies: &mut BodySet<N>,
         unilateral_ground: &mut [UnilateralGroundConstraint<N>],
         unilateral: &mut [UnilateralConstraint<N>],
         bilateral_ground: &mut [BilateralGroundConstraint<N>],
         bilateral: &mut [BilateralConstraint<N>],
+        internal: &[BodyHandle],
         mj_lambda: &mut DVector<N>,
         jacobians: &[N],
         max_iter: usize,
@@ -56,15 +59,23 @@ impl<N: Real> SORProx<N> {
             self.setup_bilateral_ground(c, jacobians, mj_lambda, Dynamic::new(c.ndofs));
         }
 
+        for handle in internal {
+            let body = bodies.body_mut(*handle);
+            let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
+            body.setup_internal_velocity_constraints(&mut dvels);
+        }
+
         /*
          * Solve.
          */
         for _ in 0..max_iter {
             self.step(
+                bodies,
                 unilateral_ground,
                 unilateral,
                 bilateral_ground,
                 bilateral,
+                internal,
                 jacobians,
                 mj_lambda,
             )
@@ -73,10 +84,12 @@ impl<N: Real> SORProx<N> {
 
     fn step(
         &self,
+        bodies: &mut BodySet<N>,
         unilateral_ground: &mut [UnilateralGroundConstraint<N>],
         unilateral: &mut [UnilateralConstraint<N>],
         bilateral_ground: &mut [BilateralGroundConstraint<N>],
         bilateral: &mut [BilateralConstraint<N>],
+        internal: &[BodyHandle],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {
@@ -135,6 +148,12 @@ impl<N: Real> SORProx<N> {
                 let dim = Dynamic::new(c.ndofs);
                 self.solve_bilateral_ground(c, unilateral_ground, jacobians, mj_lambda, dim)
             }
+        }
+
+        for handle in internal {
+            let body = bodies.body_mut(*handle);
+            let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
+            body.step_solve_internal_velocity_constraints(&mut dvels);
         }
     }
 

@@ -165,6 +165,20 @@ impl<N: Real> Body<N> for Ground<N> {
     fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
         N::zero()
     }
+
+    #[inline]
+    fn has_active_internal_constraints(&mut self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
 }
 
 impl<N: Real> BodyPart<N> for Ground<N> {

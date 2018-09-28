@@ -1057,4 +1057,21 @@ impl<N: Real> Body<N> for Multibody<N> {
             }
         }
     }
+
+    #[inline]
+    fn has_active_internal_constraints(&mut self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+        // FIXME: solve joint limit/motor constraints here directly?
+        // (instead of having a special case by returning the set of constraints to the solver).
+    }
+
+    #[inline]
+    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
 }

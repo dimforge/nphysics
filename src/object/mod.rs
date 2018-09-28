@@ -12,7 +12,7 @@ pub use self::multibody_link::MultibodyLink;
 pub use self::rigid_body::RigidBody;
 #[cfg(feature = "dim3")]
 pub use self::deformable_volume::DeformableVolume;
-pub use self::mass_spring_surface::MassSpringSurface;
+pub use self::mass_spring_surface::{MassSpringSurface, SpringType};
 
 mod material;
 

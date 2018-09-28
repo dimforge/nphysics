@@ -302,6 +302,20 @@ impl<N: Real> Body<N> for RigidBody<N> {
             }
         }
     }
+
+    #[inline]
+    fn has_active_internal_constraints(&mut self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
 }
 
 impl<N: Real> BodyPart<N> for RigidBody<N> {

@@ -17,6 +17,7 @@ pub struct MoreauJeanSolver<N: Real> {
     ext_vels: DVector<N>,
     contact_model: Box<ContactModel<N>>,
     constraints: ConstraintSet<N>,
+    internal_constraints: Vec<BodyHandle>,
 }
 
 impl<N: Real> MoreauJeanSolver<N> {
@@ -30,6 +31,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             ext_vels: DVector::zeros(0),
             contact_model: contact_model,
             constraints: constraints,
+            internal_constraints: Vec::new(),
         }
     }
 
@@ -56,7 +58,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters.set_nconstraints(self.constraints.velocity.len());
 
         counters.velocity_resolution_started();
-        self.solve_velocity_constraints(params);
+        self.solve_velocity_constraints(params, bodies);
         self.save_cache(bodies, joints, island);
         counters.velocity_resolution_completed();
 
@@ -78,6 +80,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
     ) {
+        self.internal_constraints.clear();
         let mut system_ndofs = 0;
 
         for handle in island {
@@ -90,6 +93,10 @@ impl<N: Real> MoreauJeanSolver<N> {
             );
 
             system_ndofs += ndofs;
+
+            if ndofs != 0 && body.has_active_internal_constraints() {
+                self.internal_constraints.push(*handle)
+            }
         }
 
         self.resize_buffers(system_ndofs);
@@ -207,14 +214,16 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters.custom_completed();
     }
 
-    fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>) {
+    fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) {
         let solver = SORProx::new();
 
         solver.solve(
+            bodies,
             &mut self.constraints.velocity.unilateral_ground,
             &mut self.constraints.velocity.unilateral,
             &mut self.constraints.velocity.bilateral_ground,
             &mut self.constraints.velocity.bilateral,
+            &self.internal_constraints,
             &mut self.mj_lambda_vel,
             &self.jacobians,
             params.max_velocity_iterations,
@@ -237,6 +246,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             &mut self.constraints.position.unilateral,
             &mut self.constraints.position.multibody_limits,
             joints,
+            &self.internal_constraints,
             &mut self.jacobians,
             params.max_position_iterations,
         );
