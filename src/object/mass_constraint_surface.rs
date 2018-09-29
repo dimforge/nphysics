@@ -14,75 +14,64 @@ use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationS
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
 
-/// A triangular element of the mass-spring surface.
+/// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
-pub struct MassSpringElement<N: Real> {
+pub struct MassConstraintElement<N: Real> {
     handle: Option<BodyPartHandle>,
     indices: Point3<usize>,
     surface: N,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-enum SpringConstraintType<N: Real> {
-    Equal,
-    MinRatio(N),
-    MaxRatio(N),
-}
-
 #[derive(Clone)]
-struct Spring<N: Real> {
+struct LengthConstraint<N: Real> {
     nodes: (usize, usize),
     // Should be Unit<Vector<N>>, but can be zero.
     dir: Unit<Vector<N>>,
     length: N,
     rest_length: N,
-    stiffness: N,
-    damping_ratio: N,
 }
 
-impl<N: Real> Spring<N> {
-    fn from_positions(nodes: (usize, usize), positions: &[N], stiffness: N, damping_ratio: N) -> Self {
+impl<N: Real> LengthConstraint<N> {
+    fn from_positions(nodes: (usize, usize), positions: &[N]) -> Self {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
         let rest_length = na::distance(&p0, &p1);
 
-        Spring {
+        LengthConstraint {
             nodes,
             dir: Unit::new_normalize(p1 - p0),
             length: rest_length,
             rest_length,
-            stiffness,
-            damping_ratio,
         }
     }
 }
 
-/// A deformable surface using a mass-spring model with triangular elements.
+/// A deformable surface using a mass-LengthConstraint model with triangular elements.
 #[derive(Clone)]
-pub struct MassSpringSurface<N: Real> {
+pub struct MassConstraintSurface<N: Real> {
     handle: Option<BodyHandle>,
-    springs: Vec<Spring<N>>,
-    elements: Vec<MassSpringElement<N>>,
+    constraints: Vec<LengthConstraint<N>>,
+    elements: Vec<MassConstraintElement<N>>,
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
-    augmented_mass: DMatrix<N>,
-    inv_augmented_mass: LU<N, Dynamic, Dynamic>,
+    impulses: DVector<N>,
 
     companion_id: usize,
     activation: ActivationStatus<N>,
     status: BodyStatus,
     mass: N,
     node_mass: N,
+    inv_node_mass: N,
 }
 
-impl<N: Real> MassSpringSurface<N> {
-    /// Creates a new deformable surface following the mass-spring model.
+impl<N: Real> MassConstraintSurface<N> {
+    /// Creates a new deformable surface following the mass-LengthConstraint model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
-    pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    pub fn new(mesh: &TriMesh<N>, mass: N) -> Self {
         let ndofs = mesh.vertices().len() * DIM;
-        let mut springs = HashMap::with_hasher(DeterministicState::new());
+        let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.indices().len());
         let mut positions = DVector::zeros(ndofs);
 
@@ -92,7 +81,7 @@ impl<N: Real> MassSpringSurface<N> {
 
         for idx in mesh.indices() {
             let idx = idx * DIM;
-            let elt = MassSpringElement {
+            let elt = MassConstraintElement {
                 handle: None,
                 indices: idx,
                 surface: N::zero(),
@@ -108,148 +97,82 @@ impl<N: Real> MassSpringSurface<N> {
                 }
             }
 
-            let _ = springs.entry(key(idx.x, idx.y)).or_insert_with(|| {
-                Spring::from_positions((idx.x, idx.y), positions.as_slice(), stiffness, damping_ratio)
+            let _ = constraints.entry(key(idx.x, idx.y)).or_insert_with(|| {
+                LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice())
             });
-            let _ = springs.entry(key(idx.y, idx.z)).or_insert_with(|| {
-                Spring::from_positions((idx.y, idx.z), positions.as_slice(), stiffness, damping_ratio)
+            let _ = constraints.entry(key(idx.y, idx.z)).or_insert_with(|| {
+                LengthConstraint::from_positions((idx.y, idx.z), positions.as_slice())
             });
-            let _ = springs.entry(key(idx.z, idx.x)).or_insert_with(|| {
-                Spring::from_positions((idx.z, idx.x), positions.as_slice(), stiffness, damping_ratio)
+            let _ = constraints.entry(key(idx.z, idx.x)).or_insert_with(|| {
+                LengthConstraint::from_positions((idx.z, idx.x), positions.as_slice())
             });
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
-        MassSpringSurface {
+        MassConstraintSurface {
             handle: None,
-            springs: springs.values().cloned().collect(),
+            constraints: constraints.values().cloned().collect(),
             elements,
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
-            augmented_mass: DMatrix::zeros(ndofs, ndofs),
-            inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
+            impulses: DVector::zeros(constraints.len()),
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
             mass,
             node_mass,
+            inv_node_mass: N::one() / node_mass,
         }
     }
 
     /// Creates a rectangular-shaped quad.
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::new(&trimesh, mass, stiffness, damping_ratio)
+        Self::new(&trimesh, mass)
     }
 
-    /// The triangle mesh corresponding to this mass-spring-surface structural elements.
+    /// The triangle mesh corresponding to this mass-LengthConstraint-surface structural elements.
     pub fn mesh(&self) -> TriMesh<N> {
         let vertices = self.positions.as_slice().chunks(DIM).map(|pt| Point::from_coordinates(Vector::from_row_slice(pt))).collect();
         let indices = self.elements.iter().map(|elt| elt.indices / DIM).collect();
 
         TriMesh::new(vertices, indices, None)
     }
-
-    fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.augmented_mass.fill_diagonal(self.node_mass);
-
-        for spring in &mut self.springs {
-            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
-            let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
-            let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
-
-            let ldot = v1 - v0;
-            let l = *spring.dir;
-
-            // Explicit elastic term.
-            let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * ldot.dot(&l);
-            let f0 = l * coeff;
-
-            self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&f0);
-            self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&f0);
-
-            if spring.length != N::zero() {
-                /*
-                 *
-                 * Stiffness matrix contribution: there are 4 terms.
-                 *
-                 */
-                // let contrib0 = MatrixN::<N, Dim>::from_diagonal_element(coeff / length);
-                // let contrib1 = l * (l.transpose() * (stiffness * spring.rest_length / length));
-                // let contrib2 = l * (ldot.transpose() * (damping / length));
-                // let contrib3 = -l * (l.transpose() * (damping / length * ldot.dot(&l) * na::convert(2.0)));
-                // let contrib = contrib0 + contrib1 + contrib2 + contrib3;
-                // More compact version bellow:
-                let contrib0 = MatrixN::<N, Dim>::from_diagonal_element(coeff / spring.length);
-                let contrib1 = ldot * (damping / spring.length);
-                let contrib23 = l * ((spring.stiffness * spring.rest_length - damping * ldot.dot(&l) * na::convert(2.0)) / spring.length);
-                let stiffness = contrib0 + l * (contrib1 + contrib23).transpose();
-
-                let forward_f0 = stiffness * (ldot * params.dt);
-
-                // Add the contributions to the forces.
-                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&forward_f0);
-                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&forward_f0);
-
-                // Damping matrix contribution.
-                let damping_dt = (l * l.transpose()) * (damping * params.dt);
-
-                // Add to the mass matrix.
-                let damping_stiffness = damping_dt + stiffness * (params.dt * params.dt);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1).add_assign(&damping_stiffness);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1).sub_assign(&damping_stiffness);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0).sub_assign(&damping_stiffness);
-            }
-        }
-
-        /*
-         * Add forces due to gravity.
-         */
-        let gravity_force = gravity * self.node_mass;
-
-        for i in 0..self.positions.len() / DIM {
-            let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
-            acc += gravity_force
-        }
-
-        /*
-         * Invert the augmented mass.
-         */
-        self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
-        assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
-    }
 }
 
-impl<N: Real> Body<N> for MassSpringSurface<N> {
+impl<N: Real> Body<N> for MassConstraintSurface<N> {
     fn update_kinematics(&mut self) {
-        for spring in &mut self.springs {
-            let p0 = self.positions.fixed_rows::<Dim>(spring.nodes.0);
-            let p1 = self.positions.fixed_rows::<Dim>(spring.nodes.1);
+        for constraint in &mut self.constraints {
+            let p0 = self.positions.fixed_rows::<Dim>(constraint.nodes.0);
+            let p1 = self.positions.fixed_rows::<Dim>(constraint.nodes.1);
             let l = p1 - p0;
 
             if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
-                spring.dir = dir;
-                spring.length = length;
+                constraint.dir = dir;
+                constraint.length = length;
             } else {
-                spring.dir = Vector::y_axis();
-                spring.length = N::zero();
+                constraint.dir = Vector::y_axis();
+                constraint.length = N::zero();
             }
         }
     }
 
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.update_augmented_mass_and_forces(gravity, params);
+        let gravity_acc = gravity;
+
+        for i in 0..self.positions.len() / DIM {
+            let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
+            acc += gravity_acc
+        }
     }
 
     fn clear_dynamics(&mut self) {
         self.accelerations.fill(N::zero());
-        self.augmented_mass.fill(N::zero());
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -349,7 +272,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
 
     fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
-        assert!(self.inv_augmented_mass.solve_mut(&mut out))
+        out /= self.inv_node_mass;
     }
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
@@ -358,7 +281,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
         DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
 
         if let ForceDirection::Linear(dir) = force_dir {
-            let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+            let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a triangular mass-LengthConstraint element");
 
             let a = self.positions.fixed_rows::<Dim>(elt.indices.x).into_owned();
             let b = self.positions.fixed_rows::<Dim>(elt.indices.y).into_owned();
@@ -386,21 +309,79 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {
-        false
+        true
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+        for (i, constraint) in self.constraints.iter().enumerate() {
+            let impulse = self.impulses[i];
+            if !impulse.is_zero() {
+                let vel_correction = *constraint.dir * (impulse * self.inv_node_mass);
+                dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
+                dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+            }
+        }
+    }
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+        // Solve internal constraints using a PGS solver.
+        // Note that we use the mass matrix (instead of the augmented mass
+        // matrix) for solving those constraints.
+        // The mass matrix is simply a diagonal with elements equal to self.mass / self.
+        for (i, constraint) in self.constraints.iter().enumerate() {
+            let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0) + dvels.fixed_rows::<Dim>(constraint.nodes.0);
+            let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1) + dvels.fixed_rows::<Dim>(constraint.nodes.1);
+
+            let dvel = (v1 - v0).dot(&constraint.dir);
+            let dlambda = dvel / (self.inv_node_mass + self.inv_node_mass);
+            self.impulses[i] += dlambda;
+
+            let vel_correction = *constraint.dir * (dlambda * self.inv_node_mass);
+
+            dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
+            dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+        }
+    }
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
+        for constraint in &mut self.constraints {
+            let dpos = self.positions.fixed_rows::<Dim>(constraint.nodes.1)
+                - self.positions.fixed_rows::<Dim>(constraint.nodes.0);
+
+            if let Some((dir, length)) = Unit::try_new_and_get(dpos, N::zero()) {
+                constraint.dir = dir;
+                constraint.length = length;
+            }
+
+            let error = constraint.length - constraint.rest_length;
+            let clamped_error = if error > N::zero() {
+                na::clamp(
+                    (error - params.allowed_linear_error) * params.erp,
+                    N::zero(),
+                    params.max_linear_correction,
+                )
+            } else {
+                na::clamp(
+                    (error + params.allowed_linear_error) * params.erp,
+                    -params.max_linear_correction,
+                    N::zero(),
+                )
+            };
+
+            if !clamped_error.is_zero() {
+                let shift = *constraint.dir * (clamped_error * na::convert(0.5));
+                self.positions.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&shift);
+                self.positions.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&shift);
+            }
+        }
+    }
 }
 
 
-impl<N: Real> BodyPart<N> for MassSpringElement<N> {
+impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
     fn handle(&self) -> Option<BodyPartHandle> {
         self.handle
     }
