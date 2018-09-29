@@ -140,10 +140,10 @@ fn main() {
         }
 
         let shape = meshes[0].clone().into();
-//        let mut volume = MassSpringSurface::new(&shape, 1.0, 10.0, 0.9);
-//        volume.generate_neighbor_springs(1000.0, 0.9);
-        let mut volume = MassConstraintSurface::new(&shape, 1.0);
-        volume.generate_neighbor_constraints();
+//        let mut volume = MassSpringSurface::new(&shape, 1.0, 100.0, 0.9);
+//        volume.generate_neighbor_springs(100.0, 0.9);
+        let mut volume = MassConstraintSurface::new(&shape, 1.0, None, None);
+        volume.generate_neighbor_constraints(None, None);
 
 
         let handle = world.add_body(Box::new(volume));

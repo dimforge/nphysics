@@ -29,10 +29,12 @@ struct LengthConstraint<N: Real> {
     dir: Unit<Vector<N>>,
     length: N,
     rest_length: N,
+    max_anti_compression_force: N,
+    max_anti_extension_force: N,
 }
 
 impl<N: Real> LengthConstraint<N> {
-    fn from_positions(nodes: (usize, usize), positions: &[N]) -> Self {
+    fn from_positions(nodes: (usize, usize), positions: &[N], max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) -> Self {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
         let rest_length = na::distance(&p0, &p1);
@@ -42,6 +44,8 @@ impl<N: Real> LengthConstraint<N> {
             dir: Unit::new_normalize(p1 - p0),
             length: rest_length,
             rest_length,
+            max_anti_compression_force: max_anti_compression_force.unwrap_or(N::max_value()),
+            max_anti_extension_force: max_anti_extension_force.unwrap_or(N::max_value()),
         }
     }
 }
@@ -78,7 +82,7 @@ impl<N: Real> MassConstraintSurface<N> {
     /// Creates a new deformable surface following the mass-LengthConstraint model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
-    pub fn new(mesh: &TriMesh<N>, mass: N) -> Self {
+    pub fn new(mesh: &TriMesh<N>, mass: N, max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) -> Self {
         let ndofs = mesh.vertices().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.indices().len());
@@ -99,13 +103,13 @@ impl<N: Real> MassConstraintSurface<N> {
             elements.push(elt);
 
             let _ = constraints.entry(key(idx.x, idx.y)).or_insert_with(|| {
-                LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice())
+                LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice(), max_anti_compression_force, max_anti_extension_force)
             });
             let _ = constraints.entry(key(idx.y, idx.z)).or_insert_with(|| {
-                LengthConstraint::from_positions((idx.y, idx.z), positions.as_slice())
+                LengthConstraint::from_positions((idx.y, idx.z), positions.as_slice(), max_anti_compression_force, max_anti_extension_force)
             });
             let _ = constraints.entry(key(idx.z, idx.x)).or_insert_with(|| {
-                LengthConstraint::from_positions((idx.z, idx.x), positions.as_slice())
+                LengthConstraint::from_positions((idx.z, idx.x), positions.as_slice(), max_anti_compression_force, max_anti_extension_force)
             });
         }
 
@@ -129,12 +133,12 @@ impl<N: Real> MassConstraintSurface<N> {
     }
 
     /// Creates a rectangular-shaped quad.
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N) -> Self {
+    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::new(&trimesh, mass)
+        Self::new(&trimesh, mass, max_anti_compression_force, max_anti_extension_force)
     }
 
     /// The triangle mesh corresponding to this mass-LengthConstraint-surface structural elements.
@@ -149,7 +153,7 @@ impl<N: Real> MassConstraintSurface<N> {
     ///
     /// Given three nodes `a, b, c`, if a constraint exists between `a` and `b`, and between `b` and `c`,
     /// then a constraint between `a` and `c` is created if it does not already exists.
-    pub fn generate_neighbor_constraints(&mut self) {
+    pub fn generate_neighbor_constraints(&mut self, max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) {
         // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
         let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
         let mut existing_constraints = HashSet::new();
@@ -169,7 +173,7 @@ impl<N: Real> MassConstraintSurface<N> {
 
                     if existing_constraints.insert(key) {
                         let constraint =
-                            LengthConstraint::from_positions(key, self.positions.as_slice());
+                            LengthConstraint::from_positions(key, self.positions.as_slice(), max_anti_compression_force, max_anti_extension_force);
                         self.constraints.push(constraint);
                     }
                 }
@@ -370,11 +374,17 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
             let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1) + dvels.fixed_rows::<Dim>(constraint.nodes.1);
 
             let dvel = (v1 - v0).dot(&constraint.dir);
-            let dlambda = dvel / (self.inv_node_mass + self.inv_node_mass);
-            self.impulses[i] += dlambda;
+
+            let curr_impulse = self.impulses[i];
+            let new_impulse = na::clamp(
+                curr_impulse + dvel / (self.inv_node_mass + self.inv_node_mass),
+                -constraint.max_anti_compression_force,
+                constraint.max_anti_extension_force,
+            );
+            let dlambda = new_impulse - curr_impulse;
+            self.impulses[i] = new_impulse;
 
             let vel_correction = *constraint.dir * (dlambda * self.inv_node_mass);
-
             dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
             dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
         }
@@ -382,7 +392,12 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
-        for constraint in &mut self.constraints {
+        for (i, constraint) in self.constraints.iter_mut().enumerate() {
+            if self.impulses[i] == -constraint.max_anti_compression_force || self.impulses[i] == constraint.max_anti_extension_force {
+                // Don't apply stabilization if the constraint forces reached their max.
+                continue;
+            }
+
             let dpos = self.positions.fixed_rows::<Dim>(constraint.nodes.1)
                 - self.positions.fixed_rows::<Dim>(constraint.nodes.0);
 
