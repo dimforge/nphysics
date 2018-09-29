@@ -1,6 +1,6 @@
 use std::ops::{AddAssign, SubAssign};
 use std::iter;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
@@ -46,6 +46,14 @@ impl<N: Real> LengthConstraint<N> {
     }
 }
 
+fn key(i: usize, j: usize) -> (usize, usize) {
+    if i <= j {
+        (i, j)
+    } else {
+        (j, i)
+    }
+}
+
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 #[derive(Clone)]
 pub struct MassConstraintSurface<N: Real> {
@@ -64,6 +72,7 @@ pub struct MassConstraintSurface<N: Real> {
     node_mass: N,
     inv_node_mass: N,
 }
+
 
 impl<N: Real> MassConstraintSurface<N> {
     /// Creates a new deformable surface following the mass-LengthConstraint model.
@@ -88,14 +97,6 @@ impl<N: Real> MassConstraintSurface<N> {
             };
 
             elements.push(elt);
-
-            fn key(i: usize, j: usize) -> (usize, usize) {
-                if i <= j {
-                    (i, j)
-                } else {
-                    (j, i)
-                }
-            }
 
             let _ = constraints.entry(key(idx.x, idx.y)).or_insert_with(|| {
                 LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice())
@@ -142,6 +143,40 @@ impl<N: Real> MassConstraintSurface<N> {
         let indices = self.elements.iter().map(|elt| elt.indices / DIM).collect();
 
         TriMesh::new(vertices, indices, None)
+    }
+
+    /// Generate additional constraints between nodes that are transitively neighbors.
+    ///
+    /// Given three nodes `a, b, c`, if a constraint exists between `a` and `b`, and between `b` and `c`,
+    /// then a constraint between `a` and `c` is created if it does not already exists.
+    pub fn generate_neighbor_constraints(&mut self) {
+        // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
+        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
+        let mut existing_constraints = HashSet::new();
+
+        // Build neighborhood list.
+        for constraint in &self.constraints {
+            let key = key(constraint.nodes.0, constraint.nodes.1);
+            neighbor_list[key.0 / DIM].push(key.1 / DIM);
+            let _ = existing_constraints.insert(key);
+        }
+
+        // Build constraints.
+        for (i, nbhs) in neighbor_list.iter().enumerate() {
+            for nbh in nbhs {
+                for transitive_nbh in &neighbor_list[*nbh] {
+                    let key = key(i * DIM, *transitive_nbh * DIM);
+
+                    if existing_constraints.insert(key) {
+                        let constraint =
+                            LengthConstraint::from_positions(key, self.positions.as_slice());
+                        self.constraints.push(constraint);
+                    }
+                }
+            }
+        }
+
+        self.impulses = DVector::zeros(self.constraints.len());
     }
 }
 

@@ -1,6 +1,6 @@
 use std::ops::{AddAssign, SubAssign};
 use std::iter;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
@@ -76,6 +76,14 @@ pub struct MassSpringSurface<N: Real> {
     node_mass: N,
 }
 
+fn key(i: usize, j: usize) -> (usize, usize) {
+    if i <= j {
+        (i, j)
+    } else {
+        (j, i)
+    }
+}
+
 impl<N: Real> MassSpringSurface<N> {
     /// Creates a new deformable surface following the mass-spring model.
     ///
@@ -99,14 +107,6 @@ impl<N: Real> MassSpringSurface<N> {
             };
 
             elements.push(elt);
-
-            fn key(i: usize, j: usize) -> (usize, usize) {
-                if i <= j {
-                    (i, j)
-                } else {
-                    (j, i)
-                }
-            }
 
             let _ = springs.entry(key(idx.x, idx.y)).or_insert_with(|| {
                 Spring::from_positions((idx.x, idx.y), positions.as_slice(), stiffness, damping_ratio)
@@ -147,6 +147,37 @@ impl<N: Real> MassSpringSurface<N> {
         Self::new(&trimesh, mass, stiffness, damping_ratio)
     }
 
+    /// Generate additional springs between nodes that are transitively neighbors.
+    ///
+    /// Given three nodes `a, b, c`, if a spring exists between `a` and `b`, and between `b` and `c`,
+    /// then a spring between `a` and `c` is created if it does not already exists.
+    pub fn generate_neighbor_springs(&mut self, stiffness: N, damping_ratio: N) {
+        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
+        let mut existing_springs = HashSet::new();
+
+        // Build neighborhood list.
+        for spring in &self.springs {
+            let key = key(spring.nodes.0, spring.nodes.1);
+            neighbor_list[key.0 / DIM].push(key.1 / DIM);
+            let _ = existing_springs.insert(key);
+        }
+
+        // Build springs.
+        for (i, nbhs) in neighbor_list.iter().enumerate() {
+            for nbh in nbhs {
+                for transitive_nbh in &neighbor_list[*nbh] {
+                    let key = key(i * DIM, *transitive_nbh * DIM);
+
+                    if existing_springs.insert(key) {
+                        let spring =
+                            Spring::from_positions(key, self.positions.as_slice(), stiffness, damping_ratio);
+                        self.springs.push(spring);
+                    }
+                }
+            }
+        }
+    }
+
     /// The triangle mesh corresponding to this mass-spring-surface structural elements.
     pub fn mesh(&self) -> TriMesh<N> {
         let vertices = self.positions.as_slice().chunks(DIM).map(|pt| Point::from_coordinates(Vector::from_row_slice(pt))).collect();
@@ -176,19 +207,12 @@ impl<N: Real> MassSpringSurface<N> {
             if spring.length != N::zero() {
                 /*
                  *
-                 * Stiffness matrix contribution: there are 4 terms.
+                 * Stiffness matrix contribution.
                  *
                  */
-                // let contrib0 = MatrixN::<N, Dim>::from_diagonal_element(coeff / length);
-                // let contrib1 = l * (l.transpose() * (stiffness * spring.rest_length / length));
-                // let contrib2 = l * (ldot.transpose() * (damping / length));
-                // let contrib3 = -l * (l.transpose() * (damping / length * ldot.dot(&l) * na::convert(2.0)));
-                // let contrib = contrib0 + contrib1 + contrib2 + contrib3;
-                // More compact version bellow:
-                let contrib0 = MatrixN::<N, Dim>::from_diagonal_element(coeff / spring.length);
-                let contrib1 = ldot * (damping / spring.length);
-                let contrib23 = l * ((spring.stiffness * spring.rest_length - damping * ldot.dot(&l) * na::convert(2.0)) / spring.length);
-                let stiffness = contrib0 + l * (contrib1 + contrib23).transpose();
+                let ll = l * l.transpose();
+                let one_minus_ll = MatrixN::<N, Dim>::identity() - ll;
+                let stiffness = one_minus_ll / spring.length + ll * one_minus_ll * (damping / spring.length) + ll * spring.stiffness;
 
                 let forward_f0 = stiffness * (ldot * params.dt);
 
@@ -311,7 +335,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
-        self.positions.axpy(params.dt, &self.velocities, N::one())
+        self.positions.axpy(params.dt, &self.velocities, N::one());
     }
 
     fn activate_with_energy(&mut self, energy: N) {

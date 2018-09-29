@@ -70,6 +70,7 @@ pub trait NonlinearConstraintGenerator<N: Real> {
 }
 
 /// A non-linear position-based non-penetration constraint.
+#[derive(Debug)]
 pub struct NonlinearUnilateralConstraint<N: Real> {
     /// The scaling parameter of the SOR-prox method.
     pub r: N,
