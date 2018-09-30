@@ -29,12 +29,13 @@ struct LengthConstraint<N: Real> {
     dir: Unit<Vector<N>>,
     length: N,
     rest_length: N,
-    max_anti_compression_force: N,
-    max_anti_extension_force: N,
+    stiffness: Option<N>,
+    target_vel: N,
+    max_force: N,
 }
 
 impl<N: Real> LengthConstraint<N> {
-    fn from_positions(nodes: (usize, usize), positions: &[N], max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) -> Self {
+    fn from_positions(nodes: (usize, usize), positions: &[N], stiffness: Option<N>) -> Self {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
         let rest_length = na::distance(&p0, &p1);
@@ -44,8 +45,9 @@ impl<N: Real> LengthConstraint<N> {
             dir: Unit::new_normalize(p1 - p0),
             length: rest_length,
             rest_length,
-            max_anti_compression_force: max_anti_compression_force.unwrap_or(N::max_value()),
-            max_anti_extension_force: max_anti_extension_force.unwrap_or(N::max_value()),
+            stiffness,
+            max_force: N::zero(),
+            target_vel: N::zero(),
         }
     }
 }
@@ -75,6 +77,7 @@ pub struct MassConstraintSurface<N: Real> {
     mass: N,
     node_mass: N,
     inv_node_mass: N,
+    warmstart_coeff: N,
 }
 
 
@@ -82,7 +85,7 @@ impl<N: Real> MassConstraintSurface<N> {
     /// Creates a new deformable surface following the mass-LengthConstraint model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
-    pub fn new(mesh: &TriMesh<N>, mass: N, max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) -> Self {
+    pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = mesh.vertices().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.indices().len());
@@ -103,13 +106,13 @@ impl<N: Real> MassConstraintSurface<N> {
             elements.push(elt);
 
             let _ = constraints.entry(key(idx.x, idx.y)).or_insert_with(|| {
-                LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice(), max_anti_compression_force, max_anti_extension_force)
+                LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice(), stiffness)
             });
             let _ = constraints.entry(key(idx.y, idx.z)).or_insert_with(|| {
-                LengthConstraint::from_positions((idx.y, idx.z), positions.as_slice(), max_anti_compression_force, max_anti_extension_force)
+                LengthConstraint::from_positions((idx.y, idx.z), positions.as_slice(), stiffness)
             });
             let _ = constraints.entry(key(idx.z, idx.x)).or_insert_with(|| {
-                LengthConstraint::from_positions((idx.z, idx.x), positions.as_slice(), max_anti_compression_force, max_anti_extension_force)
+                LengthConstraint::from_positions((idx.z, idx.x), positions.as_slice(), stiffness)
             });
         }
 
@@ -129,16 +132,17 @@ impl<N: Real> MassConstraintSurface<N> {
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
+            warmstart_coeff: na::convert(0.5),
         }
     }
 
     /// Creates a rectangular-shaped quad.
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) -> Self {
+    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::new(&trimesh, mass, max_anti_compression_force, max_anti_extension_force)
+        Self::new(&trimesh, mass, stiffness)
     }
 
     /// The triangle mesh corresponding to this mass-LengthConstraint-surface structural elements.
@@ -153,7 +157,7 @@ impl<N: Real> MassConstraintSurface<N> {
     ///
     /// Given three nodes `a, b, c`, if a constraint exists between `a` and `b`, and between `b` and `c`,
     /// then a constraint between `a` and `c` is created if it does not already exists.
-    pub fn generate_neighbor_constraints(&mut self, max_anti_compression_force: Option<N>, max_anti_extension_force: Option<N>) {
+    pub fn generate_neighbor_constraints(&mut self, stiffness: Option<N>) {
         // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
         let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
         let mut existing_constraints = HashSet::new();
@@ -173,7 +177,7 @@ impl<N: Real> MassConstraintSurface<N> {
 
                     if existing_constraints.insert(key) {
                         let constraint =
-                            LengthConstraint::from_positions(key, self.positions.as_slice(), max_anti_compression_force, max_anti_extension_force);
+                            LengthConstraint::from_positions(key, self.positions.as_slice(), stiffness);
                         self.constraints.push(constraint);
                     }
                 }
@@ -181,6 +185,18 @@ impl<N: Real> MassConstraintSurface<N> {
         }
 
         self.impulses = DVector::zeros(self.constraints.len());
+    }
+
+    /// The coefficient used for warm-starting the resolution of internal constraints of this
+    /// soft body (default: 0.5).
+    pub fn set_warmstart_coefficient(&mut self, coeff: N) {
+        self.warmstart_coeff = coeff
+    }
+
+    /// The coefficient used for warm-starting the resolution of internal constraints of this
+    /// soft body (default: 0.5).
+    pub fn warmstart_coefficient(&self) -> N {
+        self.warmstart_coeff
     }
 }
 
@@ -207,6 +223,26 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
         for i in 0..self.positions.len() / DIM {
             let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
             acc += gravity_acc
+        }
+
+        for constraint in &mut self.constraints {
+            if let Some(stiffness) = constraint.stiffness {
+                let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0);
+                let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1);
+
+                let ldot = v1 - v0;
+                let l = *constraint.dir;
+
+                // Explicit elastic term.
+                let err = constraint.length - constraint.rest_length;
+                // FIXME: multiply by erp here too?
+                constraint.max_force = stiffness * err.abs();
+                constraint.target_vel = params.erp * err / params.dt;
+
+                if err.abs() < params.allowed_linear_error {
+                    constraint.max_force = N::zero();
+                }
+            }
         }
     }
 
@@ -311,7 +347,7 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
 
     fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
-        out /= self.inv_node_mass;
+        out *= self.inv_node_mass;
     }
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
@@ -354,6 +390,10 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
     #[inline]
     fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
         for (i, constraint) in self.constraints.iter().enumerate() {
+            if constraint.stiffness.is_some() {
+                self.impulses[i] *= self.warmstart_coeff;
+            }
+
             let impulse = self.impulses[i];
             if !impulse.is_zero() {
                 let vel_correction = *constraint.dir * (impulse * self.inv_node_mass);
@@ -369,20 +409,22 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
         // Note that we use the mass matrix (instead of the augmented mass
         // matrix) for solving those constraints.
         // The mass matrix is simply a diagonal with elements equal to self.mass / self.
-        for (i, constraint) in self.constraints.iter().enumerate() {
+        for (i, constraint) in self.constraints.iter_mut().enumerate() {
             let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0) + dvels.fixed_rows::<Dim>(constraint.nodes.0);
             let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1) + dvels.fixed_rows::<Dim>(constraint.nodes.1);
 
             let dvel = (v1 - v0).dot(&constraint.dir);
-
-            let curr_impulse = self.impulses[i];
-            let new_impulse = na::clamp(
-                curr_impulse + dvel / (self.inv_node_mass + self.inv_node_mass),
-                -constraint.max_anti_compression_force,
-                constraint.max_anti_extension_force,
-            );
-            let dlambda = new_impulse - curr_impulse;
-            self.impulses[i] = new_impulse;
+            let dlambda;
+            if let Some(stiffness) = constraint.stiffness {
+                let curr_impulse = self.impulses[i];
+                let dimpulse = (dvel + constraint.target_vel) / (self.inv_node_mass + self.inv_node_mass);
+                let new_impulse = na::clamp(curr_impulse + dimpulse, -constraint.max_force, constraint.max_force);
+                dlambda = new_impulse - curr_impulse;
+                self.impulses[i] = new_impulse;
+            } else {
+                dlambda = dvel / (self.inv_node_mass + self.inv_node_mass);
+                self.impulses[i] += dlambda;
+            }
 
             let vel_correction = *constraint.dir * (dlambda * self.inv_node_mass);
             dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
@@ -393,38 +435,35 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
         for (i, constraint) in self.constraints.iter_mut().enumerate() {
-            if self.impulses[i] == -constraint.max_anti_compression_force || self.impulses[i] == constraint.max_anti_extension_force {
-                // Don't apply stabilization if the constraint forces reached their max.
-                continue;
-            }
+            if constraint.stiffness.is_none() {
+                let dpos = self.positions.fixed_rows::<Dim>(constraint.nodes.1)
+                    - self.positions.fixed_rows::<Dim>(constraint.nodes.0);
 
-            let dpos = self.positions.fixed_rows::<Dim>(constraint.nodes.1)
-                - self.positions.fixed_rows::<Dim>(constraint.nodes.0);
+                if let Some((dir, length)) = Unit::try_new_and_get(dpos, N::zero()) {
+                    constraint.dir = dir;
+                    constraint.length = length;
+                }
 
-            if let Some((dir, length)) = Unit::try_new_and_get(dpos, N::zero()) {
-                constraint.dir = dir;
-                constraint.length = length;
-            }
+                let error = constraint.length - constraint.rest_length;
+                let clamped_error = if error > N::zero() {
+                    na::clamp(
+                        (error - params.allowed_linear_error) * params.erp,
+                        N::zero(),
+                        params.max_linear_correction,
+                    )
+                } else {
+                    na::clamp(
+                        (error + params.allowed_linear_error) * params.erp,
+                        -params.max_linear_correction,
+                        N::zero(),
+                    )
+                };
 
-            let error = constraint.length - constraint.rest_length;
-            let clamped_error = if error > N::zero() {
-                na::clamp(
-                    (error - params.allowed_linear_error) * params.erp,
-                    N::zero(),
-                    params.max_linear_correction,
-                )
-            } else {
-                na::clamp(
-                    (error + params.allowed_linear_error) * params.erp,
-                    -params.max_linear_correction,
-                    N::zero(),
-                )
-            };
-
-            if !clamped_error.is_zero() {
-                let shift = *constraint.dir * (clamped_error * na::convert(0.5));
-                self.positions.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&shift);
-                self.positions.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&shift);
+                if !clamped_error.is_zero() {
+                    let shift = *constraint.dir * (clamped_error * na::convert(0.5));
+                    self.positions.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&shift);
+                    self.positions.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&shift);
+                }
             }
         }
     }
