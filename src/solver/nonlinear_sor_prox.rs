@@ -12,7 +12,7 @@ use solver::{ForceDirection, IntegrationParameters,
              NonlinearUnilateralConstraint};
 use math::Isometry;
 
-/// Non-linear position-based consraint solver using the SOR-Prox approach.
+/// Non-linear position-based constraint solver using the SOR-Prox approach.
 pub struct NonlinearSORProx<N: Real> {
     _phantom: PhantomData<N>,
 }
@@ -212,7 +212,7 @@ impl<N: Real> NonlinearSORProx<N> {
 
         if let Some(contact) = constraint
             .kinematic
-            .contact(&pos1, &pos2, &constraint.normal1)
+            .contact(&pos1, &**collider1.shape(), &pos2, &**collider2.shape(), &constraint.normal1)
             {
                 constraint.rhs = na::sup(
                     &((-contact.depth + params.allowed_linear_error) * params.erp),

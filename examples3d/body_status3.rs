@@ -7,7 +7,7 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::RevoluteJoint;
 use nphysics3d::math::Inertia;
-use nphysics3d::object::{BodyPartHandle, BodyStatus, Material};
+use nphysics3d::object::{BodyPartHandle, BodyStatus, Material, Body, BodyPart};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -96,7 +96,7 @@ fn main() {
     let pos = Isometry3::new(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad), na::zero());
     let platform_handle = world.add_rigid_body(pos, Inertia::zero(), Point3::origin());
     {
-        let rb = world.rigid_body_mut(platform_handle).unwrap();
+        let rb = world.rigid_body_mut(platform_handle.body_handle).unwrap();
         rb.set_status(BodyStatus::Kinematic);
         // rb.set_velocity(Velocity::linear(0.0, 0.0, 1.0));
     }
@@ -125,7 +125,7 @@ fn main() {
     );
 
     {
-        let mb = world.multibody_mut(handle).unwrap();
+        let mb = world.multibody_mut(handle.body_handle).unwrap();
         mb.generalized_velocity_mut()[0] = 3.0;
         mb.set_status(BodyStatus::Kinematic);
     }
@@ -170,10 +170,10 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
     testbed.add_callback(move |world, _, time| {
-        let platform = world.rigid_body_mut(platform_handle).unwrap();
+        let platform = world.rigid_body_mut(platform_handle.body_handle).unwrap();
         let platform_z = platform.position().translation.vector.z;
 
-        let mut vel = *platform.velocity();
+        let mut vel = platform.velocity();
         vel.linear.y = (time * 5.0).sin() * 0.8;
 
         if platform_z >= rad * 10.0 {

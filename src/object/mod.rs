@@ -12,7 +12,9 @@ pub use self::multibody_link::MultibodyLink;
 pub use self::rigid_body::RigidBody;
 #[cfg(feature = "dim3")]
 pub use self::deformable_volume::DeformableVolume;
+#[cfg(feature = "dim3")] // FIXME: allow in 2D too.
 pub use self::mass_spring_surface::MassSpringSurface;
+#[cfg(feature = "dim3")] // FIXME: allow in 2D too.
 pub use self::mass_constraint_surface::MassConstraintSurface;
 
 mod material;
@@ -26,5 +28,7 @@ mod multibody_link;
 mod rigid_body;
 #[cfg(feature = "dim3")]
 mod deformable_volume;
+#[cfg(feature = "dim3")]
 mod mass_spring_surface;
+#[cfg(feature = "dim3")]
 mod mass_constraint_surface;

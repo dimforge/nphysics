@@ -87,30 +87,30 @@ fn main() {
      * Create the deformable body and a collider for its contour.
      */
     /*
-    let mut volume = MassSpringSurface::quad(
-        &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
-        &Vector2::new(1.0, 1.0),
-        10, 10,
-        1.0, 100000.0, 1.0);
-////    let volume = MassConstraintSurface::quad(
-////        &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
-////        &Vector2::new(1.0, 1.0),
-////        10, 10,
-////        1.0);
-    let mesh = volume.mesh();
-    volume.generate_neighbor_springs(100000.0, 0.0);
-//    volume.generate_neighbor_springs(100.0, 0.0);
-//    volume.generate_neighbor_springs(100.0, 0.0);
+    //    let mut volume = MassSpringSurface::quad(
+    //        &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
+    //        &Vector2::new(1.0, 1.0),
+    //        10, 10,
+    //        1.0, 100000.0, 1.0);
+        let volume = MassConstraintSurface::quad(
+            &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
+            &Vector2::new(1.0, 1.0),
+            10, 10,
+            1.0, Some((10.0, 1.0)));
+        let mesh = volume.mesh();
+    //    volume.generate_neighbor_springs(100000.0, 0.0);
+    //    volume.generate_neighbor_springs(100.0, 0.0);
+    //    volume.generate_neighbor_springs(100.0, 0.0);
 
-    let handle = world.add_body(Box::new(volume));
-    world.add_deformable_collider(
-        COLLIDER_MARGIN,
-        mesh,
-        handle,
-        None,
-        None,
-        Material::default(),
-    );*/
+        let handle = world.add_body(Box::new(volume));
+        world.add_deformable_collider(
+            COLLIDER_MARGIN,
+            mesh,
+            handle,
+            None,
+            None,
+            Material::default(),
+        );*/
 
     let obj_path = "media/models/rust_logo_simplified.obj";
     let obj = obj::parse_file(&Path::new(&obj_path), &Path::new(""), "");
@@ -140,12 +140,30 @@ fn main() {
         }
 
         let shape = meshes[0].clone().into();
-//        let mut volume = MassSpringSurface::new(&shape, 1.0, 100.0, 0.9);
-//        volume.generate_neighbor_springs(100.0, 0.9);
-        let mut volume = MassConstraintSurface::new(&shape, 1.0, None, None);
-        volume.generate_neighbor_constraints(None, None);
+//        let mut volume = MassSpringSurface::new(&shape, 1.0, 1000.0, 0.0);
+//        volume.generate_neighbor_springs(1000.0, 0.0);
+//        volume.generate_neighbor_springs(1000.0, 0.0);
+//        volume.generate_neighbor_springs(1000.0, 0.0);
+        let mut volume = MassConstraintSurface::new(&shape, 1.0, Some(100.0));
+        volume.generate_neighbor_constraints(Some(100.0));
+        volume.generate_neighbor_constraints(Some(100.0));
+        let handle = world.add_body(Box::new(volume));
+        world.add_deformable_collider(
+            COLLIDER_MARGIN,
+            shape,
+            handle,
+            None,
+            None,
+            Material::default(),
+        );
+        world.body_mut(handle).set_deactivation_threshold(None);
 
 
+        meshes[0].translate_by(&Translation3::new(0.0, 4.5, 0.0));
+        let shape = meshes[0].clone().into();
+        let mut volume = MassConstraintSurface::new(&shape, 1.0, Some(0.1));
+        volume.generate_neighbor_constraints(Some(0.1));
+        volume.generate_neighbor_constraints(Some(0.1));
         let handle = world.add_body(Box::new(volume));
         world.add_deformable_collider(
             COLLIDER_MARGIN,
@@ -158,20 +176,20 @@ fn main() {
         world.body_mut(handle).set_deactivation_threshold(None);
     }
 
-    // Add a cube to play around with.
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(0.4 - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
-    let pos = Isometry3::new(Vector3::y() * 10.0, na::zero());
-    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        geom.clone(),
-        handle,
-        Isometry3::identity(),
-        Material::default(),
-    );
+//    // Add a cube to play around with.
+//    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(2.1 - COLLIDER_MARGIN)));
+//    let inertia = geom.inertia(1.0);
+//    let center_of_mass = geom.center_of_mass();
+//    let pos = Isometry3::new(Vector3::y() * 5.0, na::zero());
+//    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
+//
+//    world.add_collider(
+//        COLLIDER_MARGIN,
+//        geom.clone(),
+//        handle,
+//        Isometry3::identity(),
+//        Material::default(),
+//    );
 
 
     /*
