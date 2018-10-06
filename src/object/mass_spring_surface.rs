@@ -3,13 +3,14 @@ use std::iter;
 use std::collections::{HashMap, HashSet};
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
+use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, Cholesky,
          Dynamic, Vector2, Point3, MatrixN, Unit};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::procedural::{self, IndexBuffer};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Triangle};
 use ncollide::query::PointQueryWithLocation;
 
+use counters::Timer;
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
@@ -67,7 +68,7 @@ pub struct MassSpringSurface<N: Real> {
     velocities: DVector<N>,
     accelerations: DVector<N>,
     augmented_mass: DMatrix<N>,
-    inv_augmented_mass: LU<N, Dynamic, Dynamic>,
+    inv_augmented_mass: Cholesky<N, Dynamic>,
 
     companion_id: usize,
     activation: ActivationStatus<N>,
@@ -120,6 +121,7 @@ impl<N: Real> MassSpringSurface<N> {
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
+        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
         MassSpringSurface {
             handle: None,
@@ -129,7 +131,7 @@ impl<N: Real> MassSpringSurface<N> {
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
             augmented_mass: DMatrix::zeros(ndofs, ndofs),
-            inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
+            inv_augmented_mass: Cholesky::new(DMatrix::zeros(0, 0)).unwrap(),
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
@@ -187,6 +189,9 @@ impl<N: Real> MassSpringSurface<N> {
     }
 
     fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+        let mut timer = Timer::new();
+
+        timer.start();
         self.augmented_mass.fill_diagonal(self.node_mass);
 
         for spring in &mut self.springs {
@@ -241,12 +246,17 @@ impl<N: Real> MassSpringSurface<N> {
             let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
             acc += gravity_force
         }
+        timer.pause();
+        println!("Assembly time: {}", timer);
 
         /*
          * Invert the augmented mass.
          */
-        self.inv_augmented_mass = LU::new(self.augmented_mass.clone());
-        assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
+        timer.start();
+        self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
+        self.inv_augmented_mass.solve_mut(&mut self.accelerations);
+        timer.pause();
+        println!("Inversion time: {}", timer);
     }
 }
 
@@ -373,7 +383,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
 
     fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
-        assert!(self.inv_augmented_mass.solve_mut(&mut out))
+        self.inv_augmented_mass.solve_mut(&mut out);
     }
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
