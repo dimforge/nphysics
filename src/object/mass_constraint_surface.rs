@@ -86,17 +86,17 @@ impl<N: Real> MassConstraintSurface<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
-        let ndofs = mesh.vertices().len() * DIM;
+        let ndofs = mesh.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
-        let mut elements = Vec::with_capacity(mesh.indices().len());
+        let mut elements = Vec::with_capacity(mesh.faces().len());
         let mut positions = DVector::zeros(ndofs);
 
         for (i, pos) in positions.as_mut_slice().chunks_mut(DIM).enumerate() {
-            pos.copy_from_slice(mesh.vertices()[i].coords.as_slice())
+            pos.copy_from_slice(mesh.points()[i].coords.as_slice())
         }
 
-        for idx in mesh.indices() {
-            let idx = idx * DIM;
+        for face in mesh.faces() {
+            let idx = face.indices * DIM;
             let elt = MassConstraintElement {
                 handle: None,
                 indices: idx,

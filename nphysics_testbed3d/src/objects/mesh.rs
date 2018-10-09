@@ -87,7 +87,7 @@ impl Mesh {
         if let Some(c) = world.collider(self.collider) {
             if let ColliderAnchor::OnDeformableBody { .. } = c.data().anchor() {
                 let shape = c.shape().as_shape::<TriMesh<f32>>().unwrap();
-                let vtx = shape.vertices();
+                let vtx = shape.points();
 
                 self.gfx.modify_vertices(&mut |vertices| {
                     for (v, new_v) in vertices.iter_mut().zip(vtx.iter()) {

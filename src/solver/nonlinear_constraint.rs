@@ -83,8 +83,6 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     pub body1: BodyPartHandle,
     /// The first collider affected by the constraint.
     pub collider1: ColliderHandle,
-    /// The first collider's part id.
-    pub subshape_id1: usize,
 
     /// Number of degree of freedom of the second body.
     pub ndofs2: usize,
@@ -92,8 +90,6 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     pub body2: BodyPartHandle,
     /// The second collider affected by the constraint.
     pub collider2: ColliderHandle,
-    /// The second collider's part id.
-    pub subshape_id2: usize,
 
     /// The kinematic information used to update the contact location.
     pub kinematic: ContactKinematic<N>,
@@ -109,11 +105,9 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
     pub fn new(
         body1: BodyPartHandle,
         collider1: ColliderHandle,
-        subshape_id1: usize,
         ndofs1: usize,
         body2: BodyPartHandle,
         collider2: ColliderHandle,
-        subshape_id2: usize,
         ndofs2: usize,
         normal1: Unit<Vector<N>>,
         normal2: Unit<Vector<N>>,
@@ -128,11 +122,9 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
             ndofs1,
             body1,
             collider1,
-            subshape_id1,
             ndofs2,
             body2,
             collider2,
-            subshape_id2,
             kinematic,
             normal1,
             normal2,

@@ -1,5 +1,6 @@
 use na::Real;
 use ncollide::query::{ContactManifold, TrackedContact};
+use ncollide::shape::FeatureId;
 
 use math::Isometry;
 use object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor};
@@ -11,20 +12,6 @@ pub struct ColliderContactManifold<'a, N: Real> {
     pub collider1: &'a Collider<N>,
     /// The second collider involved in the contact.
     pub collider2: &'a Collider<N>,
-    /// The position of the contact manifold wrt. the first body.
-    /// 
-    /// This is the frame in which the contact kinematic informations
-    /// are expressed relative to the first body. This can be different
-    /// from `collider1.position_wrt_body()` when the collider has a
-    /// composite shape.
-    pub pos_wrt_body1: Isometry<N>,
-    /// The position of the contact manifold wrt. the second body.
-    /// 
-    /// This is the frame in which the contact kinematic informations
-    /// are expressed relative to the second body. This can be different
-    /// from `collider2.position_wrt_body()` when the collider has a
-    /// composite shape.
-    pub pos_wrt_body2: Isometry<N>,
     /// The contact manifold.
     pub manifold: &'a ContactManifold<N>,
 }
@@ -36,39 +23,9 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         collider2: &'a Collider<N>,
         manifold: &'a ContactManifold<N>,
     ) -> Self {
-        let id1 = manifold.subshape_id1();
-        let id2 = manifold.subshape_id2();
-
-        let pos_wrt_body1 = if let Some(dpos1) = collider1.shape().subshape_transform(id1) {
-            match collider1.data().anchor() {
-                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => position_wrt_body_part * dpos1,
-                ColliderAnchor::OnDeformableBody { .. } => dpos1
-            }
-        } else {
-            match collider1.data().anchor() {
-                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => *position_wrt_body_part,
-                ColliderAnchor::OnDeformableBody { .. } => Isometry::identity()
-            }
-        };
-
-
-        let pos_wrt_body2 = if let Some(dpos2) = collider2.shape().subshape_transform(id2) {
-            match collider2.data().anchor() {
-                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => position_wrt_body_part * dpos2,
-                ColliderAnchor::OnDeformableBody { .. } => dpos2
-            }
-        } else {
-            match collider2.data().anchor() {
-                ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => *position_wrt_body_part,
-                ColliderAnchor::OnDeformableBody { .. } => Isometry::identity()
-            }
-        };
-
         ColliderContactManifold {
             collider1,
             collider2,
-            pos_wrt_body1,
-            pos_wrt_body2,
             manifold,
         }
     }
@@ -98,31 +55,37 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
         self.collider2.data().body()
     }
 
-    /// The handle of the first body part involved in the contact.
-    pub fn body_part1(&self) -> BodyPartHandle {
+    /// The handle of the first body part involved in the given contact on the specified feature.
+    ///
+    /// The feature is assumed to belong to the first collider involved in this contact.
+    pub fn body_part1(&self, feature1: FeatureId) -> BodyPartHandle {
         match self.collider1.data().anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+                let subshape_id = self.collider1.shape().subshape_containing_feature(feature1);
                 if let Some(body_parts) = body_parts {
-                    BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id1()] }
+                    BodyPartHandle { body_handle: *body, part_id: body_parts[subshape_id] }
                 } else {
-                    BodyPartHandle { body_handle: *body, part_id: self.manifold.subshape_id1() }
+                    BodyPartHandle { body_handle: *body, part_id: subshape_id }
                 }
             }
         }
     }
 
-    /// The handle of the second body part involved in the contact.
-    pub fn body_part2(&self) -> BodyPartHandle {
+    /// The handle of the second body part involved in the given contact on the specified feature.
+    ///
+    /// The feature is assumed to belong to the second collider involved in this contact.
+    pub fn body_part2(&self, feature2: FeatureId) -> BodyPartHandle {
         match self.collider2.data().anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+                let subshape_id = self.collider2.shape().subshape_containing_feature(feature2);
                 if let Some(body_parts) = body_parts {
-                    BodyPartHandle { body_handle: *body, part_id: body_parts[self.manifold.subshape_id2()] }
+                    BodyPartHandle { body_handle: *body, part_id: body_parts[subshape_id] }
                 } else {
-                    BodyPartHandle { body_handle: *body, part_id: self.manifold.subshape_id2() }
+                    BodyPartHandle { body_handle: *body, part_id: subshape_id }
                 }
-            } // XXX: handle deformables
+            }
         }
     }
 

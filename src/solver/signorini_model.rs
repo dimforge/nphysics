@@ -47,8 +47,8 @@ impl<N: Real> SignoriniModel<N> {
 
         let body1 = bodies.body(manifold.body1());
         let body2 = bodies.body(manifold.body2());
-        let part1 = body1.part(manifold.body_part1());
-        let part2 = body2.part(manifold.body_part2());
+        let part1 = body1.part(manifold.body_part1(c.kinematic.feature1()));
+        let part2 = body2.part(manifold.body_part2(c.kinematic.feature2()));
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -153,8 +153,8 @@ impl<N: Real> SignoriniModel<N> {
         let data1 = manifold.collider1.data();
         let data2 = manifold.collider2.data();
 
-        let b1 = manifold.body_part1();
-        let b2 = manifold.body_part2();
+        let b1 = manifold.body_part1(c.kinematic.feature1());
+        let b2 = manifold.body_part2(c.kinematic.feature2());
 
         let body1 = bodies.body(b1.body_handle);
         let body2 = bodies.body(b2.body_handle);
@@ -172,8 +172,8 @@ impl<N: Real> SignoriniModel<N> {
         let total_margin2 = kinematic.dilation2() + data2.margin();
         kinematic.set_dilation1(total_margin1);
         kinematic.set_dilation2(total_margin2);
-        kinematic.transform1(&manifold.pos_wrt_body1);
-        kinematic.transform2(&manifold.pos_wrt_body2);
+//        kinematic.transform1(&manifold.pos_wrt_body1);
+//        kinematic.transform2(&manifold.pos_wrt_body2);
 
         constraints
             .position
@@ -181,11 +181,9 @@ impl<N: Real> SignoriniModel<N> {
             .push(NonlinearUnilateralConstraint::new(
                 b1,
                 manifold.collider1.handle(),
-                manifold.manifold.subshape_id1(),
                 body1.status_dependent_ndofs(),
                 b2,
                 manifold.collider2.handle(),
-                manifold.manifold.subshape_id2(),
                 body2.status_dependent_ndofs(),
                 normal1,
                 normal2,

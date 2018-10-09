@@ -26,8 +26,8 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-//    world.integration_parameters_mut().max_position_iterations = 2;
-//    world.integration_parameters_mut().max_velocity_iterations = 0;
+    world.integration_parameters_mut().max_position_iterations = 0;
+//    world.integration_parameters_mut().max_velocity_iterations = 1000;
 
     /*
      * Ground.
@@ -159,7 +159,7 @@ fn main() {
         world.body_mut(handle).set_deactivation_threshold(None);
 
 
-        meshes[0].translate_by(&Translation3::new(0.0, 4.5, 0.0));
+        meshes[0].translate_by(&Translation3::new(2.0, 4.5, 1.0));
         let shape = meshes[0].clone().into();
         let mut volume = MassConstraintSurface::new(&shape, 1.0, Some(0.1));
         volume.generate_neighbor_constraints(Some(0.1));

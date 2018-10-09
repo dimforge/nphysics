@@ -59,14 +59,15 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         for manifold in manifolds {
             let body1 = bodies.body(manifold.body1());
             let body2 = bodies.body(manifold.body2());
-            let part1 = body1.part(manifold.body_part1());
-            let part2 = body2.part(manifold.body_part2());
 
             let friction1 = manifold.collider1.data().material().friction;
             let friction2 = manifold.collider2.data().material().friction;
             let friction = (friction1 + friction2) * na::convert(0.5);
 
             for c in manifold.contacts() {
+                let part1 = body1.part(manifold.body_part1(c.kinematic.feature1()));
+                let part2 = body2.part(manifold.body_part2(c.kinematic.feature2()));
+
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
                 //     continue;
                 // }

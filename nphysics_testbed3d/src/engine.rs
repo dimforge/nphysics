@@ -257,19 +257,19 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let vertices = shape.vertices();
-        let indices = shape.indices();
+        let points = shape.points();
+        let faces = shape.faces();
 
-        let is = indices
+        let is = faces
             .iter()
-            .map(|p| Point3::new(p.x as u32, p.y as u32, p.z as u32))
+            .map(|f| Point3::new(f.indices.x as u32, f.indices.y as u32, f.indices.z as u32))
             .collect();
 
         out.push(Node::Mesh(Mesh::new(
             object,
             world,
             delta,
-            vertices.clone(),
+            points.to_vec(),
             is,
             color,
             window,
