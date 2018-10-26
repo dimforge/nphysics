@@ -10,6 +10,7 @@ use nphysics2d::object::{BodyHandle, Material};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
+use std::f32::consts::PI;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -62,9 +63,9 @@ fn main() {
     );
 
     // Setup the other links with revolute joints.
-    let mut revo = RevoluteJoint::new(3.14 / 10.0);
-    revo.enable_min_angle(3.14 / 10.0);
-    revo.enable_max_angle(3.14 / 10.0);
+    let mut revo = RevoluteJoint::new(PI / 10.0);
+    revo.enable_min_angle(PI / 10.0);
+    revo.enable_max_angle(PI / 10.0);
 
     for _ in 0usize..num {
         parent = world.add_multibody_link(
