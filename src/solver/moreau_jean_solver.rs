@@ -230,7 +230,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             params,
             bodies,
             &mut self.constraints.position.unilateral,
-            &mut self.constraints.position.multibody_limits,
+            &self.constraints.position.multibody_limits,
             joints,
             &mut self.jacobians,
             params.max_position_iterations,

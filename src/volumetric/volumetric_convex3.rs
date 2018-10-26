@@ -202,7 +202,7 @@ pub fn convex_mesh_mass_properties_unchecked<N: Real>(
                 let vol = utils::tetrahedron_volume(&com, p2, p3, p4);
                 let ipart = tetrahedron_unit_inertia_tensor_wrt_point(&com, &com, p2, p3, p4);
 
-                itot = itot + ipart * vol;
+                itot += ipart * vol;
             }
         }
         IndexBuffer::Split(_) => unreachable!(),

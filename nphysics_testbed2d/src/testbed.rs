@@ -30,11 +30,11 @@ enum RunMode {
 #[cfg(not(feature = "log"))]
 fn usage(exe_name: &str) {
     println!("Usage: {} [OPTION] ", exe_name);
-    println!("");
+    println!();
     println!("Options:");
     println!("    --help  - prints this help message and exits.");
     println!("    --pause - do not start the simulation right away.");
-    println!("");
+    println!();
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
@@ -68,9 +68,7 @@ fn usage(exe_name: &str) {
     info!("    3      - launch a fast cube using continuous collision detection.");
     info!("    TAB    - switch camera mode (first-person or arc-ball).");
     info!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
-    info!(
-        "    CTRL + left click + drag - select and drag an object using a ball-in-socket joint."
-    );
+    info!("    CTRL + left click + drag - select and drag an object using a ball-in-socket joint.");
     info!("    SHIFT + left click - remove an object.");
     info!("    arrows - move around when in first-person camera mode.");
     info!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
@@ -108,7 +106,7 @@ impl Testbed {
             world: Box::new(Arc::new(RwLock::new(world))),
             callbacks: Vec::new(),
             window: Some(window),
-            graphics: graphics,
+            graphics,
             nsteps: 1,
             time: 0.0,
             hide_counters: false,
@@ -215,8 +213,7 @@ impl Testbed {
     pub fn add_callback<F: Fn(&mut WorldOwner, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
-    )
-    {
+    ) {
         self.callbacks.push(Box::new(callback));
     }
 
@@ -281,11 +278,11 @@ impl State for Testbed {
                     for b in physics_world
                         .collision_world()
                         .interferences_with_point(&mapped_point, all_groups)
-                        {
-                            if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
-                                self.grabbed_object = Some(b.data().body());
-                            }
+                    {
+                        if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
+                            self.grabbed_object = Some(b.data().body());
                         }
+                    }
 
                     if modifier.contains(Modifiers::Shift) {
                         if let Some(body) = self.grabbed_object {
@@ -335,9 +332,9 @@ impl State for Testbed {
                                 .body_nodes_mut(physics_world, body)
                                 .unwrap()
                                 .iter_mut()
-                                {
-                                    node.select()
-                                }
+                            {
+                                node.select()
+                            }
                         }
 
                         event.inhibited = true;
@@ -353,9 +350,9 @@ impl State for Testbed {
                             .body_nodes_mut(physics_world, body)
                             .unwrap()
                             .iter_mut()
-                            {
-                                n.unselect()
-                            }
+                        {
+                            n.unselect()
+                        }
                     }
 
                     if let Some(joint) = self.grabbed_object_constraint {
@@ -414,19 +411,19 @@ impl State for Testbed {
                         if let Some(ns) = self
                             .graphics
                             .body_nodes_mut(&physics_world, co.data().body())
-                            {
-                                for n in ns.iter_mut() {
-                                    if let Some(node) = n.scene_node_mut() {
-                                        if self.draw_colls {
-                                            node.set_lines_width(1.0);
-                                            node.set_surface_rendering_activation(false);
-                                        } else {
-                                            node.set_lines_width(0.0);
-                                            node.set_surface_rendering_activation(true);
-                                        }
+                        {
+                            for n in ns.iter_mut() {
+                                if let Some(node) = n.scene_node_mut() {
+                                    if self.draw_colls {
+                                        node.set_lines_width(1.0);
+                                        node.set_surface_rendering_activation(false);
+                                    } else {
+                                        node.set_lines_width(0.0);
+                                        node.set_surface_rendering_activation(true);
                                     }
                                 }
                             }
+                        }
                     }
                 }
                 //      WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
@@ -483,9 +480,9 @@ impl State for Testbed {
                 self.world.get_mut().step();
                 if !self.hide_counters {
                     #[cfg(not(feature = "log"))]
-                        println!("{}", self.world.get().performance_counters());
+                    println!("{}", self.world.get().performance_counters());
                     #[cfg(feature = "log")]
-                        debug!("{}", self.world.get().performance_counters());
+                    debug!("{}", self.world.get().performance_counters());
                 }
                 self.time += self.world.get().timestep();
             }
@@ -496,9 +493,9 @@ impl State for Testbed {
                     .graphics
                     .body_nodes_mut(physics_world, co.data().body())
                     .is_none()
-                    {
-                        self.graphics.add(window, co.handle(), &physics_world);
-                    }
+                {
+                    self.graphics.add(window, co.handle(), &physics_world);
+                }
             }
             self.graphics.draw(&physics_world, window);
         }

@@ -115,7 +115,7 @@ impl GraphicsManager {
                     let sn_key = Self::body_key(world, sn_body);
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
-                    let new_sns = self.b2sn.entry(sn_key).or_insert(Vec::new());
+                    let new_sns = self.b2sn.entry(sn_key).or_insert_with(Vec::new);
                     new_sns.push(sn);
                 }
             }
@@ -189,7 +189,7 @@ impl GraphicsManager {
 
         {
             let key = Self::body_key(world, parent);
-            let nodes = self.b2sn.entry(key).or_insert(Vec::new());
+            let nodes = self.b2sn.entry(key).or_insert_with(Vec::new);
             nodes.append(&mut new_nodes);
         }
     }
