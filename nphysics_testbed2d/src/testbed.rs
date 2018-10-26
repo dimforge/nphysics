@@ -371,7 +371,7 @@ impl State for Testbed {
                         .unproject(&self.cursor_pos, &na::convert(window.size()));
 
                     let attach2 = mapped_point;
-                    if let Some(_) = self.grabbed_object {
+                    if self.grabbed_object.is_some() {
                         let joint = self.grabbed_object_constraint.unwrap();
                         let joint = physics_world
                             .constraint_mut(joint)
@@ -501,7 +501,7 @@ impl State for Testbed {
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world.get(),
+                &self.world.get(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );

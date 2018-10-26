@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 
 /// A timer.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Timer {
     time: f64,
     start: Option<f64>,
