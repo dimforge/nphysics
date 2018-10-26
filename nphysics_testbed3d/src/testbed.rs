@@ -34,11 +34,11 @@ enum RunMode {
 #[cfg(not(feature = "log"))]
 fn usage(exe_name: &str) {
     println!("Usage: {} [OPTION] ", exe_name);
-    println!("");
+    println!();
     println!("Options:");
     println!("    --help  - prints this help message and exits.");
     println!("    --pause - do not start the simulation right away.");
-    println!("");
+    println!();
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
@@ -112,7 +112,7 @@ impl Testbed {
             world: Box::new(Arc::new(RwLock::new(world))),
             callbacks: Vec::new(),
             window: Some(window),
-            graphics: graphics,
+            graphics,
             nsteps: 1,
             time: 0.0,
             hide_counters: false,
@@ -190,9 +190,7 @@ impl Testbed {
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path = Path::new(path);
         let empty = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
-        let objects = obj::parse_file(&path, &empty, "")
-            .ok()
-            .expect("Unable to open the obj file.");
+        let objects = obj::parse_file(&path, &empty, "").expect("Unable to open the obj file.");
 
         let mut res = Vec::new();
 
@@ -243,14 +241,14 @@ impl Testbed {
     }
 }
 
+type CameraEffects<'a> = (
+    Option<&'a mut Camera>,
+    Option<&'a mut PlanarCamera>,
+    Option<&'a mut PostProcessingEffect>,
+);
+
 impl State for Testbed {
-    fn cameras_and_effect(
-        &mut self,
-    ) -> (
-        Option<&mut Camera>,
-        Option<&mut PlanarCamera>,
-        Option<&mut PostProcessingEffect>,
-    ) {
+    fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
         (Some(self.graphics.camera_mut()), None, None)
     }
 
@@ -306,36 +304,31 @@ impl State for Testbed {
                                     self.graphics
                                         .remove_body_nodes(&physics_world, window, body);
                                     physics_world.remove_bodies(&[body]);
-                                } else {
-                                    if physics_world.multibody_link(body).is_some() {
-                                        let key = self.graphics.remove_body_part_nodes(
-                                            &physics_world,
-                                            window,
-                                            body,
-                                        );
-                                        physics_world.remove_multibody_links(&[body]);
-                                        // FIXME: this is a bit ugly.
-                                        self.graphics
-                                            .update_after_body_key_change(&physics_world, key);
-                                    }
+                                } else if physics_world.multibody_link(body).is_some() {
+                                    let key = self.graphics.remove_body_part_nodes(
+                                        &physics_world,
+                                        window,
+                                        body,
+                                    );
+                                    physics_world.remove_multibody_links(&[body]);
+                                    // FIXME: this is a bit ugly.
+                                    self.graphics
+                                        .update_after_body_key_change(&physics_world, key);
                                 }
                             }
                         }
 
                         event.inhibited = true;
                     } else if modifier.contains(Modifiers::Control) {
-                        match self.grabbed_object {
-                            Some(body) => {
-                                for n in self
-                                    .graphics
-                                    .body_nodes_mut(&physics_world, body)
-                                    .unwrap()
-                                    .iter_mut()
-                                {
-                                    n.unselect()
-                                }
+                        if let Some(body) = self.grabbed_object {
+                            for n in self
+                                .graphics
+                                .body_nodes_mut(&physics_world, body)
+                                .unwrap()
+                                .iter_mut()
+                            {
+                                n.unselect()
                             }
-                            None => {}
                         }
 
                         // XXX: huge and uggly code duplication for the ray cast.
@@ -556,7 +549,7 @@ impl State for Testbed {
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world.get_mut(),
+                &self.world.get(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );
@@ -588,7 +581,7 @@ impl State for Testbed {
     }
 }
 
-const CONTROLS: &'static str = "Controls:
+const CONTROLS: &str = "Controls:
     Ctrl + click + drag: select and move a solid.
     Left click + drag: rotate the camera.
     Right click + drag: pan the camera.

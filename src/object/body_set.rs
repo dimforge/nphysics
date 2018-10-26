@@ -4,8 +4,10 @@ use std::iter::Map;
 use joint::Joint;
 use math::{Inertia, Isometry, Point, Vector};
 use na::Real;
-use object::{Body, BodyMut, BodyPart, BodyPartMut, Ground, Multibody, MultibodyLinkId,
-             MultibodyLinkMut, MultibodyLinkRef, MultibodyWorkspace, RigidBody};
+use object::{
+    Body, BodyMut, BodyPart, BodyPartMut, Ground, Multibody, MultibodyLinkId, MultibodyLinkMut,
+    MultibodyLinkRef, MultibodyWorkspace, RigidBody,
+};
 use solver::IntegrationParameters;
 
 // FIXME: remove the pub(crate) after this is replaced by -> impl Iterator
@@ -175,15 +177,17 @@ impl<N: Real> BodySet<N> {
                     .insert(BodyId::MultibodyLinkId(mb_id, MultibodyLinkId::ground())),
             );
             let mb = mb_entry.insert(Multibody::new());
-            let id = mb.add_link(
-                mb_handle,
-                MultibodyLinkId::ground(),
-                joint,
-                parent_shift,
-                body_shift,
-                local_inertia,
-                local_com,
-            ).id();
+            let id = mb
+                .add_link(
+                    mb_handle,
+                    MultibodyLinkId::ground(),
+                    joint,
+                    parent_shift,
+                    body_shift,
+                    local_inertia,
+                    local_com,
+                )
+                .id();
             self.ids[mb_handle.handle] = BodyId::MultibodyLinkId(mb_id, id);
             mb_handle
         } else {
@@ -493,13 +497,11 @@ impl<'a, N: Real> Iterator for BodiesMut<'a, N> {
     #[inline]
     fn next(&mut self) -> Option<BodyMut<'a, N>> {
         if let Some(res) = self.rbs_iter.next() {
-            return Some(BodyMut::RigidBody(res.1));
+            Some(BodyMut::RigidBody(res.1))
+        } else if let Some(res) = self.mbs_iter.next() {
+            Some(BodyMut::Multibody(res.1))
+        } else {
+            None
         }
-
-        if let Some(res) = self.mbs_iter.next() {
-            return Some(BodyMut::Multibody(res.1));
-        }
-
-        return None;
     }
 }

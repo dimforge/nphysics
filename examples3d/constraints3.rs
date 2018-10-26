@@ -102,13 +102,17 @@ fn main() {
     parent = BodyHandle::ground();
 
     for i in 0usize..3 {
-        let mut body_anchor = Point3::origin();
-        let mut parent_anchor = Point3::origin();
-        if i == 0 {
-            parent_anchor = first_anchor;
+        let is_first_iteration = i == 0;
+        let body_anchor = if is_first_iteration {
+            Point3::origin()
         } else {
-            body_anchor = Point3::new(0.0, 0.0, -1.0) * (rad * 3.0);
-        }
+            Point3::new(0.0, 0.0, -1.0) * (rad * 3.0)
+        };
+        let parent_anchor = if is_first_iteration {
+            first_anchor
+        } else {
+            Point3::origin()
+        };
 
         pos -= body_anchor.coords;
 

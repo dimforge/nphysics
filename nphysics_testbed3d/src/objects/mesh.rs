@@ -27,16 +27,16 @@ impl Mesh {
         window: &mut Window,
     ) -> Mesh {
         let vs = vertices;
-        let is = indices.into_iter().map(|p| na::convert(p)).collect();
+        let is = indices.into_iter().map(na::convert).collect();
 
         let mesh = resource::Mesh::new(vs, is, None, None, false);
 
         let mut res = Mesh {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_mesh(Rc::new(RefCell::new(mesh)), Vector3::from_element(1.0)),
-            collider: collider,
+            collider,
         };
 
         if world

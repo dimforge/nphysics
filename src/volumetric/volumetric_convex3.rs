@@ -1,14 +1,14 @@
 use num::Zero;
 
+use math::{AngularInertia, Point};
+use na;
 use na::Real;
 use na::{Matrix3, Point3};
-use na;
-use ncollide::utils;
 use ncollide::procedural::{IndexBuffer, TriMesh};
-use ncollide::transformation;
 use ncollide::shape::ConvexHull;
+use ncollide::transformation;
+use ncollide::utils;
 use volumetric::Volumetric;
-use math::{AngularInertia, Point};
 
 fn tetrahedron_unit_inertia_tensor_wrt_point<N: Real>(
     point: &Point<N>,
@@ -40,26 +40,92 @@ fn tetrahedron_unit_inertia_tensor_wrt_point<N: Real>(
     let y4 = p4[1];
     let z4 = p4[2];
 
-    let diag_x = x1 * x1 + x1 * x2 + x2 * x2 + x1 * x3 + x2 * x3 + x3 * x3 + x1 * x4 + x2 * x4
-        + x3 * x4 + x4 * x4;
-    let diag_y = y1 * y1 + y1 * y2 + y2 * y2 + y1 * y3 + y2 * y3 + y3 * y3 + y1 * y4 + y2 * y4
-        + y3 * y4 + y4 * y4;
-    let diag_z = z1 * z1 + z1 * z2 + z2 * z2 + z1 * z3 + z2 * z3 + z3 * z3 + z1 * z4 + z2 * z4
-        + z3 * z4 + z4 * z4;
+    let diag_x = x1 * x1
+        + x1 * x2
+        + x2 * x2
+        + x1 * x3
+        + x2 * x3
+        + x3 * x3
+        + x1 * x4
+        + x2 * x4
+        + x3 * x4
+        + x4 * x4;
+    let diag_y = y1 * y1
+        + y1 * y2
+        + y2 * y2
+        + y1 * y3
+        + y2 * y3
+        + y3 * y3
+        + y1 * y4
+        + y2 * y4
+        + y3 * y4
+        + y4 * y4;
+    let diag_z = z1 * z1
+        + z1 * z2
+        + z2 * z2
+        + z1 * z3
+        + z2 * z3
+        + z3 * z3
+        + z1 * z4
+        + z2 * z4
+        + z3 * z4
+        + z4 * z4;
 
     let a0 = (diag_y + diag_z) * _frac_10;
     let b0 = (diag_z + diag_x) * _frac_10;
     let c0 = (diag_x + diag_y) * _frac_10;
 
-    let a1 = (y1 * z1 * _2 + y2 * z1 + y3 * z1 + y4 * z1 + y1 * z2 + y2 * z2 * _2 + y3 * z2
-        + y4 * z2 + y1 * z3 + y2 * z3 + y3 * z3 * _2 + y4 * z3 + y1 * z4 + y2 * z4
-        + y3 * z4 + y4 * z4 * _2) * _frac_20;
-    let b1 = (x1 * z1 * _2 + x2 * z1 + x3 * z1 + x4 * z1 + x1 * z2 + x2 * z2 * _2 + x3 * z2
-        + x4 * z2 + x1 * z3 + x2 * z3 + x3 * z3 * _2 + x4 * z3 + x1 * z4 + x2 * z4
-        + x3 * z4 + x4 * z4 * _2) * _frac_20;
-    let c1 = (x1 * y1 * _2 + x2 * y1 + x3 * y1 + x4 * y1 + x1 * y2 + x2 * y2 * _2 + x3 * y2
-        + x4 * y2 + x1 * y3 + x2 * y3 + x3 * y3 * _2 + x4 * y3 + x1 * y4 + x2 * y4
-        + x3 * y4 + x4 * y4 * _2) * _frac_20;
+    let a1 = (y1 * z1 * _2
+        + y2 * z1
+        + y3 * z1
+        + y4 * z1
+        + y1 * z2
+        + y2 * z2 * _2
+        + y3 * z2
+        + y4 * z2
+        + y1 * z3
+        + y2 * z3
+        + y3 * z3 * _2
+        + y4 * z3
+        + y1 * z4
+        + y2 * z4
+        + y3 * z4
+        + y4 * z4 * _2)
+        * _frac_20;
+    let b1 = (x1 * z1 * _2
+        + x2 * z1
+        + x3 * z1
+        + x4 * z1
+        + x1 * z2
+        + x2 * z2 * _2
+        + x3 * z2
+        + x4 * z2
+        + x1 * z3
+        + x2 * z3
+        + x3 * z3 * _2
+        + x4 * z3
+        + x1 * z4
+        + x2 * z4
+        + x3 * z4
+        + x4 * z4 * _2)
+        * _frac_20;
+    let c1 = (x1 * y1 * _2
+        + x2 * y1
+        + x3 * y1
+        + x4 * y1
+        + x1 * y2
+        + x2 * y2 * _2
+        + x3 * y2
+        + x4 * y2
+        + x1 * y3
+        + x2 * y3
+        + x3 * y3 * _2
+        + x4 * y3
+        + x1 * y4
+        + x2 * y4
+        + x3 * y4
+        + x4 * y4 * _2)
+        * _frac_20;
 
     let mut res = AngularInertia::zero();
 
@@ -88,17 +154,19 @@ pub fn convex_mesh_volume_and_center_of_mass_unchecked<N: Real>(
     let mut vol = N::zero();
 
     match convex_mesh.indices {
-        IndexBuffer::Unified(ref idx) => for t in idx.iter() {
-            let p2 = &convex_mesh.coords[t.x as usize];
-            let p3 = &convex_mesh.coords[t.y as usize];
-            let p4 = &convex_mesh.coords[t.z as usize];
+        IndexBuffer::Unified(ref idx) => {
+            for t in idx.iter() {
+                let p2 = &convex_mesh.coords[t.x as usize];
+                let p3 = &convex_mesh.coords[t.y as usize];
+                let p4 = &convex_mesh.coords[t.z as usize];
 
-            let volume = utils::tetrahedron_volume(&geometric_center, p2, p3, p4);
-            let center = utils::tetrahedron_center(&geometric_center, p2, p3, p4);
+                let volume = utils::tetrahedron_volume(&geometric_center, p2, p3, p4);
+                let center = utils::tetrahedron_center(&geometric_center, p2, p3, p4);
 
-            res = res + center.coords * volume;
-            vol = vol + volume;
-        },
+                res += center.coords * volume;
+                vol += volume;
+            }
+        }
         IndexBuffer::Split(_) => unreachable!(),
     }
 
@@ -125,16 +193,18 @@ pub fn convex_mesh_mass_properties_unchecked<N: Real>(
     let mut itot = AngularInertia::zero();
 
     match convex_mesh.indices {
-        IndexBuffer::Unified(ref idx) => for t in idx.iter() {
-            let p2 = &convex_mesh.coords[t.x as usize];
-            let p3 = &convex_mesh.coords[t.y as usize];
-            let p4 = &convex_mesh.coords[t.z as usize];
+        IndexBuffer::Unified(ref idx) => {
+            for t in idx.iter() {
+                let p2 = &convex_mesh.coords[t.x as usize];
+                let p3 = &convex_mesh.coords[t.y as usize];
+                let p4 = &convex_mesh.coords[t.z as usize];
 
-            let vol = utils::tetrahedron_volume(&com, p2, p3, p4);
-            let ipart = tetrahedron_unit_inertia_tensor_wrt_point(&com, &com, p2, p3, p4);
+                let vol = utils::tetrahedron_volume(&com, p2, p3, p4);
+                let ipart = tetrahedron_unit_inertia_tensor_wrt_point(&com, &com, p2, p3, p4);
 
-            itot = itot + ipart * vol;
-        },
+                itot = itot + ipart * vol;
+            }
+        }
         IndexBuffer::Split(_) => unreachable!(),
     }
 
@@ -148,13 +218,15 @@ pub fn convex_mesh_area_unchecked<N: Real>(convex_mesh: &TriMesh<N>) -> N {
     let mut area = N::zero();
 
     match convex_mesh.indices {
-        IndexBuffer::Unified(ref idx) => for t in idx.iter() {
-            let p1 = &convex_mesh.coords[t.x as usize];
-            let p2 = &convex_mesh.coords[t.y as usize];
-            let p3 = &convex_mesh.coords[t.z as usize];
+        IndexBuffer::Unified(ref idx) => {
+            for t in idx.iter() {
+                let p1 = &convex_mesh.coords[t.x as usize];
+                let p2 = &convex_mesh.coords[t.y as usize];
+                let p3 = &convex_mesh.coords[t.z as usize];
 
-            area = area + utils::triangle_area(p1, p2, p3);
-        },
+                area += utils::triangle_area(p1, p2, p3);
+            }
+        }
         IndexBuffer::Split(_) => unreachable!(),
     }
 
@@ -213,8 +285,8 @@ impl<N: Real> Volumetric<N> for ConvexHull<N> {
 #[cfg(test)]
 mod test {
     use na::Vector3;
-    use ncollide::shape::{ConvexHull, Cuboid};
     use ncollide::procedural;
+    use ncollide::shape::{ConvexHull, Cuboid};
     use volumetric::Volumetric;
 
     #[test]
@@ -229,7 +301,8 @@ mod test {
             c.z = c.z + excentricity;
         }
 
-        let indices: Vec<usize> = shape.flat_indices()
+        let indices: Vec<usize> = shape
+            .flat_indices()
             .into_iter()
             .map(|i| i as usize)
             .collect();

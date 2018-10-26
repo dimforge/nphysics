@@ -1,8 +1,8 @@
-use kiss3d::window;
 use kiss3d::scene::SceneNode;
+use kiss3d::window;
 use na::{Isometry3, Point3};
-use nphysics3d::world::World;
 use nphysics3d::object::ColliderHandle;
+use nphysics3d::world::World;
 use objects::node;
 
 pub struct Cylinder {
@@ -24,11 +24,11 @@ impl Cylinder {
         window: &mut window::Window,
     ) -> Cylinder {
         let mut res = Cylinder {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_cylinder(r, h),
-            collider: collider,
+            collider,
         };
 
         if world

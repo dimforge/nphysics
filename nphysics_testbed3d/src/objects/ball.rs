@@ -1,8 +1,8 @@
-use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
+use kiss3d::window::Window;
 use na::{Isometry3, Point3};
-use nphysics3d::world::World;
 use nphysics3d::object::ColliderHandle;
+use nphysics3d::world::World;
 use objects::node;
 
 pub struct Ball {
@@ -23,11 +23,11 @@ impl Ball {
         window: &mut Window,
     ) -> Ball {
         let mut res = Ball {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_sphere(radius),
-            collider: collider,
+            collider,
         };
 
         if world

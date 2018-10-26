@@ -41,8 +41,8 @@ impl GraphicsManager {
         }
 
         GraphicsManager {
-            arc_ball: arc_ball,
-            first_person: first_person,
+            arc_ball,
+            first_person,
             curr_is_arc_ball: true,
             rand: rng,
             b2sn: HashMap::new(),
@@ -115,7 +115,7 @@ impl GraphicsManager {
                     let sn_key = Self::body_key(world, sn_body);
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
-                    let new_sns = self.b2sn.entry(sn_key).or_insert(Vec::new());
+                    let new_sns = self.b2sn.entry(sn_key).or_insert_with(Vec::new);
                     new_sns.push(sn);
                 }
             }
@@ -189,7 +189,7 @@ impl GraphicsManager {
 
         {
             let key = Self::body_key(world, parent);
-            let nodes = self.b2sn.entry(key).or_insert(Vec::new());
+            let nodes = self.b2sn.entry(key).or_insert_with(Vec::new);
             nodes.append(&mut new_nodes);
         }
     }
@@ -212,10 +212,10 @@ impl GraphicsManager {
             self.add_box(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
             self.add_convex(window, object, world, delta, s, color, out) /*
-        } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
-            self.add_cylinder(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
-            self.add_cone(window, object, world, delta, s, color, out)*/
+                                                                         } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
+                                                                             self.add_cylinder(window, object, world, delta, s, color, out)
+                                                                         } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
+                                                                             self.add_cone(window, object, world, delta, s, color, out)*/
         } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, world, delta * t, s.as_ref(), color, out)
@@ -408,5 +408,11 @@ impl GraphicsManager {
         handle: BodyHandle,
     ) -> Option<&mut Vec<Node>> {
         self.b2sn.get_mut(&Self::body_key(world, handle))
+    }
+}
+
+impl Default for GraphicsManager {
+    fn default() -> Self {
+        Self::new()
     }
 }
