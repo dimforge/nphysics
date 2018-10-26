@@ -382,3 +382,9 @@ impl GraphicsManager {
         self.b2sn.get_mut(&Self::body_key(world, handle))
     }
 }
+
+impl Default for GraphicsManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}

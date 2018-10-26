@@ -291,18 +291,16 @@ impl State for Testbed {
                                     self.graphics
                                         .remove_body_nodes(&physics_world, window, body);
                                     physics_world.remove_bodies(&[body]);
-                                } else {
-                                    if physics_world.multibody_link(body).is_some() {
-                                        let key = self.graphics.remove_body_part_nodes(
-                                            &physics_world,
-                                            window,
-                                            body,
-                                        );
-                                        physics_world.remove_multibody_links(&[body]);
-                                        // FIXME: this is a bit ugly.
-                                        self.graphics
-                                            .update_after_body_key_change(&physics_world, key);
-                                    }
+                                } else if physics_world.multibody_link(body).is_some() {
+                                    let key = self.graphics.remove_body_part_nodes(
+                                        &physics_world,
+                                        window,
+                                        body,
+                                    );
+                                    physics_world.remove_multibody_links(&[body]);
+                                    // FIXME: this is a bit ugly.
+                                    self.graphics
+                                        .update_after_body_key_change(&physics_world, key);
                                 }
                             }
                         }
@@ -535,7 +533,7 @@ impl State for Testbed {
     }
 }
 
-const CONTROLS: &'static str = "Controls:
+const CONTROLS: &str = "Controls:
     Ctrl + click + drag: select and move a solid.
     Right click + drag: pan the camera.
     Mouse wheel: zoom in/zoom out.
@@ -550,13 +548,14 @@ fn draw_collisions(
 ) {
     for (_, _, manifold) in world.collision_world().contact_manifolds() {
         for c in manifold.contacts() {
-            if existing.contains_key(&c.id) {
-                if running {
-                    existing.insert(c.id, true);
-                }
-            } else {
-                existing.insert(c.id, false);
-            }
+            existing
+                .entry(c.id)
+                .and_modify(|value| {
+                    if running {
+                        *value = true
+                    }
+                })
+                .or_insert(false);
 
             let color = if existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)
