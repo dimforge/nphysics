@@ -4,8 +4,10 @@ use na::{DVectorSliceMut, Real};
 
 use joint::{Joint, JointMotor};
 use object::{BodyHandle, MultibodyLinkRef};
-use solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
-             IntegrationParameters, UnilateralGroundConstraint};
+use solver::{
+    BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+    UnilateralGroundConstraint,
+};
 
 /// Trait implemented by joints using the reduced-coordinates approach and allowing only one degree of freedom.
 pub trait UnitJoint<N: Real>: Joint<N> {
@@ -73,9 +75,9 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
         let constraint = BilateralGroundConstraint {
             impulse: impulses[impulse_id] * params.warmstart_coeff,
             r: N::one() / inv_r,
-            rhs: rhs,
-            limits: limits,
-            impulse_id: impulse_id,
+            rhs,
+            limits,
+            impulse_id,
             assembly_id: assembly_id,
             j_id: *ground_j_id,
             wj_id: *ground_j_id + ndofs,
@@ -144,7 +146,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
                 impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
-                impulse_id: impulse_id,
+                impulse_id,
                 assembly_id: assembly_id,
                 j_id: *ground_j_id,
                 wj_id: *ground_j_id + ndofs,
