@@ -950,6 +950,12 @@ impl<N: Real> Multibody<N> {
     }
 }
 
+impl<N: Real> Default for Multibody<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Iterator through all the multibody links.
 pub struct MultibodyLinks<'a, N: Real> {
     mb: &'a Multibody<N>,

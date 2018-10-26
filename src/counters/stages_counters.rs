@@ -2,6 +2,7 @@ use counters::Timer;
 use std::fmt::{Display, Formatter, Result};
 
 /// Performance counters related to each stage of the time step.
+#[derive(Default)]
 pub struct StagesCounters {
     /// Time spent for updating the kinematic and dynamics of every body.
     pub update_time: Timer,

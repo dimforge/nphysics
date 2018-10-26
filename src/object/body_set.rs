@@ -242,7 +242,7 @@ impl<N: Real> BodySet<N> {
     /// the kinematic tree becomes the root of a new multibody and its joint is replaced by
     /// a free joint attached to the ground.
     pub fn remove_multibody_links(&mut self, body_parts: &[BodyHandle]) {
-        if body_parts.len() != 0 {
+        if !body_parts.is_empty() {
             if let BodyId::MultibodyLinkId(parent_id, _) = self.ids[body_parts[0].handle] {
                 let mb = self.mbs.remove(parent_id);
                 let mut links = Vec::with_capacity(body_parts.len());

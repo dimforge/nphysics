@@ -2,6 +2,7 @@ use counters::Timer;
 use std::fmt::{Display, Formatter, Result};
 
 /// Performance counters related to collision detection.
+#[derive(Default)]
 pub struct CollisionDetectionCounters {
     /// Number of contact pairs detected.
     pub ncontact_pairs: usize,
