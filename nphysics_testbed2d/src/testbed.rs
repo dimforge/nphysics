@@ -79,7 +79,7 @@ pub struct Testbed {
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
-    callbacks: Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>,
+    callbacks: Callbacks,
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
@@ -92,6 +92,8 @@ pub struct Testbed {
     grabbed_object_constraint: Option<ConstraintHandle>,
     world: Box<WorldOwner>,
 }
+
+type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
 
 impl Testbed {
     pub fn new_empty() -> Testbed {
@@ -184,9 +186,7 @@ impl Testbed {
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path = Path::new(path);
         let empty = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
-        let objects = obj::parse_file(&path, &empty, "")
-            .ok()
-            .expect("Unable to open the obj file.");
+        let objects = obj::parse_file(&path, &empty, "").expect("Unable to open the obj file.");
 
         let mut res = Vec::new();
 
@@ -237,14 +237,14 @@ impl Testbed {
     }
 }
 
+type CameraEffects<'a> = (
+    Option<&'a mut Camera>,
+    Option<&'a mut PlanarCamera>,
+    Option<&'a mut PostProcessingEffect>,
+);
+
 impl State for Testbed {
-    fn cameras_and_effect(
-        &mut self,
-    ) -> (
-        Option<&mut Camera>,
-        Option<&mut PlanarCamera>,
-        Option<&mut PostProcessingEffect>,
-    ) {
+    fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
         (None, Some(self.graphics.camera_mut()), None)
     }
 

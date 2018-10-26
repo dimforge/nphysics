@@ -972,6 +972,7 @@ impl<'a, N: Real> Iterator for MultibodyLinks<'a, N> {
 }
 
 /// A temporary workspace for various updates of the multibody.
+#[derive(Default)]
 pub struct MultibodyWorkspace<N: Real> {
     accs: Vec<Velocity<N>>,
 }

@@ -1,7 +1,7 @@
 use na::Real;
 
 /// Logical information of the geometry of a constraint.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct ConstraintGeometry<N: Real> {
     /// Index of the first entry of the jacobian of the constraint affecting the first body.
     pub j_id1: usize,

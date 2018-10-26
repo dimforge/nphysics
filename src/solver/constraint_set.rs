@@ -47,6 +47,7 @@ impl<N: Real> Constraints<N> {
 }
 
 /// Set of non-linear position-based constraints.
+#[derive(Default)]
 pub struct NonlinearConstraints<N: Real> {
     /// Unilateral position-based constraints between two bodies.
     pub unilateral: Vec<NonlinearUnilateralConstraint<N>>,
@@ -76,6 +77,7 @@ impl<N: Real> NonlinearConstraints<N> {
 }
 
 /// A set of all velocity constraints and non-linear position-based constraints.
+#[derive(Default)]
 pub struct ConstraintSet<N: Real> {
     /// The velocity constraints constructed.
     pub velocity: Constraints<N>,

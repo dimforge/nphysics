@@ -84,7 +84,7 @@ pub struct Testbed {
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
-    callbacks: Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>,
+    callbacks: Callbacks,
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
@@ -97,6 +97,8 @@ pub struct Testbed {
     grabbed_object_constraint: Option<ConstraintHandle>,
     grabbed_object_plane: (Point3<f32>, Vector3<f32>),
 }
+
+type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
 
 impl Testbed {
     pub fn new_empty() -> Testbed {

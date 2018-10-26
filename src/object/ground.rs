@@ -175,3 +175,9 @@ impl<N: Real> Ground<N> {
     #[inline]
     pub fn apply_force(&mut self, _: &Force<N>) {}
 }
+
+impl<N: Real> Default for Ground<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}

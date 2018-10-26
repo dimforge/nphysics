@@ -65,6 +65,7 @@ impl BodyId {
 }
 
 /// A set containing all the bodies added to the world.
+#[derive(Default)]
 pub struct BodySet<N: Real> {
     ground: Ground<N>,
     ids: Slab<BodyId>,
