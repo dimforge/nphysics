@@ -92,12 +92,12 @@ impl<N: Real> Joint<N> for BallJoint<N> {
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
         let angvel = Vector3::from_row_slice(&vels[..3]);
         let disp = UnitQuaternion::new_eps(angvel * params.dt, N::zero());
-        self.rot *= disp;
+        self.rot = disp * self.rot;
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
         let angle = Vector3::from_row_slice(&disp[..3]);
         let disp = UnitQuaternion::new(angle);
-        self.rot *= disp;
+        self.rot = disp * self.rot;
     }
 }
