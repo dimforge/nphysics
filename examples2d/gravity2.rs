@@ -91,15 +91,13 @@ fn main() {
             /*
              * Set artifical gravity.
              */
-            let color;
-
-            if j == 1 {
+            let color = if j == 1 {
                 up_gravity.add_body_part(handle);
-                color = Point3::new(0.0, 0.0, 1.0);
+                Point3::new(0.0, 0.0, 1.0)
             } else {
                 down_gravity.add_body_part(handle);
-                color = Point3::new(0.0, 1.0, 0.0);
-            }
+                Point3::new(0.0, 1.0, 0.0)
+            };
 
             testbed.set_body_color(&world, handle, color);
         }

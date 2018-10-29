@@ -3,6 +3,7 @@ use num::Zero;
 use std::ops::{Index, IndexMut};
 
 /// A cache for impulses.
+#[derive(Default)]
 pub struct ImpulseCache<N> {
     cache: Vec<(GenerationalId, N)>,
 }

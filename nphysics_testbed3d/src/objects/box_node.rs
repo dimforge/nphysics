@@ -1,8 +1,8 @@
-use kiss3d::window;
 use kiss3d::scene::SceneNode;
+use kiss3d::window;
 use na::{Isometry3, Point3};
-use nphysics3d::world::World;
 use nphysics3d::object::ColliderHandle;
+use nphysics3d::world::World;
 use objects::node;
 
 pub struct Box {
@@ -29,11 +29,11 @@ impl Box {
         let gz = rz * 2.0;
 
         let mut res = Box {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_cube(gx, gy, gz),
-            collider: collider,
+            collider,
         };
 
         if world

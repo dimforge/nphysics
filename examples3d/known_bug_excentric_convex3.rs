@@ -25,11 +25,11 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use ncollide3d::procedural;
-use nphysics3d::world::World;
+use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 const COLLIDER_MARGIN: f32 = 0.01;
@@ -71,7 +71,7 @@ fn main() {
     let mut cuboid_mesh = procedural::cuboid(&Vector3::repeat(2.0 * (rad - COLLIDER_MARGIN)));
 
     for c in cuboid_mesh.coords.iter_mut() {
-        *c = *c + Vector3::new(excentricity, excentricity, excentricity);
+        *c += Vector3::new(excentricity, excentricity, excentricity)
     }
 
     let indices: Vec<usize> = cuboid_mesh

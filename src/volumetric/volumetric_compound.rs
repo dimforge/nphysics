@@ -1,16 +1,16 @@
 use num::Zero;
 
+use math::{AngularInertia, Point};
 use na::{self, Real};
 use ncollide::shape::Compound;
 use volumetric::{InertiaTensor, Volumetric};
-use math::{AngularInertia, Point};
 
 impl<N: Real> Volumetric<N> for Compound<N> {
     fn area(&self) -> N {
         let mut stot: N = na::zero();
 
         for &(_, ref s) in self.shapes().iter() {
-            stot = stot + s.area()
+            stot += s.area()
         }
 
         stot
@@ -20,7 +20,7 @@ impl<N: Real> Volumetric<N> for Compound<N> {
         let mut vtot: N = na::zero();
 
         for &(_, ref s) in self.shapes().iter() {
-            vtot = vtot + s.volume()
+            vtot += s.volume()
         }
 
         vtot
@@ -36,9 +36,9 @@ impl<N: Real> Volumetric<N> for Compound<N> {
         for &(ref m, ref s) in shapes.iter() {
             let (mpart, cpart, _) = s.mass_properties(na::one());
 
-            mtot = mtot + mpart;
-            ctot = ctot + (*m * cpart * mpart).coords;
-            gtot = gtot + (*m * cpart).coords;
+            mtot += mpart;
+            ctot += (*m * cpart * mpart).coords;
+            gtot += (*m * cpart).coords;
         }
 
         if mtot.is_zero() {
@@ -57,7 +57,7 @@ impl<N: Real> Volumetric<N> for Compound<N> {
         for &(ref m, ref s) in shapes.iter() {
             let (mpart, cpart, ipart) = s.mass_properties(na::one());
 
-            itot = itot + ipart
+            itot += ipart
                 .to_world_space(m)
                 .to_relative_wrt_point(mpart, &(*m * cpart + (-com.coords)));
         }
@@ -82,19 +82,19 @@ impl<N: Real> Volumetric<N> for Compound<N> {
             .collect();
 
         for (&(ref m, _), &(ref mpart, ref cpart, _)) in shapes.iter().zip(props.iter()) {
-            mtot = mtot + *mpart;
-            ctot = ctot + (*m * *cpart * *mpart).coords;
-            gtot = gtot + (*m * *cpart).coords;
+            mtot += *mpart;
+            ctot += (*m * *cpart * *mpart).coords;
+            gtot += (*m * *cpart).coords;
         }
 
         if mtot.is_zero() {
             ctot = gtot;
         } else {
-            ctot = ctot / mtot;
+            ctot /= mtot;
         }
 
         for (&(ref m, _), &(ref mpart, ref cpart, ref ipart)) in shapes.iter().zip(props.iter()) {
-            itot = itot + ipart
+            itot += ipart
                 .to_world_space(m)
                 .to_relative_wrt_point(*mpart, &(*m * *cpart + (-ctot.coords)));
         }

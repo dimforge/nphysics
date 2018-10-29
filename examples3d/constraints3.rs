@@ -5,8 +5,10 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PlanarConstraint, PrismaticConstraint,
-                        RectangularConstraint, RevoluteConstraint, UniversalConstraint};
+use nphysics3d::joint::{
+    BallConstraint, PinSlotConstraint, PlanarConstraint, PrismaticConstraint,
+    RectangularConstraint, RevoluteConstraint, UniversalConstraint,
+};
 use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
@@ -100,13 +102,17 @@ fn main() {
     parent = BodyHandle::ground();
 
     for i in 0usize..3 {
-        let mut body_anchor = Point3::origin();
-        let mut parent_anchor = Point3::origin();
-        if i == 0 {
-            parent_anchor = first_anchor;
+        let is_first_iteration = i == 0;
+        let body_anchor = if is_first_iteration {
+            Point3::origin()
         } else {
-            body_anchor = Point3::new(0.0, 0.0, -1.0) * (rad * 3.0);
-        }
+            Point3::new(0.0, 0.0, -1.0) * (rad * 3.0)
+        };
+        let parent_anchor = if is_first_iteration {
+            first_anchor
+        } else {
+            Point3::origin()
+        };
 
         pos -= body_anchor.coords;
 
@@ -143,13 +149,17 @@ fn main() {
 
     for i in 0usize..num {
         let angle = i as f32 * 2.0 * PI / (num as f32);
-        let mut body_anchor = Point3::origin();
-        let mut parent_anchor = Point3::origin();
-        if i == 0 {
-            parent_anchor = first_anchor;
+        let is_first_iteration = i == 0;
+        let body_anchor = if is_first_iteration {
+            Point3::origin()
         } else {
-            body_anchor = Point3::new(angle.cos(), 0.3, angle.sin()) * (rad * 5.0);
-        }
+            Point3::new(angle.cos(), 0.3, angle.sin()) * (rad * 5.0)
+        };
+        let parent_anchor = if is_first_iteration {
+            first_anchor
+        } else {
+            Point3::origin()
+        };
 
         pos -= body_anchor.coords;
 
@@ -334,40 +344,40 @@ fn main() {
         /*
          * Activate the helical constraint motor if it is to low.
          */
-        // Might be None if the user interactively deleted the helical body.
-        if let Some(mut helical) = world.multibody_link_mut(hel_handle) {
-            let dof = helical
-                .joint_mut()
-                .downcast_mut::<HelicalJoint<f32>>()
-                .unwrap();
+    // Might be None if the user interactively deleted the helical body.
+    if let Some(mut helical) = world.multibody_link_mut(hel_handle) {
+    let dof = helical
+    .joint_mut()
+    .downcast_mut::<HelicalJoint<f32>>()
+    .unwrap();
 
-            if dof.offset() < -5.0 {
-                dof.enable_angular_motor();
-            } else if dof.offset() > 0.0 {
-                dof.disable_angular_motor();
-            }
-        }
+    if dof.offset() < -5.0 {
+    dof.enable_angular_motor();
+    } else if dof.offset() > 0.0 {
+    dof.disable_angular_motor();
+    }
+    }
     });
 
     testbed.add_callback(move |world, _| {
-        /*
-         * Activate the pin-slot constraint linear motor if it is to low.
-         */
-        // Might be None if the user interactively deleted the pin-slot body.
-        if let Some(mut pin_slot) = world.multibody_link_mut(pin_handle) {
-            let dof = pin_slot
-                .joint_mut()
-                .downcast_mut::<PinSlotJoint<f32>>()
-                .unwrap();
+    /*
+     * Activate the pin-slot constraint linear motor if it is to low.
+     */
+    // Might be None if the user interactively deleted the pin-slot body.
+    if let Some(mut pin_slot) = world.multibody_link_mut(pin_handle) {
+    let dof = pin_slot
+    .joint_mut()
+    .downcast_mut::<PinSlotJoint<f32>>()
+    .unwrap();
 
-            if dof.offset() < -10.0 {
-                dof.enable_linear_motor();
-            } else if dof.offset() > -4.0 {
-                dof.disable_linear_motor();
-            }
-        }
+    if dof.offset() < -10.0 {
+    dof.enable_linear_motor();
+    } else if dof.offset() > -4.0 {
+    dof.disable_linear_motor();
+    }
+    }
     });
-    */
+     */
 
     testbed.look_at(Point3::new(30.0, -2.0, 0.0), Point3::new(0.0, -2.0, 0.0));
     testbed.run();

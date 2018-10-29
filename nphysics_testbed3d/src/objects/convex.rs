@@ -1,9 +1,9 @@
-use kiss3d::window::Window;
 use kiss3d::scene::SceneNode;
+use kiss3d::window::Window;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::procedural::TriMesh;
-use nphysics3d::world::World;
 use nphysics3d::object::ColliderHandle;
+use nphysics3d::world::World;
 use objects::node;
 
 pub struct Convex {
@@ -24,11 +24,11 @@ impl Convex {
         window: &mut Window,
     ) -> Convex {
         let mut res = Convex {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_trimesh(convex.clone(), Vector3::from_element(1.0)),
-            collider: collider,
+            collider,
         };
 
         if world

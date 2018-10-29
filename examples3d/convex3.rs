@@ -56,9 +56,7 @@ fn main() {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let geom;
-
-                if true {
+                let geom = if true {
                     // j % 2 == 0 {
                     let mut pts = Vec::with_capacity(npts);
 
@@ -66,10 +64,10 @@ fn main() {
                         pts.push(Point3::rand(&mut rng) * 0.4);
                     }
 
-                    geom = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
+                    ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap())
                 } else {
-                    geom = ShapeHandle::new(Ball::new(0.1 - COLLIDER_MARGIN));
-                }
+                    ShapeHandle::new(Ball::new(0.1 - COLLIDER_MARGIN))
+                };
 
                 let inertia = geom.inertia(1.0);
                 let center_of_mass = geom.center_of_mass();

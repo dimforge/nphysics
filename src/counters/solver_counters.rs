@@ -2,6 +2,7 @@ use counters::Timer;
 use std::fmt::{Display, Formatter, Result};
 
 /// Performance counters related to constraints resolution.
+#[derive(Default)]
 pub struct SolverCounters {
     /// Number of constraints generated.
     pub nconstraints: usize,

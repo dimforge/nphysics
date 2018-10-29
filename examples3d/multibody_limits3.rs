@@ -5,11 +5,12 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::world::World;
-use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::joint::{FreeJoint, RevoluteJoint};
+use nphysics3d::object::{BodyHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
+use std::f32::consts::PI;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -59,9 +60,9 @@ fn main() {
     );
 
     // Setup the other links with revolute joints.
-    let mut revo = RevoluteJoint::new(axis, -3.14 / 10.0);
-    revo.enable_min_angle(-3.14 / 10.0);
-    revo.enable_max_angle(-3.14 / 10.0);
+    let mut revo = RevoluteJoint::new(axis, -PI / 10.0);
+    revo.enable_min_angle(-PI / 10.0);
+    revo.enable_max_angle(-PI / 10.0);
 
     for _ in 0usize..num {
         parent = world.add_multibody_link(

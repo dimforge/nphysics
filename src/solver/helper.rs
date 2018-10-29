@@ -8,8 +8,10 @@ use std::ops::Neg;
 
 use math::{AngularVector, Force, Point, Rotation, Vector};
 use object::BodyPart;
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
-             GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
+use solver::{
+    BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
+    GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters,
+};
 
 /// The direction of a force.
 #[derive(Copy, Clone, Debug)]
@@ -95,14 +97,13 @@ pub fn constraint_pair_geometry<N: Real>(
     res.ndofs1 = body1.status_dependent_parent_ndofs();
     res.ndofs2 = body2.status_dependent_parent_ndofs();
 
-    let out_j_id;
-    if res.ndofs1 == 0 || res.ndofs2 == 0 {
+    let out_j_id = if res.ndofs1 == 0 || res.ndofs2 == 0 {
         res.j_id1 = *ground_j_id;
-        out_j_id = ground_j_id;
+        ground_j_id
     } else {
         res.j_id1 = *j_id;
-        out_j_id = j_id;
-    }
+        j_id
+    };
 
     res.j_id2 = res.j_id1 + res.ndofs1;
     res.wj_id1 = res.j_id2 + res.ndofs2;
@@ -112,14 +113,7 @@ pub fn constraint_pair_geometry<N: Real>(
 
     if res.ndofs1 != 0 {
         fill_constraint_geometry(
-            body1,
-            res.ndofs1,
-            center1,
-            dir,
-            res.j_id1,
-            res.wj_id1,
-            jacobians,
-            &mut inv_r,
+            body1, res.ndofs1, center1, dir, res.j_id1, res.wj_id1, jacobians, &mut inv_r,
         );
     }
 

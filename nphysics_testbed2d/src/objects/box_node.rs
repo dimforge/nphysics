@@ -27,11 +27,11 @@ impl Box {
         let gy = ry * 2.0;
 
         let mut res = Box {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_rectangle(gx, gy),
-            collider: collider,
+            collider,
         };
 
         if world

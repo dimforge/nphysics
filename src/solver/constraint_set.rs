@@ -1,9 +1,12 @@
 use na::Real;
-use solver::{BilateralConstraint, BilateralGroundConstraint,
-             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearUnilateralConstraint,
-             UnilateralConstraint, UnilateralGroundConstraint};
+use solver::{
+    BilateralConstraint, BilateralGroundConstraint,
+    MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearUnilateralConstraint,
+    UnilateralConstraint, UnilateralGroundConstraint,
+};
 
 /// Set of velocity-based constraints.
+#[derive(Default)]
 pub struct Constraints<N: Real> {
     /// Unilateral velocity constraints involving a dynamic body and the ground (or a body without any degrees of freedoms).
     pub unilateral_ground: Vec<UnilateralGroundConstraint<N>>,
@@ -28,7 +31,9 @@ impl<N: Real> Constraints<N> {
 
     /// The total number of constraints on this set.
     pub fn len(&self) -> usize {
-        self.unilateral_ground.len() + self.unilateral.len() + self.bilateral_ground.len()
+        self.unilateral_ground.len()
+            + self.unilateral.len()
+            + self.bilateral_ground.len()
             + self.bilateral.len()
     }
 
@@ -42,6 +47,7 @@ impl<N: Real> Constraints<N> {
 }
 
 /// Set of non-linear position-based constraints.
+#[derive(Default)]
 pub struct NonlinearConstraints<N: Real> {
     /// Unilateral position-based constraints between two bodies.
     pub unilateral: Vec<NonlinearUnilateralConstraint<N>>,
@@ -71,6 +77,7 @@ impl<N: Real> NonlinearConstraints<N> {
 }
 
 /// A set of all velocity constraints and non-linear position-based constraints.
+#[derive(Default)]
 pub struct ConstraintSet<N: Real> {
     /// The velocity constraints constructed.
     pub velocity: Constraints<N>,

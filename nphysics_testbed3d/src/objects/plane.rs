@@ -1,9 +1,9 @@
-use num::Zero;
-use na::{Point3, Vector3};
-use kiss3d::window;
 use kiss3d::scene::SceneNode;
-use nphysics3d::world::World;
+use kiss3d::window;
+use na::{Point3, Vector3};
 use nphysics3d::object::ColliderHandle;
+use nphysics3d::world::World;
+use num::Zero;
 
 pub struct Plane {
     gfx: SceneNode,
@@ -21,7 +21,7 @@ impl Plane {
     ) -> Plane {
         let mut res = Plane {
             gfx: window.add_quad(100.0, 100.0, 10, 10),
-            collider: collider,
+            collider,
         };
 
         if world
@@ -36,13 +36,11 @@ impl Plane {
 
         res.gfx.set_color(color.x, color.y, color.z);
 
-        let up;
-
-        if world_normal.z.is_zero() && world_normal.y.is_zero() {
-            up = Vector3::z();
+        let up = if world_normal.z.is_zero() && world_normal.y.is_zero() {
+            Vector3::z()
         } else {
-            up = Vector3::x();
-        }
+            Vector3::x()
+        };
 
         res.gfx
             .reorient(world_pos, &(*world_pos + *world_normal), &up);

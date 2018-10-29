@@ -1,7 +1,7 @@
 use na::Real;
 
 /// Logical information of the geometry of a constraint.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct ConstraintGeometry<N: Real> {
     /// Index of the first entry of the jacobian of the constraint affecting the first body.
     pub j_id1: usize,
@@ -88,10 +88,10 @@ impl<N: Real> UnilateralConstraint<N> {
     ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
-            impulse: impulse,
+            impulse,
             r: geom.r,
-            rhs: rhs,
-            impulse_id: impulse_id,
+            rhs,
+            impulse_id,
             assembly_id1: assembly_id1,
             assembly_id2: assembly_id2,
             j_id1: geom.j_id1,
@@ -139,10 +139,10 @@ impl<N: Real> UnilateralGroundConstraint<N> {
     ) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
-                impulse: impulse,
+                impulse,
                 r: geom.r,
-                rhs: rhs,
-                impulse_id: impulse_id,
+                rhs,
+                impulse_id,
                 assembly_id: assembly_id2,
                 j_id: geom.j_id2,
                 wj_id: geom.wj_id2,
@@ -150,10 +150,10 @@ impl<N: Real> UnilateralGroundConstraint<N> {
             }
         } else {
             UnilateralGroundConstraint {
-                impulse: impulse,
+                impulse,
                 r: geom.r,
-                rhs: rhs,
-                impulse_id: impulse_id,
+                rhs,
+                impulse_id,
                 assembly_id: assembly_id1,
                 j_id: geom.j_id1,
                 wj_id: geom.wj_id1,
@@ -233,11 +233,11 @@ impl<N: Real> BilateralConstraint<N> {
     ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         BilateralConstraint {
-            impulse: impulse,
+            impulse,
             r: geom.r,
-            rhs: rhs,
-            limits: limits,
-            impulse_id: impulse_id,
+            rhs,
+            limits,
+            impulse_id,
             assembly_id1: assembly_id1,
             assembly_id2: assembly_id2,
             j_id1: geom.j_id1,
@@ -289,11 +289,11 @@ impl<N: Real> BilateralGroundConstraint<N> {
     ) -> Self {
         if geom.ndofs1 == 0 {
             BilateralGroundConstraint {
-                impulse: impulse,
+                impulse,
                 r: geom.r,
-                rhs: rhs,
-                limits: limits,
-                impulse_id: impulse_id,
+                rhs,
+                limits,
+                impulse_id,
                 assembly_id: assembly_id2,
                 j_id: geom.j_id2,
                 wj_id: geom.wj_id2,
@@ -301,11 +301,11 @@ impl<N: Real> BilateralGroundConstraint<N> {
             }
         } else {
             BilateralGroundConstraint {
-                impulse: impulse,
+                impulse,
                 r: geom.r,
-                rhs: rhs,
-                limits: limits,
-                impulse_id: impulse_id,
+                rhs,
+                limits,
+                impulse_id,
                 assembly_id: assembly_id1,
                 j_id: geom.j_id1,
                 wj_id: geom.wj_id1,

@@ -1,8 +1,8 @@
-use na::Real;
+use math::{AngularInertia, Point, DIM};
 use na;
+use na::Real;
 use ncollide::shape::Ball;
 use volumetric::Volumetric;
-use math::{AngularInertia, Point, DIM};
 
 /// The volume of a ball.
 #[inline]
@@ -37,12 +37,11 @@ pub fn ball_center_of_mass<N: Real>() -> Point<N> {
 /// The unit angular inertia of a ball.
 #[inline]
 pub fn ball_unit_angular_inertia<N: Real>(radius: N) -> AngularInertia<N> {
-    let diag;
-    if DIM == 2 {
-        diag = radius * radius / na::convert(2.0f64);
+    let diag = if DIM == 2 {
+        radius * radius / na::convert(2.0f64)
     } else {
-        diag = radius * radius * na::convert(2.0f64 / 5.0);
-    }
+        radius * radius * na::convert(2.0f64 / 5.0)
+    };
 
     AngularInertia::from_diagonal_element(diag)
 }

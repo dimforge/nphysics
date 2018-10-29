@@ -950,6 +950,12 @@ impl<N: Real> Multibody<N> {
     }
 }
 
+impl<N: Real> Default for Multibody<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Iterator through all the multibody links.
 pub struct MultibodyLinks<'a, N: Real> {
     mb: &'a Multibody<N>,
@@ -972,6 +978,7 @@ impl<'a, N: Real> Iterator for MultibodyLinks<'a, N> {
 }
 
 /// A temporary workspace for various updates of the multibody.
+#[derive(Default)]
 pub struct MultibodyWorkspace<N: Real> {
     accs: Vec<Velocity<N>>,
 }

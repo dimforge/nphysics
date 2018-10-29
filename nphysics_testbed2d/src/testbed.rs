@@ -30,11 +30,11 @@ enum RunMode {
 #[cfg(not(feature = "log"))]
 fn usage(exe_name: &str) {
     println!("Usage: {} [OPTION] ", exe_name);
-    println!("");
+    println!();
     println!("Options:");
     println!("    --help  - prints this help message and exits.");
     println!("    --pause - do not start the simulation right away.");
-    println!("");
+    println!();
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
@@ -68,9 +68,7 @@ fn usage(exe_name: &str) {
     info!("    3      - launch a fast cube using continuous collision detection.");
     info!("    TAB    - switch camera mode (first-person or arc-ball).");
     info!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
-    info!(
-        "    CTRL + left click + drag - select and drag an object using a ball-in-socket joint."
-    );
+    info!("    CTRL + left click + drag - select and drag an object using a ball-in-socket joint.");
     info!("    SHIFT + left click - remove an object.");
     info!("    arrows - move around when in first-person camera mode.");
     info!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
@@ -81,7 +79,7 @@ pub struct Testbed {
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
-    callbacks: Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>,
+    callbacks: Callbacks,
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
@@ -94,6 +92,8 @@ pub struct Testbed {
     grabbed_object_constraint: Option<ConstraintHandle>,
     world: Box<WorldOwner>,
 }
+
+type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
 
 impl Testbed {
     pub fn new_empty() -> Testbed {
@@ -108,7 +108,7 @@ impl Testbed {
             world: Box::new(Arc::new(RwLock::new(world))),
             callbacks: Vec::new(),
             window: Some(window),
-            graphics: graphics,
+            graphics,
             nsteps: 1,
             time: 0.0,
             hide_counters: false,
@@ -186,9 +186,7 @@ impl Testbed {
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path = Path::new(path);
         let empty = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
-        let objects = obj::parse_file(&path, &empty, "")
-            .ok()
-            .expect("Unable to open the obj file.");
+        let objects = obj::parse_file(&path, &empty, "").expect("Unable to open the obj file.");
 
         let mut res = Vec::new();
 
@@ -215,8 +213,7 @@ impl Testbed {
     pub fn add_callback<F: Fn(&mut WorldOwner, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
-    )
-    {
+    ) {
         self.callbacks.push(Box::new(callback));
     }
 
@@ -240,14 +237,14 @@ impl Testbed {
     }
 }
 
+type CameraEffects<'a> = (
+    Option<&'a mut Camera>,
+    Option<&'a mut PlanarCamera>,
+    Option<&'a mut PostProcessingEffect>,
+);
+
 impl State for Testbed {
-    fn cameras_and_effect(
-        &mut self,
-    ) -> (
-        Option<&mut Camera>,
-        Option<&mut PlanarCamera>,
-        Option<&mut PostProcessingEffect>,
-    ) {
+    fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
         (None, Some(self.graphics.camera_mut()), None)
     }
 
@@ -281,11 +278,11 @@ impl State for Testbed {
                     for b in physics_world
                         .collision_world()
                         .interferences_with_point(&mapped_point, all_groups)
-                        {
-                            if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
-                                self.grabbed_object = Some(b.data().body());
-                            }
+                    {
+                        if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
+                            self.grabbed_object = Some(b.data().body());
                         }
+                    }
 
                     if modifier.contains(Modifiers::Shift) {
                         if let Some(body) = self.grabbed_object {
@@ -294,18 +291,16 @@ impl State for Testbed {
                                     self.graphics
                                         .remove_body_nodes(&physics_world, window, body);
                                     physics_world.remove_bodies(&[body]);
-                                } else {
-                                    if physics_world.multibody_link(body).is_some() {
-                                        let key = self.graphics.remove_body_part_nodes(
-                                            &physics_world,
-                                            window,
-                                            body,
-                                        );
-                                        physics_world.remove_multibody_links(&[body]);
-                                        // FIXME: this is a bit ugly.
-                                        self.graphics
-                                            .update_after_body_key_change(&physics_world, key);
-                                    }
+                                } else if physics_world.multibody_link(body).is_some() {
+                                    let key = self.graphics.remove_body_part_nodes(
+                                        &physics_world,
+                                        window,
+                                        body,
+                                    );
+                                    physics_world.remove_multibody_links(&[body]);
+                                    // FIXME: this is a bit ugly.
+                                    self.graphics
+                                        .update_after_body_key_change(&physics_world, key);
                                 }
                             }
                         }
@@ -335,9 +330,9 @@ impl State for Testbed {
                                 .body_nodes_mut(physics_world, body)
                                 .unwrap()
                                 .iter_mut()
-                                {
-                                    node.select()
-                                }
+                            {
+                                node.select()
+                            }
                         }
 
                         event.inhibited = true;
@@ -353,9 +348,9 @@ impl State for Testbed {
                             .body_nodes_mut(physics_world, body)
                             .unwrap()
                             .iter_mut()
-                            {
-                                n.unselect()
-                            }
+                        {
+                            n.unselect()
+                        }
                     }
 
                     if let Some(joint) = self.grabbed_object_constraint {
@@ -376,7 +371,7 @@ impl State for Testbed {
                         .unproject(&self.cursor_pos, &na::convert(window.size()));
 
                     let attach2 = mapped_point;
-                    if let Some(_) = self.grabbed_object {
+                    if self.grabbed_object.is_some() {
                         let joint = self.grabbed_object_constraint.unwrap();
                         let joint = physics_world
                             .constraint_mut(joint)
@@ -414,19 +409,19 @@ impl State for Testbed {
                         if let Some(ns) = self
                             .graphics
                             .body_nodes_mut(&physics_world, co.data().body())
-                            {
-                                for n in ns.iter_mut() {
-                                    if let Some(node) = n.scene_node_mut() {
-                                        if self.draw_colls {
-                                            node.set_lines_width(1.0);
-                                            node.set_surface_rendering_activation(false);
-                                        } else {
-                                            node.set_lines_width(0.0);
-                                            node.set_surface_rendering_activation(true);
-                                        }
+                        {
+                            for n in ns.iter_mut() {
+                                if let Some(node) = n.scene_node_mut() {
+                                    if self.draw_colls {
+                                        node.set_lines_width(1.0);
+                                        node.set_surface_rendering_activation(false);
+                                    } else {
+                                        node.set_lines_width(0.0);
+                                        node.set_surface_rendering_activation(true);
                                     }
                                 }
                             }
+                        }
                     }
                 }
                 //      WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
@@ -483,9 +478,9 @@ impl State for Testbed {
                 self.world.get_mut().step();
                 if !self.hide_counters {
                     #[cfg(not(feature = "log"))]
-                        println!("{}", self.world.get().performance_counters());
+                    println!("{}", self.world.get().performance_counters());
                     #[cfg(feature = "log")]
-                        debug!("{}", self.world.get().performance_counters());
+                    debug!("{}", self.world.get().performance_counters());
                 }
                 self.time += self.world.get().timestep();
             }
@@ -496,9 +491,9 @@ impl State for Testbed {
                     .graphics
                     .body_nodes_mut(physics_world, co.data().body())
                     .is_none()
-                    {
-                        self.graphics.add(window, co.handle(), &physics_world);
-                    }
+                {
+                    self.graphics.add(window, co.handle(), &physics_world);
+                }
             }
             self.graphics.draw(&physics_world, window);
         }
@@ -506,7 +501,7 @@ impl State for Testbed {
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world.get(),
+                &self.world.get(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );
@@ -538,7 +533,7 @@ impl State for Testbed {
     }
 }
 
-const CONTROLS: &'static str = "Controls:
+const CONTROLS: &str = "Controls:
     Ctrl + click + drag: select and move a solid.
     Right click + drag: pan the camera.
     Mouse wheel: zoom in/zoom out.
@@ -553,13 +548,14 @@ fn draw_collisions(
 ) {
     for (_, _, manifold) in world.collision_world().contact_manifolds() {
         for c in manifold.contacts() {
-            if existing.contains_key(&c.id) {
-                if running {
-                    existing.insert(c.id, true);
-                }
-            } else {
-                existing.insert(c.id, false);
-            }
+            existing
+                .entry(c.id)
+                .and_modify(|value| {
+                    if running {
+                        *value = true
+                    }
+                })
+                .or_insert(false);
 
             let color = if existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)

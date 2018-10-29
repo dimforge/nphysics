@@ -140,16 +140,20 @@ impl<'a, N: Real> Body<'a, N> {
     #[inline]
     pub fn status_dependent_ndofs(&self) -> usize {
         match *self {
-            Body::RigidBody(ref rb) => if rb.is_dynamic() {
-                rb.ndofs()
-            } else {
-                0
-            },
-            Body::Multibody(ref mb) => if mb.is_dynamic() {
-                mb.ndofs()
-            } else {
-                0
-            },
+            Body::RigidBody(ref rb) => {
+                if rb.is_dynamic() {
+                    rb.ndofs()
+                } else {
+                    0
+                }
+            }
+            Body::Multibody(ref mb) => {
+                if mb.is_dynamic() {
+                    mb.ndofs()
+                } else {
+                    0
+                }
+            }
             Body::Ground(_) => 0,
         }
     }
@@ -172,16 +176,20 @@ impl<'a, N: Real> BodyMut<'a, N> {
     #[inline]
     pub fn status_dependent_ndofs(&self) -> usize {
         match *self {
-            BodyMut::RigidBody(ref rb) => if rb.is_dynamic() {
-                rb.ndofs()
-            } else {
-                0
-            },
-            BodyMut::Multibody(ref mb) => if mb.is_dynamic() {
-                mb.ndofs()
-            } else {
-                0
-            },
+            BodyMut::RigidBody(ref rb) => {
+                if rb.is_dynamic() {
+                    rb.ndofs()
+                } else {
+                    0
+                }
+            }
+            BodyMut::Multibody(ref mb) => {
+                if mb.is_dynamic() {
+                    mb.ndofs()
+                } else {
+                    0
+                }
+            }
             BodyMut::Ground(_) => 0,
         }
     }
@@ -323,16 +331,20 @@ impl<'a, N: Real> BodyPart<'a, N> {
     #[inline]
     pub fn status_dependent_parent_ndofs(&self) -> usize {
         match *self {
-            BodyPart::RigidBody(ref rb) => if rb.is_dynamic() {
-                rb.ndofs()
-            } else {
-                0
-            },
-            BodyPart::MultibodyLink(ref mb) => if mb.multibody().is_dynamic() {
-                mb.multibody().ndofs()
-            } else {
-                0
-            },
+            BodyPart::RigidBody(ref rb) => {
+                if rb.is_dynamic() {
+                    rb.ndofs()
+                } else {
+                    0
+                }
+            }
+            BodyPart::MultibodyLink(ref mb) => {
+                if mb.multibody().is_dynamic() {
+                    mb.multibody().ndofs()
+                } else {
+                    0
+                }
+            }
             BodyPart::Ground(_) => 0,
         }
     }
@@ -403,16 +415,20 @@ impl<'a, N: Real> BodyPart<'a, N> {
     #[inline]
     pub fn status_dependent_velocity(&self) -> Velocity<N> {
         match *self {
-            BodyPart::RigidBody(ref rb) => if !rb.is_static() {
-                *rb.velocity()
-            } else {
-                Velocity::zero()
-            },
-            BodyPart::MultibodyLink(ref mb) => if mb.multibody().is_static() {
-                *mb.velocity()
-            } else {
-                Velocity::zero()
-            },
+            BodyPart::RigidBody(ref rb) => {
+                if !rb.is_static() {
+                    *rb.velocity()
+                } else {
+                    Velocity::zero()
+                }
+            }
+            BodyPart::MultibodyLink(ref mb) => {
+                if mb.multibody().is_static() {
+                    *mb.velocity()
+                } else {
+                    Velocity::zero()
+                }
+            }
             BodyPart::Ground(_) => Velocity::zero(),
         }
     }
@@ -451,7 +467,7 @@ impl<'a, N: Real> BodyPart<'a, N> {
 impl<'a, N: Real> BodyPartMut<'a, N> {
     /// Retrieves an immutable reference to this body part.
     #[inline]
-    pub fn as_ref<'b>(&'b self) -> BodyPart<'b, N> {
+    pub fn as_ref(&self) -> BodyPart<'_, N> {
         match *self {
             BodyPartMut::RigidBody(ref rb) => BodyPart::RigidBody(rb),
             BodyPartMut::MultibodyLink(ref mb) => BodyPart::MultibodyLink(mb.as_ref()),

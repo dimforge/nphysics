@@ -138,7 +138,7 @@ impl<'a, N: Real> MultibodyLinkMut<'a, N> {
     }
 
     /// Retrieve an immutable reference to this link.
-    pub fn as_ref<'b>(&'b self) -> MultibodyLinkRef<'b, N> {
+    pub fn as_ref(&self) -> MultibodyLinkRef<'_, N> {
         MultibodyLinkRef::new(self.id, &*self.multibody)
     }
 
