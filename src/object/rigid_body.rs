@@ -166,27 +166,32 @@ impl<N: Real> RigidBody<N> {
     /// Set the velocity of this rigid body.
     #[inline]
     pub fn set_velocity(&mut self, vel: Velocity<N>) {
-        self.velocity = vel
+        self.velocity = vel;
+        self.activate();
     }
 
     /// Set the linear velocity of this rigid body.
     #[inline]
     pub fn set_linear_velocity(&mut self, vel: Vector<N>) {
-        self.velocity.linear = vel
+        self.velocity.linear = vel;
+        self.activate();
+
     }
 
     #[cfg(feature = "dim2")]
     /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: N) {
-        self.velocity.angular = vel
+        self.velocity.angular = vel;
+        self.activate();
     }
 
     #[cfg(feature = "dim3")]
     /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: AngularVector<N>) {
-        self.velocity.angular = vel
+        self.velocity.angular = vel;
+        self.activate();
     }
 
     /// Reset the timestep-specific dynamic information of this rigid body.
