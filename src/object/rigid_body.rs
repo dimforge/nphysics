@@ -175,7 +175,6 @@ impl<N: Real> RigidBody<N> {
     pub fn set_linear_velocity(&mut self, vel: Vector<N>) {
         self.velocity.linear = vel;
         self.activate();
-
     }
 
     #[cfg(feature = "dim2")]
