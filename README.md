@@ -2,6 +2,9 @@
   <img src="http://nphysics.org/img/logo_nphysics_full.svg" alt="crates.io">
 </p>
 <p align="center">
+    <a href="https://discord.gg/vt9DJSW">
+        <img src="https://img.shields.io/discord/507548572338880513.svg?logo=discord&colorB=7289DA">
+    </a>
     <a href="https://crates.io/crates/nphysics">
          <img src="http://meritbadge.herokuapp.com/nphysics3d?style=flat-square" alt="crates.io">
     </a>
