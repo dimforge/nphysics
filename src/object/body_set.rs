@@ -124,6 +124,17 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Clear the external forces applied to all the bodies.
+    pub fn clear_forces(&mut self) {
+        for (_, mb) in &mut self.mbs {
+            mb.clear_forces();
+        }
+
+        for (_, rb) in &mut self.rbs {
+            rb.clear_forces()
+        }
+    }
+
     /// Update the dynamics of all the bodies.
     pub fn update_dynamics(
         &mut self,

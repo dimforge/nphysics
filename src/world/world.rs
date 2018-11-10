@@ -321,6 +321,8 @@ impl<N: Real> World<N> {
                 mb.integrate(&self.params)
             }
         }
+
+        self.bodies.clear_forces();
         self.counters.solver_completed();
         self.counters.step_completed();
     }

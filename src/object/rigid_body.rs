@@ -193,6 +193,10 @@ impl<N: Real> RigidBody<N> {
     pub fn clear_dynamics(&mut self) {
         self.augmented_mass = Inertia::zero();
         self.acceleration = Velocity::zero();
+    }
+
+    /// Clears the external forces applied to this rigid-body.
+    pub fn clear_forces(&mut self) {
         self.external_forces = Force::zero();
     }
 
