@@ -38,13 +38,13 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 10;
+    let num = 7;
     let rad = 0.1;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-    let height = 2.0; // 3.0;
+    let height = 0.0; // 2.0; // 3.0;
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
     let inertia = geom.inertia(1.0);

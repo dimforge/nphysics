@@ -23,7 +23,7 @@ either     = "1.0"
 num-traits = "0.2"
 slab       = "0.4"
 alga       = "0.7"
-nalgebra   = "0.16"
+nalgebra   = { version = "0.16", features = [ "sparse" ] }
 approx     = "0.3"
 downcast   = "0.9"
 ncollide2d = "0.17"

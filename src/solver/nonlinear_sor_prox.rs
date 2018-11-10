@@ -176,6 +176,8 @@ impl<N: Real> NonlinearSORProx<N> {
 
         let pos1;
         let pos2;
+        let coords1;
+        let coords2;
 
         match collider1.data().anchor() {
             ColliderAnchor::OnDeformableBody { indices, .. } => {
@@ -186,9 +188,11 @@ impl<N: Real> NonlinearSORProx<N> {
                     constraint.kinematic.approx1_mut());
                 // FIXME: is this really the identity?
                 pos1 = Isometry::identity();
+                coords1 = Some(coords);
             }
-            ColliderAnchor::OnBodyPart { .. } => {
-                pos1 = part1.position();
+            ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => {
+                pos1 = part1.position() * position_wrt_body_part;
+                coords1 = None;
             }
         }
 
@@ -201,16 +205,18 @@ impl<N: Real> NonlinearSORProx<N> {
                     constraint.kinematic.approx2_mut());
                 // FIXME: is this really the identity?
                 pos2 = Isometry::identity();
+                coords2 = Some(coords);
             }
-            ColliderAnchor::OnBodyPart { .. } => {
-                pos2 = part2.position();
+            ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => {
+                pos2 = part2.position() * position_wrt_body_part;
+                coords2 = None;
             }
         }
 
 
         if let Some(contact) = constraint
             .kinematic
-            .contact(&pos1, &**collider1.shape(), &pos2, &**collider2.shape(), &constraint.normal1)
+            .contact(&pos1, &**collider1.shape(), coords1, &pos2, &**collider2.shape(), coords2, &constraint.normal1)
             {
                 constraint.rhs = na::sup(
                     &((-contact.depth + params.allowed_linear_error) * params.erp),

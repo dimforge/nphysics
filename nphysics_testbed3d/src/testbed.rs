@@ -567,7 +567,7 @@ fn draw_collisions(
     existing: &mut HashMap<GenerationalId, bool>,
     running: bool,
 ) {
-    for (_, _, manifold) in world.collision_world().contact_manifolds() {
+    for (_, _, _, manifold) in world.collision_world().contact_pairs() {
         for c in manifold.contacts() {
             if existing.contains_key(&c.id) {
                 if running {
@@ -577,16 +577,13 @@ fn draw_collisions(
                 existing.insert(c.id, false);
             }
 
-            let color = if existing[&c.id] {
+            let color = if c.contact.depth < 0.0 { // existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)
             } else {
                 Point3::new(1.0, 0.0, 0.0)
             };
 
-            window.draw_line(&c.contact.world1, &c.contact.world2, &color);
-            // let center = na::center(&c.world1, &c.world2);
-            // let end    = center + c.normal * 0.4f32;
-            // window.draw_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
+            window.draw_line(&(c.contact.world1 + Vector3::new(0.005, 0.005, 0.005)), &c.contact.world2, &color);
         }
     }
 }

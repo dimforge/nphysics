@@ -36,7 +36,7 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
     }
 
     /// Get all the contacts from the manifold.
-    pub fn contacts(&self) -> &[TrackedContact<N>] {
+    pub fn contacts(&self) -> impl Iterator<Item = &TrackedContact<N>> {
         self.manifold.contacts()
     }
 

@@ -100,6 +100,15 @@ impl<N: Real> ColliderData<N> {
         &self.anchor
     }
 
+    /// The position of this collider geometry wrt. the body it is attached to.
+    pub fn position_wrt_body(&self) -> Isometry<N> {
+        if let ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } = self.anchor {
+            position_wrt_body_part
+        } else {
+            Isometry::identity()
+        }
+    }
+
     /// The material of this collider.
     #[inline]
     pub fn material(&self) -> &Material<N> {

@@ -306,7 +306,7 @@ impl<N: Real> World<N> {
         self.counters.island_construction_completed();
 
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
-        for (coll1, coll2, c) in self.cworld.contact_manifolds() {
+        for (coll1, coll2, _, manifold) in self.cworld.contact_pairs() {
             // assert!(coll1.data().body_part() != coll2.data().body());
 
             let b1 = self.bodies.body(coll1.data().body());
@@ -316,7 +316,7 @@ impl<N: Real> World<N> {
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
                 || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
                 {
-                    contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, c));
+                    contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, manifold));
                 }
         }
 
@@ -368,8 +368,8 @@ impl<N: Real> World<N> {
     fn activate_bodies_touching_deleted_bodies(&mut self) {
         let bodies = &mut self.bodies;
 
-        for (co1, co2, detector) in self.cworld.contact_pairs() {
-            if detector.num_contacts() != 0 {
+        for (co1, co2, _, manifold) in self.cworld.contact_pairs() {
+            if manifold.len() != 0 {
                 let b1_exists = bodies.contains_body(co1.data().body());
                 let b2_exists = bodies.contains_body(co2.data().body());
 

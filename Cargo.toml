@@ -1,3 +1,13 @@
 [workspace]
 members = [ "build/nphysics2d", "nphysics_testbed2d", "examples2d",
             "build/nphysics3d", "nphysics_testbed3d", "examples3d" ]
+
+[patch.crates-io]
+ncollide2d = { path = "../ncollide-dev/build/ncollide2d" }
+ncollide3d = { path = "../ncollide-dev/build/ncollide3d" }
+nalgebra = { path = "../nalgebra-dev" }
+
+
+#[profile.release]
+#lto = true
+#codegen-units = 1

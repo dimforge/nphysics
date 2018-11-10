@@ -15,6 +15,7 @@ use ncollide3d::bounding_volume::{self, AABB, BoundingVolume};
 use nphysics3d::object::{BodyPartHandle, Material, MassSpringSurface, MassConstraintSurface};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
+use nphysics3d::math::Inertia;
 use nphysics_testbed3d::Testbed;
 
 
@@ -26,7 +27,7 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-    world.integration_parameters_mut().max_position_iterations = 0;
+//    world.integration_parameters_mut().max_position_iterations = 0;
 //    world.integration_parameters_mut().max_velocity_iterations = 1000;
 
     /*
@@ -135,18 +136,19 @@ fn main() {
             trimesh.translate_by(&Translation3::from_vector(-center));
             trimesh.scale_by_scalar(6.0 / diag);
             trimesh.transform_by(&Isometry3::new(na::zero(), Vector3::x() * f32::consts::FRAC_PI_2));
-            trimesh.translate_by(&Translation3::new(0.0, 5.0, 0.0));
             trimesh.split_index_buffer(true);
         }
 
+
+        meshes[0].translate_by(&Translation3::new(0.0, 5.0, 0.0));
         let shape = meshes[0].clone().into();
 //        let mut volume = MassSpringSurface::new(&shape, 1.0, 1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
-        let mut volume = MassConstraintSurface::new(&shape, 1.0, Some(100.0));
-        volume.generate_neighbor_constraints(Some(100.0));
-        volume.generate_neighbor_constraints(Some(100.0));
+        let mut volume = MassSpringSurface::new(&shape, 1.0, 1.0, 0.5);
+        volume.generate_neighbor_springs(1.0, 0.5);
+        volume.generate_neighbor_springs(1.0, 0.5);
         let handle = world.add_body(Box::new(volume));
         world.add_deformable_collider(
             COLLIDER_MARGIN,
@@ -159,11 +161,11 @@ fn main() {
         world.body_mut(handle).set_deactivation_threshold(None);
 
 
-        meshes[0].translate_by(&Translation3::new(2.0, 4.5, 1.0));
+        meshes[0].translate_by(&Translation3::new(0.0, 4.5, 0.0));
         let shape = meshes[0].clone().into();
-        let mut volume = MassConstraintSurface::new(&shape, 1.0, Some(0.1));
-        volume.generate_neighbor_constraints(Some(0.1));
-        volume.generate_neighbor_constraints(Some(0.1));
+        let mut volume = MassSpringSurface::new(&shape, 1.0, 1.0, 0.5);
+        volume.generate_neighbor_springs(1.0, 0.5);
+        volume.generate_neighbor_springs(1.0, 0.5);
         let handle = world.add_body(Box::new(volume));
         world.add_deformable_collider(
             COLLIDER_MARGIN,
@@ -174,22 +176,63 @@ fn main() {
             Material::default(),
         );
         world.body_mut(handle).set_deactivation_threshold(None);
+
+
+        /*
+
+        let trimesh: TriMesh<_> = meshes[0].clone().into();
+        let com = trimesh.aabb().center();
+        let shape = ShapeHandle::new(trimesh);
+        let pos = Isometry3::new(Vector3::y() * 5.0, na::zero());
+        let handle = world.add_rigid_body(pos, Inertia::new(1.0, na::one()), com);
+        world.add_collider(
+            COLLIDER_MARGIN,
+            shape.clone(),
+            BodyPartHandle::ground(),
+            Isometry3::identity(),
+            Material::default(),
+        );
+        world.body_mut(handle.body_handle).set_deactivation_threshold(None);
+
+
+        let pos = Isometry3::new(Vector3::new(1.0, 2.5, 2.0), na::zero());
+        let handle = world.add_rigid_body(pos, Inertia::new(1.0, na::one()), com);
+        world.add_collider(
+            COLLIDER_MARGIN,
+            shape.clone(),
+            handle,
+            Isometry3::identity(),
+            Material::default(),
+        );
+        world.body_mut(handle.body_handle).set_deactivation_threshold(None);
+*/
+/*
+        let pos = Isometry3::new(Vector3::y() * 14.0, na::zero());
+        let handle = world.add_rigid_body(pos, Inertia::new(1.0, na::one()), com);
+        world.add_collider(
+            COLLIDER_MARGIN,
+            shape.clone(),
+            handle,
+            Isometry3::identity(),
+            Material::default(),
+        );
+        world.body_mut(handle.body_handle).set_deactivation_threshold(None);*/
     }
 
-//    // Add a cube to play around with.
-//    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(2.1 - COLLIDER_MARGIN)));
-//    let inertia = geom.inertia(1.0);
-//    let center_of_mass = geom.center_of_mass();
-//    let pos = Isometry3::new(Vector3::y() * 5.0, na::zero());
-//    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-//
-//    world.add_collider(
-//        COLLIDER_MARGIN,
-//        geom.clone(),
-//        handle,
-//        Isometry3::identity(),
-//        Material::default(),
-//    );
+    // Add a cube to play around with.
+    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(0.5 - COLLIDER_MARGIN)));
+    let inertia = geom.inertia(0.1);
+    let center_of_mass = geom.center_of_mass();
+    let pos = Isometry3::new(Vector3::y() * 15.0, na::zero());
+    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
+
+    world.add_collider(
+        COLLIDER_MARGIN,
+        geom.clone(),
+        handle,
+        Isometry3::identity(),
+        Material::default(),
+    );
 
 
     /*

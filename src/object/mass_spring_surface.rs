@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, Cholesky,
-         Dynamic, Vector2, Point3, MatrixN, Unit};
+         Dynamic, Vector2, Point3, MatrixN, Unit, CsCholesky, CsMatrix};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::procedural::{self, IndexBuffer};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Triangle};
@@ -155,7 +155,7 @@ impl<N: Real> MassSpringSurface<N> {
     /// then a spring between `a` and `c` is created if it does not already exists.
     pub fn generate_neighbor_springs(&mut self, stiffness: N, damping_ratio: N) {
         let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
-        let mut existing_springs = HashSet::new();
+        let mut existing_springs = HashSet::with_hasher(DeterministicState::new());
 
         // Build neighborhood list.
         for spring in &self.springs {
@@ -178,14 +178,6 @@ impl<N: Real> MassSpringSurface<N> {
                 }
             }
         }
-    }
-
-    /// The triangle mesh corresponding to this mass-spring-surface structural elements.
-    pub fn mesh(&self) -> TriMesh<N> {
-        let vertices = self.positions.as_slice().chunks(DIM).map(|pt| Point::from_coordinates(Vector::from_row_slice(pt))).collect();
-        let indices = self.elements.iter().map(|elt| elt.indices / DIM).collect();
-
-        TriMesh::new(vertices, indices, None)
     }
 
     fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
@@ -254,9 +246,26 @@ impl<N: Real> MassSpringSurface<N> {
          */
         timer.start();
         self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
-        self.inv_augmented_mass.solve_mut(&mut self.accelerations);
         timer.pause();
         println!("Inversion time: {}", timer);
+        self.inv_augmented_mass.solve_mut(&mut self.accelerations);
+
+        let cs_a: CsMatrix<_, _, _> = self.augmented_mass.clone().into();
+        println!("Shape: {:?}, fill: {}", cs_a.shape(), cs_a.len());
+        let mut chol_cs_a = CsCholesky::new_symbolic(&cs_a);
+        timer.start();
+        let _ = chol_cs_a.decompose_left_looking(cs_a.data.values());
+        timer.pause();
+        println!("Decomposed fill: {}", chol_cs_a.l().unwrap().len());
+        println!("Sparse cholesky time: {}", timer);
+    }
+
+    /// The triangle mesh corresponding to this mass-spring-surface structural elements.
+    pub fn mesh(&self) -> TriMesh<N> {
+        let vertices = self.positions.as_slice().chunks(DIM).map(|pt| Point::from_coordinates(Vector::from_row_slice(pt))).collect();
+        let indices = self.elements.iter().map(|elt| elt.indices / DIM).collect();
+
+        TriMesh::new(vertices, indices, None)
     }
 }
 

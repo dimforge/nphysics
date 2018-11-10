@@ -160,7 +160,7 @@ impl<N: Real> MassConstraintSurface<N> {
     pub fn generate_neighbor_constraints(&mut self, stiffness: Option<N>) {
         // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
         let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
-        let mut existing_constraints = HashSet::new();
+        let mut existing_constraints = HashSet::with_hasher(DeterministicState::new());
 
         // Build neighborhood list.
         for constraint in &self.constraints {

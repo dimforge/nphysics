@@ -172,8 +172,17 @@ impl<N: Real> SignoriniModel<N> {
         let total_margin2 = kinematic.dilation2() + data2.margin();
         kinematic.set_dilation1(total_margin1);
         kinematic.set_dilation2(total_margin2);
-//        kinematic.transform1(&manifold.pos_wrt_body1);
-//        kinematic.transform2(&manifold.pos_wrt_body2);
+
+//        println!("Kinematic: {:?}", kinematic);
+//        println!("Original constraint: {:?}", c.contact);
+//        println!("Recomputed contact : {:?}", kinematic.contact(
+//            &(pos1 * data1.position_wrt_body()),
+//            &**manifold.collider1.shape(),
+//            None,
+//            &(pos2 * data2.position_wrt_body()),
+//            &**manifold.collider2.shape(),
+//            None,
+//            &normal1).unwrap());
 
         constraints
             .position
