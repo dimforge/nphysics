@@ -440,7 +440,10 @@ impl<N: Real> Multibody<N> {
         self.augmented_mass.fill(N::zero());
         let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
         accs.fill(N::zero());
+    }
 
+    /// Clears the external forces applied to this multibody.
+    pub fn clear_forces(&mut self) {
         for rb in &mut *self.rbs {
             rb.external_forces = Force::zero();
         }
