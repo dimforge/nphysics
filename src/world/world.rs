@@ -3,10 +3,13 @@ use std::f64;
 
 use na::{self, Real};
 use ncollide;
+use ncollide::bounding_volume::AABB;
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
 use ncollide::shape::ShapeHandle;
-use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
+use ncollide::world::{
+    CollisionGroups, CollisionObjectHandle, GeometricQueryType, InterferencesWithAABB,
+};
 
 use counters::Counters;
 use detection::{ActivationManager, ColliderContactManifold};
@@ -40,6 +43,7 @@ pub struct World<N: Real> {
     forces: Slab<Box<ForceGenerator<N>>>,
     params: IntegrationParameters<N>,
     workspace: MultibodyWorkspace<N>,
+    empty_groups: CollisionGroups,
 }
 
 impl<N: Real> World<N> {
@@ -83,6 +87,7 @@ impl<N: Real> World<N> {
             forces,
             params,
             workspace,
+            empty_groups: CollisionGroups::new(),
         }
     }
 
@@ -606,6 +611,15 @@ impl<N: Real> World<N> {
     /// An iterator through all the proximity events generated during the last execution of `self.step()`.
     pub fn proximity_events(&self) -> &ProximityEvents {
         self.cworld.proximity_events()
+    }
+
+    /// FIXME
+    pub fn interferences_with_aabb<'a>(
+        &'a self,
+        aabb: &'a AABB<N>,
+    ) -> InterferencesWithAABB<'a, 'a, N, ColliderData<N>> {
+        self.cworld
+            .interferences_with_aabb(aabb, &self.empty_groups)
     }
 }
 
