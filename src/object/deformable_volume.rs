@@ -3,7 +3,7 @@ use std::iter;
 use std::collections::HashMap;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point3, Point4, Vector3, Matrix3, DMatrix, Isometry3,
+use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix6x3, Matrix3x6, DMatrix, Isometry3,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, VectorSliceMut3,
          Rotation3};
 use ncollide::utils::{self, DeterministicState};
@@ -23,6 +23,7 @@ pub struct TetrahedralElement<N: Real> {
     rot: Rotation3<N>,
     j: Matrix3<N>,
     j_inv: Matrix3<N>,
+    plastic_strain: Vector6<N>,
     volume: N,
     density: N,
 }
@@ -70,6 +71,7 @@ impl<N: Real> DeformableVolume<N> {
                 rot: Rotation3::identity(),
                 j: na::zero(),
                 j_inv: na::zero(),
+                plastic_strain: Vector6::zeros(),
                 volume: na::zero(),
                 density,
             }).collect();
@@ -201,9 +203,97 @@ impl<N: Real> DeformableVolume<N> {
         let d1 = (self.young_modulus * self.poisson_ratio) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
         let d2 = (self.young_modulus * (_1 - _2 * self.poisson_ratio)) / (_2 * (_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
 
-        for elt in &self.elements {
+        for elt in &mut self.elements {
             let j_inv_rot = elt.rot.inverse().matrix() * elt.j_inv;
 
+
+            /*
+             *
+             * Plastic strain.
+             *
+             */
+            let mut total_strain = Vector6::zeros();
+
+            // Compute plastic strain.
+            for a in 0..4 {
+                let bn;
+                let cn;
+                let dn;
+
+                if a == 0 {
+                    bn = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
+                    cn = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
+                    dn = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
+                } else {
+                    bn = j_inv_rot[(0, a - 1)];
+                    cn = j_inv_rot[(1, a - 1)];
+                    dn = j_inv_rot[(2, a - 1)];
+                }
+
+                let _0 = N::zero();
+                let B_n = Matrix6x3::new(
+                    bn, _0, _0,
+                    _0, cn, _0,
+                    _0, _0, dn,
+                    cn, bn, _0,
+                    dn, _0, bn,
+                    _0, dn, cn
+                );
+
+                let ia = elt.indices[a];
+                let pos_part = self.positions.fixed_rows::<U3>(ia);
+                let ref_pos_part = self.rest_positions.fixed_rows::<U3>(ia);
+                let rot_tr = elt.rot.transpose();
+                let dpos = rot_tr * pos_part - ref_pos_part;
+                total_strain += B_n * dpos;
+            }
+
+            let strain = total_strain - elt.plastic_strain;
+            if strain.norm() > na::convert(0.1) {
+                let coeff = params.dt * (N::one() / params.dt).min(na::convert(20.0));
+                elt.plastic_strain += strain * coeff;
+            }
+
+            // Apply plastic strain.
+            for a in 0..4 {
+                let bn;
+                let cn;
+                let dn;
+
+                if a == 0 {
+                    bn = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
+                    cn = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
+                    dn = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
+                } else {
+                    bn = j_inv_rot[(0, a - 1)];
+                    cn = j_inv_rot[(1, a - 1)];
+                    dn = j_inv_rot[(2, a - 1)];
+                }
+
+                let _0 = N::zero();
+
+                let P_n = Matrix3x6::new(
+                    bn * d0, bn * d1, bn * d1, cn * d2, dn * d2, _0,
+                    cn * d1, cn * d0, cn * d1, bn * d2, _0, dn * d2,
+                    dn * d1, dn * d1, dn * d0, _0, bn * d2, cn * d2
+                ) * elt.volume;
+
+                let ia = elt.indices[a];
+                let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
+                let plastic_force = elt.rot * (P_n * elt.plastic_strain);
+                force_part += plastic_force;
+            }
+
+
+
+
+
+
+            /*
+             *
+             * Elastic strain.
+             *
+             */
             for a in 0..4 {
                 let bn;
                 let cn;
@@ -221,9 +311,6 @@ impl<N: Real> DeformableVolume<N> {
 
                 let ia = elt.indices[a];
                 let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
-                let ref_pos_a = self.rest_positions.fixed_rows::<U3>(ia);
-                let pos_a = self.positions.fixed_rows::<U3>(ia);
-                let delta_a = pos_a - ref_pos_a;
 
 
                 for b in 0..4 {
@@ -240,24 +327,12 @@ impl<N: Real> DeformableVolume<N> {
                         cm = j_inv_rot[(1, b - 1)];
                         dm = j_inv_rot[(2, b - 1)];
                     }
-/*
-                    let node_stiffness = Matrix3::new(
-                        (d0 * bn) * bm + (d2 * cn) * cm + (d2 * dn) * dm, (d1 * bn) * cm + (d2 * cn) * bm, (d1 * bn) * dm + (d2 * dn) * bm,
-                        (d1 * cn) * bm + (d2 * bn) * cm, (d0 * cn) * cm + (d2 * bn) * bm + (d2 * dn) * dm, (d1 * cn) * dm + (d2 * dn) * cm,
-                        (d1 * dn) * bm + (d2 * bn) * dm, (d1 * dn) * cm + (d2 * cn) * dm, (d0 * dn) * dm + (d2 * bn) * bm + (d2 * cn) * cm,
-                    ) * elt.volume;
-                    */
-
 
                     let node_stiffness = Matrix3::new(
                         d0 * bn * bm + d2 * (cn * cm + dn * dm), d1 * bn * cm + d2 * cn * bm, d1 * bn * dm + d2 * dn * bm,
                         d1 * cn * bm + d2 * bn * cm, d0 * cn * cm + d2 * (bn * bm + dn * dm), d1 * cn * dm + d2 * dn * cm,
                         d1 * dn * bm + d2 * bn * dm, d1 * dn * cm + d2 * cn * dm, d0 * dn * dm + d2 * (bn * bm + cn * cm),
                     ) * elt.volume;
-
-
-//                    println!("Element stiffness: {}", node_stiffness);
-
 
                     let rot_stiffness = elt.rot * node_stiffness;
                     let rot_tr = elt.rot.transpose();
@@ -270,7 +345,7 @@ impl<N: Real> DeformableVolume<N> {
                     let vel_part = self.velocities.fixed_rows::<U3>(ib);
                     let pos_part = self.positions.fixed_rows::<U3>(ib);
                     let ref_pos_part = self.rest_positions.fixed_rows::<U3>(ib);
-                    let dpos = rot_tr * (vel_part * dt + pos_part) - (ref_pos_part /*+ delta_a*/);
+                    let dpos = rot_tr * (vel_part * dt + pos_part) - ref_pos_part;
                     force_part.gemv(-N::one(), &rot_stiffness, &dpos, N::one());
                 }
             }
@@ -514,7 +589,6 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             ];
             let _ = Vector3::orthonormalize(&mut cols);
             elt.rot = Rotation3::from_matrix_unchecked(Matrix3::from_columns(&cols));
-            println!("Rot: axis: {:?}, angle: {:?}", elt.rot.axis(), elt.rot.angle())
         }
     }
 
