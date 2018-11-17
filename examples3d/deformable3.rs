@@ -19,8 +19,8 @@ fn main() {
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
     world.integration_parameters_mut().max_position_iterations = 0;
-    world.integration_parameters_mut().max_velocity_iterations = 50;
-    world.set_timestep(0.001);
+//    world.integration_parameters_mut().max_velocity_iterations = 50;
+//    world.set_timestep(0.001);
 
     /*
      * Ground.
@@ -28,7 +28,7 @@ fn main() {
     let ground_size = 50.0;
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+    let ground_pos = Isometry3::new(Vector3::y() * (-ground_size - 1.0), na::zero());
 
     world.add_collider(
         COLLIDER_MARGIN,
@@ -38,29 +38,29 @@ fn main() {
         Material::default(),
     );
 
-    /*
+
     let ground_size = 3.0;
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector3::new(0.02, 0.02, ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::new(0.5, -0.01, 0.0), na::zero());
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
-
-    let ground_pos = Isometry3::new(Vector3::new(-0.5, -0.01, 0.0), na::zero());
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+//    let ground_pos = Isometry3::new(Vector3::new(0.5, -0.01, 0.0), na::zero());
+//
+//    world.add_collider(
+//        COLLIDER_MARGIN,
+//        ground_shape.clone(),
+//        BodyPartHandle::ground(),
+//        ground_pos,
+//        Material::default(),
+//    );
+//
+//    let ground_pos = Isometry3::new(Vector3::new(-0.5, -0.01, 0.0), na::zero());
+//
+//    world.add_collider(
+//        COLLIDER_MARGIN,
+//        ground_shape.clone(),
+//        BodyPartHandle::ground(),
+//        ground_pos,
+//        Material::default(),
+//    );
 
 
     let ground_pos = Isometry3::new(Vector3::new(0.0, -0.2, 0.0), na::zero());
@@ -71,16 +71,16 @@ fn main() {
         BodyPartHandle::ground(),
         ground_pos,
         Material::default(),
-    );*/
+    );
 
     /*
      * Create the deformable body and a collider for its contour.
      */
     let volume = DeformableVolume::cube(
-        &Isometry3::new(Vector3::y() * 0.5, Vector3::z() * 1.0),
-        &Vector3::new(1.0, 0.05, 0.1),
-        30, 2, 2,
-        1.0, 1.0e2, 0.0,
+        &Isometry3::new(Vector3::y() * 0.5, na::zero()),// Vector3::z() * 1.0),
+        &Vector3::new(1.1, 0.1, 0.1),
+        10, 1, 1,
+        1.0, 1.0e2, 0.3,
         (0.4, 0.0));
     let (mesh, ids_map, parts_map) = volume.boundary_mesh();
 

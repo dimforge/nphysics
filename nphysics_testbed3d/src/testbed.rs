@@ -583,7 +583,7 @@ fn draw_collisions(
                 Point3::new(1.0, 0.0, 0.0)
             };
 
-            window.draw_line(&(c.contact.world1 + Vector3::new(0.005, 0.005, 0.005)), &c.contact.world2, &color);
+            window.draw_line(&(c.contact.world1), &c.contact.world2, &color);
         }
     }
 }
