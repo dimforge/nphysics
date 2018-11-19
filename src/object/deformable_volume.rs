@@ -441,6 +441,45 @@ impl<N: Real> DeformableVolume<N> {
         (TriMesh::new(vertices, indices, None), deformation_indices, body_parts)
     }
 
+    /// Renumber degrees of freedom so that the `deformation_indices[i]`-th DOF becomes the `i`-th one.
+    pub fn renumber_dofs(&mut self, deformation_indices: &[usize]) {
+        let mut dof_map: Vec<_> = (0..).take(self.positions.len()).collect();
+        let mut new_positions = self.positions.clone();
+        let mut new_rest_positions = self.rest_positions.clone();
+
+        for (mesh_i, vol_i) in deformation_indices.iter().cloned().enumerate() {
+            let mesh_i = mesh_i * 3;
+
+            if vol_i >= deformation_indices.len() * 3 {
+                dof_map.swap(vol_i, mesh_i);
+
+                new_positions.swap((mesh_i + 0, 0), (vol_i + 0, 0));
+                new_positions.swap((mesh_i + 1, 0), (vol_i + 1, 0));
+                new_positions.swap((mesh_i + 2, 0), (vol_i + 2, 0));
+
+                new_rest_positions.swap((mesh_i + 0, 0), (vol_i + 0, 0));
+                new_rest_positions.swap((mesh_i + 1, 0), (vol_i + 1, 0));
+                new_rest_positions.swap((mesh_i + 2, 0), (vol_i + 2, 0));
+            } else {
+                dof_map[vol_i] = mesh_i;
+                new_positions[(mesh_i + 0, 0)] = self.positions[(vol_i + 0, 0)];
+                new_positions[(mesh_i + 1, 0)] = self.positions[(vol_i + 1, 0)];
+                new_positions[(mesh_i + 2, 0)] = self.positions[(vol_i + 2, 0)];
+
+                new_rest_positions[(mesh_i + 0, 0)] = self.rest_positions[(vol_i + 0, 0)];
+                new_rest_positions[(mesh_i + 1, 0)] = self.rest_positions[(vol_i + 1, 0)];
+                new_rest_positions[(mesh_i + 2, 0)] = self.rest_positions[(vol_i + 2, 0)];
+            }
+        }
+
+        for elt in &mut self.elements {
+            elt.indices.coords.apply(|i| dof_map[i]);
+        }
+
+        self.positions = new_positions;
+        self.rest_positions = new_rest_positions;
+    }
+
 // FIXME: add a method to apply a transformation to the whole volume.
 
     /// Constructs an axis-aligned cube with regular subdivisions along each axis.
@@ -724,7 +763,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point3<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
         // Needed by the non-linear SOR-prox.
-        // FIXME: should this be done by the non-linear SOR-prox itself?
+        // FIXME: should this `fill` be done by the non-linear SOR-prox itself?
         DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
 
         if let ForceDirection::Linear(dir) = force_dir {
