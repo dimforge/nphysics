@@ -3,6 +3,7 @@ use std::ops::{Add, AddAssign, Mul};
 
 use na::{self, Isometry2, Matrix1, Matrix3, Real, Vector3};
 use algebra::{Force2, Velocity2};
+use alga::general::{Identity, Additive};
 
 /// The inertia of a rigid body grouping both its mass and its angular inertia.
 #[derive(Clone, Copy, Debug)]
@@ -64,6 +65,12 @@ impl<N: Real> Inertia2<N> {
             N::one() / self.angular
         };
         Inertia2::new(inv_mass, inv_angular)
+    }
+}
+
+impl<N: Real> Identity<Additive> for Inertia2<N> {
+    fn identity() -> Self {
+        Inertia2::zero()
     }
 }
 
