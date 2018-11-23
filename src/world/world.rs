@@ -615,7 +615,10 @@ impl<N: Real> World<N> {
         self.cworld.proximity_events()
     }
 
-    /// FIXME
+    /// Computes the interferences between every rigid bodies, and a aabb.
+    /// Requires that [`step`] has been run at least once.
+    ///
+    /// [`step`]: ./struct.World.html#method.step
     pub fn interferences_with_aabb<'a>(
         &'a self,
         aabb: &'a AABB<N>,
