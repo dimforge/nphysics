@@ -45,6 +45,8 @@ pub struct World<N: Real> {
     forces: Slab<Box<ForceGenerator<N>>>,
     params: IntegrationParameters<N>,
     workspace: MultibodyWorkspace<N>,
+    // Required, because the iterators returned by interferences_* require
+    // a reference to a collision group that outlives the function.
     empty_groups: CollisionGroups,
 }
 
