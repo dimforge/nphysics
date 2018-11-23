@@ -6,9 +6,11 @@ use ncollide;
 use ncollide::bounding_volume::AABB;
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
+use ncollide::query::ray_internal::Ray;
 use ncollide::shape::ShapeHandle;
 use ncollide::world::{
     CollisionGroups, CollisionObjectHandle, GeometricQueryType, InterferencesWithAABB,
+    InterferencesWithPoint, InterferencesWithRay,
 };
 
 use counters::Counters;
@@ -620,6 +622,29 @@ impl<N: Real> World<N> {
     ) -> InterferencesWithAABB<'a, 'a, N, ColliderData<N>> {
         self.cworld
             .interferences_with_aabb(aabb, &self.empty_groups)
+    }
+
+    /// Computes the interferences between every rigid bodies, and a point.
+    /// Requires that [`step`] has been run at least once.
+    ///
+    /// [`step`]: ./struct.World.html#method.step
+    pub fn interferences_with_point<'a>(
+        &'a self,
+        point: &'a Point<N>,
+    ) -> InterferencesWithPoint<'a, 'a, N, ColliderData<N>> {
+        self.cworld
+            .interferences_with_point(point, &self.empty_groups)
+    }
+
+    /// Computes the interferences between every rigid bodies on this world and a ray.
+    /// Requires that [`step`] has been run at least once.
+    ///
+    /// [`step`]: ./struct.World.html#method.step
+    pub fn interferences_with_ray<'a>(
+        &'a self,
+        ray: &'a Ray<N>,
+    ) -> InterferencesWithRay<'a, 'a, N, ColliderData<N>> {
+        self.cworld.interferences_with_ray(ray, &self.empty_groups)
     }
 }
 
