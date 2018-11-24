@@ -85,7 +85,7 @@ impl<N: Real> SignoriniModel<N> {
             &geom,
         );
 
-        if rhs > -params.restitution_velocity_threshold {
+        /*if true { // rhs > -params.restitution_velocity_threshold {
             let depth = c.contact.depth + data1.margin() + data2.margin();
 
             // No penetration, use predictive contact.
@@ -96,7 +96,23 @@ impl<N: Real> SignoriniModel<N> {
             let rest1 = data1.material().restitution;
             let rest2 = data2.material().restitution;
             rhs += (rest1 + rest2) * na::convert(0.5) * rhs;
+        }*/
+
+        // Handle restitution.
+        if rhs <= -params.restitution_velocity_threshold {
+            let rest1 = data1.material().restitution;
+            let rest2 = data2.material().restitution;
+            rhs += (rest1 + rest2) * na::convert(0.5) * rhs;
         }
+
+        // Handle predictive contact if no penetration.
+        let depth = c.contact.depth + data1.margin() + data2.margin();
+        if depth < N::zero() {
+            rhs += (-depth) / params.dt;
+        }
+
+        // FIXME: would it be more efficient to consider the contact active iff. the rhs
+        // is still negative at this point?
 
         let warmstart = impulse * params.warmstart_coeff;
         if geom.is_ground_constraint() {
@@ -222,9 +238,9 @@ impl<N: Real> ContactModel<N> for SignoriniModel<N> {
 
         for manifold in manifolds {
             for c in manifold.contacts() {
-                // if !Self::is_constraint_active(c, manifold) {
-                //     continue;
-                // }
+                 if !Self::is_constraint_active(c, manifold) {
+                     continue;
+                 }
 
                 let _ = Self::build_velocity_constraint(
                     params,
