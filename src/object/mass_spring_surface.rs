@@ -397,7 +397,7 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
         // Needed by the non-linear SOR-prox.
-        // FIXME: should this be done by the non-linear SOR-prox itself?
+        // FIXME: should this `fill` be done by the non-linear SOR-prox itself?
         DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
 
         if let ForceDirection::Linear(dir) = force_dir {

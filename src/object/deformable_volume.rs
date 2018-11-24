@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix6x3, Matrix3x6, DMatrix, Isometry3,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, VectorSliceMut3,
-         Rotation3};
+         Rotation3, Unit};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
 use ncollide::query::PointQueryWithLocation;
@@ -39,9 +39,6 @@ pub struct DeformableVolume<N: Real> {
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
-    damping: DMatrix<N>,
-    stiffness: DMatrix<N>,
-    stiffness2: DMatrix<N>,
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: Cholesky<N, Dynamic>,
 
@@ -54,6 +51,9 @@ pub struct DeformableVolume<N: Real> {
     damping_coeffs: (N, N),
     young_modulus: N,
     poisson_ratio: N,
+    plasticity_threshold: N,
+    plasticity_creep: N,
+    plasticity_max_force: N,
 
     companion_id: usize,
     activation: ActivationStatus<N>,
@@ -77,25 +77,14 @@ impl<N: Real> DeformableVolume<N> {
             }).collect();
 
         let ndofs = vertices.len() * 3;
-        let mut rest_positions = DVector::from_iterator(ndofs, vertices.iter().flat_map(|p| p.iter().cloned()));
-//        let t = na::UnitQuaternion::new(Vector3::y());
-        let mut vv = vertices.clone();
-//        for v in &mut vv {
-//            let scale: N = na::convert(1.7);
-//            *v =  t * *v * scale
-//        }
-        let positions = DVector::from_iterator(ndofs, vv.iter().flat_map(|p| p.iter().cloned()));
-//        rest_positions.apply(|e| e + na::convert(10000.0));
+        let rest_positions = DVector::from_iterator(ndofs, vertices.iter().flat_map(|p| p.iter().cloned()));
 
         DeformableVolume {
             handle: None,
             elements,
-            positions, // : rest_positions.clone(),
+            positions: rest_positions.clone(),
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
-            damping: DMatrix::zeros(ndofs, ndofs),
-            stiffness: DMatrix::zeros(ndofs, ndofs),
-            stiffness2: DMatrix::zeros(ndofs, ndofs),
             augmented_mass: DMatrix::zeros(ndofs, ndofs),
             inv_augmented_mass: Cholesky::new(DMatrix::zeros(0, 0)).unwrap(),
             dpos: DVector::zeros(ndofs),
@@ -104,6 +93,9 @@ impl<N: Real> DeformableVolume<N> {
             young_modulus,
             poisson_ratio,
             companion_id: 0,
+            plasticity_threshold: N::zero(),
+            plasticity_max_force: N::zero(),
+            plasticity_creep: N::zero(),
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
         }
@@ -127,28 +119,18 @@ impl<N: Real> DeformableVolume<N> {
         &mut self.velocities
     }
 
-    fn assemble_forces(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
-        for elt in &self.elements {
-            let contribution = gravity * (elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
-            for k in 0..4 {
-                let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(elt.indices[k]);
-                forces_part += contribution;
-            }
-        }
-
-        // Compute: self.forces - self.stiffness * (pos - rest_pos + vel * dt) - self.damping * vel;
-        self.dpos.copy_from(&self.positions);
-        self.dpos.axpy(params.dt, &self.velocities, N::one());
-        self.accelerations.gemv(-N::one(), &self.stiffness, &self.dpos, N::one());
-        self.accelerations.gemv(N::one(), &self.stiffness2, &self.rest_positions, N::one());
-        self.accelerations.gemv(-N::one(), &self.damping, &self.velocities, N::one());
+    /// Sets the plastic properties of this deformable volume.
+    pub fn set_plasticity(&mut self, strain_threshold: N, creep: N, max_force: N) {
+        self.plasticity_threshold = strain_threshold;
+        self.plasticity_creep = creep;
+        self.plasticity_max_force = max_force;
     }
 
     fn assemble_mass_with_damping(&mut self, params: &IntegrationParameters<N>) {
         let mass_damping = params.dt * self.damping_coeffs.0;
 
-        for elt in &self.elements {
+        for elt in self.elements.iter().filter(|e| e.volume > N::zero()) {
             let coeff_mass = elt.density * elt.volume / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
 
             for a in 0..4 {
@@ -173,16 +155,6 @@ impl<N: Real> DeformableVolume<N> {
         }
     }
 
-    fn assemble_damping(&mut self) {
-        let d = self.damping.as_mut_slice();
-        let m = self.augmented_mass.as_slice();
-        let s = self.stiffness.as_slice();
-
-        for i in 0..d.len() {
-            d[i] = self.damping_coeffs.0 * m[i] + self.damping_coeffs.1 * s[i]
-        }
-    }
-
     fn assemble_stiffness_and_forces_with_damping(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
@@ -192,7 +164,7 @@ impl<N: Real> DeformableVolume<N> {
         let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
 
         // External forces.
-        for elt in &self.elements {
+        for elt in self.elements.iter().filter(|e| e.volume > N::zero()) {
             let contribution = gravity * (elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
             for k in 0..4 {
@@ -206,7 +178,7 @@ impl<N: Real> DeformableVolume<N> {
         let d1 = (self.young_modulus * self.poisson_ratio) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
         let d2 = (self.young_modulus * (_1 - _2 * self.poisson_ratio)) / (_2 * (_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
 
-        for elt in &mut self.elements {
+        for elt in self.elements.iter_mut().filter(|e| e.volume > N::zero()) {
             let j_inv_rot = elt.rot.inverse().matrix() * elt.j_inv;
 
             // XXX: simplify/optimize those two parts.
@@ -253,9 +225,15 @@ impl<N: Real> DeformableVolume<N> {
             }
 
             let strain = total_strain - elt.plastic_strain;
-            if strain.norm() > na::convert(0.1) {
-                let coeff = params.dt * (N::one() / params.dt).min(na::convert(20.0));
+            if strain.norm() > self.plasticity_threshold {
+                let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
                 elt.plastic_strain += strain * coeff;
+            }
+
+            if let Some((dir, strain)) = Unit::try_new_and_get(elt.plastic_strain, N::zero()) {
+                if strain > self.plasticity_max_force {
+                    elt.plastic_strain = *dir * strain;
+                }
             }
 
             // Apply plastic strain.
@@ -596,8 +574,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             );
             let j_det =  elt.j.determinant();
             elt.volume = j_det * na::convert(1.0 / 6.0);
-//            assert!(elt.volume > N::zero());
-            elt.j_inv = elt.j.try_inverse().expect("Degenerate tetrahedral element found.");
+            elt.j_inv = elt.j.try_inverse().unwrap_or(Matrix3::identity());
             elt.com = Point3::from_coordinates(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
 
             /*
@@ -635,37 +612,16 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     fn update_dynamics(&mut self,
                        gravity: &Vector3<N>,
                        params: &IntegrationParameters<N>) {
-        /*
-        self.assemble_damping();
-        self.assemble_forces(gravity, params);
-
-// Finalize assembling the augmented mass.
-        {
-            let dt2 = params.dt * params.dt;
-            let d = self.damping.as_slice();
-            let m = self.augmented_mass.as_mut_slice();
-
-            for i in 0..d.len() {
-                m[i] += params.dt * d[i];
-            }
-        }*/
-
         self.assemble_mass_with_damping(params);
         self.assemble_stiffness_and_forces_with_damping(gravity, params);
-        // FIXME: add damping.
 
-// FIXME: avoid allocation inside Cholesky at each timestep.
-//        println!("Forces: {}", self.accelerations);
-
+        // FIXME: avoid allocation inside Cholesky at each timestep.
         self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
-//        println!("Accelerations: {}", self.accelerations);
     }
 
     fn clear_dynamics(&mut self) {
         self.augmented_mass.fill(N::zero());
-        self.stiffness.fill(N::zero());
-        self.stiffness2.fill(N::zero());
         self.accelerations.fill(N::zero());
     }
 
@@ -758,7 +714,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
 
     fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
         let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
-        self.inv_augmented_mass.solve_mut(&mut out)
+        self.inv_augmented_mass.solve_mut(&mut out);
     }
 
     fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point3<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
