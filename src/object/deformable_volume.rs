@@ -46,7 +46,7 @@ pub struct DeformableVolume<N: Real> {
     // FIXME: use a workspace common with other deformables?
     dpos: DVector<N>,
 
-    // Constraints.
+    // Parameters
     rest_positions: DVector<N>,
     damping_coeffs: (N, N),
     young_modulus: N,
@@ -165,7 +165,7 @@ impl<N: Real> DeformableVolume<N> {
 
         // External forces.
         for elt in self.elements.iter().filter(|e| e.volume > N::zero()) {
-            let contribution = gravity * (elt.volume * na::convert::<_, N>(1.0 / 4.0));
+            let contribution = gravity * (elt.density * elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
             for k in 0..4 {
                 let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(elt.indices[k]);
