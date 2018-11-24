@@ -145,9 +145,11 @@ impl<N: Real> DeformableVolume<N> {
         self.accelerations.gemv(-N::one(), &self.damping, &self.velocities, N::one());
     }
 
-    fn assemble_mass(&mut self) {
+    fn assemble_mass_with_damping(&mut self, params: &IntegrationParameters<N>) {
+        let mass_damping = params.dt * self.damping_coeffs.0;
+
         for elt in &self.elements {
-            let coeff_mass = elt.density * elt.volume / na::convert::<_, N>(20.0f64);
+            let coeff_mass = elt.density * elt.volume / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
 
             for a in 0..4 {
                 for b in 0..4 {
@@ -181,12 +183,13 @@ impl<N: Real> DeformableVolume<N> {
         }
     }
 
-    fn assemble_stiffness_and_forces(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
+    fn assemble_stiffness_and_forces_with_damping(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
         let _6: N = na::convert(6.0);
         let dt = params.dt;
         let dt2 = params.dt * params.dt;
+        let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
 
         // External forces.
         for elt in &self.elements {
@@ -206,6 +209,7 @@ impl<N: Real> DeformableVolume<N> {
         for elt in &mut self.elements {
             let j_inv_rot = elt.rot.inverse().matrix() * elt.j_inv;
 
+            // XXX: simplify/optimize those two parts.
 
             /*
              *
@@ -285,10 +289,6 @@ impl<N: Real> DeformableVolume<N> {
             }
 
 
-
-
-
-
             /*
              *
              * Elastic strain.
@@ -340,7 +340,7 @@ impl<N: Real> DeformableVolume<N> {
                     let ib = elt.indices[b];
 
                     let mut mass_part = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
-                    mass_part.gemm(dt2, &rot_stiffness, rot_tr.matrix(), N::one());
+                    mass_part.gemm(stiffness_coeff, &rot_stiffness, rot_tr.matrix(), N::one());
 
                     let vel_part = self.velocities.fixed_rows::<U3>(ib);
                     let pos_part = self.positions.fixed_rows::<U3>(ib);
@@ -650,8 +650,8 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
             }
         }*/
 
-        self.assemble_mass();
-        self.assemble_stiffness_and_forces(gravity, params);
+        self.assemble_mass_with_damping(params);
+        self.assemble_stiffness_and_forces_with_damping(gravity, params);
         // FIXME: add damping.
 
 // FIXME: avoid allocation inside Cholesky at each timestep.
