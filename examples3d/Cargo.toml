@@ -110,8 +110,12 @@ name = "deformable3"
 path = "./deformable3.rs"
 
 [[bin]]
-name = "mass_spring_surface3"
-path = "./mass_spring_surface3.rs"
+name = "plasticity3"
+path = "./plasticity3.rs"
+
+[[bin]]
+name = "mass_spring_system3"
+path = "./mass_spring_system3.rs"
 
 [[bin]]
 name = "kinematic_deformable3"

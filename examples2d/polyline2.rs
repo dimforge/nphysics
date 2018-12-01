@@ -40,7 +40,7 @@ fn main() {
         vertices[i + 1].y = h * max_h + begin_h;
     }
 
-    let polyline = Polyline::new(vertices);
+    let polyline = Polyline::new(vertices, None);
     world.add_collider(
         COLLIDER_MARGIN,
         ShapeHandle::new(polyline),

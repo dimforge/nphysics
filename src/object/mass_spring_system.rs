@@ -1,13 +1,17 @@
 use std::ops::{AddAssign, SubAssign};
 use std::iter;
 use std::collections::{HashMap, HashSet};
+use std::marker::PhantomData;
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, Cholesky,
-         Dynamic, Vector2, Point3, MatrixN, Unit, CsCholesky, CsMatrix};
+         Dynamic, Vector2, Point2, Point3, MatrixN, Unit, CsCholesky, CsMatrix};
 use ncollide::utils::{self, DeterministicState};
+#[cfg(feature = "dim3")]
 use ncollide::procedural::{self, IndexBuffer};
-use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Triangle};
+use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment};
+#[cfg(feature = "dim3")]
+use ncollide::shape::{TriMesh, TetrahedronPointLocation};
 use ncollide::query::PointQueryWithLocation;
 
 use counters::Timer;
@@ -15,12 +19,19 @@ use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationS
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
 
-/// A triangular element of the mass-spring surface.
+// FIXME: use an enum for the element itself?
+#[derive(Clone)]
+pub enum MassSpringElementIndices {
+    Triangle(Point3<usize>),
+    Segment(Point2<usize>)
+}
+
+/// An element of the mass-spring system.
 #[derive(Clone)]
 pub struct MassSpringElement<N: Real> {
     handle: Option<BodyPartHandle>,
-    indices: Point3<usize>,
-    surface: N,
+    indices: MassSpringElementIndices,
+    phantom: PhantomData<N>
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -60,7 +71,7 @@ impl<N: Real> Spring<N> {
 
 /// A deformable surface using a mass-spring model with triangular elements.
 #[derive(Clone)]
-pub struct MassSpringSurface<N: Real> {
+pub struct MassSpringSystem<N: Real> {
     handle: Option<BodyHandle>,
     springs: Vec<Spring<N>>,
     elements: Vec<MassSpringElement<N>>,
@@ -85,11 +96,12 @@ fn key(i: usize, j: usize) -> (usize, usize) {
     }
 }
 
-impl<N: Real> MassSpringSurface<N> {
+impl<N: Real> MassSpringSystem<N> {
     /// Creates a new deformable surface following the mass-spring model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
-    pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    #[cfg(feature = "dim3")]
+    pub fn from_trimesh(mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -103,8 +115,8 @@ impl<N: Real> MassSpringSurface<N> {
             let idx = face.indices * DIM;
             let elt = MassSpringElement {
                 handle: None,
-                indices: idx,
-                surface: N::zero(),
+                indices: MassSpringElementIndices::Triangle(idx),
+                phantom: PhantomData
             };
 
             elements.push(elt);
@@ -123,7 +135,7 @@ impl<N: Real> MassSpringSurface<N> {
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
         println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
-        MassSpringSurface {
+        MassSpringSystem {
             handle: None,
             springs: springs.values().cloned().collect(),
             elements,
@@ -140,7 +152,54 @@ impl<N: Real> MassSpringSurface<N> {
         }
     }
 
-    /// Creates a rectangular-shaped quad.
+    /// Builds a mass-spring system from a polyline.
+    pub fn from_polyline(polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+        let ndofs = polyline.points().len() * DIM;
+        let mut springs = HashMap::with_hasher(DeterministicState::new());
+        let mut elements = Vec::with_capacity(polyline.edges().len());
+        let mut positions = DVector::zeros(ndofs);
+
+        for (i, pos) in positions.as_mut_slice().chunks_mut(DIM).enumerate() {
+            pos.copy_from_slice(polyline.points()[i].coords.as_slice())
+        }
+
+        for edge in polyline.edges() {
+            let idx = edge.indices * DIM;
+            let elt = MassSpringElement {
+                handle: None,
+                indices: MassSpringElementIndices::Segment(idx),
+                phantom: PhantomData
+            };
+
+            elements.push(elt);
+
+            let _ = springs.entry(key(idx.x, idx.y)).or_insert_with(|| {
+                Spring::from_positions((idx.x, idx.y), positions.as_slice(), stiffness, damping_ratio)
+            });
+        }
+
+        let node_mass = mass / na::convert((ndofs / DIM) as f64);
+        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
+
+        MassSpringSystem {
+            handle: None,
+            springs: springs.values().cloned().collect(),
+            elements,
+            positions,
+            velocities: DVector::zeros(ndofs),
+            accelerations: DVector::zeros(ndofs),
+            augmented_mass: DMatrix::zeros(ndofs, ndofs),
+            inv_augmented_mass: Cholesky::new(DMatrix::zeros(0, 0)).unwrap(),
+            companion_id: 0,
+            activation: ActivationStatus::new_active(),
+            status: BodyStatus::Dynamic,
+            mass,
+            node_mass,
+        }
+    }
+
+    /// Creates a rectangular quad.
+    #[cfg(feature = "dim3")]
     pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
@@ -154,7 +213,7 @@ impl<N: Real> MassSpringSurface<N> {
     /// Given three nodes `a, b, c`, if a spring exists between `a` and `b`, and between `b` and `c`,
     /// then a spring between `a` and `c` is created if it does not already exists.
     pub fn generate_neighbor_springs(&mut self, stiffness: N, damping_ratio: N) {
-        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
+        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / DIM).collect();
         let mut existing_springs = HashSet::with_hasher(DeterministicState::new());
 
         // Build neighborhood list.
@@ -178,6 +237,15 @@ impl<N: Real> MassSpringSurface<N> {
                 }
             }
         }
+    }
+
+    /// Add one spring to this mass-spring system.
+    pub fn add_spring(&mut self, node1: usize, node2: usize, stiffness: N, damping_ratio: N) {
+        assert!(node1 < self.positions.len() / DIM, "Node index out of bounds.");
+        assert!(node2 < self.positions.len() / DIM, "Node index out of bounds.");
+        let key = key(node1 * DIM, node2 * DIM);
+        let spring = Spring::from_positions(key, self.positions.as_slice(), stiffness, damping_ratio);
+        self.springs.push(spring);
     }
 
     fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
@@ -239,37 +307,29 @@ impl<N: Real> MassSpringSurface<N> {
             acc += gravity_force
         }
         timer.pause();
-        println!("Assembly time: {}", timer);
+//        println!("Assembly time: {}", timer);
 
         /*
          * Invert the augmented mass.
          */
-        timer.start();
+//        timer.start();
         self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
-        timer.pause();
-        println!("Inversion time: {}", timer);
+//        timer.pause();
+//        println!("Inversion time: {}", timer);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
 
-        let cs_a: CsMatrix<_, _, _> = self.augmented_mass.clone().into();
-        println!("Shape: {:?}, fill: {}", cs_a.shape(), cs_a.len());
-        let mut chol_cs_a = CsCholesky::new_symbolic(&cs_a);
-        timer.start();
-        let _ = chol_cs_a.decompose_left_looking(cs_a.data.values());
-        timer.pause();
-        println!("Decomposed fill: {}", chol_cs_a.l().unwrap().len());
-        println!("Sparse cholesky time: {}", timer);
-    }
-
-    /// The triangle mesh corresponding to this mass-spring-surface structural elements.
-    pub fn mesh(&self) -> TriMesh<N> {
-        let vertices = self.positions.as_slice().chunks(DIM).map(|pt| Point::from_coordinates(Vector::from_row_slice(pt))).collect();
-        let indices = self.elements.iter().map(|elt| elt.indices / DIM).collect();
-
-        TriMesh::new(vertices, indices, None)
+//        let cs_a: CsMatrix<_, _, _> = self.augmented_mass.clone().into();
+//        println!("Shape: {:?}, fill: {}", cs_a.shape(), cs_a.len());
+//        let mut chol_cs_a = CsCholesky::new_symbolic(&cs_a);
+//        timer.start();
+//        let _ = chol_cs_a.decompose_left_looking(cs_a.data.values());
+//        timer.pause();
+//        println!("Decomposed fill: {}", chol_cs_a.l().unwrap().len());
+//        println!("Sparse cholesky time: {}", timer);
     }
 }
 
-impl<N: Real> Body<N> for MassSpringSurface<N> {
+impl<N: Real> Body<N> for MassSpringSystem<N> {
     fn update_kinematics(&mut self) {
         for spring in &mut self.springs {
             let p0 = self.positions.fixed_rows::<Dim>(spring.nodes.0);
@@ -403,23 +463,43 @@ impl<N: Real> Body<N> for MassSpringSurface<N> {
         if let ForceDirection::Linear(dir) = force_dir {
             let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a triangular mass-spring element");
 
-            let a = self.positions.fixed_rows::<Dim>(elt.indices.x).into_owned();
-            let b = self.positions.fixed_rows::<Dim>(elt.indices.y).into_owned();
-            let c = self.positions.fixed_rows::<Dim>(elt.indices.z).into_owned();
+            match elt.indices {
+                MassSpringElementIndices::Triangle(indices) => {
+                    let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
+                    let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
+                    let c = self.positions.fixed_rows::<Dim>(indices.z).into_owned();
 
-            let tri = Triangle::new(
-                Point::from_coordinates(a),
-                Point::from_coordinates(b),
-                Point::from_coordinates(c),
-            );
+                    let tri = Triangle::new(
+                        Point::from_coordinates(a),
+                        Point::from_coordinates(b),
+                        Point::from_coordinates(c),
+                    );
 
-            // XXX: This is extremely costly!
-            let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
-            let bcoords = proj.barycentric_coordinates().unwrap();
+                    // XXX: This is extremely costly!
+                    let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
+                    let bcoords = proj.barycentric_coordinates().unwrap();
 
-            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.x..]).copy_from(&(**dir * bcoords[0]));
-            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.y..]).copy_from(&(**dir * bcoords[1]));
-            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.z..]).copy_from(&(**dir * bcoords[2]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.z..]).copy_from(&(**dir * bcoords[2]));
+                }
+                MassSpringElementIndices::Segment(indices) => {
+                    let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
+                    let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
+
+                    let seg = Segment::new(
+                        Point::from_coordinates(a),
+                        Point::from_coordinates(b),
+                    );
+
+                    // XXX: This is extremely costly!
+                    let proj = seg.project_point_with_location(&Isometry::identity(), pt, false).1;
+                    let bcoords = proj.barycentric_coordinates();
+
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                }
+            }
         }
     }
 

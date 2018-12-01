@@ -86,3 +86,15 @@ path = "./sensor2.rs"
 [[bin]]
 name = "wall2"
 path = "./wall2.rs"
+
+[[bin]]
+name = "mass_spring_system2"
+path = "./mass_spring_system2.rs"
+
+[[bin]]
+name = "mass_constraint_system2"
+path = "./mass_constraint_system2.rs"
+
+[[bin]]
+name = "deformable2"
+path = "./deformable2.rs"

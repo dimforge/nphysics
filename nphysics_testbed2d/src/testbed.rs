@@ -10,7 +10,7 @@ use na::{self, Point2, Point3};
 use ncollide2d::utils::GenerationalId;
 use ncollide2d::world::CollisionGroups;
 use nphysics2d::joint::{ConstraintHandle, MouseConstraint};
-use nphysics2d::object::{BodyPartHandle, ColliderHandle};
+use nphysics2d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics2d::world::World;
 use std::collections::HashMap;
 use std::env;
@@ -131,8 +131,8 @@ impl Testbed {
         self.graphics.look_at(at, zoom);
     }
 
-    pub fn set_body_color(&mut self, world: &World<f32>, body: BodyPartHandle, color: Point3<f32>) {
-        self.graphics.set_body_color(world, body, color);
+    pub fn set_body_color(&mut self, body: BodyHandle, color: Point3<f32>) {
+        self.graphics.set_body_color(body, color);
     }
 
     pub fn set_collider_color(&mut self, collider: ColliderHandle, color: Point3<f32>) {
@@ -245,28 +245,33 @@ impl State for Testbed {
                         .collision_world()
                         .interferences_with_point(&mapped_point, all_groups)
                         {
-                            if !b.query_type().is_proximity_query() && !b.data().body_part().is_ground() {
-                                self.grabbed_object = Some(b.data().body());
+                            if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
+
+                                if
+                                    let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
+                                    {
+                                        self.grabbed_object = Some(*body_part);
+                                    } else { unimplemented!() }
                             }
                         }
 
                     if modifier.contains(Modifiers::Shift) {
-                        if let Some(body) = self.grabbed_object {
-                            if !body.is_ground() {
+                        if let Some(body_part) = self.grabbed_object {
+                            if !body_part.is_ground() {
                                 if !modifier.contains(Modifiers::Control) {
-                                    self.graphics.remove_body_nodes(&self.world, window, body);
-                                    self.world.remove_bodies(&[body]);
+                                    self.graphics.remove_body_nodes(window, body_part.body_handle);
+                                    self.world.remove_bodies(&[body_part.body_handle]);
                                 } else {
-                                    if self.world.multibody_link(body).is_some() {
+                                    if self.world.multibody_link(body_part).is_some() {
                                         let key = self.graphics.remove_body_part_nodes(
                                             &self.world,
                                             window,
-                                            body,
+                                            body_part,
                                         );
-                                        self.world.remove_multibody_links(&[body]);
+                                        self.world.remove_multibody_links(&[body_part]);
                                         // FIXME: this is a bit ugly.
                                         self.graphics
-                                            .update_after_body_key_change(&self.world, key);
+                                            .update_after_body_key_change(&self.world, key.body_handle);
                                     }
                                 }
                             }
@@ -293,7 +298,7 @@ impl State for Testbed {
 
                             for node in self
                                 .graphics
-                                .body_nodes_mut(&self.world, body)
+                                .body_nodes_mut(body.body_handle)
                                 .unwrap()
                                 .iter_mut()
                                 {
@@ -310,7 +315,7 @@ impl State for Testbed {
                     if let Some(body) = self.grabbed_object {
                         for n in self
                             .graphics
-                            .body_nodes_mut(&self.world, body)
+                            .body_nodes_mut(body.body_handle)
                             .unwrap()
                             .iter_mut()
                             {
@@ -371,7 +376,7 @@ impl State for Testbed {
                     for co in self.world.colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
-                        self.graphics.body_nodes_mut(&self.world, co.data().body())
+                        self.graphics.body_nodes_mut(co.data().body())
                             {
                                 for n in ns.iter_mut() {
                                     if let Some(node) = n.scene_node_mut() {
@@ -444,9 +449,9 @@ impl State for Testbed {
                 }
                 self.time += self.world.timestep();
             }
-
-            self.graphics.draw(&self.world, window);
         }
+
+        self.graphics.draw(&self.world, window);
 
         if self.draw_colls {
             draw_collisions(
@@ -496,7 +501,7 @@ fn draw_collisions(
     existing: &mut HashMap<GenerationalId, bool>,
     running: bool,
 ) {
-    for (_, _, manifold) in world.collision_world().contact_manifolds() {
+    for (_, _, _, manifold) in world.collision_world().contact_pairs() {
         for c in manifold.contacts() {
             if existing.contains_key(&c.id) {
                 if running {
@@ -506,7 +511,7 @@ fn draw_collisions(
                 existing.insert(c.id, false);
             }
 
-            let color = if existing[&c.id] {
+            let color = if c.contact.depth < 0.0 {// existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)
             } else {
                 Point3::new(1.0, 0.0, 0.0)
@@ -514,9 +519,9 @@ fn draw_collisions(
 
             window.draw_planar_line(&c.contact.world1, &c.contact.world2, &color);
 
-            let center = na::center(&c.contact.world1, &c.contact.world2);
-            let end = center + *c.contact.normal * 0.4f32;
-            window.draw_planar_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
+//            let center = na::center(&c.contact.world1, &c.contact.world2);
+//            let end = center + *c.contact.normal * 0.4f32;
+//            window.draw_planar_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
         }
     }
 }

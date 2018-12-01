@@ -85,19 +85,6 @@ impl<N: Real> SignoriniModel<N> {
             &geom,
         );
 
-        /*if true { // rhs > -params.restitution_velocity_threshold {
-            let depth = c.contact.depth + data1.margin() + data2.margin();
-
-            // No penetration, use predictive contact.
-            if depth < N::zero() {
-                rhs += (-depth) / params.dt;
-            }
-        } else {
-            let rest1 = data1.material().restitution;
-            let rest2 = data2.material().restitution;
-            rhs += (rest1 + rest2) * na::convert(0.5) * rhs;
-        }*/
-
         // Handle restitution.
         if rhs <= -params.restitution_velocity_threshold {
             let rest1 = data1.material().restitution;

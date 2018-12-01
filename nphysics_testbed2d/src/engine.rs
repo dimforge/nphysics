@@ -4,7 +4,7 @@ use kiss3d::window::Window;
 use na;
 use na::{Isometry2, Point2, Point3};
 use ncollide2d::shape::{self, Compound, ConvexPolygon, Cuboid, Shape};
-use nphysics2d::object::{Body, BodyPartHandle, ColliderHandle};
+use nphysics2d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics2d::world::World;
 use objects::ball::Ball;
 use objects::box_node::Box;
@@ -18,8 +18,8 @@ use std::collections::HashMap;
 
 pub struct GraphicsManager {
     rand: XorShiftRng,
-    b2sn: HashMap<BodyPartHandle, Vec<Node>>,
-    b2color: HashMap<BodyPartHandle, Point3<f32>>,
+    b2sn: HashMap<BodyHandle, Vec<Node>>,
+    b2color: HashMap<BodyHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
     camera: Sidescroll,
     aabbs: Vec<PlanarSceneNode>,
@@ -49,8 +49,8 @@ impl GraphicsManager {
     pub fn clear(&mut self, window: &mut Window) {
         for sns in self.b2sn.values() {
             for sn in sns.iter() {
-                if let Some(node) = sn.scene_node() {
-                    window.remove_planar_node(&mut node.clone());
+                if let Some(n) = sn.scene_node() {
+                    window.remove_planar_node(&mut n.clone());
                 }
             }
         }
@@ -63,37 +63,42 @@ impl GraphicsManager {
         self.aabbs.clear();
     }
 
-    pub fn remove_body_nodes(&mut self, world: &World<f32>, window: &mut Window, body: BodyPartHandle) {
-        let body_key = Self::body_key(world, body);
-
-        if let Some(sns) = self.b2sn.get(&body_key) {
+    pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {
+        if let Some(sns) = self.b2sn.get(&body) {
             for sn in sns.iter() {
-                if let Some(node) = sn.scene_node() {
-                    window.remove_planar_node(&mut node.clone());
+                if let Some(n) = sn.scene_node() {
+                    window.remove_planar_node(&mut n.clone());
                 }
             }
         }
 
-        self.b2sn.remove(&body_key);
+        self.b2sn.remove(&body);
     }
 
     pub fn remove_body_part_nodes(
         &mut self,
         world: &World<f32>,
         window: &mut Window,
-        body: BodyPartHandle,
+        part: BodyPartHandle,
     ) -> BodyPartHandle {
         let mut delete_array = true;
-        let body_key = Self::body_key(world, body);
 
-        if let Some(sns) = self.b2sn.get_mut(&body_key) {
+        if let Some(sns) = self.b2sn.get_mut(&part.body_handle) {
             sns.retain(|sn| {
-                if world.collider(sn.collider()).unwrap().data().body_part() == body {
-                    if let Some(node) = sn.scene_node() {
-                        window.remove_planar_node(&mut node.clone());
-                    }
-                    false
-                } else {
+                if let ColliderAnchor::OnBodyPart {
+                    body_part, ..
+                } = world.collider(sn.collider()).unwrap().data().anchor()
+                    {
+                        if *body_part == part {
+                            if let Some(n) = sn.scene_node() {
+                                window.remove_planar_node(&mut n.clone());
+                            }
+                            false
+                        } else {
+                            delete_array = false;
+                            true
+                        }
+                    } else {
                     delete_array = false;
                     true
                 }
@@ -101,18 +106,17 @@ impl GraphicsManager {
         }
 
         if delete_array {
-            self.b2sn.remove(&body_key);
+            self.b2sn.remove(&part.body_handle);
         }
 
-        body_key
+        part
     }
 
-    pub fn update_after_body_key_change(&mut self, world: &World<f32>, body_key: BodyPartHandle) {
+    pub fn update_after_body_key_change(&mut self, world: &World<f32>, body_key: BodyHandle) {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
-                    let sn_body = world.collider(sn.collider()).unwrap().data().body_part();
-                    let sn_key = Self::body_key(world, sn_body);
+                    let sn_key = world.collider(sn.collider()).unwrap().data().body();
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
                     let new_sns = self.b2sn.entry(sn_key).or_insert(Vec::new());
@@ -122,11 +126,10 @@ impl GraphicsManager {
         }
     }
 
-    pub fn set_body_color(&mut self, world: &World<f32>, b: BodyPartHandle, color: Point3<f32>) {
-        let body_key = Self::body_key(world, b);
-        self.b2color.insert(body_key, color);
+    pub fn set_body_color(&mut self, b: BodyHandle, color: Point3<f32>) {
+        self.b2color.insert(b, color);
 
-        if let Some(ns) = self.b2sn.get_mut(&body_key) {
+        if let Some(ns) = self.b2sn.get_mut(&b) {
             for n in ns.iter_mut() {
                 n.set_color(color)
             }
@@ -137,36 +140,36 @@ impl GraphicsManager {
         self.c2color.insert(handle, color);
     }
 
-    fn body_key(world: &World<f32>, handle: BodyPartHandle) -> BodyPartHandle {
-        if let Body::Multibody(mb) = world.body(handle) {
-            mb.handle()
-        } else {
-            handle
+    fn alloc_color(&mut self, handle: BodyHandle) -> Point3<f32> {
+        let mut color = Point3::new(0.5, 0.5, 0.5);
+
+        match self.b2color.get(&handle) {
+            Some(c) => color = *c,
+            None => {
+                if !handle.is_ground() {
+                    color = self.rand.gen();
+                    color *= 1.5;
+                    color.x = color.x.min(1.0);
+                    color.y = color.y.min(1.0);
+                    color.z = color.z.min(1.0);
+                }
+            }
         }
+
+        self.set_body_color(handle, color);
+
+        color
     }
 
     pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
-        let mut color = Point3::new(0.5, 0.5, 0.5);
         let collider = world.collider(id).unwrap();
 
+        let color;
         if let Some(c) = self.c2color.get(&id).cloned() {
-            color = c
+            color = c;
+            self.set_body_color(collider.data().body(), color);
         } else {
-            let body_key = Self::body_key(world, collider.data().body());
-            match self.b2color.get(&body_key) {
-                Some(c) => color = *c,
-                None => {
-                    if !collider.data().body_part().is_ground() {
-                        color = self.rand.gen();
-                        color *= 1.5;
-                        color.x = color.x.min(1.0);
-                        color.y = color.y.min(1.0);
-                        color.z = color.z.min(1.0);
-                    }
-                }
-            }
-
-            self.set_body_color(world, collider.data().body_part(), color);
+            color = self.alloc_color(collider.data().body())
         }
 
         self.add_with_color(window, id, world, color)
@@ -180,7 +183,7 @@ impl GraphicsManager {
         color: Point3<f32>,
     ) {
         let collider = world.collider(id).unwrap();
-        let parent = collider.data().body_part();
+        let key = collider.data().body();
         let shape = collider.shape().as_ref();
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
@@ -188,7 +191,6 @@ impl GraphicsManager {
         self.add_shape(window, id, world, na::one(), shape, color, &mut new_nodes);
 
         {
-            let key = Self::body_key(world, parent);
             let nodes = self.b2sn.entry(key).or_insert(Vec::new());
             nodes.append(&mut new_nodes);
         }
@@ -251,13 +253,15 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let vertices = shape.vertices();
+        let vertices = shape.points().to_vec();
+        let indices = shape.edges().iter().map(|e| e.indices).collect();
 
         out.push(Node::Polyline(Polyline::new(
             object,
             world,
             delta,
-            vertices.to_vec(),
+            vertices,
+            indices,
             color,
             window,
         )))
@@ -370,15 +374,14 @@ impl GraphicsManager {
         self.camera.look_at(at, zoom);
     }
 
-    pub fn body_nodes(&self, world: &World<f32>, handle: BodyPartHandle) -> Option<&Vec<Node>> {
-        self.b2sn.get(&Self::body_key(world, handle))
+    pub fn body_nodes(&self, handle: BodyHandle) -> Option<&Vec<Node>> {
+        self.b2sn.get(&handle)
     }
 
     pub fn body_nodes_mut(
         &mut self,
-        world: &World<f32>,
-        handle: BodyPartHandle,
+        handle: BodyHandle,
     ) -> Option<&mut Vec<Node>> {
-        self.b2sn.get_mut(&Self::body_key(world, handle))
+        self.b2sn.get_mut(&handle)
     }
 }

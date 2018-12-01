@@ -1,25 +1,37 @@
 use std::ops::{AddAssign, SubAssign};
 use std::iter;
 use std::collections::{HashMap, HashSet};
+use std::marker::PhantomData;
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
-         Dynamic, Vector2, Point3, MatrixN, Unit};
+         Dynamic, Vector2, Point2, Point3, MatrixN, Unit};
 use ncollide::utils::{self, DeterministicState};
+#[cfg(feature = "dim3")]
 use ncollide::procedural::{self, IndexBuffer};
-use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Triangle};
+use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment};
+#[cfg(feature = "dim3")]
+use ncollide::shape::{TriMesh, TetrahedronPointLocation};
 use ncollide::query::PointQueryWithLocation;
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
 
+
+// FIXME: use an enum for the element itself?
+#[derive(Clone)]
+pub enum MassConstraintElementIndices {
+    Triangle(Point3<usize>),
+    Segment(Point2<usize>)
+}
+
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
 pub struct MassConstraintElement<N: Real> {
     handle: Option<BodyPartHandle>,
-    indices: Point3<usize>,
-    surface: N,
+    indices: MassConstraintElementIndices,
+    phantom: PhantomData<N>,
 }
 
 #[derive(Clone)]
@@ -62,7 +74,7 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 #[derive(Clone)]
-pub struct MassConstraintSurface<N: Real> {
+pub struct MassConstraintSystem<N: Real> {
     handle: Option<BodyHandle>,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
@@ -81,11 +93,12 @@ pub struct MassConstraintSurface<N: Real> {
 }
 
 
-impl<N: Real> MassConstraintSurface<N> {
+impl<N: Real> MassConstraintSystem<N> {
     /// Creates a new deformable surface following the mass-LengthConstraint model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
-    pub fn new(mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
+    #[cfg(feature = "dim3")]
+    pub fn from_trimesh(mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -99,8 +112,8 @@ impl<N: Real> MassConstraintSurface<N> {
             let idx = face.indices * DIM;
             let elt = MassConstraintElement {
                 handle: None,
-                indices: idx,
-                surface: N::zero(),
+                indices: MassConstraintElementIndices::Triangle(idx),
+                phantom: PhantomData
             };
 
             elements.push(elt);
@@ -118,7 +131,54 @@ impl<N: Real> MassConstraintSurface<N> {
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
-        MassConstraintSurface {
+        MassConstraintSystem {
+            handle: None,
+            constraints: constraints.values().cloned().collect(),
+            elements,
+            positions,
+            velocities: DVector::zeros(ndofs),
+            accelerations: DVector::zeros(ndofs),
+            impulses: DVector::zeros(0),
+            companion_id: 0,
+            activation: ActivationStatus::new_active(),
+            status: BodyStatus::Dynamic,
+            mass,
+            node_mass,
+            inv_node_mass: N::one() / node_mass,
+            warmstart_coeff: na::convert(0.5),
+        }
+    }
+
+    /// Builds a mass-spring system from a polyline.
+    pub fn from_polyline(polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
+        let ndofs = polyline.points().len() * DIM;
+        let mut constraints = HashMap::with_hasher(DeterministicState::new());
+        let mut elements = Vec::with_capacity(polyline.edges().len());
+        let mut positions = DVector::zeros(ndofs);
+
+        for (i, pos) in positions.as_mut_slice().chunks_mut(DIM).enumerate() {
+            pos.copy_from_slice(polyline.points()[i].coords.as_slice())
+        }
+
+        for edge in polyline.edges() {
+            let idx = edge.indices * DIM;
+            let elt = MassConstraintElement {
+                handle: None,
+                indices: MassConstraintElementIndices::Segment(idx),
+                phantom: PhantomData
+            };
+
+            elements.push(elt);
+
+            let _ = constraints.entry(key(idx.x, idx.y)).or_insert_with(|| {
+                LengthConstraint::from_positions((idx.x, idx.y), positions.as_slice(), stiffness)
+            });
+        }
+
+        let node_mass = mass / na::convert((ndofs / DIM) as f64);
+        println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
+
+        MassConstraintSystem {
             handle: None,
             constraints: constraints.values().cloned().collect(),
             elements,
@@ -137,6 +197,7 @@ impl<N: Real> MassConstraintSurface<N> {
     }
 
     /// Creates a rectangular-shaped quad.
+    #[cfg(feature = "dim3")]
     pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
@@ -145,12 +206,13 @@ impl<N: Real> MassConstraintSurface<N> {
         Self::new(&trimesh, mass, stiffness)
     }
 
-    /// The triangle mesh corresponding to this mass-LengthConstraint-surface structural elements.
-    pub fn mesh(&self) -> TriMesh<N> {
-        let vertices = self.positions.as_slice().chunks(DIM).map(|pt| Point::from_coordinates(Vector::from_row_slice(pt))).collect();
-        let indices = self.elements.iter().map(|elt| elt.indices / DIM).collect();
-
-        TriMesh::new(vertices, indices, None)
+    /// Add one constraint to this mass-constraint system.
+    pub fn add_constraint(&mut self, node1: usize, node2: usize, stiffness: Option<N>) {
+        assert!(node1 < self.positions.len() / DIM, "Node index out of bounds.");
+        assert!(node2 < self.positions.len() / DIM, "Node index out of bounds.");
+        let key = key(node1 * DIM, node2 * DIM);
+        let constraint = LengthConstraint::from_positions(key, self.positions.as_slice(), stiffness);
+        self.constraints.push(constraint);
     }
 
     /// Generate additional constraints between nodes that are transitively neighbors.
@@ -159,7 +221,7 @@ impl<N: Real> MassConstraintSurface<N> {
     /// then a constraint between `a` and `c` is created if it does not already exists.
     pub fn generate_neighbor_constraints(&mut self, stiffness: Option<N>) {
         // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
-        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / 3).collect();
+        let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / DIM).collect();
         let mut existing_constraints = HashSet::with_hasher(DeterministicState::new());
 
         // Build neighborhood list.
@@ -183,8 +245,6 @@ impl<N: Real> MassConstraintSurface<N> {
                 }
             }
         }
-
-        self.impulses = DVector::zeros(self.constraints.len());
     }
 
     /// The coefficient used for warm-starting the resolution of internal constraints of this
@@ -200,7 +260,7 @@ impl<N: Real> MassConstraintSurface<N> {
     }
 }
 
-impl<N: Real> Body<N> for MassConstraintSurface<N> {
+impl<N: Real> Body<N> for MassConstraintSystem<N> {
     fn update_kinematics(&mut self) {
         for constraint in &mut self.constraints {
             let p0 = self.positions.fixed_rows::<Dim>(constraint.nodes.0);
@@ -358,23 +418,43 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
         if let ForceDirection::Linear(dir) = force_dir {
             let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a triangular mass-LengthConstraint element");
 
-            let a = self.positions.fixed_rows::<Dim>(elt.indices.x).into_owned();
-            let b = self.positions.fixed_rows::<Dim>(elt.indices.y).into_owned();
-            let c = self.positions.fixed_rows::<Dim>(elt.indices.z).into_owned();
+            match elt.indices {
+                MassConstraintElementIndices::Triangle(indices) => {
+                    let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
+                    let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
+                    let c = self.positions.fixed_rows::<Dim>(indices.z).into_owned();
 
-            let tri = Triangle::new(
-                Point::from_coordinates(a),
-                Point::from_coordinates(b),
-                Point::from_coordinates(c),
-            );
+                    let tri = Triangle::new(
+                        Point::from_coordinates(a),
+                        Point::from_coordinates(b),
+                        Point::from_coordinates(c),
+                    );
 
-            // XXX: This is extremely costly!
-            let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
-            let bcoords = proj.barycentric_coordinates().unwrap();
+                    // XXX: This is extremely costly!
+                    let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
+                    let bcoords = proj.barycentric_coordinates().unwrap();
 
-            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.x..]).copy_from(&(**dir * bcoords[0]));
-            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.y..]).copy_from(&(**dir * bcoords[1]));
-            VectorSliceMutN::<N, Dim>::from_slice(&mut out[elt.indices.z..]).copy_from(&(**dir * bcoords[2]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.z..]).copy_from(&(**dir * bcoords[2]));
+                }
+                MassConstraintElementIndices::Segment(indices) => {
+                    let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
+                    let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
+
+                    let seg = Segment::new(
+                        Point::from_coordinates(a),
+                        Point::from_coordinates(b),
+                    );
+
+                    // XXX: This is extremely costly!
+                    let proj = seg.project_point_with_location(&Isometry::identity(), pt, false).1;
+                    let bcoords = proj.barycentric_coordinates();
+
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
+                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                }
+            }
         }
     }
 
@@ -389,6 +469,10 @@ impl<N: Real> Body<N> for MassConstraintSurface<N> {
 
     #[inline]
     fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+        if self.impulses.len() != self.constraints.len() {
+            self.impulses = DVector::zeros(self.constraints.len());
+        }
+
         for (i, constraint) in self.constraints.iter().enumerate() {
             if constraint.stiffness.is_some() {
                 self.impulses[i] *= self.warmstart_coeff;

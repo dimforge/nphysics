@@ -38,7 +38,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 7;
+    let num = 10;
     let rad = 0.1;
     let shift = rad * 2.0;
     let centerx = shift * (num as f32) / 2.0;

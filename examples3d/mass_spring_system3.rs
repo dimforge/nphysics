@@ -12,7 +12,7 @@ use kiss3d::loader::obj;
 use ncollide3d::shape::{Cuboid, ShapeHandle, Ball, TriMesh};
 use ncollide3d::procedural;
 use ncollide3d::bounding_volume::{self, AABB, BoundingVolume};
-use nphysics3d::object::{BodyPartHandle, Material, MassSpringSurface, MassConstraintSurface};
+use nphysics3d::object::{BodyPartHandle, Material, MassSpringSystem, MassConstraintSystem};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics3d::math::Inertia;
@@ -88,12 +88,12 @@ fn main() {
      * Create the deformable body and a collider for its contour.
      */
     /*
-    //    let mut volume = MassSpringSurface::quad(
+    //    let mut volume = MassSpringSystem::quad(
     //        &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
     //        &Vector2::new(1.0, 1.0),
     //        10, 10,
     //        1.0, 100000.0, 1.0);
-        let volume = MassConstraintSurface::quad(
+        let volume = MassConstraintSystem::quad(
             &Isometry3::new(Vector3::y() * 0.5, Vector3::x() * -f32::consts::FRAC_PI_2),
             &Vector2::new(1.0, 1.0),
             10, 10,
@@ -142,13 +142,13 @@ fn main() {
 
         meshes[0].translate_by(&Translation3::new(0.0, 5.0, 0.0));
         let shape = meshes[0].clone().into();
-//        let mut volume = MassSpringSurface::new(&shape, 1.0, 1000.0, 0.0);
+//        let mut volume = MassSpringSystem::new(&shape, 1.0, 1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
-        let mut volume = MassSpringSurface::new(&shape, 1.0, 1.0, 0.5);
-        volume.generate_neighbor_springs(1.0, 0.5);
-        volume.generate_neighbor_springs(1.0, 0.5);
+        let mut volume = MassSpringSystem::new(&shape, 1.0, 10.0, 0.5);
+        volume.generate_neighbor_springs(10.0, 0.5);
+        volume.generate_neighbor_springs(10.0, 0.5);
         let handle = world.add_body(Box::new(volume));
         world.add_deformable_collider(
             COLLIDER_MARGIN,
@@ -163,9 +163,9 @@ fn main() {
 
         meshes[0].translate_by(&Translation3::new(0.0, 4.5, 0.0));
         let shape = meshes[0].clone().into();
-        let mut volume = MassSpringSurface::new(&shape, 1.0, 1.0, 0.5);
-        volume.generate_neighbor_springs(1.0, 0.5);
-        volume.generate_neighbor_springs(1.0, 0.5);
+        let mut volume = MassSpringSystem::new(&shape, 1.0, 100.0, 0.5);
+        volume.generate_neighbor_springs(100.0, 0.5);
+        volume.generate_neighbor_springs(100.0, 0.5);
         let handle = world.add_body(Box::new(volume));
         world.add_deformable_collider(
             COLLIDER_MARGIN,

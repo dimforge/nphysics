@@ -141,7 +141,7 @@ pub mod math {
     use algebra::{Force3, Inertia3, Velocity3};
     use na::{
         Dynamic, Isometry3, Matrix3, Matrix6, MatrixMN, MatrixSlice6xX, MatrixSliceMut6xX, Point3,
-        Translation3, U3, U6, UnitQuaternion, Vector3, Vector6,
+        Translation3, U3, U6, UnitQuaternion, Vector3, Vector6, Rotation3
     };
 
     /// The maximum number of possible rotations and translations of a rigid body.
@@ -178,8 +178,11 @@ pub mod math {
     /// The transformation matrix type.
     pub type Isometry<N> = Isometry3<N>;
 
-    /// The rotation matrix type.
+    /// The rotation type.
     pub type Rotation<N> = UnitQuaternion<N>;
+
+    /// The rotation matrix type.
+    pub type RotationMatrix<N> = Rotation3<N>;
 
     /// The translation type.
     pub type Translation<N> = Translation3<N>;
@@ -198,6 +201,9 @@ pub mod math {
 
     /// The inertia matrix type.
     pub type InertiaMatrix<N> = Matrix6<N>;
+
+    /// Square matrix with dimension `Dim × Dim`.
+    pub type Matrix<N> = Matrix3<N>;
 
     /// Square matrix with dimension `SpatialDim × SpatialDim`.
     pub type SpatialMatrix<N> = Matrix6<N>;
@@ -218,7 +224,7 @@ pub mod math {
     use algebra::{Force2, Inertia2, Velocity2};
     use na::{
         Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX, Point2,
-        Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3,
+        Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3, Rotation2, Matrix2
     };
 
     /// The maximum number of possible rotations and translations of a rigid body.
@@ -228,7 +234,7 @@ pub mod math {
     /// The maximum number of possible translations of a rigid body.
     pub const DIM: usize = 2;
 
-    /// The dimension of the ambiant space.
+    /// The dimension of the ambient space.
     pub type Dim = U2;
 
     /// The dimension of the rotation.
@@ -255,8 +261,11 @@ pub mod math {
     /// The transformation matrix type.
     pub type Isometry<N> = Isometry2<N>;
 
-    /// The rotation matrix type.
+    /// The rotation type.
     pub type Rotation<N> = UnitComplex<N>;
+
+    /// The rotation matrix type.
+    pub type RotationMatrix<N> = Rotation2<N>;
 
     /// The translation type.
     pub type Translation<N> = Translation2<N>;
@@ -275,6 +284,9 @@ pub mod math {
 
     /// The inertia matrix type.
     pub type InertiaMatrix<N> = Matrix3<N>;
+
+    /// Square matrix with dimension `Dim × Dim`.
+    pub type Matrix<N> = Matrix2<N>;
 
     /// Square matrix with dimension `SpatialDim × SpatialDim`.
     pub type SpatialMatrix<N> = Matrix3<N>;
