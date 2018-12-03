@@ -94,6 +94,9 @@ fn main() {
     system.generate_neighbor_springs(100.0, 0.5);
     system.generate_neighbor_springs(100.0, 0.5);
 
+    system.set_node_kinematic(n, true);
+    system.set_node_kinematic(2 * n - 1, true);
+
     for spring in extra_springs1.iter().chain(extra_springs2.iter()) {
         system.add_spring(spring.x, spring.y, 100.0, 0.5);
     }

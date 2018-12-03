@@ -75,6 +75,7 @@ pub struct MassSpringSystem<N: Real> {
     handle: Option<BodyHandle>,
     springs: Vec<Spring<N>>,
     elements: Vec<MassSpringElement<N>>,
+    kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
@@ -133,12 +134,12 @@ impl<N: Real> MassSpringSystem<N> {
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
-        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
         MassSpringSystem {
             handle: None,
             springs: springs.values().cloned().collect(),
             elements,
+            kinematic_nodes: DVector::repeat(ndofs / DIM, false),
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
@@ -184,6 +185,7 @@ impl<N: Real> MassSpringSystem<N> {
         MassSpringSystem {
             handle: None,
             springs: springs.values().cloned().collect(),
+            kinematic_nodes: DVector::repeat(ndofs / DIM, false),
             elements,
             positions,
             velocities: DVector::zeros(ndofs),
@@ -248,13 +250,24 @@ impl<N: Real> MassSpringSystem<N> {
         self.springs.push(spring);
     }
 
-    fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        let mut timer = Timer::new();
+    /// Restrict the specified node acceleration to always be zero so
+    /// it can be controlled manually by the user at the velocity level.
+    pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
+        assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.kinematic_nodes[i] = is_kinematic;
+    }
 
-        timer.start();
+    fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         self.augmented_mass.fill_diagonal(self.node_mass);
 
         for spring in &mut self.springs {
+            let kinematic1 = self.kinematic_nodes[spring.nodes.0 / DIM];
+            let kinematic2 = self.kinematic_nodes[spring.nodes.1 / DIM];
+
+            if kinematic1 && kinematic2 {
+                continue;
+            }
+
             let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
             let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
             let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
@@ -266,8 +279,12 @@ impl<N: Real> MassSpringSystem<N> {
             let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * ldot.dot(&l);
             let f0 = l * coeff;
 
-            self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&f0);
-            self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&f0);
+            if !kinematic1 {
+                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&f0);
+            }
+            if !kinematic2 {
+                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&f0);
+            }
 
             if spring.length != N::zero() {
                 /*
@@ -278,54 +295,58 @@ impl<N: Real> MassSpringSystem<N> {
                 let ll = l * l.transpose();
                 let one_minus_ll = MatrixN::<N, Dim>::identity() - ll;
                 let stiffness = one_minus_ll / spring.length + ll * one_minus_ll * (damping / spring.length) + ll * spring.stiffness;
-
                 let forward_f0 = stiffness * (ldot * params.dt);
 
                 // Add the contributions to the forces.
-                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&forward_f0);
-                self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&forward_f0);
+                if !kinematic1 {
+                    self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&forward_f0);
+                }
+                if !kinematic2 {
+                    self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&forward_f0);
+                }
 
                 // Damping matrix contribution.
                 let damping_dt = (l * l.transpose()) * (damping * params.dt);
 
                 // Add to the mass matrix.
                 let damping_stiffness = damping_dt + stiffness * (params.dt * params.dt);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1).add_assign(&damping_stiffness);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1).sub_assign(&damping_stiffness);
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0).sub_assign(&damping_stiffness);
+
+                if !kinematic1 {
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
+                }
+                if !kinematic2 {
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1).add_assign(&damping_stiffness);
+                }
+                if !kinematic1 && !kinematic2 {
+                    // FIXME: we don't need to fill both because Cholesky won't read tho upper triangle.
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1).sub_assign(&damping_stiffness);
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0).sub_assign(&damping_stiffness);
+                }
             }
         }
 
         /*
-         * Add forces due to gravity.
+         * Add forces due to gravity and set the mass matrix diagonal
+         * to the identity for kinematic nodes.
          */
         let gravity_force = gravity * self.node_mass;
 
         for i in 0..self.positions.len() / DIM {
-            let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
-            acc += gravity_force
+            let idof = i * DIM;
+
+            if !self.kinematic_nodes[i] {
+                let mut acc = self.accelerations.fixed_rows_mut::<Dim>(idof);
+                acc += gravity_force
+            } else {
+                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(idof, idof).fill_diagonal(N::one());
+            }
         }
-        timer.pause();
-//        println!("Assembly time: {}", timer);
 
         /*
          * Invert the augmented mass.
          */
-//        timer.start();
         self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
-//        timer.pause();
-//        println!("Inversion time: {}", timer);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
-
-//        let cs_a: CsMatrix<_, _, _> = self.augmented_mass.clone().into();
-//        println!("Shape: {:?}, fill: {}", cs_a.shape(), cs_a.len());
-//        let mut chol_cs_a = CsCholesky::new_symbolic(&cs_a);
-//        timer.start();
-//        let _ = chol_cs_a.decompose_left_looking(cs_a.data.values());
-//        timer.pause();
-//        println!("Decomposed fill: {}", chol_cs_a.l().unwrap().len());
-//        println!("Sparse cholesky time: {}", timer);
     }
 }
 
@@ -465,6 +486,14 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 
             match elt.indices {
                 MassSpringElementIndices::Triangle(indices) => {
+                    let kinematic1 = self.kinematic_nodes[indices.x / DIM];
+                    let kinematic2 = self.kinematic_nodes[indices.y / DIM];
+                    let kinematic3 = self.kinematic_nodes[indices.z / DIM];
+
+                    if kinematic1 && kinematic2 && kinematic3 {
+                        return;
+                    }
+
                     let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
                     let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
                     let c = self.positions.fixed_rows::<Dim>(indices.z).into_owned();
@@ -479,11 +508,24 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
                     let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
                     let bcoords = proj.barycentric_coordinates().unwrap();
 
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.z..]).copy_from(&(**dir * bcoords[2]));
+                    if !kinematic1 {
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
+                    }
+                    if !kinematic2 {
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                    }
+                    if !kinematic3 {
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.z..]).copy_from(&(**dir * bcoords[2]));
+                    }
                 }
                 MassSpringElementIndices::Segment(indices) => {
+                    let kinematic1 = self.kinematic_nodes[indices.x / DIM];
+                    let kinematic2 = self.kinematic_nodes[indices.y / DIM];
+
+                    if kinematic1 && kinematic2 {
+                        return;
+                    }
+
                     let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
                     let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
 
@@ -496,8 +538,12 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
                     let proj = seg.project_point_with_location(&Isometry::identity(), pt, false).1;
                     let bcoords = proj.barycentric_coordinates();
 
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                    if !kinematic1 {
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
+                    }
+                    if !kinematic2 {
+                        VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
+                    }
                 }
             }
         }

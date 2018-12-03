@@ -98,3 +98,7 @@ path = "./mass_constraint_system2.rs"
 [[bin]]
 name = "deformable2"
 path = "./deformable2.rs"
+
+[[bin]]
+name = "plasticity2"
+path = "./plasticity2.rs"
