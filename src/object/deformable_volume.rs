@@ -13,7 +13,7 @@ use ncollide::query::PointQueryWithLocation;
 
 use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
 use solver::{IntegrationParameters, ForceDirection};
-use math::{Force, Inertia, Velocity};
+use math::{Force, Inertia, Velocity, DIM};
 use object::fem_helper;
 
 /// One element of a deformable volume.
@@ -138,23 +138,33 @@ impl<N: Real> DeformableVolume<N> {
             let coeff_mass = elt.density * elt.volume / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
 
             for a in 0..4 {
-                for b in 0..4 {
-                    let mass_contribution;
+                let ia = elt.indices[a];
 
-                    if a == b {
-                        mass_contribution = coeff_mass * na::convert(2.0);
-                    } else {
-                        mass_contribution = coeff_mass;
+                if !self.kinematic_nodes[ia / DIM] {
+                    for b in 0..4 {
+                        let ib = elt.indices[b];
+
+                        if !self.kinematic_nodes[ib / DIM] {
+                            let mass_contribution = if a == b {
+                                coeff_mass * na::convert(2.0)
+                            } else {
+                                coeff_mass
+                            };
+
+                            let mut node_mass = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                            node_mass[(0, 0)] += mass_contribution;
+                            node_mass[(1, 1)] += mass_contribution;
+                            node_mass[(2, 2)] += mass_contribution;
+                        }
                     }
-
-                    let ia = elt.indices[a];
-                    let ib = elt.indices[b];
-
-                    let mut node_mass = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
-                    node_mass[(0, 0)] += mass_contribution;
-                    node_mass[(1, 1)] += mass_contribution;
-                    node_mass[(2, 2)] += mass_contribution;
                 }
+            }
+        }
+
+        // Set the identity for kinematic nodes.
+        for i in 0..self.kinematic_nodes.len() {
+            if self.kinematic_nodes[i] {
+                self.augmented_mass.fixed_slice_mut::<U3, U3>(i * DIM, i * DIM).fill_diagonal(N::one());
             }
         }
     }
@@ -172,8 +182,12 @@ impl<N: Real> DeformableVolume<N> {
             let contribution = gravity * (elt.density * elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
             for k in 0..4 {
-                let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(elt.indices[k]);
-                forces_part += contribution;
+                let ie = elt.indices[k];
+
+                if !self.kinematic_nodes[ie / DIM] {
+                    let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(ie);
+                    forces_part += contribution;
+                }
             }
         }
 
@@ -242,34 +256,36 @@ impl<N: Real> DeformableVolume<N> {
 
             // Apply plastic strain.
             for a in 0..4 {
-                let bn;
-                let cn;
-                let dn;
-
-                if a == 0 {
-                    bn = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
-                    cn = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
-                    dn = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
-                } else {
-                    bn = j_inv_rot[(0, a - 1)];
-                    cn = j_inv_rot[(1, a - 1)];
-                    dn = j_inv_rot[(2, a - 1)];
-                }
-
-                let _0 = N::zero();
-
-                let P_n = Matrix3x6::new(
-                    bn * d0, bn * d1, bn * d1, cn * d2, dn * d2, _0,
-                    cn * d1, cn * d0, cn * d1, bn * d2, _0, dn * d2,
-                    dn * d1, dn * d1, dn * d0, _0, bn * d2, cn * d2
-                ) * elt.volume;
-
                 let ia = elt.indices[a];
-                let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
-                let plastic_force = elt.rot * (P_n * elt.plastic_strain);
-                force_part += plastic_force;
-            }
 
+                if !self.kinematic_nodes[ia / DIM] {
+                    let bn;
+                    let cn;
+                    let dn;
+
+                    if a == 0 {
+                        bn = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
+                        cn = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
+                        dn = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
+                    } else {
+                        bn = j_inv_rot[(0, a - 1)];
+                        cn = j_inv_rot[(1, a - 1)];
+                        dn = j_inv_rot[(2, a - 1)];
+                    }
+
+                    let _0 = N::zero();
+
+                    let P_n = Matrix3x6::new(
+                        bn * d0, bn * d1, bn * d1, cn * d2, dn * d2, _0,
+                        cn * d1, cn * d0, cn * d1, bn * d2, _0, dn * d2,
+                        dn * d1, dn * d1, dn * d0, _0, bn * d2, cn * d2
+                    ) * elt.volume;
+
+                    let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
+                    let plastic_force = elt.rot * (P_n * elt.plastic_strain);
+                    force_part += plastic_force;
+                }
+            }
 
             /*
              *
@@ -277,58 +293,63 @@ impl<N: Real> DeformableVolume<N> {
              *
              */
             for a in 0..4 {
-                let bn;
-                let cn;
-                let dn;
-
-                if a == 0 {
-                    bn = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
-                    cn = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
-                    dn = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
-                } else {
-                    bn = j_inv_rot[(0, a - 1)];
-                    cn = j_inv_rot[(1, a - 1)];
-                    dn = j_inv_rot[(2, a - 1)];
-                }
-
                 let ia = elt.indices[a];
-                let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
 
+                if !self.kinematic_nodes[ia / DIM] {
+                    let bn;
+                    let cn;
+                    let dn;
 
-                for b in 0..4 {
-                    let bm;
-                    let cm;
-                    let dm;
-
-                    if b == 0 {
-                        bm = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
-                        cm = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
-                        dm = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
+                    if a == 0 {
+                        bn = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
+                        cn = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
+                        dn = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
                     } else {
-                        bm = j_inv_rot[(0, b - 1)];
-                        cm = j_inv_rot[(1, b - 1)];
-                        dm = j_inv_rot[(2, b - 1)];
+                        bn = j_inv_rot[(0, a - 1)];
+                        cn = j_inv_rot[(1, a - 1)];
+                        dn = j_inv_rot[(2, a - 1)];
                     }
 
-                    let node_stiffness = Matrix3::new(
-                        d0 * bn * bm + d2 * (cn * cm + dn * dm), d1 * bn * cm + d2 * cn * bm, d1 * bn * dm + d2 * dn * bm,
-                        d1 * cn * bm + d2 * bn * cm, d0 * cn * cm + d2 * (bn * bm + dn * dm), d1 * cn * dm + d2 * dn * cm,
-                        d1 * dn * bm + d2 * bn * dm, d1 * dn * cm + d2 * cn * dm, d0 * dn * dm + d2 * (bn * bm + cn * cm),
-                    ) * elt.volume;
+                    let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
 
-                    let rot_stiffness = elt.rot * node_stiffness;
-                    let rot_tr = elt.rot.transpose();
 
-                    let ib = elt.indices[b];
+                    for b in 0..4 {
+                        let bm;
+                        let cm;
+                        let dm;
 
-                    let mut mass_part = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
-                    mass_part.gemm(stiffness_coeff, &rot_stiffness, rot_tr.matrix(), N::one());
+                        if b == 0 {
+                            bm = -j_inv_rot.m11 - j_inv_rot.m12 - j_inv_rot.m13;
+                            cm = -j_inv_rot.m21 - j_inv_rot.m22 - j_inv_rot.m23;
+                            dm = -j_inv_rot.m31 - j_inv_rot.m32 - j_inv_rot.m33;
+                        } else {
+                            bm = j_inv_rot[(0, b - 1)];
+                            cm = j_inv_rot[(1, b - 1)];
+                            dm = j_inv_rot[(2, b - 1)];
+                        }
 
-                    let vel_part = self.velocities.fixed_rows::<U3>(ib);
-                    let pos_part = self.positions.fixed_rows::<U3>(ib);
-                    let ref_pos_part = self.rest_positions.fixed_rows::<U3>(ib);
-                    let dpos = rot_tr * (vel_part * dt + pos_part) - ref_pos_part;
-                    force_part.gemv(-N::one(), &rot_stiffness, &dpos, N::one());
+                        let node_stiffness = Matrix3::new(
+                            d0 * bn * bm + d2 * (cn * cm + dn * dm), d1 * bn * cm + d2 * cn * bm, d1 * bn * dm + d2 * dn * bm,
+                            d1 * cn * bm + d2 * bn * cm, d0 * cn * cm + d2 * (bn * bm + dn * dm), d1 * cn * dm + d2 * dn * cm,
+                            d1 * dn * bm + d2 * bn * dm, d1 * dn * cm + d2 * cn * dm, d0 * dn * dm + d2 * (bn * bm + cn * cm),
+                        ) * elt.volume;
+
+                        let rot_stiffness = elt.rot * node_stiffness;
+                        let rot_tr = elt.rot.transpose();
+
+                        let ib = elt.indices[b];
+
+                        if !self.kinematic_nodes[ib / DIM] {
+                            let mut mass_part = self.augmented_mass.fixed_slice_mut::<U3, U3>(ia, ib);
+                            mass_part.gemm(stiffness_coeff, &rot_stiffness, rot_tr.matrix(), N::one());
+                        }
+
+                        let vel_part = self.velocities.fixed_rows::<U3>(ib);
+                        let pos_part = self.positions.fixed_rows::<U3>(ib);
+                        let ref_pos_part = self.rest_positions.fixed_rows::<U3>(ib);
+                        let dpos = rot_tr * (vel_part * dt + pos_part) - ref_pos_part;
+                        force_part.gemv(-N::one(), &rot_stiffness, &dpos, N::one());
+                    }
                 }
             }
         }
@@ -546,6 +567,13 @@ impl<N: Real> DeformableVolume<N> {
         }
 
         Self::new(&vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
+    }
+
+    /// Restrict the specified node acceleration to always be zero so
+    /// it can be controlled manually by the user at the velocity level.
+    pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
+        assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.kinematic_nodes[i] = is_kinematic;
     }
 }
 

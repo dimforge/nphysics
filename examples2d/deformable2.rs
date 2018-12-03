@@ -79,6 +79,26 @@ fn main() {
     let (polyline, ids_map, parts_map) = surface.boundary_polyline();
     surface.renumber_dofs(&ids_map);
 
+    let mut imin_x = 0;
+    let mut imax_x = 0;
+
+    for (i, p) in polyline.points().iter().enumerate() {
+        let min_x = polyline.points()[imin_x].x;
+        let min_y = polyline.points()[imin_x].y;
+        let max_x = polyline.points()[imax_x].x;
+        let max_y = polyline.points()[imax_x].y;
+
+        if p.x < min_x || (p.x == min_x && p.y > min_y) {
+            imin_x = i
+        }
+
+        if p.x > max_x || (p.x == max_x && p.y > max_y) {
+            imax_x = i
+        }
+    }
+    surface.set_node_kinematic(imin_x, true);
+    surface.set_node_kinematic(imax_x, true);
+
     let deformable_handle = world.add_body(Box::new(surface));
     world.add_deformable_collider(
         COLLIDER_MARGIN,

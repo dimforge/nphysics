@@ -20,9 +20,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
-//    world.integration_parameters_mut().max_position_iterations = 0;
-//    world.integration_parameters_mut().max_velocity_iterations = 50;
-//    world.set_timestep(0.001);
 
     /*
      * Ground.
@@ -39,20 +36,6 @@ fn main() {
         ground_pos,
         Material::default(),
     );
-
-//    let ground_size = 0.2;
-//    let ground_shape =
-//         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-////        ShapeHandle::new(TriMesh::from(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)).to_trimesh(())));
-//    let ground_pos = Isometry3::new(Vector3::y() * (-ground_size), na::zero());
-//
-//    world.add_collider(
-//        COLLIDER_MARGIN,
-//        ground_shape.clone(),
-//        BodyPartHandle::ground(),
-//        ground_pos,
-//        Material::default(),
-//    );
 
 
     let ground_size = 3.0;
@@ -79,17 +62,6 @@ fn main() {
         Material::default(),
     );
 
-
-//    let ground_pos = Isometry3::new(Vector3::new(0.0, -0.2, 0.0), na::zero());
-//
-//    world.add_collider(
-//        COLLIDER_MARGIN,
-//        ground_shape.clone(),
-//        BodyPartHandle::ground(),
-//        ground_pos,
-//        Material::default(),
-//    );
-
     /*
      * Create the deformable body and a collider for its contour.
      */
@@ -98,9 +70,10 @@ fn main() {
         &Vector3::new(1.1, 0.1, 0.1),
         50, 1, 1,
         1.0, 1.0e3, 0.0,
-        (0.0, 0.0));
+        (0.2, 0.0));
     let (mesh, ids_map, parts_map) = volume.boundary_mesh();
     volume.renumber_dofs(&ids_map);
+
 
     let handle = world.add_body(Box::new(volume));
     world.add_deformable_collider(
@@ -112,35 +85,6 @@ fn main() {
         Material::default(),
     );
     world.body_mut(handle).set_deactivation_threshold(None);
-
-
-//    let mut volume = MassSpringSurface::new(&mesh, 1.0, 100000.0, 0.5);
-//    volume.generate_neighbor_springs(100000.0, 0.5);
-//    volume.generate_neighbor_springs(100000.0, 0.5);
-//    let handle = world.add_body(Box::new(volume));
-//    world.add_deformable_collider(
-//        COLLIDER_MARGIN,
-//        mesh,
-//        handle,
-//        None,
-//        None,
-//        Material::default(),
-//    );
-
-    // Add a cube to play around with.
-//    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(1.1, 0.1, 0.1))); // 0.1 - COLLIDER_MARGIN)));
-//    let inertia = geom.inertia(1.1);
-//    let center_of_mass = geom.center_of_mass();
-//    let pos = Isometry3::identity(); // new(Vector3::y() * 1.0, na::zero());
-//    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-//
-//    world.add_collider(
-//        COLLIDER_MARGIN,
-//        ShapeHandle::new(TriMesh::from(mesh)),// geom.clone(),
-//        handle,
-//        Isometry3::identity(),
-//        Material::default(),
-//    );
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::new(0.05 - COLLIDER_MARGIN, 0.05 - COLLIDER_MARGIN, 0.05 - COLLIDER_MARGIN)));
     let inertia = geom.inertia(10.1);
