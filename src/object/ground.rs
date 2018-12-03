@@ -19,7 +19,7 @@ pub struct Ground<N: Real> {
 impl<N: Real> Ground<N> {
     pub(crate) fn new() -> Self {
         Ground {
-            companion_id: usize::max_value(),
+            companion_id: 0,
             activation: ActivationStatus::new_inactive(),
             data: [],
         }
@@ -156,15 +156,19 @@ impl<N: Real> Body<N> for Ground<N> {
     fn set_deactivation_threshold(&mut self, threshold: Option<N>) {}
 
     #[inline]
-    fn body_part_jacobian_mul_unit_force(&self, _: &BodyPart<N>, _: &Point<N>, _: &ForceDirection<N>, _: &mut [N]) {}
-
-    #[inline]
-    fn inv_mass_mul_generalized_forces(&self, _: &mut [N]) {}
-
-    #[inline]
-    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
-        N::zero()
-    }
+    fn fill_constraint_geometry(
+        &self,
+        _: &BodyPart<N>,
+        _: usize, // FIXME: keep this parameter?
+        _: &Point<N>,
+        _: &ForceDirection<N>,
+        _: usize,
+        _: usize,
+        _: &mut [N],
+        _: &mut N,
+        _: Option<&DVectorSlice<N>>,
+        _: Option<&mut N>
+    ) {}
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {

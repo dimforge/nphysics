@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use std::sync::Arc;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
-use nphysics3d::object::{BodyPartHandle, Material, DeformableVolume, MassSpringSurface};
+use nphysics3d::object::{BodyPartHandle, Material, DeformableVolume};
 use nphysics3d::world::World;
 use nphysics3d::volumetric::Volumetric;
 use ncollide3d::transformation::ToTriMesh;

@@ -1028,33 +1028,65 @@ impl<N: Real> Body<N> for Multibody<N> {
         self.ndofs
     }
 
-    #[inline]
-    fn inv_mass_mul_generalized_forces(&self, generalized_force: &mut [N]) {
-        let mut out = DVectorSliceMut::from_slice(generalized_force, self.ndofs);
-        assert!(self.inv_augmented_mass.solve_mut(&mut out))
-    }
-
-    #[inline]
-    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
-        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
-        let pos = point - link.com.coords;
-        let force = force_dir.at_point(&pos);
-
-        self.link_jacobian_mul_force(link, &force, out)
-    }
-
-    #[inline]
-    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
+    fn fill_constraint_geometry(
+        &self,
+        part: &BodyPart<N>,
+        ndofs: usize, // FIXME: keep this parameter?
+        point: &Point<N>,
+        force_dir: &ForceDirection<N>,
+        j_id: usize,
+        wj_id: usize,
+        jacobians: &mut [N],
+        inv_r: &mut N,
+        ext_vels: Option<&DVectorSlice<N>>,
+        out_vel: Option<&mut N>
+    ) {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
 
-        match *force_dir {
-            ForceDirection::Linear(ref normal) => {
-                let dpos = point - link.com;
-                link.velocity.shift(&dpos).linear.dot(normal)
-            }
-            ForceDirection::Angular(ref axis) => {
-                link.velocity.angular_vector().dot(axis)
-            }
+        match self.status() {
+            BodyStatus::Dynamic => {
+                let pos = point - link.com.coords;
+                let force = force_dir.at_point(&pos);
+
+                self.link_jacobian_mul_force(link, &force, &mut jacobians[j_id..]);
+
+                // FIXME: this could be optimized with a copy_nonoverlapping.
+                for i in 0..ndofs {
+                    jacobians[wj_id + i] = jacobians[j_id + i];
+                }
+
+                {
+                    let mut out = DVectorSliceMut::from_slice(&mut jacobians[wj_id..], self.ndofs);
+                    assert!(self.inv_augmented_mass.solve_mut(&mut out))
+                }
+
+                let j = DVectorSlice::from_slice(&jacobians[j_id..], ndofs);
+                let invm_j = DVectorSlice::from_slice(&jacobians[wj_id..], ndofs);
+
+                *inv_r += j.dot(&invm_j);
+
+                if let Some(out_vel) = out_vel {
+                    *out_vel += j.dot(&self.generalized_velocity());
+
+                    if let Some(ext_vels) = ext_vels {
+                        *out_vel += j.dot(ext_vels)
+                    }
+                }
+            },
+            BodyStatus::Kinematic => {
+                if let Some(out_vel) = out_vel {
+                    match *force_dir {
+                        ForceDirection::Linear(ref normal) => {
+                            let dpos = point - link.com;
+                            *out_vel = link.velocity.shift(&dpos).linear.dot(normal)
+                        }
+                        ForceDirection::Angular(ref axis) => {
+                            *out_vel = link.velocity.angular_vector().dot(axis)
+                        }
+                    }
+                }
+            },
+            BodyStatus::Static | BodyStatus::Disabled => {}
         }
     }
 

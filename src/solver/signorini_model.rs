@@ -56,6 +56,8 @@ impl<N: Real> SignoriniModel<N> {
         let center1 = c.contact.world1 + c.contact.normal.unwrap() * data1.margin();
         let center2 = c.contact.world2 - c.contact.normal.unwrap() * data2.margin();
         let dir = ForceDirection::Linear(-c.contact.normal);
+        let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+        let mut rhs = N::zero();
 
         let geom = helper::constraint_pair_geometry(
             body1,
@@ -68,21 +70,9 @@ impl<N: Real> SignoriniModel<N> {
             ground_j_id,
             j_id,
             jacobians,
-        );
-
-        let mut rhs = helper::constraint_pair_velocity(
-            body1,
-            part1,
-            body2,
-            part2,
-            assembly_id1,
-            assembly_id2,
-            &center1,
-            &center2,
-            &dir,
-            ext_vels,
-            jacobians,
-            &geom,
+            Some(&ext_vels1),
+            Some(&ext_vels2),
+            Some(&mut rhs)
         );
 
         // Handle restitution.

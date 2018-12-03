@@ -66,9 +66,6 @@ fn main() {
         Material::default(),
     );
 
-
-
-
     let mut vertices = Vec::new();
     let n = 50;
     let width = 10.0;

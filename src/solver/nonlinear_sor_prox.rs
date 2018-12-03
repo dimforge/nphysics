@@ -233,8 +233,7 @@ impl<N: Real> NonlinearSORProx<N> {
                 let j_id2 = (constraint.ndofs1 * 2) + constraint.ndofs2;
 
                 if constraint.ndofs1 != 0 {
-                    helper::fill_constraint_geometry(
-                        body1,
+                    body1.fill_constraint_geometry(
                         part1,
                         constraint.ndofs1,
                         &contact.world1,
@@ -243,12 +242,13 @@ impl<N: Real> NonlinearSORProx<N> {
                         0,
                         jacobians,
                         &mut inv_r,
+                        None,
+                        None
                     );
                 }
 
                 if constraint.ndofs2 != 0 {
-                    helper::fill_constraint_geometry(
-                        body2,
+                    body2.fill_constraint_geometry(
                         part2,
                         constraint.ndofs2,
                         &contact.world2,
@@ -257,6 +257,8 @@ impl<N: Real> NonlinearSORProx<N> {
                         constraint.ndofs1,
                         jacobians,
                         &mut inv_r,
+                        None,
+                        None
                     );
                 }
 

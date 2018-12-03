@@ -1,6 +1,7 @@
 use std::ops::AddAssign;
 use std::iter;
 use std::collections::HashMap;
+use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix6x3, Matrix3x6, DMatrix, Isometry3,
@@ -10,9 +11,10 @@ use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
 use ncollide::query::PointQueryWithLocation;
 
-use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
+use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity};
+use object::fem_helper;
 
 /// One element of a deformable volume.
 #[derive(Clone)]
@@ -36,6 +38,7 @@ pub struct TetrahedralElement<N: Real> {
 pub struct DeformableVolume<N: Real> {
     handle: Option<BodyHandle>,
     elements: Vec<TetrahedralElement<N>>,
+    kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
@@ -82,6 +85,7 @@ impl<N: Real> DeformableVolume<N> {
         DeformableVolume {
             handle: None,
             elements,
+            kinematic_nodes: DVector::repeat(vertices.len(), false),
             positions: rest_positions.clone(),
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
@@ -712,105 +716,39 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         }
     }
 
-    fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
-        let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
-        self.inv_augmented_mass.solve_mut(&mut out);
+    fn fill_constraint_geometry(
+        &self,
+        part: &BodyPart<N>,
+        ndofs: usize, // FIXME: keep this parameter?
+        center: &Point3<N>,
+        force_dir: &ForceDirection<N>,
+        j_id: usize,
+        wj_id: usize,
+        jacobians: &mut [N],
+        inv_r: &mut N,
+        ext_vels: Option<&DVectorSlice<N>>,
+        out_vel: Option<&mut N>
+    ) {
+        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        fem_helper::fill_contact_geometry_fem(
+            self.ndofs(),
+            self.status,
+            FiniteElementIndices::Tetrahedron(elt.indices),
+            &self.positions,
+            &self.velocities,
+            &self.kinematic_nodes,
+            Either::Right(&self.inv_augmented_mass),
+            center,
+            force_dir,
+            j_id,
+            wj_id,
+            jacobians,
+            inv_r,
+            ext_vels,
+            out_vel
+        );
     }
 
-    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point3<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
-        // Needed by the non-linear SOR-prox.
-        // FIXME: should this `fill` be done by the non-linear SOR-prox itself?
-        DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
-
-        if let ForceDirection::Linear(dir) = force_dir {
-            let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
-
-            let a = self.positions.fixed_rows::<U3>(elt.indices.x).into_owned();
-            let b = self.positions.fixed_rows::<U3>(elt.indices.y).into_owned();
-            let c = self.positions.fixed_rows::<U3>(elt.indices.z).into_owned();
-            let d = self.positions.fixed_rows::<U3>(elt.indices.w).into_owned();
-
-            let tetra = Tetrahedron::new(
-                Point3::from_coordinates(a),
-                Point3::from_coordinates(b),
-                Point3::from_coordinates(c),
-                Point3::from_coordinates(d),
-            );
-
-            // XXX: This is extremely costly!
-            let proj = tetra.project_point_with_location(&Isometry3::identity(), pt, true).1;
-
-            let bcoords = if let Some(b) = proj.barycentric_coordinates() {
-                b
-            } else {
-                let pt_a = pt.coords - a;
-                // XXX: we have to update j_inv to use the new positions here!
-                let b = elt.j_inv.tr_mul(&pt_a);
-                [(N::one() - b.x - b.y - b.z), b.x, b.y, b.z]
-            };
-
-
-            VectorSliceMut3::from_slice(&mut out[elt.indices.x..]).copy_from(&(**dir * bcoords[0]));
-            VectorSliceMut3::from_slice(&mut out[elt.indices.y..]).copy_from(&(**dir * bcoords[1]));
-            VectorSliceMut3::from_slice(&mut out[elt.indices.z..]).copy_from(&(**dir * bcoords[2]));
-            VectorSliceMut3::from_slice(&mut out[elt.indices.w..]).copy_from(&(**dir * bcoords[3]));
-        }
-    }
-
-    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point3<N>, force_dir: &ForceDirection<N>) -> N {
-        if let ForceDirection::Linear(dir) = force_dir {
-            let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
-
-            let a = self.positions.fixed_rows::<U3>(elt.indices.x).into_owned();
-            let b = self.positions.fixed_rows::<U3>(elt.indices.y).into_owned();
-            let c = self.positions.fixed_rows::<U3>(elt.indices.z).into_owned();
-            let d = self.positions.fixed_rows::<U3>(elt.indices.w).into_owned();
-
-            let vs = [
-                self.velocities.fixed_rows::<U3>(elt.indices.x).into_owned(),
-                self.velocities.fixed_rows::<U3>(elt.indices.y).into_owned(),
-                self.velocities.fixed_rows::<U3>(elt.indices.z).into_owned(),
-                self.velocities.fixed_rows::<U3>(elt.indices.w).into_owned()
-            ];
-
-            let tetra = Tetrahedron::new(
-                Point3::from_coordinates(a),
-                Point3::from_coordinates(b),
-                Point3::from_coordinates(c),
-                Point3::from_coordinates(d),
-            );
-
-            // XXX: This is extremely costly!
-            match tetra.project_point_with_location(&Isometry3::identity(), point, true).1 {
-                TetrahedronPointLocation::OnVertex(i) => {
-                    vs[i].dot(dir)
-                }
-                TetrahedronPointLocation::OnEdge(i, uv) => {
-                    let idx = Tetrahedron::<N>::edge_ids(i);
-                    vs[idx.0].dot(dir) * uv[0] + vs[idx.1].dot(dir) * uv[1]
-                }
-                TetrahedronPointLocation::OnFace(i, uvw) => {
-                    let idx = Tetrahedron::<N>::face_ids(i);
-                    vs[idx.0].dot(dir) * uvw[0] + vs[idx.1].dot(dir) * uvw[1] + vs[idx.2].dot(dir) * uvw[2]
-                }
-                TetrahedronPointLocation::OnSolid => {
-                    let pt_a = point.coords - a;
-                    // XXX: we have to update j_inv to use the new positions here!
-                    let bcoords = elt.j_inv.tr_mul(&pt_a);
-
-
-                    let f2 = bcoords.x;
-                    let f3 = bcoords.y;
-                    let f4 = bcoords.z;
-                    let f1 = N::one() - f2 - f3 - f4;
-
-                    vs[0].dot(dir) * f1 + vs[1].dot(dir) * f2 + vs[2].dot(dir) * f3 + vs[3].dot(dir) * f4
-                }
-            }
-        } else {
-            N::zero()
-        }
-    }
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {

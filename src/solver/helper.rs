@@ -48,38 +48,6 @@ impl<N: Real> Neg for ForceDirection<N> {
 }
 
 /// Fills all the jacobians (and the jacobians multiplied by the invers augmented mass matricxs) for a
-/// constraint applying a force at the point `center` (relative to the body part's center of mass) and
-/// the direction `dir`.
-///
-/// If the force is a torque, it is applied at the center of mass of the body part.
-#[inline]
-pub fn fill_constraint_geometry<N: Real>(
-    body: &Body<N>,
-    part: &BodyPart<N>,
-    ndofs: usize,
-    center: &Point<N>,
-    dir: &ForceDirection<N>,
-    j_id: usize,
-    wj_id: usize,
-    jacobians: &mut [N],
-    inv_r: &mut N,
-) {
-    // XXX: all that should probably just be a call to the body trait-object.
-    body.body_part_jacobian_mul_unit_force(part, center, dir, &mut jacobians[j_id..]);
-
-    // FIXME: this could be optimized with a copy_nonoverlapping.
-    for i in 0..ndofs {
-        jacobians[wj_id + i] = jacobians[j_id + i];
-    }
-    body.inv_mass_mul_generalized_forces(&mut jacobians[wj_id..]);
-
-    let j = DVectorSlice::from_slice(&jacobians[j_id..], ndofs);
-    let invm_j = DVectorSlice::from_slice(&jacobians[wj_id..], ndofs);
-
-    *inv_r += j.dot(&invm_j);
-}
-
-/// Fills all the jacobians (and the jacobians multiplied by the invers augmented mass matricxs) for a
 /// constraint applying a force at the points `center1, center2` and the direction `dir`.
 ///
 /// If the force is a torque, it is applied at the centers of mass of the body parts.
@@ -96,6 +64,9 @@ pub fn constraint_pair_geometry<N: Real>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
+    ext_vels1: Option<&DVectorSlice<N>>,
+    ext_vels2: Option<&DVectorSlice<N>>,
+    mut out_vel: Option<&mut N>
 ) -> ConstraintGeometry<N> {
     let mut res = ConstraintGeometry::new();
 
@@ -117,33 +88,33 @@ pub fn constraint_pair_geometry<N: Real>(
 
     let mut inv_r = N::zero();
 
-    if res.ndofs1 != 0 {
-        fill_constraint_geometry(
-            body1,
-            part1,
-            res.ndofs1,
-            center1,
-            dir,
-            res.j_id1,
-            res.wj_id1,
-            jacobians,
-            &mut inv_r,
-        );
-    }
+    body1.fill_constraint_geometry(
+        part1,
+        res.ndofs1,
+        center1,
+        dir,
+        res.j_id1,
+        res.wj_id1,
+        jacobians,
+        &mut inv_r,
+        ext_vels1,
+        // Unfortunate pattern we have to do to avoid borrowing issues.
+        // See https://internals.rust-lang.org/t/should-option-mut-t-implement-copy/3715/6
+        out_vel.as_mut().map(|v| &mut **v)
+    );
 
-    if res.ndofs2 != 0 {
-        fill_constraint_geometry(
-            body2,
-            part2,
-            res.ndofs2,
-            center2,
-            &dir.neg(),
-            res.j_id2,
-            res.wj_id2,
-            jacobians,
-            &mut inv_r,
-        );
-    }
+    body2.fill_constraint_geometry(
+        part2,
+        res.ndofs2,
+        center2,
+        &dir.neg(),
+        res.j_id2,
+        res.wj_id2,
+        jacobians,
+        &mut inv_r,
+        ext_vels2,
+        out_vel
+    );
 
     if body1.handle() == body2.handle() {
         let j1 = DVectorSlice::from_slice(&jacobians[res.j_id1..], res.ndofs1);
@@ -164,47 +135,6 @@ pub fn constraint_pair_geometry<N: Real>(
     res
 }
 
-/// Compute the generalized relative velocity for at the given points and along a given direction.
-///
-/// Every input are expressed in world-space.
-#[inline]
-pub fn constraint_pair_velocity<N: Real>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
-    assembly_id1: usize,
-    assembly_id2: usize,
-    center1: &Point<N>,
-    center2: &Point<N>,
-    dir: &ForceDirection<N>,
-    ext_vels: &DVector<N>,
-    jacobians: &[N],
-    geom: &ConstraintGeometry<N>,
-) -> N {
-    let mut vel = N::zero();
-
-    if geom.ndofs1 != 0 {
-        let j = DVectorSlice::from_slice(&jacobians[geom.j_id1..], geom.ndofs1);
-        vel += j.dot(&body1.generalized_velocity())
-            + j.dot(&ext_vels.rows(assembly_id1, geom.ndofs1));
-    } else if body1.status() == BodyStatus::Kinematic {
-        // Adjust the rhs for kinematic bodies.
-        vel += body1.body_part_point_velocity(part1, center1, dir);
-    }
-
-    if geom.ndofs2 != 0 {
-        let j = DVectorSlice::from_slice(&jacobians[geom.j_id2..], geom.ndofs2);
-        vel += j.dot(&body2.generalized_velocity())
-            + j.dot(&ext_vels.rows(assembly_id2, geom.ndofs2));
-    } else if body2.status() == BodyStatus::Kinematic {
-        // Adjust the rhs for kinematic bodies.
-        vel -= body2.body_part_point_velocity(part2, center2, dir);
-    }
-
-    vel
-}
-
 /// Test if a constraint between the two given bodies should be a ground
 /// constraint (a constraint between a dynamic body and one without any degree of freedom).
 #[inline]
@@ -213,6 +143,20 @@ pub fn constraints_are_ground_constraints<N: Real>(
     body2: &Body<N>,
 ) -> bool {
     body1.status_dependent_ndofs() == 0 || body2.status_dependent_ndofs() == 0
+}
+
+/// Retrieve the external velocity subvectors for the given bodies.
+#[inline(always)]
+pub fn split_ext_vels<'a, N: Real>(
+    body1: &Body<N>,
+    body2: &Body<N>,
+    assembly_id1: usize,
+    assembly_id2: usize,
+    ext_vels: &'a DVector<N>)
+    -> (DVectorSlice<'a, N>, DVectorSlice<'a, N>){
+    let ndofs1 = body1.status_dependent_ndofs();
+    let ndofs2 = body2.status_dependent_ndofs();
+    (ext_vels.rows(assembly_id1, ndofs1), ext_vels.rows(assembly_id2, ndofs2))
 }
 
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts wrt the given axis.
@@ -242,6 +186,9 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
     };
 
     let force = ForceDirection::Linear(*axis);
+    let mut rhs = N::zero();
+    let (ext_vels1, ext_vels2) = split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+
     let geom = constraint_pair_geometry(
         body1,
         part1,
@@ -253,21 +200,9 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
         ground_j_id,
         j_id,
         jacobians,
-    );
-
-    let rhs = constraint_pair_velocity(
-        body1,
-        part1,
-        body2,
-        part2,
-        assembly_id1,
-        assembly_id2,
-        anchor1,
-        anchor2,
-        &force,
-        ext_vels,
-        jacobians,
-        &geom,
+        Some(&ext_vels1),
+        Some(&ext_vels2),
+        Some(&mut rhs)
     );
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
@@ -384,6 +319,9 @@ pub fn cancel_relative_translation_wrt_axis<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -depth;
@@ -435,6 +373,9 @@ pub fn cancel_relative_translation<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -depth;
@@ -482,7 +423,10 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
         max: N::max_value(),
     };
 
+    let (ext_vels1, ext_vels2) = split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
     let force = ForceDirection::Angular(*axis);
+    let mut rhs = N::zero();
+
     let geom = constraint_pair_geometry(
         body1,
         part1,
@@ -494,21 +438,9 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
         ground_j_id,
         j_id,
         jacobians,
-    );
-
-    let rhs = constraint_pair_velocity(
-        body1,
-        part1,
-        body2,
-        part2,
-        assembly_id1,
-        assembly_id2,
-        anchor1,
-        anchor2,
-        &force,
-        ext_vels,
-        jacobians,
-        &geom,
+        Some(&ext_vels1),
+        Some(&ext_vels2),
+        Some(&mut rhs)
     );
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
@@ -619,6 +551,9 @@ pub fn cancel_relative_rotation<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -depth;
@@ -667,9 +602,12 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
         max: N::max_value(),
     };
 
+    let (ext_vels1, ext_vels2) = split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+
     let mut i = 0;
     AngularVector::orthonormal_subspace_basis(&[axis.unwrap()], |dir| {
         let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
+        let mut rhs = N::zero();
         let geom = constraint_pair_geometry(
             body1,
             part1,
@@ -681,21 +619,9 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
             ground_j_id,
             j_id,
             jacobians,
-        );
-
-        let rhs = constraint_pair_velocity(
-            body1,
-            part1,
-            body2,
-            part2,
-            assembly_id1,
-            assembly_id2,
-            anchor1,
-            anchor2,
-            &dir,
-            ext_vels,
-            jacobians,
-            &geom,
+            Some(&ext_vels1),
+            Some(&ext_vels2),
+            Some(&mut rhs)
         );
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
@@ -775,6 +701,9 @@ pub fn align_axis<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -depth;
@@ -822,9 +751,13 @@ pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
         max: N::max_value(),
     };
 
+    let (ext_vels1, ext_vels2) = split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
+
     let mut i = 0;
     Vector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
         let dir = ForceDirection::Linear(Unit::new_unchecked(*dir));
+        let mut rhs = N::zero();
+
         let geom = constraint_pair_geometry(
             body1,
             part1,
@@ -836,21 +769,9 @@ pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
             ground_j_id,
             j_id,
             jacobians,
-        );
-
-        let rhs = constraint_pair_velocity(
-            body1,
-            part1,
-            body2,
-            part2,
-            assembly_id1,
-            assembly_id2,
-            anchor1,
-            anchor2,
-            &dir,
-            ext_vels,
-            jacobians,
-            &geom,
+            Some(&ext_vels1),
+            Some(&ext_vels2),
+            Some(&mut rhs)
         );
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
@@ -921,6 +842,9 @@ pub fn project_anchor_to_axis<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -depth;
@@ -997,6 +921,9 @@ pub fn restore_angle_between_axis<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -error;

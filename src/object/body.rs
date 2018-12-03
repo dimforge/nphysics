@@ -174,14 +174,24 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// If this is a deformable body, returns a mutable reference to its deformed positions.
     fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])>;
 
-    /// Convert generalized forces applied to this body part into generalized accelerations.
-    fn inv_mass_mul_generalized_forces(&self, out: &mut [N]);
-
-    /// Convert a force applied to the center of mass of this body part into generalized force.
-    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]);
-
-    /// The velocity of the this body part at the given point and along the given direction.
-    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N;
+    /// Fills all the jacobians (and the jacobians multiplied by the inverse augmented mass matrix) for a
+    /// constraint applying a force at the point `center` (relative to the body part's center of mass) and
+    /// the direction `dir`.
+    ///
+    /// If the force is a torque, it is applied at the center of mass of the body part.
+    fn fill_constraint_geometry(
+        &self,
+        part: &BodyPart<N>,
+        ndofs: usize, // FIXME: keep this parameter?
+        center: &Point<N>,
+        dir: &ForceDirection<N>,
+        j_id: usize,
+        wj_id: usize,
+        jacobians: &mut [N],
+        inv_r: &mut N,
+        ext_vels: Option<&DVectorSlice<N>>,
+        out_vel: Option<&mut N>
+    );
 
     /// Returns `true` if this bodies contains internal constraints that need to be solved.
     fn has_active_internal_constraints(&mut self) -> bool;

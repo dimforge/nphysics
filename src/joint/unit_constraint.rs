@@ -60,7 +60,9 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
         }
     };
 
+    let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
     let force = ForceDirection::Linear(dir);
+    let mut rhs = N::zero();
     let geom = helper::constraint_pair_geometry(
         body1,
         part1,
@@ -72,21 +74,9 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
         ground_j_id,
         j_id,
         jacobians,
-    );
-
-    let rhs = helper::constraint_pair_velocity(
-        body1,
-        part1,
-        body2,
-        part2,
-        assembly_id1,
-        assembly_id2,
-        anchor1,
-        anchor2,
-        &force,
-        ext_vels,
-        jacobians,
-        &geom,
+        Some(&ext_vels1),
+        Some(&ext_vels2),
+        Some(&mut rhs)
     );
 
     // FIXME: generate unilateral constraints for unilateral limits.
@@ -175,6 +165,9 @@ pub fn build_linear_limits_position_constraint<N: Real>(
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -error;

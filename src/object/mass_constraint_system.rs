@@ -2,6 +2,7 @@ use std::ops::{AddAssign, SubAssign};
 use std::iter;
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
+use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
@@ -14,23 +15,16 @@ use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment};
 use ncollide::shape::{TriMesh, TetrahedronPointLocation};
 use ncollide::query::PointQueryWithLocation;
 
-use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus};
+use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
 use solver::{IntegrationParameters, ForceDirection};
 use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
-
-
-// FIXME: use an enum for the element itself?
-#[derive(Clone)]
-pub enum MassConstraintElementIndices {
-    Triangle(Point3<usize>),
-    Segment(Point2<usize>)
-}
+use object::fem_helper;
 
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
 pub struct MassConstraintElement<N: Real> {
     handle: Option<BodyPartHandle>,
-    indices: MassConstraintElementIndices,
+    indices: FiniteElementIndices,
     phantom: PhantomData<N>,
 }
 
@@ -78,6 +72,7 @@ pub struct MassConstraintSystem<N: Real> {
     handle: Option<BodyHandle>,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
+    kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
@@ -112,7 +107,7 @@ impl<N: Real> MassConstraintSystem<N> {
             let idx = face.indices * DIM;
             let elt = MassConstraintElement {
                 handle: None,
-                indices: MassConstraintElementIndices::Triangle(idx),
+                indices: FiniteElementIndices::Triangle(idx),
                 phantom: PhantomData
             };
 
@@ -135,6 +130,7 @@ impl<N: Real> MassConstraintSystem<N> {
             handle: None,
             constraints: constraints.values().cloned().collect(),
             elements,
+            kinematic_nodes: DVector::repeat(mesh.points().len(), false),
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
@@ -164,7 +160,7 @@ impl<N: Real> MassConstraintSystem<N> {
             let idx = edge.indices * DIM;
             let elt = MassConstraintElement {
                 handle: None,
-                indices: MassConstraintElementIndices::Segment(idx),
+                indices: FiniteElementIndices::Segment(idx),
                 phantom: PhantomData
             };
 
@@ -182,6 +178,7 @@ impl<N: Real> MassConstraintSystem<N> {
             handle: None,
             constraints: constraints.values().cloned().collect(),
             elements,
+            kinematic_nodes: DVector::repeat(polyline.points().len(), false),
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
@@ -203,7 +200,7 @@ impl<N: Real> MassConstraintSystem<N> {
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::new(&trimesh, mass, stiffness)
+        Self::from_trimesh(&trimesh, mass, stiffness)
     }
 
     /// Add one constraint to this mass-constraint system.
@@ -405,61 +402,37 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
-    fn inv_mass_mul_generalized_forces(&self, generalized_forces: &mut [N]) {
-        let mut out = DVectorSliceMut::from_slice(generalized_forces, self.ndofs());
-        out *= self.inv_node_mass;
-    }
-
-    fn body_part_jacobian_mul_unit_force(&self, part: &BodyPart<N>, pt: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
-        // Needed by the non-linear SOR-prox.
-        // FIXME: should this be done by the non-linear SOR-prox itself?
-        DVectorSliceMut::from_slice(out, self.ndofs()).fill(N::zero());
-
-        if let ForceDirection::Linear(dir) = force_dir {
-            let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a triangular mass-LengthConstraint element");
-
-            match elt.indices {
-                MassConstraintElementIndices::Triangle(indices) => {
-                    let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
-                    let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
-                    let c = self.positions.fixed_rows::<Dim>(indices.z).into_owned();
-
-                    let tri = Triangle::new(
-                        Point::from_coordinates(a),
-                        Point::from_coordinates(b),
-                        Point::from_coordinates(c),
-                    );
-
-                    // XXX: This is extremely costly!
-                    let proj = tri.project_point_with_location(&Isometry::identity(), pt, false).1;
-                    let bcoords = proj.barycentric_coordinates().unwrap();
-
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.z..]).copy_from(&(**dir * bcoords[2]));
-                }
-                MassConstraintElementIndices::Segment(indices) => {
-                    let a = self.positions.fixed_rows::<Dim>(indices.x).into_owned();
-                    let b = self.positions.fixed_rows::<Dim>(indices.y).into_owned();
-
-                    let seg = Segment::new(
-                        Point::from_coordinates(a),
-                        Point::from_coordinates(b),
-                    );
-
-                    // XXX: This is extremely costly!
-                    let proj = seg.project_point_with_location(&Isometry::identity(), pt, false).1;
-                    let bcoords = proj.barycentric_coordinates();
-
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.x..]).copy_from(&(**dir * bcoords[0]));
-                    VectorSliceMutN::<N, Dim>::from_slice(&mut out[indices.y..]).copy_from(&(**dir * bcoords[1]));
-                }
-            }
-        }
-    }
-
-    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
-        unimplemented!()
+    fn fill_constraint_geometry(
+        &self,
+        part: &BodyPart<N>,
+        ndofs: usize, // FIXME: keep this parameter?
+        center: &Point<N>,
+        force_dir: &ForceDirection<N>,
+        j_id: usize,
+        wj_id: usize,
+        jacobians: &mut [N],
+        inv_r: &mut N,
+        ext_vels: Option<&DVectorSlice<N>>,
+        out_vel: Option<&mut N>
+    ) {
+        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        fem_helper::fill_contact_geometry_fem(
+            self.ndofs(),
+            self.status,
+            elt.indices,
+            &self.positions,
+            &self.velocities,
+            &self.kinematic_nodes,
+            Either::Left(self.inv_node_mass),
+            center,
+            force_dir,
+            j_id,
+            wj_id,
+            jacobians,
+            inv_r,
+            ext_vels,
+            out_vel
+        );
     }
 
     #[inline]

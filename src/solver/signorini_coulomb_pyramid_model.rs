@@ -118,9 +118,11 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     + c.contact.normal.unwrap() * manifold.collider1.data().margin();
                 let center2 = c.contact.world2
                     - c.contact.normal.unwrap() * manifold.collider2.data().margin();
+                let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
                 Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
                     let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
+                    let mut rhs = N::zero();
 
                     // FIXME: will this compute the momentum twice ?
                     let geom = helper::constraint_pair_geometry(
@@ -134,21 +136,9 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         ground_j_id,
                         j_id,
                         jacobians,
-                    );
-
-                    let rhs = helper::constraint_pair_velocity(
-                        body1,
-                        part1,
-                        body2,
-                        part2,
-                        assembly_id1,
-                        assembly_id2,
-                        &center1,
-                        &center2,
-                        &dir,
-                        ext_vels,
-                        jacobians,
-                        &geom,
+                        Some(&ext_vels1),
+                        Some(&ext_vels2),
+                        Some(&mut rhs)
                     );
 
                     let warmstart = impulse[i] * params.warmstart_coeff;

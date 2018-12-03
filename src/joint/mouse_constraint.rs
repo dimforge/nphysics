@@ -93,10 +93,12 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         };
 
         let error = anchor2 - anchor1;
+        let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
         let mut i = 0;
         Vector::canonical_basis(|dir| {
             let fdir = ForceDirection::Linear(Unit::new_unchecked(*dir));
+            let mut rhs =  -error.dot(&*dir) * params.erp / params.dt;
             let geom = helper::constraint_pair_geometry(
                 body1,
                 part1,
@@ -108,22 +110,10 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
                 ground_j_id,
                 j_id,
                 jacobians,
+                Some(&ext_vels1),
+                Some(&ext_vels2),
+                Some(&mut rhs)
             );
-
-            let rhs = helper::constraint_pair_velocity(
-                body1,
-                part1,
-                body2,
-                part2,
-                assembly_id1,
-                assembly_id2,
-                &anchor1,
-                &anchor2,
-                &fdir,
-                ext_vels,
-                jacobians,
-                &geom,
-            ) - error.dot(&*dir) * params.erp / params.dt;
 
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
                 constraints

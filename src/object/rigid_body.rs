@@ -276,30 +276,46 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn inv_mass_mul_generalized_forces(&self, out: &mut [N]) {
-        let force = Force::from_slice(out);
-        let acc = self.inv_augmented_mass * force;
-        out[..SPATIAL_DIM].copy_from_slice(acc.as_slice());
-    }
-
-    #[inline]
-    fn body_part_jacobian_mul_unit_force(&self, _: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>, out: &mut [N]) {
+    fn fill_constraint_geometry(
+        &self,
+        _: &BodyPart<N>,
+        ndofs: usize,
+        point: &Point<N>,
+        force_dir: &ForceDirection<N>,
+        j_id: usize,
+        wj_id: usize,
+        jacobians: &mut [N],
+        inv_r: &mut N,
+        ext_vels: Option<&DVectorSlice<N>>,
+        out_vel: Option<&mut N>
+    ) {
         let pos = point - self.com.coords;
         let force = force_dir.at_point(&pos);
 
-        out[..SPATIAL_DIM].copy_from_slice(force.as_slice());
-    }
+        match self.status {
+            BodyStatus::Kinematic => {
+                if let Some(out_vel) = out_vel {
+                    *out_vel += force.as_vector().dot(&self.velocity.as_vector());
+                }
+            },
+            BodyStatus::Dynamic => {
+                jacobians[j_id..j_id + SPATIAL_DIM].copy_from_slice(force.as_slice());
 
-    #[inline]
-    fn body_part_point_velocity(&self, part: &BodyPart<N>, point: &Point<N>, force_dir: &ForceDirection<N>) -> N {
-        match *force_dir {
-            ForceDirection::Linear(ref normal) => {
-                let dpos = point - self.com;
-                self.velocity.shift(&dpos).linear.dot(normal)
-            }
-            ForceDirection::Angular(ref axis) => {
-                self.velocity.angular_vector().dot(axis)
-            }
+                let inv_mass = self.inv_augmented_mass();
+                let imf = *inv_mass * force;
+                jacobians[wj_id..wj_id + SPATIAL_DIM].copy_from_slice(imf.as_slice());
+
+                *inv_r += inv_mass.mass() + force.angular_vector().dot(&imf.angular_vector());
+
+                if let Some(out_vel) = out_vel {
+                    *out_vel += force.as_vector().dot(&self.velocity.as_vector());
+
+                    if let Some(ext_vels) = ext_vels {
+                        *out_vel += force.as_vector().dot(ext_vels)
+                    }
+                }
+            },
+            BodyStatus::Static | BodyStatus::Disabled => {},
         }
     }
 

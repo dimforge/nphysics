@@ -146,7 +146,7 @@ fn main() {
 //        volume.generate_neighbor_springs(1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
 //        volume.generate_neighbor_springs(1000.0, 0.0);
-        let mut volume = MassSpringSystem::new(&shape, 1.0, 10.0, 0.5);
+        let mut volume = MassSpringSystem::from_trimesh(&shape, 1.0, 10.0, 0.5);
         volume.generate_neighbor_springs(10.0, 0.5);
         volume.generate_neighbor_springs(10.0, 0.5);
         let handle = world.add_body(Box::new(volume));
@@ -163,7 +163,7 @@ fn main() {
 
         meshes[0].translate_by(&Translation3::new(0.0, 4.5, 0.0));
         let shape = meshes[0].clone().into();
-        let mut volume = MassSpringSystem::new(&shape, 1.0, 100.0, 0.5);
+        let mut volume = MassSpringSystem::from_trimesh(&shape, 1.0, 100.0, 0.5);
         volume.generate_neighbor_springs(100.0, 0.5);
         volume.generate_neighbor_springs(100.0, 0.5);
         let handle = world.add_body(Box::new(volume));

@@ -16,6 +16,7 @@ pub use self::deformable_surface::DeformableSurface;
 pub use self::deformable_volume::DeformableVolume;
 pub use self::mass_constraint_system::MassConstraintSystem;
 pub use self::mass_spring_system::MassSpringSystem;
+pub use self::fem_helper::FiniteElementIndices;
 
 mod material;
 
@@ -32,3 +33,4 @@ mod deformable_surface;
 mod deformable_volume;
 mod mass_spring_system;
 mod mass_constraint_system;
+pub(crate) mod fem_helper;
