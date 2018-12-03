@@ -1,6 +1,8 @@
 use either::Either;
 
 use na::{Real, Cholesky, Dynamic, DVectorSliceMut, VectorSliceMutN, Point2, Point3, Point4, DVector, DVectorSlice};
+#[cfg(feature = "dim3")]
+use na::Matrix3;
 use ncollide::shape::{Segment, Triangle};
 use ncollide::query::PointQueryWithLocation;
 #[cfg(feature = "dim3")]
@@ -176,11 +178,10 @@ pub fn fill_contact_geometry_fem<N: Real>(
                 let bcoords = if let Some(b) = proj.barycentric_coordinates() {
                     b
                 } else {
-                    unimplemented!()
-//                    let pt_a = center.coords - a;
-//                    // XXX: we have to update j_inv to use the new positions here!
-//                    let b = elt.j_inv.tr_mul(&pt_a);
-//                    [(N::one() - b.x - b.y - b.z), b.x, b.y, b.z]
+                    let pt_a = center.coords - a;
+                    let mat = Matrix3::from_columns(&[b - a, c - a, d - a]);
+                    let b = mat.try_inverse().unwrap_or_else(|| Matrix3::identity()) * pt_a;
+                    [(N::one() - b.x - b.y - b.z), b.x, b.y, b.z]
                 };
 
                 let dir1 = **dir * bcoords[0];
