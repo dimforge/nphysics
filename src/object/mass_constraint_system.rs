@@ -255,6 +255,13 @@ impl<N: Real> MassConstraintSystem<N> {
     pub fn warmstart_coefficient(&self) -> N {
         self.warmstart_coeff
     }
+
+    /// Restrict the specified node acceleration to always be zero so
+    /// it can be controlled manually by the user at the velocity level.
+    pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
+        assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.kinematic_nodes[i] = is_kinematic;
+    }
 }
 
 impl<N: Real> Body<N> for MassConstraintSystem<N> {
@@ -278,8 +285,10 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         let gravity_acc = gravity;
 
         for i in 0..self.positions.len() / DIM {
-            let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
-            acc += gravity_acc
+            if !self.kinematic_nodes[i] {
+                let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
+                acc += gravity_acc
+            }
         }
 
         for constraint in &mut self.constraints {
@@ -454,8 +463,13 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
             let impulse = self.impulses[i];
             if !impulse.is_zero() {
                 let vel_correction = *constraint.dir * (impulse * self.inv_node_mass);
-                dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
-                dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+
+                if !self.kinematic_nodes[constraint.nodes.0 / DIM] {
+                    dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
+                }
+                if !self.kinematic_nodes[constraint.nodes.1 / DIM] {
+                    dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+                }
             }
         }
     }
@@ -467,25 +481,43 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         // matrix) for solving those constraints.
         // The mass matrix is simply a diagonal with elements equal to self.mass / self.
         for (i, constraint) in self.constraints.iter_mut().enumerate() {
+            let kinematic1 = self.kinematic_nodes[constraint.nodes.0 / DIM];
+            let kinematic2 = self.kinematic_nodes[constraint.nodes.1 / DIM];
+
+            if kinematic1 && kinematic2 {
+                continue;
+            }
+
             let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0) + dvels.fixed_rows::<Dim>(constraint.nodes.0);
             let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1) + dvels.fixed_rows::<Dim>(constraint.nodes.1);
 
             let dvel = (v1 - v0).dot(&constraint.dir);
             let dlambda;
+            let denom = if kinematic1 || kinematic2 {
+                self.inv_node_mass
+            } else {
+                self.inv_node_mass + self.inv_node_mass
+            };
+
             if let Some(stiffness) = constraint.stiffness {
                 let curr_impulse = self.impulses[i];
-                let dimpulse = (dvel + constraint.target_vel) / (self.inv_node_mass + self.inv_node_mass);
+                let dimpulse = (dvel + constraint.target_vel) / denom;
                 let new_impulse = na::clamp(curr_impulse + dimpulse, -constraint.max_force, constraint.max_force);
                 dlambda = new_impulse - curr_impulse;
                 self.impulses[i] = new_impulse;
             } else {
-                dlambda = dvel / (self.inv_node_mass + self.inv_node_mass);
+                dlambda = dvel / denom;
                 self.impulses[i] += dlambda;
             }
 
             let vel_correction = *constraint.dir * (dlambda * self.inv_node_mass);
-            dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
-            dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+
+            if !kinematic1 {
+                dvels.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&vel_correction);
+            }
+            if !kinematic2 {
+                dvels.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&vel_correction);
+            }
         }
     }
 
@@ -493,6 +525,13 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
         for (i, constraint) in self.constraints.iter_mut().enumerate() {
             if constraint.stiffness.is_none() {
+                let kinematic1 = self.kinematic_nodes[constraint.nodes.0 / DIM];
+                let kinematic2 = self.kinematic_nodes[constraint.nodes.1 / DIM];
+
+                if kinematic1 && kinematic2 {
+                    continue;
+                }
+
                 let dpos = self.positions.fixed_rows::<Dim>(constraint.nodes.1)
                     - self.positions.fixed_rows::<Dim>(constraint.nodes.0);
 
@@ -517,9 +556,19 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
                 };
 
                 if !clamped_error.is_zero() {
-                    let shift = *constraint.dir * (clamped_error * na::convert(0.5));
-                    self.positions.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&shift);
-                    self.positions.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&shift);
+                    let coeff = if kinematic1 || kinematic2 {
+                        N::one()
+                    } else {
+                        na::convert(0.5)
+                    };
+                    let shift = *constraint.dir * (clamped_error * coeff);
+
+                    if !kinematic1 {
+                        self.positions.fixed_rows_mut::<Dim>(constraint.nodes.0).add_assign(&shift);
+                    }
+                    if !kinematic2 {
+                        self.positions.fixed_rows_mut::<Dim>(constraint.nodes.1).sub_assign(&shift);
+                    }
                 }
             }
         }
