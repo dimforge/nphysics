@@ -1,9 +1,9 @@
 use na::{Real, Unit};
 
-use force_generator::ForceGenerator;
-use math::{Force, Point, Vector};
-use object::{BodyPartHandle, BodySet};
-use solver::IntegrationParameters;
+use crate::force_generator::ForceGenerator;
+use crate::math::{Force, Point, Vector};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.
 pub struct Spring<N: Real> {

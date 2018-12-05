@@ -1,9 +1,9 @@
 use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
-use joint::{Joint, PrismaticJoint};
-use math::{JacobianSliceMut, Velocity};
-use object::{Multibody, MultibodyLink};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::joint::{Joint, PrismaticJoint};
+use crate::math::{JacobianSliceMut, Velocity};
+use crate::object::{Multibody, MultibodyLink};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows two translational degrees of freedom.
 #[derive(Copy, Clone, Debug)]

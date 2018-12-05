@@ -15,10 +15,10 @@ use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment};
 use ncollide::shape::{TriMesh, TetrahedronPointLocation};
 use ncollide::query::PointQueryWithLocation;
 
-use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
-use solver::{IntegrationParameters, ForceDirection};
-use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
-use object::fem_helper;
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
+use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
+use crate::object::fem_helper;
 
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]

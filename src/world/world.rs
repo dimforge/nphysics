@@ -10,17 +10,17 @@ use ncollide::events::{ContactEvents, ProximityEvents};
 use ncollide::shape::{ShapeHandle, Shape, DeformableShape};
 use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
 
-use counters::Counters;
-use detection::{ActivationManager, ColliderContactManifold};
-use force_generator::{ForceGenerator, ForceGeneratorHandle};
-use joint::{ConstraintHandle, Joint, JointConstraint};
-use math::{Inertia, Isometry, Point, Vector};
-use object::{
+use crate::counters::Counters;
+use crate::detection::{ActivationManager, ColliderContactManifold};
+use crate::force_generator::{ForceGenerator, ForceGeneratorHandle};
+use crate::joint::{ConstraintHandle, Joint, JointConstraint};
+use crate::math::{Inertia, Isometry, Point, Vector};
+use crate::object::{
     Body, BodyPartHandle, BodyPart, BodySet, BodyStatus, Collider, ColliderData, ColliderAnchor,
     ColliderHandle, Colliders, Material, Multibody, MultibodyLink,
     MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle, Bodies, BodiesMut,
 };
-use solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
+use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 
 /// Type of the collision world used by nphysics.
 pub type CollisionWorld<N> = ncollide::world::CollisionWorld<N, ColliderData<N>>;
@@ -725,7 +725,7 @@ impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFi
 
 #[cfg(test)]
 mod test {
-    use world::World;
+    use crate::world::World;
 
     #[test]
     fn world_is_send_sync() {

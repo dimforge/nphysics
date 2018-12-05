@@ -1,8 +1,8 @@
 use na::{DVector, Real, Unit};
 
-use math::{Point, Vector};
-use object::{Body, BodyPart};
-use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
+use crate::math::{Point, Vector};
+use crate::object::{Body, BodyPart};
+use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 pub fn build_linear_limits_velocity_constraint<N: Real>(

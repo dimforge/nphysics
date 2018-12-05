@@ -1,9 +1,9 @@
 use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
 
-use joint::{Joint, PrismaticJoint, RevoluteJoint};
-use math::{JacobianSliceMut, Velocity};
-use object::{Multibody, MultibodyLink};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
+use crate::math::{JacobianSliceMut, Velocity};
+use crate::object::{Multibody, MultibodyLink};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one translational and one rotational degrees of freedom.
 ///

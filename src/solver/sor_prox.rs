@@ -4,9 +4,9 @@ use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN};
 
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
-use math::{SpatialDim, SPATIAL_DIM};
-use object::{BodySet, BodyHandle, Body};
-use solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
+use crate::math::{SpatialDim, SPATIAL_DIM};
+use crate::object::{BodySet, BodyHandle, Body};
+use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint};
 
 /// A SOR-Prox velocity-based constraints solver.

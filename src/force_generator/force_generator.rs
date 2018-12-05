@@ -3,8 +3,8 @@
 use downcast::Any;
 use na::Real;
 
-use object::BodySet;
-use solver::IntegrationParameters;
+use crate::object::BodySet;
+use crate::solver::IntegrationParameters;
 
 /// The handle of a force generator.
 pub type ForceGeneratorHandle = usize;

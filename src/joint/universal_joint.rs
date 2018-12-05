@@ -1,9 +1,9 @@
 use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
-use joint::{Joint, RevoluteJoint};
-use math::{JacobianSliceMut, Velocity};
-use object::{Multibody, MultibodyLink};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::joint::{Joint, RevoluteJoint};
+use crate::math::{JacobianSliceMut, Velocity};
+use crate::object::{Multibody, MultibodyLink};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows only two relative rotations between two multibody links.
 #[derive(Copy, Clone, Debug)]

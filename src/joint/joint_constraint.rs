@@ -3,8 +3,8 @@
 use downcast::Any;
 use na::{DVector, Real};
 
-use object::{BodyPartHandle, BodySet};
-use solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator};
 
 /// The handle of a consraint.
 pub type ConstraintHandle = usize;

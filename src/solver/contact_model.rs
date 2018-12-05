@@ -3,9 +3,9 @@
 use downcast::Any;
 use na::{DVector, Real};
 
-use detection::ColliderContactManifold;
-use object::BodySet;
-use solver::{ConstraintSet, IntegrationParameters};
+use crate::detection::ColliderContactManifold;
+use crate::object::BodySet;
+use crate::solver::{ConstraintSet, IntegrationParameters};
 
 /// The modeling of a contact.
 pub trait ContactModel<N: Real>: Any + Send + Sync {

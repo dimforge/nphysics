@@ -1,4 +1,4 @@
-use counters::Timer;
+use crate::counters::Timer;
 use std::fmt::{Display, Formatter, Result};
 
 /// Performance counters related to each stage of the time step.

@@ -1,11 +1,11 @@
 use alga::linear::FiniteDimVectorSpace;
 use na::{DVector, Real, Unit};
 
-use joint::JointConstraint;
-use math::{Point, Vector, DIM};
-use object::{BodyPartHandle, BodySet};
-use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::joint::JointConstraint;
+use crate::math::{Point, Vector, DIM};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A spring-like constraint to be used to drag a body part with the mouse.

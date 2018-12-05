@@ -2,10 +2,10 @@
 
 use na::{self, DVectorSliceMut, Real, Unit};
 
-use joint::{self, Joint, JointMotor, UnitJoint};
-use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use object::{MultibodyLink, Multibody};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::joint::{self, Joint, JointMotor, UnitJoint};
+use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
+use crate::object::{MultibodyLink, Multibody};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A unit joint that allows only one translational degree on freedom.
 #[derive(Copy, Clone, Debug)]

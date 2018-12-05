@@ -3,9 +3,9 @@
 use downcast::Any;
 use na::{DVectorSliceMut, Real};
 
-use object::{Multibody, MultibodyLink};
-use math::{Isometry, JacobianSliceMut, Vector, Velocity};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::object::{Multibody, MultibodyLink};
+use crate::math::{Isometry, JacobianSliceMut, Vector, Velocity};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// Trait implemented by all joints following the reduced-coordinate formation.
 pub trait Joint<N: Real>: Any + Send + Sync {

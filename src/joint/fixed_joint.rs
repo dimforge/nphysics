@@ -1,8 +1,8 @@
 use na::{DVectorSliceMut, Real};
 
-use joint::Joint;
-use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
-use solver::IntegrationParameters;
+use crate::joint::Joint;
+use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
+use crate::solver::IntegrationParameters;
 
 /// A joint that does not allow any relative degrees of freedom.
 #[derive(Copy, Clone, Debug)]

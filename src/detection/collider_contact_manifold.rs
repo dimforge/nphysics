@@ -2,8 +2,8 @@ use na::Real;
 use ncollide::query::{ContactManifold, TrackedContact};
 use ncollide::shape::FeatureId;
 
-use math::Isometry;
-use object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor};
+use crate::math::Isometry;
+use crate::object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]

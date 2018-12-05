@@ -1,5 +1,5 @@
 use na::Real;
-use solver::{BilateralConstraint, BilateralGroundConstraint,
+use crate::solver::{BilateralConstraint, BilateralGroundConstraint,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearUnilateralConstraint,
              UnilateralConstraint, UnilateralGroundConstraint};
 

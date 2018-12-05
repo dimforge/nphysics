@@ -1,11 +1,11 @@
 use na::{DVector, Real, Unit};
 use std::ops::Range;
 
-use joint::JointConstraint;
-use math::{AngularVector, Point};
-use object::{BodyPartHandle, BodySet};
-use solver::helper;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::joint::JointConstraint;
+use crate::math::{AngularVector, Point};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::helper;
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes one relative translational degree of freedom, and all but one rotational degrees of freedom.

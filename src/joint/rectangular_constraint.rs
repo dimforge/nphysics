@@ -1,11 +1,11 @@
 use na::{DVector, Real, Unit, Vector3};
 use std::ops::Range;
 
-use joint::JointConstraint;
-use math::{AngularVector, Point};
-use object::{BodyPartHandle, BodySet};
-use solver::helper;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::joint::JointConstraint;
+use crate::math::{AngularVector, Point};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::helper;
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that remove all relative rotations and one relative translation between two body parts.

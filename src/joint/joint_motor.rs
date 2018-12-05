@@ -1,6 +1,6 @@
 use na::Real;
 use num::Zero;
-use solver::ImpulseLimits;
+use crate::solver::ImpulseLimits;
 
 /// Description of a motor applied to a joint.
 #[derive(Copy, Clone, Debug)]

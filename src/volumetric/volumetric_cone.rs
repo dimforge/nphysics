@@ -6,7 +6,7 @@ use na::{Matrix1, Matrix3, Point2, Point3};
 use na;
 use ncollide::shape::{Cone2, Cone3};
 use ncollide::math::Point;
-use volumetric::Volumetric;
+use crate::volumetric::Volumetric;
 
 /// The volume of a cone.
 #[inline]

@@ -1,9 +1,9 @@
 use na::Real;
 
-use solver::IntegrationParameters;
-use force_generator::ForceGenerator;
-use object::{BodyPartHandle, BodySet};
-use math::{Velocity, Vector};
+use crate::solver::IntegrationParameters;
+use crate::force_generator::ForceGenerator;
+use crate::object::{BodyPartHandle, BodySet};
+use crate::math::{Velocity, Vector};
 
 /// Force generator adding a constant acceleration
 /// at the center of mass of a set of body parts.

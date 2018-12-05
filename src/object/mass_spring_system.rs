@@ -15,11 +15,11 @@ use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment};
 use ncollide::shape::{TriMesh, TetrahedronPointLocation};
 use ncollide::query::PointQueryWithLocation;
 
-use counters::Timer;
-use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
-use solver::{IntegrationParameters, ForceDirection};
-use math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
-use object::fem_helper;
+use crate::counters::Timer;
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
+use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
+use crate::object::fem_helper;
 
 /// An element of the mass-spring system.
 #[derive(Clone)]

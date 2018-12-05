@@ -11,10 +11,10 @@ use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, TrianglePointLocation, Triangle};
 use ncollide::query::PointQueryWithLocation;
 
-use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
-use solver::{IntegrationParameters, ForceDirection};
-use math::{Force, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry, SpatialVector, RotationMatrix, Vector};
-use object::fem_helper;
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
+use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry, SpatialVector, RotationMatrix, Vector};
+use crate::object::fem_helper;
 
 /// One element of a deformable surface.
 #[derive(Clone)]

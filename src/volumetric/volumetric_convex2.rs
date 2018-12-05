@@ -5,8 +5,8 @@ use na::{Matrix1, Point2};
 use na;
 use ncollide::utils;
 use ncollide::shape::ConvexPolygon;
-use volumetric::Volumetric;
-use math::{AngularInertia, Point};
+use crate::volumetric::Volumetric;
+use crate::math::{AngularInertia, Point};
 
 /// The area and center of mass of a 2D convex Polyline.
 ///
@@ -159,7 +159,7 @@ mod test {
     use na::{self, Matrix1, Point2, Vector2, Vector3};
     use ncollide::shape::{Cuboid, ConvexPolygon};
     use ncollide::procedural;
-    use volumetric::Volumetric;
+    use crate::volumetric::Volumetric;
 
     #[test]
     fn test_inertia_tensor2() {

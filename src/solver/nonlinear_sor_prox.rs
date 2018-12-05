@@ -3,14 +3,14 @@ use slab::Slab;
 use std::marker::PhantomData;
 use std::ops::MulAssign;
 
-use world::CollisionWorld;
-use joint::JointConstraint;
-use object::{BodySet, ColliderAnchor, BodyHandle};
-use solver::helper;
-use solver::{ForceDirection, IntegrationParameters,
+use crate::world::CollisionWorld;
+use crate::joint::JointConstraint;
+use crate::object::{BodySet, ColliderAnchor, BodyHandle};
+use crate::solver::helper;
+use crate::solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
              NonlinearUnilateralConstraint};
-use math::Isometry;
+use crate::math::Isometry;
 
 /// Non-linear position-based constraint solver using the SOR-Prox approach.
 pub struct NonlinearSORProx<N: Real> {

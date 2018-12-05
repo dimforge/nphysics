@@ -8,9 +8,9 @@ use ncollide::query::PointQueryWithLocation;
 #[cfg(feature = "dim3")]
 use ncollide::shape::Tetrahedron;
 
-use object::BodyStatus;
-use solver::ForceDirection;
-use math::{Point, Isometry, Dim, DIM};
+use crate::object::BodyStatus;
+use crate::solver::ForceDirection;
+use crate::math::{Point, Isometry, Dim, DIM};
 
 
 /// Indices of the nodes of on element of a body decomposed in finite elements.

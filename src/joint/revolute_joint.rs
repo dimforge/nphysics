@@ -2,11 +2,11 @@
 
 use na::{self, DVectorSliceMut, Real, Unit};
 
-use joint::{self, Joint, JointMotor, UnitJoint};
-use math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use object::{MultibodyLink, Multibody};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use utils::GeneralizedCross;
+use crate::joint::{self, Joint, JointMotor, UnitJoint};
+use crate::math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
+use crate::object::{MultibodyLink, Multibody};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::utils::GeneralizedCross;
 
 /// A unit joint that allows only one relative rotational degree of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]

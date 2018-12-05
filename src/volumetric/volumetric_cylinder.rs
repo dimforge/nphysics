@@ -2,8 +2,8 @@ use num::Zero;
 
 use na::{self, Real};
 use ncollide::shape::Cylinder;
-use volumetric::Volumetric;
-use math::{AngularInertia, Point, DIM};
+use crate::volumetric::Volumetric;
+use crate::math::{AngularInertia, Point, DIM};
 
 /// The volume of a cylinder.
 #[inline]

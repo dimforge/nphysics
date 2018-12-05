@@ -1,12 +1,12 @@
 use na::{self, DVector, Real};
 use std::ops::Range;
 
-use detection::ColliderContactManifold;
+use crate::detection::ColliderContactManifold;
 use ncollide::query::TrackedContact;
 use ncollide::utils::IsometryOps;
-use object::BodySet;
-use solver::helper;
-use solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
+use crate::object::BodySet;
+use crate::solver::helper;
+use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
              NonlinearUnilateralConstraint, UnilateralConstraint, UnilateralGroundConstraint};
 
 /// A contact model generating one non-penetration constraint per contact.

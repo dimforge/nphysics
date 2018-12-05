@@ -2,9 +2,9 @@
 
 use na::{DVectorSliceMut, Real};
 
-use joint::{Joint, JointMotor};
-use object::{BodyPartHandle, Multibody, MultibodyLink, Body, BodyPart};
-use solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
+use crate::joint::{Joint, JointMotor};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body, BodyPart};
+use crate::solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
              IntegrationParameters, UnilateralGroundConstraint};
 
 /// Trait implemented by joints using the reduced-coordinates approach and allowing only one degree of freedom.

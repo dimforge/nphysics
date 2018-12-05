@@ -3,20 +3,20 @@ use slab::Slab;
 
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
-use joint::Joint;
-use math::{
+use crate::joint::Joint;
+use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
     Vector, Velocity, DIM,
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
-use object::{
+use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink,
     MultibodyLinkVec, Body, BodyPart, BodyHandle, RigidBody, Ground,
 };
-use solver::{
+use crate::solver::{
     ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator, ForceDirection,
 };
-use utils::{GeneralizedCross, IndexMut2};
+use crate::utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: Real> {

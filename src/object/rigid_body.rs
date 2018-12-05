@@ -1,15 +1,15 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
-use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
-use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
-use solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
+use crate::solver::{IntegrationParameters, ForceDirection};
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
 
 #[cfg(feature = "dim3")]
-use math::AngularVector;
+use crate::math::AngularVector;
 #[cfg(feature = "dim3")]
-use utils::GeneralizedCross;
+use crate::utils::GeneralizedCross;
 
 /// A rigid body.
 #[derive(Clone, Debug)]

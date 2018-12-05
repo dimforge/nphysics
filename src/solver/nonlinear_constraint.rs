@@ -1,9 +1,9 @@
 use na::{Real, Unit};
 use ncollide::query::ContactKinematic;
 
-use math::Vector;
-use object::{BodyPartHandle, BodySet, ColliderHandle};
-use solver::IntegrationParameters;
+use crate::math::Vector;
+use crate::object::{BodyPartHandle, BodySet, ColliderHandle};
+use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
 pub struct GenericNonlinearConstraint<N: Real> {

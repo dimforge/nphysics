@@ -1,12 +1,12 @@
 use slab::{Iter, IterMut, Slab};
 use std::iter::Map;
 
-use joint::Joint;
-use math::{Inertia, Isometry, Point, Vector};
+use crate::joint::Joint;
+use crate::math::{Inertia, Isometry, Point, Vector};
 use na::Real;
-use object::{Body, BodyPart, Ground, Multibody,
+use crate::object::{Body, BodyPart, Ground, Multibody,
              MultibodyLink, MultibodyWorkspace, RigidBody};
-use solver::IntegrationParameters;
+use crate::solver::IntegrationParameters;
 
 // FIXME: remove the pub(crate) after this is replaced by -> impl Iterator
 pub(crate) type RigidBodies<'a, N> =

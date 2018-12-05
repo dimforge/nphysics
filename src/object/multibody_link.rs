@@ -2,9 +2,9 @@ use std::ops::{Deref, DerefMut};
 
 use na::Real;
 
-use joint::Joint;
-use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use object::{BodyPartHandle, BodyPart, BodyHandle};
+use crate::joint::Joint;
+use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: Real> {

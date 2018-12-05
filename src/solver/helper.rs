@@ -6,9 +6,9 @@ use na;
 use na::{DVector, DVectorSlice, Real, Unit};
 use std::ops::Neg;
 
-use math::{AngularVector, Force, Point, Rotation, Vector};
-use object::{Body, BodyPart, BodyStatus};
-use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
+use crate::math::{AngularVector, Force, Point, Rotation, Vector};
+use crate::object::{Body, BodyPart, BodyStatus};
+use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 /// The direction of a force in world-space.

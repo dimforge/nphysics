@@ -1,12 +1,12 @@
 use std::ops::Range;
 use na::{DVector, Real};
 
-use object::{BodyPartHandle, BodySet};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
-use solver::helper;
-use joint::JointConstraint;
-use math::{Point, Vector, DIM};
+use crate::solver::helper;
+use crate::joint::JointConstraint;
+use crate::math::{Point, Vector, DIM};
 
 /// A constraint that removes all relative linear motion between two body parts.
 pub struct BallConstraint<N: Real> {

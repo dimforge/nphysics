@@ -7,8 +7,8 @@ use ncollide::utils;
 use ncollide::procedural::{IndexBuffer, TriMesh};
 use ncollide::transformation;
 use ncollide::shape::ConvexHull;
-use volumetric::Volumetric;
-use math::{AngularInertia, Point};
+use crate::volumetric::Volumetric;
+use crate::math::{AngularInertia, Point};
 
 fn tetrahedron_unit_inertia_tensor_wrt_point<N: Real>(
     point: &Point<N>,
@@ -215,7 +215,7 @@ mod test {
     use na::Vector3;
     use ncollide::shape::{ConvexHull, Cuboid};
     use ncollide::procedural;
-    use volumetric::Volumetric;
+    use crate::volumetric::Volumetric;
 
     #[test]
     fn test_inertia_tensor3() {

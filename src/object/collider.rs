@@ -3,8 +3,8 @@ use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
 use ncollide::shape::FeatureId;
 
-use math::Isometry;
-use object::{BodyPartHandle, BodyHandle, Material};
+use crate::math::Isometry;
+use crate::object::{BodyPartHandle, BodyHandle, Material};
 
 /// Type of a reference to a collider.
 pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;

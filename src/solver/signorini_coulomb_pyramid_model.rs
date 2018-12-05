@@ -2,11 +2,11 @@ use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, Real, Unit};
 use std::ops::Range;
 
-use detection::ColliderContactManifold;
-use math::{Vector, DIM};
-use object::BodySet;
-use solver::helper;
-use solver::{
+use crate::detection::ColliderContactManifold;
+use crate::math::{Vector, DIM};
+use crate::object::BodySet;
+use crate::solver::helper;
+use crate::solver::{
     BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel, ForceDirection,
     ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel,
 };

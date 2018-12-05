@@ -5,9 +5,9 @@ use downcast::Any;
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 use ncollide::shape::DeformationsType;
 
-use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use object::{BodyPartHandle, BodyHandle};
-use solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use crate::object::{BodyPartHandle, BodyHandle};
+use crate::solver::{IntegrationParameters, ForceDirection};
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]

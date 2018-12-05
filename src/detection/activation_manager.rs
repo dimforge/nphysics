@@ -1,11 +1,11 @@
 use slab::Slab;
 
 use na::{self, Real};
-use world::CollisionWorld;
-use object::{BodyHandle, Body, BodySet};
-use joint::JointConstraint;
-use utils::union_find::UnionFindSet;
-use utils::union_find;
+use crate::world::CollisionWorld;
+use crate::object::{BodyHandle, Body, BodySet};
+use crate::joint::JointConstraint;
+use crate::utils::union_find::UnionFindSet;
+use crate::utils::union_find;
 
 /// Structure that monitors island-based activation/deactivation of bodies.
 ///

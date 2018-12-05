@@ -1,10 +1,10 @@
 use na::{self, DVectorSliceMut, Isometry3, Matrix3, Real, Translation3, U3, UnitQuaternion,
          Vector3, VectorSlice3};
 
-use joint::Joint;
-use math::{JacobianSliceMut, Velocity};
-use solver::IntegrationParameters;
-use utils::GeneralizedCross;
+use crate::joint::Joint;
+use crate::math::{JacobianSliceMut, Velocity};
+use crate::solver::IntegrationParameters;
+use crate::utils::GeneralizedCross;
 
 /// A joint that allows only all rotational degrees of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]

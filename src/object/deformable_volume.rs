@@ -11,10 +11,10 @@ use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
 use ncollide::query::PointQueryWithLocation;
 
-use object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
-use solver::{IntegrationParameters, ForceDirection};
-use math::{Force, Inertia, Velocity, DIM};
-use object::fem_helper;
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
+use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Velocity, DIM};
+use crate::object::fem_helper;
 
 /// One element of a deformable volume.
 #[derive(Clone)]

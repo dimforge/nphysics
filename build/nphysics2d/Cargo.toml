@@ -9,6 +9,7 @@ repository = "https://github.com/sebcrozet/nphysics"
 readme = "README.md"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
+edition = "2018"
 
 [features]
 default = [ "dim2" ]

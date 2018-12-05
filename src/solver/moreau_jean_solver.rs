@@ -2,12 +2,12 @@ use slab::Slab;
 
 use na::{DVector, Real};
 
-use counters::Counters;
-use detection::ColliderContactManifold;
-use joint::JointConstraint;
-use object::{BodyHandle, BodySet, Body};
-use solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
-use world::CollisionWorld;
+use crate::counters::Counters;
+use crate::detection::ColliderContactManifold;
+use crate::joint::JointConstraint;
+use crate::object::{BodyHandle, BodySet, Body};
+use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
+use crate::world::CollisionWorld;
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {

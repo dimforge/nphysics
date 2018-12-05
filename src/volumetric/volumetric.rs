@@ -2,7 +2,7 @@
 
 use na::{self, Real};
 use na::{Isometry2, Isometry3, Matrix1, Matrix3, Point2, Point3, Vector1, Vector3};
-use math::{AngularInertia, Inertia, Point};
+use crate::math::{AngularInertia, Inertia, Point};
 
 /// Trait implemented by inertia tensors.
 pub trait InertiaTensor<N, P, AV, M> {
@@ -12,10 +12,10 @@ pub trait InertiaTensor<N, P, AV, M> {
     fn apply(&self, a: &AV) -> AV;
 
     /// Transforms this inertia tensor from local space to world space.
-    fn to_world_space(&self, &M) -> Self;
+    fn to_world_space(&self, _: &M) -> Self;
 
     /// Computes this inertia tensor relative to a given point.
-    fn to_relative_wrt_point(&self, N, &P) -> Self;
+    fn to_relative_wrt_point(&self, _: N, _: &P) -> Self;
 }
 
 /// Trait implemented by objects which have a mass, a center of mass, and an inertia tensor.

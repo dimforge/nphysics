@@ -4,8 +4,8 @@ use ncollide::shape::{Ball, Compound, Cuboid, Shape};
 use ncollide::shape::ConvexHull;
 #[cfg(feature = "dim2")]
 use ncollide::shape::ConvexPolygon;
-use volumetric::Volumetric;
-use math::{AngularInertia, Point};
+use crate::volumetric::Volumetric;
+use crate::math::{AngularInertia, Point};
 
 macro_rules! dispatch(
     ($p: ty, $i: ty, $sself: ident.$name: ident($($argN: ident),*)) => {

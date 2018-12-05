@@ -1,11 +1,11 @@
 use na::{DVector, Real};
 use std::ops::Range;
 
-use joint::JointConstraint;
-use math::{AngularVector, Isometry, Point, ANGULAR_DIM};
-use object::{BodyPartHandle, BodySet};
-use solver::helper;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::joint::JointConstraint;
+use crate::math::{AngularVector, Isometry, Point, ANGULAR_DIM};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::helper;
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all relative angular motion between two body parts.

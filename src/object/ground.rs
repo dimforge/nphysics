@@ -1,9 +1,9 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use ncollide::shape::DeformationsType;
-use math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
-use solver::{IntegrationParameters, ForceDirection};
+use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
+use crate::solver::{IntegrationParameters, ForceDirection};
 
 /// A singleton representing the ground.
 ///
