@@ -681,6 +681,16 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         }
     }
 
+    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
+        fem_helper::material_coordinates_to_world_coordinates(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
+    }
+
+    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
+        fem_helper::world_coordinates_to_material_coordinates(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
+    }
+
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,
@@ -694,7 +704,7 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>
     ) {
-        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,

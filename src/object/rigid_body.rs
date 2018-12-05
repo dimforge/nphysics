@@ -4,6 +4,7 @@ use math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Veloc
 use object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
 use solver::{IntegrationParameters, ForceDirection};
 use ncollide::shape::DeformationsType;
+use ncollide::utils::IsometryOps;
 
 #[cfg(feature = "dim3")]
 use math::AngularVector;
@@ -273,6 +274,16 @@ impl<N: Real> Body<N> for RigidBody<N> {
     #[inline]
     fn apply_displacement(&mut self, displacement: &[N]) {
         self.apply_displacement(&Velocity::from_slice(displacement))
+    }
+
+    #[inline]
+    fn material_coordinates_to_world_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        self.local_to_world * point
+    }
+
+    #[inline]
+    fn world_coordinates_to_material_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        self.local_to_world.inverse_transform_point(point)
     }
 
     #[inline]

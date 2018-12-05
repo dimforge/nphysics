@@ -251,7 +251,7 @@ impl State for Testbed {
                                     let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
                                     {
                                         self.grabbed_object = Some(*body_part);
-                                    } else { unimplemented!() }
+                                    } else { continue; }
                             }
                         }
 

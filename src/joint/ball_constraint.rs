@@ -20,7 +20,7 @@ pub struct BallConstraint<N: Real> {
 }
 
 impl<N: Real> BallConstraint<N> {
-    /// Creates a ball constaint between two body parts.
+    /// Creates a ball constraint between two body parts.
     /// 
     /// This will ensure the two points identified by `anchor1` and `anchor2` will coincide.
     /// Both are given in the local-space of their corresponding body part.
@@ -76,11 +76,8 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
          * Joint constraints.
          *
          */
-        let pos1 = part1.position();
-        let pos2 = part2.position();
-
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = body1.material_coordinates_to_world_coordinates(part1, &self.anchor1);
+        let anchor2 = body2.material_coordinates_to_world_coordinates(part2, &self.anchor2);
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -144,11 +141,8 @@ impl<N: Real> NonlinearConstraintGenerator<N> for BallConstraint<N> {
         let part1 = body1.part(self.b1);
         let part2 = body2.part(self.b2);
 
-        let pos1 = part1.position();
-        let pos2 = part2.position();
-
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = body1.material_coordinates_to_world_coordinates(part1, &self.anchor1);
+        let anchor2 = body2.material_coordinates_to_world_coordinates(part2, &self.anchor2);
 
         helper::cancel_relative_translation(params, body1, part1, body2, part2, &anchor1, &anchor2, jacobians)
     }

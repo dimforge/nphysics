@@ -411,6 +411,16 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
+    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
+        fem_helper::material_coordinates_to_world_coordinates(elt.indices, &self.positions, point)
+    }
+
+    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
+        fem_helper::world_coordinates_to_material_coordinates(elt.indices, &self.positions, point)
+    }
+
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,

@@ -193,6 +193,12 @@ pub trait Body<N: Real>: Any + Send + Sync {
         out_vel: Option<&mut N>
     );
 
+    /// Transform the given point expressed in material coordinates to world-space.
+    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N>;
+
+    /// Transform the given point expressed in material coordinates to world-space.
+    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N>;
+
     /// Returns `true` if this bodies contains internal constraints that need to be solved.
     fn has_active_internal_constraints(&mut self) -> bool;
 

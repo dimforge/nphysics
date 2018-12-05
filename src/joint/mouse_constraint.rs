@@ -78,11 +78,8 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
          * Joint constraints.
          *
          */
-        let pos1 = part1.position();
-        let pos2 = part2.position();
-
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = body1.material_coordinates_to_world_coordinates(part1, &self.anchor1);
+        let anchor2 = body2.material_coordinates_to_world_coordinates(part2, &self.anchor2);
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();

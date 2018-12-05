@@ -599,6 +599,13 @@ impl<N: Real> World<N> {
         self.bodies.body_part_mut(handle)
     }
 
+    /// Get a reference to the specified body and body part.
+    ///
+    /// Panics if a body or body part with the given handle was not found.
+    pub fn body_and_part(&self, handle: BodyPartHandle) -> (&Body<N>, &BodyPart<N>) {
+        self.bodies.body_and_part(handle)
+    }
+
     /// Get a reference to the specified body.
     pub fn body(&self, handle: BodyHandle) -> &Body<N> {
         self.bodies.body(handle)

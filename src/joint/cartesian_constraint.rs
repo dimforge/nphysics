@@ -20,10 +20,10 @@ pub struct CartesianConstraint<N: Real> {
 }
 
 impl<N: Real> CartesianConstraint<N> {
-    /// Creates a cartesian constaint between two body parts.
+    /// Creates a cartesian constraint between two body parts.
     /// 
     /// This will ensure the rotational parts of the frames given identified by `joint_to_b1` and
-    /// `joint_to_b2` and attached to the corrisponding bodies will coincide.
+    /// `joint_to_b2` and attached to the corresponding bodies will coincide.
     pub fn new(
         b1: BodyPartHandle,
         b2: BodyPartHandle,

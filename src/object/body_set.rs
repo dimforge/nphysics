@@ -309,7 +309,7 @@ impl<N: Real> BodySet<N> {
         }
     }
 
-    /// Reference to the body part identified by `body`.
+    /// Reference to the body part identified by `handle`.
     ///
     /// Panics if the body part is not found.
     #[inline]
@@ -322,7 +322,7 @@ impl<N: Real> BodySet<N> {
         }
     }
 
-    /// Mutable reference to the body part identified by `body`.
+    /// Mutable reference to the body part identified by `handle`.
     ///
     /// Panics if the body part is not found.
     #[inline]
@@ -332,6 +332,20 @@ impl<N: Real> BodySet<N> {
             BodyVariant::RigidBody(id) => &mut self.rbs[id],
             BodyVariant::Multibody(id) => self.mbs[id].part_mut(handle),
             BodyVariant::AbstractBody(id) => self.bodies[id].part_mut(handle),
+        }
+    }
+
+
+    /// Reference to the body and body_part identified by `handle`.
+    ///
+    /// Panics if the body or body part is not found.
+    #[inline]
+    pub fn body_and_part(&self, handle: BodyPartHandle) -> (&Body<N>, &BodyPart<N>) {
+        match handle.body_handle.0 {
+            BodyVariant::Ground => (&self.ground, &self.ground),
+            BodyVariant::RigidBody(id) => (&self.rbs[id], &self.rbs[id]),
+            BodyVariant::Multibody(id) => (&self.mbs[id], self.mbs[id].part(handle)),
+            BodyVariant::AbstractBody(id) => (&*self.bodies[id], self.bodies[id].part(handle)),
         }
     }
 

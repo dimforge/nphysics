@@ -466,6 +466,16 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
+    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        fem_helper::material_coordinates_to_world_coordinates(elt.indices, &self.positions, point)
+    }
+
+    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        fem_helper::world_coordinates_to_material_coordinates(elt.indices, &self.positions, point)
+    }
+
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,
@@ -479,7 +489,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>
     ) {
-        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,

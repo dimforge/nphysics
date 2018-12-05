@@ -2,6 +2,7 @@ use std::ops::Range;
 use slab::Slab;
 
 use ncollide::shape::DeformationsType;
+use ncollide::utils::IsometryOps;
 use joint::Joint;
 use math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
@@ -1026,6 +1027,18 @@ impl<N: Real> Body<N> for Multibody<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         self.ndofs
+    }
+
+    #[inline]
+    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        link.local_to_world * point
+    }
+
+    #[inline]
+    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        link.local_to_world.inverse_transform_point(point)
     }
 
     fn fill_constraint_geometry(

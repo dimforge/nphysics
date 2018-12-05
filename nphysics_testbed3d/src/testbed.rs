@@ -263,13 +263,8 @@ impl State for Testbed {
                                 if !b.query_type().is_proximity_query() && inter.toi < mintoi {
                                     mintoi = inter.toi;
 
-                                    if
-                                        let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
-                                        {
-                                            minb = Some(*body_part)
-                                        } else {
-                                        unimplemented!()
-                                    }
+                                    let subshape = b.shape().subshape_containing_feature(inter.feature);
+                                    minb = Some(b.data().body_part(subshape));
                                 }
                             }
 
@@ -329,20 +324,17 @@ impl State for Testbed {
                                 if !b.query_type().is_proximity_query() && inter.toi < mintoi {
                                     mintoi = inter.toi;
 
-                                    if
-                                        let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
-                                        {
-                                            minb = Some(*body_part);
-                                        } else { unimplemented!() }
+                                    let subshape = b.shape().subshape_containing_feature(inter.feature);
+                                    minb = Some(b.data().body_part(subshape));
                                 }
                             }
 
-                        if let Some(body_part) = minb {
-                            if self.world.body(body_part.body_handle).status_dependent_ndofs() != 0 {
+                        if let Some(body_part_handle) = minb {
+                            if self.world.body(body_part_handle.body_handle).status_dependent_ndofs() != 0 {
                                 self.grabbed_object = minb;
                                 for n in self
                                     .graphics
-                                    .body_nodes_mut(body_part.body_handle)
+                                    .body_nodes_mut(body_part_handle.body_handle)
                                     .unwrap()
                                     .iter_mut()
                                     {
@@ -350,12 +342,14 @@ impl State for Testbed {
                                             self.world.remove_constraint(joint);
                                         }
 
-                                        let body_pos = self.world.body_part(body_part).position();
                                         let attach1 = ray.origin + ray.dir * mintoi;
-                                        let attach2 = body_pos.inverse() * attach1;
+                                        let attach2 = {
+                                            let (body, body_part) = self.world.body_and_part(body_part_handle);
+                                            body.world_coordinates_to_material_coordinates(body_part, &attach1)
+                                        };
                                         let constraint = MouseConstraint::new(
                                             BodyPartHandle::ground(),
-                                            body_part,
+                                            body_part_handle,
                                             attach1,
                                             attach2,
                                             1.0,

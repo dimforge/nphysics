@@ -25,6 +25,94 @@ pub enum FiniteElementIndices {
     Segment(Point2<usize>)
 }
 
+
+#[inline]
+pub fn material_coordinates_to_world_coordinates<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+    match indices {
+        FiniteElementIndices::Segment(indices) => {
+            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
+            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            Point::from_coordinates(a * (N::one() - point.x) + b * point.x)
+        }
+        FiniteElementIndices::Triangle(indices) => {
+            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
+            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+            Point::from_coordinates(a * (N::one() - point.x - point.y) + b * point.x + c * point.y)
+        }
+        #[cfg(feature = "dim3")]
+        FiniteElementIndices::Tetrahedron(indices) => {
+            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
+            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+            let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
+            Point::from_coordinates(a * (N::one() - point.x - point.y - point.z) + b * point.x + c * point.y + d * point.z)
+        }
+    }
+}
+
+
+#[inline]
+pub fn world_coordinates_to_material_coordinates<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+    match indices {
+        FiniteElementIndices::Segment(indices) => {
+            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
+            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+
+            let seg = Segment::new(
+                Point::from_coordinates(a),
+                Point::from_coordinates(b),
+            );
+
+            // FIXME: do we really want to project here? Even in 2D?
+            let proj = seg.project_point_with_location(&Isometry::identity(), point, false).1;
+            let bcoords = proj.barycentric_coordinates();
+
+            let mut res = Point::origin();
+            res.x = bcoords[1];
+            res
+        }
+        FiniteElementIndices::Triangle(indices) => {
+            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
+            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+
+            let tri = Triangle::new(
+                Point::from_coordinates(a),
+                Point::from_coordinates(b),
+                Point::from_coordinates(c),
+            );
+
+            // FIXME: do we really want to project here? Even in 2D?
+            let proj = tri.project_point_with_location(&Isometry::identity(), point, false).1;
+            let bcoords = proj.barycentric_coordinates().unwrap();
+
+            let mut res = Point::origin();
+            res.x = bcoords[1];
+            res.y = bcoords[2];
+            res
+        }
+        #[cfg(feature = "dim3")]
+        FiniteElementIndices::Tetrahedron(indices) => {
+            let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
+            let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
+            let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
+            let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
+
+            let tetra = Tetrahedron::new(
+                Point3::from_coordinates(a),
+                Point3::from_coordinates(b),
+                Point3::from_coordinates(c),
+                Point3::from_coordinates(d),
+            );
+
+            // FIXME: what to do if this returns `None`?
+            let bcoords = tetra.barycentric_coordinates(point).unwrap_or([N::zero(); 4]);
+            Point3::new(bcoords[1], bcoords[2], bcoords[3])
+        }
+    }
+}
+
 #[inline]
 pub fn fill_contact_geometry_fem<N: Real>(
     ndofs: usize,
@@ -172,17 +260,8 @@ pub fn fill_contact_geometry_fem<N: Real>(
                     Point3::from_coordinates(d),
                 );
 
-                // XXX: This is extremely costly!
-                let proj = tetra.project_point_with_location(&Isometry::identity(), center, true).1;
-
-                let bcoords = if let Some(b) = proj.barycentric_coordinates() {
-                    b
-                } else {
-                    let pt_a = center.coords - a;
-                    let mat = Matrix3::from_columns(&[b - a, c - a, d - a]);
-                    let b = mat.try_inverse().unwrap_or_else(|| Matrix3::identity()) * pt_a;
-                    [(N::one() - b.x - b.y - b.z), b.x, b.y, b.z]
-                };
+                // FIXME: what to do if this returns `None`?
+                let bcoords = tetra.barycentric_coordinates(center).unwrap_or([N::zero(); 4]);
 
                 let dir1 = **dir * bcoords[0];
                 let dir2 = **dir * bcoords[1];

@@ -156,6 +156,17 @@ impl<N: Real> Body<N> for Ground<N> {
     fn set_deactivation_threshold(&mut self, threshold: Option<N>) {}
 
     #[inline]
+    fn material_coordinates_to_world_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        *point
+    }
+
+    #[inline]
+    fn world_coordinates_to_material_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        *point
+    }
+
+
+    #[inline]
     fn fill_constraint_geometry(
         &self,
         _: &BodyPart<N>,

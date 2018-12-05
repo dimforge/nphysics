@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects};
+use ncollide::shape::FeatureId;
 
 use math::Isometry;
 use object::{BodyPartHandle, BodyHandle, Material};
@@ -106,6 +107,20 @@ impl<N: Real> ColliderData<N> {
             position_wrt_body_part
         } else {
             Isometry::identity()
+        }
+    }
+
+    /// Handle to the body part containing the given subshape of this collider's shape.
+    pub fn body_part(&self, subshape_id: usize) -> BodyPartHandle {
+        match &self.anchor {
+            ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
+            ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
+                if let Some(body_parts) = body_parts {
+                    BodyPartHandle { body_handle: *body, part_id: body_parts[subshape_id] }
+                } else {
+                    BodyPartHandle { body_handle: *body, part_id: subshape_id }
+                }
+            }
         }
     }
 

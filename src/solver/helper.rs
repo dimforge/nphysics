@@ -11,7 +11,7 @@ use object::{Body, BodyPart, BodyStatus};
 use solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
-/// The direction of a force.
+/// The direction of a force in world-space.
 #[derive(Copy, Clone, Debug)]
 pub enum ForceDirection<N: Real> {
     /// A linear force toward a direction.

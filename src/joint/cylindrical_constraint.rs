@@ -26,7 +26,7 @@ pub struct CylindricalConstraint<N: Real> {
 }
 
 impl<N: Real> CylindricalConstraint<N> {
-    /// Creates a cartesian constaint between two body parts.
+    /// Creates a cartesian constraint between two body parts.
     /// 
     /// This will ensure `axis1` and `axis2` always coincide. All the axis and anchors
     /// are provided on the local space of the corresponding body parts.
