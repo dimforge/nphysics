@@ -3,11 +3,11 @@ use kiss3d::window::Window;
 use na::{Isometry2, Point3};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
-use objects::ball::Ball;
-use objects::box_node::Box;
-use objects::convex::Convex;
-use objects::plane::Plane;
-use objects::polyline::Polyline;
+use crate::objects::ball::Ball;
+use crate::objects::box_node::Box;
+use crate::objects::convex::Convex;
+use crate::objects::plane::Plane;
+use crate::objects::polyline::Polyline;
 
 pub enum Node {
     Plane(Plane),

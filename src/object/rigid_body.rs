@@ -277,12 +277,17 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn material_coordinates_to_world_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.local_to_world * point
     }
 
     #[inline]
-    fn world_coordinates_to_material_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+        self.local_to_world * Translation::from_vector(point.coords)
+    }
+
+    #[inline]
+    fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.local_to_world.inverse_transform_point(point)
     }
 

@@ -13,7 +13,7 @@ use ncollide::query::PointQueryWithLocation;
 
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry, SpatialVector, RotationMatrix, Vector};
+use crate::math::{Force, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry, SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
 
 /// One element of a deformable surface.
@@ -681,14 +681,20 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         }
     }
 
-    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
-        fem_helper::material_coordinates_to_world_coordinates(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
+        fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
     }
 
-    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
-        fem_helper::world_coordinates_to_material_coordinates(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
+        let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point);
+        Isometry::from_parts(Translation::from_vector(pt.coords), na::one())
+    }
+
+    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
+        fem_helper::material_point_at_world_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
     }
 
     fn fill_constraint_geometry(

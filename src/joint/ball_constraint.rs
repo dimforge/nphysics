@@ -76,8 +76,8 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
          * Joint constraints.
          *
          */
-        let anchor1 = body1.material_coordinates_to_world_coordinates(part1, &self.anchor1);
-        let anchor2 = body2.material_coordinates_to_world_coordinates(part2, &self.anchor2);
+        let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
+        let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -141,8 +141,8 @@ impl<N: Real> NonlinearConstraintGenerator<N> for BallConstraint<N> {
         let part1 = body1.part(self.b1);
         let part2 = body2.part(self.b2);
 
-        let anchor1 = body1.material_coordinates_to_world_coordinates(part1, &self.anchor1);
-        let anchor2 = body2.material_coordinates_to_world_coordinates(part2, &self.anchor2);
+        let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
+        let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
         helper::cancel_relative_translation(params, body1, part1, body2, part2, &anchor1, &anchor2, jacobians)
     }

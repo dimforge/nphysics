@@ -18,7 +18,7 @@ use ncollide::query::PointQueryWithLocation;
 use crate::counters::Timer;
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim};
+use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
 
 /// An element of the mass-spring system.
@@ -466,14 +466,20 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
-    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
-        fem_helper::material_coordinates_to_world_coordinates(elt.indices, &self.positions, point)
+        fem_helper::world_point_at_material_point(elt.indices, &self.positions, point)
     }
 
-    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
-        fem_helper::world_coordinates_to_material_coordinates(elt.indices, &self.positions, point)
+        let pt = fem_helper::world_point_at_material_point(elt.indices, &self.positions, point);
+        Isometry::from_parts(Translation::from_vector(pt.coords), na::one())
+    }
+
+    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+        let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
+        fem_helper::material_point_at_world_point(elt.indices, &self.positions, point)
     }
 
     fn fill_constraint_geometry(

@@ -2,7 +2,7 @@ use na::{DVector, Real};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
-use crate::math::{AngularVector, Isometry, Point, Vector, DIM, SPATIAL_DIM};
+use crate::math::{AngularVector, Isometry, Rotation, Point, Vector, DIM, SPATIAL_DIM};
 use crate::object::{BodyPartHandle, BodySet};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
@@ -12,8 +12,10 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 pub struct FixedConstraint<N: Real> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
-    joint_to_b1: Isometry<N>,
-    joint_to_b2: Isometry<N>,
+    anchor1: Point<N>,
+    ref_frame1: Rotation<N>,
+    anchor2: Point<N>,
+    ref_frame2: Rotation<N>,
     lin_impulses: Vector<N>,
     ang_impulses: AngularVector<N>,
     bilateral_ground_rng: Range<usize>,
@@ -28,14 +30,18 @@ impl<N: Real> FixedConstraint<N> {
     pub fn new(
         b1: BodyPartHandle,
         b2: BodyPartHandle,
-        joint_to_b1: Isometry<N>,
-        joint_to_b2: Isometry<N>,
+        anchor1: Point<N>,
+        ref_frame1: Rotation<N>,
+        anchor2: Point<N>,
+        ref_frame2: Rotation<N>,
     ) -> Self {
         FixedConstraint {
             b1,
             b2,
-            joint_to_b1,
-            joint_to_b2,
+            anchor1,
+            ref_frame1,
+            anchor2,
+            ref_frame2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
@@ -43,14 +49,24 @@ impl<N: Real> FixedConstraint<N> {
         }
     }
 
-    /// Changes the frame attached to the first body part.
-    pub fn set_anchor_1(&mut self, local1: Isometry<N>) {
-        self.joint_to_b1 = local1
+    /// Changes the reference frame for the first body part.
+    pub fn set_reference_frame_1(&mut self, ref_frame1: Rotation<N>) {
+        self.ref_frame1 = ref_frame1
     }
 
-    /// Changes the frame attached to the second body part.
-    pub fn set_anchor_2(&mut self, local2: Isometry<N>) {
-        self.joint_to_b2 = local2
+    /// Changes the reference frame for the second body part.
+    pub fn set_reference_frame_2(&mut self, ref_frame2: Rotation<N>) {
+        self.ref_frame2 = ref_frame2
+    }
+
+    /// Changes the attached material point from the first body part.
+    pub fn set_anchor_1(&mut self, anchor1: Point<N>) {
+        self.anchor1 = anchor1
+    }
+
+    /// Changes the attached material point from the second body part.
+    pub fn set_anchor_2(&mut self, anchor2: Point<N>) {
+        self.anchor2 = anchor2
     }
 }
 
@@ -75,12 +91,11 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
     ) {
         let body1 = bodies.body(self.b1.body_handle);
         let body2 = bodies.body(self.b2.body_handle);
-
         let part1 = body1.part(self.b2);
         let part2 = body2.part(self.b2);
 
-        let pos1 = part1.position() * self.joint_to_b1;
-        let pos2 = part2.position() * self.joint_to_b2;
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1) * self.ref_frame1;
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2) * self.ref_frame2;
 
         let anchor1 = Point::from_coordinates(pos1.translation.vector);
         let anchor2 = Point::from_coordinates(pos2.translation.vector);
@@ -173,8 +188,8 @@ impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
         let part1 = body1.part(self.b1);
         let part2 = body2.part(self.b2);
 
-        let pos1 = part1.position() * self.joint_to_b1;
-        let pos2 = part2.position() * self.joint_to_b2;
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1) * self.ref_frame1;
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2) * self.ref_frame2;
 
         let anchor1 = Point::from_coordinates(pos1.translation.vector);
         let anchor2 = Point::from_coordinates(pos2.translation.vector);

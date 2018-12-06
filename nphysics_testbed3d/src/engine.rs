@@ -7,12 +7,12 @@ use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
 use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
-use objects::ball::Ball;
-use objects::box_node::Box;
-use objects::convex::Convex;
-use objects::mesh::Mesh;
-use objects::node::Node;
-use objects::plane::Plane;
+use crate::objects::ball::Ball;
+use crate::objects::box_node::Box;
+use crate::objects::convex::Convex;
+use crate::objects::mesh::Mesh;
+use crate::objects::node::Node;
+use crate::objects::plane::Plane;
 use rand::{Rng, SeedableRng, XorShiftRng};
 use std::collections::HashMap;
 

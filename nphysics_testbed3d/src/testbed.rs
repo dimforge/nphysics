@@ -5,7 +5,7 @@ use std::mem;
 use std::path::Path;
 use std::rc::Rc;
 
-use engine::GraphicsManager;
+use crate::engine::GraphicsManager;
 use kiss3d::camera::Camera;
 use kiss3d::event::{Action, Key, Modifiers, WindowEvent};
 use kiss3d::light::Light;
@@ -345,7 +345,7 @@ impl State for Testbed {
                                         let attach1 = ray.origin + ray.dir * mintoi;
                                         let attach2 = {
                                             let (body, body_part) = self.world.body_and_part(body_part_handle);
-                                            body.world_coordinates_to_material_coordinates(body_part, &attach1)
+                                            body.material_point_at_world_point(body_part, &attach1)
                                         };
                                         let constraint = MouseConstraint::new(
                                             BodyPartHandle::ground(),

@@ -6,7 +6,7 @@ use ncollide::utils::IsometryOps;
 use crate::joint::Joint;
 use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
-    Vector, Velocity, DIM,
+    Vector, Velocity, DIM, Translation
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use crate::object::{
@@ -1030,13 +1030,19 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world * point
     }
 
     #[inline]
-    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+        let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        link.local_to_world * Translation::from_vector(point.coords)
+    }
+
+    #[inline]
+    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world.inverse_transform_point(point)
     }

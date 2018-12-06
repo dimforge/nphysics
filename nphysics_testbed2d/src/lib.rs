@@ -6,8 +6,8 @@ extern crate num_traits as num;
 extern crate rand;
 extern crate time;
 
-pub use engine::GraphicsManager;
-pub use testbed::Testbed;
+pub use crate::engine::GraphicsManager;
+pub use crate::testbed::Testbed;
 
 mod engine;
 pub mod objects;

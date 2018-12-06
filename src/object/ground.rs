@@ -1,7 +1,7 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use ncollide::shape::DeformationsType;
-use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity, Translation};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
@@ -156,12 +156,17 @@ impl<N: Real> Body<N> for Ground<N> {
     fn set_deactivation_threshold(&mut self, threshold: Option<N>) {}
 
     #[inline]
-    fn material_coordinates_to_world_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         *point
     }
 
     #[inline]
-    fn world_coordinates_to_material_coordinates(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+        Isometry::from_parts(Translation::from_vector(point.coords), na::one())
+    }
+
+    #[inline]
+    fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         *point
     }
 

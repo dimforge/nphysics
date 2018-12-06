@@ -4,7 +4,7 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::procedural::TriMesh;
 use nphysics3d::world::World;
 use nphysics3d::object::ColliderHandle;
-use objects::node;
+use crate::objects::node;
 
 pub struct Convex {
     color: Point3<f32>,

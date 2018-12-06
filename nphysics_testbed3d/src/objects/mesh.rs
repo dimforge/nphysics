@@ -5,7 +5,7 @@ use na::{self, Isometry3, Point3, Vector3};
 use ncollide3d::shape::TriMesh;
 use nphysics3d::object::{ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
-use objects::node;
+use crate::objects::node;
 use std::cell::RefCell;
 use std::rc::Rc;
 

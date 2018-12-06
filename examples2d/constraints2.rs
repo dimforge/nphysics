@@ -3,7 +3,7 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point2, Vector2};
+use na::{Isometry2, Point2, Vector2, UnitComplex};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::joint::{CartesianConstraint, PrismaticConstraint, RevoluteConstraint};
 use nphysics2d::object::{BodyPartHandle, Material};
@@ -155,8 +155,10 @@ fn main() {
             let constraint = CartesianConstraint::new(
                 BodyPartHandle::ground(),
                 rb,
-                Isometry2::identity(),
-                Isometry2::identity(),
+                Point2::origin(),
+                UnitComplex::identity(),
+                Point2::origin(),
+                UnitComplex::identity(),
             );
 
             world.add_constraint(constraint);

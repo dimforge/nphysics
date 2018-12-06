@@ -80,11 +80,11 @@ impl<N: Real> JointConstraint<N> for PlanarConstraint<N> {
          * Joint constraints.
          *
          */
-        let pos1 = part1.position();
-        let pos2 = part2.position();
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1);
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2);
 
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = Point::from_coordinates(pos1.translation.vector);
+        let anchor2 = Point::from_coordinates(pos2.translation.vector);
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -184,11 +184,11 @@ impl<N: Real> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
         let part1 = body1.part(self.b1);
         let part2 = body2.part(self.b2);
 
-        let pos1 = part1.position();
-        let pos2 = part2.position();
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1);
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2);
 
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = Point::from_coordinates(pos1.translation.vector);
+        let anchor2 = Point::from_coordinates(pos2.translation.vector);
 
         let axis1 = pos1 * self.axis1;
 

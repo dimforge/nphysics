@@ -2,13 +2,13 @@ use kiss3d::scene::SceneNode;
 use na::{Isometry3, Point3};
 use nphysics3d::object::ColliderHandle;
 use nphysics3d::world::World;
-use objects::ball::Ball;
-use objects::box_node::Box;
-use objects::cone::Cone;
-use objects::convex::Convex;
-use objects::cylinder::Cylinder;
-use objects::mesh::Mesh;
-use objects::plane::Plane;
+use crate::objects::ball::Ball;
+use crate::objects::box_node::Box;
+use crate::objects::cone::Cone;
+use crate::objects::convex::Convex;
+use crate::objects::cylinder::Cylinder;
+use crate::objects::mesh::Mesh;
+use crate::objects::plane::Plane;
 
 pub enum Node {
     Plane(Plane),

@@ -6,7 +6,7 @@ use either::Either;
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix6x3, Matrix3x6, DMatrix, Isometry3,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, VectorSliceMut2,
-         Rotation3, Unit, VectorSliceMut3};
+         Rotation3, Unit, VectorSliceMut3, Translation3};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron};
 use ncollide::query::PointQueryWithLocation;
@@ -744,14 +744,20 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         }
     }
 
-    fn material_coordinates_to_world_coordinates(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
+    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
         let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedral element");
-        fem_helper::material_coordinates_to_world_coordinates(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
+        fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
     }
 
-    fn world_coordinates_to_material_coordinates(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
+    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Isometry3<N> {
+        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
+        let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point);
+        Isometry3::from_parts(Translation3::from_vector(pt.coords), na::one())
+    }
+
+    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
         let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedral element");
-        fem_helper::world_coordinates_to_material_coordinates(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
+        fem_helper::material_point_at_world_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
     }
 
     fn fill_constraint_geometry(

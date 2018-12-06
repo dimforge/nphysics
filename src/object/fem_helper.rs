@@ -27,7 +27,7 @@ pub enum FiniteElementIndices {
 
 
 #[inline]
-pub fn material_coordinates_to_world_coordinates<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
@@ -53,7 +53,7 @@ pub fn material_coordinates_to_world_coordinates<N: Real>(indices: FiniteElement
 
 
 #[inline]
-pub fn world_coordinates_to_material_coordinates<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
