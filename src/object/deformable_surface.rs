@@ -196,7 +196,17 @@ impl<N: Real> DeformableSurface<N> {
         let d2 = (self.young_modulus * (_1 - _2 * self.poisson_ratio)) / (_2 * (_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
 
         for elt in self.elements.iter_mut().filter(|e| e.surface > N::zero()) {
-            let j_inv_rot = elt.rot.inverse().matrix() * elt.j_inv;
+
+            let d0_surf = d0 * elt.surface;
+            let d1_surf = d1 * elt.surface;
+            let d2_surf = d2 * elt.surface;
+
+            let rot_tr = elt.rot.inverse();
+            let j_inv_rot = rot_tr.matrix() * elt.j_inv;
+            let j_inv_rot = Matrix2x3::new(
+                -j_inv_rot.m11 - j_inv_rot.m12, j_inv_rot.m11, j_inv_rot.m12,
+                -j_inv_rot.m21 - j_inv_rot.m22, j_inv_rot.m21, j_inv_rot.m22,
+            );
 
             // XXX: simplify/optimize those two parts.
 
@@ -205,34 +215,23 @@ impl<N: Real> DeformableSurface<N> {
              * Plastic strain.
              *
              */
-            let mut total_strain = SpatialVector::zeros();
+            let mut total_strain = Vector3::zeros();
 
             // Compute plastic strain.
             for a in 0..3 {
-                let bn;
-                let cn;
-
-                if a == 0 {
-                    bn = -j_inv_rot.m11 - j_inv_rot.m12;
-                    cn = -j_inv_rot.m21 - j_inv_rot.m22;
-                } else {
-                    bn = j_inv_rot[(0, a - 1)];
-                    cn = j_inv_rot[(1, a - 1)];
-                }
-
-                let _0 = N::zero();
-                let B_n = Matrix3x2::new(
-                    bn, _0,
-                    _0, cn,
-                    cn, bn,
-                );
+                let bn = j_inv_rot[(0, a)];
+                let cn = j_inv_rot[(1, a)];
 
                 let ia = elt.indices[a];
-                let pos_part = self.positions.fixed_rows::<Dim>(ia);
-                let ref_pos_part = self.rest_positions.fixed_rows::<Dim>(ia);
-                let rot_tr = elt.rot.transpose();
-                let dpos = rot_tr * pos_part - ref_pos_part;
-                total_strain += B_n * dpos;
+                let pos = self.positions.fixed_rows::<Dim>(ia);
+                let ref_pos = self.rest_positions.fixed_rows::<Dim>(ia);
+                let dpos = rot_tr * pos - ref_pos;
+                // total_strain += B_n * dpos
+                total_strain += Vector3::new(
+                    bn * dpos.x,
+                    cn * dpos.y,
+                    cn * dpos.x + bn * dpos.y,
+                );
             }
 
             let strain = total_strain - elt.plastic_strain;
@@ -241,85 +240,50 @@ impl<N: Real> DeformableSurface<N> {
                 elt.plastic_strain += strain * coeff;
             }
 
-            if let Some((dir, strain)) = Unit::try_new_and_get(elt.plastic_strain, N::zero()) {
-                if strain > self.plasticity_max_force {
-                    elt.plastic_strain = *dir * strain;
+            if let Some((dir, magnitude)) = Unit::try_new_and_get(elt.plastic_strain, N::zero()) {
+                if magnitude > self.plasticity_max_force {
+                    elt.plastic_strain = *dir * self.plasticity_max_force;
                 }
             }
 
-            // Apply plastic strain.
             for a in 0..3 {
                 let ia = elt.indices[a];
 
                 if !self.kinematic_nodes[ia / DIM] {
-                    let bn;
-                    let cn;
-
-                    if a == 0 {
-                        bn = -j_inv_rot.m11 - j_inv_rot.m12;
-                        cn = -j_inv_rot.m21 - j_inv_rot.m22;
-                    } else {
-                        bn = j_inv_rot[(0, a - 1)];
-                        cn = j_inv_rot[(1, a - 1)];
-                    }
-
-                    let _0 = N::zero();
-
-                    let P_n = Matrix2x3::new(
-                        bn * d0, bn * d1, cn * d2,
-                        cn * d1, cn * d0, bn * d2,
-                    ) * elt.surface;
-
-                    let mut force_part = self.accelerations.fixed_rows_mut::<Dim>(ia);
-                    let plastic_force = elt.rot * (P_n * elt.plastic_strain);
-                    force_part += plastic_force;
-                }
-            }
-
-
-            /*
-             *
-             * Elastic strain.
-             *
-             */
-            for a in 0..3 {
-                let ia = elt.indices[a];
-
-                if !self.kinematic_nodes[ia / DIM] {
-                    let bn;
-                    let cn;
-
-                    if a == 0 {
-                        bn = -j_inv_rot.m11 - j_inv_rot.m12;
-                        cn = -j_inv_rot.m21 - j_inv_rot.m22;
-                    } else {
-                        bn = j_inv_rot[(0, a - 1)];
-                        cn = j_inv_rot[(1, a - 1)];
-                    }
+                    let bn = j_inv_rot[(0, a)];
+                    let cn = j_inv_rot[(1, a)];
 
                     let mut force_part = self.accelerations.fixed_rows_mut::<Dim>(ia);
 
+                    // Fields of P_n * elt.volume:
+                    //
+                    // let P_n = Matrix3x6::new(
+                    //   bn * d0, bn * d1, cn * d2,
+                    //   cn * d1, cn * d0, bn * d2,
+                    // ) * elt.surface;
+                    let bn0 = bn * d0_surf;
+                    let bn1 = bn * d1_surf;
+                    let bn2 = bn * d2_surf;
+                    let cn0 = cn * d0_surf;
+                    let cn1 = cn * d1_surf;
+                    let cn2 = cn * d2_surf;
+
+                    /*
+                     * Add elastic strain.
+                     */
                     for b in 0..3 {
-                        let ib = elt.indices[b];
+                        let bm = j_inv_rot[(0, b)];
+                        let cm = j_inv_rot[(1, b)];
 
-                        let bm;
-                        let cm;
-
-                        if b == 0 {
-                            bm = -j_inv_rot.m11 - j_inv_rot.m12;
-                            cm = -j_inv_rot.m21 - j_inv_rot.m22;
-                        } else {
-                            bm = j_inv_rot[(0, b - 1)];
-                            cm = j_inv_rot[(1, b - 1)];
-                        }
-
-                        let node_stiffness = Matrix::new(
-                            d0 * bn * bm + d2 * cn * cm, d1 * bn * cm + d2 * cn * bm,
-                            d1 * cn * bm + d2 * bn * cm, d0 * cn * cm + d2 * bn * bm,
-                        ) * elt.surface;
+                        let node_stiffness = Matrix2::new(
+                            bn0 * bm + cn2 * cm, bn1 * cm + cn2 * bm,
+                            cn1 * bm + bn2 * cm, cn0 * cm + bn2 * bm,
+                        );
 
                         let rot_stiffness = elt.rot * node_stiffness;
                         let rot_tr = elt.rot.transpose();
+
+                        let ib = elt.indices[b];
 
                         if !self.kinematic_nodes[ib / DIM] {
                             let mut mass_part = self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
@@ -332,6 +296,21 @@ impl<N: Real> DeformableSurface<N> {
                         let dpos = rot_tr * (vel_part * dt + pos_part) - ref_pos_part;
                         force_part.gemv(-N::one(), &rot_stiffness, &dpos, N::one());
                     }
+
+                    /*
+                     * Add plastic strain
+                     */
+                    // P_n * elt_plastic_strain
+                    let ps = elt.plastic_strain;
+                    #[cfg_attr(rustfmt, rustfmt_skip)]
+                    let projected_plastic_strain = Vector2::new(
+                        bn0 * ps.x + bn1 * ps.y + cn2 * ps.z,
+                        cn1 * ps.x + cn0 * ps.y + bn2 * ps.z,
+                    );
+
+                    let mut force_part = self.accelerations.fixed_rows_mut::<Dim>(ia);
+                    let plastic_force = elt.rot * projected_plastic_strain;
+                    force_part += plastic_force;
                 }
             }
         }
