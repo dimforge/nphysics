@@ -38,6 +38,7 @@ struct LengthConstraint<N: Real> {
     stiffness: Option<N>,
     target_vel: N,
     max_force: N,
+    plastic_strain: N
 }
 
 impl<N: Real> LengthConstraint<N> {
@@ -54,6 +55,7 @@ impl<N: Real> LengthConstraint<N> {
             stiffness,
             max_force: N::zero(),
             target_vel: N::zero(),
+            plastic_strain: N::zero()
         }
     }
 }
@@ -85,6 +87,10 @@ pub struct MassConstraintSystem<N: Real> {
     node_mass: N,
     inv_node_mass: N,
     warmstart_coeff: N,
+
+    plasticity_threshold: N,
+    plasticity_creep: N,
+    plasticity_max_force: N,
 }
 
 
@@ -142,6 +148,9 @@ impl<N: Real> MassConstraintSystem<N> {
             node_mass,
             inv_node_mass: N::one() / node_mass,
             warmstart_coeff: na::convert(0.5),
+            plasticity_threshold: N::zero(),
+            plasticity_creep: N::zero(),
+            plasticity_max_force: N::zero(),
         }
     }
 
@@ -190,6 +199,9 @@ impl<N: Real> MassConstraintSystem<N> {
             node_mass,
             inv_node_mass: N::one() / node_mass,
             warmstart_coeff: na::convert(0.5),
+            plasticity_threshold: N::zero(),
+            plasticity_creep: N::zero(),
+            plasticity_max_force: N::zero(),
         }
     }
 
@@ -262,6 +274,13 @@ impl<N: Real> MassConstraintSystem<N> {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
         self.kinematic_nodes[i] = is_kinematic;
     }
+
+    /// Sets the plastic properties of this mass-constraint system.
+    pub fn set_plasticity(&mut self, strain_threshold: N, creep: N, max_force: N) {
+        self.plasticity_threshold = strain_threshold;
+        self.plasticity_creep = creep;
+        self.plasticity_max_force = max_force;
+    }
 }
 
 impl<N: Real> Body<N> for MassConstraintSystem<N> {
@@ -301,11 +320,25 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
                 // Explicit elastic term.
                 let err = constraint.length - constraint.rest_length;
-                // FIXME: multiply by erp here too?
-                constraint.max_force = stiffness * err.abs();
-                constraint.target_vel = params.erp * err / params.dt;
 
-                if err.abs() < params.allowed_linear_error {
+                // Plastic strain.
+                let total_strain = stiffness * err;
+                let strain = total_strain - constraint.plastic_strain;
+
+                if strain.abs() > self.plasticity_threshold {
+                    let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
+                    constraint.plastic_strain += strain * coeff;
+                }
+
+                if constraint.plastic_strain.abs() > self.plasticity_max_force {
+                    constraint.plastic_strain = constraint.plastic_strain.signum() * self.plasticity_max_force;
+                }
+
+                let err_with_plasticity = err - constraint.plastic_strain / stiffness;
+                constraint.max_force = stiffness * err_with_plasticity.abs();
+                constraint.target_vel = params.erp * err_with_plasticity / params.dt;
+
+                if err_with_plasticity.abs() < params.allowed_linear_error {
                     constraint.max_force = N::zero();
                 }
             }

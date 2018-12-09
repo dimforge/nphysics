@@ -264,7 +264,7 @@ impl<N: Real> MassSpringSystem<N> {
         self.kinematic_nodes[i] = is_kinematic;
     }
 
-    /// Sets the plastic properties of this deformable surface.
+    /// Sets the plastic properties of this mass-spring system.
     pub fn set_plasticity(&mut self, strain_threshold: N, creep: N, max_force: N) {
         self.plasticity_threshold = strain_threshold;
         self.plasticity_creep = creep;
