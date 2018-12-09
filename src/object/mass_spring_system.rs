@@ -45,6 +45,7 @@ struct Spring<N: Real> {
     rest_length: N,
     stiffness: N,
     damping_ratio: N,
+    plastic_strain: N,
 }
 
 impl<N: Real> Spring<N> {
@@ -60,6 +61,7 @@ impl<N: Real> Spring<N> {
             rest_length,
             stiffness,
             damping_ratio,
+            plastic_strain: N::zero()
         }
     }
 }
@@ -82,6 +84,10 @@ pub struct MassSpringSystem<N: Real> {
     status: BodyStatus,
     mass: N,
     node_mass: N,
+
+    plasticity_threshold: N,
+    plasticity_creep: N,
+    plasticity_max_force: N,
 }
 
 fn key(i: usize, j: usize) -> (usize, usize) {
@@ -145,6 +151,9 @@ impl<N: Real> MassSpringSystem<N> {
             status: BodyStatus::Dynamic,
             mass,
             node_mass,
+            plasticity_max_force: N::zero(),
+            plasticity_creep: N::zero(),
+            plasticity_threshold: N::zero()
         }
     }
 
@@ -192,6 +201,9 @@ impl<N: Real> MassSpringSystem<N> {
             status: BodyStatus::Dynamic,
             mass,
             node_mass,
+            plasticity_max_force: N::zero(),
+            plasticity_creep: N::zero(),
+            plasticity_threshold: N::zero()
         }
     }
 
@@ -252,6 +264,13 @@ impl<N: Real> MassSpringSystem<N> {
         self.kinematic_nodes[i] = is_kinematic;
     }
 
+    /// Sets the plastic properties of this deformable surface.
+    pub fn set_plasticity(&mut self, strain_threshold: N, creep: N, max_force: N) {
+        self.plasticity_threshold = strain_threshold;
+        self.plasticity_creep = creep;
+        self.plasticity_max_force = max_force;
+    }
+
     fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         self.augmented_mass.fill_diagonal(self.node_mass);
 
@@ -263,6 +282,27 @@ impl<N: Real> MassSpringSystem<N> {
                 continue;
             }
 
+            /*
+             *
+             * Plastic strain.
+             *
+             */
+            // Compute plastic strain.
+            let total_strain = spring.stiffness * (spring.length - spring.rest_length);
+            let strain = total_strain - spring.plastic_strain;
+
+            if strain.abs() > self.plasticity_threshold {
+                let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
+                spring.plastic_strain += strain * coeff;
+            }
+
+            if spring.plastic_strain.abs() > self.plasticity_max_force {
+                spring.plastic_strain = spring.plastic_strain.signum() * self.plasticity_max_force;
+            }
+
+            /*
+             * Elastic strain.
+             */
             let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
             let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
             let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
@@ -270,9 +310,9 @@ impl<N: Real> MassSpringSystem<N> {
             let ldot = v1 - v0;
             let l = *spring.dir;
 
-            // Explicit elastic term.
+            // Explicit elastic term - plastic term.
             let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * ldot.dot(&l);
-            let f0 = l * coeff;
+            let f0 = l * (coeff - spring.plastic_strain);
 
             if !kinematic1 {
                 self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&f0);
@@ -280,6 +320,7 @@ impl<N: Real> MassSpringSystem<N> {
             if !kinematic2 {
                 self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&f0);
             }
+
 
             if spring.length != N::zero() {
                 /*
