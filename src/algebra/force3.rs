@@ -6,6 +6,7 @@ use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 /// A force with a linear and angular (torque) component.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Force3<N: Real> {
     /// The linear force.
     pub linear: Vector3<N>,

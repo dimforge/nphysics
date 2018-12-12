@@ -105,6 +105,11 @@ extern crate ncollide2d as ncollide;
 #[cfg(feature = "dim3")]
 extern crate ncollide3d as ncollide;
 extern crate num_traits as num;
+
+#[cfg(feature = "serde")]
+#[macro_use]
+extern crate serde;
+
 extern crate slab;
 
 /*

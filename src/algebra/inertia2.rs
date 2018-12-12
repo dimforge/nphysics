@@ -6,6 +6,7 @@ use algebra::{Force2, Velocity2};
 
 /// The inertia of a rigid body grouping both its mass and its angular inertia.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Inertia2<N: Real> {
     /// The linear part (mass) of the inertia.
     pub linear: N,

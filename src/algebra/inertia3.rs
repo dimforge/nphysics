@@ -5,6 +5,7 @@ use na::{self, Isometry3, Matrix3, Matrix6, Real, U3};
 
 /// The inertia of a rigid body grouping both its mass and its angular inertia.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Inertia3<N: Real> {
     /// The linear part (mass) of the inertia.
     pub linear: N,
