@@ -71,6 +71,12 @@ impl<N: Real> ColliderData<N> {
         &self.material
     }
 
+    /// Set the material of this collider.
+    #[inline]
+    pub fn set_material(&mut self, material: Material<N>) {
+        self.material = material;
+    }
+
     #[inline]
     pub(crate) fn body_status_dependent_ndofs(&self) -> usize {
         self.body_status_dependent_ndofs
