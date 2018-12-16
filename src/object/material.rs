@@ -7,6 +7,7 @@ use na::{self, Real};
 /// will average the coefficient of the two surfaces in contact in order
 /// to deduce the restitution/friction coefficient.
 #[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Material<N: Real> {
     /// Restitution coefficient of the surface.
     pub restitution: N,
