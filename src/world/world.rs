@@ -91,6 +91,11 @@ impl<N: Real> World<N> {
         self.prediction
     }
 
+    /// Angular prediction used internally for collision detection.
+    pub fn angular_prediction(&self) -> N {
+        self.angular_prediction
+    }
+
     /// Disable the perfomance counters that measure various times and statistics during a timestep.
     pub fn disable_performance_counters(&mut self) {
         self.counters.disable();
