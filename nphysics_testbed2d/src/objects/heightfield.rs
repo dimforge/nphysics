@@ -16,15 +16,24 @@ impl HeightField {
         collider: ColliderHandle,
         world: &World<f32>,
         _: Isometry2<f32>,
-        heights: &DVector<f32>,
-        scale: &Vector2<f32>,
+        heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         _: &mut Window,
     ) -> HeightField {
+        let heights = heightfield.heights();
+        let scale = heightfield.scale();
+        let mut vertices = Vec::new();
         let step = 1.0 / (heights.len() as f32 - 1.0);
-        let vertices = heights.iter().enumerate().map(|(i, y)|
-            Point2::new((i as f32 * step - 0.5) * scale.x, y * scale.y)
-        ).collect();
+
+        for (i, ys) in heights.as_slice().windows(2).enumerate() {
+            if !heightfield.is_segment_removed(i) {
+                let a = Point2::new((i as f32 * step - 0.5) * scale.x, ys[0] * scale.y);
+                let b = Point2::new(((i + 1) as f32 * step - 0.5) * scale.x, ys[1] * scale.y);
+                vertices.push(a);
+                vertices.push(b);
+            }
+        }
+
         let mut res = HeightField {
             color,
             base_color: color,
@@ -57,7 +66,7 @@ impl HeightField {
     }
 
     pub fn draw(&mut self, window: &mut Window) {
-        for vtx in self.vertices.windows(2) {
+        for vtx in self.vertices.chunks(2) {
             window.draw_planar_line(&vtx[0], &vtx[1], &self.color)
         }
     }

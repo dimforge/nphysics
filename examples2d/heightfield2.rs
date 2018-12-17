@@ -27,10 +27,15 @@ fn main() {
     let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
     let heights = DVector::from_fn(20, |_, _| rng.gen::<f32>());
 
-    let polyline = HeightField::new(heights, Vector2::new(20.0, 1.0));
+    let mut heightfield = HeightField::new(heights, Vector2::new(20.0, 1.0));
+
+    // It is possible to remove some segments from the heightfield.
+    heightfield.set_segment_removed(3, true);
+    heightfield.set_segment_removed(13, true);
+
     world.add_collider(
         COLLIDER_MARGIN,
-        ShapeHandle::new(polyline),
+        ShapeHandle::new(heightfield),
         BodyPartHandle::ground(),
         Isometry2::identity(),
         Material::default(),

@@ -294,8 +294,7 @@ impl GraphicsManager {
             object,
             world,
             delta,
-            heightfield.heights(),
-            heightfield.scale(),
+            heightfield,
             color,
             window,
         )))

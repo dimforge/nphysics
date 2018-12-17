@@ -4,6 +4,8 @@ use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, Vector3, DMatrix};
 use nphysics3d::object::{ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
+use ncollide3d::shape;
+use ncollide3d::transformation::ToTriMesh;
 use crate::objects::node;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -21,29 +23,17 @@ impl HeightField {
         collider: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        heights: &DMatrix<f32>,
-        scale: &Vector3<f32>,
+        heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         window: &mut Window,
     ) -> HeightField {
-        let mut quad = ncollide3d::procedural::quad(1.0, 1.0, heights.nrows() - 1, heights.ncols() - 1);
-
-        // ncollide generates a quad with `z` as the normal.
-        // so we switch z and y here and set the right altitude at each point.
-        for (i, p) in quad.coords.iter_mut().enumerate() {
-            p.z = p.y;
-            p.y = heights[i];
-        }
-
-        quad.flip_triangles();
-        quad.replicate_vertices();
-        quad.recompute_normals();
+        let mesh = heightfield.to_trimesh(());
 
         let mut res = HeightField {
             color: color,
             base_color: color,
             delta: delta,
-            gfx: window.add_trimesh(quad, *scale),
+            gfx: window.add_trimesh(mesh, Vector3::repeat(1.0)),
             collider: collider,
         };
 
