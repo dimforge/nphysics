@@ -25,8 +25,6 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector2::new(0.0, -9.81));
-//    world.integration_parameters_mut().max_position_iterations = 0;
-//    world.integration_parameters_mut().max_velocity_iterations = 1000;
 
     /*
      * Ground.

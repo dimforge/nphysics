@@ -4,8 +4,8 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
+use na::{Isometry3, Point3, Vector3, DMatrix};
+use ncollide3d::shape::{Cuboid, ShapeHandle, HeightField};
 use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
@@ -24,26 +24,13 @@ fn main() {
     /*
      * Setup a random ground.
      */
-    let quad = ncollide3d::procedural::quad(10.0, 10.0, 10, 10);
-    let indices = quad
-        .flat_indices()
-        .chunks(3)
-        .map(|is| Point3::new(is[0] as usize, is[2] as usize, is[1] as usize))
-        .collect();
     let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
-    let mut vertices = quad.coords;
+    let heights = DMatrix::from_fn(10, 10, |_, _| rng.gen::<f32>());
 
-    // ncollide generatse a quad with `z` as the normal.
-    // so we switch z and y here and set a random altitude at each point.
-    for p in &mut vertices {
-        p.z = p.y;
-        p.y = rng.gen::<f32>() * 1.5;
-    }
-
-    let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
+    let heightfield: HeightField<f32> = HeightField::new(heights, Vector3::new(10.0, 1.5, 10.0));
     world.add_collider(
         COLLIDER_MARGIN,
-        ShapeHandle::new(trimesh),
+        ShapeHandle::new(heightfield),
         BodyPartHandle::ground(),
         Isometry3::identity(),
         Material::default(),

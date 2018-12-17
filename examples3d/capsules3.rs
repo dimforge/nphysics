@@ -2,15 +2,14 @@ extern crate nalgebra as na;
 extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
-extern crate rand;
 
-use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
+use na::{Isometry3, Point3, Vector3, Matrix3};
+use ncollide3d::shape::{Cuboid, Capsule, ShapeHandle};
 use nphysics3d::object::{BodyPartHandle, Material};
 use nphysics3d::volumetric::Volumetric;
+use nphysics3d::algebra::Inertia3;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
-use rand::{Rng, SeedableRng, StdRng};
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
@@ -22,45 +21,35 @@ fn main() {
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
-     * Setup a random ground.
+     * Ground.
      */
-    let quad = ncollide3d::procedural::quad(10.0, 10.0, 10, 10);
-    let indices = quad
-        .flat_indices()
-        .chunks(3)
-        .map(|is| Point3::new(is[0] as usize, is[2] as usize, is[1] as usize))
-        .collect();
-    let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
-    let mut vertices = quad.coords;
+    let ground_size = 50.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
+    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
 
-    // ncollide generatse a quad with `z` as the normal.
-    // so we switch z and y here and set a random altitude at each point.
-    for p in &mut vertices {
-        p.z = p.y;
-        p.y = rng.gen::<f32>() * 1.5;
-    }
-
-    let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
     world.add_collider(
         COLLIDER_MARGIN,
-        ShapeHandle::new(trimesh),
+        ground_shape,
         BodyPartHandle::ground(),
-        Isometry3::identity(),
+        ground_pos,
         Material::default(),
     );
 
     /*
-     * Create some boxes and spheres.
+     * Create the boxes
      */
     let num = 7;
     let rad = 0.1;
-    let shift = rad * 2.0 + 0.5;
+    let half_height = 0.2;
+    let shift = rad * 2.0;
+    let shifty = (rad + half_height) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
+    let centery = shifty / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-    let height = 1.0;
+    let height = 0.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
+    let geom = ShapeHandle::new(Capsule::new(half_height, rad - COLLIDER_MARGIN));
     let inertia = geom.inertia(1.0);
     let center_of_mass = geom.center_of_mass();
 
@@ -68,7 +57,7 @@ fn main() {
         for j in 0usize..num {
             for k in 0usize..num {
                 let x = i as f32 * shift - centerx;
-                let y = j as f32 * shift + centery + height;
+                let y = j as f32 * shifty + centery + height;
                 let z = k as f32 * shift - centerz;
 
                 /*
@@ -94,6 +83,8 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let testbed = Testbed::new(world);
+    let mut testbed = Testbed::new(world);
+    // testbed.hide_performance_counters();
+    testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }

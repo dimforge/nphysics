@@ -5,9 +5,11 @@ use nphysics3d::world::World;
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
 use crate::objects::cone::Cone;
+use crate::objects::capsule::Capsule;
 use crate::objects::convex::Convex;
 use crate::objects::cylinder::Cylinder;
 use crate::objects::mesh::Mesh;
+use crate::objects::heightfield::HeightField;
 use crate::objects::plane::Plane;
 
 pub enum Node {
@@ -16,7 +18,9 @@ pub enum Node {
     Box(Box),
     Cylinder(Cylinder),
     Cone(Cone),
+    Capsule(Capsule),
     Mesh(Mesh),
+    HeightField(HeightField),
     Convex(Convex),
 }
 
@@ -28,7 +32,9 @@ impl Node {
             Node::Box(ref mut n) => n.select(),
             Node::Cylinder(ref mut n) => n.select(),
             Node::Cone(ref mut n) => n.select(),
+            Node::Capsule(ref mut n) => n.select(),
             Node::Mesh(ref mut n) => n.select(),
+            Node::HeightField(ref mut n) => n.select(),
             Node::Convex(ref mut n) => n.select(),
         }
     }
@@ -40,7 +46,9 @@ impl Node {
             Node::Box(ref mut n) => n.unselect(),
             Node::Cylinder(ref mut n) => n.unselect(),
             Node::Cone(ref mut n) => n.unselect(),
+            Node::Capsule(ref mut n) => n.unselect(),
             Node::Mesh(ref mut n) => n.unselect(),
+            Node::HeightField(ref mut n) => n.unselect(),
             Node::Convex(ref mut n) => n.unselect(),
         }
     }
@@ -52,7 +60,9 @@ impl Node {
             Node::Box(ref mut n) => n.update(world),
             Node::Cylinder(ref mut n) => n.update(world),
             Node::Cone(ref mut n) => n.update(world),
+            Node::Capsule(ref mut n) => n.update(world),
             Node::Mesh(ref mut n) => n.update(world),
+            Node::HeightField(ref mut n) => n.update(world),
             Node::Convex(ref mut n) => n.update(world),
         }
     }
@@ -64,7 +74,9 @@ impl Node {
             Node::Box(ref n) => n.scene_node(),
             Node::Cylinder(ref n) => n.scene_node(),
             Node::Cone(ref n) => n.scene_node(),
+            Node::Capsule(ref n) => n.scene_node(),
             Node::Mesh(ref n) => n.scene_node(),
+            Node::HeightField(ref n) => n.scene_node(),
             Node::Convex(ref n) => n.scene_node(),
         }
     }
@@ -76,7 +88,9 @@ impl Node {
             Node::Box(ref mut n) => n.scene_node_mut(),
             Node::Cylinder(ref mut n) => n.scene_node_mut(),
             Node::Cone(ref mut n) => n.scene_node_mut(),
+            Node::Capsule(ref mut n) => n.scene_node_mut(),
             Node::Mesh(ref mut n) => n.scene_node_mut(),
+            Node::HeightField(ref mut n) => n.scene_node_mut(),
             Node::Convex(ref mut n) => n.scene_node_mut(),
         }
     }
@@ -88,7 +102,9 @@ impl Node {
             Node::Box(ref n) => n.object(),
             Node::Cylinder(ref n) => n.object(),
             Node::Cone(ref n) => n.object(),
+            Node::Capsule(ref n) => n.object(),
             Node::Mesh(ref n) => n.object(),
+            Node::HeightField(ref n) => n.object(),
             Node::Convex(ref n) => n.object(),
         }
     }
@@ -100,7 +116,9 @@ impl Node {
             Node::Box(ref mut n) => n.set_color(color),
             Node::Cylinder(ref mut n) => n.set_color(color),
             Node::Cone(ref mut n) => n.set_color(color),
+            Node::Capsule(ref mut n) => n.set_color(color),
             Node::Mesh(ref mut n) => n.set_color(color),
+            Node::HeightField(ref mut n) => n.set_color(color),
             Node::Convex(ref mut n) => n.set_color(color),
         }
     }

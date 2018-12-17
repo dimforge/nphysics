@@ -336,10 +336,11 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
                 let err_with_plasticity = err - constraint.plastic_strain / stiffness;
                 constraint.max_force = stiffness * err_with_plasticity.abs();
-                constraint.target_vel = params.erp * err_with_plasticity / params.dt;
 
-                if err_with_plasticity.abs() < params.allowed_linear_error {
-                    constraint.max_force = N::zero();
+                if err_with_plasticity.abs() > params.allowed_linear_error {
+                    constraint.target_vel = params.erp * err_with_plasticity / params.dt;
+                } else {
+                    constraint.target_vel = N::zero();
                 }
             }
         }

@@ -7,6 +7,11 @@ pub use self::volumetric_ball::{ball_area, ball_center_of_mass, ball_unit_angula
                                 ball_volume};
 pub use self::volumetric_cuboid::{cuboid_area, cuboid_center_of_mass, cuboid_unit_angular_inertia,
                                   cuboid_volume};
+pub use self::volumetric_cone::{cone_area, cone_center_of_mass, cone_unit_angular_inertia,
+                                cone_volume};
+pub use self::volumetric_cylinder::{cylinder_area, cylinder_center_of_mass, cylinder_unit_angular_inertia,
+                                    cylinder_volume};
+
 #[cfg(feature = "dim2")]
 pub use self::volumetric_convex2::{convex_hull_area, convex_hull_center_of_mass,
                                    convex_hull_unit_angular_inertia, convex_hull_volume,
@@ -25,6 +30,9 @@ pub mod volumetric;
 
 mod volumetric_ball;
 mod volumetric_cuboid;
+mod volumetric_capsule;
+mod volumetric_cone;
+mod volumetric_cylinder;
 #[cfg(feature = "dim2")]
 mod volumetric_convex2;
 #[cfg(feature = "dim3")]

@@ -1,7 +1,6 @@
 use num::Zero;
 
 use na::{self, Real};
-use ncollide::shape::Cylinder;
 use crate::volumetric::Volumetric;
 use crate::math::{AngularInertia, Point, DIM};
 
@@ -66,20 +65,20 @@ pub fn cylinder_unit_angular_inertia<N: Real>(half_height: N, radius: N) -> Angu
     }
 }
 
-impl<N: Real> Volumetric<N> for Cylinder<N> {
-    fn area(&self) -> N {
-        cylinder_area(self.half_height(), self.radius())
-    }
-
-    fn volume(&self) -> N {
-        cylinder_volume(self.half_height(), self.radius())
-    }
-
-    fn center_of_mass(&self) -> Point<N> {
-        cylinder_center_of_mass()
-    }
-
-    fn unit_angular_inertia(&self) -> AngularInertia<N> {
-        cylinder_unit_angular_inertia(self.half_height(), self.radius())
-    }
-}
+//impl<N: Real> Volumetric<N> for Cylinder<N> {
+//    fn area(&self) -> N {
+//        cylinder_area(self.half_height(), self.radius())
+//    }
+//
+//    fn volume(&self) -> N {
+//        cylinder_volume(self.half_height(), self.radius())
+//    }
+//
+//    fn center_of_mass(&self) -> Point<N> {
+//        cylinder_center_of_mass()
+//    }
+//
+//    fn unit_angular_inertia(&self) -> AngularInertia<N> {
+//        cylinder_unit_angular_inertia(self.half_height(), self.radius())
+//    }
+//}

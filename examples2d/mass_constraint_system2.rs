@@ -88,12 +88,15 @@ fn main() {
 
 
     let polyline = Polyline::new(vertices, Some(indices));
-    let mut system = MassConstraintSystem::from_polyline(&polyline, 1.0, Some(10000.0));
-    system.generate_neighbor_constraints(Some(10000.0));
-    system.generate_neighbor_constraints(Some(10000.0));
+    let mut system = MassConstraintSystem::from_polyline(&polyline, 1.0, Some(1.0e2));
+    system.generate_neighbor_constraints(Some(1.0e2));
+    system.generate_neighbor_constraints(Some(1.0e2));
+
+    system.set_node_kinematic(n, true);
+    system.set_node_kinematic(2 * n - 1, true);
 
     for spring in extra_springs1.iter().chain(extra_springs2.iter()) {
-        system.add_constraint(spring.x, spring.y, Some(10000.0));
+        system.add_constraint(spring.x, spring.y, Some(1.0e2));
     }
 
     let mass_spring_handle = world.add_body(Box::new(system.clone()));

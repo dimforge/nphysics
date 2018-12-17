@@ -1,5 +1,5 @@
 use na::Real;
-use ncollide::shape::{Ball, Compound, Cuboid, Shape};
+use ncollide::shape::{Ball, Compound, Cuboid, Shape, Capsule};
 #[cfg(feature = "dim3")]
 use ncollide::shape::ConvexHull;
 #[cfg(feature = "dim2")]
@@ -32,6 +32,9 @@ macro_rules! dispatch(
                 }
             }
             if let Some(c) = $sself.as_shape::<Cuboid<N>>() {
+                return c.$name($($argN,)*)
+            }
+            if let Some(c) = $sself.as_shape::<Capsule<N>>() {
                 return c.$name($($argN,)*)
             }
             // if let Some(c) = $sself.as_shape::<Cylinder<N>>() {

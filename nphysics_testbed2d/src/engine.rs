@@ -10,6 +10,8 @@ use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
 use crate::objects::convex::Convex;
 use crate::objects::polyline::Polyline;
+use crate::objects::capsule::Capsule;
+use crate::objects::heightfield::HeightField;
 // use crate::objects::mesh::Mesh;
 use crate::objects::node::Node;
 use crate::objects::plane::Plane;
@@ -212,8 +214,12 @@ impl GraphicsManager {
             self.add_ball(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(window, object, world, delta, s, color, out)
+        } else if let Some(s) = shape.as_shape::<shape::Capsule<f32>>() {
+            self.add_capsule(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
             self.add_convex(window, object, world, delta, s, color, out)
+        } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+            self.add_heightfield(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, world, delta * t, s.as_ref(), color, out)
@@ -307,6 +313,25 @@ impl GraphicsManager {
         )))
     }
 
+    fn add_capsule(
+        &mut self,
+        window: &mut Window,
+        object: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry2<f32>,
+        shape: &shape::Capsule<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        let margin = world.collider(object).unwrap().data().margin();
+        let r = shape.radius() + margin;
+        let hh = shape.half_height();
+
+        out.push(Node::Capsule(Capsule::new(
+            object, world, delta, r, hh, color, window,
+        )))
+    }
+
     fn add_convex(
         &mut self,
         window: &mut Window,
@@ -324,6 +349,27 @@ impl GraphicsManager {
             world,
             delta,
             points.to_vec(),
+            color,
+            window,
+        )))
+    }
+
+    fn add_heightfield(
+        &mut self,
+        window: &mut Window,
+        object: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry2<f32>,
+        heightfield: &shape::HeightField<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        out.push(Node::HeightField(HeightField::new(
+            object,
+            world,
+            delta,
+            heightfield.heights(),
+            heightfield.scale(),
             color,
             window,
         )))

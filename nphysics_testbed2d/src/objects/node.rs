@@ -5,15 +5,19 @@ use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
+use crate::objects::capsule::Capsule;
 use crate::objects::convex::Convex;
 use crate::objects::plane::Plane;
 use crate::objects::polyline::Polyline;
+use crate::objects::heightfield::HeightField;
 
 pub enum Node {
     Plane(Plane),
     Ball(Ball),
     Box(Box),
+    Capsule(Capsule),
     Polyline(Polyline),
+    HeightField(HeightField),
     Convex(Convex),
 }
 
@@ -23,7 +27,9 @@ impl Node {
             Node::Plane(ref mut n) => n.select(),
             Node::Ball(ref mut n) => n.select(),
             Node::Box(ref mut n) => n.select(),
+            Node::Capsule(ref mut n) => n.select(),
             Node::Polyline(ref mut n) => n.select(),
+            Node::HeightField(ref mut n) => n.select(),
             Node::Convex(ref mut n) => n.select(),
         }
     }
@@ -33,7 +39,9 @@ impl Node {
             Node::Plane(ref mut n) => n.unselect(),
             Node::Ball(ref mut n) => n.unselect(),
             Node::Box(ref mut n) => n.unselect(),
+            Node::Capsule(ref mut n) => n.unselect(),
             Node::Polyline(ref mut n) => n.unselect(),
+            Node::HeightField(ref mut n) => n.unselect(),
             Node::Convex(ref mut n) => n.unselect(),
         }
     }
@@ -43,7 +51,9 @@ impl Node {
             Node::Plane(ref mut n) => n.update(world),
             Node::Ball(ref mut n) => n.update(world),
             Node::Box(ref mut n) => n.update(world),
+            Node::Capsule(ref mut n) => n.update(world),
             Node::Polyline(ref mut n) => n.update(world),
+            Node::HeightField(ref mut n) => n.update(world),
             Node::Convex(ref mut n) => n.update(world),
         }
     }
@@ -51,9 +61,11 @@ impl Node {
     pub fn draw(&mut self, window: &mut Window) {
         match *self {
             Node::Polyline(ref mut n) => n.draw(window),
+            Node::HeightField(ref mut n) => n.draw(window),
             Node::Plane(ref mut n) => n.draw(window),
             Node::Ball(..) => {}
             Node::Box(..) => {}
+            Node::Capsule(..) => {}
             Node::Convex(..) => {}
         }
     }
@@ -63,7 +75,9 @@ impl Node {
             Node::Plane(_) => None,
             Node::Ball(ref n) => Some(n.scene_node()),
             Node::Box(ref n) => Some(n.scene_node()),
+            Node::Capsule(ref n) => Some(n.scene_node()),
             Node::Polyline(_) => None,
+            Node::HeightField(_) => None,
             Node::Convex(ref n) => Some(n.scene_node()),
         }
     }
@@ -73,7 +87,9 @@ impl Node {
             Node::Plane(_) => None,
             Node::Ball(ref mut n) => Some(n.scene_node_mut()),
             Node::Box(ref mut n) => Some(n.scene_node_mut()),
+            Node::Capsule(ref mut n) => Some(n.scene_node_mut()),
             Node::Polyline(_) => None,
+            Node::HeightField(_) => None,
             Node::Convex(ref mut n) => Some(n.scene_node_mut()),
         }
     }
@@ -83,7 +99,9 @@ impl Node {
             Node::Plane(ref n) => n.object(),
             Node::Ball(ref n) => n.object(),
             Node::Box(ref n) => n.object(),
+            Node::Capsule(ref n) => n.object(),
             Node::Polyline(ref n) => n.object(),
+            Node::HeightField(ref n) => n.object(),
             Node::Convex(ref n) => n.object(),
         }
     }
@@ -93,7 +111,9 @@ impl Node {
             Node::Plane(ref mut n) => n.set_color(color),
             Node::Ball(ref mut n) => n.set_color(color),
             Node::Box(ref mut n) => n.set_color(color),
+            Node::Capsule(ref mut n) => n.set_color(color),
             Node::Polyline(ref mut n) => n.set_color(color),
+            Node::HeightField(ref mut n) => n.set_color(color),
             Node::Convex(ref mut n) => n.set_color(color),
         }
     }

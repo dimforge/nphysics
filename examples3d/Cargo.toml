@@ -9,7 +9,7 @@ rand       = { version = "0.5", features = [ "stdweb" ] }
 num-traits = "0.2"
 nalgebra   = "0.16"
 ncollide3d = "0.17"
-kiss3d     = "0.16"
+kiss3d     = "0.17"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"
@@ -41,6 +41,10 @@ path = "./body_status3.rs"
 [[bin]]
 name = "boxes3"
 path = "./boxes3.rs"
+
+[[bin]]
+name = "capsules3"
+path = "./capsules3.rs"
 
 [[bin]]
 name = "compound3"
@@ -101,6 +105,10 @@ path = "./sensor3.rs"
 [[bin]]
 name = "trimesh3"
 path = "./trimesh3.rs"
+
+[[bin]]
+name = "heightfield3"
+path = "./heightfield3.rs"
 
 [[bin]]
 name = "wall3"

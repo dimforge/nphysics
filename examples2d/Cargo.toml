@@ -33,6 +33,10 @@ name = "boxes2"
 path = "./boxes2.rs"
 
 [[bin]]
+name = "capsules2"
+path = "./capsules2.rs"
+
+[[bin]]
 name = "collision_groups2"
 path = "./collision_groups2.rs"
 
@@ -71,6 +75,10 @@ path = "./multibody_limits2.rs"
 [[bin]]
 name = "polyline2"
 path = "./polyline2.rs"
+
+[[bin]]
+name = "heightfield2"
+path = "./heightfield2.rs"
 
 [[bin]]
 name = "pyramid2"
