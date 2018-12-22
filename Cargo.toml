@@ -6,8 +6,9 @@ members = [ "build/nphysics2d", "nphysics_testbed2d", "examples2d",
 ncollide2d = { path = "../ncollide-dev/build/ncollide2d" }
 ncollide3d = { path = "../ncollide-dev/build/ncollide3d" }
 nalgebra = { path = "../nalgebra-dev" }
+kiss3d = { path = "../kiss3d" }
 
 
-#[profile.release]
-#lto = true
-#codegen-units = 1
+[profile.release]
+lto = true
+codegen-units = 1
