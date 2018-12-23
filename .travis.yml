@@ -12,6 +12,10 @@ matrix:
   allow_failures:
     - rust: beta
     - rust: nightly
+before_script:
+  - rustup target add wasm32-unknown-unknown
 script:
+  - rustup update
+  - rustup target add wasm32-unknown-unknown
   - cargo build --target ${TARGET}
   - cargo test --target ${TARGET}
