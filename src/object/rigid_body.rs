@@ -357,7 +357,7 @@ impl<N: Real> RigidBody<N> {
         self.inv_augmented_mass = inertia.inverse();
     }
 
-    /// Disable the rotation of this rigid body by removing the angular inertia.
+    /// Disable rotations of this rigid body by removing the angular inertia.
     #[inline]
     pub fn disable_rotations(&mut self) {
         let zero = Inertia::zero();
