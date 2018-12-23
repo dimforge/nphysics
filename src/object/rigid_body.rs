@@ -344,4 +344,25 @@ impl<N: Real> RigidBody<N> {
         let acc = self.inv_augmented_mass * *force;
         out[..SPATIAL_DIM].copy_from_slice(acc.as_slice());
     }
+
+    /// Set the local inertia of this rigid body.
+    /// Inertia is processed from the given local inertia.
+    #[inline]
+    pub fn set_local_inertia(&mut self, local_inertia: Inertia<N>) {
+        let inertia = local_inertia.transformed(&self.position());
+
+        self.local_inertia = local_inertia;
+        self.inertia = inertia;
+        self.augmented_mass = inertia;
+        self.inv_augmented_mass = inertia.inverse();
+    }
+
+    /// Disable the rotation of this rigid body by removing the angular inertia.
+    #[inline]
+    pub fn disable_rotations(&mut self) {
+        let zero = Inertia::zero();
+        let local_inertia = Inertia::new(self.local_inertia.linear, zero.angular);
+
+        self.set_local_inertia(local_inertia);
+    }
 }
