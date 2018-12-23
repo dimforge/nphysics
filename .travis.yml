@@ -1,11 +1,12 @@
 sudo: false
 language: rust
+cache: cargo
 rust:
   - stable
   - beta
   - nightly
 env:
-  - TARGET=build
+  - TARGET=x86_64-unknown-unknown
   - TARGET=wasm32-unknown-unknown
 matrix:
   allow_failures:
