@@ -1,13 +1,16 @@
 sudo: false
 language: rust
 rust:
-    - stable
-    - beta
-    - nightly
+  - stable
+  - beta
+  - nightly
+env:
+  - TARGET=build
+  - TARGET=wasm32-unknown-unknown
 matrix:
   allow_failures:
     - rust: beta
     - rust: nightly
 script:
-  - cargo build
-  - cargo test
+  - cargo build --target ${TARGET}
+  - cargo test --target ${TARGET}
