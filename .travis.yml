@@ -6,10 +6,8 @@ rust:
   - beta
   - nightly
 env:
-  - TARGET="x86_64-unknown-linux-gnu"
-    SUBCOMMAND=""
-  - TARGET="wasm32-unknown-unknown"
-    SUBCOMMAND="web"
+  - TARGET="x86_64-unknown-linux-gnu" SUBCOMMAND=""
+  - TARGET="wasm32-unknown-unknown" SUBCOMMAND="web"
   allow_failures:
     - rust: beta
     - rust: nightly
