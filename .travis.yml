@@ -8,6 +8,7 @@ rust:
 env:
   - TARGET="x86_64-unknown-linux-gnu" SUBCOMMAND=""
   - TARGET="wasm32-unknown-unknown" SUBCOMMAND="web"
+matrix:
   allow_failures:
     - rust: beta
     - rust: nightly
