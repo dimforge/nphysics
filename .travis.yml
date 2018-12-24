@@ -13,23 +13,19 @@ matrix:
     - rust: beta
     - rust: nightly
 before_install:
-  - if [ "${SUBCOMMAND}" == "web" ]; then
-      cargo install cargo-web
-    fi
+  - [ "$SUBCOMMAND" == "web" ] && cargo install cargo-web
 script:
-  - if [ "${SUBCOMMAND}" == "web" ]; then
-      cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
-      cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
-      cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed2d
-      cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed3d
-    else
-      cargo ${SUBCOMMAND} build --target ${TARGET}
-    fi
-  - if [ "${SUBCOMMAND}" == "web" ]; then
-      cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
-      cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
-      cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed2d
-      cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed3d
-    else
-      cargo ${SUBCOMMAND} build --target ${TARGET}
-    fi
+  # build (each package is listed since cargo-web needs them)
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed3d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-3d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-2d
+  # test (each package is list since cargo-web needs them)
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed3d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-3d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-2d
