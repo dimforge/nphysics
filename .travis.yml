@@ -15,14 +15,12 @@ matrix:
 before_install:
   - if [ "$SUBCOMMAND" == "web" ];then cargo install cargo-web; fi
 script:
-  # build (each package is listed since cargo-web needs them)
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed2d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed3d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-3d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-2d
-  # test (each package is list since cargo-web needs them)
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed2d
