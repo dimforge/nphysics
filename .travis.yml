@@ -13,7 +13,7 @@ matrix:
     - rust: beta
     - rust: nightly
 before_install:
-  - [ "$SUBCOMMAND" == "web" ] && cargo install cargo-web
+  - if [ "$SUBCOMMAND" == "web" ];then cargo install cargo-web; fi
 script:
   # build (each package is listed since cargo-web needs them)
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
