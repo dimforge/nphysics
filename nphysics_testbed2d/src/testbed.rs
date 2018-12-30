@@ -8,6 +8,7 @@ use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
 use na::{self, Point2, Point3};
 use ncollide2d::utils::GenerationalId;
+use ncollide2d::query::Ray;
 use ncollide2d::world::CollisionGroups;
 use nphysics2d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics2d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
@@ -65,6 +66,7 @@ pub struct Testbed {
     cursor_pos: Point2<f32>,
     grabbed_object: Option<BodyPartHandle>,
     grabbed_object_constraint: Option<ConstraintHandle>,
+    drawing_ray: Option<Point2<f32>>
 }
 
 impl Testbed {
@@ -92,6 +94,7 @@ impl Testbed {
             cursor_pos: Point2::new(0.0f32, 0.0),
             grabbed_object: None,
             grabbed_object_constraint: None,
+            drawing_ray: None
         }
     }
 
@@ -234,16 +237,11 @@ impl State for Testbed {
                 //             graphics.add(window, WorldObject::RigidBody(body));
                 //         },
                 WindowEvent::MouseButton(_, Action::Press, modifier) => {
-                    let mapped_point = self
-                        .graphics
-                        .camera()
-                        .unproject(&self.cursor_pos, &na::convert(window.size()));
-
                     let all_groups = &CollisionGroups::new();
                     for b in self
                         .world
                         .collision_world()
-                        .interferences_with_point(&mapped_point, all_groups)
+                        .interferences_with_point(&self.cursor_pos, all_groups)
                         {
                             if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
 
@@ -285,7 +283,7 @@ impl State for Testbed {
                             }
 
                             let body_pos = self.world.body_part(body).position();
-                            let attach1 = mapped_point;
+                            let attach1 = self.cursor_pos;
                             let attach2 = body_pos.inverse() * attach1;
                             let joint = MouseConstraint::new(
                                 BodyPartHandle::ground(),
@@ -307,6 +305,8 @@ impl State for Testbed {
                         }
 
                         event.inhibited = true;
+                    } else if modifier.contains(Modifiers::Alt) {
+                        self.drawing_ray = Some(self.cursor_pos);
                     } else {
                         self.grabbed_object = None;
                     }
@@ -327,6 +327,12 @@ impl State for Testbed {
                         let _ = self.world.remove_constraint(joint);
                     }
 
+
+                    if let Some(start) = self.drawing_ray {
+                        self.graphics.add_ray(Ray::new(start, self.cursor_pos - start));
+                    }
+
+                    self.drawing_ray = None;
                     self.grabbed_object = None;
                     self.grabbed_object_constraint = None;
                 }
@@ -334,12 +340,12 @@ impl State for Testbed {
                     self.cursor_pos.x = x as f32;
                     self.cursor_pos.y = y as f32;
 
-                    let mapped_point = self
+                    self.cursor_pos = self
                         .graphics
                         .camera()
                         .unproject(&self.cursor_pos, &na::convert(window.size()));
 
-                    let attach2 = mapped_point;
+                    let attach2 = self.cursor_pos;
                     if let Some(_) = self.grabbed_object {
                         let joint = self.grabbed_object_constraint.unwrap();
                         let joint = self
@@ -464,6 +470,10 @@ impl State for Testbed {
 
         if self.running == RunMode::Step {
             self.running = RunMode::Stop;
+        }
+
+        if let Some(start) = self.drawing_ray {
+            window.draw_planar_line(&start, &self.cursor_pos, &Point3::new(1.0, 0.0, 0.0));
         }
 
         let color = Point3::new(0.0, 0.0, 0.0);

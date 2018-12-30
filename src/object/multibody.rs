@@ -1,9 +1,10 @@
 use std::ops::Range;
 use slab::Slab;
+use std::iter;
 
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
-use crate::joint::Joint;
+use crate::joint::{Joint, FreeJoint};
 use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
     Vector, Velocity, DIM, Translation
@@ -278,17 +279,15 @@ impl<N: Real> Multibody<N> {
 
     /// Remove a set of links from this multibody.
     pub fn remove_links(self, links: &[BodyPartHandle]) -> Vec<Multibody<N>> {
-        /*
-        // FIXME: this could be optimized.
         let mut rb2mb: Vec<_> = iter::repeat(0).take(self.rbs.len()).collect();
-        let mut rb2id: Vec<_> = iter::repeat(MultibodyLinkId::ground())
+        let mut rb2id: Vec<_> = iter::repeat(0)
             .take(self.rbs.len())
             .collect();
         let mut removed: Vec<_> = iter::repeat(false).take(self.rbs.len()).collect();
         let mut multibodies = Vec::new();
 
         for link in links {
-            removed[link.internal_id] = true;
+            removed[link.part_id] = true;
         }
 
         for (i, mut rb) in self.rbs.unwrap().into_iter().enumerate() {
@@ -303,12 +302,12 @@ impl<N: Real> Multibody<N> {
                     rb2id[i] = mb.take_link(rb, velocities, damping);
                     rb2mb[i] = multibodies.len();
                     multibodies.push(mb);
-                } else if removed[rb.parent.internal_id] {
+                } else if removed[rb.parent.part_id] {
                     let velocity = rb.velocity;
                     let damping = SpatialVector::zeros();
                     let mut mb = Multibody::new();
 
-                    rb.parent = MultibodyLinkId::ground();
+                    rb.parent = BodyPartHandle::ground();
                     rb.dof = Box::new(FreeJoint::new(rb.local_to_world));
                     rb.parent_shift.fill(N::zero());
                     rb.body_shift.fill(N::zero());
@@ -317,14 +316,14 @@ impl<N: Real> Multibody<N> {
                     rb2mb[i] = multibodies.len();
                     multibodies.push(mb);
                 } else {
-                    let parent_id = rb.parent.internal_id;
+                    let parent_id = rb.parent.part_id;
                     let mb_id = rb2mb[parent_id];
                     let ndofs = rb.dof.ndofs();
                     let velocities = &self.velocities[rb.assembly_id..rb.assembly_id + ndofs];
                     let damping = &self.damping[rb.assembly_id..rb.assembly_id + ndofs];
                     let mut mb = &mut multibodies[mb_id];
 
-                    rb.parent = rb2id[parent_id];
+                    rb.parent = BodyPartHandle::new(BodyHandle::ground(), rb2id[parent_id]);
                     rb2id[i] = mb.take_link(rb, velocities, damping);
                     rb2mb[i] = mb_id;
                 }
@@ -332,8 +331,6 @@ impl<N: Real> Multibody<N> {
         }
 
         multibodies
-        */
-        unimplemented!()
     }
 
     /// Computes the constant terms of the dynamics.
@@ -870,7 +867,15 @@ impl<N: Real> Body<N> for Multibody<N> {
         self.handle = handle;
 
         for rb in &mut *self.rbs {
-            rb.multibody_handle = handle
+            rb.multibody_handle = handle;
+        }
+
+        if let Some(handle) = handle {
+            if self.rbs.len() > 1 {
+                for rb in &mut self.rbs[1..] {
+                    rb.parent.body_handle = handle;
+                }
+            }
         }
     }
 

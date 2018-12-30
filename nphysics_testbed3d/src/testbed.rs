@@ -241,7 +241,17 @@ impl State for Testbed {
                 //             graphics.add(window, WorldObject::RigidBody(body));
                 //         },
                 WindowEvent::MouseButton(_, Action::Press, modifier) => {
-                    if modifier.contains(Modifiers::Shift) {
+                    if modifier.contains(Modifiers::Alt) {
+                        let size = window.size();
+                        let (pos, dir) = self
+                            .graphics
+                            .camera()
+                            .unproject(&self.cursor_pos, &na::convert(size));
+                        let ray = Ray::new(pos, dir);
+                        self.graphics.add_ray(ray);
+
+                        event.inhibited = true;
+                    } else if modifier.contains(Modifiers::Shift) {
                         // XXX: huge and uggly code duplication for the ray cast.
                         let size = window.size();
                         let (pos, dir) = self
@@ -362,8 +372,9 @@ impl State for Testbed {
                             }
                         }
 
-                        event.inhibited = true;
                     }
+
+                    event.inhibited = true;
                 }
                 WindowEvent::MouseButton(_, Action::Release, _) => {
                     if let Some(body_part) = self.grabbed_object {
@@ -509,7 +520,7 @@ impl State for Testbed {
                 self.time += self.world.timestep();
             }
 
-            self.graphics.draw(&self.world);
+            self.graphics.draw(&self.world, window);
         }
 
         if self.draw_colls {

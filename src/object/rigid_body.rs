@@ -212,7 +212,11 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn clear_dynamics(&mut self) {
-        self.augmented_mass = Inertia::zero();
+        #[cfg(feature = "dim3")]
+            {
+                self.augmented_mass = Inertia::zero();
+                self.inv_augmented_mass = Inertia::zero();
+            }
         self.acceleration = Velocity::zero();
         self.external_forces = Force::zero();
     }
@@ -226,28 +230,28 @@ impl<N: Real> Body<N> for RigidBody<N> {
             BodyStatus::Dynamic => {
                 // The inverse inertia matrix is constant in 2D.
                 #[cfg(feature = "dim3")]
-                    {
-                        self.inertia = self.local_inertia.transformed(&self.local_to_world);
-                        self.augmented_mass += self.inertia;
+                {
+                    self.inertia = self.local_inertia.transformed(&self.local_to_world);
+                    self.augmented_mass += self.inertia;
 
-                        let i = &self.inertia.angular;
-                        let w = &self.velocity.angular;
-                        let iw = i * w;
-                        let w_dt = w * params.dt;
-                        let w_dt_cross = w_dt.gcross_matrix();
-                        let iw_dt_cross = (iw * params.dt).gcross_matrix();
-                        self.augmented_mass.angular += w_dt_cross * i - iw_dt_cross;
+                    let i = &self.inertia.angular;
+                    let w = &self.velocity.angular;
+                    let iw = i * w;
+                    let w_dt = w * params.dt;
+                    let w_dt_cross = w_dt.gcross_matrix();
+                    let iw_dt_cross = (iw * params.dt).gcross_matrix();
+                    self.augmented_mass.angular += w_dt_cross * i - iw_dt_cross;
 
-                        // NOTE: if we did not have the gyroscopic forces, we would not have to invert the inertia
-                        // matrix at each time-step => add a flag to disable gyroscopic forces?
-                        self.inv_augmented_mass = self.augmented_mass.inverse();
+                    // NOTE: if we did not have the gyroscopic forces, we would not have to invert the inertia
+                    // matrix at each time-step => add a flag to disable gyroscopic forces?
+                    self.inv_augmented_mass = self.augmented_mass.inverse();
 
-                        /*
-                         * Compute acceleration due to gyroscopic forces.
-                         */
-                        let gyroscopic = -w.cross(&iw);
-                        self.acceleration.angular += self.inv_augmented_mass.angular * gyroscopic;
-                    }
+                    /*
+                     * Compute acceleration due to gyroscopic forces.
+                     */
+                    let gyroscopic = -w.cross(&iw);
+                    self.acceleration.angular += self.inv_augmented_mass.angular * gyroscopic;
+                }
 
                 self.acceleration.linear += *gravity;
                 self.acceleration += self.inv_augmented_mass * self.external_forces

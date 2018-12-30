@@ -2,6 +2,7 @@ use slab::Slab;
 use std::f64;
 use std::sync::Arc;
 use either::Either;
+use std::collections::HashMap;
 
 use na::{self, Real};
 use ncollide;
@@ -30,8 +31,8 @@ pub struct World<N: Real> {
     counters: Counters,
     bodies: BodySet<N>,
     active_bodies: Vec<BodyHandle>,
-    colliders_w_parent: Vec<ColliderHandle>,
     // The set of colliders that have a parent.
+    colliders_w_parent: Vec<ColliderHandle>,
     cworld: CollisionWorld<N>,
     solver: MoreauJeanSolver<N>,
     activation_manager: ActivationManager<N>,
@@ -85,7 +86,7 @@ impl<N: Real> World<N> {
             constraints,
             forces,
             params,
-            workspace,
+            workspace
         }
     }
 

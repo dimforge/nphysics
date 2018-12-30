@@ -5,6 +5,8 @@ use na;
 use na::{Isometry3, Point3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
+use ncollide3d::query::Ray;
+use ncollide3d::world::CollisionGroups;
 use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
 use crate::objects::ball::Ball;
@@ -23,6 +25,7 @@ pub struct GraphicsManager {
     b2sn: HashMap<BodyHandle, Vec<Node>>,
     b2color: HashMap<BodyHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
+    rays: Vec<Ray<f32>>,
     arc_ball: ArcBall,
     first_person: FirstPerson,
     curr_is_arc_ball: bool,
@@ -50,6 +53,7 @@ impl GraphicsManager {
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
+            rays: Vec::new(),
             aabbs: Vec::new(),
         }
     }
@@ -67,6 +71,7 @@ impl GraphicsManager {
 
         self.b2sn.clear();
         self.aabbs.clear();
+        self.rays.clear();
     }
 
     pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {
@@ -161,6 +166,10 @@ impl GraphicsManager {
         self.set_body_color(handle, color);
 
         color
+    }
+
+    pub fn add_ray(&mut self, ray: Ray<f32>) {
+        self.rays.push(ray)
     }
 
     pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
@@ -382,11 +391,20 @@ impl GraphicsManager {
         )))
     }
 
-    pub fn draw(&mut self, world: &World<f32>) {
+    pub fn draw(&mut self, world: &World<f32>, window: &mut Window) {
         for (_, ns) in self.b2sn.iter_mut() {
             for n in ns.iter_mut() {
                 n.update(world)
             }
+        }
+
+        for ray in &self.rays {
+            let groups = CollisionGroups::new();
+            let inter = world.collision_world().interferences_with_ray(ray, &groups);
+            let hit = inter.fold(1000.0, |t, hit| hit.1.toi.min(t));
+            let p1 = ray.origin;
+            let p2 = ray.origin + ray.dir * hit;
+            window.draw_line(&p1, &p2, &Point3::new(1.0, 0.0, 0.0));
         }
     }
 
