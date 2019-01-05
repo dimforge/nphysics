@@ -4,16 +4,16 @@ pub use self::material::Material;
 
 pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus};
 pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySet, BodyHandle};
-pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, Colliders, Sensor, SensorHandle};
+pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, Colliders, Sensor, SensorHandle, ColliderDesc};
 pub use self::ground::Ground;
-pub use self::multibody::{Multibody, MultibodyLinks, MultibodyWorkspace};
+pub use self::multibody::{Multibody, MultibodyWorkspace, MultibodyDesc};
 pub(crate) use self::multibody_link::MultibodyLinkVec;
 pub use self::multibody_link::MultibodyLink;
-pub use self::rigid_body::RigidBody;
+pub use self::rigid_body::{RigidBody, RigidBodyDesc};
 #[cfg(feature = "dim2")]
 pub use self::deformable_surface::DeformableSurface;
 #[cfg(feature = "dim3")]
-pub use self::deformable_volume::DeformableVolume;
+pub use self::deformable_volume::{DeformableVolume, DeformableVolumeDesc};
 pub use self::mass_constraint_system::MassConstraintSystem;
 pub use self::mass_spring_system::MassSpringSystem;
 pub use self::fem_helper::FiniteElementIndices;

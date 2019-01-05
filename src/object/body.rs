@@ -3,11 +3,13 @@
 use downcast::Any;
 
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
+use either::Either;
 use ncollide::shape::DeformationsType;
 
 use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyHandle};
+use crate::object::{BodyPartHandle, BodyHandle, ColliderAnchor, ColliderHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::world::CollisionWorld;
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -160,13 +162,13 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn deactivate(&mut self);
 
     /// A reference to the specified body part.
-    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N>;
+    fn part(&self, i: usize) -> &BodyPart<N>;
 
     /// A mutable reference to the specified body part.
-    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N>;
+    fn part_mut(&mut self, i: usize) -> &mut BodyPart<N>;
 
     /// Returns `true` if `handle` is a valid handle for one of this body's part.
-    fn contains_part(&self, handle: BodyPartHandle) -> bool;
+    fn contains_part(&self, i: usize) -> bool;
 
     /// If this is a deformable body, returns its deformed positions.
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
@@ -275,6 +277,10 @@ pub trait Body<N: Real>: Any + Send + Sync {
             self.activate_with_energy(threshold * na::convert(2.0));
         }
     }
+
+    fn sync_colliders(&self, cworld: &mut CollisionWorld<N>) {
+        unimplemented!()
+    }
 }
 
 /// Trait implemented by each part of a body supported by nphysics.
@@ -298,6 +304,10 @@ pub trait BodyPart<N: Real>: Any + Send + Sync {
 
     /// The world-space inertia of this body part.
     fn inertia(&self) -> Inertia<N>;
+
+    /// Add the given inertia to the local inertia of this body part.
+    fn add_local_inertia(&mut self, inertia: Inertia<N>)
+    {} // FIXME: don't auto-impl.
 
     /// The local-space inertia of this body part.
     fn local_inertia(&self) -> Inertia<N>;

@@ -65,26 +65,41 @@ fn main() {
     /*
      * Create the deformable body and a collider for its contour.
      */
-    let mut volume = DeformableVolume::cube(
-        &Isometry3::new(Vector3::y() * 0.1, na::zero()), // Vector3::z() * 1.0),
-        &Vector3::new(1.1, 0.1, 0.1),
-        50, 1, 1,
-        1.0, 1.0e3, 0.0,
-        (0.2, 0.0));
-    let (mesh, ids_map, parts_map) = volume.boundary_mesh();
-    volume.renumber_dofs(&ids_map);
+    let volume = DeformableVolumeDesc::cube(50, 1, 1)
+        .with_scaling(1.0, 0.1, 0.1)
+        .with_translation(Vecotr3::y() * 0.1)
+        .with_young_modulus(1.0e3)
+        .with_sleeping_threshold(None)
+        .with_damping(0.2, 0.0);
+
+    volume.build(&mut world, Some(&mut cworld));
 
 
-    let handle = world.add_body(Box::new(volume));
-    world.add_deformable_collider(
-        COLLIDER_MARGIN,
-        mesh,
-        handle,
-        None,
-        Some(Arc::new(parts_map)),
-        Material::default(),
-    );
-    world.body_mut(handle).set_deactivation_threshold(None);
+
+
+//    let mut volume = DeformableVolume::cube(
+//        &Isometry3::new(Vector3::y() * 0.1, na::zero()), // Vector3::z() * 1.0),
+//        &Vector3::new(1.1, 0.1, 0.1),
+//        50, 1, 1,
+//        1.0, 1.0e3, 0.0,
+//        (0.2, 0.0));
+//    let (mesh, ids_map, parts_map) = volume.boundary_mesh();
+//    volume.renumber_dofs(&ids_map);
+//
+//
+//    let handle = world.add_body(Box::new(volume));
+//    world.add_deformable_collider(
+//        COLLIDER_MARGIN,
+//        mesh,
+//        handle,
+//        None,
+//        Some(Arc::new(parts_map)),
+//        Material::default(),
+//    );
+//    world.body_mut(handle).set_deactivation_threshold(None);
+
+
+
 
     let geom = ShapeHandle::new(Cuboid::new(Vector3::new(0.05 - COLLIDER_MARGIN, 0.05 - COLLIDER_MARGIN, 0.05 - COLLIDER_MARGIN)));
     let inertia = geom.inertia(10.1);

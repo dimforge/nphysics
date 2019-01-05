@@ -178,6 +178,11 @@ impl<N: Real> RevoluteJoint<N> {
 
 impl<N: Real> Joint<N> for RevoluteJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         1
     }

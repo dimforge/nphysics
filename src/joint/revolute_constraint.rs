@@ -150,10 +150,10 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body(self.b1.body_handle);
-        let body2 = bodies.body(self.b2.body_handle);
-        let part1 = body1.part(self.b1);
-        let part2 = body2.part(self.b2);
+        let body1 = bodies.body(self.b1.0);
+        let body2 = bodies.body(self.b2.0);
+        let part1 = body1.part(self.b1.1);
+        let part2 = body2.part(self.b2.1);
 
         /*
          *
@@ -265,10 +265,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.body_handle);
-        let body2 = bodies.body(self.b2.body_handle);
-        let part1 = body1.part(self.b1);
-        let part2 = body2.part(self.b2);
+        let body1 = bodies.body(self.b1.0);
+        let body2 = bodies.body(self.b2.0);
+        let part1 = body1.part(self.b1.1);
+        let part2 = body2.part(self.b2.1);
 
         let pos1 = body1.position_at_material_point(part1, &self.anchor1);
         let pos2 = body2.position_at_material_point(part2, &self.anchor2);

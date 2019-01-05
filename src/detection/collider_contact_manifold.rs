@@ -64,9 +64,9 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
                 let subshape_id = self.collider1.shape().subshape_containing_feature(feature1);
                 if let Some(body_parts) = body_parts {
-                    BodyPartHandle { body_handle: *body, part_id: body_parts[subshape_id] }
+                    BodyPartHandle(*body, body_parts[subshape_id])
                 } else {
-                    BodyPartHandle { body_handle: *body, part_id: subshape_id }
+                    BodyPartHandle(*body, subshape_id)
                 }
             }
         }
@@ -81,9 +81,9 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
                 let subshape_id = self.collider2.shape().subshape_containing_feature(feature2);
                 if let Some(body_parts) = body_parts {
-                    BodyPartHandle { body_handle: *body, part_id: body_parts[subshape_id] }
+                    BodyPartHandle(*body, body_parts[subshape_id])
                 } else {
-                    BodyPartHandle { body_handle: *body, part_id: subshape_id }
+                    BodyPartHandle(*body, subshape_id)
                 }
             }
         }

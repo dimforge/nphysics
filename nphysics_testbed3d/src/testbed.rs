@@ -280,22 +280,8 @@ impl State for Testbed {
 
                         if let Some(body_part) = minb {
                             if !body_part.is_ground() {
-                                if !modifier.contains(Modifiers::Control) {
-                                    self.graphics.remove_body_nodes(window, body_part.body_handle);
-                                    self.world.remove_bodies(&[body_part.body_handle]);
-                                } else {
-                                    if self.world.multibody_link(body_part).is_some() {
-                                        let key = self.graphics.remove_body_part_nodes(
-                                            &self.world,
-                                            window,
-                                            body_part,
-                                        );
-                                        self.world.remove_multibody_links(&[body_part]);
-                                        // FIXME: this is a bit ugly.
-                                        self.graphics
-                                            .update_after_body_key_change(&self.world, key.body_handle);
-                                    }
-                                }
+                                self.graphics.remove_body_nodes(window, body_part.0);
+                                self.world.remove_bodies(&[body_part.0]);
                             }
                         }
 
@@ -304,7 +290,7 @@ impl State for Testbed {
                         match self.grabbed_object {
                             Some(body) => for n in self
                                 .graphics
-                                .body_nodes_mut(body.body_handle)
+                                .body_nodes_mut(body.0)
                                 .unwrap()
                                 .iter_mut()
                                 {
@@ -340,11 +326,11 @@ impl State for Testbed {
                             }
 
                         if let Some(body_part_handle) = minb {
-                            if self.world.body(body_part_handle.body_handle).status_dependent_ndofs() != 0 {
+                            if self.world.body(body_part_handle.0).status_dependent_ndofs() != 0 {
                                 self.grabbed_object = minb;
                                 for n in self
                                     .graphics
-                                    .body_nodes_mut(body_part_handle.body_handle)
+                                    .body_nodes_mut(body_part_handle.0)
                                     .unwrap()
                                     .iter_mut()
                                     {
@@ -354,8 +340,9 @@ impl State for Testbed {
 
                                         let attach1 = ray.origin + ray.dir * mintoi;
                                         let attach2 = {
-                                            let (body, body_part) = self.world.body_and_part(body_part_handle);
-                                            body.material_point_at_world_point(body_part, &attach1)
+                                            let body = self.world.body(body_part_handle.0);
+                                            let part = body.part(body_part_handle.1);
+                                            body.material_point_at_world_point(part, &attach1)
                                         };
                                         let constraint = MouseConstraint::new(
                                             BodyPartHandle::ground(),
@@ -371,7 +358,6 @@ impl State for Testbed {
                                     }
                             }
                         }
-
                     }
 
                     event.inhibited = true;
@@ -380,7 +366,7 @@ impl State for Testbed {
                     if let Some(body_part) = self.grabbed_object {
                         for n in self
                             .graphics
-                            .body_nodes_mut(body_part.body_handle)
+                            .body_nodes_mut(body_part.0)
                             .unwrap()
                             .iter_mut()
                             {

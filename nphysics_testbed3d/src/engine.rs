@@ -92,7 +92,7 @@ impl GraphicsManager {
     ) -> BodyPartHandle {
         let mut delete_array = true;
 
-        if let Some(sns) = self.b2sn.get_mut(&part.body_handle) {
+        if let Some(sns) = self.b2sn.get_mut(&part.0) {
             sns.retain(|sn| {
                 if let ColliderAnchor::OnBodyPart {
                     body_part, ..
@@ -113,7 +113,7 @@ impl GraphicsManager {
         }
 
         if delete_array {
-            self.b2sn.remove(&part.body_handle);
+            self.b2sn.remove(&part.0);
         }
 
         part

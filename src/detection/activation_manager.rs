@@ -152,7 +152,7 @@ impl<N: Real> ActivationManager<N> {
 
         for (_, c) in constraints.iter() {
             let (b1, b2) = c.anchors();
-            make_union(bodies, b1.body_handle, b2.body_handle, &mut self.ufind);
+            make_union(bodies, b1.0, b2.0, &mut self.ufind);
         }
 
         /*

@@ -582,7 +582,7 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         self.handle = handle;
 
         for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle { body_handle: h, part_id: i })
+            element.handle = handle.map(|h| BodyPartHandle(h, i))
         }
     }
 
@@ -644,20 +644,16 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
-    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
-        &self.elements[handle.part_id]
+    fn part(&self, id: usize) -> &BodyPart<N> {
+        &self.elements[id]
     }
 
-    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
-        &mut self.elements[handle.part_id]
+    fn part_mut(&mut self, id: usize) -> &mut BodyPart<N> {
+        &mut self.elements[id]
     }
 
-    fn contains_part(&self, handle: BodyPartHandle) -> bool {
-        if let Some(me) = self.handle {
-            handle.body_handle == me && handle.part_id < self.elements.len()
-        } else {
-            false
-        }
+    fn contains_part(&self, id: usize) -> bool {
+            id < self.elements.len()
     }
 
     fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {

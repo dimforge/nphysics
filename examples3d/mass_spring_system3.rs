@@ -192,7 +192,7 @@ fn main() {
             Isometry3::identity(),
             Material::default(),
         );
-        world.body_mut(handle.body_handle).set_deactivation_threshold(None);
+        world.body_mut(handle.0).set_deactivation_threshold(None);
 
 
         let pos = Isometry3::new(Vector3::new(1.0, 2.5, 2.0), na::zero());
@@ -204,7 +204,7 @@ fn main() {
             Isometry3::identity(),
             Material::default(),
         );
-        world.body_mut(handle.body_handle).set_deactivation_threshold(None);
+        world.body_mut(handle.0).set_deactivation_threshold(None);
 */
 /*
         let pos = Isometry3::new(Vector3::y() * 14.0, na::zero());
@@ -216,7 +216,7 @@ fn main() {
             Isometry3::identity(),
             Material::default(),
         );
-        world.body_mut(handle.body_handle).set_deactivation_threshold(None);*/
+        world.body_mut(handle.0).set_deactivation_threshold(None);*/
     }
 
     // Add a cube to play around with.

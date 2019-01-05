@@ -68,10 +68,10 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body(self.b1.body_handle);
-        let body2 = bodies.body(self.b2.body_handle);
-        let part1 = body1.part(self.b1);
-        let part2 = body2.part(self.b2);
+        let body1 = bodies.body(self.b1.0);
+        let body2 = bodies.body(self.b2.0);
+        let part1 = body1.part(self.b1.1);
+        let part2 = body2.part(self.b2.1);
 
         /*
          *

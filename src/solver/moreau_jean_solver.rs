@@ -126,8 +126,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         for (_, g) in joints.iter() {
             if g.is_active(bodies) {
                 let (b1, b2) = g.anchors();
-                let body1 = bodies.body(b1.body_handle);
-                let body2 = bodies.body(b2.body_handle);
+                let body1 = bodies.body(b1.0);
+                let body2 = bodies.body(b2.0);
 
                 let ndofs1 = body1.status_dependent_ndofs();
                 let ndofs2 = body2.status_dependent_ndofs();
@@ -155,14 +155,6 @@ impl<N: Real> MoreauJeanSolver<N> {
             }
         }
 
-        for handle in island {
-            if let Some(mb) = bodies.multibody(*handle) {
-                for rb in mb.rbs().iter() {
-                    ground_jacobian_sz += rb.dof.num_velocity_constraints() * mb.ndofs() * 2;
-                }
-            }
-        }
-
         self.jacobians
             .resize(jacobian_sz + ground_jacobian_sz, N::zero());
 
@@ -182,18 +174,6 @@ impl<N: Real> MoreauJeanSolver<N> {
                     &self.ext_vels,
                     &mut ground_j_id,
                     &mut j_id,
-                    &mut self.jacobians,
-                    &mut self.constraints,
-                );
-            }
-        }
-
-        for handle in island {
-            if let Some(mb) = bodies.multibody_mut(*handle) {
-                mb.constraints(
-                    params,
-                    &self.ext_vels,
-                    &mut ground_j_id,
                     &mut self.jacobians,
                     &mut self.constraints,
                 );
@@ -258,12 +238,6 @@ impl<N: Real> MoreauJeanSolver<N> {
         joints: &mut Slab<Box<JointConstraint<N>>>,
         island: &[BodyHandle],
     ) {
-        for handle in island {
-            if let Some(mb) = bodies.multibody_mut(*handle) {
-                mb.cache_impulses(&self.constraints)
-            }
-        }
-
         self.contact_model.cache_impulses(&self.constraints);
 
         for (_, g) in joints {

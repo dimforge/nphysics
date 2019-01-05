@@ -5,12 +5,11 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{BodyPartHandle, Material};
+use ncollide3d::world::CollisionWorld;
+use nphysics3d::object::{BodyPartHandle, Material, BodyPart, RigidBody, RigidBodyDesc, ColliderDesc};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
-
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -24,16 +23,11 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(Vector3::y() * -ground_size)
+        .build(&mut world);
 
     /*
      * Create the boxes
@@ -46,9 +40,12 @@ fn main() {
     let centerz = shift * (num as f32) / 2.0;
     let height = 3.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - 0.01)));
+    let mut collider_desc = ColliderDesc::new(cuboid)
+        .with_density(Some(1.0));
+
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -57,22 +54,10 @@ fn main() {
                 let y = j as f32 * shift + centery + height;
                 let z = k as f32 * shift - centerz;
 
-                /*
-                 * Create the rigid body.
-                 */
-                let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-                /*
-                 * Create the collider.
-                 */
-                world.add_collider(
-                    COLLIDER_MARGIN,
-                    geom.clone(),
-                    handle,
-                    Isometry3::identity(),
-                    Material::default(),
-                );
+                // Build the rigid body and its collider.
+                let rb = rb_desc
+                    .set_translation(Vector3::new(x, y, z))
+                    .build(&mut world);
             }
         }
     }

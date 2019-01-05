@@ -117,10 +117,10 @@ impl<N: Real> NonlinearSORProx<N> {
                         // FIXME: the body update should be performed lazily, especially because
                         // we dont actually need to update the kinematic of a multibody until
                         // we have to solve a contact involvoing one of its links.
-                        bodies.body_mut(constraint.body1.body_handle).apply_displacement(
+                        bodies.body_mut(constraint.body1.0).apply_displacement(
                             &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
                         );
-                        bodies.body_mut(constraint.body2.body_handle).apply_displacement(
+                        bodies.body_mut(constraint.body2.0).apply_displacement(
                             &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
                         );
                     }
@@ -147,12 +147,12 @@ impl<N: Real> NonlinearSORProx<N> {
 
             if dim1.value() != 0 {
                 bodies
-                    .body_mut(constraint.body1.body_handle)
+                    .body_mut(constraint.body1.0)
                     .apply_displacement(&jacobians[0..dim1.value()]);
             }
             if dim2.value() != 0 {
                 bodies
-                    .body_mut(constraint.body2.body_handle)
+                    .body_mut(constraint.body2.0)
                     .apply_displacement(&jacobians[dim1.value()..dim1.value() + dim2.value()]);
             }
         }
@@ -166,10 +166,10 @@ impl<N: Real> NonlinearSORProx<N> {
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
     ) -> bool {
-        let body1 = bodies.body(constraint.body1.body_handle);
-        let body2 = bodies.body(constraint.body2.body_handle);
-        let part1 = body1.part(constraint.body1);
-        let part2 = body2.part(constraint.body2);
+        let body1 = bodies.body(constraint.body1.0);
+        let body2 = bodies.body(constraint.body2.0);
+        let part1 = body1.part(constraint.body1.1);
+        let part2 = body2.part(constraint.body2.1);
 
         let collider1 = cworld.collision_object(constraint.collider1).unwrap();
         let collider2 = cworld.collision_object(constraint.collider2).unwrap();

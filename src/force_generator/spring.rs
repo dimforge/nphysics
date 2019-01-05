@@ -55,12 +55,19 @@ impl<N: Real> Spring<N> {
 
 impl<N: Real> ForceGenerator<N> for Spring<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
-        if !bodies.contains_body_part(self.b1) || !bodies.contains_body_part(self.b2) {
+        if !bodies.contains_body(self.b1.0) || !bodies.contains_body(self.b2.0) {
             return false;
         }
 
-        let anchor1 = bodies.body_part(self.b1).position() * self.anchor1;
-        let anchor2 = bodies.body_part(self.b2).position() * self.anchor2;
+        let b1 = bodies.body(self.b1.0);
+        let b2 = bodies.body(self.b2.0);
+
+        if !b1.contains_part(self.b1.1) || !b2.contains_part(self.b2.1) {
+            return false;
+        }
+
+        let anchor1 = b1.part(self.b1.1).position() * self.anchor1;
+        let anchor2 = b2.part(self.b2.1).position() * self.anchor2;
 
         let force_dir;
         let delta_length;
@@ -75,8 +82,8 @@ impl<N: Real> ForceGenerator<N> for Spring<N> {
         }
 
         let force = Force::linear(force_dir.as_ref() * delta_length * self.stiffness);
-        bodies.body_part_mut(self.b1).apply_force(&force);
-        bodies.body_part_mut(self.b2).apply_force(&-force);
+        bodies.body_mut(self.b1.0).part_mut(self.b1.1).apply_force(&force);
+        bodies.body_mut(self.b2.0).part_mut(self.b2.1).apply_force(&-force);
 
         true
     }

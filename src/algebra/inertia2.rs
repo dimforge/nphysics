@@ -57,7 +57,11 @@ impl<N: Real> Inertia2<N> {
     ///
     /// Sets the angular part to zero if it is not invertible.
     pub fn inverse(&self) -> Self {
-        let inv_mass = N::one() / self.linear;
+        let inv_mass = if self.linear.is_zero() {
+            N::zero()
+        } else {
+            N::one() / self.linear
+        };
         let inv_angular = if self.angular.is_zero() {
             N::zero()
         } else {

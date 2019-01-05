@@ -359,7 +359,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         self.handle = handle;
 
         for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle { body_handle: h, part_id: i })
+            element.handle = handle.map(|h| BodyPartHandle(h, i))
         }
     }
 
@@ -421,17 +421,17 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         self.velocities.fill(N::zero());
     }
 
-    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
-        &self.elements[handle.part_id]
+    fn part(&self, id: usize) -> &BodyPart<N> {
+        &self.elements[id]
     }
 
-    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
-        &mut self.elements[handle.part_id]
+    fn part_mut(&mut self, id: usize) -> &mut BodyPart<N> {
+        &mut self.elements[id]
     }
 
-    fn contains_part(&self, handle: BodyPartHandle) -> bool {
+    fn contains_part(&self, id: usize) -> bool {
         if let Some(me) = self.handle {
-            handle.body_handle == me && handle.part_id < self.elements.len()
+            id < self.elements.len()
         } else {
             false
         }

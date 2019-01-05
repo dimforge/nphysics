@@ -19,6 +19,11 @@ impl<N: Real> CartesianJoint<N> {
 
 impl<N: Real> Joint<N> for CartesianJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         DIM
     }

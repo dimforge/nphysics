@@ -32,7 +32,7 @@ pub struct TetrahedralElement<N: Real> {
 
 /// A deformable volume using FEM to simulate linear elasticity.
 ///
-/// The volume is described by a set of tetrahedral elements. This
+/// The volume is described by a set of tetrahedronsl elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 #[derive(Clone)]
 pub struct DeformableVolume<N: Real> {
@@ -64,9 +64,9 @@ pub struct DeformableVolume<N: Real> {
 }
 
 impl<N: Real> DeformableVolume<N> {
-    /// Initializes a new deformable volume from its tetrahedral elements.
-    pub fn new(vertices: &Vec<Point3<N>>, tetrahedra: &Vec<Point4<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
-        let elements = tetrahedra.iter().map(|idx|
+    /// Initializes a new deformable volume from its tetrahedronsl elements.
+    pub fn new(vertices: &Vec<Point3<N>>, tetrahedrons: &Vec<Point4<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+        let elements = tetrahedrons.iter().map(|idx|
             TetrahedralElement {
                 handle: None,
                 indices: idx * 3,
@@ -332,7 +332,7 @@ impl<N: Real> DeformableVolume<N> {
     /// Returns the triangles at the boundary of this volume.
     ///
     /// Each element of the returned `Vec` is a tuple containing the 3 indices of the triangle
-    /// vertices, and the index of the corresponding tetrahedral element.
+    /// vertices, and the index of the corresponding tetrahedronsl element.
     pub fn boundary(&self) -> Vec<(Point3<usize>, usize)> {
         fn key(a: usize, b: usize, c: usize) -> (usize, usize, usize) {
             let (sa, sb, sc) = utils::sort3(&a, &b, &c);
@@ -357,7 +357,7 @@ impl<N: Real> DeformableVolume<N> {
             if n.0 == 1 {
                 // Ensure the triangle has an outward normal.
                 // FIXME: there is a much more efficient way of doing this, given the
-                // tetrahedra orientations and the face.
+                // tetrahedrons orientations and the face.
                 let a = self.positions.fixed_rows::<U3>(k.0);
                 let b = self.positions.fixed_rows::<U3>(k.1);
                 let c = self.positions.fixed_rows::<U3>(k.2);
@@ -382,7 +382,7 @@ impl<N: Real> DeformableVolume<N> {
 
     /// Returns a triangle mesh at the boundary of this volume as well as a mapping between the mesh
     /// vertices and this volume degrees of freedom and the mapping between the mesh triangles and
-    /// this volume body parts (the tetrahedral elements).
+    /// this volume body parts (the tetrahedronsl elements).
     ///
     /// The output is (triangle mesh, deformation indices, element to body part map).
     pub fn boundary_mesh(&self) -> (TriMesh<N>, Vec<usize>, Vec<usize>) {
@@ -490,7 +490,7 @@ impl<N: Real> DeformableVolume<N> {
             for j in 0..ny {
                 for k in 0..nz {
                     // See https://www.ics.uci.edu/~eppstein/projects/tetra/
-                    // for the 5-elements tetrahedral decomposition where local
+                    // for the 5-elements tetrahedronsl decomposition where local
                     // cube indices are as follows:
                     //
                     //     4 o----------o 7
@@ -643,7 +643,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.handle = handle;
 
         for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle { body_handle: h, part_id: i })
+            element.handle = handle.map(|h| BodyPartHandle(h, i))
         }
     }
 
@@ -705,35 +705,31 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
-    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
-        &self.elements[handle.part_id]
+    fn part(&self, id: usize) -> &BodyPart<N> {
+        &self.elements[id]
     }
 
-    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
-        &mut self.elements[handle.part_id]
+    fn part_mut(&mut self, id: usize) -> &mut BodyPart<N> {
+        &mut self.elements[id]
     }
 
-    fn contains_part(&self, handle: BodyPartHandle) -> bool {
-        if let Some(me) = self.handle {
-            handle.body_handle == me && handle.part_id < self.elements.len()
-        } else {
-            false
-        }
+    fn contains_part(&self, id: usize) -> bool {
+        id < self.elements.len()
     }
 
     fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedral element");
+        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedronsl element");
         fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
     }
 
     fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Isometry3<N> {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
+        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedronsl element");
         let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point);
         Isometry3::from_parts(Translation3::from_vector(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedral element");
+        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedronsl element");
         fem_helper::material_point_at_world_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)
     }
 
@@ -750,7 +746,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         ext_vels: Option<&DVectorSlice<N>>,
         out_vel: Option<&mut N>
     ) {
-        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
+        let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedronsl element");
         fem_helper::fill_contact_geometry_fem(
             self.ndofs(),
             self.status,
@@ -814,5 +810,87 @@ impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
 
     fn apply_force(&mut self, force: &Force<N>) {
         unimplemented!()
+    }
+}
+
+enum DeformableVolumeDescGeometry<'a, N: Real> {
+    Cube(usize, usize, usize),
+    Tetrahedrons(&'a [Point3<N>], &'a [Point4<usize>])
+}
+
+pub struct DeformableVolumeDesc<'a, N: Real> {
+    geom: DeformableVolumeDescGeometry<'a, N>,
+    scale: Point3<N>,
+    position: Isometry3<N>,
+    young_modulus: N,
+    poisson_ratio: N,
+    sleep_threshold: Option<N>,
+    mass_damping: N,
+    stiffness_damping: N,
+    density: N
+}
+
+impl<'a, N: Real> DeformableVolumeDesc<'a, N> {
+    fn with_geometry(geom: DeformableVolumeDescGeometry<'a, N>) -> Self {
+        DeformableVolumeDesc {
+            geom,
+            scale: Point3::new(N::one(), N::one(), N::one()),
+            position: Isometry3::identity(),
+            young_modulus: na::convert(0.3),
+            poisson_ratio: N::zero(),
+            sleep_threshold: Some(ActivationStatus::default_threshold()),
+            mass_damping: na::convert(0.2),
+            stiffness_damping: N::zero(),
+            density: N::one()
+
+        }
+    }
+
+    pub fn new(vertices: &'a [Point3<N>], tetrahedrons: &'a [Point4<usize>]) -> Self {
+        Self::with_geometry(DeformableVolumeDescGeometry::Tetrahedrons(vertices, tetrahedrons))
+    }
+
+    pub fn cube(subdiv_x: usize, subdiv_y: usize, subdiv_z: usize) -> Self {
+        Self::with_geometry(DeformableVolumeDescGeometry::Cube(subdiv_x, subdiv_y, subdiv_z))
+    }
+
+    pub fn with_scale(mut self, scale_x: N, scale_y: N, scale_z: N) -> Self {
+        self.scale = Point3::new(scale_x, scale_y, scale_z);
+        self
+    }
+
+    pub fn with_translation(mut self, vector: Vector3<N>) -> Self {
+        self.position.translation.vector = vector;
+        self
+    }
+
+    pub fn with_young_modulus(mut  self, young_modulus: N) -> Self {
+        self.young_modulus = young_modulus;
+        self
+    }
+
+    pub fn with_poisson_ratio(mut  self, poisson_ratio: N) -> Self {
+        self.poisson_ratio = poisson_ratio;
+        self
+    }
+
+    pub fn with_sleep_threshold(mut self, threshold: Option<N>) -> Self {
+        self.sleep_threshold = threshold;
+        self
+    }
+
+    pub fn with_mass_damping(mut self, mass_damping: N) -> Self {
+        self.mass_damping = mass_damping;
+        self
+    }
+
+    pub fn with_stiffness_damping(mut self, stiffness_damping: N) -> Self {
+        self.stiffness_damping = stiffness_damping;
+        self
+    }
+
+    pub fn with_density(mut self, density: N) -> Self {
+        self.density = density;
+        self
     }
 }

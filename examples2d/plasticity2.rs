@@ -41,7 +41,7 @@ fn main() {
     for (i, pos) in positions.iter().enumerate() {
         // NOTE: it is OK to set an inertia equal to zero for a body that will only be kinematic.
         let part = world.add_rigid_body(*pos, Inertia::zero(), Point2::origin());
-        world.body_mut(part.body_handle).set_status(BodyStatus::Kinematic);
+        world.body_mut(part.0).set_status(BodyStatus::Kinematic);
 
         world.add_collider(
             COLLIDER_MARGIN,
@@ -51,7 +51,7 @@ fn main() {
             Material::default(),
         );
 
-        platforms[i] = part.body_handle;
+        platforms[i] = part.0;
     }
 
     /*

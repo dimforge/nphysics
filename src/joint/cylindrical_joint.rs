@@ -26,6 +26,11 @@ impl<N: Real> CylindricalJoint<N> {
 
 impl<N: Real> Joint<N> for CylindricalJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         2
     }

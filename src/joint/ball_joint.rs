@@ -28,6 +28,11 @@ impl<N: Real> BallJoint<N> {
 
 impl<N: Real> Joint<N> for BallJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         3
     }

@@ -96,7 +96,7 @@ fn main() {
     let pos = Isometry3::new(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad), na::zero());
     let platform_handle = world.add_rigid_body(pos, Inertia::zero(), Point3::origin());
     {
-        let rb = world.rigid_body_mut(platform_handle.body_handle).unwrap();
+        let rb = world.rigid_body_mut(platform_handle.0).unwrap();
         rb.set_status(BodyStatus::Kinematic);
         // rb.set_velocity(Velocity::linear(0.0, 0.0, 1.0));
     }
@@ -125,7 +125,7 @@ fn main() {
     );
 
     {
-        let mb = world.multibody_mut(handle.body_handle).unwrap();
+        let mb = world.multibody_mut(handle.0).unwrap();
         mb.generalized_velocity_mut()[0] = 3.0;
         mb.set_status(BodyStatus::Kinematic);
     }
@@ -171,7 +171,7 @@ fn main() {
     let mut testbed = Testbed::new(world);
 
     testbed.add_callback(move |world, _, time| {
-        let platform = world.rigid_body_mut(platform_handle.body_handle).unwrap();
+        let platform = world.rigid_body_mut(platform_handle.0).unwrap();
         let platform_z = platform.position().translation.vector.z;
 
         let mut vel = platform.velocity();

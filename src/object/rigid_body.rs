@@ -1,8 +1,10 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
+                    ColliderHandle, SensorHandle, ColliderDesc, ColliderData};
 use crate::solver::{IntegrationParameters, ForceDirection};
+use crate::world::{World, CollisionWorld};
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
 
@@ -12,7 +14,7 @@ use crate::math::AngularVector;
 use crate::utils::GeneralizedCross;
 
 /// A rigid body.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct RigidBody<N: Real> {
     handle: Option<BodyHandle>,
     local_to_world: Isometry<N>,
@@ -28,25 +30,22 @@ pub struct RigidBody<N: Real> {
     status: BodyStatus,
     activation: ActivationStatus<N>,
     companion_id: usize,
+    colliders: Vec<ColliderHandle>
 }
 
 impl<N: Real> RigidBody<N> {
     /// Create a new rigid body with the specified handle and dynamic properties.
-    pub fn new(
-        position: Isometry<N>,
-        local_inertia: Inertia<N>,
-        local_com: Point<N>,
-    ) -> Self {
-        let inertia = local_inertia.transformed(&position);
-        let com = position * local_com;
+    fn new(position: Isometry<N>) -> Self {
+        let inertia = Inertia::zero();
+        let com = Point::from_coordinates(position.translation.vector);
 
         RigidBody {
             handle: None,
             local_to_world: position,
             velocity: Velocity::zero(),
-            local_inertia,
+            local_inertia: inertia,
             inertia,
-            local_com,
+            local_com: Point::origin(),
             com,
             augmented_mass: inertia,
             inv_augmented_mass: inertia.inverse(),
@@ -55,13 +54,31 @@ impl<N: Real> RigidBody<N> {
             status: BodyStatus::Dynamic,
             activation: ActivationStatus::new_active(),
             companion_id: 0,
+            colliders: Vec::new(),
         }
+    }
+
+    #[inline]
+    fn part_handle(&self) -> BodyPartHandle {
+        BodyPartHandle(self.handle.unwrap(), 0)
     }
 
     /// Mutable information regarding activation and deactivation (sleeping) of this rigid body.
     #[inline]
     pub fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
         &mut self.activation
+    }
+
+    /// Set the center of mass of this rigid body, expressed in its local space.
+    #[inline]
+    pub fn set_local_center_of_mass(&mut self, local_com: Point<N>) {
+        self.local_com = local_com;
+    }
+
+    /// Set the center of mass of this rigid body, expressed in its local space.
+    #[inline]
+    pub fn set_local_inertia(&mut self, local_inertia: Inertia<N>) {
+        self.local_inertia = local_inertia;
     }
 
     /// Sets the position of this rigid body.
@@ -74,27 +91,27 @@ impl<N: Real> RigidBody<N> {
     /// Set the velocity of this rigid body.
     #[inline]
     pub fn set_velocity(&mut self, vel: Velocity<N>) {
-        self.velocity = vel
+        self.velocity = vel;
     }
 
     /// Set the linear velocity of this rigid body.
     #[inline]
     pub fn set_linear_velocity(&mut self, vel: Vector<N>) {
-        self.velocity.linear = vel
+        self.velocity.linear = vel;
     }
 
     #[cfg(feature = "dim2")]
     /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: N) {
-        self.velocity.angular = vel
+        self.velocity.angular = vel;
     }
 
     #[cfg(feature = "dim3")]
     /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: AngularVector<N>) {
-        self.velocity.angular = vel
+        self.velocity.angular = vel;
     }
 
     /// The augmented mass (inluding gyroscropic terms) in world-space of this rigid body.
@@ -221,8 +238,8 @@ impl<N: Real> Body<N> for RigidBody<N> {
         self.external_forces = Force::zero();
     }
 
-    #[inline]
-    fn update_kinematics(&mut self) {}
+    fn update_kinematics(&mut self) {
+    }
 
     #[allow(unused_variables)] // for params used only in 3D.
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
@@ -261,23 +278,23 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn part(&self, _: BodyPartHandle) -> &BodyPart<N> {
+    fn part(&self, _: usize) -> &BodyPart<N> {
         self
     }
 
     #[inline]
-    fn part_mut(&mut self, _: BodyPartHandle) -> &mut BodyPart<N> {
+    fn part_mut(&mut self, _: usize) -> &mut BodyPart<N> {
         self
     }
 
     #[inline]
-    fn contains_part(&self, handle: BodyPartHandle) -> bool {
-        self.handle.is_some() && handle.body_handle == self.handle.unwrap()
+    fn contains_part(&self, handle: usize) -> bool {
+        true
     }
 
     #[inline]
     fn apply_displacement(&mut self, displacement: &[N]) {
-        self.apply_displacement(&Velocity::from_slice(displacement))
+        self.apply_displacement(&Velocity::from_slice(displacement));
     }
 
     #[inline]
@@ -352,6 +369,13 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn sync_colliders(&self, cworld: &mut CollisionWorld<N>) {
+        for collider in &self.colliders {
+            ColliderData::sync(cworld, *collider, self, Some(self))
+        }
+    }
 }
 
 impl<N: Real> BodyPart<N> for RigidBody<N> {
@@ -362,7 +386,7 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 
     #[inline]
     fn handle(&self) -> Option<BodyPartHandle> {
-        self.handle.map(|h| BodyPartHandle::new(h, 0))
+        self.handle.map(|h| BodyPartHandle(h, 0))
     }
 
     #[inline]
@@ -386,6 +410,12 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
     }
 
     #[inline]
+    fn add_local_inertia(&mut self, inertia: Inertia<N>) {
+        self.local_inertia += inertia;
+        println!("New inertia: {:?}", self.local_inertia);
+    }
+
+    #[inline]
     fn center_of_mass(&self) -> Point<N> {
         self.com
     }
@@ -394,5 +424,72 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
     fn apply_force(&mut self, force: &Force<N>) {
         self.external_forces.linear += force.linear;
         self.external_forces.angular += force.angular;
+    }
+}
+
+
+#[derive(Clone)]
+pub struct RigidBodyDesc<'a, N: Real> {
+    pub position: Isometry<N>,
+    pub velocity: Velocity<N>,
+    pub local_inertia: Inertia<N>,
+    pub local_com: Point<N>,
+    pub status: BodyStatus,
+    pub colliders: Vec<&'a ColliderDesc<N>>,
+    pub sleep_threshold: Option<N>
+}
+
+impl<'a, N: Real> RigidBodyDesc<'a, N> {
+    pub fn with_translation(mut self, t: Vector<N>) -> Self {
+        self.position.translation.vector = t;
+        self
+    }
+
+    pub fn with_collider(mut self, collider: &'a ColliderDesc<N>) -> Self {
+        self.colliders.push(collider);
+        self
+    }
+
+    pub fn set_translation(&mut self, t: Vector<N>) -> &mut Self {
+        self.position.translation.vector = t;
+        self
+    }
+
+    pub fn set_collider(&mut self, collider: &'a ColliderDesc<N>) -> &mut Self {
+        self.colliders.push(collider);
+        self
+    }
+
+    pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
+        let mut rb = RigidBody::new(self.position);
+        rb.set_velocity(self.velocity);
+        rb.set_local_inertia(self.local_inertia);
+        rb.set_local_center_of_mass(self.local_com);
+        rb.set_status(self.status);
+        rb.set_deactivation_threshold(self.sleep_threshold);
+
+        let rb_handle = world.add_body(Box::new(rb)).handle().expect("Invalid handle");
+        let rb_handle = BodyPartHandle(rb_handle, 0);
+
+        for desc in &mut self.colliders {
+            let collider = desc.build_with_parent(rb_handle, world).handle();
+            world.rigid_body_mut(rb_handle.0).unwrap().colliders.push(collider);
+        }
+
+        world.rigid_body_mut(rb_handle.0).unwrap()
+    }
+}
+
+impl<'a, N: Real> Default for RigidBodyDesc<'a, N> {
+    fn default() -> Self {
+        RigidBodyDesc {
+            position: Isometry::identity(),
+            velocity: Velocity::zero(),
+            local_inertia: Inertia::zero(),
+            local_com: Point::origin(),
+            status: BodyStatus::Dynamic,
+            colliders: Vec::new(),
+            sleep_threshold: Some(ActivationStatus::default_threshold())
+        }
     }
 }

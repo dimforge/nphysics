@@ -256,22 +256,8 @@ impl State for Testbed {
                     if modifier.contains(Modifiers::Shift) {
                         if let Some(body_part) = self.grabbed_object {
                             if !body_part.is_ground() {
-                                if !modifier.contains(Modifiers::Control) {
-                                    self.graphics.remove_body_nodes(window, body_part.body_handle);
-                                    self.world.remove_bodies(&[body_part.body_handle]);
-                                } else {
-                                    if self.world.multibody_link(body_part).is_some() {
-                                        let key = self.graphics.remove_body_part_nodes(
-                                            &self.world,
-                                            window,
-                                            body_part,
-                                        );
-                                        self.world.remove_multibody_links(&[body_part]);
-                                        // FIXME: this is a bit ugly.
-                                        self.graphics
-                                            .update_after_body_key_change(&self.world, key.body_handle);
-                                    }
-                                }
+                                self.graphics.remove_body_nodes(window, body_part.0);
+                                self.world.remove_bodies(&[body_part.0]);
                             }
                         }
 
@@ -282,7 +268,7 @@ impl State for Testbed {
                                 let _ = self.world.remove_constraint(joint);
                             }
 
-                            let body_pos = self.world.body_part(body).position();
+                            let body_pos = self.world.body(body.0).part(body.1).position();
                             let attach1 = self.cursor_pos;
                             let attach2 = body_pos.inverse() * attach1;
                             let joint = MouseConstraint::new(
@@ -296,7 +282,7 @@ impl State for Testbed {
 
                             for node in self
                                 .graphics
-                                .body_nodes_mut(body.body_handle)
+                                .body_nodes_mut(body.0)
                                 .unwrap()
                                 .iter_mut()
                                 {
@@ -315,7 +301,7 @@ impl State for Testbed {
                     if let Some(body) = self.grabbed_object {
                         for n in self
                             .graphics
-                            .body_nodes_mut(body.body_handle)
+                            .body_nodes_mut(body.0)
                             .unwrap()
                             .iter_mut()
                             {

@@ -28,6 +28,11 @@ impl<N: Real> FreeJoint<N> {
 }
 
 impl<N: Real> Joint<N> for FreeJoint<N> {
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }

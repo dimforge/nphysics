@@ -146,11 +146,7 @@ impl MultibodyJointLimitsNonlinearConstraintGenerator {
 
 impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
-        if let Some(link) = bodies.multibody_link(self.link) {
-            link.joint().num_position_constraints()
-        } else {
-            0
-        }
+        0
     }
 
     fn position_constraint(
@@ -160,8 +156,6 @@ impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearC
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let mb = bodies.multibody(self.link.body_handle)?;
-        let link = mb.link(self.link)?;
-        link.joint().position_constraint(i, mb, link, 0, jacobians)
+        None
     }
 }

@@ -139,6 +139,11 @@ impl<N: Real> PrismaticJoint<N> {
 
 impl<N: Real> Joint<N> for PrismaticJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         1
     }

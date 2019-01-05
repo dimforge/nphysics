@@ -84,6 +84,8 @@ pub trait Joint<N: Real>: Any + Send + Sync {
     ) -> Option<GenericNonlinearConstraint<N>> {
         None
     }
+
+    fn clone(&self) -> Box<Joint<N>>;
 }
 
 downcast!(<N> Joint<N> where N: Real);

@@ -16,8 +16,8 @@ pub trait JointConstraint<N: Real>: NonlinearConstraintGenerator<N> + Any + Send
     /// Typically, a constraint is disable if it is between two sleeping bodies, or, between bodies without any degrees of freedom.
     fn is_active(&self, bodies: &BodySet<N>) -> bool {
         let (b1, b2) = self.anchors();
-        let body1 = bodies.body(b1.body_handle);
-        let body2 = bodies.body(b2.body_handle);
+        let body1 = bodies.body(b1.0);
+        let body2 = bodies.body(b2.0);
 
         let ndofs1 = body1.status_dependent_ndofs();
         let ndofs2 = body2.status_dependent_ndofs();

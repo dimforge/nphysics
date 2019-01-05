@@ -40,6 +40,11 @@ impl<N: Real> HelicalJoint<N> {
 
 impl<N: Real> Joint<N> for HelicalJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         1
     }

@@ -37,18 +37,18 @@ impl<N: Real> Body<N> for Ground<N> {
     fn clear_dynamics(&mut self) {}
 
     #[inline]
-    fn part(&self, handle: BodyPartHandle) -> &BodyPart<N> {
+    fn part(&self, handle: usize) -> &BodyPart<N> {
         self
     }
 
     #[inline]
-    fn part_mut(&mut self, handle: BodyPartHandle) -> &mut BodyPart<N> {
+    fn part_mut(&mut self, handle: usize) -> &mut BodyPart<N> {
         self
     }
 
     #[inline]
-    fn contains_part(&self, handle: BodyPartHandle) -> bool {
-        handle.is_ground()
+    fn contains_part(&self, handle: usize) -> bool {
+        true
     }
 
     #[inline]

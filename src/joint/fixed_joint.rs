@@ -23,6 +23,11 @@ impl<N: Real> FixedJoint<N> {
 }
 
 impl<N: Real> Joint<N> for FixedJoint<N> {
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn ndofs(&self) -> usize {
         0
     }

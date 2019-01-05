@@ -47,8 +47,8 @@ impl<N: Real> SignoriniModel<N> {
 
         let body1 = bodies.body(manifold.body1());
         let body2 = bodies.body(manifold.body2());
-        let part1 = body1.part(manifold.body_part1(c.kinematic.feature1()));
-        let part2 = body2.part(manifold.body_part2(c.kinematic.feature2()));
+        let part1 = body1.part(manifold.body_part1(c.kinematic.feature1()).1);
+        let part2 = body2.part(manifold.body_part2(c.kinematic.feature2()).1);
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -149,10 +149,10 @@ impl<N: Real> SignoriniModel<N> {
         let b1 = manifold.body_part1(c.kinematic.feature1());
         let b2 = manifold.body_part2(c.kinematic.feature2());
 
-        let body1 = bodies.body(b1.body_handle);
-        let body2 = bodies.body(b2.body_handle);
-        let part1 = body1.part(b1);
-        let part2 = body2.part(b2);
+        let body1 = bodies.body(b1.0);
+        let body2 = bodies.body(b2.0);
+        let part1 = body1.part(b1.1);
+        let part2 = body2.part(b2.1);
 
         // XXX: don't do this with deformable.
         let pos1 = part1.position();
