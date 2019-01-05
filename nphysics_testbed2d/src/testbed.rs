@@ -268,7 +268,7 @@ impl State for Testbed {
                                 let _ = self.world.remove_constraint(joint);
                             }
 
-                            let body_pos = self.world.body(body.0).part(body.1).position();
+                            let body_pos = self.world.body(body.0).unwrap().part(body.1).unwrap().position();
                             let attach1 = self.cursor_pos;
                             let attach2 = body_pos.inverse() * attach1;
                             let joint = MouseConstraint::new(

@@ -142,9 +142,10 @@ impl<N: Real> World<N> {
 
     // NOTE: static method used to avoid borrowing issues.
     fn activate_body_at(bodies: &mut BodySet<N>, handle: BodyHandle) {
-        let body = bodies.body_mut(handle);
-        if body.status_dependent_ndofs() != 0 {
-            body.activate();
+        if let Some(body) = bodies.body_mut(handle) {
+            if body.status_dependent_ndofs() != 0 {
+                body.activate();
+            }
         }
     }
 
@@ -277,8 +278,8 @@ impl<N: Real> World<N> {
         for (coll1, coll2, _, manifold) in self.cworld.contact_pairs() {
             // assert!(coll1.data().body_part() != coll2.data().body());
 
-            let b1 = self.bodies.body(coll1.data().body());
-            let b2 = self.bodies.body(coll2.data().body());
+            let b1 = try_continue!(self.bodies.body(coll1.data().body()));
+            let b2 = try_continue!(self.bodies.body(coll2.data().body()));
 
             if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
@@ -357,10 +358,10 @@ impl<N: Real> World<N> {
                 .data()
                 .anchor() {
                 ColliderAnchor::OnBodyPart { body_part, .. } => {
-                    do_remove = !self.bodies.contains_body(body_part.0) || !self.bodies.body(body_part.0).contains_part(body_part.1)
+                    do_remove = self.bodies.body(body_part.0).and_then(|b| b.part(body_part.1)).is_none()
                 }
                 ColliderAnchor::OnDeformableBody { body, .. } => {
-                    do_remove = !self.bodies.contains_body(*body)
+                    do_remove = self.bodies.body(*body).is_none()
                 }
             };
 
@@ -378,8 +379,8 @@ impl<N: Real> World<N> {
 
         self.constraints.retain(|_, constraint| {
             let (b1, b2) = constraint.anchors();
-            let b1_exists = bodies.contains_body(b1.0) && bodies.body(b1.0).contains_part(b1.1);
-            let b2_exists = bodies.contains_body(b2.0) && bodies.body(b2.0).contains_part(b2.1);
+            let b1_exists = bodies.body(b1.0).and_then(|b| b.part(b1.1)).is_some();
+            let b2_exists = bodies.body(b2.0).and_then(|b| b.part(b2.1)).is_some();
 
             if !b1_exists {
                 if b2_exists {
@@ -405,129 +406,129 @@ impl<N: Real> World<N> {
     }
     */
 
-    /// Add a deformable collider to the world and retrieve its handle.
-    pub fn add_deformable_collider<S: Shape<N> + DeformableShape<N> + Clone>(
-        &mut self,
-        margin: N,
-        shape: S,
-        parent: BodyHandle,
-        dof_map: Option<Arc<Vec<usize>>>,
-        parts_map: Option<Arc<Vec<usize>>>,
-        material: Material<N>,
-    ) -> ColliderHandle {
-        let query = GeometricQueryType::Contacts(
-            margin + self.prediction * na::convert(0.5f64),
-            self.angular_prediction,
-        );
-        self.add_deformable_collision_object(query, margin, shape, parent, dof_map, parts_map, material)
-    }
+//    /// Add a deformable collider to the world and retrieve its handle.
+//    pub fn add_deformable_collider<S: Shape<N> + DeformableShape<N> + Clone>(
+//        &mut self,
+//        margin: N,
+//        shape: S,
+//        parent: BodyHandle,
+//        dof_map: Option<Arc<Vec<usize>>>,
+//        parts_map: Option<Arc<Vec<usize>>>,
+//        material: Material<N>,
+//    ) -> ColliderHandle {
+//        let query = GeometricQueryType::Contacts(
+//            margin + self.prediction * na::convert(0.5f64),
+//            self.angular_prediction,
+//        );
+//        self.add_deformable_collision_object(query, margin, shape, parent, dof_map, parts_map, material)
+//    }
 
-    /// Add a collider to the world and retrieve its handle.
-    pub fn add_collider(
-        &mut self,
-        margin: N,
-        shape: ShapeHandle<N>,
-        parent: BodyPartHandle,
-        to_parent: Isometry<N>,
-        material: Material<N>,
-    ) -> ColliderHandle {
-        let query = GeometricQueryType::Contacts(
-            margin + self.prediction * na::convert(0.5f64),
-            self.angular_prediction,
-        );
-        self.add_collision_object(query, margin, shape, parent, to_parent, material)
-    }
+//    /// Add a collider to the world and retrieve its handle.
+//    pub fn add_collider(
+//        &mut self,
+//        margin: N,
+//        shape: ShapeHandle<N>,
+//        parent: BodyPartHandle,
+//        to_parent: Isometry<N>,
+//        material: Material<N>,
+//    ) -> ColliderHandle {
+//        let query = GeometricQueryType::Contacts(
+//            margin + self.prediction * na::convert(0.5f64),
+//            self.angular_prediction,
+//        );
+//        self.add_collision_object(query, margin, shape, parent, to_parent, material)
+//    }
 
-    /// Add a sensor to the world and retrieve its handle.
-    pub fn add_sensor(
-        &mut self,
-        shape: ShapeHandle<N>,
-        parent: BodyPartHandle,
-        to_parent: Isometry<N>,
-    ) -> SensorHandle {
-        let query = GeometricQueryType::Proximity(self.prediction * na::convert(0.5f64));
-        self.add_collision_object(
-            query,
-            N::zero(),
-            shape,
-            parent,
-            to_parent,
-            Material::default(),
-        )
-    }
+//    /// Add a sensor to the world and retrieve its handle.
+//    pub fn add_sensor(
+//        &mut self,
+//        shape: ShapeHandle<N>,
+//        parent: BodyPartHandle,
+//        to_parent: Isometry<N>,
+//    ) -> SensorHandle {
+//        let query = GeometricQueryType::Proximity(self.prediction * na::convert(0.5f64));
+//        self.add_collision_object(
+//            query,
+//            N::zero(),
+//            shape,
+//            parent,
+//            to_parent,
+//            Material::default(),
+//        )
+//    }
+//
+//    fn add_collision_object(
+//        &mut self,
+//        query: GeometricQueryType<N>,
+//        margin: N,
+//        shape: ShapeHandle<N>,
+//        parent: BodyPartHandle,
+//        to_parent: Isometry<N>,
+//        material: Material<N>,
+//    ) -> CollisionObjectHandle {
+//        let (pos, ndofs) = if parent.is_ground() {
+//            (to_parent, 0)
+//        } else {
+//            let parent_body = self.bodies.body(parent.0);
+//            let parent_part = parent_body.part(parent.1);
+//            (
+//                parent_part.position() * to_parent,
+//                parent_body.status_dependent_ndofs(),
+//            )
+//        };
+//
+//        let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: to_parent };
+//        let data = ColliderData::new(margin, anchor, ndofs, material);
+//        let groups = CollisionGroups::new();
+//        let co = self.cworld.add(pos, shape, groups, query, data);
+//
+//        if !parent.is_ground() {
+//            self.colliders_w_parent.push(co.handle());
+//        }
+//
+//        co.handle()
+//    }
 
-    fn add_collision_object(
-        &mut self,
-        query: GeometricQueryType<N>,
-        margin: N,
-        shape: ShapeHandle<N>,
-        parent: BodyPartHandle,
-        to_parent: Isometry<N>,
-        material: Material<N>,
-    ) -> CollisionObjectHandle {
-        let (pos, ndofs) = if parent.is_ground() {
-            (to_parent, 0)
-        } else {
-            let parent_body = self.bodies.body(parent.0);
-            let parent_part = parent_body.part(parent.1);
-            (
-                parent_part.position() * to_parent,
-                parent_body.status_dependent_ndofs(),
-            )
-        };
-
-        let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: to_parent };
-        let data = ColliderData::new(margin, anchor, ndofs, material);
-        let groups = CollisionGroups::new();
-        let co = self.cworld.add(pos, shape, groups, query, data);
-
-        if !parent.is_ground() {
-            self.colliders_w_parent.push(co.handle());
-        }
-
-        co.handle()
-    }
-
-    fn add_deformable_collision_object<S: Shape<N> + DeformableShape<N> + Clone>(
-        &mut self,
-        query: GeometricQueryType<N>,
-        margin: N,
-        shape: S,
-        parent: BodyHandle,
-        dof_map: Option<Arc<Vec<usize>>>,
-        parts_map: Option<Arc<Vec<usize>>>,
-        material: Material<N>,
-    ) -> CollisionObjectHandle {
-        let parent_body = self.bodies.body(parent);
-        let parent_deformation_type = parent_body
-            .deformed_positions()
-            .expect("A deformable collider must be attached to a deformable body.")
-            .0;
-
-        assert_eq!(
-            parent_deformation_type,
-            shape.deformations_type(),
-            "Both the deformable shape and deformable body must support the same deformation types."
-        );
-
-        let anchor = ColliderAnchor::OnDeformableBody { body: parent, indices: dof_map, body_parts: parts_map };
-        let ndofs = parent_body.status_dependent_ndofs();
-        let data = ColliderData::new(margin, anchor, ndofs, material);
-        let groups = CollisionGroups::new();
-        let co = self.cworld.add(Isometry::identity(), ShapeHandle::new(shape), groups, query, data);
-
-        self.colliders_w_parent.push(co.handle());
-
-        co.handle()
-    }
+//    fn add_deformable_collision_object<S: Shape<N> + DeformableShape<N> + Clone>(
+//        &mut self,
+//        query: GeometricQueryType<N>,
+//        margin: N,
+//        shape: S,
+//        parent: BodyHandle,
+//        dof_map: Option<Arc<Vec<usize>>>,
+//        parts_map: Option<Arc<Vec<usize>>>,
+//        material: Material<N>,
+//    ) -> CollisionObjectHandle {
+//        let parent_body = self.bodies.body(parent);
+//        let parent_deformation_type = parent_body
+//            .deformed_positions()
+//            .expect("A deformable collider must be attached to a deformable body.")
+//            .0;
+//
+//        assert_eq!(
+//            parent_deformation_type,
+//            shape.deformations_type(),
+//            "Both the deformable shape and deformable body must support the same deformation types."
+//        );
+//
+//        let anchor = ColliderAnchor::OnDeformableBody { body: parent, indices: dof_map, body_parts: parts_map };
+//        let ndofs = parent_body.status_dependent_ndofs();
+//        let data = ColliderData::new(margin, anchor, ndofs, material);
+//        let groups = CollisionGroups::new();
+//        let co = self.cworld.add(Isometry::identity(), ShapeHandle::new(shape), groups, query, data);
+//
+//        self.colliders_w_parent.push(co.handle());
+//
+//        co.handle()
+//    }
 
     /// Get a reference to the specified body.
-    pub fn body(&self, handle: BodyHandle) -> &Body<N> {
+    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
         self.bodies.body(handle)
     }
 
     /// Get a mutable reference to the specified body.
-    pub fn body_mut(&mut self, handle: BodyHandle) -> &mut Body<N> {
+    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
         self.bodies.body_mut(handle)
     }
 
@@ -535,28 +536,28 @@ impl<N: Real> World<N> {
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody(&self, handle: BodyHandle) -> Option<&Multibody<N>> {
-        self.bodies.body(handle).downcast_ref::<Multibody<N>>().ok()
+        self.bodies.body(handle)?.downcast_ref::<Multibody<N>>().ok()
     }
 
     /// Get a mutable reference to the multibody containing the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody_mut(&mut self, handle: BodyHandle) -> Option<&mut Multibody<N>> {
-        self.bodies.body_mut(handle).downcast_mut::<Multibody<N>>().ok()
+        self.bodies.body_mut(handle)?.downcast_mut::<Multibody<N>>().ok()
     }
 
     /// Get a reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body(&self, handle: BodyHandle) -> Option<&RigidBody<N>> {
-        self.bodies.body(handle).downcast_ref::<RigidBody<N>>().ok()
+        self.bodies.body(handle)?.downcast_ref::<RigidBody<N>>().ok()
     }
 
     /// Get a mutable reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body_mut(&mut self, handle: BodyHandle) -> Option<&mut RigidBody<N>> {
-        self.bodies.body_mut(handle).downcast_mut::<RigidBody<N>>().ok()
+        self.bodies.body_mut(handle)?.downcast_mut::<RigidBody<N>>().ok()
     }
 
     /// Reference to the underlying collision world.

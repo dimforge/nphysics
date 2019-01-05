@@ -326,7 +326,7 @@ impl State for Testbed {
                             }
 
                         if let Some(body_part_handle) = minb {
-                            if self.world.body(body_part_handle.0).status_dependent_ndofs() != 0 {
+                            if self.world.body(body_part_handle.0).unwrap().status_dependent_ndofs() != 0 {
                                 self.grabbed_object = minb;
                                 for n in self
                                     .graphics
@@ -340,8 +340,8 @@ impl State for Testbed {
 
                                         let attach1 = ray.origin + ray.dir * mintoi;
                                         let attach2 = {
-                                            let body = self.world.body(body_part_handle.0);
-                                            let part = body.part(body_part_handle.1);
+                                            let body = self.world.body(body_part_handle.0).unwrap();
+                                            let part = body.part(body_part_handle.1).unwrap();
                                             body.material_point_at_world_point(part, &attach1)
                                         };
                                         let constraint = MouseConstraint::new(

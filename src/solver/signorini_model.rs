@@ -45,10 +45,10 @@ impl<N: Real> SignoriniModel<N> {
         let data1 = manifold.collider1.data();
         let data2 = manifold.collider2.data();
 
-        let body1 = bodies.body(manifold.body1());
-        let body2 = bodies.body(manifold.body2());
-        let part1 = body1.part(manifold.body_part1(c.kinematic.feature1()).1);
-        let part2 = body2.part(manifold.body_part2(c.kinematic.feature2()).1);
+        let body1 = try_ret!(bodies.body(manifold.body1()), false);
+        let body2 = try_ret!(bodies.body(manifold.body2()), false);
+        let part1 = try_ret!(body1.part(manifold.body_part1(c.kinematic.feature1()).1), false);
+        let part2 = try_ret!(body2.part(manifold.body_part2(c.kinematic.feature2()).1), false);
 
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
@@ -105,7 +105,7 @@ impl<N: Real> SignoriniModel<N> {
                     impulse_id,
                 ));
 
-            true
+            return true;
         } else {
             constraints
                 .velocity
@@ -119,7 +119,7 @@ impl<N: Real> SignoriniModel<N> {
                     impulse_id,
                 ));
 
-            false
+            return false;
         }
     }
 
@@ -149,10 +149,10 @@ impl<N: Real> SignoriniModel<N> {
         let b1 = manifold.body_part1(c.kinematic.feature1());
         let b2 = manifold.body_part2(c.kinematic.feature2());
 
-        let body1 = bodies.body(b1.0);
-        let body2 = bodies.body(b2.0);
-        let part1 = body1.part(b1.1);
-        let part2 = body2.part(b2.1);
+        let body1 = try_ret!(bodies.body(b1.0));
+        let body2 = try_ret!(bodies.body(b2.0));
+        let part1 = try_ret!(body1.part(b1.1));
+        let part2 = try_ret!(body2.part(b2.1));
 
         // XXX: don't do this with deformable.
         let pos1 = part1.position();

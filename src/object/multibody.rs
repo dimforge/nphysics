@@ -830,13 +830,13 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn part(&self, id: usize) -> &BodyPart<N> {
-        self.link(id).expect("Multibody part not found.")
+    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
+        self.link(id).map(|l| l as &BodyPart<N>)
     }
 
     #[inline]
-    fn part_mut(&mut self, id: usize) -> &mut BodyPart<N> {
-        self.link_mut(id).expect("Multibody part not found.")
+    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
+        self.link_mut(id).map(|l| l as &mut BodyPart<N>)
     }
 
     #[inline]
@@ -1164,7 +1164,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
 
     pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut MultibodyLink<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collision_world_mut();
-        let mb = bodies.body_mut(parent.0).downcast_mut::<Multibody<N>>().ok()?;
+        let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>().ok()?;
         Some(self.do_build(mb, cworld, parent))
     }
 

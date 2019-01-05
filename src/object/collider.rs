@@ -233,28 +233,28 @@ impl<N: Real> ColliderDesc<N> {
         self
     }
 
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> &'w mut Collider<N> {
+    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         self.do_build(parent, world)
     }
 
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Collider<N> {
-        self.do_build(BodyPartHandle::ground(), world)
+        self.do_build(BodyPartHandle::ground(), world).expect("The world should contain a Ground")
     }
 
-    fn do_build<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> &'w mut Collider<N> {
+    fn do_build<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collision_world_mut();
-        let body = bodies.body_mut(parent.0);
+        let body = bodies.body_mut(parent.0)?;
         let ndofs = body.status_dependent_ndofs();
-        let part = body.part_mut(parent.1);
-        self.build_with_infos(parent, ndofs, part, cworld)
+        let part = body.part_mut(parent.1)?;
+        Some(self.build_with_infos(parent, ndofs, part, cworld))
     }
 
     pub(crate) fn build_with_infos<'w>(&self,
-                                   parent: BodyPartHandle,
-                                   parent_status_dependent_ndofs: usize,
-                                   parent_part: &mut BodyPart<N>,
-                                   cworld: &'w mut CollisionWorld<N>)
-                                -> &'w mut Collider<N> {
+                                       parent: BodyPartHandle,
+                                       parent_status_dependent_ndofs: usize,
+                                       parent_part: &mut BodyPart<N>,
+                                       cworld: &'w mut CollisionWorld<N>)
+                                    -> &'w mut Collider<N> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction * na::convert(0.5f64))
         } else {

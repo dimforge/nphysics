@@ -45,14 +45,10 @@ impl<N: Real> ForceGenerator<N> for ConstantAcceleration<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
         let acceleration = self.acceleration;
         self.parts.retain(|h| {
-            if bodies.contains_body(h.0) {
-                let body = bodies.body_mut(h.0);
-                if body.contains_part(h.1) {
-                    let mut part = body.part_mut(h.1);
-                    let force = part.inertia() * acceleration;
-                    part.apply_force(&force);
-                    return true;
-                }
+            if let Some(part) = bodies.body_mut(h.0).and_then(|b| b.part_mut(h.1)) {
+                let force = part.inertia() * acceleration;
+                part.apply_force(&force);
+                return true;
             }
 
             false

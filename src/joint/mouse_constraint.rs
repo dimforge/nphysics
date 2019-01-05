@@ -68,10 +68,10 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body(self.b1.0);
-        let body2 = bodies.body(self.b2.0);
-        let part1 = body1.part(self.b1.1);
-        let part2 = body2.part(self.b2.1);
+        let body1 = try_ret!(bodies.body(self.b1.0));
+        let body2 = try_ret!(bodies.body(self.b2.0));
+        let part1 = try_ret!(body1.part(self.b1.1));
+        let part2 = try_ret!(body2.part(self.b2.1));
 
         /*
          *
@@ -95,7 +95,7 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
         let mut i = 0;
         Vector::canonical_basis(|dir| {
             let fdir = ForceDirection::Linear(Unit::new_unchecked(*dir));
-            let mut rhs =  -error.dot(&*dir) * params.erp / params.dt;
+            let mut rhs = -error.dot(&*dir) * params.erp / params.dt;
             let geom = helper::constraint_pair_geometry(
                 body1,
                 part1,

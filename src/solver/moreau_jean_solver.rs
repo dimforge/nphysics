@@ -84,7 +84,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         let mut system_ndofs = 0;
 
         for handle in island {
-            let mut body = bodies.body_mut(*handle);
+            let mut body = try_continue!(bodies.body_mut(*handle));
             body.set_companion_id(system_ndofs);
             let ndofs = body.status_dependent_ndofs();
             assert!(
@@ -106,7 +106,7 @@ impl<N: Real> MoreauJeanSolver<N> {
          * Initialize M^{-1} h * dt
          */
         for handle in island {
-            let body = bodies.body(*handle);
+            let body = try_continue!(bodies.body(*handle));
             let id = body.companion_id();
             let accs = body.generalized_acceleration();
 
@@ -126,8 +126,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         for (_, g) in joints.iter() {
             if g.is_active(bodies) {
                 let (b1, b2) = g.anchors();
-                let body1 = bodies.body(b1.0);
-                let body2 = bodies.body(b2.0);
+                let body1 = try_continue!(bodies.body(b1.0));
+                let body2 = try_continue!(bodies.body(b2.0));
 
                 let ndofs1 = body1.status_dependent_ndofs();
                 let ndofs2 = body2.status_dependent_ndofs();
@@ -144,8 +144,8 @@ impl<N: Real> MoreauJeanSolver<N> {
         }
 
         for m in manifolds {
-            let ndofs1 = bodies.body(m.body1()).status_dependent_ndofs();
-            let ndofs2 = bodies.body(m.body2()).status_dependent_ndofs();
+            let ndofs1 = try_continue!(bodies.body(m.body1())).status_dependent_ndofs();
+            let ndofs2 = try_continue!(bodies.body(m.body2())).status_dependent_ndofs();
             let sz = self.contact_model.num_velocity_constraints(m) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {
@@ -260,7 +260,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         island: &[BodyHandle],
     ) {
         for handle in island {
-            let mut body = bodies.body_mut(*handle);
+            let mut body = try_continue!(bodies.body_mut(*handle));
             let id = body.companion_id();
             let ndofs = body.ndofs();
 

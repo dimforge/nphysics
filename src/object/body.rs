@@ -162,10 +162,10 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn deactivate(&mut self);
 
     /// A reference to the specified body part.
-    fn part(&self, i: usize) -> &BodyPart<N>;
+    fn part(&self, i: usize) -> Option<&BodyPart<N>>;
 
     /// A mutable reference to the specified body part.
-    fn part_mut(&mut self, i: usize) -> &mut BodyPart<N>;
+    fn part_mut(&mut self, i: usize) -> Option<&mut BodyPart<N>>;
 
     /// Returns `true` if `handle` is a valid handle for one of this body's part.
     fn contains_part(&self, i: usize) -> bool;

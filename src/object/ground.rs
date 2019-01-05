@@ -37,13 +37,13 @@ impl<N: Real> Body<N> for Ground<N> {
     fn clear_dynamics(&mut self) {}
 
     #[inline]
-    fn part(&self, handle: usize) -> &BodyPart<N> {
-        self
+    fn part(&self, handle: usize) -> Option<&BodyPart<N>> {
+        Some(self)
     }
 
     #[inline]
-    fn part_mut(&mut self, handle: usize) -> &mut BodyPart<N> {
-        self
+    fn part_mut(&mut self, handle: usize) -> Option<&mut BodyPart<N>> {
+        Some(self)
     }
 
     #[inline]

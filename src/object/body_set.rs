@@ -157,11 +157,11 @@ impl<N: Real> BodySet<N> {
     ///
     /// Panics if the body is not found.
     #[inline]
-    pub fn body(&self, handle: BodyHandle) -> &Body<N> {
+    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
         if handle.is_ground() {
-            &self.ground
+            Some(&self.ground)
         } else {
-            &*self.bodies[handle.0]
+            self.bodies.get(handle.0).map(|b| &**b)
         }
     }
 
@@ -169,11 +169,11 @@ impl<N: Real> BodySet<N> {
     ///
     /// Panics if the body is not found.
     #[inline]
-    pub fn body_mut(&mut self, handle: BodyHandle) -> &mut Body<N> {
+    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
         if handle.is_ground() {
-            &mut self.ground
+            Some(&mut self.ground)
         } else {
-            &mut *self.bodies[handle.0]
+            self.bodies.get_mut(handle.0).map(|b| &mut **b)
         }
     }
 

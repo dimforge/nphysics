@@ -59,32 +59,32 @@ impl<N: Real> ForceGenerator<N> for Spring<N> {
             return false;
         }
 
-        let b1 = bodies.body(self.b1.0);
-        let b2 = bodies.body(self.b2.0);
+        let part1 = bodies.body(self.b1.0).and_then(|b| b.part(self.b1.1));
+        let part2 = bodies.body(self.b2.0).and_then(|b| b.part(self.b2.1));
 
-        if !b1.contains_part(self.b1.1) || !b2.contains_part(self.b2.1) {
-            return false;
+        if let (Some(part1), Some(part2)) = (part1, part2) {
+            let anchor1 = part1.position() * self.anchor1;
+            let anchor2 = part2.position() * self.anchor2;
+
+            let force_dir;
+            let delta_length;
+
+            if let Some((dir, length)) = Unit::try_new_and_get(anchor2 - anchor1, N::default_epsilon())
+                {
+                    force_dir = dir;
+                    delta_length = length - self.length;
+                } else {
+                force_dir = Vector::y_axis();
+                delta_length = -self.length;
+            }
+
+            let force = Force::linear(force_dir.as_ref() * delta_length * self.stiffness);
+            bodies.body_mut(self.b1.0).unwrap().part_mut(self.b1.1).unwrap().apply_force(&force);
+            bodies.body_mut(self.b2.0).unwrap().part_mut(self.b2.1).unwrap().apply_force(&-force);
+
+            true
+        } else {
+            false
         }
-
-        let anchor1 = b1.part(self.b1.1).position() * self.anchor1;
-        let anchor2 = b2.part(self.b2.1).position() * self.anchor2;
-
-        let force_dir;
-        let delta_length;
-
-        if let Some((dir, length)) = Unit::try_new_and_get(anchor2 - anchor1, N::default_epsilon())
-            {
-                force_dir = dir;
-                delta_length = length - self.length;
-            } else {
-            force_dir = Vector::y_axis();
-            delta_length = -self.length;
-        }
-
-        let force = Force::linear(force_dir.as_ref() * delta_length * self.stiffness);
-        bodies.body_mut(self.b1.0).part_mut(self.b1.1).apply_force(&force);
-        bodies.body_mut(self.b2.0).part_mut(self.b2.1).apply_force(&-force);
-
-        true
     }
 }

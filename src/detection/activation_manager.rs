@@ -95,7 +95,7 @@ impl<N: Real> ActivationManager<N> {
          *
          */
         for handle in self.to_activate.iter() {
-            let mut body = bodies.body_mut(*handle);
+            let mut body = try_continue!(bodies.body_mut(*handle));
 
             if body.activation_status().deactivation_threshold().is_some() {
                 body.activate()
@@ -132,8 +132,8 @@ impl<N: Real> ActivationManager<N> {
             b2: BodyHandle,
             ufs: &mut [UnionFindSet],
         ) {
-            let b1 = bodies.body(b1);
-            let b2 = bodies.body(b2);
+            let b1 = try_ret!(bodies.body(b1));
+            let b2 = try_ret!(bodies.body(b2));
             if (b1.status_dependent_ndofs() != 0 || b1.is_kinematic())
                 && (b2.status_dependent_ndofs() != 0 || b2.is_kinematic())
                 {
@@ -162,7 +162,7 @@ impl<N: Real> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let body = bodies.body(handle);
+            let body = try_continue!(bodies.body(handle));
             // FIXME: avoid the Copy when NLL lands ?
             let status = *body.activation_status();
 
@@ -176,7 +176,7 @@ impl<N: Real> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let mut body = bodies.body_mut(handle);
+            let mut body = try_continue!(bodies.body_mut(handle));
 
             if self.can_deactivate[root] {
                 // Everybody in this set can be deactivacted.

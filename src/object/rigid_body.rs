@@ -278,13 +278,13 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn part(&self, _: usize) -> &BodyPart<N> {
-        self
+    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
+        Some(self)
     }
 
     #[inline]
-    fn part_mut(&mut self, _: usize) -> &mut BodyPart<N> {
-        self
+    fn part_mut(&mut self, _: usize) -> Option<&mut BodyPart<N>> {
+        Some(self)
     }
 
     #[inline]
@@ -472,7 +472,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         let rb_handle = BodyPartHandle(rb_handle, 0);
 
         for desc in &mut self.colliders {
-            let collider = desc.build_with_parent(rb_handle, world).handle();
+            let collider = desc.build_with_parent(rb_handle, world).expect("Invalid insertion").handle();
             world.rigid_body_mut(rb_handle.0).unwrap().colliders.push(collider);
         }
 

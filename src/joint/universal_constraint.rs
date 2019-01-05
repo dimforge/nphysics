@@ -71,10 +71,10 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body(self.b1.0);
-        let body2 = bodies.body(self.b2.0);
-        let part1 = body1.part(self.b1.1);
-        let part2 = body2.part(self.b2.1);
+        let body1 = try_ret!(bodies.body(self.b1.0));
+        let body2 = try_ret!(bodies.body(self.b2.0));
+        let part1 = try_ret!(body1.part(self.b1.1));
+        let part2 = try_ret!(body2.part(self.b2.1));
 
         /*
          *
@@ -181,10 +181,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0);
-        let body2 = bodies.body(self.b2.0);
-        let part1 = body1.part(self.b1.1);
-        let part2 = body2.part(self.b2.1);
+        let body1 = bodies.body(self.b1.0)?;
+        let body2 = bodies.body(self.b2.0)?;
+        let part1 = body1.part(self.b1.1)?;
+        let part2 = body2.part(self.b2.1)?;
 
         let pos1 = body1.position_at_material_point(part1, &self.anchor1);
         let pos2 = body2.position_at_material_point(part2, &self.anchor2);

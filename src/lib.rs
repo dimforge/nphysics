@@ -123,6 +123,29 @@ extern crate stdweb;
 //#[cfg(test)]
 //extern crate test;
 
+macro_rules! try_ret {
+    ($val: expr) => {
+        try_ret!($val, ())
+    };
+    ($val: expr, $ret: expr) => {
+        if let Some(val) = $val {
+            val
+        } else {
+            return $ret;
+        }
+    }
+}
+
+macro_rules! try_continue {
+    ($val: expr) => {
+        if let Some(val) = $val {
+            val
+        } else {
+            continue;
+        }
+    }
+}
+
 pub mod algebra;
 pub mod counters;
 pub mod detection;

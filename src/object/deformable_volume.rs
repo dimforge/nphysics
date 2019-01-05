@@ -705,12 +705,12 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
-    fn part(&self, id: usize) -> &BodyPart<N> {
-        &self.elements[id]
+    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
+        self.elements.get(id).map(|e| e as &BodyPart<N>)
     }
 
-    fn part_mut(&mut self, id: usize) -> &mut BodyPart<N> {
-        &mut self.elements[id]
+    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
+        self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
     fn contains_part(&self, id: usize) -> bool {

@@ -60,9 +60,10 @@ impl<N: Real> SORProx<N> {
         }
 
         for handle in internal {
-            let body = bodies.body_mut(*handle);
-            let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
-            body.setup_internal_velocity_constraints(&mut dvels);
+            if let Some(body) = bodies.body_mut(*handle) {
+                let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
+                body.setup_internal_velocity_constraints(&mut dvels);
+            }
         }
 
         /*
@@ -151,9 +152,10 @@ impl<N: Real> SORProx<N> {
         }
 
         for handle in internal {
-            let body = bodies.body_mut(*handle);
-            let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
-            body.step_solve_internal_velocity_constraints(&mut dvels);
+            if let Some(body) = bodies.body_mut(*handle) {
+                let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
+                body.step_solve_internal_velocity_constraints(&mut dvels);
+            }
         }
     }
 
