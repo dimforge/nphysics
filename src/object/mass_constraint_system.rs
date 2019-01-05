@@ -429,14 +429,6 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
-    fn contains_part(&self, id: usize) -> bool {
-        if let Some(me) = self.handle {
-            id < self.elements.len()
-        } else {
-            false
-        }
-    }
-
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
     }

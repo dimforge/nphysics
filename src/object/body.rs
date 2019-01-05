@@ -167,9 +167,6 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// A mutable reference to the specified body part.
     fn part_mut(&mut self, i: usize) -> Option<&mut BodyPart<N>>;
 
-    /// Returns `true` if `handle` is a valid handle for one of this body's part.
-    fn contains_part(&self, i: usize) -> bool;
-
     /// If this is a deformable body, returns its deformed positions.
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
 

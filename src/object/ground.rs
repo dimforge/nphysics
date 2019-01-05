@@ -47,11 +47,6 @@ impl<N: Real> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn contains_part(&self, handle: usize) -> bool {
-        true
-    }
-
-    #[inline]
     fn set_handle(&mut self, handle: Option<BodyHandle>) {}
 
     #[inline]

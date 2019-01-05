@@ -331,8 +331,8 @@ impl<N: Real> World<N> {
 
         for (co1, co2, _, manifold) in self.cworld.contact_pairs() {
             if manifold.len() != 0 {
-                let b1_exists = bodies.contains_body(co1.data().body());
-                let b2_exists = bodies.contains_body(co2.data().body());
+                let b1_exists = bodies.body(co1.data().body()).is_some();
+                let b2_exists = bodies.body(co2.data().body()).is_some();
 
                 if !b1_exists {
                     if b2_exists {

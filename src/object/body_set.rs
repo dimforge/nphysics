@@ -146,13 +146,6 @@ impl<N: Real> BodySet<N> {
         }
     }
 
-    /// Checks that the given handle identifies a valid body.
-    ///
-    /// Returns `true` if `handle.is_ground()` too.
-    pub fn contains_body(&self, handle: BodyHandle) -> bool {
-        handle.is_ground() || self.bodies.contains(handle.0)
-    }
-
     /// Reference to the body identified by `body`.
     ///
     /// Panics if the body is not found.

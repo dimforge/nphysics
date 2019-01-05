@@ -713,10 +713,6 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
-    fn contains_part(&self, id: usize) -> bool {
-        id < self.elements.len()
-    }
-
     fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
         let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be tetrahedronsl element");
         fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point)

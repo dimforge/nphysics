@@ -840,11 +840,6 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn contains_part(&self, id: usize) -> bool {
-        self.link(id).is_some()
-    }
-
-    #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         None
     }

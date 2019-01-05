@@ -288,11 +288,6 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn contains_part(&self, handle: usize) -> bool {
-        true
-    }
-
-    #[inline]
     fn apply_displacement(&mut self, displacement: &[N]) {
         self.apply_displacement(&Velocity::from_slice(displacement));
     }

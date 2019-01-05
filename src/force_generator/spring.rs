@@ -55,7 +55,7 @@ impl<N: Real> Spring<N> {
 
 impl<N: Real> ForceGenerator<N> for Spring<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
-        if !bodies.contains_body(self.b1.0) || !bodies.contains_body(self.b2.0) {
+        if bodies.body(self.b1.0).is_none() || bodies.body(self.b2.0).is_none() {
             return false;
         }
 

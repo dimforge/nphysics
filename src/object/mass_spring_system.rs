@@ -491,10 +491,6 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
-    fn contains_part(&self, id: usize) -> bool {
-        id < self.elements.len()
-    }
-
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
     }

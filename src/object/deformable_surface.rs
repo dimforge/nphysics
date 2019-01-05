@@ -652,10 +652,6 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         self.elements.get_mut(id).map(|b| b as &mut BodyPart<N>)
     }
 
-    fn contains_part(&self, id: usize) -> bool {
-            id < self.elements.len()
-    }
-
     fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
