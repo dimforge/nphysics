@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use std::f64;
+use std::mem;
 use either::Either;
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects, GeometricQueryType, CollisionGroups};
@@ -10,16 +11,12 @@ use crate::object::{BodyPartHandle, BodyHandle, Material, Body, BodyPart};
 use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
 
-/// Type of a reference to a collider.
-pub type Colliders<'a, N> = CollisionObjects<'a, N, ColliderData<N>>;
-
 /// Type of the handle of a collider.
 pub type ColliderHandle = CollisionObjectHandle;
-/// Type of a collider.
-pub type Collider<N> = CollisionObject<N, ColliderData<N>>;
 
 /// Type of the handle of a sensor.
 pub type SensorHandle = CollisionObjectHandle;
+
 /// Type of a sensor.
 pub type Sensor<N> = CollisionObject<N, ColliderData<N>>;
 
@@ -143,33 +140,106 @@ impl<N: Real> ColliderData<N> {
     pub(crate) fn set_body_status_dependent_ndofs(&mut self, ndofs: usize) {
         self.body_status_dependent_ndofs = ndofs
     }
+}
 
-    // FIXME: move this to a collider wrapper.
-    pub fn sync(cworld: &mut ColliderWorld<N>, handle: ColliderHandle, body: &Body<N>, body_part: Option<&BodyPart<N>>) {
-        let new_pos;
-        let collider = cworld
-            .collision_object_mut(handle)
-            .expect("Internal error: collider not found.");
 
-        collider
-            .data_mut()
-            .set_body_status_dependent_ndofs(body.status_dependent_ndofs());
+#[repr(transparent)]
+pub struct Collider<N: Real>(pub CollisionObject<N, ColliderData<N>>);
 
-        match collider.data().anchor() {
-            ColliderAnchor::OnBodyPart { position_wrt_body_part, .. } => {
-                let part_pos = body_part.expect("Invalid body part.").position();
-                new_pos = Either::Left(part_pos * position_wrt_body_part)
-            }
-            ColliderAnchor::OnDeformableBody { indices, .. } => {
-                // (that's why this is an arc) to avoid borrowing issue.
-                new_pos = Either::Right(indices.clone());
-            }
+impl<N: Real> Collider<N> {
+    pub fn from_ref(co: &CollisionObject<N, ColliderData<N>>) -> &Self {
+        unsafe {
+            mem::transmute(co)
         }
+    }
 
-        match new_pos {
-            Either::Left(pos) => cworld.set_position(handle, pos),
-            Either::Right(indices) => cworld.set_deformations(handle, body.deformed_positions().unwrap().1, indices.as_ref().map(|idx| &idx[..]))
+    pub fn from_mut(co: &mut CollisionObject<N, ColliderData<N>>) -> &mut Self {
+        unsafe {
+            mem::transmute(co)
         }
+    }
+
+    /*
+     * Methods of ColliderData.
+     */
+    /// The collision margin surrounding this collider.
+    #[inline]
+    pub fn margin(&self) -> N {
+        self.0.data().margin()
+    }
+
+    /// Handle to the body this collider is attached to.
+    pub fn body(&self) -> BodyHandle {
+        self.0.data().body()
+    }
+
+    /// The anchor attaching this collider with a body part or deformable body.
+    pub fn anchor(&self) -> &ColliderAnchor<N> {
+        self.0.data().anchor()
+    }
+
+    /// The position of this collider geometry wrt. the body it is attached to.
+    pub fn position_wrt_body(&self) -> Isometry<N> {
+        self.0.data().position_wrt_body()
+    }
+
+    /// Handle to the body part containing the given subshape of this collider's shape.
+    pub fn body_part(&self, subshape_id: usize) -> BodyPartHandle {
+        self.0.data().body_part(subshape_id)
+    }
+
+    /// The material of this collider.
+    #[inline]
+    pub fn material(&self) -> &Material<N> {
+        self.0.data().material()
+    }
+
+    /*
+     * Original methods from the CollisionObject.
+     */
+
+    /// The collision object unique handle.
+    #[inline]
+    pub fn handle(&self) -> CollisionObjectHandle {
+        self.0.handle()
+    }
+
+    /// The collision object position.
+    #[inline]
+    pub fn position(&self) -> &Isometry<N> {
+        self.0.position()
+    }
+
+    /// Sets the position of the collision object.
+    #[inline]
+    pub fn set_position(&mut self, pos: Isometry<N>) {
+        self.0.set_position(pos)
+    }
+
+    /// Deforms the underlying shape if possible.
+    ///
+    /// Panics if the shape is not deformable.
+    #[inline]
+    pub fn set_deformations(&mut self, coords: &[N], indices: Option<&[usize]>) {
+        self.0.set_deformations(coords, indices)
+    }
+
+    /// The collision object shape.
+    #[inline]
+    pub fn shape(&self) -> &ShapeHandle<N> {
+        self.0.shape()
+    }
+
+    /// The collision groups of the collision object.
+    #[inline]
+    pub fn collision_groups(&self) -> &CollisionGroups {
+        self.0.collision_groups()
+    }
+
+    /// The kind of queries this collision object may generate.
+    #[inline]
+    pub fn query_type(&self) -> GeometricQueryType<N> {
+        self.0.query_type()
     }
 }
 

@@ -184,7 +184,7 @@ impl<N: Real> NonlinearSORProx<N> {
         let coords1;
         let coords2;
 
-        match collider1.data().anchor() {
+        match collider1.anchor() {
             ColliderAnchor::OnDeformableBody { indices, .. } => {
                 let coords = body1.deformed_positions().unwrap().1;
                 collider1.shape().as_deformable_shape().unwrap().update_local_approximation(
@@ -201,7 +201,7 @@ impl<N: Real> NonlinearSORProx<N> {
             }
         }
 
-        match collider2.data().anchor() {
+        match collider2.anchor() {
             ColliderAnchor::OnDeformableBody { indices, .. } => {
                 let coords = body2.deformed_positions().unwrap().1;
                 collider2.shape().as_deformable_shape().unwrap().update_local_approximation(

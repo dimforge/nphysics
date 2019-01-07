@@ -47,19 +47,19 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
 
     /// The handle of the first body involved in the contact.
     pub fn body1(&self) -> BodyHandle {
-        self.collider1.data().body()
+        self.collider1.body()
     }
 
     /// The handle of the first body involved in the contact.
     pub fn body2(&self) -> BodyHandle {
-        self.collider2.data().body()
+        self.collider2.body()
     }
 
     /// The handle of the first body part involved in the given contact on the specified feature.
     ///
     /// The feature is assumed to belong to the first collider involved in this contact.
     pub fn body_part1(&self, feature1: FeatureId) -> BodyPartHandle {
-        match self.collider1.data().anchor() {
+        match self.collider1.anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
                 let subshape_id = self.collider1.shape().subshape_containing_feature(feature1);
@@ -76,7 +76,7 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
     ///
     /// The feature is assumed to belong to the second collider involved in this contact.
     pub fn body_part2(&self, feature2: FeatureId) -> BodyPartHandle {
-        match self.collider2.data().anchor() {
+        match self.collider2.anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
                 let subshape_id = self.collider2.shape().subshape_containing_feature(feature2);
@@ -91,11 +91,11 @@ impl<'a, N: Real> ColliderContactManifold<'a, N> {
 
     /// The anchor between the fist collider and the body it is attached to.
     pub fn anchor1(&self) -> &ColliderAnchor<N> {
-        self.collider1.data().anchor()
+        self.collider1.anchor()
     }
 
     /// The anchor between the fist collider and the body it is attached to.
     pub fn anchor2(&self) -> &ColliderAnchor<N> {
-        self.collider2.data().anchor()
+        self.collider2.anchor()
     }
 }

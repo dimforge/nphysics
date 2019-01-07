@@ -274,7 +274,7 @@ impl State for Testbed {
                                     mintoi = inter.toi;
 
                                     let subshape = b.shape().subshape_containing_feature(inter.feature);
-                                    minb = Some(b.data().body_part(subshape));
+                                    minb = Some(b.body_part(subshape));
                                 }
                             }
 
@@ -321,7 +321,7 @@ impl State for Testbed {
                                     mintoi = inter.toi;
 
                                     let subshape = b.shape().subshape_containing_feature(inter.feature);
-                                    minb = Some(b.data().body_part(subshape));
+                                    minb = Some(b.body_part(subshape));
                                 }
                             }
 
@@ -433,7 +433,7 @@ impl State for Testbed {
                     for co in self.world.colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
-                        self.graphics.body_nodes_mut(co.data().body())
+                        self.graphics.body_nodes_mut(co.body())
                             {
                                 for n in ns.iter_mut() {
                                     if self.draw_colls {

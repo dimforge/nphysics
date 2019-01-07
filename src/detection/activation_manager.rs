@@ -142,8 +142,8 @@ impl<N: Real> ActivationManager<N> {
         }
 
         for (c1, c2, cd, manifold) in cworld.contact_pairs() {
-            let b1 = c1.data().body();
-            let b2 = c2.data().body();
+            let b1 = c1.body();
+            let b2 = c2.body();
 
             if manifold.len() != 0 {
                 make_union(bodies, b1, b2, &mut self.ufind)

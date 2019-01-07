@@ -51,7 +51,7 @@ impl Polyline {
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
         if let Some(c) = world.collider(self.collider) {
-            if let ColliderAnchor::OnDeformableBody { .. } = c.data().anchor() {
+            if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
                 let shape = c.shape().as_shape::<shape::Polyline<f32>>().unwrap();
                 self.vertices = shape.points().to_vec();
                 self.indices.clear();

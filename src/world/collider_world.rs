@@ -19,6 +19,21 @@ pub struct ColliderWorld<N: Real> {
 }
 
 impl<N: Real> ColliderWorld<N> {
+    /// Creates a new collision world.
+    // FIXME: use default values for `margin` and allow its modification by the user ?
+    pub fn new(margin: N) -> Self {
+        let mut cworld = CollisionWorld::new(margin);
+        cworld.register_broad_phase_pair_filter(
+            "__nphysics_internal_body_status_collision_filter",
+            BodyStatusCollisionFilter,
+        );
+
+        ColliderWorld {
+            cworld,
+            colliders_w_parent: Vec::new()
+        }
+    }
+
     pub fn sync_colliders(&mut self, bodies: &BodySet<N>) {
         let cworld = &mut self.cworld;
         self.colliders_w_parent.retain(|collider_id| {
@@ -56,15 +71,6 @@ impl<N: Real> ColliderWorld<N> {
         });
     }
 
-    /// Creates a new collision world.
-    // FIXME: use default values for `margin` and allow its modification by the user ?
-    pub fn new(margin: N) -> Self {
-        ColliderWorld {
-            cworld: CollisionWorld::new(margin),
-            colliders_w_parent: Vec::new()
-        }
-    }
-
     fn as_collision_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
         &self.cworld
     }
@@ -73,7 +79,7 @@ impl<N: Real> ColliderWorld<N> {
         self.cworld
     }
 
-    /// Adds a collision object to the world.
+    /// Adds a collider to the world.
     pub fn add(
         &mut self,
         position: Isometry<N>,
@@ -89,7 +95,7 @@ impl<N: Real> ColliderWorld<N> {
             self.colliders_w_parent.push(co.handle());
         }
 
-        co
+        Collider::from_mut(co)
     }
 
     /// Updates the collision world.
@@ -107,14 +113,14 @@ impl<N: Real> ColliderWorld<N> {
         self.cworld.clear_events()
     }
 
-    /// Removed the specified set of collision objects from the world.
+    /// Removed the specified set of colliders from the world.
     ///
     /// Panics of any handle is invalid, or if the list contains duplicates.
     pub fn remove(&mut self, handles: &[ColliderHandle]) {
         self.cworld.remove(handles)
     }
 
-    /// Sets the position the collision object attached to the specified object.
+    /// Sets the position the collider attached to the specified object.
     pub fn set_position(&mut self, handle: ColliderHandle, pos: Isometry<N>) {
         self.cworld.set_position(handle, pos)
     }
@@ -132,7 +138,7 @@ impl<N: Real> ColliderWorld<N> {
 
     /// Adds a filter that tells if a potential collision pair should be ignored or not.
     ///
-    /// The proximity filter returns `false` for a given pair of collision objects if they should
+    /// The proximity filter returns `false` for a given pair of colliders if they should
     /// be ignored by the narrow phase. Keep in mind that modifying the proximity filter will have
     /// a non-trivial overhead during the next update as it will force re-detection of all
     /// collision pairs.
@@ -169,7 +175,7 @@ impl<N: Real> ColliderWorld<N> {
         self.cworld.set_narrow_phase(narrow_phase)
     }
 
-    /// The contact pair, if any, between the given collision objects.
+    /// The contact pair, if any, between the given colliders.
     #[inline]
     pub fn contact_pair(
         &self,
@@ -189,7 +195,7 @@ impl<N: Real> ColliderWorld<N> {
             &ContactAlgorithm<N>,
             &ContactManifold<N>,
         )> {
-        self.cworld.contact_pairs()
+        self.cworld.contact_pairs().map(|p| (Collider::from_ref(p.0), Collider::from_ref(p.1), p.2, p.3))
     }
 
     /// Iterates through all the proximity pairs detected since the last update.
@@ -200,32 +206,32 @@ impl<N: Real> ColliderWorld<N> {
             &Collider<N>,
             &ProximityAlgorithm<N>,
         )> {
-        self.cworld.proximity_pairs()
+        self.cworld.proximity_pairs().map(|p| (Collider::from_ref(p.0), Collider::from_ref(p.1), p.2))
     }
 
-    /// Iterates through all collision objects.
+    /// Iterates through all colliders.
     #[inline]
     pub fn colliders(&self) -> impl Iterator<Item = &Collider<N>> {
-        self.cworld.collision_objects()
+        self.cworld.collision_objects().map(|co| Collider::from_ref(co))
     }
 
-    /// Returns a reference to the collision object identified by its handle.
+    /// Returns a reference to the collider identified by its handle.
     #[inline]
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
-        self.cworld.collision_object(handle)
+        self.cworld.collision_object(handle).map(|co| Collider::from_ref(co))
     }
 
-    /// Returns a mutable reference to the collision object identified by its handle.
+    /// Returns a mutable reference to the collider identified by its handle.
     #[inline]
-    pub fn collision_object_mut(
+    pub fn collider_mut(
         &mut self,
         handle: ColliderHandle,
     ) -> Option<&mut Collider<N>>
     {
-        self.cworld.collision_object_mut(handle)
+        self.cworld.collision_object_mut(handle).map(|co| Collider::from_mut(co))
     }
 
-    /// Sets the collision groups of the given collision object.
+    /// Sets the collision groups of the given collider.
     #[inline]
     pub fn set_collision_groups(&mut self, handle: ColliderHandle, groups: CollisionGroups) {
         self.cworld.set_collision_groups(handle, groups)
@@ -239,7 +245,7 @@ impl<N: Real> ColliderWorld<N> {
         groups: &'a CollisionGroups,
     ) -> impl Iterator<Item = (&'a Collider<N>, RayIntersection<N>)>
     {
-        self.cworld.interferences_with_ray(ray, groups)
+        self.cworld.interferences_with_ray(ray, groups).map(|res| (Collider::from_ref(res.0), res.1))
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a point.
@@ -250,7 +256,7 @@ impl<N: Real> ColliderWorld<N> {
         groups: &'a CollisionGroups,
     ) -> impl Iterator<Item = &'a Collider<N>>
     {
-        self.cworld.interferences_with_point(point, groups)
+        self.cworld.interferences_with_point(point, groups).map(|co| Collider::from_ref(co))
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a aabb.
@@ -261,7 +267,7 @@ impl<N: Real> ColliderWorld<N> {
         groups: &'a CollisionGroups,
     ) -> impl Iterator<Item = &'a Collider<N>>
     {
-        self.cworld.interferences_with_aabb(aabb, groups)
+        self.cworld.interferences_with_aabb(aabb, groups).map(|co| Collider::from_ref(co))
     }
 
     /// The contact events pool.
@@ -272,5 +278,14 @@ impl<N: Real> ColliderWorld<N> {
     /// The proximity events pool.
     pub fn proximity_events(&self) -> &ProximityEvents {
         self.cworld.proximity_events()
+    }
+}
+
+struct BodyStatusCollisionFilter;
+
+impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
+    /// Activate an action for when two objects start or stop to be close to each other.
+    fn is_pair_valid(&self, b1: &CollisionObject<N, ColliderData<N>>, b2: &CollisionObject<N, ColliderData<N>>) -> bool {
+        b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }

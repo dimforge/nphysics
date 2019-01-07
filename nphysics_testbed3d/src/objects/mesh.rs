@@ -85,7 +85,7 @@ impl Mesh {
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
         if let Some(c) = world.collider(self.collider) {
-            if let ColliderAnchor::OnDeformableBody { .. } = c.data().anchor() {
+            if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
                 let shape = c.shape().as_shape::<TriMesh<f32>>().unwrap();
                 let vtx = shape.points();
 

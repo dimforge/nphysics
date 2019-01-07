@@ -243,10 +243,10 @@ impl State for Testbed {
                         .collision_world()
                         .interferences_with_point(&self.cursor_pos, all_groups)
                         {
-                            if !b.query_type().is_proximity_query() && !b.data().body().is_ground() {
+                            if !b.query_type().is_proximity_query() && !b.body().is_ground() {
 
                                 if
-                                    let ColliderAnchor::OnBodyPart { body_part, .. } = b.data().anchor()
+                                    let ColliderAnchor::OnBodyPart { body_part, .. } = b.anchor()
                                     {
                                         self.grabbed_object = Some(*body_part);
                                     } else { continue; }
@@ -368,7 +368,7 @@ impl State for Testbed {
                     for co in self.world.colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
-                        self.graphics.body_nodes_mut(co.data().body())
+                        self.graphics.body_nodes_mut(co.body())
                             {
                                 for n in ns.iter_mut() {
                                     if let Some(node) = n.scene_node_mut() {

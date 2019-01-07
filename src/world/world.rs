@@ -18,7 +18,7 @@ use crate::joint::{ConstraintHandle, Joint, JointConstraint};
 use crate::math::{Inertia, Isometry, Point, Vector};
 use crate::object::{
     Body, BodyPartHandle, BodyPart, BodySet, BodyDesc, BodyStatus, Collider, ColliderData, ColliderAnchor,
-    ColliderHandle, Colliders, Material, Multibody, MultibodyLink,
+    ColliderHandle, Material, Multibody, MultibodyLink,
     MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle, Bodies, BodiesMut,
 };
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
@@ -65,10 +65,6 @@ impl<N: Real> World<N> {
         let gravity = Vector::zeros();
         let params = IntegrationParameters::default();
         let workspace = MultibodyWorkspace::new();
-        cworld.register_broad_phase_pair_filter(
-            "__nphysics_internal_body_status_collision_filter",
-            BodyStatusCollisionFilter,
-        );
 
         World {
             counters,
@@ -277,10 +273,10 @@ impl<N: Real> World<N> {
 
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
         for (coll1, coll2, _, manifold) in self.cworld.contact_pairs() {
-            // assert!(coll1.data().body_part() != coll2.data().body());
+            // assert!(coll1.body_part() != coll2.body());
 
-            let b1 = try_continue!(self.bodies.body(coll1.data().body()));
-            let b2 = try_continue!(self.bodies.body(coll2.data().body()));
+            let b1 = try_continue!(self.bodies.body(coll1.body()));
+            let b2 = try_continue!(self.bodies.body(coll2.body()));
 
             if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
@@ -332,15 +328,15 @@ impl<N: Real> World<N> {
 
         for (co1, co2, _, manifold) in self.cworld.contact_pairs() {
             if manifold.len() != 0 {
-                let b1_exists = bodies.body(co1.data().body()).is_some();
-                let b2_exists = bodies.body(co2.data().body()).is_some();
+                let b1_exists = bodies.body(co1.body()).is_some();
+                let b2_exists = bodies.body(co2.body()).is_some();
 
                 if !b1_exists {
                     if b2_exists {
-                        Self::activate_body_at(bodies, co2.data().body());
+                        Self::activate_body_at(bodies, co2.body());
                     }
                 } else if !b2_exists {
-                    Self::activate_body_at(bodies, co1.data().body());
+                    Self::activate_body_at(bodies, co1.body());
                 }
             }
         }
@@ -356,7 +352,7 @@ impl<N: Real> World<N> {
             match self
                 .collider(cid)
                 .expect("Internal error: collider not present")
-                .data()
+
                 .anchor() {
                 ColliderAnchor::OnBodyPart { body_part, .. } => {
                     do_remove = self.bodies.body(body_part.0).and_then(|b| b.part(body_part.1)).is_none()
@@ -594,7 +590,7 @@ impl<N: Real> World<N> {
     pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N>> {
         self.cworld
             .collider(handle)
-            .map(|co| co.data().anchor())
+            .map(|co| co.anchor())
     }
 
     /// An iterator through all the colliders on this collision world.
@@ -622,15 +618,6 @@ impl<N: Real> World<N> {
 impl<N: Real> Default for World<N> {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-struct BodyStatusCollisionFilter;
-
-impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
-    /// Activate an action for when two objects start or stop to be close to each other.
-    fn is_pair_valid(&self, b1: &Collider<N>, b2: &Collider<N>) -> bool {
-        b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }
 

@@ -94,7 +94,7 @@ impl GraphicsManager {
             sns.retain(|sn| {
                 if let ColliderAnchor::OnBodyPart {
                     body_part, ..
-                } = world.collider(sn.collider()).unwrap().data().anchor()
+                } = world.collider(sn.collider()).unwrap().anchor()
                     {
                         if *body_part == part {
                             if let Some(n) = sn.scene_node() {
@@ -123,7 +123,7 @@ impl GraphicsManager {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
-                    let sn_key = world.collider(sn.collider()).unwrap().data().body();
+                    let sn_key = world.collider(sn.collider()).unwrap().body();
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
                     let new_sns = self.b2sn.entry(sn_key).or_insert(Vec::new());
@@ -178,9 +178,9 @@ impl GraphicsManager {
         let color;
         if let Some(c) = self.c2color.get(&id).cloned() {
             color = c;
-            self.set_body_color(collider.data().body(), color);
+            self.set_body_color(collider.body(), color);
         } else {
-            color = self.alloc_color(collider.data().body())
+            color = self.alloc_color(collider.body())
         }
 
         self.add_with_color(window, id, world, color)
@@ -194,7 +194,7 @@ impl GraphicsManager {
         color: Point3<f32>,
     ) {
         let collider = world.collider(id).unwrap();
-        let key = collider.data().body();
+        let key = collider.body();
         let shape = collider.shape().as_ref();
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
@@ -292,7 +292,7 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let margin = world.collider(object).unwrap().data().margin();
+        let margin = world.collider(object).unwrap().margin();
         out.push(Node::Ball(Ball::new(
             object,
             world,
@@ -313,7 +313,7 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let margin = world.collider(object).unwrap().data().margin();
+        let margin = world.collider(object).unwrap().margin();
         let rx = shape.half_extents().x + margin;
         let ry = shape.half_extents().y + margin;
 
@@ -332,7 +332,7 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let margin = world.collider(object).unwrap().data().margin();
+        let margin = world.collider(object).unwrap().margin();
         let r = shape.radius() + margin;
         let hh = shape.half_height();
 

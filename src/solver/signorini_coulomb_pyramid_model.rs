@@ -60,8 +60,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             let body1 = try_continue!(bodies.body(manifold.body1()));
             let body2 = try_continue!(bodies.body(manifold.body2()));
 
-            let friction1 = manifold.collider1.data().material().friction;
-            let friction2 = manifold.collider2.data().material().friction;
+            let friction1 = manifold.collider1.material().friction;
+            let friction2 = manifold.collider2.material().friction;
             let friction = (friction1 + friction2) * na::convert(0.5);
 
             for c in manifold.contacts() {
@@ -115,9 +115,9 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 // FIXME: this compute the contact point locations (with margins) several times,
                 // it was already computed for the signorini law.
                 let center1 = c.contact.world1
-                    + c.contact.normal.unwrap() * manifold.collider1.data().margin();
+                    + c.contact.normal.unwrap() * manifold.collider1.margin();
                 let center2 = c.contact.world2
-                    - c.contact.normal.unwrap() * manifold.collider2.data().margin();
+                    - c.contact.normal.unwrap() * manifold.collider2.margin();
                 let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
                 Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {

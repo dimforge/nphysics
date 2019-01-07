@@ -132,7 +132,7 @@ pub fn update_scene_node(
     delta: &Isometry3<f32>,
 ) {
     let co = world.collider(coll).unwrap();
-    // let active = world.body(co.data().body()).is_active();
+    // let active = world.body(co.body()).is_active();
 
     if true {
         // active {

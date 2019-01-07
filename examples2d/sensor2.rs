@@ -94,8 +94,8 @@ fn main() {
                 Proximity::Disjoint => Point3::new(0.5, 0.5, 1.0),
             };
 
-            let body1 = world.collider(prox.collider1).unwrap().data().body();
-            let body2 = world.collider(prox.collider2).unwrap().data().body();
+            let body1 = world.collider(prox.collider1).unwrap().body();
+            let body2 = world.collider(prox.collider2).unwrap().body();
 
             if !body1.is_ground() && body1 != sensor_body.0 {
                 graphics.set_body_color(body1, color);

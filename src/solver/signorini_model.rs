@@ -42,8 +42,8 @@ impl<N: Real> SignoriniModel<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) -> bool {
-        let data1 = manifold.collider1.data();
-        let data2 = manifold.collider2.data();
+        let data1 = manifold.collider1;
+        let data2 = manifold.collider2;
 
         let body1 = try_ret!(bodies.body(manifold.body1()), false);
         let body2 = try_ret!(bodies.body(manifold.body2()), false);
@@ -128,8 +128,8 @@ impl<N: Real> SignoriniModel<N> {
         c: &TrackedContact<N>,
         manifold: &ColliderContactManifold<N>,
     ) -> bool {
-        let depth = c.contact.depth + manifold.collider1.data().margin()
-            + manifold.collider2.data().margin();
+        let depth = c.contact.depth + manifold.collider1.margin()
+            + manifold.collider2.margin();
 
         // NOTE: for now we consider non-penetrating
         // constraints as inactive.
@@ -143,8 +143,8 @@ impl<N: Real> SignoriniModel<N> {
         c: &TrackedContact<N>,
         constraints: &mut ConstraintSet<N>,
     ) {
-        let data1 = manifold.collider1.data();
-        let data2 = manifold.collider2.data();
+        let data1 = manifold.collider1;
+        let data2 = manifold.collider2;
 
         let b1 = manifold.body_part1(c.kinematic.feature1());
         let b2 = manifold.body_part2(c.kinematic.feature2());
