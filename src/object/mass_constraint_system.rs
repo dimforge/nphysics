@@ -23,7 +23,7 @@ use crate::object::fem_helper;
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
 pub struct MassConstraintElement<N: Real> {
-    handle: Option<BodyPartHandle>,
+    handle: BodyPartHandle,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>,
 }
@@ -71,7 +71,7 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 #[derive(Clone)]
 pub struct MassConstraintSystem<N: Real> {
-    handle: Option<BodyHandle>,
+    handle: BodyHandle,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -99,7 +99,7 @@ impl<N: Real> MassConstraintSystem<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     #[cfg(feature = "dim3")]
-    pub fn from_trimesh(mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
+    pub fn from_trimesh(handle: BodyHandle, mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -109,10 +109,10 @@ impl<N: Real> MassConstraintSystem<N> {
             pos.copy_from_slice(mesh.points()[i].coords.as_slice())
         }
 
-        for face in mesh.faces() {
+        for (i, face) in mesh.faces().iter().enumerate() {
             let idx = face.indices * DIM;
             let elt = MassConstraintElement {
-                handle: None,
+                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Triangle(idx),
                 phantom: PhantomData
             };
@@ -133,7 +133,7 @@ impl<N: Real> MassConstraintSystem<N> {
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
         MassConstraintSystem {
-            handle: None,
+            handle,
             constraints: constraints.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(mesh.points().len(), false),
@@ -155,7 +155,7 @@ impl<N: Real> MassConstraintSystem<N> {
     }
 
     /// Builds a mass-spring system from a polyline.
-    pub fn from_polyline(polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
+    pub fn from_polyline(handle: BodyHandle, polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = polyline.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(polyline.edges().len());
@@ -165,10 +165,10 @@ impl<N: Real> MassConstraintSystem<N> {
             pos.copy_from_slice(polyline.points()[i].coords.as_slice())
         }
 
-        for edge in polyline.edges() {
+        for (i, edge) in polyline.edges().iter().enumerate() {
             let idx = edge.indices * DIM;
             let elt = MassConstraintElement {
-                handle: None,
+                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Segment(idx),
                 phantom: PhantomData
             };
@@ -184,7 +184,7 @@ impl<N: Real> MassConstraintSystem<N> {
         println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
 
         MassConstraintSystem {
-            handle: None,
+            handle,
             constraints: constraints.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(polyline.points().len(), false),
@@ -207,12 +207,12 @@ impl<N: Real> MassConstraintSystem<N> {
 
     /// Creates a rectangular-shaped quad.
     #[cfg(feature = "dim3")]
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
+    pub fn quad(handle: BodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::from_trimesh(&trimesh, mass, stiffness)
+        Self::from_trimesh(handle, &trimesh, mass, stiffness)
     }
 
     /// Add one constraint to this mass-constraint system.
@@ -355,15 +355,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         self.positions += disp;
     }
 
-    fn set_handle(&mut self, handle: Option<BodyHandle>) {
-        self.handle = handle;
-
-        for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle(h, i))
-        }
-    }
-
-    fn handle(&self) -> Option<BodyHandle> {
+    fn handle(&self) -> BodyHandle {
         self.handle
     }
 
@@ -619,7 +611,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
 
 impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
-    fn handle(&self) -> Option<BodyPartHandle> {
+    fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
 

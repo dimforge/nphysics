@@ -24,7 +24,7 @@ use crate::object::fem_helper;
 /// An element of the mass-spring system.
 #[derive(Clone)]
 pub struct MassSpringElement<N: Real> {
-    handle: Option<BodyPartHandle>,
+    handle: BodyPartHandle,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>
 }
@@ -69,7 +69,7 @@ impl<N: Real> Spring<N> {
 /// A deformable surface using a mass-spring model with triangular elements.
 #[derive(Clone)]
 pub struct MassSpringSystem<N: Real> {
-    handle: Option<BodyHandle>,
+    handle: BodyHandle,
     springs: Vec<Spring<N>>,
     elements: Vec<MassSpringElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -103,7 +103,7 @@ impl<N: Real> MassSpringSystem<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     #[cfg(feature = "dim3")]
-    pub fn from_trimesh(mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    pub fn from_trimesh(handle: BodyHandle, mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -113,10 +113,10 @@ impl<N: Real> MassSpringSystem<N> {
             pos.copy_from_slice(mesh.points()[i].coords.as_slice())
         }
 
-        for face in mesh.faces() {
+        for (i, face) in mesh.faces().iter().enumerate() {
             let idx = face.indices * DIM;
             let elt = MassSpringElement {
-                handle: None,
+                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Triangle(idx),
                 phantom: PhantomData
             };
@@ -137,7 +137,7 @@ impl<N: Real> MassSpringSystem<N> {
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
         MassSpringSystem {
-            handle: None,
+            handle,
             springs: springs.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(ndofs / DIM, false),
@@ -158,7 +158,7 @@ impl<N: Real> MassSpringSystem<N> {
     }
 
     /// Builds a mass-spring system from a polyline.
-    pub fn from_polyline(polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    pub fn from_polyline(handle: BodyHandle, polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = polyline.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(polyline.edges().len());
@@ -168,10 +168,10 @@ impl<N: Real> MassSpringSystem<N> {
             pos.copy_from_slice(polyline.points()[i].coords.as_slice())
         }
 
-        for edge in polyline.edges() {
+        for (i, edge) in polyline.edges().iter().enumerate() {
             let idx = edge.indices * DIM;
             let elt = MassSpringElement {
-                handle: None,
+                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Segment(idx),
                 phantom: PhantomData
             };
@@ -187,7 +187,7 @@ impl<N: Real> MassSpringSystem<N> {
         println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
         MassSpringSystem {
-            handle: None,
+            handle,
             springs: springs.values().cloned().collect(),
             kinematic_nodes: DVector::repeat(ndofs / DIM, false),
             elements,
@@ -209,12 +209,12 @@ impl<N: Real> MassSpringSystem<N> {
 
     /// Creates a rectangular quad.
     #[cfg(feature = "dim3")]
-    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    pub fn quad(handle: BodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::from_trimesh(&trimesh, mass, stiffness, damping_ratio)
+        Self::from_trimesh(handle,&trimesh, mass, stiffness, damping_ratio)
     }
 
     /// Generate additional springs between nodes that are transitively neighbors.
@@ -417,15 +417,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         self.positions += disp;
     }
 
-    fn set_handle(&mut self, handle: Option<BodyHandle>) {
-        self.handle = handle;
-
-        for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle(h, i))
-        }
-    }
-
-    fn handle(&self) -> Option<BodyHandle> {
+    fn handle(&self) -> BodyHandle {
         self.handle
     }
 
@@ -565,7 +557,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 
 
 impl<N: Real> BodyPart<N> for MassSpringElement<N> {
-    fn handle(&self) -> Option<BodyPartHandle> {
+    fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
 

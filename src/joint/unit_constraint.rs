@@ -172,8 +172,8 @@ pub fn build_linear_limits_position_constraint<N: Real>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             false,
             geom.ndofs1,
             geom.ndofs2,

@@ -2,9 +2,9 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
-                    ColliderHandle, SensorHandle, ColliderDesc, ColliderData};
+                    ColliderHandle, SensorHandle, ColliderDesc, ColliderData, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::world::{World, CollisionWorld};
+use crate::world::{World, ColliderWorld};
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
 
@@ -13,10 +13,11 @@ use crate::math::AngularVector;
 #[cfg(feature = "dim3")]
 use crate::utils::GeneralizedCross;
 
+
 /// A rigid body.
 #[derive(Debug)]
 pub struct RigidBody<N: Real> {
-    handle: Option<BodyHandle>,
+    handle: BodyHandle,
     local_to_world: Isometry<N>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
@@ -30,17 +31,16 @@ pub struct RigidBody<N: Real> {
     status: BodyStatus,
     activation: ActivationStatus<N>,
     companion_id: usize,
-    colliders: Vec<ColliderHandle>
 }
 
 impl<N: Real> RigidBody<N> {
     /// Create a new rigid body with the specified handle and dynamic properties.
-    fn new(position: Isometry<N>) -> Self {
+    fn new(handle: BodyHandle, position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
         let com = Point::from_coordinates(position.translation.vector);
 
         RigidBody {
-            handle: None,
+            handle,
             local_to_world: position,
             velocity: Velocity::zero(),
             local_inertia: inertia,
@@ -54,13 +54,12 @@ impl<N: Real> RigidBody<N> {
             status: BodyStatus::Dynamic,
             activation: ActivationStatus::new_active(),
             companion_id: 0,
-            colliders: Vec::new(),
         }
     }
 
     #[inline]
     fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.handle.unwrap(), 0)
+        BodyPartHandle(self.handle, 0)
     }
 
     /// Mutable information regarding activation and deactivation (sleeping) of this rigid body.
@@ -140,11 +139,6 @@ impl<N: Real> RigidBody<N> {
 
 impl<N: Real> Body<N> for RigidBody<N> {
     #[inline]
-    fn set_handle(&mut self, handle: Option<BodyHandle>) {
-        self.handle = handle
-    }
-
-    #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }
@@ -197,7 +191,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn handle(&self) -> Option<BodyHandle> {
+    fn handle(&self) -> BodyHandle {
         self.handle
     }
 
@@ -364,13 +358,6 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
-
-    #[inline]
-    fn sync_colliders(&self, cworld: &mut CollisionWorld<N>) {
-        for collider in &self.colliders {
-            ColliderData::sync(cworld, *collider, self, Some(self))
-        }
-    }
 }
 
 impl<N: Real> BodyPart<N> for RigidBody<N> {
@@ -380,8 +367,8 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn handle(&self) -> Option<BodyPartHandle> {
-        self.handle.map(|h| BodyPartHandle(h, 0))
+    fn part_handle(&self) -> BodyPartHandle {
+        BodyPartHandle(self.handle, 0)
     }
 
     #[inline]
@@ -456,22 +443,28 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     }
 
     pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
-        let mut rb = RigidBody::new(self.position);
+        world.add_body(self)
+    }
+}
+
+impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
+    type Body = RigidBody<N>;
+
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> RigidBody<N> {
+        let mut rb = RigidBody::new(handle, self.position);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);
         rb.set_local_center_of_mass(self.local_com);
         rb.set_status(self.status);
         rb.set_deactivation_threshold(self.sleep_threshold);
 
-        let rb_handle = world.add_body(Box::new(rb)).handle().expect("Invalid handle");
-        let rb_handle = BodyPartHandle(rb_handle, 0);
-
-        for desc in &mut self.colliders {
-            let collider = desc.build_with_parent(rb_handle, world).expect("Invalid insertion").handle();
-            world.rigid_body_mut(rb_handle.0).unwrap().colliders.push(collider);
+        for desc in &self.colliders {
+            let part_handle = rb.part_handle();
+            let ndofs = rb.status_dependent_ndofs();
+            let handle = desc.build_with_infos(part_handle, ndofs, &mut rb, cworld);
         }
 
-        world.rigid_body_mut(rb_handle.0).unwrap()
+        rb
     }
 }
 

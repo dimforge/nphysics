@@ -47,9 +47,6 @@ impl<N: Real> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn set_handle(&mut self, handle: Option<BodyHandle>) {}
-
-    #[inline]
     fn is_ground(&self) -> bool {
         true
     }
@@ -58,8 +55,8 @@ impl<N: Real> Body<N> for Ground<N> {
     fn apply_displacement(&mut self, _: &[N]) {}
 
     #[inline]
-    fn handle(&self) -> Option<BodyHandle> {
-        Some(BodyHandle::ground())
+    fn handle(&self) -> BodyHandle {
+        BodyHandle::ground()
     }
 
     #[inline]
@@ -203,8 +200,8 @@ impl<N: Real> BodyPart<N> for Ground<N> {
     }
 
     #[inline]
-    fn handle(&self) -> Option<BodyPartHandle> {
-        Some(BodyPartHandle::ground())
+    fn part_handle(&self) -> BodyPartHandle {
+        BodyPartHandle::ground()
     }
 
     #[inline]

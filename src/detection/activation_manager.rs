@@ -1,7 +1,7 @@
 use slab::Slab;
 
 use na::{self, Real};
-use crate::world::CollisionWorld;
+use crate::world::ColliderWorld;
 use crate::object::{BodyHandle, Body, BodySet};
 use crate::joint::JointConstraint;
 use crate::utils::union_find::UnionFindSet;
@@ -62,7 +62,7 @@ impl<N: Real> ActivationManager<N> {
     pub fn update(
         &mut self,
         bodies: &mut BodySet<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
         constraints: &Slab<Box<JointConstraint<N>>>,
         active_bodies: &mut Vec<BodyHandle>,
     ) {
@@ -80,12 +80,12 @@ impl<N: Real> ActivationManager<N> {
                 }
 
                 body.set_companion_id(self.id_to_body.len());
-                self.id_to_body.push(body.handle().unwrap());
+                self.id_to_body.push(body.handle());
             }
 
             if body.is_kinematic() {
                 body.set_companion_id(self.id_to_body.len());
-                self.id_to_body.push(body.handle().unwrap());
+                self.id_to_body.push(body.handle());
             }
         }
 

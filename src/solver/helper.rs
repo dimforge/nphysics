@@ -326,8 +326,8 @@ pub fn cancel_relative_translation_wrt_axis<N: Real>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -380,8 +380,8 @@ pub fn cancel_relative_translation<N: Real>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -558,8 +558,8 @@ pub fn cancel_relative_rotation<N: Real>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -708,8 +708,8 @@ pub fn align_axis<N: Real>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -849,8 +849,8 @@ pub fn project_anchor_to_axis<N: Real>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -928,8 +928,8 @@ pub fn restore_angle_between_axis<N: Real>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            part1.handle().unwrap(),
-            part2.handle().unwrap(),
+            part1.part_handle(),
+            part2.part_handle(),
             true,
             geom.ndofs1,
             geom.ndofs2,

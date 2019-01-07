@@ -17,14 +17,12 @@ use crate::force_generator::{ForceGenerator, ForceGeneratorHandle};
 use crate::joint::{ConstraintHandle, Joint, JointConstraint};
 use crate::math::{Inertia, Isometry, Point, Vector};
 use crate::object::{
-    Body, BodyPartHandle, BodyPart, BodySet, BodyStatus, Collider, ColliderData, ColliderAnchor,
+    Body, BodyPartHandle, BodyPart, BodySet, BodyDesc, BodyStatus, Collider, ColliderData, ColliderAnchor,
     ColliderHandle, Colliders, Material, Multibody, MultibodyLink,
     MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle, Bodies, BodiesMut,
 };
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
-
-/// Type of the collision world used by nphysics.
-pub type CollisionWorld<N> = ncollide::world::CollisionWorld<N, ColliderData<N>>;
+use crate::world::ColliderWorld;
 
 /// The physics world.
 pub struct World<N: Real> {
@@ -33,7 +31,7 @@ pub struct World<N: Real> {
     active_bodies: Vec<BodyHandle>,
     // The set of colliders that have a parent.
     colliders_w_parent: Vec<ColliderHandle>,
-    cworld: CollisionWorld<N>,
+    cworld: ColliderWorld<N>,
     solver: MoreauJeanSolver<N>,
     activation_manager: ActivationManager<N>,
     // FIXME: set those two parameters per-collider?
@@ -60,7 +58,7 @@ impl<N: Real> World<N> {
         let colliders_w_parent = Vec::new();
         let constraints = Slab::new();
         let forces = Slab::new();
-        let mut cworld = CollisionWorld::new(bv_margin);
+        let mut cworld = ColliderWorld::new(bv_margin);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
@@ -243,8 +241,11 @@ impl<N: Real> World<N> {
         self.bodies
             .bodies_mut().for_each(|b| {
             b.update_dynamics(gravity, params);
-            b.sync_colliders(cworld);
         });
+
+
+        self.cworld.sync_colliders(&self.bodies);
+
         self.counters.update_completed();
 
 
@@ -394,9 +395,9 @@ impl<N: Real> World<N> {
         })
     }
 
-    /// Add an abstract body to the world.
-    pub fn add_body(&mut self, body: Box<Body<N>>) -> &mut Body<N> {
-        self.bodies.add_body(body)
+    /// Adds a body to the world.
+    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B) -> &mut B::Body {
+        self.bodies.add_body(desc, &mut self.cworld)
     }
 
     /*
@@ -561,19 +562,19 @@ impl<N: Real> World<N> {
     }
 
     /// Reference to the underlying collision world.
-    pub fn collision_world(&self) -> &CollisionWorld<N> {
+    pub fn collision_world(&self) -> &ColliderWorld<N> {
         &self.cworld
     }
 
     /// Mutable reference to the underlying collision world.
-    pub fn collision_world_mut(&mut self) -> &mut CollisionWorld<N> {
+    pub fn collision_world_mut(&mut self) -> &mut ColliderWorld<N> {
         &mut self.cworld
     }
 
 
     /// Mutable reference to the underlying collision world.
     #[doc(hidden)]
-    pub fn bodies_mut_and_collision_world_mut(&mut self) -> (&mut BodySet<N>, &mut CollisionWorld<N>) {
+    pub fn bodies_mut_and_collision_world_mut(&mut self) -> (&mut BodySet<N>, &mut ColliderWorld<N>) {
         (&mut self.bodies, &mut self.cworld)
     }
 
@@ -581,7 +582,7 @@ impl<N: Real> World<N> {
     ///
     /// Returns `None` if the handle does not correspond to a collider in this world.
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
-        self.cworld.collision_object(handle)
+        self.cworld.collider(handle)
     }
 
     /// Gets the handle of the body the specified collider is attached to.
@@ -592,13 +593,13 @@ impl<N: Real> World<N> {
     /// Gets the anchor attaching this collider to a body or body part.
     pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N>> {
         self.cworld
-            .collision_object(handle)
+            .collider(handle)
             .map(|co| co.data().anchor())
     }
 
     /// An iterator through all the colliders on this collision world.
-    pub fn colliders(&self) -> Colliders<N> {
-        self.cworld.collision_objects()
+    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N>> {
+        self.cworld.colliders()
     }
 
     /// An iterator through all the bodies on this world.

@@ -197,7 +197,7 @@ pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
         let inv_r = sign * jacobians[link.assembly_id + dof_id]; // = J^t * M^-1 J
 
         return Some(GenericNonlinearConstraint::new(
-            link.handle().expect("The provided multibody is not on a world."),
+            link.part_handle(),
             BodyPartHandle::ground(),
             is_angular,
             ndofs,

@@ -7,7 +7,7 @@ use ncollide::shape::{FeatureId, ShapeHandle};
 
 use crate::math::{Isometry, Vector};
 use crate::object::{BodyPartHandle, BodyHandle, Material, Body, BodyPart};
-use crate::world::{World, CollisionWorld};
+use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
 
 /// Type of a reference to a collider.
@@ -145,7 +145,7 @@ impl<N: Real> ColliderData<N> {
     }
 
     // FIXME: move this to a collider wrapper.
-    pub fn sync(cworld: &mut CollisionWorld<N>, handle: ColliderHandle, body: &Body<N>, body_part: Option<&BodyPart<N>>) {
+    pub fn sync(cworld: &mut ColliderWorld<N>, handle: ColliderHandle, body: &Body<N>, body_part: Option<&BodyPart<N>>) {
         let new_pos;
         let collider = cworld
             .collision_object_mut(handle)
@@ -253,7 +253,7 @@ impl<N: Real> ColliderDesc<N> {
                                        parent: BodyPartHandle,
                                        parent_status_dependent_ndofs: usize,
                                        parent_part: &mut BodyPart<N>,
-                                       cworld: &'w mut CollisionWorld<N>)
+                                       cworld: &'w mut ColliderWorld<N>)
                                     -> &'w mut Collider<N> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction * na::convert(0.5f64))

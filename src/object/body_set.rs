@@ -4,7 +4,7 @@ use std::iter::Map;
 use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector};
 use na::Real;
-use crate::world::CollisionWorld;
+use crate::world::ColliderWorld;
 use crate::object::{Body, BodyPart, Ground, Multibody,
              MultibodyLink, MultibodyWorkspace, RigidBody};
 use crate::solver::IntegrationParameters;
@@ -108,6 +108,12 @@ impl<'a, N: Real> AbstractBodySet<'a, N> for BodySet<N> {
 }
 */
 
+pub trait BodyDesc<N: Real> {
+    type Body: Body<N>;
+
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> Self::Body;
+}
+
 /// A set containing all the bodies added to the world.
 pub struct BodySet<N: Real> {
     ground: Ground<N>,
@@ -129,12 +135,12 @@ impl<N: Real> BodySet<N> {
     }
 
     /// Adds a body to the world.
-    pub fn add_body(&mut self, mut body: Box<Body<N>>) -> &mut Body<N> {
+    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N>) -> &mut B::Body {
         let b_entry = self.bodies.vacant_entry();
         let b_id = b_entry.key();
         let handle = BodyHandle(b_id);
-        body.set_handle(Some(handle));
-        &mut **b_entry.insert(body)
+        let body = desc.build_with_handle(cworld, handle);
+        b_entry.insert(Box::new(body)).downcast_mut::<B::Body>().expect("Body construction failed with type mismatch.")
     }
 
     /// Remove a body from this set.

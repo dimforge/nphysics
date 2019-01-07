@@ -19,7 +19,7 @@ use crate::object::fem_helper;
 /// One element of a deformable surface.
 #[derive(Clone)]
 pub struct TriangularElement<N: Real> {
-    handle: Option<BodyPartHandle>,
+    handle: BodyPartHandle,
     indices: Point3<usize>,
     com: Point<N>,
     rot: RotationMatrix<N>,
@@ -36,7 +36,7 @@ pub struct TriangularElement<N: Real> {
 /// implements an isoparametric approach where the interpolations are linear.
 #[derive(Clone)]
 pub struct DeformableSurface<N: Real> {
-    handle: Option<BodyHandle>,
+    handle: BodyHandle,
     elements: Vec<TriangularElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -65,10 +65,10 @@ pub struct DeformableSurface<N: Real> {
 
 impl<N: Real> DeformableSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
-    pub fn new(vertices: &Vec<Point<N>>, triangles: &Vec<Point3<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
-        let elements = triangles.iter().map(|idx|
+    pub fn new(handle: BodyHandle, vertices: &Vec<Point<N>>, triangles: &Vec<Point3<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+        let elements = triangles.iter().enumerate().map(|(i, idx)|
             TriangularElement {
-                handle: None,
+                handle: BodyPartHandle(handle, i),
                 indices: idx * DIM,
                 com: Point::origin(),
                 rot: RotationMatrix::identity(),
@@ -83,7 +83,7 @@ impl<N: Real> DeformableSurface<N> {
         let rest_positions = DVector::from_iterator(ndofs, vertices.iter().flat_map(|p| p.iter().cloned()));
 
         DeformableSurface {
-            handle: None,
+            handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
             positions: rest_positions.clone(),
@@ -442,7 +442,7 @@ impl<N: Real> DeformableSurface<N> {
     ///
     /// The cube is subdivided `nx` (resp. `ny`) times along
     /// the `x` (resp. `y`) axis.
-    pub fn quad(pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn quad(handle: BodyHandle, pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -489,7 +489,7 @@ impl<N: Real> DeformableSurface<N> {
             }
         }
 
-        Self::new(&vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
+        Self::new(handle, &vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
     }
 
     /// Restrict the specified node acceleration to always be zero so
@@ -578,15 +578,7 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
         self.positions += disp;
     }
 
-    fn set_handle(&mut self, handle: Option<BodyHandle>) {
-        self.handle = handle;
-
-        for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle(h, i))
-        }
-    }
-
-    fn handle(&self) -> Option<BodyHandle> {
+    fn handle(&self) -> BodyHandle {
         self.handle
     }
 
@@ -718,7 +710,7 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
 
 
 impl<N: Real> BodyPart<N> for TriangularElement<N> {
-    fn handle(&self) -> Option<BodyPartHandle> {
+    fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
 

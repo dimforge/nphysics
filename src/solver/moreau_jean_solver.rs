@@ -7,7 +7,7 @@ use crate::detection::ColliderContactManifold;
 use crate::joint::JointConstraint;
 use crate::object::{BodyHandle, BodySet, Body};
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
-use crate::world::CollisionWorld;
+use crate::world::ColliderWorld;
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: Real> {
@@ -49,7 +49,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
     ) {
         counters.assembly_started();
         self.assemble_system(counters, params, bodies, joints, manifolds, island);
@@ -213,7 +213,7 @@ impl<N: Real> MoreauJeanSolver<N> {
     fn solve_position_constraints(
         &mut self,
         params: &IntegrationParameters<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {

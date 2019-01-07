@@ -19,7 +19,7 @@ use crate::object::fem_helper;
 /// One element of a deformable volume.
 #[derive(Clone)]
 pub struct TetrahedralElement<N: Real> {
-    handle: Option<BodyPartHandle>,
+    handle: BodyPartHandle,
     indices: Point4<usize>,
     com: Point3<N>,
     rot: Rotation3<N>,
@@ -32,11 +32,11 @@ pub struct TetrahedralElement<N: Real> {
 
 /// A deformable volume using FEM to simulate linear elasticity.
 ///
-/// The volume is described by a set of tetrahedronsl elements. This
+/// The volume is described by a set of tetrahedral elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 #[derive(Clone)]
 pub struct DeformableVolume<N: Real> {
-    handle: Option<BodyHandle>,
+    handle: BodyHandle,
     elements: Vec<TetrahedralElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -65,10 +65,10 @@ pub struct DeformableVolume<N: Real> {
 
 impl<N: Real> DeformableVolume<N> {
     /// Initializes a new deformable volume from its tetrahedronsl elements.
-    pub fn new(vertices: &Vec<Point3<N>>, tetrahedrons: &Vec<Point4<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
-        let elements = tetrahedrons.iter().map(|idx|
+    pub fn new(handle: BodyHandle, vertices: &Vec<Point3<N>>, tetrahedrons: &Vec<Point4<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+        let elements = tetrahedrons.iter().enumerate().map(|(i, idx)|
             TetrahedralElement {
-                handle: None,
+                handle: BodyPartHandle(handle, i),
                 indices: idx * 3,
                 com: Point3::origin(),
                 rot: Rotation3::identity(),
@@ -83,7 +83,7 @@ impl<N: Real> DeformableVolume<N> {
         let rest_positions = DVector::from_iterator(ndofs, vertices.iter().flat_map(|p| p.iter().cloned()));
 
         DeformableVolume {
-            handle: None,
+            handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
             positions: rest_positions.clone(),
@@ -463,7 +463,7 @@ impl<N: Real> DeformableVolume<N> {
     ///
     /// The cube is subdivided `nx` (resp. `ny` and `nz`) times along
     /// the `x` (resp. `y` and `z`) axis.
-    pub fn cube(pos: &Isometry3<N>, extents: &Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn cube(handle: BodyHandle, pos: &Isometry3<N>, extents: &Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -540,7 +540,7 @@ impl<N: Real> DeformableVolume<N> {
             }
         }
 
-        Self::new(&vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
+        Self::new(handle, &vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
     }
 
     /// Restrict the specified node acceleration to always be zero so
@@ -639,15 +639,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
         self.positions += disp;
     }
 
-    fn set_handle(&mut self, handle: Option<BodyHandle>) {
-        self.handle = handle;
-
-        for (i, element) in self.elements.iter_mut().enumerate() {
-            element.handle = handle.map(|h| BodyPartHandle(h, i))
-        }
-    }
-
-    fn handle(&self) -> Option<BodyHandle> {
+    fn handle(&self) -> BodyHandle {
         self.handle
     }
 
@@ -780,7 +772,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
 
 
 impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
-    fn handle(&self) -> Option<BodyPartHandle> {
+    fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
 

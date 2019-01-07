@@ -5,10 +5,9 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use ncollide3d::world::CollisionWorld;
 use nphysics3d::object::{BodyPartHandle, Material, BodyPart, RigidBody, RigidBodyDesc, ColliderDesc};
 use nphysics3d::volumetric::Volumetric;
-use nphysics3d::world::World;
+use nphysics3d::world::{World, ColliderWorld};
 use nphysics_testbed3d::Testbed;
 
 fn main() {

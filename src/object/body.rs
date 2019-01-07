@@ -9,7 +9,7 @@ use ncollide::shape::DeformationsType;
 use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, BodyHandle, ColliderAnchor, ColliderHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::world::CollisionWorld;
+use crate::world::ColliderWorld;
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -109,16 +109,8 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// Applies a generalized displacement to this body.
     fn apply_displacement(&mut self, disp: &[N]);
 
-    /// Sets the tag associated to this body and its body parts.
-    ///
-    /// This is should not be called explicitly by user code. This is called
-    /// by the world when the body is added to the world.
-    /// If `tag` is `None`, all handles of this body and body parts should be
-    /// reset to `None` as well.
-    fn set_handle(&mut self, handle: Option<BodyHandle>);
-
     /// The handle of this body.
-    fn handle(&self) -> Option<BodyHandle>;
+    fn handle(&self) -> BodyHandle;
 
     /// The status of this body.
     fn status(&self) -> BodyStatus;
@@ -274,10 +266,6 @@ pub trait Body<N: Real>: Any + Send + Sync {
             self.activate_with_energy(threshold * na::convert(2.0));
         }
     }
-
-    fn sync_colliders(&self, cworld: &mut CollisionWorld<N>) {
-        unimplemented!()
-    }
 }
 
 /// Trait implemented by each part of a body supported by nphysics.
@@ -288,7 +276,7 @@ pub trait BodyPart<N: Real>: Any + Send + Sync {
     }
 
     /// The handle of this body part.
-    fn handle(&self) -> Option<BodyPartHandle>;
+    fn part_handle(&self) -> BodyPartHandle;
 
     /// The center of mass of this body part.
     fn center_of_mass(&self) -> Point<N>;

@@ -3,7 +3,7 @@ use slab::Slab;
 use std::marker::PhantomData;
 use std::ops::MulAssign;
 
-use crate::world::CollisionWorld;
+use crate::world::ColliderWorld;
 use crate::joint::JointConstraint;
 use crate::object::{BodySet, ColliderAnchor, BodyHandle};
 use crate::solver::helper;
@@ -29,7 +29,7 @@ impl<N: Real> NonlinearSORProx<N> {
     pub fn solve(
         &self,
         params: &IntegrationParameters<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
         constraints: &mut [NonlinearUnilateralConstraint<N>],
         multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator],
@@ -137,7 +137,7 @@ impl<N: Real> NonlinearSORProx<N> {
     fn solve_unilateral<D1: Dim, D2: Dim>(
         &self,
         params: &IntegrationParameters<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
@@ -167,7 +167,7 @@ impl<N: Real> NonlinearSORProx<N> {
     fn update_contact_constraint(
         &self,
         params: &IntegrationParameters<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
         bodies: &BodySet<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
@@ -176,8 +176,8 @@ impl<N: Real> NonlinearSORProx<N> {
         let body2 = try_ret!(bodies.body(constraint.body2.0), false);
         let part1 = try_ret!(body1.part(constraint.body1.1), false);
         let part2 = try_ret!(body2.part(constraint.body2.1), false);
-        let collider1 = try_ret!(cworld.collision_object(constraint.collider1), false);
-        let collider2 = try_ret!(cworld.collision_object(constraint.collider2), false);
+        let collider1 = try_ret!(cworld.collider(constraint.collider1), false);
+        let collider2 = try_ret!(cworld.collider(constraint.collider2), false);
 
         let pos1;
         let pos2;

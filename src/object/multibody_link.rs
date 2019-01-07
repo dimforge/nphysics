@@ -5,12 +5,12 @@ use na::Real;
 use crate::joint::Joint;
 use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, BodyPart, BodyHandle, ColliderData, ColliderHandle, Multibody};
-use crate::world::CollisionWorld;
+use crate::world::ColliderWorld;
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: Real> {
     // FIXME: make all those private.
-    pub(crate) multibody_handle: Option<BodyHandle>,
+    pub(crate) multibody_handle: BodyHandle,
     pub(crate) internal_id: usize,
     pub(crate) assembly_id: usize,
     pub(crate) impulse_id: usize,
@@ -40,7 +40,6 @@ pub struct MultibodyLink<N: Real> {
 
     pub(crate) local_inertia: Inertia<N>,
     pub(crate) local_com: Point<N>,
-    pub(crate) colliders: Vec<ColliderHandle>,
     // TODO: User-defined data
     // user_data:       T
 }
@@ -51,6 +50,7 @@ impl<N: Real> MultibodyLink<N> {
         internal_id: usize,
         assembly_id: usize,
         impulse_id: usize,
+        multibody_handle: BodyHandle,
         parent: BodyPartHandle,
         parent_internal_id: usize,
         dof: Box<Joint<N>>,
@@ -71,7 +71,7 @@ impl<N: Real> MultibodyLink<N> {
         let com = local_to_world * local_com;
 
         MultibodyLink {
-            multibody_handle: None,
+            multibody_handle,
             internal_id,
             assembly_id,
             impulse_id,
@@ -91,8 +91,7 @@ impl<N: Real> MultibodyLink<N> {
             local_inertia,
             local_com,
             inertia,
-            com,
-            colliders: Vec::new()
+            com
         }
     }
 
@@ -113,12 +112,6 @@ impl<N: Real> MultibodyLink<N> {
     pub fn joint_mut(&mut self) -> &mut Joint<N> {
         &mut *self.dof
     }
-
-    pub fn sync_colliders(&self, multibody: &Multibody<N>, cworld: &mut CollisionWorld<N>) {
-        for collider in &self.colliders {
-            ColliderData::sync(cworld, *collider, multibody, Some(self))
-        }
-    }
 }
 
 
@@ -129,8 +122,8 @@ impl<N: Real> BodyPart<N> for MultibodyLink<N> {
     }
 
     #[inline]
-    fn handle(&self) -> Option<BodyPartHandle> {
-        self.multibody_handle.map(|h| BodyPartHandle(h, self.internal_id))
+    fn part_handle(&self) -> BodyPartHandle {
+        BodyPartHandle(self.multibody_handle, self.internal_id)
     }
 
     #[inline]
