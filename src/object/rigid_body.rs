@@ -2,7 +2,7 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
-                    ColliderHandle, SensorHandle, ColliderDesc, ColliderData, BodyDesc};
+                    ColliderHandle, ColliderDesc, ColliderData, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use ncollide::shape::DeformationsType;
@@ -422,25 +422,19 @@ pub struct RigidBodyDesc<'a, N: Real> {
 }
 
 impl<'a, N: Real> RigidBodyDesc<'a, N> {
-    pub fn with_translation(mut self, t: Vector<N>) -> Self {
-        self.position.translation.vector = t;
-        self
-    }
+    body_desc_custom_accessors!(
+        self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
+    );
 
-    pub fn with_collider(mut self, collider: &'a ColliderDesc<N>) -> Self {
-        self.colliders.push(collider);
-        self
-    }
-
-    pub fn set_translation(&mut self, t: Vector<N>) -> &mut Self {
-        self.position.translation.vector = t;
-        self
-    }
-
-    pub fn set_collider(&mut self, collider: &'a ColliderDesc<N>) -> &mut Self {
-        self.colliders.push(collider);
-        self
-    }
+    body_desc_accessors!(
+        with_status, set_status, status: BodyStatus
+        with_position, set_position, position: Isometry<N>
+        with_velocity, set_velocity, velocity: Velocity<N>
+        with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
+        with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
+        with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+    );
 
     pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
         world.add_body(self)

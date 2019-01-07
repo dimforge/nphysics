@@ -19,7 +19,7 @@ use crate::math::{Inertia, Isometry, Point, Vector};
 use crate::object::{
     Body, BodyPartHandle, BodyPart, BodySet, BodyDesc, BodyStatus, Collider, ColliderData, ColliderAnchor,
     ColliderHandle, Material, Multibody, MultibodyLink,
-    MultibodyWorkspace, RigidBody, SensorHandle, BodyHandle, Bodies, BodiesMut,
+    RigidBody, BodyHandle, Bodies, BodiesMut,
 };
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
@@ -41,7 +41,6 @@ pub struct World<N: Real> {
     constraints: Slab<Box<JointConstraint<N>>>,
     forces: Slab<Box<ForceGenerator<N>>>,
     params: IntegrationParameters<N>,
-    workspace: MultibodyWorkspace<N>,
 }
 
 impl<N: Real> World<N> {
@@ -64,7 +63,6 @@ impl<N: Real> World<N> {
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
         let gravity = Vector::zeros();
         let params = IntegrationParameters::default();
-        let workspace = MultibodyWorkspace::new();
 
         World {
             counters,
@@ -79,8 +77,7 @@ impl<N: Real> World<N> {
             gravity,
             constraints,
             forces,
-            params,
-            workspace
+            params
         }
     }
 

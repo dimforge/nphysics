@@ -146,6 +146,42 @@ macro_rules! try_continue {
     }
 }
 
+macro_rules! body_desc_accessors(
+    ($($with_method: ident, $set_method: ident $(, $arg: ident: $t: ty)*)*) => {
+        $(
+            pub fn $with_method(mut self $(, $arg: $t)*) -> Self {
+                $(
+                    self.$arg = $arg;
+                )*
+                self
+            }
+
+            pub fn $set_method(&mut self $(, $arg: $t)*) -> &mut Self {
+                $(
+                    self.$arg = $arg;
+                )*
+                self
+            }
+        )*
+    }
+);
+
+macro_rules! body_desc_custom_accessors(
+    ($($this: ident.$with_method: ident, $set_method: ident $(, $arg: ident: $t: ty)* | $imp: expr)*) => {
+        $(
+            pub fn $with_method(mut $this $(, $arg: $t)*) -> Self {
+                $imp
+                $this
+            }
+
+            pub fn $set_method(&mut $this $(, $arg: $t)*) -> &mut Self {
+                $imp
+                $this
+            }
+        )*
+    }
+);
+
 pub mod algebra;
 pub mod counters;
 pub mod detection;

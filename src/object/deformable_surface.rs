@@ -1,6 +1,7 @@
 use std::ops::AddAssign;
 use std::iter;
 use std::collections::HashMap;
+use std::sync::Arc;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
@@ -8,13 +9,15 @@ use na::{self, Real, Point2, Point3, Point4, Vector3, Vector6, Matrix2, Matrix3,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, VectorSliceMut2, Vector2,
          Rotation3, Unit};
 use ncollide::utils::{self, DeterministicState};
-use ncollide::shape::{Polyline, DeformationsType, TrianglePointLocation, Triangle};
+use ncollide::shape::{Polyline, DeformationsType, TrianglePointLocation, Triangle, ShapeHandle};
 use ncollide::query::PointQueryWithLocation;
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
+                    FiniteElementIndices, DeformableColliderDesc, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry, SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
+use crate::world::{World, ColliderWorld};
 
 /// One element of a deformable surface.
 #[derive(Clone)]
@@ -65,7 +68,8 @@ pub struct DeformableSurface<N: Real> {
 
 impl<N: Real> DeformableSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
-    pub fn new(handle: BodyHandle, vertices: &Vec<Point<N>>, triangles: &Vec<Point3<usize>>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn new(handle: BodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
+               scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let elements = triangles.iter().enumerate().map(|(i, idx)|
             TriangularElement {
                 handle: BodyPartHandle(handle, i),
@@ -80,8 +84,12 @@ impl<N: Real> DeformableSurface<N> {
             }).collect();
 
         let ndofs = vertices.len() * DIM;
-        let rest_positions = DVector::from_iterator(ndofs, vertices.iter().flat_map(|p| p.iter().cloned()));
+        let mut rest_positions = DVector::zeros(ndofs);
 
+        for (i, pt)  in vertices.iter().enumerate() {
+            let pt = pos * Point::from_coordinates(pt.coords.component_mul(&scale));
+            rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
+        }
         DeformableSurface {
             handle,
             elements,
@@ -456,9 +464,9 @@ impl<N: Real> DeformableSurface<N> {
             for j in 0..=ny {
                 let y = y_step * na::convert(j as f64) - na::convert(0.5);
                 let mut coords = Vector::zeros();
-                coords.x = x * extents.x;
-                coords.y = y * extents.y;
-                vertices.push(pos * Point::from_coordinates(coords))
+                coords.x = x;
+                coords.y = y;
+                vertices.push(Point::from_coordinates(coords))
             }
         }
 
@@ -489,7 +497,7 @@ impl<N: Real> DeformableSurface<N> {
             }
         }
 
-        Self::new(handle, &vertices, &indices, density, young_modulus, poisson_ratio, damping_coeffs)
+        Self::new(handle, &vertices, &indices, pos, extents, density, young_modulus, poisson_ratio, damping_coeffs)
     }
 
     /// Restrict the specified node acceleration to always be zero so
@@ -736,5 +744,118 @@ impl<N: Real> BodyPart<N> for TriangularElement<N> {
 
     fn apply_force(&mut self, force: &Force<N>) {
         unimplemented!()
+    }
+}
+
+
+enum DeformableSurfaceDescGeometry<'a, N: Real> {
+    Quad(usize, usize),
+    Triangles(&'a [Point<N>], &'a [Point3<usize>])
+}
+
+pub struct DeformableSurfaceDesc<'a, N: Real> {
+    geom: DeformableSurfaceDescGeometry<'a, N>,
+    scale: Vector<N>,
+    position: Isometry<N>,
+    young_modulus: N,
+    poisson_ratio: N,
+    sleep_threshold: Option<N>,
+    boundary_trimesh_collider: bool,
+    mass_damping: N,
+    stiffness_damping: N,
+    density: N,
+    plasticity: (N, N, N),
+    kinematic_nodes: Vec<usize>,
+    status: BodyStatus
+}
+
+impl<'a, N: Real> DeformableSurfaceDesc<'a, N> {
+    fn with_geometry(geom: DeformableSurfaceDescGeometry<'a, N>) -> Self {
+        DeformableSurfaceDesc {
+            geom,
+            scale: Vector::repeat(N::one()),
+            position: Isometry::identity(),
+            young_modulus: na::convert(0.3),
+            poisson_ratio: N::zero(),
+            sleep_threshold: Some(ActivationStatus::default_threshold()),
+            boundary_trimesh_collider: false,
+            mass_damping: na::convert(0.2),
+            stiffness_damping: N::zero(),
+            density: N::one(),
+            plasticity: (N::zero(), N::zero(), N::zero()),
+            kinematic_nodes: Vec::new(),
+            status: BodyStatus::Dynamic
+        }
+    }
+
+    pub fn new(vertices: &'a [Point<N>], triangles: &'a [Point3<usize>]) -> Self {
+        Self::with_geometry(DeformableSurfaceDescGeometry::Triangles(vertices, triangles))
+    }
+
+    pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
+        Self::with_geometry(DeformableSurfaceDescGeometry::Quad(subdiv_x, subdiv_y))
+    }
+
+    pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
+        self.kinematic_nodes.clear();
+        self
+    }
+
+    body_desc_custom_accessors!(
+        self.with_boundary_trimesh_collider, set_boundary_trimesh_collider_enabled, enable: bool | { self.boundary_trimesh_collider = enable }
+        self.with_scale, set_scale, scale_x: N, scale_y: N | { self.scale = Vector::new(scale_x, scale_y) }
+        self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
+        self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+    );
+
+    body_desc_accessors!(
+        with_young_modulus, set_young_modulus, young_modulus: N
+        with_poisson_ratio, set_poisson_ratio, poisson_ratio: N
+        with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+        with_mass_damping, set_mass_damping, mass_damping: N
+        with_stiffness_damping, set_stiffness_damping, stiffness_damping: N
+        with_density, set_density, density: N
+        with_status, set_status, status: BodyStatus
+        with_position, set_position, position: Isometry<N>
+    );
+
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w DeformableSurface<N> {
+        world.add_body(self)
+    }
+}
+
+impl<'a, N: Real> BodyDesc<N> for DeformableSurfaceDesc<'a, N> {
+    type Body = DeformableSurface<N>;
+
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> DeformableSurface<N> {
+        let mut vol = match self.geom {
+            DeformableSurfaceDescGeometry::Quad(nx, ny) =>
+                DeformableSurface::quad(handle, &self.position, &self.scale,
+                                       nx, ny, self.density, self.young_modulus,
+                                       self.poisson_ratio,
+                                       (self.mass_damping, self.stiffness_damping)),
+            DeformableSurfaceDescGeometry::Triangles(pts, idx) =>
+                DeformableSurface::new(handle, pts, idx, &self.position, &self.scale,
+                                      self.density, self.young_modulus, self.poisson_ratio,
+                                      (self.mass_damping, self.stiffness_damping))
+        };
+
+        vol.set_deactivation_threshold(self.sleep_threshold);
+        vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
+
+        for i in &self.kinematic_nodes {
+            vol.set_node_kinematic(*i, true)
+        }
+
+        if self.boundary_trimesh_collider {
+            let (mesh, ids_map, parts_map) = vol.boundary_polyline();
+            vol.renumber_dofs(&ids_map);
+            let _ = DeformableColliderDesc::new(ShapeHandle::new(mesh))
+                .with_body_parts_mapping(Some(Arc::new(parts_map)))
+                .build_with_infos(&vol, cworld);
+        }
+
+        vol
     }
 }

@@ -14,12 +14,6 @@ use crate::volumetric::Volumetric;
 /// Type of the handle of a collider.
 pub type ColliderHandle = CollisionObjectHandle;
 
-/// Type of the handle of a sensor.
-pub type SensorHandle = CollisionObjectHandle;
-
-/// Type of a sensor.
-pub type Sensor<N> = CollisionObject<N, ColliderData<N>>;
-
 /// Description of the way a collider is attached to a body.
 pub enum ColliderAnchor<N: Real> {
     /// Attach of a collider with a body part.
@@ -33,13 +27,6 @@ pub enum ColliderAnchor<N: Real> {
     OnDeformableBody {
         /// The attached body handle.
         body: BodyHandle,
-        /// Indices mapping degrees of freedom of the body with degrees of freedom of the collision object.
-        /// If set to `None`, the mapping is trivial, i.e., the i-th degree of freedom of the body corresponds to
-        /// the i-th degree of freedom of the collision object.
-        // NOTE: we made it an ARC mostly because ot avoids some borrowing issue on simulation steps to
-        // apply the deformation to attached colliders. Though it is still interesting per se to allow
-        // sharing deformation index buffers between deformable colliders.
-        indices: Option<Arc<Vec<usize>>>,
         /// A map between the collision objects parts and body part indices.
         ///
         /// The `i`-th part of the collision object corresponds to the `body_parts[i]`-th body part.
@@ -194,13 +181,19 @@ impl<N: Real> Collider<N> {
         self.0.data().material()
     }
 
+    /// Returns `true` if this collider is a sensor.
+    #[inline]
+    pub fn is_sensor(&self) -> bool {
+        self.query_type().is_proximity_query()
+    }
+
     /*
      * Original methods from the CollisionObject.
      */
 
     /// The collision object unique handle.
     #[inline]
-    pub fn handle(&self) -> CollisionObjectHandle {
+    pub fn handle(&self) -> ColliderHandle {
         self.0.handle()
     }
 
@@ -220,8 +213,8 @@ impl<N: Real> Collider<N> {
     ///
     /// Panics if the shape is not deformable.
     #[inline]
-    pub fn set_deformations(&mut self, coords: &[N], indices: Option<&[usize]>) {
-        self.0.set_deformations(coords, indices)
+    pub fn set_deformations(&mut self, coords: &[N]) {
+        self.0.set_deformations(coords)
     }
 
     /// The collision object shape.
@@ -244,20 +237,20 @@ impl<N: Real> Collider<N> {
 }
 
 pub struct ColliderDesc<N: Real> {
-    pub margin: N,
-    pub groups: CollisionGroups,
-    pub shape: ShapeHandle<N>,
-    pub position: Isometry<N>,
-    pub material: Material<N>,
-    pub density: Option<N>,
-    pub linear_prediction: N,
-    pub angular_prediction: N,
-    pub is_sensor: bool
+    margin: N,
+    groups: CollisionGroups,
+    shape: ShapeHandle<N>,
+    position: Isometry<N>,
+    material: Material<N>,
+    density: Option<N>,
+    linear_prediction: N,
+    angular_prediction: N,
+    is_sensor: bool
 }
 
 impl<N: Real> ColliderDesc<N> {
     pub fn new(shape: ShapeHandle<N>) -> Self {
-        let linear_prediction = na::convert(0.002);
+        let linear_prediction = na::convert(0.001);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
         ColliderDesc {
@@ -326,10 +319,10 @@ impl<N: Real> ColliderDesc<N> {
                                        cworld: &'w mut ColliderWorld<N>)
                                     -> &'w mut Collider<N> {
         let query = if self.is_sensor {
-            GeometricQueryType::Proximity(self.linear_prediction * na::convert(0.5f64))
+            GeometricQueryType::Proximity(self.linear_prediction)
         } else {
             GeometricQueryType::Contacts(
-                self.margin + self.linear_prediction * na::convert(0.5f64),
+                self.margin + self.linear_prediction,
                 self.angular_prediction,
             )
         };
@@ -352,5 +345,95 @@ impl<N: Real> ColliderDesc<N> {
         let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: self.position };
         let data = ColliderData::new(self.margin, anchor, ndofs, self.material.clone());
         cworld.add(pos, self.shape.clone(), self.groups, query, data)
+    }
+}
+
+
+pub struct DeformableColliderDesc<N: Real> {
+    margin: N,
+    groups: CollisionGroups,
+    shape: ShapeHandle<N>,
+    material: Material<N>,
+    linear_prediction: N,
+    angular_prediction: N,
+    is_sensor: bool,
+    body_parts_mapping: Option<Arc<Vec<usize>>>
+}
+
+impl<N: Real> DeformableColliderDesc<N> {
+    pub fn new(shape: ShapeHandle<N>) -> Self {
+        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        let linear_prediction = na::convert(0.002);
+        let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
+
+        DeformableColliderDesc {
+            shape,
+            margin: na::convert(0.01),
+            groups: CollisionGroups::default(),
+            material: Material::default(),
+            linear_prediction,
+            angular_prediction,
+            is_sensor: false,
+            body_parts_mapping: None
+        }
+    }
+
+    pub fn set_body_parts_mapping(&mut self, mapping: Option<Arc<Vec<usize>>>) -> &mut Self {
+        self.body_parts_mapping = mapping;
+        self
+    }
+
+    pub fn set_shape(&mut self, shape: ShapeHandle<N>) -> &mut Self {
+        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        self.shape = shape;
+        self
+    }
+
+    pub fn with_body_parts_mapping(mut self, mapping: Option<Arc<Vec<usize>>>) -> Self {
+        self.body_parts_mapping = mapping;
+        self
+    }
+
+    pub fn with_shape(mut self, shape: ShapeHandle<N>) -> Self {
+        self.shape = shape;
+        self
+    }
+
+    pub fn build_with_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
+        let (bodies, cworld) = world.bodies_mut_and_collision_world_mut();
+        let parent = bodies.body(parent)?;
+        Some(self.build_with_infos(parent, cworld))
+    }
+
+    pub(crate) fn build_with_infos<'w>(&self,
+                                       parent: &Body<N>,
+                                       cworld: &'w mut ColliderWorld<N>)
+                                       -> &'w mut Collider<N> {
+        let query = if self.is_sensor {
+            GeometricQueryType::Proximity(self.linear_prediction)
+        } else {
+            GeometricQueryType::Contacts(
+                self.margin + self.linear_prediction,
+                self.angular_prediction,
+            )
+        };
+
+        let parent_deformation_type = parent
+            .deformed_positions()
+            .expect("A deformable collider can only be attached to a deformable body.")
+            .0;
+
+        assert_eq!(
+            parent_deformation_type,
+            self.shape.as_deformable_shape().unwrap().deformations_type(),
+            "Both the deformable shape and deformable body must support the same deformation types."
+        );
+
+        let body = parent.handle();
+        let ndofs = parent.status_dependent_ndofs();
+        let body_parts = self.body_parts_mapping.clone();
+        let anchor = ColliderAnchor::OnDeformableBody { body, body_parts };
+        let data = ColliderData::new(self.margin, anchor, ndofs, self.material.clone());
+        cworld.add(Isometry::identity(), self.shape.clone(), self.groups, query, data)
     }
 }

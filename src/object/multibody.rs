@@ -51,7 +51,7 @@ pub struct Multibody<N: Real> {
 
 impl<N: Real> Multibody<N> {
     /// Creates a new multibody with no link.
-    pub fn new(handle: BodyHandle) -> Self {
+    fn new(handle: BodyHandle) -> Self {
         Multibody {
             handle,
             rbs: MultibodyLinkVec(Vec::new()),
@@ -739,7 +739,7 @@ impl<N: Real> Multibody<N> {
 }
 
 /// A temporary workspace for various updates of the multibody.
-pub struct MultibodyWorkspace<N: Real> {
+struct MultibodyWorkspace<N: Real> {
     accs: Vec<Velocity<N>>,
 }
 
@@ -1008,7 +1008,6 @@ impl<N: Real> Body<N> for Multibody<N> {
 pub struct MultibodyDesc<'a, N: Real> {
     children: Vec<MultibodyDesc<'a, N>>,
     joint: Box<Joint<N>>,
-    position: Isometry<N>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     local_com: Point<N>,
@@ -1022,7 +1021,6 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         MultibodyDesc {
             joint: Box::new(joint),
             children: Vec::new(),
-            position: Isometry::identity(),
             velocity: Velocity::zero(),
             local_inertia: Inertia::zero(),
             local_com: Point::origin(),
@@ -1039,36 +1037,18 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         self.children.last_mut().unwrap()
     }
 
-    pub fn with_body_shift(mut self, body_shift: Vector<N>) -> Self {
-        self.body_shift = body_shift;
-        self
-    }
+    body_desc_custom_accessors!(
+        self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
+    );
 
-    pub fn with_parent_shift(mut self, parent_shift: Vector<N>) -> Self {
-        self.parent_shift = parent_shift;
-        self
-    }
-
-    pub fn with_collider(mut self, collider: &'a ColliderDesc<N>) -> Self {
-        self.colliders.push(collider);
-        self
-    }
-
-
-    pub fn set_body_shift(&mut self, body_shift: Vector<N>) -> &mut Self {
-        self.body_shift = body_shift;
-        self
-    }
-
-    pub fn set_parent_shift(&mut self, parent_shift: Vector<N>) -> &mut Self {
-        self.parent_shift = parent_shift;
-        self
-    }
-
-    pub fn add_collider(&mut self, collider: &'a ColliderDesc<N>) -> &mut Self {
-        self.colliders.push(collider);
-        self
-    }
+    body_desc_accessors!(
+//        with_status, set_status, status: BodyStatus
+        with_parent_shift, set_parent_shift, parent_shift: Vector<N>
+        with_body_shift, set_body_shift, body_shift: Vector<N>
+        with_velocity, set_velocity, velocity: Velocity<N>
+        with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
+        with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
+    );
 
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Multibody<N> {
         world.add_body(self)

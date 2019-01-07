@@ -5,8 +5,7 @@ use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector};
 use na::Real;
 use crate::world::ColliderWorld;
-use crate::object::{Body, BodyPart, Ground, Multibody,
-             MultibodyLink, MultibodyWorkspace, RigidBody};
+use crate::object::{Body, BodyPart, Ground, Multibody, MultibodyLink, RigidBody};
 use crate::solver::IntegrationParameters;
 
 /// A world-specific body handle.

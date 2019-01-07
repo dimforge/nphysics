@@ -53,18 +53,16 @@ impl<N: Real> ColliderWorld<N> {
                 ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
                     let part = try_ret!(body.part(body_part.1), false);
                     let part_pos = part.position();
-                    Either::Left(part_pos * position_wrt_body_part)
+                    Some(part_pos * position_wrt_body_part)
                 }
-                ColliderAnchor::OnDeformableBody { indices, .. } => {
-                    // FIXME: too bad we have to clone the indices here
-                    // (that's why this is an arc) to avoid borrowing issue.
-                    Either::Right(indices.clone())
+                ColliderAnchor::OnDeformableBody { .. } => {
+                    None
                 }
             };
 
             match new_pos {
-                Either::Left(pos) => cworld.set_position(*collider_id, pos),
-                Either::Right(indices) => cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1, indices.as_ref().map(|idx| &idx[..]))
+                Some(pos) => cworld.set_position(*collider_id, pos),
+                None => cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1)
             }
 
             true
@@ -130,10 +128,9 @@ impl<N: Real> ColliderWorld<N> {
         &mut self,
         handle: ColliderHandle,
         coords: &[N],
-        indices: Option<&[usize]>,
     )
     {
-        self.cworld.set_deformations(handle, coords, indices)
+        self.cworld.set_deformations(handle, coords)
     }
 
     /// Adds a filter that tells if a potential collision pair should be ignored or not.

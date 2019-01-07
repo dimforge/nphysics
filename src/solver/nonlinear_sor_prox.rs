@@ -185,11 +185,10 @@ impl<N: Real> NonlinearSORProx<N> {
         let coords2;
 
         match collider1.anchor() {
-            ColliderAnchor::OnDeformableBody { indices, .. } => {
+            ColliderAnchor::OnDeformableBody { .. } => {
                 let coords = body1.deformed_positions().unwrap().1;
                 collider1.shape().as_deformable_shape().unwrap().update_local_approximation(
                     coords,
-                    indices.as_ref().map(|idx| &idx[..]),
                     constraint.kinematic.approx1_mut());
                 // FIXME: is this really the identity?
                 pos1 = Isometry::identity();
@@ -202,11 +201,10 @@ impl<N: Real> NonlinearSORProx<N> {
         }
 
         match collider2.anchor() {
-            ColliderAnchor::OnDeformableBody { indices, .. } => {
+            ColliderAnchor::OnDeformableBody { .. } => {
                 let coords = body2.deformed_positions().unwrap().1;
                 collider2.shape().as_deformable_shape().unwrap().update_local_approximation(
                     coords,
-                    indices.as_ref().map(|idx| &idx[..]),
                     constraint.kinematic.approx2_mut());
                 // FIXME: is this really the identity?
                 pos2 = Isometry::identity();

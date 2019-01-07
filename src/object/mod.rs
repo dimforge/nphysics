@@ -4,9 +4,9 @@ pub use self::material::Material;
 
 pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus};
 pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySet, BodyHandle, BodyDesc};
-pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, Sensor, SensorHandle, ColliderDesc};
+pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, ColliderDesc, DeformableColliderDesc};
 pub use self::ground::Ground;
-pub use self::multibody::{Multibody, MultibodyWorkspace, MultibodyDesc};
+pub use self::multibody::{Multibody, MultibodyDesc};
 pub(crate) use self::multibody_link::MultibodyLinkVec;
 pub use self::multibody_link::MultibodyLink;
 pub use self::rigid_body::{RigidBody, RigidBodyDesc};
