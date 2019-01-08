@@ -1037,11 +1037,11 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         self.children.last_mut().unwrap()
     }
 
-    body_desc_custom_accessors!(
+    desc_custom_setters!(
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
-    body_desc_accessors!(
+    desc_setters!(
 //        with_status, set_status, status: BodyStatus
         with_parent_shift, set_parent_shift, parent_shift: Vector<N>
         with_body_shift, set_body_shift, body_shift: Vector<N>

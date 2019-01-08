@@ -58,6 +58,11 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[inline]
+    pub fn handle(&self) -> BodyHandle {
+        self.handle
+    }
+
+    #[inline]
     fn part_handle(&self) -> BodyPartHandle {
         BodyPartHandle(self.handle, 0)
     }
@@ -264,7 +269,9 @@ impl<N: Real> Body<N> for RigidBody<N> {
                     self.acceleration.angular += self.inv_augmented_mass.angular * gyroscopic;
                 }
 
-                self.acceleration.linear += *gravity;
+                if self.inv_augmented_mass.linear != N::zero() {
+                    self.acceleration.linear += *gravity;
+                }
                 self.acceleration += self.inv_augmented_mass * self.external_forces
             }
             _ => {}
@@ -394,7 +401,10 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn add_local_inertia(&mut self, inertia: Inertia<N>) {
         self.local_inertia += inertia;
-        println!("New inertia: {:?}", self.local_inertia);
+
+        // Needed for 2D because the inertia is not updated on the `update_dynamics`.
+        self.inertia = self.local_inertia.transformed(&self.local_to_world);
+        self.inv_augmented_mass = self.inertia.inverse();
     }
 
     #[inline]
@@ -422,18 +432,32 @@ pub struct RigidBodyDesc<'a, N: Real> {
 }
 
 impl<'a, N: Real> RigidBodyDesc<'a, N> {
-    body_desc_custom_accessors!(
+    desc_custom_setters!(
         self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
-    body_desc_accessors!(
+    desc_setters!(
         with_status, set_status, status: BodyStatus
         with_position, set_position, position: Isometry<N>
         with_velocity, set_velocity, velocity: Velocity<N>
         with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
         with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
         with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+    );
+
+    desc_custom_getters!(
+        self.translation: &Vector<N> | { &self.position.translation.vector }
+        self.colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
+    );
+
+    desc_getters!(
+        [val] status: BodyStatus
+        [val] sleep_threshold: Option<N>
+        [ref] position: Isometry<N>
+        [ref] velocity: Velocity<N>
+        [ref] local_inertia: Inertia<N>
+        [ref] local_com: Point<N>
     );
 
     pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {

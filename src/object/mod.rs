@@ -11,7 +11,7 @@ pub(crate) use self::multibody_link::MultibodyLinkVec;
 pub use self::multibody_link::MultibodyLink;
 pub use self::rigid_body::{RigidBody, RigidBodyDesc};
 #[cfg(feature = "dim2")]
-pub use self::deformable_surface::DeformableSurface;
+pub use self::deformable_surface::{DeformableSurface, DeformableSurfaceDesc};
 #[cfg(feature = "dim3")]
 pub use self::deformable_volume::{DeformableVolume, DeformableVolumeDesc};
 pub use self::mass_constraint_system::MassConstraintSystem;

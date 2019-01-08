@@ -10,7 +10,7 @@ use na::{Isometry2, Point2, Point3, Vector2, Translation3};
 use ncollide2d::shape::{Cuboid, ShapeHandle, Ball, Polyline};
 use ncollide2d::procedural;
 use ncollide2d::bounding_volume::{self, AABB, BoundingVolume};
-use nphysics2d::object::{BodyPartHandle, Material, DeformableSurface};
+use nphysics2d::object::{BodyPartHandle, Material, DeformableSurfaceDesc, ColliderDesc, RigidBodyDesc};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics2d::math::Inertia;
@@ -29,107 +29,68 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_size = 50.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry2::new(Vector2::y() * -ground_size, na::zero());
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let mut obstacle_desc = ColliderDesc::new(obstacle);
 
+    let _ = obstacle_desc
+        .set_translation(Vector2::x() * 4.0)
+        .build(&mut world);
 
-    let ground_size = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry2::new(Vector2::new(0.0, 2.0), na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
-
-    let ground_pos = Isometry2::new(Vector2::new(7.0, 2.0), na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
-
+    let _ = obstacle_desc
+        .set_translation(Vector2::x() * -4.0)
+        .build(&mut world);
 
     /*
-     * Create the deformable body and a collider for its contour.
+     * Create the deformable body and a collider for its boundary.
      */
-    let mut surface = DeformableSurface::quad(
-        &Isometry2::new(Vector2::new(5.0, 6.0), 0.0),
-        &Vector2::new(10.0, 1.0),
-        50, 1,
-        1.0, 1.0e3, 0.0,
-        (0.0, 0.0));
-    let (polyline, ids_map, parts_map) = surface.boundary_polyline();
-    surface.renumber_dofs(&ids_map);
+    let deformable_handle = DeformableSurfaceDesc::quad(50, 1)
+        .with_scale(10.0, 1.0)
+        .with_translation(Vector2::y() * 1.0)
+        .with_young_modulus(1.0e4)
+        .with_mass_damping(0.2)
+        .with_boundary_polyline_collider(true)
+        .build(&mut world)
+        .handle();
 
-    let mut imin_x = 0;
-    let mut imax_x = 0;
+    /*
+     * Create a pyramid on top of the deformable body.
+     */
 
-    for (i, p) in polyline.points().iter().enumerate() {
-        let min_x = polyline.points()[imin_x].x;
-        let min_y = polyline.points()[imin_x].y;
-        let max_x = polyline.points()[imax_x].x;
-        let max_y = polyline.points()[imax_x].y;
+    /*
+     * Create the boxes
+     */
+    let num = 20;
+    let rad = 0.1;
+    let shift = 2.0 * rad;
+    let centerx = shift * (num as f32) / 2.0;
 
-        if p.x < min_x || (p.x == min_x && p.y > min_y) {
-            imin_x = i
-        }
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let mut collider_desc = ColliderDesc::new(cuboid)
+        .with_density(Some(1.0));
 
-        if p.x > max_x || (p.x == max_x && p.y > max_y) {
-            imax_x = i
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
+
+    for i in 0usize..num {
+        for j in i..num {
+            let fj = j as f32;
+            let fi = i as f32;
+            let x = (fi * shift / 2.0) + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) - centerx;
+            let y = fi * 2.0 * (rad + collider_desc.margin()) + rad + 4.0;
+
+            // Build the rigid body and its collider.
+            let _ = rb_desc
+                .set_translation(Vector2::new(x, y))
+                .build(&mut world);
         }
     }
-    surface.set_node_kinematic(imin_x, true);
-    surface.set_node_kinematic(imax_x, true);
-
-    let deformable_handle = world.add_body(Box::new(surface));
-    world.add_deformable_collider(
-        COLLIDER_MARGIN,
-        polyline,
-        deformable_handle,
-        None,
-        Some(Arc::new(parts_map)),
-        Material::default(),
-    );
-    world.body_mut(deformable_handle).set_deactivation_threshold(None);
-
-    // Add a cube to play around with.
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.5 - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(0.1);
-    let center_of_mass = geom.center_of_mass();
-    let pos = Isometry2::new(Vector2::y() * 15.0, na::zero());
-    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        geom.clone(),
-        handle,
-        Isometry2::identity(),
-        Material::default(),
-    );
-
 
     /*
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
     testbed.set_body_color(deformable_handle, Point3::new(0.0, 0.0, 1.0));
-    // testbed.hide_performance_counters();
-//    testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.look_at(Point2::new(0.0, -3.0), 100.0);
     testbed.run();
 }

@@ -5,7 +5,7 @@ extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{BodyPartHandle, Material};
+use nphysics2d::object::{BodyPartHandle, Material, ColliderDesc, RigidBodyDesc};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
@@ -22,61 +22,39 @@ fn main() {
     /*
      * Ground
      */
-    let ground_radx = 25.0;
-    let ground_rady = 1.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        ground_radx - COLLIDER_MARGIN,
-        ground_rady - COLLIDER_MARGIN,
-    )));
+    let ground_size = 25.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
-    let ground_pos = Isometry2::new(-Vector2::y() * ground_rady, na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(-Vector2::y())
+        .build(&mut world);
 
     /*
      * Create the boxes
      */
     let num = 25;
-    let radx = 0.1;
-    let rady = 0.1;
-    let shiftx = radx * 2.0;
-    let shifty = rady * 2.0;
-    let centerx = shiftx * (num as f32) / 2.0;
-    let centery = shifty / 2.0;
+    let rad = 0.1;
+    let shift = rad * 2.0;
+    let centerx = shift * (num as f32) / 2.0;
+    let centery = shift / 2.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::new(
-        radx - COLLIDER_MARGIN,
-        rady - COLLIDER_MARGIN,
-    )));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - ColliderDesc::<f32>::default_margin())));
+    let mut collider_desc = ColliderDesc::new(cuboid)
+        .with_density(Some(1.0));
+
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * shiftx - centerx;
-            let y = j as f32 * shifty + centery;
+            let x = i as f32 * (shift + collider_desc.margin()) - centerx;
+            let y = j as f32 * (shift + collider_desc.margin()) + centery;
 
-            /*
-             * Create the rigid body.
-             */
-            let pos = Isometry2::new(Vector2::new(x, y), 0.0);
-            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-            /*
-             * Create the collider.
-             */
-            world.add_collider(
-                COLLIDER_MARGIN,
-                geom.clone(),
-                handle,
-                Isometry2::identity(),
-                Material::default(),
-            );
+            // Build the rigid body and its collider.
+            let rb = rb_desc
+                .set_translation(Vector2::new(x, y))
+                .build(&mut world);
         }
     }
 

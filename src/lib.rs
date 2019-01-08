@@ -146,9 +146,10 @@ macro_rules! try_continue {
     }
 }
 
-macro_rules! body_desc_accessors(
+macro_rules! desc_setters(
     ($($with_method: ident, $set_method: ident $(, $arg: ident: $t: ty)*)*) => {
         $(
+            #[inline]
             pub fn $with_method(mut self $(, $arg: $t)*) -> Self {
                 $(
                     self.$arg = $arg;
@@ -156,6 +157,7 @@ macro_rules! body_desc_accessors(
                 self
             }
 
+            #[inline]
             pub fn $set_method(&mut self $(, $arg: $t)*) -> &mut Self {
                 $(
                     self.$arg = $arg;
@@ -166,17 +168,47 @@ macro_rules! body_desc_accessors(
     }
 );
 
-macro_rules! body_desc_custom_accessors(
+macro_rules! desc_custom_setters(
     ($($this: ident.$with_method: ident, $set_method: ident $(, $arg: ident: $t: ty)* | $imp: expr)*) => {
         $(
+            #[inline]
             pub fn $with_method(mut $this $(, $arg: $t)*) -> Self {
                 $imp
                 $this
             }
 
+            #[inline]
             pub fn $set_method(&mut $this $(, $arg: $t)*) -> &mut Self {
                 $imp
                 $this
+            }
+        )*
+    }
+);
+
+macro_rules! desc_custom_getters(
+    ($($this: ident.$get_method: ident: $t: ty | $imp: expr)*) => {
+        $(
+            #[inline]
+            pub fn $get_method(&$this) -> $t {
+                $imp
+            }
+        )*
+    }
+);
+
+macro_rules! desc_getters(
+    ($([val] $val: ident: $t: ty)* $([ref] $ref_val: ident: $ref_t: ty)*) => {
+        $(
+            #[inline]
+            pub fn $val(&self) -> $t {
+                self.$val
+            }
+        )*
+        $(
+            #[inline]
+            pub fn $ref_val(&self) -> &$ref_t {
+                &self.$ref_val
             }
         )*
     }
