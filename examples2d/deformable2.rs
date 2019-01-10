@@ -45,7 +45,7 @@ fn main() {
      * Create the deformable body and a collider for its boundary.
      */
     let deformable_handle = DeformableSurfaceDesc::quad(50, 1)
-        .with_scale(10.0, 1.0)
+        .with_scale(Vector2::new(10.0, 1.0))
         .with_translation(Vector2::y() * 1.0)
         .with_young_modulus(1.0e4)
         .with_mass_damping(0.2)
@@ -55,10 +55,6 @@ fn main() {
 
     /*
      * Create a pyramid on top of the deformable body.
-     */
-
-    /*
-     * Create the boxes
      */
     let num = 20;
     let rad = 0.1;
@@ -77,7 +73,7 @@ fn main() {
             let fj = j as f32;
             let fi = i as f32;
             let x = (fi * shift / 2.0) + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) - centerx;
-            let y = fi * 2.0 * (rad + collider_desc.margin()) + rad + 4.0;
+            let y = fi * 2.0 * (rad + collider_desc.margin()) + rad + 2.0;
 
             // Build the rigid body and its collider.
             let _ = rb_desc

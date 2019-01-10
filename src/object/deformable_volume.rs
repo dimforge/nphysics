@@ -870,13 +870,13 @@ impl<'a, N: Real> DeformableVolumeDesc<'a, N> {
 
     desc_custom_setters!(
         self.with_boundary_trimesh_collider, set_boundary_trimesh_collider_enabled, enable: bool | { self.boundary_trimesh_collider_enabled = enable }
-        self.with_scale, set_scale, scale_x: N, scale_y: N, scale_z: N | { self.scale = Vector3::new(scale_x, scale_y, scale_z) }
         self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.with_translation, set_translation, vector: Vector3<N> | { self.position.translation.vector = vector }
     );
 
     desc_setters!(
+        with_scale, set_scale, scale: Vector3<N>
         with_young_modulus, set_young_modulus, young_modulus: N
         with_poisson_ratio, set_poisson_ratio, poisson_ratio: N
         with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>

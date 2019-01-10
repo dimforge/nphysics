@@ -12,7 +12,7 @@ use kiss3d::loader::obj;
 use ncollide3d::shape::{Cuboid, ShapeHandle, Ball, TriMesh};
 use ncollide3d::procedural;
 use ncollide3d::bounding_volume::{self, AABB, BoundingVolume};
-use nphysics3d::object::{BodyPartHandle, Material, MassConstraintSystem};
+use nphysics3d::object::{BodyPartHandle, Material, MassConstraintSystem, ColliderDesc, MassConstraintSystemDesc};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics3d::math::Inertia;
@@ -33,20 +33,16 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(Vector3::y() * -ground_size)
+        .build(&mut world);
 
     /*
      * Create the deformable body and a collider for its contour.
      */
+
     let obj_path = "media/models/rust_logo_simplified.obj";
     let obj = obj::parse_file(&Path::new(&obj_path), &Path::new(""), "");
 
@@ -55,80 +51,34 @@ fn main() {
             .into_iter()
             .map(|mesh| mesh.1.to_trimesh().unwrap())
             .collect();
+        meshes[0].split_index_buffer(true);
 
-        // Compute the size of the model, to scale it and have similar size for everything.
-        let mut aabb = bounding_volume::point_cloud_aabb(&Isometry3::identity(), &meshes[0].coords[..]);
+        let trimesh = meshes[0].clone().into();
 
-        for mesh in meshes[1..].iter() {
-            aabb.merge(&bounding_volume::point_cloud_aabb(&Isometry3::identity(), &mesh.coords[..]));
-        }
+        let rot = Vector3::x() * f32::consts::FRAC_PI_2;
+        let mut desc = MassConstraintSystemDesc::from_trimesh(&trimesh)
+            .with_scale(Vector3::repeat(0.5))
+            .with_position(Isometry3::new(Vector3::y() * 5.0, rot))
+            .with_stiffness(Some(0.1))
+            .with_collider_enabled(true);
 
-        let center = aabb.center().coords;
-        let diag = na::norm(&(*aabb.maxs() - *aabb.mins()));
-
-        for mut trimesh in meshes.iter_mut() {
-            trimesh.translate_by(&Translation3::from_vector(-center));
-            trimesh.scale_by_scalar(6.0 / diag);
-            trimesh.transform_by(&Isometry3::new(na::zero(), Vector3::x() * f32::consts::FRAC_PI_2));
-            trimesh.split_index_buffer(true);
-        }
+        let deformable1 = desc.build(&mut world);
+        deformable1.generate_neighbor_constraints(Some(0.1));
+        deformable1.generate_neighbor_constraints(Some(0.1));
 
 
-        meshes[0].translate_by(&Translation3::new(0.0, 5.0, 0.0));
-        let shape = meshes[0].clone().into();
-        let mut volume = MassConstraintSystem::from_trimesh(&shape, 1.0, Some(0.1));
-        volume.generate_neighbor_constraints(Some(0.1));
-        volume.generate_neighbor_constraints(Some(0.1));
-        let handle = world.add_body(Box::new(volume));
-        world.add_deformable_collider(
-            COLLIDER_MARGIN,
-            shape,
-            handle,
-            None,
-            None,
-            Material::default(),
-        );
-        world.body_mut(handle).set_deactivation_threshold(None);
-
-
-        meshes[0].translate_by(&Translation3::new(0.0, 4.5, 0.0));
-        let shape = meshes[0].clone().into();
-        let mut volume = MassConstraintSystem::from_trimesh(&shape, 1.0, Some(100.0));
-        volume.generate_neighbor_constraints(Some(100.0));
-        volume.generate_neighbor_constraints(Some(100.0));
-        let handle = world.add_body(Box::new(volume));
-        world.add_deformable_collider(
-            COLLIDER_MARGIN,
-            shape,
-            handle,
-            None,
-            None,
-            Material::default(),
-        );
-        world.body_mut(handle).set_deactivation_threshold(None);
+        let deformable2 = desc
+            .set_position(Isometry3::new(Vector3::y() * 9.5, rot))
+            .set_stiffness(Some(100.0))
+            .build(&mut world);
+        deformable2.generate_neighbor_constraints(Some(100.0));
+        deformable2.generate_neighbor_constraints(Some(100.0));
     }
-
-    // Add a cube to play around with.
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(0.5 - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(0.1);
-    let center_of_mass = geom.center_of_mass();
-    let pos = Isometry3::new(Vector3::y() * 15.0, na::zero());
-    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        geom.clone(),
-        handle,
-        Isometry3::identity(),
-        Material::default(),
-    );
-
 
     /*
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    // testbed.hide_performance_counters();
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
     testbed.run();
 }

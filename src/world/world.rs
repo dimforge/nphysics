@@ -226,9 +226,11 @@ impl<N: Real> World<N> {
             b.update_kinematics();
         });
 
-        for gen in &mut self.forces {
-            let _ = gen.1.apply(&self.params, &mut self.bodies);
-        }
+        let params = &self.params;
+        let bodies = &mut self.bodies;
+        self.forces.retain(|_, f| {
+            f.apply(params, bodies)
+        });
 
         let (gravity, params, cworld) = (&self.gravity, &self.params, &mut self.cworld);
         self.bodies

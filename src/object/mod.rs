@@ -14,8 +14,8 @@ pub use self::rigid_body::{RigidBody, RigidBodyDesc};
 pub use self::deformable_surface::{DeformableSurface, DeformableSurfaceDesc};
 #[cfg(feature = "dim3")]
 pub use self::deformable_volume::{DeformableVolume, DeformableVolumeDesc};
-pub use self::mass_constraint_system::MassConstraintSystem;
-pub use self::mass_spring_system::MassSpringSystem;
+pub use self::mass_constraint_system::{MassConstraintSystem, MassConstraintSystemDesc};
+pub use self::mass_spring_system::{MassSpringSystem, MassSpringSystemDesc};
 pub use self::fem_helper::FiniteElementIndices;
 
 mod material;

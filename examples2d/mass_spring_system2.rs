@@ -10,7 +10,7 @@ use na::{Isometry2, Point2, Point3, Vector2, Translation3};
 use ncollide2d::shape::{Cuboid, ShapeHandle, Ball, Polyline};
 use ncollide2d::procedural;
 use ncollide2d::bounding_volume::{self, AABB, BoundingVolume};
-use nphysics2d::object::{BodyPartHandle, Material, MassSpringSystem};
+use nphysics2d::object::{BodyPartHandle, Material, MassSpringSystemDesc, ColliderDesc, RigidBodyDesc};
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::world::World;
 use nphysics2d::math::Inertia;
@@ -29,106 +29,76 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_size = 50.0;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry2::new(Vector2::y() * -ground_size, na::zero());
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let mut obstacle_desc = ColliderDesc::new(obstacle);
 
+    let _ = obstacle_desc
+        .set_translation(Vector2::x() * 4.0)
+        .build(&mut world);
 
-    let ground_size = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry2::new(Vector2::new(0.0, 2.0), na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let _ = obstacle_desc
+        .set_translation(Vector2::x() * -4.0)
+        .build(&mut world);
 
-    let ground_pos = Isometry2::new(Vector2::new(7.0, 2.0), na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    /*
+     * Create the deformable body and a collider for its boundary.
+     */
+    let deformable = MassSpringSystemDesc::quad(50, 1)
+        .with_scale(Vector2::new(10.0, 1.0))
+        .with_translation(Vector2::y() * 1.0)
+        .with_stiffness(1.0e3)
+        .with_damping_ratio(0.2)
+        .with_collider_enabled(true)
+        .build(&mut world);
+    let deformable_handle = deformable.handle();
 
-    let mut vertices = Vec::new();
-    let n = 50;
-    let width = 10.0;
-    let y = 6.0;
+    // Add other springs for volume stiffness.
+    deformable.generate_neighbor_springs(1.0e3, 0.5);
+    deformable.generate_neighbor_springs(1.0e3, 0.5);
 
-    for i in 0..n {
-        let step = width / (n as f32);
-        vertices.push(Point2::new(step * (i as f32), 0.0 + y));
-    }
-    for i in (0..n).rev() {
-        let step = width / (n as f32);
-        vertices.push(Point2::new(step * (i as f32), 1.0 + y));
+    let nnodes = deformable.num_nodes();
+    let extra_springs1 = (0..).map(|i| Point2::new(i, nnodes - i - 2)).take(nnodes / 2);
+    let extra_springs2 = (1..).map(|i| Point2::new(i, nnodes - i)).take(nnodes / 2);
+
+    for spring in extra_springs1.chain(extra_springs2) {
+        deformable.add_spring(spring.x, spring.y, 1.0e3, 0.5);
     }
 
-    let mut indices: Vec<_> = (0..).map(|i| Point2::new(i, i + 1)).take(vertices.len() - 1).collect();
-    indices.push(Point2::new(vertices.len() - 1, 0));
-    let extra_springs1: Vec<_> = (0..).map(|i| Point2::new(i, vertices.len() - i - 2)).take(vertices.len() / 2).collect();
-    let extra_springs2: Vec<_> = (1..).map(|i| Point2::new(i, vertices.len() - i)).take(vertices.len() / 2).collect();
+    /*
+     * Create a pyramid on top of the deformable body.
+     */
+    let num = 20;
+    let rad = 0.1;
+    let shift = 2.0 * rad;
+    let centerx = shift * (num as f32) / 2.0;
 
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let mut collider_desc = ColliderDesc::new(cuboid)
+        .with_density(Some(1.0));
 
-    let polyline = Polyline::new(vertices, Some(indices));
-    let mut system = MassSpringSystem::from_polyline(&polyline, 1.0, 100.0, 0.5);
-    system.generate_neighbor_springs(100.0, 0.5);
-    system.generate_neighbor_springs(100.0, 0.5);
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
 
-    system.set_node_kinematic(n, true);
-    system.set_node_kinematic(2 * n - 1, true);
+    for i in 0usize..num {
+        for j in i..num {
+            let fj = j as f32;
+            let fi = i as f32;
+            let x = (fi * shift / 2.0) + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) - centerx;
+            let y = fi * 2.0 * (rad + collider_desc.margin()) + rad + 2.0;
 
-    for spring in extra_springs1.iter().chain(extra_springs2.iter()) {
-        system.add_spring(spring.x, spring.y, 100.0, 0.5);
+            // Build the rigid body and its collider.
+            let _ = rb_desc
+                .set_translation(Vector2::new(x, y))
+                .build(&mut world);
+        }
     }
-
-    let mass_spring_handle = world.add_body(Box::new(system.clone()));
-    world.add_deformable_collider(
-        COLLIDER_MARGIN,
-        polyline,
-        mass_spring_handle,
-        None,
-        None,
-        Material::default(),
-    );
-    world.body_mut(mass_spring_handle).set_deactivation_threshold(None);
-
-    // Add a cube to play around with.
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.5 - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(0.1);
-    let center_of_mass = geom.center_of_mass();
-    let pos = Isometry2::new(Vector2::y() * 15.0, na::zero());
-    let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        geom.clone(),
-        handle,
-        Isometry2::identity(),
-        Material::default(),
-    );
-
 
     /*
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    testbed.set_body_color(mass_spring_handle, Point3::new(0.0, 0.0, 1.0));
-    // testbed.hide_performance_counters();
-//    testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.set_body_color(deformable_handle, Point3::new(0.0, 0.0, 1.0));
+    testbed.look_at(Point2::new(0.0, -3.0), 100.0);
     testbed.run();
 }

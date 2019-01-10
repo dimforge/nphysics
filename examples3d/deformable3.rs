@@ -47,7 +47,7 @@ fn main() {
      * Create the deformable body and a collider for its boundary.
      */
     let _ = DeformableVolumeDesc::cube(50, 1, 1)
-        .with_scale(1.0, 0.1, 0.1)
+        .with_scale(Vector3::new(1.0, 0.1, 0.1))
         .with_translation(Vector3::y() * 0.1)
         .with_young_modulus(1.0e3)
         .with_mass_damping(0.2)

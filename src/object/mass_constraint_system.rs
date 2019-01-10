@@ -10,15 +10,17 @@ use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSlic
 use ncollide::utils::{self, DeterministicState};
 #[cfg(feature = "dim3")]
 use ncollide::procedural::{self, IndexBuffer};
-use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment};
+use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment, ShapeHandle};
 #[cfg(feature = "dim3")]
 use ncollide::shape::{TriMesh, TetrahedronPointLocation};
 use ncollide::query::PointQueryWithLocation;
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices};
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
+                    FiniteElementIndices, DeformableColliderDesc, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
+use crate::world::{World, ColliderWorld};
 
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
@@ -254,6 +256,14 @@ impl<N: Real> MassConstraintSystem<N> {
                 }
             }
         }
+    }
+
+    pub fn num_nodes(&self) -> usize {
+        self.positions.len() / DIM
+    }
+
+    pub fn handle(&self) -> BodyHandle {
+        self.handle
     }
 
     /// The coefficient used for warm-starting the resolution of internal constraints of this
@@ -637,5 +647,174 @@ impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
 
     fn apply_force(&mut self, force: &Force<N>) {
         unimplemented!()
+    }
+}
+
+
+
+
+enum MassConstraintSystemDescGeometry<'a, N: Real> {
+    Quad(usize, usize),
+    Polyline(&'a Polyline<N>),
+    #[cfg(feature = "dim3")]
+    TriMesh(&'a TriMesh<N>),
+}
+
+pub struct MassConstraintSystemDesc<'a, N: Real> {
+    geom: MassConstraintSystemDescGeometry<'a, N>,
+    scale: Vector<N>,
+    position: Isometry<N>,
+    stiffness: Option<N>,
+    sleep_threshold: Option<N>,
+//    damping_ratio: N,
+    mass: N,
+    plasticity: (N, N, N),
+    kinematic_nodes: Vec<usize>,
+    status: BodyStatus,
+    collider_enabled: bool
+}
+
+impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
+    fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
+        MassConstraintSystemDesc {
+            geom,
+            scale: Vector::repeat(N::one()),
+            position: Isometry::identity(),
+            stiffness: Some(na::convert(1.0e3)),
+            sleep_threshold: Some(ActivationStatus::default_threshold()),
+//            damping_ratio: na::convert(0.2),
+            mass: N::one(),
+            plasticity: (N::zero(), N::zero(), N::zero()),
+            kinematic_nodes: Vec::new(),
+            status: BodyStatus::Dynamic,
+            collider_enabled: false
+        }
+    }
+
+    #[cfg(feature = "dim3")]
+    pub fn from_trimesh(mesh: &'a TriMesh<N>) -> Self {
+        Self::with_geometry(MassConstraintSystemDescGeometry::TriMesh(mesh))
+    }
+
+    pub fn from_polyline(polyline: &'a Polyline<N>) -> Self {
+        Self::with_geometry(MassConstraintSystemDescGeometry::Polyline(polyline))
+    }
+
+    pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
+        Self::with_geometry(MassConstraintSystemDescGeometry::Quad(subdiv_x, subdiv_y))
+    }
+
+    pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
+        self.kinematic_nodes.clear();
+        self
+    }
+
+    desc_custom_setters!(
+        self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
+        self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+    );
+
+    desc_setters!(
+        with_collider_enabled, set_collider_enabled, collider_enabled: bool
+        with_scale, set_scale, scale: Vector<N>
+        with_stiffness, set_stiffness, stiffness: Option<N>
+        with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+//        with_damping_ratio, set_damping_ratio, damping_ratio: N
+        with_mass, set_mass, mass: N
+        with_status, set_status, status: BodyStatus
+        with_position, set_position, position: Isometry<N>
+    );
+
+    desc_custom_getters!(
+        self.plasticity_strain_threshold: N | { self.plasticity.0 }
+        self.plasticity_creep: N | { self.plasticity.1 }
+        self.plasticity_max_force: N | { self.plasticity.2 }
+        self.kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
+        self.translation: &Vector<N> | { &self.position.translation.vector }
+    );
+
+    desc_getters!(
+        [val] stiffness: Option<N>
+        [val] sleep_threshold: Option<N>
+//        [val] damping_ratio: N
+        [val] mass: N
+        [val] status: BodyStatus
+        [val] collider_enabled: bool
+        [ref] position: Isometry<N>
+        [ref] scale: Vector<N>
+    );
+
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassConstraintSystem<N> {
+        world.add_body(self)
+    }
+}
+
+impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
+    type Body = MassConstraintSystem<N>;
+
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> MassConstraintSystem<N> {
+        let mut vol = match self.geom {
+            #[cfg(feature = "dim3")]
+            MassConstraintSystemDescGeometry::Quad(nx, ny) => {
+                MassConstraintSystem::quad(
+                    handle, &self.position, &self.scale.xy(), nx, ny,
+                    self.mass, self.stiffness)
+            }
+            #[cfg(feature = "dim2")]
+            MassConstraintSystemDescGeometry::Quad(nx, ny) => {
+                let mut polyline = Polyline::quad(nx, ny);
+                polyline.scale_by(&self.scale);
+                polyline.transform_by(&self.position);
+
+                let mut vol = MassConstraintSystem::from_polyline(
+                    handle, &polyline, self.mass, self.stiffness);
+
+
+                if self.collider_enabled {
+                    let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline.clone()))
+                        .build_with_infos(&vol, cworld);
+                }
+
+                vol
+            }
+            MassConstraintSystemDescGeometry::Polyline(polyline) => {
+                let mut polyline = polyline.clone();
+                polyline.scale_by(&self.scale);
+                polyline.transform_by(&self.position);
+
+                let mut vol = MassConstraintSystem::from_polyline(
+                    handle, &polyline, self.mass, self.stiffness);
+                if self.collider_enabled {
+                    let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
+                        .build_with_infos(&vol, cworld);
+                }
+
+                vol
+            }
+            #[cfg(feature = "dim3")]
+            MassConstraintSystemDescGeometry::TriMesh(trimesh) => {
+                let mut trimesh = trimesh.clone();
+                trimesh.scale_by(&self.scale);
+                trimesh.transform_by(&self.position);
+
+                let mut vol = MassConstraintSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness);
+                if self.collider_enabled {
+                    let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
+                        .build_with_infos(&vol, cworld);
+                }
+
+                vol
+            }
+        };
+
+        vol.set_deactivation_threshold(self.sleep_threshold);
+        vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
+
+        for i in &self.kinematic_nodes {
+            vol.set_node_kinematic(*i, true)
+        }
+
+        vol
     }
 }
