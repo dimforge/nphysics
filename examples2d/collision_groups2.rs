@@ -3,15 +3,13 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point2, Point3, Vector2};
+use na::{Point2, Point3, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use ncollide2d::world::CollisionGroups;
-use nphysics2d::object::{BodyPartHandle, Material};
-use nphysics2d::volumetric::Volumetric;
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     let mut testbed = Testbed::new_empty();
@@ -41,102 +39,73 @@ fn main() {
     let ground_radx = 5.0;
     let ground_rady = 1.0;
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        ground_radx - COLLIDER_MARGIN,
-        ground_rady - COLLIDER_MARGIN,
+        ground_radx,
+        ground_rady,
     )));
 
-    let ground_pos = Isometry2::new(-Vector2::y() * ground_rady, na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(-Vector2::y() * ground_rady)
+        .build(&mut world);
 
     /*
      * A green floor that will collide with the GREEN group only.
      */
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 0.1)));
-    let handle = world.add_collider(
-        COLLIDER_MARGIN,
-        geom,
-        BodyPartHandle::ground(),
-        Isometry2::new(Vector2::y(), na::zero()),
-        Material::default(),
-    );
+    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 0.1)));
 
-    world
-        .collision_world_mut()
-        .set_collision_groups(handle, green_group);
+    let collider_handle = ColliderDesc::new(ground_shape.clone())
+        .with_translation(Vector2::y())
+        .with_collision_groups(green_group)
+        .build(&mut world)
+        .handle();
 
-    testbed.set_collider_color(handle, Point3::new(0.0, 1.0, 0.0));
+    testbed.set_collider_color(collider_handle, Point3::new(0.0, 1.0, 0.0));
 
     /*
      * A blue floor that will collide with the BLUE group only.
      */
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 0.1)));
-    let handle = world.add_collider(
-        COLLIDER_MARGIN,
-        geom,
-        BodyPartHandle::ground(),
-        Isometry2::new(Vector2::y() * 2.0, na::zero()),
-        Material::default(),
-    );
+    let collider_handle = ColliderDesc::new(ground_shape)
+        .with_translation(Vector2::y() * 2.0)
+        .with_collision_groups(blue_group)
+        .build(&mut world)
+        .handle();
 
-    world
-        .collision_world_mut()
-        .set_collision_groups(handle, blue_group);
-
-    testbed.set_collider_color(handle, Point3::new(0.0, 0.0, 1.0));
+    testbed.set_collider_color(collider_handle, Point3::new(0.0, 0.0, 1.0));
 
     /*
      * Create the boxes
      */
     let num = 8;
     let rad = 0.1;
-    let shift = rad * 2.0;
+
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = 2.5;
-
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
 
     for k in 0usize..4 {
         for i in 0usize..num {
             let x = i as f32 * shift - centerx;
             let y = k as f32 * shift + centery;
 
-            /*
-             * Create the rigid body.
-             */
-            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
-            let body_handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-            /*
-             * Create the collider.
-             */
-            let collider_handle = world.add_collider(
-                COLLIDER_MARGIN,
-                geom.clone(),
-                body_handle,
-                Isometry2::identity(),
-                Material::default(),
-            );
-
             // Alternate between the GREEN and BLUE groups.
-            if k % 2 == 0 {
-                world
-                    .collision_world_mut()
-                    .set_collision_groups(collider_handle, green_group);
-                testbed.set_body_color(&world, body_handle, Point3::new(0.0, 1.0, 0.0));
+            let (group, color) = if k % 2 == 0 {
+                (green_group, Point3::new(0.0, 1.0, 0.0))
             } else {
-                world
-                    .collision_world_mut()
-                    .set_collision_groups(collider_handle, blue_group);
-                testbed.set_body_color(&world, body_handle, Point3::new(0.0, 0.0, 1.0));
-            }
+                (blue_group, Point3::new(0.0, 0.0, 1.0))
+            };
+
+            // Build the rigid body and its collider.
+            let collider_desc = ColliderDesc::new(cuboid.clone())
+                .with_density(1.0)
+                .with_collision_groups(group);
+
+            let body_handle = RigidBodyDesc::default()
+                .with_collider(&collider_desc)
+                .with_translation(Vector2::new(x, y))
+                .build(&mut world)
+                .handle();
+
+            testbed.set_body_color(body_handle, color);
         }
     }
 

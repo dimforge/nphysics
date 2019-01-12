@@ -56,6 +56,8 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction_ground = constraints.velocity.bilateral_ground.len();
         let id_friction = constraints.velocity.bilateral.len();
 
+        println!("Num manifolds: {}", manifolds.len());
+
         for manifold in manifolds {
             let body1 = try_continue!(bodies.body(manifold.body1()));
             let body2 = try_continue!(bodies.body(manifold.body2()));
@@ -106,7 +108,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 // Generate friction constraints.
                 let limits = ImpulseLimits::Dependent {
-                    dependency: dependency,
+                    dependency,
                     coeff: friction,
                 };
 

@@ -255,8 +255,12 @@ impl<N: Real> World<N> {
         self.counters.collision_detection_completed();
 
         if self.counters.enabled() {
-            let npairs = self.cworld.contact_pairs().count();
-            self.counters.set_ncontact_pairs(npairs);
+            let count = self
+                .cworld
+                .contact_pairs()
+                .fold((0, 0), |n, cp| (n.0 + 1, n.1 + cp.3.len()));
+            self.counters.set_ncontact_pairs(count.0);
+            self.counters.set_ncontacts(count.1);
         }
 
         // FIXME: for now, no island is built.
@@ -286,6 +290,14 @@ impl<N: Real> World<N> {
         }
 
         self.counters.solver_started();
+        // FIXME This is currently needed by the solver because otherwise
+        // some kinematic bodies may end up with a companion_id (used as
+        // an assembly_id) that it out of bounds of the velocity vector.
+        // Note sure what the best place for this is though.
+        for b in self.bodies.bodies_mut() {
+            b.set_companion_id(0)
+        }
+
         self.solver.step(
             &mut self.counters,
             &mut self.bodies,

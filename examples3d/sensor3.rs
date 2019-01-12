@@ -3,15 +3,13 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Point3, Vector3};
 use ncollide3d::query::Proximity;
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics3d::object::{BodyPartHandle, Material};
-use nphysics3d::volumetric::Volumetric;
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     let mut testbed = Testbed::new_empty();
@@ -25,70 +23,63 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(50.0, 50.0, 50.0)));
-    let ground_pos = Isometry3::new(Vector3::y() * -50.0, na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let ground_size = 50.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+
+    ColliderDesc::new(ground_shape)
+        .with_translation(Vector3::y() * -ground_size)
+        .build(&mut world);
 
     /*
      * Create some boxes.
      */
     let num = 10;
     let rad = 0.2;
-    let shift = rad * 2.0;
+
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let collider_desc = ColliderDesc::new(cuboid)
+        .with_density(1.0);
+
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
+
+    let shift = (rad + collider_desc.margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for k in 0usize..num {
             let x = i as f32 * shift - centerx;
             let z = k as f32 * shift - centerz;
 
-            /*
-             * Create the rigid body.
-             */
-            let pos = Isometry3::new(Vector3::new(x, 3.0, z), na::zero());
-            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-            /*
-             * Create the collider.
-             */
-            world.add_collider(
-                COLLIDER_MARGIN,
-                geom.clone(),
-                handle,
-                Isometry3::identity(),
-                Material::default(),
-            );
-            testbed.set_body_color(&world, handle, Point3::new(0.5, 0.5, 1.0));
+            // Build the rigid body and its collider.
+            let handle = rb_desc
+                .set_translation(Vector3::new(x, 3.0, z))
+                .build(&mut world)
+                .handle();
+            testbed.set_body_color(handle, Point3::new(0.5, 0.5, 1.0));
         }
     }
 
     /*
-     * Create a box that will have a sensor attached.
+     * Create a ball that will have a ball-shaped sensor attached.
      */
-    let pos = Isometry3::new(Vector3::new(0.0, 10.0, 0.0), na::zero());
-    let sensor_body = world.add_rigid_body(pos, inertia, center_of_mass);
     let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
+    // We create a collider desc without density because we don't
+    // want it to contribute to the rigid body mass.
+    let sensor_collider = ColliderDesc::new(sensor_geom)
+        .as_sensor(true);
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        geom,
-        sensor_body,
-        Isometry3::identity(),
-        Material::default(),
-    );
-    world.add_sensor(sensor_geom, sensor_body, Isometry3::identity());
-    testbed.set_body_color(&world, sensor_body, Point3::new(0.5, 1.0, 1.0));
+    let sensor_handle = RigidBodyDesc::default()
+        .with_collider(&collider_desc)
+        .with_collider(&sensor_collider)
+        .with_translation(Vector3::new(0.0, 10.0, 0.0))
+        .build(&mut world)
+        .handle();
+
+    testbed.set_body_color(sensor_handle, Point3::new(0.5, 1.0, 1.0));
+
 
     // Callback that will be executed on the main loop to handle proximities.
     testbed.add_callback(move |world, graphics, _| {
@@ -98,14 +89,14 @@ fn main() {
                 Proximity::Disjoint => Point3::new(0.5, 0.5, 1.0),
             };
 
-            let body1 = world.collider(prox.collider1).unwrap().body_part();
-            let body2 = world.collider(prox.collider2).unwrap().body_part();
+            let body_handle1 = world.collider(prox.collider1).unwrap().body();
+            let body_handle2 = world.collider(prox.collider2).unwrap().body();
 
-            if !body1.is_ground() && body1 != sensor_body {
-                graphics.set_body_color(world, body1, color);
+            if !body_handle1.is_ground() && body_handle1 != sensor_handle {
+                graphics.set_body_color(body_handle1, color);
             }
-            if !body2.is_ground() && body2 != sensor_body {
-                graphics.set_body_color(world, body2, color);
+            if !body_handle2.is_ground() && body_handle2 != sensor_handle {
+                graphics.set_body_color(body_handle2, color);
             }
         }
     });

@@ -156,6 +156,7 @@ pub fn split_ext_vels<'a, N: Real>(
     -> (DVectorSlice<'a, N>, DVectorSlice<'a, N>){
     let ndofs1 = body1.status_dependent_ndofs();
     let ndofs2 = body2.status_dependent_ndofs();
+
     (ext_vels.rows(assembly_id1, ndofs1), ext_vels.rows(assembly_id2, ndofs2))
 }
 

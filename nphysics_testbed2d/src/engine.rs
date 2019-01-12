@@ -178,7 +178,8 @@ impl GraphicsManager {
         let color;
         if let Some(c) = self.c2color.get(&id).cloned() {
             color = c;
-            self.set_body_color(collider.body(), color);
+        } else if let Some(c) = self.b2color.get(&collider.body()).cloned() {
+            color = c;
         } else {
             color = self.alloc_color(collider.body())
         }

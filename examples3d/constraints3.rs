@@ -7,13 +7,12 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PlanarConstraint, PrismaticConstraint,
                         RectangularConstraint, RevoluteConstraint, UniversalConstraint};
-use nphysics3d::object::{BodyPartHandle, Material};
+use nphysics3d::object::{BodyPartHandle, Material, ColliderDesc, RigidBodyDesc};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 use std::f32::consts::{FRAC_PI_2, PI};
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -27,16 +26,11 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * (-ground_size - 5.0), na::zero());
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(Vector3::y() * (-ground_size - 5.0))
+        .build(&mut world);
 
     /*
      * Geometries that will be re-used for several multibody links..
@@ -46,6 +40,9 @@ fn main() {
     let cuboid_inertia = cuboid.inertia(1.0);
     let cuboid_center_of_mass = cuboid.center_of_mass();
 
+    let collider_desc = ColliderDesc::new(cuboid.clone())
+        .with_density(1.0);
+
     /*
      * Revolute joints.
      */
@@ -53,6 +50,9 @@ fn main() {
     let mut parent = BodyPartHandle::ground();
     let first_anchor = Point3::new(0.0, 5.0, 11.0);
     let mut pos = first_anchor.coords;
+
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
 
     for i in 0usize..num {
         let body_anchor = Point3::new(0.0, 0.0, 1.0) * (rad * 3.0 + 0.2);
@@ -64,23 +64,14 @@ fn main() {
 
         pos -= body_anchor.coords;
 
-        let rb = world.add_rigid_body(
-            Isometry3::new(pos, na::zero()),
-            cuboid_inertia,
-            cuboid_center_of_mass,
-        );
-
-        world.add_collider(
-            COLLIDER_MARGIN,
-            cuboid.clone(),
-            rb,
-            Isometry3::identity(),
-            Material::default(),
-        );
+        let rb_handle = rb_desc
+            .set_translation(pos)
+            .build(&mut world)
+            .part_handle();
 
         let constraint = RevoluteConstraint::new(
             parent,
-            rb,
+            rb_handle,
             parent_anchor,
             Vector3::x_axis(),
             body_anchor,
@@ -89,7 +80,7 @@ fn main() {
 
         world.add_constraint(constraint);
 
-        parent = rb;
+        parent = rb_handle;
     }
 
     /*
@@ -110,28 +101,19 @@ fn main() {
 
         pos -= body_anchor.coords;
 
-        let rb = world.add_rigid_body(
-            Isometry3::new(pos, na::zero()),
-            cuboid_inertia,
-            cuboid_center_of_mass,
-        );
-
-        world.add_collider(
-            COLLIDER_MARGIN,
-            cuboid.clone(),
-            rb,
-            Isometry3::identity(),
-            Material::default(),
-        );
+        let rb_handle = rb_desc
+            .set_translation(pos)
+            .build(&mut world)
+            .part_handle();
 
         let mut constraint =
-            PrismaticConstraint::new(parent, rb, parent_anchor, Vector3::y_axis(), body_anchor);
+            PrismaticConstraint::new(parent, rb_handle, parent_anchor, Vector3::y_axis(), body_anchor);
 
         constraint.enable_min_offset(-rad * 2.0);
 
         world.add_constraint(constraint);
 
-        parent = rb;
+        parent = rb_handle;
     }
 
     /*
@@ -153,25 +135,14 @@ fn main() {
 
         pos -= body_anchor.coords;
 
-        let rb = world.add_rigid_body(
-            Isometry3::new(pos, na::zero()),
-            cuboid_inertia,
-            cuboid_center_of_mass,
-        );
+        let rb_handle = rb_desc
+            .set_translation(pos)
+            .build(&mut world)
+            .part_handle();
 
-        world.add_collider(
-            COLLIDER_MARGIN,
-            cuboid.clone(),
-            rb,
-            Isometry3::identity(),
-            Material::default(),
-        );
-
-        let constraint = BallConstraint::new(parent, rb, parent_anchor, body_anchor);
-
+        let constraint = BallConstraint::new(parent, rb_handle, parent_anchor, body_anchor);
         world.add_constraint(constraint);
-
-        parent = rb;
+        parent = rb_handle;
     }
 
     /*
@@ -180,31 +151,18 @@ fn main() {
     let parent_pos = Vector3::new(0.0, 5.0, -5.0);
     let child_pos = Vector3::new(0.0, 5.0, -6.0);
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        cuboid.clone(),
-        BodyPartHandle::ground(),
-        Isometry3::new(parent_pos, na::zero()),
-        Material::default(),
-    );
+    let _ = ColliderDesc::new(cuboid)
+        .set_translation(parent_pos)
+        .build(&mut world);
 
-    let rb = world.add_rigid_body(
-        Isometry3::new(child_pos, na::zero()),
-        cuboid_inertia,
-        cuboid_center_of_mass,
-    );
-
-    world.add_collider(
-        COLLIDER_MARGIN,
-        cuboid.clone(),
-        rb,
-        Isometry3::identity(),
-        Material::default(),
-    );
+    let rb_handle = rb_desc
+        .set_translation(child_pos)
+        .build(&mut world)
+        .part_handle();
 
     let constraint = UniversalConstraint::new(
         BodyPartHandle::ground(),
-        rb,
+        rb_handle,
         Point3::from_coordinates(parent_pos),
         Vector3::x_axis(),
         Point3::new(0.0, 0.0, 1.0),
@@ -230,23 +188,14 @@ fn main() {
                 z += rad * 2.0;
             }
 
-            let rb = world.add_rigid_body(
-                Isometry3::new(shift + Vector3::new(na::zero(), y, z), na::zero()),
-                cuboid_inertia,
-                cuboid_center_of_mass,
-            );
-
-            world.add_collider(
-                COLLIDER_MARGIN,
-                cuboid.clone(),
-                rb,
-                Isometry3::identity(),
-                Material::default(),
-            );
+            let rb_handle = rb_desc
+                .set_translation(shift + Vector3::new(0.0, y, z))
+                .build(&mut world)
+                .part_handle();
 
             let constraint = PlanarConstraint::new(
                 BodyPartHandle::ground(),
-                rb,
+                rb_handle,
                 Point3::origin(),
                 Vector3::x_axis(),
                 Point3::origin(),
@@ -271,23 +220,14 @@ fn main() {
                 z += rad * 2.0;
             }
 
-            let rb = world.add_rigid_body(
-                Isometry3::new(shift + Vector3::new(na::zero(), y, z), na::zero()),
-                cuboid_inertia,
-                cuboid_center_of_mass,
-            );
-
-            world.add_collider(
-                COLLIDER_MARGIN,
-                cuboid.clone(),
-                rb,
-                Isometry3::identity(),
-                Material::default(),
-            );
+            let rb_handle = rb_desc
+                .set_translation(shift + Vector3::new(0.0, y, z))
+                .build(&mut world)
+                .part_handle();
 
             let constraint = RectangularConstraint::new(
                 BodyPartHandle::ground(),
-                rb,
+                rb_handle,
                 Point3::origin(),
                 Vector3::x_axis(),
                 Point3::origin(),
@@ -301,21 +241,17 @@ fn main() {
      * Pin-slot constraint.
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
-    let cuboid_inertia = cuboid.inertia(1.0);
-    let cuboid_center_of_mass = cuboid.center_of_mass();
-    let rb = world.add_rigid_body(Isometry3::identity(), cuboid_inertia, cuboid_center_of_mass);
+    let collider_desc = ColliderDesc::new(cuboid)
+        .with_density(1.0);
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        cuboid.clone(),
-        rb,
-        Isometry3::identity(),
-        Material::default(),
-    );
+    let pin_handle = RigidBodyDesc::default()
+        .with_collider(&collider_desc)
+        .build(&mut world)
+        .part_handle();
 
     let constraint = PinSlotConstraint::new(
         BodyPartHandle::ground(),
-        rb,
+        pin_handle,
         Point3::origin(),
         Vector3::y_axis(),
         Vector3::x_axis(),
@@ -329,46 +265,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    /*
-    testbed.add_callback(move |world, _| {
-        /*
-         * Activate the helical constraint motor if it is to low.
-         */
-        // Might be None if the user interactively deleted the helical body.
-        if let Some(mut helical) = world.multibody_link_mut(hel_handle) {
-            let dof = helical
-                .joint_mut()
-                .downcast_mut::<HelicalJoint<f32>>()
-                .unwrap();
-
-            if dof.offset() < -5.0 {
-                dof.enable_angular_motor();
-            } else if dof.offset() > 0.0 {
-                dof.disable_angular_motor();
-            }
-        }
-    });
-
-    testbed.add_callback(move |world, _| {
-        /*
-         * Activate the pin-slot constraint linear motor if it is to low.
-         */
-        // Might be None if the user interactively deleted the pin-slot body.
-        if let Some(mut pin_slot) = world.multibody_link_mut(pin_handle) {
-            let dof = pin_slot
-                .joint_mut()
-                .downcast_mut::<PinSlotJoint<f32>>()
-                .unwrap();
-
-            if dof.offset() < -10.0 {
-                dof.enable_linear_motor();
-            } else if dof.offset() > -4.0 {
-                dof.disable_linear_motor();
-            }
-        }
-    });
-    */
-
     testbed.look_at(Point3::new(30.0, -2.0, 0.0), Point3::new(0.0, -2.0, 0.0));
     testbed.run();
 }

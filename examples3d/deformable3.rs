@@ -3,13 +3,10 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::sync::Arc;
-use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{Cuboid, ShapeHandle, TriMesh};
-use nphysics3d::object::{BodyPartHandle, Material, DeformableVolumeDesc, ColliderDesc};
+use na::{Point3, Vector3};
+use ncollide3d::shape::{Cuboid, ShapeHandle};
+use nphysics3d::object::{DeformableVolumeDesc, ColliderDesc};
 use nphysics3d::world::World;
-use nphysics3d::volumetric::Volumetric;
-use ncollide3d::transformation::ToTriMesh;
 use nphysics_testbed3d::Testbed;
 
 fn main() {

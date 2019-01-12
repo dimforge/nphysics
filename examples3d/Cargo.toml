@@ -35,8 +35,8 @@ name = "balls3"
 path = "./balls3.rs"
 
 [[bin]]
-name = "body_status3"
-path = "./body_status3.rs"
+name = "kinematic3"
+path = "./kinematic3.rs"
 
 [[bin]]
 name = "boxes3"

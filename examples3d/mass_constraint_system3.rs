@@ -4,22 +4,16 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use std::sync::Arc;
 use std::f32;
 use std::path::Path;
-use na::{Isometry3, Point3, Vector3, Vector2, Translation3};
+use na::{Isometry3, Point3, Vector3};
 use kiss3d::loader::obj;
-use ncollide3d::shape::{Cuboid, ShapeHandle, Ball, TriMesh};
+use ncollide3d::shape::{Cuboid, ShapeHandle};
 use ncollide3d::procedural;
-use ncollide3d::bounding_volume::{self, AABB, BoundingVolume};
-use nphysics3d::object::{BodyPartHandle, Material, MassConstraintSystem, ColliderDesc, MassConstraintSystemDesc};
-use nphysics3d::volumetric::Volumetric;
+use nphysics3d::object::{ColliderDesc, MassConstraintSystemDesc};
 use nphysics3d::world::World;
-use nphysics3d::math::Inertia;
 use nphysics_testbed3d::Testbed;
 
-
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*

@@ -33,28 +33,29 @@ fn main() {
      */
     let num = 10;
     let rad = 0.1;
-    let shift = rad * 2.0;
+
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let collider_desc = ColliderDesc::new(cuboid)
+        .with_density(1.0);
+
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
+
+    let shift = (rad + collider_desc.margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
     let height = 3.0;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let mut collider_desc = ColliderDesc::new(cuboid)
-        .with_density(Some(1.0));
-
-    let mut rb_desc = RigidBodyDesc::default()
-        .with_collider(&collider_desc);
-
     for i in 0usize..num {
         for j in 0usize..num {
             for k in 0usize..num {
-                let x = i as f32 * (shift + collider_desc.margin()) - centerx;
-                let y = j as f32 * (shift + collider_desc.margin()) + centery + height;
-                let z = k as f32 * (shift + collider_desc.margin()) - centerz;
+                let x = i as f32 * shift - centerx;
+                let y = j as f32 * shift + centery + height;
+                let z = k as f32 * shift - centerz;
 
                 // Build the rigid body and its collider.
-                let rb = rb_desc
+                let _ = rb_desc
                     .set_translation(Vector3::new(x, y, z))
                     .build(&mut world);
             }

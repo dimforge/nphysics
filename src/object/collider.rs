@@ -242,7 +242,7 @@ pub struct ColliderDesc<N: Real> {
     shape: ShapeHandle<N>,
     position: Isometry<N>,
     material: Material<N>,
-    density: Option<N>,
+    density: N,
     linear_prediction: N,
     angular_prediction: N,
     is_sensor: bool
@@ -259,7 +259,7 @@ impl<N: Real> ColliderDesc<N> {
             collision_groups: CollisionGroups::default(),
             position: Isometry::identity(),
             material: Material::default(),
-            density: None,
+            density: N::zero(),
             linear_prediction,
             angular_prediction,
             is_sensor: false
@@ -277,7 +277,7 @@ impl<N: Real> ColliderDesc<N> {
     desc_setters!(
         with_shape, set_shape, shape: ShapeHandle<N>
         with_margin, set_margin, margin: N
-        with_density, set_density, density: Option<N>
+        with_density, set_density, density: N
         with_collision_groups, set_collision_groups, collision_groups: CollisionGroups
         with_linear_prediction, set_linear_prediction, linear_prediction: N
         with_angular_prediction, set_angular_prediction, angular_prediction: N
@@ -293,7 +293,7 @@ impl<N: Real> ColliderDesc<N> {
 
     desc_getters!(
         [val] margin: N
-        [val] density: Option<N>
+        [val] density: N
         [val] collision_groups: CollisionGroups
         [val] linear_prediction: N
         [val] angular_prediction: N
@@ -336,10 +336,10 @@ impl<N: Real> ColliderDesc<N> {
         let (pos, ndofs) = if parent.is_ground() {
             (self.position, 0)
         } else {
-            if let Some(density) = self.density {
-                let inertia = self.shape.inertia(density);
-                // FIXME: contribute to the center of mass too.
-                parent_part.add_local_inertia(inertia);
+            if !self.density.is_zero() {
+                let com = self.shape.center_of_mass();
+                let inertia = self.shape.inertia(self.density);
+                parent_part.add_local_inertia_and_com(com, inertia);
             }
 
             (

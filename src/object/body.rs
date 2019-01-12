@@ -291,7 +291,7 @@ pub trait BodyPart<N: Real>: Any + Send + Sync {
     fn inertia(&self) -> Inertia<N>;
 
     /// Add the given inertia to the local inertia of this body part.
-    fn add_local_inertia(&mut self, inertia: Inertia<N>)
+    fn add_local_inertia_and_com(&mut self, com: Point<N>, inertia: Inertia<N>)
     {} // FIXME: don't auto-impl.
 
     /// The local-space inertia of this body part.

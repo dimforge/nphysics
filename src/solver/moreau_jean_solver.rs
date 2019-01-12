@@ -29,8 +29,8 @@ impl<N: Real> MoreauJeanSolver<N> {
             jacobians: Vec::new(),
             mj_lambda_vel: DVector::zeros(0),
             ext_vels: DVector::zeros(0),
-            contact_model: contact_model,
-            constraints: constraints,
+            contact_model,
+            constraints,
             internal_constraints: Vec::new(),
         }
     }

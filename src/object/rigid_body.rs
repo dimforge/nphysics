@@ -63,7 +63,7 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
+    pub fn part_handle(&self) -> BodyPartHandle {
         BodyPartHandle(self.handle, 0)
     }
 
@@ -128,6 +128,16 @@ impl<N: Real> RigidBody<N> {
     #[inline]
     pub fn inv_augmented_mass(&self) -> &Inertia<N> {
         &self.inv_augmented_mass
+    }
+
+    #[inline]
+    pub fn position(&self) -> &Isometry<N> {
+        &self.local_to_world
+    }
+
+    #[inline]
+    pub fn velocity(&self) -> &Velocity<N> {
+        &self.velocity
     }
 
     #[inline]
@@ -399,7 +409,15 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn add_local_inertia(&mut self, inertia: Inertia<N>) {
+    fn add_local_inertia_and_com(&mut self, com: Point<N>, inertia: Inertia<N>) {
+        // Update center of mass.
+        if !inertia.linear.is_zero() {
+            let mass_sum = self.inertia.linear + inertia.linear;
+            self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
+            self.com = self.local_to_world * self.local_com;
+        }
+
+        // Update local inertia.
         self.local_inertia += inertia;
 
         // Needed for 2D because the inertia is not updated on the `update_dynamics`.

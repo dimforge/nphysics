@@ -3,21 +3,13 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use std::sync::Arc;
 use std::f32;
-use std::path::Path;
-use na::{Isometry2, Point2, Point3, Vector2, Translation3};
-use ncollide2d::shape::{Cuboid, ShapeHandle, Ball, Polyline};
-use ncollide2d::procedural;
-use ncollide2d::bounding_volume::{self, AABB, BoundingVolume};
-use nphysics2d::object::{BodyPartHandle, Material, MassSpringSystemDesc, ColliderDesc, RigidBodyDesc};
-use nphysics2d::volumetric::Volumetric;
+use na::{Point2, Point3, Vector2};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::object::{MassSpringSystemDesc, ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
-use nphysics2d::math::Inertia;
 use nphysics_testbed2d::Testbed;
 
-
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -74,8 +66,8 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let mut collider_desc = ColliderDesc::new(cuboid)
-        .with_density(Some(1.0));
+    let collider_desc = ColliderDesc::new(cuboid)
+        .with_density(1.0);
 
     let mut rb_desc = RigidBodyDesc::default()
         .with_collider(&collider_desc);

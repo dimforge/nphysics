@@ -9,13 +9,11 @@ use nphysics3d::joint::{
     BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint, PrismaticJoint,
     RectangularJoint, RevoluteJoint, UniversalJoint,
 };
-use nphysics3d::object::{BodyPartHandle, Material, ColliderDesc, MultibodyDesc};
-use nphysics3d::volumetric::Volumetric;
+use nphysics3d::object::{ColliderDesc, MultibodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 use std::f32::consts::PI;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -29,19 +27,15 @@ fn main() {
      */
     let rad = 0.2;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let cuboid_inertia = cuboid.inertia(1.0);
-    let cuboid_center_of_mass = cuboid.center_of_mass();
 
     /*
      * Revolute joints.
      */
     let num = 6;
-    let mut parent = BodyPartHandle::ground();
-
     let revo = RevoluteJoint::new(Vector3::x_axis(), -0.1);
     let body_shift = Vector3::z() * (rad * 3.0 + 0.2);
 
-    let mut collider = ColliderDesc::new(cuboid.clone()).with_density(Some(1.0));
+    let collider = ColliderDesc::new(cuboid.clone()).with_density(1.0);
     let mut multibody = MultibodyDesc::new(revo)
         .with_body_shift(body_shift)
         .with_parent_shift(Vector3::new(0.0, 5.0, 11.0))
@@ -49,7 +43,7 @@ fn main() {
 
     let mut curr = &mut multibody;
 
-    for i in 0usize..num {
+    for _ in 0usize..num {
         curr = curr
             .add_child(revo)
             .set_body_shift(body_shift)
@@ -61,7 +55,6 @@ fn main() {
     /*
      * Prismatic joint.
      */
-    parent = BodyPartHandle::ground();
     let mut prism = PrismaticJoint::new(Vector3::y_axis(), 0.0);
     // Joint limit so that it does not fall indefinitely.
     prism.enable_min_offset(-rad * 2.0);
@@ -71,7 +64,7 @@ fn main() {
 
     let mut curr = &mut multibody;
 
-    for i in 0usize..num {
+    for _ in 0usize..num {
         curr = curr
             .add_child(prism)
             .set_parent_shift(Vector3::z() * rad * 3.0)
@@ -93,8 +86,8 @@ fn main() {
         // The multibody links are initialized along a circle.
         let angle = i as f32 * 2.0 * PI / (num as f32);
         let shift = rad * 5.0;
-        let mut parent_shift = Vector3::zeros();
-        let mut body_shift = Vector3::new(angle.cos(), 0.3, angle.sin()) * shift;
+        let parent_shift = Vector3::zeros();
+        let body_shift = Vector3::new(angle.cos(), 0.3, angle.sin()) * shift;
 
         curr = curr
             .add_child(spherical)
@@ -126,14 +119,12 @@ fn main() {
         .add_collider(&collider);
 
     // Remove the default damping so that it balances indefinitely.
-    let mut mb = multibody.build(&mut world);
+    let mb = multibody.build(&mut world);
     mb.damping_mut().fill(0.0);
 
     /*
      * Helical joint.
      */
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let cuboid_inertia = cuboid.inertia(1.0);
     let axis = Vector3::y_axis();
 
     let mut hel = HelicalJoint::new(axis, 1.0, 0.0);
@@ -206,7 +197,7 @@ fn main() {
      * Pin-slot joint.
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
-    let collider = ColliderDesc::new(cuboid).with_density(Some(1.0));
+    let collider = ColliderDesc::new(cuboid).with_density(1.0);
     let axis_v = Vector3::y_axis();
     let axis_w = Vector3::x_axis();
     let shift = Vector3::z() * -1.5;

@@ -3,15 +3,13 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point3, Vector2};
+use na::{Point3, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::force_generator::ConstantAcceleration;
-use nphysics2d::object::{BodyPartHandle, Material};
-use nphysics2d::volumetric::Volumetric;
+use nphysics2d::object::{RigidBodyDesc, ColliderDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     let mut testbed = Testbed::new_empty();
@@ -31,27 +29,19 @@ fn main() {
     let ground_radx = 25.0;
     let ground_rady = 1.0;
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        ground_radx - COLLIDER_MARGIN,
-        ground_rady - COLLIDER_MARGIN,
+        ground_radx,
+        ground_rady,
     )));
 
-    let ground_pos = Isometry2::new(-Vector2::y() * 2.0, na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape.clone(),
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let mut ground_desc = ColliderDesc::new(ground_shape);
 
-    let ground_pos = Isometry2::new(Vector2::y() * 3.0, na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let _ = ground_desc
+        .set_translation(-Vector2::y() * 2.0)
+        .build(&mut world);
+
+    let _ = ground_desc
+        .set_translation(Vector2::y() * 3.0)
+        .build(&mut world);
 
     /*
      * Create the balls
@@ -62,31 +52,22 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = rad * 4.0;
 
-    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
+    let geom = ShapeHandle::new(Ball::new(rad));
+    let collider_desc = ColliderDesc::new(geom)
+        .with_density(1.0);
+    let mut rb_desc = RigidBodyDesc::default()
+        .with_collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0usize..2 {
             let x = i as f32 * 2.5 * rad - centerx;
             let y = j as f32 * 2.5 * -rad + centery;
 
-            /*
-             * Create the rigid body.
-             */
-            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
-            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-            /*
-             * Create the collider.
-             */
-            world.add_collider(
-                COLLIDER_MARGIN,
-                geom.clone(),
-                handle,
-                Isometry2::identity(),
-                Material::default(),
-            );
+            // Crate the rigid body and its collider.
+            let rb_handle = rb_desc
+                .set_translation(Vector2::new(x, y))
+                .build(&mut world)
+                .part_handle();
 
             /*
              * Set artifical gravity.
@@ -94,14 +75,14 @@ fn main() {
             let color;
 
             if j == 1 {
-                up_gravity.add_body_part(handle);
+                up_gravity.add_body_part(rb_handle);
                 color = Point3::new(0.0, 0.0, 1.0);
             } else {
-                down_gravity.add_body_part(handle);
+                down_gravity.add_body_part(rb_handle);
                 color = Point3::new(0.0, 1.0, 0.0);
             }
 
-            testbed.set_body_color(&world, handle, color);
+            testbed.set_body_color(rb_handle.0, color);
         }
     }
 

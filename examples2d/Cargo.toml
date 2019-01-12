@@ -25,8 +25,8 @@ name = "balls2"
 path = "./balls2.rs"
 
 [[bin]]
-name = "body_status2"
-path = "./body_status2.rs"
+name = "kinematic2"
+path = "./kinematic2.rs"
 
 [[bin]]
 name = "boxes2"

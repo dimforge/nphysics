@@ -35,24 +35,25 @@ fn main() {
      */
     let num = 25;
     let rad = 0.1;
-    let shift = rad * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - ColliderDesc::<f32>::default_margin())));
-    let mut collider_desc = ColliderDesc::new(cuboid)
-        .with_density(Some(1.0));
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let collider_desc = ColliderDesc::new(cuboid)
+        .with_density(1.0);
 
     let mut rb_desc = RigidBodyDesc::default()
         .with_collider(&collider_desc);
 
+    let shift = (rad + collider_desc.margin()) * 2.0;
+    let centerx = shift * (num as f32) / 2.0;
+    let centery = shift / 2.0;
+
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * (shift + collider_desc.margin()) - centerx;
-            let y = j as f32 * (shift + collider_desc.margin()) + centery;
+            let x = i as f32 * shift - centerx;
+            let y = j as f32 * shift + centery;
 
             // Build the rigid body and its collider.
-            let rb = rb_desc
+            let _ = rb_desc
                 .set_translation(Vector2::new(x, y))
                 .build(&mut world);
         }
