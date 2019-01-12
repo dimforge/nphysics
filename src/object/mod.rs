@@ -11,9 +11,9 @@ pub(crate) use self::multibody_link::MultibodyLinkVec;
 pub use self::multibody_link::MultibodyLink;
 pub use self::rigid_body::{RigidBody, RigidBodyDesc};
 #[cfg(feature = "dim2")]
-pub use self::deformable_surface::{DeformableSurface, DeformableSurfaceDesc};
+pub use self::fem_surface::{FEMSurface, FEMSurfaceDesc};
 #[cfg(feature = "dim3")]
-pub use self::deformable_volume::{DeformableVolume, DeformableVolumeDesc};
+pub use self::fem_volume::{FEMVolume, FEMVolumeDesc};
 pub use self::mass_constraint_system::{MassConstraintSystem, MassConstraintSystemDesc};
 pub use self::mass_spring_system::{MassSpringSystem, MassSpringSystemDesc};
 pub use self::fem_helper::FiniteElementIndices;
@@ -28,9 +28,9 @@ mod multibody;
 mod multibody_link;
 mod rigid_body;
 #[cfg(feature = "dim2")]
-mod deformable_surface;
+mod fem_surface;
 #[cfg(feature = "dim3")]
-mod deformable_volume;
+mod fem_volume;
 mod mass_spring_system;
 mod mass_constraint_system;
 pub(crate) mod fem_helper;

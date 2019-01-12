@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use std::sync::Arc;
 use na::{Isometry2, Point2, Point3, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle, Polyline};
-use nphysics2d::object::{BodyPartHandle, Material, DeformableSurface, BodyHandle, BodyStatus, BodyPart};
+use nphysics2d::object::{BodyPartHandle, Material, FEMSurface, BodyHandle, BodyStatus, BodyPart};
 use nphysics2d::world::World;
 use nphysics2d::volumetric::Volumetric;
 use nphysics2d::math::Inertia;
@@ -57,7 +57,7 @@ fn main() {
     /*
      * Create the deformable body and a collider for its contour.
      */
-    let mut volume = DeformableSurface::quad(
+    let mut volume = FEMSurface::quad(
         &Isometry2::identity(),
         &Vector2::new(1.1, 0.1),
         50, 1,

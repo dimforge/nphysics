@@ -6,7 +6,7 @@ extern crate nphysics_testbed2d;
 use std::f32;
 use na::{Point2, Point3, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{DeformableSurfaceDesc, ColliderDesc, RigidBodyDesc};
+use nphysics2d::object::{FEMSurfaceDesc, ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
@@ -36,7 +36,7 @@ fn main() {
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let deformable_handle = DeformableSurfaceDesc::quad(50, 1)
+    let deformable_handle = FEMSurfaceDesc::quad(50, 1)
         .with_scale(Vector2::new(10.0, 1.0))
         .with_translation(Vector2::y() * 1.0)
         .with_young_modulus(1.0e4)

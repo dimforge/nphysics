@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use std::sync::Arc;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{Material, DeformableVolume, BodyStatus};
+use nphysics3d::object::{Material, FEMVolume, BodyStatus};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -23,7 +23,7 @@ fn main() {
     /*
      * For the ground, create a kinematic deformable body and a collider for its contour.
      */
-    let mut volume = DeformableVolume::cube(
+    let mut volume = FEMVolume::cube(
         &Isometry3::identity(),
         &Vector3::new(5.0, 0.2, 5.0),
         6, 2, 2,

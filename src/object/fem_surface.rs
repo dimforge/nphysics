@@ -36,7 +36,7 @@ pub struct TriangularElement<N: Real> {
 /// The surface is described by a set of triangle elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 #[derive(Clone)]
-pub struct DeformableSurface<N: Real> {
+pub struct FEMSurface<N: Real> {
     handle: BodyHandle,
     elements: Vec<TriangularElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -64,7 +64,7 @@ pub struct DeformableSurface<N: Real> {
     status: BodyStatus,
 }
 
-impl<N: Real> DeformableSurface<N> {
+impl<N: Real> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
     fn new(handle: BodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
            scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
@@ -88,7 +88,7 @@ impl<N: Real> DeformableSurface<N> {
             let pt = pos * Point::from_coordinates(pt.coords.component_mul(&scale));
             rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
         }
-        DeformableSurface {
+        FEMSurface {
             handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
@@ -509,7 +509,7 @@ impl<N: Real> DeformableSurface<N> {
     }
 }
 
-impl<N: Real> Body<N> for DeformableSurface<N> {
+impl<N: Real> Body<N> for FEMSurface<N> {
     #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
@@ -749,13 +749,13 @@ impl<N: Real> BodyPart<N> for TriangularElement<N> {
 }
 
 
-enum DeformableSurfaceDescGeometry<'a, N: Real> {
+enum FEMSurfaceDescGeometry<'a, N: Real> {
     Quad(usize, usize),
     Triangles(&'a [Point<N>], &'a [Point3<usize>])
 }
 
-pub struct DeformableSurfaceDesc<'a, N: Real> {
-    geom: DeformableSurfaceDescGeometry<'a, N>,
+pub struct FEMSurfaceDesc<'a, N: Real> {
+    geom: FEMSurfaceDescGeometry<'a, N>,
     scale: Vector<N>,
     position: Isometry<N>,
     young_modulus: N,
@@ -770,9 +770,9 @@ pub struct DeformableSurfaceDesc<'a, N: Real> {
     status: BodyStatus
 }
 
-impl<'a, N: Real> DeformableSurfaceDesc<'a, N> {
-    fn with_geometry(geom: DeformableSurfaceDescGeometry<'a, N>) -> Self {
-        DeformableSurfaceDesc {
+impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
+    fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
+        FEMSurfaceDesc {
             geom,
             scale: Vector::repeat(N::one()),
             position: Isometry::identity(),
@@ -790,11 +790,11 @@ impl<'a, N: Real> DeformableSurfaceDesc<'a, N> {
     }
 
     pub fn new(vertices: &'a [Point<N>], triangles: &'a [Point3<usize>]) -> Self {
-        Self::with_geometry(DeformableSurfaceDescGeometry::Triangles(vertices, triangles))
+        Self::with_geometry(FEMSurfaceDescGeometry::Triangles(vertices, triangles))
     }
 
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
-        Self::with_geometry(DeformableSurfaceDescGeometry::Quad(subdiv_x, subdiv_y))
+        Self::with_geometry(FEMSurfaceDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
@@ -842,23 +842,23 @@ impl<'a, N: Real> DeformableSurfaceDesc<'a, N> {
         [ref] scale: Vector<N>
     );
 
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w DeformableSurface<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w FEMSurface<N> {
         world.add_body(self)
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for DeformableSurfaceDesc<'a, N> {
-    type Body = DeformableSurface<N>;
+impl<'a, N: Real> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
+    type Body = FEMSurface<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> DeformableSurface<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> FEMSurface<N> {
         let mut vol = match self.geom {
-            DeformableSurfaceDescGeometry::Quad(nx, ny) =>
-                DeformableSurface::quad(handle, &self.position, &self.scale,
+            FEMSurfaceDescGeometry::Quad(nx, ny) =>
+                FEMSurface::quad(handle, &self.position, &self.scale,
                                        nx, ny, self.density, self.young_modulus,
                                        self.poisson_ratio,
                                        (self.mass_damping, self.stiffness_damping)),
-            DeformableSurfaceDescGeometry::Triangles(pts, idx) =>
-                DeformableSurface::new(handle, pts, idx, &self.position, &self.scale,
+            FEMSurfaceDescGeometry::Triangles(pts, idx) =>
+                FEMSurface::new(handle, pts, idx, &self.position, &self.scale,
                                       self.density, self.young_modulus, self.poisson_ratio,
                                       (self.mass_damping, self.stiffness_damping))
         };

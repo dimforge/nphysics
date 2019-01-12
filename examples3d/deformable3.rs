@@ -5,7 +5,7 @@ extern crate nphysics_testbed3d;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{DeformableVolumeDesc, ColliderDesc};
+use nphysics3d::object::{FEMVolumeDesc, ColliderDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
@@ -43,7 +43,7 @@ fn main() {
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let _ = DeformableVolumeDesc::cube(50, 1, 1)
+    let _ = FEMVolumeDesc::cube(50, 1, 1)
         .with_scale(Vector3::new(1.0, 0.1, 0.1))
         .with_translation(Vector3::y() * 0.1)
         .with_young_modulus(1.0e3)

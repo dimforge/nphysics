@@ -36,7 +36,7 @@ pub struct TetrahedralElement<N: Real> {
 /// The volume is described by a set of tetrahedral elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 #[derive(Clone)]
-pub struct DeformableVolume<N: Real> {
+pub struct FEMVolume<N: Real> {
     handle: BodyHandle,
     elements: Vec<TetrahedralElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -64,7 +64,7 @@ pub struct DeformableVolume<N: Real> {
     status: BodyStatus,
 }
 
-impl<N: Real> DeformableVolume<N> {
+impl<N: Real> FEMVolume<N> {
     /// Initializes a new deformable volume from its tetrahedral elements.
     pub fn new(handle: BodyHandle, vertices: &[Point3<N>], tetrahedrons: &[Point4<usize>], pos: &Isometry3<N>,
                scale: &Vector3<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
@@ -89,7 +89,7 @@ impl<N: Real> DeformableVolume<N> {
             rest_positions.fixed_rows_mut::<U3>(i * 3).copy_from(&pt.coords);
         }
 
-        DeformableVolume {
+        FEMVolume {
             handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
@@ -560,7 +560,7 @@ impl<N: Real> DeformableVolume<N> {
     }
 }
 
-impl<N: Real> Body<N> for DeformableVolume<N> {
+impl<N: Real> Body<N> for FEMVolume<N> {
     #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
@@ -810,13 +810,13 @@ impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
     }
 }
 
-enum DeformableVolumeDescGeometry<'a, N: Real> {
+enum FEMVolumeDescGeometry<'a, N: Real> {
     Cube(usize, usize, usize),
     Tetrahedrons(&'a [Point3<N>], &'a [Point4<usize>])
 }
 
-pub struct DeformableVolumeDesc<'a, N: Real> {
-    geom: DeformableVolumeDescGeometry<'a, N>,
+pub struct FEMVolumeDesc<'a, N: Real> {
+    geom: FEMVolumeDescGeometry<'a, N>,
     scale: Vector3<N>,
     position: Isometry3<N>,
     young_modulus: N,
@@ -831,9 +831,9 @@ pub struct DeformableVolumeDesc<'a, N: Real> {
     status: BodyStatus
 }
 
-impl<'a, N: Real> DeformableVolumeDesc<'a, N> {
-    fn with_geometry(geom: DeformableVolumeDescGeometry<'a, N>) -> Self {
-        DeformableVolumeDesc {
+impl<'a, N: Real> FEMVolumeDesc<'a, N> {
+    fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
+        FEMVolumeDesc {
             geom,
             scale: Vector3::repeat(N::one()),
             position: Isometry3::identity(),
@@ -851,11 +851,11 @@ impl<'a, N: Real> DeformableVolumeDesc<'a, N> {
     }
 
     pub fn new(vertices: &'a [Point3<N>], tetrahedrons: &'a [Point4<usize>]) -> Self {
-        Self::with_geometry(DeformableVolumeDescGeometry::Tetrahedrons(vertices, tetrahedrons))
+        Self::with_geometry(FEMVolumeDescGeometry::Tetrahedrons(vertices, tetrahedrons))
     }
 
     pub fn cube(subdiv_x: usize, subdiv_y: usize, subdiv_z: usize) -> Self {
-        Self::with_geometry(DeformableVolumeDescGeometry::Cube(subdiv_x, subdiv_y, subdiv_z))
+        Self::with_geometry(FEMVolumeDescGeometry::Cube(subdiv_x, subdiv_y, subdiv_z))
     }
 
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
@@ -903,23 +903,23 @@ impl<'a, N: Real> DeformableVolumeDesc<'a, N> {
         [ref] scale: Vector3<N>
     );
 
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w DeformableVolume<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w FEMVolume<N> {
         world.add_body(self)
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for DeformableVolumeDesc<'a, N> {
-    type Body = DeformableVolume<N>;
+impl<'a, N: Real> BodyDesc<N> for FEMVolumeDesc<'a, N> {
+    type Body = FEMVolume<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> DeformableVolume<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> FEMVolume<N> {
         let mut vol = match self.geom {
-            DeformableVolumeDescGeometry::Cube(nx, ny, nz) =>
-                DeformableVolume::cube(handle, &self.position, &self.scale,
+            FEMVolumeDescGeometry::Cube(nx, ny, nz) =>
+                FEMVolume::cube(handle, &self.position, &self.scale,
                                        nx, ny, nz, self.density, self.young_modulus,
                                        self.poisson_ratio,
                                        (self.mass_damping, self.stiffness_damping)),
-            DeformableVolumeDescGeometry::Tetrahedrons(pts, idx) =>
-                DeformableVolume::new(handle, pts, idx, &self.position, &self.scale,
+            FEMVolumeDescGeometry::Tetrahedrons(pts, idx) =>
+                FEMVolume::new(handle, pts, idx, &self.position, &self.scale,
                                       self.density, self.young_modulus, self.poisson_ratio,
                                       (self.mass_damping, self.stiffness_damping))
         };
