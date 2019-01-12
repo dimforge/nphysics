@@ -1,7 +1,7 @@
 use kiss3d::window::Window;
-use na::{Isometry2, Point2, Point3, DVector, Vector2};
+use na::{Isometry2, Point2, Point3};
 use ncollide2d::shape;
-use nphysics2d::object::{ColliderHandle, ColliderAnchor};
+use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
 
 pub struct HeightField {
@@ -58,7 +58,7 @@ impl HeightField {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {
+    pub fn update(&mut self, _: &World<f32>) {
     }
 
     pub fn object(&self) -> ColliderHandle {

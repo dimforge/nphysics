@@ -37,12 +37,12 @@ impl<N: Real> Body<N> for Ground<N> {
     fn clear_dynamics(&mut self) {}
 
     #[inline]
-    fn part(&self, handle: usize) -> Option<&BodyPart<N>> {
+    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
         Some(self)
     }
 
     #[inline]
-    fn part_mut(&mut self, handle: usize) -> Option<&mut BodyPart<N>> {
+    fn part_mut(&mut self, _: usize) -> Option<&mut BodyPart<N>> {
         Some(self)
     }
 
@@ -145,7 +145,7 @@ impl<N: Real> Body<N> for Ground<N> {
     fn deactivate(&mut self) {}
 
     #[inline]
-    fn set_deactivation_threshold(&mut self, threshold: Option<N>) {}
+    fn set_deactivation_threshold(&mut self, _: Option<N>) {}
 
     #[inline]
     fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
@@ -184,13 +184,13 @@ impl<N: Real> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 }
 
 impl<N: Real> BodyPart<N> for Ground<N> {

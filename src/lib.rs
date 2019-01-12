@@ -88,7 +88,7 @@ The libraries needed to compile the examples are:
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
 #![deny(unused_qualifications)]
-#![warn(missing_docs)]
+#![allow(missing_docs)] // XXX: deny that
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]

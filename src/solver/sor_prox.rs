@@ -5,7 +5,7 @@ use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN};
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{BodySet, BodyHandle, Body};
+use crate::object::{BodySet, BodyHandle};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint};
 

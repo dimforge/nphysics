@@ -1,10 +1,9 @@
 use std::sync::Arc;
 use std::f64;
 use std::mem;
-use either::Either;
 use na::Real;
-use ncollide::world::{CollisionObject, CollisionObjectHandle, CollisionObjects, GeometricQueryType, CollisionGroups};
-use ncollide::shape::{FeatureId, ShapeHandle, Shape};
+use ncollide::world::{CollisionObject, CollisionObjectHandle, GeometricQueryType, CollisionGroups};
+use ncollide::shape::{ShapeHandle, Shape};
 
 use crate::math::{Isometry, Vector};
 use crate::object::{BodyPartHandle, BodyHandle, Material, Body, BodyPart};

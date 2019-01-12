@@ -1,14 +1,11 @@
-use kiss3d::resource;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
-use na::{self, Isometry3, Point3, Vector3, DMatrix};
-use nphysics3d::object::{ColliderHandle, ColliderAnchor};
+use na::{self, Isometry3, Point3, Vector3};
+use nphysics3d::object::{ColliderHandle};
 use nphysics3d::world::World;
 use ncollide3d::shape;
 use ncollide3d::transformation::ToTriMesh;
 use crate::objects::node;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 pub struct HeightField {
     color: Point3<f32>,

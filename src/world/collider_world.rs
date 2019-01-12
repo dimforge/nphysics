@@ -1,10 +1,7 @@
-use either::Either;
 use na::Real;
-use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups,
-                      CollisionObject, CollisionObjects, InterferencesWithRay,
-                      InterferencesWithPoint, InterferencesWithAABB};
+use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
 use ncollide::broad_phase::BroadPhasePairFilter;
-use ncollide::narrow_phase::{NarrowPhase, ContactAlgorithm, ContactPairs, ProximityPairs, ProximityAlgorithm};
+use ncollide::narrow_phase::{NarrowPhase, ContactAlgorithm, ProximityAlgorithm};
 use ncollide::query::{ContactManifold, Ray, RayIntersection};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
@@ -69,11 +66,11 @@ impl<N: Real> ColliderWorld<N> {
         });
     }
 
-    fn as_collision_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
+    pub fn as_collision_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
         &self.cworld
     }
 
-    fn into_inner(self) -> CollisionWorld<N, ColliderData<N>> {
+    pub fn into_inner(self) -> CollisionWorld<N, ColliderData<N>> {
         self.cworld
     }
 

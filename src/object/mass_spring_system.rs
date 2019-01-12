@@ -4,18 +4,16 @@ use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use either::Either;
 
-use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, Cholesky,
-         Dynamic, Vector2, Point2, Point3, MatrixN, Unit, CsCholesky, CsMatrix};
-use ncollide::utils::{self, DeterministicState};
+use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, MatrixN, Unit};
 #[cfg(feature = "dim3")]
-use ncollide::procedural::{self, IndexBuffer};
-use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment, ShapeHandle};
+use na::Vector2;
+use ncollide::utils::DeterministicState;
 #[cfg(feature = "dim3")]
-use ncollide::shape::{TriMesh, TetrahedronPointLocation};
-use ncollide::query::PointQueryWithLocation;
+use ncollide::procedural;
+use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
+#[cfg(feature = "dim3")]
+use ncollide::shape::TriMesh;
 
-use crate::counters::Timer;
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices,
                     BodyDesc, DeformableColliderDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
@@ -29,13 +27,6 @@ pub struct MassSpringElement<N: Real> {
     handle: BodyPartHandle,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>
-}
-
-#[derive(Copy, Clone, PartialEq, Eq)]
-enum SpringConstraintType<N: Real> {
-    Equal,
-    MinRatio(N),
-    MaxRatio(N),
 }
 
 #[derive(Clone)]
@@ -217,16 +208,6 @@ impl<N: Real> MassSpringSystem<N> {
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
         Self::from_trimesh(handle,&trimesh, mass, stiffness, damping_ratio)
-    }
-
-    #[cfg(feature = "dim2")]
-    fn quad(handle: BodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
-        unimplemented!()
-//        let mesh = procedural::quad(extents.x, extents.y, nx, ny);
-//        let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
-//        let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
-//        let trimesh = TriMesh::new(vertices, indices, None);
-//        Self::from_trimesh(handle,&trimesh, mass, stiffness, damping_ratio)
     }
 
     pub fn num_nodes(&self) -> usize {
@@ -530,7 +511,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,
-        ndofs: usize, // FIXME: keep this parameter?
+        _: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         force_dir: &ForceDirection<N>,
         j_id: usize,
@@ -566,13 +547,13 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 }
 
 
@@ -601,7 +582,7 @@ impl<N: Real> BodyPart<N> for MassSpringElement<N> {
         unimplemented!()
     }
 
-    fn apply_force(&mut self, force: &Force<N>) {
+    fn apply_force(&mut self, _force: &Force<N>) {
         unimplemented!()
     }
 }
@@ -721,7 +702,7 @@ impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
                 polyline.scale_by(&self.scale);
                 polyline.transform_by(&self.position);
 
-                let mut vol = MassSpringSystem::from_polyline(
+                let vol = MassSpringSystem::from_polyline(
                     handle, &polyline, self.mass, self.stiffness, self.damping_ratio);
 
 
@@ -737,7 +718,7 @@ impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
                 polyline.scale_by(&self.scale);
                 polyline.transform_by(&self.position);
 
-                let mut vol = MassSpringSystem::from_polyline(
+                let vol = MassSpringSystem::from_polyline(
                     handle, &polyline, self.mass, self.stiffness, self.damping_ratio);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
@@ -752,7 +733,7 @@ impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
                 trimesh.scale_by(&self.scale);
                 trimesh.transform_by(&self.position);
 
-                let mut vol = MassSpringSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness, self.damping_ratio);
+                let vol = MassSpringSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness, self.damping_ratio);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
                         .build_with_infos(&vol, cworld);

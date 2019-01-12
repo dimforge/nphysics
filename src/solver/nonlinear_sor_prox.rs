@@ -6,7 +6,6 @@ use std::ops::MulAssign;
 use crate::world::ColliderWorld;
 use crate::joint::JointConstraint;
 use crate::object::{BodySet, ColliderAnchor, BodyHandle};
-use crate::solver::helper;
 use crate::solver::{ForceDirection, IntegrationParameters,
              MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
              NonlinearUnilateralConstraint};

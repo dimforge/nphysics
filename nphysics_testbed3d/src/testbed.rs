@@ -19,7 +19,7 @@ use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
 use ncollide3d::world::CollisionGroups;
 use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
 use nphysics3d::world::World;
 
 #[derive(PartialEq)]

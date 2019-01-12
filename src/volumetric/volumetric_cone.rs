@@ -1,9 +1,8 @@
 use std::ops::IndexMut;
 use num::Zero;
 
-use na::{self, Real, Matrix1, Matrix3, Point2, Point3};
+use na::{self, Real};
 use ncollide::math::Point;
-use crate::volumetric::Volumetric;
 
 /// The volume of a cone.
 #[inline]

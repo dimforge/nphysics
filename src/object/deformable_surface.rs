@@ -5,12 +5,10 @@ use std::sync::Arc;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point2, Point3, Point4, Vector3, Vector6, Matrix2, Matrix3, Matrix3x2, Matrix2x3, DMatrix,
-         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, VectorSliceMut2, Vector2,
-         Rotation3, Unit};
+use na::{self, Real, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
+         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Vector2, Unit};
 use ncollide::utils::{self, DeterministicState};
-use ncollide::shape::{Polyline, DeformationsType, TrianglePointLocation, Triangle, ShapeHandle};
-use ncollide::query::PointQueryWithLocation;
+use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
                     FiniteElementIndices, DeformableColliderDesc, BodyDesc};
@@ -185,7 +183,6 @@ impl<N: Real> DeformableSurface<N> {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
         let dt = params.dt;
-        let dt2 = params.dt * params.dt;
         let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
 
         // External forces.
@@ -202,7 +199,7 @@ impl<N: Real> DeformableSurface<N> {
             }
         }
 
-        /// Internal forces and stiffness.
+        // Internal forces and stiffness.
         let d0 = (self.young_modulus * (_1 - self.poisson_ratio)) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
         let d1 = (self.young_modulus * self.poisson_ratio) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
         let d2 = (self.young_modulus * (_1 - _2 * self.poisson_ratio)) / (_2 * (_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
@@ -389,7 +386,7 @@ impl<N: Real> DeformableSurface<N> {
         let mut idx_remap: Vec<usize> = iter::repeat(INVALID).take(self.positions.len() / 2).collect();
         let mut vertices = Vec::new();
 
-        for (idx, part_id) in &mut indices {
+        for (idx, _) in &mut indices {
             for i in 0..2 {
                 let idx_i = &mut idx[i];
                 if idx_remap[*idx_i / 2] == INVALID {
@@ -675,7 +672,7 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,
-        ndofs: usize, // FIXME: keep this parameter?
+        _: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         force_dir: &ForceDirection<N>,
         j_id: usize,
@@ -711,13 +708,13 @@ impl<N: Real> Body<N> for DeformableSurface<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 }
 
 
@@ -746,7 +743,7 @@ impl<N: Real> BodyPart<N> for TriangularElement<N> {
         Inertia::new(self.surface * self.density, N::one())
     }
 
-    fn apply_force(&mut self, force: &Force<N>) {
+    fn apply_force(&mut self, _: &Force<N>) {
         unimplemented!()
     }
 }

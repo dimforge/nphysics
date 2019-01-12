@@ -4,8 +4,7 @@ use na::Real;
 
 use crate::joint::Joint;
 use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyPart, BodyHandle, ColliderData, ColliderHandle, Multibody};
-use crate::world::ColliderWorld;
+use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: Real> {
@@ -18,7 +17,6 @@ pub struct MultibodyLink<N: Real> {
 
     // XXX: rename to "joint".
     // (And rename the full-coordinates joint constraints JointConstraint).
-    pub(crate) parent: BodyPartHandle,
     pub(crate) parent_internal_id: usize,
     pub(crate) dof: Box<Joint<N>>,
     pub(crate) parent_shift: Vector<N>,
@@ -51,7 +49,6 @@ impl<N: Real> MultibodyLink<N> {
         assembly_id: usize,
         impulse_id: usize,
         multibody_handle: BodyHandle,
-        parent: BodyPartHandle,
         parent_internal_id: usize,
         dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
@@ -76,7 +73,6 @@ impl<N: Real> MultibodyLink<N> {
             assembly_id,
             impulse_id,
             is_leaf,
-            parent,
             parent_internal_id,
             dof,
             parent_shift,
@@ -201,11 +197,6 @@ impl<N: Real> MultibodyLinkVec<N> {
             let parent_rb = &*(self.get_unchecked(parent_id) as *const _);
             (rb, parent_rb)
         }
-    }
-
-    #[inline]
-    pub fn unwrap(self) -> Vec<MultibodyLink<N>> {
-        self.0
     }
 }
 

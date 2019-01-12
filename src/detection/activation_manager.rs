@@ -73,7 +73,7 @@ impl<N: Real> ActivationManager<N> {
          */
         self.id_to_body.clear();
 
-        for mut body in bodies.bodies_mut() {
+        for body in bodies.bodies_mut() {
             if body.status_dependent_ndofs() != 0 {
                 if body.is_active() {
                     self.update_energy(body);
@@ -95,7 +95,7 @@ impl<N: Real> ActivationManager<N> {
          *
          */
         for handle in self.to_activate.iter() {
-            let mut body = try_continue!(bodies.body_mut(*handle));
+            let body = try_continue!(bodies.body_mut(*handle));
 
             if body.activation_status().deactivation_threshold().is_some() {
                 body.activate()
@@ -141,7 +141,7 @@ impl<N: Real> ActivationManager<N> {
                 }
         }
 
-        for (c1, c2, cd, manifold) in cworld.contact_pairs() {
+        for (c1, c2, _, manifold) in cworld.contact_pairs() {
             let b1 = c1.body();
             let b2 = c2.body();
 
@@ -176,7 +176,7 @@ impl<N: Real> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let mut body = try_continue!(bodies.body_mut(handle));
+            let body = try_continue!(bodies.body_mut(handle));
 
             if self.can_deactivate[root] {
                 // Everybody in this set can be deactivacted.

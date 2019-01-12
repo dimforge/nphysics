@@ -5,7 +5,7 @@ use na::{DVector, Real};
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
 use crate::joint::JointConstraint;
-use crate::object::{BodyHandle, BodySet, Body};
+use crate::object::{BodyHandle, BodySet};
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 use crate::world::ColliderWorld;
 
@@ -59,7 +59,7 @@ impl<N: Real> MoreauJeanSolver<N> {
 
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(params, bodies);
-        self.save_cache(bodies, joints, island);
+        self.save_cache(bodies, joints);
         counters.velocity_resolution_completed();
 
         counters.velocity_update_started();
@@ -84,7 +84,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         let mut system_ndofs = 0;
 
         for handle in island {
-            let mut body = try_continue!(bodies.body_mut(*handle));
+            let body = try_continue!(bodies.body_mut(*handle));
             body.set_companion_id(system_ndofs);
             let ndofs = body.status_dependent_ndofs();
             assert!(
@@ -236,7 +236,6 @@ impl<N: Real> MoreauJeanSolver<N> {
         &mut self,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
-        island: &[BodyHandle],
     ) {
         self.contact_model.cache_impulses(&self.constraints);
 
@@ -260,7 +259,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         island: &[BodyHandle],
     ) {
         for handle in island {
-            let mut body = try_continue!(bodies.body_mut(*handle));
+            let body = try_continue!(bodies.body_mut(*handle));
             let id = body.companion_id();
             let ndofs = body.ndofs();
 

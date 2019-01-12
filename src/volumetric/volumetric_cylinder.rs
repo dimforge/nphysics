@@ -1,7 +1,6 @@
 use num::Zero;
 
 use na::{self, Real};
-use crate::volumetric::Volumetric;
 use crate::math::{AngularInertia, Point, DIM};
 
 /// The volume of a cylinder.

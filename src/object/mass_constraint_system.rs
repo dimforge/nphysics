@@ -4,16 +4,15 @@ use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 use either::Either;
 
-use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, VectorSliceMutN, LU,
-         Dynamic, Vector2, Point2, Point3, MatrixN, Unit};
-use ncollide::utils::{self, DeterministicState};
+use na::{self, Real, DVector, DVectorSlice, DVectorSliceMut, Unit};
 #[cfg(feature = "dim3")]
-use ncollide::procedural::{self, IndexBuffer};
-use ncollide::shape::{DeformationsType, Triangle, Polyline, Segment, ShapeHandle};
+use na::Vector2;
+use ncollide::utils::DeterministicState;
 #[cfg(feature = "dim3")]
-use ncollide::shape::{TriMesh, TetrahedronPointLocation};
-use ncollide::query::PointQueryWithLocation;
+use ncollide::procedural;
+use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
+#[cfg(feature = "dim3")]
+use ncollide::shape::TriMesh;
 
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
                     FiniteElementIndices, DeformableColliderDesc, BodyDesc};
@@ -322,12 +321,6 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
         for constraint in &mut self.constraints {
             if let Some(stiffness) = constraint.stiffness {
-                let v0 = self.velocities.fixed_rows::<Dim>(constraint.nodes.0);
-                let v1 = self.velocities.fixed_rows::<Dim>(constraint.nodes.1);
-
-                let ldot = v1 - v0;
-                let l = *constraint.dir;
-
                 // Explicit elastic term.
                 let err = constraint.length - constraint.rest_length;
 
@@ -458,7 +451,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,
-        ndofs: usize, // FIXME: keep this parameter?
+        _: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         force_dir: &ForceDirection<N>,
         j_id: usize,
@@ -543,7 +536,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
                 self.inv_node_mass + self.inv_node_mass
             };
 
-            if let Some(stiffness) = constraint.stiffness {
+            if constraint.stiffness.is_some() {
                 let curr_impulse = self.impulses[i];
                 let dimpulse = (dvel + constraint.target_vel) / denom;
                 let new_impulse = na::clamp(curr_impulse + dimpulse, -constraint.max_force, constraint.max_force);
@@ -567,7 +560,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
-        for (i, constraint) in self.constraints.iter_mut().enumerate() {
+        for constraint in &mut self.constraints {
             if constraint.stiffness.is_none() {
                 let kinematic1 = self.kinematic_nodes[constraint.nodes.0 / DIM];
                 let kinematic2 = self.kinematic_nodes[constraint.nodes.1 / DIM];
@@ -645,7 +638,7 @@ impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
         unimplemented!()
     }
 
-    fn apply_force(&mut self, force: &Force<N>) {
+    fn apply_force(&mut self, _force: &Force<N>) {
         unimplemented!()
     }
 }
@@ -767,7 +760,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
                 polyline.scale_by(&self.scale);
                 polyline.transform_by(&self.position);
 
-                let mut vol = MassConstraintSystem::from_polyline(
+                let vol = MassConstraintSystem::from_polyline(
                     handle, &polyline, self.mass, self.stiffness);
 
 
@@ -783,7 +776,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
                 polyline.scale_by(&self.scale);
                 polyline.transform_by(&self.position);
 
-                let mut vol = MassConstraintSystem::from_polyline(
+                let vol = MassConstraintSystem::from_polyline(
                     handle, &polyline, self.mass, self.stiffness);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
@@ -798,7 +791,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
                 trimesh.scale_by(&self.scale);
                 trimesh.transform_by(&self.position);
 
-                let mut vol = MassConstraintSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness);
+                let vol = MassConstraintSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
                         .build_with_infos(&vol, cworld);

@@ -1,12 +1,8 @@
 use slab::{Iter, IterMut, Slab};
-use std::iter::Map;
 
-use crate::joint::Joint;
-use crate::math::{Inertia, Isometry, Point, Vector};
 use na::Real;
 use crate::world::ColliderWorld;
-use crate::object::{Body, BodyPart, Ground, Multibody, MultibodyLink, RigidBody};
-use crate::solver::IntegrationParameters;
+use crate::object::{Body, Ground};
 
 /// A world-specific body handle.
 ///
@@ -189,6 +185,6 @@ impl<N: Real> BodySet<N> {
 }
 
 /// Iterator yielding all the bodies on a body set.
-pub type Bodies<'a, N: Real> = Iter<'a, Box<Body<N>>>;
+pub type Bodies<'a, N> = Iter<'a, Box<Body<N>>>;
 /// Mutable iterator yielding all the bodies on a body set.
-pub type BodiesMut<'a, N: Real> = IterMut<'a, Box<Body<N>>>;
+pub type BodiesMut<'a, N> = IterMut<'a, Box<Body<N>>>;

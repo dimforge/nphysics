@@ -1,8 +1,8 @@
 use either::Either;
 
-use na::{Real, Cholesky, Dynamic, DVectorSliceMut, VectorSliceMutN, Point2, Point3, Point4, DVector, DVectorSlice};
+use na::{Real, Cholesky, Dynamic, DVectorSliceMut, VectorSliceMutN, Point2, Point3, DVector, DVectorSlice};
 #[cfg(feature = "dim3")]
-use na::Matrix3;
+use na::Point4;
 use ncollide::shape::{Segment, Triangle};
 use ncollide::query::PointQueryWithLocation;
 #[cfg(feature = "dim3")]

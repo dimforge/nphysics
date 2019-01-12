@@ -2,7 +2,7 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
-                    ColliderHandle, ColliderDesc, ColliderData, BodyDesc};
+                    ColliderDesc, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use ncollide::shape::DeformationsType;
@@ -322,7 +322,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
     fn fill_constraint_geometry(
         &self,
         _: &BodyPart<N>,
-        ndofs: usize,
+        _: usize,
         point: &Point<N>,
         force_dir: &ForceDirection<N>,
         j_id: usize,
@@ -368,13 +368,13 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 }
 
 impl<N: Real> BodyPart<N> for RigidBody<N> {
@@ -497,7 +497,7 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         for desc in &self.colliders {
             let part_handle = rb.part_handle();
             let ndofs = rb.status_dependent_ndofs();
-            let handle = desc.build_with_infos(part_handle, ndofs, &mut rb, cworld);
+            let _ = desc.build_with_infos(part_handle, ndofs, &mut rb, cworld);
         }
 
         rb

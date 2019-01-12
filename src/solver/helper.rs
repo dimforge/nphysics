@@ -7,7 +7,7 @@ use na::{DVector, DVectorSlice, Real, Unit};
 use std::ops::Neg;
 
 use crate::math::{AngularVector, Force, Point, Rotation, Vector};
-use crate::object::{Body, BodyPart, BodyStatus};
+use crate::object::{Body, BodyPart};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 

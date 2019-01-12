@@ -1,25 +1,17 @@
 use slab::Slab;
-use std::f64;
-use std::sync::Arc;
-use either::Either;
-use std::collections::HashMap;
 
 use na::{self, Real};
 use ncollide;
-use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::events::{ContactEvents, ProximityEvents};
-use ncollide::shape::{ShapeHandle, Shape, DeformableShape};
-use ncollide::world::{CollisionGroups, CollisionObjectHandle, GeometricQueryType};
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
 use crate::force_generator::{ForceGenerator, ForceGeneratorHandle};
-use crate::joint::{ConstraintHandle, Joint, JointConstraint};
-use crate::math::{Inertia, Isometry, Point, Vector};
+use crate::joint::{ConstraintHandle, JointConstraint};
+use crate::math::Vector;
 use crate::object::{
-    Body, BodyPartHandle, BodyPart, BodySet, BodyDesc, BodyStatus, Collider, ColliderData, ColliderAnchor,
-    ColliderHandle, Material, Multibody, MultibodyLink,
-    RigidBody, BodyHandle, Bodies, BodiesMut,
+    Body, BodySet, BodyDesc, BodyStatus, Collider, ColliderAnchor,
+    ColliderHandle, Multibody, RigidBody, BodyHandle,
 };
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
@@ -36,7 +28,6 @@ pub struct World<N: Real> {
     activation_manager: ActivationManager<N>,
     // FIXME: set those two parameters per-collider?
     prediction: N,
-    angular_prediction: N,
     gravity: Vector<N>,
     constraints: Slab<Box<JointConstraint<N>>>,
     forces: Slab<Box<ForceGenerator<N>>>,
@@ -51,13 +42,12 @@ impl<N: Real> World<N> {
         let counters = Counters::new(false);
         let bv_margin = na::convert(0.01f64);
         let prediction = na::convert(0.002);
-        let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
         let bodies = BodySet::new();
         let active_bodies = Vec::new();
         let colliders_w_parent = Vec::new();
         let constraints = Slab::new();
         let forces = Slab::new();
-        let mut cworld = ColliderWorld::new(bv_margin);
+        let cworld = ColliderWorld::new(bv_margin);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
@@ -73,7 +63,6 @@ impl<N: Real> World<N> {
             solver,
             activation_manager,
             prediction,
-            angular_prediction,
             gravity,
             constraints,
             forces,
@@ -232,7 +221,8 @@ impl<N: Real> World<N> {
             f.apply(params, bodies)
         });
 
-        let (gravity, params, cworld) = (&self.gravity, &self.params, &mut self.cworld);
+        let gravity = &self.gravity;
+        let params = &self.params;
         self.bodies
             .bodies_mut().for_each(|b| {
             b.update_dynamics(gravity, params);

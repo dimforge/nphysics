@@ -1,19 +1,16 @@
 use std::ops::Range;
-use slab::Slab;
-use std::iter;
 
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
-use crate::joint::{Joint, FreeJoint};
+use crate::joint::Joint;
 use crate::math::{
-    AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix, SpatialVector,
+    AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
     Vector, Velocity, DIM, Translation
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink,
-    MultibodyLinkVec, Body, BodyPart, BodyHandle, RigidBody, Ground,
-    ColliderDesc, BodyDesc
+    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc
 };
 use crate::solver::{
     ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator, ForceDirection,
@@ -75,14 +72,6 @@ impl<N: Real> Multibody<N> {
         }
     }
 
-    pub(crate) fn rbs(&self) -> &MultibodyLinkVec<N> {
-        &self.rbs
-    }
-
-    pub(crate) fn rbs_mut(&mut self) -> &mut MultibodyLinkVec<N> {
-        &mut self.rbs
-    }
-
     /// Reference to the multibody link with the given handle.
     ///
     /// Return `None` if the given handle does not identifies a multibody link part of `self`.
@@ -116,12 +105,6 @@ impl<N: Real> Multibody<N> {
     #[inline]
     pub fn generalized_velocity_slice_mut(&mut self) -> &mut [N] {
         &mut self.velocities
-    }
-
-    /// Mutable informations regarding activation and deactivation (sleeping) of this multibody.
-    #[inline]
-    fn activation_status_mut(&mut self) -> &mut ActivationStatus<N> {
-        &mut self.activation
     }
 
     /// The vector of damping applied to this multibody.
@@ -197,12 +180,11 @@ impl<N: Real> Multibody<N> {
             local_to_world = local_to_parent;
         }
 
-        let mut rb = MultibodyLink::new(
+        let rb = MultibodyLink::new(
             internal_id,
             assembly_id,
             impulse_id,
             self.handle,
-            parent,
             parent_internal_id,
             dof,
             parent_shift,
@@ -228,40 +210,6 @@ impl<N: Real> Multibody<N> {
 
         let len = self.impulses.len();
         self.impulses.resize(len + nimpulses, N::zero());
-    }
-
-    fn take_link(
-        &mut self,
-        mut link: MultibodyLink<N>,
-        vels: &[N],
-        damping: &[N],
-    ) -> usize {
-        let ndofs = link.dof.ndofs();
-        let nimpulses = link.dof.nimpulses();
-        let assembly_id = self.velocities.len();
-        let impulse_id = self.impulses.len();
-        let internal_id = self.rbs.len();
-
-        self.ndofs += ndofs;
-        self.grow_buffers(ndofs, nimpulses);
-        self.velocities[assembly_id..].copy_from_slice(vels);
-        self.damping[assembly_id..].copy_from_slice(damping);
-
-        link.assembly_id = assembly_id;
-        link.impulse_id = impulse_id;
-        link.is_leaf = true;
-
-        if !link.parent.is_ground() {
-            assert!(
-                link.parent_internal_id < self.rbs.len(),
-                "Internal error: invalid parent."
-            );
-            self.rbs[link.parent_internal_id].is_leaf = false;
-        }
-
-        self.rbs.push(link);
-
-        internal_id
     }
 
     /// Computes the constant terms of the dynamics.
@@ -450,6 +398,7 @@ impl<N: Real> Multibody<N> {
             let rb = &self.rbs[i];
             let body_jacobian = &self.body_jacobians[i];
 
+            #[allow(unused_mut)] // mut is needed for 3D but not for 2D.
             let mut augmented_inertia = rb.inertia;
 
             #[cfg(feature = "dim3")]
@@ -714,7 +663,7 @@ impl<N: Real> Multibody<N> {
 
             if link.joint().num_position_constraints() != 0 {
                 let generator =
-                    MultibodyJointLimitsNonlinearConstraintGenerator::new(link.part_handle());
+                    MultibodyJointLimitsNonlinearConstraintGenerator::new();
                 constraints.position.multibody_limits.push(generator)
             }
         }
@@ -992,16 +941,16 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {
         // FIXME: solve joint limit/motor constraints here directly?
         // (instead of having a special case by returning the set of constraints to the solver).
     }
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, _params: &IntegrationParameters<N>) {}
 }
 
 

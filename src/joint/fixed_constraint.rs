@@ -2,7 +2,7 @@ use na::{DVector, Real};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
-use crate::math::{AngularVector, Isometry, Rotation, Point, Vector, DIM, SPATIAL_DIM};
+use crate::math::{AngularVector, Rotation, Point, Vector, DIM, SPATIAL_DIM};
 use crate::object::{BodyPartHandle, BodySet};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,

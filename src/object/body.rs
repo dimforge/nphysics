@@ -3,13 +3,11 @@
 use downcast::Any;
 
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
-use either::Either;
 use ncollide::shape::DeformationsType;
 
 use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyHandle, ColliderAnchor, ColliderHandle};
+use crate::object::{BodyPartHandle, BodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::world::ColliderWorld;
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -291,7 +289,7 @@ pub trait BodyPart<N: Real>: Any + Send + Sync {
     fn inertia(&self) -> Inertia<N>;
 
     /// Add the given inertia to the local inertia of this body part.
-    fn add_local_inertia_and_com(&mut self, com: Point<N>, inertia: Inertia<N>)
+    fn add_local_inertia_and_com(&mut self, _com: Point<N>, _inertia: Inertia<N>)
     {} // FIXME: don't auto-impl.
 
     /// The local-space inertia of this body part.

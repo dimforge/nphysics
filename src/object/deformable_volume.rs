@@ -5,12 +5,10 @@ use std::sync::Arc;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix6x3, Matrix3x6, Matrix3x4, DMatrix, Isometry3,
-         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, VectorSliceMut2,
-         Rotation3, Unit, VectorSliceMut3, Translation3};
+use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, DMatrix, Isometry3,
+         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3};
 use ncollide::utils::{self, DeterministicState};
-use ncollide::shape::{TriMesh, DeformationsType, TetrahedronPointLocation, Tetrahedron, ShapeHandle};
-use ncollide::query::PointQueryWithLocation;
+use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyDesc,
                     ActivationStatus, FiniteElementIndices, DeformableColliderDesc};
@@ -188,7 +186,6 @@ impl<N: Real> DeformableVolume<N> {
         let _2: N = na::convert(2.0);
         let _6: N = na::convert(6.0);
         let dt = params.dt;
-        let dt2 = params.dt * params.dt;
         let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
 
         // External forces.
@@ -205,7 +202,7 @@ impl<N: Real> DeformableVolume<N> {
             }
         }
 
-        /// Internal forces and stiffness.
+        // Internal forces and stiffness.
         let d0 = (self.young_modulus * (_1 - self.poisson_ratio)) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
         let d1 = (self.young_modulus * self.poisson_ratio) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
         let d2 = (self.young_modulus * (_1 - _2 * self.poisson_ratio)) / (_2 * (_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
@@ -406,7 +403,7 @@ impl<N: Real> DeformableVolume<N> {
         let mut idx_remap: Vec<usize> = iter::repeat(INVALID).take(self.positions.len() / 3).collect();
         let mut vertices = Vec::new();
 
-        for (idx, part_id) in &mut indices {
+        for (idx, _) in &mut indices {
             for i in 0..3 {
                 let idx_i = &mut idx[i];
                 if idx_remap[*idx_i / 3] == INVALID {
@@ -533,8 +530,6 @@ impl<N: Real> DeformableVolume<N> {
                     let _5 = _0 + shift(ny, nz, 0, 1, 1);
                     let _6 = _0 + shift(ny, nz, 1, 1, 1);
                     let _7 = _0 + shift(ny, nz, 1, 1, 0);
-
-                    let ifirst = indices.len();
 
                     if (i % 2) == 0 && ((j % 2) == (k % 2)) ||
                         (i % 2) == 1 && ((j % 2) != (k % 2)) {
@@ -738,7 +733,7 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     fn fill_constraint_geometry(
         &self,
         part: &BodyPart<N>,
-        ndofs: usize, // FIXME: keep this parameter?
+        _: usize, // FIXME: keep this parameter?
         center: &Point3<N>,
         force_dir: &ForceDirection<N>,
         j_id: usize,
@@ -775,13 +770,13 @@ impl<N: Real> Body<N> for DeformableVolume<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 }
 
 
@@ -810,7 +805,7 @@ impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
         Inertia::new(self.volume * self.density, Matrix3::identity())
     }
 
-    fn apply_force(&mut self, force: &Force<N>) {
+    fn apply_force(&mut self, _force: &Force<N>) {
         unimplemented!()
     }
 }

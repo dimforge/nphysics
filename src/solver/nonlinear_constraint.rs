@@ -133,28 +133,26 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
 }
 
 /// A non-linear position constraint generator to enforce multibody joint limits.
-pub struct MultibodyJointLimitsNonlinearConstraintGenerator {
-    link: BodyPartHandle,
-}
+pub struct MultibodyJointLimitsNonlinearConstraintGenerator;
 
 impl MultibodyJointLimitsNonlinearConstraintGenerator {
     /// Creates the constraint generator from the given multibody link.
-    pub fn new(link: BodyPartHandle) -> Self {
-        MultibodyJointLimitsNonlinearConstraintGenerator { link }
+    pub fn new() -> Self {
+        MultibodyJointLimitsNonlinearConstraintGenerator
     }
 }
 
 impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
         0
     }
 
     fn position_constraint(
         &self,
         _: &IntegrationParameters<N>,
-        i: usize,
-        bodies: &mut BodySet<N>,
-        jacobians: &mut [N],
+        _: usize,
+        _: &mut BodySet<N>,
+        _: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         None
     }
