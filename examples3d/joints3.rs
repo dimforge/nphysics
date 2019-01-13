@@ -23,7 +23,7 @@ fn main() {
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
-     * Geometries that will be re-used for several multibody links..
+     * Shape that will be re-used for several multibody links.
      */
     let rad = 0.2;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));

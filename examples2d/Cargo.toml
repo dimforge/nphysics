@@ -17,10 +17,6 @@ path = "../nphysics_testbed2d"
 path = "../build/nphysics2d"
 
 [[bin]]
-name = "balls_vee2"
-path = "./balls_vee2.rs"
-
-[[bin]]
 name = "balls2"
 path = "./balls2.rs"
 
@@ -67,10 +63,6 @@ path = "./gravity2.rs"
 [[bin]]
 name = "joints2"
 path = "./joints2.rs"
-
-[[bin]]
-name = "multibody_limits2"
-path = "./multibody_limits2.rs"
 
 [[bin]]
 name = "polyline2"

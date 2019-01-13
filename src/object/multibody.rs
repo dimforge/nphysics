@@ -986,6 +986,11 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         self.children.last_mut().unwrap()
     }
 
+    pub fn set_joint<J: Joint<N>>(&mut self, joint: J) -> &mut Self {
+        self.joint = Box::new(joint);
+        self
+    }
+
     desc_custom_setters!(
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );

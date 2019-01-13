@@ -6,12 +6,10 @@ extern crate nphysics_testbed2d;
 use na::{Isometry2, Point2, Vector2};
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics2d::joint::{FreeJoint, RevoluteJoint};
-use nphysics2d::object::{BodyPartHandle, Material};
-use nphysics2d::volumetric::Volumetric;
+use nphysics2d::object::{ColliderDesc, MultibodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -23,37 +21,18 @@ fn main() {
     /*
      * A plane for the ground
      */
-    let ground_radx = 25.0;
-    let ground_rady = 1.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        ground_radx - COLLIDER_MARGIN,
-        ground_rady - COLLIDER_MARGIN,
-    )));
+    let ground_size = 25.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
-    let ground_pos = Isometry2::new(Vector2::y() * -ground_rady, na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(-Vector2::y())
+        .build(&mut world);
 
     /*
      * Create the ragdolls
      */
-    let n = 5;
-    let shiftx = 2.0;
-    let shifty = 6.5;
-
-    for i in 0usize..n {
-        for j in 0usize..n {
-            let x = i as f32 * shiftx - n as f32 * shiftx / 2.0;
-            let y = j as f32 * shifty + 6.0;
-
-            add_ragdoll(Vector2::new(x, y), &mut world);
-        }
-    }
+    add_ragdolls(&mut world);
 
     /*
      * Run the simulation.
@@ -63,7 +42,7 @@ fn main() {
     testbed.run();
 }
 
-fn add_ragdoll(pos: Vector2<f32>, world: &mut World<f32>) {
+fn add_ragdolls(world: &mut World<f32>) {
     let body_rady = 1.2;
     let body_radx = 0.2;
     let head_rad = 0.4;
@@ -77,130 +56,69 @@ fn add_ragdoll(pos: Vector2<f32>, world: &mut World<f32>) {
     let arm_geom = ShapeHandle::new(Cuboid::new(Vector2::new(member_rad, arm_length)));
     let leg_geom = ShapeHandle::new(Cuboid::new(Vector2::new(member_rad, leg_length)));
 
-    let body_inertia = body_geom.inertia(0.3);
-    let head_inertia = head_geom.inertia(0.3);
-    let arm_inertia = arm_geom.inertia(0.3);
-    let leg_inertia = leg_geom.inertia(0.3);
-
-    let body_center_of_mass = body_geom.center_of_mass();
-    let head_center_of_mass = head_geom.center_of_mass();
-    let arm_center_of_mass = arm_geom.center_of_mass();
-    let leg_center_of_mass = leg_geom.center_of_mass();
-
-    let free = FreeJoint::new(Isometry2::new(pos, na::zero()));
+    // The position of the free joint will be modified in the
+    // final loop of this function (before we actually build the
+    // ragdoll body into the World.
+    let free = FreeJoint::new(Isometry2::new(Vector2::zeros(), na::zero()));
     let spherical = RevoluteJoint::new(na::zero());
 
     /*
      * Body.
      */
-    let body = world.add_multibody_link(
-        BodyPartHandle::ground(),
-        free,
-        na::zero(),
-        na::zero(),
-        body_inertia,
-        body_center_of_mass,
-    );
-
-    let _ = world.add_collider(
-        COLLIDER_MARGIN,
-        body_geom,
-        body,
-        Isometry2::identity(),
-        Material::default(),
-    );
+    let body_collider = ColliderDesc::new(body_geom).with_density(0.3);
+    let mut body = MultibodyDesc::new(free)
+        .with_collider(&body_collider);
 
     /*
      * Head.
      */
-    let head = world.add_multibody_link(
-        body,
-        spherical,
-        Vector2::new(0.0, body_rady + head_rad + space * 2.0),
-        na::zero(),
-        head_inertia,
-        head_center_of_mass,
-    );
-
-    let _ = world.add_collider(
-        COLLIDER_MARGIN,
-        head_geom,
-        head,
-        Isometry2::identity(),
-        Material::default(),
-    );
+    let head_collider = ColliderDesc::new(head_geom).with_density(0.3);
+    body.add_child(spherical)
+        .add_collider(&head_collider)
+        .set_parent_shift(Vector2::new(0.0, body_rady + head_rad + space * 2.0));
 
     /*
      * Arms.
      */
-    let left_arm = world.add_multibody_link(
-        body,
-        spherical,
-        Vector2::new(body_radx + 2.0 * space, body_rady),
-        Vector2::new(0.0, arm_length + space),
-        arm_inertia,
-        arm_center_of_mass,
-    );
+    let arm_collider = ColliderDesc::new(arm_geom).with_density(0.3);
+    body.add_child(spherical)
+        .add_collider(&arm_collider)
+        .set_parent_shift(Vector2::new(body_radx + 2.0 * space, body_rady))
+        .set_body_shift(Vector2::new(0.0, arm_length + space));
 
-    let right_arm = world.add_multibody_link(
-        body,
-        spherical,
-        Vector2::new(-body_radx - 2.0 * space, body_rady),
-        Vector2::new(0.0, arm_length + space),
-        arm_inertia,
-        arm_center_of_mass,
-    );
-
-    let _ = world.add_collider(
-        COLLIDER_MARGIN,
-        arm_geom.clone(),
-        left_arm,
-        Isometry2::identity(),
-        Material::default(),
-    );
-
-    let _ = world.add_collider(
-        COLLIDER_MARGIN,
-        arm_geom,
-        right_arm,
-        Isometry2::identity(),
-        Material::default(),
-    );
+    body.add_child(spherical)
+        .add_collider(&arm_collider)
+        .set_parent_shift(Vector2::new(-body_radx - 2.0 * space, body_rady))
+        .set_body_shift(Vector2::new(0.0, arm_length + space));
 
     /*
      * Legs.
      */
-    let left_leg = world.add_multibody_link(
-        body,
-        spherical,
-        Vector2::new(body_radx, -body_rady),
-        Vector2::new(0.0, leg_length + space),
-        leg_inertia,
-        leg_center_of_mass,
-    );
+    let leg_collider = ColliderDesc::new(leg_geom).with_density(0.3);
+    body.add_child(spherical)
+        .add_collider(&leg_collider)
+        .set_parent_shift(Vector2::new(body_radx, -body_rady))
+        .set_body_shift(Vector2::new(0.0, leg_length + space));
 
-    let rigth_leg = world.add_multibody_link(
-        body,
-        spherical,
-        Vector2::new(-body_radx, -body_rady),
-        Vector2::new(0.0, leg_length + space),
-        leg_inertia,
-        leg_center_of_mass,
-    );
 
-    let _ = world.add_collider(
-        COLLIDER_MARGIN,
-        leg_geom.clone(),
-        left_leg,
-        Isometry2::identity(),
-        Material::default(),
-    );
+    body.add_child(spherical)
+        .add_collider(&leg_collider)
+        .set_parent_shift(Vector2::new(-body_radx, -body_rady))
+        .set_body_shift(Vector2::new(0.0, leg_length + space));
 
-    let _ = world.add_collider(
-        COLLIDER_MARGIN,
-        leg_geom,
-        rigth_leg,
-        Isometry2::identity(),
-        Material::default(),
-    );
+
+    let n = 5;
+    let shiftx = 2.0;
+    let shifty = 6.5;
+
+    for i in 0usize..n {
+        for j in 0usize..n {
+            let x = i as f32 * shiftx - n as f32 * shiftx / 2.0;
+            let y = j as f32 * shifty + 6.0;
+
+            let free = FreeJoint::new(Isometry2::translation(x, y));
+            body.set_joint(free)
+                .build(world);
+        }
+    }
 }

@@ -27,10 +27,6 @@ name = "joints3"
 path = "./joints3.rs"
 
 [[bin]]
-name = "balls_vee3"
-path = "./balls_vee3.rs"
-
-[[bin]]
 name = "balls3"
 path = "./balls3.rs"
 
