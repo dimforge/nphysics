@@ -57,7 +57,7 @@ fn main() {
             .add_collider(&collider);
     }
 
-    let _ = multibody.build(&mut world);
+    multibody.build(&mut world);
 
     /*
      * Prismatic joint.
@@ -78,7 +78,7 @@ fn main() {
             .add_collider(&collider);
     }
 
-    let _ = multibody.build(&mut world);
+    multibody.build(&mut world);
 
     /*
      * Cartesian joint.
@@ -97,7 +97,7 @@ fn main() {
 
             let rect = CartesianJoint::new(Vector2::new(x, y));
 
-            let _ = MultibodyDesc::new(rect)
+            MultibodyDesc::new(rect)
                 .with_parent_shift(shift)
                 .with_collider(&collider)
                 .build(&mut world);

@@ -151,7 +151,7 @@ fn main() {
     let parent_pos = Vector3::new(0.0, 5.0, -5.0);
     let child_pos = Vector3::new(0.0, 5.0, -6.0);
 
-    let _ = ColliderDesc::new(cuboid)
+    ColliderDesc::new(cuboid)
         .set_translation(parent_pos)
         .build(&mut world);
 

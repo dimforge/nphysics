@@ -55,7 +55,7 @@ fn main() {
                 let z = k as f32 * shift - centerz;
 
                 // Build the rigid body and its collider.
-                let _ = rb_desc
+                rb_desc
                     .set_translation(Vector3::new(x, y, z))
                     .build(&mut world);
             }
@@ -99,7 +99,7 @@ fn main() {
     joint.set_max_angular_motor_torque(1.0);
     joint.enable_angular_motor();
 
-    let _ = MultibodyDesc::new(joint)
+    MultibodyDesc::new(joint)
         .with_body_shift(Vector3::z() * 2.0)
         .with_parent_shift(Vector3::new(0.0, 3.0, -4.0))
         .with_collider(&small_cuboid_collider_desc)

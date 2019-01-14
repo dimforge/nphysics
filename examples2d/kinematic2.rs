@@ -51,7 +51,7 @@ fn main() {
             let y = j as f32 * shift + centery;
 
             // Build the rigid body and its collider.
-            let _ = rb_desc
+            rb_desc
                 .set_translation(Vector2::new(x, y))
                 .build(&mut world);
         }
@@ -96,7 +96,7 @@ fn main() {
 
     let geom = ShapeHandle::new(Ball::new(2.0 * rad));
     let ball_collider_desc = ColliderDesc::new(geom).with_density(1.0);
-    let _ = MultibodyDesc::new(joint)
+    MultibodyDesc::new(joint)
         .with_body_shift(Vector2::x() * 2.0)
         .with_parent_shift(Vector2::new(-4.0, 3.0))
         .with_collider(&ball_collider_desc)

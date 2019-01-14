@@ -46,7 +46,7 @@ fn main() {
     }
 
     let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
-    let _ = ColliderDesc::new(ShapeHandle::new(trimesh))
+    ColliderDesc::new(ShapeHandle::new(trimesh))
         .build(&mut world);
 
     /*
@@ -75,7 +75,7 @@ fn main() {
                 let z = k as f32 * shift - centerz;
 
                 // Build the rigid body and its collider.
-                let _ = rb_desc
+                rb_desc
                     .set_translation(Vector3::new(x, y, z))
                     .build(&mut world);
             }

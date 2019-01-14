@@ -25,7 +25,7 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
-    let _ = ColliderDesc::new(ground_shape)
+    ColliderDesc::new(ground_shape)
         .with_translation(-Vector2::y() * 10.0)
         .build(&mut world);
 

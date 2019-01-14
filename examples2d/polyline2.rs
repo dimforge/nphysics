@@ -43,7 +43,7 @@ fn main() {
     }
 
     let polyline = ShapeHandle::new(Polyline::new(vertices, None));
-    let _ = ColliderDesc::new(polyline).build(&mut world);
+    ColliderDesc::new(polyline).build(&mut world);
 
     /*
      * Create the boxes
@@ -70,7 +70,7 @@ fn main() {
             let y = fi * shift + 0.5;
 
             // Create the rigid body and its collider.
-            let _ = rb_desc
+            rb_desc
                 .set_translation(Vector2::new(x, y))
                 .build(&mut world);
         }

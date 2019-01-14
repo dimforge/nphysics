@@ -50,7 +50,7 @@ fn main() {
             .add_collider(&collider);
     }
 
-    let _ = multibody.build(&mut world);
+    multibody.build(&mut world);
 
     /*
      * Prismatic joint.
@@ -71,7 +71,7 @@ fn main() {
             .add_collider(&collider);
     }
 
-    let _ = multibody.build(&mut world);
+    multibody.build(&mut world);
 
     /*
      * Ball joint.
@@ -96,7 +96,7 @@ fn main() {
             .add_collider(&collider);
     }
 
-    let _ = multibody.build(&mut world);
+    multibody.build(&mut world);
 
     /*
      * Universal joint.
@@ -114,7 +114,7 @@ fn main() {
     let mut multibody = MultibodyDesc::new(fixed)
         .with_parent_shift(parent_shift)
         .with_collider(&collider);
-    let _ = multibody.add_child(uni)
+    multibody.add_child(uni)
         .set_body_shift(body_shift)
         .add_collider(&collider);
 
@@ -131,7 +131,7 @@ fn main() {
     hel.set_desired_angular_motor_velocity(4.0);
 
     let parent_shift = Vector3::new(0.0, -2.0, 10.0);
-    let _ = MultibodyDesc::new(hel)
+    MultibodyDesc::new(hel)
         .with_parent_shift(parent_shift)
         .with_collider(&collider)
         .build(&mut world);
@@ -157,7 +157,7 @@ fn main() {
             planar.enable_max_offset_1(width / 2.0);
             planar.enable_min_offset_2(-5.0);
 
-            let _ = MultibodyDesc::new(planar)
+            MultibodyDesc::new(planar)
                 .with_parent_shift(shift)
                 .with_collider(&collider)
                 .build(&mut world);
@@ -186,7 +186,7 @@ fn main() {
             rect.enable_max_offset_1(width / 2.0);
             rect.enable_min_offset_2(-5.0);
 
-            let _ = MultibodyDesc::new(rect)
+            MultibodyDesc::new(rect)
                 .with_parent_shift(shift)
                 .with_collider(&collider)
                 .build(&mut world);
@@ -205,7 +205,7 @@ fn main() {
     let mut pin_slot = PinSlotJoint::new(axis_v, axis_w, -10.0, 0.0);
     pin_slot.set_desired_linear_motor_velocity(3.0);
 
-    let _ = MultibodyDesc::new(pin_slot)
+    MultibodyDesc::new(pin_slot)
         .with_parent_shift(shift)
         .with_collider(&collider)
         .build(&mut world);

@@ -25,11 +25,11 @@ fn main() {
 
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
-    let _ = obstacle_desc
+    obstacle_desc
         .set_translation(Vector2::x() * 4.0)
         .build(&mut world);
 
-    let _ = obstacle_desc
+    obstacle_desc
         .set_translation(Vector2::x() * -4.0)
         .build(&mut world);
 
@@ -68,7 +68,7 @@ fn main() {
             let y = fi * 2.0 * (rad + collider_desc.margin()) + rad + 2.0;
 
             // Build the rigid body and its collider.
-            let _ = rb_desc
+            rb_desc
                 .set_translation(Vector2::new(x, y))
                 .build(&mut world);
         }

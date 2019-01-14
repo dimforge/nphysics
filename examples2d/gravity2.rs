@@ -35,11 +35,11 @@ fn main() {
 
     let mut ground_desc = ColliderDesc::new(ground_shape);
 
-    let _ = ground_desc
+    ground_desc
         .set_translation(-Vector2::y() * 2.0)
         .build(&mut world);
 
-    let _ = ground_desc
+    ground_desc
         .set_translation(Vector2::y() * 3.0)
         .build(&mut world);
 

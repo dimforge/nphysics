@@ -22,7 +22,7 @@ fn main() {
     let ground_size = 50.0;
     let ground = ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    let _ = ColliderDesc::new(ground)
+    ColliderDesc::new(ground)
         .with_translation(Vector3::y() * (-ground_size - 1.0))
         .build(&mut world);
 
@@ -32,18 +32,18 @@ fn main() {
 
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
-    let _ = obstacle_desc
+    obstacle_desc
         .set_translation(Vector3::new(0.4, -0.01, 0.0))
         .build(&mut world);
 
-    let _ = obstacle_desc
+    obstacle_desc
         .set_translation(Vector3::new(-0.4, -0.01, 0.0))
         .build(&mut world);
 
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let _ = FEMVolumeDesc::cube(50, 1, 1)
+    FEMVolumeDesc::cube(50, 2, 2)
         .with_scale(Vector3::new(1.0, 0.1, 0.1))
         .with_translation(Vector3::y() * 0.1)
         .with_young_modulus(1.0e3)

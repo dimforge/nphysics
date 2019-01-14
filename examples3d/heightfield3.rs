@@ -41,7 +41,7 @@ fn main() {
     statuses.column_mut(10).apply(|status| status | HeightFieldCellStatus::LEFT_TRIANGLE_REMOVED);
     statuses.row_mut(5).apply(|status| status | HeightFieldCellStatus::CELL_REMOVED);
 
-    let _ = ColliderDesc::new(ShapeHandle::new(heightfield))
+    ColliderDesc::new(ShapeHandle::new(heightfield))
         .build(&mut world);
 
     /*
@@ -70,7 +70,7 @@ fn main() {
                 let z = k as f32 * shift - centerz;
 
                 // Build the rigid body and its collider.
-                let _ = rb_desc
+                rb_desc
                     .set_translation(Vector3::new(x, y, z))
                     .build(&mut world);
             }

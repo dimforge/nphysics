@@ -28,12 +28,12 @@ fn main() {
      */
     let plane = ShapeHandle::new(Plane::new(Vector3::y_axis()));
 
-    let _ = ColliderDesc::new(plane)
+    ColliderDesc::new(plane)
         .build(&mut world);
 
     let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
 
-    let _ = ColliderDesc::new(plane)
+    ColliderDesc::new(plane)
         .with_translation(Vector3::y() * 20.0)
         .build(&mut world);
 

@@ -52,7 +52,7 @@ fn main() {
             let y = j as f32 * shift + centery;
 
             // Build the rigid body and its collider.
-            let _ = rb_desc
+            rb_desc
                 .set_translation(Vector3::new(x, y, 0.0))
                 .build(&mut world);
         }
