@@ -44,7 +44,6 @@ fn main() {
 
     let compound = Compound::new(cross_geoms);
     let cross = ShapeHandle::new(compound);
-
     let collider_desc = ColliderDesc::new(cross)
         .with_density(1.0);
 

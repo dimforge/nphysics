@@ -240,7 +240,7 @@ impl State for Testbed {
                     let all_groups = &CollisionGroups::new();
                     for b in self
                         .world
-                        .collision_world()
+                        .collider_world()
                         .interferences_with_point(&self.cursor_pos, all_groups)
                         {
                             if !b.query_type().is_proximity_query() && !b.body().is_ground() {
@@ -497,7 +497,7 @@ fn draw_collisions(
     existing: &mut HashMap<GenerationalId, bool>,
     running: bool,
 ) {
-    for (_, _, _, manifold) in world.collision_world().contact_pairs() {
+    for (_, _, _, manifold) in world.collider_world().contact_pairs() {
         for c in manifold.contacts() {
             if existing.contains_key(&c.id) {
                 if running {

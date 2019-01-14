@@ -3,7 +3,7 @@
 use na::{DVectorSliceMut, Real};
 
 use crate::joint::{Joint, JointMotor};
-use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body, BodyPart};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body};
 use crate::solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
              IntegrationParameters, UnilateralGroundConstraint};
 

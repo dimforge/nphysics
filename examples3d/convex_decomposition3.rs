@@ -11,14 +11,11 @@ use kiss3d::loader::obj;
 use ncollide3d::shape::{Compound, ConvexHull, Cuboid, ShapeHandle};
 use ncollide3d::procedural::TriMesh;
 use ncollide3d::transformation;
-use ncollide3d::bounding_volume::{BoundingVolume, AABB};
-use ncollide3d::bounding_volume;
+use ncollide3d::bounding_volume::{self, BoundingVolume, AABB};
 use nphysics3d::world::World;
-use nphysics3d::volumetric::Volumetric;
-use nphysics3d::object::{BodyPartHandle, Material};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics_testbed3d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -32,16 +29,11 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyPartHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .with_translation(Vector3::y() * -ground_size)
+        .build(&mut world);
 
     /*
      * Create the convex decompositions.
@@ -67,12 +59,10 @@ fn main() {
                 .collect();
 
             // Compute the size of the model, to scale it and have similar size for everything.
-            let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, &meshes[0].coords[..]);
-            let mut aabb = AABB::new(mins, maxs);
+            let mut aabb = bounding_volume::point_cloud_aabb(&deltas, &meshes[0].coords[..]);
 
             for mesh in meshes[1..].iter() {
-                let (mins, maxs) = bounding_volume::point_cloud_aabb(&deltas, &mesh.coords[..]);
-                aabb.merge(&AABB::new(mins, maxs));
+                aabb.merge(&bounding_volume::point_cloud_aabb(&deltas, &mesh.coords[..]));
             }
 
             let center = aabb.center().coords;
@@ -101,26 +91,19 @@ fn main() {
 
             let compound = Compound::new(geom_data);
             let geom = ShapeHandle::new(compound);
-            let inertia = geom.inertia(1.0);
-            let center_of_mass = geom.center_of_mass();
+            let collider_desc = ColliderDesc::new(geom)
+                .with_density(1.0);
+            let mut rb_desc = RigidBodyDesc::default()
+                .with_collider(&collider_desc);
 
             for k in 1..num_duplications + 1 {
                 let i = igeom % width;
                 let j = igeom / width;
-                let shift = Vector3::new(i as f32, k as f32, j as f32) * shift;
-                let pos = Isometry3::new(shift, na::zero());
-                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
+                let pos = Vector3::new(i as f32, k as f32, j as f32) * shift;
 
-                /*
-                 * Create the collider.
-                 */
-                world.add_collider(
-                    COLLIDER_MARGIN,
-                    geom.clone(),
-                    handle,
-                    Isometry3::identity(),
-                    Material::default(),
-                );
+                rb_desc
+                    .set_translation(pos)
+                    .build(&mut world);
             }
         }
     }

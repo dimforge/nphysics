@@ -310,7 +310,7 @@ impl<N: Real> ColliderDesc<N> {
     }
 
     fn do_build<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
-        let (bodies, cworld) = world.bodies_mut_and_collision_world_mut();
+        let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
         let body = bodies.body_mut(parent.0)?;
         let ndofs = body.status_dependent_ndofs();
         let part = body.part_mut(parent.1)?;
@@ -419,7 +419,7 @@ impl<N: Real> DeformableColliderDesc<N> {
     );
 
     pub fn build_with_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
-        let (bodies, cworld) = world.bodies_mut_and_collision_world_mut();
+        let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
         let parent = bodies.body(parent)?;
         Some(self.build_with_infos(parent, cworld))
     }

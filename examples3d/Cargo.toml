@@ -50,9 +50,9 @@ path = "./compound3.rs"
 name = "constraints3"
 path = "./constraints3.rs"
 
-# [[bin]]
-# name = "convex_decomposition3"
-# path = "./convex_decomposition3.rs"
+[[bin]]
+name = "convex_decomposition3"
+path = "./convex_decomposition3.rs"
 
 [[bin]]
 name = "convex3"
@@ -71,20 +71,16 @@ name = "fixed_bug_long_thin_box_one_shot_manifold3"
 path = "./fixed_bug_long_thin_box_one_shot_manifold3.rs"
 
 [[bin]]
+name = "fixed_bug_tree_like_multibody3"
+path = "./fixed_bug_tree_like_multibody3.rs"
+
+[[bin]]
 name = "gravity3"
 path = "./gravity3.rs"
 
 [[bin]]
 name = "known_bug_excentric_convex3"
 path = "./known_bug_excentric_convex3.rs"
-
-[[bin]]
-name = "multibody_limits3"
-path = "./multibody_limits3.rs"
-
-# [[bin]]
-# name = "multibody3"
-# path = "./multibody3.rs"
 
 [[bin]]
 name = "pyramid3"
@@ -129,8 +125,4 @@ path = "./mass_constraint_system3.rs"
 [[bin]]
 name = "kinematic_deformable3"
 path = "./kinematic_deformable3.rs"
-
-[[bin]]
-name = "fixed_bug_tree_like_multibody3"
-path = "./fixed_bug_tree_like_multibody3.rs"
 

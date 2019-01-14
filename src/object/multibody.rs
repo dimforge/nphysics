@@ -72,6 +72,16 @@ impl<N: Real> Multibody<N> {
         }
     }
 
+    #[inline]
+    pub fn root(&self) -> &MultibodyLink<N> {
+        &self.rbs[0]
+    }
+
+    #[inline]
+    pub fn root_mut(&mut self) -> &mut MultibodyLink<N> {
+        &mut self.rbs[0]
+    }
+
     /// Reference to the multibody link with the given handle.
     ///
     /// Return `None` if the given handle does not identifies a multibody link part of `self`.
@@ -1009,9 +1019,14 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
     }
 
     pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut MultibodyLink<N>> {
-        let (bodies, cworld) = world.bodies_mut_and_collision_world_mut();
-        let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>().ok()?;
-        Some(self.do_build(mb, cworld, parent))
+        if parent.is_ground() {
+            Some(self.build(world).root_mut())
+        } else {
+            let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
+            // FIXME: keep the Err so the user gets a more meaningful error?
+            let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>().ok()?;
+            Some(self.do_build(mb, cworld, parent))
+        }
     }
 
     fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N>, parent: BodyPartHandle) -> &'m mut MultibodyLink<N> {

@@ -108,6 +108,11 @@ impl<N: Real> MultibodyLink<N> {
     pub fn joint_mut(&mut self) -> &mut Joint<N> {
         &mut *self.dof
     }
+
+    #[inline]
+    pub fn part_handle(&self) -> BodyPartHandle {
+        BodyPartHandle(self.multibody_handle, self.internal_id)
+    }
 }
 
 

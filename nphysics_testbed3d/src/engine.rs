@@ -175,13 +175,13 @@ impl GraphicsManager {
     pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
         let collider = world.collider(id).unwrap();
 
-        let color;
-        if let Some(c) = self.c2color.get(&id).cloned() {
-            color = c;
-            self.set_body_color(collider.body(), color);
+        let color = if let Some(c) = self.c2color.get(&id).cloned() {
+            c
+        } else if let Some(c) = self.b2color.get(&collider.body()).cloned() {
+            c
         } else {
-            color = self.alloc_color(collider.body())
-        }
+            self.alloc_color(collider.body())
+        };
 
         self.add_with_color(window, id, world, color)
     }
@@ -400,7 +400,7 @@ impl GraphicsManager {
 
         for ray in &self.rays {
             let groups = CollisionGroups::new();
-            let inter = world.collision_world().interferences_with_ray(ray, &groups);
+            let inter = world.collider_world().interferences_with_ray(ray, &groups);
             let hit = inter.fold(1000.0, |t, hit| hit.1.toi.min(t));
             let p1 = ray.origin;
             let p2 = ray.origin + ray.dir * hit;

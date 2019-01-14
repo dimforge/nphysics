@@ -559,19 +559,19 @@ impl<N: Real> World<N> {
     }
 
     /// Reference to the underlying collision world.
-    pub fn collision_world(&self) -> &ColliderWorld<N> {
+    pub fn collider_world(&self) -> &ColliderWorld<N> {
         &self.cworld
     }
 
     /// Mutable reference to the underlying collision world.
-    pub fn collision_world_mut(&mut self) -> &mut ColliderWorld<N> {
+    pub fn collider_world_mut(&mut self) -> &mut ColliderWorld<N> {
         &mut self.cworld
     }
 
 
     /// Mutable reference to the underlying collision world.
     #[doc(hidden)]
-    pub fn bodies_mut_and_collision_world_mut(&mut self) -> (&mut BodySet<N>, &mut ColliderWorld<N>) {
+    pub fn bodies_mut_and_collider_world_mut(&mut self) -> (&mut BodySet<N>, &mut ColliderWorld<N>) {
         (&mut self.bodies, &mut self.cworld)
     }
 
