@@ -124,7 +124,7 @@ impl<N: Real> Material<N> for BasicMaterial<N> {
 
     fn surface_velocity(&self, context: MaterialContext<N>) -> Vector<N> {
         if let Some(ref vel) = self.surface_velocity {
-            context.body_part.position() * vel
+            context.collider.position() * vel
         } else {
             Vector::zeros()
         }

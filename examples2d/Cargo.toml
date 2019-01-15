@@ -21,6 +21,10 @@ name = "balls2"
 path = "./balls2.rs"
 
 [[bin]]
+name = "conveyor_belt2"
+path = "./conveyor_belt2.rs"
+
+[[bin]]
 name = "kinematic2"
 path = "./kinematic2.rs"
 
