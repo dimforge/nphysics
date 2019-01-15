@@ -73,7 +73,7 @@ downcast!(<N> Material<N> where N: Real);
 /// Description of the state of surface of a solid.
 ///
 /// Strictly speaking, the coefficient provided here only exist
-/// when considering a pair of touching surfaces. In practive, nphysics
+/// when considering a pair of touching surfaces. In practice, nphysics
 /// will average the coefficient of the two surfaces in contact in order
 /// to deduce the restitution/friction coefficient.
 #[derive(Copy, Clone, Debug)]
@@ -85,7 +85,7 @@ pub struct BasicMaterial<N: Real> {
     /// Friction coefficient of the surface.
     pub friction: N,
     /// The fictitious velocity at the surface of this material.
-    pub surface_velocity: Vector<N>,
+    pub surface_velocity: Option<Vector<N>>,
     /// The way restitution coefficients are combined if no match
     /// was found in the material lookup tables.
     pub restitution_combine_mode: MaterialCombineMode,
@@ -102,7 +102,7 @@ impl<N: Real> BasicMaterial<N> {
             id: None,
             restitution,
             friction,
-            surface_velocity: Vector::zeros(),
+            surface_velocity: None,
             restitution_combine_mode: MaterialCombineMode::Average,
             friction_combine_mode: MaterialCombineMode::Average
         }
@@ -123,7 +123,11 @@ impl<N: Real> Material<N> for BasicMaterial<N> {
     }
 
     fn surface_velocity(&self, context: MaterialContext<N>) -> Vector<N> {
-        self.surface_velocity
+        if let Some(ref vel) = self.surface_velocity {
+            context.body_part.position() * vel
+        } else {
+            Vector::zeros()
+        }
     }
 }
 

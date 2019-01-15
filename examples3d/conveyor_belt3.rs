@@ -4,9 +4,9 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use std::f32;
-use na::{Isometry3, Point3, Vector3};
+use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, BodyStatus, BasicMaterial, MaterialHandle};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc, BasicMaterial, MaterialHandle};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
@@ -30,56 +30,56 @@ fn main() {
 
     let materials =
         [
-            BasicMaterial { surface_velocity: Vector3::new(-1.0, 0.0, 0.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new( 1.0, 0.0, 0.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new( 0.0, 0.0, -1.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new( 0.0, 0.0, 1.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new( 1.0, 0.0, -2.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new(-2.0, 0.0, -1.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new(-1.0, 0.0, 2.0), ..BasicMaterial::default() },
-            BasicMaterial { surface_velocity: Vector3::new( 2.0, 0.0, 1.0), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new(-1.0, 0.0, 0.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new( 1.0, 0.0, 0.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new( 0.0, 0.0, -1.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new( 0.0, 0.0, 1.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new( 1.0, 0.0, -2.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new(-2.0, 0.0, -1.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new(-1.0, 0.0, 2.0)), ..BasicMaterial::default() },
+            BasicMaterial { surface_velocity: Some(Vector3::new( 2.0, 0.0, 1.0)), ..BasicMaterial::default() },
         ];
 
         ColliderDesc::new(conveyor_lane_shape.clone())
             .with_material(MaterialHandle::new(materials[0]))
-            .with_translation(Vector3::new(0.0, -1.0, -conveyor_shift))
+            .with_translation(Vector3::new(0.0, -0.2, -conveyor_shift))
             .build(&mut world);
 
         ColliderDesc::new(conveyor_lane_shape.clone())
             .with_material(MaterialHandle::new(materials[1]))
-            .with_translation(Vector3::new(0.0, -1.0, conveyor_shift))
+            .with_translation(Vector3::new(0.0, -0.2, conveyor_shift))
             .build(&mut world);
 
         ColliderDesc::new(conveyor_lane_shape.clone())
             .with_material(MaterialHandle::new(materials[2]))
-            .with_translation(Vector3::new(conveyor_shift, -1.0, 0.0))
+            .with_translation(Vector3::new(conveyor_shift, -0.2, 0.0))
             .with_rotation(Vector3::y() * f32::consts::FRAC_PI_2)
             .build(&mut world);
 
         ColliderDesc::new(conveyor_lane_shape.clone())
             .with_material(MaterialHandle::new(materials[3]))
-            .with_translation(Vector3::new(-conveyor_shift, -1.0, 0.0))
+            .with_translation(Vector3::new(-conveyor_shift, -0.2, 0.0))
             .with_rotation(Vector3::y() * f32::consts::FRAC_PI_2)
             .build(&mut world);
 
         ColliderDesc::new(conveyor_corner_shape.clone())
             .with_material(MaterialHandle::new(materials[4]))
-            .with_translation(Vector3::new(conveyor_shift, -1.0, conveyor_shift))
+            .with_translation(Vector3::new(conveyor_shift, -0.2, conveyor_shift))
             .build(&mut world);
 
         ColliderDesc::new(conveyor_corner_shape.clone())
             .with_material(MaterialHandle::new(materials[5]))
-            .with_translation(Vector3::new(conveyor_shift, -1.0, -conveyor_shift))
+            .with_translation(Vector3::new(conveyor_shift, -0.2, -conveyor_shift))
             .build(&mut world);
 
         ColliderDesc::new(conveyor_corner_shape.clone())
             .with_material(MaterialHandle::new(materials[6]))
-            .with_translation(Vector3::new(-conveyor_shift, -1.0, -conveyor_shift))
+            .with_translation(Vector3::new(-conveyor_shift, -0.2, -conveyor_shift))
             .build(&mut world);
 
         ColliderDesc::new(conveyor_corner_shape.clone())
             .with_material(MaterialHandle::new(materials[7]))
-            .with_translation(Vector3::new(-conveyor_shift, -1.0, conveyor_shift))
+            .with_translation(Vector3::new(-conveyor_shift, -0.2, conveyor_shift))
             .build(&mut world);
 
     /*
@@ -95,11 +95,11 @@ fn main() {
     let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
-    let shift = (rad + collider_desc.margin()) * 2.0 + 0.002;
+    let shift = (rad + collider_desc.margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0 + conveyor_shift;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-    let height = 3.0;
+    let height = 0.0;
 
     for i in 0usize..num {
         for j in 0usize..num {
