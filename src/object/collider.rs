@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::f64;
 use std::mem;
+use std::any::Any;
 use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, GeometricQueryType, CollisionGroups};
 use ncollide::shape::{ShapeHandle, Shape};
@@ -54,6 +55,7 @@ pub struct ColliderData<N: Real> {
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
     material: MaterialHandle<N>,
+    user_data: Option<Box<Any + Send + Sync>>,
 }
 
 impl<N: Real> ColliderData<N> {
@@ -69,8 +71,11 @@ impl<N: Real> ColliderData<N> {
             anchor,
             body_status_dependent_ndofs,
             material,
+            user_data: None
         }
     }
+
+    user_data_accessors!();
 
     /// The collision margin surrounding this collider.
     #[inline]
@@ -158,6 +163,26 @@ impl<N: Real> Collider<N> {
     /*
      * Methods of ColliderData.
      */
+    #[inline]
+    pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
+        self.0.data().user_data.as_ref().map(|d| &**d)
+    }
+
+    #[inline]
+    pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
+        self.0.data_mut().user_data.as_mut().map(|d| &mut **d)
+    }
+
+    #[inline]
+    pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
+        std::mem::replace(&mut self.0.data_mut().user_data, data)
+    }
+
+    #[inline]
+    pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
+        self.0.data_mut().user_data.take()
+    }
+
     /// The collision margin surrounding this collider.
     #[inline]
     pub fn margin(&self) -> N {

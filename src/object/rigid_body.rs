@@ -1,3 +1,4 @@
+use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
@@ -31,6 +32,7 @@ pub struct RigidBody<N: Real> {
     status: BodyStatus,
     activation: ActivationStatus<N>,
     companion_id: usize,
+    user_data: Option<Box<Any + Send + Sync>>
 }
 
 impl<N: Real> RigidBody<N> {
@@ -54,8 +56,11 @@ impl<N: Real> RigidBody<N> {
             status: BodyStatus::Dynamic,
             activation: ActivationStatus::new_active(),
             companion_id: 0,
+            user_data: None
         }
     }
+
+    user_data_accessors!();
 
     #[inline]
     pub fn handle(&self) -> BodyHandle {

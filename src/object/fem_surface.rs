@@ -2,6 +2,7 @@ use std::ops::AddAssign;
 use std::iter;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::any::Any;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
@@ -35,7 +36,6 @@ pub struct TriangularElement<N: Real> {
 ///
 /// The surface is described by a set of triangle elements. This
 /// implements an isoparametric approach where the interpolations are linear.
-#[derive(Clone)]
 pub struct FEMSurface<N: Real> {
     handle: BodyHandle,
     elements: Vec<TriangularElement<N>>,
@@ -62,6 +62,8 @@ pub struct FEMSurface<N: Real> {
     companion_id: usize,
     activation: ActivationStatus<N>,
     status: BodyStatus,
+
+    user_data: Option<Box<Any + Send + Sync>>,
 }
 
 impl<N: Real> FEMSurface<N> {
@@ -108,8 +110,11 @@ impl<N: Real> FEMSurface<N> {
             plasticity_creep: N::zero(),
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
+            user_data: None
         }
     }
+
+    user_data_accessors!();
 
     /// The position of this body in generalized coordinates.
     #[inline]

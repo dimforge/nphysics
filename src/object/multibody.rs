@@ -1,4 +1,5 @@
 use std::ops::Range;
+use std::any::Any;
 
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
@@ -36,6 +37,7 @@ pub struct Multibody<N: Real> {
     companion_id: usize,
     unilateral_ground_rng: Range<usize>,
     bilateral_ground_rng: Range<usize>,
+    user_data: Option<Box<Any + Send + Sync>>,
 
     /*
      * Workspaces.
@@ -69,8 +71,11 @@ impl<N: Real> Multibody<N> {
             coriolis_v: Vec::new(),
             coriolis_w: Vec::new(),
             i_coriolis_dt: Jacobian::zeros(0),
+            user_data: None
         }
     }
+
+    user_data_accessors!();
 
     #[inline]
     pub fn root(&self) -> &MultibodyLink<N> {

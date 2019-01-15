@@ -2,6 +2,7 @@ use std::ops::{AddAssign, SubAssign};
 use std::iter;
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
+use std::any::Any;
 use either::Either;
 
 use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, MatrixN, Unit};
@@ -60,7 +61,6 @@ impl<N: Real> Spring<N> {
 }
 
 /// A deformable surface using a mass-spring model with triangular elements.
-#[derive(Clone)]
 pub struct MassSpringSystem<N: Real> {
     handle: BodyHandle,
     springs: Vec<Spring<N>>,
@@ -81,6 +81,8 @@ pub struct MassSpringSystem<N: Real> {
     plasticity_threshold: N,
     plasticity_creep: N,
     plasticity_max_force: N,
+
+    user_data: Option<Box<Any + Send + Sync>>,
 }
 
 fn key(i: usize, j: usize) -> (usize, usize) {
@@ -150,6 +152,8 @@ impl<N: Real> MassSpringSystem<N> {
         }
     }
 
+    user_data_accessors!();
+
     /// Builds a mass-spring system from a polyline.
     fn from_polyline(handle: BodyHandle, polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = polyline.points().len() * DIM;
@@ -196,7 +200,8 @@ impl<N: Real> MassSpringSystem<N> {
             node_mass,
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
-            plasticity_threshold: N::zero()
+            plasticity_threshold: N::zero(),
+            user_data: None
         }
     }
 

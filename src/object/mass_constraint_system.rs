@@ -2,6 +2,7 @@ use std::ops::{AddAssign, SubAssign};
 use std::iter;
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
+use std::any::Any;
 use either::Either;
 
 use na::{self, Real, DVector, DVectorSlice, DVectorSliceMut, Unit};
@@ -70,7 +71,6 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 }
 
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
-#[derive(Clone)]
 pub struct MassConstraintSystem<N: Real> {
     handle: BodyHandle,
     constraints: Vec<LengthConstraint<N>>,
@@ -92,6 +92,8 @@ pub struct MassConstraintSystem<N: Real> {
     plasticity_threshold: N,
     plasticity_creep: N,
     plasticity_max_force: N,
+
+    user_data: Option<Box<Any + Send + Sync>>,
 }
 
 
@@ -152,6 +154,7 @@ impl<N: Real> MassConstraintSystem<N> {
             plasticity_threshold: N::zero(),
             plasticity_creep: N::zero(),
             plasticity_max_force: N::zero(),
+            user_data: None
         }
     }
 
@@ -203,8 +206,11 @@ impl<N: Real> MassConstraintSystem<N> {
             plasticity_threshold: N::zero(),
             plasticity_creep: N::zero(),
             plasticity_max_force: N::zero(),
+            user_data: None
         }
     }
+
+    user_data_accessors!();
 
     /// Creates a rectangular-shaped quad.
     #[cfg(feature = "dim3")]

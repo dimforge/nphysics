@@ -29,12 +29,13 @@ fn main() {
     let conveyor_shift = conveyor_length;
 
     let conveyor_side_material = BasicMaterial { surface_velocity: Some(Vector3::new(1.0, 0.0, 0.0)), ..BasicMaterial::default() };
-    let conveyor_corner_material = BasicMaterial { surface_velocity: Some(Vector3::new( 1.0, 0.0, -2.0)), ..BasicMaterial::default() };
+    let conveyor_corner_material = BasicMaterial { surface_velocity: Some(Vector3::new(1.0, 0.0, -2.0)), ..BasicMaterial::default() };
 
     // Build the sides of the conveyor belt "circle".
     //
     // Note that we can re-use the same material everywhere because the surface_velocity
-    // is expressed in the local-space of the shape.
+    // is expressed in the local-space of the shape (and we are applying rotations to the
+    // colliders so the surface_velocity points toward where we want it to).
     let mut side_desc = ColliderDesc::new(conveyor_side_shape.clone())
         .with_material(MaterialHandle::new(conveyor_side_material));
 
@@ -60,7 +61,8 @@ fn main() {
     // Build the corners of the conveyor belt "circle".
 
     // Note that we can re-use the same material everywhere because the surface_velocity
-    // is expressed in the local-space of the shape.
+    // is expressed in the local-space of the shape (and we are applying rotations to the
+    // colliders so the surface_velocity points toward where we want it to).
     let mut corner_desc = ColliderDesc::new(conveyor_corner_shape)
         .with_material(MaterialHandle::new(conveyor_corner_material));
 
@@ -80,7 +82,7 @@ fn main() {
 
     corner_desc
         .set_translation(Vector3::new(-conveyor_shift, -0.2, conveyor_shift))
-        .set_rotation(Vector3::y() *(f32::consts::PI + f32::consts::FRAC_PI_2))
+        .set_rotation(Vector3::y() * (f32::consts::PI + f32::consts::FRAC_PI_2))
         .build(&mut world);
 
     /*

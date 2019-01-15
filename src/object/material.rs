@@ -44,7 +44,8 @@ impl MaterialCombineMode {
             (MaterialCombineMode::Max, _) | (_, MaterialCombineMode::Max) => a.0.max(b.0),
             (MaterialCombineMode::Multiply, _) | (_, MaterialCombineMode::Multiply) => a.0 * b.0,
             (MaterialCombineMode::Min, _) | (_, MaterialCombineMode::Min) => a.0.min(b.0),
-            (MaterialCombineMode::Average, _) | (_, MaterialCombineMode::Average) => (a.0 + b.0) * na::convert(0.5)
+            // Average
+            _ => (a.0 + b.0) * na::convert(0.5)
         }
     }
 }
@@ -110,15 +111,15 @@ impl<N: Real> BasicMaterial<N> {
 }
 
 impl<N: Real> Material<N> for BasicMaterial<N> {
-    fn id(&self, context: MaterialContext<N>) -> Option<u8> {
+    fn id(&self, _: MaterialContext<N>) -> Option<u8> {
         self.id
     }
 
-    fn restitution(&self, context: MaterialContext<N>) -> (N, MaterialCombineMode) {
+    fn restitution(&self, _: MaterialContext<N>) -> (N, MaterialCombineMode) {
         (self.restitution, self.restitution_combine_mode)
     }
 
-    fn friction(&self, context: MaterialContext<N>) -> (N, MaterialCombineMode) {
+    fn friction(&self, _: MaterialContext<N>) -> (N, MaterialCombineMode) {
         (self.friction, self.friction_combine_mode)
     }
 

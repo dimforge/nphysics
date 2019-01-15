@@ -192,6 +192,30 @@ macro_rules! desc_getters(
     }
 );
 
+macro_rules! user_data_accessors(
+    () => {
+        #[inline]
+        pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
+            self.user_data.as_ref().map(|d| &**d)
+        }
+
+        #[inline]
+        pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
+            self.user_data.as_mut().map(|d| &mut **d)
+        }
+
+        #[inline]
+        pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
+            std::mem::replace(&mut self.user_data, data)
+        }
+
+        #[inline]
+        pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
+            self.user_data.take()
+        }
+    }
+);
+
 pub mod algebra;
 pub mod counters;
 pub mod detection;
