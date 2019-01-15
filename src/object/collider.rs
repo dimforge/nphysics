@@ -5,8 +5,8 @@ use na::Real;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, GeometricQueryType, CollisionGroups};
 use ncollide::shape::{ShapeHandle, Shape};
 
-use crate::math::{Isometry, Vector};
-use crate::object::{BodyPartHandle, BodyHandle, Material, Body, BodyPart};
+use crate::math::{Isometry, Vector, Rotation};
+use crate::object::{BodyPartHandle, BodyHandle, Material, MaterialHandle, Body, BodyPart};
 use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
 
@@ -53,7 +53,7 @@ pub struct ColliderData<N: Real> {
     anchor: ColliderAnchor<N>,
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
-    material: Material<N>,
+    material: MaterialHandle<N>,
 }
 
 impl<N: Real> ColliderData<N> {
@@ -62,7 +62,7 @@ impl<N: Real> ColliderData<N> {
         margin: N,
         anchor: ColliderAnchor<N>,
         body_status_dependent_ndofs: usize,
-        material: Material<N>,
+        material: MaterialHandle<N>,
     ) -> Self {
         ColliderData {
             margin,
@@ -114,7 +114,17 @@ impl<N: Real> ColliderData<N> {
     /// The material of this collider.
     #[inline]
     pub fn material(&self) -> &Material<N> {
-        &self.material
+        &*self.material
+    }
+
+    /// A mutable reference to this collider's material.
+    ///
+    /// If the material is shared, then an internal clone is performed
+    /// before returning the mutable reference (this effectively call
+    /// the `Arc::make_mut` method to get a copy-on-write behavior).
+    #[inline]
+    pub fn material_mut(&mut self) -> &mut Material<N> {
+        self.material.make_mut()
     }
 
     #[inline]
@@ -240,7 +250,7 @@ pub struct ColliderDesc<N: Real> {
     collision_groups: CollisionGroups,
     shape: ShapeHandle<N>,
     position: Isometry<N>,
-    material: Material<N>,
+    material: Option<MaterialHandle<N>>,
     density: N,
     linear_prediction: N,
     angular_prediction: N,
@@ -257,7 +267,7 @@ impl<N: Real> ColliderDesc<N> {
             margin: Self::default_margin(),
             collision_groups: CollisionGroups::default(),
             position: Isometry::identity(),
-            material: Material::default(),
+            material: None,
             density: N::zero(),
             linear_prediction,
             angular_prediction,
@@ -269,8 +279,20 @@ impl<N: Real> ColliderDesc<N> {
         na::convert(0.01)
     }
 
+    #[cfg(feature = "dim3")]
+    desc_custom_setters!(
+        self.with_rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
+    );
+
+    #[cfg(feature = "dim2")]
+    desc_custom_setters!(
+        self.with_rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
+    );
+
+
     desc_custom_setters!(
         self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.with_material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
     );
 
     desc_setters!(
@@ -282,12 +304,22 @@ impl<N: Real> ColliderDesc<N> {
         with_angular_prediction, set_angular_prediction, angular_prediction: N
         as_sensor, set_as_sensor, is_sensor: bool
         with_position, set_position, position: Isometry<N>
-        with_material, set_material, material: Material<N>
+    );
+
+    #[cfg(feature = "dim3")]
+    desc_custom_getters!(
+        self.rotation: Vector<N> | { self.position.rotation.scaled_axis() }
+    );
+
+    #[cfg(feature = "dim2")]
+    desc_custom_getters!(
+        self.rotation: N | { self.position.rotation.angle() }
     );
 
     desc_custom_getters!(
         self.shape: &Shape<N> | { &*self.shape }
         self.translation: &Vector<N> | { &self.position.translation.vector }
+        self.material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
 
     desc_getters!(
@@ -298,7 +330,6 @@ impl<N: Real> ColliderDesc<N> {
         [val] angular_prediction: N
         [val] is_sensor: bool
         [ref] position: Isometry<N>
-        [ref] material: Material<N>
     );
 
     pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
@@ -348,7 +379,8 @@ impl<N: Real> ColliderDesc<N> {
         };
 
         let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: self.position };
-        let data = ColliderData::new(self.margin, anchor, ndofs, self.material.clone());
+        let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
+        let data = ColliderData::new(self.margin, anchor, ndofs, material);
         cworld.add(pos, self.shape.clone(), self.collision_groups, query, data)
     }
 }
@@ -358,7 +390,7 @@ pub struct DeformableColliderDesc<N: Real> {
     margin: N,
     collision_groups: CollisionGroups,
     shape: ShapeHandle<N>,
-    material: Material<N>,
+    material: Option<MaterialHandle<N>>,
     linear_prediction: N,
     angular_prediction: N,
     is_sensor: bool,
@@ -375,7 +407,7 @@ impl<N: Real> DeformableColliderDesc<N> {
             shape,
             margin: na::convert(0.01),
             collision_groups: CollisionGroups::default(),
-            material: Material::default(),
+            material: None,
             linear_prediction,
             angular_prediction,
             is_sensor: false,
@@ -395,18 +427,23 @@ impl<N: Real> DeformableColliderDesc<N> {
         self
     }
 
+    desc_custom_setters!(
+        self.with_material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
+    );
+
     desc_setters!(
         with_margin, set_margin, margin: N
         with_collision_groups, set_collision_groups, collision_groups: CollisionGroups
         with_linear_prediction, set_linear_prediction, linear_prediction: N
         with_angular_prediction, set_angular_prediction, angular_prediction: N
         as_sensor, set_as_sensor, is_sensor: bool
-        with_material, set_material, material: Material<N>
         with_body_parts_mapping, set_body_parts_mapping, body_parts_mapping: Option<Arc<Vec<usize>>>
     );
 
     desc_custom_getters!(
         self.shape: &Shape<N> | { &*self.shape }
+        self.material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+
     );
 
     desc_getters!(
@@ -415,7 +452,6 @@ impl<N: Real> DeformableColliderDesc<N> {
         [val] linear_prediction: N
         [val] angular_prediction: N
         [val] is_sensor: bool
-        [ref] material: Material<N>
     );
 
     pub fn build_with_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
@@ -452,7 +488,8 @@ impl<N: Real> DeformableColliderDesc<N> {
         let ndofs = parent.status_dependent_ndofs();
         let body_parts = self.body_parts_mapping.clone();
         let anchor = ColliderAnchor::OnDeformableBody { body, body_parts };
-        let data = ColliderData::new(self.margin, anchor, ndofs, self.material.clone());
+        let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
+        let data = ColliderData::new(self.margin, anchor, ndofs, material);
         cworld.add(Isometry::identity(), self.shape.clone(), self.collision_groups, query, data)
     }
 }

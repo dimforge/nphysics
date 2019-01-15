@@ -27,27 +27,6 @@ writing bindings and has several advantages:
   search for a physics engine and **nphysics** will be there, proudly
   exhibiting its _Rusty_ sexyness.
 
-## Compilation
-You will need the latest release of the [Rust compiler](http://www.rust-lang.org)
-and the official package manager: [Cargo](https://github.com/rust-lang/cargo).
-
-If you want to use the 2D version of `nphysics`, add the crate named
-`nphysics2d` to your dependencies:
-
-```ignore
-[dependencies]
-nphysics2d = "0.8"
-```
-
-For the 3D version, add the crate named `nphysics3d`:
-
-```ignore
-[dependencies]
-nphysics3d = "0.8"
-```
-
-Use `make examples` to build the demos and execute `./your_favorite_example_here --help`
-to see all the cool stuffs you can do.
 
 ## Features
 - Static and dynamic rigid bodies.
@@ -60,16 +39,15 @@ to see all the cool stuffs you can do.
 - Ball-in-socket joint.
 - FixedJoint joint.
 - Sensors.
+- Deformable bodies (aka. soft-bodies)
+- Kinematic bodies
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
 become a grown up. Many missing features are because of missing features on
 **ncollide**. Features missing from **nphysics** itself include:
 
-- kinematic bodies
-- efficient signaling system
 - more joints, joint limits, joint motors and breakable joints.
-- soft-bodies (see https://github.com/natal/roft for a draft)
 - parallel pipeline
 - GPU-based pipeline
 
@@ -88,7 +66,7 @@ The libraries needed to compile the examples are:
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
 #![deny(unused_qualifications)]
-#![allow(missing_docs)] // XXX: deny that
+#![warn(missing_docs)] // XXX: deny that
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]

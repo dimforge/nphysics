@@ -438,18 +438,58 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 }
 
 
+/// The description of a rigid body, used to build a new `RigidBody`.
+///
+/// This is the structure to use in order to create and add a rigid body
+/// (as well as some attached colliders) to the `World`. It follows
+/// the builder pattern and defines three kinds of methods:
+///
+/// * Methods with the `.with_` prefix: sets a property of `self` and returns `Self` itself.
+/// * Methods with the `.set_`prefix: sets a property of `&mut self` and retuns the `&mut self` pointer.
+/// * The `build` method: actually build the rigid body into the given `World` and returns a mutable reference to the newly created rigid body.
+///   The `build` methods takes `self` by-ref so the same `RigidBodyDesc` can be re-used (possibly modified) to build other rigid bodies.
+///
+/// The `.with_` methods as well as the `.set_` method are designed to support chaining.
+/// Because the `.with_` methods takes `self` by-move, it is useful to use when initializing the
+/// `RigidBodyDesc` for the first time. The `.set_` methods are useful when modifying it after
+/// this initialization (including after calls to `.build`).
 #[derive(Clone)]
 pub struct RigidBodyDesc<'a, N: Real> {
-    pub position: Isometry<N>,
-    pub velocity: Velocity<N>,
-    pub local_inertia: Inertia<N>,
-    pub local_com: Point<N>,
-    pub status: BodyStatus,
-    pub colliders: Vec<&'a ColliderDesc<N>>,
-    pub sleep_threshold: Option<N>
+    position: Isometry<N>,
+    velocity: Velocity<N>,
+    surface_velocity: Velocity<N>,
+    local_inertia: Inertia<N>,
+    local_com: Point<N>,
+    status: BodyStatus,
+    colliders: Vec<&'a ColliderDesc<N>>,
+    sleep_threshold: Option<N>
 }
 
 impl<'a, N: Real> RigidBodyDesc<'a, N> {
+
+    pub fn new() -> Self {
+        RigidBodyDesc {
+            position: Isometry::identity(),
+            velocity: Velocity::zero(),
+            surface_velocity: Velocity::zero(),
+            local_inertia: Inertia::zero(),
+            local_com: Point::origin(),
+            status: BodyStatus::Dynamic,
+            colliders: Vec::new(),
+            sleep_threshold: Some(ActivationStatus::default_threshold())
+        }
+    }
+
+    #[cfg(feature = "dim3")]
+    desc_custom_setters!(
+        self.with_rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
+    );
+
+    #[cfg(feature = "dim2")]
+    desc_custom_setters!(
+        self.with_rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
+    );
+
     desc_custom_setters!(
         self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
@@ -459,9 +499,20 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         with_status, set_status, status: BodyStatus
         with_position, set_position, position: Isometry<N>
         with_velocity, set_velocity, velocity: Velocity<N>
+        with_surface_velocity, set_surface_velocity, surface_velocity: Velocity<N>
         with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
         with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
         with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+    );
+
+    #[cfg(feature = "dim3")]
+    desc_custom_getters!(
+        self.rotation: Vector<N> | { self.position.rotation.scaled_axis() }
+    );
+
+    #[cfg(feature = "dim2")]
+    desc_custom_getters!(
+        self.rotation: N | { self.position.rotation.angle() }
     );
 
     desc_custom_getters!(
@@ -501,19 +552,5 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         }
 
         rb
-    }
-}
-
-impl<'a, N: Real> Default for RigidBodyDesc<'a, N> {
-    fn default() -> Self {
-        RigidBodyDesc {
-            position: Isometry::identity(),
-            velocity: Velocity::zero(),
-            local_inertia: Inertia::zero(),
-            local_com: Point::origin(),
-            status: BodyStatus::Dynamic,
-            colliders: Vec::new(),
-            sleep_threshold: Some(ActivationStatus::default_threshold())
-        }
     }
 }

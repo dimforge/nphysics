@@ -7,12 +7,18 @@ use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
 use ncollide::events::{ContactEvents, ProximityEvents};
 
-use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet};
+use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet,
+                    BasicMaterial, MaterialHandle};
 use crate::math::{Isometry, Point};
 
+/// The world managing all geometric queries.
+///
+/// This is a wrapper over the `CollisionWorld` structure from `ncollide` to simplify
+/// its use with the [object::Collider] structure.
 pub struct ColliderWorld<N: Real> {
     cworld: CollisionWorld<N, ColliderData<N>>,
     colliders_w_parent: Vec<ColliderHandle>,
+    default_marterial: MaterialHandle<N>
 }
 
 impl<N: Real> ColliderWorld<N> {
@@ -27,7 +33,8 @@ impl<N: Real> ColliderWorld<N> {
 
         ColliderWorld {
             cworld,
-            colliders_w_parent: Vec::new()
+            colliders_w_parent: Vec::new(),
+            default_marterial: MaterialHandle::new(BasicMaterial::default())
         }
     }
 
@@ -64,6 +71,10 @@ impl<N: Real> ColliderWorld<N> {
 
             true
         });
+    }
+
+    pub fn default_material(&self) -> MaterialHandle<N> {
+        self.default_marterial.clone()
     }
 
     pub fn as_collider_world(&self) -> &CollisionWorld<N, ColliderData<N>> {

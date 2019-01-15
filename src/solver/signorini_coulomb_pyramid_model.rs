@@ -4,7 +4,7 @@ use std::ops::Range;
 
 use crate::detection::ColliderContactManifold;
 use crate::math::{Vector, DIM};
-use crate::object::BodySet;
+use crate::object::{BodySet, MaterialCombineMode, MaterialContext};
 use crate::solver::helper;
 use crate::solver::{
     BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel, ForceDirection,
@@ -62,13 +62,20 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             let body1 = try_continue!(bodies.body(manifold.body1()));
             let body2 = try_continue!(bodies.body(manifold.body2()));
 
-            let friction1 = manifold.collider1.material().friction;
-            let friction2 = manifold.collider2.material().friction;
-            let friction = (friction1 + friction2) * na::convert(0.5);
-
             for c in manifold.contacts() {
                 let part1 = try_continue!(body1.part(manifold.body_part1(c.kinematic.feature1()).1));
                 let part2 = try_continue!(body2.part(manifold.body_part2(c.kinematic.feature2()).1));
+
+                let context1 = MaterialContext::new(body1, part1, manifold.collider1, c, true);
+                let context2 = MaterialContext::new(body2, part2, manifold.collider2, c, false);
+
+                let friction1 = manifold.collider1.material().friction(context1);
+                let friction2 = manifold.collider2.material().friction(context2);
+                let friction = MaterialCombineMode::combine(friction1, friction2);
+
+                let surface_velocity1 = manifold.collider1.material().surface_velocity(context1);
+                let surface_velocity2 = manifold.collider2.material().surface_velocity(context2);
+                let surface_dvel = surface_velocity1 - surface_velocity2;
 
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
                 //     continue;
@@ -79,9 +86,13 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 let ground_constraint = SignoriniModel::build_velocity_constraint(
                     params,
-                    bodies,
+                    body1,
+                    part1,
+                    body2,
+                    part2,
                     manifold,
                     ext_vels,
+                    &surface_dvel,
                     c,
                     impulse[0],
                     impulse_id,
@@ -124,7 +135,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
                     let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
-                    let mut rhs = N::zero();
+                    let mut rhs = friction_dir.dot(&surface_dvel);
 
                     // FIXME: will this compute the momentum twice ?
                     let geom = helper::constraint_pair_geometry(
