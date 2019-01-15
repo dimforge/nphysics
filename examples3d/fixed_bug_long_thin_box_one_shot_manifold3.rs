@@ -57,7 +57,7 @@ fn main() {
     let collider_desc = ColliderDesc::new(geom)
         .with_density(1.0);
 
-    RigidBodyDesc::default()
+    RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .with_translation(Vector3::new(x, y, z))
         .build(&mut world);

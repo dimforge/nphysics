@@ -55,6 +55,10 @@ name = "convex_decomposition3"
 path = "./convex_decomposition3.rs"
 
 [[bin]]
+name = "conveyor_belt3"
+path = "./conveyor_belt3.rs"
+
+[[bin]]
 name = "convex3"
 path = "./convex3.rs"
 

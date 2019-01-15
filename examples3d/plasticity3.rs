@@ -35,7 +35,7 @@ fn main() {
     let mut platforms = [BodyHandle::ground(); 5];
 
     for (i, pos) in positions.iter().enumerate() {
-        platforms[i] = RigidBodyDesc::default()
+        platforms[i] = RigidBodyDesc::new()
             .with_position(*pos)
             .with_status(BodyStatus::Kinematic)
             .with_collider(&ColliderDesc::new(platform_shape.clone()))

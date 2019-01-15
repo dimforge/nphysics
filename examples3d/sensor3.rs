@@ -41,7 +41,7 @@ fn main() {
     let collider_desc = ColliderDesc::new(cuboid)
         .with_density(1.0);
 
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
     let shift = (rad + collider_desc.margin()) * 2.0;
@@ -71,7 +71,7 @@ fn main() {
     let sensor_collider = ColliderDesc::new(sensor_geom)
         .as_sensor(true);
 
-    let sensor_handle = RigidBodyDesc::default()
+    let sensor_handle = RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .with_collider(&sensor_collider)
         .with_translation(Vector3::new(0.0, 10.0, 0.0))

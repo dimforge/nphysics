@@ -51,7 +51,7 @@ fn main() {
     let first_anchor = Point3::new(0.0, 5.0, 11.0);
     let mut pos = first_anchor.coords;
 
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
     for i in 0usize..num {
@@ -244,7 +244,7 @@ fn main() {
     let collider_desc = ColliderDesc::new(cuboid)
         .with_density(1.0);
 
-    let pin_handle = RigidBodyDesc::default()
+    let pin_handle = RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .build(&mut world)
         .part_handle();

@@ -93,7 +93,7 @@ fn main() {
             let geom = ShapeHandle::new(compound);
             let collider_desc = ColliderDesc::new(geom)
                 .with_density(1.0);
-            let mut rb_desc = RigidBodyDesc::default()
+            let mut rb_desc = RigidBodyDesc::new()
                 .with_collider(&collider_desc);
 
             for k in 1..num_duplications + 1 {

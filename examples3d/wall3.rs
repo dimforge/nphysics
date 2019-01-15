@@ -39,7 +39,7 @@ fn main() {
     let collider_desc = ColliderDesc::new(cuboid)
         .with_density(1.0);
 
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
     let shift = (rad + collider_desc.margin()) * 2.0;

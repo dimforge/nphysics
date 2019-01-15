@@ -58,7 +58,7 @@ fn main() {
     let centery = 3.0 + shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
 
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
     for i in 0usize..num {

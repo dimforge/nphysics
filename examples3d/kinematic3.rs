@@ -39,7 +39,7 @@ fn main() {
     let small_cuboid_collider_desc = ColliderDesc::new(cuboid)
         .with_density(1.0);
 
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&small_cuboid_collider_desc);
 
     let shift = (rad + small_cuboid_collider_desc.margin()) * 2.0;
@@ -70,7 +70,7 @@ fn main() {
     let collider_desc = ColliderDesc::new(geom)
         .with_density(1.0);
 
-    let platform_handle = RigidBodyDesc::default()
+    let platform_handle = RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .with_translation(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad))
         .with_status(BodyStatus::Kinematic)

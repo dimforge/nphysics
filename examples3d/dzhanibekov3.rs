@@ -37,7 +37,7 @@ fn main() {
     /*
      * Create the rigid body.
      */
-    RigidBodyDesc::default()
+    RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .with_velocity(Velocity::angular(0.0, 10.0, 0.1))
         .build(&mut world);
