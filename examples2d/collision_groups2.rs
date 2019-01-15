@@ -99,7 +99,7 @@ fn main() {
                 .with_density(1.0)
                 .with_collision_groups(group);
 
-            let body_handle = RigidBodyDesc::default()
+            let body_handle = RigidBodyDesc::new()
                 .with_collider(&collider_desc)
                 .with_translation(Vector2::new(x, y))
                 .build(&mut world)

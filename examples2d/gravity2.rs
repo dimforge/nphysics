@@ -55,7 +55,7 @@ fn main() {
     let geom = ShapeHandle::new(Ball::new(rad));
     let collider_desc = ColliderDesc::new(geom)
         .with_density(1.0);
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
     for i in 0usize..num {

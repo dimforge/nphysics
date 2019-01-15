@@ -28,7 +28,7 @@ fn main() {
     /*
      * Create the body that will be deactivated.
      */
-    RigidBodyDesc::default()
+    RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .with_velocity(Velocity::linear(0.099, 0.0))
         .build(&mut world);
@@ -37,7 +37,7 @@ fn main() {
      * Create the body that cannot be deactivated by
      * setting its sleep threshold to None.
      */
-    RigidBodyDesc::default()
+    RigidBodyDesc::new()
         .with_collider(&collider_desc)
         .with_translation(Vector2::y() * 0.3)
         .with_velocity(Velocity::linear(0.099, 0.0))

@@ -33,14 +33,14 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 25;
+    let num = 10;
     let rad = 0.1;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid)
         .with_density(1.0);
 
-    let mut rb_desc = RigidBodyDesc::default()
+    let mut rb_desc = RigidBodyDesc::new()
         .with_collider(&collider_desc);
 
     let shift = (rad + collider_desc.margin()) * 2.0;
