@@ -1,7 +1,8 @@
 use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
-use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity, SPATIAL_DIM};
+use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
+                  SpatialVector, SPATIAL_DIM, DIM, Dim};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
                     ColliderDesc, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
@@ -55,12 +56,49 @@ impl<N: Real> RigidBody<N> {
             acceleration: Velocity::zero(),
             status: BodyStatus::Dynamic,
             activation: ActivationStatus::new_active(),
+            jacobian_mask: SpatialVector::repeat(N::one()),
             companion_id: 0,
             user_data: None
         }
     }
 
     user_data_accessors!();
+
+    pub fn set_kinematic_translations(&mut self, is_kinematic: Vector<bool>) {
+        for i in 0..DIM {
+            self.jacobian_mask[i] = if is_kinematic[i] { N::zero() } else { N::one() }
+        }
+    }
+
+    #[cfg(feature = "dim3")]
+    pub fn set_kinematic_rotations(&mut self, is_kinematic: Vector<bool>) {
+        self.jacobian_mask[3] = if is_kinematic.x { N::zero() } else { N::one() };
+        self.jacobian_mask[4] = if is_kinematic.y { N::zero() } else { N::one() };
+        self.jacobian_mask[5] = if is_kinematic.z { N::zero() } else { N::one() };
+    }
+
+    #[cfg(feature = "dim2")]
+    pub fn set_kinematic_rotation(&mut self, is_kinematic: bool) {
+        self.jacobian_mask[2] = if is_kinematic { N::zero() } else { N::one() };
+    }
+
+    pub fn kinematic_translations(&mut self) -> Vector<bool> {
+        self.jacobian_mask.fixed_rows::<Dim>(0).map(|m| m.is_zero())
+    }
+
+    #[cfg(feature = "dim3")]
+    pub fn kinematic_rotations(&mut self) -> Vector<bool> {
+        Vector::new(
+            self.jacobian_mask[3].is_zero(),
+            self.jacobian_mask[4].is_zero(),
+            self.jacobian_mask[5].is_zero(),
+        )
+    }
+
+    #[cfg(feature = "dim2")]
+    pub fn kinematic_rotation(&self) -> bool {
+        self.jacobian_mask[2].is_zero()
+    }
 
     #[inline]
     pub fn handle(&self) -> BodyHandle {
@@ -84,7 +122,7 @@ impl<N: Real> RigidBody<N> {
         self.local_com = local_com;
     }
 
-    /// Set the center of mass of this rigid body, expressed in its local space.
+    /// Set the local inertia of this rigid body, expressed in its local space.
     #[inline]
     pub fn set_local_inertia(&mut self, local_inertia: Inertia<N>) {
         self.local_inertia = local_inertia;
@@ -339,27 +377,33 @@ impl<N: Real> Body<N> for RigidBody<N> {
     ) {
         let pos = point - self.com.coords;
         let force = force_dir.at_point(&pos);
+        let mut masked_force = force.clone();
+        masked_force.as_vector_mut().component_mul_assign(&self.jacobian_mask);
 
         match self.status {
             BodyStatus::Kinematic => {
                 if let Some(out_vel) = out_vel {
+                    // Don't use the masked force here so the locked
+                    // DOF remain controllable at the velocity level.
                     *out_vel += force.as_vector().dot(&self.velocity.as_vector());
                 }
             },
             BodyStatus::Dynamic => {
-                jacobians[j_id..j_id + SPATIAL_DIM].copy_from_slice(force.as_slice());
+                jacobians[j_id..j_id + SPATIAL_DIM].copy_from_slice(masked_force.as_slice());
 
                 let inv_mass = self.inv_augmented_mass();
-                let imf = *inv_mass * force;
+                let imf = *inv_mass * masked_force;
                 jacobians[wj_id..wj_id + SPATIAL_DIM].copy_from_slice(imf.as_slice());
 
-                *inv_r += inv_mass.mass() + force.angular_vector().dot(&imf.angular_vector());
+                *inv_r += inv_mass.mass() + masked_force.angular_vector().dot(&imf.angular_vector());
 
                 if let Some(out_vel) = out_vel {
+                    // Don't use the masked force here so the locked
+                    // DOF remain controllable at the velocity level.
                     *out_vel += force.as_vector().dot(&self.velocity.as_vector());
 
                     if let Some(ext_vels) = ext_vels {
-                        *out_vel += force.as_vector().dot(ext_vels)
+                        *out_vel += masked_force.as_vector().dot(ext_vels)
                     }
                 }
             },
@@ -467,7 +511,12 @@ pub struct RigidBodyDesc<'a, N: Real> {
     local_com: Point<N>,
     status: BodyStatus,
     colliders: Vec<&'a ColliderDesc<N>>,
-    sleep_threshold: Option<N>
+    sleep_threshold: Option<N>,
+    kinematic_translations: Vector<bool>,
+    #[cfg(feature = "dim3")]
+    kinematic_rotations: Vector<bool>,
+    #[cfg(feature = "dim2")]
+    kinematic_rotation: bool,
 }
 
 impl<'a, N: Real> RigidBodyDesc<'a, N> {
@@ -481,18 +530,26 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
             local_com: Point::origin(),
             status: BodyStatus::Dynamic,
             colliders: Vec::new(),
-            sleep_threshold: Some(ActivationStatus::default_threshold())
+            sleep_threshold: Some(ActivationStatus::default_threshold()),
+            kinematic_translations: Vector::repeat(false),
+            #[cfg(feature = "dim3")]
+            kinematic_rotations: Vector::repeat(false),
+            #[cfg(feature = "dim2")]
+            kinematic_rotation: false
         }
     }
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
         self.with_rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
+        self.with_kinematic_rotations, set_kinematic_rotations, kinematic_rotations: Vector<bool> | { self.kinematic_rotations = kinematic_rotations }
+
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
         self.with_rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
+        self.with_kinematic_rotation, set_kinematic_rotation, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
     );
 
     desc_custom_setters!(
@@ -508,16 +565,19 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
         with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
         with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+        with_kinematic_translations, set_kinematic_translation, kinematic_translations: Vector<bool>
     );
 
     #[cfg(feature = "dim3")]
     desc_custom_getters!(
         self.rotation: Vector<N> | { self.position.rotation.scaled_axis() }
+        self.kinematic_rotations: Vector<bool> | { self.kinematic_rotations }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
         self.rotation: N | { self.position.rotation.angle() }
+        self.kinematic_rotation: bool | { self.kinematic_rotation }
     );
 
     desc_custom_getters!(
@@ -549,6 +609,16 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.set_local_center_of_mass(self.local_com);
         rb.set_status(self.status);
         rb.set_deactivation_threshold(self.sleep_threshold);
+        rb.set_kinematic_translations(self.kinematic_translations);
+
+        #[cfg(feature = "dim3")]
+            {
+                rb.set_kinematic_rotations(self.kinematic_rotations);
+            }
+        #[cfg(feature = "dim2")]
+            {
+                rb.set_kinematic_rotation(self.kinematic_rotation);
+            }
 
         for desc in &self.colliders {
             let part_handle = rb.part_handle();
