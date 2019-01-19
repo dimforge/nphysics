@@ -1,13 +1,29 @@
 sudo: false
 language: rust
+cache: cargo
 rust:
-    - stable
-    - beta
-    - nightly
+  - stable
+  - beta
+  - nightly
+env:
+  - TARGET="x86_64-unknown-linux-gnu" SUBCOMMAND=""
+  - TARGET="wasm32-unknown-unknown" SUBCOMMAND="web"
 matrix:
   allow_failures:
     - rust: beta
     - rust: nightly
+before_install:
+  - if [ "$SUBCOMMAND" == "web" ];then cargo install cargo-web; fi
 script:
-  - cargo build
-  - cargo test
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed3d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-3d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed3d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-3d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-2d
