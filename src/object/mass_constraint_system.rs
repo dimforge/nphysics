@@ -359,6 +359,9 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         self.accelerations.fill(N::zero());
     }
 
+    fn clear_forces(&mut self) {
+    }
+
     fn apply_displacement(&mut self, disp: &[N]) {
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;

@@ -104,6 +104,9 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// Reset the timestep-specific dynamic information of this body.
     fn clear_dynamics(&mut self);
 
+    /// Reset the timestep-specific dynamic information of this body.
+    fn clear_forces(&mut self);
+
     /// Applies a generalized displacement to this body.
     fn apply_displacement(&mut self, disp: &[N]);
 

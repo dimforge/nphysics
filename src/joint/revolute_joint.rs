@@ -235,12 +235,6 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
-        // println!("Applying displacement: {}", disp[0]);
-        // println!(
-        //     "Previous angle: {}, new: {}",
-        //     self.angle,
-        //     self.angle + disp[0]
-        // );
         self.angle += disp[0];
         self.update_rot();
     }

@@ -37,6 +37,9 @@ impl<N: Real> Body<N> for Ground<N> {
     fn clear_dynamics(&mut self) {}
 
     #[inline]
+    fn clear_forces(&mut self) {}
+
+    #[inline]
     fn part(&self, _: usize) -> Option<&BodyPart<N>> {
         Some(self)
     }

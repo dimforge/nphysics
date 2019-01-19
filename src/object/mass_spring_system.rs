@@ -148,7 +148,8 @@ impl<N: Real> MassSpringSystem<N> {
             node_mass,
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
-            plasticity_threshold: N::zero()
+            plasticity_threshold: N::zero(),
+            user_data: None
         }
     }
 
@@ -416,6 +417,9 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     fn clear_dynamics(&mut self) {
         self.accelerations.fill(N::zero());
         self.augmented_mass.fill(N::zero());
+    }
+
+    fn clear_forces(&mut self) {
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {

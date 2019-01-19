@@ -298,11 +298,12 @@ impl<N: Real> World<N> {
             &self.cworld,
         );
 
-        // FIXME: not sure what is the most pretty/efficient way of doing this.
-        for mb in self.bodies.bodies_mut() {
-            if mb.status() == BodyStatus::Kinematic {
-                mb.integrate(&self.params)
+        for b in self.bodies.bodies_mut() {
+            if b.status() == BodyStatus::Kinematic {
+                b.integrate(&self.params)
             }
+
+            b.clear_forces();
         }
 
         self.counters.solver_completed();

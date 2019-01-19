@@ -32,6 +32,7 @@ pub struct RigidBody<N: Real> {
     acceleration: Velocity<N>,
     status: BodyStatus,
     activation: ActivationStatus<N>,
+    jacobian_mask: SpatialVector<N>,
     companion_id: usize,
     user_data: Option<Box<Any + Send + Sync>>
 }
@@ -192,6 +193,56 @@ impl<N: Real> RigidBody<N> {
         let new_pos = disp * self.local_to_world;
         self.set_position(new_pos);
     }
+/*
+    /*
+     * Application of forces.
+     */
+    #[cfg(feature = "dim3")]
+    #[inline]
+    pub fn apply_torque(&mut self, torque: &Vector<N>) {
+        self.external_forces.angular += torque
+    }
+
+    #[cfg(feature = "dim2")]
+    #[inline]
+    pub fn apply_torque(&mut self, torque: N) {
+        self.external_forces.angular += torque
+    }
+
+    #[inline]
+    pub fn apply_central_force(&mut self, force: &Vector<N>) {
+        self.external_forces.linear += force.linear;
+    }
+
+    #[inline]
+    pub fn apply_force(&mut self, force: &Vector<N>, point: &Point<N>) {
+        self.external_forces.linear += force.linear;
+        self.external_forces.angular += force.angular;
+    }
+
+    /*
+     * Application of impulses.
+     */
+    #[inline]
+    pub fn apply_central_impulse(&mut self, impulse: &Vector<N>) {
+        self.velocity.linear += impulse * self.inv_inertia.linear;
+    }
+
+    #[inline]
+    pub fn apply_torque_impulse(&mut self, impulse: &Vector<N>) {
+        self.velocity.angular += self.inv_inertia.angular * impulse;
+    }
+
+    #[inline]
+    pub fn apply_impulse(&mut self, impulse: &Vector<N>, pt: &Point<N>) {
+        self.apply_central_impulse(impulse);
+        self.apply_central_impulse(&(pt - self.center_of_mass()).cross(impulse));
+    }
+
+    /*
+     * Application of velocity change.
+     */
+*/
 }
 
 
@@ -287,6 +338,9 @@ impl<N: Real> Body<N> for RigidBody<N> {
                 self.inv_augmented_mass = Inertia::zero();
             }
         self.acceleration = Velocity::zero();
+    }
+
+    fn clear_forces(&mut self) {
         self.external_forces = Force::zero();
     }
 
@@ -325,7 +379,9 @@ impl<N: Real> Body<N> for RigidBody<N> {
                 if self.inv_augmented_mass.linear != N::zero() {
                     self.acceleration.linear += *gravity;
                 }
-                self.acceleration += self.inv_augmented_mass * self.external_forces
+
+                self.acceleration += self.inv_augmented_mass * self.external_forces;
+                self.acceleration.as_vector_mut().component_mul_assign(&self.jacobian_mask);
             }
             _ => {}
         }

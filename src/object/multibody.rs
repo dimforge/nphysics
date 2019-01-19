@@ -331,7 +331,7 @@ impl<N: Real> Multibody<N> {
                         gyroscopic = N::zero();
                     }
 
-                external_forces = Force::new(gravity_force, -gyroscopic) - rb.inertia * acc;
+                external_forces = Force::new(gravity_force, -gyroscopic) - rb.inertia * acc + rb.external_forces;
                 accs.gemv_tr(
                     N::one(),
                     &self.body_jacobians[i],
@@ -339,7 +339,6 @@ impl<N: Real> Multibody<N> {
                     N::one(),
                 );
             }
-            self.rbs[i].external_forces += external_forces;
         }
 
         let damping = DVectorSlice::from_slice(&self.damping, self.ndofs);
@@ -347,6 +346,11 @@ impl<N: Real> Multibody<N> {
         accs.cmpy(-N::one(), &damping, &vels, N::one());
 
         assert!(self.inv_augmented_mass.solve_mut(&mut accs));
+    }
+
+    pub apply_impulse_at_point(&mut self, i: usize, impulse: Vector<N>, at: Vector<N>) {
+        let impulse;
+        self.velocity.gemv_tr(N::one(), self.body_jacobians[i], impulse, N::one());
     }
 
     fn update_body_jacobians(&mut self) {
@@ -759,7 +763,9 @@ impl<N: Real> Body<N> for Multibody<N> {
         self.augmented_mass.fill(N::zero());
         let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
         accs.fill(N::zero());
+    }
 
+    fn clear_forces(&mut self) {
         for rb in &mut *self.rbs {
             rb.external_forces = Force::zero();
         }
