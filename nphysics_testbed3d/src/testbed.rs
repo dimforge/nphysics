@@ -18,6 +18,7 @@ use na::{self, Point2, Point3, Vector3};
 use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
 use ncollide3d::world::CollisionGroups;
+use ncollide3d::narrow_phase::Interaction;
 use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
 use nphysics3d::world::World;
@@ -558,23 +559,28 @@ fn draw_collisions(
     existing: &mut HashMap<GenerationalId, bool>,
     running: bool,
 ) {
-    for (_, _, _, manifold) in world.collider_world().contact_pairs() {
-        for c in manifold.contacts() {
-            if existing.contains_key(&c.id) {
-                if running {
-                    existing.insert(c.id, true);
+    for (_, _, interaction) in world.collider_world().interaction_pairs() {
+        match interaction {
+            Interaction::Contact(_, manifold) => {
+                for c in manifold.contacts() {
+                    if existing.contains_key(&c.id) {
+                        if running {
+                            existing.insert(c.id, true);
+                        }
+                    } else {
+                        existing.insert(c.id, false);
+                    }
+
+                    let color = if c.contact.depth < 0.0 { // existing[&c.id] {
+                        Point3::new(0.0, 0.0, 1.0)
+                    } else {
+                        Point3::new(1.0, 0.0, 0.0)
+                    };
+
+                    window.draw_line(&(c.contact.world1), &c.contact.world2, &color);
                 }
-            } else {
-                existing.insert(c.id, false);
             }
-
-            let color = if c.contact.depth < 0.0 { // existing[&c.id] {
-                Point3::new(0.0, 0.0, 1.0)
-            } else {
-                Point3::new(1.0, 0.0, 0.0)
-            };
-
-            window.draw_line(&(c.contact.world1), &c.contact.world2, &color);
+            _ => {}
         }
     }
 }

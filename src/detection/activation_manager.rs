@@ -1,6 +1,7 @@
 use slab::Slab;
 
 use na::{self, Real};
+use ncollide::narrow_phase::Interaction;
 use crate::world::ColliderWorld;
 use crate::object::{BodyHandle, Body, BodySet};
 use crate::joint::JointConstraint;
@@ -125,6 +126,7 @@ impl<N: Real> ActivationManager<N> {
         }
 
         // Run the union-find.
+        // FIXME: use the union-find from petgraph?
         #[inline(always)]
         fn make_union<N: Real>(
             bodies: &BodySet<N>,
@@ -141,12 +143,14 @@ impl<N: Real> ActivationManager<N> {
                 }
         }
 
-        for (c1, c2, _, manifold) in cworld.contact_pairs() {
+        for (c1, c2, interaction) in cworld.interaction_pairs() {
             let b1 = c1.body();
             let b2 = c2.body();
 
-            if manifold.len() != 0 {
-                make_union(bodies, b1, b2, &mut self.ufind)
+            if let Interaction::Contact(_, manifold) = interaction {
+                if manifold.len() != 0 {
+                    make_union(bodies, b1, b2, &mut self.ufind)
+                }
             }
         }
 

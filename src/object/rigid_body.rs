@@ -15,6 +15,58 @@ use crate::math::AngularVector;
 #[cfg(feature = "dim3")]
 use crate::utils::GeneralizedCross;
 
+/*
+bitflags! {
+    #[derive(Default)]
+    struct BodyUpdateStatusFlags: u8 {
+        const POSITION_CHANGED = 0b00000001;
+        const VELOCITY_CHANGED = 0b00000010;
+        const LOCAL_INERTIA_CHANGED = 0b000100;
+    }
+}
+
+macro_rules! bitflag_accessors(
+    ($($get_name: ident, $set_name: ident, $reset_name: ident, $variant: ident)*) => {$(
+        #[inline]
+        fn $get_name(&self) -> bool {
+            self.0.contains(BodyUpdateStatus::$variant)
+        }
+
+        #[inline]
+        fn $set_name(&mut self) {
+            self.0.set(BodyUpdateStatus::$variant)
+        }
+
+        #[inline]
+        fn $reset_name(&mut self) {
+            self.0.reset(BodyUpdateStatus::$variant)
+        }
+    )*}
+);
+
+struct BodyUpdateStatus(BodyUpdateStatusFlags);
+impl BodyUpdateStatus {
+    bitflags_accessors!(
+        position_changed, set_position_changed, reset_position_changed, POSITION_CHANGED,
+        velocity_changed, set_velocity_changed, reset_velocity_changed, VELOCITY_CHANGED,
+        local_inertia_changed, set_local_inertia_changed, reset_local_inertia_changed, LOCAL_INERTIA_CHANGED,
+    );
+
+    #[inline]
+    fn inertia_needs_update(&self) -> bool {
+        self.0.any(
+            BodyUpdateStatus::POSITION_CHANGED |
+            BodyUpdateStatus::VELOCITY_CHANGED |
+            BodyUpdateStatus::LOCAL_INERTIA_CHANGED
+        )
+    }
+
+    #[inline]
+    fn reset(&mut self) {
+        self.0.clear()
+    }
+}*/
+
 
 /// A rigid body.
 #[derive(Debug)]

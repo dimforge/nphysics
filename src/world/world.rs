@@ -3,6 +3,7 @@ use slab::Slab;
 use na::{self, Real};
 use ncollide;
 use ncollide::events::{ContactEvents, ProximityEvents};
+use ncollide::narrow_phase::Interaction;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
@@ -237,14 +238,14 @@ impl<N: Real> World<N> {
         self.counters.narrow_phase_completed();
         self.counters.collision_detection_completed();
 
-        if self.counters.enabled() {
-            let count = self
-                .cworld
-                .contact_pairs()
-                .fold((0, 0), |n, cp| (n.0 + 1, n.1 + cp.3.len()));
-            self.counters.set_ncontact_pairs(count.0);
-            self.counters.set_ncontacts(count.1);
-        }
+//        if self.counters.enabled() {
+//            let count = self
+//                .cworld
+//                .interaction_pairs()
+//                .fold((0, 0), |n, cp| (n.0 + 1, n.1 + cp.3.len()));
+//            self.counters.set_ncontact_pairs(count.0);
+//            self.counters.set_ncontacts(count.1);
+//        }
 
         // FIXME: for now, no island is built.
         self.counters.island_construction_started();
@@ -258,18 +259,20 @@ impl<N: Real> World<N> {
         self.counters.island_construction_completed();
 
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
-        for (coll1, coll2, _, manifold) in self.cworld.contact_pairs() {
-            // assert!(coll1.body_part() != coll2.body());
+        for (coll1, coll2, interaction) in self.cworld.interaction_pairs() {
+            if let Interaction::Contact(_, manifold) = interaction {
+                // assert!(coll1.body_part() != coll2.body());
 
-            let b1 = try_continue!(self.bodies.body(coll1.body()));
-            let b2 = try_continue!(self.bodies.body(coll2.body()));
+                let b1 = try_continue!(self.bodies.body(coll1.body()));
+                let b2 = try_continue!(self.bodies.body(coll2.body()));
 
-            if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
-                && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
-                || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
-                {
-                    contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, manifold));
-                }
+                if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
+                    && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
+                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+                    {
+                        contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, manifold));
+                    }
+            }
         }
 
         self.counters.solver_started();
@@ -314,24 +317,25 @@ impl<N: Real> World<N> {
 
     fn cleanup_after_body_removal(&mut self) {
         self.activate_bodies_touching_deleted_bodies();
-        self.cleanup_colliders_with_deleted_parents();
         self.cleanup_constraints_with_deleted_anchors();
     }
 
     fn activate_bodies_touching_deleted_bodies(&mut self) {
         let bodies = &mut self.bodies;
 
-        for (co1, co2, _, manifold) in self.cworld.contact_pairs() {
-            if manifold.len() != 0 {
-                let b1_exists = bodies.body(co1.body()).is_some();
-                let b2_exists = bodies.body(co2.body()).is_some();
+        for (co1, co2, interaction) in self.cworld.interaction_pairs() {
+            if let Interaction::Contact(_, manifold) = interaction {
+                if manifold.len() != 0 {
+                    let b1_exists = bodies.body(co1.body()).is_some();
+                    let b2_exists = bodies.body(co2.body()).is_some();
 
-                if !b1_exists {
-                    if b2_exists {
-                        Self::activate_body_at(bodies, co2.body());
+                    if !b1_exists {
+                        if b2_exists {
+                            Self::activate_body_at(bodies, co2.body());
+                        }
+                    } else if !b2_exists {
+                        Self::activate_body_at(bodies, co1.body());
                     }
-                } else if !b2_exists {
-                    Self::activate_body_at(bodies, co1.body());
                 }
             }
         }

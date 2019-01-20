@@ -1,7 +1,7 @@
 use na::Real;
 use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
 use ncollide::broad_phase::BroadPhasePairFilter;
-use ncollide::narrow_phase::{NarrowPhase, ContactAlgorithm, ProximityAlgorithm};
+use ncollide::narrow_phase::Interaction;
 use ncollide::query::{ContactManifold, Ray, RayIntersection};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
@@ -167,51 +167,26 @@ impl<N: Real> ColliderWorld<N> {
         self.cworld.perform_narrow_phase()
     }
 
-    /// Sets a new narrow phase and returns the previous one.
-    ///
-    /// Keep in mind that modifying the narrow-pase will have a non-trivial overhead during the
-    /// next update as it will force re-detection of all collision pairs and their associated
-    /// contacts.
-    pub fn set_narrow_phase(
-        &mut self,
-        narrow_phase: Box<NarrowPhase<N, ColliderData<N>>>,
-    ) -> Box<NarrowPhase<N, ColliderData<N>>>
-    {
-        self.cworld.set_narrow_phase(narrow_phase)
-    }
-
     /// The contact pair, if any, between the given colliders.
     #[inline]
-    pub fn contact_pair(
+    pub fn interaction_pair(
         &self,
         handle1: ColliderHandle,
         handle2: ColliderHandle,
-    ) -> Option<(&ContactAlgorithm<N>, &ContactManifold<N>)>
+    ) -> Option<(&Collider<N>, &Collider<N>, &Interaction<N>)>
     {
-        self.cworld.contact_pair(handle1, handle2)
+        self.cworld.interaction_pair(handle1, handle2).map(|p| (Collider::from_ref(p.0), Collider::from_ref(p.1), p.2))
     }
 
-    /// Iterates through all the contact pairs detected since the last update.
+    /// Iterates through all the interaction pairs detected since the last update.
     #[inline]
-    pub fn contact_pairs(&self)
+    pub fn interaction_pairs(&self)
         -> impl Iterator<Item = (
             &Collider<N>,
             &Collider<N>,
-            &ContactAlgorithm<N>,
-            &ContactManifold<N>,
+            &Interaction<N>,
         )> {
-        self.cworld.contact_pairs().map(|p| (Collider::from_ref(p.0), Collider::from_ref(p.1), p.2, p.3))
-    }
-
-    /// Iterates through all the proximity pairs detected since the last update.
-    #[inline]
-    pub fn proximity_pairs(&self)
-        -> impl Iterator<Item = (
-            &Collider<N>,
-            &Collider<N>,
-            &ProximityAlgorithm<N>,
-        )> {
-        self.cworld.proximity_pairs().map(|p| (Collider::from_ref(p.0), Collider::from_ref(p.1), p.2))
+        self.cworld.interaction_pairs().map(|p| (Collider::from_ref(p.0), Collider::from_ref(p.1), p.2))
     }
 
     /// Iterates through all colliders.

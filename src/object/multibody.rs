@@ -348,11 +348,6 @@ impl<N: Real> Multibody<N> {
         assert!(self.inv_augmented_mass.solve_mut(&mut accs));
     }
 
-    pub apply_impulse_at_point(&mut self, i: usize, impulse: Vector<N>, at: Vector<N>) {
-        let impulse;
-        self.velocity.gemv_tr(N::one(), self.body_jacobians[i], impulse, N::one());
-    }
-
     fn update_body_jacobians(&mut self) {
         for i in 0..self.rbs.len() {
             let rb = &self.rbs[i];
