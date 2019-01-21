@@ -15,8 +15,8 @@ use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus, FiniteElementIndices,
-                    BodyDesc, DeformableColliderDesc};
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+                    ActivationStatus, FiniteElementIndices, BodyDesc, DeformableColliderDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -75,6 +75,7 @@ pub struct MassSpringSystem<N: Real> {
     companion_id: usize,
     activation: ActivationStatus<N>,
     status: BodyStatus,
+    update_status: BodyUpdateStatus,
     mass: N,
     node_mass: N,
 
@@ -144,6 +145,7 @@ impl<N: Real> MassSpringSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
+            update_status: BodyUpdateStatus::new(),
             mass,
             node_mass,
             plasticity_max_force: N::zero(),
@@ -197,6 +199,7 @@ impl<N: Real> MassSpringSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
+            update_status: BodyUpdateStatus::new(),
             mass,
             node_mass,
             plasticity_max_force: N::zero(),
@@ -229,6 +232,8 @@ impl<N: Real> MassSpringSystem<N> {
     /// Given three nodes `a, b, c`, if a spring exists between `a` and `b`, and between `b` and `c`,
     /// then a spring between `a` and `c` is created if it does not already exists.
     pub fn generate_neighbor_springs(&mut self, stiffness: N, damping_ratio: N) {
+        self.update_status.set_local_inertia_changed(true);
+
         let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / DIM).collect();
         let mut existing_springs = HashSet::with_hasher(DeterministicState::new());
 
@@ -259,6 +264,7 @@ impl<N: Real> MassSpringSystem<N> {
     pub fn add_spring(&mut self, node1: usize, node2: usize, stiffness: N, damping_ratio: N) {
         assert!(node1 < self.positions.len() / DIM, "Node index out of bounds.");
         assert!(node2 < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_local_inertia_changed(true);
         let key = key(node1 * DIM, node2 * DIM);
         let spring = Spring::from_positions(key, self.positions.as_slice(), stiffness, damping_ratio);
         self.springs.push(spring);
@@ -268,7 +274,14 @@ impl<N: Real> MassSpringSystem<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
+    }
+
+    /// Mark all nodes as non-kinematic.
+    pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_local_inertia_changed(true);
+        self.kinematic_nodes.fill(false)
     }
 
     /// Sets the plastic properties of this mass-spring system.
@@ -278,8 +291,84 @@ impl<N: Real> MassSpringSystem<N> {
         self.plasticity_max_force = max_force;
     }
 
-    fn update_augmented_mass_and_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn update_augmented_mass(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+        self.augmented_mass.fill(N::zero());
         self.augmented_mass.fill_diagonal(self.node_mass);
+
+        for spring in &mut self.springs {
+            let kinematic1 = self.kinematic_nodes[spring.nodes.0 / DIM];
+            let kinematic2 = self.kinematic_nodes[spring.nodes.1 / DIM];
+
+            if kinematic1 && kinematic2 {
+                continue;
+            }
+
+            /*
+             * Elastic strain.
+             */
+            // FIXME: precompute this and store it on the spring struct?
+            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
+            let l = *spring.dir;
+
+            if spring.length != N::zero() {
+                /*
+                 *
+                 * Stiffness matrix contribution.
+                 *
+                 */
+                let ll = l * l.transpose();
+                let stiffness = ll * spring.stiffness;
+                // NOTE: for now, we only treat the (spring.length() - spring.rest_length) term
+                // in a linearly-implicit way. It appears the other terms would introduce
+                // instabilities.
+                // To treat other terms in a linearly-implicit way, the following terms would
+                // be added to the stiffness matrix:
+                //
+                // let one_minus_ll = MatrixN::<N, Dim>::identity() - ll;
+                // let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
+                // let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
+                // let ldot = v1 - v0;
+                // let lldot = l.dot(&ldot);
+                // let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * lldot;
+                // stiffness += one_minus_ll * coeff / spring.length + (l * ldot.transpose()) * one_minus_ll * damping / spring.length;
+                //
+                // Also the damping matrix would be non-zero:
+                //
+                // let damping_matrix = ll * damping;
+                // let damping_stiffness = -damping_matrix * params.dt + stiffness * (params.dt * params.dt).
+
+                // Add to the mass matrix.
+                let damping_stiffness = stiffness * (params.dt * params.dt);
+
+                if !kinematic1 {
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
+                }
+                if !kinematic2 {
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1).add_assign(&damping_stiffness);
+                }
+                if !kinematic1 && !kinematic2 {
+                    // FIXME: we don't need to fill both because Cholesky won't read tho upper triangle.
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1).sub_assign(&damping_stiffness);
+                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0).sub_assign(&damping_stiffness);
+                }
+            }
+        }
+
+        /*
+         * Set the mass matrix diagonal to the identity for kinematic nodes.
+         */
+        for i in 0..self.positions.len() / DIM {
+            if self.kinematic_nodes[i] {
+                let idof = i * DIM;
+                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(idof, idof).fill_diagonal(N::one());
+            }
+        }
+
+        self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
+    }
+
+    fn update_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+        self.accelerations.fill(N::zero());
 
         for spring in &mut self.springs {
             let kinematic1 = self.kinematic_nodes[spring.nodes.0 / DIM];
@@ -310,6 +399,7 @@ impl<N: Real> MassSpringSystem<N> {
             /*
              * Elastic strain.
              */
+            // FIXME: precompute this and store it on the spring struct?
             let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
             let v0 = self.velocities.fixed_rows::<Dim>(spring.nodes.0);
             let v1 = self.velocities.fixed_rows::<Dim>(spring.nodes.1);
@@ -318,53 +408,17 @@ impl<N: Real> MassSpringSystem<N> {
             let l = *spring.dir;
 
             // Explicit elastic term - plastic term.
-            let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * ldot.dot(&l);
+            let coeff = spring.stiffness * (spring.length - spring.rest_length) + damping * l.dot(&ldot);
             let f0 = l * (coeff - spring.plastic_strain);
+
+            // NOTE: we don't add the additional terms due to the linearly-implicit
+            // integration because they seem to introduce instabilities.
 
             if !kinematic1 {
                 self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&f0);
             }
             if !kinematic2 {
                 self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&f0);
-            }
-
-
-            if spring.length != N::zero() {
-                /*
-                 *
-                 * Stiffness matrix contribution.
-                 *
-                 */
-                let ll = l * l.transpose();
-                let one_minus_ll = MatrixN::<N, Dim>::identity() - ll;
-                let stiffness = one_minus_ll / spring.length + ll * one_minus_ll * (damping / spring.length) + ll * spring.stiffness;
-                let forward_f0 = stiffness * (ldot * params.dt);
-
-                // Add the contributions to the forces.
-                if !kinematic1 {
-                    self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.0).add_assign(&forward_f0);
-                }
-                if !kinematic2 {
-                    self.accelerations.fixed_rows_mut::<Dim>(spring.nodes.1).sub_assign(&forward_f0);
-                }
-
-                // Damping matrix contribution.
-                let damping_dt = (l * l.transpose()) * (damping * params.dt);
-
-                // Add to the mass matrix.
-                let damping_stiffness = damping_dt + stiffness * (params.dt * params.dt);
-
-                if !kinematic1 {
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
-                }
-                if !kinematic2 {
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.1).add_assign(&damping_stiffness);
-                }
-                if !kinematic1 && !kinematic2 {
-                    // FIXME: we don't need to fill both because Cholesky won't read tho upper triangle.
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.1).sub_assign(&damping_stiffness);
-                    self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.1, spring.nodes.0).sub_assign(&damping_stiffness);
-                }
             }
         }
 
@@ -380,49 +434,50 @@ impl<N: Real> MassSpringSystem<N> {
             if !self.kinematic_nodes[i] {
                 let mut acc = self.accelerations.fixed_rows_mut::<Dim>(idof);
                 acc += gravity_force
-            } else {
-                self.augmented_mass.fixed_slice_mut::<Dim, Dim>(idof, idof).fill_diagonal(N::one());
             }
         }
 
-        /*
-         * Invert the augmented mass.
-         */
-        self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
 }
 
 impl<N: Real> Body<N> for MassSpringSystem<N> {
     fn update_kinematics(&mut self) {
-        for spring in &mut self.springs {
-            let p0 = self.positions.fixed_rows::<Dim>(spring.nodes.0);
-            let p1 = self.positions.fixed_rows::<Dim>(spring.nodes.1);
-            let l = p1 - p0;
+        if self.update_status.position_changed() {
+            for spring in &mut self.springs {
+                let p0 = self.positions.fixed_rows::<Dim>(spring.nodes.0);
+                let p1 = self.positions.fixed_rows::<Dim>(spring.nodes.1);
+                let l = p1 - p0;
 
-            if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
-                spring.dir = dir;
-                spring.length = length;
-            } else {
-                spring.dir = Vector::y_axis();
-                spring.length = N::zero();
+                if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
+                    spring.dir = dir;
+                    spring.length = length;
+                } else {
+                    spring.dir = Vector::y_axis();
+                    spring.length = N::zero();
+                }
             }
         }
     }
 
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.update_augmented_mass_and_forces(gravity, params);
+        if self.update_status.inertia_needs_update() {
+            self.update_augmented_mass(gravity, params);
+        }
+    }
+
+    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+        self.update_forces(gravity, params);
     }
 
     fn clear_dynamics(&mut self) {
-        self.accelerations.fill(N::zero());
-        self.augmented_mass.fill(N::zero());
     }
 
     fn clear_forces(&mut self) {
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
+        self.update_status.set_position_changed(true);
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;
     }
@@ -437,6 +492,14 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 
     fn set_status(&mut self, status: BodyStatus) {
         self.status = status
+    }
+
+    fn clear_update_flags(&mut self) {
+        self.update_status.clear()
+    }
+
+    fn update_status(&self) -> BodyUpdateStatus {
+        self.update_status
     }
 
     fn activation_status(&self) -> &ActivationStatus<N> {
@@ -468,11 +531,13 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
+        self.update_status.set_velocity_changed(true);
         let len = self.velocities.len();
         DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), len)
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
+        self.update_status.set_position_changed(true);
         self.positions.axpy(params.dt, &self.velocities, N::one());
     }
 
@@ -481,6 +546,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn deactivate(&mut self) {
+        self.update_status.set_velocity_changed(true);
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
@@ -498,6 +564,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        self.update_status.set_position_changed(true);
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
