@@ -125,7 +125,7 @@ impl<N: Real> FEMSurface<N> {
             d0, d1, d2,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             user_data: None
         }
     }
@@ -671,9 +671,6 @@ impl<N: Real> Body<N> for FEMSurface<N> {
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
 
-    fn clear_dynamics(&mut self) {
-    }
-
     fn clear_forces(&mut self) {
     }
 
@@ -754,10 +751,6 @@ impl<N: Real> Body<N> for FEMSurface<N> {
 
     fn part(&self, id: usize) -> Option<&BodyPart<N>> {
         self.elements.get(id).map(|b| b as &BodyPart<N>)
-    }
-
-    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
-        self.elements.get_mut(id).map(|b| b as &mut BodyPart<N>)
     }
 
     fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {

@@ -145,7 +145,7 @@ impl<N: Real> MassSpringSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             mass,
             node_mass,
             plasticity_max_force: N::zero(),
@@ -199,7 +199,7 @@ impl<N: Real> MassSpringSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             mass,
             node_mass,
             plasticity_max_force: N::zero(),
@@ -470,9 +470,6 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         self.update_forces(gravity, params);
     }
 
-    fn clear_dynamics(&mut self) {
-    }
-
     fn clear_forces(&mut self) {
     }
 
@@ -553,10 +550,6 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 
     fn part(&self, id: usize) -> Option<&BodyPart<N>> {
         self.elements.get(id).map(|e| e as &BodyPart<N>)
-    }
-
-    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
-        self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
@@ -655,10 +648,6 @@ impl<N: Real> BodyPart<N> for MassSpringElement<N> {
     }
 
     fn local_inertia(&self) -> Inertia<N> {
-        unimplemented!()
-    }
-
-    fn apply_force(&mut self, _force: &Force<N>) {
         unimplemented!()
     }
 }

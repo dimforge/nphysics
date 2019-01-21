@@ -79,8 +79,8 @@ impl<N: Real> ForceGenerator<N> for Spring<N> {
             }
 
             let force = Force::linear(force_dir.as_ref() * delta_length * self.stiffness);
-            bodies.body_mut(self.b1.0).unwrap().part_mut(self.b1.1).unwrap().apply_force(&force);
-            bodies.body_mut(self.b2.0).unwrap().part_mut(self.b2.1).unwrap().apply_force(&-force);
+            bodies.body_mut(self.b1.0).unwrap().apply_force_to_part(self.b1.1, &force);
+            bodies.body_mut(self.b2.0).unwrap().apply_force_to_part(self.b2.1, &-force);
 
             true
         } else {

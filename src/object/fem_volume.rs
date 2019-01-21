@@ -124,7 +124,7 @@ impl<N: Real> FEMVolume<N> {
             plasticity_creep: N::zero(),
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             user_data: None
         }
     }
@@ -721,9 +721,6 @@ impl<N: Real> Body<N> for FEMVolume<N> {
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
 
-    fn clear_dynamics(&mut self) {
-    }
-
     fn clear_forces(&mut self) {
     }
 
@@ -804,10 +801,6 @@ impl<N: Real> Body<N> for FEMVolume<N> {
 
     fn part(&self, id: usize) -> Option<&BodyPart<N>> {
         self.elements.get(id).map(|e| e as &BodyPart<N>)
-    }
-
-    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
-        self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
     fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
@@ -899,10 +892,6 @@ impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
 
     fn local_inertia(&self) -> Inertia<N> {
         Inertia::new(self.volume * self.density, Matrix3::identity())
-    }
-
-    fn apply_force(&mut self, _force: &Force<N>) {
-        unimplemented!()
     }
 }
 

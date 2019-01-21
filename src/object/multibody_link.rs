@@ -151,24 +151,6 @@ impl<N: Real> BodyPart<N> for MultibodyLink<N> {
     fn inertia(&self) -> Inertia<N> {
         self.inertia
     }
-
-    #[inline]
-    fn add_local_inertia_and_com(&mut self, com: Point<N>, inertia: Inertia<N>) {
-        // Update center of mass.
-        if !inertia.linear.is_zero() {
-            let mass_sum = self.inertia.linear + inertia.linear;
-            self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
-            self.com = self.local_to_world * self.local_com;
-        }
-
-        // Update inertia.
-        self.local_inertia += inertia;
-    }
-
-    #[inline]
-    fn apply_force(&mut self, force: &Force<N>) {
-        self.external_forces += *force;
-    }
 }
 
 

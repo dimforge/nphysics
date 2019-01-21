@@ -60,7 +60,7 @@ impl<N: Real> RigidBody<N> {
             activation: ActivationStatus::new_active(),
             jacobian_mask: SpatialVector::repeat(N::one()),
             companion_id: 0,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             user_data: None
         }
     }
@@ -345,16 +345,6 @@ impl<N: Real> Body<N> for RigidBody<N> {
         self.apply_displacement(&disp);
     }
 
-    #[inline]
-    fn clear_dynamics(&mut self) {
-        #[cfg(feature = "dim3")]
-            {
-                self.augmented_mass = Inertia::zero();
-                self.inv_augmented_mass = Inertia::zero();
-            }
-        self.acceleration = Velocity::zero();
-    }
-
     fn clear_forces(&mut self) {
         self.external_forces = Force::zero();
     }
@@ -426,11 +416,6 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn part(&self, _: usize) -> Option<&BodyPart<N>> {
-        Some(self)
-    }
-
-    #[inline]
-    fn part_mut(&mut self, _: usize) -> Option<&mut BodyPart<N>> {
         Some(self)
     }
 
@@ -517,6 +502,31 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn add_local_inertia_and_com_to_part(&mut self, _: usize, com: Point<N>, inertia: Inertia<N>) {
+        self.update_status.set_local_com_changed(true);
+        self.update_status.set_local_inertia_changed(true);
+
+        // Update center of mass.
+        if !inertia.linear.is_zero() {
+            let mass_sum = self.inertia.linear + inertia.linear;
+            self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
+            self.com = self.local_to_world * self.local_com;
+        }
+
+        // Update local inertia.
+        self.local_inertia += inertia;
+
+        // Needed for 2D because the inertia is not updated on the `update_dynamics`.
+        self.inertia = self.local_inertia.transformed(&self.local_to_world);
+        self.inv_augmented_mass = self.inertia.inverse();
+    }
+
+    #[inline]
+    fn apply_force_to_part(&mut self, _: usize, force: &Force<N>) {
+        self.external_forces += *force;
+    }
 }
 
 impl<N: Real> BodyPart<N> for RigidBody<N> {
@@ -551,34 +561,8 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn add_local_inertia_and_com(&mut self, com: Point<N>, inertia: Inertia<N>) {
-        self.update_status.set_local_com_changed(true);
-        self.update_status.set_local_inertia_changed(true);
-
-        // Update center of mass.
-        if !inertia.linear.is_zero() {
-            let mass_sum = self.inertia.linear + inertia.linear;
-            self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
-            self.com = self.local_to_world * self.local_com;
-        }
-
-        // Update local inertia.
-        self.local_inertia += inertia;
-
-        // Needed for 2D because the inertia is not updated on the `update_dynamics`.
-        self.inertia = self.local_inertia.transformed(&self.local_to_world);
-        self.inv_augmented_mass = self.inertia.inverse();
-    }
-
-    #[inline]
     fn center_of_mass(&self) -> Point<N> {
         self.com
-    }
-
-    #[inline]
-    fn apply_force(&mut self, force: &Force<N>) {
-        self.external_forces.linear += force.linear;
-        self.external_forces.angular += force.angular;
     }
 }
 
@@ -718,8 +702,7 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
 
         for desc in &self.colliders {
             let part_handle = rb.part_handle();
-            let ndofs = rb.status_dependent_ndofs();
-            let _ = desc.build_with_infos(part_handle, ndofs, &mut rb, cworld);
+            let _ = desc.build_with_infos(part_handle, &mut rb, cworld);
         }
 
         rb

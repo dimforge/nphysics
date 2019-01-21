@@ -103,23 +103,14 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
 
     /// Update the acceleration of this body given the forces it is subject to and the gravity.
-    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        unimplemented!() // XXX: remove auto-impl
-    }
-
-    /// Reset the timestep-specific dynamic information of this body.
-    fn clear_dynamics(&mut self);
+    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
 
     /// Reset the timestep-specific dynamic information of this body.
     fn clear_forces(&mut self);
 
-    fn clear_update_flags(&mut self) {
-        unimplemented!() // XXX: remove auto-impl
-    }
+    fn clear_update_flags(&mut self);
 
-    fn update_status(&self) -> BodyUpdateStatus {
-        unimplemented!()
-    }
+    fn update_status(&self) -> BodyUpdateStatus;
 
     /// Applies a generalized displacement to this body.
     fn apply_displacement(&mut self, disp: &[N]);
@@ -171,9 +162,6 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// A reference to the specified body part.
     fn part(&self, i: usize) -> Option<&BodyPart<N>>;
 
-    /// A mutable reference to the specified body part.
-    fn part_mut(&mut self, i: usize) -> Option<&mut BodyPart<N>>;
-
     /// If this is a deformable body, returns its deformed positions.
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
 
@@ -220,6 +208,14 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// Execute one step for the iterative resolution of this body's internal position constraints.
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>);
+
+    /// Add the given inertia to the local inertia of this body part.
+    fn add_local_inertia_and_com_to_part(&mut self, part_index: usize, _com: Point<N>, _inertia: Inertia<N>)
+    {} // FIXME: don't auto-impl.
+
+    /// Apply a force to this body part at the next frame.
+    fn apply_force_to_part(&mut self, part_index: usize, force: &Force<N>)
+    {} // FIXME: don't auto-impl.
 
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.
     ///
@@ -305,15 +301,8 @@ pub trait BodyPart<N: Real>: Any + Send + Sync {
     /// The world-space inertia of this body part.
     fn inertia(&self) -> Inertia<N>;
 
-    /// Add the given inertia to the local inertia of this body part.
-    fn add_local_inertia_and_com(&mut self, _com: Point<N>, _inertia: Inertia<N>)
-    {} // FIXME: don't auto-impl.
-
     /// The local-space inertia of this body part.
     fn local_inertia(&self) -> Inertia<N>;
-
-    /// Apply a force to this body part at the next frame.
-    fn apply_force(&mut self, force: &Force<N>);
 }
 
 downcast!(<N> Body<N> where N: Real);
@@ -350,8 +339,13 @@ macro_rules! bitflags_accessors(
 pub struct BodyUpdateStatus(BodyUpdateStatusFlags);
 impl BodyUpdateStatus {
     #[inline]
-    pub fn new() -> Self {
+    pub fn all() -> Self {
         BodyUpdateStatus(BodyUpdateStatusFlags::all())
+    }
+
+    #[inline]
+    pub fn empty() -> Self {
+        BodyUpdateStatus(BodyUpdateStatusFlags::default())
     }
 
     bitflags_accessors!(

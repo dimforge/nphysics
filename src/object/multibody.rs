@@ -63,7 +63,7 @@ impl<N: Real> Multibody<N> {
             augmented_mass: DMatrix::zeros(0, 0),
             inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             activation: ActivationStatus::new_active(),
             ndofs: 0,
             companion_id: 0,
@@ -101,7 +101,7 @@ impl<N: Real> Multibody<N> {
     ///
     /// Return `None` if the given id does not identifies a multibody link part of `self`.
     #[inline]
-    pub fn link_mut(&mut self, id: usize) -> Option<&mut MultibodyLink<N>> {
+    fn link_mut(&mut self, id: usize) -> Option<&mut MultibodyLink<N>> {
         self.rbs.get_mut(id)
     }
 
@@ -736,11 +736,6 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
-        self.link_mut(id).map(|l| l as &mut BodyPart<N>)
-    }
-
-    #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         None
     }
@@ -775,9 +770,6 @@ impl<N: Real> Body<N> for Multibody<N> {
         }
 
         self.update_kinematics();
-    }
-
-    fn clear_dynamics(&mut self) {
     }
 
     fn clear_forces(&mut self) {
@@ -997,6 +989,26 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _params: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn add_local_inertia_and_com_to_part(&mut self, part_id: usize, com: Point<N>, inertia: Inertia<N>) {
+        self.update_status.set_local_inertia_changed(true);
+        let mut link = &mut self.rbs[part_id];
+        // Update center of mass.
+        if !link.inertia.linear.is_zero() {
+            let mass_sum = link.inertia.linear + inertia.linear;
+            link.local_com = (link.local_com * link.inertia.linear + com.coords * inertia.linear) / mass_sum;
+            link.com = link.local_to_world * link.local_com;
+        }
+
+        // Update inertia.
+        link.local_inertia += inertia;
+    }
+
+    #[inline]
+    fn apply_force_to_part(&mut self, part_id: usize, force: &Force<N>) {
+        self.rbs[part_id].external_forces += *force;
+    }
 }
 
 
@@ -1066,7 +1078,6 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
     }
 
     fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N>, parent: BodyPartHandle) -> &'m mut MultibodyLink<N> {
-        let ndofs = mb.status_dependent_ndofs();
         let link = mb.add_link(
             parent,
             self.joint.clone(),
@@ -1080,7 +1091,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         let me = link.part_handle();
 
         for desc in &self.colliders {
-            let _ = desc.build_with_infos(me, ndofs, link, cworld);
+            let _ = desc.build_with_infos(me, mb, cworld);
         }
 
         for child in &self.children {

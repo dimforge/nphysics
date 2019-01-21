@@ -2,7 +2,7 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use ncollide::shape::DeformationsType;
 use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity, Translation};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle};
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, BodyUpdateStatus, Body, BodyPart, BodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
 /// A singleton representing the ground.
@@ -34,18 +34,21 @@ impl<N: Real> Body<N> for Ground<N> {
     fn update_dynamics(&mut self, _: &Vector<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
-    fn clear_dynamics(&mut self) {}
+    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {}
 
     #[inline]
     fn clear_forces(&mut self) {}
 
     #[inline]
-    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
-        Some(self)
+    fn clear_update_flags(&mut self) {}
+
+    #[inline]
+    fn update_status(&self) -> BodyUpdateStatus {
+        BodyUpdateStatus::empty()
     }
 
     #[inline]
-    fn part_mut(&mut self, _: usize) -> Option<&mut BodyPart<N>> {
+    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
         Some(self)
     }
 
@@ -231,7 +234,4 @@ impl<N: Real> BodyPart<N> for Ground<N> {
     fn local_inertia(&self) -> Inertia<N> {
         Inertia::zero()
     }
-
-    #[inline]
-    fn apply_force(&mut self, _: &Force<N>) {}
 }

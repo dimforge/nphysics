@@ -148,7 +148,7 @@ impl<N: Real> MassConstraintSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
@@ -201,7 +201,7 @@ impl<N: Real> MassConstraintSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
-            update_status: BodyUpdateStatus::new(),
+            update_status: BodyUpdateStatus::all(),
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
@@ -375,9 +375,6 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         }
     }
 
-    fn clear_dynamics(&mut self) {
-    }
-
     fn clear_forces(&mut self) {
     }
 
@@ -458,10 +455,6 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
     fn part(&self, id: usize) -> Option<&BodyPart<N>> {
         self.elements.get(id).map(|e| e as &BodyPart<N>)
-    }
-
-    fn part_mut(&mut self, id: usize) -> Option<&mut BodyPart<N>> {
-        self.elements.get_mut(id).map(|e| e as &mut BodyPart<N>)
     }
 
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
@@ -676,10 +669,6 @@ impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
     }
 
     fn local_inertia(&self) -> Inertia<N> {
-        unimplemented!()
-    }
-
-    fn apply_force(&mut self, _force: &Force<N>) {
         unimplemented!()
     }
 }

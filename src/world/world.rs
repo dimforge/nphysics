@@ -211,7 +211,6 @@ impl<N: Real> World<N> {
         for b in self.bodies.bodies_mut() {
             b.update_kinematics();
             b.update_dynamics(&self.gravity, &self.params);
-            b.update_acceleration(&self.gravity, &self.params);
         }
 
         let params = &self.params;
@@ -219,6 +218,10 @@ impl<N: Real> World<N> {
         self.forces.retain(|_, f| {
             f.apply(params, bodies)
         });
+
+        for b in self.bodies.bodies_mut() {
+            b.update_acceleration(&self.gravity, &self.params);
+        }
 
         /*
          *
