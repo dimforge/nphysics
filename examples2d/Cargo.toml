@@ -101,8 +101,8 @@ name = "mass_constraint_system2"
 path = "./mass_constraint_system2.rs"
 
 [[bin]]
-name = "deformable2"
-path = "./deformable2.rs"
+name = "fem_surface2"
+path = "./fem_surface2.rs"
 
 [[bin]]
 name = "plasticity2"

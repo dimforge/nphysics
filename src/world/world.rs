@@ -17,6 +17,7 @@ use crate::object::{
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
 
+
 /// The physics world.
 pub struct World<N: Real> {
     counters: Counters,
@@ -201,14 +202,17 @@ impl<N: Real> World<N> {
     /// Execute one time step of the physics simulation.
     pub fn step(&mut self) {
         self.counters.step_started();
-        self.counters.update_started();
 
-        // FIXME: objects involved in a non-linear position stabilization already
-        // updated their kinematics.
-        self.bodies.bodies_mut().for_each(|b| {
-            b.clear_dynamics();
+        /*
+         *
+         * Update body dynamics and accelerations.
+         *
+         */
+        for b in self.bodies.bodies_mut() {
             b.update_kinematics();
-        });
+            b.update_dynamics(&self.gravity, &self.params);
+            b.update_acceleration(&self.gravity, &self.params);
+        }
 
         let params = &self.params;
         let bodies = &mut self.bodies;
@@ -216,37 +220,22 @@ impl<N: Real> World<N> {
             f.apply(params, bodies)
         });
 
-        let gravity = &self.gravity;
-        let params = &self.params;
-        self.bodies.bodies_mut().for_each(|b| {
-            b.update_dynamics(gravity, params);
-        });
-
-
-        self.cworld.sync_colliders(&self.bodies);
-
-        self.counters.update_completed();
-
-
-        self.counters.collision_detection_started();
+        /*
+         *
+         * Sync colliders and perform CD if the user moved
+         * manually some bodies.
+         */
         self.cworld.clear_events();
-        self.counters.broad_phase_started();
+        self.cworld.sync_colliders(&self.bodies);
         self.cworld.perform_broad_phase();
-        self.counters.broad_phase_completed();
-        self.counters.narrow_phase_started();
         self.cworld.perform_narrow_phase();
-        self.counters.narrow_phase_completed();
-        self.counters.collision_detection_completed();
 
-//        if self.counters.enabled() {
-//            let count = self
-//                .cworld
-//                .interaction_pairs()
-//                .fold((0, 0), |n, cp| (n.0 + 1, n.1 + cp.3.len()));
-//            self.counters.set_ncontact_pairs(count.0);
-//            self.counters.set_ncontacts(count.1);
-//        }
-
+        /*
+         *
+         * Handle sleeping and collision
+         * islands.
+         *
+         */
         // FIXME: for now, no island is built.
         self.counters.island_construction_started();
         self.active_bodies.clear();
@@ -258,6 +247,11 @@ impl<N: Real> World<N> {
         );
         self.counters.island_construction_completed();
 
+        /*
+         *
+         * Collect contact manifolds.
+         *
+         */
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
         for (coll1, coll2, interaction) in self.cworld.interaction_pairs() {
             if let Interaction::Contact(_, manifold) = interaction {
@@ -275,13 +269,17 @@ impl<N: Real> World<N> {
             }
         }
 
-        self.counters.solver_started();
-        // FIXME This is currently needed by the solver because otherwise
-        // some kinematic bodies may end up with a companion_id (used as
-        // an assembly_id) that it out of bounds of the velocity vector.
-        // Note sure what the best place for this is though.
+        /*
+         *
+         * Solve the system and integrate.
+         *
+         */
         for b in self.bodies.bodies_mut() {
-            b.set_companion_id(0)
+            // FIXME This is currently needed by the solver because otherwise
+            // some kinematic bodies may end up with a companion_id (used as
+            // an assembly_id) that it out of bounds of the velocity vector.
+            // Note sure what the best place for this is though.
+            b.set_companion_id(0);
         }
 
         self.solver.step(
@@ -298,11 +296,45 @@ impl<N: Real> World<N> {
             if b.status() == BodyStatus::Kinematic {
                 b.integrate(&self.params)
             }
-
-            b.clear_forces();
         }
 
-        self.counters.solver_completed();
+
+        /*
+         *
+         * Update body kinematics and dynamics
+         * after the contact resolution step.
+         *
+         */
+        // FIXME: objects involved in a non-linear position stabilization already
+        // updated their kinematics.
+        let params = &self.params;
+        self.bodies.bodies_mut().for_each(|b| {
+            b.update_kinematics();
+            b.update_dynamics(&Vector::zeros(), params);
+        });
+
+        /*
+         *
+         * Update colliders and perform CD with the now
+         * body positions.
+         *
+         */
+        self.cworld.sync_colliders(&self.bodies);
+        self.counters.collision_detection_started();
+        self.cworld.perform_broad_phase();
+        self.cworld.perform_narrow_phase();
+        self.counters.collision_detection_completed();
+
+        /*
+         *
+         * Finally, clear the update flag of every body.
+         *
+         */
+        self.bodies.bodies_mut().for_each(|b| {
+            b.clear_forces();
+            b.clear_update_flags();
+        });
+
         self.counters.step_completed();
     }
 

@@ -4,7 +4,7 @@ use na::{DVectorSlice, DVectorSliceMut, Real};
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
-                    ColliderDesc, BodyDesc};
+                    ColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use ncollide::shape::DeformationsType;
@@ -14,58 +14,6 @@ use ncollide::utils::IsometryOps;
 use crate::math::AngularVector;
 #[cfg(feature = "dim3")]
 use crate::utils::GeneralizedCross;
-
-/*
-bitflags! {
-    #[derive(Default)]
-    struct BodyUpdateStatusFlags: u8 {
-        const POSITION_CHANGED = 0b00000001;
-        const VELOCITY_CHANGED = 0b00000010;
-        const LOCAL_INERTIA_CHANGED = 0b000100;
-    }
-}
-
-macro_rules! bitflag_accessors(
-    ($($get_name: ident, $set_name: ident, $reset_name: ident, $variant: ident)*) => {$(
-        #[inline]
-        fn $get_name(&self) -> bool {
-            self.0.contains(BodyUpdateStatus::$variant)
-        }
-
-        #[inline]
-        fn $set_name(&mut self) {
-            self.0.set(BodyUpdateStatus::$variant)
-        }
-
-        #[inline]
-        fn $reset_name(&mut self) {
-            self.0.reset(BodyUpdateStatus::$variant)
-        }
-    )*}
-);
-
-struct BodyUpdateStatus(BodyUpdateStatusFlags);
-impl BodyUpdateStatus {
-    bitflags_accessors!(
-        position_changed, set_position_changed, reset_position_changed, POSITION_CHANGED,
-        velocity_changed, set_velocity_changed, reset_velocity_changed, VELOCITY_CHANGED,
-        local_inertia_changed, set_local_inertia_changed, reset_local_inertia_changed, LOCAL_INERTIA_CHANGED,
-    );
-
-    #[inline]
-    fn inertia_needs_update(&self) -> bool {
-        self.0.any(
-            BodyUpdateStatus::POSITION_CHANGED |
-            BodyUpdateStatus::VELOCITY_CHANGED |
-            BodyUpdateStatus::LOCAL_INERTIA_CHANGED
-        )
-    }
-
-    #[inline]
-    fn reset(&mut self) {
-        self.0.clear()
-    }
-}*/
 
 
 /// A rigid body.
@@ -86,6 +34,7 @@ pub struct RigidBody<N: Real> {
     activation: ActivationStatus<N>,
     jacobian_mask: SpatialVector<N>,
     companion_id: usize,
+    update_status: BodyUpdateStatus,
     user_data: Option<Box<Any + Send + Sync>>
 }
 
@@ -111,6 +60,7 @@ impl<N: Real> RigidBody<N> {
             activation: ActivationStatus::new_active(),
             jacobian_mask: SpatialVector::repeat(N::one()),
             companion_id: 0,
+            update_status: BodyUpdateStatus::new(),
             user_data: None
         }
     }
@@ -172,18 +122,21 @@ impl<N: Real> RigidBody<N> {
     /// Set the center of mass of this rigid body, expressed in its local space.
     #[inline]
     pub fn set_local_center_of_mass(&mut self, local_com: Point<N>) {
+        self.update_status.set_local_com_changed(true);
         self.local_com = local_com;
     }
 
     /// Set the local inertia of this rigid body, expressed in its local space.
     #[inline]
     pub fn set_local_inertia(&mut self, local_inertia: Inertia<N>) {
+        self.update_status.set_local_inertia_changed(true);
         self.local_inertia = local_inertia;
     }
 
     /// Sets the position of this rigid body.
     #[inline]
     pub fn set_position(&mut self, pos: Isometry<N>) {
+        self.update_status.set_position_changed(true);
         self.local_to_world = pos;
         self.com = pos * self.local_com;
     }
@@ -191,12 +144,14 @@ impl<N: Real> RigidBody<N> {
     /// Set the velocity of this rigid body.
     #[inline]
     pub fn set_velocity(&mut self, vel: Velocity<N>) {
+        self.update_status.set_velocity_changed(true);
         self.velocity = vel;
     }
 
     /// Set the linear velocity of this rigid body.
     #[inline]
     pub fn set_linear_velocity(&mut self, vel: Vector<N>) {
+        self.update_status.set_velocity_changed(true);
         self.velocity.linear = vel;
     }
 
@@ -204,6 +159,7 @@ impl<N: Real> RigidBody<N> {
     /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: N) {
+        self.update_status.set_velocity_changed(true);
         self.velocity.angular = vel;
     }
 
@@ -211,6 +167,7 @@ impl<N: Real> RigidBody<N> {
     /// Set the angular velocity of this rigid body.
     #[inline]
     pub fn set_angular_velocity(&mut self, vel: AngularVector<N>) {
+        self.update_status.set_velocity_changed(true);
         self.velocity.angular = vel;
     }
 
@@ -320,6 +277,10 @@ impl<N: Real> Body<N> for RigidBody<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
+    #[inline]
+    fn update_status(&self) -> BodyUpdateStatus {
+        self.update_status
+    }
 
     #[inline]
     fn status(&self) -> BodyStatus {
@@ -368,6 +329,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
+        self.update_status.set_velocity_changed(true);
         DVectorSliceMut::from_slice(self.velocity.as_mut_slice(), SPATIAL_DIM)
     }
 
@@ -396,40 +358,62 @@ impl<N: Real> Body<N> for RigidBody<N> {
         self.external_forces = Force::zero();
     }
 
+    fn clear_update_flags(&mut self) {
+        self.update_status.clear();
+    }
+
     fn update_kinematics(&mut self) {
     }
 
     #[allow(unused_variables)] // for params used only in 3D.
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+        if !self.update_status.inertia_needs_update() {
+            return;
+        }
+
+        match self.status {
+            #[cfg(feature = "dim3")]
+            BodyStatus::Dynamic => {
+                // The inverse inertia matrix is constant in 2D.
+                self.inertia = self.local_inertia.transformed(&self.local_to_world);
+                self.augmented_mass = self.inertia;
+
+                let i = &self.inertia.angular;
+                let w = &self.velocity.angular;
+                let iw = i * w;
+                let w_dt = w * params.dt;
+                let w_dt_cross = w_dt.gcross_matrix();
+                let iw_dt_cross = (iw * params.dt).gcross_matrix();
+                self.augmented_mass.angular += w_dt_cross * i - iw_dt_cross;
+
+                // NOTE: if we did not have the gyroscopic forces, we would not have to invert the inertia
+                // matrix at each time-step => add a flag to disable gyroscopic forces?
+                self.inv_augmented_mass = self.augmented_mass.inverse();
+            }
+            _ => {}
+        }
+    }
+
+    fn update_acceleration(&mut self, gravity: &Vector<N>, _: &IntegrationParameters<N>) {
+        self.acceleration = Velocity::zero();
+
         match self.status {
             BodyStatus::Dynamic => {
                 // The inverse inertia matrix is constant in 2D.
                 #[cfg(feature = "dim3")]
-                {
-                    self.inertia = self.local_inertia.transformed(&self.local_to_world);
-                    self.augmented_mass += self.inertia;
-
-                    let i = &self.inertia.angular;
-                    let w = &self.velocity.angular;
-                    let iw = i * w;
-                    let w_dt = w * params.dt;
-                    let w_dt_cross = w_dt.gcross_matrix();
-                    let iw_dt_cross = (iw * params.dt).gcross_matrix();
-                    self.augmented_mass.angular += w_dt_cross * i - iw_dt_cross;
-
-                    // NOTE: if we did not have the gyroscopic forces, we would not have to invert the inertia
-                    // matrix at each time-step => add a flag to disable gyroscopic forces?
-                    self.inv_augmented_mass = self.augmented_mass.inverse();
-
-                    /*
-                     * Compute acceleration due to gyroscopic forces.
-                     */
-                    let gyroscopic = -w.cross(&iw);
-                    self.acceleration.angular += self.inv_augmented_mass.angular * gyroscopic;
-                }
+                    {
+                        /*
+                         * Compute acceleration due to gyroscopic forces.
+                         */
+                        let i = &self.inertia.angular;
+                        let w = &self.velocity.angular;
+                        let iw = i * w;
+                        let gyroscopic = -w.cross(&iw);
+                        self.acceleration.angular = self.inv_augmented_mass.angular * gyroscopic;
+                    }
 
                 if self.inv_augmented_mass.linear != N::zero() {
-                    self.acceleration.linear += *gravity;
+                    self.acceleration.linear = *gravity;
                 }
 
                 self.acceleration += self.inv_augmented_mass * self.external_forces;
@@ -567,6 +551,9 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 
     #[inline]
     fn add_local_inertia_and_com(&mut self, com: Point<N>, inertia: Inertia<N>) {
+        self.update_status.set_local_com_changed(true);
+        self.update_status.set_local_inertia_changed(true);
+
         // Update center of mass.
         if !inertia.linear.is_zero() {
             let mass_sum = self.inertia.linear + inertia.linear;

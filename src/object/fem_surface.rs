@@ -6,13 +6,13 @@ use std::any::Any;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
+use na::{self, Real, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix, U2,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Vector2, Unit};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
-                    FiniteElementIndices, DeformableColliderDesc, BodyDesc};
+                    FiniteElementIndices, DeformableColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry, SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
@@ -25,8 +25,10 @@ pub struct TriangularElement<N: Real> {
     indices: Point3<usize>,
     com: Point<N>,
     rot: RotationMatrix<N>,
+    inv_rot: RotationMatrix<N>,
     j: Matrix<N>,
-    j_inv: Matrix<N>,
+    local_j_inv: Matrix2x3<N>,
+    total_strain: SpatialVector<N>,
     plastic_strain: SpatialVector<N>,
     surface: N,
     density: N,
@@ -58,10 +60,17 @@ pub struct FEMSurface<N: Real> {
     plasticity_threshold: N,
     plasticity_creep: N,
     plasticity_max_force: N,
+    // Elasticity coefficients computed from the young modulus
+    // and poisson ratio.
+    d0: N,
+    d1: N,
+    d2: N,
 
     companion_id: usize,
     activation: ActivationStatus<N>,
     status: BodyStatus,
+    update_status: BodyUpdateStatus,
+
 
     user_data: Option<Box<Any + Send + Sync>>,
 }
@@ -76,8 +85,10 @@ impl<N: Real> FEMSurface<N> {
                 indices: idx * DIM,
                 com: Point::origin(),
                 rot: RotationMatrix::identity(),
+                inv_rot: RotationMatrix::identity(),
                 j: na::zero(),
-                j_inv: na::zero(),
+                local_j_inv: na::zero(),
+                total_strain: SpatialVector::zeros(),
                 plastic_strain: SpatialVector::zeros(),
                 surface: na::zero(),
                 density,
@@ -90,6 +101,9 @@ impl<N: Real> FEMSurface<N> {
             let pt = pos * Point::from_coordinates(pt.coords.component_mul(&scale));
             rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
         }
+
+        let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
+
         FEMSurface {
             handle,
             elements,
@@ -108,8 +122,10 @@ impl<N: Real> FEMSurface<N> {
             plasticity_threshold: N::zero(),
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
+            d0, d1, d2,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
+            update_status: BodyUpdateStatus::new(),
             user_data: None
         }
     }
@@ -131,15 +147,40 @@ impl<N: Real> FEMSurface<N> {
     /// The mutable velocity of this body in generalized coordinates.
     #[inline]
     pub fn velocities_mut(&mut self) -> &mut DVector<N> {
+        self.update_status.set_velocity_changed(true);
         &mut self.velocities
     }
 
 
     /// Sets the plastic properties of this deformable surface.
+    ///
+    /// Note that large plasticity creep coefficient can yield to significant instability.
     pub fn set_plasticity(&mut self, strain_threshold: N, creep: N, max_force: N) {
         self.plasticity_threshold = strain_threshold;
         self.plasticity_creep = creep;
         self.plasticity_max_force = max_force;
+    }
+
+    /// Sets the young modulus of this deformable surface.
+    pub fn set_young_modulus(&mut self, young_modulus: N) {
+        self.update_status.set_local_inertia_changed(true);
+        self.young_modulus = young_modulus;
+
+        let (d0, d1, d2) = fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
+        self.d0 = d0;
+        self.d1 = d1;
+        self.d2 = d2;
+    }
+
+    /// Sets the poisson ratio of this deformable surface.
+    pub fn set_poisson_ratio(&mut self, poisson_ratio: N) {
+        self.update_status.set_local_inertia_changed(true);
+        self.poisson_ratio = poisson_ratio;
+
+        let (d0, d1, d2) = fem_helper::elasticity_coefficients(self.young_modulus, self.poisson_ratio);
+        self.d0 = d0;
+        self.d1 = d1;
+        self.d2 = d2;
     }
 
     pub fn handle(&self) -> BodyHandle {
@@ -184,7 +225,64 @@ impl<N: Real> FEMSurface<N> {
         }
     }
 
-    fn assemble_stiffness_and_forces_with_damping(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+
+    fn assemble_stiffness(&mut self, params: &IntegrationParameters<N>) {
+        let _1: N = na::one();
+        let _2: N = na::convert(2.0);
+        let dt = params.dt;
+        let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
+
+        for elt in self.elements.iter_mut().filter(|e| e.surface > N::zero()) {
+            let d0_surf = self.d0 * elt.surface;
+            let d1_surf = self.d1 * elt.surface;
+            let d2_surf = self.d2 * elt.surface;
+
+            for a in 0..3 {
+                let ia = elt.indices[a];
+
+                if !self.kinematic_nodes[ia / DIM] {
+                    let bn = elt.local_j_inv[(0, a)];
+                    let cn = elt.local_j_inv[(1, a)];
+
+                    // Fields of P_n * elt.volume:
+                    //
+                    // let P_n = Matrix3x6::new(
+                    //   bn * d0, bn * d1, cn * d2,
+                    //   cn * d1, cn * d0, bn * d2,
+                    // ) * elt.surface;
+                    let bn0 = bn * d0_surf;
+                    let bn1 = bn * d1_surf;
+                    let bn2 = bn * d2_surf;
+                    let cn0 = cn * d0_surf;
+                    let cn1 = cn * d1_surf;
+                    let cn2 = cn * d2_surf;
+
+                    /*
+                     * Add elastic strain.
+                     */
+                    for b in 0..3 {
+                        let bm = elt.local_j_inv[(0, b)];
+                        let cm = elt.local_j_inv[(1, b)];
+
+                        let node_stiffness = Matrix2::new(
+                            bn0 * bm + cn2 * cm, bn1 * cm + cn2 * bm,
+                            cn1 * bm + bn2 * cm, cn0 * cm + bn2 * bm,
+                        );
+
+                        let rot_stiffness = elt.rot * node_stiffness;
+                        let ib = elt.indices[b];
+
+                        if !self.kinematic_nodes[ib / DIM] {
+                            let mut mass_part = self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
+                            mass_part.gemm(stiffness_coeff, &rot_stiffness, elt.inv_rot.matrix(), N::one());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn assemble_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
         let dt = params.dt;
@@ -204,51 +302,38 @@ impl<N: Real> FEMSurface<N> {
             }
         }
 
-        // Internal forces and stiffness.
-        let d0 = (self.young_modulus * (_1 - self.poisson_ratio)) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
-        let d1 = (self.young_modulus * self.poisson_ratio) / ((_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
-        let d2 = (self.young_modulus * (_1 - _2 * self.poisson_ratio)) / (_2 * (_1 + self.poisson_ratio) * (_1 - _2 * self.poisson_ratio));
-
         for elt in self.elements.iter_mut().filter(|e| e.surface > N::zero()) {
 
-            let d0_surf = d0 * elt.surface;
-            let d1_surf = d1 * elt.surface;
-            let d2_surf = d2 * elt.surface;
-
-            let rot_tr = elt.rot.inverse();
-            let j_inv_rot = rot_tr.matrix() * elt.j_inv;
-            let j_inv_rot = Matrix2x3::new(
-                -j_inv_rot.m11 - j_inv_rot.m12, j_inv_rot.m11, j_inv_rot.m12,
-                -j_inv_rot.m21 - j_inv_rot.m22, j_inv_rot.m21, j_inv_rot.m22,
-            );
-
-            // XXX: simplify/optimize those two parts.
+            let d0_surf = self.d0 * elt.surface;
+            let d1_surf = self.d1 * elt.surface;
+            let d2_surf = self.d2 * elt.surface;
 
             /*
              *
              * Plastic strain.
              *
              */
-            let mut total_strain = Vector3::zeros();
+            elt.total_strain = Vector3::zeros();
 
             // Compute plastic strain.
             for a in 0..3 {
-                let bn = j_inv_rot[(0, a)];
-                let cn = j_inv_rot[(1, a)];
+                let bn = elt.local_j_inv[(0, a)];
+                let cn = elt.local_j_inv[(1, a)];
 
                 let ia = elt.indices[a];
-                let pos = self.positions.fixed_rows::<Dim>(ia);
-                let ref_pos = self.rest_positions.fixed_rows::<Dim>(ia);
-                let dpos = rot_tr * pos - ref_pos;
+                let vel_part = self.velocities.fixed_rows::<Dim>(ia);
+                let pos_part = self.positions.fixed_rows::<Dim>(ia);
+                let ref_pos_part = self.rest_positions.fixed_rows::<Dim>(ia);
+                let dpos = elt.inv_rot * (vel_part * dt + pos_part) - ref_pos_part;
                 // total_strain += B_n * dpos
-                total_strain += Vector3::new(
+                elt.total_strain += Vector3::new(
                     bn * dpos.x,
                     cn * dpos.y,
                     cn * dpos.x + bn * dpos.y,
                 );
             }
 
-            let strain = total_strain - elt.plastic_strain;
+            let strain = elt.total_strain - elt.plastic_strain;
             if strain.norm() > self.plasticity_threshold {
                 let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
                 elt.plastic_strain += strain * coeff;
@@ -264,8 +349,8 @@ impl<N: Real> FEMSurface<N> {
                 let ia = elt.indices[a];
 
                 if !self.kinematic_nodes[ia / DIM] {
-                    let bn = j_inv_rot[(0, a)];
-                    let cn = j_inv_rot[(1, a)];
+                    let bn = elt.local_j_inv[(0, a)];
+                    let cn = elt.local_j_inv[(1, a)];
 
                     let mut force_part = self.accelerations.fixed_rows_mut::<Dim>(ia);
 
@@ -283,48 +368,18 @@ impl<N: Real> FEMSurface<N> {
                     let cn2 = cn * d2_surf;
 
                     /*
-                     * Add elastic strain.
+                     * Add plastic strain.
                      */
-                    for b in 0..3 {
-                        let bm = j_inv_rot[(0, b)];
-                        let cm = j_inv_rot[(1, b)];
-
-                        let node_stiffness = Matrix2::new(
-                            bn0 * bm + cn2 * cm, bn1 * cm + cn2 * bm,
-                            cn1 * bm + bn2 * cm, cn0 * cm + bn2 * bm,
-                        );
-
-                        let rot_stiffness = elt.rot * node_stiffness;
-                        let rot_tr = elt.rot.transpose();
-
-                        let ib = elt.indices[b];
-
-                        if !self.kinematic_nodes[ib / DIM] {
-                            let mut mass_part = self.augmented_mass.fixed_slice_mut::<Dim, Dim>(ia, ib);
-                            mass_part.gemm(stiffness_coeff, &rot_stiffness, rot_tr.matrix(), N::one());
-                        }
-
-                        let vel_part = self.velocities.fixed_rows::<Dim>(ib);
-                        let pos_part = self.positions.fixed_rows::<Dim>(ib);
-                        let ref_pos_part = self.rest_positions.fixed_rows::<Dim>(ib);
-                        let dpos = rot_tr * (vel_part * dt + pos_part) - ref_pos_part;
-                        force_part.gemv(-N::one(), &rot_stiffness, &dpos, N::one());
-                    }
-
-                    /*
-                     * Add plastic strain
-                     */
-                    // P_n * elt_plastic_strain
-                    let ps = elt.plastic_strain;
+                    // P_n * strain
+                    let strain = elt.total_strain - elt.plastic_strain;
                     #[cfg_attr(rustfmt, rustfmt_skip)]
-                    let projected_plastic_strain = Vector2::new(
-                        bn0 * ps.x + bn1 * ps.y + cn2 * ps.z,
-                        cn1 * ps.x + cn0 * ps.y + bn2 * ps.z,
+                    let projected_strain = Vector2::new(
+                        bn0 * strain.x + bn1 * strain.y + cn2 * strain.z,
+                        cn1 * strain.x + cn0 * strain.y + bn2 * strain.z,
                     );
 
                     let mut force_part = self.accelerations.fixed_rows_mut::<Dim>(ia);
-                    let plastic_force = elt.rot * projected_plastic_strain;
-                    force_part += plastic_force;
+                    force_part -= elt.rot * projected_strain;
                 }
             }
         }
@@ -418,27 +473,27 @@ impl<N: Real> FEMSurface<N> {
     /// Renumber degrees of freedom so that the `deformation_indices[i]`-th DOF becomes the `i`-th one.
     pub fn renumber_dofs(&mut self, deformation_indices: &[usize]) {
         let mut dof_map: Vec<_> = (0..).take(self.positions.len()).collect();
-        let mut new_positions = self.positions.clone();
-        let mut new_rest_positions = self.rest_positions.clone();
+        let mut remapped: Vec<_> = iter::repeat(false).take(self.positions.len()).collect();
+        let mut new_positions = DVector::zeros(self.positions.len());
+        let mut new_rest_positions = DVector::zeros(self.positions.len());
 
-        for (mesh_i, vol_i) in deformation_indices.iter().cloned().enumerate() {
-            let mesh_i = mesh_i * DIM;
+        for (target_i, orig_i) in deformation_indices.iter().cloned().enumerate() {
+            assert!(!remapped[orig_i], "Duplicate DOF remapping found.");
+            let target_i = target_i * 2;
+            new_positions.fixed_rows_mut::<U2>(target_i).copy_from(&self.positions.fixed_rows::<U2>(orig_i));
+            new_rest_positions.fixed_rows_mut::<U2>(target_i).copy_from(&self.rest_positions.fixed_rows::<U2>(orig_i));
+            dof_map[orig_i] = target_i;
+            remapped[orig_i] = true;
+        }
 
-            if vol_i >= deformation_indices.len() * DIM {
-                dof_map.swap(vol_i, mesh_i);
+        let mut curr_target = deformation_indices.len() * 2;
 
-                for k in 0..DIM {
-                    new_positions.swap((mesh_i + k, 0), (vol_i + k, 0));
-                    new_rest_positions.swap((mesh_i + k, 0), (vol_i + k, 0));
-                }
-            } else {
-                dof_map[vol_i] = mesh_i;
-
-
-                for k in 0..DIM {
-                    new_positions[(mesh_i + k, 0)] = self.positions[(vol_i + k, 0)];
-                    new_rest_positions[(mesh_i + k, 0)] = self.rest_positions[(vol_i + k, 0)];
-                }
+        for orig_i in (0..self.positions.len()).step_by(2) {
+            if !remapped[orig_i] {
+                new_positions.fixed_rows_mut::<U2>(curr_target).copy_from(&self.positions.fixed_rows::<U2>(orig_i));
+                new_rest_positions.fixed_rows_mut::<U2>(curr_target).copy_from(&self.rest_positions.fixed_rows::<U2>(orig_i));
+                dof_map[orig_i] = curr_target;
+                curr_target += 2;
             }
         }
 
@@ -510,7 +565,14 @@ impl<N: Real> FEMSurface<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
+    }
+
+    /// Mark all nodes as non-kinematic.
+    pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_local_inertia_changed(true);
+        self.kinematic_nodes.fill(false)
     }
 }
 
@@ -522,10 +584,15 @@ impl<N: Real> Body<N> for FEMSurface<N> {
 
     #[inline]
     fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        self.update_status.set_local_inertia_changed(true);
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
     fn update_kinematics(&mut self) {
+        if !self.update_status.position_changed() {
+            return;
+        }
+
         for elt in &mut self.elements {
             let a = self.positions.fixed_rows::<Dim>(elt.indices.x);
             let b = self.positions.fixed_rows::<Dim>(elt.indices.y);
@@ -540,7 +607,6 @@ impl<N: Real> Body<N> for FEMSurface<N> {
             );
             let j_det =  elt.j.determinant();
             elt.surface = j_det * na::convert(1.0 / 2.0);
-            elt.j_inv = elt.j.try_inverse().unwrap_or(Matrix2::identity());
             elt.com = Point::from_coordinates(a + b + c) * na::convert::<_, N>(1.0 / 3.0);
 
             /*
@@ -567,6 +633,15 @@ impl<N: Real> Body<N> for FEMSurface<N> {
             ];
             let _ = Vector::orthonormalize(&mut cols);
             elt.rot = RotationMatrix::from_matrix_unchecked(Matrix::from_columns(&cols));
+            elt.inv_rot = elt.rot.inverse();
+
+            let j_inv = elt.j.try_inverse().unwrap_or(Matrix2::identity());
+            let local_j_inv = elt.inv_rot.matrix() * j_inv;
+            elt.local_j_inv = Matrix2x3::new(
+                -local_j_inv.m11 - local_j_inv.m12, local_j_inv.m11, local_j_inv.m12,
+                -local_j_inv.m21 - local_j_inv.m22, local_j_inv.m21, local_j_inv.m22,
+            );
+
         }
     }
 
@@ -574,23 +649,44 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     fn update_dynamics(&mut self,
                        gravity: &Vector<N>,
                        params: &IntegrationParameters<N>) {
-        self.assemble_mass_with_damping(params);
-        self.assemble_stiffness_and_forces_with_damping(gravity, params);
+        if self.update_status.inertia_needs_update() {
+            self.augmented_mass.fill(N::zero());
+            self.assemble_mass_with_damping(params);
+            self.assemble_stiffness(params);
 
-        // FIXME: avoid allocation inside Cholesky at each timestep.
-        self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
+            // FIXME: avoid allocation inside Cholesky at each timestep.
+            // FIXME: if Cholesky fails fallback to some sort of mass-spring formulation?
+            //        If we do so we should add a bool to let give the user the ability to check which
+            //        model has been used during the last timestep.
+            self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).expect("Singular system found.");
+        }
+    }
+
+    /// Update the dynamics property of this deformable surface.
+    fn update_acceleration(&mut self,
+                           gravity: &Vector<N>,
+                           params: &IntegrationParameters<N>) {
+        self.accelerations.fill(N::zero());
+        self.assemble_forces(gravity, params);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
 
     fn clear_dynamics(&mut self) {
-        self.augmented_mass.fill(N::zero());
-        self.accelerations.fill(N::zero());
     }
 
     fn clear_forces(&mut self) {
     }
 
+    fn clear_update_flags(&mut self) {
+        self.update_status.clear()
+    }
+
+    fn update_status(&self) -> BodyUpdateStatus {
+        self.update_status
+    }
+
     fn apply_displacement(&mut self, disp: &[N]) {
+        self.update_status.set_position_changed(true);
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;
     }
@@ -632,11 +728,13 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     }
 
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
+        self.update_status.set_velocity_changed(true);
         let ndofs = self.velocities.len();
         DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), ndofs)
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
+        self.update_status.set_position_changed(true);
         self.positions.axpy(params.dt, &self.velocities, N::one())
     }
 

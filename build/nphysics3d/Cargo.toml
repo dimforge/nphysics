@@ -27,6 +27,7 @@ alga       = "0.7"
 nalgebra   = { version = "0.16", features = [ "sparse" ] }
 approx     = "0.3"
 downcast   = "0.9"
+bitflags   = "1.0"
 ncollide3d = "0.17"
 
 [target.wasm32-unknown-unknown.dependencies]

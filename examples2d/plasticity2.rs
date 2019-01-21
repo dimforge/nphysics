@@ -50,7 +50,7 @@ fn main() {
         .with_density(1.0)
         .with_young_modulus(1.0e2)
         .with_mass_damping(0.2)
-        .with_plasticity(0.1, 20.0, 1.0e5)
+        .with_plasticity(0.1, 5.0, 1.0e5)
         .with_boundary_polyline_collider(true)
         .build(&mut world)
         .handle();

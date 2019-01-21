@@ -10,6 +10,7 @@ use na::{self, Point2, Point3};
 use ncollide2d::utils::GenerationalId;
 use ncollide2d::query::Ray;
 use ncollide2d::world::CollisionGroups;
+use ncollide2d::narrow_phase::Interaction;
 use nphysics2d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics2d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics2d::world::World;
@@ -497,27 +498,29 @@ fn draw_collisions(
     existing: &mut HashMap<GenerationalId, bool>,
     running: bool,
 ) {
-    for (_, _, _, manifold) in world.collider_world().contact_pairs() {
-        for c in manifold.contacts() {
-            if existing.contains_key(&c.id) {
-                if running {
-                    existing.insert(c.id, true);
+    for (_, _, interaction) in world.collider_world().interaction_pairs() {
+        if let Interaction::Contact(_, manifold) = interaction {
+            for c in manifold.contacts() {
+                if existing.contains_key(&c.id) {
+                    if running {
+                        existing.insert(c.id, true);
+                    }
+                } else {
+                    existing.insert(c.id, false);
                 }
-            } else {
-                existing.insert(c.id, false);
+
+                let color = if c.contact.depth < 0.0 {// existing[&c.id] {
+                    Point3::new(0.0, 0.0, 1.0)
+                } else {
+                    Point3::new(1.0, 0.0, 0.0)
+                };
+
+                window.draw_planar_line(&c.contact.world1, &c.contact.world2, &color);
+
+    //            let center = na::center(&c.contact.world1, &c.contact.world2);
+    //            let end = center + *c.contact.normal * 0.4f32;
+    //            window.draw_planar_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
             }
-
-            let color = if c.contact.depth < 0.0 {// existing[&c.id] {
-                Point3::new(0.0, 0.0, 1.0)
-            } else {
-                Point3::new(1.0, 0.0, 0.0)
-            };
-
-            window.draw_planar_line(&c.contact.world1, &c.contact.world2, &color);
-
-//            let center = na::center(&c.contact.world1, &c.contact.world2);
-//            let end = center + *c.contact.normal * 0.4f32;
-//            window.draw_planar_line(&center, &end, &Point3::new(0.0, 1.0, 1.0))
         }
     }
 }

@@ -76,6 +76,8 @@ The libraries needed to compile the examples are:
 extern crate approx;
 #[macro_use]
 extern crate downcast;
+#[macro_use]
+extern crate bitflags;
 
 extern crate alga;
 extern crate nalgebra as na;

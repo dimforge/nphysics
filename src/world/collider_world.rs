@@ -2,7 +2,7 @@ use na::Real;
 use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::narrow_phase::Interaction;
-use ncollide::query::{ContactManifold, Ray, RayIntersection};
+use ncollide::query::{Ray, RayIntersection};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
 use ncollide::events::{ContactEvents, ProximityEvents};
@@ -49,7 +49,7 @@ impl<N: Real> ColliderWorld<N> {
                 .data_mut()
                 .set_body_status_dependent_ndofs(body.status_dependent_ndofs());
 
-            if !body.is_active() {
+            if !body.is_active() || !body.update_status().colliders_need_update() {
                 return true;
             }
 

@@ -13,6 +13,17 @@ use crate::solver::ForceDirection;
 use crate::math::{Point, Isometry, Dim, DIM};
 
 
+pub fn elasticity_coefficients<N: Real>(young_modulus: N, poisson_ratio: N) -> (N, N, N) {
+    let _1 = N::one();
+    let _2: N = na::convert(2.0);
+
+    let d0 = (young_modulus * (_1 - poisson_ratio)) / ((_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
+    let d1 = (young_modulus * poisson_ratio) / ((_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
+    let d2 = (young_modulus * (_1 - _2 * poisson_ratio)) / (_2 * (_1 + poisson_ratio) * (_1 - _2 * poisson_ratio));
+    (d0, d1, d2)
+}
+
+
 /// Indices of the nodes of on element of a body decomposed in finite elements.
 #[derive(Copy, Clone, Debug)]
 pub enum FiniteElementIndices {

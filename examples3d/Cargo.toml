@@ -111,8 +111,8 @@ name = "wall3"
 path = "./wall3.rs"
 
 [[bin]]
-name = "deformable3"
-path = "./deformable3.rs"
+name = "fem_volume3"
+path = "./fem_volume3.rs"
 
 [[bin]]
 name = "plasticity3"

@@ -43,7 +43,7 @@ fn main() {
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    FEMVolumeDesc::cube(50, 2, 2)
+    FEMVolumeDesc::cube(50, 1, 1)
         .with_scale(Vector3::new(1.0, 0.1, 0.1))
         .with_translation(Vector3::y() * 0.1)
         .with_young_modulus(1.0e3)
