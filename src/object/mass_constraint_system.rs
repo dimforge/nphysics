@@ -15,8 +15,8 @@ use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
-                    FiniteElementIndices, DeformableColliderDesc, BodyDesc};
+use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+                    ActivationStatus, FiniteElementIndices, DeformableColliderDesc, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -84,6 +84,7 @@ pub struct MassConstraintSystem<N: Real> {
     companion_id: usize,
     activation: ActivationStatus<N>,
     status: BodyStatus,
+    update_status: BodyUpdateStatus,
     mass: N,
     node_mass: N,
     inv_node_mass: N,
@@ -147,6 +148,7 @@ impl<N: Real> MassConstraintSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
+            update_status: BodyUpdateStatus::new(),
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
@@ -199,6 +201,7 @@ impl<N: Real> MassConstraintSystem<N> {
             companion_id: 0,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
+            update_status: BodyUpdateStatus::new(),
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
@@ -226,6 +229,7 @@ impl<N: Real> MassConstraintSystem<N> {
     pub fn add_constraint(&mut self, node1: usize, node2: usize, stiffness: Option<N>) {
         assert!(node1 < self.positions.len() / DIM, "Node index out of bounds.");
         assert!(node2 < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_local_inertia_changed(true);
         let key = key(node1 * DIM, node2 * DIM);
         let constraint = LengthConstraint::from_positions(key, self.positions.as_slice(), stiffness);
         self.constraints.push(constraint);
@@ -236,6 +240,8 @@ impl<N: Real> MassConstraintSystem<N> {
     /// Given three nodes `a, b, c`, if a constraint exists between `a` and `b`, and between `b` and `c`,
     /// then a constraint between `a` and `c` is created if it does not already exists.
     pub fn generate_neighbor_constraints(&mut self, stiffness: Option<N>) {
+        self.update_status.set_local_inertia_changed(true);
+
         // XXX: duplicate code with MassSpringSurface::generate_neighbor_springs.
         let mut neighbor_list: Vec<_> = iter::repeat(Vec::new()).take(self.positions.len() / DIM).collect();
         let mut existing_constraints = HashSet::with_hasher(DeterministicState::new());
@@ -287,7 +293,14 @@ impl<N: Real> MassConstraintSystem<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
+    }
+
+    /// Mark all nodes as non-kinematic.
+    pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_local_inertia_changed(true);
+        self.kinematic_nodes.fill(false)
     }
 
     /// Sets the plastic properties of this mass-constraint system.
@@ -300,22 +313,28 @@ impl<N: Real> MassConstraintSystem<N> {
 
 impl<N: Real> Body<N> for MassConstraintSystem<N> {
     fn update_kinematics(&mut self) {
-        for constraint in &mut self.constraints {
-            let p0 = self.positions.fixed_rows::<Dim>(constraint.nodes.0);
-            let p1 = self.positions.fixed_rows::<Dim>(constraint.nodes.1);
-            let l = p1 - p0;
+        if self.update_status.position_changed() {
+            for constraint in &mut self.constraints {
+                let p0 = self.positions.fixed_rows::<Dim>(constraint.nodes.0);
+                let p1 = self.positions.fixed_rows::<Dim>(constraint.nodes.1);
+                let l = p1 - p0;
 
-            if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
-                constraint.dir = dir;
-                constraint.length = length;
-            } else {
-                constraint.dir = Vector::y_axis();
-                constraint.length = N::zero();
+                if let Some((dir, length)) = Unit::try_new_and_get(l, N::zero()) {
+                    constraint.dir = dir;
+                    constraint.length = length;
+                } else {
+                    constraint.dir = Vector::y_axis();
+                    constraint.length = N::zero();
+                }
             }
         }
     }
 
     fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    }
+
+    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+        self.accelerations.fill(N::zero());
         let gravity_acc = gravity;
 
         for i in 0..self.positions.len() / DIM {
@@ -325,6 +344,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
             }
         }
 
+        // NOTE: should this be on update_dynamics?
         for constraint in &mut self.constraints {
             if let Some(stiffness) = constraint.stiffness {
                 // Explicit elastic term.
@@ -356,13 +376,13 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn clear_dynamics(&mut self) {
-        self.accelerations.fill(N::zero());
     }
 
     fn clear_forces(&mut self) {
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
+        self.update_status.set_position_changed(true);
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;
     }
@@ -377,6 +397,14 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
     fn set_status(&mut self, status: BodyStatus) {
         self.status = status
+    }
+
+    fn clear_update_flags(&mut self) {
+        self.update_status.clear()
+    }
+
+    fn update_status(&self) -> BodyUpdateStatus {
+        self.update_status
     }
 
     fn activation_status(&self) -> &ActivationStatus<N> {
@@ -408,11 +436,13 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
+        self.update_status.set_velocity_changed(true);
         let len = self.velocities.len();
         DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), len)
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
+        self.update_status.set_position_changed(true);
         self.positions.axpy(params.dt, &self.velocities, N::one())
     }
 
@@ -421,6 +451,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn deactivate(&mut self) {
+        self.update_status.set_velocity_changed(true);
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
@@ -438,6 +469,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
+        self.update_status.set_position_changed(true);
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
