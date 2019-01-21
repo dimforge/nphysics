@@ -79,7 +79,7 @@ nphysics3d = "0.9"
 ## Features
 - Static, dynamic, and kinematic rigid bodies.
 - Common convex primitives: box, ball, convex polyhedron.
-- Concave geometries built from convex primitives: compound geometries, trinangle mesh, polylines.
+- Concave geometries built from convex primitives: compound geometries, triangle mesh, polylines.
 - Multibodies using reduced-coordinates approaches or constraints-based joints.
 - Multibody joint limits and motors.
 - Stable stacking due to non-linear a position-based penetration correction and one-shot contact manifold generation.
