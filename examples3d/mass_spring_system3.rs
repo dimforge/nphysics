@@ -61,7 +61,6 @@ fn main() {
         deformable1.generate_neighbor_springs(10.0, 0.5);
         deformable1.generate_neighbor_springs(10.0, 0.5);
 
-
         let deformable2 = desc
             .set_position(Isometry3::new(Vector3::y() * 9.5, rot))
             .set_stiffness(100.0)

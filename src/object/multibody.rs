@@ -863,6 +863,7 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn deactivate(&mut self) {
+        self.update_status.set_velocity_changed(true);
         self.activation.set_energy(N::zero());
         for v in &mut self.velocities {
             *v = N::zero()

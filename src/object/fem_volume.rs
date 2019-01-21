@@ -793,6 +793,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
     }
 
     fn deactivate(&mut self) {
+        self.update_status.set_velocity_changed(true);
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
