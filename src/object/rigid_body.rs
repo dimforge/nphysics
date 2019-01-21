@@ -2,7 +2,7 @@ use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
-                  SpatialVector, SPATIAL_DIM, DIM, Dim};
+                  SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
                     ColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
@@ -20,7 +20,7 @@ use crate::utils::GeneralizedCross;
 #[derive(Debug)]
 pub struct RigidBody<N: Real> {
     handle: BodyHandle,
-    local_to_world: Isometry<N>,
+    position: Isometry<N>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     inertia: Inertia<N>,
@@ -46,7 +46,7 @@ impl<N: Real> RigidBody<N> {
 
         RigidBody {
             handle,
-            local_to_world: position,
+            position,
             velocity: Velocity::zero(),
             local_inertia: inertia,
             inertia,
@@ -137,7 +137,7 @@ impl<N: Real> RigidBody<N> {
     #[inline]
     pub fn set_position(&mut self, pos: Isometry<N>) {
         self.update_status.set_position_changed(true);
-        self.local_to_world = pos;
+        self.position = pos;
         self.com = pos * self.local_com;
     }
 
@@ -185,7 +185,7 @@ impl<N: Real> RigidBody<N> {
 
     #[inline]
     pub fn position(&self) -> &Isometry<N> {
-        &self.local_to_world
+        &self.position
     }
 
     #[inline]
@@ -199,59 +199,55 @@ impl<N: Real> RigidBody<N> {
         let translation = Translation::from_vector(displacement.linear);
         let shift = Translation::from_vector(self.com.coords);
         let disp = translation * shift * rotation * shift.inverse();
-        let new_pos = disp * self.local_to_world;
+        let new_pos = disp * self.position;
         self.set_position(new_pos);
     }
-/*
+
     /*
      * Application of forces.
      */
-    #[cfg(feature = "dim3")]
-    #[inline]
-    pub fn apply_torque(&mut self, torque: &Vector<N>) {
-        self.external_forces.angular += torque
+    pub fn apply_force(&mut self, force: &Force<N>, force_type: ForceType) {
+        match force_type {
+            ForceType::Force => {
+                self.external_forces += *force;
+            }
+            ForceType::Impulse => {
+                self.update_status.set_velocity_changed(true);
+                self.velocity += self.inv_augmented_mass * *force;
+            }
+            ForceType::AccelerationChange => {
+                let change = self.augmented_mass * *force;
+                self.external_forces.linear += change.linear;
+                self.external_forces.angular += change.angular;
+            }
+            ForceType::VelocityChange => {
+                self.update_status.set_velocity_changed(true);
+                self.velocity.linear += force.linear;
+                self.velocity.angular += force.angular;
+            }
+        }
     }
 
-    #[cfg(feature = "dim2")]
-    #[inline]
-    pub fn apply_torque(&mut self, torque: N) {
-        self.external_forces.angular += torque
+    pub fn apply_local_force(&mut self, force: &Force<N>, force_type: ForceType) {
+        let world_force = Force::new(self.position * force.linear, self.position * force.angular);
     }
 
-    #[inline]
-    pub fn apply_central_force(&mut self, force: &Vector<N>) {
-        self.external_forces.linear += force.linear;
+    pub fn apply_force_at_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
+        let force = Force::linear_at_point(*force, &(point - self.com.coords));
+        self.apply_force(&force, force_type)
     }
 
-    #[inline]
-    pub fn apply_force(&mut self, force: &Vector<N>, point: &Point<N>) {
-        self.external_forces.linear += force.linear;
-        self.external_forces.angular += force.angular;
+    pub fn apply_local_force_at_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
+        self.apply_force_at_point(&(self.position * force), point, force_type)
     }
 
-    /*
-     * Application of impulses.
-     */
-    #[inline]
-    pub fn apply_central_impulse(&mut self, impulse: &Vector<N>) {
-        self.velocity.linear += impulse * self.inv_inertia.linear;
+    pub fn apply_force_at_local_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
+        self.apply_force_at_point(force, &(self.position * point), force_type)
     }
 
-    #[inline]
-    pub fn apply_torque_impulse(&mut self, impulse: &Vector<N>) {
-        self.velocity.angular += self.inv_inertia.angular * impulse;
+    pub fn apply_local_force_at_local_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
+        self.apply_force_at_point(&(self.position * force), &(self.position * point), force_type)
     }
-
-    #[inline]
-    pub fn apply_impulse(&mut self, impulse: &Vector<N>, pt: &Point<N>) {
-        self.apply_central_impulse(impulse);
-        self.apply_central_impulse(&(pt - self.center_of_mass()).cross(impulse));
-    }
-
-    /*
-     * Application of velocity change.
-     */
-*/
 }
 
 
@@ -366,7 +362,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
             #[cfg(feature = "dim3")]
             BodyStatus::Dynamic => {
                 // The inverse inertia matrix is constant in 2D.
-                self.inertia = self.local_inertia.transformed(&self.local_to_world);
+                self.inertia = self.local_inertia.transformed(&self.position);
                 self.augmented_mass = self.inertia;
 
                 let i = &self.inertia.angular;
@@ -426,17 +422,17 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
-        self.local_to_world * point
+        self.position * point
     }
 
     #[inline]
     fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        self.local_to_world * Translation::from_vector(point.coords)
+        self.position * Translation::from_vector(point.coords)
     }
 
     #[inline]
     fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
-        self.local_to_world.inverse_transform_point(point)
+        self.position.inverse_transform_point(point)
     }
 
     #[inline]
@@ -512,14 +508,14 @@ impl<N: Real> Body<N> for RigidBody<N> {
         if !inertia.linear.is_zero() {
             let mass_sum = self.inertia.linear + inertia.linear;
             self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
-            self.com = self.local_to_world * self.local_com;
+            self.com = self.position * self.local_com;
         }
 
         // Update local inertia.
         self.local_inertia += inertia;
 
         // Needed for 2D because the inertia is not updated on the `update_dynamics`.
-        self.inertia = self.local_inertia.transformed(&self.local_to_world);
+        self.inertia = self.local_inertia.transformed(&self.position);
         self.inv_augmented_mass = self.inertia.inverse();
     }
 
@@ -547,7 +543,7 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 
     #[inline]
     fn position(&self) -> Isometry<N> {
-        self.local_to_world
+        self.position
     }
 
     #[inline]

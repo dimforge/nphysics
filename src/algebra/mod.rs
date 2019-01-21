@@ -9,6 +9,13 @@ pub use self::force3::Force3;
 pub use self::inertia2::Inertia2;
 pub use self::inertia3::Inertia3;
 
+pub enum ForceType {
+    Force,
+    Impulse,
+    AccelerationChange,
+    VelocityChange
+}
+
 mod velocity2;
 mod velocity3;
 

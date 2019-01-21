@@ -239,6 +239,8 @@ pub mod math {
         Translation3, U3, U6, UnitQuaternion, Vector3, Vector6, Rotation3
     };
 
+    pub use crate::algebra::ForceType;
+
     /// The maximum number of possible rotations and translations of a rigid body.
     pub const SPATIAL_DIM: usize = 6;
     /// The maximum number of possible rotations of a rigid body.
@@ -321,6 +323,8 @@ pub mod math {
         Dynamic, Isometry2, Matrix1, Matrix3, MatrixMN, MatrixSlice3xX, MatrixSliceMut3xX, Point2,
         Translation2, U1, U2, U3, UnitComplex, Vector1, Vector2, Vector3, Rotation2, Matrix2
     };
+
+    pub use crate::algebra::ForceType;
 
     /// The maximum number of possible rotations and translations of a rigid body.
     pub const SPATIAL_DIM: usize = 3;
