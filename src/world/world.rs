@@ -210,7 +210,7 @@ impl<N: Real> World<N> {
          */
         for b in self.bodies.bodies_mut() {
             b.update_kinematics();
-            b.update_dynamics(&self.gravity, &self.params);
+            b.update_dynamics(self.params.dt);
         }
 
         let params = &self.params;
@@ -310,10 +310,9 @@ impl<N: Real> World<N> {
          */
         // FIXME: objects involved in a non-linear position stabilization already
         // updated their kinematics.
-        let params = &self.params;
         self.bodies.bodies_mut().for_each(|b| {
             b.update_kinematics();
-            b.update_dynamics(&Vector::zeros(), params);
+            b.update_dynamics(params.dt);
         });
 
         /*

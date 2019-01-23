@@ -7,7 +7,7 @@ use ncollide::world::{CollisionObject, CollisionObjectHandle, GeometricQueryType
 use ncollide::shape::{ShapeHandle, Shape};
 
 use crate::math::{Isometry, Vector, Rotation};
-use crate::object::{BodyPartHandle, BodyHandle, Material, MaterialHandle, Body, BodyPart};
+use crate::object::{BodyPartHandle, BodyHandle, Material, MaterialHandle, Body};
 use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
 
@@ -392,7 +392,7 @@ impl<N: Real> ColliderDesc<N> {
             if !self.density.is_zero() {
                 let com = self.shape.center_of_mass();
                 let inertia = self.shape.inertia(self.density);
-                body.add_local_inertia_and_com_to_part(parent.1, com, inertia);
+                body.add_local_inertia_and_com(parent.1, com, inertia);
             }
 
             (

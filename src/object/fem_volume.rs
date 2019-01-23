@@ -14,7 +14,7 @@ use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     BodyDesc, ActivationStatus, FiniteElementIndices, DeformableColliderDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, Inertia, Velocity, DIM};
+use crate::math::{Force, ForceType, Inertia, Velocity, DIM};
 use crate::world::{World, ColliderWorld};
 use crate::object::fem_helper;
 
@@ -45,12 +45,12 @@ pub struct FEMVolume<N: Real> {
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
+    forces: DVector<N>,
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: Cholesky<N, Dynamic>,
 
     // Cache.
-    // FIXME: use a workspace common with other deformables?
-    dpos: DVector<N>,
+    workspace: DVector<N>,
 
     // Parameters
     rest_positions: DVector<N>,
@@ -110,9 +110,10 @@ impl<N: Real> FEMVolume<N> {
             positions: rest_positions.clone(),
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
+            forces: DVector::zeros(ndofs),
             augmented_mass: DMatrix::zeros(ndofs, ndofs),
             inv_augmented_mass: Cholesky::new(DMatrix::zeros(0, 0)).unwrap(),
-            dpos: DVector::zeros(ndofs),
+            workspace: DVector::zeros(ndofs),
             rest_positions,
             damping_coeffs,
             young_modulus,
@@ -188,8 +189,8 @@ impl<N: Real> FEMVolume<N> {
         self.handle
     }
 
-    fn assemble_mass_with_damping(&mut self, params: &IntegrationParameters<N>) {
-        let mass_damping = params.dt * self.damping_coeffs.0;
+    fn assemble_mass_with_damping(&mut self, dt: N) {
+        let mass_damping = dt * self.damping_coeffs.0;
 
         for elt in self.elements.iter().filter(|e| e.volume > N::zero()) {
             let coeff_mass = elt.density * elt.volume / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
@@ -226,11 +227,11 @@ impl<N: Real> FEMVolume<N> {
         }
     }
 
-    fn assemble_stiffness(&mut self, params: &IntegrationParameters<N>) {
+    fn assemble_stiffness(&mut self, dt: N) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
         let _6: N = na::convert(6.0);
-        let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
+        let stiffness_coeff = dt * (dt + self.damping_coeffs.1);
 
         for elt in self.elements.iter_mut().filter(|e| e.volume > N::zero()) {
             let d0_vol = self.d0 * elt.volume;
@@ -244,8 +245,6 @@ impl<N: Real> FEMVolume<N> {
                     let bn = elt.local_j_inv[(0, a)];
                     let cn = elt.local_j_inv[(1, a)];
                     let dn = elt.local_j_inv[(2, a)];
-
-                    let mut force_part = self.accelerations.fixed_rows_mut::<U3>(ia);
 
                     // Fields of P_n * elt.volume:
                     //
@@ -698,13 +697,11 @@ impl<N: Real> Body<N> for FEMVolume<N> {
     }
 
     /// Update the dynamics property of this deformable volume.
-    fn update_dynamics(&mut self,
-                       gravity: &Vector3<N>,
-                       params: &IntegrationParameters<N>) {
+    fn update_dynamics(&mut self, dt: N) {
         if self.update_status.inertia_needs_update() {
             self.augmented_mass.fill(N::zero());
-            self.assemble_mass_with_damping(params);
-            self.assemble_stiffness(params);
+            self.assemble_mass_with_damping(dt);
+            self.assemble_stiffness(dt);
 
             // FIXME: avoid allocation inside Cholesky at each timestep.
             // FIXME: if Cholesky fails fallback to some sort of mass-spring formulation?
@@ -722,6 +719,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
     }
 
     fn clear_forces(&mut self) {
+        self.forces.fill(N::zero())
     }
 
     fn clear_update_flags(&mut self) {
@@ -866,6 +864,94 @@ impl<N: Real> Body<N> for FEMVolume<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
+
+
+    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+        if self.status != BodyStatus::Dynamic {
+            return;
+        }
+
+        if auto_wake_up {
+            self.activate()
+        }
+
+
+        let element = &self.elements[part_id];
+        let forces = [
+            force * (N::one() - point.x - point.y - point.z),
+            force * point.x,
+            force * point.y,
+            force * point.z,
+        ];
+
+        match force_type {
+            ForceType::Force => {
+                for i in 0..4 {
+                    if !self.kinematic_nodes[element.indices[i] / DIM] {
+                        self.forces.fixed_rows_mut::<U3>(element.indices[i]).add_assign(forces[i]);
+                    }
+                }
+            }
+            ForceType::Impulse => {
+                let dvel = &mut self.workspace;
+                dvel.fill(N::zero());
+                for i in 0..4 {
+                    if !self.kinematic_nodes[element.indices[i] / DIM] {
+                        dvel.fixed_rows_mut::<U3>(element.indices[i]).copy_from(&forces[i]);
+                    }
+                }
+                self.inv_augmented_mass.solve_mut(dvel);
+                self.velocities += &*dvel;
+            }
+            ForceType::AccelerationChange => {
+                let acceleration = &mut self.workspace;
+                acceleration.fill(N::zero());
+                for i in 0..4 {
+                    if !self.kinematic_nodes[element.indices[i] / DIM] {
+                        acceleration.fixed_rows_mut::<U3>(element.indices[i]).copy_from(&forces[i]);
+                    }
+                }
+                self.forces.gemv(N::one(), &self.augmented_mass, acceleration, N::one())
+            }
+            ForceType::VelocityChange => {
+                for i in 0..4 {
+                    if !self.kinematic_nodes[element.indices[i] / DIM] {
+                        self.velocities.fixed_rows_mut::<U3>(element.indices[i]).add_assign(forces[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        let _1_4: N = na::convert(1.0 / 4.0);
+        let barycenter = Point3::new(_1_4, _1_4, _1_4);
+        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        let world_force = Force::new(
+            self.elements[part_id].rot * force.linear,
+            self.elements[part_id].rot * force.angular);
+        self.apply_force(part_id, &world_force, force_type, auto_wake_up);
+    }
+
+    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+        let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
+        self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+        let world_force = self.elements[part_id].rot * force;
+        let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
+        self.apply_force_at_local_point(part_id, &world_force, &local_point, force_type, auto_wake_up);
+    }
+
+
+    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector3<N>, point: &Point3<N>, force_type: ForceType, auto_wake_up: bool) {
+        let world_force = self.elements[part_id].rot * force;
+        self.apply_force_at_local_point(part_id, &world_force, &point, force_type, auto_wake_up);
+    }
 }
 
 

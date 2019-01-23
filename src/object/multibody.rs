@@ -6,7 +6,7 @@ use ncollide::utils::IsometryOps;
 use crate::joint::Joint;
 use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
-    Vector, Velocity, DIM, Translation
+    Vector, Velocity, DIM, Translation, ForceType
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use crate::object::{
@@ -23,9 +23,10 @@ use crate::utils::{GeneralizedCross, IndexMut2};
 pub struct Multibody<N: Real> {
     handle: BodyHandle,
     rbs: MultibodyLinkVec<N>,
-    velocities: Vec<N>,
-    damping: Vec<N>,
-    accelerations: Vec<N>,
+    velocities: DVector<N>,
+    damping: DVector<N>,
+    accelerations: DVector<N>,
+    forces: DVector<N>,
     impulses: Vec<N>,
     body_jacobians: Vec<Jacobian<N>>,
     // FIXME: use sparse matrices.
@@ -55,9 +56,10 @@ impl<N: Real> Multibody<N> {
         Multibody {
             handle,
             rbs: MultibodyLinkVec(Vec::new()),
-            velocities: Vec::new(),
-            damping: Vec::new(),
-            accelerations: Vec::new(),
+            velocities: DVector::zeros(0),
+            forces: DVector::zeros(0),
+            damping: DVector::zeros(0),
+            accelerations: DVector::zeros(0),
             impulses: Vec::new(),
             body_jacobians: Vec::new(),
             augmented_mass: DMatrix::zeros(0, 0),
@@ -112,36 +114,16 @@ impl<N: Real> Multibody<N> {
         self.rbs.iter()
     }
 
-    /// The slice of generalized velocities of this multibody.
-    #[inline]
-    pub fn generalized_velocity_slice(&self) -> &[N] {
-        &self.velocities
-    }
-
-    /// The mutable slice of generalized velocities of this multibody.
-    #[inline]
-    pub fn generalized_velocity_slice_mut(&mut self) -> &mut [N] {
-        self.update_status.set_velocity_changed(true);
-        &mut self.velocities
-    }
-
     /// The vector of damping applied to this multibody.
     #[inline]
-    pub fn damping(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.damping, self.ndofs)
+    pub fn damping(&self) -> &DVector<N> {
+        &self.damping
     }
 
     /// Mutable vector of damping applied to this multibody.
     #[inline]
-    pub fn damping_mut(&mut self) -> DVectorSliceMut<N> {
-        self.update_status.set_damping_changed(true);
-        DVectorSliceMut::from_slice(&mut self.damping, self.ndofs)
-    }
-
-    /// Generalized impulses applied to each degree of freedom.
-    #[inline]
-    pub fn impulses(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.impulses, self.impulses.len())
+    pub fn damping_mut(&mut self) -> &mut DVector<N> {
+        &mut self.damping
     }
 
     fn add_link(
@@ -176,12 +158,12 @@ impl<N: Real> Multibody<N> {
         /*
          * Setup default damping.
          */
-        dof.default_damping(&mut self.damping_mut().rows_mut(assembly_id, ndofs));
+        dof.default_damping(&mut self.damping.rows_mut(assembly_id, ndofs));
 
         /*
          * Create the multibody.
          */
-        dof.update_jacobians(&body_shift, &self.velocities[assembly_id..]);
+        dof.update_jacobians(&body_shift, &self.velocities.as_slice()[assembly_id..]);
         let local_to_parent = dof.body_to_parent(&parent_shift, &body_shift);
         let local_to_world;
         let parent_to_world;
@@ -216,16 +198,17 @@ impl<N: Real> Multibody<N> {
         );
 
         self.rbs.push(rb);
-        self.workspace.resize(self.rbs.len());
+        self.workspace.resize(self.rbs.len(), self.ndofs);
 
         &mut self.rbs[internal_id]
     }
 
     fn grow_buffers(&mut self, ndofs: usize, nimpulses: usize) {
         let len = self.velocities.len();
-        self.velocities.resize(len + ndofs, N::zero());
-        self.damping.resize(len + ndofs, N::zero());
-        self.accelerations.resize(len + ndofs, N::zero());
+        self.velocities.resize_vertically_assign(len + ndofs, N::zero());
+        self.forces.resize_vertically_assign(len + ndofs, N::zero());
+        self.damping.resize_vertically_assign(len + ndofs, N::zero());
+        self.accelerations.resize_vertically_assign(len + ndofs, N::zero());
         self.body_jacobians.push(Jacobian::zeros(0));
 
         let len = self.impulses.len();
@@ -237,8 +220,7 @@ impl<N: Real> Multibody<N> {
             return;
         }
 
-        let mut accs = DVectorSliceMut::from_slice(&mut self.accelerations, self.ndofs);
-        accs.fill(N::zero());
+        self.accelerations.fill(N::zero());
 
         for i in 0..self.rbs.len() {
             let external_forces;
@@ -285,8 +267,8 @@ impl<N: Real> Multibody<N> {
                         gyroscopic = N::zero();
                     }
 
-                external_forces = Force::new(gravity_force, -gyroscopic) - rb.inertia * acc + rb.external_forces;
-                accs.gemv_tr(
+                external_forces = Force::new(gravity_force, -gyroscopic) - rb.inertia * acc;
+                self.accelerations.gemv_tr(
                     N::one(),
                     &self.body_jacobians[i],
                     external_forces.as_vector(),
@@ -295,19 +277,14 @@ impl<N: Real> Multibody<N> {
             }
         }
 
-        let damping = DVectorSlice::from_slice(&self.damping, self.ndofs);
-        let vels = DVectorSlice::from_slice(&self.velocities, self.ndofs);
-        accs.cmpy(-N::one(), &damping, &vels, N::one());
+        self.accelerations.axpy(N::one(), &self.forces, N::one());
+        self.accelerations.cmpy(-N::one(), &self.damping, &self.velocities, N::one());
 
-        assert!(self.inv_augmented_mass.solve_mut(&mut accs));
+        assert!(self.inv_augmented_mass.solve_mut(&mut self.accelerations));
     }
 
     /// Computes the constant terms of the dynamics.
-    fn update_dynamics(
-        &mut self,
-        gravity: &Vector<N>,
-        params: &IntegrationParameters<N>
-    ) {
+    fn update_dynamics(&mut self, dt: N) {
         if !self.update_status.inertia_needs_update() {
             return;
         }
@@ -318,10 +295,10 @@ impl<N: Real> Multibody<N> {
         let rb = &mut self.rbs[0];
         let velocity_wrt_joint = rb
             .dof
-            .jacobian_mul_coordinates(&self.velocities[rb.assembly_id..]);
+            .jacobian_mul_coordinates(&self.velocities.as_slice()[rb.assembly_id..]);
         let velocity_dot_wrt_joint = rb
             .dof
-            .jacobian_dot_mul_coordinates(&self.velocities[rb.assembly_id..]);
+            .jacobian_dot_mul_coordinates(&self.velocities.as_slice()[rb.assembly_id..]);
 
         rb.velocity_dot_wrt_joint = velocity_dot_wrt_joint;
         rb.velocity_wrt_joint = velocity_wrt_joint;
@@ -332,10 +309,10 @@ impl<N: Real> Multibody<N> {
 
             let velocity_wrt_joint = rb
                 .dof
-                .jacobian_mul_coordinates(&self.velocities[rb.assembly_id..]);
+                .jacobian_mul_coordinates(&self.velocities.as_slice()[rb.assembly_id..]);
             let velocity_dot_wrt_joint = rb
                 .dof
-                .jacobian_dot_mul_coordinates(&self.velocities[rb.assembly_id..]);
+                .jacobian_dot_mul_coordinates(&self.velocities.as_slice()[rb.assembly_id..]);
 
             rb.velocity_dot_wrt_joint =
                 velocity_dot_wrt_joint.transformed(&parent_rb.local_to_world);
@@ -353,7 +330,7 @@ impl<N: Real> Multibody<N> {
         /*
          * Update augmented mass matrix.
          */
-        self.update_inertias(params);
+        self.update_inertias(dt);
     }
 
     fn update_body_jacobians(&mut self) {
@@ -393,7 +370,7 @@ impl<N: Real> Multibody<N> {
         }
     }
 
-    fn update_inertias(&mut self, params: &IntegrationParameters<N>) {
+    fn update_inertias(&mut self, dt: N) {
         if self.augmented_mass.ncols() != self.ndofs {
             // FIXME: do a resize instead of a full reallocation.
             self.augmented_mass = DMatrix::zeros(self.ndofs, self.ndofs);
@@ -432,7 +409,7 @@ impl<N: Real> Multibody<N> {
                     let gyroscopic_matrix = rb.velocity.angular.gcross_matrix() * ang_inertia
                         - (ang_inertia * rb.velocity.angular).gcross_matrix();
 
-                    augmented_inertia.angular += gyroscopic_matrix * params.dt;
+                    augmented_inertia.angular += gyroscopic_matrix * dt;
                 }
 
             // FIXME: optimize that (knowing the structure of the augmented inertia matrix).
@@ -530,7 +507,7 @@ impl<N: Real> Multibody<N> {
                     .jacobian_dot(&rb.parent_to_world, &mut rb_joint_j_dot);
                 rb.dof.jacobian_dot_veldiff_mul_coordinates(
                     &rb.parent_to_world,
-                    &self.velocities[rb.assembly_id..],
+                    &self.velocities.as_slice()[rb.assembly_id..],
                     &mut rb_joint_j_dot_veldiff,
                 );
 
@@ -557,14 +534,14 @@ impl<N: Real> Multibody<N> {
             {
                 let mut i_coriolis_dt_v = self.i_coriolis_dt.fixed_rows_mut::<Dim>(0);
                 i_coriolis_dt_v.copy_from(coriolis_v);
-                i_coriolis_dt_v *= rb.inertia.linear * params.dt;
+                i_coriolis_dt_v *= rb.inertia.linear * dt;
             }
 
             {
                 // FIXME: in 2D this is just an axpy.
                 let mut i_coriolis_dt_w = self.i_coriolis_dt.fixed_rows_mut::<AngularDim>(DIM);
                 i_coriolis_dt_w.gemm(
-                    params.dt,
+                    dt,
                     rb.inertia.angular_matrix(),
                     &coriolis_w,
                     N::zero(),
@@ -579,7 +556,7 @@ impl<N: Real> Multibody<N> {
          * Damping.
          */
         for i in 0..self.ndofs {
-            self.augmented_mass[(i, i)] += self.damping[i] * params.dt;
+            self.augmented_mass[(i, i)] += self.damping[i] * dt;
         }
 
         // FIXME: avoid allocation inside LU at each timestep.
@@ -591,7 +568,7 @@ impl<N: Real> Multibody<N> {
     pub fn joint_velocity(&self, link: &MultibodyLink<N>) -> DVectorSlice<N> {
         let ndofs = link.dof.ndofs();
         DVectorSlice::from_slice(
-            &self.velocities[link.assembly_id..link.assembly_id + ndofs],
+            &self.velocities.as_slice()[link.assembly_id..link.assembly_id + ndofs],
             ndofs,
         )
     }
@@ -657,7 +634,7 @@ impl<N: Real> Multibody<N> {
             i = link.assembly_id;
         }
 
-        DVectorSliceMut::from_slice(&mut self.velocities[i..i + ndofs], ndofs)
+        DVectorSliceMut::from_slice(&mut self.velocities.as_mut_slice()[i..i + ndofs], ndofs)
     }
 
     /// Generates the set of velocity and position constraints needed for joint limits and motors at each link
@@ -710,22 +687,43 @@ impl<N: Real> Multibody<N> {
                 self.impulses[constraint.impulse_id] = constraint.impulse;
             }
     }
+
+    #[inline]
+    pub fn generalized_force(&self) -> &DVector<N> {
+        &self.forces
+    }
+
+    #[inline]
+    pub fn generalized_force_mut(&mut self) -> &mut DVector<N> {
+        &mut self.forces
+    }
+
+    #[inline]
+    pub(crate) fn impulses(&self) -> &[N] {
+        &self.impulses
+    }
 }
 
 /// A temporary workspace for various updates of the multibody.
 struct MultibodyWorkspace<N: Real> {
     accs: Vec<Velocity<N>>,
+    ndofs_vec: DVector<N>,
 }
 
 impl<N: Real> MultibodyWorkspace<N> {
     /// Create an empty workspace.
     pub fn new() -> Self {
-        MultibodyWorkspace { accs: Vec::new() }
+        MultibodyWorkspace {
+            accs: Vec::new(),
+            ndofs_vec: DVector::zeros(0)
+        }
     }
 
     /// Resize the workspace so it is enough for `nlinks` links.
-    pub fn resize(&mut self, nlinks: usize) {
+    pub fn resize(&mut self, nlinks: usize, ndofs: usize) {
         self.accs.resize(nlinks, Velocity::zero());
+        self.ndofs_vec = DVector::zeros(ndofs)
+
     }
 }
 
@@ -758,7 +756,7 @@ impl<N: Real> Body<N> for Multibody<N> {
         self.update_status.set_position_changed(true);
 
         for rb in self.rbs.iter_mut() {
-            rb.dof.integrate(params, &self.velocities[rb.assembly_id..])
+            rb.dof.integrate(params, &self.velocities.as_slice()[rb.assembly_id..])
         }
     }
 
@@ -773,9 +771,7 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     fn clear_forces(&mut self) {
-        for rb in &mut *self.rbs {
-            rb.external_forces = Force::zero();
-        }
+        self.forces.fill(N::zero())
     }
 
     fn update_kinematics(&mut self) {
@@ -786,7 +782,7 @@ impl<N: Real> Body<N> for Multibody<N> {
         // Special case for the root, which has no parent.
         {
             let rb = &mut self.rbs[0];
-            rb.dof.update_jacobians(&rb.body_shift, &self.velocities);
+            rb.dof.update_jacobians(&rb.body_shift, &self.velocities.as_slice());
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = rb.local_to_parent;
             rb.com = rb.local_to_world * rb.local_com;
@@ -797,7 +793,7 @@ impl<N: Real> Body<N> for Multibody<N> {
             let (rb, parent_rb) = self.rbs.get_mut_with_parent(i);
 
             rb.dof
-                .update_jacobians(&rb.body_shift, &self.velocities[rb.assembly_id..]);
+                .update_jacobians(&rb.body_shift, &self.velocities.as_slice()[rb.assembly_id..]);
             rb.local_to_parent = rb.dof.body_to_parent(&rb.parent_shift, &rb.body_shift);
             rb.local_to_world = parent_rb.local_to_world * rb.local_to_parent;
             rb.parent_to_world = parent_rb.local_to_world;
@@ -810,12 +806,8 @@ impl<N: Real> Body<N> for Multibody<N> {
         self.update_body_jacobians();
     }
 
-    fn update_dynamics(
-        &mut self,
-        gravity: &Vector<N>,
-        params: &IntegrationParameters<N>,
-    ) {
-        self.update_dynamics(gravity, params)
+    fn update_dynamics(&mut self, dt: N) {
+        self.update_dynamics(dt)
     }
 
     fn update_acceleration(&mut self, gravity: &Vector<N>, _: &IntegrationParameters<N>) {
@@ -824,18 +816,18 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn generalized_acceleration(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.accelerations, self.ndofs)
+        self.accelerations.rows(0, self.ndofs)
     }
 
     #[inline]
     fn generalized_velocity(&self) -> DVectorSlice<N> {
-        DVectorSlice::from_slice(&self.velocities, self.ndofs)
+        self.velocities.rows(0, self.ndofs)
     }
 
     #[inline]
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N> {
         self.update_status.set_velocity_changed(true);
-        DVectorSliceMut::from_slice(&mut self.velocities, self.ndofs)
+        self.velocities.rows_mut(0, self.ndofs)
     }
 
     #[inline]
@@ -857,9 +849,7 @@ impl<N: Real> Body<N> for Multibody<N> {
     fn deactivate(&mut self) {
         self.update_status.set_velocity_changed(true);
         self.activation.set_energy(N::zero());
-        for v in &mut self.velocities {
-            *v = N::zero()
-        }
+        self.velocities.fill(N::zero());
     }
 
     #[inline]
@@ -991,7 +981,7 @@ impl<N: Real> Body<N> for Multibody<N> {
     fn step_solve_internal_position_constraints(&mut self, _params: &IntegrationParameters<N>) {}
 
     #[inline]
-    fn add_local_inertia_and_com_to_part(&mut self, part_id: usize, com: Point<N>, inertia: Inertia<N>) {
+    fn add_local_inertia_and_com(&mut self, part_id: usize, com: Point<N>, inertia: Inertia<N>) {
         self.update_status.set_local_inertia_changed(true);
         let mut link = &mut self.rbs[part_id];
         // Update center of mass.
@@ -1005,9 +995,63 @@ impl<N: Real> Body<N> for Multibody<N> {
         link.local_inertia += inertia;
     }
 
-    #[inline]
-    fn apply_force_to_part(&mut self, part_id: usize, force: &Force<N>) {
-        self.rbs[part_id].external_forces += *force;
+    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        if self.status != BodyStatus::Dynamic {
+            return;
+        }
+
+        if auto_wake_up {
+            self.activate()
+        }
+
+        match force_type {
+            ForceType::Force => {
+                self.forces.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::one())
+            }
+            ForceType::Impulse => {
+                self.update_status.set_velocity_changed(true);
+                let dvel = &mut self.workspace.ndofs_vec;
+                dvel.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::zero());
+                let _ = self.inv_augmented_mass.solve_mut(dvel);
+                self.velocities.axpy(N::one(), dvel, N::one());
+            }
+            ForceType::AccelerationChange => {
+                let acc = &mut self.workspace.ndofs_vec;
+                acc.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::zero());
+                self.forces.gemv(N::one(), &self.augmented_mass, acc, N::one())
+            }
+            ForceType::VelocityChange => {
+                self.update_status.set_velocity_changed(true);
+                self.velocities.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::one())
+            }
+        }
+    }
+
+    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        let world_force = force.transform_by(&self.rbs[part_id].local_to_world);
+        self.apply_force(part_id, &world_force, force_type, auto_wake_up);
+    }
+
+    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        let force = Force::linear_at_point(*force, &(point - self.rbs[part_id].com.coords));
+        self.apply_force(part_id, &force, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        self.apply_force_at_point(part_id, &(self.rbs[part_id].local_to_world * force), point, force_type, auto_wake_up)
+    }
+
+    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        self.apply_force_at_point(part_id, force, &(self.rbs[part_id].local_to_world * point), force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        self.apply_force_at_point(
+            part_id,
+            &(self.rbs[part_id].local_to_world * force),
+            &(self.rbs[part_id].local_to_world * point),
+            force_type,
+            auto_wake_up)
     }
 }
 

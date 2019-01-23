@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use na::Real;
 
 use crate::joint::Joint;
-use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use crate::math::{Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
 
 /// One link of a multibody.
@@ -32,7 +32,6 @@ pub struct MultibodyLink<N: Real> {
     pub(crate) velocity_wrt_joint: Velocity<N>,
     // J  q' in world space.
     pub(crate) velocity: Velocity<N>,
-    pub(crate) external_forces: Force<N>,
     pub(crate) inertia: Inertia<N>,
     pub(crate) com: Point<N>,
 
@@ -63,7 +62,6 @@ impl<N: Real> MultibodyLink<N> {
         let velocity = Velocity::zero();
         let velocity_dot_wrt_joint = Velocity::zero();
         let velocity_wrt_joint = Velocity::zero();
-        let external_forces = Force::zero();
         let inertia = local_inertia.transformed(&local_to_world);
         let com = local_to_world * local_com;
 
@@ -83,7 +81,6 @@ impl<N: Real> MultibodyLink<N> {
             velocity_dot_wrt_joint,
             velocity_wrt_joint,
             velocity,
-            external_forces,
             local_inertia,
             local_com,
             inertia,

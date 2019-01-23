@@ -22,6 +22,7 @@ use ncollide3d::narrow_phase::Interaction;
 use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
 use nphysics3d::world::World;
+use nphysics3d::math::ForceType;
 
 #[derive(PartialEq)]
 enum RunMode {
@@ -280,9 +281,19 @@ impl State for Testbed {
                             }
 
                         if let Some(body_part) = minb {
-                            if !body_part.is_ground() {
-                                self.graphics.remove_body_nodes(window, body_part.0);
-                                self.world.remove_bodies(&[body_part.0]);
+                            if modifier.contains(Modifiers::Control) {
+                                if !body_part.is_ground() {
+                                    self.graphics.remove_body_nodes(window, body_part.0);
+                                    self.world.remove_bodies(&[body_part.0]);
+                                }
+                            } else {
+                                self.world.body_mut(body_part.0)
+                                    .unwrap()
+                                    .apply_force_at_point(body_part.1,
+                                                          &(ray.dir.normalize() * 0.01),
+                                                          &ray.point_at(mintoi),
+                                                          ForceType::Impulse,
+                                                true);
                             }
                         }
 

@@ -149,7 +149,7 @@ impl<N: Real> BodySet<N> {
 
     /// Reference to the body identified by `body`.
     ///
-    /// Panics if the body is not found.
+    /// Returns `None` if the body is not found.
     #[inline]
     pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
         if handle.is_ground() {
@@ -161,7 +161,7 @@ impl<N: Real> BodySet<N> {
 
     /// Mutable reference to the body identified by `body`.
     ///
-    /// Panics if the body is not found.
+    /// Returns `None` if the body is not found.
     #[inline]
     pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
         if handle.is_ground() {

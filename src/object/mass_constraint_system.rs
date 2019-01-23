@@ -18,7 +18,7 @@ use ncollide::shape::TriMesh;
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, DeformableColliderDesc, BodyDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
+use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
 use crate::world::{World, ColliderWorld};
 
@@ -79,6 +79,7 @@ pub struct MassConstraintSystem<N: Real> {
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
+    forces: DVector<N>,
     impulses: DVector<N>,
 
     companion_id: usize,
@@ -144,6 +145,7 @@ impl<N: Real> MassConstraintSystem<N> {
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
+            forces: DVector::zeros(ndofs),
             impulses: DVector::zeros(0),
             companion_id: 0,
             activation: ActivationStatus::new_active(),
@@ -197,6 +199,7 @@ impl<N: Real> MassConstraintSystem<N> {
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
+            forces: DVector::zeros(ndofs),
             impulses: DVector::zeros(constraints.len()),
             companion_id: 0,
             activation: ActivationStatus::new_active(),
@@ -277,6 +280,10 @@ impl<N: Real> MassConstraintSystem<N> {
         self.handle
     }
 
+    pub fn mass(&self) -> N {
+        self.mass
+    }
+
     /// The coefficient used for warm-starting the resolution of internal constraints of this
     /// soft body (default: 0.5).
     pub fn set_warmstart_coefficient(&mut self, coeff: N) {
@@ -330,7 +337,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
         }
     }
 
-    fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn update_dynamics(&mut self, _: N) {
     }
 
     fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
@@ -376,6 +383,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn clear_forces(&mut self) {
+        self.forces.fill(N::zero())
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -643,6 +651,94 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
                 }
             }
         }
+    }
+
+
+    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        if self.status != BodyStatus::Dynamic {
+            return;
+        }
+
+        if auto_wake_up {
+            self.activate()
+        }
+
+        let element = &self.elements[part_id];
+        let indices = element.indices.as_slice();
+
+        #[cfg(feature = "dim2")]
+        let forces = [
+            force * (N::one() - point.x - point.y),
+            force * point.x,
+            force * point.y,
+        ];
+        #[cfg(feature = "dim3")]
+        let forces = [
+            force * (N::one() - point.x - point.y - point.z),
+            force * point.x,
+            force * point.y,
+            force * point.z,
+        ];
+
+        match force_type {
+            ForceType::Force => {
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(&forces[i]);
+                    }
+                }
+            }
+            ForceType::Impulse => {
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        self.velocities.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i] * self.inv_node_mass);
+                    }
+                }
+            }
+            ForceType::AccelerationChange => {
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i] * self.node_mass);
+                    }
+                }
+            }
+            ForceType::VelocityChange => {
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        self.velocities.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        let dim = self.elements[part_id].indices.as_slice().len();
+        let inv_dim: N = na::convert(1.0 / dim as f64);
+        let barycenter = Point::from_coordinates(Vector::repeat(inv_dim));
+        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
+        self.apply_force(part_id, &force, force_type, auto_wake_up);
+    }
+
+    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
+        self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
+        let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
+        self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up);
+    }
+
+
+    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
+        self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }
 }
 

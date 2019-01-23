@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::any::Any;
 use either::Either;
 
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, MatrixN, Unit};
+use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Unit};
 #[cfg(feature = "dim3")]
 use na::Vector2;
 use ncollide::utils::DeterministicState;
@@ -18,7 +18,7 @@ use ncollide::shape::TriMesh;
 use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, BodyDesc, DeformableColliderDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::math::{Force, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
+use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
 use crate::world::{World, ColliderWorld};
 
@@ -69,8 +69,11 @@ pub struct MassSpringSystem<N: Real> {
     positions: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
+    forces: DVector<N>,
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: Cholesky<N, Dynamic>,
+
+    workspace: DVector<N>,
 
     companion_id: usize,
     activation: ActivationStatus<N>,
@@ -140,6 +143,8 @@ impl<N: Real> MassSpringSystem<N> {
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
+            forces: DVector::zeros(ndofs),
+            workspace: DVector::zeros(ndofs),
             augmented_mass: DMatrix::zeros(ndofs, ndofs),
             inv_augmented_mass: Cholesky::new(DMatrix::zeros(0, 0)).unwrap(),
             companion_id: 0,
@@ -194,6 +199,8 @@ impl<N: Real> MassSpringSystem<N> {
             positions,
             velocities: DVector::zeros(ndofs),
             accelerations: DVector::zeros(ndofs),
+            forces: DVector::zeros(ndofs),
+            workspace: DVector::zeros(ndofs),
             augmented_mass: DMatrix::zeros(ndofs, ndofs),
             inv_augmented_mass: Cholesky::new(DMatrix::zeros(0, 0)).unwrap(),
             companion_id: 0,
@@ -217,6 +224,10 @@ impl<N: Real> MassSpringSystem<N> {
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
         Self::from_trimesh(handle,&trimesh, mass, stiffness, damping_ratio)
+    }
+
+    pub fn mass(&self) -> N {
+        self.mass
     }
 
     pub fn num_nodes(&self) -> usize {
@@ -291,7 +302,7 @@ impl<N: Real> MassSpringSystem<N> {
         self.plasticity_max_force = max_force;
     }
 
-    fn update_augmented_mass(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn update_augmented_mass(&mut self, dt: N) {
         self.augmented_mass.fill(N::zero());
         self.augmented_mass.fill_diagonal(self.node_mass);
 
@@ -306,8 +317,7 @@ impl<N: Real> MassSpringSystem<N> {
             /*
              * Elastic strain.
              */
-            // FIXME: precompute this and store it on the spring struct?
-            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
+//            let damping = spring.damping_ratio * (spring.stiffness * self.node_mass).sqrt() * na::convert(2.0);
             let l = *spring.dir;
 
             if spring.length != N::zero() {
@@ -338,7 +348,7 @@ impl<N: Real> MassSpringSystem<N> {
                 // let damping_stiffness = -damping_matrix * params.dt + stiffness * (params.dt * params.dt).
 
                 // Add to the mass matrix.
-                let damping_stiffness = stiffness * (params.dt * params.dt);
+                let damping_stiffness = stiffness * (dt * dt);
 
                 if !kinematic1 {
                     self.augmented_mass.fixed_slice_mut::<Dim, Dim>(spring.nodes.0, spring.nodes.0).add_assign(&damping_stiffness);
@@ -460,9 +470,9 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
         }
     }
 
-    fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn update_dynamics(&mut self, dt: N) {
         if self.update_status.inertia_needs_update() {
-            self.update_augmented_mass(gravity, params);
+            self.update_augmented_mass(dt);
         }
     }
 
@@ -471,6 +481,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn clear_forces(&mut self) {
+        self.forces.fill(N::zero())
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -623,6 +634,101 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
+
+
+    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        if self.status != BodyStatus::Dynamic {
+            return;
+        }
+
+        if auto_wake_up {
+            self.activate()
+        }
+
+        let element = &self.elements[part_id];
+        let indices = element.indices.as_slice();
+
+        #[cfg(feature = "dim2")]
+        let forces = [
+            force * (N::one() - point.x - point.y),
+            force * point.x,
+            force * point.y,
+        ];
+        #[cfg(feature = "dim3")]
+        let forces = [
+            force * (N::one() - point.x - point.y - point.z),
+            force * point.x,
+            force * point.y,
+            force * point.z,
+        ];
+
+        match force_type {
+            ForceType::Force => {
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(&forces[i]);
+                    }
+                }
+            }
+            ForceType::Impulse => {
+                let dvel = &mut self.workspace;
+                dvel.fill(N::zero());
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        dvel.fixed_rows_mut::<Dim>(indices[i]).copy_from(&forces[i]);
+                    }
+                }
+                self.inv_augmented_mass.solve_mut(dvel);
+                self.velocities += &*dvel;
+            }
+            ForceType::AccelerationChange => {
+                let acceleration = &mut self.workspace;
+                acceleration.fill(N::zero());
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        acceleration.fixed_rows_mut::<Dim>(indices[i]).copy_from(&forces[i]);
+                    }
+                }
+                self.forces.gemv(N::one(), &self.augmented_mass, acceleration, N::one())
+            }
+            ForceType::VelocityChange => {
+                for i in 0..indices.len() {
+                    if !self.kinematic_nodes[indices[i] / DIM] {
+                        self.velocities.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i]);
+                    }
+                }
+            }
+        }
+    }
+
+    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        let dim = self.elements[part_id].indices.as_slice().len();
+        let inv_dim: N = na::convert(1.0 / dim as f64);
+        let barycenter = Point::from_coordinates(Vector::repeat(inv_dim));
+        self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
+        self.apply_force(part_id, &force, force_type, auto_wake_up);
+    }
+
+    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
+        self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
+        let local_point = self.material_point_at_world_point(&self.elements[part_id], point);
+        self.apply_force_at_local_point(part_id, &force, &local_point, force_type, auto_wake_up);
+    }
+
+
+    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
+        self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
+    }
 }
 
 

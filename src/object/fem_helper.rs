@@ -36,6 +36,28 @@ pub enum FiniteElementIndices {
     Segment(Point2<usize>)
 }
 
+impl FiniteElementIndices {
+    #[inline]
+    pub fn as_slice(&self) -> &[usize] {
+        match self {
+            #[cfg(feature = "dim3")]
+            FiniteElementIndices::Tetrahedron(idx) => idx.coords.as_slice(),
+            FiniteElementIndices::Triangle(idx) => idx.coords.as_slice(),
+            FiniteElementIndices::Segment(idx) => idx.coords.as_slice(),
+        }
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        match self {
+            #[cfg(feature = "dim3")]
+            FiniteElementIndices::Tetrahedron(_) => 4,
+            FiniteElementIndices::Triangle(_) => 3,
+            FiniteElementIndices::Segment(_) => 2,
+        }
+    }
+}
+
 
 #[inline]
 pub fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
@@ -62,7 +84,9 @@ pub fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, pos
     }
 }
 
-
+// NOTE: the barycentric coordinate with the form (1 - x - y - ...) is the first component
+// because it makes it simpler to handle the case where we don't know at compile-time the
+// dimension of `indices`.
 #[inline]
 pub fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {

@@ -5,7 +5,7 @@ use downcast::Any;
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 use ncollide::shape::DeformationsType;
 
-use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity};
+use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, BodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
@@ -99,8 +99,7 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn update_kinematics(&mut self);
 
     /// Update the dynamics property of this body.
-    // FIXME: this should only depend on dt.
-    fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
+    fn update_dynamics(&mut self, dt: N);
 
     /// Update the acceleration of this body given the forces it is subject to and the gravity.
     fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
@@ -210,12 +209,8 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>);
 
     /// Add the given inertia to the local inertia of this body part.
-    fn add_local_inertia_and_com_to_part(&mut self, part_index: usize, _com: Point<N>, _inertia: Inertia<N>)
+    fn add_local_inertia_and_com(&mut self, _part_index: usize, _com: Point<N>, _inertia: Inertia<N>)
     {} // FIXME: don't auto-impl.
-
-    /// Apply a force to this body part at the next frame.
-    fn apply_force_to_part(&mut self, part_index: usize, force: &Force<N>)
-    {} // FIXME: don't auto-impl.
 
     /// The number of degrees of freedom (DOF) of this body, taking its status into account.
     ///
@@ -277,6 +272,21 @@ pub trait Body<N: Real>: Any + Send + Sync {
             self.activate_with_energy(threshold * na::convert(2.0));
         }
     }
+
+    /*
+     * Application of forces/impulses.
+     */
+    fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool);
+
+    fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool);
+
+    fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+
+    fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+
+    fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+
+    fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
 }
 
 /// Trait implemented by each part of a body supported by nphysics.

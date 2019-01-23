@@ -1,7 +1,7 @@
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use ncollide::shape::DeformationsType;
-use crate::math::{Force, Inertia, Isometry, Point, Vector, Velocity, Translation};
+use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity, Translation};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, BodyUpdateStatus, Body, BodyPart, BodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
@@ -31,10 +31,10 @@ impl<N: Real> Body<N> for Ground<N> {
     fn update_kinematics(&mut self) {}
 
     #[inline]
-    fn update_dynamics(&mut self, _: &Vector<N>, _: &IntegrationParameters<N>) {}
+    fn update_dynamics(&mut self, _: N) {}
 
     #[inline]
-    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {}
+    fn update_acceleration(&mut self, _: &Vector<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn clear_forces(&mut self) {}
@@ -197,6 +197,24 @@ impl<N: Real> Body<N> for Ground<N> {
 
     #[inline]
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn apply_force(&mut self, _: usize, _: &Force<N>, _: ForceType, _: bool) {}
+
+    #[inline]
+    fn apply_local_force(&mut self, _: usize, _: &Force<N>, _: ForceType, _: bool) {}
+
+    #[inline]
+    fn apply_force_at_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+
+    #[inline]
+    fn apply_local_force_at_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+
+    #[inline]
+    fn apply_force_at_local_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+
+    #[inline]
+    fn apply_local_force_at_local_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
 }
 
 impl<N: Real> BodyPart<N> for Ground<N> {

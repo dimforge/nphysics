@@ -202,52 +202,6 @@ impl<N: Real> RigidBody<N> {
         let new_pos = disp * self.position;
         self.set_position(new_pos);
     }
-
-    /*
-     * Application of forces.
-     */
-    pub fn apply_force(&mut self, force: &Force<N>, force_type: ForceType) {
-        match force_type {
-            ForceType::Force => {
-                self.external_forces += *force;
-            }
-            ForceType::Impulse => {
-                self.update_status.set_velocity_changed(true);
-                self.velocity += self.inv_augmented_mass * *force;
-            }
-            ForceType::AccelerationChange => {
-                let change = self.augmented_mass * *force;
-                self.external_forces.linear += change.linear;
-                self.external_forces.angular += change.angular;
-            }
-            ForceType::VelocityChange => {
-                self.update_status.set_velocity_changed(true);
-                self.velocity.linear += force.linear;
-                self.velocity.angular += force.angular;
-            }
-        }
-    }
-
-    pub fn apply_local_force(&mut self, force: &Force<N>, force_type: ForceType) {
-        let world_force = Force::new(self.position * force.linear, self.position * force.angular);
-    }
-
-    pub fn apply_force_at_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
-        let force = Force::linear_at_point(*force, &(point - self.com.coords));
-        self.apply_force(&force, force_type)
-    }
-
-    pub fn apply_local_force_at_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
-        self.apply_force_at_point(&(self.position * force), point, force_type)
-    }
-
-    pub fn apply_force_at_local_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
-        self.apply_force_at_point(force, &(self.position * point), force_type)
-    }
-
-    pub fn apply_local_force_at_local_point(&mut self, force: &Vector<N>, point: &Point<N>, force_type: ForceType) {
-        self.apply_force_at_point(&(self.position * force), &(self.position * point), force_type)
-    }
 }
 
 
@@ -353,7 +307,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[allow(unused_variables)] // for params used only in 3D.
-    fn update_dynamics(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn update_dynamics(&mut self, dt: N) {
         if !self.update_status.inertia_needs_update() {
             return;
         }
@@ -368,9 +322,9 @@ impl<N: Real> Body<N> for RigidBody<N> {
                 let i = &self.inertia.angular;
                 let w = &self.velocity.angular;
                 let iw = i * w;
-                let w_dt = w * params.dt;
+                let w_dt = w * dt;
                 let w_dt_cross = w_dt.gcross_matrix();
-                let iw_dt_cross = (iw * params.dt).gcross_matrix();
+                let iw_dt_cross = (iw * dt).gcross_matrix();
                 self.augmented_mass.angular += w_dt_cross * i - iw_dt_cross;
 
                 // NOTE: if we did not have the gyroscopic forces, we would not have to invert the inertia
@@ -500,7 +454,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
     fn step_solve_internal_position_constraints(&mut self, _: &IntegrationParameters<N>) {}
 
     #[inline]
-    fn add_local_inertia_and_com_to_part(&mut self, _: usize, com: Point<N>, inertia: Inertia<N>) {
+    fn add_local_inertia_and_com(&mut self, _: usize, com: Point<N>, inertia: Inertia<N>) {
         self.update_status.set_local_com_changed(true);
         self.update_status.set_local_inertia_changed(true);
 
@@ -519,11 +473,61 @@ impl<N: Real> Body<N> for RigidBody<N> {
         self.inv_augmented_mass = self.inertia.inverse();
     }
 
-    #[inline]
-    fn apply_force_to_part(&mut self, _: usize, force: &Force<N>) {
-        self.external_forces += *force;
+    /*
+     * Application of forces/impulses.
+     */
+    fn apply_force(&mut self, _: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        if self.status != BodyStatus::Dynamic {
+            return;
+        }
+
+        if auto_wake_up {
+            self.activate();
+        }
+
+        match force_type {
+            ForceType::Force => {
+                self.external_forces.as_vector_mut().cmpy(N::one(), force.as_vector(), &self.jacobian_mask, N::one())
+            }
+            ForceType::Impulse => {
+                self.update_status.set_velocity_changed(true);
+                let dvel = self.inv_augmented_mass * *force;
+                self.velocity.as_vector_mut().cmpy(N::one(), dvel.as_vector(), &self.jacobian_mask, N::one())
+            }
+            ForceType::AccelerationChange => {
+                let change = self.augmented_mass * *force;
+                self.external_forces.as_vector_mut().cmpy(N::one(), change.as_vector(), &self.jacobian_mask, N::one())
+            }
+            ForceType::VelocityChange => {
+                self.update_status.set_velocity_changed(true);
+                self.velocity.as_vector_mut().cmpy(N::one(), force.as_vector(), &self.jacobian_mask, N::one())
+            }
+        }
+    }
+
+    fn apply_local_force(&mut self, _: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
+        let world_force = force.transform_by(&self.position);
+        self.apply_force(0, &world_force, force_type, auto_wake_up)
+    }
+
+    fn apply_force_at_point(&mut self, _: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        let force = Force::linear_at_point(*force, &(point - self.com.coords));
+        self.apply_force(0, &force, force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_point(&mut self, _: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        self.apply_force_at_point(0, &(self.position * force), point, force_type, auto_wake_up)
+    }
+
+    fn apply_force_at_local_point(&mut self, _: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        self.apply_force_at_point(0, force, &(self.position * point), force_type, auto_wake_up)
+    }
+
+    fn apply_local_force_at_local_point(&mut self, _: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
+        self.apply_force_at_point(0, &(self.position * force), &(self.position * point), force_type, auto_wake_up)
     }
 }
+
 
 impl<N: Real> BodyPart<N> for RigidBody<N> {
     #[inline]

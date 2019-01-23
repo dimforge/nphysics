@@ -3,7 +3,7 @@ use na::Real;
 use crate::solver::IntegrationParameters;
 use crate::force_generator::ForceGenerator;
 use crate::object::{BodyPartHandle, BodySet};
-use crate::math::{Velocity, Vector};
+use crate::math::{Force, ForceType, Velocity, Vector};
 
 /// Force generator adding a constant acceleration
 /// at the center of mass of a set of body parts.
@@ -46,17 +46,16 @@ impl<N: Real> ForceGenerator<N> for ConstantAcceleration<N> {
         let acceleration = self.acceleration;
         self.parts.retain(|h| {
             if let Some(body) = bodies.body_mut(h.0) {
-                let force = body.part(h.1).map(|p| p.inertia() * acceleration);
-
-                if let Some(force) = force {
-                    body.apply_force_to_part(h.1, &force);
-                    return true;
-                }
+                body.apply_force(h.1,
+                                 &Force::new(acceleration.linear, acceleration.angular),
+                                 ForceType::AccelerationChange,
+                                  false);
+                true
+            } else {
+                false
             }
-
-            false
         });
 
-        true
+        !self.parts.is_empty()
     }
 }

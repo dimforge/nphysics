@@ -1,7 +1,7 @@
 use na::{Real, Unit};
 
 use crate::force_generator::ForceGenerator;
-use crate::math::{Force, Point, Vector};
+use crate::math::{ForceType, Point, Vector};
 use crate::object::{BodyPartHandle, BodySet};
 use crate::solver::IntegrationParameters;
 
@@ -59,32 +59,29 @@ impl<N: Real> ForceGenerator<N> for Spring<N> {
             return false;
         }
 
-        let part1 = bodies.body(self.b1.0).and_then(|b| b.part(self.b1.1));
-        let part2 = bodies.body(self.b2.0).and_then(|b| b.part(self.b2.1));
+        let body1 = try_ret!(bodies.body(self.b1.0), false);
+        let body2 = try_ret!(bodies.body(self.b2.0), false);
+        let part1 = try_ret!(body1.part(self.b1.1), false);
+        let part2 = try_ret!(body2.part(self.b2.1), false);
 
-        if let (Some(part1), Some(part2)) = (part1, part2) {
-            let anchor1 = part1.position() * self.anchor1;
-            let anchor2 = part2.position() * self.anchor2;
+        let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
+        let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
-            let force_dir;
-            let delta_length;
+        let force_dir;
+        let delta_length;
 
-            if let Some((dir, length)) = Unit::try_new_and_get(anchor2 - anchor1, N::default_epsilon())
-                {
-                    force_dir = dir;
-                    delta_length = length - self.length;
-                } else {
-                force_dir = Vector::y_axis();
-                delta_length = -self.length;
-            }
-
-            let force = Force::linear(force_dir.as_ref() * delta_length * self.stiffness);
-            bodies.body_mut(self.b1.0).unwrap().apply_force_to_part(self.b1.1, &force);
-            bodies.body_mut(self.b2.0).unwrap().apply_force_to_part(self.b2.1, &-force);
-
-            true
+        if let Some((dir, length)) = Unit::try_new_and_get(anchor2 - anchor1, N::default_epsilon()) {
+            force_dir = dir;
+            delta_length = length - self.length;
         } else {
-            false
+            force_dir = Vector::y_axis();
+            delta_length = -self.length;
         }
+
+        let force = force_dir.as_ref() * delta_length * self.stiffness;
+        bodies.body_mut(self.b1.0).unwrap().apply_force_at_local_point(self.b1.1, &force, &self.anchor1, ForceType::Force, false);
+        bodies.body_mut(self.b2.0).unwrap().apply_force_at_local_point(self.b2.1, &-force, &self.anchor2, ForceType::Force, false);
+
+        true
     }
 }
