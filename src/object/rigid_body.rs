@@ -463,7 +463,10 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn warmstart_internal_velocity_constraints(&mut self,  _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}

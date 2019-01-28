@@ -548,7 +548,10 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {
+    fn setup_internal_velocity_constraints(&mut self, _: &DVectorSlice<N>, _: &IntegrationParameters<N>) {}
+
+    #[inline]
+    fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
         if self.impulses.len() != self.constraints.len() {
             self.impulses = DVector::zeros(self.constraints.len());
         }

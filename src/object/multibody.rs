@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::ops::{Range, MulAssign};
 use std::any::Any;
 
 use ncollide::shape::DeformationsType;
@@ -8,7 +8,8 @@ use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
     Vector, Velocity, DIM, Translation, ForceType
 };
-use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
+use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, U1, MatrixMN, Real, LU,
+        VectorSliceMutN};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
     MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc
@@ -25,7 +26,7 @@ pub struct Multibody<N: Real> {
     damping: DVector<N>,
     accelerations: DVector<N>,
     forces: DVector<N>,
-    impulses: Vec<N>,
+    impulses: DVector<N>,
     body_jacobians: Vec<Jacobian<N>>,
     // FIXME: use sparse matrices.
     augmented_mass: DMatrix<N>,
@@ -53,7 +54,7 @@ pub struct Multibody<N: Real> {
      * FIXME: we should void explicitly generating those constraints by
      * just iterating on all joints at each step of the resolution.
      */
-    solver_workspace: SolverWorkspace<N>
+    solver_workspace: Option<SolverWorkspace<N>>
 }
 
 impl<N: Real> Multibody<N> {
@@ -66,7 +67,7 @@ impl<N: Real> Multibody<N> {
             forces: DVector::zeros(0),
             damping: DVector::zeros(0),
             accelerations: DVector::zeros(0),
-            impulses: Vec::new(),
+            impulses: DVector::zeros(0),
             body_jacobians: Vec::new(),
             augmented_mass: DMatrix::zeros(0, 0),
             inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
@@ -82,7 +83,7 @@ impl<N: Real> Multibody<N> {
             coriolis_v: Vec::new(),
             coriolis_w: Vec::new(),
             i_coriolis_dt: Jacobian::zeros(0),
-            solver_workspace: SolverWorkspace::new(),
+            solver_workspace: Some(SolverWorkspace::new()),
             user_data: None
         }
     }
@@ -111,7 +112,7 @@ impl<N: Real> Multibody<N> {
     ///
     /// Return `None` if the given id does not identifies a multibody link part of `self`.
     #[inline]
-    fn link_mut(&mut self, id: usize) -> Option<&mut MultibodyLink<N>> {
+    pub fn link_mut(&mut self, id: usize) -> Option<&mut MultibodyLink<N>> {
         self.rbs.get_mut(id)
     }
 
@@ -220,7 +221,7 @@ impl<N: Real> Multibody<N> {
         self.body_jacobians.push(Jacobian::zeros(0));
 
         let len = self.impulses.len();
-        self.impulses.resize(len + nimpulses, N::zero());
+        self.impulses.resize_vertically_assign(len + nimpulses, N::zero());
     }
 
     fn update_acceleration(&mut self, gravity: &Vector<N>) {
@@ -650,57 +651,6 @@ impl<N: Real> Multibody<N> {
         DVectorSliceMut::from_slice(&mut self.velocities.as_mut_slice()[i..i + ndofs], ndofs)
     }
 
-//    /// Generates the set of velocity and position constraints needed for joint limits and motors at each link
-//    /// of this multibody.
-//    pub fn constraints(
-//        &mut self,
-//        params: &IntegrationParameters<N>,
-//        ext_vels: &DVector<N>,
-//        ground_j_id: &mut usize,
-//        jacobians: &mut [N],
-//        constraints: &mut ConstraintSet<N>,
-//    ) {
-//        let first_unilateral = constraints.velocity.unilateral_ground.len();
-//        let first_bilateral = constraints.velocity.bilateral_ground.len();
-//
-//        for link in self.links() {
-//            link.joint().velocity_constraints(
-//                params,
-//                self,
-//                &link,
-//                self.companion_id,
-//                0,
-//                ext_vels.as_slice(),
-//                ground_j_id,
-//                jacobians,
-//                constraints,
-//            );
-//
-//            if link.joint().num_position_constraints() != 0 {
-//                let generator =
-//                    MultibodyJointLimitsNonlinearConstraintGenerator::new();
-//                constraints.position.multibody_limits.push(generator)
-//            }
-//        }
-//
-//        self.unilateral_ground_rng = first_unilateral..constraints.velocity.unilateral_ground.len();
-//        self.bilateral_ground_rng = first_bilateral..constraints.velocity.bilateral_ground.len();
-//    }
-
-    /// Store impulses computed by the solver for joint limits and motors.
-    pub fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
-        for constraint in
-            &constraints.velocity.unilateral_ground[self.unilateral_ground_rng.clone()]
-            {
-                self.impulses[constraint.impulse_id] = constraint.impulse;
-            }
-
-        for constraint in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()]
-            {
-                self.impulses[constraint.impulse_id] = constraint.impulse;
-            }
-    }
-
     #[inline]
     pub fn generalized_force(&self) -> &DVector<N> {
         &self.forces
@@ -713,7 +663,7 @@ impl<N: Real> Multibody<N> {
 
     #[inline]
     pub(crate) fn impulses(&self) -> &[N] {
-        &self.impulses
+        self.impulses.as_slice()
     }
 }
 
@@ -742,8 +692,6 @@ impl<N: Real> MultibodyWorkspace<N> {
 
 struct SolverWorkspace<N: Real> {
     jacobians: DVector<N>,
-    mj_lambda: DVector<N>,
-    impulses: DVector<N>,
     constraints: ConstraintSet<N>,
 }
 
@@ -751,9 +699,15 @@ impl<N: Real> SolverWorkspace<N> {
     pub fn new() -> Self {
         SolverWorkspace {
             jacobians: DVector::zeros(0),
-            mj_lambda: DVector::zeros(0),
-            impulses: DVector::zeros(0),
             constraints: ConstraintSet::new(),
+        }
+    }
+
+    pub fn resize(&mut self, nconstraints: usize, ndofs: usize) {
+        let j_len = nconstraints * ndofs * 2;
+
+        if self.jacobians.len() != j_len {
+            self.jacobians = DVector::zeros(j_len);
         }
     }
 }
@@ -1011,37 +965,115 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &mut DVectorSliceMut<N>, params: &IntegrationParameters<N>) {
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, params: &IntegrationParameters<N>) {
         let mut ground_j_id = 0;
+        let mut workspace = self.solver_workspace.take().unwrap();
 
-        for link in self.links() {
+        /*
+         * Cache impulses from the last timestep for warmstarting.
+         */
+        // FIXME: should this be another pass of the solver (happening after all the resolution completed).
+        for c in &workspace.constraints.velocity.unilateral_ground {
+            self.impulses[c.impulse_id] = c.impulse;
+        }
+
+        for c in &workspace.constraints.velocity.bilateral_ground {
+            self.impulses[c.impulse_id] = c.impulse;
+        }
+
+        workspace.constraints.clear();
+
+        /*
+         * Setup the constraints.
+         */
+        let nconstraints = self.rbs
+            .iter()
+            .map(|l| l.joint().num_velocity_constraints())
+            .sum();
+
+        workspace.resize(nconstraints, self.ndofs);
+
+        for link in self.rbs.iter() {
             link.joint().velocity_constraints(
                 params,
                 self,
                 &link,
                 0,
                 0,
-                ext_vels,
+                ext_vels.as_slice(),
                 &mut ground_j_id,
-                &mut self.solver_workspace.jacobians,
-                &mut self.solver_workspace.constraints,
+                workspace.jacobians.as_mut_slice(),
+                &mut workspace.constraints,
             );
         }
+
+        self.solver_workspace = Some(workspace);
     }
 
     #[inline]
-    fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {
-        // FIXME: solve joint limit/motor constraints here directly?
-        // (instead of having a special case by returning the set of constraints to the solver).
-        let solver = SORProx::new();
-        for c in &mut self.constraints.velocity.unilateral_ground {
+    fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+        let mut workspace = self.solver_workspace.as_mut().unwrap();
+        for c in &mut workspace.constraints.velocity.unilateral_ground {
             let dim = Dynamic::new(c.ndofs);
-            solver.solve_unilateral_ground(c, self.jacobians.as_slice(), &mut self.mj_lambda, dim)
+            SORProx::warmstart_unilateral_ground(c, workspace.jacobians.as_slice(), dvels, dim)
+        }
+
+        for c in &mut workspace.constraints.velocity.bilateral_ground {
+            let dim = Dynamic::new(c.ndofs);
+            SORProx::warmstart_bilateral_ground(c, workspace.jacobians.as_slice(), dvels, dim)
         }
     }
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, _params: &IntegrationParameters<N>) {}
+    fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+        let workspace = self.solver_workspace.as_mut().unwrap();
+        for c in &mut workspace.constraints.velocity.unilateral_ground {
+            let dim = Dynamic::new(c.ndofs);
+            SORProx::solve_unilateral_ground(c, workspace.jacobians.as_slice(), dvels, dim)
+        }
+
+        for c in &mut workspace.constraints.velocity.bilateral_ground {
+            let dim = Dynamic::new(c.ndofs);
+            SORProx::solve_bilateral_ground(c, &[], workspace.jacobians.as_slice(), dvels, dim)
+        }
+    }
+
+    #[inline]
+    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
+        // FIXME: this `.take()` trick is ugly.
+        // We should not pass a reference to the multibody to the link position constraint method.
+        let mut workspace = self.solver_workspace.take().unwrap();
+        let jacobians = &mut workspace.jacobians;
+
+        for i in 0..self.rbs.len() {
+            for j in 0..self.rbs[i].joint().num_position_constraints() {
+                let link = &self.rbs[i];
+                // FIXME: should each link directly solve the constraint internally
+                // instead of having to return a GenericNonlinearConstraint struct
+                // every time.
+                let c = link
+                    .joint()
+                    .position_constraint(j, self, link, 0, jacobians.as_mut_slice());
+
+                if let Some(mut c) = c {
+                    // FIXME: the following has been copy-pasted from the NonlinearSORProx.
+                    // We should refactor the code better.
+                    let rhs = NonlinearSORProx::clamp_rhs(c.rhs, c.is_angular, params);
+
+                    if rhs < N::zero() {
+                        let impulse = -rhs * c.r;
+                        jacobians.rows_mut(c.wj_id1, c.dim1).mul_assign(impulse);
+
+                        // FIXME: we should not use apply_displacement to avoid
+                        // performing the .update_kinematic().
+                        self.apply_displacement(jacobians.rows(c.wj_id1, c.dim1).as_slice(), );
+                    }
+                }
+            }
+        }
+        self.solver_workspace = Some(workspace);
+        self.update_kinematics();
+    }
 
     #[inline]
     fn add_local_inertia_and_com(&mut self, part_id: usize, com: Point<N>, inertia: Inertia<N>) {

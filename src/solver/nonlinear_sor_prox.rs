@@ -6,25 +6,16 @@ use std::ops::MulAssign;
 use crate::world::ColliderWorld;
 use crate::joint::JointConstraint;
 use crate::object::{BodySet, ColliderAnchor, BodyHandle};
-use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator, NonlinearUnilateralConstraint};
+use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
+                    NonlinearUnilateralConstraint, GenericNonlinearConstraint};
 use crate::math::Isometry;
 
 /// Non-linear position-based constraint solver using the SOR-Prox approach.
-pub struct NonlinearSORProx<N: Real> {
-    _phantom: PhantomData<N>,
-}
+pub struct NonlinearSORProx;
 
-impl<N: Real> NonlinearSORProx<N> {
-    /// Initialize a new nonlinear SOR-Prox solver.
-    pub fn new() -> Self {
-        NonlinearSORProx {
-            _phantom: PhantomData,
-        }
-    }
-
+impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
-    pub fn solve(
-        &self,
+    pub fn solve<N: Real>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
@@ -39,11 +30,11 @@ impl<N: Real> NonlinearSORProx<N> {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                self.solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
+                Self::solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
             }
 
             for joint in &*joints_constraints {
-                self.solve_generic(params, bodies, &**joint.1, jacobians)
+                Self::solve_generator(params, bodies, &**joint.1, jacobians)
             }
 
             for constraint in internal_constraints {
@@ -54,8 +45,7 @@ impl<N: Real> NonlinearSORProx<N> {
         }
     }
 
-    fn solve_generic<Gen: ?Sized + NonlinearConstraintGenerator<N>>(
-        &self,
+    fn solve_generator<N: Real, Gen: ?Sized + NonlinearConstraintGenerator<N>>(
         params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         generator: &Gen,
@@ -64,70 +54,56 @@ impl<N: Real> NonlinearSORProx<N> {
         let nconstraints = generator.num_position_constraints(bodies);
 
         for i in 0..nconstraints {
-            if let Some(mut constraint) =
-            generator.position_constraint(params, i, bodies, jacobians)
-                {
-                    let dim1 = Dynamic::new(constraint.dim1);
-                    let dim2 = Dynamic::new(constraint.dim2);
-
-                    let rhs = if constraint.is_angular {
-                        na::sup(
-                            &((constraint.rhs + params.allowed_angular_error) * params.erp),
-                            &(-params.max_angular_correction),
-                        )
-                    } else {
-                        na::sup(
-                            &((constraint.rhs + params.allowed_linear_error) * params.erp),
-                            &(-params.max_linear_correction),
-                        )
-                    };
-
-                    // Avoid overshoot when the penetration vector is close to the null-space
-                    // of a multibody link jacobian.
-                    // FIXME: will this cause issue with very light objects?
-                    // Should this be done depending on the jacobian magnitude instead
-                    // (instead of JM-1J)?
-                    if false {
-                        // constraint.r > params.max_stabilization_multiplier {
-                        constraint.r = params.max_stabilization_multiplier;
-                    }
-
-                    if rhs < N::zero() {
-                        let impulse = -rhs * constraint.r;
-
-                        VectorSliceMutN::from_slice_generic(
-                            &mut jacobians[constraint.wj_id1..],
-                            dim1,
-                            U1,
-                        ).mul_assign(impulse);
-
-                        VectorSliceMutN::from_slice_generic(
-                            &mut jacobians[constraint.wj_id2..],
-                            dim2,
-                            U1,
-                        ).mul_assign(impulse);
-
-                        // FIXME: the body update should be performed lazily, especially because
-                        // we dont actually need to update the kinematic of a multibody until
-                        // we have to solve a contact involvoing one of its links.
-                        if let Some(b1) = bodies.body_mut(constraint.body1.0) {
-                            b1.apply_displacement(
-                                &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
-                            );
-                        }
-
-                        if let Some(b2) = bodies.body_mut(constraint.body2.0) {
-                            b2.apply_displacement(
-                                &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
-                            )
-                        }
-                    }
-                }
+            if let Some(mut constraint) = generator.position_constraint(params, i, bodies, jacobians) {
+                Self::solve_generic(params, bodies, &mut constraint, jacobians)
+            }
         }
     }
 
-    fn solve_unilateral<D1: Dim, D2: Dim>(
-        &self,
+    pub fn solve_generic<N: Real>(
+        params: &IntegrationParameters<N>,
+        bodies: &mut BodySet<N>,
+        constraint: &mut GenericNonlinearConstraint<N>,
+        jacobians: &mut [N],
+    ) {
+        let dim1 = Dynamic::new(constraint.dim1);
+        let dim2 = Dynamic::new(constraint.dim2);
+
+        let rhs = Self::clamp_rhs(constraint.rhs, constraint.is_angular, params);
+
+        if rhs < N::zero() {
+            let impulse = -rhs * constraint.r;
+
+            VectorSliceMutN::from_slice_generic(
+                &mut jacobians[constraint.wj_id1..],
+                dim1,
+                U1,
+            ).mul_assign(impulse);
+
+            VectorSliceMutN::from_slice_generic(
+                &mut jacobians[constraint.wj_id2..],
+                dim2,
+                U1,
+            ).mul_assign(impulse);
+
+            // FIXME: the body update should be performed lazily, especially because
+            // we dont actually need to update the kinematic of a multibody until
+            // we have to solve a contact involving one of its links.
+            if let Some(b1) = bodies.body_mut(constraint.body1.0) {
+                b1.apply_displacement(
+                    &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
+                );
+            }
+
+            if let Some(b2) = bodies.body_mut(constraint.body2.0) {
+                b2.apply_displacement(
+                    &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
+                )
+            }
+        }
+    }
+
+    fn solve_unilateral<N: Real, D1: Dim, D2: Dim>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
@@ -136,7 +112,7 @@ impl<N: Real> NonlinearSORProx<N> {
         dim1: D1,
         dim2: D2,
     ) {
-        if self.update_contact_constraint(params, cworld, bodies, constraint, jacobians) {
+        if Self::update_contact_constraint(params, cworld, bodies, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
             VectorSliceMutN::from_slice_generic(jacobians, dim1, U1).mul_assign(impulse);
@@ -156,8 +132,7 @@ impl<N: Real> NonlinearSORProx<N> {
         }
     }
 
-    fn update_contact_constraint(
-        &self,
+    fn update_contact_constraint<N: Real>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &BodySet<N>,
@@ -211,10 +186,7 @@ impl<N: Real> NonlinearSORProx<N> {
         if let Some(contact) = constraint
             .kinematic
             .contact(&pos1, &**collider1.shape(), coords1, &pos2, &**collider2.shape(), coords2, &constraint.normal1) {
-            constraint.rhs = na::sup(
-                &((-contact.depth + params.allowed_linear_error) * params.erp),
-                &(-params.max_linear_correction),
-            );
+            constraint.rhs = Self::clamp_rhs(-contact.depth, false, params);
 
             if constraint.rhs >= N::zero() {
                 return false;
@@ -277,6 +249,21 @@ impl<N: Real> NonlinearSORProx<N> {
             true
         } else {
             false
+        }
+    }
+
+    #[inline]
+    pub fn clamp_rhs<N: Real>(rhs: N, is_angular: bool, params: &IntegrationParameters<N>) -> N {
+        if is_angular {
+            na::sup(
+                &((rhs + params.allowed_angular_error) * params.erp),
+                &(-params.max_angular_correction),
+            )
+        } else {
+            na::sup(
+                &((rhs + params.allowed_linear_error) * params.erp),
+                &(-params.max_linear_correction),
+            )
         }
     }
 }

@@ -205,8 +205,11 @@ pub trait Body<N: Real>: Any + Send + Sync {
     /// Returns `true` if this bodies contains internal constraints that need to be solved.
     fn has_active_internal_constraints(&mut self) -> bool;
 
-    /// For warmstarting the solver, initializes the delta velocity applied by the internal constraints of this body.
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>, params: &IntegrationParameters<N>);
+    /// Initializes the internal velocity constraints of a body.
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, params: &IntegrationParameters<N>);
+
+    /// For warmstarting the solver, modifies the delta velocity applied by the internal constraints of this body.
+    fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
 
     /// Execute one step for the iterative resolution of this body's internal velocity constraints.
     fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);

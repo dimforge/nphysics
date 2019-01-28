@@ -59,7 +59,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     let joint_velocity = multibody.joint_velocity(link);
 
     if joint.motor().enabled {
-        let dvel = joint_velocity[dof_id] + ext_vels[assembly_id + link.assembly_id];
+        let dvel = joint_velocity[dof_id] + ext_vels[link.assembly_id];
 
         DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
         jacobians[*ground_j_id + link.assembly_id + dof_id] = N::one();
@@ -75,13 +75,13 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
         let constraint = BilateralGroundConstraint {
             impulse: impulses[impulse_id] * params.warmstart_coeff,
             r: N::one() / inv_r,
-            rhs: rhs,
-            limits: limits,
+            rhs,
+            limits,
             impulse_id,
             assembly_id,
             j_id: *ground_j_id,
             wj_id: *ground_j_id + ndofs,
-            ndofs: ndofs,
+            ndofs,
         };
 
         constraints.velocity.bilateral_ground.push(constraint);
@@ -91,7 +91,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     if let Some(min_position) = joint.min_position() {
         let err = min_position - joint.position();
         let dvel =
-            joint_velocity[dof_id] + ext_vels[assembly_id + link.assembly_id + dof_id];
+            joint_velocity[dof_id] + ext_vels[link.assembly_id + dof_id];
 
         if err >= N::zero() {
             is_min_constraint_active = true;
@@ -123,7 +123,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     if let Some(max_position) = joint.max_position() {
         let err = -(max_position - joint.position());
         let dvel =
-            -joint_velocity[dof_id] - ext_vels[assembly_id + link.assembly_id + dof_id];
+            -joint_velocity[dof_id] - ext_vels[link.assembly_id + dof_id];
 
         if err >= N::zero() {
             DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
@@ -146,11 +146,11 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
                 impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
-                impulse_id: impulse_id,
-                assembly_id: assembly_id,
+                impulse_id,
+                assembly_id,
                 j_id: *ground_j_id,
                 wj_id: *ground_j_id + ndofs,
-                ndofs: ndofs,
+                ndofs,
             };
 
             constraints.velocity.unilateral_ground.push(constraint);

@@ -192,12 +192,18 @@ impl<N: Real> MoreauJeanSolver<N> {
             &mut self.constraints,
         );
         counters.custom_completed();
+
+
+        for handle in &self.internal_constraints {
+            if let Some(body) = bodies.body_mut(*handle) {
+                let ext_vels = self.ext_vels.rows(body.companion_id(), body.ndofs());
+                body.setup_internal_velocity_constraints(&ext_vels, params);
+            }
+        }
     }
 
     fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) {
-        let solver = SORProx::new();
-
-        solver.solve(
+        SORProx::solve(
             bodies,
             &mut self.constraints.velocity.unilateral_ground,
             &mut self.constraints.velocity.unilateral,
@@ -206,7 +212,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             &self.internal_constraints,
             &mut self.mj_lambda_vel,
             &self.jacobians,
-            params,
+            params.max_velocity_iterations,
         );
     }
 
@@ -217,9 +223,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {
-        let solver = NonlinearSORProx::new();
-
-        solver.solve(
+        NonlinearSORProx::solve(
             params,
             cworld,
             bodies,
