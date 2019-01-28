@@ -1,4 +1,4 @@
-use std::ops::{Range, MulAssign};
+use std::ops::MulAssign;
 use std::any::Any;
 
 use ncollide::shape::DeformationsType;
@@ -6,10 +6,9 @@ use ncollide::utils::IsometryOps;
 use crate::joint::Joint;
 use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
-    Vector, Velocity, DIM, Translation, ForceType
+    AngularInertia, Vector, Velocity, DIM, Translation, ForceType
 };
-use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, U1, MatrixMN, Real, LU,
-        VectorSliceMutN};
+use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
     MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc
@@ -37,8 +36,6 @@ pub struct Multibody<N: Real> {
     activation: ActivationStatus<N>,
     ndofs: usize,
     companion_id: usize,
-    unilateral_ground_rng: Range<usize>,
-    bilateral_ground_rng: Range<usize>,
     user_data: Option<Box<Any + Send + Sync>>,
 
     /*
@@ -77,8 +74,6 @@ impl<N: Real> Multibody<N> {
             activation: ActivationStatus::new_active(),
             ndofs: 0,
             companion_id: 0,
-            unilateral_ground_rng: 0..0,
-            bilateral_ground_rng: 0..0,
             workspace: MultibodyWorkspace::new(),
             coriolis_v: Vec::new(),
             coriolis_w: Vec::new(),
@@ -133,6 +128,21 @@ impl<N: Real> Multibody<N> {
     #[inline]
     pub fn damping_mut(&mut self) -> &mut DVector<N> {
         &mut self.damping
+    }
+
+
+    /// Set the mass of the specified link.
+    #[inline]
+    pub fn set_link_mass(&mut self, link_id: usize, mass: N) {
+        self.update_status.set_local_inertia_changed(true);
+        self.rbs[link_id].local_inertia.linear = mass;
+    }
+
+    /// Set the angular inertia of the specified linked, expressed in its local space.
+    #[inline]
+    pub fn set_link_angular_inertia(&mut self, link_id: usize, angular_inertia: AngularInertia<N>) {
+        self.update_status.set_local_inertia_changed(true);
+        self.rbs[link_id].local_inertia.angular = angular_inertia;
     }
 
     fn add_link(
@@ -1012,7 +1022,7 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
-        let mut workspace = self.solver_workspace.as_mut().unwrap();
+        let workspace = self.solver_workspace.as_mut().unwrap();
         for c in &mut workspace.constraints.velocity.unilateral_ground {
             let dim = Dynamic::new(c.ndofs);
             SORProx::warmstart_unilateral_ground(c, workspace.jacobians.as_slice(), dvels, dim)
@@ -1055,7 +1065,7 @@ impl<N: Real> Body<N> for Multibody<N> {
                     .joint()
                     .position_constraint(j, self, link, 0, jacobians.as_mut_slice());
 
-                if let Some(mut c) = c {
+                if let Some(c) = c {
                     // FIXME: the following has been copy-pasted from the NonlinearSORProx.
                     // We should refactor the code better.
                     let rhs = NonlinearSORProx::clamp_rhs(c.rhs, c.is_angular, params);
@@ -1156,7 +1166,7 @@ pub struct MultibodyDesc<'a, N: Real> {
     joint: Box<Joint<N>>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
-    local_com: Point<N>,
+    local_center_of_mass: Point<N>,
     colliders: Vec<&'a ColliderDesc<N>>,
     body_shift: Vector<N>,
     parent_shift: Vector<N>
@@ -1169,7 +1179,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
             children: Vec::new(),
             velocity: Velocity::zero(),
             local_inertia: Inertia::zero(),
-            local_com: Point::origin(),
+            local_center_of_mass: Point::origin(),
             colliders: Vec::new(),
             body_shift: Vector::zeros(),
             parent_shift: Vector::zeros()
@@ -1190,6 +1200,8 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
 
     desc_custom_setters!(
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
+        self.with_mass, set_mass, mass: N | { self.local_inertia.linear = mass }
+        self.with_angular_inertia, set_angular_inertia, angular_inertia: AngularInertia<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_setters!(
@@ -1198,8 +1210,22 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         with_body_shift, set_body_shift, body_shift: Vector<N>
         with_velocity, set_velocity, velocity: Velocity<N>
         with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
-        with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
+        with_local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
     );
+
+    desc_custom_getters!(
+        self.mass: N | { self.local_inertia.linear }
+        self.angular_inertia: &AngularInertia<N> | { &self.local_inertia.angular }
+    );
+
+    desc_getters!(
+        [ref] parent_shift: Vector<N>
+        [ref] body_shift: Vector<N>
+        [ref] velocity: Velocity<N>
+        [ref] local_inertia: Inertia<N>
+        [ref] local_center_of_mass: Point<N>
+    );
+
 
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Multibody<N> {
         world.add_body(self)
@@ -1223,7 +1249,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
             self.parent_shift,
             self.body_shift,
             self.local_inertia,
-            self.local_com);
+            self.local_center_of_mass);
 
         link.velocity = self.velocity;
 

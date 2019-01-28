@@ -1,6 +1,5 @@
 use na::{self, Dim, Dynamic, Real, U1, VectorSliceMutN};
 use slab::Slab;
-use std::marker::PhantomData;
 use std::ops::MulAssign;
 
 use crate::world::ColliderWorld;

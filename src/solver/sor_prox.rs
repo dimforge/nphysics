@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN, Vector};
 use na::storage::StorageMut;
 
@@ -8,7 +6,7 @@ use na::storage::StorageMut;
 use crate::math::{SpatialDim, SPATIAL_DIM};
 use crate::object::{BodySet, BodyHandle};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
-             UnilateralGroundConstraint, IntegrationParameters};
+             UnilateralGroundConstraint};
 
 /// A SOR-Prox velocity-based constraints solver.
 pub struct SORProx;

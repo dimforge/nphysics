@@ -7,7 +7,8 @@ use ncollide::world::{CollisionObject, CollisionObjectHandle, GeometricQueryType
 use ncollide::shape::{ShapeHandle, Shape};
 
 use crate::math::{Isometry, Vector, Rotation};
-use crate::object::{BodyPartHandle, BodyHandle, Material, MaterialHandle, Body};
+use crate::object::{BodyPartHandle, BodyHandle, Body};
+use crate::material::{Material, MaterialHandle};
 use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
 

@@ -9,8 +9,8 @@ use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
 use ncollide::events::{ContactEvents, ProximityEvents};
 
-use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet,
-                    BasicMaterial, MaterialHandle, BodyHandle};
+use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodyHandle};
+use crate::material::{BasicMaterial, MaterialHandle};
 use crate::math::{Isometry, Point};
 
 /// The world managing all geometric queries.

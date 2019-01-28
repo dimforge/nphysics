@@ -2,7 +2,7 @@ use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
-                  SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
+                  AngularInertia, SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
                     ColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
@@ -136,6 +136,20 @@ impl<N: Real> RigidBody<N> {
     pub fn set_local_inertia(&mut self, local_inertia: Inertia<N>) {
         self.update_status.set_local_inertia_changed(true);
         self.local_inertia = local_inertia;
+    }
+
+    /// Set the mass of this rigid body.
+    #[inline]
+    pub fn set_mass(&mut self, mass: N) {
+        self.update_status.set_local_inertia_changed(true);
+        self.local_inertia.linear = mass;
+    }
+
+    /// Set the angular inertia of this rigid body, expressed in its local space.
+    #[inline]
+    pub fn set_angular_inertia(&mut self, angular_inertia: AngularInertia<N>) {
+        self.update_status.set_local_inertia_changed(true);
+        self.local_inertia.angular = angular_inertia;
     }
 
     /// Sets the position of this rigid body.
@@ -610,7 +624,7 @@ pub struct RigidBodyDesc<'a, N: Real> {
     velocity: Velocity<N>,
     surface_velocity: Velocity<N>,
     local_inertia: Inertia<N>,
-    local_com: Point<N>,
+    local_center_of_mass: Point<N>,
     status: BodyStatus,
     colliders: Vec<&'a ColliderDesc<N>>,
     sleep_threshold: Option<N>,
@@ -630,7 +644,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
             velocity: Velocity::zero(),
             surface_velocity: Velocity::zero(),
             local_inertia: Inertia::zero(),
-            local_com: Point::origin(),
+            local_center_of_mass: Point::origin(),
             status: BodyStatus::Dynamic,
             colliders: Vec::new(),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
@@ -657,6 +671,8 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
 
     desc_custom_setters!(
         self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.with_mass, set_mass, mass: N | { self.local_inertia.linear = mass }
+        self.with_angular_inertia, set_angular_inertia, angular_inertia: AngularInertia<N> | { self.local_inertia.angular = angular_inertia }
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
@@ -667,7 +683,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         with_velocity, set_velocity, velocity: Velocity<N>
         with_surface_velocity, set_surface_velocity, surface_velocity: Velocity<N>
         with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
-        with_local_center_of_mass, set_local_center_of_mass, local_com: Point<N>
+        with_local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
         with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
         with_kinematic_translations, set_kinematic_translation, kinematic_translations: Vector<bool>
     );
@@ -686,6 +702,8 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
 
     desc_custom_getters!(
         self.translation: &Vector<N> | { &self.position.translation.vector }
+        self.mass: N | { self.local_inertia.linear }
+        self.angular_inertia: &AngularInertia<N> | { &self.local_inertia.angular }
         self.colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
     );
 
@@ -696,7 +714,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         [ref] position: Isometry<N>
         [ref] velocity: Velocity<N>
         [ref] local_inertia: Inertia<N>
-        [ref] local_com: Point<N>
+        [ref] local_center_of_mass: Point<N>
     );
 
     pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
@@ -711,7 +729,7 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         let mut rb = RigidBody::new(handle, self.position);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);
-        rb.set_local_center_of_mass(self.local_com);
+        rb.set_local_center_of_mass(self.local_center_of_mass);
         rb.set_status(self.status);
         rb.set_deactivation_threshold(self.sleep_threshold);
         rb.set_kinematic_translations(self.kinematic_translations);

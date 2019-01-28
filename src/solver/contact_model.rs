@@ -5,6 +5,7 @@ use na::{DVector, Real};
 
 use crate::detection::ColliderContactManifold;
 use crate::object::BodySet;
+use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, IntegrationParameters};
 
 /// The modeling of a contact.
@@ -15,6 +16,7 @@ pub trait ContactModel<N: Real>: Any + Send + Sync {
     fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
+        material_coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         manifolds: &[ColliderContactManifold<N>],

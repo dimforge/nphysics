@@ -6,6 +6,7 @@ use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
 use crate::joint::JointConstraint;
 use crate::object::{BodyHandle, BodySet};
+use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 use crate::world::ColliderWorld;
 
@@ -49,10 +50,11 @@ impl<N: Real> MoreauJeanSolver<N> {
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
+        coefficients: &MaterialsCoefficientsTable<N>,
         cworld: &ColliderWorld<N>,
     ) {
         counters.assembly_started();
-        self.assemble_system(counters, params, bodies, joints, manifolds, island);
+        self.assemble_system(counters, params, coefficients, bodies, joints, manifolds, island);
         counters.assembly_completed();
 
         counters.set_nconstraints(self.constraints.velocity.len());
@@ -75,6 +77,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         &mut self,
         counters: &mut Counters,
         params: &IntegrationParameters<N>,
+        coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
@@ -183,6 +186,7 @@ impl<N: Real> MoreauJeanSolver<N> {
         counters.custom_started();
         self.contact_model.constraints(
             params,
+            coefficients,
             bodies,
             &self.ext_vels,
             manifolds,

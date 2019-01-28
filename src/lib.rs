@@ -228,6 +228,7 @@ pub mod solver;
 pub mod utils;
 pub mod volumetric;
 pub mod world;
+pub mod material;
 // mod tests;
 
 /// Compilation flags dependent aliases for mathematical types.

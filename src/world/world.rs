@@ -13,6 +13,7 @@ use crate::object::{
     Body, BodySet, BodyDesc, BodyStatus, Collider, ColliderAnchor,
     ColliderHandle, Multibody, RigidBody, BodyHandle,
 };
+use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
 
@@ -25,6 +26,7 @@ pub struct World<N: Real> {
     cworld: ColliderWorld<N>,
     solver: MoreauJeanSolver<N>,
     activation_manager: ActivationManager<N>,
+    material_coefficients: MaterialsCoefficientsTable<N>,
     // FIXME: set those two parameters per-collider?
     prediction: N,
     gravity: Vector<N>,
@@ -51,6 +53,7 @@ impl<N: Real> World<N> {
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
         let gravity = Vector::zeros();
         let params = IntegrationParameters::default();
+        let material_coefficients = MaterialsCoefficientsTable::new();
 
         World {
             counters,
@@ -59,6 +62,7 @@ impl<N: Real> World<N> {
             cworld,
             solver,
             activation_manager,
+            material_coefficients,
             prediction,
             gravity,
             constraints,
@@ -100,6 +104,14 @@ impl<N: Real> World<N> {
     /// Retrieve a mutable reference to the parameters for the integration.
     pub fn integration_parameters_mut(&mut self) -> &mut IntegrationParameters<N> {
         &mut self.params
+    }
+
+    pub fn materials_coefficients_table(&self) -> &MaterialsCoefficientsTable<N> {
+        &self.material_coefficients
+    }
+
+    pub fn materials_coefficients_table_mut(&mut self) -> &mut MaterialsCoefficientsTable<N> {
+        &mut self.material_coefficients
     }
 
     /// Retrieve the timestep used for the integration.
@@ -288,6 +300,7 @@ impl<N: Real> World<N> {
             &contact_manifolds[..],
             &self.active_bodies[..],
             &self.params,
+            &self.material_coefficients,
             &self.cworld,
         );
 
