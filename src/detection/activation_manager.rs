@@ -1,7 +1,6 @@
 use slab::Slab;
 
 use na::{self, Real};
-use ncollide::narrow_phase::Interaction;
 use crate::world::ColliderWorld;
 use crate::object::{BodyHandle, Body, BodySet};
 use crate::joint::JointConstraint;
@@ -143,14 +142,9 @@ impl<N: Real> ActivationManager<N> {
                 }
         }
 
-        for (c1, c2, interaction) in cworld.interaction_pairs() {
-            let b1 = c1.body();
-            let b2 = c2.body();
-
-            if let Interaction::Contact(_, manifold) = interaction {
-                if manifold.len() != 0 {
-                    make_union(bodies, b1, b2, &mut self.ufind)
-                }
+        for (c1, c2, _, manifold) in cworld.contact_pairs(false) {
+            if manifold.len() > 0 {
+                make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }
         }
 

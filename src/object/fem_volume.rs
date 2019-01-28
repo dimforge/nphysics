@@ -53,6 +53,7 @@ pub struct FEMVolume<N: Real> {
     workspace: DVector<N>,
 
     // Parameters
+    gravity_enabled: bool,
     rest_positions: DVector<N>,
     damping_coeffs: (N, N),
     young_modulus: N,
@@ -126,6 +127,7 @@ impl<N: Real> FEMVolume<N> {
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
             update_status: BodyUpdateStatus::all(),
+            gravity_enabled: true,
             user_data: None
         }
     }
@@ -295,16 +297,18 @@ impl<N: Real> FEMVolume<N> {
         let _6: N = na::convert(6.0);
         let dt = params.dt;
 
-        // External forces.
-        for elt in self.elements.iter().filter(|e| e.volume > N::zero()) {
-            let contribution = gravity * (elt.density * elt.volume * na::convert::<_, N>(1.0 / 4.0));
+        // Gravity
+        if self.gravity_enabled {
+            for elt in self.elements.iter().filter(|e| e.volume > N::zero()) {
+                let contribution = gravity * (elt.density * elt.volume * na::convert::<_, N>(1.0 / 4.0));
 
-            for k in 0..4 {
-                let ie = elt.indices[k];
+                for k in 0..4 {
+                    let ie = elt.indices[k];
 
-                if !self.kinematic_nodes[ie / DIM] {
-                    let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(ie);
-                    forces_part += contribution;
+                    if !self.kinematic_nodes[ie / DIM] {
+                        let mut forces_part = self.accelerations.fixed_rows_mut::<U3>(ie);
+                        forces_part += contribution;
+                    }
                 }
             }
         }
@@ -608,18 +612,30 @@ impl<N: Real> FEMVolume<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
     }
 
     /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes.fill(false)
     }
 }
 
 impl<N: Real> Body<N> for FEMVolume<N> {
+    #[inline]
+    fn gravity_enabled(&self) -> bool {
+        self.gravity_enabled
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, enabled: bool) {
+        self.gravity_enabled = enabled
+    }
+
     #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
@@ -745,6 +761,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
     }
 
     fn set_status(&mut self, status: BodyStatus) {
+        self.update_status.set_status_changed(true);
         self.status = status
     }
 
@@ -857,7 +874,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -987,6 +1004,7 @@ enum FEMVolumeDescGeometry<'a, N: Real> {
 }
 
 pub struct FEMVolumeDesc<'a, N: Real> {
+    gravity_enabled: bool,
     geom: FEMVolumeDescGeometry<'a, N>,
     scale: Vector3<N>,
     position: Isometry3<N>,
@@ -1005,6 +1023,7 @@ pub struct FEMVolumeDesc<'a, N: Real> {
 impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
+            gravity_enabled: true,
             geom,
             scale: Vector3::repeat(N::one()),
             position: Isometry3::identity(),
@@ -1042,6 +1061,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     );
 
     desc_setters!(
+        with_gravity_enabled, enable_gravity, gravity_enabled: bool
         with_scale, set_scale, scale: Vector3<N>
         with_young_modulus, set_young_modulus, young_modulus: N
         with_poisson_ratio, set_poisson_ratio, poisson_ratio: N
@@ -1062,6 +1082,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     );
 
     desc_getters!(
+        [val] gravity_enabled: bool
         [val] young_modulus: N
         [val] poisson_ratio: N
         [val] sleep_threshold: Option<N>
@@ -1097,6 +1118,7 @@ impl<'a, N: Real> BodyDesc<N> for FEMVolumeDesc<'a, N> {
 
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
+        vol.enable_gravity(self.gravity_enabled);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

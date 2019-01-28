@@ -6,9 +6,7 @@ use std::ops::MulAssign;
 use crate::world::ColliderWorld;
 use crate::joint::JointConstraint;
 use crate::object::{BodySet, ColliderAnchor, BodyHandle};
-use crate::solver::{ForceDirection, IntegrationParameters,
-             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearConstraintGenerator,
-             NonlinearUnilateralConstraint};
+use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator, NonlinearUnilateralConstraint};
 use crate::math::Isometry;
 
 /// Non-linear position-based constraint solver using the SOR-Prox approach.
@@ -31,7 +29,6 @@ impl<N: Real> NonlinearSORProx<N> {
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
         constraints: &mut [NonlinearUnilateralConstraint<N>],
-        multibody_limits: &[MultibodyJointLimitsNonlinearConstraintGenerator],
         joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
         internal_constraints: &[BodyHandle],
         jacobians: &mut [N],
@@ -43,10 +40,6 @@ impl<N: Real> NonlinearSORProx<N> {
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
                 self.solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
-            }
-
-            for generator in multibody_limits {
-                self.solve_generic(params, bodies, generator, jacobians)
             }
 
             for joint in &*joints_constraints {

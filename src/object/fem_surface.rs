@@ -53,6 +53,7 @@ pub struct FEMSurface<N: Real> {
     workspace: DVector<N>,
 
     // Parameters
+    gravity_enabled: bool,
     rest_positions: DVector<N>,
     damping_coeffs: (N, N),
     young_modulus: N,
@@ -123,6 +124,7 @@ impl<N: Real> FEMSurface<N> {
             plasticity_threshold: N::zero(),
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
+            gravity_enabled: true,
             d0, d1, d2,
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
@@ -288,16 +290,18 @@ impl<N: Real> FEMSurface<N> {
         let dt = params.dt;
         let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
 
-        // External forces.
-        for elt in self.elements.iter().filter(|e| e.surface > N::zero()) {
-            let contribution = gravity * (elt.density * elt.surface * na::convert::<_, N>(1.0 / 3.0));
+        // Gravity
+        if self.gravity_enabled {
+            for elt in self.elements.iter().filter(|e| e.surface > N::zero()) {
+                let contribution = gravity * (elt.density * elt.surface * na::convert::<_, N>(1.0 / 3.0));
 
-            for k in 0..3 {
-                let ie = elt.indices[k];
+                for k in 0..3 {
+                    let ie = elt.indices[k];
 
-                if !self.kinematic_nodes[ie / DIM] {
-                    let mut forces_part = self.accelerations.fixed_rows_mut::<Dim>(ie);
-                    forces_part += contribution;
+                    if !self.kinematic_nodes[ie / DIM] {
+                        let mut forces_part = self.accelerations.fixed_rows_mut::<Dim>(ie);
+                        forces_part += contribution;
+                    }
                 }
             }
         }
@@ -565,18 +569,30 @@ impl<N: Real> FEMSurface<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
     }
 
     /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes.fill(false)
     }
 }
 
 impl<N: Real> Body<N> for FEMSurface<N> {
+    #[inline]
+    fn gravity_enabled(&self) -> bool {
+        self.gravity_enabled
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, enabled: bool) {
+        self.gravity_enabled = enabled
+    }
+
     #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
@@ -696,6 +712,7 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     }
 
     fn set_status(&mut self, status: BodyStatus) {
+        self.update_status.set_status_changed(true);
         self.status = status
     }
 
@@ -807,7 +824,7 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -945,12 +962,14 @@ pub struct FEMSurfaceDesc<'a, N: Real> {
     density: N,
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
-    status: BodyStatus
+    status: BodyStatus,
+    gravity_enabled: bool,
 }
 
 impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
+            gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
             position: Isometry::identity(),
@@ -988,6 +1007,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     );
 
     desc_setters!(
+        with_gravity_enabled, enable_gravity, gravity_enabled: bool
         with_scale, set_scale, scale: Vector<N>
         with_young_modulus, set_young_modulus, young_modulus: N
         with_poisson_ratio, set_poisson_ratio, poisson_ratio: N
@@ -1008,6 +1028,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     );
 
     desc_getters!(
+        [val] gravity_enabled: bool
         [val] young_modulus: N
         [val] poisson_ratio: N
         [val] sleep_threshold: Option<N>
@@ -1043,6 +1064,7 @@ impl<'a, N: Real> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
 
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
+        vol.enable_gravity(self.gravity_enabled);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

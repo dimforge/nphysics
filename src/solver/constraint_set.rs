@@ -1,6 +1,5 @@
 use na::Real;
-use crate::solver::{BilateralConstraint, BilateralGroundConstraint,
-             MultibodyJointLimitsNonlinearConstraintGenerator, NonlinearUnilateralConstraint,
+use crate::solver::{BilateralConstraint, BilateralGroundConstraint, NonlinearUnilateralConstraint,
              UnilateralConstraint, UnilateralGroundConstraint};
 
 /// Set of velocity-based constraints.
@@ -45,8 +44,6 @@ impl<N: Real> Constraints<N> {
 pub struct NonlinearConstraints<N: Real> {
     /// Unilateral position-based constraints between two bodies.
     pub unilateral: Vec<NonlinearUnilateralConstraint<N>>,
-    /// Position-based constraints for joint limits.
-    pub multibody_limits: Vec<MultibodyJointLimitsNonlinearConstraintGenerator>,
 }
 
 impl<N: Real> NonlinearConstraints<N> {
@@ -54,19 +51,17 @@ impl<N: Real> NonlinearConstraints<N> {
     pub fn new() -> Self {
         NonlinearConstraints {
             unilateral: Vec::new(),
-            multibody_limits: Vec::new(),
         }
     }
 
     /// The total number of constraints on this set.
     pub fn len(&self) -> usize {
-        self.unilateral.len() + self.multibody_limits.len()
+        self.unilateral.len()
     }
 
     /// Remove all constraints from this set.
     pub fn clear(&mut self) {
         self.unilateral.clear();
-        self.multibody_limits.clear();
     }
 }
 

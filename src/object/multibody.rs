@@ -13,9 +13,7 @@ use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
     MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc
 };
-use crate::solver::{
-    ConstraintSet, IntegrationParameters, MultibodyJointLimitsNonlinearConstraintGenerator, ForceDirection,
-};
+use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
 use crate::world::{World, ColliderWorld};
 use crate::utils::{GeneralizedCross, IndexMut2};
 
@@ -33,6 +31,7 @@ pub struct Multibody<N: Real> {
     augmented_mass: DMatrix<N>,
     inv_augmented_mass: LU<N, Dynamic, Dynamic>,
     status: BodyStatus,
+    gravity_enabled: bool,
     update_status: BodyUpdateStatus,
     activation: ActivationStatus<N>,
     ndofs: usize,
@@ -48,6 +47,13 @@ pub struct Multibody<N: Real> {
     coriolis_v: Vec<MatrixMN<N, Dim, Dynamic>>,
     coriolis_w: Vec<MatrixMN<N, AngularDim, Dynamic>>,
     i_coriolis_dt: Jacobian<N>,
+
+    /*
+     * Constraint resolution data.
+     * FIXME: we should void explicitly generating those constraints by
+     * just iterating on all joints at each step of the resolution.
+     */
+    solver_workspace: SolverWorkspace<N>
 }
 
 impl<N: Real> Multibody<N> {
@@ -66,6 +72,7 @@ impl<N: Real> Multibody<N> {
             inv_augmented_mass: LU::new(DMatrix::zeros(0, 0)),
             status: BodyStatus::Dynamic,
             update_status: BodyUpdateStatus::all(),
+            gravity_enabled: true,
             activation: ActivationStatus::new_active(),
             ndofs: 0,
             companion_id: 0,
@@ -75,6 +82,7 @@ impl<N: Real> Multibody<N> {
             coriolis_v: Vec::new(),
             coriolis_w: Vec::new(),
             i_coriolis_dt: Jacobian::zeros(0),
+            solver_workspace: SolverWorkspace::new(),
             user_data: None
         }
     }
@@ -252,7 +260,12 @@ impl<N: Real> Multibody<N> {
 
                 self.workspace.accs[i] = acc;
 
-                let gravity_force = gravity * rb.inertia.mass();
+                let gravity_force = if self.gravity_enabled {
+                    gravity * rb.inertia.mass()
+                } else {
+                    Vector::zeros()
+                };
+
                 let gyroscopic;
 
                 #[cfg(feature = "dim3")]
@@ -637,42 +650,42 @@ impl<N: Real> Multibody<N> {
         DVectorSliceMut::from_slice(&mut self.velocities.as_mut_slice()[i..i + ndofs], ndofs)
     }
 
-    /// Generates the set of velocity and position constraints needed for joint limits and motors at each link
-    /// of this multibody.
-    pub fn constraints(
-        &mut self,
-        params: &IntegrationParameters<N>,
-        ext_vels: &DVector<N>,
-        ground_j_id: &mut usize,
-        jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
-    ) {
-        let first_unilateral = constraints.velocity.unilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral_ground.len();
-
-        for link in self.links() {
-            link.joint().velocity_constraints(
-                params,
-                self,
-                &link,
-                self.companion_id,
-                0,
-                ext_vels.as_slice(),
-                ground_j_id,
-                jacobians,
-                constraints,
-            );
-
-            if link.joint().num_position_constraints() != 0 {
-                let generator =
-                    MultibodyJointLimitsNonlinearConstraintGenerator::new();
-                constraints.position.multibody_limits.push(generator)
-            }
-        }
-
-        self.unilateral_ground_rng = first_unilateral..constraints.velocity.unilateral_ground.len();
-        self.bilateral_ground_rng = first_bilateral..constraints.velocity.bilateral_ground.len();
-    }
+//    /// Generates the set of velocity and position constraints needed for joint limits and motors at each link
+//    /// of this multibody.
+//    pub fn constraints(
+//        &mut self,
+//        params: &IntegrationParameters<N>,
+//        ext_vels: &DVector<N>,
+//        ground_j_id: &mut usize,
+//        jacobians: &mut [N],
+//        constraints: &mut ConstraintSet<N>,
+//    ) {
+//        let first_unilateral = constraints.velocity.unilateral_ground.len();
+//        let first_bilateral = constraints.velocity.bilateral_ground.len();
+//
+//        for link in self.links() {
+//            link.joint().velocity_constraints(
+//                params,
+//                self,
+//                &link,
+//                self.companion_id,
+//                0,
+//                ext_vels.as_slice(),
+//                ground_j_id,
+//                jacobians,
+//                constraints,
+//            );
+//
+//            if link.joint().num_position_constraints() != 0 {
+//                let generator =
+//                    MultibodyJointLimitsNonlinearConstraintGenerator::new();
+//                constraints.position.multibody_limits.push(generator)
+//            }
+//        }
+//
+//        self.unilateral_ground_rng = first_unilateral..constraints.velocity.unilateral_ground.len();
+//        self.bilateral_ground_rng = first_bilateral..constraints.velocity.bilateral_ground.len();
+//    }
 
     /// Store impulses computed by the solver for joint limits and motors.
     pub fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
@@ -724,6 +737,24 @@ impl<N: Real> MultibodyWorkspace<N> {
         self.accs.resize(nlinks, Velocity::zero());
         self.ndofs_vec = DVector::zeros(ndofs)
 
+    }
+}
+
+struct SolverWorkspace<N: Real> {
+    jacobians: DVector<N>,
+    mj_lambda: DVector<N>,
+    impulses: DVector<N>,
+    constraints: ConstraintSet<N>,
+}
+
+impl<N: Real> SolverWorkspace<N> {
+    pub fn new() -> Self {
+        SolverWorkspace {
+            jacobians: DVector::zeros(0),
+            mj_lambda: DVector::zeros(0),
+            impulses: DVector::zeros(0),
+            constraints: ConstraintSet::new(),
+        }
     }
 }
 
@@ -831,6 +862,16 @@ impl<N: Real> Body<N> for Multibody<N> {
     }
 
     #[inline]
+    fn gravity_enabled(&self) -> bool {
+        self.gravity_enabled
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, enabled: bool) {
+        self.gravity_enabled = enabled
+    }
+
+    #[inline]
     fn handle(&self) -> BodyHandle {
         self.handle
     }
@@ -859,6 +900,7 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn set_status(&mut self, status: BodyStatus) {
+        self.update_status.set_status_changed(true);
         self.status = status
     }
 
@@ -965,16 +1007,37 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {
-        false
+        self.links().any(|link| link.joint().num_velocity_constraints() != 0)
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &mut DVectorSliceMut<N>, params: &IntegrationParameters<N>) {
+        let mut ground_j_id = 0;
+
+        for link in self.links() {
+            link.joint().velocity_constraints(
+                params,
+                self,
+                &link,
+                0,
+                0,
+                ext_vels,
+                &mut ground_j_id,
+                &mut self.solver_workspace.jacobians,
+                &mut self.solver_workspace.constraints,
+            );
+        }
+    }
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {
         // FIXME: solve joint limit/motor constraints here directly?
         // (instead of having a special case by returning the set of constraints to the solver).
+        let solver = SORProx::new();
+        for c in &mut self.constraints.velocity.unilateral_ground {
+            let dim = Dynamic::new(c.ndofs);
+            solver.solve_unilateral_ground(c, self.jacobians.as_slice(), &mut self.mj_lambda, dim)
+        }
     }
 
     #[inline]

@@ -3,7 +3,6 @@ use slab::Slab;
 use na::{self, Real};
 use ncollide;
 use ncollide::events::{ContactEvents, ProximityEvents};
-use ncollide::narrow_phase::Interaction;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
@@ -256,20 +255,17 @@ impl<N: Real> World<N> {
          *
          */
         let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
-        for (coll1, coll2, interaction) in self.cworld.interaction_pairs() {
-            if let Interaction::Contact(_, manifold) = interaction {
-                // assert!(coll1.body_part() != coll2.body());
+        for (c1, c2, _, manifold) in self.cworld.contact_pairs(false) {
+            let b1 = try_continue!(self.bodies.body(c1.body()));
+            let b2 = try_continue!(self.bodies.body(c2.body()));
 
-                let b1 = try_continue!(self.bodies.body(coll1.body()));
-                let b2 = try_continue!(self.bodies.body(coll2.body()));
-
-                if b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
-                    && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
-                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
-                    {
-                        contact_manifolds.push(ColliderContactManifold::new(coll1, coll2, manifold));
-                    }
-            }
+            if manifold.len() > 0
+                && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
+                && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
+                || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+                {
+                    contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
+                }
         }
 
         /*
@@ -317,7 +313,7 @@ impl<N: Real> World<N> {
 
         /*
          *
-         * Update colliders and perform CD with the now
+         * Update colliders and perform CD with the new
          * body positions.
          *
          */
@@ -344,6 +340,7 @@ impl<N: Real> World<N> {
     pub fn remove_bodies(&mut self, handles: &[BodyHandle]) {
         for handle in handles {
             self.bodies.remove_body(*handle);
+            self.cworld.remove_body(*handle);
         }
 
         self.cleanup_after_body_removal();
@@ -357,20 +354,16 @@ impl<N: Real> World<N> {
     fn activate_bodies_touching_deleted_bodies(&mut self) {
         let bodies = &mut self.bodies;
 
-        for (co1, co2, interaction) in self.cworld.interaction_pairs() {
-            if let Interaction::Contact(_, manifold) = interaction {
-                if manifold.len() != 0 {
-                    let b1_exists = bodies.body(co1.body()).is_some();
-                    let b2_exists = bodies.body(co2.body()).is_some();
+        for (c1, c2, _, _) in self.cworld.contact_pairs(true) {
+            let b1_exists = bodies.body(c1.body()).is_some();
+            let b2_exists = bodies.body(c2.body()).is_some();
 
-                    if !b1_exists {
-                        if b2_exists {
-                            Self::activate_body_at(bodies, co2.body());
-                        }
-                    } else if !b2_exists {
-                        Self::activate_body_at(bodies, co1.body());
-                    }
+            if !b1_exists {
+                if b2_exists {
+                    Self::activate_body_at(bodies, c2.body());
                 }
+            } else if !b2_exists {
+                Self::activate_body_at(bodies, c1.body());
             }
         }
     }

@@ -76,6 +76,7 @@ pub struct MassSpringSystem<N: Real> {
     workspace: DVector<N>,
 
     companion_id: usize,
+    gravity_enabled: bool,
     activation: ActivationStatus<N>,
     status: BodyStatus,
     update_status: BodyUpdateStatus,
@@ -156,6 +157,7 @@ impl<N: Real> MassSpringSystem<N> {
             plasticity_max_force: N::zero(),
             plasticity_creep: N::zero(),
             plasticity_threshold: N::zero(),
+            gravity_enabled: true,
             user_data: None
         }
     }
@@ -207,6 +209,7 @@ impl<N: Real> MassSpringSystem<N> {
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
             update_status: BodyUpdateStatus::all(),
+            gravity_enabled: true,
             mass,
             node_mass,
             plasticity_max_force: N::zero(),
@@ -285,12 +288,14 @@ impl<N: Real> MassSpringSystem<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
     }
 
     /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes.fill(false)
     }
@@ -433,17 +438,18 @@ impl<N: Real> MassSpringSystem<N> {
         }
 
         /*
-         * Add forces due to gravity and set the mass matrix diagonal
-         * to the identity for kinematic nodes.
+         * Add forces due to gravity.
          */
-        let gravity_force = gravity * self.node_mass;
+        if self.gravity_enabled {
+            let gravity_force = gravity * self.node_mass;
 
-        for i in 0..self.positions.len() / DIM {
-            let idof = i * DIM;
+            for i in 0..self.positions.len() / DIM {
+                let idof = i * DIM;
 
-            if !self.kinematic_nodes[i] {
-                let mut acc = self.accelerations.fixed_rows_mut::<Dim>(idof);
-                acc += gravity_force
+                if !self.kinematic_nodes[i] {
+                    let mut acc = self.accelerations.fixed_rows_mut::<Dim>(idof);
+                    acc += gravity_force
+                }
             }
         }
 
@@ -452,6 +458,16 @@ impl<N: Real> MassSpringSystem<N> {
 }
 
 impl<N: Real> Body<N> for MassSpringSystem<N> {
+    #[inline]
+    fn gravity_enabled(&self) -> bool {
+        self.gravity_enabled
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, enabled: bool) {
+        self.gravity_enabled = enabled
+    }
+
     fn update_kinematics(&mut self) {
         if self.update_status.position_changed() {
             for spring in &mut self.springs {
@@ -499,6 +515,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn set_status(&mut self, status: BodyStatus) {
+        self.update_status.set_status_changed(true);
         self.status = status
     }
 
@@ -627,7 +644,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -777,12 +794,14 @@ pub struct MassSpringSystemDesc<'a, N: Real> {
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
     status: BodyStatus,
-    collider_enabled: bool
+    collider_enabled: bool,
+    gravity_enabled: bool,
 }
 
 impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     fn with_geometry(geom: MassSpringSystemDescGeometry<'a, N>) -> Self {
         MassSpringSystemDesc {
+            gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
             position: Isometry::identity(),
@@ -822,6 +841,7 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     );
 
     desc_setters!(
+        with_gravity_enabled, enable_gravity, gravity_enabled: bool
         with_collider_enabled, set_collider_enabled, collider_enabled: bool
         with_scale, set_scale, scale: Vector<N>
         with_stiffness, set_stiffness, stiffness: N
@@ -841,6 +861,7 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     );
 
     desc_getters!(
+        [val] gravity_enabled: bool
         [val] stiffness: N
         [val] sleep_threshold: Option<N>
         [val] damping_ratio: N
@@ -916,6 +937,7 @@ impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
 
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
+        vol.enable_gravity(self.gravity_enabled);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

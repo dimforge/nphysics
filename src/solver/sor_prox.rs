@@ -7,7 +7,7 @@ use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN};
 use crate::math::{SpatialDim, SPATIAL_DIM};
 use crate::object::{BodySet, BodyHandle};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
-             UnilateralGroundConstraint};
+             UnilateralGroundConstraint, IntegrationParameters};
 
 /// A SOR-Prox velocity-based constraints solver.
 pub struct SORProx<N: Real> {
@@ -33,7 +33,7 @@ impl<N: Real> SORProx<N> {
         internal: &[BodyHandle],
         mj_lambda: &mut DVector<N>,
         jacobians: &[N],
-        max_iter: usize,
+        params: &IntegrationParameters<N>,
     ) {
         /*
          * Setup constraints.
@@ -62,14 +62,14 @@ impl<N: Real> SORProx<N> {
         for handle in internal {
             if let Some(body) = bodies.body_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
-                body.setup_internal_velocity_constraints(&mut dvels);
+                body.setup_internal_velocity_constraints(&mut dvels, params);
             }
         }
 
         /*
          * Solve.
          */
-        for _ in 0..max_iter {
+        for _ in 0..params.max_velocity_iterations {
             self.step(
                 bodies,
                 unilateral_ground,
@@ -190,7 +190,7 @@ impl<N: Real> SORProx<N> {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    fn solve_unilateral_ground<D: Dim>(
+    pub fn solve_unilateral_ground<D: Dim>(
         &self,
         c: &mut UnilateralGroundConstraint<N>,
         jacobians: &[N],

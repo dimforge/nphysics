@@ -52,6 +52,9 @@ impl<N: Real> ColliderAnchor<N> {
 pub struct ColliderData<N: Real> {
     margin: N,
     anchor: ColliderAnchor<N>,
+    // Doubly linked list of colliders attached to a body.
+    prev: Option<ColliderHandle>,
+    next: Option<ColliderHandle>,
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
     material: MaterialHandle<N>,
@@ -69,6 +72,8 @@ impl<N: Real> ColliderData<N> {
         ColliderData {
             margin,
             anchor,
+            prev: None,
+            next: None,
             body_status_dependent_ndofs,
             material,
             user_data: None
@@ -267,6 +272,30 @@ impl<N: Real> Collider<N> {
     #[inline]
     pub fn query_type(&self) -> GeometricQueryType<N> {
         self.0.query_type()
+    }
+
+    /*
+     * Collider chain.
+     */
+
+    #[inline]
+    pub(crate) fn next(&self) -> Option<ColliderHandle> {
+        self.0.data().next
+    }
+
+    #[inline]
+    pub(crate) fn prev(&self) -> Option<ColliderHandle> {
+        self.0.data().prev
+    }
+
+    #[inline]
+    pub(crate) fn set_next(&mut self, next: Option<ColliderHandle>) {
+        self.0.data_mut().next = next
+    }
+
+    #[inline]
+    pub(crate) fn set_prev(&mut self, prev: Option<ColliderHandle>) {
+        self.0.data_mut().prev = prev
     }
 }
 

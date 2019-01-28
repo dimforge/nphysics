@@ -83,6 +83,7 @@ pub struct MassConstraintSystem<N: Real> {
     impulses: DVector<N>,
 
     companion_id: usize,
+    gravity_enabled: bool,
     activation: ActivationStatus<N>,
     status: BodyStatus,
     update_status: BodyUpdateStatus,
@@ -154,6 +155,7 @@ impl<N: Real> MassConstraintSystem<N> {
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
+            gravity_enabled: true,
             warmstart_coeff: na::convert(0.5),
             plasticity_threshold: N::zero(),
             plasticity_creep: N::zero(),
@@ -205,6 +207,7 @@ impl<N: Real> MassConstraintSystem<N> {
             activation: ActivationStatus::new_active(),
             status: BodyStatus::Dynamic,
             update_status: BodyUpdateStatus::all(),
+            gravity_enabled: true,
             mass,
             node_mass,
             inv_node_mass: N::one() / node_mass,
@@ -300,12 +303,14 @@ impl<N: Real> MassConstraintSystem<N> {
     /// it can be controlled manually by the user at the velocity level.
     pub fn set_node_kinematic(&mut self, i: usize, is_kinematic: bool) {
         assert!(i < self.positions.len() / DIM, "Node index out of bounds.");
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes[i] = is_kinematic;
     }
 
     /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) {
+        self.update_status.set_status_changed(true);
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_nodes.fill(false)
     }
@@ -319,6 +324,16 @@ impl<N: Real> MassConstraintSystem<N> {
 }
 
 impl<N: Real> Body<N> for MassConstraintSystem<N> {
+    #[inline]
+    fn gravity_enabled(&self) -> bool {
+        self.gravity_enabled
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, enabled: bool) {
+        self.gravity_enabled = enabled
+    }
+
     fn update_kinematics(&mut self) {
         if self.update_status.position_changed() {
             for constraint in &mut self.constraints {
@@ -342,12 +357,15 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 
     fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         self.accelerations.fill(N::zero());
-        let gravity_acc = gravity;
 
-        for i in 0..self.positions.len() / DIM {
-            if !self.kinematic_nodes[i] {
-                let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
-                acc += gravity_acc
+        if self.gravity_enabled {
+            let gravity_acc = gravity;
+
+            for i in 0..self.positions.len() / DIM {
+                if !self.kinematic_nodes[i] {
+                    let mut acc = self.accelerations.fixed_rows_mut::<Dim>(i * DIM);
+                    acc += gravity_acc
+                }
             }
         }
 
@@ -401,6 +419,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn set_status(&mut self, status: BodyStatus) {
+        self.update_status.set_status_changed(true);
         self.status = status
     }
 
@@ -529,7 +548,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>) {
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {
         if self.impulses.len() != self.constraints.len() {
             self.impulses = DVector::zeros(self.constraints.len());
         }
@@ -790,12 +809,14 @@ pub struct MassConstraintSystemDesc<'a, N: Real> {
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
     status: BodyStatus,
-    collider_enabled: bool
+    collider_enabled: bool,
+    gravity_enabled: bool,
 }
 
 impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
+            gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
             position: Isometry::identity(),
@@ -835,6 +856,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
     );
 
     desc_setters!(
+        with_gravity_enabled, enable_gravity, gravity_enabled: bool
         with_collider_enabled, set_collider_enabled, collider_enabled: bool
         with_scale, set_scale, scale: Vector<N>
         with_stiffness, set_stiffness, stiffness: Option<N>
@@ -854,6 +876,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
     );
 
     desc_getters!(
+        [val] gravity_enabled: bool
         [val] stiffness: Option<N>
         [val] sleep_threshold: Option<N>
 //        [val] damping_ratio: N
@@ -929,6 +952,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
 
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
+        vol.enable_gravity(self.gravity_enabled);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

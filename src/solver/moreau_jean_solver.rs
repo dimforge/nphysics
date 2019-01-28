@@ -206,7 +206,7 @@ impl<N: Real> MoreauJeanSolver<N> {
             &self.internal_constraints,
             &mut self.mj_lambda_vel,
             &self.jacobians,
-            params.max_velocity_iterations,
+            params,
         );
     }
 
@@ -224,7 +224,6 @@ impl<N: Real> MoreauJeanSolver<N> {
             cworld,
             bodies,
             &mut self.constraints.position.unilateral,
-            &mut self.constraints.position.multibody_limits,
             joints,
             &self.internal_constraints,
             &mut self.jacobians,

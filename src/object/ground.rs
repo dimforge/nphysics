@@ -28,6 +28,14 @@ impl<N: Real> Ground<N> {
 
 impl<N: Real> Body<N> for Ground<N> {
     #[inline]
+    fn gravity_enabled(&self) -> bool {
+        false
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, _: bool) {}
+
+    #[inline]
     fn update_kinematics(&mut self) {}
 
     #[inline]
@@ -190,7 +198,7 @@ impl<N: Real> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}

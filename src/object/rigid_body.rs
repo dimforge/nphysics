@@ -31,6 +31,7 @@ pub struct RigidBody<N: Real> {
     external_forces: Force<N>,
     acceleration: Velocity<N>,
     status: BodyStatus,
+    gravity_enabled: bool,
     activation: ActivationStatus<N>,
     jacobian_mask: SpatialVector<N>,
     companion_id: usize,
@@ -57,6 +58,7 @@ impl<N: Real> RigidBody<N> {
             external_forces: Force::zero(),
             acceleration: Velocity::zero(),
             status: BodyStatus::Dynamic,
+            gravity_enabled: true,
             activation: ActivationStatus::new_active(),
             jacobian_mask: SpatialVector::repeat(N::one()),
             companion_id: 0,
@@ -68,6 +70,7 @@ impl<N: Real> RigidBody<N> {
     user_data_accessors!();
 
     pub fn set_kinematic_translations(&mut self, is_kinematic: Vector<bool>) {
+        self.update_status.set_status_changed(true);
         for i in 0..DIM {
             self.jacobian_mask[i] = if is_kinematic[i] { N::zero() } else { N::one() }
         }
@@ -75,6 +78,7 @@ impl<N: Real> RigidBody<N> {
 
     #[cfg(feature = "dim3")]
     pub fn set_kinematic_rotations(&mut self, is_kinematic: Vector<bool>) {
+        self.update_status.set_status_changed(true);
         self.jacobian_mask[3] = if is_kinematic.x { N::zero() } else { N::one() };
         self.jacobian_mask[4] = if is_kinematic.y { N::zero() } else { N::one() };
         self.jacobian_mask[5] = if is_kinematic.z { N::zero() } else { N::one() };
@@ -82,15 +86,16 @@ impl<N: Real> RigidBody<N> {
 
     #[cfg(feature = "dim2")]
     pub fn set_kinematic_rotation(&mut self, is_kinematic: bool) {
+        self.update_status.set_status_changed(true);
         self.jacobian_mask[2] = if is_kinematic { N::zero() } else { N::one() };
     }
 
-    pub fn kinematic_translations(&mut self) -> Vector<bool> {
+    pub fn kinematic_translations(&self) -> Vector<bool> {
         self.jacobian_mask.fixed_rows::<Dim>(0).map(|m| m.is_zero())
     }
 
     #[cfg(feature = "dim3")]
-    pub fn kinematic_rotations(&mut self) -> Vector<bool> {
+    pub fn kinematic_rotations(&self) -> Vector<bool> {
         Vector::new(
             self.jacobian_mask[3].is_zero(),
             self.jacobian_mask[4].is_zero(),
@@ -240,6 +245,9 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn set_status(&mut self, status: BodyStatus) {
+        if status != self.status {
+            self.update_status.set_status_changed(true);
+        }
         self.status = status
     }
 
@@ -353,7 +361,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
                         self.acceleration.angular = self.inv_augmented_mass.angular * gyroscopic;
                     }
 
-                if self.inv_augmented_mass.linear != N::zero() {
+                if self.inv_augmented_mass.linear != N::zero() && self.gravity_enabled {
                     self.acceleration.linear = *gravity;
                 }
 
@@ -387,6 +395,16 @@ impl<N: Real> Body<N> for RigidBody<N> {
     #[inline]
     fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.position.inverse_transform_point(point)
+    }
+
+    #[inline]
+    fn gravity_enabled(&self) -> bool {
+        self.gravity_enabled
+    }
+
+    #[inline]
+    fn enable_gravity(&mut self, enabled: bool) {
+        self.gravity_enabled = enabled
     }
 
     #[inline]
@@ -445,7 +463,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
+    fn setup_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>, _: &IntegrationParameters<N>) {}
 
     #[inline]
     fn step_solve_internal_velocity_constraints(&mut self, _: &mut DVectorSliceMut<N>) {}
@@ -584,6 +602,7 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 /// this initialization (including after calls to `.build`).
 #[derive(Clone)]
 pub struct RigidBodyDesc<'a, N: Real> {
+    gravity_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
     surface_velocity: Velocity<N>,
@@ -603,6 +622,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
 
     pub fn new() -> Self {
         RigidBodyDesc {
+            gravity_enabled: true,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
             surface_velocity: Velocity::zero(),
@@ -638,6 +658,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     );
 
     desc_setters!(
+        with_gravity_enabled, enable_gravity, gravity_enabled: bool
         with_status, set_status, status: BodyStatus
         with_position, set_position, position: Isometry<N>
         with_velocity, set_velocity, velocity: Velocity<N>
@@ -666,6 +687,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     );
 
     desc_getters!(
+        [val] gravity_enabled: bool
         [val] status: BodyStatus
         [val] sleep_threshold: Option<N>
         [ref] position: Isometry<N>
@@ -690,6 +712,7 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.set_status(self.status);
         rb.set_deactivation_threshold(self.sleep_threshold);
         rb.set_kinematic_translations(self.kinematic_translations);
+        rb.enable_gravity(self.gravity_enabled);
 
         #[cfg(feature = "dim3")]
             {

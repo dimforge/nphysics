@@ -95,7 +95,14 @@ pub trait Body<N: Real>: Any + Send + Sync {
         false
     }
 
-    /// Updates the kinematics, e.g., positions and jacobians, of this body.
+    /// Update whether this body needs to be waken up after a user-interaction.
+    fn update_activation_status(&mut self) {
+        if self.update_status().body_needs_wake_up() {
+            self.activate()
+        }
+    }
+
+        /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);
 
     /// Update the dynamics property of this body.
@@ -199,7 +206,7 @@ pub trait Body<N: Real>: Any + Send + Sync {
     fn has_active_internal_constraints(&mut self) -> bool;
 
     /// For warmstarting the solver, initializes the delta velocity applied by the internal constraints of this body.
-    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
+    fn setup_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>, params: &IntegrationParameters<N>);
 
     /// Execute one step for the iterative resolution of this body's internal velocity constraints.
     fn step_solve_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
@@ -273,6 +280,12 @@ pub trait Body<N: Real>: Any + Send + Sync {
         }
     }
 
+    #[inline]
+    fn gravity_enabled(&self) -> bool;
+
+    #[inline]
+    fn enable_gravity(&mut self, disabled: bool);
+
     /*
      * Application of forces/impulses.
      */
@@ -328,6 +341,7 @@ bitflags! {
         const LOCAL_INERTIA_CHANGED = 0b000100;
         const LOCAL_COM_CHANGED = 0b001000;
         const DAMPING_CHANGED = 0b010000;
+        const STATUS_CHANGED = 0b100000;
     }
 }
 
@@ -364,6 +378,7 @@ impl BodyUpdateStatus {
         local_inertia_changed, set_local_inertia_changed, LOCAL_INERTIA_CHANGED
         local_com_changed, set_local_com_changed, LOCAL_COM_CHANGED
         damping_changed, set_damping_changed, DAMPING_CHANGED
+        status_changed, set_status_changed, STATUS_CHANGED
     );
 
     #[inline]
@@ -373,13 +388,23 @@ impl BodyUpdateStatus {
                 BodyUpdateStatusFlags::VELOCITY_CHANGED |
                 BodyUpdateStatusFlags::LOCAL_INERTIA_CHANGED |
                 BodyUpdateStatusFlags::LOCAL_COM_CHANGED |
-                BodyUpdateStatusFlags::DAMPING_CHANGED
+                BodyUpdateStatusFlags::DAMPING_CHANGED |
+                BodyUpdateStatusFlags::STATUS_CHANGED
         )
     }
 
     #[inline]
     pub fn colliders_need_update(&self) -> bool {
         self.position_changed()
+    }
+
+    #[inline]
+    pub fn body_needs_wake_up(&self) -> bool {
+        self.0.intersects(
+            BodyUpdateStatusFlags::POSITION_CHANGED |
+                BodyUpdateStatusFlags::VELOCITY_CHANGED |
+                BodyUpdateStatusFlags::STATUS_CHANGED
+        )
     }
 
     #[inline]
