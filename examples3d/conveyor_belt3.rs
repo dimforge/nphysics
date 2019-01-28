@@ -6,7 +6,8 @@ extern crate nphysics_testbed3d;
 use std::f32;
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, BasicMaterial, MaterialHandle};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
+use nphysics3d::material::{BasicMaterial, MaterialHandle};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 

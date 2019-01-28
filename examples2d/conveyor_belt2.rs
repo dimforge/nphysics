@@ -5,7 +5,8 @@ extern crate nphysics_testbed2d;
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, MaterialHandle, BasicMaterial};
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
+use nphysics2d::material::{MaterialHandle, BasicMaterial};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
