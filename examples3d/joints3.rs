@@ -9,7 +9,7 @@ use nphysics3d::joint::{
     BallJoint, FixedJoint, HelicalJoint, PinSlotJoint, PlanarJoint, PrismaticJoint,
     RectangularJoint, RevoluteJoint, UniversalJoint,
 };
-use nphysics3d::object::{ColliderDesc, MultibodyDesc};
+use nphysics3d::object::{Body, ColliderDesc, MultibodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 use std::f32::consts::PI;
@@ -35,11 +35,11 @@ fn main() {
     let revo = RevoluteJoint::new(Vector3::x_axis(), -0.1);
     let body_shift = Vector3::z() * (rad * 3.0 + 0.2);
 
-    let collider = ColliderDesc::new(cuboid.clone()).with_density(1.0);
+    let collider = ColliderDesc::new(cuboid.clone()).density(1.0);
     let mut multibody = MultibodyDesc::new(revo)
-        .with_body_shift(body_shift)
-        .with_parent_shift(Vector3::new(0.0, 5.0, 11.0))
-        .with_collider(&collider);
+        .body_shift(body_shift)
+        .parent_shift(Vector3::new(0.0, 5.0, 11.0))
+        .collider(&collider);
 
     let mut curr = &mut multibody;
 
@@ -59,8 +59,8 @@ fn main() {
     // Joint limit so that it does not fall indefinitely.
     prism.enable_min_offset(-rad * 2.0);
     let mut multibody = MultibodyDesc::new(prism)
-        .with_parent_shift(Vector3::new(0.0, 5.0, 5.0))
-        .with_collider(&collider);
+        .parent_shift(Vector3::new(0.0, 5.0, 5.0))
+        .collider(&collider);
 
     let mut curr = &mut multibody;
 
@@ -78,8 +78,8 @@ fn main() {
      */
     let spherical = BallJoint::new(na::zero());
     let mut multibody = MultibodyDesc::new(spherical)
-        .with_parent_shift(Vector3::y() * 5.0)
-        .with_collider(&collider);
+        .parent_shift(Vector3::y() * 5.0)
+        .collider(&collider);
     let mut curr = &mut multibody;
 
     for i in 0usize..num {
@@ -112,8 +112,8 @@ fn main() {
     let body_shift = -Vector3::z();
 
     let mut multibody = MultibodyDesc::new(fixed)
-        .with_parent_shift(parent_shift)
-        .with_collider(&collider);
+        .parent_shift(parent_shift)
+        .collider(&collider);
     multibody.add_child(uni)
         .set_body_shift(body_shift)
         .add_collider(&collider);
@@ -131,10 +131,11 @@ fn main() {
     hel.set_desired_angular_motor_velocity(4.0);
 
     let parent_shift = Vector3::new(0.0, -2.0, 10.0);
-    MultibodyDesc::new(hel)
-        .with_parent_shift(parent_shift)
-        .with_collider(&collider)
-        .build(&mut world);
+    let helical_handle = MultibodyDesc::new(hel)
+        .parent_shift(parent_shift)
+        .collider(&collider)
+        .build(&mut world)
+        .handle();
 
     /*
      * Planar joint.
@@ -158,8 +159,8 @@ fn main() {
             planar.enable_min_offset_2(-5.0);
 
             MultibodyDesc::new(planar)
-                .with_parent_shift(shift)
-                .with_collider(&collider)
+                .parent_shift(shift)
+                .collider(&collider)
                 .build(&mut world);
         }
     }
@@ -187,8 +188,8 @@ fn main() {
             rect.enable_min_offset_2(-5.0);
 
             MultibodyDesc::new(rect)
-                .with_parent_shift(shift)
-                .with_collider(&collider)
+                .parent_shift(shift)
+                .collider(&collider)
                 .build(&mut world);
         }
     }
@@ -197,7 +198,7 @@ fn main() {
      * Pin-slot joint.
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
-    let collider = ColliderDesc::new(cuboid).with_density(1.0);
+    let collider = ColliderDesc::new(cuboid).density(1.0);
     let axis_v = Vector3::y_axis();
     let axis_w = Vector3::x_axis();
     let shift = Vector3::z() * -1.5;
@@ -205,23 +206,25 @@ fn main() {
     let mut pin_slot = PinSlotJoint::new(axis_v, axis_w, -10.0, 0.0);
     pin_slot.set_desired_linear_motor_velocity(3.0);
 
-    MultibodyDesc::new(pin_slot)
-        .with_parent_shift(shift)
-        .with_collider(&collider)
-        .build(&mut world);
+    let pin_slot_handle = MultibodyDesc::new(pin_slot)
+        .parent_shift(shift)
+        .collider(&collider)
+        .build(&mut world)
+        .handle();
 
     /*
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
 
-    /*
+
     testbed.add_callback(move |world, _, _| {
         /*
          * Activate the helical joint motor if it is to low.
          */
         // Might be None if the user interactively deleted the helical body.
-        if let Some(helical) = world.multibody_link_mut(hel_handle) {
+        let link = world.multibody_mut(helical_handle).and_then(|mb| mb.link_mut(0));
+        if let Some(helical) = link {
             let dof = helical
                 .joint_mut()
                 .downcast_mut::<HelicalJoint<f32>>()
@@ -240,7 +243,8 @@ fn main() {
          * Activate the pin-slot joint linear motor if it is to low.
          */
         // Might be None if the user interactively deleted the pin-slot body.
-        if let Some(pin_slot) = world.multibody_link_mut(pin_handle) {
+        let link = world.multibody_mut(pin_slot_handle).and_then(|mb| mb.link_mut(0));
+        if let Some(pin_slot) = link {
             let dof = pin_slot
                 .joint_mut()
                 .downcast_mut::<PinSlotJoint<f32>>()
@@ -253,7 +257,6 @@ fn main() {
             }
         }
     });
-    */
 
     testbed.look_at(Point3::new(30.0, -2.0, 0.0), Point3::new(0.0, -2.0, 0.0));
     testbed.run();

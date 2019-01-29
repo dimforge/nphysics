@@ -25,7 +25,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_size)
         .build(&mut world);
 
 
@@ -37,12 +37,12 @@ fn main() {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let small_cuboid_collider_desc = ColliderDesc::new(cuboid)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&small_cuboid_collider_desc);
+        .collider(&small_cuboid_collider_desc);
 
-    let shift = (rad + small_cuboid_collider_desc.margin()) * 2.0;
+    let shift = (rad + small_cuboid_collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 3.04;
     let centerz = shift * (num as f32) / 2.0;
@@ -68,12 +68,12 @@ fn main() {
     let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 10.0, rad, rad * 10.0)));
 
     let collider_desc = ColliderDesc::new(geom)
-        .with_density(1.0);
+        .density(1.0);
 
     let platform_handle = RigidBodyDesc::new()
-        .with_collider(&collider_desc)
-        .with_translation(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad))
-        .with_status(BodyStatus::Kinematic)
+        .collider(&collider_desc)
+        .translation(Vector3::new(0.0, 1.5 + 0.8, -10.0 * rad))
+        .status(BodyStatus::Kinematic)
         .build(&mut world)
         .handle();
 
@@ -83,9 +83,9 @@ fn main() {
     let joint = RevoluteJoint::new(Vector3::x_axis(), 0.0);
 
     let mb = MultibodyDesc::new(joint)
-        .with_body_shift(Vector3::z() * 2.0)
-        .with_parent_shift(Vector3::new(0.0, 2.0, 5.0))
-        .with_collider(&small_cuboid_collider_desc)
+        .body_shift(Vector3::z() * 2.0)
+        .parent_shift(Vector3::new(0.0, 2.0, 5.0))
+        .collider(&small_cuboid_collider_desc)
         .build(&mut world);
 
     mb.set_status(BodyStatus::Kinematic);
@@ -100,9 +100,9 @@ fn main() {
     joint.enable_angular_motor();
 
     MultibodyDesc::new(joint)
-        .with_body_shift(Vector3::z() * 2.0)
-        .with_parent_shift(Vector3::new(0.0, 3.0, -4.0))
-        .with_collider(&small_cuboid_collider_desc)
+        .body_shift(Vector3::z() * 2.0)
+        .parent_shift(Vector3::new(0.0, 3.0, -4.0))
+        .collider(&small_cuboid_collider_desc)
         .build(&mut world);
 
     /*

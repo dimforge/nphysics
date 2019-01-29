@@ -25,7 +25,7 @@ fn main() {
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(20.0, 20.0)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector2::y() * -20.0)
+        .translation(Vector2::y() * -20.0)
         .build(&mut world);
 
     /*
@@ -36,12 +36,12 @@ fn main() {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
-    let shift = (rad + collider_desc.margin()) * 2.0;
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 3.04;
 
@@ -62,13 +62,13 @@ fn main() {
      */
     let geom = ShapeHandle::new(Cuboid::new(Vector2::new(rad * 10.0, rad)));
     let collider_desc = ColliderDesc::new(geom)
-        .with_density(1.0);
+        .density(1.0);
 
     let platform_handle = RigidBodyDesc::new()
-        .with_collider(&collider_desc)
-        .with_translation(Vector2::new(0.0, 1.5))
-        .with_velocity(Velocity::linear(1.0, 0.0))
-        .with_status(BodyStatus::Kinematic)
+        .collider(&collider_desc)
+        .translation(Vector2::new(0.0, 1.5))
+        .velocity(Velocity::linear(1.0, 0.0))
+        .status(BodyStatus::Kinematic)
         .build(&mut world)
         .handle();
 
@@ -78,9 +78,9 @@ fn main() {
     let joint = RevoluteJoint::new(0.0);
 
     let mb = MultibodyDesc::new(joint)
-        .with_body_shift(Vector2::x() * 2.0)
-        .with_parent_shift(Vector2::new(5.0, 2.0))
-        .with_collider(&collider_desc)
+        .body_shift(Vector2::x() * 2.0)
+        .parent_shift(Vector2::new(5.0, 2.0))
+        .collider(&collider_desc)
         .build(&mut world);
 
     mb.set_status(BodyStatus::Kinematic);
@@ -95,11 +95,11 @@ fn main() {
     joint.enable_angular_motor();
 
     let geom = ShapeHandle::new(Ball::new(2.0 * rad));
-    let ball_collider_desc = ColliderDesc::new(geom).with_density(1.0);
+    let ball_collider_desc = ColliderDesc::new(geom).density(1.0);
     MultibodyDesc::new(joint)
-        .with_body_shift(Vector2::x() * 2.0)
-        .with_parent_shift(Vector2::new(-4.0, 3.0))
-        .with_collider(&ball_collider_desc)
+        .body_shift(Vector2::x() * 2.0)
+        .parent_shift(Vector2::new(-4.0, 3.0))
+        .collider(&ball_collider_desc)
         .build(&mut world);
 
     /*

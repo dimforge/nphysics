@@ -34,7 +34,7 @@ fn main() {
     let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
 
     ColliderDesc::new(plane)
-        .with_translation(Vector3::y() * 20.0)
+        .translation(Vector3::y() * 20.0)
         .build(&mut world);
 
     /*
@@ -48,10 +48,10 @@ fn main() {
 
     let ball = ShapeHandle::new(Ball::new(rad));
     let collider_desc = ColliderDesc::new(ball)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0usize..2 {

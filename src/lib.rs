@@ -178,16 +178,16 @@ macro_rules! desc_custom_getters(
 );
 
 macro_rules! desc_getters(
-    ($([val] $val: ident: $t: ty)* $([ref] $ref_val: ident: $ref_t: ty)*) => {
+    ($([val] $name: ident -> $val: ident: $t: ty)* $([ref] $ref_name: ident -> $ref_val: ident: $ref_t: ty)*) => {
         $(
             #[inline]
-            pub fn $val(&self) -> $t {
+            pub fn $name(&self) -> $t {
                 self.$val
             }
         )*
         $(
             #[inline]
-            pub fn $ref_val(&self) -> &$ref_t {
+            pub fn $ref_name(&self) -> &$ref_t {
                 &self.$ref_val
             }
         )*

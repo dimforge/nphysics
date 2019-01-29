@@ -15,11 +15,11 @@ use nphysics_testbed3d::Testbed;
 fn new_link<J: Joint<f32>>(world: &mut World<f32>, joint: J, parent: BodyPartHandle) -> BodyPartHandle {
     let shape = ShapeHandle::new(Cuboid::new(Vector3::new(0.2, 0.2, 0.2)));
     let collider_desc = ColliderDesc::new(shape)
-        .with_density(1.0);
+        .density(1.0);
 
     MultibodyDesc::new(joint)
-        .with_collider(&collider_desc)
-        .build_with_parent(parent, world)
+        .collider(&collider_desc)
+        .build_parent(parent, world)
         .unwrap()
         .part_handle()
 }
@@ -36,7 +36,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * (-ground_size - 5.0))
+        .translation(Vector3::y() * (-ground_size - 5.0))
         .build(&mut world);
 
     /*

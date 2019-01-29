@@ -25,7 +25,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(-Vector2::y())
+        .translation(-Vector2::y())
         .build(&mut world);
 
     /*
@@ -55,7 +55,7 @@ fn main() {
     let cross = ShapeHandle::new(compound);
 
     let collider_desc = ColliderDesc::new(cross)
-        .with_density(1.0);
+        .density(1.0);
 
 
     /*
@@ -63,11 +63,11 @@ fn main() {
      */
     let num = 15;
     let shift = 2.5 * large_rad;
-    let centerx = (shift + collider_desc.margin()) * (num as f32) / 2.0;
-    let centery = (shift + collider_desc.margin()) * (num as f32) / 2.0;
+    let centerx = (shift + collider_desc.get_margin()) * (num as f32) / 2.0;
+    let centery = (shift + collider_desc.get_margin()) * (num as f32) / 2.0;
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0usize..num {

@@ -7,7 +7,7 @@ use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::{BallConstraint, PinSlotConstraint, PlanarConstraint, PrismaticConstraint,
                         RectangularConstraint, RevoluteConstraint, UniversalConstraint};
-use nphysics3d::object::{BodyPartHandle, Material, ColliderDesc, RigidBodyDesc};
+use nphysics3d::object::{BodyPartHandle, ColliderDesc, RigidBodyDesc};
 use nphysics3d::volumetric::Volumetric;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
@@ -29,7 +29,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * (-ground_size - 5.0))
+        .translation(Vector3::y() * (-ground_size - 5.0))
         .build(&mut world);
 
     /*
@@ -37,11 +37,9 @@ fn main() {
      */
     let rad = 0.2;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let cuboid_inertia = cuboid.inertia(1.0);
-    let cuboid_center_of_mass = cuboid.center_of_mass();
 
     let collider_desc = ColliderDesc::new(cuboid.clone())
-        .with_density(1.0);
+        .density(1.0);
 
     /*
      * Revolute joints.
@@ -52,7 +50,7 @@ fn main() {
     let mut pos = first_anchor.coords;
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
     for i in 0usize..num {
         let body_anchor = Point3::new(0.0, 0.0, 1.0) * (rad * 3.0 + 0.2);
@@ -242,10 +240,10 @@ fn main() {
      */
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
     let collider_desc = ColliderDesc::new(cuboid)
-        .with_density(1.0);
+        .density(1.0);
 
     let pin_handle = RigidBodyDesc::new()
-        .with_collider(&collider_desc)
+        .collider(&collider_desc)
         .build(&mut world)
         .part_handle();
 

@@ -29,7 +29,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(-Vector2::y())
+        .translation(-Vector2::y())
         .build(&mut world);
 
     /*
@@ -48,7 +48,7 @@ fn main() {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
-            let mut pts = Vec::with_capacity(npts);
+            let mut pts = Vec::capacity(npts);
 
             for _ in 0..npts {
                 let pt: Point2<f32> = distribution.sample(&mut rng);
@@ -57,11 +57,11 @@ fn main() {
 
             let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
             let collider_desc = ColliderDesc::new(geom)
-                .with_density(1.0);
+                .density(1.0);
 
             RigidBodyDesc::new()
-                .with_collider(&collider_desc)
-                .with_translation(Vector2::new(x, y))
+                .collider(&collider_desc)
+                .translation(Vector2::new(x, y))
                 .build(&mut world);
         }
     }

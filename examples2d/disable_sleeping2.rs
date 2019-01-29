@@ -23,14 +23,14 @@ fn main() {
      */
     let rad = 0.1;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::new(rad, rad)));
-    let collider_desc = ColliderDesc::new(cuboid).with_density(1.0);
+    let collider_desc = ColliderDesc::new(cuboid).density(1.0);
 
     /*
      * Create the body that will be deactivated.
      */
     RigidBodyDesc::new()
-        .with_collider(&collider_desc)
-        .with_velocity(Velocity::linear(0.099, 0.0))
+        .collider(&collider_desc)
+        .velocity(Velocity::linear(0.099, 0.0))
         .build(&mut world);
 
     /*
@@ -38,10 +38,10 @@ fn main() {
      * setting its sleep threshold to None.
      */
     RigidBodyDesc::new()
-        .with_collider(&collider_desc)
-        .with_translation(Vector2::y() * 0.3)
-        .with_velocity(Velocity::linear(0.099, 0.0))
-        .with_sleep_threshold(None)
+        .collider(&collider_desc)
+        .translation(Vector2::y() * 0.3)
+        .velocity(Velocity::linear(0.099, 0.0))
+        .sleep_threshold(None)
         .build(&mut world);
 
     /*

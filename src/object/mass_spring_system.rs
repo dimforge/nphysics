@@ -853,43 +853,43 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     }
 
     desc_custom_setters!(
-        self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
-        self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
-        self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
-        self.with_name, set_name, name: String | { self.name = name }
+        self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
+        self.kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
-        with_gravity_enabled, enable_gravity, gravity_enabled: bool
-        with_collider_enabled, set_collider_enabled, collider_enabled: bool
-        with_scale, set_scale, scale: Vector<N>
-        with_stiffness, set_stiffness, stiffness: N
-        with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
-        with_damping_ratio, set_damping_ratio, damping_ratio: N
-        with_mass, set_mass, mass: N
-        with_status, set_status, status: BodyStatus
-        with_position, set_position, position: Isometry<N>
+        gravity_enabled, enable_gravity, gravity_enabled: bool
+        collider_enabled, set_collider_enabled, collider_enabled: bool
+        scale, set_scale, scale: Vector<N>
+        stiffness, set_stiffness, stiffness: N
+        sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+        damping_ratio, set_damping_ratio, damping_ratio: N
+        mass, set_mass, mass: N
+        status, set_status, status: BodyStatus
+        position, set_position, position: Isometry<N>
     );
 
     desc_custom_getters!(
-        self.plasticity_strain_threshold: N | { self.plasticity.0 }
-        self.plasticity_creep: N | { self.plasticity.1 }
-        self.plasticity_max_force: N | { self.plasticity.2 }
-        self.kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
-        self.translation: &Vector<N> | { &self.position.translation.vector }
-        self.name: &str | { &self.name }
+        self.get_plasticity_strain_threshold: N | { self.plasticity.0 }
+        self.get_plasticity_creep: N | { self.plasticity.1 }
+        self.get_plasticity_max_force: N | { self.plasticity.2 }
+        self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
+        self.get_translation: &Vector<N> | { &self.position.translation.vector }
+        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
-        [val] gravity_enabled: bool
-        [val] stiffness: N
-        [val] sleep_threshold: Option<N>
-        [val] damping_ratio: N
-        [val] mass: N
-        [val] status: BodyStatus
-        [val] collider_enabled: bool
-        [ref] position: Isometry<N>
-        [ref] scale: Vector<N>
+        [val] is_gravity_enabled -> gravity_enabled: bool
+        [val] get_stiffness -> stiffness: N
+        [val] get_sleep_threshold -> sleep_threshold: Option<N>
+        [val] get_damping_ratio -> damping_ratio: N
+        [val] get_mass -> mass: N
+        [val] get_status -> status: BodyStatus
+        [val] is_collider_enabled -> collider_enabled: bool
+        [ref] get_position -> position: Isometry<N>
+        [ref] get_scale -> scale: Vector<N>
     );
 
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassSpringSystem<N> {

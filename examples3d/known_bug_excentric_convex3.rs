@@ -48,7 +48,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_size)
         .build(&mut world);
 
     /*
@@ -71,12 +71,12 @@ fn main() {
 
     let shape = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
     let collider_desc = ColliderDesc::new(shape)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
-    let shift = (rad + collider_desc.margin()) * 2.0;
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;

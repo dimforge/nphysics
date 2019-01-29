@@ -239,14 +239,14 @@ impl<N: Real> Multibody<N> {
 
     fn grow_buffers(&mut self, ndofs: usize, nimpulses: usize) {
         let len = self.velocities.len();
-        self.velocities.resize_vertically_assign(len + ndofs, N::zero());
-        self.forces.resize_vertically_assign(len + ndofs, N::zero());
-        self.damping.resize_vertically_assign(len + ndofs, N::zero());
-        self.accelerations.resize_vertically_assign(len + ndofs, N::zero());
+        self.velocities.resize_vertically_mut(len + ndofs, N::zero());
+        self.forces.resize_vertically_mut(len + ndofs, N::zero());
+        self.damping.resize_vertically_mut(len + ndofs, N::zero());
+        self.accelerations.resize_vertically_mut(len + ndofs, N::zero());
         self.body_jacobians.push(Jacobian::zeros(0));
 
         let len = self.impulses.len();
-        self.impulses.resize_vertically_assign(len + nimpulses, N::zero());
+        self.impulses.resize_vertically_mut(len + nimpulses, N::zero());
     }
 
     fn update_acceleration(&mut self, gravity: &Vector<N>) {
@@ -1227,51 +1227,51 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
-        self.with_angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
+        self.angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
-        self.with_angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
+        self.angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_custom_setters!(
-        self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
-        self.with_mass, set_mass, mass: N | { self.local_inertia.linear = mass }
+        self.collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
+        self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
     );
 
     desc_setters!(
-//        with_status, set_status, status: BodyStatus
-        with_name, set_name, name: String
-        with_parent_shift, set_parent_shift, parent_shift: Vector<N>
-        with_body_shift, set_body_shift, body_shift: Vector<N>
-        with_velocity, set_velocity, velocity: Velocity<N>
-        with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
-        with_local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
+//        status, set_status, status: BodyStatus
+        name, set_name, name: String
+        parent_shift, set_parent_shift, parent_shift: Vector<N>
+        body_shift, set_body_shift, body_shift: Vector<N>
+        velocity, set_velocity, velocity: Velocity<N>
+        local_inertia, set_local_inertia, local_inertia: Inertia<N>
+        local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
     );
 
 
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
-        self.angular_inertia: N | { self.local_inertia.angular }
+        self.get_angular_inertia: N | { self.local_inertia.angular }
     );
 
     #[cfg(feature = "dim3")]
     desc_custom_getters!(
-        self.angular_inertia: &na::Matrix3<N> | { &self.local_inertia.angular }
+        self.get_angular_inertia: &na::Matrix3<N> | { &self.local_inertia.angular }
     );
 
     desc_custom_getters!(
-        self.mass: N | { self.local_inertia.linear }
-        self.name: &str | { &self.name }
+        self.get_mass: N | { self.local_inertia.linear }
+        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
-        [ref] parent_shift: Vector<N>
-        [ref] body_shift: Vector<N>
-        [ref] velocity: Velocity<N>
-        [ref] local_inertia: Inertia<N>
-        [ref] local_center_of_mass: Point<N>
+        [ref] get_parent_shift -> parent_shift: Vector<N>
+        [ref] get_body_shift -> body_shift: Vector<N>
+        [ref] get_velocity -> velocity: Velocity<N>
+        [ref] get_local_inertia -> local_inertia: Inertia<N>
+        [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
 

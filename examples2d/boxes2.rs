@@ -27,7 +27,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(-Vector2::y())
+        .translation(-Vector2::y())
         .build(&mut world);
 
     /*
@@ -38,12 +38,12 @@ fn main() {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
-    let shift = (rad + collider_desc.margin()) * 2.0;
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
 

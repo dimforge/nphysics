@@ -10,7 +10,6 @@ use na::{self, Point2, Point3};
 use ncollide2d::utils::GenerationalId;
 use ncollide2d::query::Ray;
 use ncollide2d::world::CollisionGroups;
-use ncollide2d::narrow_phase::Interaction;
 use nphysics2d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics2d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics2d::world::World;

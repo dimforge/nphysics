@@ -28,16 +28,16 @@ fn main() {
 
     for i in 0..10 {
         ColliderDesc::new(ground_shape.clone())
-            .with_translation(Vector2::new(-2.0, 5.0 - i as f32 * 4.0))
-            .with_rotation(0.1)
-            .with_material(MaterialHandle::new(conveyor_material1))
+            .translation(Vector2::new(-2.0, 5.0 - i as f32 * 4.0))
+            .rotation(0.1)
+            .material(MaterialHandle::new(conveyor_material1))
             .build(&mut world);
 
 
         ColliderDesc::new(ground_shape.clone())
-            .with_translation(Vector2::new(2.0, 3.0 - i as f32 * 4.0))
-            .with_rotation(-0.1)
-            .with_material(MaterialHandle::new(conveyor_material2))
+            .translation(Vector2::new(2.0, 3.0 - i as f32 * 4.0))
+            .rotation(-0.1)
+            .material(MaterialHandle::new(conveyor_material2))
             .build(&mut world);
     }
 
@@ -49,12 +49,12 @@ fn main() {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
-    let shift = (rad + collider_desc.margin()) * 2.0;
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0 + 5.0;
     let centery = shift / 2.0 + 5.0;
 

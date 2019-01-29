@@ -353,57 +353,57 @@ impl<N: Real> ColliderDesc<N> {
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
-        self.with_rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
+        self.rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
-        self.with_rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
+        self.rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
     );
 
 
     desc_custom_setters!(
-        self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
-        self.with_material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
+        self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
     );
 
     desc_setters!(
-        with_shape, set_shape, shape: ShapeHandle<N>
-        with_margin, set_margin, margin: N
-        with_density, set_density, density: N
-        with_name, set_name, name: String
-        with_collision_groups, set_collision_groups, collision_groups: CollisionGroups
-        with_linear_prediction, set_linear_prediction, linear_prediction: N
-        with_angular_prediction, set_angular_prediction, angular_prediction: N
+        shape, set_shape, shape: ShapeHandle<N>
+        margin, set_margin, margin: N
+        density, set_density, density: N
+        name, set_name, name: String
+        collision_groups, set_collision_groups, collision_groups: CollisionGroups
+        linear_prediction, set_linear_prediction, linear_prediction: N
+        angular_prediction, set_angular_prediction, angular_prediction: N
         as_sensor, set_as_sensor, is_sensor: bool
-        with_position, set_position, position: Isometry<N>
+        position, set_position, position: Isometry<N>
     );
 
     #[cfg(feature = "dim3")]
     desc_custom_getters!(
-        self.rotation: Vector<N> | { self.position.rotation.scaled_axis() }
+        self.get_rotation: Vector<N> | { self.position.rotation.scaled_axis() }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
-        self.rotation: N | { self.position.rotation.angle() }
+        self.get_rotation: N | { self.position.rotation.angle() }
     );
 
     desc_custom_getters!(
-        self.shape: &Shape<N> | { &*self.shape }
-        self.name: &str | { &self.name }
-        self.translation: &Vector<N> | { &self.position.translation.vector }
-        self.material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_shape: &Shape<N> | { &*self.shape }
+        self.get_name: &str | { &self.name }
+        self.get_translation: &Vector<N> | { &self.position.translation.vector }
+        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
 
     desc_getters!(
-        [val] margin: N
-        [val] density: N
-        [val] collision_groups: CollisionGroups
-        [val] linear_prediction: N
-        [val] angular_prediction: N
-        [val] is_sensor: bool
-        [ref] position: Isometry<N>
+        [val] get_margin -> margin: N
+        [val] get_density -> density: N
+        [val] get_collision_groups -> collision_groups: CollisionGroups
+        [val] get_linear_prediction -> linear_prediction: N
+        [val] get_angular_prediction -> angular_prediction: N
+        [val] get_is_sensor -> is_sensor: bool
+        [ref] get_position -> position: Isometry<N>
     );
 
     pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
@@ -502,35 +502,35 @@ impl<N: Real> DeformableColliderDesc<N> {
     }
 
     desc_custom_setters!(
-        self.with_material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
+        self.material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
     );
 
     desc_setters!(
-        with_name, set_name, name: String
-        with_margin, set_margin, margin: N
-        with_collision_groups, set_collision_groups, collision_groups: CollisionGroups
-        with_linear_prediction, set_linear_prediction, linear_prediction: N
-        with_angular_prediction, set_angular_prediction, angular_prediction: N
+        name, set_name, name: String
+        margin, set_margin, margin: N
+        collision_groups, set_collision_groups, collision_groups: CollisionGroups
+        linear_prediction, set_linear_prediction, linear_prediction: N
+        angular_prediction, set_angular_prediction, angular_prediction: N
         as_sensor, set_as_sensor, is_sensor: bool
-        with_body_parts_mapping, set_body_parts_mapping, body_parts_mapping: Option<Arc<Vec<usize>>>
+        body_parts_mapping, set_body_parts_mapping, body_parts_mapping: Option<Arc<Vec<usize>>>
     );
 
     desc_custom_getters!(
-        self.shape: &Shape<N> | { &*self.shape }
-        self.name: &str | { &self.name }
-        self.material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_shape: &Shape<N> | { &*self.shape }
+        self.get_name: &str | { &self.name }
+        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );
 
     desc_getters!(
-        [val] margin: N
-        [val] collision_groups: CollisionGroups
-        [val] linear_prediction: N
-        [val] angular_prediction: N
-        [val] is_sensor: bool
+        [val] get_margin -> margin: N
+        [val] get_collision_groups -> collision_groups: CollisionGroups
+        [val] get_linear_prediction -> linear_prediction: N
+        [val] get_angular_prediction -> angular_prediction: N
+        [val] get_is_sensor -> is_sensor: bool
     );
 
-    pub fn build_with_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
+    pub fn build_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
         let parent = bodies.body(parent)?;
         Some(self.build_with_infos(parent, cworld))

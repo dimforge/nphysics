@@ -1027,7 +1027,7 @@ pub struct FEMVolumeDesc<'a, N: Real> {
     young_modulus: N,
     poisson_ratio: N,
     sleep_threshold: Option<N>,
-    boundary_trimesh_collider_enabled: bool,
+    collider_enabled: bool,
     mass_damping: N,
     stiffness_damping: N,
     density: N,
@@ -1047,7 +1047,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
             young_modulus: na::convert(0.3),
             poisson_ratio: N::zero(),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
-            boundary_trimesh_collider_enabled: false,
+            collider_enabled: false,
             mass_damping: na::convert(0.2),
             stiffness_damping: N::zero(),
             density: N::one(),
@@ -1071,47 +1071,47 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     }
 
     desc_custom_setters!(
-        self.with_boundary_trimesh_collider, set_boundary_trimesh_collider_enabled, enable: bool | { self.boundary_trimesh_collider_enabled = enable }
-        self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
-        self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
-        self.with_translation, set_translation, vector: Vector3<N> | { self.position.translation.vector = vector }
-        self.with_name, set_name, name: String | { self.name = name }
+        self.collider_enabled, set_collider_enabled, enable: bool | { self.collider_enabled = enable }
+        self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
+        self.kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.translation, set_translation, vector: Vector3<N> | { self.position.translation.vector = vector }
+        self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
-        with_gravity_enabled, enable_gravity, gravity_enabled: bool
-        with_scale, set_scale, scale: Vector3<N>
-        with_young_modulus, set_young_modulus, young_modulus: N
-        with_poisson_ratio, set_poisson_ratio, poisson_ratio: N
-        with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
-        with_mass_damping, set_mass_damping, mass_damping: N
-        with_stiffness_damping, set_stiffness_damping, stiffness_damping: N
-        with_density, set_density, density: N
-        with_status, set_status, status: BodyStatus
-        with_position, set_position, position: Isometry3<N>
+        gravity_enabled, enable_gravity, gravity_enabled: bool
+        scale, set_scale, scale: Vector3<N>
+        young_modulus, set_young_modulus, young_modulus: N
+        poisson_ratio, set_poisson_ratio, poisson_ratio: N
+        sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+        mass_damping, set_mass_damping, mass_damping: N
+        stiffness_damping, set_stiffness_damping, stiffness_damping: N
+        density, set_density, density: N
+        status, set_status, status: BodyStatus
+        position, set_position, position: Isometry3<N>
     );
 
     desc_custom_getters!(
-        self.plasticity_strain_threshold: N | { self.plasticity.0 }
-        self.plasticity_creep: N | { self.plasticity.1 }
-        self.plasticity_max_force: N | { self.plasticity.2 }
-        self.kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
-        self.translation: &Vector3<N> | { &self.position.translation.vector }
-        self.name: &str | { &self.name }
+        self.get_plasticity_strain_threshold: N | { self.plasticity.0 }
+        self.get_plasticity_creep: N | { self.plasticity.1 }
+        self.get_plasticity_max_force: N | { self.plasticity.2 }
+        self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
+        self.get_translation: &Vector3<N> | { &self.position.translation.vector }
+        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
-        [val] gravity_enabled: bool
-        [val] young_modulus: N
-        [val] poisson_ratio: N
-        [val] sleep_threshold: Option<N>
-        [val] mass_damping: N
-        [val] stiffness_damping: N
-        [val] density: N
-        [val] status: BodyStatus
-        [val] boundary_trimesh_collider_enabled: bool
-        [ref] position: Isometry3<N>
-        [ref] scale: Vector3<N>
+        [val] is_gravity_enabled -> gravity_enabled: bool
+        [val] get_young_modulus -> young_modulus: N
+        [val] get_poisson_ratio -> poisson_ratio: N
+        [val] get_sleep_threshold -> sleep_threshold: Option<N>
+        [val] get_mass_damping -> mass_damping: N
+        [val] get_stiffness_damping -> stiffness_damping: N
+        [val] get_density -> density: N
+        [val] get_status -> status: BodyStatus
+        [val] is_collider_enabled -> collider_enabled: bool
+        [ref] get_position -> position: Isometry3<N>
+        [ref] get_scale -> scale: Vector3<N>
     );
 
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMVolume<N> {
@@ -1145,11 +1145,11 @@ impl<'a, N: Real> BodyDesc<N> for FEMVolumeDesc<'a, N> {
             vol.set_node_kinematic(*i, true)
         }
 
-        if self.boundary_trimesh_collider_enabled {
+        if self.collider_enabled {
             let (mesh, ids_map, parts_map) = vol.boundary_mesh();
             vol.renumber_dofs(&ids_map);
             let _ = DeformableColliderDesc::new(ShapeHandle::new(mesh))
-                .with_body_parts_mapping(Some(Arc::new(parts_map)))
+                .body_parts_mapping(Some(Arc::new(parts_map)))
                 .build_with_infos(&vol, cworld);
         }
 

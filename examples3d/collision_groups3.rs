@@ -41,7 +41,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_size)
         .build(&mut world);
 
     /*
@@ -49,8 +49,8 @@ fn main() {
      */
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector3::new(1.0, 0.1, 1.0)));
     let collider_handle = ColliderDesc::new(ground_shape.clone())
-        .with_translation(Vector3::y())
-        .with_collision_groups(green_group)
+        .translation(Vector3::y())
+        .collision_groups(green_group)
         .build(&mut world)
         .handle();
 
@@ -60,8 +60,8 @@ fn main() {
      * A blue floor that will collide with the BLUE group only.
      */
     let collider_handle = ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * 2.0)
-        .with_collision_groups(blue_group)
+        .translation(Vector3::y() * 2.0)
+        .collision_groups(blue_group)
         .build(&mut world)
         .handle();
 
@@ -95,12 +95,12 @@ fn main() {
 
                 // Build the rigid body and its collider.
                 let collider_desc = ColliderDesc::new(cuboid.clone())
-                    .with_density(1.0)
-                    .with_collision_groups(group);
+                    .density(1.0)
+                    .collision_groups(group);
 
                 let body_handle = RigidBodyDesc::new()
-                    .with_collider(&collider_desc)
-                    .with_translation(Vector3::new(x, y, z))
+                    .collider(&collider_desc)
+                    .translation(Vector3::new(x, y, z))
                     .build(&mut world)
                     .handle();
 

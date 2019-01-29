@@ -30,7 +30,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_size)
         .build(&mut world);
 
     /*
@@ -51,15 +51,14 @@ fn main() {
 
         let rot = Vector3::x() * f32::consts::FRAC_PI_2;
         let mut desc = MassConstraintSystemDesc::from_trimesh(&trimesh)
-            .with_scale(Vector3::repeat(0.5))
-            .with_position(Isometry3::new(Vector3::y() * 5.0, rot))
-            .with_stiffness(Some(0.1))
-            .with_collider_enabled(true);
+            .scale(Vector3::repeat(0.5))
+            .position(Isometry3::new(Vector3::y() * 5.0, rot))
+            .stiffness(Some(0.1))
+            .collider_enabled(true);
 
         let deformable1 = desc.build(&mut world);
         deformable1.generate_neighbor_constraints(Some(0.1));
         deformable1.generate_neighbor_constraints(Some(0.1));
-
 
         let deformable2 = desc
             .set_position(Isometry3::new(Vector3::y() * 9.5, rot))

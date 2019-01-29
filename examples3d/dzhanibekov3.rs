@@ -32,14 +32,14 @@ fn main() {
 
     let geom = ShapeHandle::new(Compound::new(shapes));
     let collider_desc = ColliderDesc::new(geom)
-        .with_density(1.0);
+        .density(1.0);
 
     /*
      * Create the rigid body.
      */
     RigidBodyDesc::new()
-        .with_collider(&collider_desc)
-        .with_velocity(Velocity::angular(0.0, 10.0, 0.1))
+        .collider(&collider_desc)
+        .velocity(Velocity::angular(0.0, 10.0, 0.1))
         .build(&mut world);
 
     /*

@@ -26,7 +26,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(-Vector2::y() * 5.0)
+        .translation(-Vector2::y() * 5.0)
         .build(&mut world);
 
     /*
@@ -42,11 +42,11 @@ fn main() {
     let revo = RevoluteJoint::new(-0.1);
     let body_shift = Vector2::x() * (rad * 3.0 + 0.2);
 
-    let collider = ColliderDesc::new(cuboid.clone()).with_density(1.0);
+    let collider = ColliderDesc::new(cuboid.clone()).density(1.0);
     let mut multibody = MultibodyDesc::new(revo)
-        .with_body_shift(body_shift)
-        .with_parent_shift(Vector2::new(-4.0, 5.0))
-        .with_collider(&collider);
+        .body_shift(body_shift)
+        .parent_shift(Vector2::new(-4.0, 5.0))
+        .collider(&collider);
 
     let mut curr = &mut multibody;
 
@@ -66,8 +66,8 @@ fn main() {
     // Joint limit so that it does not fall indefinitely.
     prism.enable_min_offset(-rad * 2.0);
     let mut multibody = MultibodyDesc::new(prism)
-        .with_parent_shift(Vector2::new(5.0, 5.0))
-        .with_collider(&collider);
+        .parent_shift(Vector2::new(5.0, 5.0))
+        .collider(&collider);
 
     let mut curr = &mut multibody;
 
@@ -98,8 +98,8 @@ fn main() {
             let rect = CartesianJoint::new(Vector2::new(x, y));
 
             MultibodyDesc::new(rect)
-                .with_parent_shift(shift)
-                .with_collider(&collider)
+                .parent_shift(shift)
+                .collider(&collider)
                 .build(&mut world);
         }
     }

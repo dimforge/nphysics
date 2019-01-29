@@ -37,10 +37,10 @@ fn main() {
      * Create the deformable body and a collider for its boundary.
      */
     let deformable = MassConstraintSystemDesc::quad(50, 1)
-        .with_scale(Vector2::new(10.0, 1.0))
-        .with_translation(Vector2::y() * 1.0)
-        .with_stiffness(Some(1.0e4))
-        .with_collider_enabled(true)
+        .scale(Vector2::new(10.0, 1.0))
+        .translation(Vector2::y() * 1.0)
+        .stiffness(Some(1.0e4))
+        .collider_enabled(true)
         .build(&mut world);
     let deformable_handle = deformable.handle();
 
@@ -66,17 +66,17 @@ fn main() {
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid)
-        .with_density(0.1);
+        .density(0.1);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
     for i in 0usize..num {
         for j in i..num {
             let fj = j as f32;
             let fi = i as f32;
             let x = (fi * shift / 2.0) + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) - centerx;
-            let y = fi * 2.0 * (rad + collider_desc.margin()) + rad + 2.0;
+            let y = fi * 2.0 * (rad + collider_desc.get_margin()) + rad + 2.0;
 
             // Build the rigid body and its collider.
             rb_desc

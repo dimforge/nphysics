@@ -32,7 +32,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_size)
         .build(&mut world);
 
     /*
@@ -92,9 +92,9 @@ fn main() {
             let compound = Compound::new(geom_data);
             let geom = ShapeHandle::new(compound);
             let collider_desc = ColliderDesc::new(geom)
-                .with_density(1.0);
+                .density(1.0);
             let mut rb_desc = RigidBodyDesc::new()
-                .with_collider(&collider_desc);
+                .collider(&collider_desc);
 
             for k in 1..num_duplications + 1 {
                 let i = igeom % width;

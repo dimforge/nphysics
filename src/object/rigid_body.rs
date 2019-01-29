@@ -681,66 +681,66 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
-        self.with_rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
-        self.with_kinematic_rotations, set_kinematic_rotations, kinematic_rotations: Vector<bool> | { self.kinematic_rotations = kinematic_rotations }
-        self.with_angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
+        self.rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
+        self.kinematic_rotations, set_kinematic_rotations, kinematic_rotations: Vector<bool> | { self.kinematic_rotations = kinematic_rotations }
+        self.angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
-        self.with_rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
-        self.with_kinematic_rotation, set_kinematic_rotation, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
-        self.with_angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
+        self.rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
+        self.kinematic_rotation, set_kinematic_rotation, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
+        self.angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_custom_setters!(
-        self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
-        self.with_mass, set_mass, mass: N | { self.local_inertia.linear = mass }
-        self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
+        self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
+        self.collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
     desc_setters!(
-        with_gravity_enabled, enable_gravity, gravity_enabled: bool
-        with_status, set_status, status: BodyStatus
-        with_name, set_name, name: String
-        with_position, set_position, position: Isometry<N>
-        with_velocity, set_velocity, velocity: Velocity<N>
-        with_surface_velocity, set_surface_velocity, surface_velocity: Velocity<N>
-        with_local_inertia, set_local_inertia, local_inertia: Inertia<N>
-        with_local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
-        with_sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
-        with_kinematic_translations, set_kinematic_translation, kinematic_translations: Vector<bool>
+        gravity_enabled, enable_gravity, gravity_enabled: bool
+        status, set_status, status: BodyStatus
+        name, set_name, name: String
+        position, set_position, position: Isometry<N>
+        velocity, set_velocity, velocity: Velocity<N>
+        surface_velocity, set_surface_velocity, surface_velocity: Velocity<N>
+        local_inertia, set_local_inertia, local_inertia: Inertia<N>
+        local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
+        sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
+        kinematic_translations, set_kinematic_translation, kinematic_translations: Vector<bool>
     );
 
     #[cfg(feature = "dim3")]
     desc_custom_getters!(
-        self.rotation: Vector<N> | { self.position.rotation.scaled_axis() }
-        self.kinematic_rotations: Vector<bool> | { self.kinematic_rotations }
-        self.angular_inertia: &na::Matrix3<N> | { &self.local_inertia.angular }
+        self.get_rotation: Vector<N> | { self.position.rotation.scaled_axis() }
+        self.get_kinematic_rotations: Vector<bool> | { self.kinematic_rotations }
+        self.get_angular_inertia: &na::Matrix3<N> | { &self.local_inertia.angular }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
-        self.rotation: N | { self.position.rotation.angle() }
-        self.kinematic_rotation: bool | { self.kinematic_rotation }
-        self.angular_inertia: N | { self.local_inertia.angular }
+        self.get_rotation: N | { self.position.rotation.angle() }
+        self.get_kinematic_rotation: bool | { self.kinematic_rotation }
+        self.get_angular_inertia: N | { self.local_inertia.angular }
     );
 
     desc_custom_getters!(
-        self.translation: &Vector<N> | { &self.position.translation.vector }
-        self.mass: N | { self.local_inertia.linear }
-        self.name: &str | { &self.name }
-        self.colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
+        self.get_translation: &Vector<N> | { &self.position.translation.vector }
+        self.get_mass: N | { self.local_inertia.linear }
+        self.get_name: &str | { &self.name }
+        self.get_colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
     );
 
     desc_getters!(
-        [val] gravity_enabled: bool
-        [val] status: BodyStatus
-        [val] sleep_threshold: Option<N>
-        [ref] position: Isometry<N>
-        [ref] velocity: Velocity<N>
-        [ref] local_inertia: Inertia<N>
-        [ref] local_center_of_mass: Point<N>
+        [val] is_gravity_enabled -> gravity_enabled: bool
+        [val] get_status -> status: BodyStatus
+        [val] get_sleep_threshold -> sleep_threshold: Option<N>
+        [ref] get_position -> position: Isometry<N>
+        [ref] get_velocity -> velocity: Velocity<N>
+        [ref] get_local_inertia -> local_inertia: Inertia<N>
+        [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
     pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {

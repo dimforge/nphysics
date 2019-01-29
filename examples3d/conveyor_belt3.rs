@@ -38,7 +38,7 @@ fn main() {
     // is expressed in the local-space of the shape (and we are applying rotations to the
     // colliders so the surface_velocity points toward where we want it to).
     let mut side_desc = ColliderDesc::new(conveyor_side_shape.clone())
-        .with_material(MaterialHandle::new(conveyor_side_material));
+        .material(MaterialHandle::new(conveyor_side_material));
 
     side_desc
         .set_translation(Vector3::new(0.0, -0.2, conveyor_shift))
@@ -65,7 +65,7 @@ fn main() {
     // is expressed in the local-space of the shape (and we are applying rotations to the
     // colliders so the surface_velocity points toward where we want it to).
     let mut corner_desc = ColliderDesc::new(conveyor_corner_shape)
-        .with_material(MaterialHandle::new(conveyor_corner_material));
+        .material(MaterialHandle::new(conveyor_corner_material));
 
     corner_desc
         .set_translation(Vector3::new(conveyor_shift, -0.2, conveyor_shift))
@@ -94,12 +94,12 @@ fn main() {
 
     let ball = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
     let collider_desc = ColliderDesc::new(ball)
-        .with_density(1.0);
+        .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
-        .with_collider(&collider_desc);
+        .collider(&collider_desc);
 
-    let shift = (rad + collider_desc.margin()) * 2.0;
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0 + conveyor_shift;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;

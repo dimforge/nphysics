@@ -26,7 +26,7 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     ColliderDesc::new(ground_shape)
-        .with_translation(-Vector2::y())
+        .translation(-Vector2::y())
         .build(&mut world);
 
     /*
@@ -65,14 +65,14 @@ fn add_ragdolls(world: &mut World<f32>) {
     /*
      * Body.
      */
-    let body_collider = ColliderDesc::new(body_geom).with_density(0.3);
+    let body_collider = ColliderDesc::new(body_geom).density(0.3);
     let mut body = MultibodyDesc::new(free)
-        .with_collider(&body_collider);
+        .collider(&body_collider);
 
     /*
      * Head.
      */
-    let head_collider = ColliderDesc::new(head_geom).with_density(0.3);
+    let head_collider = ColliderDesc::new(head_geom).density(0.3);
     body.add_child(spherical)
         .add_collider(&head_collider)
         .set_parent_shift(Vector2::new(0.0, body_rady + head_rad + space * 2.0));
@@ -80,7 +80,7 @@ fn add_ragdolls(world: &mut World<f32>) {
     /*
      * Arms.
      */
-    let arm_collider = ColliderDesc::new(arm_geom).with_density(0.3);
+    let arm_collider = ColliderDesc::new(arm_geom).density(0.3);
     body.add_child(spherical)
         .add_collider(&arm_collider)
         .set_parent_shift(Vector2::new(body_radx + 2.0 * space, body_rady))
@@ -94,7 +94,7 @@ fn add_ragdolls(world: &mut World<f32>) {
     /*
      * Legs.
      */
-    let leg_collider = ColliderDesc::new(leg_geom).with_density(0.3);
+    let leg_collider = ColliderDesc::new(leg_geom).density(0.3);
     body.add_child(spherical)
         .add_collider(&leg_collider)
         .set_parent_shift(Vector2::new(body_radx, -body_rady))

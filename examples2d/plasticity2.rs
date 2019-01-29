@@ -35,9 +35,9 @@ fn main() {
 
     for (i, pos) in positions.iter().enumerate() {
         platforms[i] = RigidBodyDesc::new()
-            .with_position(*pos)
-            .with_status(BodyStatus::Kinematic)
-            .with_collider(&ColliderDesc::new(platform_shape.clone()))
+            .position(*pos)
+            .status(BodyStatus::Kinematic)
+            .collider(&ColliderDesc::new(platform_shape.clone()))
             .build(&mut world)
             .handle();
     }
@@ -46,12 +46,12 @@ fn main() {
      * Create the deformable body and a collider for its contour.
      */
     let deformable_surface_handle = FEMSurfaceDesc::quad(50, 1)
-        .with_scale(Vector2::new(1.1, 0.1))
-        .with_density(1.0)
-        .with_young_modulus(1.0e2)
-        .with_mass_damping(0.2)
-        .with_plasticity(0.1, 5.0, 1.0e5)
-        .with_boundary_polyline_collider(true)
+        .scale(Vector2::new(1.1, 0.1))
+        .density(1.0)
+        .young_modulus(1.0e2)
+        .mass_damping(0.2)
+        .plasticity(0.1, 5.0, 1.0e5)
+        .boundary_polyline_collider(true)
         .build(&mut world)
         .handle();
 

@@ -23,7 +23,7 @@ fn main() {
     let ground = ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground)
-        .with_translation(Vector3::y() * (-ground_size - 1.0))
+        .translation(Vector3::y() * (-ground_size - 1.0))
         .build(&mut world);
 
 
@@ -44,11 +44,11 @@ fn main() {
      * Create the deformable body and a collider for its boundary.
      */
     FEMVolumeDesc::cube(50, 1, 1)
-        .with_scale(Vector3::new(1.0, 0.1, 0.1))
-        .with_translation(Vector3::y() * 0.1)
-        .with_young_modulus(1.0e3)
-        .with_mass_damping(0.2)
-        .with_boundary_trimesh_collider(true)
+        .scale(Vector3::new(1.0, 0.1, 0.1))
+        .translation(Vector3::y() * 0.1)
+        .young_modulus(1.0e3)
+        .mass_damping(0.2)
+        .boundary_trimesh_collider(true)
         .build(&mut world);
 
     /*
