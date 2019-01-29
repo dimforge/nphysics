@@ -38,6 +38,14 @@ impl<N: Real> Velocity3<N> {
         Velocity3::new(Vector3::new(vx, vy, vz), na::zero())
     }
 
+    /// Computes the velocity required to move from `start` to `end` in the given `time`.
+    pub fn between_positions(start: &Isometry3<N>, end: &Isometry3<N>, time: N) -> Self {
+        let delta = end / start;
+        let linear = delta.translation.vector / time;
+        let angular = delta.rotation.scaled_axis() / time;
+        Self::new(linear, angular)
+    }
+
     /// Create a zero velocity.
     #[inline]
     pub fn zero() -> Self {
