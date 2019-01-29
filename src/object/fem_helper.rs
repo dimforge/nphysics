@@ -173,7 +173,9 @@ pub fn fill_contact_geometry_fem<N: Real>(
 
     // Needed by the non-linear SOR-prox.
     // FIXME: should this `fill` be done by the non-linear SOR-prox itself?
-    DVectorSliceMut::from_slice(&mut jacobians[j_id..], ndofs).fill(N::zero());
+    if status == BodyStatus::Dynamic {
+        DVectorSliceMut::from_slice(&mut jacobians[j_id..], ndofs).fill(N::zero());
+    }
 
     if let ForceDirection::Linear(dir) = force_dir {
         match indices {
@@ -211,12 +213,14 @@ pub fn fill_contact_geometry_fem<N: Real>(
 
                     *out_vel += va.dot(&dir1) + vb.dot(&dir2);
 
-                    if let Some(ext_vels) = ext_vels {
-                        if !kinematic1 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
-                        }
-                        if !kinematic2 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                    if status == BodyStatus::Dynamic {
+                        if let Some(ext_vels) = ext_vels {
+                            if !kinematic1 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
+                            }
+                            if !kinematic2 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                            }
                         }
                     }
                 }
@@ -263,15 +267,17 @@ pub fn fill_contact_geometry_fem<N: Real>(
 
                     *out_vel += va.dot(&dir1) + vb.dot(&dir2) + vc.dot(&dir3);
 
-                    if let Some(ext_vels) = ext_vels {
-                        if !kinematic1 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
-                        }
-                        if !kinematic2 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
-                        }
-                        if !kinematic3 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.z).dot(&dir3);
+                    if status == BodyStatus::Dynamic {
+                        if let Some(ext_vels) = ext_vels {
+                            if !kinematic1 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
+                            }
+                            if !kinematic2 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                            }
+                            if !kinematic3 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.z).dot(&dir3);
+                            }
                         }
                     }
                 }
@@ -326,18 +332,20 @@ pub fn fill_contact_geometry_fem<N: Real>(
 
                     *out_vel += va.dot(&dir1) + vb.dot(&dir2) + vc.dot(&dir3) + vd.dot(&dir4);
 
-                    if let Some(ext_vels) = ext_vels {
-                        if !kinematic1 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
-                        }
-                        if !kinematic2 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
-                        }
-                        if !kinematic3 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.z).dot(&dir3);
-                        }
-                        if !kinematic4 {
-                            *out_vel += ext_vels.fixed_rows::<Dim>(indices.w).dot(&dir4);
+                    if status == BodyStatus::Dynamic {
+                        if let Some(ext_vels) = ext_vels {
+                            if !kinematic1 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.x).dot(&dir1);
+                            }
+                            if !kinematic2 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.y).dot(&dir2);
+                            }
+                            if !kinematic3 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.z).dot(&dir3);
+                            }
+                            if !kinematic4 {
+                                *out_vel += ext_vels.fixed_rows::<Dim>(indices.w).dot(&dir4);
+                            }
                         }
                     }
                 }

@@ -500,7 +500,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn update_dynamics(&mut self, dt: N) {
-        if self.update_status.inertia_needs_update() {
+        if self.update_status.inertia_needs_update() && self.status == BodyStatus::Dynamic {
             self.update_augmented_mass(dt);
         }
     }
@@ -959,6 +959,7 @@ impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
         vol.set_name(self.name.clone());
+        vol.set_status(self.status);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

@@ -726,7 +726,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
 
     /// Update the dynamics property of this deformable volume.
     fn update_dynamics(&mut self, dt: N) {
-        if self.update_status.inertia_needs_update() {
+        if self.update_status.inertia_needs_update() && self.status == BodyStatus::Dynamic {
             self.augmented_mass.fill(N::zero());
             self.assemble_mass_with_damping(dt);
             self.assemble_stiffness(dt);
@@ -1039,7 +1039,7 @@ pub struct FEMVolumeDesc<'a, N: Real> {
 impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
-            name: String,
+            name: String::new(),
             gravity_enabled: true,
             geom,
             scale: Vector3::repeat(N::one()),
@@ -1114,7 +1114,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
         [ref] scale: Vector3<N>
     );
 
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w FEMVolume<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMVolume<N> {
         world.add_body(self)
     }
 }
@@ -1139,6 +1139,7 @@ impl<'a, N: Real> BodyDesc<N> for FEMVolumeDesc<'a, N> {
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
         vol.set_name(self.name.clone());
+        vol.set_status(self.status);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

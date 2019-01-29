@@ -974,6 +974,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
         vol.set_name(self.name.clone());
+        vol.set_status(self.status);
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)
