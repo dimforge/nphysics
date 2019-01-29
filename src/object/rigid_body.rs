@@ -2,7 +2,7 @@ use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, Real};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
-                  AngularInertia, SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
+                  SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
                     ColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
@@ -19,6 +19,7 @@ use crate::utils::GeneralizedCross;
 /// A rigid body.
 #[derive(Debug)]
 pub struct RigidBody<N: Real> {
+    name: String,
     handle: BodyHandle,
     position: Isometry<N>,
     velocity: Velocity<N>,
@@ -46,6 +47,7 @@ impl<N: Real> RigidBody<N> {
         let com = Point::from_coordinates(position.translation.vector);
 
         RigidBody {
+            name: String::new(),
             handle,
             position,
             velocity: Velocity::zero(),
@@ -147,7 +149,16 @@ impl<N: Real> RigidBody<N> {
 
     /// Set the angular inertia of this rigid body, expressed in its local space.
     #[inline]
-    pub fn set_angular_inertia(&mut self, angular_inertia: AngularInertia<N>) {
+    #[cfg(feature = "dim2")]
+    pub fn set_angular_inertia(&mut self, angular_inertia: N) {
+        self.update_status.set_local_inertia_changed(true);
+        self.local_inertia.angular = angular_inertia;
+    }
+
+    /// Set the angular inertia of this rigid body, expressed in its local space.
+    #[inline]
+    #[cfg(feature = "dim3")]
+    pub fn set_angular_inertia(&mut self, angular_inertia: na::Matrix3<N>) {
         self.update_status.set_local_inertia_changed(true);
         self.local_inertia.angular = angular_inertia;
     }
@@ -225,6 +236,16 @@ impl<N: Real> RigidBody<N> {
 
 
 impl<N: Real> Body<N> for RigidBody<N> {
+    #[inline]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    fn set_name(&mut self, name: String) {
+        self.name = name
+    }
+
     #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
@@ -619,6 +640,7 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 /// this initialization (including after calls to `.build`).
 #[derive(Clone)]
 pub struct RigidBodyDesc<'a, N: Real> {
+    name: String,
     gravity_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
@@ -639,6 +661,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
 
     pub fn new() -> Self {
         RigidBodyDesc {
+            name: String::new(),
             gravity_enabled: true,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
@@ -660,25 +683,26 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     desc_custom_setters!(
         self.with_rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
         self.with_kinematic_rotations, set_kinematic_rotations, kinematic_rotations: Vector<bool> | { self.kinematic_rotations = kinematic_rotations }
-
+        self.with_angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
         self.with_rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
         self.with_kinematic_rotation, set_kinematic_rotation, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
+        self.with_angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_custom_setters!(
         self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.with_mass, set_mass, mass: N | { self.local_inertia.linear = mass }
-        self.with_angular_inertia, set_angular_inertia, angular_inertia: AngularInertia<N> | { self.local_inertia.angular = angular_inertia }
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
     desc_setters!(
         with_gravity_enabled, enable_gravity, gravity_enabled: bool
         with_status, set_status, status: BodyStatus
+        with_name, set_name, name: String
         with_position, set_position, position: Isometry<N>
         with_velocity, set_velocity, velocity: Velocity<N>
         with_surface_velocity, set_surface_velocity, surface_velocity: Velocity<N>
@@ -692,18 +716,20 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     desc_custom_getters!(
         self.rotation: Vector<N> | { self.position.rotation.scaled_axis() }
         self.kinematic_rotations: Vector<bool> | { self.kinematic_rotations }
+        self.angular_inertia: &na::Matrix3<N> | { &self.local_inertia.angular }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
         self.rotation: N | { self.position.rotation.angle() }
         self.kinematic_rotation: bool | { self.kinematic_rotation }
+        self.angular_inertia: N | { self.local_inertia.angular }
     );
 
     desc_custom_getters!(
         self.translation: &Vector<N> | { &self.position.translation.vector }
         self.mass: N | { self.local_inertia.linear }
-        self.angular_inertia: &AngularInertia<N> | { &self.local_inertia.angular }
+        self.name: &str | { &self.name }
         self.colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
     );
 
@@ -734,6 +760,7 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.set_deactivation_threshold(self.sleep_threshold);
         rb.set_kinematic_translations(self.kinematic_translations);
         rb.enable_gravity(self.gravity_enabled);
+        rb.set_name(self.name.clone());
 
         #[cfg(feature = "dim3")]
             {

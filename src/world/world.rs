@@ -491,6 +491,16 @@ impl<N: Real> World<N> {
     /// A mutable iterator through all the bodies on this world.
     pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut Body<N>> { self.bodies.bodies_mut() }
 
+    /// An iterator through all the bodies with the given name.
+    pub fn bodies_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Body<N>> {
+        self.bodies().filter(move |b| b.name() == name)
+    }
+
+    /// An iterator through all the bodies with the given name.
+    pub fn bodies_with_name_mut<'a>(&'a mut self, name: &'a str) -> impl Iterator<Item = &'a mut Body<N>> {
+        self.bodies_mut().filter(move |b| b.name() == name)
+    }
+
     /// An iterator through all the contact events generated during the last execution of `self.step()`.
     pub fn contact_events(&self) -> &ContactEvents {
         self.cworld.contact_events()

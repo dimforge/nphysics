@@ -11,6 +11,7 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 /// similar to the other bodies.
 #[derive(Clone, Debug)]
 pub struct Ground<N: Real> {
+    name: String,
     companion_id: usize,
     activation: ActivationStatus<N>,
     data: [N; 0],
@@ -19,6 +20,7 @@ pub struct Ground<N: Real> {
 impl<N: Real> Ground<N> {
     pub(crate) fn new() -> Self {
         Ground {
+            name: String::new(),
             companion_id: 0,
             activation: ActivationStatus::new_inactive(),
             data: [],
@@ -27,6 +29,16 @@ impl<N: Real> Ground<N> {
 }
 
 impl<N: Real> Body<N> for Ground<N> {
+    #[inline]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    fn set_name(&mut self, name: String) {
+        self.name = name
+    }
+
     #[inline]
     fn gravity_enabled(&self) -> bool {
         false

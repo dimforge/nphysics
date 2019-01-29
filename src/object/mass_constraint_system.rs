@@ -72,6 +72,7 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 pub struct MassConstraintSystem<N: Real> {
+    name: String,
     handle: BodyHandle,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
@@ -139,6 +140,7 @@ impl<N: Real> MassConstraintSystem<N> {
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
         MassConstraintSystem {
+            name: String::new(),
             handle,
             constraints: constraints.values().cloned().collect(),
             elements,
@@ -194,6 +196,7 @@ impl<N: Real> MassConstraintSystem<N> {
         println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
 
         MassConstraintSystem {
+            name: String::new(),
             handle,
             constraints: constraints.values().cloned().collect(),
             elements,
@@ -324,6 +327,16 @@ impl<N: Real> MassConstraintSystem<N> {
 }
 
 impl<N: Real> Body<N> for MassConstraintSystem<N> {
+    #[inline]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    fn set_name(&mut self, name: String) {
+        self.name = name
+    }
+
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -802,6 +815,7 @@ enum MassConstraintSystemDescGeometry<'a, N: Real> {
 }
 
 pub struct MassConstraintSystemDesc<'a, N: Real> {
+    name: String,
     geom: MassConstraintSystemDescGeometry<'a, N>,
     scale: Vector<N>,
     position: Isometry<N>,
@@ -819,6 +833,7 @@ pub struct MassConstraintSystemDesc<'a, N: Real> {
 impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
+            name: String::new(),
             gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
@@ -856,6 +871,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
         self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.with_translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
+        self.with_name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
@@ -876,6 +892,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
         self.plasticity_max_force: N | { self.plasticity.2 }
         self.kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
         self.translation: &Vector<N> | { &self.position.translation.vector }
+        self.name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -956,6 +973,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
+        vol.set_name(self.name.clone());
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

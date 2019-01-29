@@ -51,6 +51,7 @@ impl<N: Real> ColliderAnchor<N> {
 ///
 /// Those are needed by nphysics.
 pub struct ColliderData<N: Real> {
+    name: String,
     margin: N,
     anchor: ColliderAnchor<N>,
     // Doubly linked list of colliders attached to a body.
@@ -65,12 +66,14 @@ pub struct ColliderData<N: Real> {
 impl<N: Real> ColliderData<N> {
     /// Initializes data for a collider.
     pub fn new(
+        name: String,
         margin: N,
         anchor: ColliderAnchor<N>,
         body_status_dependent_ndofs: usize,
         material: MaterialHandle<N>,
     ) -> Self {
         ColliderData {
+            name,
             margin,
             anchor,
             prev: None,
@@ -275,6 +278,18 @@ impl<N: Real> Collider<N> {
         self.0.query_type()
     }
 
+    /// The user-defined name of this collider.
+    #[inline]
+    pub fn name(&self) -> &str {
+        &self.0.data().name
+    }
+
+    /// Sets the name of this collider.
+    #[inline]
+    pub fn set_name(&mut self, name: String) {
+        self.0.data_mut().name = name
+    }
+
     /*
      * Collider chain.
      */
@@ -301,6 +316,7 @@ impl<N: Real> Collider<N> {
 }
 
 pub struct ColliderDesc<N: Real> {
+    name: String,
     margin: N,
     collision_groups: CollisionGroups,
     shape: ShapeHandle<N>,
@@ -318,6 +334,7 @@ impl<N: Real> ColliderDesc<N> {
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
         ColliderDesc {
+            name: String::new(),
             shape,
             margin: Self::default_margin(),
             collision_groups: CollisionGroups::default(),
@@ -354,6 +371,7 @@ impl<N: Real> ColliderDesc<N> {
         with_shape, set_shape, shape: ShapeHandle<N>
         with_margin, set_margin, margin: N
         with_density, set_density, density: N
+        with_name, set_name, name: String
         with_collision_groups, set_collision_groups, collision_groups: CollisionGroups
         with_linear_prediction, set_linear_prediction, linear_prediction: N
         with_angular_prediction, set_angular_prediction, angular_prediction: N
@@ -373,6 +391,7 @@ impl<N: Real> ColliderDesc<N> {
 
     desc_custom_getters!(
         self.shape: &Shape<N> | { &*self.shape }
+        self.name: &str | { &self.name }
         self.translation: &Vector<N> | { &self.position.translation.vector }
         self.material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
@@ -433,13 +452,14 @@ impl<N: Real> ColliderDesc<N> {
 
         let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: self.position };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
-        let data = ColliderData::new(self.margin, anchor, ndofs, material);
+        let data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
         Some(cworld.add(pos, self.shape.clone(), self.collision_groups, query, data))
     }
 }
 
 
 pub struct DeformableColliderDesc<N: Real> {
+    name: String,
     margin: N,
     collision_groups: CollisionGroups,
     shape: ShapeHandle<N>,
@@ -457,6 +477,7 @@ impl<N: Real> DeformableColliderDesc<N> {
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
         DeformableColliderDesc {
+            name: String::new(),
             shape,
             margin: na::convert(0.01),
             collision_groups: CollisionGroups::default(),
@@ -485,6 +506,7 @@ impl<N: Real> DeformableColliderDesc<N> {
     );
 
     desc_setters!(
+        with_name, set_name, name: String
         with_margin, set_margin, margin: N
         with_collision_groups, set_collision_groups, collision_groups: CollisionGroups
         with_linear_prediction, set_linear_prediction, linear_prediction: N
@@ -495,6 +517,7 @@ impl<N: Real> DeformableColliderDesc<N> {
 
     desc_custom_getters!(
         self.shape: &Shape<N> | { &*self.shape }
+        self.name: &str | { &self.name }
         self.material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );
@@ -542,7 +565,7 @@ impl<N: Real> DeformableColliderDesc<N> {
         let body_parts = self.body_parts_mapping.clone();
         let anchor = ColliderAnchor::OnDeformableBody { body, body_parts };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
-        let data = ColliderData::new(self.margin, anchor, ndofs, material);
+        let data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
         cworld.add(Isometry::identity(), self.shape.clone(), self.collision_groups, query, data)
     }
 }

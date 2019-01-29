@@ -6,7 +6,7 @@ use ncollide::utils::IsometryOps;
 use crate::joint::Joint;
 use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,
-    AngularInertia, Vector, Velocity, DIM, Translation, ForceType
+    Vector, Velocity, DIM, Translation, ForceType
 };
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, Real, LU};
 use crate::object::{
@@ -19,6 +19,7 @@ use crate::utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: Real> {
+    name: String,
     handle: BodyHandle,
     rbs: MultibodyLinkVec<N>,
     velocities: DVector<N>,
@@ -58,6 +59,7 @@ impl<N: Real> Multibody<N> {
     /// Creates a new multibody with no link.
     fn new(handle: BodyHandle) -> Self {
         Multibody {
+            name: String::new(),
             handle,
             rbs: MultibodyLinkVec(Vec::new()),
             velocities: DVector::zeros(0),
@@ -111,6 +113,10 @@ impl<N: Real> Multibody<N> {
         self.rbs.get_mut(id)
     }
 
+    pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a MultibodyLink<N>> {
+        self.rbs.iter().filter(move |l| l.name == name)
+    }
+
     /// Iterator through all the links of this multibody.
     ///
     /// All link are guaranteed to be yielded before its descendant.
@@ -140,7 +146,16 @@ impl<N: Real> Multibody<N> {
 
     /// Set the angular inertia of the specified linked, expressed in its local space.
     #[inline]
-    pub fn set_link_angular_inertia(&mut self, link_id: usize, angular_inertia: AngularInertia<N>) {
+    #[cfg(feature = "dim3")]
+    pub fn set_link_angular_inertia(&mut self, link_id: usize, angular_inertia: na::Matrix3<N>) {
+        self.update_status.set_local_inertia_changed(true);
+        self.rbs[link_id].local_inertia.angular = angular_inertia;
+    }
+
+    /// Set the angular inertia of the specified linked, expressed in its local space.
+    #[inline]
+    #[cfg(feature = "dim2")]
+    pub fn set_link_angular_inertia(&mut self, link_id: usize, angular_inertia: N) {
         self.update_status.set_local_inertia_changed(true);
         self.rbs[link_id].local_inertia.angular = angular_inertia;
     }
@@ -724,6 +739,16 @@ impl<N: Real> SolverWorkspace<N> {
 
 impl<N: Real> Body<N> for Multibody<N> {
     #[inline]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    fn set_name(&mut self, name: String) {
+        self.name = name
+    }
+
+    #[inline]
     fn part(&self, id: usize) -> Option<&BodyPart<N>> {
         self.link(id).map(|l| l as &BodyPart<N>)
     }
@@ -1162,6 +1187,7 @@ impl<N: Real> Body<N> for Multibody<N> {
 
 
 pub struct MultibodyDesc<'a, N: Real> {
+    name: String,
     children: Vec<MultibodyDesc<'a, N>>,
     joint: Box<Joint<N>>,
     velocity: Velocity<N>,
@@ -1175,6 +1201,7 @@ pub struct MultibodyDesc<'a, N: Real> {
 impl<'a, N: Real> MultibodyDesc<'a, N> {
     pub fn new<J: Joint<N>>(joint: J) -> Self {
         MultibodyDesc {
+            name: String::new(),
             joint: Box::new(joint),
             children: Vec::new(),
             velocity: Velocity::zero(),
@@ -1198,14 +1225,24 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         self
     }
 
+    #[cfg(feature = "dim2")]
+    desc_custom_setters!(
+        self.with_angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
+    );
+
+    #[cfg(feature = "dim3")]
+    desc_custom_setters!(
+        self.with_angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
+    );
+
     desc_custom_setters!(
         self.with_collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
         self.with_mass, set_mass, mass: N | { self.local_inertia.linear = mass }
-        self.with_angular_inertia, set_angular_inertia, angular_inertia: AngularInertia<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_setters!(
 //        with_status, set_status, status: BodyStatus
+        with_name, set_name, name: String
         with_parent_shift, set_parent_shift, parent_shift: Vector<N>
         with_body_shift, set_body_shift, body_shift: Vector<N>
         with_velocity, set_velocity, velocity: Velocity<N>
@@ -1213,9 +1250,20 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         with_local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
     );
 
+
+    #[cfg(feature = "dim2")]
+    desc_custom_getters!(
+        self.angular_inertia: N | { self.local_inertia.angular }
+    );
+
+    #[cfg(feature = "dim3")]
+    desc_custom_getters!(
+        self.angular_inertia: &na::Matrix3<N> | { &self.local_inertia.angular }
+    );
+
     desc_custom_getters!(
         self.mass: N | { self.local_inertia.linear }
-        self.angular_inertia: &AngularInertia<N> | { &self.local_inertia.angular }
+        self.name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -1252,6 +1300,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
             self.local_center_of_mass);
 
         link.velocity = self.velocity;
+        link.name = self.name.clone();
 
         let me = link.part_handle();
 

@@ -8,6 +8,7 @@ use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: Real> {
+    pub(crate) name: String,
     // FIXME: make all those private.
     pub(crate) multibody_handle: BodyHandle,
     pub(crate) internal_id: usize,
@@ -66,6 +67,7 @@ impl<N: Real> MultibodyLink<N> {
         let com = local_to_world * local_com;
 
         MultibodyLink {
+            name: String::new(),
             multibody_handle,
             internal_id,
             assembly_id,
@@ -104,6 +106,18 @@ impl<N: Real> MultibodyLink<N> {
     #[inline]
     pub fn joint_mut(&mut self) -> &mut Joint<N> {
         &mut *self.dof
+    }
+
+    /// This link's name.
+    #[inline]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Sets this link's name.
+    #[inline]
+    pub fn set_name(&mut self, name: String) {
+        self.name = name
     }
 
     #[inline]

@@ -40,6 +40,7 @@ pub struct TriangularElement<N: Real> {
 /// The surface is described by a set of triangle elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMSurface<N: Real> {
+    name: String,
     handle: BodyHandle,
     elements: Vec<TriangularElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -106,6 +107,7 @@ impl<N: Real> FEMSurface<N> {
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
         FEMSurface {
+            name: String::new(),
             handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
@@ -288,7 +290,6 @@ impl<N: Real> FEMSurface<N> {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
         let dt = params.dt;
-        let stiffness_coeff = params.dt * (params.dt + self.damping_coeffs.1);
 
         // Gravity
         if self.gravity_enabled {
@@ -583,6 +584,16 @@ impl<N: Real> FEMSurface<N> {
 }
 
 impl<N: Real> Body<N> for FEMSurface<N> {
+    #[inline]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    fn set_name(&mut self, name: String) {
+        self.name = name
+    }
+
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -953,6 +964,7 @@ enum FEMSurfaceDescGeometry<'a, N: Real> {
 }
 
 pub struct FEMSurfaceDesc<'a, N: Real> {
+    name: String,
     geom: FEMSurfaceDescGeometry<'a, N>,
     scale: Vector<N>,
     position: Isometry<N>,
@@ -972,6 +984,7 @@ pub struct FEMSurfaceDesc<'a, N: Real> {
 impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
+            name: String::new(),
             gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
@@ -1020,6 +1033,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
         with_density, set_density, density: N
         with_status, set_status, status: BodyStatus
         with_position, set_position, position: Isometry<N>
+        with_name, set_name, name: String
     );
 
     desc_custom_getters!(
@@ -1028,6 +1042,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
         self.plasticity_max_force: N | { self.plasticity.2 }
         self.kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
         self.translation: &Vector<N> | { &self.position.translation.vector }
+        self.name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -1068,6 +1083,7 @@ impl<'a, N: Real> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
+        vol.set_name(self.name.clone());
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

@@ -39,6 +39,7 @@ pub struct TetrahedralElement<N: Real> {
 /// The volume is described by a set of tetrahedral elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMVolume<N: Real> {
+    name: String,
     handle: BodyHandle,
     elements: Vec<TetrahedralElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -105,6 +106,7 @@ impl<N: Real> FEMVolume<N> {
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
         FEMVolume {
+            name: String::new(),
             handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
@@ -627,6 +629,16 @@ impl<N: Real> FEMVolume<N> {
 
 impl<N: Real> Body<N> for FEMVolume<N> {
     #[inline]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    fn set_name(&mut self, name: String) {
+        self.name = name
+    }
+
+    #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
     }
@@ -1007,6 +1019,7 @@ enum FEMVolumeDescGeometry<'a, N: Real> {
 }
 
 pub struct FEMVolumeDesc<'a, N: Real> {
+    name: String,
     gravity_enabled: bool,
     geom: FEMVolumeDescGeometry<'a, N>,
     scale: Vector3<N>,
@@ -1026,6 +1039,7 @@ pub struct FEMVolumeDesc<'a, N: Real> {
 impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
+            name: String,
             gravity_enabled: true,
             geom,
             scale: Vector3::repeat(N::one()),
@@ -1061,6 +1075,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
         self.with_plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.with_kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.with_translation, set_translation, vector: Vector3<N> | { self.position.translation.vector = vector }
+        self.with_name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
@@ -1082,6 +1097,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
         self.plasticity_max_force: N | { self.plasticity.2 }
         self.kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
         self.translation: &Vector3<N> | { &self.position.translation.vector }
+        self.name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -1122,6 +1138,7 @@ impl<'a, N: Real> BodyDesc<N> for FEMVolumeDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
+        vol.set_name(self.name.clone());
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

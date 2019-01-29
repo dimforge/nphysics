@@ -90,6 +90,12 @@ impl<N: Real> ActivationStatus<N> {
 
 /// Trait implemented by all bodies supported by nphysics.
 pub trait Body<N: Real>: Any + Send + Sync {
+    /// The name of this body.
+    fn name(&self) -> &str;
+
+    /// Sets the name of this body.
+    fn set_name(&mut self, name: String);
+
     /// Returns `true` if this body is the ground.
     fn is_ground(&self) -> bool {
         false

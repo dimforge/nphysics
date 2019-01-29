@@ -9,7 +9,7 @@ use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
 use ncollide::events::{ContactEvents, ProximityEvents};
 
-use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodyHandle};
+use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodyHandle, BodyPartHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
 use crate::math::{Isometry, Point};
 
@@ -192,6 +192,11 @@ impl<N: Real> ColliderWorld<N> {
         let _ = self.collider_lists.remove(&handle);
     }
 
+    /// Iterator through all the colliders with the given name.
+    pub fn colliders_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Collider<N>> {
+        self.colliders().filter(move |co| co.name() == name)
+    }
+
     /// Iterator through all the colliders attached to the body with the given `handle`.
     ///
     /// Returns an empty iterator if the body does not exists.
@@ -202,6 +207,19 @@ impl<N: Real> ColliderWorld<N> {
             cworld: self,
             curr: first
         }
+    }
+
+    /// Iterator through all the colliders attached to the body part with the given `handle`.
+    ///
+    /// Returns an empty iterator if the body part does not exists.
+    /// Does not return deformable colliders.
+    pub fn body_part_collider(&self, handle: BodyPartHandle) -> impl Iterator<Item = &Collider<N>> {
+        self.body_colliders(handle.0).filter(move |co| {
+            match co.anchor() {
+                ColliderAnchor::OnBodyPart { body_part, .. } => *body_part == handle,
+                _ => false
+            }
+        })
     }
 
     /// Sets the position the collider attached to the specified object.
