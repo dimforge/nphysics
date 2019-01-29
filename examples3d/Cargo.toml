@@ -23,8 +23,8 @@ name = "collision_groups3"
 path = "./collision_groups3.rs"
 
 [[bin]]
-name = "joints3"
-path = "./joints3.rs"
+name = "multibody3"
+path = "./multibody3.rs"
 
 [[bin]]
 name = "balls3"

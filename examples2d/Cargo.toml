@@ -65,8 +65,8 @@ name = "gravity2"
 path = "./gravity2.rs"
 
 [[bin]]
-name = "joints2"
-path = "./joints2.rs"
+name = "multibody2"
+path = "./multibody2.rs"
 
 [[bin]]
 name = "polyline2"
