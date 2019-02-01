@@ -19,11 +19,11 @@ script:
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics3d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed2d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics_testbed3d
-  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-3d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-2d
+  - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics-examples-3d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics2d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics3d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed2d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics_testbed3d
-  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-3d
   - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-2d
+  - cargo ${SUBCOMMAND} test --target ${TARGET} -p nphysics-examples-3d
