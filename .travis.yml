@@ -12,8 +12,6 @@ matrix:
   allow_failures:
     - rust: beta
     - rust: nightly
-before_install:
-  - if [ "$SUBCOMMAND" == "web" ];then cargo install cargo-web; fi
 script:
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics2d
   - cargo ${SUBCOMMAND} build --target ${TARGET} -p nphysics3d
