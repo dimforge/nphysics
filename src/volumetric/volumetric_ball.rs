@@ -7,8 +7,13 @@ use crate::math::{AngularInertia, Point, DIM};
 /// The volume of a ball.
 #[inline]
 pub fn ball_volume<N: Real>(radius: N) -> N {
-    let _pi = N::pi();
-    _pi * radius.powi(DIM as i32)
+    if DIM == 2 {
+        let _pi = N::pi();
+        _pi * radius * radius
+    } else {
+        let _pi = N::pi();
+        _pi * radius * radius * radius * na::convert(4.0f64 / 3.0)
+    }
 }
 
 /// The area of a ball.
@@ -32,12 +37,11 @@ pub fn ball_center_of_mass<N: Real>() -> Point<N> {
 /// The unit angular inertia of a ball.
 #[inline]
 pub fn ball_unit_angular_inertia<N: Real>(radius: N) -> AngularInertia<N> {
-    let diag;
-    if DIM == 2 {
-        diag = radius * radius / na::convert(2.0f64);
+    let diag = if DIM == 2 {
+        radius * radius / na::convert(2.0f64)
     } else {
-        diag = radius * radius * na::convert(2.0f64 / 5.0);
-    }
+        radius * radius * na::convert(2.0f64 / 5.0)
+    };
 
     AngularInertia::from_diagonal_element(diag)
 }

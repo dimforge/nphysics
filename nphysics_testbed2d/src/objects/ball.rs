@@ -23,11 +23,11 @@ impl Ball {
         window: &mut Window,
     ) -> Ball {
         let mut res = Ball {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_circle(radius),
-            collider: collider,
+            collider,
         };
 
         if world

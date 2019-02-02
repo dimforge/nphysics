@@ -2,11 +2,14 @@
   <img src="http://nphysics.org/img/logo_nphysics_full.svg" alt="crates.io">
 </p>
 <p align="center">
+    <a href="https://discord.gg/vt9DJSW">
+        <img src="https://img.shields.io/discord/507548572338880513.svg?logo=discord&colorB=7289DA">
+    </a>
     <a href="https://crates.io/crates/nphysics">
          <img src="http://meritbadge.herokuapp.com/nphysics3d?style=flat-square" alt="crates.io">
     </a>
-    <a href="https://travis-ci.org/sebcrozet/nphysics">
-        <img src="https://travis-ci.org/sebcrozet/nphysics.svg?branch=master" alt="Build status">
+    <a href="https://travis-ci.org/rustsim/nphysics">
+        <img src="https://travis-ci.org/rustsim/nphysics.svg?branch=master" alt="Build status">
     </a>
 </p>
 <p align = "center">
@@ -55,11 +58,13 @@ writing bindings and has several advantages:
   exhibiting its _Rusty_ sexiness.
 
 ## Features
-- Static and dynamic rigid bodies.
-- Common convex primitives: cone, box, ball, cylinder.
-- Concave geometries build from convex primitives (aka. compound geometries).
-- Stable stacking.
-- Island based sleeping (objects deactivation).
+- Static, dynamic, and kinematic rigid bodies.
+- Common convex primitives: box, ball, convex polyhedron.
+- Concave geometries built from convex primitives: compound geometries, triangle mesh, polylines.
+- Multibodies using reduced-coordinates approaches or constraints-based joints.
+- Multibody joint limits and motors.
+- Stable stacking due to non-linear a position-based penetration correction and one-shot contact manifold generation.
+- Island based sleeping (objects deactivation when they are at rest).
 - Ray casting.
 - Swept sphere based continuous collision detection.
 - Ball-in-socket joint.
@@ -87,4 +92,3 @@ The libraries needed to compile the physics engine are:
 The libraries needed to compile the examples are:
 
 * [kiss3d](http://kiss3d.org): the 3d graphics engine.
-* [rust-sfml](http://www.rust-sfml.org): the 2D graphics engine. See [windows installation instructions](https://github.com/jeremyletang/rust-sfml/wiki/How-to-use-rust-sfml-on-Windows).

@@ -46,8 +46,8 @@ impl GraphicsManager {
         }
 
         GraphicsManager {
-            arc_ball: arc_ball,
-            first_person: first_person,
+            arc_ball,
+            first_person,
             curr_is_arc_ball: true,
             rand: rng,
             b2sn: HashMap::new(),
@@ -126,7 +126,7 @@ impl GraphicsManager {
                     let sn_key = world.collider(sn.collider()).unwrap().body();
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
-                    let new_sns = self.b2sn.entry(sn_key).or_insert(Vec::new());
+                    let new_sns = self.b2sn.entry(sn_key).or_insert_with(Vec::new);
                     new_sns.push(sn);
                 }
             }
@@ -202,7 +202,7 @@ impl GraphicsManager {
         self.add_shape(window, id, world, na::one(), shape, color, &mut new_nodes);
 
         {
-            let nodes = self.b2sn.entry(key).or_insert(Vec::new());
+            let nodes = self.b2sn.entry(key).or_insert_with(Vec::new);
             nodes.append(&mut new_nodes);
         }
     }
@@ -473,5 +473,11 @@ impl GraphicsManager {
         handle: BodyHandle,
     ) -> Option<&mut Vec<Node>> {
         self.b2sn.get_mut(&handle)
+    }
+}
+
+impl Default for GraphicsManager {
+    fn default() -> Self {
+        Self::new()
     }
 }

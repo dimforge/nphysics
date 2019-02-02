@@ -58,7 +58,7 @@ impl<N: Real> PrismaticJoint<N> {
 
     /// The relative translation of the attached multibody links along the joint axis.
     pub fn translation(&self) -> Translation<N> {
-        Translation::from_vector(&*self.axis * self.offset)
+        Translation::from_vector(*self.axis * self.offset)
     }
 
     /// The lower limit of the relative displacement of the attached multibody links along the joint axis.

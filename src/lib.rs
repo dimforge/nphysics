@@ -61,7 +61,6 @@ The libraries needed to compile the physics engine are:
 The libraries needed to compile the examples are:
 
 */
-
 #![deny(non_camel_case_types)]
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
@@ -70,7 +69,8 @@ The libraries needed to compile the examples are:
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
-#![doc(html_root_url = "http://nphysics-dev.org/doc")]
+#![doc(html_root_url = "http://nphysics.org/rustdoc/")]
+
 
 #[macro_use]
 extern crate approx;
@@ -96,9 +96,18 @@ extern crate either;
 #[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 extern crate time;
 
-#[cfg(any(target_arch = "wasm32", target_arch = "asmjs"))]
+#[cfg(all(
+  any(target_arch = "wasm32", target_arch = "asmjs"),
+  feature = "stdweb",
+))]
 #[macro_use]
 extern crate stdweb;
+
+#[cfg(all(
+  any(target_arch = "wasm32", target_arch = "asmjs"),
+  feature = "use-wasm-bindgen",
+))]
+extern crate wasm_bindgen;
 
 //#[cfg(test)]
 //extern crate test;

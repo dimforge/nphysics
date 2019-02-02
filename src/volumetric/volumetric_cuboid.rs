@@ -10,8 +10,8 @@ use crate::math::{AngularInertia, Point, Vector, DIM};
 pub fn cuboid_volume<N: Real>(half_extents: &Vector<N>) -> N {
     let mut res = N::one();
 
-    for i in 0..DIM {
-        res = res * half_extents[i] * na::convert(2.0f64)
+    for half_extent in half_extents.iter() {
+        res = res * *half_extent * na::convert(2.0f64)
     }
 
     res

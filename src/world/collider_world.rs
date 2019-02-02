@@ -227,15 +227,15 @@ impl<N: Real> ColliderWorld<N> {
         self.cworld.set_position(handle, pos)
     }
 
-    /// Apply the given deformations to the specified object.
-    pub(crate) fn set_deformations(
-        &mut self,
-        handle: ColliderHandle,
-        coords: &[N],
-    )
-    {
-        self.cworld.set_deformations(handle, coords)
-    }
+//    /// Apply the given deformations to the specified object.
+//    pub(crate) fn set_deformations(
+//        &mut self,
+//        handle: ColliderHandle,
+//        coords: &[N],
+//    )
+//    {
+//        self.cworld.set_deformations(handle, coords)
+//    }
 
     /// Adds a filter that tells if a potential collision pair should be ignored or not.
     ///

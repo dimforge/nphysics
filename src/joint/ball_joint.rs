@@ -1,5 +1,7 @@
-use na::{self, DVectorSliceMut, Isometry3, Matrix3, Real, Translation3, U3, UnitQuaternion,
-         Vector3, VectorSlice3};
+use na::{
+    self, DVectorSliceMut, Isometry3, Matrix3, Real, Translation3, UnitQuaternion, Vector3,
+    VectorSlice3, U3,
+};
 
 use crate::joint::Joint;
 use crate::math::{JacobianSliceMut, Velocity};

@@ -24,11 +24,11 @@ impl Cone {
         window: &mut window::Window,
     ) -> Cone {
         let mut res = Cone {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_cone(r, h),
-            collider: collider,
+            collider,
         };
 
         if world

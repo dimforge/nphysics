@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 
 /// A timer.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Timer {
     time: f64,
     start: Option<f64>,
@@ -41,18 +41,16 @@ impl Timer {
     }
 }
 
-#[cfg(not(any(any(target_arch = "wasm32", target_arch = "asmjs"), target_arch = "asmjs")))]
+#[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 fn now() -> f64 {
     use time;
     time::precise_time_s()
 }
 
-#[cfg(
-    any(
-        any(any(target_arch = "wasm32", target_arch = "asmjs"), target_arch = "asmjs"),
-        target_arch = "asmjs"
-    )
-)]
+#[cfg(all(
+    any(target_arch = "wasm32", target_arch = "asmjs"),
+    feature = "stdweb",
+))]
 #[allow(unused_results)] // Needed because the js macro triggers it.
 fn now() -> f64 {
     use stdweb::unstable::TryInto;
@@ -60,6 +58,26 @@ fn now() -> f64 {
     // https://developer.mozilla.org/en-US/docs/Web/API/Performance/now
     let v = js! { return performance.now() / 1000.0; };
     v.try_into().unwrap()
+}
+#[cfg(all(
+    any(target_arch = "wasm32", target_arch = "asmjs"),
+    feature = "use-wasm-bindgen",
+))]
+mod performance {
+    use wasm_bindgen::prelude::*;
+    #[wasm_bindgen]
+    extern "C" {
+        #[wasm_bindgen(js_namespace = performance)]
+        pub fn now() -> f64;
+    }
+}
+
+#[cfg(all(
+    any(target_arch = "wasm32", target_arch = "asmjs"),
+    feature = "use-wasm-bindgen",
+))]
+fn now() -> f64 {
+    performance::now() / 1000.0
 }
 
 impl Display for Timer {

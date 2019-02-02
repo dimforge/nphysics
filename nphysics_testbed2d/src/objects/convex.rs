@@ -23,11 +23,11 @@ impl Convex {
         window: &mut Window,
     ) -> Convex {
         let mut res = Convex {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_convex_polygon(vertices, Vector2::from_element(1.0)),
-            collider: collider,
+            collider,
         };
 
         if world

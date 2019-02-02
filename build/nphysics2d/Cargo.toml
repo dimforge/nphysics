@@ -1,18 +1,19 @@
 [package]
 name    = "nphysics2d"
-version = "0.9.1"
+version = "0.9.4"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 description = "2-dimensional physics engine in Rust."
 documentation = "http://nphysics.org/rustdoc/nphysics2d/index.html"
 homepage = "http://nphysics.org"
-repository = "https://github.com/sebcrozet/nphysics"
+repository = "https://github.com/rustsim/nphysics"
 readme = "README.md"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
 edition = "2018"
 
 [features]
-default = [ "dim2" ]
+default = [ "dim2", "stdweb" ]
+use-wasm-bindgen = [ "dim2", "wasm-bindgen" ]
 dim2    = [ ]
 
 [lib]
@@ -31,13 +32,16 @@ bitflags   = "1.0"
 ncollide2d = "0.17"
 
 [target.wasm32-unknown-unknown.dependencies]
-stdweb = "0.4"
+stdweb = {version = "0.4", optional = true}
+wasm-bindgen = {version = "0.2.21", optional = true}
 
 [target.wasm32-unknown-emscripten.dependencies]
-stdweb = "0.4"
+stdweb = {version = "0.4", optional = true}
+wasm-bindgen = {version = "0.2.21", optional = true}
 
 [target.asmjs-unknown-emscripten.dependencies]
-stdweb = "0.4"
+stdweb = {version = "0.4", optional = true}
+wasm-bindgen = {version = "0.2.21", optional = true}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 time = "0.1"

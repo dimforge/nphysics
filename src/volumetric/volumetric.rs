@@ -65,7 +65,7 @@ impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<
 
     #[inline]
     fn to_world_space(&self, _: &Isometry2<N>) -> Matrix1<N> {
-        self.clone()
+        *self
     }
 
     #[inline]
@@ -91,11 +91,11 @@ impl<N: Real> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<
     fn to_relative_wrt_point(&self, mass: N, pt: &Point3<N>) -> Matrix3<N> {
         let diag = na::norm_squared(&pt.coords);
         let diagm = Matrix3::new(
-            diag.clone(),
+            diag,
             na::zero(),
             na::zero(),
             na::zero(),
-            diag.clone(),
+            diag,
             na::zero(),
             na::zero(),
             na::zero(),

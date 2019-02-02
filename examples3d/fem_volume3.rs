@@ -48,7 +48,7 @@ fn main() {
         .translation(Vector3::y() * 0.1)
         .young_modulus(1.0e3)
         .mass_damping(0.2)
-        .boundary_collider(true)
+        .collider_enabled(true)
         .build(&mut world);
 
     /*

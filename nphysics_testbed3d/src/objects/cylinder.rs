@@ -24,11 +24,11 @@ impl Cylinder {
         window: &mut window::Window,
     ) -> Cylinder {
         let mut res = Cylinder {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_cylinder(r, h),
-            collider: collider,
+            collider,
         };
 
         if world

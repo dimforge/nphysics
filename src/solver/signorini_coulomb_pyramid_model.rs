@@ -36,6 +36,12 @@ impl<N: Real> SignoriniCoulombPyramidModel<N> {
     }
 }
 
+impl<N: Real> Default for SignoriniCoulombPyramidModel<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
     fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
         DIM * c.len()

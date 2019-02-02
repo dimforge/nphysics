@@ -33,3 +33,9 @@ impl<V: Zero, N: Real> JointMotor<V, N> {
         }
     }
 }
+
+impl<V: Zero, N: Real> Default for JointMotor<V, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}

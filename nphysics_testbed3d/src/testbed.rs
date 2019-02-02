@@ -4,6 +4,7 @@ use std::env;
 use std::mem;
 use std::path::Path;
 use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 
 use crate::engine::GraphicsManager;
 use kiss3d::camera::Camera;
@@ -22,6 +23,7 @@ use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
 use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
 use nphysics3d::world::World;
 use nphysics3d::math::ForceType;
+use crate::world_owner::WorldOwner;
 
 #[derive(PartialEq)]
 enum RunMode {
@@ -30,13 +32,14 @@ enum RunMode {
     Step,
 }
 
+#[cfg(not(feature = "log"))]
 fn usage(exe_name: &str) {
     println!("Usage: {} [OPTION] ", exe_name);
-    println!("");
+    println!();
     println!("Options:");
     println!("    --help  - prints this help message and exits.");
     println!("    --pause - do not start the simulation right away.");
-    println!("");
+    println!();
     println!("The following keyboard commands are supported:");
     println!("    t      - pause/continue the simulation.");
     println!("    s      - pause then execute only one simulation step.");
@@ -54,12 +57,35 @@ fn usage(exe_name: &str) {
     println!("    b      - draw the bounding boxes.");
 }
 
+#[cfg(feature = "log")]
+fn usage(exe_name: &str) {
+    info!("Usage: {} [OPTION] ", exe_name);
+    info!("");
+    info!("Options:");
+    info!("    --help  - prints this help message and exits.");
+    info!("    --pause - do not start the simulation right away.");
+    info!("");
+    info!("The following keyboard commands are supported:");
+    info!("    t      - pause/continue the simulation.");
+    info!("    s      - pause then execute only one simulation step.");
+    info!("    1      - launch a ball.");
+    info!("    2      - launch a cube.");
+    info!("    3      - launch a fast cube using continuous collision detection.");
+    info!("    TAB    - switch camera mode (first-person or arc-ball).");
+    info!("    SHIFT + right click - launch a fast cube using continuous collision detection.");
+    info!("    CTRL + left click + drag - select and drag an object using a ball-in-socket joint.");
+    info!("    SHIFT + left click - remove an object.");
+    info!("    arrows - move around when in first-person camera mode.");
+    info!("    space  - switch wireframe mode. When ON, the contacts points and normals are displayed.");
+    info!("    b      - draw the bounding boxes.");
+}
+
 pub struct Testbed {
-    world: World<f32>,
+    world: Box<WorldOwner>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
-    callbacks: Vec<Box<Fn(&mut World<f32>, &mut GraphicsManager, f32)>>,
+    callbacks: Callbacks,
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
@@ -73,6 +99,8 @@ pub struct Testbed {
     grabbed_object_plane: (Point3<f32>, Vector3<f32>),
 }
 
+type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
+
 impl Testbed {
     pub fn new_empty() -> Testbed {
         let graphics = GraphicsManager::new();
@@ -84,15 +112,14 @@ impl Testbed {
         window.set_light(Light::StickToCamera);
 
         Testbed {
-            world: world,
+            world: Box::new(Arc::new(RwLock::new(world))),
             callbacks: Vec::new(),
             window: Some(window),
-            graphics: graphics,
+            graphics,
             nsteps: 1,
             time: 0.0,
             hide_counters: false,
             persistant_contacts: HashMap::new(),
-
             font: Font::default(),
             running: RunMode::Running,
             draw_colls: false,
@@ -103,11 +130,14 @@ impl Testbed {
         }
     }
 
-    pub fn new(world: World<f32>) -> Testbed {
+    pub fn new(world: World<f32>) -> Self {
+        Self::new_with_world_owner(Box::new(world))
+    }
+
+    pub fn new_with_world_owner(world: Box<WorldOwner>) -> Self {
         let mut res = Testbed::new_empty();
 
-        res.set_world(world);
-
+        res.set_world_owner(world);
         res
     }
 
@@ -124,14 +154,19 @@ impl Testbed {
     }
 
     pub fn set_world(&mut self, world: World<f32>) {
+        self.set_world_owner(Box::new(world))
+    }
+
+    pub fn set_world_owner(&mut self, world: Box<WorldOwner>) {
         self.world = world;
-        self.world.enable_performance_counters();
+        let mut world = self.world.get_mut();
+        world.enable_performance_counters();
 
         self.graphics.clear(self.window.as_mut().unwrap());
 
-        for co in self.world.colliders() {
+        for co in world.colliders() {
             self.graphics
-                .add(self.window.as_mut().unwrap(), co.handle(), &self.world);
+                .add(self.window.as_mut().unwrap(), co.handle(), &world);
         }
     }
 
@@ -147,7 +182,7 @@ impl Testbed {
         self.graphics.set_collider_color(collider, color);
     }
 
-    pub fn world(&self) -> &World<f32> {
+    pub fn world(&self) -> &Box<WorldOwner> {
         &self.world
     }
 
@@ -157,10 +192,8 @@ impl Testbed {
 
     pub fn load_obj(path: &str) -> Vec<(Vec<Point3<f32>>, Vec<usize>)> {
         let path = Path::new(path);
-        let empty = Path::new("_some_non_existent_folder"); // don't bother loading mtl files correctly
-        let objects = obj::parse_file(&path, &empty, "")
-            .ok()
-            .expect("Unable to open the obj file.");
+        let empty = Path::new("_some_non_existant_folder"); // dont bother loading mtl files correctly
+        let objects = obj::parse_file(&path, &empty, "").expect("Unable to open the obj file.");
 
         let mut res = Vec::new();
 
@@ -184,7 +217,7 @@ impl Testbed {
         res
     }
 
-    pub fn add_callback<F: Fn(&mut World<f32>, &mut GraphicsManager, f32) + 'static>(
+    pub fn add_callback<F: Fn(&mut WorldOwner, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
     ) {
@@ -211,14 +244,14 @@ impl Testbed {
     }
 }
 
+type CameraEffects<'a> = (
+    Option<&'a mut Camera>,
+    Option<&'a mut PlanarCamera>,
+    Option<&'a mut PostProcessingEffect>,
+);
+
 impl State for Testbed {
-    fn cameras_and_effect(
-        &mut self,
-    ) -> (
-        Option<&mut Camera>,
-        Option<&mut PlanarCamera>,
-        Option<&mut PostProcessingEffect>,
-    ) {
+    fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
         (Some(self.graphics.camera_mut()), None, None)
     }
 
@@ -242,6 +275,8 @@ impl State for Testbed {
                 //             graphics.add(window, WorldObject::RigidBody(body));
                 //         },
                 WindowEvent::MouseButton(_, Action::Press, modifier) => {
+                    let physics_world = &mut self.world.get_mut();
+
                     if modifier.contains(Modifiers::Alt) {
                         let size = window.size();
                         let (pos, dir) = self
@@ -266,8 +301,7 @@ impl State for Testbed {
                         let mut minb = None;
 
                         let all_groups = CollisionGroups::new();
-                        for (b, inter) in self
-                            .world
+                        for (b, inter) in physics_world
                             .collider_world()
                             .interferences_with_ray(&ray, &all_groups)
                             {
@@ -283,10 +317,10 @@ impl State for Testbed {
                             if modifier.contains(Modifiers::Control) {
                                 if !body_part.is_ground() {
                                     self.graphics.remove_body_nodes(window, body_part.0);
-                                    self.world.remove_bodies(&[body_part.0]);
+                                    physics_world.remove_bodies(&[body_part.0]);
                                 }
                             } else {
-                                self.world.body_mut(body_part.0)
+                                physics_world.body_mut(body_part.0)
                                     .unwrap()
                                     .apply_force_at_point(body_part.1,
                                                           &(ray.dir.normalize() * 0.01),
@@ -323,8 +357,7 @@ impl State for Testbed {
                         let mut minb = None;
 
                         let all_groups = CollisionGroups::new();
-                        for (b, inter) in self
-                            .world
+                        for (b, inter) in physics_world
                             .collider_world()
                             .interferences_with_ray(&ray, &all_groups)
                             {
@@ -337,7 +370,7 @@ impl State for Testbed {
                             }
 
                         if let Some(body_part_handle) = minb {
-                            if self.world.body(body_part_handle.0).unwrap().status_dependent_ndofs() != 0 {
+                            if physics_world.body(body_part_handle.0).unwrap().status_dependent_ndofs() != 0 {
                                 self.grabbed_object = minb;
                                 for n in self
                                     .graphics
@@ -346,12 +379,12 @@ impl State for Testbed {
                                     .iter_mut()
                                     {
                                         if let Some(joint) = self.grabbed_object_constraint {
-                                            self.world.remove_constraint(joint);
+                                            physics_world.remove_constraint(joint);
                                         }
 
                                         let attach1 = ray.origin + ray.dir * mintoi;
                                         let attach2 = {
-                                            let body = self.world.body(body_part_handle.0).unwrap();
+                                            let body = physics_world.body(body_part_handle.0).unwrap();
                                             let part = body.part(body_part_handle.1).unwrap();
                                             body.material_point_at_world_point(part, &attach1)
                                         };
@@ -364,7 +397,7 @@ impl State for Testbed {
                                         );
                                         self.grabbed_object_plane = (attach1, -ray.dir);
                                         self.grabbed_object_constraint =
-                                            Some(self.world.add_constraint(constraint));
+                                            Some(physics_world.add_constraint(constraint));
                                         n.select()
                                     }
                             }
@@ -386,13 +419,16 @@ impl State for Testbed {
                     }
 
                     if let Some(joint) = self.grabbed_object_constraint {
-                        let _ = self.world.remove_constraint(joint);
+                        let physics_world = &mut self.world.get_mut();
+                        let _ = physics_world.remove_constraint(joint);
                     }
 
                     self.grabbed_object = None;
                     self.grabbed_object_constraint = None;
                 }
                 WindowEvent::CursorPos(x, y, modifiers) => {
+                    let physics_world = &mut self.world.get_mut();
+
                     self.cursor_pos.x = x as f32;
                     self.cursor_pos.y = y as f32;
 
@@ -408,8 +444,7 @@ impl State for Testbed {
                         if let Some(inter) =
                         query::ray_internal::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir))
                             {
-                                let joint = self
-                                    .world
+                                let joint = physics_world
                                     .constraint_mut(joint)
                                     .downcast_mut::<MouseConstraint<f32>>()
                                     .unwrap();
@@ -440,8 +475,10 @@ impl State for Testbed {
                 //             // }
                 //         },
                 WindowEvent::Key(Key::Space, Action::Release, _) => {
+                    let physics_world = &mut self.world.get_mut();
+
                     self.draw_colls = !self.draw_colls;
-                    for co in self.world.colliders() {
+                    for co in physics_world.colliders() {
                         // FIXME: ugly clone.
                         if let Some(ns) =
                         self.graphics.body_nodes_mut(co.body())
@@ -476,8 +513,8 @@ impl State for Testbed {
 
                 //          rb.set_lin_vel(front * 40.0f32);
 
-                //          let body = self.world.add_rigid_body(rb);
-                //          graphics.add(window, body, &self.world.rigid_bodies());
+                //          let body = physics_world.add_rigid_body(rb);
+                //          graphics.add(window, body, &physics_world.rigid_bodies());
                 //      },
                 //      WindowEvent::Key(Key::Num2, _, Action::Press, _) => {
                 //          let mut graphics = self.graphics;
@@ -497,7 +534,7 @@ impl State for Testbed {
 
                 //          rb.set_lin_vel(front * 40.0f32);
 
-                //          let body = self.world.add_rigid_body(rb);
+                //          let body = physics_world.add_rigid_body(rb);
                 //          graphics.add(window, body, &self.world.rigid_bodies());
                 //      }
                 _ => {}
@@ -508,22 +545,27 @@ impl State for Testbed {
             // let before = time::precise_time_s();
             for _ in 0..self.nsteps {
                 for f in &self.callbacks {
-                    f(&mut self.world, &mut self.graphics, self.time)
+                    f(&mut *self.world, &mut self.graphics, self.time)
                 }
-                self.world.step();
+
+                let mut world = self.world.get_mut();
+                world.step();
                 if !self.hide_counters {
-                    println!("{}", self.world.performance_counters());
+                    #[cfg(not(feature = "log"))]
+                    println!("{}", world.performance_counters());
+                    #[cfg(feature = "log")]
+                    debug!("{}", world.performance_counters());
                 }
-                self.time += self.world.timestep();
+                self.time += world.timestep();
             }
 
-            self.graphics.draw(&self.world, window);
+            self.graphics.draw(&self.world.get(), window);
         }
 
         if self.draw_colls {
             draw_collisions(
                 window,
-                &mut self.world,
+                &self.world.get(),
                 &mut self.persistant_contacts,
                 self.running != RunMode::Stop,
             );
@@ -541,7 +583,7 @@ impl State for Testbed {
                 &format!(
                     "Simulation time: {:.*}sec.",
                     4,
-                    self.world.performance_counters().step_time()
+                    self.world.get().performance_counters().step_time()
                 )[..],
                 &Point2::origin(),
                 60.0,
@@ -555,7 +597,7 @@ impl State for Testbed {
     }
 }
 
-const CONTROLS: &'static str = "Controls:
+const CONTROLS: &str = "Controls:
     Ctrl + click + drag: select and move a solid.
     Left click + drag: rotate the camera.
     Right click + drag: pan the camera.
@@ -571,13 +613,14 @@ fn draw_collisions(
 ) {
     for (_, _, _, manifold) in world.collider_world().contact_pairs(false) {
         for c in manifold.contacts() {
-            if existing.contains_key(&c.id) {
-                if running {
-                    existing.insert(c.id, true);
-                }
-            } else {
-                existing.insert(c.id, false);
-            }
+            existing
+                .entry(c.id)
+                .and_modify(|value| {
+                    if running {
+                        *value = true
+                    }
+                })
+                .or_insert(false);
 
             let color = if c.contact.depth < 0.0 { // existing[&c.id] {
                 Point3::new(0.0, 0.0, 1.0)

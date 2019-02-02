@@ -131,11 +131,7 @@ pub fn update_scene_node(
     color: &Point3<f32>,
     delta: &Isometry3<f32>,
 ) {
-    let co = world.collider(coll).unwrap();
-    // let active = world.body(co.body()).is_active();
-
-    if true {
-        // active {
+    if let Some(co) = world.collider(coll) {
         node.set_local_transformation(co.position() * delta);
         node.set_color(color.x, color.y, color.z);
     } else {

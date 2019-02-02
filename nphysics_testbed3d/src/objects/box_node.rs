@@ -29,11 +29,11 @@ impl Box {
         let gz = rz * 2.0;
 
         let mut res = Box {
-            color: color,
+            color,
             base_color: color,
-            delta: delta,
+            delta,
             gfx: window.add_cube(gx, gy, gz),
-            collider: collider,
+            collider,
         };
 
         if world

@@ -32,8 +32,8 @@ pub fn convex_polyline_area_and_center_of_mass_unchecked<N: Real>(
             &geometric_center,
         );
 
-        res = res + center.coords * area;
-        areasum = areasum + area;
+        res += center.coords * area;
+        areasum += area;
     }
 
     if areasum.is_zero() {
@@ -78,7 +78,7 @@ pub fn convex_polyline_mass_properties_unchecked<N: Real>(
 
         let ipart = factor * (intx2 + inty2);
 
-        itot = itot + ipart * area;
+        itot += ipart * area;
     }
 
     (area * density, com, itot * density)
@@ -100,7 +100,7 @@ pub fn convex_polyline_area_unchecked<N: Real>(convex_polyline: &[Point<N>]) -> 
             &geometric_center,
         );
 
-        areasum = areasum + area;
+        areasum += area;
     }
 
     areasum
@@ -256,8 +256,9 @@ mod test {
         // real moment of inertia but divided by the area of the triangle
         // formula taken from http://www.efunda.com/math/areas/triangle.cfm
         let area = b * h / 2.0;
-        let real_moi = (b.powf(3.0) * h - b.powf(2.0) * h * a + b * h * a.powf(2.0)
-            + b * h.powf(3.0)) / (36.0 * area);
+        let real_moi =
+            (b.powf(3.0) * h - b.powf(2.0) * h * a + b * h * a.powf(2.0) + b * h.powf(3.0))
+                / (36.0 * area);
         let expected = Matrix1::new(real_moi);
 
         // convex shape
