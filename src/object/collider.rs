@@ -375,7 +375,7 @@ impl<N: Real> ColliderDesc<N> {
         collision_groups, set_collision_groups, collision_groups: CollisionGroups
         linear_prediction, set_linear_prediction, linear_prediction: N
         angular_prediction, set_angular_prediction, angular_prediction: N
-        as_sensor, set_as_sensor, is_sensor: bool
+        sensor, set_is_sensor, is_sensor: bool
         position, set_position, position: Isometry<N>
     );
 
@@ -402,7 +402,7 @@ impl<N: Real> ColliderDesc<N> {
         [val] get_collision_groups -> collision_groups: CollisionGroups
         [val] get_linear_prediction -> linear_prediction: N
         [val] get_angular_prediction -> angular_prediction: N
-        [val] get_is_sensor -> is_sensor: bool
+        [val] is_sensor -> is_sensor: bool
         [ref] get_position -> position: Isometry<N>
     );
 

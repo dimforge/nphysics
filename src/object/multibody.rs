@@ -324,8 +324,12 @@ impl<N: Real> Multibody<N> {
 
     /// Computes the constant terms of the dynamics.
     fn update_dynamics(&mut self, dt: N) {
-        if !self.update_status.inertia_needs_update() {
+        if !self.update_status.inertia_needs_update() || self.status != BodyStatus::Dynamic {
             return;
+        }
+
+        if !self.is_active() {
+            self.activate();
         }
 
         /*
@@ -877,7 +881,7 @@ impl<N: Real> Body<N> for Multibody<N> {
 
     #[inline]
     fn deactivate(&mut self) {
-        self.update_status.set_velocity_changed(true);
+        self.update_status.clear();
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
@@ -1146,9 +1150,8 @@ impl<N: Real> Body<N> for Multibody<N> {
                 self.velocities.axpy(N::one(), dvel, N::one());
             }
             ForceType::AccelerationChange => {
-                let acc = &mut self.workspace.ndofs_vec;
-                acc.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::zero());
-                self.forces.gemv(N::one(), &self.augmented_mass, acc, N::one())
+                let force = self.rbs[part_id].inertia * *force;
+                self.forces.gemv_tr(N::one(), &self.body_jacobians[part_id], force.as_vector(), N::one());
             }
             ForceType::VelocityChange => {
                 self.update_status.set_velocity_changed(true);

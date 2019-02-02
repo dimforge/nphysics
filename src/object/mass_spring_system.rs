@@ -386,7 +386,7 @@ impl<N: Real> MassSpringSystem<N> {
     }
 
     fn update_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.accelerations.fill(N::zero());
+        self.accelerations.copy_from(&self.forces);
 
         for spring in &mut self.springs {
             let kinematic1 = self.kinematic_nodes[spring.nodes.0 / DIM];
@@ -501,6 +501,10 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 
     fn update_dynamics(&mut self, dt: N) {
         if self.update_status.inertia_needs_update() && self.status == BodyStatus::Dynamic {
+            if !self.is_active() {
+                self.activate();
+            }
+
             self.update_augmented_mass(dt);
         }
     }
@@ -584,7 +588,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     }
 
     fn deactivate(&mut self) {
-        self.update_status.set_velocity_changed(true);
+        self.update_status.clear();
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
@@ -715,14 +719,11 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
                 self.velocities += &*dvel;
             }
             ForceType::AccelerationChange => {
-                let acceleration = &mut self.workspace;
-                acceleration.fill(N::zero());
                 for i in 0..indices.len() {
                     if !self.kinematic_nodes[indices[i] / DIM] {
-                        acceleration.fixed_rows_mut::<Dim>(indices[i]).copy_from(&forces[i]);
+                        self.forces.fixed_rows_mut::<Dim>(indices[i]).add_assign(forces[i] * self.node_mass);
                     }
                 }
-                self.forces.gemv(N::one(), &self.augmented_mass, acceleration, N::one())
             }
             ForceType::VelocityChange => {
                 for i in 0..indices.len() {
@@ -854,7 +855,7 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
 
     desc_custom_setters!(
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
-        self.kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.name, set_name, name: String | { self.name = name }
     );

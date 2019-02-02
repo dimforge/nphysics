@@ -4,6 +4,10 @@ use na::{self, Real};
 pub struct IntegrationParameters<N: Real> {
     /// The timestep (default: `1.0 / 60.0`)
     pub dt: N,
+    /// The total elapsed time in the physics world.
+    ///
+    /// This is the accumulation of the `dt` of all the calls to `world.step()`.
+    pub t: N,
     /// The Error Reduction Parameter in `[0, 1]` is the proportion of
     /// the positional error to be corrected at each time step (default: `0.2`).
     pub erp: N,
@@ -48,6 +52,7 @@ impl<N: Real> IntegrationParameters<N> {
         max_position_iterations: usize,
     ) -> Self {
         IntegrationParameters {
+            t: N::zero(),
             dt,
             erp,
             warmstart_coeff,

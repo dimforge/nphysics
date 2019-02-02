@@ -41,7 +41,7 @@ fn main() {
         .translation(Vector2::y() * 1.0)
         .young_modulus(1.0e4)
         .mass_damping(0.2)
-        .boundary_polyline_collider(true)
+        .collider_enabled(true)
         .build(&mut world)
         .handle();
 
@@ -78,6 +78,7 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
+    testbed.hide_performance_counters();
     testbed.set_body_color(deformable_handle, Point3::new(0.0, 0.0, 1.0));
     testbed.look_at(Point2::new(0.0, -3.0), 100.0);
     testbed.run();

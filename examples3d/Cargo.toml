@@ -17,6 +17,9 @@ path = "../build/nphysics3d"
 [dependencies.nphysics_testbed3d]
 path = "../nphysics_testbed3d"
 
+[[bin]]
+name = "plasticity3"
+path = "./plasticity3.rs"
 
 [[bin]]
 name = "collision_groups3"
@@ -79,8 +82,8 @@ name = "fixed_bug_tree_like_multibody3"
 path = "./fixed_bug_tree_like_multibody3.rs"
 
 [[bin]]
-name = "gravity3"
-path = "./gravity3.rs"
+name = "force_generator3"
+path = "./force_generator3.rs"
 
 [[bin]]
 name = "known_bug_excentric_convex3"
@@ -114,9 +117,6 @@ path = "./wall3.rs"
 name = "fem_volume3"
 path = "./fem_volume3.rs"
 
-[[bin]]
-name = "plasticity3"
-path = "./plasticity3.rs"
 
 [[bin]]
 name = "mass_spring_system3"

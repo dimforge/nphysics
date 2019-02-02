@@ -90,7 +90,7 @@ impl<N: Real> ColliderWorld<N> {
     }
 
     /// Adds a collider to the world.
-    pub fn add(
+    pub(crate) fn add(
         &mut self,
         position: Isometry<N>,
         shape: ShapeHandle<N>,
@@ -145,7 +145,7 @@ impl<N: Real> ColliderWorld<N> {
     /// Removed the specified set of colliders from the world.
     ///
     /// Panics of any handle is invalid, or if the list contains duplicates.
-    pub fn remove(&mut self, handles: &[ColliderHandle]) {
+    pub(crate) fn remove(&mut self, handles: &[ColliderHandle]) {
         // Update the collider lists.
         for handle in handles {
             if let Some(co) = self.collider(*handle) {
@@ -176,7 +176,7 @@ impl<N: Real> ColliderWorld<N> {
     }
 
     /// Remove all the colliders attached to `body`.
-    pub fn remove_body_colliders(&mut self, body: BodyHandle) {
+    pub(crate) fn remove_body_colliders(&mut self, body: BodyHandle) {
         let mut curr = try_ret!(self.collider_lists.get(&body)).0;
 
         loop {
@@ -213,7 +213,7 @@ impl<N: Real> ColliderWorld<N> {
     ///
     /// Returns an empty iterator if the body part does not exists.
     /// Does not return deformable colliders.
-    pub fn body_part_collider(&self, handle: BodyPartHandle) -> impl Iterator<Item = &Collider<N>> {
+    pub fn body_part_colliders(&self, handle: BodyPartHandle) -> impl Iterator<Item = &Collider<N>> {
         self.body_colliders(handle.0).filter(move |co| {
             match co.anchor() {
                 ColliderAnchor::OnBodyPart { body_part, .. } => *body_part == handle,
@@ -228,7 +228,7 @@ impl<N: Real> ColliderWorld<N> {
     }
 
     /// Apply the given deformations to the specified object.
-    pub fn set_deformations(
+    pub(crate) fn set_deformations(
         &mut self,
         handle: ColliderHandle,
         coords: &[N],
@@ -277,11 +277,7 @@ impl<N: Real> ColliderWorld<N> {
 
     /// Returns a mutable reference to the collider identified by its handle.
     #[inline]
-    pub fn collider_mut(
-        &mut self,
-        handle: ColliderHandle,
-    ) -> Option<&mut Collider<N>>
-    {
+    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N>> {
         self.cworld.collision_object_mut(handle).map(|co| Collider::from_mut(co))
     }
 

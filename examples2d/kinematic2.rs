@@ -107,20 +107,21 @@ fn main() {
      */
     let mut testbed = Testbed::new(world);
     testbed.add_callback(move |world, _, time| {
-        let platform = world.rigid_body_mut(platform_handle).unwrap();
-        let platform_x = platform.position().translation.vector.x;
+        if let Some(platform) = world.rigid_body_mut(platform_handle) {
+            let platform_x = platform.position().translation.vector.x;
 
-        let mut vel = *platform.velocity();
-        vel.linear.y = (time * 5.0).sin() * 0.8;
+            let mut vel = *platform.velocity();
+            vel.linear.y = (time * 5.0).sin() * 0.8;
 
-        if platform_x >= rad * 10.0 {
-            vel.linear.x = -1.0;
+            if platform_x >= rad * 10.0 {
+                vel.linear.x = -1.0;
+            }
+            if platform_x <= -rad * 10.0 {
+                vel.linear.x = 1.0;
+            }
+
+            platform.set_velocity(vel);
         }
-        if platform_x <= -rad * 10.0 {
-            vel.linear.x = 1.0;
-        }
-
-        platform.set_velocity(vel);
     });
 
     /*

@@ -366,10 +366,13 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn update_dynamics(&mut self, _: N) {
+        if self.update_status.inertia_needs_update() && self.status == BodyStatus::Dynamic && !self.is_active() {
+            self.activate();
+        }
     }
 
     fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.accelerations.fill(N::zero());
+        self.accelerations.copy_from(&self.forces);
 
         if self.gravity_enabled {
             let gravity_acc = gravity;
@@ -488,7 +491,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     }
 
     fn deactivate(&mut self) {
-        self.update_status.set_velocity_changed(true);
+        self.update_status.clear();
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
@@ -869,7 +872,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
 
     desc_custom_setters!(
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
-        self.kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.name, set_name, name: String | { self.name = name }
     );

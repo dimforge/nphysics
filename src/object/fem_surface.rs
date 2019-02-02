@@ -291,6 +291,8 @@ impl<N: Real> FEMSurface<N> {
         let _2: N = na::convert(2.0);
         let dt = params.dt;
 
+        self.accelerations.copy_from(&self.forces);
+
         // Gravity
         if self.gravity_enabled {
             for elt in self.elements.iter().filter(|e| e.surface > N::zero()) {
@@ -673,6 +675,10 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     /// Update the dynamics property of this deformable surface.
     fn update_dynamics(&mut self, dt: N) {
         if self.update_status.inertia_needs_update() && self.status == BodyStatus::Dynamic {
+            if !self.is_active() {
+                self.activate();
+            }
+
             self.augmented_mass.fill(N::zero());
             self.assemble_mass_with_damping(dt);
             self.assemble_stiffness(dt);
@@ -689,7 +695,6 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     fn update_acceleration(&mut self,
                            gravity: &Vector<N>,
                            params: &IntegrationParameters<N>) {
-        self.accelerations.fill(N::zero());
         self.assemble_forces(gravity, params);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
@@ -765,7 +770,7 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     }
 
     fn deactivate(&mut self) {
-        self.update_status.set_velocity_changed(true);
+        self.update_status.clear();
         self.activation.set_energy(N::zero());
         self.velocities.fill(N::zero());
     }
@@ -880,14 +885,13 @@ impl<N: Real> Body<N> for FEMSurface<N> {
                 self.velocities += &*dvel;
             }
             ForceType::AccelerationChange => {
-                let acceleration = &mut self.workspace;
-                acceleration.fill(N::zero());
+                let mass = element.density * element.surface;
+
                 for i in 0..3 {
                     if !self.kinematic_nodes[element.indices[i] / DIM] {
-                        acceleration.fixed_rows_mut::<Dim>(element.indices[i]).copy_from(&forces[i]);
+                        self.forces.fixed_rows_mut::<Dim>(element.indices[i]).add_assign(forces[i] * mass);
                     }
                 }
-                self.forces.gemv(N::one(), &self.augmented_mass, acceleration, N::one())
             }
             ForceType::VelocityChange => {
                 for i in 0..3 {
@@ -1016,7 +1020,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     desc_custom_setters!(
         self.collider_enabled, set_collider_enabled, enable: bool | { self.collider_enabled = enable }
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
-        self.kinematic_nodes, set_kinematic_nodes, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
+        self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
     );
 

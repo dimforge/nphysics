@@ -71,7 +71,7 @@ impl<N: Real> RigidBody<N> {
 
     user_data_accessors!();
 
-    pub fn set_kinematic_translations(&mut self, is_kinematic: Vector<bool>) {
+    pub fn set_translations_kinematic(&mut self, is_kinematic: Vector<bool>) {
         self.update_status.set_status_changed(true);
         for i in 0..DIM {
             self.jacobian_mask[i] = if is_kinematic[i] { N::zero() } else { N::one() }
@@ -79,7 +79,7 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[cfg(feature = "dim3")]
-    pub fn set_kinematic_rotations(&mut self, is_kinematic: Vector<bool>) {
+    pub fn set_rotations_kinematic(&mut self, is_kinematic: Vector<bool>) {
         self.update_status.set_status_changed(true);
         self.jacobian_mask[3] = if is_kinematic.x { N::zero() } else { N::one() };
         self.jacobian_mask[4] = if is_kinematic.y { N::zero() } else { N::one() };
@@ -87,7 +87,7 @@ impl<N: Real> RigidBody<N> {
     }
 
     #[cfg(feature = "dim2")]
-    pub fn set_kinematic_rotation(&mut self, is_kinematic: bool) {
+    pub fn set_rotation_kinematic(&mut self, is_kinematic: bool) {
         self.update_status.set_status_changed(true);
         self.jacobian_mask[2] = if is_kinematic { N::zero() } else { N::one() };
     }
@@ -108,6 +108,57 @@ impl<N: Real> RigidBody<N> {
     #[cfg(feature = "dim2")]
     pub fn kinematic_rotation(&self) -> bool {
         self.jacobian_mask[2].is_zero()
+    }
+
+    /// Disable all rotations of this rigid body.
+    ///
+    /// This is the same as setting all the rotations of this rigid body as kinematic and setting
+    /// its angular velocity to zero. The rotations will still be controllable at the velocity level
+    /// by the user afterwards.
+    pub fn disable_all_rotations(&mut self) {
+        self.update_status.set_velocity_changed(true);
+        #[cfg(feature = "dim3")]
+            {
+                self.set_rotations_kinematic(Vector::repeat(true));
+                self.velocity.angular = Vector::zeros();
+            }
+        #[cfg(feature = "dim2")]
+            {
+                self.set_rotation_kinematic(true);
+                self.velocity.angular = N::zero();
+            }
+    }
+
+    /// Enable all rotations for this rigid body.
+    ///
+    /// This is the same as setting all the rotations of this rigid body as non-kinematic.
+    pub fn enable_all_rotations(&mut self) {
+        #[cfg(feature = "dim3")]
+            {
+                self.set_rotations_kinematic(Vector::repeat(false))
+            }
+        #[cfg(feature = "dim2")]
+            {
+                self.set_rotation_kinematic(false)
+            }
+    }
+
+    /// Disable all translations of this rigid body.
+    ///
+    /// This is the same as setting all the translations of this rigid body as kinematic and setting
+    /// its linear velocity to zero. The translations will still be controllable at the velocity level
+    /// by the user afterwards.
+    pub fn disable_all_translations(&mut self) {
+        self.update_status.set_velocity_changed(true);
+        self.set_translations_kinematic(Vector::repeat(true));
+        self.velocity.linear = Vector::zeros();
+    }
+
+    /// Enable all translations for this rigid body.
+    ///
+    /// This is the same as setting all the translations of this rigid body as non-kinematic.
+    pub fn enable_all_translations(&mut self) {
+        self.set_translations_kinematic(Vector::repeat(false))
     }
 
     #[inline]
@@ -258,7 +309,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn deactivate(&mut self) {
-        self.update_status.set_velocity_changed(true);
+        self.update_status.clear();
         self.activation.set_energy(N::zero());
         self.velocity = Velocity::zero();
     }
@@ -351,8 +402,12 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[allow(unused_variables)] // for params used only in 3D.
     fn update_dynamics(&mut self, dt: N) {
-        if !self.update_status.inertia_needs_update() {
+        if !self.update_status.inertia_needs_update() || self.status != BodyStatus::Dynamic {
             return;
+        }
+
+        if !self.is_active() {
+            self.activate();
         }
 
         match self.status {
@@ -644,7 +699,6 @@ pub struct RigidBodyDesc<'a, N: Real> {
     gravity_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
-    surface_velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
     status: BodyStatus,
@@ -665,7 +719,6 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
             gravity_enabled: true,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
-            surface_velocity: Velocity::zero(),
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
             status: BodyStatus::Dynamic,
@@ -682,14 +735,14 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
         self.rotation, set_rotation, axisangle: Vector<N> | { self.position.rotation = Rotation::new(axisangle) }
-        self.kinematic_rotations, set_kinematic_rotations, kinematic_rotations: Vector<bool> | { self.kinematic_rotations = kinematic_rotations }
+        self.kinematic_rotations, set_rotations_kinematic, kinematic_rotations: Vector<bool> | { self.kinematic_rotations = kinematic_rotations }
         self.angular_inertia, set_angular_inertia, angular_inertia: na::Matrix3<N> | { self.local_inertia.angular = angular_inertia }
     );
 
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
         self.rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
-        self.kinematic_rotation, set_kinematic_rotation, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
+        self.kinematic_rotation, set_rotation_kinematic, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
         self.angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
@@ -705,11 +758,10 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         name, set_name, name: String
         position, set_position, position: Isometry<N>
         velocity, set_velocity, velocity: Velocity<N>
-        surface_velocity, set_surface_velocity, surface_velocity: Velocity<N>
         local_inertia, set_local_inertia, local_inertia: Inertia<N>
         local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
         sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
-        kinematic_translations, set_kinematic_translation, kinematic_translations: Vector<bool>
+        kinematic_translations, set_translations_kinematic, kinematic_translations: Vector<bool>
     );
 
     #[cfg(feature = "dim3")]
@@ -758,17 +810,17 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.set_local_center_of_mass(self.local_center_of_mass);
         rb.set_status(self.status);
         rb.set_deactivation_threshold(self.sleep_threshold);
-        rb.set_kinematic_translations(self.kinematic_translations);
+        rb.set_translations_kinematic(self.kinematic_translations);
         rb.enable_gravity(self.gravity_enabled);
         rb.set_name(self.name.clone());
 
         #[cfg(feature = "dim3")]
             {
-                rb.set_kinematic_rotations(self.kinematic_rotations);
+                rb.set_rotations_kinematic(self.kinematic_rotations);
             }
         #[cfg(feature = "dim2")]
             {
-                rb.set_kinematic_rotation(self.kinematic_rotation);
+                rb.set_rotation_kinematic(self.kinematic_rotation);
             }
 
         for desc in &self.colliders {

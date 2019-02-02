@@ -61,8 +61,8 @@ name = "disable_sleeping2"
 path = "./disable_sleeping2.rs"
 
 [[bin]]
-name = "gravity2"
-path = "./gravity2.rs"
+name = "force_generator2"
+path = "./force_generator2.rs"
 
 [[bin]]
 name = "multibody2"

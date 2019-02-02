@@ -52,7 +52,7 @@ fn main() {
         .young_modulus(1.0e2)
         .mass_damping(0.2)
         .plasticity(0.1, 5.0, 1.0e5)
-        .boundary_trimesh_collider(true)
+        .collider_enabled(true)
         .build(&mut world)
         .handle();
 

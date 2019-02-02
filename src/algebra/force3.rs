@@ -3,7 +3,7 @@ use na::{self, Point3, Real, U6, Vector, Vector3, Vector6, Isometry3};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
-/// A force with a linear and agular (torque) component.
+/// A force with a linear and angular (torque) component.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct Force3<N: Real> {

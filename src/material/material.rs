@@ -137,8 +137,8 @@ pub struct MaterialHandle<N: Real>(Arc<Box<Material<N>>>);
 impl<N: Real> MaterialHandle<N> {
     /// Creates a sharable shape handle from a shape.
     #[inline]
-    pub fn new<S: Material<N> + Clone>(shape: S) -> MaterialHandle<N> {
-        MaterialHandle(Arc::new(Box::new(shape)))
+    pub fn new<S: Material<N> + Clone>(material: S) -> MaterialHandle<N> {
+        MaterialHandle(Arc::new(Box::new(material)))
     }
 
     pub(crate) fn make_mut(&mut self) -> &mut Material<N> {

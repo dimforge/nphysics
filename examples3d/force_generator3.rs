@@ -84,6 +84,9 @@ fn main() {
         }
     }
 
+    /*
+     * Add the force generators to the world.
+     */
     world.add_force_generator(up_gravity);
     world.add_force_generator(down_gravity);
 

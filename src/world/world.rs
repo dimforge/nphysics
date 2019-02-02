@@ -346,6 +346,7 @@ impl<N: Real> World<N> {
             b.clear_update_flags();
         });
 
+        self.params.t += self.params.dt;
         self.counters.step_completed();
     }
 
@@ -461,11 +462,18 @@ impl<N: Real> World<N> {
         (&mut self.bodies, &mut self.cworld)
     }
 
-    /// Get a mutable reference to the specified collider.
+    /// Get a reference to the specified collider.
     ///
     /// Returns `None` if the handle does not correspond to a collider in this world.
     pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
         self.cworld.collider(handle)
+    }
+
+    /// Get a mutable reference to the specified collider.
+    ///
+    /// Returns `None` if the handle does not correspond to a collider in this world.
+    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N>> {
+        self.cworld.collider_mut(handle)
     }
 
     /// Gets the handle of the body the specified collider is attached to.
