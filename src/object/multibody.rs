@@ -1288,7 +1288,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         } else {
             let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
             // FIXME: keep the Err so the user gets a more meaningful error?
-            let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>().ok()?;
+            let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>()?;
             Some(self.do_build(mb, cworld, parent))
         }
     }

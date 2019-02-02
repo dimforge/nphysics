@@ -19,7 +19,7 @@ pub trait UnitJoint<N: Real>: Joint<N> {
     fn max_position(&self) -> Option<N>;
 }
 
-downcast!(<N> UnitJoint<N> where N: Real);
+impl_downcast!(UnitJoint<N> where N: Real);
 
 /// Computes the maximum number of velocity constraints to be applied by the given unit joint.
 pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) -> usize {

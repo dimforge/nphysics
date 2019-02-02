@@ -421,28 +421,28 @@ impl<N: Real> World<N> {
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody(&self, handle: BodyHandle) -> Option<&Multibody<N>> {
-        self.bodies.body(handle)?.downcast_ref::<Multibody<N>>().ok()
+        self.bodies.body(handle)?.downcast_ref::<Multibody<N>>()
     }
 
     /// Get a mutable reference to the multibody containing the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody_mut(&mut self, handle: BodyHandle) -> Option<&mut Multibody<N>> {
-        self.bodies.body_mut(handle)?.downcast_mut::<Multibody<N>>().ok()
+        self.bodies.body_mut(handle)?.downcast_mut::<Multibody<N>>()
     }
 
     /// Get a reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body(&self, handle: BodyHandle) -> Option<&RigidBody<N>> {
-        self.bodies.body(handle)?.downcast_ref::<RigidBody<N>>().ok()
+        self.bodies.body(handle)?.downcast_ref::<RigidBody<N>>()
     }
 
     /// Get a mutable reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body_mut(&mut self, handle: BodyHandle) -> Option<&mut RigidBody<N>> {
-        self.bodies.body_mut(handle)?.downcast_mut::<RigidBody<N>>().ok()
+        self.bodies.body_mut(handle)?.downcast_mut::<RigidBody<N>>()
     }
 
     /// Reference to the underlying collision world.

@@ -1,6 +1,6 @@
 #![allow(missing_docs)] // For downcast.
 
-use downcast::Any;
+use downcast_rs::Downcast;
 
 use na::{self, DVectorSlice, DVectorSliceMut, Real};
 use ncollide::shape::DeformationsType;
@@ -89,7 +89,7 @@ impl<N: Real> ActivationStatus<N> {
 }
 
 /// Trait implemented by all bodies supported by nphysics.
-pub trait Body<N: Real>: Any + Send + Sync {
+pub trait Body<N: Real>: Downcast + Send + Sync {
     /// The name of this body.
     fn name(&self) -> &str;
 
@@ -312,7 +312,7 @@ pub trait Body<N: Real>: Any + Send + Sync {
 }
 
 /// Trait implemented by each part of a body supported by nphysics.
-pub trait BodyPart<N: Real>: Any + Send + Sync {
+pub trait BodyPart<N: Real>: Downcast + Send + Sync {
     /// Returns `true` if this body part is the ground.
     fn is_ground(&self) -> bool {
         false
@@ -337,8 +337,8 @@ pub trait BodyPart<N: Real>: Any + Send + Sync {
     fn local_inertia(&self) -> Inertia<N>;
 }
 
-downcast!(<N> Body<N> where N: Real);
-downcast!(<N> BodyPart<N> where N: Real);
+impl_downcast!(Body<N> where N: Real);
+impl_downcast!(BodyPart<N> where N: Real);
 
 
 

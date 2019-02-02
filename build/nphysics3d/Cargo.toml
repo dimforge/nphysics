@@ -27,7 +27,7 @@ slab       = "0.4"
 alga       = "0.7"
 nalgebra   = { version = "0.16", features = [ "sparse" ] }
 approx     = "0.3"
-downcast   = "0.9"
+downcast-rs = "1.0"
 bitflags   = "1.0"
 ncollide3d = "0.17"
 

@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-use downcast::Any;
+use downcast_rs::Downcast;
 use na::{DVector, Real};
 
 use crate::detection::ColliderContactManifold;
@@ -9,7 +9,7 @@ use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, IntegrationParameters};
 
 /// The modeling of a contact.
-pub trait ContactModel<N: Real>: Any + Send + Sync {
+pub trait ContactModel<N: Real>: Downcast + Send + Sync {
     /// Maximum number of velocity constraint to be generated for each contact.
     fn num_velocity_constraints(&self, manifold: &ColliderContactManifold<N>) -> usize;
     /// Generate all constraints for the given contact manifolds.
@@ -30,4 +30,4 @@ pub trait ContactModel<N: Real>: Any + Send + Sync {
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>);
 }
 
-downcast!(<N> ContactModel<N> where N: Real);
+impl_downcast!(ContactModel<N> where N: Real);

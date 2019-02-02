@@ -1,4 +1,4 @@
-use downcast::Any;
+use downcast_rs::Downcast;
 use std::sync::Arc;
 use std::ops::Deref;
 use na::{self, Real};
@@ -73,11 +73,11 @@ impl<N: Real, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
     }
 }
 
-pub trait Material<N: Real>: Any + Send + Sync + MaterialClone<N> {
+pub trait Material<N: Real>: Downcast + Send + Sync + MaterialClone<N> {
     fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N>;
 }
 
-downcast!(<N> Material<N> where N: Real);
+impl_downcast!(Material<N> where N: Real);
 
 impl<N: Real> Clone for Box<Material<N>> {
     fn clone(&self) -> Box<Material<N>> {

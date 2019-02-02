@@ -75,7 +75,7 @@ The libraries needed to compile the examples are:
 #[macro_use]
 extern crate approx;
 #[macro_use]
-extern crate downcast;
+extern crate downcast_rs;
 #[macro_use]
 extern crate bitflags;
 
