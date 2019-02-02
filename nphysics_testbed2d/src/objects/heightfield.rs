@@ -25,13 +25,9 @@ impl HeightField {
         let mut vertices = Vec::new();
         let step = 1.0 / (heights.len() as f32 - 1.0);
 
-        for (i, ys) in heights.as_slice().windows(2).enumerate() {
-            if !heightfield.is_segment_removed(i) {
-                let a = Point2::new((i as f32 * step - 0.5) * scale.x, ys[0] * scale.y);
-                let b = Point2::new(((i + 1) as f32 * step - 0.5) * scale.x, ys[1] * scale.y);
-                vertices.push(a);
-                vertices.push(b);
-            }
+        for seg in heightfield.segments() {
+            vertices.push(*seg.a());
+            vertices.push(*seg.b());
         }
 
         let mut res = HeightField {
