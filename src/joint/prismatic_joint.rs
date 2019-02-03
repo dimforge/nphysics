@@ -58,7 +58,7 @@ impl<N: Real> PrismaticJoint<N> {
 
     /// The relative translation of the attached multibody links along the joint axis.
     pub fn translation(&self) -> Translation<N> {
-        Translation::from_vector(*self.axis * self.offset)
+        Translation::from(*self.axis * self.offset)
     }
 
     /// The lower limit of the relative displacement of the attached multibody links along the joint axis.
@@ -151,14 +151,14 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     #[cfg(feature = "dim3")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
         let trans =
-            Translation::from_vector(parent_shift - body_shift + self.axis.as_ref() * self.offset);
+            Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
         Isometry::from_parts(trans, Rotation::identity())
     }
 
     #[cfg(feature = "dim2")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
         let trans =
-            Translation::from_vector(parent_shift - body_shift + self.axis.as_ref() * self.offset);
+            Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
         Isometry::from_parts(trans, Rotation::identity())
     }
 

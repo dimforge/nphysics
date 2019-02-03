@@ -9,17 +9,26 @@ use crate::material::MaterialsCoefficientsTable;
 use crate::math::Vector;
 
 
+/// The context for determining the local material properties at a contact.
 #[derive(Copy, Clone)]
 pub struct MaterialContext<'a, N: Real> {
+    /// One of the two bodies involved in the contact.
     pub body: &'a Body<N>,
+    /// One of the two bodies part involved in the contact.
     pub body_part: &'a BodyPart<N>,
+    /// One of the two colliders involved in the contact.
     pub collider: &'a Collider<N>,
+    /// The contact.
     pub contact: &'a TrackedContact<N>,
+    /// Whether the bodies (and collider) in this structure are the first one involved in the
+    /// contact.
+    ///
+    /// This is `false` if the body involved in the contact is the second one.
     pub is_first: bool,
 }
 
 impl<'a, N: Real> MaterialContext<'a, N> {
-    pub fn new(body: &'a Body<N>, body_part: &'a BodyPart<N>, collider: &'a Collider<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
+    pub(crate) fn new(body: &'a Body<N>, body_part: &'a BodyPart<N>, collider: &'a Collider<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
         MaterialContext {
             body,
             body_part,
@@ -30,16 +39,33 @@ impl<'a, N: Real> MaterialContext<'a, N> {
     }
 }
 
+/// The way the friction and restitution coefficients of two materials should be combined.
 #[derive(Copy, Clone, Debug)]
 pub enum MaterialCombineMode {
+    /// Combination by averaging the coefficients from both materials.
     Average,
+    /// Combination by taking the min of the coefficients from both materials.
+    ///
+    /// Has precedence over the `Average` combine mode.
     Min,
+    /// Combination by multiplying the coefficients from both materials.
+    ///
+    /// Has precedence over the `Min` and `Average` combine modes.
     Multiply,
+    /// Combination by taking the max the coefficients from both materials.
+    ///
+    /// Has precedence over all other combine mode.
     Max,
+    /// Should not be used directly. This is set as a result of the `combine` method
+    /// if the combination was performed by a lookup on the `MaterialsCoefficientsTable`.
     Lookup // Same as Average if specified by the user.
 }
 
 impl MaterialCombineMode {
+    /// Combines two coefficients using their associated MaterialCombineMode.
+    ///
+    /// The combine mode with the highest precedence among the two provided determines
+    /// the actual formula used. Precedences are described on the `MaterialCombineMode` enum.
     #[inline]
     pub fn combine<N: Real>(a: (N, Self), b: (N, Self)) -> (N, MaterialCombineMode) {
         match (a.1, b.1) {
@@ -52,19 +78,27 @@ impl MaterialCombineMode {
     }
 }
 
+/// Computed material properties at a contact point.
 pub struct LocalMaterialProperties<N: Real> {
+    /// The optional material identifier used for pairwise material coefficient lookup table.
     pub id: Option<MaterialId>,
+    /// The friction coefficient and its combination mode.
     pub friction: (N, MaterialCombineMode),
+    /// The restitution coefficient and its combination mode.
     pub restitution: (N, MaterialCombineMode),
+    /// The surface velocity at this point.
     pub surface_velocity: Vector<N>,
 }
 
+/// An utility trait to clone material trait-objects.
 pub trait MaterialClone<N: Real> {
+    /// Clone a material trait-object.
     fn clone_box(&self) -> Box<Material<N>> {
         unimplemented!()
     }
 }
 
+/// The identifier of a material.
 pub type MaterialId = u32;
 
 impl<N: Real, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
@@ -73,7 +107,9 @@ impl<N: Real, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
     }
 }
 
+/// An abstract material.
 pub trait Material<N: Real>: Downcast + Send + Sync + MaterialClone<N> {
+    /// Retrieve the local material properties of a collider at the given contact point.
     fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N>;
 }
 
@@ -86,6 +122,7 @@ impl<N: Real> Clone for Box<Material<N>> {
 }
 
 impl<N: Real> Material<N> {
+    /// Combine two materials given their contexts and a material lookup table.
     pub fn combine<M1, M2>(
         table: &MaterialsCoefficientsTable<N>,
         material1: &M1,

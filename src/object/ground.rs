@@ -180,7 +180,7 @@ impl<N: Real> Body<N> for Ground<N> {
 
     #[inline]
     fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        Isometry::from_parts(Translation::from_vector(point.coords), na::one())
+        Isometry::from_parts(Translation::from(point.coords), na::one())
     }
 
     #[inline]

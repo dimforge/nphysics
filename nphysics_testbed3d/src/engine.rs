@@ -252,7 +252,7 @@ impl GraphicsManager {
         out: &mut Vec<Node>,
     ) {
         let pos = world.collider(object).unwrap().position();
-        let position = Point3::from_coordinates(pos.translation.vector);
+        let position = Point3::from(pos.translation.vector);
         let normal = pos * shape.normal();
 
         out.push(Node::Plane(Plane::new(

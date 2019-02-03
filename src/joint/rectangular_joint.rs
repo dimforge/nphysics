@@ -36,7 +36,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        let t = Translation3::from_vector(parent_shift - body_shift) * self.prism1.translation()
+        let t = Translation3::from(parent_shift - body_shift) * self.prism1.translation()
             * self.prism2.translation();
         Isometry3::from_parts(t, na::one())
     }

@@ -53,8 +53,8 @@ impl<N: Real> SignoriniModel<N> {
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let center1 = c.contact.world1 + c.contact.normal.unwrap() * data1.margin();
-        let center2 = c.contact.world2 - c.contact.normal.unwrap() * data2.margin();
+        let center1 = c.contact.world1 + c.contact.normal.into_inner() * data1.margin();
+        let center2 = c.contact.world2 - c.contact.normal.into_inner() * data2.margin();
         let dir = ForceDirection::Linear(-c.contact.normal);
         let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
         let mut rhs = c.contact.normal.dot(&props.surface_velocity);

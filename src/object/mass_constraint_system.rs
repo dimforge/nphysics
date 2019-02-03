@@ -278,14 +278,17 @@ impl<N: Real> MassConstraintSystem<N> {
         }
     }
 
+    /// The number of nodes of this mass-constraint system.
     pub fn num_nodes(&self) -> usize {
         self.positions.len() / DIM
     }
 
+    /// The handle of this body.
     pub fn handle(&self) -> BodyHandle {
         self.handle
     }
 
+    /// The total mass of this body.
     pub fn mass(&self) -> N {
         self.mass
     }
@@ -517,7 +520,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
         let pt = fem_helper::world_point_at_material_point(elt.indices, &self.positions, point);
-        Isometry::from_parts(Translation::from_vector(pt.coords), na::one())
+        Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
@@ -753,7 +756,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
     fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
         let dim = self.elements[part_id].indices.as_slice().len();
         let inv_dim: N = na::convert(1.0 / dim as f64);
-        let barycenter = Point::from_coordinates(Vector::repeat(inv_dim));
+        let barycenter = Point::from(Vector::repeat(inv_dim));
         self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
     }
 
@@ -817,6 +820,7 @@ enum MassConstraintSystemDescGeometry<'a, N: Real> {
     TriMesh(&'a TriMesh<N>),
 }
 
+/// A builder of a mass-constraint system.
 pub struct MassConstraintSystemDesc<'a, N: Real> {
     name: String,
     geom: MassConstraintSystemDescGeometry<'a, N>,
@@ -852,19 +856,23 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
         }
     }
 
+    /// Create a mass-constraints system form a triangle mesh.
     #[cfg(feature = "dim3")]
     pub fn from_trimesh(mesh: &'a TriMesh<N>) -> Self {
         Self::with_geometry(MassConstraintSystemDescGeometry::TriMesh(mesh))
     }
 
+    /// Create a mass-constraints system form a polygonal line.
     pub fn from_polyline(polyline: &'a Polyline<N>) -> Self {
         Self::with_geometry(MassConstraintSystemDescGeometry::Polyline(polyline))
     }
 
+    /// Create a quad-shaped body.
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
         Self::with_geometry(MassConstraintSystemDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
+    /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
         self.kinematic_nodes.clear();
         self
@@ -910,6 +918,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
         [ref] get_scale -> scale: Vector<N>
     );
 
+    /// Build a mass-constraint system.
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassConstraintSystem<N> {
         world.add_body(self)
     }

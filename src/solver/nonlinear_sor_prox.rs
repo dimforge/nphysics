@@ -10,7 +10,7 @@ use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGe
 use crate::math::Isometry;
 
 /// Non-linear position-based constraint solver using the SOR-Prox approach.
-pub struct NonlinearSORProx;
+pub(crate) struct NonlinearSORProx;
 
 impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.

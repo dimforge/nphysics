@@ -37,7 +37,7 @@ impl<N: Real> Joint<N> for SlotJoint<N> {
     }
 
     fn body_to_parent(&self) -> Isometry<N> {
-        let trans = Translation3::from_vector(self.shift + &*self.axis * self.pos);
+        let trans = Translation3::from(self.shift + &*self.axis * self.pos);
         let rot   = 
         Isometry::from_parts(trans, self.rot)
     }

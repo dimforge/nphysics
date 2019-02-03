@@ -80,6 +80,7 @@ impl<N: Real> Force2<N> {
         Vector1::new(self.angular)
     }
 
+    /// Apply the given transformation to this force.
     #[inline]
     pub fn transform_by(&self, m: &Isometry2<N>) -> Self {
         Self::new(m * self.linear, self.angular)

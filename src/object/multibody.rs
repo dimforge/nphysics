@@ -87,11 +87,13 @@ impl<N: Real> Multibody<N> {
 
     user_data_accessors!();
 
+    /// The first link of this multibody.
     #[inline]
     pub fn root(&self) -> &MultibodyLink<N> {
         &self.rbs[0]
     }
 
+    /// Mutable reference to the first link of this multibody.
     #[inline]
     pub fn root_mut(&mut self) -> &mut MultibodyLink<N> {
         &mut self.rbs[0]
@@ -113,6 +115,7 @@ impl<N: Real> Multibody<N> {
         self.rbs.get_mut(id)
     }
 
+    /// The links of this multibody with the given `name`.
     pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a MultibodyLink<N>> {
         self.rbs.iter().filter(move |l| l.name == name)
     }
@@ -680,11 +683,13 @@ impl<N: Real> Multibody<N> {
         DVectorSliceMut::from_slice(&mut self.velocities.as_mut_slice()[i..i + ndofs], ndofs)
     }
 
+    /// The generalized forces applied to this multibody at the next timestep.
     #[inline]
     pub fn generalized_force(&self) -> &DVector<N> {
         &self.forces
     }
 
+    /// Mutable reference to the generalized forces applied to this multibody at the next timestep.
     #[inline]
     pub fn generalized_force_mut(&mut self) -> &mut DVector<N> {
         &mut self.forces
@@ -927,7 +932,7 @@ impl<N: Real> Body<N> for Multibody<N> {
     #[inline]
     fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
-        link.local_to_world * Translation::from_vector(point.coords)
+        link.local_to_world * Translation::from(point.coords)
     }
 
     #[inline]
@@ -1189,6 +1194,7 @@ impl<N: Real> Body<N> for Multibody<N> {
 }
 
 
+/// A multibody builder.
 pub struct MultibodyDesc<'a, N: Real> {
     name: String,
     children: Vec<MultibodyDesc<'a, N>>,
@@ -1202,6 +1208,7 @@ pub struct MultibodyDesc<'a, N: Real> {
 }
 
 impl<'a, N: Real> MultibodyDesc<'a, N> {
+    /// Initialize a multibody builder with one link with one joint.
     pub fn new<J: Joint<N>>(joint: J) -> Self {
         MultibodyDesc {
             name: String::new(),
@@ -1216,6 +1223,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         }
     }
 
+    /// Add a children link to the multibody link represented by `self`.
     pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<'a, N> {
         let child = MultibodyDesc::new(joint);
 
@@ -1223,6 +1231,7 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
         self.children.last_mut().unwrap()
     }
 
+    /// Sets the joint of this multibody builder.
     pub fn set_joint<J: Joint<N>>(&mut self, joint: J) -> &mut Self {
         self.joint = Box::new(joint);
         self
@@ -1278,10 +1287,15 @@ impl<'a, N: Real> MultibodyDesc<'a, N> {
     );
 
 
+    /// Build into the `world` the multibody represented by `self` and its children.
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Multibody<N> {
         world.add_body(self)
     }
 
+    /// Adds the links represented by `self` and its children to the multibody identified by `parent`.
+    ///
+    /// If `parent` is the ground, then a new multibody is created.
+    /// If `parent` is not another multibody link, then `None` is returned.
     pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut MultibodyLink<N>> {
         if parent.is_ground() {
             Some(self.build(world).root_mut())

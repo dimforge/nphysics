@@ -99,7 +99,7 @@ impl<N: Real> FEMVolume<N> {
         let mut rest_positions = DVector::zeros(ndofs);
 
         for (i, pt)  in vertices.iter().enumerate() {
-            let pt = pos * Point3::from_coordinates(pt.coords.component_mul(&scale));
+            let pt = pos * Point3::from(pt.coords.component_mul(&scale));
             rest_positions.fixed_rows_mut::<U3>(i * 3).copy_from(&pt.coords);
         }
 
@@ -188,6 +188,7 @@ impl<N: Real> FEMVolume<N> {
         self.d2 = d2;
     }
 
+    /// The handle of this body.
     #[inline]
     pub fn handle(&self) -> BodyHandle {
         self.handle
@@ -683,7 +684,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
             );
             let j_det =  elt.j.determinant();
             elt.volume = j_det * na::convert(1.0 / 6.0);
-            elt.com = Point3::from_coordinates(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
+            elt.com = Point3::from(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
 
             /*
              * Compute the orientation.
@@ -843,7 +844,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
     fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Isometry3<N> {
         let elt = part.downcast_ref::<TetrahedralElement<N>>().expect("The provided body part must be a tetrahedral element");
         let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Tetrahedron(elt.indices), &self.positions, point);
-        Isometry3::from_parts(Translation3::from_vector(pt.coords), na::one())
+        Isometry3::from_parts(Translation3::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point3<N>) -> Point3<N> {
@@ -1022,6 +1023,7 @@ enum FEMVolumeDescGeometry<'a, N: Real> {
     Tetrahedrons(&'a [Point3<N>], &'a [Point4<usize>])
 }
 
+/// A builder for FEMVolume bodies.
 pub struct FEMVolumeDesc<'a, N: Real> {
     name: String,
     gravity_enabled: bool,
@@ -1061,14 +1063,17 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
         }
     }
 
+    /// Create a volume form the given tetrahedrons.
     pub fn new(vertices: &'a [Point3<N>], tetrahedrons: &'a [Point4<usize>]) -> Self {
         Self::with_geometry(FEMVolumeDescGeometry::Tetrahedrons(vertices, tetrahedrons))
     }
 
+    /// Create a cube-shaped body.
     pub fn cube(subdiv_x: usize, subdiv_y: usize, subdiv_z: usize) -> Self {
         Self::with_geometry(FEMVolumeDescGeometry::Cube(subdiv_x, subdiv_y, subdiv_z))
     }
 
+    /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
         self.kinematic_nodes.clear();
         self
@@ -1118,6 +1123,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
         [ref] get_scale -> scale: Vector3<N>
     );
 
+    /// Build a deformable volume.
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMVolume<N> {
         world.add_body(self)
     }

@@ -106,10 +106,12 @@ impl<N: Real> World<N> {
         &mut self.params
     }
 
+    /// Reference to the lookup table for friction and restitution coefficients.
     pub fn materials_coefficients_table(&self) -> &MaterialsCoefficientsTable<N> {
         &self.material_coefficients
     }
 
+    /// Mutable reference to the lookup table for friction and restitution coefficients.
     pub fn materials_coefficients_table_mut(&mut self) -> &mut MaterialsCoefficientsTable<N> {
         &mut self.material_coefficients
     }

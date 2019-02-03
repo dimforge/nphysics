@@ -33,8 +33,8 @@ impl<N: Real> Joint<N> for FixedJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let parent_trans = Translation::from_vector(*parent_shift);
-        let body_trans = Translation::from_vector(*body_shift);
+        let parent_trans = Translation::from(*parent_shift);
+        let body_trans = Translation::from(*body_shift);
         parent_trans * self.body_to_parent * body_trans
     }
 

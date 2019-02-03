@@ -267,7 +267,7 @@ impl State for Testbed {
                 //             let size = window.size();
                 //             let (pos, dir) = graphics.camera().unproject(&cursor_pos, &size);
 
-                //             rb.set_translation(Translation3::from_vector(pos.coords));
+                //             rb.set_translation(Translation3::from(pos.coords));
                 //             rb.set_lin_vel(dir * 1000.0f32);
 
                 //             let body = self.world.add_rigid_body(rb);

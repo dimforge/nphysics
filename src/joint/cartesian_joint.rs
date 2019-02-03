@@ -29,7 +29,7 @@ impl<N: Real> Joint<N> for CartesianJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let t = Translation::from_vector(parent_shift - body_shift + self.position);
+        let t = Translation::from(parent_shift - body_shift + self.position);
         Isometry::from_parts(t, na::one())
     }
 

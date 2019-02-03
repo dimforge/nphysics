@@ -129,12 +129,12 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 // FIXME: this compute the contact point locations (with margins) several times,
                 // it was already computed for the signorini law.
                 let center1 = c.contact.world1
-                    + c.contact.normal.unwrap() * manifold.collider1.margin();
+                    + c.contact.normal.into_inner() * manifold.collider1.margin();
                 let center2 = c.contact.world2
-                    - c.contact.normal.unwrap() * manifold.collider2.margin();
+                    - c.contact.normal.into_inner() * manifold.collider2.margin();
                 let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
-                Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
+                Vector::orthonormal_subspace_basis(&[c.contact.normal.into_inner()], |friction_dir| {
                     let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
                     let mut rhs = friction_dir.dot(&props.surface_velocity);
 

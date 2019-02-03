@@ -232,14 +232,17 @@ impl<N: Real> MassSpringSystem<N> {
         Self::from_trimesh(handle,&trimesh, mass, stiffness, damping_ratio)
     }
 
+    /// The total mass of this mass-spring system.
     pub fn mass(&self) -> N {
         self.mass
     }
 
+    /// The number of nodes of this mass-spring system.
     pub fn num_nodes(&self) -> usize {
         self.positions.len() / DIM
     }
 
+    /// The handle of this mass-spring system.
     pub fn handle(&self) -> BodyHandle {
         self.handle
     }
@@ -614,7 +617,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
         let pt = fem_helper::world_point_at_material_point(elt.indices, &self.positions, point);
-        Isometry::from_parts(Translation::from_vector(pt.coords), na::one())
+        Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
@@ -738,7 +741,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
     fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool) {
         let dim = self.elements[part_id].indices.as_slice().len();
         let inv_dim: N = na::convert(1.0 / dim as f64);
-        let barycenter = Point::from_coordinates(Vector::repeat(inv_dim));
+        let barycenter = Point::from(Vector::repeat(inv_dim));
         self.apply_force_at_local_point(part_id, &force.linear, &barycenter, force_type, auto_wake_up)
     }
 
@@ -800,6 +803,7 @@ enum MassSpringSystemDescGeometry<'a, N: Real> {
     TriMesh(&'a TriMesh<N>),
 }
 
+/// A builder for mass-spring systems.
 pub struct MassSpringSystemDesc<'a, N: Real> {
     name: String,
     geom: MassSpringSystemDescGeometry<'a, N>,
@@ -835,19 +839,23 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
         }
     }
 
+    /// Create a mass-constraints system form a triangle mesh.
     #[cfg(feature = "dim3")]
     pub fn from_trimesh(mesh: &'a TriMesh<N>) -> Self {
         Self::with_geometry(MassSpringSystemDescGeometry::TriMesh(mesh))
     }
 
+    /// Create a mass-constraints system form a polygonal line.
     pub fn from_polyline(polyline: &'a Polyline<N>) -> Self {
         Self::with_geometry(MassSpringSystemDescGeometry::Polyline(polyline))
     }
 
+    /// Create a quad-shaped body.
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
         Self::with_geometry(MassSpringSystemDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
+    /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
         self.kinematic_nodes.clear();
         self
@@ -893,6 +901,7 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
         [ref] get_scale -> scale: Vector<N>
     );
 
+    /// Builds a mass-spring system.
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassSpringSystem<N> {
         world.add_body(self)
     }

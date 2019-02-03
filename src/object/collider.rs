@@ -153,17 +153,18 @@ impl<N: Real> ColliderData<N> {
 }
 
 
+/// A geometric entity that can be attached to a body so it can be affected by contacts and proximity queries.
 #[repr(transparent)]
 pub struct Collider<N: Real>(pub CollisionObject<N, ColliderData<N>>);
 
 impl<N: Real> Collider<N> {
-    pub fn from_ref(co: &CollisionObject<N, ColliderData<N>>) -> &Self {
+    pub(crate) fn from_ref(co: &CollisionObject<N, ColliderData<N>>) -> &Self {
         unsafe {
             mem::transmute(co)
         }
     }
 
-    pub fn from_mut(co: &mut CollisionObject<N, ColliderData<N>>) -> &mut Self {
+    pub(crate) fn from_mut(co: &mut CollisionObject<N, ColliderData<N>>) -> &mut Self {
         unsafe {
             mem::transmute(co)
         }
@@ -172,21 +173,25 @@ impl<N: Real> Collider<N> {
     /*
      * Methods of ColliderData.
      */
+    /// The user-data attached to this collider.
     #[inline]
     pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
         self.0.data().user_data.as_ref().map(|d| &**d)
     }
 
+    /// Mutable reference to the user-data attached to this collider.
     #[inline]
     pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
         self.0.data_mut().user_data.as_mut().map(|d| &mut **d)
     }
 
+    /// Sets the user-data attached to this collider.
     #[inline]
     pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
         std::mem::replace(&mut self.0.data_mut().user_data, data)
     }
 
+    /// Replace the user-data of this collider by `None` and returns the old value.
     #[inline]
     pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
         self.0.data_mut().user_data.take()
@@ -315,6 +320,9 @@ impl<N: Real> Collider<N> {
     }
 }
 
+/// A non-deformable collider builder.
+///
+/// See https://www.nphysics.org/rigid_body_simulations_with_contacts/#colliders for details.
 pub struct ColliderDesc<N: Real> {
     name: String,
     margin: N,
@@ -329,6 +337,7 @@ pub struct ColliderDesc<N: Real> {
 }
 
 impl<N: Real> ColliderDesc<N> {
+    /// Creates a new collider builder with the given shape.
     pub fn new(shape: ShapeHandle<N>) -> Self {
         let linear_prediction = na::convert(0.001);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
@@ -347,6 +356,7 @@ impl<N: Real> ColliderDesc<N> {
         }
     }
 
+    /// The default margin surrounding a collider: 0.01
     pub fn default_margin() -> N {
         na::convert(0.01)
     }
@@ -406,10 +416,12 @@ impl<N: Real> ColliderDesc<N> {
         [ref] get_position -> position: Isometry<N>
     );
 
+    /// Builds a collider into the `world` attached to the body part `parent`.
     pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         self.do_build(parent, world)
     }
 
+    /// Builds a collider into the `world`.
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Collider<N> {
         self.do_build(BodyPartHandle::ground(), world).expect("The world should contain a Ground")
     }
@@ -458,6 +470,7 @@ impl<N: Real> ColliderDesc<N> {
 }
 
 
+/// A deformable collider builder.
 pub struct DeformableColliderDesc<N: Real> {
     name: String,
     margin: N,
@@ -471,6 +484,9 @@ pub struct DeformableColliderDesc<N: Real> {
 }
 
 impl<N: Real> DeformableColliderDesc<N> {
+    /// Creates a deformable collider from the given shape.
+    ///
+    /// Panics if the shape is not deformable.
     pub fn new(shape: ShapeHandle<N>) -> Self {
         assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
         let linear_prediction = na::convert(0.002);
@@ -489,12 +505,18 @@ impl<N: Real> DeformableColliderDesc<N> {
         }
     }
 
-    pub fn with_shape(mut self, shape: ShapeHandle<N>) -> Self {
+    /// Sets the shape of this collider builder.
+    ///
+    /// Panics if the shape is not deformable.
+    pub fn shape(mut self, shape: ShapeHandle<N>) -> Self {
         assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
         self.shape = shape;
         self
     }
 
+    /// Sets the shape of this collider builder.
+    ///
+    /// Panics if the shape is not deformable.
     pub fn set_shape(&mut self, shape: ShapeHandle<N>) -> &mut Self {
         assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
         self.shape = shape;
@@ -530,6 +552,7 @@ impl<N: Real> DeformableColliderDesc<N> {
         [val] get_is_sensor -> is_sensor: bool
     );
 
+    /// Builds a deformable collider attached to `parent` into the `world`.
     pub fn build_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
         let parent = bodies.body(parent)?;

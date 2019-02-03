@@ -103,9 +103,12 @@ impl<'a, N: Real> AbstractBodySet<'a, N> for BodySet<N> {
 }
 */
 
+/// A abstract body descriptor to be passed to the physics `World` to create a body.
 pub trait BodyDesc<N: Real> {
+    /// The type of body being generated.
     type Body: Body<N>;
 
+    /// Called by the `World` to create a body with the given allocated handle.
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> Self::Body;
 }
 

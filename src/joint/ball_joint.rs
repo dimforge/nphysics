@@ -40,7 +40,7 @@ impl<N: Real> Joint<N> for BallJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        let trans = Translation3::from_vector(parent_shift - self.rot * body_shift);
+        let trans = Translation3::from(parent_shift - self.rot * body_shift);
         Isometry3::from_parts(trans, self.rot)
     }
 

@@ -13,7 +13,7 @@ use crate::solver::ForceDirection;
 use crate::math::{Point, Isometry, Dim, DIM};
 
 
-pub fn elasticity_coefficients<N: Real>(young_modulus: N, poisson_ratio: N) -> (N, N, N) {
+pub(crate) fn elasticity_coefficients<N: Real>(young_modulus: N, poisson_ratio: N) -> (N, N, N) {
     let _1 = N::one();
     let _2: N = na::convert(2.0);
 
@@ -26,7 +26,7 @@ pub fn elasticity_coefficients<N: Real>(young_modulus: N, poisson_ratio: N) -> (
 
 /// Indices of the nodes of on element of a body decomposed in finite elements.
 #[derive(Copy, Clone, Debug)]
-pub enum FiniteElementIndices {
+pub(crate) enum FiniteElementIndices {
     #[cfg(feature = "dim3")]
     /// A tetrahedral element.
     Tetrahedron(Point4<usize>),
@@ -47,31 +47,31 @@ impl FiniteElementIndices {
         }
     }
 
-    #[inline]
-    pub fn len(&self) -> usize {
-        match self {
-            #[cfg(feature = "dim3")]
-            FiniteElementIndices::Tetrahedron(_) => 4,
-            FiniteElementIndices::Triangle(_) => 3,
-            FiniteElementIndices::Segment(_) => 2,
-        }
-    }
+//    #[inline]
+//    pub fn len(&self) -> usize {
+//        match self {
+//            #[cfg(feature = "dim3")]
+//            FiniteElementIndices::Tetrahedron(_) => 4,
+//            FiniteElementIndices::Triangle(_) => 3,
+//            FiniteElementIndices::Segment(_) => 2,
+//        }
+//    }
 }
 
 
 #[inline]
-pub fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub(crate) fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
-            Point::from_coordinates(a * (N::one() - point.x) + b * point.x)
+            Point::from(a * (N::one() - point.x) + b * point.x)
         }
         FiniteElementIndices::Triangle(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
             let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
-            Point::from_coordinates(a * (N::one() - point.x - point.y) + b * point.x + c * point.y)
+            Point::from(a * (N::one() - point.x - point.y) + b * point.x + c * point.y)
         }
         #[cfg(feature = "dim3")]
         FiniteElementIndices::Tetrahedron(indices) => {
@@ -79,7 +79,7 @@ pub fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, pos
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
             let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
             let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
-            Point::from_coordinates(a * (N::one() - point.x - point.y - point.z) + b * point.x + c * point.y + d * point.z)
+            Point::from(a * (N::one() - point.x - point.y - point.z) + b * point.x + c * point.y + d * point.z)
         }
     }
 }
@@ -88,15 +88,15 @@ pub fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, pos
 // because it makes it simpler to handle the case where we don't know at compile-time the
 // dimension of `indices`.
 #[inline]
-pub fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub(crate) fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
             let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
 
             let seg = Segment::new(
-                Point::from_coordinates(a),
-                Point::from_coordinates(b),
+                Point::from(a),
+                Point::from(b),
             );
 
             // FIXME: do we really want to project here? Even in 2D?
@@ -113,9 +113,9 @@ pub fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, pos
             let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
 
             let tri = Triangle::new(
-                Point::from_coordinates(a),
-                Point::from_coordinates(b),
-                Point::from_coordinates(c),
+                Point::from(a),
+                Point::from(b),
+                Point::from(c),
             );
 
             // FIXME: do we really want to project here? Even in 2D?
@@ -135,10 +135,10 @@ pub fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, pos
             let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
 
             let tetra = Tetrahedron::new(
-                Point3::from_coordinates(a),
-                Point3::from_coordinates(b),
-                Point3::from_coordinates(c),
-                Point3::from_coordinates(d),
+                Point3::from(a),
+                Point3::from(b),
+                Point3::from(c),
+                Point3::from(d),
             );
 
             // FIXME: what to do if this returns `None`?
@@ -149,7 +149,7 @@ pub fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, pos
 }
 
 #[inline]
-pub fn fill_contact_geometry_fem<N: Real>(
+pub(crate) fn fill_contact_geometry_fem<N: Real>(
     ndofs: usize,
     status: BodyStatus,
     indices: FiniteElementIndices,
@@ -187,8 +187,8 @@ pub fn fill_contact_geometry_fem<N: Real>(
                 let b = positions.fixed_rows::<Dim>(indices.y).into_owned();
 
                 let seg = Segment::new(
-                    Point::from_coordinates(a),
-                    Point::from_coordinates(b),
+                    Point::from(a),
+                    Point::from(b),
                 );
 
                 // FIXME: This is costly!
@@ -235,9 +235,9 @@ pub fn fill_contact_geometry_fem<N: Real>(
                 let c = positions.fixed_rows::<Dim>(indices.z).into_owned();
 
                 let tri = Triangle::new(
-                    Point::from_coordinates(a),
-                    Point::from_coordinates(b),
-                    Point::from_coordinates(c),
+                    Point::from(a),
+                    Point::from(b),
+                    Point::from(c),
                 );
 
                 // FIXME: This is costly!
@@ -295,10 +295,10 @@ pub fn fill_contact_geometry_fem<N: Real>(
                 let d = positions.fixed_rows::<Dim>(indices.w).into_owned();
 
                 let tetra = Tetrahedron::new(
-                    Point3::from_coordinates(a),
-                    Point3::from_coordinates(b),
-                    Point3::from_coordinates(c),
-                    Point3::from_coordinates(d),
+                    Point3::from(a),
+                    Point3::from(b),
+                    Point3::from(c),
+                    Point3::from(d),
                 );
 
                 // FIXME: what to do if this returns `None`?

@@ -120,6 +120,7 @@ impl<N: Real> MultibodyLink<N> {
         self.name = name
     }
 
+    /// The handle of this multibody link.
     #[inline]
     pub fn part_handle(&self) -> BodyPartHandle {
         BodyPartHandle(self.multibody_handle, self.internal_id)

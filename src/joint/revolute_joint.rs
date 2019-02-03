@@ -189,13 +189,13 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
 
     #[cfg(feature = "dim3")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let trans = Translation::from_vector(parent_shift - self.rot * body_shift);
+        let trans = Translation::from(parent_shift - self.rot * body_shift);
         Isometry::from_parts(trans, self.rot)
     }
 
     #[cfg(feature = "dim2")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let trans = Translation::from_vector(parent_shift - self.rot * body_shift);
+        let trans = Translation::from(parent_shift - self.rot * body_shift);
         Isometry::from_parts(trans, self.rot)
     }
 
@@ -203,7 +203,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
         let shift = self.rot * -body_shift;
         let shift_dot_veldiff = self.axis.gcross(&shift);
 
-        self.jacobian = Velocity::new_with_vectors(self.axis.gcross(&shift), self.axis.unwrap());
+        self.jacobian = Velocity::new_with_vectors(self.axis.gcross(&shift), self.axis.into_inner());
         self.jacobian_dot_veldiff.linear = self.axis.gcross(&shift_dot_veldiff);
         self.jacobian_dot.linear = self.jacobian_dot_veldiff.linear * vels[0];
     }

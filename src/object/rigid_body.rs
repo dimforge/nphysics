@@ -44,7 +44,7 @@ impl<N: Real> RigidBody<N> {
     /// Create a new rigid body with the specified handle and dynamic properties.
     fn new(handle: BodyHandle, position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
-        let com = Point::from_coordinates(position.translation.vector);
+        let com = Point::from(position.translation.vector);
 
         RigidBody {
             name: String::new(),
@@ -71,6 +71,7 @@ impl<N: Real> RigidBody<N> {
 
     user_data_accessors!();
 
+    /// Mark some translational degrees of freedom as kinematic.
     pub fn set_translations_kinematic(&mut self, is_kinematic: Vector<bool>) {
         self.update_status.set_status_changed(true);
         for i in 0..DIM {
@@ -78,6 +79,7 @@ impl<N: Real> RigidBody<N> {
         }
     }
 
+    /// Mark some rotational degrees of freedom as kinematic.
     #[cfg(feature = "dim3")]
     pub fn set_rotations_kinematic(&mut self, is_kinematic: Vector<bool>) {
         self.update_status.set_status_changed(true);
@@ -86,16 +88,20 @@ impl<N: Real> RigidBody<N> {
         self.jacobian_mask[5] = if is_kinematic.z { N::zero() } else { N::one() };
     }
 
+    /// Mark rotations as kinematic.
     #[cfg(feature = "dim2")]
     pub fn set_rotation_kinematic(&mut self, is_kinematic: bool) {
         self.update_status.set_status_changed(true);
         self.jacobian_mask[2] = if is_kinematic { N::zero() } else { N::one() };
     }
 
+
+    /// Flags indicating which translational degrees of freedoms are kinematic.
     pub fn kinematic_translations(&self) -> Vector<bool> {
         self.jacobian_mask.fixed_rows::<Dim>(0).map(|m| m.is_zero())
     }
 
+    /// Flags indicating which rotational degrees of freedoms are kinematic.
     #[cfg(feature = "dim3")]
     pub fn kinematic_rotations(&self) -> Vector<bool> {
         Vector::new(
@@ -105,6 +111,7 @@ impl<N: Real> RigidBody<N> {
         )
     }
 
+    /// Flags indicating if rotations are kinematic.
     #[cfg(feature = "dim2")]
     pub fn kinematic_rotation(&self) -> bool {
         self.jacobian_mask[2].is_zero()
@@ -161,11 +168,15 @@ impl<N: Real> RigidBody<N> {
         self.set_translations_kinematic(Vector::repeat(false))
     }
 
+    /// The handle of this rigid body.
     #[inline]
     pub fn handle(&self) -> BodyHandle {
         self.handle
     }
 
+    /// The part-handle of this rigid body.
+    ///
+    /// The part id is set to 0 though any value is acceptable.
     #[inline]
     pub fn part_handle(&self) -> BodyPartHandle {
         BodyPartHandle(self.handle, 0)
@@ -264,11 +275,13 @@ impl<N: Real> RigidBody<N> {
         &self.inv_augmented_mass
     }
 
+    /// The position of this rigid body.
     #[inline]
     pub fn position(&self) -> &Isometry<N> {
         &self.position
     }
 
+    /// The velocity of this rigid body.
     #[inline]
     pub fn velocity(&self) -> &Velocity<N> {
         &self.velocity
@@ -277,8 +290,8 @@ impl<N: Real> RigidBody<N> {
     #[inline]
     fn apply_displacement(&mut self, displacement: &Velocity<N>) {
         let rotation = Rotation::new(displacement.angular);
-        let translation = Translation::from_vector(displacement.linear);
-        let shift = Translation::from_vector(self.com.coords);
+        let translation = Translation::from(displacement.linear);
+        let shift = Translation::from(self.com.coords);
         let disp = translation * shift * rotation * shift.inverse();
         let new_pos = disp * self.position;
         self.set_position(new_pos);
@@ -479,7 +492,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
     #[inline]
     fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
-        self.position * Translation::from_vector(point.coords)
+        self.position * Translation::from(point.coords)
     }
 
     #[inline]
@@ -712,7 +725,7 @@ pub struct RigidBodyDesc<'a, N: Real> {
 }
 
 impl<'a, N: Real> RigidBodyDesc<'a, N> {
-
+    /// A default rigid body builder.
     pub fn new() -> Self {
         RigidBodyDesc {
             name: String::new(),
@@ -795,6 +808,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
+    /// Builds a rigid body and all its attached colliders.
     pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
         world.add_body(self)
     }

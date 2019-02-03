@@ -50,7 +50,7 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        Translation3::from_vector(self.revo.axis().as_ref() * self.revo.angle())
+        Translation3::from(self.revo.axis().as_ref() * self.revo.angle())
             * self.revo.body_to_parent(parent_shift, body_shift)
     }
 

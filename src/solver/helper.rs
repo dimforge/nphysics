@@ -606,7 +606,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
     let (ext_vels1, ext_vels2) = split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
     let mut i = 0;
-    AngularVector::orthonormal_subspace_basis(&[axis.unwrap()], |dir| {
+    AngularVector::orthonormal_subspace_basis(&[axis.into_inner()], |dir| {
         let dir = ForceDirection::Angular(Unit::new_unchecked(*dir));
         let mut rhs = N::zero();
         let geom = constraint_pair_geometry(
@@ -684,7 +684,7 @@ pub fn align_axis<N: Real>(
         let imin = axis1.iamin();
         error = Vector::zeros();
         error[imin] = N::one();
-        error = na::normalize(&error.cross(&axis1)) * N::pi();
+        error = error.cross(&axis1).normalize() * N::pi();
     }
 
     if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
@@ -755,7 +755,7 @@ pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
     let (ext_vels1, ext_vels2) = split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
     let mut i = 0;
-    Vector::orthonormal_subspace_basis(&[axis1.unwrap()], |dir| {
+    Vector::orthonormal_subspace_basis(&[axis1.into_inner()], |dir| {
         let dir = ForceDirection::Linear(Unit::new_unchecked(*dir));
         let mut rhs = N::zero();
 
@@ -825,7 +825,7 @@ pub fn project_anchor_to_axis<N: Real>(
 ) -> Option<GenericNonlinearConstraint<N>> {
     // Linear regularization of a point on an axis.
     let dpt = anchor2 - anchor1;
-    let proj = anchor1 + axis1.unwrap() * axis1.dot(&dpt);
+    let proj = anchor1 + axis1.into_inner() * axis1.dot(&dpt);
     let error = anchor2 - proj;
 
     if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
@@ -893,7 +893,7 @@ pub fn restore_angle_between_axis<N: Real>(
         let imin = axis1.iamin();
         separation = Vector::zeros();
         separation[imin] = N::one();
-        separation = na::normalize(&separation.cross(&axis1)) * N::pi();
+        separation = separation.cross(&axis1).normalize() * N::pi();
     }
 
     if let Some((mut dir, curr_ang)) = Unit::try_new_and_get(separation, N::default_epsilon()) {

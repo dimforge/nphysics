@@ -66,10 +66,10 @@ fn main() {
             }
 
             let center = aabb.center().coords;
-            let diag = na::norm(&(*aabb.maxs() - *aabb.mins()));
+            let diag = (*aabb.maxs() - *aabb.mins()).norm();
 
             for mut trimesh in meshes.into_iter() {
-                trimesh.translate_by(&Translation3::from_vector(-center));
+                trimesh.translate_by(&Translation3::from(-center));
                 trimesh.scale_by_scalar(6.0 / diag);
                 trimesh.split_index_buffer(true);
 

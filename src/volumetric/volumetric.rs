@@ -70,7 +70,7 @@ impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point2<N>) -> Matrix1<N> {
-        *self + Matrix1::new(mass * na::norm_squared(&pt.coords))
+        *self + Matrix1::new(mass * pt.coords.norm_squared())
     }
 }
 
@@ -89,7 +89,7 @@ impl<N: Real> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point3<N>) -> Matrix3<N> {
-        let diag = na::norm_squared(&pt.coords);
+        let diag = pt.coords.norm_squared();
         let diagm = Matrix3::new(
             diag,
             na::zero(),

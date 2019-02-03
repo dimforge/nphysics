@@ -108,7 +108,7 @@ pub trait Body<N: Real>: Downcast + Send + Sync {
         }
     }
 
-        /// Updates the kinematics, e.g., positions and jacobians, of this body.
+    /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);
 
     /// Update the dynamics property of this body.
@@ -120,8 +120,10 @@ pub trait Body<N: Real>: Downcast + Send + Sync {
     /// Reset the timestep-specific dynamic information of this body.
     fn clear_forces(&mut self);
 
+    /// Clear all the update flags of this body.
     fn clear_update_flags(&mut self);
 
+    /// The flags tracking what modifications were applied to a body.
     fn update_status(&self) -> BodyUpdateStatus;
 
     /// Applies a generalized displacement to this body.
@@ -289,25 +291,33 @@ pub trait Body<N: Real>: Downcast + Send + Sync {
         }
     }
 
+    /// Whether this body is affected by gravity.
     #[inline]
     fn gravity_enabled(&self) -> bool;
 
+    /// Enable or disable gravity for this body.
     #[inline]
-    fn enable_gravity(&mut self, disabled: bool);
+    fn enable_gravity(&mut self, enabled: bool);
 
     /*
      * Application of forces/impulses.
      */
+    /// Apply a force at the center of mass of a part of this body.
     fn apply_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool);
 
+    /// Apply a local force at the center of mass of a part of this body.
     fn apply_local_force(&mut self, part_id: usize, force: &Force<N>, force_type: ForceType, auto_wake_up: bool);
 
+    /// Apply a force at a given point of a part of this body.
     fn apply_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
 
+    /// Apply a local force at a given point of a part of this body.
     fn apply_local_force_at_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
 
+    /// Apply a force at a given local point of a part of this body.
     fn apply_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
 
+    /// Apply a local force at a given local point of a part of this body.
     fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
 }
 

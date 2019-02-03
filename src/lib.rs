@@ -65,7 +65,7 @@ The libraries needed to compile the examples are:
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
 #![deny(unused_qualifications)]
-//#![warn(missing_docs)] // XXX: deny that
+#![warn(missing_docs)]
 #![deny(unused_results)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
@@ -138,6 +138,7 @@ macro_rules! try_continue {
 macro_rules! desc_setters(
     ($($with_method: ident, $set_method: ident $(, $arg: ident: $t: ty)*)*) => {
         $(
+            #[allow(missing_docs)]
             #[inline]
             pub fn $with_method(mut self $(, $arg: $t)*) -> Self {
                 $(
@@ -146,6 +147,7 @@ macro_rules! desc_setters(
                 self
             }
 
+            #[allow(missing_docs)]
             #[inline]
             pub fn $set_method(&mut self $(, $arg: $t)*) -> &mut Self {
                 $(
@@ -160,12 +162,14 @@ macro_rules! desc_setters(
 macro_rules! desc_custom_setters(
     ($($this: ident.$with_method: ident, $set_method: ident $(, $arg: ident: $t: ty)* | $imp: expr)*) => {
         $(
+            #[allow(missing_docs)]
             #[inline]
             pub fn $with_method(mut $this $(, $arg: $t)*) -> Self {
                 $imp
                 $this
             }
 
+            #[allow(missing_docs)]
             #[inline]
             pub fn $set_method(&mut $this $(, $arg: $t)*) -> &mut Self {
                 $imp
@@ -178,6 +182,7 @@ macro_rules! desc_custom_setters(
 macro_rules! desc_custom_getters(
     ($($this: ident.$get_method: ident: $t: ty | $imp: expr)*) => {
         $(
+            #[allow(missing_docs)]
             #[inline]
             pub fn $get_method(&$this) -> $t {
                 $imp
@@ -189,12 +194,14 @@ macro_rules! desc_custom_getters(
 macro_rules! desc_getters(
     ($([val] $name: ident -> $val: ident: $t: ty)* $([ref] $ref_name: ident -> $ref_val: ident: $ref_t: ty)*) => {
         $(
+            #[allow(missing_docs)]
             #[inline]
             pub fn $name(&self) -> $t {
                 self.$val
             }
         )*
         $(
+            #[allow(missing_docs)]
             #[inline]
             pub fn $ref_name(&self) -> &$ref_t {
                 &self.$ref_val
@@ -205,21 +212,25 @@ macro_rules! desc_getters(
 
 macro_rules! user_data_accessors(
     () => {
+        /// Retrieves a reference to the user-defined user-data attached to this object.
         #[inline]
         pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
             self.user_data.as_ref().map(|d| &**d)
         }
 
+        /// Retrieves a mutable reference to the user-defined user-data attached to this object.
         #[inline]
         pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
             self.user_data.as_mut().map(|d| &mut **d)
         }
 
+        /// Sets the user-defined data attached to this object.
         #[inline]
         pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
             std::mem::replace(&mut self.user_data, data)
         }
 
+        /// Replace by `None` the user-defined data attached to this object and returns the old value.
         #[inline]
         pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
             self.user_data.take()

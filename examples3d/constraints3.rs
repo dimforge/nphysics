@@ -161,7 +161,7 @@ fn main() {
     let constraint = UniversalConstraint::new(
         BodyPartHandle::ground(),
         rb_handle,
-        Point3::from_coordinates(parent_pos),
+        Point3::from(parent_pos),
         Vector3::x_axis(),
         Point3::new(0.0, 0.0, 1.0),
         Vector3::z_axis(),

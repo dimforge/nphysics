@@ -9,7 +9,7 @@ use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimit
              UnilateralGroundConstraint};
 
 /// A SOR-Prox velocity-based constraints solver.
-pub struct SORProx;
+pub(crate) struct SORProx;
 
 impl SORProx {
     /// Solve the given set of constraints.

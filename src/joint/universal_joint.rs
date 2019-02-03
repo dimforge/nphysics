@@ -41,7 +41,7 @@ impl<N: Real> Joint<N> for UniversalJoint<N> {
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        Translation3::from_vector(*parent_shift) * self.revo1.rotation()
+        Translation3::from(*parent_shift) * self.revo1.rotation()
             * self.revo2.body_to_parent(&na::zero(), body_shift)
     }
 

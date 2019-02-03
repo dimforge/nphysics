@@ -100,7 +100,7 @@ impl<N: Real> FEMSurface<N> {
         let mut rest_positions = DVector::zeros(ndofs);
 
         for (i, pt)  in vertices.iter().enumerate() {
-            let pt = pos * Point::from_coordinates(pt.coords.component_mul(&scale));
+            let pt = pos * Point::from(pt.coords.component_mul(&scale));
             rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
         }
 
@@ -188,6 +188,7 @@ impl<N: Real> FEMSurface<N> {
         self.d2 = d2;
     }
 
+    /// The handle of this body.
     pub fn handle(&self) -> BodyHandle {
         self.handle
     }
@@ -532,7 +533,7 @@ impl<N: Real> FEMSurface<N> {
                 let mut coords = Vector::zeros();
                 coords.x = x;
                 coords.y = y;
-                vertices.push(Point::from_coordinates(coords))
+                vertices.push(Point::from(coords))
             }
         }
 
@@ -634,7 +635,7 @@ impl<N: Real> Body<N> for FEMSurface<N> {
             );
             let j_det =  elt.j.determinant();
             elt.surface = j_det * na::convert(1.0 / 2.0);
-            elt.com = Point::from_coordinates(a + b + c) * na::convert::<_, N>(1.0 / 3.0);
+            elt.com = Point::from(a + b + c) * na::convert::<_, N>(1.0 / 3.0);
 
             /*
              * Compute the orientation.
@@ -791,7 +792,7 @@ impl<N: Real> Body<N> for FEMSurface<N> {
     fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point);
-        Isometry::from_parts(Translation::from_vector(pt.coords), na::one())
+        Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
     fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
@@ -965,6 +966,7 @@ enum FEMSurfaceDescGeometry<'a, N: Real> {
     Triangles(&'a [Point<N>], &'a [Point3<usize>])
 }
 
+/// A builder for FEMSurface bodies.
 pub struct FEMSurfaceDesc<'a, N: Real> {
     name: String,
     geom: FEMSurfaceDescGeometry<'a, N>,
@@ -1004,14 +1006,17 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
         }
     }
 
+    /// Create a surface form the given tiangles.
     pub fn new(vertices: &'a [Point<N>], triangles: &'a [Point3<usize>]) -> Self {
         Self::with_geometry(FEMSurfaceDescGeometry::Triangles(vertices, triangles))
     }
 
+    /// Create a surface form the given triangles.
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
         Self::with_geometry(FEMSurfaceDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
+    /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
         self.kinematic_nodes.clear();
         self
@@ -1061,6 +1066,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
         [ref] get_scale -> scale: Vector<N>
     );
 
+    /// Build a deformable surface.
     pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMSurface<N> {
         world.add_body(self)
     }

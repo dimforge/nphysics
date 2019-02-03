@@ -67,6 +67,7 @@ fn main() {
 
 
     testbed.add_callback(move |world, _, _| {
+        let mut world = world.get_mut();
         for (i, handle) in platforms.iter().enumerate() {
             let platform = world.rigid_body_mut(*handle).unwrap();
             let platform_y = platform.position().translation.vector.y;

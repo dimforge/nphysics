@@ -94,6 +94,7 @@ impl<N: Real> Force3<N> {
         self.as_vector().as_slice()
     }
 
+    /// Apply the given transformation to this force.
     #[inline]
     pub fn transform_by(&self, m: &Isometry3<N>) -> Self {
         Self::new(m * self.linear, m * self.angular)

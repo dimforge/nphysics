@@ -14,10 +14,10 @@ pub use self::nonlinear_constraint::{
     GenericNonlinearConstraint, MultibodyJointLimitsNonlinearConstraintGenerator,
     NonlinearConstraintGenerator, NonlinearUnilateralConstraint,
 };
-pub use self::nonlinear_sor_prox::NonlinearSORProx;
+pub(crate) use self::nonlinear_sor_prox::NonlinearSORProx;
 pub use self::signorini_coulomb_pyramid_model::SignoriniCoulombPyramidModel;
 pub use self::signorini_model::SignoriniModel;
-pub use self::sor_prox::SORProx;
+pub(crate) use self::sor_prox::SORProx;
 
 mod constraint;
 mod constraint_set;
