@@ -3,7 +3,7 @@ use kiss3d::window;
 use na::{Isometry2, Point3};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
-use objects::node;
+use crate::objects::node;
 
 pub struct Box {
     color: Point3<f32>,

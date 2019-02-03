@@ -1,14 +1,14 @@
 use num::Zero;
 
-use math::{AngularInertia, Point};
-use na;
 use na::Real;
 use na::{Matrix3, Point3};
-use ncollide::procedural::{IndexBuffer, TriMesh};
-use ncollide::shape::ConvexHull;
-use ncollide::transformation;
+use na;
 use ncollide::utils;
-use volumetric::Volumetric;
+use ncollide::procedural::{IndexBuffer, TriMesh};
+use ncollide::transformation;
+use ncollide::shape::ConvexHull;
+use crate::volumetric::Volumetric;
+use crate::math::{AngularInertia, Point};
 
 fn tetrahedron_unit_inertia_tensor_wrt_point<N: Real>(
     point: &Point<N>,
@@ -285,9 +285,9 @@ impl<N: Real> Volumetric<N> for ConvexHull<N> {
 #[cfg(test)]
 mod test {
     use na::Vector3;
-    use ncollide::procedural;
     use ncollide::shape::{ConvexHull, Cuboid};
-    use volumetric::Volumetric;
+    use ncollide::procedural;
+    use crate::volumetric::Volumetric;
 
     #[test]
     fn test_inertia_tensor3() {

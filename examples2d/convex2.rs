@@ -4,16 +4,15 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
-use rand::{Rand, XorShiftRng};
+use rand::distributions::{Standard, Distribution};
+use rand::{SeedableRng, XorShiftRng};
 
-use na::{Isometry2, Point2, Vector2};
+use na::{Point2, Vector2};
 use ncollide2d::shape::{ConvexPolygon, Cuboid, ShapeHandle};
-use nphysics2d::object::{BodyHandle, Material};
-use nphysics2d::volumetric::Volumetric;
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -27,16 +26,11 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry2::new(Vector2::y() * -ground_size, na::zero());
+        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .translation(-Vector2::y())
+        .build(&mut world);
 
     /*
      * Create the convex geometries.
@@ -46,7 +40,8 @@ fn main() {
     let shift = 0.4;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift;
-    let mut rng = XorShiftRng::new_unseeded();
+    let mut rng = XorShiftRng::seed_from_u64(0);
+    let distribution = Standard;
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -56,27 +51,18 @@ fn main() {
             let mut pts = Vec::with_capacity(npts);
 
             for _ in 0..npts {
-                pts.push(Point2::rand(&mut rng) * 0.4);
+                let pt: Point2<f32> = distribution.sample(&mut rng);
+                pts.push(pt * 0.4);
             }
 
             let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
+            let collider_desc = ColliderDesc::new(geom)
+                .density(1.0);
 
-            let inertia = geom.inertia(1.0);
-            let center_of_mass = geom.center_of_mass();
-
-            let pos = Isometry2::new(Vector2::new(x, y), na::zero());
-            let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-            /*
-             * Create the collider.
-             */
-            world.add_collider(
-                COLLIDER_MARGIN,
-                geom.clone(),
-                handle,
-                Isometry2::identity(),
-                Material::default(),
-            );
+            RigidBodyDesc::new()
+                .collider(&collider_desc)
+                .translation(Vector2::new(x, y))
+                .build(&mut world);
         }
     }
 

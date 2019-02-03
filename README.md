@@ -57,25 +57,6 @@ writing bindings and has several advantages:
   search for a physics engine and **nphysics** will be there, proudly
   exhibiting its _Rusty_ sexiness.
 
-## Compilation
-You will need the latest release of the [Rust compiler](http://www.rust-lang.org)
-and the official package manager: [Cargo](https://github.com/rust-lang/cargo).
-
-If you want to use the 2D version of `nphysics`, add the crate named
-`nphysics2d` to your dependencies:
-
-```ignore
-[dependencies]
-nphysics2d = "0.9"
-```
-
-For the 3D version, add the crate named `nphysics3d`:
-
-```ignore
-[dependencies]
-nphysics3d = "0.9"
-```
-
 ## Features
 - Static, dynamic, and kinematic rigid bodies.
 - Common convex primitives: box, ball, convex polyhedron.
@@ -85,19 +66,22 @@ nphysics3d = "0.9"
 - Stable stacking due to non-linear a position-based penetration correction and one-shot contact manifold generation.
 - Island based sleeping (objects deactivation when they are at rest).
 - Ray casting.
+- Swept sphere based continuous collision detection.
+- Ball-in-socket joint.
+- FixedJoint joint.
 - Sensors.
-- WASM support.
+- Deformable bodies (aka. soft-bodies)
+- Kinematic bodies
+- WASM support
 
 ## What is missing?
 **nphysics** is a very young library and needs to learn a lot of things to
 become a grown up. Many missing features are because of missing features on
 **ncollide**. Features missing from **nphysics** itself include:
 
-- Breakable joints.
-- Soft-bodies.
-- Fluids.
-- Parallel pipeline.
-- GPU-based pipeline.
+- more joints, joint limits, joint motors and breakable joints.
+- parallel pipeline
+- GPU-based pipeline
 
 ## Dependencies
 The libraries needed to compile the physics engine are:

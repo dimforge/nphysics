@@ -1,11 +1,11 @@
 use slab::Slab;
 
 use na::{self, Real};
-use world::CollisionWorld;
-use object::{BodyHandle, BodyMut, BodySet};
-use joint::JointConstraint;
-use utils::union_find::UnionFindSet;
-use utils::union_find;
+use crate::world::ColliderWorld;
+use crate::object::{BodyHandle, Body, BodySet};
+use crate::joint::JointConstraint;
+use crate::utils::union_find::UnionFindSet;
+use crate::utils::union_find;
 
 /// Structure that monitors island-based activation/deactivation of bodies.
 ///
@@ -45,7 +45,7 @@ impl<N: Real> ActivationManager<N> {
         self.to_activate.push(handle);
     }
 
-    fn update_energy(&self, body: &mut BodyMut<N>) {
+    fn update_energy(&self, body: &mut Body<N>) {
         // FIXME: avoid the Copy when NLL lands ?
         let status = *body.activation_status();
 
@@ -62,7 +62,7 @@ impl<N: Real> ActivationManager<N> {
     pub fn update(
         &mut self,
         bodies: &mut BodySet<N>,
-        cworld: &CollisionWorld<N>,
+        cworld: &ColliderWorld<N>,
         constraints: &Slab<Box<JointConstraint<N>>>,
         active_bodies: &mut Vec<BodyHandle>,
     ) {
@@ -73,10 +73,10 @@ impl<N: Real> ActivationManager<N> {
          */
         self.id_to_body.clear();
 
-        for mut body in bodies.bodies_mut() {
+        for body in bodies.bodies_mut() {
             if body.status_dependent_ndofs() != 0 {
                 if body.is_active() {
-                    self.update_energy(&mut body);
+                    self.update_energy(body);
                 }
 
                 body.set_companion_id(self.id_to_body.len());
@@ -95,7 +95,7 @@ impl<N: Real> ActivationManager<N> {
          *
          */
         for handle in self.to_activate.iter() {
-            let mut body = bodies.body_mut(*handle);
+            let body = try_continue!(bodies.body_mut(*handle));
 
             if body.activation_status().deactivation_threshold().is_some() {
                 body.activate()
@@ -125,6 +125,7 @@ impl<N: Real> ActivationManager<N> {
         }
 
         // Run the union-find.
+        // FIXME: use the union-find from petgraph?
         #[inline(always)]
         fn make_union<N: Real>(
             bodies: &BodySet<N>,
@@ -132,27 +133,24 @@ impl<N: Real> ActivationManager<N> {
             b2: BodyHandle,
             ufs: &mut [UnionFindSet],
         ) {
-            let b1 = bodies.body(b1);
-            let b2 = bodies.body(b2);
+            let b1 = try_ret!(bodies.body(b1));
+            let b2 = try_ret!(bodies.body(b2));
             if (b1.status_dependent_ndofs() != 0 || b1.is_kinematic())
                 && (b2.status_dependent_ndofs() != 0 || b2.is_kinematic())
-            {
-                union_find::union(b1.companion_id(), b2.companion_id(), ufs)
-            }
+                {
+                    union_find::union(b1.companion_id(), b2.companion_id(), ufs)
+                }
         }
 
-        for (c1, c2, cd) in cworld.contact_pairs() {
-            let b1 = c1.data().body();
-            let b2 = c2.data().body();
-
-            if cd.num_contacts() != 0 {
-                make_union(bodies, b1, b2, &mut self.ufind)
+        for (c1, c2, _, manifold) in cworld.contact_pairs(false) {
+            if manifold.len() > 0 {
+                make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }
         }
 
         for (_, c) in constraints.iter() {
             let (b1, b2) = c.anchors();
-            make_union(bodies, b1, b2, &mut self.ufind);
+            make_union(bodies, b1.0, b2.0, &mut self.ufind);
         }
 
         /*
@@ -162,7 +160,7 @@ impl<N: Real> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let body = bodies.body(handle);
+            let body = try_continue!(bodies.body(handle));
             // FIXME: avoid the Copy when NLL lands ?
             let status = *body.activation_status();
 
@@ -176,7 +174,7 @@ impl<N: Real> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let mut body = bodies.body_mut(handle);
+            let body = try_continue!(bodies.body_mut(handle));
 
             if self.can_deactivate[root] {
                 // Everybody in this set can be deactivacted.

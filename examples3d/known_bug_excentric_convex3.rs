@@ -25,14 +25,13 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide3d::procedural;
 use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
-use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::volumetric::Volumetric;
+use ncollide3d::procedural;
 use nphysics3d::world::World;
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
+use nphysics3d::volumetric::Volumetric;
 use nphysics_testbed3d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -46,44 +45,42 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .translation(Vector3::y() * -ground_size)
+        .build(&mut world);
 
     /*
      * Create the convex geometries.
      */
     let num = 8;
     let rad = 0.1;
-    let shift = rad * 2.0;
     let excentricity = 1000.0f32;
+
+    let pts = vec![
+        Point3::new(-rad, -rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new(-rad, -rad,  rad) + Vector3::repeat(excentricity),
+        Point3::new(-rad,  rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new(-rad,  rad,  rad) + Vector3::repeat(excentricity),
+        Point3::new( rad, -rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new( rad, -rad,  rad) + Vector3::repeat(excentricity),
+        Point3::new( rad,  rad, -rad) + Vector3::repeat(excentricity),
+        Point3::new( rad,  rad,  rad) + Vector3::repeat(excentricity),
+    ];
+
+    let shape = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
+    let collider_desc = ColliderDesc::new(shape)
+        .density(1.0);
+
+    let mut rb_desc = RigidBodyDesc::new()
+        .collider(&collider_desc);
+
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
 
-    let mut cuboid_mesh = procedural::cuboid(&Vector3::repeat(2.0 * (rad - COLLIDER_MARGIN)));
-
-    for c in cuboid_mesh.coords.iter_mut() {
-        *c += Vector3::new(excentricity, excentricity, excentricity)
-    }
-
-    let indices: Vec<usize> = cuboid_mesh
-        .flat_indices()
-        .into_iter()
-        .map(|i| i as usize)
-        .collect();
-    let vertices = cuboid_mesh.coords;
-
-    let geom = ShapeHandle::new(ConvexHull::try_new(vertices, &indices).unwrap());
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -92,22 +89,10 @@ fn main() {
                 let y = j as f32 * shift + centery - excentricity;
                 let z = k as f32 * shift - centerz - excentricity;
 
-                /*
-                 * Create the rigid body.
-                 */
-                let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-                /*
-                 * Create the collider.
-                 */
-                world.add_collider(
-                    COLLIDER_MARGIN,
-                    geom.clone(),
-                    handle,
-                    Isometry3::identity(),
-                    Material::default(),
-                );
+                // Build the rigid body and its collider.
+                rb_desc
+                    .set_translation(Vector3::new(x, y, z))
+                    .build(&mut world);
             }
         }
     }

@@ -2,12 +2,13 @@
 name    = "nphysics-examples-2d"
 version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+edition = "2018"
 
 [dependencies]
-rand       = "0.5"
-alga       = "0.7"
-nalgebra   = "0.16"
-ncollide2d = "0.17"
+rand       = "0.6"
+alga       = "0.8"
+nalgebra   = "0.17"
+ncollide2d = "0.18"
 
 [dependencies.nphysics_testbed2d]
 path = "../nphysics_testbed2d"
@@ -16,20 +17,24 @@ path = "../nphysics_testbed2d"
 path = "../build/nphysics2d"
 
 [[bin]]
-name = "balls_vee2"
-path = "./balls_vee2.rs"
-
-[[bin]]
 name = "balls2"
 path = "./balls2.rs"
 
 [[bin]]
-name = "body_status2"
-path = "./body_status2.rs"
+name = "conveyor_belt2"
+path = "./conveyor_belt2.rs"
+
+[[bin]]
+name = "kinematic2"
+path = "./kinematic2.rs"
 
 [[bin]]
 name = "boxes2"
 path = "./boxes2.rs"
+
+[[bin]]
+name = "capsules2"
+path = "./capsules2.rs"
 
 [[bin]]
 name = "collision_groups2"
@@ -56,20 +61,20 @@ name = "disable_sleeping2"
 path = "./disable_sleeping2.rs"
 
 [[bin]]
-name = "gravity2"
-path = "./gravity2.rs"
+name = "force_generator2"
+path = "./force_generator2.rs"
 
 [[bin]]
-name = "joints2"
-path = "./joints2.rs"
-
-[[bin]]
-name = "multibody_limits2"
-path = "./multibody_limits2.rs"
+name = "multibody2"
+path = "./multibody2.rs"
 
 [[bin]]
 name = "polyline2"
 path = "./polyline2.rs"
+
+[[bin]]
+name = "heightfield2"
+path = "./heightfield2.rs"
 
 [[bin]]
 name = "pyramid2"
@@ -86,3 +91,19 @@ path = "./sensor2.rs"
 [[bin]]
 name = "wall2"
 path = "./wall2.rs"
+
+[[bin]]
+name = "mass_spring_system2"
+path = "./mass_spring_system2.rs"
+
+[[bin]]
+name = "mass_constraint_system2"
+path = "./mass_constraint_system2.rs"
+
+[[bin]]
+name = "fem_surface2"
+path = "./fem_surface2.rs"
+
+[[bin]]
+name = "plasticity2"
+path = "./plasticity2.rs"

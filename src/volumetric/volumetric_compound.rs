@@ -1,9 +1,9 @@
 use num::Zero;
 
-use math::{AngularInertia, Point};
 use na::{self, Real};
 use ncollide::shape::Compound;
-use volumetric::{InertiaTensor, Volumetric};
+use crate::volumetric::{InertiaTensor, Volumetric};
+use crate::math::{AngularInertia, Point};
 
 impl<N: Real> Volumetric<N> for Compound<N> {
     fn area(&self) -> N {

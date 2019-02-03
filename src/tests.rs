@@ -7,9 +7,9 @@ mod test {
     #[cfg(feature = "dim2")]
     use ncollide::shape::Cuboid;
     #[cfg(feature = "dim2")]
-    use object::{ActivationState, RigidBody};
+    use crate::object::{ActivationState, RigidBody};
     #[cfg(feature = "dim2")]
-    use world::World;
+    use crate::world::World;
 
     /// Gravity tests
     #[cfg(feature = "dim2")]

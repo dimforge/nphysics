@@ -1,8 +1,8 @@
 use na::{DVectorSliceMut, Real};
 
-use joint::Joint;
-use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
-use solver::IntegrationParameters;
+use crate::joint::Joint;
+use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
+use crate::solver::IntegrationParameters;
 
 /// A joint that does not allow any relative degrees of freedom.
 #[derive(Copy, Clone, Debug)]
@@ -23,13 +23,18 @@ impl<N: Real> FixedJoint<N> {
 }
 
 impl<N: Real> Joint<N> for FixedJoint<N> {
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn ndofs(&self) -> usize {
         0
     }
 
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let parent_trans = Translation::from_vector(*parent_shift);
-        let body_trans = Translation::from_vector(*body_shift);
+        let parent_trans = Translation::from(*parent_shift);
+        let body_trans = Translation::from(*body_shift);
         parent_trans * self.body_to_parent * body_trans
     }
 

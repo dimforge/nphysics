@@ -1,17 +1,17 @@
 use na::{DVector, Real, Unit};
 use std::ops::Range;
 
-use joint::JointConstraint;
-use math::{AngularVector, Point, Vector, DIM};
-use object::{BodyHandle, BodySet};
-use solver::helper;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::joint::JointConstraint;
+use crate::math::{AngularVector, Point, Vector, DIM};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::helper;
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all but two relative rotations along distinct axii.
 pub struct UniversalConstraint<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<AngularVector<N>>,
@@ -28,8 +28,8 @@ impl<N: Real> UniversalConstraint<N> {
     ///
     /// All anchors and axii are expressed in the local coordinate systems of the corresponding body parts.
     pub fn new(
-        b1: BodyHandle,
-        b2: BodyHandle,
+        b1: BodyPartHandle,
+        b2: BodyPartHandle,
         anchor1: Point<N>,
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
@@ -57,7 +57,7 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
         4
     }
 
-    fn anchors(&self) -> (BodyHandle, BodyHandle) {
+    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
         (self.b1, self.b2)
     }
 
@@ -71,29 +71,33 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let b1 = bodies.body_part(self.b1);
-        let b2 = bodies.body_part(self.b2);
+        let body1 = try_ret!(bodies.body(self.b1.0));
+        let body2 = try_ret!(bodies.body(self.b2.0));
+        let part1 = try_ret!(body1.part(self.b1.1));
+        let part2 = try_ret!(body2.part(self.b2.1));
 
         /*
          *
          * Joint constraints.
          *
          */
-        let pos1 = b1.position();
-        let pos2 = b2.position();
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1);
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2);
 
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = Point::from(pos1.translation.vector);
+        let anchor2 = Point::from(pos2.translation.vector);
 
-        let assembly_id1 = b1.parent_companion_id();
-        let assembly_id2 = b2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
-            &b1,
-            &b2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -111,8 +115,10 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
         let axis2 = pos2 * self.axis2;
         if let Some(orth) = Unit::try_new(axis1.cross(&*axis2), N::default_epsilon()) {
             helper::cancel_relative_angular_velocity_wrt_axis(
-                &b1,
-                &b2,
+                body1,
+                part1,
+                body2,
+                part2,
                 assembly_id1,
                 assembly_id2,
                 &anchor1,
@@ -175,20 +181,24 @@ impl<N: Real> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.0)?;
+        let body2 = bodies.body(self.b2.0)?;
+        let part1 = body1.part(self.b1.1)?;
+        let part2 = body2.part(self.b2.1)?;
 
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1);
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2);
 
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
+        let anchor1 = Point::from(pos1.translation.vector);
+        let anchor2 = Point::from(pos2.translation.vector);
 
         if i == 0 {
             return helper::cancel_relative_translation(
                 params,
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 jacobians,
@@ -201,8 +211,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
 
             return helper::restore_angle_between_axis(
                 params,
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 &axis1,

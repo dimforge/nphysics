@@ -1,8 +1,8 @@
 use na::{DVectorSliceMut, Real};
 
-use joint::Joint;
-use math::{Isometry, JacobianSliceMut, Vector, Velocity, SPATIAL_DIM};
-use solver::IntegrationParameters;
+use crate::joint::Joint;
+use crate::math::{Isometry, JacobianSliceMut, Vector, Velocity, SPATIAL_DIM};
+use crate::solver::IntegrationParameters;
 
 /// A joint that allows all the relative degrees of freedom between two multibody links.
 ///
@@ -28,6 +28,11 @@ impl<N: Real> FreeJoint<N> {
 }
 
 impl<N: Real> Joint<N> for FreeJoint<N> {
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }

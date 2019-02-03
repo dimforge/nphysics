@@ -1,9 +1,9 @@
 use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
 
-use joint::{Joint, PrismaticJoint};
-use math::{JacobianSliceMut, Velocity};
-use object::MultibodyLinkRef;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::joint::{Joint, PrismaticJoint};
+use crate::math::{JacobianSliceMut, Velocity};
+use crate::object::{Multibody, MultibodyLink};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows two translational degrees of freedom.
 #[derive(Copy, Clone, Debug)]
@@ -26,12 +26,17 @@ impl<N: Real> RectangularJoint<N> {
 
 impl<N: Real> Joint<N> for RectangularJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         2
     }
 
     fn body_to_parent(&self, parent_shift: &Vector3<N>, body_shift: &Vector3<N>) -> Isometry3<N> {
-        let t = Translation3::from_vector(parent_shift - body_shift) * self.prism1.translation()
+        let t = Translation3::from(parent_shift - body_shift) * self.prism1.translation()
             * self.prism2.translation();
         Isometry3::from_parts(t, na::one())
     }
@@ -53,9 +58,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
         _: &Isometry3<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    ) {
-
-    }
+    ) {}
 
     fn jacobian_mul_coordinates(&self, vels: &[N]) -> Velocity<N> {
         self.prism1.jacobian_mul_coordinates(vels)
@@ -88,7 +91,8 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
     fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
@@ -98,6 +102,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
     ) {
         self.prism1.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id,
@@ -108,6 +113,7 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
         );
         self.prism2.velocity_constraints(
             params,
+            multibody,
             link,
             assembly_id,
             dof_id + 1,
@@ -126,15 +132,16 @@ impl<N: Real> Joint<N> for RectangularJoint<N> {
     fn position_constraint(
         &self,
         i: usize,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         if i == 0 {
-            self.prism1.position_constraint(0, link, dof_id, jacobians)
+            self.prism1.position_constraint(0, multibody, link, dof_id, jacobians)
         } else {
             self.prism2
-                .position_constraint(0, link, dof_id + 1, jacobians)
+                .position_constraint(0, multibody, link, dof_id + 1, jacobians)
         }
     }
 }

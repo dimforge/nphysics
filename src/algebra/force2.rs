@@ -1,5 +1,5 @@
 use na::storage::Storage;
-use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3};
+use na::{self, Point2, Real, U3, Vector, Vector1, Vector2, Vector3, Isometry2};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
@@ -78,6 +78,12 @@ impl<N: Real> Force2<N> {
     #[inline]
     pub fn angular_vector(&self) -> Vector1<N> {
         Vector1::new(self.angular)
+    }
+
+    /// Apply the given transformation to this force.
+    #[inline]
+    pub fn transform_by(&self, m: &Isometry2<N>) -> Self {
+        Self::new(m * self.linear, self.angular)
     }
 
     /// This force seen as a slice.

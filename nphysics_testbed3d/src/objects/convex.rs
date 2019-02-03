@@ -1,10 +1,10 @@
-use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
+use kiss3d::scene::SceneNode;
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::procedural::TriMesh;
 use nphysics3d::object::ColliderHandle;
 use nphysics3d::world::World;
-use objects::node;
+use crate::objects::node;
 
 pub struct Convex {
     color: Point3<f32>,

@@ -3,7 +3,7 @@ use kiss3d::window::Window;
 use na::{Isometry2, Point2, Point3, Vector2};
 use nphysics2d::object::ColliderHandle;
 use nphysics2d::world::World;
-use objects::node;
+use crate::objects::node;
 
 pub struct Convex {
     color: Point3<f32>,

@@ -2,12 +2,10 @@
 
 use na::{DVectorSliceMut, Real};
 
-use joint::{Joint, JointMotor};
-use object::{BodyHandle, MultibodyLinkRef};
-use solver::{
-    BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
-    UnilateralGroundConstraint,
-};
+use crate::joint::{Joint, JointMotor};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body};
+use crate::solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
+             IntegrationParameters, UnilateralGroundConstraint};
 
 /// Trait implemented by joints using the reduced-coordinates approach and allowing only one degree of freedom.
 pub trait UnitJoint<N: Real>: Joint<N> {
@@ -21,7 +19,7 @@ pub trait UnitJoint<N: Real>: Joint<N> {
     fn max_position(&self) -> Option<N>;
 }
 
-downcast!(<N> UnitJoint<N> where N: Real);
+impl_downcast!(UnitJoint<N> where N: Real);
 
 /// Computes the maximum number of velocity constraints to be applied by the given unit joint.
 pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) -> usize {
@@ -46,7 +44,8 @@ pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) 
 pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     joint: &J,
     params: &IntegrationParameters<N>,
-    link: &MultibodyLinkRef<N>,
+    multibody: &Multibody<N>,
+    link: &MultibodyLink<N>,
     assembly_id: usize,
     dof_id: usize,
     ext_vels: &[N],
@@ -54,23 +53,24 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     jacobians: &mut [N],
     constraints: &mut ConstraintSet<N>,
 ) {
-    let ndofs = link.multibody().ndofs();
-    let impulses = link.multibody().impulses();
+    let ndofs = multibody.ndofs();
+    let impulses = multibody.impulses();
     let mut is_min_constraint_active = false;
+    let joint_velocity = multibody.joint_velocity(link);
 
     if joint.motor().enabled {
-        let dvel = link.joint_velocity()[dof_id] + ext_vels[assembly_id + link.assembly_id()];
+        let dvel = joint_velocity[dof_id] + ext_vels[link.assembly_id];
 
         DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
-        jacobians[*ground_j_id + link.assembly_id() + dof_id] = N::one();
+        jacobians[*ground_j_id + link.assembly_id + dof_id] = N::one();
 
         let wj_id = *ground_j_id + ndofs;
-        link.inv_mass_mul_unit_joint_force(dof_id, N::one(), &mut jacobians[wj_id..]);
+        multibody.inv_mass_mul_unit_joint_force(link, dof_id, N::one(), &mut jacobians[wj_id..]);
 
-        let inv_r = jacobians[wj_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
+        let inv_r = jacobians[wj_id + link.assembly_id + dof_id]; // = J^t * M^-1 J
         let rhs = dvel - joint.motor().desired_velocity;
         let limits = joint.motor().impulse_limits();
-        let impulse_id = link.impulse_id() + dof_id * 3;
+        let impulse_id = link.impulse_id + dof_id * 3;
 
         let constraint = BilateralGroundConstraint {
             impulse: impulses[impulse_id] * params.warmstart_coeff,
@@ -78,10 +78,10 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
             rhs,
             limits,
             impulse_id,
-            assembly_id: assembly_id,
+            assembly_id,
             j_id: *ground_j_id,
             wj_id: *ground_j_id + ndofs,
-            ndofs: ndofs,
+            ndofs,
         };
 
         constraints.velocity.bilateral_ground.push(constraint);
@@ -91,19 +91,19 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     if let Some(min_position) = joint.min_position() {
         let err = min_position - joint.position();
         let dvel =
-            link.joint_velocity()[dof_id] + ext_vels[assembly_id + link.assembly_id() + dof_id];
+            joint_velocity[dof_id] + ext_vels[link.assembly_id + dof_id];
 
         if err >= N::zero() {
             is_min_constraint_active = true;
             DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
-            jacobians[*ground_j_id + link.assembly_id() + dof_id] = N::one();
+            jacobians[*ground_j_id + link.assembly_id + dof_id] = N::one();
 
             let wj_id = *ground_j_id + ndofs;
-            link.inv_mass_mul_unit_joint_force(dof_id, N::one(), &mut jacobians[wj_id..]);
+            multibody.inv_mass_mul_unit_joint_force(link, dof_id, N::one(), &mut jacobians[wj_id..]);
 
-            let inv_r = jacobians[wj_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
+            let inv_r = jacobians[wj_id + link.assembly_id + dof_id]; // = J^t * M^-1 J
 
-            let impulse_id = link.impulse_id() + dof_id * 3 + 1;
+            let impulse_id = link.impulse_id + dof_id * 3 + 1;
             let constraint = UnilateralGroundConstraint {
                 impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
@@ -123,11 +123,11 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
     if let Some(max_position) = joint.max_position() {
         let err = -(max_position - joint.position());
         let dvel =
-            -link.joint_velocity()[dof_id] - ext_vels[assembly_id + link.assembly_id() + dof_id];
+            -joint_velocity[dof_id] - ext_vels[link.assembly_id + dof_id];
 
         if err >= N::zero() {
             DVectorSliceMut::from_slice(&mut jacobians[*ground_j_id..], ndofs).fill(N::zero());
-            jacobians[*ground_j_id + link.assembly_id() + dof_id] = -N::one();
+            jacobians[*ground_j_id + link.assembly_id + dof_id] = -N::one();
             let wj_id = *ground_j_id + ndofs;
 
             if is_min_constraint_active {
@@ -136,21 +136,21 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
                     jacobians[wj_id + i] = -jacobians[*ground_j_id - ndofs + i];
                 }
             } else {
-                link.inv_mass_mul_unit_joint_force(dof_id, -N::one(), &mut jacobians[wj_id..]);
+                multibody.inv_mass_mul_unit_joint_force(link, dof_id, -N::one(), &mut jacobians[wj_id..]);
             }
 
-            let inv_r = -jacobians[wj_id + link.assembly_id() + dof_id]; // = J^t * M^-1 J
+            let inv_r = -jacobians[wj_id + link.assembly_id + dof_id]; // = J^t * M^-1 J
 
-            let impulse_id = link.impulse_id() + dof_id * 3 + 2;
+            let impulse_id = link.impulse_id + dof_id * 3 + 2;
             let constraint = UnilateralGroundConstraint {
                 impulse: impulses[impulse_id] * params.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
                 impulse_id,
-                assembly_id: assembly_id,
+                assembly_id,
                 j_id: *ground_j_id,
                 wj_id: *ground_j_id + ndofs,
-                ndofs: ndofs,
+                ndofs,
             };
 
             constraints.velocity.unilateral_ground.push(constraint);
@@ -163,7 +163,8 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
 /// to this joint.
 pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
     joint: &J,
-    link: &MultibodyLinkRef<N>,
+    multibody: &Multibody<N>,
+    link: &MultibodyLink<N>,
     dof_id: usize,
     is_angular: bool,
     jacobians: &mut [N],
@@ -189,16 +190,15 @@ pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
     }
 
     if let Some(rhs) = rhs {
-        let mb = link.multibody();
-        let ndofs = mb.ndofs();
+        let ndofs = multibody.ndofs();
 
-        link.inv_mass_mul_unit_joint_force(dof_id, sign, jacobians);
+        multibody.inv_mass_mul_unit_joint_force(link, dof_id, sign, jacobians);
 
-        let inv_r = sign * jacobians[link.assembly_id() + dof_id]; // = J^t * M^-1 J
+        let inv_r = sign * jacobians[link.assembly_id + dof_id]; // = J^t * M^-1 J
 
         return Some(GenericNonlinearConstraint::new(
-            mb.handle(),
-            BodyHandle::ground(),
+            link.part_handle(),
+            BodyPartHandle::ground(),
             is_angular,
             ndofs,
             0,

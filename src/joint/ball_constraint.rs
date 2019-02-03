@@ -1,17 +1,17 @@
 use std::ops::Range;
 use na::{DVector, Real};
 
-use object::{BodyHandle, BodySet};
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
-use solver::helper;
-use joint::JointConstraint;
-use math::{Point, Vector, DIM};
+use crate::solver::helper;
+use crate::joint::JointConstraint;
+use crate::math::{Point, Vector, DIM};
 
 /// A constraint that removes all relative linear motion between two body parts.
 pub struct BallConstraint<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
     anchor1: Point<N>,
     anchor2: Point<N>,
     impulses: Vector<N>,
@@ -20,11 +20,11 @@ pub struct BallConstraint<N: Real> {
 }
 
 impl<N: Real> BallConstraint<N> {
-    /// Creates a ball constaint between two body parts.
+    /// Creates a ball constraint between two body parts.
     /// 
     /// This will ensure the two points identified by `anchor1` and `anchor2` will coincide.
     /// Both are given in the local-space of their corresponding body part.
-    pub fn new(b1: BodyHandle, b2: BodyHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
+    pub fn new(b1: BodyPartHandle, b2: BodyPartHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
         BallConstraint {
             b1,
             b2,
@@ -52,7 +52,7 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
         DIM
     }
 
-    fn anchors(&self) -> (BodyHandle, BodyHandle) {
+    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
         (self.b1, self.b2)
     }
 
@@ -66,29 +66,30 @@ impl<N: Real> JointConstraint<N> for BallConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = try_ret!(bodies.body(self.b1.0));
+        let body2 = try_ret!(bodies.body(self.b2.0));
+        let part1 = try_ret!(body1.part(self.b1.1));
+        let part2 = try_ret!(body2.part(self.b2.1));
 
         /*
          *
          * Joint constraints.
          *
          */
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
+        let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
-
-        let assembly_id1 = body1.parent_companion_id();
-        let assembly_id2 = body2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
-            &body1,
-            &body2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -135,15 +136,14 @@ impl<N: Real> NonlinearConstraintGenerator<N> for BallConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.0)?;
+        let body2 = bodies.body(self.b2.0)?;
+        let part1 = body1.part(self.b1.1)?;
+        let part2 = body2.part(self.b2.1)?;
 
-        let pos1 = body1.position();
-        let pos2 = body2.position();
+        let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
+        let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
-        let anchor1 = pos1 * self.anchor1;
-        let anchor2 = pos2 * self.anchor2;
-
-        helper::cancel_relative_translation(params, &body1, &body2, &anchor1, &anchor2, jacobians)
+        helper::cancel_relative_translation(params, body1, part1, body2, part2, &anchor1, &anchor2, jacobians)
     }
 }

@@ -1,8 +1,8 @@
 //! Traits to compute inertial properties.
 
-use math::{AngularInertia, Inertia, Point};
 use na::{self, Real};
 use na::{Isometry2, Isometry3, Matrix1, Matrix3, Point2, Point3, Vector1, Vector3};
+use crate::math::{AngularInertia, Inertia, Point};
 
 /// Trait implemented by inertia tensors.
 pub trait InertiaTensor<N, P, AV, M> {
@@ -12,10 +12,10 @@ pub trait InertiaTensor<N, P, AV, M> {
     fn apply(&self, a: &AV) -> AV;
 
     /// Transforms this inertia tensor from local space to world space.
-    fn to_world_space(&self, &M) -> Self;
+    fn to_world_space(&self, _: &M) -> Self;
 
     /// Computes this inertia tensor relative to a given point.
-    fn to_relative_wrt_point(&self, N, &P) -> Self;
+    fn to_relative_wrt_point(&self, _: N, _: &P) -> Self;
 }
 
 /// Trait implemented by objects which have a mass, a center of mass, and an inertia tensor.
@@ -70,7 +70,7 @@ impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point2<N>) -> Matrix1<N> {
-        *self + Matrix1::new(mass * na::norm_squared(&pt.coords))
+        *self + Matrix1::new(mass * pt.coords.norm_squared())
     }
 }
 
@@ -89,7 +89,7 @@ impl<N: Real> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<
 
     #[inline]
     fn to_relative_wrt_point(&self, mass: N, pt: &Point3<N>) -> Matrix3<N> {
-        let diag = na::norm_squared(&pt.coords);
+        let diag = pt.coords.norm_squared();
         let diagm = Matrix3::new(
             diag,
             na::zero(),

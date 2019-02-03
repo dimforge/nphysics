@@ -93,6 +93,11 @@ impl Counters {
         self.solver.nconstraints = n;
     }
 
+    /// Set the number of contacts generated.
+    pub fn set_ncontacts(&mut self, n: usize) {
+        self.solver.ncontacts = n;
+    }
+
     /// Set the number of contact pairs generated.
     pub fn set_ncontact_pairs(&mut self, n: usize) {
         self.cd.ncontact_pairs = n;

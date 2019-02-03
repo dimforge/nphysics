@@ -4,16 +4,15 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use rand::{Rand, XorShiftRng};
+use rand::distributions::{Standard, Distribution};
+use rand::{SeedableRng, XorShiftRng};
 
-use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{Ball, ConvexHull, Cuboid, ShapeHandle};
-use nphysics3d::object::{BodyHandle, Material};
-use nphysics3d::volumetric::Volumetric;
+use na::{Point3, Vector3};
+use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     /*
@@ -27,16 +26,11 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size - COLLIDER_MARGIN)));
-    let ground_pos = Isometry3::new(Vector3::y() * -ground_size, na::zero());
+        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    ColliderDesc::new(ground_shape)
+        .translation(Vector3::y() * -ground_size)
+        .build(&mut world);
 
     /*
      * Create the convex geometries.
@@ -47,7 +41,8 @@ fn main() {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-    let mut rng = XorShiftRng::new_unseeded();
+    let mut rng = XorShiftRng::seed_from_u64(0);
+    let distribution = Standard;
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -56,35 +51,21 @@ fn main() {
                 let y = j as f32 * shift + centery;
                 let z = k as f32 * shift - centerz;
 
-                let geom = if true {
-                    // j % 2 == 0 {
-                    let mut pts = Vec::with_capacity(npts);
+                let mut pts = Vec::with_capacity(npts);
 
-                    for _ in 0..npts {
-                        pts.push(Point3::rand(&mut rng) * 0.4);
-                    }
+                for _ in 0..npts {
+                    let pt: Point3<f32> = distribution.sample(&mut rng);
+                    pts.push(pt * 0.4);
+                }
 
-                    ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap())
-                } else {
-                    ShapeHandle::new(Ball::new(0.1 - COLLIDER_MARGIN))
-                };
+                let geom = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
+                let collider_desc = ColliderDesc::new(geom)
+                    .density(1.0);
 
-                let inertia = geom.inertia(1.0);
-                let center_of_mass = geom.center_of_mass();
-
-                let pos = Isometry3::new(Vector3::new(x, y, z), na::zero());
-                let handle = world.add_rigid_body(pos, inertia, center_of_mass);
-
-                /*
-                 * Create the collider.
-                 */
-                world.add_collider(
-                    COLLIDER_MARGIN,
-                    geom.clone(),
-                    handle,
-                    Isometry3::identity(),
-                    Material::default(),
-                );
+                RigidBodyDesc::new()
+                    .collider(&collider_desc)
+                    .translation(Vector3::new(x, y, z))
+                    .build(&mut world);
             }
         }
     }

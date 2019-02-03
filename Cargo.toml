@@ -1,3 +1,7 @@
 [workspace]
 members = [ "build/nphysics2d", "nphysics_testbed2d", "examples2d",
             "build/nphysics3d", "nphysics_testbed3d", "examples3d" ]
+
+[profile.release]
+lto = true
+codegen-units = 1

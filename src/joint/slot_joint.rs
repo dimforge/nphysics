@@ -1,9 +1,9 @@
 use na::{self, Real, U3, VectorSlice3, Vector, Point, Matrix3, Isometry, Translation3, UnitQuaternion};
 
-use utils::GeneralizedCross;
-use joint::Joint;
-use solver::IntegrationParameters;
-use math::{Velocity, JacobianSliceMut};
+use crate::utils::GeneralizedCross;
+use crate::joint::Joint;
+use crate::solver::IntegrationParameters;
+use crate::math::{Velocity, JacobianSliceMut};
 
 
 #[derive(Copy, Clone, Debug)]
@@ -37,7 +37,7 @@ impl<N: Real> Joint<N> for SlotJoint<N> {
     }
 
     fn body_to_parent(&self) -> Isometry<N> {
-        let trans = Translation3::from_vector(self.shift + &*self.axis * self.pos);
+        let trans = Translation3::from(self.shift + &*self.axis * self.pos);
         let rot   = 
         Isometry::from_parts(trans, self.rot)
     }

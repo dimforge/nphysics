@@ -7,6 +7,8 @@ homepage = "http://nphysics.org"
 repository = "https://github.com/rustsim/nphysics"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
+edition = "2018"
+
 
 [lib]
 name = "nphysics_testbed3d"
@@ -15,10 +17,10 @@ name = "nphysics_testbed3d"
 log        = { version = "0.4", optional = true }
 num-traits = "0.2"
 time       = "0.1"
-rand       = "0.5"
-nalgebra   = "0.16"
-kiss3d     = "0.17"
-ncollide3d = "0.17"
+rand       = "0.6"
+nalgebra   = "0.17"
+kiss3d     = "0.18"
+ncollide3d = "0.18"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

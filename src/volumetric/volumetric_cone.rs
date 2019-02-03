@@ -1,12 +1,8 @@
 use std::ops::IndexMut;
 use num::Zero;
 
-use na::Real;
-use na::{Matrix1, Matrix3, Point2, Point3};
-use na;
-use ncollide::shape::{Cone2, Cone3};
+use na::{self, Real};
 use ncollide::math::Point;
-use volumetric::Volumetric;
 
 /// The volume of a cone.
 #[inline]
@@ -45,8 +41,8 @@ pub fn cone_area<N: Real>(dimension: usize, half_height: N, radius: N) -> N {
 
 /// The center of mass of a cone.
 #[inline]
-pub fn cone_center_of_mass<P: Point>(half_height: P::Real) -> P {
-    let mut com = P::origin();
+pub fn cone_center_of_mass<N: Real>(half_height: N) -> Point<N> {
+    let mut com = Point::origin();
     com[1] = -half_height / na::convert(2.0f64);
 
     com
@@ -90,27 +86,27 @@ where
     }
 }
 
-macro_rules! impl_volumetric_cone(
-    ($t: ident, $dimension: expr, $p: ident, $i: ident) => (
-        impl<N: Real> Volumetric<N, $p<N>, $i<N>> for $t<N> {
-            fn area(&self) -> N {
-                cone_area($dimension, self.half_height(), self.radius())
-            }
-
-            fn volume(&self) -> N {
-                cone_volume($dimension, self.half_height(), self.radius())
-            }
-
-            fn center_of_mass(&self) -> $p<N> {
-                cone_center_of_mass(self.half_height())
-            }
-
-            fn unit_angular_inertia(&self) -> $i<N> {
-                cone_unit_angular_inertia($dimension, self.half_height(), self.radius())
-            }
-        }
-    )
-);
-
-impl_volumetric_cone!(Cone2, 2, Point2, Matrix1);
-impl_volumetric_cone!(Cone3, 3, Point3, Matrix3);
+//macro_rules! impl_volumetric_cone(
+//    ($t: ident, $dimension: expr, $p: ident, $i: ident) => (
+//        impl<N: Real> Volumetric<N, $p<N>, $i<N>> for $t<N> {
+//            fn area(&self) -> N {
+//                cone_area($dimension, self.half_height(), self.radius())
+//            }
+//
+//            fn volume(&self) -> N {
+//                cone_volume($dimension, self.half_height(), self.radius())
+//            }
+//
+//            fn center_of_mass(&self) -> $p<N> {
+//                cone_center_of_mass(self.half_height())
+//            }
+//
+//            fn unit_angular_inertia(&self) -> $i<N> {
+//                cone_unit_angular_inertia($dimension, self.half_height(), self.radius())
+//            }
+//        }
+//    )
+//);
+//
+//impl_volumetric_cone!(Cone2, 2, Point2, Matrix1);
+//impl_volumetric_cone!(Cone3, 3, Point3, Matrix3);

@@ -2,10 +2,10 @@
 
 use na::{self, DVectorSliceMut, Real, Unit};
 
-use joint::{self, Joint, JointMotor, UnitJoint};
-use math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use object::MultibodyLinkRef;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
+use crate::joint::{self, Joint, JointMotor, UnitJoint};
+use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
+use crate::object::{MultibodyLink, Multibody};
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A unit joint that allows only one translational degree on freedom.
 #[derive(Copy, Clone, Debug)]
@@ -58,7 +58,7 @@ impl<N: Real> PrismaticJoint<N> {
 
     /// The relative translation of the attached multibody links along the joint axis.
     pub fn translation(&self) -> Translation<N> {
-        Translation::from_vector(*self.axis * self.offset)
+        Translation::from(*self.axis * self.offset)
     }
 
     /// The lower limit of the relative displacement of the attached multibody links along the joint axis.
@@ -139,6 +139,11 @@ impl<N: Real> PrismaticJoint<N> {
 
 impl<N: Real> Joint<N> for PrismaticJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         1
     }
@@ -146,14 +151,14 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     #[cfg(feature = "dim3")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
         let trans =
-            Translation::from_vector(parent_shift - body_shift + self.axis.as_ref() * self.offset);
+            Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
         Isometry::from_parts(trans, Rotation::identity())
     }
 
     #[cfg(feature = "dim2")]
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
         let trans =
-            Translation::from_vector(parent_shift - body_shift + self.axis.as_ref() * self.offset);
+            Translation::from(parent_shift - body_shift + self.axis.as_ref() * self.offset);
         Isometry::from_parts(trans, Rotation::identity())
     }
 
@@ -172,8 +177,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         _: &Isometry<N>,
         _: &[N],
         _: &mut JacobianSliceMut<N>,
-    ) {
-    }
+    ) {}
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
@@ -200,7 +204,8 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     fn velocity_constraints(
         &self,
         params: &IntegrationParameters<N>,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         assembly_id: usize,
         dof_id: usize,
         ext_vels: &[N],
@@ -211,6 +216,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
         joint::unit_joint_velocity_constraints(
             self,
             params,
+            multibody,
             link,
             assembly_id,
             dof_id,
@@ -232,11 +238,12 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     fn position_constraint(
         &self,
         _: usize,
-        link: &MultibodyLinkRef<N>,
+        multibody: &Multibody<N>,
+        link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        joint::unit_joint_position_constraint(self, link, dof_id, false, jacobians)
+        joint::unit_joint_position_constraint(self, multibody, link, dof_id, false, jacobians)
     }
 }
 
@@ -259,7 +266,7 @@ impl<N: Real> UnitJoint<N> for PrismaticJoint<N> {
 }
 
 #[cfg(feature = "dim3")]
-macro_rules! prismatic_motor_limit_methods(
+macro_rules! prismatic_motor_limit_methods (
     ($ty: ident, $prism: ident) => {
         _prismatic_motor_limit_methods!(
             $ty,
@@ -281,7 +288,7 @@ macro_rules! prismatic_motor_limit_methods(
 );
 
 #[cfg(feature = "dim3")]
-macro_rules! prismatic_motor_limit_methods_1(
+macro_rules! prismatic_motor_limit_methods_1 (
     ($ty: ident, $prism: ident) => {
         _prismatic_motor_limit_methods!(
             $ty,
@@ -303,7 +310,7 @@ macro_rules! prismatic_motor_limit_methods_1(
 );
 
 #[cfg(feature = "dim3")]
-macro_rules! prismatic_motor_limit_methods_2(
+macro_rules! prismatic_motor_limit_methods_2 (
     ($ty: ident, $prism: ident) => {
         _prismatic_motor_limit_methods!(
             $ty,
@@ -325,7 +332,7 @@ macro_rules! prismatic_motor_limit_methods_2(
 );
 
 #[cfg(feature = "dim3")]
-macro_rules! _prismatic_motor_limit_methods(
+macro_rules! _prismatic_motor_limit_methods (
     ($ty: ident, $prism: ident,
      $min_offset:         ident,
      $max_offset:         ident,

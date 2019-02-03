@@ -2,11 +2,12 @@ use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, Real, Unit};
 use std::ops::Range;
 
-use detection::ColliderContactManifold;
-use math::{Vector, DIM};
-use object::BodySet;
-use solver::helper;
-use solver::{
+use crate::detection::ColliderContactManifold;
+use crate::math::{Vector, DIM};
+use crate::object::BodySet;
+use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
+use crate::solver::helper;
+use crate::solver::{
     BilateralConstraint, BilateralGroundConstraint, ConstraintSet, ContactModel, ForceDirection,
     ImpulseCache, ImpulseLimits, IntegrationParameters, SignoriniModel,
 };
@@ -49,6 +50,7 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
     fn constraints(
         &mut self,
         params: &IntegrationParameters<N>,
+        coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &BodySet<N>,
         ext_vels: &DVector<N>,
         manifolds: &[ColliderContactManifold<N>],
@@ -63,14 +65,19 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
 
         for manifold in manifolds {
-            let body1 = bodies.body_part(manifold.collider1.data().body());
-            let body2 = bodies.body_part(manifold.collider2.data().body());
-
-            let friction1 = manifold.collider1.data().material().friction;
-            let friction2 = manifold.collider2.data().material().friction;
-            let friction = (friction1 + friction2) * na::convert(0.5);
+            let body1 = try_continue!(bodies.body(manifold.body1()));
+            let body2 = try_continue!(bodies.body(manifold.body2()));
 
             for c in manifold.contacts() {
+                let part1 = try_continue!(body1.part(manifold.body_part1(c.kinematic.feature1()).1));
+                let part2 = try_continue!(body2.part(manifold.body_part2(c.kinematic.feature2()).1));
+
+                let material1 = manifold.collider1.material();
+                let material2 = manifold.collider2.material();
+                let context1 = MaterialContext::new(body1, part1, manifold.collider1, c, true);
+                let context2 = MaterialContext::new(body2, part2, manifold.collider2, c, false);
+                let props = Material::combine(coefficients, material1, context1, material2, context2);
+
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
                 //     continue;
                 // }
@@ -80,7 +87,11 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
 
                 let ground_constraint = SignoriniModel::build_velocity_constraint(
                     params,
-                    bodies,
+                    body1,
+                    part1,
+                    body2,
+                    part2,
+                    &props,
                     manifold,
                     ext_vels,
                     c,
@@ -104,13 +115,13 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     dependency = constraints.len() - 1;
                 }
 
-                let assembly_id1 = body1.parent_companion_id();
-                let assembly_id2 = body2.parent_companion_id();
+                let assembly_id1 = body1.companion_id();
+                let assembly_id2 = body2.companion_id();
 
                 // Generate friction constraints.
                 let limits = ImpulseLimits::Dependent {
-                    dependency: dependency,
-                    coeff: friction,
+                    dependency,
+                    coeff: props.friction.0,
                 };
 
                 let mut i = 1;
@@ -118,36 +129,30 @@ impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 // FIXME: this compute the contact point locations (with margins) several times,
                 // it was already computed for the signorini law.
                 let center1 = c.contact.world1
-                    + c.contact.normal.unwrap() * manifold.collider1.data().margin();
+                    + c.contact.normal.into_inner() * manifold.collider1.margin();
                 let center2 = c.contact.world2
-                    - c.contact.normal.unwrap() * manifold.collider2.data().margin();
+                    - c.contact.normal.into_inner() * manifold.collider2.margin();
+                let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
 
-                Vector::orthonormal_subspace_basis(&[c.contact.normal.unwrap()], |friction_dir| {
+                Vector::orthonormal_subspace_basis(&[c.contact.normal.into_inner()], |friction_dir| {
                     let dir = ForceDirection::Linear(Unit::new_unchecked(*friction_dir));
+                    let mut rhs = friction_dir.dot(&props.surface_velocity);
 
                     // FIXME: will this compute the momentum twice ?
                     let geom = helper::constraint_pair_geometry(
-                        &body1,
-                        &body2,
+                        body1,
+                        part1,
+                        body2,
+                        part2,
                         &center1,
                         &center2,
                         &dir,
                         ground_j_id,
                         j_id,
                         jacobians,
-                    );
-
-                    let rhs = helper::constraint_pair_velocity(
-                        &body1,
-                        &body2,
-                        assembly_id1,
-                        assembly_id2,
-                        &center1,
-                        &center2,
-                        &dir,
-                        ext_vels,
-                        jacobians,
-                        &geom,
+                        Some(&ext_vels1),
+                        Some(&ext_vels2),
+                        Some(&mut rhs)
                     );
 
                     let warmstart = impulse[i] * params.warmstart_coeff;

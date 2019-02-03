@@ -1,13 +1,15 @@
 use na::{DVector, Real, Unit};
 
-use math::{Point, Vector};
-use object::BodyPart;
-use solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
+use crate::math::{Point, Vector};
+use crate::object::{Body, BodyPart};
+use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 pub fn build_linear_limits_velocity_constraint<N: Real>(
-    body1: &BodyPart<N>,
-    body2: &BodyPart<N>,
+    body1: &Body<N>,
+    part1: &BodyPart<N>,
+    body2: &Body<N>,
+    part2: &BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -58,29 +60,23 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
         }
     };
 
+    let (ext_vels1, ext_vels2) = helper::split_ext_vels(body1, body2, assembly_id1, assembly_id2, ext_vels);
     let force = ForceDirection::Linear(dir);
+    let mut rhs = N::zero();
     let geom = helper::constraint_pair_geometry(
         body1,
+        part1,
         body2,
+        part2,
         anchor1,
         anchor2,
         &force,
         ground_j_id,
         j_id,
         jacobians,
-    );
-
-    let rhs = helper::constraint_pair_velocity(
-        &body1,
-        &body2,
-        assembly_id1,
-        assembly_id2,
-        anchor1,
-        anchor2,
-        &force,
-        ext_vels,
-        jacobians,
-        &geom,
+        Some(&ext_vels1),
+        Some(&ext_vels2),
+        Some(&mut rhs)
     );
 
     // FIXME: generate unilateral constraints for unilateral limits.
@@ -127,8 +123,10 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
 
 pub fn build_linear_limits_position_constraint<N: Real>(
     params: &IntegrationParameters<N>,
-    body1: &BodyPart<N>,
-    body2: &BodyPart<N>,
+    body1: &Body<N>,
+    part1: &BodyPart<N>,
+    body2: &Body<N>,
+    part2: &BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
@@ -158,19 +156,24 @@ pub fn build_linear_limits_position_constraint<N: Real>(
 
         let geom = helper::constraint_pair_geometry(
             body1,
+            part1,
             body2,
+            part2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
             &mut ground_j_id,
             &mut j_id,
             jacobians,
+            None,
+            None,
+            None
         );
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            body1.handle(),
-            body2.handle(),
+            part1.part_handle(),
+            part2.part_handle(),
             false,
             geom.ndofs1,
             geom.ndofs2,

@@ -1,8 +1,8 @@
 use na::{self, DVectorSliceMut, Real};
 
-use joint::Joint;
-use math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
-use solver::IntegrationParameters;
+use crate::joint::Joint;
+use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
+use crate::solver::IntegrationParameters;
 
 /// A joint that allows only all the translational degrees of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
@@ -19,12 +19,17 @@ impl<N: Real> CartesianJoint<N> {
 
 impl<N: Real> Joint<N> for CartesianJoint<N> {
     #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
+    #[inline]
     fn ndofs(&self) -> usize {
         DIM
     }
 
     fn body_to_parent(&self, parent_shift: &Vector<N>, body_shift: &Vector<N>) -> Isometry<N> {
-        let t = Translation::from_vector(parent_shift - body_shift + self.position);
+        let t = Translation::from(parent_shift - body_shift + self.position);
         Isometry::from_parts(t, na::one())
     }
 

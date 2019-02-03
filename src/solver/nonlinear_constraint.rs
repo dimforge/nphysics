@@ -1,16 +1,16 @@
 use na::{Real, Unit};
 use ncollide::query::ContactKinematic;
 
-use math::Vector;
-use object::{BodyHandle, BodySet};
-use solver::IntegrationParameters;
+use crate::math::Vector;
+use crate::object::{BodyPartHandle, BodySet, ColliderHandle};
+use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
 pub struct GenericNonlinearConstraint<N: Real> {
     /// The first body affected by the constraint.
-    pub body1: BodyHandle,
+    pub body1: BodyPartHandle,
     /// The second body affected by the constraint.
-    pub body2: BodyHandle,
+    pub body2: BodyPartHandle,
     /// Whether this constraint affects the bodies translation or orientation.
     pub is_angular: bool,
     //  FIXME: rename ndofs1?
@@ -31,8 +31,8 @@ pub struct GenericNonlinearConstraint<N: Real> {
 impl<N: Real> GenericNonlinearConstraint<N> {
     /// Initialize a new nonlinear constraint.
     pub fn new(
-        body1: BodyHandle,
-        body2: BodyHandle,
+        body1: BodyPartHandle,
+        body2: BodyPartHandle,
         is_angular: bool,
         dim1: usize,
         dim2: usize,
@@ -70,6 +70,7 @@ pub trait NonlinearConstraintGenerator<N: Real> {
 }
 
 /// A non-linear position-based non-penetration constraint.
+#[derive(Debug)]
 pub struct NonlinearUnilateralConstraint<N: Real> {
     /// The scaling parameter of the SOR-prox method.
     pub r: N,
@@ -79,12 +80,16 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     /// Number of degree of freedom of the first body.
     pub ndofs1: usize,
     /// The first body affected by the constraint.
-    pub body1: BodyHandle,
+    pub body1: BodyPartHandle,
+    /// The first collider affected by the constraint.
+    pub collider1: ColliderHandle,
 
     /// Number of degree of freedom of the second body.
     pub ndofs2: usize,
     /// The second body affected by the constraint.
-    pub body2: BodyHandle,
+    pub body2: BodyPartHandle,
+    /// The second collider affected by the constraint.
+    pub collider2: ColliderHandle,
 
     /// The kinematic information used to update the contact location.
     pub kinematic: ContactKinematic<N>,
@@ -98,9 +103,11 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
 impl<N: Real> NonlinearUnilateralConstraint<N> {
     /// Create a new nonlinear position-based non-penetration constraint.
     pub fn new(
-        body1: BodyHandle,
+        body1: BodyPartHandle,
+        collider1: ColliderHandle,
         ndofs1: usize,
-        body2: BodyHandle,
+        body2: BodyPartHandle,
+        collider2: ColliderHandle,
         ndofs2: usize,
         normal1: Unit<Vector<N>>,
         normal2: Unit<Vector<N>>,
@@ -114,8 +121,10 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
             rhs,
             ndofs1,
             body1,
+            collider1,
             ndofs2,
             body2,
+            collider2,
             kinematic,
             normal1,
             normal2,
@@ -124,37 +133,27 @@ impl<N: Real> NonlinearUnilateralConstraint<N> {
 }
 
 /// A non-linear position constraint generator to enforce multibody joint limits.
-pub struct MultibodyJointLimitsNonlinearConstraintGenerator {
-    link: BodyHandle,
-}
+pub struct MultibodyJointLimitsNonlinearConstraintGenerator;
 
 impl MultibodyJointLimitsNonlinearConstraintGenerator {
     /// Creates the constraint generator from the given multibody link.
-    pub fn new(link: BodyHandle) -> Self {
-        MultibodyJointLimitsNonlinearConstraintGenerator { link }
+    pub fn new() -> Self {
+        MultibodyJointLimitsNonlinearConstraintGenerator
     }
 }
 
 impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
-        if let Some(link) = bodies.multibody_link(self.link) {
-            link.joint().num_position_constraints()
-        } else {
-            0
-        }
+    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
+        0
     }
 
     fn position_constraint(
         &self,
         _: &IntegrationParameters<N>,
-        i: usize,
-        bodies: &mut BodySet<N>,
-        jacobians: &mut [N],
+        _: usize,
+        _: &mut BodySet<N>,
+        _: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        if let Some(link) = bodies.multibody_link(self.link) {
-            link.joint().position_constraint(i, &link, 0, jacobians)
-        } else {
-            None
-        }
+        None
     }
 }

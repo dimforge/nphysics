@@ -1,14 +1,14 @@
 use na::Real;
 
-use solver::IntegrationParameters;
-use force_generator::ForceGenerator;
-use object::{BodyHandle, BodySet};
-use math::{Velocity, Vector};
+use crate::solver::IntegrationParameters;
+use crate::force_generator::ForceGenerator;
+use crate::object::{BodyPartHandle, BodySet};
+use crate::math::{Force, ForceType, Velocity, Vector};
 
 /// Force generator adding a constant acceleration
 /// at the center of mass of a set of body parts.
 pub struct ConstantAcceleration<N: Real> {
-    parts: Vec<BodyHandle>,
+    parts: Vec<BodyPartHandle>,
     acceleration: Velocity<N>,
 }
 
@@ -36,28 +36,26 @@ impl<N: Real> ConstantAcceleration<N> {
     }
 
     /// Add a body part to be affected by this force generator.
-    pub fn add_body_part(&mut self, body: BodyHandle) {
+    pub fn add_body_part(&mut self, body: BodyPartHandle) {
         self.parts.push(body)
     }
 }
 
 impl<N: Real> ForceGenerator<N> for ConstantAcceleration<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
-        let mut i = 0;
-
-        while i < self.parts.len() {
-            let body = self.parts[i];
-
-            if bodies.contains(body) {
-                let mut part = bodies.body_part_mut(body);
-                let force = part.as_ref().inertia() * self.acceleration;
-                part.apply_force(&force);
-                i += 1;
+        let acceleration = self.acceleration;
+        self.parts.retain(|h| {
+            if let Some(body) = bodies.body_mut(h.0) {
+                body.apply_force(h.1,
+                                 &Force::new(acceleration.linear, acceleration.angular),
+                                 ForceType::AccelerationChange,
+                                  false);
+                true
             } else {
-                let _ = self.parts.swap_remove(i);
+                false
             }
-        }
+        });
 
-        true
+        !self.parts.is_empty()
     }
 }

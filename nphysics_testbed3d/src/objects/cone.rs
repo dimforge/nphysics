@@ -1,9 +1,9 @@
-use kiss3d::scene::SceneNode;
 use kiss3d::window;
+use kiss3d::scene::SceneNode;
 use na::{Isometry3, Point3};
-use nphysics3d::object::ColliderHandle;
 use nphysics3d::world::World;
-use objects::node;
+use nphysics3d::object::ColliderHandle;
+use crate::objects::node;
 
 pub struct Cone {
     color: Point3<f32>,

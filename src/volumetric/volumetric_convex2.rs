@@ -1,12 +1,12 @@
 use num::Zero;
 
-use math::{AngularInertia, Point};
-use na;
 use na::Real;
 use na::{Matrix1, Point2};
-use ncollide::shape::ConvexPolygon;
+use na;
 use ncollide::utils;
-use volumetric::Volumetric;
+use ncollide::shape::ConvexPolygon;
+use crate::volumetric::Volumetric;
+use crate::math::{AngularInertia, Point};
 
 /// The area and center of mass of a 2D convex Polyline.
 ///
@@ -157,9 +157,9 @@ impl<N: Real> Volumetric<N> for ConvexPolygon<N> {
 #[cfg(test)]
 mod test {
     use na::{self, Matrix1, Point2, Vector2, Vector3};
+    use ncollide::shape::{Cuboid, ConvexPolygon};
     use ncollide::procedural;
-    use ncollide::shape::{ConvexPolygon, Cuboid};
-    use volumetric::Volumetric;
+    use crate::volumetric::Volumetric;
 
     #[test]
     fn test_inertia_tensor2() {

@@ -1,19 +1,21 @@
 use na::{DVector, Real};
 use std::ops::Range;
 
-use joint::JointConstraint;
-use math::{AngularVector, Isometry, Point, Vector, DIM, SPATIAL_DIM};
-use object::{BodyHandle, BodySet};
-use solver::helper;
-use solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::joint::JointConstraint;
+use crate::math::{AngularVector, Rotation, Point, Vector, DIM, SPATIAL_DIM};
+use crate::object::{BodyPartHandle, BodySet};
+use crate::solver::helper;
+use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all degrees of freedom between two body parts.
 pub struct FixedConstraint<N: Real> {
-    b1: BodyHandle,
-    b2: BodyHandle,
-    joint_to_b1: Isometry<N>,
-    joint_to_b2: Isometry<N>,
+    b1: BodyPartHandle,
+    b2: BodyPartHandle,
+    anchor1: Point<N>,
+    ref_frame1: Rotation<N>,
+    anchor2: Point<N>,
+    ref_frame2: Rotation<N>,
     lin_impulses: Vector<N>,
     ang_impulses: AngularVector<N>,
     bilateral_ground_rng: Range<usize>,
@@ -26,16 +28,20 @@ impl<N: Real> FixedConstraint<N> {
     /// This will ensure the frames `joint_to_b1` and `joint_to_b2` attached to the
     /// body parts `b1` adn `b2` respectively always coincide.
     pub fn new(
-        b1: BodyHandle,
-        b2: BodyHandle,
-        joint_to_b1: Isometry<N>,
-        joint_to_b2: Isometry<N>,
+        b1: BodyPartHandle,
+        b2: BodyPartHandle,
+        anchor1: Point<N>,
+        ref_frame1: Rotation<N>,
+        anchor2: Point<N>,
+        ref_frame2: Rotation<N>,
     ) -> Self {
         FixedConstraint {
             b1,
             b2,
-            joint_to_b1,
-            joint_to_b2,
+            anchor1,
+            ref_frame1,
+            anchor2,
+            ref_frame2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
@@ -43,14 +49,24 @@ impl<N: Real> FixedConstraint<N> {
         }
     }
 
-    /// Changes the frame attached to the first body part.
-    pub fn set_anchor_1(&mut self, local1: Isometry<N>) {
-        self.joint_to_b1 = local1
+    /// Changes the reference frame for the first body part.
+    pub fn set_reference_frame_1(&mut self, ref_frame1: Rotation<N>) {
+        self.ref_frame1 = ref_frame1
     }
 
-    /// Changes the frame attached to the second body part.
-    pub fn set_anchor_2(&mut self, local2: Isometry<N>) {
-        self.joint_to_b2 = local2
+    /// Changes the reference frame for the second body part.
+    pub fn set_reference_frame_2(&mut self, ref_frame2: Rotation<N>) {
+        self.ref_frame2 = ref_frame2
+    }
+
+    /// Changes the attached material point from the first body part.
+    pub fn set_anchor_1(&mut self, anchor1: Point<N>) {
+        self.anchor1 = anchor1
+    }
+
+    /// Changes the attached material point from the second body part.
+    pub fn set_anchor_2(&mut self, anchor2: Point<N>) {
+        self.anchor2 = anchor2
     }
 }
 
@@ -59,7 +75,7 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
         SPATIAL_DIM
     }
 
-    fn anchors(&self) -> (BodyHandle, BodyHandle) {
+    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
         (self.b1, self.b2)
     }
 
@@ -73,24 +89,28 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let b1 = bodies.body_part(self.b1);
-        let b2 = bodies.body_part(self.b2);
+        let body1 = try_ret!(bodies.body(self.b1.0));
+        let body2 = try_ret!(bodies.body(self.b2.0));
+        let part1 = try_ret!(body1.part(self.b1.1));
+        let part2 = try_ret!(body2.part(self.b2.1));
 
-        let pos1 = b1.position() * self.joint_to_b1;
-        let pos2 = b2.position() * self.joint_to_b2;
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1) * self.ref_frame1;
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2) * self.ref_frame2;
 
-        let anchor1 = Point::from_coordinates(pos1.translation.vector);
-        let anchor2 = Point::from_coordinates(pos2.translation.vector);
+        let anchor1 = Point::from(pos1.translation.vector);
+        let anchor2 = Point::from(pos2.translation.vector);
 
-        let assembly_id1 = b1.parent_companion_id();
-        let assembly_id2 = b2.parent_companion_id();
+        let assembly_id1 = body1.companion_id();
+        let assembly_id2 = body2.companion_id();
 
         let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
         let first_bilateral = constraints.velocity.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
-            &b1,
-            &b2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -105,8 +125,10 @@ impl<N: Real> JointConstraint<N> for FixedConstraint<N> {
         );
 
         helper::cancel_relative_angular_velocity(
-            &b1,
-            &b2,
+            body1,
+            part1,
+            body2,
+            part2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -161,14 +183,16 @@ impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body_part(self.b1);
-        let body2 = bodies.body_part(self.b2);
+        let body1 = bodies.body(self.b1.0)?;
+        let body2 = bodies.body(self.b2.0)?;
+        let part1 = body1.part(self.b1.1)?;
+        let part2 = body2.part(self.b2.1)?;
 
-        let pos1 = body1.position() * self.joint_to_b1;
-        let pos2 = body2.position() * self.joint_to_b2;
+        let pos1 = body1.position_at_material_point(part1, &self.anchor1) * self.ref_frame1;
+        let pos2 = body2.position_at_material_point(part2, &self.anchor2) * self.ref_frame2;
 
-        let anchor1 = Point::from_coordinates(pos1.translation.vector);
-        let anchor2 = Point::from_coordinates(pos2.translation.vector);
+        let anchor1 = Point::from(pos1.translation.vector);
+        let anchor2 = Point::from(pos2.translation.vector);
 
         if i == 0 {
             let rotation1 = pos1.rotation;
@@ -176,8 +200,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
 
             helper::cancel_relative_rotation(
                 params,
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 &rotation1,
@@ -187,8 +213,10 @@ impl<N: Real> NonlinearConstraintGenerator<N> for FixedConstraint<N> {
         } else if i == 1 {
             helper::cancel_relative_translation(
                 params,
-                &body1,
-                &body2,
+                body1,
+                part1,
+                body2,
+                part2,
                 &anchor1,
                 &anchor2,
                 jacobians,

@@ -1,7 +1,7 @@
 use std::ops::{Add, AddAssign, Mul};
 
-use algebra::{Force3, Velocity3};
 use na::{self, Isometry3, Matrix3, Matrix6, Real, U3};
+use crate::algebra::{Force3, Velocity3};
 
 /// The inertia of a rigid body grouping both its mass and its angular inertia.
 #[derive(Clone, Copy, Debug)]
@@ -63,7 +63,7 @@ impl<N: Real> Inertia3<N> {
     ///
     /// Sets the angular part to zero if it is not invertible.
     pub fn inverse(&self) -> Self {
-        let inv_mass = N::one() / self.linear;
+        let inv_mass = if self.linear.is_zero() { N::zero() } else { N::one() / self.linear };
         let inv_angular = self.angular.try_inverse().unwrap_or_else(na::zero);
         Inertia3::new(inv_mass, inv_angular)
     }

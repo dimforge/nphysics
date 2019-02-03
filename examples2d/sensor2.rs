@@ -3,15 +3,13 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::{Isometry2, Point2, Point3, Vector2};
+use na::{Point2, Point3, Vector2};
 use ncollide2d::query::Proximity;
 use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics2d::object::{BodyHandle, Material};
-use nphysics2d::volumetric::Volumetric;
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     let mut testbed = Testbed::new_empty();
@@ -25,66 +23,60 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(10.0, 1.0)));
-    let ground_pos = Isometry2::new(-Vector2::y(), na::zero());
-    world.add_collider(
-        COLLIDER_MARGIN,
-        ground_shape,
-        BodyHandle::ground(),
-        ground_pos,
-        Material::default(),
-    );
+    let ground_size = 10.0;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+
+    ColliderDesc::new(ground_shape)
+        .translation(-Vector2::y())
+        .build(&mut world);
 
     /*
      * Create some boxes.
      */
     let num = 15;
     let rad = 0.2;
-    let shift = rad * 2.0;
-    let centerx = shift * (num as f32) / 2.0;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad - COLLIDER_MARGIN)));
-    let inertia = geom.inertia(1.0);
-    let center_of_mass = geom.center_of_mass();
+    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let collider_desc = ColliderDesc::new(cuboid)
+        .density(1.0);
+
+    let mut rb_desc = RigidBodyDesc::new()
+        .collider(&collider_desc);
+
+    let shift = (rad + collider_desc.get_margin()) * 2.0;
+    let centerx = shift * (num as f32) / 2.0;
 
     for i in 0usize..num {
         let x = i as f32 * shift - centerx;
 
-        /*
-         * Create the rigid body.
-         */
-        let pos = Isometry2::new(Vector2::new(x, 2.0), na::zero());
-        let handle = world.add_rigid_body(pos, inertia, center_of_mass);
+        // Build the rigid body and its collider.
+        let handle = rb_desc
+            .set_translation(Vector2::new(x, 2.0))
+            .build(&mut world)
+            .handle();
 
-        /*
-         * Create the collider.
-         */
-        world.add_collider(
-            COLLIDER_MARGIN,
-            geom.clone(),
-            handle,
-            Isometry2::identity(),
-            Material::default(),
-        );
-        testbed.set_body_color(&world, handle, Point3::new(0.5, 0.5, 1.0));
+        testbed.set_body_color(handle, Point3::new(0.5, 0.5, 1.0));
     }
 
     /*
-     * Create a box that will have a sensor attached.
+     * Create a box that will have a ball-shaped sensor attached.
      */
-    let pos = Isometry2::new(Vector2::new(0.0, 4.0), na::zero());
-    let sensor_body = world.add_rigid_body(pos, inertia, center_of_mass);
     let sensor_geom = ShapeHandle::new(Ball::new(rad * 5.0));
+    // We create a collider desc without density because we don't
+    // want it to contribute to the rigid body mass.
+    let sensor_collider = ColliderDesc::new(sensor_geom)
+        .sensor(true);
 
-    world.add_collider(
-        COLLIDER_MARGIN,
-        geom,
-        sensor_body,
-        Isometry2::identity(),
-        Material::default(),
-    );
-    world.add_sensor(sensor_geom, sensor_body, Isometry2::identity());
-    testbed.set_body_color(&world, sensor_body, Point3::new(0.5, 1.0, 1.0));
+
+    let sensor_body = RigidBodyDesc::new()
+        .collider(&collider_desc)
+        .collider(&sensor_collider)
+        .translation(Vector2::new(0.0, 4.0))
+        .build(&mut world)
+        .handle();
+
+    testbed.set_body_color(sensor_body, Point3::new(0.5, 1.0, 1.0));
 
     // Callback that will be executed on the main loop to handle proximities.
     testbed.add_callback(move |world, graphics, _| {
@@ -95,14 +87,15 @@ fn main() {
                 Proximity::Disjoint => Point3::new(0.5, 0.5, 1.0),
             };
 
-            let body1 = world.collider(prox.collider1).unwrap().data().body();
-            let body2 = world.collider(prox.collider2).unwrap().data().body();
+            let body1 = world.collider(prox.collider1).unwrap().body();
+            let body2 = world.collider(prox.collider2).unwrap().body();
 
             if !body1.is_ground() && body1 != sensor_body {
-                graphics.set_body_color(&world, body1, color);
+                graphics.set_body_color(body1, color);
             }
+
             if !body2.is_ground() && body2 != sensor_body {
-                graphics.set_body_color(&world, body2, color);
+                graphics.set_body_color(body2, color);
             }
         }
     });

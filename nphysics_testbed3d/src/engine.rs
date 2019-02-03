@@ -5,14 +5,18 @@ use na;
 use na::{Isometry3, Point3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
-use nphysics3d::object::{Body, BodyHandle, ColliderHandle};
+use ncollide3d::query::Ray;
+use ncollide3d::world::CollisionGroups;
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics3d::world::World;
-use objects::ball::Ball;
-use objects::box_node::Box;
-use objects::convex::Convex;
-use objects::mesh::Mesh;
-use objects::node::Node;
-use objects::plane::Plane;
+use crate::objects::ball::Ball;
+use crate::objects::box_node::Box;
+use crate::objects::convex::Convex;
+use crate::objects::mesh::Mesh;
+use crate::objects::node::Node;
+use crate::objects::heightfield::HeightField;
+use crate::objects::plane::Plane;
+use crate::objects::capsule::Capsule;
 use rand::{Rng, SeedableRng, XorShiftRng};
 use std::collections::HashMap;
 
@@ -21,6 +25,7 @@ pub struct GraphicsManager {
     b2sn: HashMap<BodyHandle, Vec<Node>>,
     b2color: HashMap<BodyHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
+    rays: Vec<Ray<f32>>,
     arc_ball: ArcBall,
     first_person: FirstPerson,
     curr_is_arc_ball: bool,
@@ -48,6 +53,7 @@ impl GraphicsManager {
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
+            rays: Vec::new(),
             aabbs: Vec::new(),
         }
     }
@@ -65,35 +71,41 @@ impl GraphicsManager {
 
         self.b2sn.clear();
         self.aabbs.clear();
+        self.rays.clear();
     }
 
-    pub fn remove_body_nodes(&mut self, world: &World<f32>, window: &mut Window, body: BodyHandle) {
-        let body_key = Self::body_key(world, body);
-
-        if let Some(sns) = self.b2sn.get(&body_key) {
+    pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {
+        if let Some(sns) = self.b2sn.get(&body) {
             for sn in sns.iter() {
                 window.remove_node(&mut sn.scene_node().clone());
             }
         }
 
-        self.b2sn.remove(&body_key);
+        self.b2sn.remove(&body);
     }
 
     pub fn remove_body_part_nodes(
         &mut self,
         world: &World<f32>,
         window: &mut Window,
-        body: BodyHandle,
-    ) -> BodyHandle {
+        part: BodyPartHandle,
+    ) -> BodyPartHandle {
         let mut delete_array = true;
-        let body_key = Self::body_key(world, body);
 
-        if let Some(sns) = self.b2sn.get_mut(&body_key) {
+        if let Some(sns) = self.b2sn.get_mut(&part.0) {
             sns.retain(|sn| {
-                if world.collider(sn.collider()).unwrap().data().body() == body {
-                    window.remove_node(&mut sn.scene_node().clone());
-                    false
-                } else {
+                if let ColliderAnchor::OnBodyPart {
+                    body_part, ..
+                } = world.collider(sn.collider()).unwrap().anchor()
+                    {
+                        if *body_part == part {
+                            window.remove_node(&mut sn.scene_node().clone());
+                            false
+                        } else {
+                            delete_array = false;
+                            true
+                        }
+                    } else {
                     delete_array = false;
                     true
                 }
@@ -101,18 +113,17 @@ impl GraphicsManager {
         }
 
         if delete_array {
-            self.b2sn.remove(&body_key);
+            self.b2sn.remove(&part.0);
         }
 
-        body_key
+        part
     }
 
     pub fn update_after_body_key_change(&mut self, world: &World<f32>, body_key: BodyHandle) {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
-                    let sn_body = world.collider(sn.collider()).unwrap().data().body();
-                    let sn_key = Self::body_key(world, sn_body);
+                    let sn_key = world.collider(sn.collider()).unwrap().body();
 
                     let _ = self.b2color.entry(sn_key).or_insert(color);
                     let new_sns = self.b2sn.entry(sn_key).or_insert_with(Vec::new);
@@ -122,11 +133,10 @@ impl GraphicsManager {
         }
     }
 
-    pub fn set_body_color(&mut self, world: &World<f32>, b: BodyHandle, color: Point3<f32>) {
-        let body_key = Self::body_key(world, b);
-        self.b2color.insert(body_key, color);
+    pub fn set_body_color(&mut self, b: BodyHandle, color: Point3<f32>) {
+        self.b2color.insert(b, color);
 
-        if let Some(ns) = self.b2sn.get_mut(&body_key) {
+        if let Some(ns) = self.b2sn.get_mut(&b) {
             for n in ns.iter_mut() {
                 n.set_color(color)
             }
@@ -137,37 +147,41 @@ impl GraphicsManager {
         self.c2color.insert(handle, color);
     }
 
-    fn body_key(world: &World<f32>, handle: BodyHandle) -> BodyHandle {
-        if let Body::Multibody(mb) = world.body(handle) {
-            mb.handle()
-        } else {
-            handle
+    fn alloc_color(&mut self, handle: BodyHandle) -> Point3<f32> {
+        let mut color = Point3::new(0.5, 0.5, 0.5);
+
+        match self.b2color.get(&handle) {
+            Some(c) => color = *c,
+            None => {
+                if !handle.is_ground() {
+                    color = self.rand.gen();
+                    color *= 1.5;
+                    color.x = color.x.min(1.0);
+                    color.y = color.y.min(1.0);
+                    color.z = color.z.min(1.0);
+                }
+            }
         }
+
+        self.set_body_color(handle, color);
+
+        color
+    }
+
+    pub fn add_ray(&mut self, ray: Ray<f32>) {
+        self.rays.push(ray)
     }
 
     pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
-        let mut color = Point3::new(0.5, 0.5, 0.5);
         let collider = world.collider(id).unwrap();
 
-        if let Some(c) = self.c2color.get(&id).cloned() {
-            color = c
+        let color = if let Some(c) = self.c2color.get(&id).cloned() {
+            c
+        } else if let Some(c) = self.b2color.get(&collider.body()).cloned() {
+            c
         } else {
-            let body_key = Self::body_key(world, collider.data().body());
-            match self.b2color.get(&body_key) {
-                Some(c) => color = *c,
-                None => {
-                    if !collider.data().body().is_ground() {
-                        color = self.rand.gen();
-                        color *= 1.5;
-                        color.x = color.x.min(1.0);
-                        color.y = color.y.min(1.0);
-                        color.z = color.z.min(1.0);
-                    }
-                }
-            }
-
-            self.set_body_color(world, collider.data().body(), color);
-        }
+            self.alloc_color(collider.body())
+        };
 
         self.add_with_color(window, id, world, color)
     }
@@ -180,7 +194,7 @@ impl GraphicsManager {
         color: Point3<f32>,
     ) {
         let collider = world.collider(id).unwrap();
-        let parent = collider.data().body();
+        let key = collider.body();
         let shape = collider.shape().as_ref();
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
@@ -188,7 +202,6 @@ impl GraphicsManager {
         self.add_shape(window, id, world, na::one(), shape, color, &mut new_nodes);
 
         {
-            let key = Self::body_key(world, parent);
             let nodes = self.b2sn.entry(key).or_insert_with(Vec::new);
             nodes.append(&mut new_nodes);
         }
@@ -212,18 +225,20 @@ impl GraphicsManager {
             self.add_box(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
             self.add_convex(window, object, world, delta, s, color, out) /*
-                                                                         } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
-                                                                             self.add_cylinder(window, object, world, delta, s, color, out)
-                                                                         } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
-                                                                             self.add_cone(window, object, world, delta, s, color, out)*/
+        } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
+            self.add_cylinder(window, object, world, delta, s, color, out)
+        } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
+            self.add_cone(window, object, world, delta, s, color, out)*/
+        } else if let Some(s) = shape.as_shape::<shape::Capsule<f32>>() {
+            self.add_capsule(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, world, delta * t, s.as_ref(), color, out)
             }
         } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
             self.add_mesh(window, object, world, delta, s, color, out);
-        } else {
-            panic!("Not yet implemented.")
+        } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+            self.add_heightfield(window, object, world, delta, s, color, out);
         }
     }
 
@@ -237,7 +252,7 @@ impl GraphicsManager {
         out: &mut Vec<Node>,
     ) {
         let pos = world.collider(object).unwrap().position();
-        let position = Point3::from_coordinates(pos.translation.vector);
+        let position = Point3::from(pos.translation.vector);
         let normal = pos * shape.normal();
 
         out.push(Node::Plane(Plane::new(
@@ -255,20 +270,62 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let vertices = shape.vertices();
-        let indices = shape.indices();
+        let points = shape.points();
+        let faces = shape.faces();
 
-        let is = indices
+        let is = faces
             .iter()
-            .map(|p| Point3::new(p.x as u32, p.y as u32, p.z as u32))
+            .map(|f| Point3::new(f.indices.x as u32, f.indices.y as u32, f.indices.z as u32))
             .collect();
 
         out.push(Node::Mesh(Mesh::new(
             object,
             world,
             delta,
-            vertices.clone(),
+            points.to_vec(),
             is,
+            color,
+            window,
+        )))
+    }
+
+    fn add_heightfield(
+        &mut self,
+        window: &mut Window,
+        object: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry3<f32>,
+        heightfield: &shape::HeightField<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        out.push(Node::HeightField(HeightField::new(
+            object,
+            world,
+            delta,
+            heightfield,
+            color,
+            window,
+        )))
+    }
+
+    fn add_capsule(
+        &mut self,
+        window: &mut Window,
+        object: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry3<f32>,
+        shape: &shape::Capsule<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        let margin = world.collider(object).unwrap().margin();
+        out.push(Node::Capsule(Capsule::new(
+            object,
+            world,
+            delta,
+            shape.radius() + margin,
+            shape.height(),
             color,
             window,
         )))
@@ -284,7 +341,7 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let margin = world.collider(object).unwrap().data().margin();
+        let margin = world.collider(object).unwrap().margin();
         out.push(Node::Ball(Ball::new(
             object,
             world,
@@ -305,7 +362,7 @@ impl GraphicsManager {
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
-        let margin = world.collider(object).unwrap().data().margin();
+        let margin = world.collider(object).unwrap().margin();
         let rx = shape.half_extents().x + margin;
         let ry = shape.half_extents().y + margin;
         let rz = shape.half_extents().z + margin;
@@ -334,36 +391,45 @@ impl GraphicsManager {
         )))
     }
 
-    pub fn draw(&mut self, world: &World<f32>) {
+    pub fn draw(&mut self, world: &World<f32>, window: &mut Window) {
         for (_, ns) in self.b2sn.iter_mut() {
             for n in ns.iter_mut() {
                 n.update(world)
             }
         }
+
+        for ray in &self.rays {
+            let groups = CollisionGroups::new();
+            let inter = world.collider_world().interferences_with_ray(ray, &groups);
+            let hit = inter.fold(1000.0, |t, hit| hit.1.toi.min(t));
+            let p1 = ray.origin;
+            let p2 = ray.origin + ray.dir * hit;
+            window.draw_line(&p1, &p2, &Point3::new(1.0, 0.0, 0.0));
+        }
     }
 
-    // pub fn draw_positions(&mut self, window: &mut Window, rbs: &RigidBodies<f32>) {
-    //     for (_, ns) in self.b2sn.iter_mut() {
-    //         for n in ns.iter_mut() {
-    //             let object = n.object();
-    //             let rb = rbs.get(object).expect("Rigid body not found.");
+// pub fn draw_positions(&mut self, window: &mut Window, rbs: &RigidBodies<f32>) {
+//     for (_, ns) in self.b2sn.iter_mut() {
+//         for n in ns.iter_mut() {
+//             let object = n.object();
+//             let rb = rbs.get(object).expect("Rigid body not found.");
 
-    //             // if let WorldObjectBorrowed::RigidBody(rb) = object {
-    //                 let t      = rb.position();
-    //                 let center = rb.center_of_mass();
+//             // if let WorldObjectBorrowed::RigidBody(rb) = object {
+//                 let t      = rb.position();
+//                 let center = rb.center_of_mass();
 
-    //                 let rotmat = t.rotation.to_rotation_matrix().unwrap();
-    //                 let x = rotmat.column(0) * 0.25f32;
-    //                 let y = rotmat.column(1) * 0.25f32;
-    //                 let z = rotmat.column(2) * 0.25f32;
+//                 let rotmat = t.rotation.to_rotation_matrix().unwrap();
+//                 let x = rotmat.column(0) * 0.25f32;
+//                 let y = rotmat.column(1) * 0.25f32;
+//                 let z = rotmat.column(2) * 0.25f32;
 
-    //                 window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
-    //                 window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
-    //                 window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
-    //             // }
-    //         }
-    //     }
-    // }
+//                 window.draw_line(center, &(*center + x), &Point3::new(1.0, 0.0, 0.0));
+//                 window.draw_line(center, &(*center + y), &Point3::new(0.0, 1.0, 0.0));
+//                 window.draw_line(center, &(*center + z), &Point3::new(0.0, 0.0, 1.0));
+//             // }
+//         }
+//     }
+// }
 
     pub fn switch_cameras(&mut self) {
         if self.curr_is_arc_ball {
@@ -398,16 +464,15 @@ impl GraphicsManager {
         self.first_person.look_at(eye, at);
     }
 
-    pub fn body_nodes(&self, world: &World<f32>, handle: BodyHandle) -> Option<&Vec<Node>> {
-        self.b2sn.get(&Self::body_key(world, handle))
+    pub fn body_nodes(&self, handle: BodyHandle) -> Option<&Vec<Node>> {
+        self.b2sn.get(&handle)
     }
 
     pub fn body_nodes_mut(
         &mut self,
-        world: &World<f32>,
         handle: BodyHandle,
     ) -> Option<&mut Vec<Node>> {
-        self.b2sn.get_mut(&Self::body_key(world, handle))
+        self.b2sn.get_mut(&handle)
     }
 }
 

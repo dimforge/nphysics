@@ -9,6 +9,7 @@ repository = "https://github.com/rustsim/nphysics"
 readme = "README.md"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
 license = "BSD-3-Clause"
+edition = "2018"
 
 [features]
 default = [ "dim2", "stdweb" ]
@@ -20,13 +21,15 @@ name = "nphysics2d"
 path = "../../src/lib.rs"
 
 [dependencies]
+either     = "1.0"
 num-traits = "0.2"
 slab       = "0.4"
-alga       = "0.7"
-nalgebra   = "0.16"
+alga       = "0.8"
+nalgebra   = { version = "0.17", features = [ "sparse" ] }
 approx     = "0.3"
-downcast   = "0.9"
-ncollide2d = "0.17"
+downcast-rs = "1.0"
+bitflags   = "1.0"
+ncollide2d = "0.18"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = {version = "0.4", optional = true}

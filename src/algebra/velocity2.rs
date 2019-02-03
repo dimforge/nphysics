@@ -44,6 +44,14 @@ impl<N: Real> Velocity2<N> {
         Self::new(na::zero(), N::zero())
     }
 
+    /// Computes the velocity required to move from `start` to `end` in the given `time`.
+    pub fn between_positions(start: &Isometry2<N>, end: &Isometry2<N>, time: N) -> Self {
+        let delta = end / start;
+        let linear = delta.translation.vector / time;
+        let angular = delta.rotation.angle() / time;
+        Self::new(linear, angular)
+    }
+
     /// The angular part of the velocity.
     #[inline]
     pub fn angular_vector(&self) -> Vector1<N> {

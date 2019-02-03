@@ -10,9 +10,9 @@ extern crate time;
 #[macro_use]
 extern crate log;
 
-pub use engine::GraphicsManager;
-pub use testbed::Testbed;
-pub use world_owner::WorldOwner;
+pub use crate::engine::GraphicsManager;
+pub use crate::testbed::Testbed;
+pub use crate::world_owner::WorldOwner;
 
 mod engine;
 pub mod objects;
