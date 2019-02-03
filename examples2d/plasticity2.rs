@@ -51,7 +51,7 @@ fn main() {
         .young_modulus(1.0e2)
         .mass_damping(0.2)
         .plasticity(0.1, 5.0, 1.0e5)
-        .boundary_polyline_collider(true)
+        .collider_enabled(true)
         .build(&mut world)
         .handle();
 
@@ -66,6 +66,7 @@ fn main() {
     }
 
     testbed.add_callback(move |world, _, _| {
+        let mut world = world.get_mut();
         for (i, handle) in platforms.iter().enumerate() {
             let platform = world.rigid_body_mut(*handle).unwrap();
             let platform_y = platform.position().translation.vector.y;

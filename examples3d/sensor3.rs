@@ -69,7 +69,7 @@ fn main() {
     // We create a collider desc without density because we don't
     // want it to contribute to the rigid body mass.
     let sensor_collider = ColliderDesc::new(sensor_geom)
-        .as_sensor(true);
+        .sensor(true);
 
     let sensor_handle = RigidBodyDesc::new()
         .collider(&collider_desc)
@@ -83,6 +83,7 @@ fn main() {
 
     // Callback that will be executed on the main loop to handle proximities.
     testbed.add_callback(move |world, graphics, _| {
+        let world = world.get();
         for prox in world.proximity_events() {
             let color = match prox.new_status {
                 Proximity::WithinMargin | Proximity::Intersecting => Point3::new(1.0, 1.0, 0.0),

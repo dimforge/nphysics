@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::joint::RevoluteJoint;
-use nphysics3d::object::{BodyStatus, Body, BodyPart, ColliderDesc, RigidBodyDesc, MultibodyDesc};
+use nphysics3d::object::{BodyStatus, Body, ColliderDesc, RigidBodyDesc, MultibodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
@@ -111,10 +111,11 @@ fn main() {
     let mut testbed = Testbed::new(world);
 
     testbed.add_callback(move |world, _, time| {
+        let mut world = world.get_mut();
         let platform = world.rigid_body_mut(platform_handle).unwrap();
         let platform_z = platform.position().translation.z;
 
-        let mut vel = platform.velocity();
+        let mut vel = *platform.velocity();
         vel.linear.y = (time * 5.0).sin() * 0.8;
 
         if platform_z >= rad * 10.0 {

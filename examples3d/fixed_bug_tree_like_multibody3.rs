@@ -19,7 +19,7 @@ fn new_link<J: Joint<f32>>(world: &mut World<f32>, joint: J, parent: BodyPartHan
 
     MultibodyDesc::new(joint)
         .collider(&collider_desc)
-        .build_parent(parent, world)
+        .build_with_parent(parent, world)
         .unwrap()
         .part_handle()
 }

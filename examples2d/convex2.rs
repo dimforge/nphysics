@@ -48,7 +48,7 @@ fn main() {
             let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
-            let mut pts = Vec::capacity(npts);
+            let mut pts = Vec::with_capacity(npts);
 
             for _ in 0..npts {
                 let pt: Point2<f32> = distribution.sample(&mut rng);

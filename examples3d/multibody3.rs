@@ -223,6 +223,7 @@ fn main() {
          * Activate the helical joint motor if it is to low.
          */
         // Might be None if the user interactively deleted the helical body.
+        let mut world = world.get_mut();
         let link = world.multibody_mut(helical_handle).and_then(|mb| mb.link_mut(0));
         if let Some(helical) = link {
             let dof = helical
@@ -243,6 +244,7 @@ fn main() {
          * Activate the pin-slot joint linear motor if it is to low.
          */
         // Might be None if the user interactively deleted the pin-slot body.
+        let mut world = world.get_mut();
         let link = world.multibody_mut(pin_slot_handle).and_then(|mb| mb.link_mut(0));
         if let Some(pin_slot) = link {
             let dof = pin_slot
