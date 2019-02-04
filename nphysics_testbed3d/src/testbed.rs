@@ -118,7 +118,7 @@ impl Testbed {
             graphics,
             nsteps: 1,
             time: 0.0,
-            hide_counters: false,
+            hide_counters: true,
             persistant_contacts: HashMap::new(),
             font: Font::default(),
             running: RunMode::Running,
