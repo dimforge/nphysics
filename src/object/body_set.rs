@@ -150,6 +150,12 @@ impl<N: Real> BodySet<N> {
         }
     }
 
+    /// Returns `true` if the given body exists.
+    #[inline]
+    pub fn contains(&self, handle: BodyHandle) -> bool {
+        handle.is_ground() || self.bodies.contains(handle.0)
+    }
+
     /// Reference to the body identified by `body`.
     ///
     /// Returns `None` if the body is not found.
