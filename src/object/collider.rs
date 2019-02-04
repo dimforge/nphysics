@@ -451,8 +451,8 @@ impl<N: Real> ColliderDesc<N> {
             (self.position, 0)
         } else {
             if !self.density.is_zero() {
-                let com = self.shape.center_of_mass();
-                let inertia = self.shape.inertia(self.density);
+                let com = self.position * self.shape.center_of_mass();
+                let inertia = self.shape.inertia(self.density).transformed(&self.position);
                 body.add_local_inertia_and_com(parent.1, com, inertia);
             }
 
