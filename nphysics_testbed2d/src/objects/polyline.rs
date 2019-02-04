@@ -10,6 +10,7 @@ pub struct Polyline {
     vertices: Vec<Point2<f32>>,
     indices: Vec<Point2<usize>>,
     collider: ColliderHandle,
+    pos: Isometry2<f32>
 }
 
 impl Polyline {
@@ -24,6 +25,7 @@ impl Polyline {
     ) -> Polyline {
         let mut res = Polyline {
             color,
+            pos: Isometry2::identity(),
             base_color: color,
             vertices,
             indices,
@@ -51,6 +53,7 @@ impl Polyline {
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
         if let Some(c) = world.collider(self.collider) {
+            self.pos = *c.position();
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
                 let shape = c.shape().as_shape::<shape::Polyline<f32>>().unwrap();
                 self.vertices = shape.points().to_vec();
@@ -69,7 +72,9 @@ impl Polyline {
 
     pub fn draw(&mut self, window: &mut Window) {
         for idx in &self.indices {
-            window.draw_planar_line(&self.vertices[idx.x], &self.vertices[idx.y], &self.color)
+            let p1 = self.pos * self.vertices[idx.x];
+            let p2 = self.pos * self.vertices[idx.y];
+            window.draw_planar_line(&p1, &p2, &self.color)
         }
     }
 }
