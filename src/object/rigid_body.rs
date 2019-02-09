@@ -195,11 +195,19 @@ impl<N: Real> RigidBody<N> {
         self.local_com = local_com;
     }
 
+    fn update_inertia_from_local_inertia(&mut self) {
+        // Needed for 2D because the inertia is not updated on the `update_dynamics`.
+        self.inertia = self.local_inertia.transformed(&self.position);
+        self.augmented_mass = self.inertia;
+        self.inv_augmented_mass = self.inertia.inverse();
+    }
+
     /// Set the local inertia of this rigid body, expressed in its local space.
     #[inline]
     pub fn set_local_inertia(&mut self, local_inertia: Inertia<N>) {
         self.update_status.set_local_inertia_changed(true);
         self.local_inertia = local_inertia;
+        self.update_inertia_from_local_inertia();
     }
 
     /// Set the mass of this rigid body.
@@ -207,6 +215,7 @@ impl<N: Real> RigidBody<N> {
     pub fn set_mass(&mut self, mass: N) {
         self.update_status.set_local_inertia_changed(true);
         self.local_inertia.linear = mass;
+        self.update_inertia_from_local_inertia();
     }
 
     /// Set the angular inertia of this rigid body, expressed in its local space.
@@ -215,6 +224,7 @@ impl<N: Real> RigidBody<N> {
     pub fn set_angular_inertia(&mut self, angular_inertia: N) {
         self.update_status.set_local_inertia_changed(true);
         self.local_inertia.angular = angular_inertia;
+        self.update_inertia_from_local_inertia();
     }
 
     /// Set the angular inertia of this rigid body, expressed in its local space.
@@ -223,6 +233,7 @@ impl<N: Real> RigidBody<N> {
     pub fn set_angular_inertia(&mut self, angular_inertia: na::Matrix3<N>) {
         self.update_status.set_local_inertia_changed(true);
         self.local_inertia.angular = angular_inertia;
+        self.update_inertia_from_local_inertia();
     }
 
     /// Sets the position of this rigid body.
@@ -591,10 +602,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
 
         // Update local inertia.
         self.local_inertia += inertia;
-
-        // Needed for 2D because the inertia is not updated on the `update_dynamics`.
-        self.inertia = self.local_inertia.transformed(&self.position);
-        self.inv_augmented_mass = self.inertia.inverse();
+        self.update_inertia_from_local_inertia();
     }
 
     /*
