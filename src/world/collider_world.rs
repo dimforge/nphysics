@@ -107,7 +107,9 @@ impl<N: Real> ColliderWorld<N> {
         let parent = co.body();
         let result = co.handle();
 
-        self.colliders_w_parent.push(result);
+        if !parent.is_ground() {
+            self.colliders_w_parent.push(result);
+        }
 
         // Update the colliders list.
         match self.collider_lists.entry(parent) {
@@ -158,7 +160,7 @@ impl<N: Real> ColliderWorld<N> {
                 match (prev, next) {
                     (Some(prev), Some(next)) => {
                         self.collider_mut(next).unwrap().set_prev(Some(prev));
-                        self.collider_mut(prev).unwrap().set_prev(Some(next));
+                        self.collider_mut(prev).unwrap().set_next(Some(next));
                     }
                     (Some(prev), None) => {
                         self.collider_mut(prev).unwrap().set_next(None);
