@@ -11,6 +11,8 @@ use crate::object::{BodyPartHandle, BodyHandle, Body};
 use crate::material::{Material, MaterialHandle};
 use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
+use crate::utils::{UserData, UserDataBox};
+
 
 /// Type of the handle of a collider.
 pub type ColliderHandle = CollisionObjectHandle;
@@ -325,6 +327,7 @@ impl<N: Real> Collider<N> {
 /// See https://www.nphysics.org/rigid_body_simulations_with_contacts/#colliders for details.
 pub struct ColliderDesc<N: Real> {
     name: String,
+    user_data: Option<UserDataBox>,
     margin: N,
     collision_groups: CollisionGroups,
     shape: ShapeHandle<N>,
@@ -344,6 +347,7 @@ impl<N: Real> ColliderDesc<N> {
 
         ColliderDesc {
             name: String::new(),
+            user_data: None,
             shape,
             margin: Self::default_margin(),
             collision_groups: CollisionGroups::default(),
@@ -360,6 +364,8 @@ impl<N: Real> ColliderDesc<N> {
     pub fn default_margin() -> N {
         na::convert(0.01)
     }
+
+    user_data_desc_accessors!();
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
@@ -464,7 +470,8 @@ impl<N: Real> ColliderDesc<N> {
 
         let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: self.position };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
-        let data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
         Some(cworld.add(pos, self.shape.clone(), self.collision_groups, query, data))
     }
 }
@@ -473,6 +480,7 @@ impl<N: Real> ColliderDesc<N> {
 /// A deformable collider builder.
 pub struct DeformableColliderDesc<N: Real> {
     name: String,
+    user_data: Option<UserDataBox>,
     margin: N,
     collision_groups: CollisionGroups,
     shape: ShapeHandle<N>,
@@ -494,6 +502,7 @@ impl<N: Real> DeformableColliderDesc<N> {
 
         DeformableColliderDesc {
             name: String::new(),
+            user_data: None,
             shape,
             margin: na::convert(0.01),
             collision_groups: CollisionGroups::default(),
@@ -504,6 +513,10 @@ impl<N: Real> DeformableColliderDesc<N> {
             body_parts_mapping: None
         }
     }
+}
+
+impl<N: Real> DeformableColliderDesc<N> {
+    user_data_desc_accessors!();
 
     /// Sets the shape of this collider builder.
     ///
@@ -588,7 +601,8 @@ impl<N: Real> DeformableColliderDesc<N> {
         let body_parts = self.body_parts_mapping.clone();
         let anchor = ColliderAnchor::OnDeformableBody { body, body_parts };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
-        let data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
         cworld.add(Isometry::identity(), self.shape.clone(), self.collision_groups, query, data)
     }
 }
