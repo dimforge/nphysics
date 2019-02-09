@@ -18,6 +18,7 @@ use crate::math::{Force, ForceType, Inertia, Velocity, Matrix, Dim, DIM, Point, 
                   SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
 use crate::world::{World, ColliderWorld};
+use crate::utils::{UserData, UserDataBox};
 
 /// One element of a deformable surface.
 #[derive(Clone)]
@@ -969,6 +970,7 @@ enum FEMSurfaceDescGeometry<'a, N: Real> {
 /// A builder for FEMSurface bodies.
 pub struct FEMSurfaceDesc<'a, N: Real> {
     name: String,
+    user_data: Option<UserDataBox>,
     geom: FEMSurfaceDescGeometry<'a, N>,
     scale: Vector<N>,
     position: Isometry<N>,
@@ -989,6 +991,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
             name: String::new(),
+            user_data: None,
             gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
@@ -1021,6 +1024,8 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
         self.kinematic_nodes.clear();
         self
     }
+
+    user_data_desc_accessors!();
 
     desc_custom_setters!(
         self.collider_enabled, set_collider_enabled, enable: bool | { self.collider_enabled = enable }
@@ -1093,6 +1098,7 @@ impl<'a, N: Real> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
         vol.enable_gravity(self.gravity_enabled);
         vol.set_name(self.name.clone());
         vol.set_status(self.status);
+        let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

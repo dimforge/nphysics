@@ -238,6 +238,28 @@ macro_rules! user_data_accessors(
     }
 );
 
+
+macro_rules! user_data_desc_accessors(
+    () => {
+        /// Sets a user-data to be attached to the object being built.
+        pub fn user_data(mut self, data: impl UserData) -> Self {
+            self.user_data = Some(UserDataBox(Box::new(data) as Box<UserData>));
+            self
+        }
+
+        /// Sets the user-data to be attached to the object being built.
+        pub fn set_user_data(&mut self, data: Option<impl UserData>) -> &mut Self {
+            self.user_data = data.map(|data| UserDataBox(Box::new(data) as Box<UserData>));
+            self
+        }
+
+        /// Reference to the user-data to be attached to the object being built.
+        pub fn get_user_data(&self) -> Option<&(Any + Send + Sync)> {
+            self.user_data.as_ref().map(|data| data.0.as_any())
+        }
+    }
+);
+
 pub mod algebra;
 pub mod counters;
 pub mod detection;

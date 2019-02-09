@@ -21,6 +21,7 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
 use crate::world::{World, ColliderWorld};
+use crate::utils::{UserData, UserDataBox};
 
 /// An element of the mass-spring system.
 #[derive(Clone)]
@@ -806,6 +807,7 @@ enum MassSpringSystemDescGeometry<'a, N: Real> {
 /// A builder for mass-spring systems.
 pub struct MassSpringSystemDesc<'a, N: Real> {
     name: String,
+    user_data: Option<UserDataBox>,
     geom: MassSpringSystemDescGeometry<'a, N>,
     scale: Vector<N>,
     position: Isometry<N>,
@@ -824,6 +826,7 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     fn with_geometry(geom: MassSpringSystemDescGeometry<'a, N>) -> Self {
         MassSpringSystemDesc {
             name: String::new(),
+            user_data: None,
             gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
@@ -854,6 +857,8 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
         Self::with_geometry(MassSpringSystemDescGeometry::Quad(subdiv_x, subdiv_y))
     }
+
+    user_data_desc_accessors!();
 
     /// Mark all nodes as non-kinematic.
     pub fn clear_kinematic_nodes(&mut self) -> &mut Self {
@@ -970,6 +975,7 @@ impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
         vol.enable_gravity(self.gravity_enabled);
         vol.set_name(self.name.clone());
         vol.set_status(self.status);
+        let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

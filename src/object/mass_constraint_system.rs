@@ -21,6 +21,7 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
 use crate::world::{World, ColliderWorld};
+use crate::utils::{UserData, UserDataBox};
 
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
@@ -823,6 +824,7 @@ enum MassConstraintSystemDescGeometry<'a, N: Real> {
 /// A builder of a mass-constraint system.
 pub struct MassConstraintSystemDesc<'a, N: Real> {
     name: String,
+    user_data: Option<UserDataBox>,
     geom: MassConstraintSystemDescGeometry<'a, N>,
     scale: Vector<N>,
     position: Isometry<N>,
@@ -841,6 +843,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
             name: String::new(),
+            user_data: None,
             gravity_enabled: true,
             geom,
             scale: Vector::repeat(N::one()),
@@ -855,6 +858,8 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
             collider_enabled: false
         }
     }
+
+    user_data_desc_accessors!();
 
     /// Create a mass-constraints system form a triangle mesh.
     #[cfg(feature = "dim3")]
@@ -987,6 +992,7 @@ impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
         vol.enable_gravity(self.gravity_enabled);
         vol.set_name(self.name.clone());
         vol.set_status(self.status);
+        let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)

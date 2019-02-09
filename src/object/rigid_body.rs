@@ -7,6 +7,7 @@ use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart
                     ColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
+use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
 use ncollide::utils::IsometryOps;
 
@@ -717,6 +718,7 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 #[derive(Clone)]
 pub struct RigidBodyDesc<'a, N: Real> {
     name: String,
+    user_data: Option<UserDataBox>,
     gravity_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
@@ -734,9 +736,10 @@ pub struct RigidBodyDesc<'a, N: Real> {
 
 impl<'a, N: Real> RigidBodyDesc<'a, N> {
     /// A default rigid body builder.
-    pub fn new() -> Self {
+    pub fn new() -> RigidBodyDesc<'a, N> {
         RigidBodyDesc {
             name: String::new(),
+            user_data: None,
             gravity_enabled: true,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
@@ -752,6 +755,8 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
             kinematic_rotation: false
         }
     }
+
+    user_data_desc_accessors!();
 
     #[cfg(feature = "dim3")]
     desc_custom_setters!(
@@ -835,6 +840,7 @@ impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.set_translations_kinematic(self.kinematic_translations);
         rb.enable_gravity(self.gravity_enabled);
         rb.set_name(self.name.clone());
+        let _ = rb.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 
         #[cfg(feature = "dim3")]
             {
