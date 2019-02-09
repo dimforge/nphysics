@@ -21,7 +21,7 @@ pub struct ColliderWorld<N: Real> {
     cworld: CollisionWorld<N, ColliderData<N>>,
     collider_lists: HashMap<BodyHandle, (ColliderHandle, ColliderHandle)>, // (head, tail)
     colliders_w_parent: Vec<ColliderHandle>,
-    default_marterial: MaterialHandle<N>
+    default_material: MaterialHandle<N>
 }
 
 impl<N: Real> ColliderWorld<N> {
@@ -38,7 +38,7 @@ impl<N: Real> ColliderWorld<N> {
             cworld,
             collider_lists: HashMap::new(),
             colliders_w_parent: Vec::new(),
-            default_marterial: MaterialHandle::new(BasicMaterial::default())
+            default_material: MaterialHandle::new(BasicMaterial::default())
         }
     }
 
@@ -80,7 +80,7 @@ impl<N: Real> ColliderWorld<N> {
 
     /// The material given to colliders without user-defined materials.
     pub fn default_material(&self) -> MaterialHandle<N> {
-        self.default_marterial.clone()
+        self.default_material.clone()
     }
 
     /// The underlying collision world from the ncollide crate.
