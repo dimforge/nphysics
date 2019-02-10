@@ -13,6 +13,7 @@ pub use self::inertia3::Inertia3;
 ///
 /// See the [user guide](https://www.nphysics.org/rigid_body_simulations_with_contacts/#one-time-force-application-and-impulses)
 /// for details.
+#[derive(Clone, Copy, Debug)]
 pub enum ForceType {
     /// A regular force.
     Force,
