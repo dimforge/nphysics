@@ -6,6 +6,7 @@ use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 /// A velocity structure combining both the linear angular velocities of a point.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Velocity2<N: Real> {
     /// The linear velocity.
     pub linear: Vector2<N>,
