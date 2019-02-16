@@ -5,6 +5,7 @@ use crate::algebra::{Force3, Velocity3};
 
 /// The inertia of a rigid body grouping both its mass and its angular inertia.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Inertia3<N: Real> {
     /// The linear part (mass) of the inertia.
     pub linear: N,

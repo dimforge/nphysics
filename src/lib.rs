@@ -89,6 +89,10 @@ extern crate num_traits as num;
 extern crate slab;
 extern crate either;
 
+#[cfg(feature = "serde")]
+#[macro_use]
+extern crate serde;
+
 /*
  * The two following crates are pulled-in for
  * measuring time.
