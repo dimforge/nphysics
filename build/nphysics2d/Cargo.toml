@@ -19,6 +19,7 @@ dim2    = [ ]
 [lib]
 name = "nphysics2d"
 path = "../../src/lib.rs"
+required-features = [ "dim2" ]
 
 [dependencies]
 either     = "1.0"

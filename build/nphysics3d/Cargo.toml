@@ -19,6 +19,7 @@ dim3    = [ ]
 [lib]
 name = "nphysics3d"
 path = "../../src/lib.rs"
+required-features = [ "dim3" ]
 
 [dependencies]
 either     = "1.0"
