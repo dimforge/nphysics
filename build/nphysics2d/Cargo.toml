@@ -25,7 +25,7 @@ either     = "1.0"
 num-traits = "0.2"
 slab       = "0.4"
 alga       = "0.8"
-nalgebra   = { version = "0.17", features = [ "sparse" ] }
+nalgebra   = { version = "0.17.2", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1.0"
 bitflags   = "1.0"
