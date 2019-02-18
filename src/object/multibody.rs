@@ -327,16 +327,13 @@ impl<N: Real> Multibody<N> {
 
     /// Computes the constant terms of the dynamics.
     fn update_dynamics(&mut self, dt: N) {
-        if !self.update_status.inertia_needs_update() || self.status != BodyStatus::Dynamic {
+        if !self.update_status.inertia_needs_update() {
             return;
-        }
-
-        if !self.is_active() {
-            self.activate();
         }
 
         /*
          * Compute velocities.
+         * NOTE: this is needed for kinematic bodies too.
          */
         let rb = &mut self.rbs[0];
         let velocity_wrt_joint = rb
@@ -369,8 +366,14 @@ impl<N: Real> Multibody<N> {
             rb.velocity.linear += parent_rb.velocity.angular_vector().gcross(&shift);
         }
 
+        // We don't need to update the inertia properties if we
+        // have a kinematic body.
         if self.status != BodyStatus::Dynamic {
             return;
+        }
+
+        if !self.is_active() {
+            self.activate();
         }
 
         /*
@@ -955,12 +958,11 @@ impl<N: Real> Body<N> for Multibody<N> {
         out_vel: Option<&mut N>
     ) {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
+        let pos = point - link.com.coords;
+        let force = force_dir.at_point(&pos);
 
         match self.status() {
             BodyStatus::Dynamic => {
-                let pos = point - link.com.coords;
-                let force = force_dir.at_point(&pos);
-
                 self.link_jacobian_mul_force(link, &force, &mut jacobians[j_id..]);
 
                 // FIXME: this could be optimized with a copy_nonoverlapping.
@@ -988,15 +990,7 @@ impl<N: Real> Body<N> for Multibody<N> {
             },
             BodyStatus::Kinematic => {
                 if let Some(out_vel) = out_vel {
-                    match *force_dir {
-                        ForceDirection::Linear(ref normal) => {
-                            let dpos = point - link.com;
-                            *out_vel = link.velocity.shift(&dpos).linear.dot(normal)
-                        }
-                        ForceDirection::Angular(ref axis) => {
-                            *out_vel = link.velocity.angular_vector().dot(axis)
-                        }
-                    }
+                    *out_vel += force.as_vector().dot(&link.velocity.as_vector())
                 }
             },
             BodyStatus::Static | BodyStatus::Disabled => {}
