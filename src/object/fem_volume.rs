@@ -723,34 +723,11 @@ impl<N: Real> Body<N> for FEMVolume<N> {
                 ad.x, ad.y, ad.z,
             );
 
-            elt.com = Point3::from(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
 
-            /*
-             * Compute the orientation.
-             */
-            // Implementation of "A Robust Method to Extract the Rotational Part of Deformations"
-            // from Müller et al.
             let g = (elt.local_j_inv.fixed_slice::<U3, U3>(0, 1) * elt.j).transpose();
-            let mut rot = *elt.rot.matrix();
-
-            for i in 0..20 {
-                let axis = rot.column(0).cross(&g.column(0)) +
-                    rot.column(1).cross(&g.column(1)) +
-                    rot.column(2).cross(&g.column(2));
-                let denom = rot.column(0).dot(&g.column(0)) +
-                    rot.column(1).dot(&g.column(1)) +
-                    rot.column(2).dot(&g.column(2));
-
-                let axisangle = axis / (denom.abs() + na::convert(1.0e-9));
-                if let Some((axis, angle)) = Unit::try_new_and_get(axisangle, na::convert(1.0e-9)) {
-                    rot = Rotation3::from_axis_angle(&axis, angle) * rot;
-                } else {
-                    break;
-                }
-            }
-
-            elt.rot = Rotation3::from_matrix_unchecked(rot);
+            elt.rot = Rotation3::from_matrix_eps(&g, N::default_epsilon(), 20, elt.rot);
             elt.inv_rot = elt.rot.inverse();
+            elt.com = Point3::from(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
         }
     }
 

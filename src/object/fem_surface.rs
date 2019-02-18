@@ -6,7 +6,7 @@ use std::any::Any;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix, U2,
+use na::{self, Real, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix, Rotation2,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Vector2, Unit};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
@@ -82,21 +82,6 @@ impl<N: Real> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
     fn new(handle: BodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
            scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
-        let elements = triangles.iter().enumerate().map(|(i, idx)|
-            TriangularElement {
-                handle: BodyPartHandle(handle, i),
-                indices: idx * DIM,
-                com: Point::origin(),
-                rot: RotationMatrix::identity(),
-                inv_rot: RotationMatrix::identity(),
-                j: na::zero(),
-                local_j_inv: na::zero(),
-                total_strain: SpatialVector::zeros(),
-                plastic_strain: SpatialVector::zeros(),
-                surface: na::zero(),
-                density,
-            }).collect();
-
         let ndofs = vertices.len() * DIM;
         let mut rest_positions = DVector::zeros(ndofs);
 
@@ -104,6 +89,40 @@ impl<N: Real> FEMSurface<N> {
             let pt = pos * Point::from(pt.coords.component_mul(&scale));
             rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
         }
+
+        let elements = triangles.iter().enumerate().map(|(i, idx)| {
+            let rest_a = rest_positions.fixed_rows::<Dim>(idx.x * 2);
+            let rest_b = rest_positions.fixed_rows::<Dim>(idx.y * 2);
+            let rest_c = rest_positions.fixed_rows::<Dim>(idx.z * 2);
+
+            let rest_ab = rest_b - rest_a;
+            let rest_ac = rest_c - rest_a;
+
+            let local_j = Matrix2::new(
+                rest_ab.x, rest_ab.y,
+                rest_ac.x, rest_ac.y,
+            );
+
+            let local_j_inv = local_j.try_inverse().unwrap_or(Matrix2::identity());
+            let local_j_inv = Matrix2x3::new(
+                -local_j_inv.m11 - local_j_inv.m12, local_j_inv.m11, local_j_inv.m12,
+                -local_j_inv.m21 - local_j_inv.m22, local_j_inv.m21, local_j_inv.m22,
+            );
+
+            TriangularElement {
+                handle: BodyPartHandle(handle, i),
+                indices: idx * DIM,
+                com: Point::origin(),
+                rot: RotationMatrix::identity(),
+                inv_rot: RotationMatrix::identity(),
+                j: local_j,
+                local_j_inv,
+                total_strain: SpatialVector::zeros(),
+                plastic_strain: SpatialVector::zeros(),
+                surface: local_j.determinant() / na::convert(2.0),
+                density,
+            }
+        }).collect();
 
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
@@ -142,6 +161,12 @@ impl<N: Real> FEMSurface<N> {
     #[inline]
     pub fn positions(&self) -> &DVector<N> {
         &self.positions
+    }
+
+    /// The position of this body in generalized coordinates.
+    #[inline]
+    pub fn positions_mut(&mut self) -> &mut DVector<N> {
+        &mut self.positions
     }
 
     /// The velocity of this body in generalized coordinates.
@@ -197,8 +222,8 @@ impl<N: Real> FEMSurface<N> {
     fn assemble_mass_with_damping(&mut self, dt: N) {
         let mass_damping = dt * self.damping_coeffs.0;
 
-        for elt in self.elements.iter().filter(|e| e.surface > N::zero()) {
-            let coeff_mass = elt.density * elt.surface / na::convert::<_, N>(20.0f64) * (N::one() + mass_damping);
+        for elt in self.elements.iter() {
+            let coeff_mass = elt.density * elt.surface / na::convert::<_, N>(12.0f64) * (N::one() + mass_damping);
 
             for a in 0..3 {
                 let ia = elt.indices[a];
@@ -238,7 +263,7 @@ impl<N: Real> FEMSurface<N> {
         let _2: N = na::convert(2.0);
         let stiffness_coeff = dt * (dt + self.damping_coeffs.1);
 
-        for elt in self.elements.iter_mut().filter(|e| e.surface > N::zero()) {
+        for elt in self.elements.iter_mut() {
             let d0_surf = self.d0 * elt.surface;
             let d1_surf = self.d1 * elt.surface;
             let d2_surf = self.d2 * elt.surface;
@@ -252,7 +277,7 @@ impl<N: Real> FEMSurface<N> {
 
                     // Fields of P_n * elt.volume:
                     //
-                    // let P_n = Matrix3x6::new(
+                    // let P_n = Matrix2x3::new(
                     //   bn * d0, bn * d1, cn * d2,
                     //   cn * d1, cn * d0, bn * d2,
                     // ) * elt.surface;
@@ -270,6 +295,10 @@ impl<N: Real> FEMSurface<N> {
                         let bm = elt.local_j_inv[(0, b)];
                         let cm = elt.local_j_inv[(1, b)];
 
+
+                        // NOTE: this could be precomputed as this is constant.
+                        // however we don't because this has a significant memory
+                        // cost (Matrix2 * 3 * 3 for each element).
                         let node_stiffness = Matrix2::new(
                             bn0 * bm + cn2 * cm, bn1 * cm + cn2 * bm,
                             cn1 * bm + bn2 * cm, cn0 * cm + bn2 * bm,
@@ -297,7 +326,7 @@ impl<N: Real> FEMSurface<N> {
 
         // Gravity
         if self.gravity_enabled {
-            for elt in self.elements.iter().filter(|e| e.surface > N::zero()) {
+            for elt in self.elements.iter() {
                 let contribution = gravity * (elt.density * elt.surface * na::convert::<_, N>(1.0 / 3.0));
 
                 for k in 0..3 {
@@ -311,7 +340,7 @@ impl<N: Real> FEMSurface<N> {
             }
         }
 
-        for elt in self.elements.iter_mut().filter(|e| e.surface > N::zero()) {
+        for elt in self.elements.iter_mut() {
 
             let d0_surf = self.d0 * elt.surface;
             let d1_surf = self.d1 * elt.surface;
@@ -363,7 +392,7 @@ impl<N: Real> FEMSurface<N> {
 
                     // Fields of P_n * elt.volume:
                     //
-                    // let P_n = Matrix3x6::new(
+                    // let P_n = Matrix2x3::new(
                     //   bn * d0, bn * d1, cn * d2,
                     //   cn * d1, cn * d0, bn * d2,
                     // ) * elt.surface;
@@ -380,7 +409,7 @@ impl<N: Real> FEMSurface<N> {
                     // P_n * strain
                     let strain = elt.total_strain - elt.plastic_strain;
                     #[cfg_attr(rustfmt, rustfmt_skip)]
-                    let projected_strain = Vector2::new(
+                        let projected_strain = Vector2::new(
                         bn0 * strain.x + bn1 * strain.y + cn2 * strain.z,
                         cn1 * strain.x + cn0 * strain.y + bn2 * strain.z,
                     );
@@ -487,8 +516,8 @@ impl<N: Real> FEMSurface<N> {
         for (target_i, orig_i) in deformation_indices.iter().cloned().enumerate() {
             assert!(!remapped[orig_i], "Duplicate DOF remapping found.");
             let target_i = target_i * 2;
-            new_positions.fixed_rows_mut::<U2>(target_i).copy_from(&self.positions.fixed_rows::<U2>(orig_i));
-            new_rest_positions.fixed_rows_mut::<U2>(target_i).copy_from(&self.rest_positions.fixed_rows::<U2>(orig_i));
+            new_positions.fixed_rows_mut::<Dim>(target_i).copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
+            new_rest_positions.fixed_rows_mut::<Dim>(target_i).copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
             dof_map[orig_i] = target_i;
             remapped[orig_i] = true;
         }
@@ -497,8 +526,8 @@ impl<N: Real> FEMSurface<N> {
 
         for orig_i in (0..self.positions.len()).step_by(2) {
             if !remapped[orig_i] {
-                new_positions.fixed_rows_mut::<U2>(curr_target).copy_from(&self.positions.fixed_rows::<U2>(orig_i));
-                new_rest_positions.fixed_rows_mut::<U2>(curr_target).copy_from(&self.rest_positions.fixed_rows::<U2>(orig_i));
+                new_positions.fixed_rows_mut::<Dim>(curr_target).copy_from(&self.positions.fixed_rows::<Dim>(orig_i));
+                new_rest_positions.fixed_rows_mut::<Dim>(curr_target).copy_from(&self.rest_positions.fixed_rows::<Dim>(orig_i));
                 dof_map[orig_i] = curr_target;
                 curr_target += 2;
             }
@@ -634,43 +663,11 @@ impl<N: Real> Body<N> for FEMSurface<N> {
                 ab.x, ab.y,
                 ac.x, ac.y,
             );
-            let j_det =  elt.j.determinant();
-            elt.surface = j_det * na::convert(1.0 / 2.0);
-            elt.com = Point::from(a + b + c) * na::convert::<_, N>(1.0 / 3.0);
 
-            /*
-             * Compute the orientation.
-             */
-            // Undeformed points.
-
-            // FIXME: stiffness wrapping
-            let rest_a = self.rest_positions.fixed_rows::<Dim>(elt.indices.x);
-            let rest_b = self.rest_positions.fixed_rows::<Dim>(elt.indices.y);
-            let rest_c = self.rest_positions.fixed_rows::<Dim>(elt.indices.z);
-
-            let rest_ab = rest_b - rest_a;
-            let rest_ac = rest_c - rest_a;
-
-            let inv_e = Matrix::from_columns(&[rest_ab, rest_ac]).transpose().try_inverse().unwrap_or(Matrix2::identity());
-
-            // The transformation matrix from which we can get the rotation component.
-            let g = (inv_e * elt.j).transpose();
-            // FIXME: optimize this.
-            let mut cols = [
-                g.column(0).into_owned(),
-                g.column(1).into_owned(),
-            ];
-            let _ = Vector::orthonormalize(&mut cols);
-            elt.rot = RotationMatrix::from_matrix_unchecked(Matrix::from_columns(&cols));
+            let g = (elt.local_j_inv.fixed_slice::<Dim, Dim>(0, 1) * elt.j).transpose();
+            elt.rot = RotationMatrix::from_matrix_eps(&g, N::default_epsilon(), 20, elt.rot);
             elt.inv_rot = elt.rot.inverse();
-
-            let j_inv = elt.j.try_inverse().unwrap_or(Matrix2::identity());
-            let local_j_inv = elt.inv_rot.matrix() * j_inv;
-            elt.local_j_inv = Matrix2x3::new(
-                -local_j_inv.m11 - local_j_inv.m12, local_j_inv.m11, local_j_inv.m12,
-                -local_j_inv.m21 - local_j_inv.m22, local_j_inv.m21, local_j_inv.m22,
-            );
-
+            elt.com = Point::from(a + b + c) * na::convert::<_, N>(1.0 / 3.0);
         }
     }
 
@@ -945,7 +942,7 @@ impl<N: Real> BodyPart<N> for TriangularElement<N> {
     }
 
     fn position(&self) -> Isometry<N> {
-        Isometry::new(self.com.coords, na::zero())
+        Isometry::from_parts(self.com.coords.into(), self.rot.into())
     }
 
     fn velocity(&self) -> Velocity<N> {
@@ -1084,13 +1081,13 @@ impl<'a, N: Real> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
         let mut vol = match self.geom {
             FEMSurfaceDescGeometry::Quad(nx, ny) =>
                 FEMSurface::quad(handle, &self.position, &self.scale,
-                                       nx, ny, self.density, self.young_modulus,
-                                       self.poisson_ratio,
-                                       (self.mass_damping, self.stiffness_damping)),
+                                 nx, ny, self.density, self.young_modulus,
+                                 self.poisson_ratio,
+                                 (self.mass_damping, self.stiffness_damping)),
             FEMSurfaceDescGeometry::Triangles(pts, idx) =>
                 FEMSurface::new(handle, pts, idx, &self.position, &self.scale,
-                                      self.density, self.young_modulus, self.poisson_ratio,
-                                      (self.mass_damping, self.stiffness_damping))
+                                self.density, self.young_modulus, self.poisson_ratio,
+                                (self.mass_damping, self.stiffness_damping))
         };
 
         vol.set_deactivation_threshold(self.sleep_threshold);
