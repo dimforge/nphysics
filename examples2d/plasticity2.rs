@@ -45,12 +45,12 @@ fn main() {
     /*
      * Create the deformable body and a collider for its contour.
      */
-    let deformable_surface_handle = FEMSurfaceDesc::quad(50, 1)
+    let deformable_surface_handle = FEMSurfaceDesc::quad(20, 1)
         .scale(Vector2::new(1.1, 0.1))
         .density(1.0)
         .young_modulus(1.0e2)
         .mass_damping(0.2)
-        .plasticity(0.1, 5.0, 1.0e5)
+        .plasticity(0.1, 5.0, 10.0)
         .collider_enabled(true)
         .build(&mut world)
         .handle();

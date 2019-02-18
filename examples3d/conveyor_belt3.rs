@@ -124,6 +124,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
+    testbed.look_at(Point3::new(-10.0, 4.0, -10.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }

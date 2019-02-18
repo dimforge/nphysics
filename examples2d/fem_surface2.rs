@@ -48,7 +48,7 @@ fn main() {
     /*
      * Create a pyramid on top of the deformable body.
      */
-    let num = 20;
+    let num = 10;
     let rad = 0.1;
     let shift = 2.0 * rad;
     let centerx = shift * (num as f32) / 2.0;
@@ -78,7 +78,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    testbed.hide_performance_counters();
     testbed.set_body_color(deformable_handle, Point3::new(0.0, 0.0, 1.0));
     testbed.look_at(Point2::new(0.0, -3.0), 100.0);
     testbed.run();

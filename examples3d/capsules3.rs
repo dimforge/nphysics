@@ -30,7 +30,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 7;
+    let num = 5;
     let rad = 0.1;
     let half_height = 0.2;
 
@@ -67,7 +67,6 @@ fn main() {
      * Set up the testbed.
      */
     let mut testbed = Testbed::new(world);
-    // testbed.hide_performance_counters();
     testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
     testbed.run();
 }
