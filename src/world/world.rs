@@ -173,6 +173,18 @@ impl<N: Real> World<N> {
 
     /// Remove the specified collider from the world.
     pub fn remove_colliders(&mut self, handles: &[ColliderHandle]) {
+        let bodies = &mut self.bodies;
+
+        for handle in handles {
+            if let Some(it) = self.cworld.colliders_in_contact_with(*handle) {
+                it.for_each(|coll| {
+                    if let Some(b) = bodies.body_mut(coll.body()) {
+                        b.activate()
+                    }
+                });
+            }
+        }
+
         self.cworld.remove(handles);
     }
 
@@ -356,10 +368,13 @@ impl<N: Real> World<N> {
     pub fn remove_bodies(&mut self, handles: &[BodyHandle]) {
         for handle in handles {
             self.bodies.remove_body(*handle);
-            self.cworld.remove_body(*handle);
         }
 
         self.cleanup_after_body_removal();
+
+        for handle in handles {
+            self.cworld.remove_body(*handle);
+        }
     }
 
     fn cleanup_after_body_removal(&mut self) {
