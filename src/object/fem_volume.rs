@@ -7,7 +7,8 @@ use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, DMatrix, Isometry3,
-         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3};
+         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3,
+         MatrixMN, U6, U12};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 
@@ -34,6 +35,7 @@ pub struct TetrahedralElement<N: Real> {
     plastic_strain: Vector6<N>,
     volume: N,
     density: N,
+    stiffness: MatrixMN<N, U12, U12>
 }
 
 /// A deformable volume using FEM to simulate linear elasticity.
@@ -94,6 +96,7 @@ impl<N: Real> FEMVolume<N> {
                 total_strain: Vector6::zeros(),
                 plastic_strain: Vector6::zeros(),
                 volume: na::zero(),
+                stiffness: na::zero(),
                 density,
             }).collect();
 
@@ -143,6 +146,12 @@ impl<N: Real> FEMVolume<N> {
     #[inline]
     pub fn positions(&self) -> &DVector<N> {
         &self.positions
+    }
+
+    /// The position of this body in generalized coordinates.
+    #[inline]
+    pub fn positions_mut(&mut self) -> &mut DVector<N> {
+        &mut self.positions
     }
 
     /// The velocity of this body in generalized coordinates.
@@ -293,7 +302,11 @@ impl<N: Real> FEMVolume<N> {
                     }
                 }
             }
+
+//            println!("Stiffness: {}", elt.stiffness * (dt * dt));
         }
+
+//        println!("Augmented mass: {}", self.augmented_mass);
     }
 
     fn assemble_forces(&mut self, gravity: &Vector3<N>, params: &IntegrationParameters<N>) {
@@ -670,6 +683,12 @@ impl<N: Real> Body<N> for FEMVolume<N> {
         }
 
         for elt in &mut self.elements {
+            // Undeformed points.
+            let rest_a = self.rest_positions.fixed_rows::<U3>(elt.indices.x);
+            let rest_b = self.rest_positions.fixed_rows::<U3>(elt.indices.y);
+            let rest_c = self.rest_positions.fixed_rows::<U3>(elt.indices.z);
+            let rest_d = self.rest_positions.fixed_rows::<U3>(elt.indices.w);
+
             let a = self.positions.fixed_rows::<U3>(elt.indices.x);
             let b = self.positions.fixed_rows::<U3>(elt.indices.y);
             let c = self.positions.fixed_rows::<U3>(elt.indices.z);
@@ -679,27 +698,29 @@ impl<N: Real> Body<N> for FEMVolume<N> {
             let ac = c - a;
             let ad = d - a;
 
+            let rest_ab = rest_b - rest_a;
+            let rest_ac = rest_c - rest_a;
+            let rest_ad = rest_d - rest_a;
+
+
             elt.j = Matrix3::new(
                 ab.x, ab.y, ab.z,
                 ac.x, ac.y, ac.z,
                 ad.x, ad.y, ad.z,
             );
-            let j_det =  elt.j.determinant();
+
+            let j0 = Matrix3::new(
+                rest_ab.x, rest_ab.y, rest_ab.z,
+                rest_ac.x, rest_ac.y, rest_ac.z,
+                rest_ad.x, rest_ad.y, rest_ad.z,
+            );
+            let j_det =  j0.determinant();
             elt.volume = j_det * na::convert(1.0 / 6.0);
             elt.com = Point3::from(a + b + c + d) * na::convert::<_, N>(1.0 / 4.0);
 
             /*
              * Compute the orientation.
              */
-            // Undeformed points.
-            let rest_a = self.rest_positions.fixed_rows::<U3>(elt.indices.x);
-            let rest_b = self.rest_positions.fixed_rows::<U3>(elt.indices.y);
-            let rest_c = self.rest_positions.fixed_rows::<U3>(elt.indices.z);
-            let rest_d = self.rest_positions.fixed_rows::<U3>(elt.indices.w);
-
-            let rest_ab = rest_b - rest_a;
-            let rest_ac = rest_c - rest_a;
-            let rest_ad = rest_d - rest_a;
 
             let coeff = N::one() / j_det; // 1 / (6V)
             let n1 = rest_ac.cross(&rest_ad) * coeff;
@@ -707,7 +728,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
             let n3 = rest_ab.cross(&rest_ac) * coeff;
 
             // The transformation matrix from which we can get the rotation component.
-            let g = (Matrix3::from_columns(&[n1, n2, n3]) * elt.j).transpose();
+            let g = (j0.try_inverse().unwrap() * elt.j).transpose();
             // FIXME: optimize this.
             let mut cols = [
                 g.column(0).into_owned(),
@@ -715,17 +736,91 @@ impl<N: Real> Body<N> for FEMVolume<N> {
                 g.column(2).into_owned(),
             ];
             let _ = Vector3::orthonormalize(&mut cols);
-            elt.rot = Rotation3::from_matrix_unchecked(Matrix3::from_columns(&cols));
+
+            let svd = g.svd(true, true);
+            let mut u = svd.u.unwrap();
+            let mut v_t = svd.v_t.unwrap();
+            let imin = svd.singular_values.imin();
+
+            if v_t.determinant() < N::zero() {
+                v_t.row_mut(imin).neg_mut();
+            }
+
+            if u.determinant() < N::zero() {
+                u.column_mut(imin).neg_mut();
+            }
+
+            let rot = u * v_t;
+
+
+            // Implementation of "A Robust Method to Extract the Rotational Part of Deformations"
+            // from Müller et al.
+            let mut rot = *elt.rot.matrix();
+
+            for i in 0..20 {
+                let axis = rot.column(0).cross(&g.column(0)) +
+                    rot.column(1).cross(&g.column(1)) +
+                    rot.column(2).cross(&g.column(2));
+                let denom = rot.column(0).dot(&g.column(0)) +
+                    rot.column(1).dot(&g.column(1)) +
+                    rot.column(2).dot(&g.column(2));
+
+                let axisangle = axis / (denom.abs() + na::convert(1.0e-9));
+                if let Some((axis, angle)) = Unit::try_new_and_get(axisangle, na::convert(1.0e-9)) {
+                    rot = Rotation3::from_axis_angle(&axis, angle) * rot;
+                } else {
+                    break;
+                }
+            }
+
+            elt.rot = Rotation3::from_matrix_unchecked(rot); // from_columns(&cols));
             elt.inv_rot = elt.rot.inverse();
 
 
-            let j_inv = elt.j.try_inverse().unwrap_or(Matrix3::identity());
-            let local_j_inv = elt.inv_rot.matrix() * j_inv;
+            let j_inv = j0.try_inverse().unwrap_or(Matrix3::identity());
+            let local_j_inv = j_inv;
             elt.local_j_inv = Matrix3x4::new(
                 -local_j_inv.m11 - local_j_inv.m12 - local_j_inv.m13, local_j_inv.m11, local_j_inv.m12, local_j_inv.m13,
                 -local_j_inv.m21 - local_j_inv.m22 - local_j_inv.m23, local_j_inv.m21, local_j_inv.m22, local_j_inv.m23,
                 -local_j_inv.m31 - local_j_inv.m32 - local_j_inv.m33, local_j_inv.m31, local_j_inv.m32, local_j_inv.m33,
             );
+
+            // Assemble the element stiffness matrix.
+            let _0 = N::zero();
+            let d = MatrixMN::<N, U6, U6>::new(
+                self.d0, self.d1, self.d1, _0, _0, _0,
+                self.d1, self.d0, self.d1, _0, _0, _0,
+                self.d1, self.d1, self.d0, _0, _0, _0,
+                _0, _0, _0, self.d2, _0, _0,
+                _0, _0, _0, _0, self.d2, _0,
+                _0, _0, _0, _0, _0, self.d2,
+            );
+
+            let mut bn = MatrixMN::<N, U6, U12>::zeros();
+            let mut rot = MatrixMN::<N, U12, U12>::zeros();
+
+            for i in 0..4 {
+                rot.fixed_slice_mut::<U3, U3>(i * 3, i * 3).copy_from(elt.rot.matrix());
+            }
+
+            for i in 0..4 {
+                let mut submat = bn.fixed_slice_mut::<U6, U3>(0, i * 3);
+                let bn = elt.local_j_inv[(0, i)];
+                let cn = elt.local_j_inv[(1, i)];
+                let dn = elt.local_j_inv[(2, i)];
+
+                submat[(0, 0)] = bn;
+                submat[(1, 1)] = cn;
+                submat[(2, 2)] = dn;
+                submat[(3, 0)] = cn;
+                submat[(3, 1)] = bn;
+                submat[(4, 0)] = dn;
+                submat[(4, 2)] = bn;
+                submat[(5, 1)] = dn;
+                submat[(5, 2)] = cn;
+            }
+
+            elt.stiffness = rot * bn.transpose() * d * bn * rot.transpose() * elt.volume;
         }
     }
 
