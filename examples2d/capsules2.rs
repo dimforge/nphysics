@@ -9,8 +9,6 @@ use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-const COLLIDER_MARGIN: f32 = 0.01;
-
 fn main() {
     /*
      * World
@@ -32,13 +30,13 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 25;
+    let num = 15;
     let rad = 0.1;
     let half_height = 0.1;
 
     let capsule = ShapeHandle::new(Capsule::new(
         half_height,
-        rad - COLLIDER_MARGIN,
+        rad,
     ));
 
     let collider_desc = ColliderDesc::new(capsule)

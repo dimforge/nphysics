@@ -46,15 +46,14 @@ fn main() {
     /*
      * Create the deformable body and a collider for its contour.
      */
-    FEMVolumeDesc::cube(50, 1, 1)
+    FEMVolumeDesc::cube(20, 1, 1)
         .scale(Vector3::new(1.1, 0.1, 0.1))
         .density(1.0)
         .young_modulus(1.0e2)
         .mass_damping(0.2)
-        .plasticity(0.1, 5.0, 1.0e5)
+        .plasticity(0.1, 5.0, 10.0)
         .collider_enabled(true)
-        .build(&mut world)
-        .handle();
+        .build(&mut world);
 
     /*
      * Set up the testbed.
@@ -94,7 +93,7 @@ fn main() {
         }
     });
 
-    // testbed.hide_performance_counters();
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
+    testbed.show_performance_counters();
     testbed.run();
 }
