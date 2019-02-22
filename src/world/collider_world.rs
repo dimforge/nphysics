@@ -87,6 +87,11 @@ impl<N: Real> ColliderWorld<N> {
     pub fn as_collider_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
         &self.cworld
     }
+    
+    /// The underlying collision world from the ncollide crate.
+    pub fn as_collider_world_mut(&mut self) -> &mut CollisionWorld<N, ColliderData<N>> {
+        &mut self.cworld
+    }
 
     /// Unwraps the underlying collision world from the ncollide crate.
     pub fn into_inner(self) -> CollisionWorld<N, ColliderData<N>> {
