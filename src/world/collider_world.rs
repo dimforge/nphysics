@@ -84,7 +84,13 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// The underlying collision world from the ncollide crate.
+    #[deprecated(since = "0.11.1", note = "renamed to as_collision_world")]
     pub fn as_collider_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
+        &self.cworld
+    }
+
+    /// The underlying collision world from the ncollide crate.
+    pub fn as_collision_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
         &self.cworld
     }
 
