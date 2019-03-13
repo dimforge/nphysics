@@ -88,6 +88,11 @@ impl<N: RealField> ColliderWorld<N> {
         &self.cworld
     }
 
+    /// Customize the selection of narrow-phase collision detection algorithms
+    pub fn set_narrow_phase(&mut self, narrow_phase: ncollide::narrow_phase::NarrowPhase<N>) {
+        self.cworld.set_narrow_phase(narrow_phase);
+    }
+
     /// Unwraps the underlying collision world from the ncollide crate.
     pub fn into_inner(self) -> CollisionWorld<N, ColliderData<N>> {
         self.cworld
