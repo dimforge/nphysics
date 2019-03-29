@@ -341,7 +341,7 @@ pub struct ColliderDesc<N: Real> {
 
 impl<N: Real> ColliderDesc<N> {
     /// Creates a new collider builder with the given shape.
-    pub fn new(shape: ShapeHandle<N>) -> Self {
+    pub fn new(shape: ShapeHandle<N>) -> ColliderDesc<N> {
         let linear_prediction = na::convert(0.001);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
