@@ -1,4 +1,4 @@
-use na::{Real, Unit};
+use na::{RealField, Unit};
 use ncollide::query::ContactKinematic;
 
 use crate::math::Vector;
@@ -6,7 +6,7 @@ use crate::object::{BodyPartHandle, BodySet, ColliderHandle};
 use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
-pub struct GenericNonlinearConstraint<N: Real> {
+pub struct GenericNonlinearConstraint<N: RealField> {
     /// The first body affected by the constraint.
     pub body1: BodyPartHandle,
     /// The second body affected by the constraint.
@@ -28,7 +28,7 @@ pub struct GenericNonlinearConstraint<N: Real> {
     pub r: N,
 }
 
-impl<N: Real> GenericNonlinearConstraint<N> {
+impl<N: RealField> GenericNonlinearConstraint<N> {
     /// Initialize a new nonlinear constraint.
     pub fn new(
         body1: BodyPartHandle,
@@ -56,7 +56,7 @@ impl<N: Real> GenericNonlinearConstraint<N> {
 }
 
 /// Implemented by structures that generate non-linear constraints.
-pub trait NonlinearConstraintGenerator<N: Real> {
+pub trait NonlinearConstraintGenerator<N: RealField> {
     /// Maximum of non-linear position constraint this generater needs to output.
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize;
     /// Generate the `i`-th position constraint of this generator.
@@ -71,7 +71,7 @@ pub trait NonlinearConstraintGenerator<N: Real> {
 
 /// A non-linear position-based non-penetration constraint.
 #[derive(Debug)]
-pub struct NonlinearUnilateralConstraint<N: Real> {
+pub struct NonlinearUnilateralConstraint<N: RealField> {
     /// The scaling parameter of the SOR-prox method.
     pub r: N,
     /// The target position change this constraint must apply.
@@ -100,7 +100,7 @@ pub struct NonlinearUnilateralConstraint<N: Real> {
     pub normal2: Unit<Vector<N>>,
 }
 
-impl<N: Real> NonlinearUnilateralConstraint<N> {
+impl<N: RealField> NonlinearUnilateralConstraint<N> {
     /// Create a new nonlinear position-based non-penetration constraint.
     pub fn new(
         body1: BodyPartHandle,
@@ -142,7 +142,7 @@ impl MultibodyJointLimitsNonlinearConstraintGenerator {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
+impl<N: RealField> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
     fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
         0
     }

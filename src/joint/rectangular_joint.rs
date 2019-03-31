@@ -1,4 +1,4 @@
-use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
+use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint};
 use crate::math::{JacobianSliceMut, Velocity};
@@ -7,12 +7,12 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 
 /// A joint that allows two translational degrees of freedom.
 #[derive(Copy, Clone, Debug)]
-pub struct RectangularJoint<N: Real> {
+pub struct RectangularJoint<N: RealField> {
     prism1: PrismaticJoint<N>,
     prism2: PrismaticJoint<N>,
 }
 
-impl<N: Real> RectangularJoint<N> {
+impl<N: RealField> RectangularJoint<N> {
     /// Creates a new rectangular joint allowing relative translations anlon the two provided axii.Isometry3
     ///
     /// Both axii are expressed in the local coordinate frame on the attached multibody links.
@@ -24,7 +24,7 @@ impl<N: Real> RectangularJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for RectangularJoint<N> {
+impl<N: RealField> Joint<N> for RectangularJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

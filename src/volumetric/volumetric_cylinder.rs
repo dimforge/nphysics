@@ -1,11 +1,11 @@
 use num::Zero;
 
-use na::{self, Real};
+use na::{self, RealField};
 use crate::math::{AngularInertia, Point, DIM};
 
 /// The volume of a cylinder.
 #[inline]
-pub fn cylinder_volume<N: Real>(half_height: N, radius: N) -> N {
+pub fn cylinder_volume<N: RealField>(half_height: N, radius: N) -> N {
     if DIM == 2 {
         half_height * radius * na::convert(4.0f64)
     } else {
@@ -15,7 +15,7 @@ pub fn cylinder_volume<N: Real>(half_height: N, radius: N) -> N {
 
 /// The area of a cylinder.
 #[inline]
-pub fn cylinder_area<N: Real>(half_height: N, radius: N) -> N {
+pub fn cylinder_area<N: RealField>(half_height: N, radius: N) -> N {
     if DIM == 2 {
         (half_height + radius) * na::convert(2.0f64)
     } else {
@@ -29,13 +29,13 @@ pub fn cylinder_area<N: Real>(half_height: N, radius: N) -> N {
 
 /// The center of mass of a cylinder.
 #[inline]
-pub fn cylinder_center_of_mass<N: Real>() -> Point<N> {
+pub fn cylinder_center_of_mass<N: RealField>() -> Point<N> {
     Point::origin()
 }
 
 /// The unit angular inertia of a cylinder.
 #[inline]
-pub fn cylinder_unit_angular_inertia<N: Real>(half_height: N, radius: N) -> AngularInertia<N> {
+pub fn cylinder_unit_angular_inertia<N: RealField>(half_height: N, radius: N) -> AngularInertia<N> {
     if DIM == 2 {
         // Same a the rectangle.
         let _2: N = na::convert(2.0f64);
@@ -64,7 +64,7 @@ pub fn cylinder_unit_angular_inertia<N: Real>(half_height: N, radius: N) -> Angu
     }
 }
 
-//impl<N: Real> Volumetric<N> for Cylinder<N> {
+//impl<N: RealField> Volumetric<N> for Cylinder<N> {
 //    fn area(&self) -> N {
 //        cylinder_area(self.half_height(), self.radius())
 //    }

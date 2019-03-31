@@ -1,4 +1,4 @@
-use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
+use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
@@ -9,12 +9,12 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 ///
 /// Both are not required to be along the same direction.
 #[derive(Copy, Clone, Debug)]
-pub struct PinSlotJoint<N: Real> {
+pub struct PinSlotJoint<N: RealField> {
     prism: PrismaticJoint<N>,
     revo: RevoluteJoint<N>,
 }
 
-impl<N: Real> PinSlotJoint<N> {
+impl<N: RealField> PinSlotJoint<N> {
     /// Create a new pin-slot joint with axii expressed in the local coordinate frame of the attached bodies, and
     /// with initial linear position and angle.
     pub fn new(axis_v: Unit<Vector3<N>>, axis_w: Unit<Vector3<N>>, position: N, angle: N) -> Self {
@@ -35,7 +35,7 @@ impl<N: Real> PinSlotJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for PinSlotJoint<N> {
+impl<N: RealField> Joint<N> for PinSlotJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

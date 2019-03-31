@@ -3,7 +3,7 @@
 use alga::linear::{FiniteDimInnerSpace, FiniteDimVectorSpace};
 #[cfg(feature = "dim3")]
 use na;
-use na::{DVector, DVectorSlice, Real, Unit};
+use na::{DVector, DVectorSlice, RealField, Unit};
 use std::ops::Neg;
 
 use crate::math::{AngularVector, Force, Point, Rotation, Vector};
@@ -13,14 +13,14 @@ use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGe
 
 /// The direction of a force in world-space.
 #[derive(Copy, Clone, Debug)]
-pub enum ForceDirection<N: Real> {
+pub enum ForceDirection<N: RealField> {
     /// A linear force toward a direction.
     Linear(Unit<Vector<N>>),
     /// A torque wrt. an axis.
     Angular(Unit<AngularVector<N>>),
 }
 
-impl<N: Real> ForceDirection<N> {
+impl<N: RealField> ForceDirection<N> {
     /// The force (at the specified point) resulting from this unit force applied at the specified point.
     #[inline]
     pub fn at_point(&self, pt: &Point<N>) -> Force<N> {
@@ -35,7 +35,7 @@ impl<N: Real> ForceDirection<N> {
     }
 }
 
-impl<N: Real> Neg for ForceDirection<N> {
+impl<N: RealField> Neg for ForceDirection<N> {
     type Output = Self;
 
     #[inline]
@@ -53,7 +53,7 @@ impl<N: Real> Neg for ForceDirection<N> {
 /// If the force is a torque, it is applied at the centers of mass of the body parts.
 /// Every input are expressed in world-space.
 #[inline]
-pub fn constraint_pair_geometry<N: Real>(
+pub fn constraint_pair_geometry<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -138,7 +138,7 @@ pub fn constraint_pair_geometry<N: Real>(
 /// Test if a constraint between the two given bodies should be a ground
 /// constraint (a constraint between a dynamic body and one without any degree of freedom).
 #[inline]
-pub fn constraints_are_ground_constraints<N: Real>(
+pub fn constraints_are_ground_constraints<N: RealField>(
     body1: &Body<N>,
     body2: &Body<N>,
 ) -> bool {
@@ -147,7 +147,7 @@ pub fn constraints_are_ground_constraints<N: Real>(
 
 /// Retrieve the external velocity subvectors for the given bodies.
 #[inline(always)]
-pub fn split_ext_vels<'a, N: Real>(
+pub fn split_ext_vels<'a, N: RealField>(
     body1: &Body<N>,
     body2: &Body<N>,
     assembly_id1: usize,
@@ -163,7 +163,7 @@ pub fn split_ext_vels<'a, N: Real>(
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
+pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -238,7 +238,7 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: Real>(
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity<N: Real>(
+pub fn cancel_relative_linear_velocity<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -285,7 +285,7 @@ pub fn cancel_relative_linear_velocity<N: Real>(
 /// Generate position constraints to cancel the relative translation of two bodies wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_translation_wrt_axis<N: Real>(
+pub fn cancel_relative_translation_wrt_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
@@ -347,7 +347,7 @@ pub fn cancel_relative_translation_wrt_axis<N: Real>(
 /// Generate position constraints to cancel the relative translation of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_translation<N: Real>(
+pub fn cancel_relative_translation<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
@@ -401,7 +401,7 @@ pub fn cancel_relative_translation<N: Real>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies wrt. the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
+pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -476,7 +476,7 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: Real>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity<N: Real>(
+pub fn cancel_relative_angular_velocity<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -523,7 +523,7 @@ pub fn cancel_relative_angular_velocity<N: Real>(
 /// Generate position constraints to cancel the relative rotation of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_rotation<N: Real>(
+pub fn cancel_relative_rotation<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
@@ -580,7 +580,7 @@ pub fn cancel_relative_rotation<N: Real>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
+pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -663,7 +663,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: Real>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn align_axis<N: Real>(
+pub fn align_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
@@ -729,7 +729,7 @@ pub fn align_axis<N: Real>(
 /// Generate velocity constraints to cancel the relative linear velocity of two bodies along all axis except the one provided.
 ///
 /// All inputs mut be given in world-space.
-pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
+pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -812,7 +812,7 @@ pub fn restrict_relative_linear_velocity_to_axis<N: Real>(
 /// Generate position constraints to project `anchor2` into the axis with direction `axis1` and passing through the `anchor1`.
 ///
 /// All inputs mut be given in world-space.
-pub fn project_anchor_to_axis<N: Real>(
+pub fn project_anchor_to_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
@@ -871,7 +871,7 @@ pub fn project_anchor_to_axis<N: Real>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn restore_angle_between_axis<N: Real>(
+pub fn restore_angle_between_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,

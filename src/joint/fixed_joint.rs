@@ -1,4 +1,4 @@
-use na::{DVectorSliceMut, Real};
+use na::{DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
@@ -6,11 +6,11 @@ use crate::solver::IntegrationParameters;
 
 /// A joint that does not allow any relative degrees of freedom.
 #[derive(Copy, Clone, Debug)]
-pub struct FixedJoint<N: Real> {
+pub struct FixedJoint<N: RealField> {
     body_to_parent: Isometry<N>,
 }
 
-impl<N: Real> FixedJoint<N> {
+impl<N: RealField> FixedJoint<N> {
     /// Create a joint that does not a allow any degrees of freedom between two multibody links.
     ///
     /// The descendent attached to this joint will have a position maintained to `pos_wrt_pody`
@@ -22,7 +22,7 @@ impl<N: Real> FixedJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for FixedJoint<N> {
+impl<N: RealField> Joint<N> for FixedJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

@@ -4,7 +4,7 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
-use na::Real;
+use na::RealField;
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, Polyline, ShapeHandle};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc};

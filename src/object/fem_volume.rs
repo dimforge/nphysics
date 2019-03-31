@@ -6,7 +6,7 @@ use std::any::Any;
 use either::Either;
 
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, DMatrix, Isometry3,
+use na::{self, RealField, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, DMatrix, Isometry3,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3,
          MatrixMN, U6, U12};
 use ncollide::utils::{self, DeterministicState};
@@ -23,7 +23,7 @@ use crate::utils::{UserData, UserDataBox};
 
 /// One element of a deformable volume.
 #[derive(Clone)]
-pub struct TetrahedralElement<N: Real> {
+pub struct TetrahedralElement<N: RealField> {
     handle: BodyPartHandle,
     indices: Point4<usize>,
     com: Point3<N>,
@@ -41,7 +41,7 @@ pub struct TetrahedralElement<N: Real> {
 ///
 /// The volume is described by a set of tetrahedral elements. This
 /// implements an isoparametric approach where the interpolations are linear.
-pub struct FEMVolume<N: Real> {
+pub struct FEMVolume<N: RealField> {
     name: String,
     handle: BodyHandle,
     elements: Vec<TetrahedralElement<N>>,
@@ -79,7 +79,7 @@ pub struct FEMVolume<N: Real> {
     user_data: Option<Box<Any + Send + Sync>>,
 }
 
-impl<N: Real> FEMVolume<N> {
+impl<N: RealField> FEMVolume<N> {
     /// Initializes a new deformable volume from its tetrahedral elements.
     pub fn new(handle: BodyHandle, vertices: &[Point3<N>], tetrahedrons: &[Point4<usize>], pos: &Isometry3<N>,
                scale: &Vector3<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
@@ -670,7 +670,7 @@ impl<N: Real> FEMVolume<N> {
     }
 }
 
-impl<N: Real> Body<N> for FEMVolume<N> {
+impl<N: RealField> Body<N> for FEMVolume<N> {
     #[inline]
     fn name(&self) -> &str {
         &self.name
@@ -996,7 +996,7 @@ impl<N: Real> Body<N> for FEMVolume<N> {
 }
 
 
-impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
+impl<N: RealField> BodyPart<N> for TetrahedralElement<N> {
     fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
@@ -1022,13 +1022,13 @@ impl<N: Real> BodyPart<N> for TetrahedralElement<N> {
     }
 }
 
-enum FEMVolumeDescGeometry<'a, N: Real> {
+enum FEMVolumeDescGeometry<'a, N: RealField> {
     Cube(usize, usize, usize),
     Tetrahedrons(&'a [Point3<N>], &'a [Point4<usize>])
 }
 
 /// A builder for FEMVolume bodies.
-pub struct FEMVolumeDesc<'a, N: Real> {
+pub struct FEMVolumeDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
@@ -1047,7 +1047,7 @@ pub struct FEMVolumeDesc<'a, N: Real> {
     status: BodyStatus
 }
 
-impl<'a, N: Real> FEMVolumeDesc<'a, N> {
+impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
             name: String::new(),
@@ -1137,7 +1137,7 @@ impl<'a, N: Real> FEMVolumeDesc<'a, N> {
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for FEMVolumeDesc<'a, N> {
+impl<'a, N: RealField> BodyDesc<N> for FEMVolumeDesc<'a, N> {
     type Body = FEMVolume<N>;
 
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> FEMVolume<N> {

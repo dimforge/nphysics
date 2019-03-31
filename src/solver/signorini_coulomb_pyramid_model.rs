@@ -1,5 +1,5 @@
 use alga::linear::FiniteDimInnerSpace;
-use na::{self, DVector, Real, Unit};
+use na::{self, DVector, RealField, Unit};
 use std::ops::Range;
 
 use crate::detection::ColliderContactManifold;
@@ -15,7 +15,7 @@ use crate::solver::{
 /// A contact model generating one non-penetration constraint and two friction constraints per contact.
 ///
 /// This contact model approximates the friction cone at a contact with pyramid.
-pub struct SignoriniCoulombPyramidModel<N: Real> {
+pub struct SignoriniCoulombPyramidModel<N: RealField> {
     impulses: ImpulseCache<Vector<N>>,
     vel_ground_rng: Range<usize>,
     vel_rng: Range<usize>,
@@ -23,7 +23,7 @@ pub struct SignoriniCoulombPyramidModel<N: Real> {
     friction_rng: Range<usize>,
 }
 
-impl<N: Real> SignoriniCoulombPyramidModel<N> {
+impl<N: RealField> SignoriniCoulombPyramidModel<N> {
     /// Initialize a new signorini-coulomb-pyramid contact model.
     pub fn new() -> Self {
         SignoriniCoulombPyramidModel {
@@ -36,13 +36,13 @@ impl<N: Real> SignoriniCoulombPyramidModel<N> {
     }
 }
 
-impl<N: Real> Default for SignoriniCoulombPyramidModel<N> {
+impl<N: RealField> Default for SignoriniCoulombPyramidModel<N> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<N: Real> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
+impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
     fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
         DIM * c.len()
     }

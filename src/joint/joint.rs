@@ -1,14 +1,14 @@
 #![allow(missing_docs)] // For downcast.
 
 use downcast_rs::Downcast;
-use na::{DVectorSliceMut, Real};
+use na::{DVectorSliceMut, RealField};
 
 use crate::object::{Multibody, MultibodyLink};
 use crate::math::{Isometry, JacobianSliceMut, Vector, Velocity};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// Trait implemented by all joints following the reduced-coordinate formation.
-pub trait Joint<N: Real>: Downcast + Send + Sync {
+pub trait Joint<N: RealField>: Downcast + Send + Sync {
     /// The number of degrees of freedom allowed by the joint.
     fn ndofs(&self) -> usize;
     /// The position of the multibody link containing this joint relative to its parent.
@@ -88,4 +88,4 @@ pub trait Joint<N: Real>: Downcast + Send + Sync {
     fn clone(&self) -> Box<Joint<N>>;
 }
 
-impl_downcast!(Joint<N> where N: Real);
+impl_downcast!(Joint<N> where N: RealField);

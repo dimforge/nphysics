@@ -1,7 +1,7 @@
 #![allow(missing_docs)] // For downcast.
 
 use downcast_rs::Downcast;
-use na::{DVector, Real};
+use na::{DVector, RealField};
 
 use crate::object::{BodyPartHandle, BodySet};
 use crate::solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator};
@@ -10,7 +10,7 @@ use crate::solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGen
 pub type ConstraintHandle = usize;
 
 /// Trait implemented by joint that operate by generating constraints to restrict the relative motion of two body parts.
-pub trait JointConstraint<N: Real>: NonlinearConstraintGenerator<N> + Downcast + Send + Sync {
+pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downcast + Send + Sync {
     /// Return `true` if the constraint is active.
     ///
     /// Typically, a constraint is disable if it is between two sleeping bodies, or, between bodies without any degrees of freedom.
@@ -44,4 +44,4 @@ pub trait JointConstraint<N: Real>: NonlinearConstraintGenerator<N> + Downcast +
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N>);
 }
 
-impl_downcast!(JointConstraint<N> where N: Real);
+impl_downcast!(JointConstraint<N> where N: RealField);

@@ -1,9 +1,9 @@
-use na::Real;
+use na::RealField;
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, NonlinearUnilateralConstraint,
              UnilateralConstraint, UnilateralGroundConstraint};
 
 /// Set of velocity-based constraints.
-pub struct Constraints<N: Real> {
+pub struct Constraints<N: RealField> {
     /// Unilateral velocity constraints involving a dynamic body and the ground (or a body without any degrees of freedoms).
     pub unilateral_ground: Vec<UnilateralGroundConstraint<N>>,
     /// Unilateral velocity constraints between dynamic bodies.
@@ -14,7 +14,7 @@ pub struct Constraints<N: Real> {
     pub bilateral: Vec<BilateralConstraint<N>>,
 }
 
-impl<N: Real> Constraints<N> {
+impl<N: RealField> Constraints<N> {
     /// Creates a new empty set of constraints.
     pub fn new() -> Self {
         Constraints {
@@ -41,12 +41,12 @@ impl<N: Real> Constraints<N> {
 }
 
 /// Set of non-linear position-based constraints.
-pub struct NonlinearConstraints<N: Real> {
+pub struct NonlinearConstraints<N: RealField> {
     /// Unilateral position-based constraints between two bodies.
     pub unilateral: Vec<NonlinearUnilateralConstraint<N>>,
 }
 
-impl<N: Real> NonlinearConstraints<N> {
+impl<N: RealField> NonlinearConstraints<N> {
     /// Create an empty set of nonlinear position-based constraints.
     pub fn new() -> Self {
         NonlinearConstraints {
@@ -66,14 +66,14 @@ impl<N: Real> NonlinearConstraints<N> {
 }
 
 /// A set of all velocity constraints and non-linear position-based constraints.
-pub struct ConstraintSet<N: Real> {
+pub struct ConstraintSet<N: RealField> {
     /// The velocity constraints constructed.
     pub velocity: Constraints<N>,
     /// The position constraints constructed.
     pub position: NonlinearConstraints<N>,
 }
 
-impl<N: Real> ConstraintSet<N> {
+impl<N: RealField> ConstraintSet<N> {
     /// Create a new empty set of constraints.
     pub fn new() -> Self {
         ConstraintSet {

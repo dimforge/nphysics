@@ -1,4 +1,4 @@
-use na::{DVector, Real, Unit, Vector3};
+use na::{DVector, RealField, Unit, Vector3};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
@@ -9,7 +9,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
              NonlinearConstraintGenerator};
 
 /// A constraint that remove all relative rotations and one relative translation between two body parts.
-pub struct RectangularConstraint<N: Real> {
+pub struct RectangularConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -21,7 +21,7 @@ pub struct RectangularConstraint<N: Real> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: Real> RectangularConstraint<N> {
+impl<N: RealField> RectangularConstraint<N> {
     /// Create a new rectangular constraint that restrict `b1` and `b2` to move on a plane orthogonal to `axis1`.
     ///
     /// The `axis1` is expressed in the local coordinate system of `b1`.
@@ -47,7 +47,7 @@ impl<N: Real> RectangularConstraint<N> {
     }
 }
 
-impl<N: Real> JointConstraint<N> for RectangularConstraint<N> {
+impl<N: RealField> JointConstraint<N> for RectangularConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         4
     }
@@ -157,7 +157,7 @@ impl<N: Real> JointConstraint<N> for RectangularConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for RectangularConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for RectangularConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

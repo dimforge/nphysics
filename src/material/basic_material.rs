@@ -1,4 +1,4 @@
-use na::Real;
+use na::RealField;
 
 use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties};
 use crate::math::Vector;
@@ -11,7 +11,7 @@ use crate::math::Vector;
 /// will average the coefficient of the two surfaces in contact in order
 /// to deduce the restitution/friction coefficient.
 #[derive(Copy, Clone, Debug)]
-pub struct BasicMaterial<N: Real> {
+pub struct BasicMaterial<N: RealField> {
     /// The ID of this material for automatic lookup.
     pub id: Option<u32>,
     /// Restitution coefficient of the surface.
@@ -29,7 +29,7 @@ pub struct BasicMaterial<N: Real> {
 }
 
 
-impl<N: Real> BasicMaterial<N> {
+impl<N: RealField> BasicMaterial<N> {
     /// Initialize a material with the specified restitution and friction coefficients.
     pub fn new(restitution: N, friction: N) -> Self {
         BasicMaterial {
@@ -43,7 +43,7 @@ impl<N: Real> BasicMaterial<N> {
     }
 }
 
-impl<N: Real> Material<N> for BasicMaterial<N> {
+impl<N: RealField> Material<N> for BasicMaterial<N> {
     fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N> {
         LocalMaterialProperties {
             id: self.id,
@@ -54,7 +54,7 @@ impl<N: Real> Material<N> for BasicMaterial<N> {
     }
 }
 
-impl<N: Real> Default for BasicMaterial<N> {
+impl<N: RealField> Default for BasicMaterial<N> {
     fn default() -> Self {
         BasicMaterial::new(N::zero(), na::convert(0.5))
     }

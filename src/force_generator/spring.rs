@@ -1,4 +1,4 @@
-use na::{Real, Unit};
+use na::{RealField, Unit};
 
 use crate::force_generator::ForceGenerator;
 use crate::math::{ForceType, Point, Vector};
@@ -6,7 +6,7 @@ use crate::object::{BodyPartHandle, BodySet};
 use crate::solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.
-pub struct Spring<N: Real> {
+pub struct Spring<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -15,7 +15,7 @@ pub struct Spring<N: Real> {
     stiffness: N,
 }
 
-impl<N: Real> Spring<N> {
+impl<N: RealField> Spring<N> {
     /// Initialize a spring attached to `b1` and `b2` at the points `anchor1` and `anchor2`.
     /// 
     /// Anchors are expressed in the local coordinates of the corresponding bodies.
@@ -53,7 +53,7 @@ impl<N: Real> Spring<N> {
     }
 }
 
-impl<N: Real> ForceGenerator<N> for Spring<N> {
+impl<N: RealField> ForceGenerator<N> for Spring<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
         if bodies.body(self.b1.0).is_none() || bodies.body(self.b2.0).is_none() {
             return false;

@@ -1,4 +1,4 @@
-use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
+use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector3};
 
 use crate::joint::{Joint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
@@ -7,7 +7,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 
 /// A joint that allows only two relative rotations between two multibody links.
 #[derive(Copy, Clone, Debug)]
-pub struct UniversalJoint<N: Real> {
+pub struct UniversalJoint<N: RealField> {
     revo1: RevoluteJoint<N>,
     revo2: RevoluteJoint<N>,
 
@@ -15,7 +15,7 @@ pub struct UniversalJoint<N: Real> {
     coupling_dot_veldiff: Velocity<N>,
 }
 
-impl<N: Real> UniversalJoint<N> {
+impl<N: RealField> UniversalJoint<N> {
     /// Creates an universal joint allowing rotations along `axis1` and `axis2`.
     ///
     /// The axii are expressed in the local coordinate systems of the attached multibody links.
@@ -29,7 +29,7 @@ impl<N: Real> UniversalJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for UniversalJoint<N> {
+impl<N: RealField> Joint<N> for UniversalJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

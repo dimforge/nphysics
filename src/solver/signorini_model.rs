@@ -1,4 +1,4 @@
-use na::{self, DVector, Real};
+use na::{self, DVector, RealField};
 use std::ops::Range;
 
 use ncollide::query::TrackedContact;
@@ -13,13 +13,13 @@ use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, I
 /// A contact model generating one non-penetration constraint per contact.
 ///
 /// This is a frictionless contact model.
-pub struct SignoriniModel<N: Real> {
+pub struct SignoriniModel<N: RealField> {
     impulses: ImpulseCache<N>,
     vel_ground_rng: Range<usize>,
     vel_rng: Range<usize>,
 }
 
-impl<N: Real> SignoriniModel<N> {
+impl<N: RealField> SignoriniModel<N> {
     /// Create a new Signorini contact model.
     pub fn new() -> Self {
         SignoriniModel {
@@ -181,7 +181,7 @@ impl<N: Real> SignoriniModel<N> {
     }
 }
 
-impl<N: Real> ContactModel<N> for SignoriniModel<N> {
+impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
     fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
         c.manifold.len()
     }

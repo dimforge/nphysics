@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::f64;
 use std::mem;
 use std::any::Any;
-use na::Real;
+use na::RealField;
 use ncollide::world::{CollisionObject, CollisionObjectHandle, GeometricQueryType, CollisionGroups};
 use ncollide::shape::{ShapeHandle, Shape};
 
@@ -18,7 +18,7 @@ use crate::utils::{UserData, UserDataBox};
 pub type ColliderHandle = CollisionObjectHandle;
 
 /// Description of the way a collider is attached to a body.
-pub enum ColliderAnchor<N: Real> {
+pub enum ColliderAnchor<N: RealField> {
     /// Attach of a collider with a body part.
     OnBodyPart {
         /// The attached body part handle.
@@ -38,7 +38,7 @@ pub enum ColliderAnchor<N: Real> {
     },
 }
 
-impl<N: Real> ColliderAnchor<N> {
+impl<N: RealField> ColliderAnchor<N> {
     /// The body this anchor is attached to.
     #[inline]
     pub fn body(&self) -> BodyHandle {
@@ -52,7 +52,7 @@ impl<N: Real> ColliderAnchor<N> {
 /// Data stored into each collider.
 ///
 /// Those are needed by nphysics.
-pub struct ColliderData<N: Real> {
+pub struct ColliderData<N: RealField> {
     name: String,
     margin: N,
     anchor: ColliderAnchor<N>,
@@ -65,7 +65,7 @@ pub struct ColliderData<N: Real> {
     user_data: Option<Box<Any + Send + Sync>>,
 }
 
-impl<N: Real> ColliderData<N> {
+impl<N: RealField> ColliderData<N> {
     /// Initializes data for a collider.
     pub fn new(
         name: String,
@@ -157,9 +157,9 @@ impl<N: Real> ColliderData<N> {
 
 /// A geometric entity that can be attached to a body so it can be affected by contacts and proximity queries.
 #[repr(transparent)]
-pub struct Collider<N: Real>(pub CollisionObject<N, ColliderData<N>>);
+pub struct Collider<N: RealField>(pub CollisionObject<N, ColliderData<N>>);
 
-impl<N: Real> Collider<N> {
+impl<N: RealField> Collider<N> {
     pub(crate) fn from_ref(co: &CollisionObject<N, ColliderData<N>>) -> &Self {
         unsafe {
             mem::transmute(co)
@@ -325,7 +325,7 @@ impl<N: Real> Collider<N> {
 /// A non-deformable collider builder.
 ///
 /// See https://www.nphysics.org/rigid_body_simulations_with_contacts/#colliders for details.
-pub struct ColliderDesc<N: Real> {
+pub struct ColliderDesc<N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     margin: N,
@@ -339,7 +339,7 @@ pub struct ColliderDesc<N: Real> {
     is_sensor: bool
 }
 
-impl<N: Real> ColliderDesc<N> {
+impl<N: RealField> ColliderDesc<N> {
     /// Creates a new collider builder with the given shape.
     pub fn new(shape: ShapeHandle<N>) -> Self {
         let linear_prediction = na::convert(0.001);
@@ -478,7 +478,7 @@ impl<N: Real> ColliderDesc<N> {
 
 
 /// A deformable collider builder.
-pub struct DeformableColliderDesc<N: Real> {
+pub struct DeformableColliderDesc<N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     margin: N,
@@ -491,7 +491,7 @@ pub struct DeformableColliderDesc<N: Real> {
     body_parts_mapping: Option<Arc<Vec<usize>>>
 }
 
-impl<N: Real> DeformableColliderDesc<N> {
+impl<N: RealField> DeformableColliderDesc<N> {
     /// Creates a deformable collider from the given shape.
     ///
     /// Panics if the shape is not deformable.
@@ -515,7 +515,7 @@ impl<N: Real> DeformableColliderDesc<N> {
     }
 }
 
-impl<N: Real> DeformableColliderDesc<N> {
+impl<N: RealField> DeformableColliderDesc<N> {
     user_data_desc_accessors!();
 
     /// Sets the shape of this collider builder.

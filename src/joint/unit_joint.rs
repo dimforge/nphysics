@@ -1,6 +1,6 @@
 #![allow(missing_docs)] // For downcast.
 
-use na::{DVectorSliceMut, Real};
+use na::{DVectorSliceMut, RealField};
 
 use crate::joint::{Joint, JointMotor};
 use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body};
@@ -8,7 +8,7 @@ use crate::solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearCo
              IntegrationParameters, UnilateralGroundConstraint};
 
 /// Trait implemented by joints using the reduced-coordinates approach and allowing only one degree of freedom.
-pub trait UnitJoint<N: Real>: Joint<N> {
+pub trait UnitJoint<N: RealField>: Joint<N> {
     /// The generalized coordinate of the unit joint.
     fn position(&self) -> N;
     /// The motor applied to the degree of freedom of the unit joitn.
@@ -19,10 +19,10 @@ pub trait UnitJoint<N: Real>: Joint<N> {
     fn max_position(&self) -> Option<N>;
 }
 
-impl_downcast!(UnitJoint<N> where N: Real);
+impl_downcast!(UnitJoint<N> where N: RealField);
 
 /// Computes the maximum number of velocity constraints to be applied by the given unit joint.
-pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) -> usize {
+pub fn unit_joint_num_velocity_constraints<N: RealField, J: UnitJoint<N>>(joint: &J) -> usize {
     // FIXME: don't always keep the constraints active.
     let mut nconstraints = 0;
 
@@ -41,7 +41,7 @@ pub fn unit_joint_num_velocity_constraints<N: Real, J: UnitJoint<N>>(joint: &J) 
 
 /// Initializes and generate the velocity constraints applicable to the multibody links attached
 /// to this joint.
-pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
+pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     joint: &J,
     params: &IntegrationParameters<N>,
     multibody: &Multibody<N>,
@@ -161,7 +161,7 @@ pub fn unit_joint_velocity_constraints<N: Real, J: UnitJoint<N>>(
 
 /// Initializes and generate the position constraints applicable to the multibody links attached
 /// to this joint.
-pub fn unit_joint_position_constraint<N: Real, J: UnitJoint<N>>(
+pub fn unit_joint_position_constraint<N: RealField, J: UnitJoint<N>>(
     joint: &J,
     multibody: &Multibody<N>,
     link: &MultibodyLink<N>,

@@ -1,6 +1,6 @@
 use std::collections::{hash_map, HashMap};
 
-use na::Real;
+use na::RealField;
 use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
 use ncollide::broad_phase::BroadPhasePairFilter;
 use ncollide::narrow_phase::{Interaction, ContactAlgorithm, ProximityAlgorithm};
@@ -17,14 +17,14 @@ use crate::math::{Isometry, Point};
 ///
 /// This is a wrapper over the `CollisionWorld` structure from `ncollide` to simplify
 /// its use with the [object::Collider] structure.
-pub struct ColliderWorld<N: Real> {
+pub struct ColliderWorld<N: RealField> {
     cworld: CollisionWorld<N, ColliderData<N>>,
     collider_lists: HashMap<BodyHandle, (ColliderHandle, ColliderHandle)>, // (head, tail)
     colliders_w_parent: Vec<ColliderHandle>,
     default_material: MaterialHandle<N>
 }
 
-impl<N: Real> ColliderWorld<N> {
+impl<N: RealField> ColliderWorld<N> {
     /// Creates a new collision world.
     // FIXME: use default values for `margin` and allow its modification by the user ?
     pub fn new(margin: N) -> Self {
@@ -547,19 +547,19 @@ impl<N: Real> ColliderWorld<N> {
 
 struct BodyStatusCollisionFilter;
 
-impl<N: Real> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
+impl<N: RealField> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
     fn is_pair_valid(&self, b1: &CollisionObject<N, ColliderData<N>>, b2: &CollisionObject<N, ColliderData<N>>) -> bool {
         b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }
 
-pub struct ColliderChain<'a, N: Real> {
+pub struct ColliderChain<'a, N: RealField> {
     cworld: &'a ColliderWorld<N>,
     curr: Option<ColliderHandle>,
 }
 
-impl<'a, N: Real> Iterator for ColliderChain<'a, N> {
+impl<'a, N: RealField> Iterator for ColliderChain<'a, N> {
     type Item = &'a Collider<N>;
 
     fn next(&mut self) -> Option<&'a Collider<N>> {

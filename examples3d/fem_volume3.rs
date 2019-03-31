@@ -47,6 +47,7 @@ fn main() {
         .scale(Vector3::new(1.0, 0.1, 0.1))
         .translation(Vector3::y() * 0.1)
         .young_modulus(1.0e3)
+        .poisson_ratio(0.2)
         .mass_damping(0.2)
         .collider_enabled(true)
         .build(&mut world);

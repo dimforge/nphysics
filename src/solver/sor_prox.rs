@@ -1,4 +1,4 @@
-use na::{self, DVector, Dim, Dynamic, Real, U1, VectorSliceN, Vector};
+use na::{self, DVector, Dim, Dynamic, RealField, U1, VectorSliceN, Vector};
 use na::storage::StorageMut;
 
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
@@ -13,7 +13,7 @@ pub(crate) struct SORProx;
 
 impl SORProx {
     /// Solve the given set of constraints.
-    pub fn solve<N: Real>(
+    pub fn solve<N: RealField>(
         bodies: &mut BodySet<N>,
         unilateral_ground: &mut [UnilateralGroundConstraint<N>],
         unilateral: &mut [UnilateralConstraint<N>],
@@ -72,7 +72,7 @@ impl SORProx {
         }
     }
 
-    fn step<N: Real>(
+    fn step<N: RealField>(
         bodies: &mut BodySet<N>,
         unilateral_ground: &mut [UnilateralGroundConstraint<N>],
         unilateral: &mut [UnilateralConstraint<N>],
@@ -147,7 +147,7 @@ impl SORProx {
         }
     }
 
-    fn solve_unilateral<N: Real, D1: Dim, D2: Dim>(
+    fn solve_unilateral<N: RealField, D1: Dim, D2: Dim>(
         c: &mut UnilateralConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -177,7 +177,7 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_unilateral_ground<N: Real, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
+    pub fn solve_unilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
         c: &mut UnilateralGroundConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
@@ -197,7 +197,7 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian, N::one());
     }
 
-    fn solve_bilateral<N: Real, D1: Dim, D2: Dim>(
+    fn solve_bilateral<N: RealField, D1: Dim, D2: Dim>(
         c: &mut BilateralConstraint<N>,
         unilateral: &[UnilateralConstraint<N>],
         jacobians: &[N],
@@ -260,7 +260,7 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_bilateral_ground<N: Real, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
+    pub fn solve_bilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
         c: &mut BilateralGroundConstraint<N>,
         unilateral: &[UnilateralGroundConstraint<N>],
         jacobians: &[N],
@@ -309,7 +309,7 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian, N::one());
     }
 
-    fn warmstart_unilateral<N: Real, D1: Dim, D2: Dim>(
+    fn warmstart_unilateral<N: RealField, D1: Dim, D2: Dim>(
         c: &UnilateralConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -334,7 +334,7 @@ impl SORProx {
         }
     }
 
-    pub fn warmstart_unilateral_ground<N: Real, D: Dim,  DMJ: Dim, S: StorageMut<N, DMJ>>(
+    pub fn warmstart_unilateral_ground<N: RealField, D: Dim,  DMJ: Dim, S: StorageMut<N, DMJ>>(
         c: &UnilateralGroundConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
@@ -352,7 +352,7 @@ impl SORProx {
         }
     }
 
-    fn warmstart_bilateral<N: Real, D1: Dim, D2: Dim>(
+    fn warmstart_bilateral<N: RealField, D1: Dim, D2: Dim>(
         c: &BilateralConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -377,7 +377,7 @@ impl SORProx {
         }
     }
 
-    pub fn warmstart_bilateral_ground<N: Real, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
+    pub fn warmstart_bilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
         c: &BilateralGroundConstraint<N>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,

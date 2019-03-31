@@ -1,13 +1,13 @@
 use std::ops::{Deref, DerefMut};
 
-use na::Real;
+use na::RealField;
 
 use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
 
 /// One link of a multibody.
-pub struct MultibodyLink<N: Real> {
+pub struct MultibodyLink<N: RealField> {
     pub(crate) name: String,
     // FIXME: make all those private.
     pub(crate) multibody_handle: BodyHandle,
@@ -42,7 +42,7 @@ pub struct MultibodyLink<N: Real> {
     // user_data:       T
 }
 
-impl<N: Real> MultibodyLink<N> {
+impl<N: RealField> MultibodyLink<N> {
     /// Creates a new multibody link.
     pub fn new(
         internal_id: usize,
@@ -128,7 +128,7 @@ impl<N: Real> MultibodyLink<N> {
 }
 
 
-impl<N: Real> BodyPart<N> for MultibodyLink<N> {
+impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
     #[inline]
     fn is_ground(&self) -> bool {
         false
@@ -167,9 +167,9 @@ impl<N: Real> BodyPart<N> for MultibodyLink<N> {
 
 
 // FIXME: keep this even if we already have the Index2 traits?
-pub(crate) struct MultibodyLinkVec<N: Real>(pub Vec<MultibodyLink<N>>);
+pub(crate) struct MultibodyLinkVec<N: RealField>(pub Vec<MultibodyLink<N>>);
 
-impl<N: Real> MultibodyLinkVec<N> {
+impl<N: RealField> MultibodyLinkVec<N> {
     // #[inline]
     // pub fn get_with_parent(&self, i: usize) -> (&MultibodyLink<N>, &MultibodyLink<N>) {
     //     assert!(
@@ -199,7 +199,7 @@ impl<N: Real> MultibodyLinkVec<N> {
     }
 }
 
-impl<N: Real> Deref for MultibodyLinkVec<N> {
+impl<N: RealField> Deref for MultibodyLinkVec<N> {
     type Target = Vec<MultibodyLink<N>>;
 
     #[inline]
@@ -209,7 +209,7 @@ impl<N: Real> Deref for MultibodyLinkVec<N> {
     }
 }
 
-impl<N: Real> DerefMut for MultibodyLinkVec<N> {
+impl<N: RealField> DerefMut for MultibodyLinkVec<N> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Vec<MultibodyLink<N>> {
         let MultibodyLinkVec(ref mut me) = *self;

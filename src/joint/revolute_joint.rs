@@ -1,6 +1,6 @@
 #![macro_use]
 
-use na::{self, DVectorSliceMut, Real, Unit};
+use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
@@ -10,7 +10,7 @@ use crate::utils::GeneralizedCross;
 
 /// A unit joint that allows only one relative rotational degree of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
-pub struct RevoluteJoint<N: Real> {
+pub struct RevoluteJoint<N: RealField> {
     axis: Unit<AngularVector<N>>,
     jacobian: Velocity<N>,
     jacobian_dot: Velocity<N>,
@@ -24,7 +24,7 @@ pub struct RevoluteJoint<N: Real> {
     motor: JointMotor<N, N>,
 }
 
-impl<N: Real> RevoluteJoint<N> {
+impl<N: RealField> RevoluteJoint<N> {
     /// Create a new revolute joint with an initial angle.
     #[cfg(feature = "dim2")]
     pub fn new(angle: N) -> Self {
@@ -176,7 +176,7 @@ impl<N: Real> RevoluteJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for RevoluteJoint<N> {
+impl<N: RealField> Joint<N> for RevoluteJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)
@@ -297,7 +297,7 @@ impl<N: Real> Joint<N> for RevoluteJoint<N> {
     }
 }
 
-impl<N: Real> UnitJoint<N> for RevoluteJoint<N> {
+impl<N: RealField> UnitJoint<N> for RevoluteJoint<N> {
     fn position(&self) -> N {
         self.angle
     }
@@ -398,7 +398,7 @@ macro_rules! _revolute_motor_limit_methods (
      $max_motor_torque:           ident,
      $set_max_motor_torque:       ident
      ) => {
-        impl<N: Real> $ty<N> {
+        impl<N: RealField> $ty<N> {
             /// The lower limit of the rotation angle.
             pub fn $min_angle(&self) -> Option<N> {
                 self.$revo.min_angle()

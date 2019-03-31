@@ -51,7 +51,7 @@ fn main() {
         .density(1.0)
         .young_modulus(1.0e2)
         .mass_damping(0.2)
-        .plasticity(0.1, 5.0, 10.0)
+//        .plasticity(0.1, 5.0, 10.0)
         .collider_enabled(true)
         .build(&mut world);
 

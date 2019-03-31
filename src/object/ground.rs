@@ -1,4 +1,4 @@
-use na::{DVectorSlice, DVectorSliceMut, Real};
+use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use ncollide::shape::DeformationsType;
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity, Translation};
@@ -10,14 +10,14 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 /// Most of its methods are useless but provided anyway to be
 /// similar to the other bodies.
 #[derive(Clone, Debug)]
-pub struct Ground<N: Real> {
+pub struct Ground<N: RealField> {
     name: String,
     companion_id: usize,
     activation: ActivationStatus<N>,
     data: [N; 0],
 }
 
-impl<N: Real> Ground<N> {
+impl<N: RealField> Ground<N> {
     pub(crate) fn new() -> Self {
         Ground {
             name: String::new(),
@@ -28,7 +28,7 @@ impl<N: Real> Ground<N> {
     }
 }
 
-impl<N: Real> Body<N> for Ground<N> {
+impl<N: RealField> Body<N> for Ground<N> {
     #[inline]
     fn name(&self) -> &str {
         &self.name
@@ -240,7 +240,7 @@ impl<N: Real> Body<N> for Ground<N> {
     fn apply_local_force_at_local_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
 }
 
-impl<N: Real> BodyPart<N> for Ground<N> {
+impl<N: RealField> BodyPart<N> for Ground<N> {
     #[inline]
     fn is_ground(&self) -> bool {
         true

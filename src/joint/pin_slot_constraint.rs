@@ -1,4 +1,4 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
@@ -12,7 +12,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 ///
 /// This is different frmo the cylindrical constraint since the remaining rotation and translation
 /// are not restricted to be done wrt. the same axis.
-pub struct PinSlotConstraint<N: Real> {
+pub struct PinSlotConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -28,7 +28,7 @@ pub struct PinSlotConstraint<N: Real> {
     // max_offset: Option<N>,
 }
 
-impl<N: Real> PinSlotConstraint<N> {
+impl<N: RealField> PinSlotConstraint<N> {
     /// Creates a new pin-slot constraint.
     ///
     /// This will ensure the relative linear motions are always along `axis_v1` (here expressed
@@ -99,7 +99,7 @@ impl<N: Real> PinSlotConstraint<N> {
     // }
 }
 
-impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {
+impl<N: RealField> JointConstraint<N> for PinSlotConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 2
     }
@@ -211,7 +211,7 @@ impl<N: Real> JointConstraint<N> for PinSlotConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for PinSlotConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for PinSlotConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

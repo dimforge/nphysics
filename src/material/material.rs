@@ -1,7 +1,7 @@
 use downcast_rs::Downcast;
 use std::sync::Arc;
 use std::ops::Deref;
-use na::{self, Real};
+use na::{self, RealField};
 
 use ncollide::query::TrackedContact;
 use crate::object::{Body, BodyPart, Collider};
@@ -11,7 +11,7 @@ use crate::math::Vector;
 
 /// The context for determining the local material properties at a contact.
 #[derive(Copy, Clone)]
-pub struct MaterialContext<'a, N: Real> {
+pub struct MaterialContext<'a, N: RealField> {
     /// One of the two bodies involved in the contact.
     pub body: &'a Body<N>,
     /// One of the two bodies part involved in the contact.
@@ -27,7 +27,7 @@ pub struct MaterialContext<'a, N: Real> {
     pub is_first: bool,
 }
 
-impl<'a, N: Real> MaterialContext<'a, N> {
+impl<'a, N: RealField> MaterialContext<'a, N> {
     pub(crate) fn new(body: &'a Body<N>, body_part: &'a BodyPart<N>, collider: &'a Collider<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
         MaterialContext {
             body,
@@ -67,7 +67,7 @@ impl MaterialCombineMode {
     /// The combine mode with the highest precedence among the two provided determines
     /// the actual formula used. Precedences are described on the `MaterialCombineMode` enum.
     #[inline]
-    pub fn combine<N: Real>(a: (N, Self), b: (N, Self)) -> (N, MaterialCombineMode) {
+    pub fn combine<N: RealField>(a: (N, Self), b: (N, Self)) -> (N, MaterialCombineMode) {
         match (a.1, b.1) {
             (MaterialCombineMode::Max, _) | (_, MaterialCombineMode::Max) => (a.0.max(b.0), MaterialCombineMode::Max),
             (MaterialCombineMode::Multiply, _) | (_, MaterialCombineMode::Multiply) => (a.0 * b.0, MaterialCombineMode::Multiply),
@@ -79,7 +79,7 @@ impl MaterialCombineMode {
 }
 
 /// Computed material properties at a contact point.
-pub struct LocalMaterialProperties<N: Real> {
+pub struct LocalMaterialProperties<N: RealField> {
     /// The optional material identifier used for pairwise material coefficient lookup table.
     pub id: Option<MaterialId>,
     /// The friction coefficient and its combination mode.
@@ -91,7 +91,7 @@ pub struct LocalMaterialProperties<N: Real> {
 }
 
 /// An utility trait to clone material trait-objects.
-pub trait MaterialClone<N: Real> {
+pub trait MaterialClone<N: RealField> {
     /// Clone a material trait-object.
     fn clone_box(&self) -> Box<Material<N>> {
         unimplemented!()
@@ -101,27 +101,27 @@ pub trait MaterialClone<N: Real> {
 /// The identifier of a material.
 pub type MaterialId = u32;
 
-impl<N: Real, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
+impl<N: RealField, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
     fn clone_box(&self) -> Box<Material<N>> {
         Box::new(self.clone())
     }
 }
 
 /// An abstract material.
-pub trait Material<N: Real>: Downcast + Send + Sync + MaterialClone<N> {
+pub trait Material<N: RealField>: Downcast + Send + Sync + MaterialClone<N> {
     /// Retrieve the local material properties of a collider at the given contact point.
     fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N>;
 }
 
-impl_downcast!(Material<N> where N: Real);
+impl_downcast!(Material<N> where N: RealField);
 
-impl<N: Real> Clone for Box<Material<N>> {
+impl<N: RealField> Clone for Box<Material<N>> {
     fn clone(&self) -> Box<Material<N>> {
         self.clone_box()
     }
 }
 
-impl<N: Real> Material<N> {
+impl<N: RealField> Material<N> {
     /// Combine two materials given their contexts and a material lookup table.
     pub fn combine<M1, M2>(
         table: &MaterialsCoefficientsTable<N>,
@@ -169,9 +169,9 @@ impl<N: Real> Material<N> {
 ///
 /// This can be mutated using COW.
 #[derive(Clone)]
-pub struct MaterialHandle<N: Real>(Arc<Box<Material<N>>>);
+pub struct MaterialHandle<N: RealField>(Arc<Box<Material<N>>>);
 
-impl<N: Real> MaterialHandle<N> {
+impl<N: RealField> MaterialHandle<N> {
     /// Creates a sharable shape handle from a shape.
     #[inline]
     pub fn new<S: Material<N> + Clone>(material: S) -> MaterialHandle<N> {
@@ -183,14 +183,14 @@ impl<N: Real> MaterialHandle<N> {
     }
 }
 
-impl<N: Real> AsRef<Material<N>> for MaterialHandle<N> {
+impl<N: RealField> AsRef<Material<N>> for MaterialHandle<N> {
     #[inline]
     fn as_ref(&self) -> &Material<N> {
         &*self.deref()
     }
 }
 
-impl<N: Real> Deref for MaterialHandle<N> {
+impl<N: RealField> Deref for MaterialHandle<N> {
     type Target = Material<N>;
 
     #[inline]

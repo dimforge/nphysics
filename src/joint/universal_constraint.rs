@@ -1,4 +1,4 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
@@ -9,7 +9,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all but two relative rotations along distinct axii.
-pub struct UniversalConstraint<N: Real> {
+pub struct UniversalConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -23,7 +23,7 @@ pub struct UniversalConstraint<N: Real> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: Real> UniversalConstraint<N> {
+impl<N: RealField> UniversalConstraint<N> {
     /// Create a new universal constraint that ensure the angle between `axis1` and `axis2` is always equal to `angle`.
     ///
     /// All anchors and axii are expressed in the local coordinate systems of the corresponding body parts.
@@ -52,7 +52,7 @@ impl<N: Real> UniversalConstraint<N> {
     }
 }
 
-impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
+impl<N: RealField> JointConstraint<N> for UniversalConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         4
     }
@@ -164,7 +164,7 @@ impl<N: Real> JointConstraint<N> for UniversalConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

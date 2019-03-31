@@ -1,6 +1,6 @@
 use slab::Slab;
 
-use na::{DVector, Real};
+use na::{DVector, RealField};
 
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
@@ -11,7 +11,7 @@ use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, Nonlinea
 use crate::world::ColliderWorld;
 
 /// Moreau-Jean time-stepping scheme.
-pub struct MoreauJeanSolver<N: Real> {
+pub struct MoreauJeanSolver<N: RealField> {
     jacobians: Vec<N>,
     // FIXME: use a Vec or a DVector?
     mj_lambda_vel: DVector<N>,
@@ -21,7 +21,7 @@ pub struct MoreauJeanSolver<N: Real> {
     internal_constraints: Vec<BodyHandle>,
 }
 
-impl<N: Real> MoreauJeanSolver<N> {
+impl<N: RealField> MoreauJeanSolver<N> {
     /// Create a new time-stepping scheme with the given contact model.
     pub fn new(contact_model: Box<ContactModel<N>>) -> Self {
         let constraints = ConstraintSet::new();

@@ -1,13 +1,13 @@
 use num::Zero;
 
-use na::{self, Real};
+use na::{self, RealField};
 use ncollide::shape::Cuboid;
 use crate::volumetric::Volumetric;
 use crate::math::{AngularInertia, Point, Vector, DIM};
 
 /// The volume of a cuboid.
 #[inline]
-pub fn cuboid_volume<N: Real>(half_extents: &Vector<N>) -> N {
+pub fn cuboid_volume<N: RealField>(half_extents: &Vector<N>) -> N {
     let mut res = N::one();
 
     for half_extent in half_extents.iter() {
@@ -19,7 +19,7 @@ pub fn cuboid_volume<N: Real>(half_extents: &Vector<N>) -> N {
 
 /// The area of a cuboid.
 #[inline]
-pub fn cuboid_area<N: Real>(half_extents: &Vector<N>) -> N {
+pub fn cuboid_area<N: RealField>(half_extents: &Vector<N>) -> N {
     if DIM == 2 {
         (half_extents[0] + half_extents[1]) * na::convert(4.0f64)
     } else {
@@ -38,13 +38,13 @@ pub fn cuboid_area<N: Real>(half_extents: &Vector<N>) -> N {
 
 /// The center of mass of a cuboid.
 #[inline]
-pub fn cuboid_center_of_mass<N: Real>() -> Point<N> {
+pub fn cuboid_center_of_mass<N: RealField>() -> Point<N> {
     Point::origin()
 }
 
 /// The unit angular inertia of a cuboid.
 #[inline]
-pub fn cuboid_unit_angular_inertia<N: Real>(half_extents: &Vector<N>) -> AngularInertia<N> {
+pub fn cuboid_unit_angular_inertia<N: RealField>(half_extents: &Vector<N>) -> AngularInertia<N> {
     if DIM == 2 {
         let _2: N = na::convert(2.0f64);
         let _i12: N = na::convert(1.0f64 / 12.0);
@@ -76,7 +76,7 @@ pub fn cuboid_unit_angular_inertia<N: Real>(half_extents: &Vector<N>) -> Angular
     }
 }
 
-impl<N: Real> Volumetric<N> for Cuboid<N> {
+impl<N: RealField> Volumetric<N> for Cuboid<N> {
     fn area(&self) -> N {
         cuboid_area(self.half_extents())
     }
