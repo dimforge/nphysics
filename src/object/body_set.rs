@@ -1,6 +1,6 @@
 use slab::{Iter, IterMut, Slab};
 
-use na::Real;
+use na::RealField;
 use crate::world::ColliderWorld;
 use crate::object::{Body, Ground};
 
@@ -42,7 +42,7 @@ impl BodyPartHandle {
 }
 
 /*
-pub trait AbstractBodySet<'a, N: Real> {
+pub trait AbstractBodySet<'a, N: RealField> {
     type BodyHandle;
     type Body: ?Sized + Body<N>;
     type Bodies: Iterator<Item = &'a Self::Body>;
@@ -56,7 +56,7 @@ pub trait AbstractBodySet<'a, N: Real> {
     fn bodies_mut(&mut self) -> Self::BodiesMut;
 }
 
-impl<'a, N: Real> AbstractBodySet<'a, N> for BodySet<N> {
+impl<'a, N: RealField> AbstractBodySet<'a, N> for BodySet<N> {
     type BodyHandle = BodyHandle;
     type Body = Body<N>;
     type Bodies = Bodies<'a, N>;
@@ -104,7 +104,7 @@ impl<'a, N: Real> AbstractBodySet<'a, N> for BodySet<N> {
 */
 
 /// A abstract body descriptor to be passed to the physics `World` to create a body.
-pub trait BodyDesc<N: Real> {
+pub trait BodyDesc<N: RealField> {
     /// The type of body being generated.
     type Body: Body<N>;
 
@@ -113,12 +113,12 @@ pub trait BodyDesc<N: Real> {
 }
 
 /// A set containing all the bodies added to the world.
-pub struct BodySet<N: Real> {
+pub struct BodySet<N: RealField> {
     ground: Ground<N>,
     bodies: Slab<Box<Body<N>>>,
 }
 
-impl<N: Real> BodySet<N> {
+impl<N: RealField> BodySet<N> {
     /// Create a new empty set of bodies.
     pub fn new() -> Self {
         BodySet {

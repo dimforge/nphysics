@@ -1,7 +1,7 @@
 #![allow(missing_docs)] // for downcast.
 
 use downcast_rs::Downcast;
-use na::Real;
+use na::RealField;
 
 use crate::object::BodySet;
 use crate::solver::IntegrationParameters;
@@ -12,9 +12,9 @@ pub type ForceGeneratorHandle = usize;
 /// A persistent force generator.
 /// 
 /// A force generator applies a force to one or several bodies at each step of the simulation.
-pub trait ForceGenerator<N: Real>: Downcast + Send + Sync {
+pub trait ForceGenerator<N: RealField>: Downcast + Send + Sync {
     /// Apply forces to some bodies.
     fn apply(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool;
 }
 
-impl_downcast!(ForceGenerator<N> where N: Real);
+impl_downcast!(ForceGenerator<N> where N: RealField);

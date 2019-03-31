@@ -18,9 +18,9 @@ log        = { version = "0.4", optional = true }
 num-traits = "0.2"
 time       = "0.1"
 rand       = "0.6"
-nalgebra   = "0.17"
-kiss3d     = "0.18"
-ncollide3d = "0.18"
+nalgebra   = "0.18"
+kiss3d     = "0.19"
+ncollide3d = "0.19"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

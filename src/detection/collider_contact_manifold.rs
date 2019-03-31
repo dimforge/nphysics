@@ -1,4 +1,4 @@
-use na::Real;
+use na::RealField;
 use ncollide::query::{ContactManifold, TrackedContact};
 use ncollide::shape::FeatureId;
 
@@ -6,7 +6,7 @@ use crate::object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]
-pub struct ColliderContactManifold<'a, N: Real> {
+pub struct ColliderContactManifold<'a, N: RealField> {
     /// The first collider involved in the contact.
     pub collider1: &'a Collider<N>,
     /// The second collider involved in the contact.
@@ -15,7 +15,7 @@ pub struct ColliderContactManifold<'a, N: Real> {
     pub manifold: &'a ContactManifold<N>,
 }
 
-impl<'a, N: Real> ColliderContactManifold<'a, N> {
+impl<'a, N: RealField> ColliderContactManifold<'a, N> {
     /// Initialize a new contact manifold.
     pub fn new(
         collider1: &'a Collider<N>,

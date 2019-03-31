@@ -2,7 +2,7 @@
 
 use downcast_rs::Downcast;
 
-use na::{self, DVectorSlice, DVectorSliceMut, Real};
+use na::{self, DVectorSlice, DVectorSliceMut, RealField};
 use ncollide::shape::DeformationsType;
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
@@ -26,12 +26,12 @@ pub enum BodyStatus {
 ///
 /// This controls whether a body is sleeping or not.
 #[derive(Copy, Clone, Debug)]
-pub struct ActivationStatus<N: Real> {
+pub struct ActivationStatus<N: RealField> {
     threshold: Option<N>,
     energy: N,
 }
 
-impl<N: Real> ActivationStatus<N> {
+impl<N: RealField> ActivationStatus<N> {
     /// The default amount of energy bellow which a body can be put to sleep by nphysics.
     pub fn default_threshold() -> N {
         na::convert(0.01f64)
@@ -89,7 +89,7 @@ impl<N: Real> ActivationStatus<N> {
 }
 
 /// Trait implemented by all bodies supported by nphysics.
-pub trait Body<N: Real>: Downcast + Send + Sync {
+pub trait Body<N: RealField>: Downcast + Send + Sync {
     /// The name of this body.
     fn name(&self) -> &str;
 
@@ -322,7 +322,7 @@ pub trait Body<N: Real>: Downcast + Send + Sync {
 }
 
 /// Trait implemented by each part of a body supported by nphysics.
-pub trait BodyPart<N: Real>: Downcast + Send + Sync {
+pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
     /// Returns `true` if this body part is the ground.
     fn is_ground(&self) -> bool {
         false
@@ -347,8 +347,8 @@ pub trait BodyPart<N: Real>: Downcast + Send + Sync {
     fn local_inertia(&self) -> Inertia<N>;
 }
 
-impl_downcast!(Body<N> where N: Real);
-impl_downcast!(BodyPart<N> where N: Real);
+impl_downcast!(Body<N> where N: RealField);
+impl_downcast!(BodyPart<N> where N: RealField);
 
 
 

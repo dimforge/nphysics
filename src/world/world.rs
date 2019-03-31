@@ -1,6 +1,6 @@
 use slab::Slab;
 
-use na::{self, Real};
+use na::{self, RealField};
 use ncollide;
 use ncollide::events::{ContactEvents, ProximityEvents};
 
@@ -19,7 +19,7 @@ use crate::world::ColliderWorld;
 
 
 /// The physics world.
-pub struct World<N: Real> {
+pub struct World<N: RealField> {
     counters: Counters,
     bodies: BodySet<N>,
     active_bodies: Vec<BodyHandle>,
@@ -35,7 +35,7 @@ pub struct World<N: Real> {
     params: IntegrationParameters<N>,
 }
 
-impl<N: Real> World<N> {
+impl<N: RealField> World<N> {
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
@@ -537,7 +537,7 @@ impl<N: Real> World<N> {
     }
 }
 
-impl<N: Real> Default for World<N> {
+impl<N: RealField> Default for World<N> {
     fn default() -> Self {
         Self::new()
     }

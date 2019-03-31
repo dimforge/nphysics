@@ -1,4 +1,4 @@
-use na::Real;
+use na::RealField;
 use na::{Matrix2, Matrix3, RowVector2, Vector1, Vector2, Vector3};
 
 /// This is a non-standard generalization of the cross product design exclusively to group the
@@ -23,7 +23,7 @@ pub trait GeneralizedCross {
     fn gcross_matrix_tr(&self) -> Self::CrossMatrixTr;
 }
 
-impl<N: Real> GeneralizedCross for Vector1<N> {
+impl<N: RealField> GeneralizedCross for Vector1<N> {
     type Rhs = Vector2<N>;
     type CrossVector = Vector2<N>;
     type CrossMatrix = Matrix2<N>;
@@ -45,7 +45,7 @@ impl<N: Real> GeneralizedCross for Vector1<N> {
     }
 }
 
-impl<N: Real> GeneralizedCross for Vector2<N> {
+impl<N: RealField> GeneralizedCross for Vector2<N> {
     type Rhs = Vector2<N>;
     type CrossVector = Vector1<N>;
     type CrossMatrix = RowVector2<N>;
@@ -67,7 +67,7 @@ impl<N: Real> GeneralizedCross for Vector2<N> {
     }
 }
 
-impl<N: Real> GeneralizedCross for Vector3<N> {
+impl<N: RealField> GeneralizedCross for Vector3<N> {
     type Rhs = Vector3<N>;
     type CrossVector = Vector3<N>;
     type CrossMatrix = Matrix3<N>;

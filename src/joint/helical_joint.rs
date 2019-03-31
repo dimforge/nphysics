@@ -1,4 +1,4 @@
-use na::{self, DVectorSliceMut, Isometry3, Real, Translation3, Unit, Vector3};
+use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector3};
 
 use crate::joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
 use crate::math::{JacobianSliceMut, Velocity};
@@ -10,12 +10,12 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 /// The degree of freedom is the combination of a rotation and a translation along the same axis.
 /// Both rotational and translational motions are coupled to generate a screw motion.
 #[derive(Copy, Clone, Debug)]
-pub struct HelicalJoint<N: Real> {
+pub struct HelicalJoint<N: RealField> {
     revo: RevoluteJoint<N>,
     pitch: N,
 }
 
-impl<N: Real> HelicalJoint<N> {
+impl<N: RealField> HelicalJoint<N> {
     /// Create an helical joint with the given axis and initial angle.
     /// 
     /// The `pitch` controls how much translation is generated for how much rotation.
@@ -38,7 +38,7 @@ impl<N: Real> HelicalJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for HelicalJoint<N> {
+impl<N: RealField> Joint<N> for HelicalJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)
@@ -148,7 +148,7 @@ impl<N: Real> Joint<N> for HelicalJoint<N> {
     }
 }
 
-impl<N: Real> UnitJoint<N> for HelicalJoint<N> {
+impl<N: RealField> UnitJoint<N> for HelicalJoint<N> {
     fn position(&self) -> N {
         self.revo.angle()
     }

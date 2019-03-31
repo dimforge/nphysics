@@ -1,11 +1,11 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 
 use crate::math::{Point, Vector};
 use crate::object::{Body, BodyPart};
 use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
-pub fn build_linear_limits_velocity_constraint<N: Real>(
+pub fn build_linear_limits_velocity_constraint<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -121,7 +121,7 @@ pub fn build_linear_limits_velocity_constraint<N: Real>(
     }
 }
 
-pub fn build_linear_limits_position_constraint<N: Real>(
+pub fn build_linear_limits_position_constraint<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
@@ -190,7 +190,7 @@ pub fn build_linear_limits_position_constraint<N: Real>(
 }
 
 /*
-pub fn build_angular_limit_velocity_constraint<N: Real>(
+pub fn build_angular_limit_velocity_constraint<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,

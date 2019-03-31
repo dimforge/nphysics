@@ -1,5 +1,5 @@
 use alga::linear::FiniteDimVectorSpace;
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 
 use crate::joint::JointConstraint;
 use crate::math::{Point, Vector, DIM};
@@ -9,7 +9,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
              NonlinearConstraintGenerator};
 
 /// A spring-like constraint to be used to drag a body part with the mouse.
-pub struct MouseConstraint<N: Real> {
+pub struct MouseConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -17,7 +17,7 @@ pub struct MouseConstraint<N: Real> {
     limit: N,
 }
 
-impl<N: Real> MouseConstraint<N> {
+impl<N: RealField> MouseConstraint<N> {
     /// Initialize a mouse constraint between two bodies.BodyPartHandle
     ///
     /// Typically, `b1` will be the ground and the anchor the position of the mouse.
@@ -49,7 +49,7 @@ impl<N: Real> MouseConstraint<N> {
     }
 }
 
-impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
+impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         DIM
     }
@@ -149,7 +149,7 @@ impl<N: Real> JointConstraint<N> for MouseConstraint<N> {
     fn cache_impulses(&mut self, _: &ConstraintSet<N>) {}
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for MouseConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for MouseConstraint<N> {
     fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
         0
     }

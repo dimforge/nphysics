@@ -7,9 +7,9 @@ edition = "2018"
 [dependencies]
 rand       = { version = "0.6", features = [ "stdweb" ] }
 num-traits = "0.2"
-nalgebra   = "0.17"
-ncollide3d = "0.18"
-kiss3d     = "0.18"
+nalgebra   = "0.18"
+ncollide3d = "0.19"
+kiss3d     = "0.19"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

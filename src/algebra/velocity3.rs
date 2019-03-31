@@ -1,19 +1,19 @@
 use na::storage::Storage;
-use na::{self, Isometry3, Real, U6, UnitQuaternion, Vector, Vector3, Vector6};
+use na::{self, Isometry3, RealField, U6, UnitQuaternion, Vector, Vector3, Vector6};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
 /// A velocity structure combining both the linear angular velocities of a point.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct Velocity3<N: Real> {
+pub struct Velocity3<N: RealField> {
     /// The linear velocity.
     pub linear: Vector3<N>,
     /// The angular velocity.
     pub angular: Vector3<N>,
 }
 
-impl<N: Real> Velocity3<N> {
+impl<N: RealField> Velocity3<N> {
     /// Create velocity from its linear and angular parts.
     #[inline]
     pub fn new(linear: Vector3<N>, angular: Vector3<N>) -> Self {
@@ -129,7 +129,7 @@ impl<N: Real> Velocity3<N> {
     }
 }
 
-impl<N: Real> Add<Velocity3<N>> for Velocity3<N> {
+impl<N: RealField> Add<Velocity3<N>> for Velocity3<N> {
     type Output = Self;
 
     #[inline]
@@ -138,7 +138,7 @@ impl<N: Real> Add<Velocity3<N>> for Velocity3<N> {
     }
 }
 
-impl<N: Real> AddAssign<Velocity3<N>> for Velocity3<N> {
+impl<N: RealField> AddAssign<Velocity3<N>> for Velocity3<N> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         self.linear += rhs.linear;
@@ -146,7 +146,7 @@ impl<N: Real> AddAssign<Velocity3<N>> for Velocity3<N> {
     }
 }
 
-impl<N: Real> Sub<Velocity3<N>> for Velocity3<N> {
+impl<N: RealField> Sub<Velocity3<N>> for Velocity3<N> {
     type Output = Self;
 
     #[inline]
@@ -155,7 +155,7 @@ impl<N: Real> Sub<Velocity3<N>> for Velocity3<N> {
     }
 }
 
-impl<N: Real> SubAssign<Velocity3<N>> for Velocity3<N> {
+impl<N: RealField> SubAssign<Velocity3<N>> for Velocity3<N> {
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         self.linear -= rhs.linear;
@@ -163,7 +163,7 @@ impl<N: Real> SubAssign<Velocity3<N>> for Velocity3<N> {
     }
 }
 
-impl<N: Real> Mul<N> for Velocity3<N> {
+impl<N: RealField> Mul<N> for Velocity3<N> {
     type Output = Self;
 
     #[inline]

@@ -1,5 +1,5 @@
 use na::{
-    self, DVectorSliceMut, Isometry3, Matrix3, Real, Translation3, UnitQuaternion, Vector3,
+    self, DVectorSliceMut, Isometry3, Matrix3, RealField, Translation3, UnitQuaternion, Vector3,
     VectorSlice3, U3,
 };
 
@@ -10,14 +10,14 @@ use crate::utils::GeneralizedCross;
 
 /// A joint that allows only all rotational degrees of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
-pub struct BallJoint<N: Real> {
+pub struct BallJoint<N: RealField> {
     rot: UnitQuaternion<N>,
 
     jacobian_v: Matrix3<N>,
     jacobian_dot_v: Matrix3<N>,
 }
 
-impl<N: Real> BallJoint<N> {
+impl<N: RealField> BallJoint<N> {
     /// Create a ball joint with the an initial position given by a rotation in axis-angle form.
     pub fn new(axisangle: Vector3<N>) -> Self {
         BallJoint {
@@ -28,7 +28,7 @@ impl<N: Real> BallJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for BallJoint<N> {
+impl<N: RealField> Joint<N> for BallJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

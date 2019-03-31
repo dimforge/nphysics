@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
-use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
+use ncollide3d::shape::{Compound, Cuboid, ShapeHandle, Capsule};
 use nphysics3d::world::World;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics_testbed3d::Testbed;
@@ -39,7 +39,7 @@ fn main() {
     let delta3 = Isometry3::new(Vector3::new(large_rad, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    let vertical = ShapeHandle::new(Cuboid::new(Vector3::new(small_rad, large_rad, small_rad)));
+    let vertical = ShapeHandle::new(Capsule::new(large_rad, small_rad));
     let horizontal = ShapeHandle::new(Cuboid::new(Vector3::new(large_rad, small_rad, small_rad)));
     cross_geoms.push((delta1, horizontal));
     cross_geoms.push((delta2, vertical.clone()));

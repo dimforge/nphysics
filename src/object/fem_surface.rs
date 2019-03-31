@@ -5,8 +5,7 @@ use std::sync::Arc;
 use std::any::Any;
 use either::Either;
 
-use alga::linear::FiniteDimInnerSpace;
-use na::{self, Real, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix, Rotation2,
+use na::{self, RealField, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
          DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Vector2, Unit};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
@@ -22,7 +21,7 @@ use crate::utils::{UserData, UserDataBox};
 
 /// One element of a deformable surface.
 #[derive(Clone)]
-pub struct TriangularElement<N: Real> {
+pub struct TriangularElement<N: RealField> {
     handle: BodyPartHandle,
     indices: Point3<usize>,
     com: Point<N>,
@@ -40,7 +39,7 @@ pub struct TriangularElement<N: Real> {
 ///
 /// The surface is described by a set of triangle elements. This
 /// implements an isoparametric approach where the interpolations are linear.
-pub struct FEMSurface<N: Real> {
+pub struct FEMSurface<N: RealField> {
     name: String,
     handle: BodyHandle,
     elements: Vec<TriangularElement<N>>,
@@ -78,7 +77,7 @@ pub struct FEMSurface<N: Real> {
     user_data: Option<Box<Any + Send + Sync>>,
 }
 
-impl<N: Real> FEMSurface<N> {
+impl<N: RealField> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
     fn new(handle: BodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
            scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
@@ -614,7 +613,7 @@ impl<N: Real> FEMSurface<N> {
     }
 }
 
-impl<N: Real> Body<N> for FEMSurface<N> {
+impl<N: RealField> Body<N> for FEMSurface<N> {
     #[inline]
     fn name(&self) -> &str {
         &self.name
@@ -932,7 +931,7 @@ impl<N: Real> Body<N> for FEMSurface<N> {
 }
 
 
-impl<N: Real> BodyPart<N> for TriangularElement<N> {
+impl<N: RealField> BodyPart<N> for TriangularElement<N> {
     fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
@@ -959,13 +958,13 @@ impl<N: Real> BodyPart<N> for TriangularElement<N> {
 }
 
 
-enum FEMSurfaceDescGeometry<'a, N: Real> {
+enum FEMSurfaceDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Triangles(&'a [Point<N>], &'a [Point3<usize>])
 }
 
 /// A builder for FEMSurface bodies.
-pub struct FEMSurfaceDesc<'a, N: Real> {
+pub struct FEMSurfaceDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     geom: FEMSurfaceDescGeometry<'a, N>,
@@ -984,7 +983,7 @@ pub struct FEMSurfaceDesc<'a, N: Real> {
     gravity_enabled: bool,
 }
 
-impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
+impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
             name: String::new(),
@@ -1074,7 +1073,7 @@ impl<'a, N: Real> FEMSurfaceDesc<'a, N> {
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
+impl<'a, N: RealField> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
     type Body = FEMSurface<N>;
 
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> FEMSurface<N> {

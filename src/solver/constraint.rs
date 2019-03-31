@@ -1,8 +1,8 @@
-use na::Real;
+use na::RealField;
 
 /// Logical information of the geometry of a constraint.
 #[derive(Copy, Clone, Debug, Default)]
-pub struct ConstraintGeometry<N: Real> {
+pub struct ConstraintGeometry<N: RealField> {
     /// Index of the first entry of the jacobian of the constraint affecting the first body.
     pub j_id1: usize,
     /// Index of the first entry of the jacobian of the constraint affecting the second body.
@@ -19,7 +19,7 @@ pub struct ConstraintGeometry<N: Real> {
     pub r: N,
 }
 
-impl<N: Real> ConstraintGeometry<N> {
+impl<N: RealField> ConstraintGeometry<N> {
     /// Create a costraint geometry initialized to zero.
     #[inline]
     pub fn new() -> Self {
@@ -42,7 +42,7 @@ impl<N: Real> ConstraintGeometry<N> {
 }
 
 /// A unilateral (inequality) consraint.
-pub struct UnilateralConstraint<N: Real> {
+pub struct UnilateralConstraint<N: RealField> {
     /// The impulse applied by this constraint.
     pub impulse: N,
 
@@ -75,7 +75,7 @@ pub struct UnilateralConstraint<N: Real> {
     pub ndofs2: usize,
 }
 
-impl<N: Real> UnilateralConstraint<N> {
+impl<N: RealField> UnilateralConstraint<N> {
     /// Create a new unilateral constraint.
     #[inline]
     pub fn new(
@@ -105,7 +105,7 @@ impl<N: Real> UnilateralConstraint<N> {
 }
 
 /// A unilateral (inequality) constraint between a dynamic body and one without any degrees of freedom.
-pub struct UnilateralGroundConstraint<N: Real> {
+pub struct UnilateralGroundConstraint<N: RealField> {
     /// The impulse applied by the constraint.
     pub impulse: N,
 
@@ -126,7 +126,7 @@ pub struct UnilateralGroundConstraint<N: Real> {
     pub ndofs: usize,
 }
 
-impl<N: Real> UnilateralGroundConstraint<N> {
+impl<N: RealField> UnilateralGroundConstraint<N> {
     /// Create a new unilateral ground constraint.
     #[inline]
     pub fn new(
@@ -165,7 +165,7 @@ impl<N: Real> UnilateralGroundConstraint<N> {
 
 /// Limits of impulse applicable by a bilateral constraint.
 #[derive(Copy, Clone, Debug)]
-pub enum ImpulseLimits<N: Real> {
+pub enum ImpulseLimits<N: RealField> {
     /// Limits that are absolute threshold.
     Independent {
         /// The lower bound of the impulse.
@@ -183,7 +183,7 @@ pub enum ImpulseLimits<N: Real> {
 }
 
 /// A bilateral (equality) constraint between two bodies.
-pub struct BilateralConstraint<N: Real> {
+pub struct BilateralConstraint<N: RealField> {
     /// The impulse applied by this constraint.
     pub impulse: N,
 
@@ -219,7 +219,7 @@ pub struct BilateralConstraint<N: Real> {
     pub ndofs2: usize,
 }
 
-impl<N: Real> BilateralConstraint<N> {
+impl<N: RealField> BilateralConstraint<N> {
     /// Create a new bilateral constraint.
     #[inline]
     pub fn new(
@@ -251,7 +251,7 @@ impl<N: Real> BilateralConstraint<N> {
 }
 
 /// A bilateral (equality) constraint between a dynamic body and one without any degrees of freedom.
-pub struct BilateralGroundConstraint<N: Real> {
+pub struct BilateralGroundConstraint<N: RealField> {
     /// The impulse applied by the constraint.
     pub impulse: N,
 
@@ -275,7 +275,7 @@ pub struct BilateralGroundConstraint<N: Real> {
     pub ndofs: usize,
 }
 
-impl<N: Real> BilateralGroundConstraint<N> {
+impl<N: RealField> BilateralGroundConstraint<N> {
     /// Create a new unilateral ground constraint.
     #[inline]
     pub fn new(

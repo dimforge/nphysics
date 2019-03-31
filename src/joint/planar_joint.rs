@@ -1,4 +1,4 @@
-use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
+use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
@@ -7,13 +7,13 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 
 /// A joint that allows 1 rotational and 2 translational degrees of freedom.
 #[derive(Copy, Clone, Debug)]
-pub struct PlanarJoint<N: Real> {
+pub struct PlanarJoint<N: RealField> {
     prism1: PrismaticJoint<N>,
     prism2: PrismaticJoint<N>,
     revo: RevoluteJoint<N>,
 }
 
-impl<N: Real> PlanarJoint<N> {
+impl<N: RealField> PlanarJoint<N> {
     /// Create a new planar joint where both translational degrees of freedoms are along the provide axii.
     ///
     /// The rotational degree of freedom is along an axis orthogonal to `axis1` and `axis2`. Idealy, the two
@@ -42,7 +42,7 @@ impl<N: Real> PlanarJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for PlanarJoint<N> {
+impl<N: RealField> Joint<N> for PlanarJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

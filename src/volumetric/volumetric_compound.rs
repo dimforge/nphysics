@@ -1,11 +1,11 @@
 use num::Zero;
 
-use na::{self, Real};
+use na::{self, RealField};
 use ncollide::shape::Compound;
 use crate::volumetric::{InertiaTensor, Volumetric};
 use crate::math::{AngularInertia, Point};
 
-impl<N: Real> Volumetric<N> for Compound<N> {
+impl<N: RealField> Volumetric<N> for Compound<N> {
     fn area(&self) -> N {
         let mut stot: N = na::zero();
 

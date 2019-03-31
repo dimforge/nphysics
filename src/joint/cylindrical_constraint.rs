@@ -1,5 +1,5 @@
 use std::ops::Range;
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 
 use crate::object::{BodyPartHandle, BodySet};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
@@ -9,7 +9,7 @@ use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 
 /// A constraint that removes all degrees of freedom (of one body part relative to a second one) except one translation along an axis and one rotation along the same axis.
-pub struct CylindricalConstraint<N: Real> {
+pub struct CylindricalConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -25,7 +25,7 @@ pub struct CylindricalConstraint<N: Real> {
     // max_offset: Option<N>,
 }
 
-impl<N: Real> CylindricalConstraint<N> {
+impl<N: RealField> CylindricalConstraint<N> {
     /// Creates a cartesian constraint between two body parts.
     /// 
     /// This will ensure `axis1` and `axis2` always coincide. All the axis and anchors
@@ -92,7 +92,7 @@ impl<N: Real> CylindricalConstraint<N> {
     // }
 }
 
-impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
+impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 2
     }
@@ -203,7 +203,7 @@ impl<N: Real> JointConstraint<N> for CylindricalConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

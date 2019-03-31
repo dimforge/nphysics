@@ -1,4 +1,4 @@
-use na::{self, DVectorSliceMut, Real};
+use na::{self, DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
@@ -6,18 +6,18 @@ use crate::solver::IntegrationParameters;
 
 /// A joint that allows only all the translational degrees of freedom between two multibody links.
 #[derive(Copy, Clone, Debug)]
-pub struct CartesianJoint<N: Real> {
+pub struct CartesianJoint<N: RealField> {
     position: Vector<N>,
 }
 
-impl<N: Real> CartesianJoint<N> {
+impl<N: RealField> CartesianJoint<N> {
     /// Create a cartesian joint with an initial position given by `position`.
     pub fn new(position: Vector<N>) -> Self {
         CartesianJoint { position }
     }
 }
 
-impl<N: Real> Joint<N> for CartesianJoint<N> {
+impl<N: RealField> Joint<N> for CartesianJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

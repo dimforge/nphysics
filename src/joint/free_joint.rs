@@ -1,4 +1,4 @@
-use na::{DVectorSliceMut, Real};
+use na::{DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
 use crate::math::{Isometry, JacobianSliceMut, Vector, Velocity, SPATIAL_DIM};
@@ -8,11 +8,11 @@ use crate::solver::IntegrationParameters;
 ///
 /// This joint can only be added between a `Ground` body (as parent) and any other body.
 #[derive(Copy, Clone, Debug)]
-pub struct FreeJoint<N: Real> {
+pub struct FreeJoint<N: RealField> {
     position: Isometry<N>,
 }
 
-impl<N: Real> FreeJoint<N> {
+impl<N: RealField> FreeJoint<N> {
     /// Creates a free joint with the given initial position of the descendent, relative to the ground.
     pub fn new(position: Isometry<N>) -> Self {
         FreeJoint { position }
@@ -27,7 +27,7 @@ impl<N: Real> FreeJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for FreeJoint<N> {
+impl<N: RealField> Joint<N> for FreeJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

@@ -1,6 +1,6 @@
 #[cfg(feature = "dim3")]
 use na::Unit;
-use na::{DVector, Real};
+use na::{DVector, RealField};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
@@ -12,7 +12,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 
 /// A constraint that removes all relative motions except the rotation between two body parts.
 #[cfg(feature = "dim2")]
-pub struct RevoluteConstraint<N: Real> {
+pub struct RevoluteConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -28,7 +28,7 @@ pub struct RevoluteConstraint<N: Real> {
 
 /// A constraint that removes all relative motions except one rotation between two body parts.
 #[cfg(feature = "dim3")]
-pub struct RevoluteConstraint<N: Real> {
+pub struct RevoluteConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -43,7 +43,7 @@ pub struct RevoluteConstraint<N: Real> {
     // max_angle: Option<N>,
 }
 
-impl<N: Real> RevoluteConstraint<N> {
+impl<N: RealField> RevoluteConstraint<N> {
     /// Create a new revolute constraint which ensures the provided axii and anchors always coincide.
     ///
     /// All axii and achors are expressed in the local coordinate system of the corresponding body parts.
@@ -131,7 +131,7 @@ impl<N: Real> RevoluteConstraint<N> {
     // }
 }
 
-impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
+impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 1
     }
@@ -244,7 +244,7 @@ impl<N: Real> JointConstraint<N> for RevoluteConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

@@ -4,7 +4,6 @@ extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 extern crate rand;
 
-use na::Real;
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, Polyline, ShapeHandle};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
@@ -26,7 +25,7 @@ fn main() {
      * Polyline
      */
     let num_split = 20;
-    let begin = -15.0;
+    let begin = -15.0f32;
     let max_h = 3.0;
     let begin_h = -3.0;
     let step = (begin.abs() * 2.0) / (num_split as f32);

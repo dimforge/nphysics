@@ -1,6 +1,6 @@
 #![macro_use]
 
-use na::{self, DVectorSliceMut, Real, Unit};
+use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
@@ -9,7 +9,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 
 /// A unit joint that allows only one translational degree on freedom.
 #[derive(Copy, Clone, Debug)]
-pub struct PrismaticJoint<N: Real> {
+pub struct PrismaticJoint<N: RealField> {
     axis: Unit<Vector<N>>,
     jacobian: Velocity<N>,
 
@@ -20,7 +20,7 @@ pub struct PrismaticJoint<N: Real> {
     motor: JointMotor<N, N>,
 }
 
-impl<N: Real> PrismaticJoint<N> {
+impl<N: RealField> PrismaticJoint<N> {
     /// Create a new prismatic joint where the allowed traslation is defined along the provided axis.
     ///
     /// The axis is expressed in the local coordinate system of the two multibody links attached to this joint.
@@ -137,7 +137,7 @@ impl<N: Real> PrismaticJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for PrismaticJoint<N> {
+impl<N: RealField> Joint<N> for PrismaticJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)
@@ -247,7 +247,7 @@ impl<N: Real> Joint<N> for PrismaticJoint<N> {
     }
 }
 
-impl<N: Real> UnitJoint<N> for PrismaticJoint<N> {
+impl<N: RealField> UnitJoint<N> for PrismaticJoint<N> {
     fn position(&self) -> N {
         self.offset
     }
@@ -348,7 +348,7 @@ macro_rules! _prismatic_motor_limit_methods (
      $max_motor_force:           ident,
      $set_max_motor_force:       ident
      ) => {
-        impl<N: Real> $ty<N> {
+        impl<N: RealField> $ty<N> {
             /// The lower limit of the relative translational displacement of the attached multibody links along the joint axis.
             pub fn $min_offset(&self) -> Option<N> {
                 self.$prism.min_offset()

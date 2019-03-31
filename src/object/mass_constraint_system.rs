@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::any::Any;
 use either::Either;
 
-use na::{self, Real, DVector, DVectorSlice, DVectorSliceMut, Unit};
+use na::{self, RealField, DVector, DVectorSlice, DVectorSliceMut, Unit};
 #[cfg(feature = "dim3")]
 use na::Vector2;
 use ncollide::utils::DeterministicState;
@@ -25,14 +25,14 @@ use crate::utils::{UserData, UserDataBox};
 
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
-pub struct MassConstraintElement<N: Real> {
+pub struct MassConstraintElement<N: RealField> {
     handle: BodyPartHandle,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>,
 }
 
 #[derive(Clone)]
-struct LengthConstraint<N: Real> {
+struct LengthConstraint<N: RealField> {
     nodes: (usize, usize),
     // Should be Unit<Vector<N>>, but can be zero.
     dir: Unit<Vector<N>>,
@@ -44,7 +44,7 @@ struct LengthConstraint<N: Real> {
     plastic_strain: N
 }
 
-impl<N: Real> LengthConstraint<N> {
+impl<N: RealField> LengthConstraint<N> {
     fn from_positions(nodes: (usize, usize), positions: &[N], stiffness: Option<N>) -> Self {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
@@ -72,7 +72,7 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 }
 
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
-pub struct MassConstraintSystem<N: Real> {
+pub struct MassConstraintSystem<N: RealField> {
     name: String,
     handle: BodyHandle,
     constraints: Vec<LengthConstraint<N>>,
@@ -102,7 +102,7 @@ pub struct MassConstraintSystem<N: Real> {
 }
 
 
-impl<N: Real> MassConstraintSystem<N> {
+impl<N: RealField> MassConstraintSystem<N> {
     /// Creates a new deformable surface following the mass-LengthConstraint model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
@@ -330,7 +330,7 @@ impl<N: Real> MassConstraintSystem<N> {
     }
 }
 
-impl<N: Real> Body<N> for MassConstraintSystem<N> {
+impl<N: RealField> Body<N> for MassConstraintSystem<N> {
     #[inline]
     fn name(&self) -> &str {
         &self.name
@@ -785,7 +785,7 @@ impl<N: Real> Body<N> for MassConstraintSystem<N> {
 }
 
 
-impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
+impl<N: RealField> BodyPart<N> for MassConstraintElement<N> {
     fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
@@ -814,7 +814,7 @@ impl<N: Real> BodyPart<N> for MassConstraintElement<N> {
 
 
 
-enum MassConstraintSystemDescGeometry<'a, N: Real> {
+enum MassConstraintSystemDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Polyline(&'a Polyline<N>),
     #[cfg(feature = "dim3")]
@@ -822,7 +822,7 @@ enum MassConstraintSystemDescGeometry<'a, N: Real> {
 }
 
 /// A builder of a mass-constraint system.
-pub struct MassConstraintSystemDesc<'a, N: Real> {
+pub struct MassConstraintSystemDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     geom: MassConstraintSystemDescGeometry<'a, N>,
@@ -839,7 +839,7 @@ pub struct MassConstraintSystemDesc<'a, N: Real> {
     gravity_enabled: bool,
 }
 
-impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
+impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
             name: String::new(),
@@ -929,7 +929,7 @@ impl<'a, N: Real> MassConstraintSystemDesc<'a, N> {
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
+impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
     type Body = MassConstraintSystem<N>;
 
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> MassConstraintSystem<N> {

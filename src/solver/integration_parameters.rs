@@ -1,7 +1,7 @@
-use na::{self, Real};
+use na::{self, RealField};
 
 /// Parameters for a time-step of the physics engine.
-pub struct IntegrationParameters<N: Real> {
+pub struct IntegrationParameters<N: RealField> {
     /// The timestep (default: `1.0 / 60.0`)
     pub dt: N,
     /// The total elapsed time in the physics world.
@@ -36,7 +36,7 @@ pub struct IntegrationParameters<N: Real> {
     pub max_position_iterations: usize,
 }
 
-impl<N: Real> IntegrationParameters<N> {
+impl<N: RealField> IntegrationParameters<N> {
     /// Creates a set of integration parameters with the given values.
     pub fn new(
         dt: N,
@@ -68,7 +68,7 @@ impl<N: Real> IntegrationParameters<N> {
     }
 }
 
-impl<N: Real> Default for IntegrationParameters<N> {
+impl<N: RealField> Default for IntegrationParameters<N> {
     fn default() -> Self {
         Self::new(
             na::convert(1.0 / 60.0),

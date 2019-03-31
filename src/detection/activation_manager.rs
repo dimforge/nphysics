@@ -1,6 +1,6 @@
 use slab::Slab;
 
-use na::{self, Real};
+use na::{self, RealField};
 use crate::world::ColliderWorld;
 use crate::object::{BodyHandle, Body, BodySet};
 use crate::joint::JointConstraint;
@@ -10,7 +10,7 @@ use crate::utils::union_find;
 /// Structure that monitors island-based activation/deactivation of bodies.
 ///
 /// It is responsible for making objects sleep or wake up.
-pub struct ActivationManager<N: Real> {
+pub struct ActivationManager<N: RealField> {
     mix_factor: N,
     ufind: Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
@@ -18,7 +18,7 @@ pub struct ActivationManager<N: Real> {
     id_to_body: Vec<BodyHandle>,
 }
 
-impl<N: Real> ActivationManager<N> {
+impl<N: RealField> ActivationManager<N> {
     /// Creates a new `ActivationManager2`.
     ///
     /// # Arguments:
@@ -127,7 +127,7 @@ impl<N: Real> ActivationManager<N> {
         // Run the union-find.
         // FIXME: use the union-find from petgraph?
         #[inline(always)]
-        fn make_union<N: Real>(
+        fn make_union<N: RealField>(
             bodies: &BodySet<N>,
             b1: BodyHandle,
             b2: BodyHandle,

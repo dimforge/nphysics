@@ -1,4 +1,4 @@
-use na::{DVectorSliceMut, Isometry3, Real, Unit, Vector3};
+use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
@@ -7,12 +7,12 @@ use crate::math::{JacobianSliceMut, Velocity};
 
 /// A joint that allows one translational and one rotational degrees of freedom along a single axis.
 #[derive(Copy, Clone, Debug)]
-pub struct CylindricalJoint<N: Real> {
+pub struct CylindricalJoint<N: RealField> {
     prism: PrismaticJoint<N>,
     revo: RevoluteJoint<N>,
 }
 
-impl<N: Real> CylindricalJoint<N> {
+impl<N: RealField> CylindricalJoint<N> {
     /// Create a cylindrical joint with the given axis and initial position of angle.
     /// 
     /// The axis is expressed in the local space of the multibody links attached to this joint.
@@ -24,7 +24,7 @@ impl<N: Real> CylindricalJoint<N> {
     }
 }
 
-impl<N: Real> Joint<N> for CylindricalJoint<N> {
+impl<N: RealField> Joint<N> for CylindricalJoint<N> {
     #[inline]
     fn clone(&self) -> Box<Joint<N>> {
         Box::new(*self)

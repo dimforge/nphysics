@@ -1,6 +1,6 @@
 //! Traits to compute inertial properties.
 
-use na::{self, Real};
+use na::{self, RealField};
 use na::{Isometry2, Isometry3, Matrix1, Matrix3, Point2, Point3, Vector1, Vector3};
 use crate::math::{AngularInertia, Inertia, Point};
 
@@ -19,7 +19,7 @@ pub trait InertiaTensor<N, P, AV, M> {
 }
 
 /// Trait implemented by objects which have a mass, a center of mass, and an inertia tensor.
-pub trait Volumetric<N: Real> {
+pub trait Volumetric<N: RealField> {
     /// Computes the area of this object.
     fn area(&self) -> N;
 
@@ -57,7 +57,7 @@ pub trait Volumetric<N: Real> {
     }
 }
 
-impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<N> {
+impl<N: RealField> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<N> {
     #[inline]
     fn apply(&self, av: &Vector1<N>) -> Vector1<N> {
         *self * *av
@@ -74,7 +74,7 @@ impl<N: Real> InertiaTensor<N, Point2<N>, Vector1<N>, Isometry2<N>> for Matrix1<
     }
 }
 
-impl<N: Real> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<N> {
+impl<N: RealField> InertiaTensor<N, Point3<N>, Vector3<N>, Isometry3<N>> for Matrix3<N> {
     #[inline]
     fn apply(&self, av: &Vector3<N>) -> Vector3<N> {
         *self * *av

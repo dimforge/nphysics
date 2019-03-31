@@ -1,10 +1,10 @@
-use na::Real;
+use na::RealField;
 use num::Zero;
 use crate::solver::ImpulseLimits;
 
 /// Description of a motor applied to a joint.
 #[derive(Copy, Clone, Debug)]
-pub struct JointMotor<V, N: Real> {
+pub struct JointMotor<V, N: RealField> {
     /// The velocity the motor will attempt to reach.
     pub desired_velocity: V,
     /// The maximum force deliverable by the motor.
@@ -13,7 +13,7 @@ pub struct JointMotor<V, N: Real> {
     pub enabled: bool,
 }
 
-impl<V: Zero, N: Real> JointMotor<V, N> {
+impl<V: Zero, N: RealField> JointMotor<V, N> {
     /// Create a disable motor with zero desired velocity.
     ///
     /// The max force is initialized to a virtually infinite value, i.e., `N::max_value()`.
@@ -34,7 +34,7 @@ impl<V: Zero, N: Real> JointMotor<V, N> {
     }
 }
 
-impl<V: Zero, N: Real> Default for JointMotor<V, N> {
+impl<V: Zero, N: RealField> Default for JointMotor<V, N> {
     fn default() -> Self {
         Self::new()
     }

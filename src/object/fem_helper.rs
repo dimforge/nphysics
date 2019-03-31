@@ -1,6 +1,6 @@
 use either::Either;
 
-use na::{Real, Cholesky, Dynamic, DVectorSliceMut, VectorSliceMutN, Point2, Point3, DVector, DVectorSlice};
+use na::{RealField, Cholesky, Dynamic, DVectorSliceMut, VectorSliceMutN, Point2, Point3, DVector, DVectorSlice};
 #[cfg(feature = "dim3")]
 use na::Point4;
 use ncollide::shape::{Segment, Triangle};
@@ -13,7 +13,7 @@ use crate::solver::ForceDirection;
 use crate::math::{Point, Isometry, Dim, DIM};
 
 
-pub(crate) fn elasticity_coefficients<N: Real>(young_modulus: N, poisson_ratio: N) -> (N, N, N) {
+pub(crate) fn elasticity_coefficients<N: RealField>(young_modulus: N, poisson_ratio: N) -> (N, N, N) {
     let _1 = N::one();
     let _2: N = na::convert(2.0);
 
@@ -60,7 +60,7 @@ impl FiniteElementIndices {
 
 
 #[inline]
-pub(crate) fn world_point_at_material_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub(crate) fn world_point_at_material_point<N: RealField>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
@@ -88,7 +88,7 @@ pub(crate) fn world_point_at_material_point<N: Real>(indices: FiniteElementIndic
 // because it makes it simpler to handle the case where we don't know at compile-time the
 // dimension of `indices`.
 #[inline]
-pub(crate) fn material_point_at_world_point<N: Real>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
+pub(crate) fn material_point_at_world_point<N: RealField>(indices: FiniteElementIndices, positions: &DVector<N>, point: &Point<N>) -> Point<N> {
     match indices {
         FiniteElementIndices::Segment(indices) => {
             let a = positions.fixed_rows::<Dim>(indices.x).into_owned();
@@ -149,7 +149,7 @@ pub(crate) fn material_point_at_world_point<N: Real>(indices: FiniteElementIndic
 }
 
 #[inline]
-pub(crate) fn fill_contact_geometry_fem<N: Real>(
+pub(crate) fn fill_contact_geometry_fem<N: RealField>(
     ndofs: usize,
     status: BodyStatus,
     indices: FiniteElementIndices,

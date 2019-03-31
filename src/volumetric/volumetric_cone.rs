@@ -1,12 +1,12 @@
 use std::ops::IndexMut;
 use num::Zero;
 
-use na::{self, Real};
+use na::{self, RealField};
 use ncollide::math::Point;
 
 /// The volume of a cone.
 #[inline]
-pub fn cone_volume<N: Real>(dimension: usize, half_height: N, radius: N) -> N {
+pub fn cone_volume<N: RealField>(dimension: usize, half_height: N, radius: N) -> N {
     assert!(dimension == 2 || dimension == 3);
 
     match dimension {
@@ -18,7 +18,7 @@ pub fn cone_volume<N: Real>(dimension: usize, half_height: N, radius: N) -> N {
 
 /// The area of a cone.
 #[inline]
-pub fn cone_area<N: Real>(dimension: usize, half_height: N, radius: N) -> N {
+pub fn cone_area<N: RealField>(dimension: usize, half_height: N, radius: N) -> N {
     assert!(dimension == 2 || dimension == 3);
 
     match dimension {
@@ -41,7 +41,7 @@ pub fn cone_area<N: Real>(dimension: usize, half_height: N, radius: N) -> N {
 
 /// The center of mass of a cone.
 #[inline]
-pub fn cone_center_of_mass<N: Real>(half_height: N) -> Point<N> {
+pub fn cone_center_of_mass<N: RealField>(half_height: N) -> Point<N> {
     let mut com = Point::origin();
     com[1] = -half_height / na::convert(2.0f64);
 
@@ -52,7 +52,7 @@ pub fn cone_center_of_mass<N: Real>(half_height: N) -> Point<N> {
 #[inline]
 pub fn cone_unit_angular_inertia<N, I>(dimension: usize, half_height: N, radius: N) -> I
 where
-    N: Real,
+    N: RealField,
     I: Zero + IndexMut<(usize, usize), Output = N>,
 {
     assert!(dimension == 2 || dimension == 3);
@@ -88,7 +88,7 @@ where
 
 //macro_rules! impl_volumetric_cone(
 //    ($t: ident, $dimension: expr, $p: ident, $i: ident) => (
-//        impl<N: Real> Volumetric<N, $p<N>, $i<N>> for $t<N> {
+//        impl<N: RealField> Volumetric<N, $p<N>, $i<N>> for $t<N> {
 //            fn area(&self) -> N {
 //                cone_area($dimension, self.half_height(), self.radius())
 //            }

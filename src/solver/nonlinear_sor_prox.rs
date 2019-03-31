@@ -1,4 +1,4 @@
-use na::{self, Dim, Dynamic, Real, U1, VectorSliceMutN};
+use na::{self, Dim, Dynamic, RealField, U1, VectorSliceMutN};
 use slab::Slab;
 use std::ops::MulAssign;
 
@@ -14,7 +14,7 @@ pub(crate) struct NonlinearSORProx;
 
 impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
-    pub fn solve<N: Real>(
+    pub fn solve<N: RealField>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
@@ -44,7 +44,7 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_generator<N: Real, Gen: ?Sized + NonlinearConstraintGenerator<N>>(
+    fn solve_generator<N: RealField, Gen: ?Sized + NonlinearConstraintGenerator<N>>(
         params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         generator: &Gen,
@@ -59,7 +59,7 @@ impl NonlinearSORProx {
         }
     }
 
-    pub fn solve_generic<N: Real>(
+    pub fn solve_generic<N: RealField>(
         params: &IntegrationParameters<N>,
         bodies: &mut BodySet<N>,
         constraint: &mut GenericNonlinearConstraint<N>,
@@ -102,7 +102,7 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_unilateral<N: Real, D1: Dim, D2: Dim>(
+    fn solve_unilateral<N: RealField, D1: Dim, D2: Dim>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
@@ -131,7 +131,7 @@ impl NonlinearSORProx {
         }
     }
 
-    fn update_contact_constraint<N: Real>(
+    fn update_contact_constraint<N: RealField>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &BodySet<N>,
@@ -252,7 +252,7 @@ impl NonlinearSORProx {
     }
 
     #[inline]
-    pub fn clamp_rhs<N: Real>(rhs: N, is_angular: bool, params: &IntegrationParameters<N>) -> N {
+    pub fn clamp_rhs<N: RealField>(rhs: N, is_angular: bool, params: &IntegrationParameters<N>) -> N {
         if is_angular {
             na::sup(
                 &((rhs + params.allowed_angular_error) * params.erp),

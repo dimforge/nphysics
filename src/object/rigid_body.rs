@@ -1,5 +1,5 @@
 use std::any::Any;
-use na::{DVectorSlice, DVectorSliceMut, Real};
+use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
@@ -9,7 +9,6 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
-use ncollide::utils::IsometryOps;
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
@@ -19,7 +18,7 @@ use crate::utils::GeneralizedCross;
 
 /// A rigid body.
 #[derive(Debug)]
-pub struct RigidBody<N: Real> {
+pub struct RigidBody<N: RealField> {
     name: String,
     handle: BodyHandle,
     position: Isometry<N>,
@@ -41,7 +40,7 @@ pub struct RigidBody<N: Real> {
     user_data: Option<Box<Any + Send + Sync>>
 }
 
-impl<N: Real> RigidBody<N> {
+impl<N: RealField> RigidBody<N> {
     /// Create a new rigid body with the specified handle and dynamic properties.
     fn new(handle: BodyHandle, position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
@@ -311,7 +310,7 @@ impl<N: Real> RigidBody<N> {
 }
 
 
-impl<N: Real> Body<N> for RigidBody<N> {
+impl<N: RealField> Body<N> for RigidBody<N> {
     #[inline]
     fn name(&self) -> &str {
         &self.name
@@ -662,7 +661,7 @@ impl<N: Real> Body<N> for RigidBody<N> {
 }
 
 
-impl<N: Real> BodyPart<N> for RigidBody<N> {
+impl<N: RealField> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn is_ground(&self) -> bool {
         false
@@ -716,7 +715,7 @@ impl<N: Real> BodyPart<N> for RigidBody<N> {
 /// `RigidBodyDesc` for the first time. The `.set_` methods are useful when modifying it after
 /// this initialization (including after calls to `.build`).
 #[derive(Clone)]
-pub struct RigidBodyDesc<'a, N: Real> {
+pub struct RigidBodyDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
@@ -734,7 +733,7 @@ pub struct RigidBodyDesc<'a, N: Real> {
     kinematic_rotation: bool,
 }
 
-impl<'a, N: Real> RigidBodyDesc<'a, N> {
+impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     /// A default rigid body builder.
     pub fn new() -> RigidBodyDesc<'a, N> {
         RigidBodyDesc {
@@ -827,7 +826,7 @@ impl<'a, N: Real> RigidBodyDesc<'a, N> {
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for RigidBodyDesc<'a, N> {
+impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
     type Body = RigidBody<N>;
 
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> RigidBody<N> {

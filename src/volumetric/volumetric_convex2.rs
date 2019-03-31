@@ -1,6 +1,6 @@
 use num::Zero;
 
-use na::Real;
+use na::RealField;
 use na::{Matrix1, Point2};
 use na;
 use ncollide::utils;
@@ -11,7 +11,7 @@ use crate::math::{AngularInertia, Point};
 /// The area and center of mass of a 2D convex Polyline.
 ///
 /// The polyline is not checked to be actually convex.
-pub fn convex_polyline_area_and_center_of_mass_unchecked<N: Real>(
+pub fn convex_polyline_area_and_center_of_mass_unchecked<N: RealField>(
     convex_polyline: &[Point<N>],
 ) -> (N, Point<N>) {
     let geometric_center = utils::center(convex_polyline);
@@ -46,7 +46,7 @@ pub fn convex_polyline_area_and_center_of_mass_unchecked<N: Real>(
 /// The mass properties of a 2D convex Polyline.
 ///
 /// The polyline is not checked to be actually convex.
-pub fn convex_polyline_mass_properties_unchecked<N: Real>(
+pub fn convex_polyline_mass_properties_unchecked<N: RealField>(
     convex_polyline: &[Point<N>],
     density: N,
 ) -> (N, Point<N>, N) {
@@ -87,7 +87,7 @@ pub fn convex_polyline_mass_properties_unchecked<N: Real>(
 /// The area of a convex polyline.
 ///
 /// The polyline is not checked to be actually convex.
-pub fn convex_polyline_area_unchecked<N: Real>(convex_polyline: &[Point<N>]) -> N {
+pub fn convex_polyline_area_unchecked<N: RealField>(convex_polyline: &[Point<N>]) -> N {
     let geometric_center = utils::center(convex_polyline);
     let mut areasum = N::zero();
 
@@ -107,22 +107,22 @@ pub fn convex_polyline_area_unchecked<N: Real>(convex_polyline: &[Point<N>]) -> 
 }
 
 /// The area of a convex hull.
-pub fn convex_hull_area<N: Real>(points: &[Point<N>]) -> N {
+pub fn convex_hull_area<N: RealField>(points: &[Point<N>]) -> N {
     convex_polyline_area_unchecked(points)
 }
 
 /// The volume of the convex hull of a set of points.
-pub fn convex_hull_volume<N: Real>(points: &[Point<N>]) -> N {
+pub fn convex_hull_volume<N: RealField>(points: &[Point<N>]) -> N {
     convex_hull_area(points)
 }
 
 /// The center of mass of the convex hull of a set of points.
-pub fn convex_hull_center_of_mass<N: Real>(points: &[Point<N>]) -> Point<N> {
+pub fn convex_hull_center_of_mass<N: RealField>(points: &[Point<N>]) -> Point<N> {
     convex_polyline_area_and_center_of_mass_unchecked(points).1
 }
 
 /// The angular inertia of the convex hull of a set of points.
-pub fn convex_hull_unit_angular_inertia<N: Real>(points: &[Point<N>]) -> AngularInertia<N> {
+pub fn convex_hull_unit_angular_inertia<N: RealField>(points: &[Point<N>]) -> AngularInertia<N> {
     let (area, _, i): (_, _, N) = convex_polyline_mass_properties_unchecked(points, na::one());
 
     let mut tensor = AngularInertia::zero();
@@ -131,7 +131,7 @@ pub fn convex_hull_unit_angular_inertia<N: Real>(points: &[Point<N>]) -> Angular
     tensor
 }
 
-impl<N: Real> Volumetric<N> for ConvexPolygon<N> {
+impl<N: RealField> Volumetric<N> for ConvexPolygon<N> {
     fn area(&self) -> N {
         convex_hull_area(self.points())
     }

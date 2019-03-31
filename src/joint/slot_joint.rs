@@ -1,4 +1,4 @@
-use na::{self, Real, U3, VectorSlice3, Vector, Point, Matrix3, Isometry, Translation3, UnitQuaternion};
+use na::{self, RealField, U3, VectorSlice3, Vector, Point, Matrix3, Isometry, Translation3, UnitQuaternion};
 
 use crate::utils::GeneralizedCross;
 use crate::joint::Joint;
@@ -7,7 +7,7 @@ use crate::math::{Velocity, JacobianSliceMut};
 
 
 #[derive(Copy, Clone, Debug)]
-pub struct SlotJoint<N: Real> {
+pub struct SlotJoint<N: RealField> {
     shift: Vector<N>,
     axis:  Unit<Vector<N>>,
 
@@ -18,7 +18,7 @@ pub struct SlotJoint<N: Real> {
     jacobian_dot_v: Matrix3<N>,
 }
 
-impl<N: Real> SlotJoint<N> {
+impl<N: RealField> SlotJoint<N> {
     pub fn new(center: Point<N>, axisangle: Vector<N>) -> Self {
         SlotJoint {
             shift:          -center.coords,
@@ -30,7 +30,7 @@ impl<N: Real> SlotJoint<N> {
 }
 
 
-impl<N: Real> Joint<N> for SlotJoint<N> {
+impl<N: RealField> Joint<N> for SlotJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         ANGULAR_DIM + 1

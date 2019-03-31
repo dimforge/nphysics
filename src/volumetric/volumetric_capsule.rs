@@ -1,21 +1,21 @@
-use na::Real;
+use na::RealField;
 use ncollide::shape::Capsule;
 
 use crate::volumetric::{self, Volumetric};
 use crate::math::{Point, AngularInertia};
 
 /// Computes the volume of a capsule.
-pub fn capsule_volume<N: Real>(half_height: N, radius: N) -> N {
+pub fn capsule_volume<N: RealField>(half_height: N, radius: N) -> N {
     volumetric::cylinder_volume(half_height, radius) + volumetric::ball_volume(radius)
 }
 
 /// Computes the area of a capsule.
-pub fn capsule_area<N: Real>(half_height: N, radius: N) -> N {
+pub fn capsule_area<N: RealField>(half_height: N, radius: N) -> N {
     volumetric::cylinder_area(half_height, radius) + volumetric::ball_area(radius)
 }
 
 /// Computes the unit angular inertia of a capsule.
-pub fn capsule_unit_angular_inertia<N: Real>(half_height: N, radius: N) -> AngularInertia<N> {
+pub fn capsule_unit_angular_inertia<N: RealField>(half_height: N, radius: N) -> AngularInertia<N> {
     let mut res = volumetric::cylinder_unit_angular_inertia(half_height, radius);
     res += volumetric::ball_unit_angular_inertia(radius);
 
@@ -35,7 +35,7 @@ pub fn capsule_unit_angular_inertia<N: Real>(half_height: N, radius: N) -> Angul
 }
 
 
-impl<N: Real> Volumetric<N> for Capsule<N> {
+impl<N: RealField> Volumetric<N> for Capsule<N> {
     fn area(&self) -> N {
         capsule_area(self.half_height(), self.radius())
     }

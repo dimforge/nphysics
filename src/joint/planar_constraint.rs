@@ -1,4 +1,4 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 use std::ops::Range;
 
 use crate::joint::JointConstraint;
@@ -11,7 +11,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 /// A constraint that removes one relative translational degree of freedom, and all but one rotational degrees of freedom.
 ///
 /// This ensures a body moves only on a plane wrt. its parent.
-pub struct PlanarConstraint<N: Real> {
+pub struct PlanarConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -24,7 +24,7 @@ pub struct PlanarConstraint<N: Real> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: Real> PlanarConstraint<N> {
+impl<N: RealField> PlanarConstraint<N> {
     /// Create a new planar constraint which ensures the two provided axii always coincide.
     ///
     /// All anchros and axii are expressed in their corresponding body part local coordinate frame.
@@ -51,7 +51,7 @@ impl<N: Real> PlanarConstraint<N> {
     }
 }
 
-impl<N: Real> JointConstraint<N> for PlanarConstraint<N> {
+impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         3
     }
@@ -162,7 +162,7 @@ impl<N: Real> JointConstraint<N> for PlanarConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

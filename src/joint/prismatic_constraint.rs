@@ -1,4 +1,4 @@
-use na::{DVector, Real, Unit};
+use na::{DVector, RealField, Unit};
 use std::ops::Range;
 
 use crate::joint::{unit_constraint, JointConstraint};
@@ -9,7 +9,7 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
              NonlinearConstraintGenerator};
 
 /// A constraint that remove all be one translational degrees of freedom.
-pub struct PrismaticConstraint<N: Real> {
+pub struct PrismaticConstraint<N: RealField> {
     b1: BodyPartHandle,
     b2: BodyPartHandle,
     anchor1: Point<N>,
@@ -25,7 +25,7 @@ pub struct PrismaticConstraint<N: Real> {
     max_offset: Option<N>,
 }
 
-impl<N: Real> PrismaticConstraint<N> {
+impl<N: RealField> PrismaticConstraint<N> {
     /// Create a new prismatic constraint that ensures the relative motion between the two
     /// body parts are restricted to a single translation along the `axis1` axis (expressed in
     /// the local coordinates frame of `b1`).
@@ -96,7 +96,7 @@ impl<N: Real> PrismaticConstraint<N> {
     }
 }
 
-impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
+impl<N: RealField> JointConstraint<N> for PrismaticConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         (SPATIAL_DIM - 1) + 2
     }
@@ -230,7 +230,7 @@ impl<N: Real> JointConstraint<N> for PrismaticConstraint<N> {
     }
 }
 
-impl<N: Real> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
+impl<N: RealField> NonlinearConstraintGenerator<N> for PrismaticConstraint<N> {
     fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {

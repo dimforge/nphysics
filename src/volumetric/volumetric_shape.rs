@@ -1,4 +1,4 @@
-use na::Real;
+use na::RealField;
 use ncollide::shape::{Ball, Compound, Cuboid, Shape, Capsule};
 #[cfg(feature = "dim3")]
 use ncollide::shape::ConvexHull;
@@ -49,7 +49,7 @@ macro_rules! dispatch(
     }
 );
 
-impl<N: Real> Volumetric<N> for Shape<N> {
+impl<N: RealField> Volumetric<N> for Shape<N> {
     fn area(&self) -> N {
         dispatch!(Point<N>, AngularInertia<N>, self.area())
     }

@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::any::Any;
 use either::Either;
 
-use na::{self, Real, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Unit};
+use na::{self, RealField, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, Unit};
 #[cfg(feature = "dim3")]
 use na::Vector2;
 use ncollide::utils::DeterministicState;
@@ -25,14 +25,14 @@ use crate::utils::{UserData, UserDataBox};
 
 /// An element of the mass-spring system.
 #[derive(Clone)]
-pub struct MassSpringElement<N: Real> {
+pub struct MassSpringElement<N: RealField> {
     handle: BodyPartHandle,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>
 }
 
 #[derive(Clone)]
-struct Spring<N: Real> {
+struct Spring<N: RealField> {
     nodes: (usize, usize),
     // Should be Unit<Vector<N>>, but can be zero.
     dir: Unit<Vector<N>>,
@@ -43,7 +43,7 @@ struct Spring<N: Real> {
     plastic_strain: N,
 }
 
-impl<N: Real> Spring<N> {
+impl<N: RealField> Spring<N> {
     fn from_positions(nodes: (usize, usize), positions: &[N], stiffness: N, damping_ratio: N) -> Self {
         let p0 = Point::from_slice(&positions[nodes.0..nodes.0 + DIM]);
         let p1 = Point::from_slice(&positions[nodes.1..nodes.1 + DIM]);
@@ -62,7 +62,7 @@ impl<N: Real> Spring<N> {
 }
 
 /// A deformable surface using a mass-spring model with triangular elements.
-pub struct MassSpringSystem<N: Real> {
+pub struct MassSpringSystem<N: RealField> {
     name: String,
     handle: BodyHandle,
     springs: Vec<Spring<N>>,
@@ -100,7 +100,7 @@ fn key(i: usize, j: usize) -> (usize, usize) {
     }
 }
 
-impl<N: Real> MassSpringSystem<N> {
+impl<N: RealField> MassSpringSystem<N> {
     /// Creates a new deformable surface following the mass-spring model.
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
@@ -464,7 +464,7 @@ impl<N: Real> MassSpringSystem<N> {
     }
 }
 
-impl<N: Real> Body<N> for MassSpringSystem<N> {
+impl<N: RealField> Body<N> for MassSpringSystem<N> {
     #[inline]
     fn name(&self) -> &str {
         &self.name
@@ -770,7 +770,7 @@ impl<N: Real> Body<N> for MassSpringSystem<N> {
 }
 
 
-impl<N: Real> BodyPart<N> for MassSpringElement<N> {
+impl<N: RealField> BodyPart<N> for MassSpringElement<N> {
     fn part_handle(&self) -> BodyPartHandle {
         self.handle
     }
@@ -797,7 +797,7 @@ impl<N: Real> BodyPart<N> for MassSpringElement<N> {
 }
 
 
-enum MassSpringSystemDescGeometry<'a, N: Real> {
+enum MassSpringSystemDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Polyline(&'a Polyline<N>),
     #[cfg(feature = "dim3")]
@@ -805,7 +805,7 @@ enum MassSpringSystemDescGeometry<'a, N: Real> {
 }
 
 /// A builder for mass-spring systems.
-pub struct MassSpringSystemDesc<'a, N: Real> {
+pub struct MassSpringSystemDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     geom: MassSpringSystemDescGeometry<'a, N>,
@@ -822,7 +822,7 @@ pub struct MassSpringSystemDesc<'a, N: Real> {
     gravity_enabled: bool,
 }
 
-impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
+impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     fn with_geometry(geom: MassSpringSystemDescGeometry<'a, N>) -> Self {
         MassSpringSystemDesc {
             name: String::new(),
@@ -912,7 +912,7 @@ impl<'a, N: Real> MassSpringSystemDesc<'a, N> {
     }
 }
 
-impl<'a, N: Real> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
+impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
     type Body = MassSpringSystem<N>;
 
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> MassSpringSystem<N> {
