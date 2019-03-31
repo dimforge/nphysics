@@ -20,7 +20,6 @@ impl HeightField {
         color: Point3<f32>,
         _: &mut Window,
     ) -> HeightField {
-        let heights = heightfield.heights();
         let mut vertices = Vec::new();
 
         for seg in heightfield.segments() {
