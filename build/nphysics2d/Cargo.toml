@@ -25,12 +25,12 @@ required-features = [ "dim2" ]
 either     = "1.0"
 num-traits = "0.2"
 slab       = "0.4"
-alga       = "0.8"
-nalgebra   = { version = "0.17.2", features = [ "sparse" ] }
+alga       = "0.9"
+nalgebra   = { version = "0.18", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1.0"
 bitflags   = "1.0"
-ncollide2d = "0.18"
+ncollide2d = "0.19"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = {version = "0.4", optional = true}

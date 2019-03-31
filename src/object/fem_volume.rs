@@ -5,10 +5,8 @@ use std::sync::Arc;
 use std::any::Any;
 use either::Either;
 
-use alga::linear::FiniteDimInnerSpace;
 use na::{self, RealField, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, DMatrix, Isometry3,
-         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3,
-         MatrixMN, U6, U12};
+         DVector, DVectorSlice, DVectorSliceMut, Cholesky, Dynamic, U3, Rotation3, Unit, Translation3};
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 

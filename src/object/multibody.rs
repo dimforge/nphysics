@@ -2,7 +2,6 @@ use std::ops::MulAssign;
 use std::any::Any;
 
 use ncollide::shape::DeformationsType;
-use ncollide::utils::IsometryOps;
 use crate::joint::Joint;
 use crate::math::{
     AngularDim, Dim, Force, Inertia, Isometry, Jacobian, Point, SpatialMatrix,

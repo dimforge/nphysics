@@ -9,7 +9,6 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
-use ncollide::utils::IsometryOps;
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
