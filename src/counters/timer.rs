@@ -43,7 +43,6 @@ impl Timer {
 
 #[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 fn now() -> f64 {
-    use time;
     time::precise_time_s()
 }
 

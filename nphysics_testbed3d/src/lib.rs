@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate kiss3d;
 extern crate nalgebra as na;
 extern crate ncollide3d;

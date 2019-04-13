@@ -5,3 +5,6 @@ members = [ "build/nphysics2d", "nphysics_testbed2d", "examples2d",
 [profile.release]
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+kiss3d = { path = "../kiss3d" }

@@ -10,6 +10,7 @@ use crate::utils::union_find;
 /// Structure that monitors island-based activation/deactivation of bodies.
 ///
 /// It is responsible for making objects sleep or wake up.
+#[derive(Clone)]
 pub struct ActivationManager<N: RealField> {
     mix_factor: N,
     ufind: Vec<UnionFindSet>,

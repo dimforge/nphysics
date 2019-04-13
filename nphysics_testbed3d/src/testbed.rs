@@ -15,6 +15,7 @@ use kiss3d::planar_camera::PlanarCamera;
 use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
+use kiss3d::conrod;
 use na::{self, Point2, Point3, Vector3};
 use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
@@ -24,6 +25,19 @@ use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
 use nphysics3d::world::World;
 use nphysics3d::math::ForceType;
 use crate::world_owner::WorldOwner;
+
+use kiss3d::conrod::{Widget, Positionable, Sizeable, Colorable, Labelable};
+
+const MARGIN: f64 = 10.0;
+
+widget_ids! {
+    pub struct ConrodIds {
+        canvas,
+        button_pause,
+        slider_vel_iter,
+        slider_pos_iter
+    }
+}
 
 #[derive(PartialEq)]
 enum RunMode {
@@ -97,6 +111,7 @@ pub struct Testbed {
     grabbed_object: Option<BodyPartHandle>,
     grabbed_object_constraint: Option<ConstraintHandle>,
     grabbed_object_plane: (Point3<f32>, Vector3<f32>),
+    ids: ConrodIds
 }
 
 type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
@@ -110,6 +125,8 @@ impl Testbed {
         window.set_background_color(0.9, 0.9, 0.9);
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
+
+        let ids = ConrodIds::new(window.conrod_ui_mut().widget_id_generator());
 
         Testbed {
             world: Box::new(Arc::new(RwLock::new(world))),
@@ -127,6 +144,7 @@ impl Testbed {
             grabbed_object: None,
             grabbed_object_constraint: None,
             grabbed_object_plane: (Point3::origin(), na::zero()),
+            ids,
         }
     }
 
@@ -256,6 +274,60 @@ impl State for Testbed {
     }
 
     fn step(&mut self, window: &mut Window) {
+        {
+            let mut ui = window.conrod_ui_mut().set_widgets();
+            conrod::widget::Canvas::new()
+                .pad(MARGIN)
+                .scroll_kids_vertically()
+                .align_right()
+                .w(200.0)
+                .color(conrod::Color::Rgba(0.5, 0.5, 0.5, 0.2))
+                .set(self.ids.canvas, &mut ui);
+            for _press in conrod::widget::Button::new()
+                .label("Pause (T)")
+                .align_top_of(self.ids.canvas)
+                .color(conrod::Color::Rgba(0.5, 0.2, 0.2, 0.7))
+                .hover_color(conrod::Color::Rgba(1.0, 0.2, 0.2, 0.7))
+                .h(20.0)
+                .set(self.ids.button_pause, &mut ui) {
+                if self.running == RunMode::Stop {
+                    self.running = RunMode::Running
+                } else {
+                    self.running = RunMode::Stop
+                }
+                println!("Clicked!")
+            }
+
+            let mut world = self.world.get_mut();
+            for val in conrod::widget::Slider::new(world.integration_parameters().max_velocity_iterations as f32, 0.0, 50.0)
+                .w_h(200.0, 50.0)
+                .mid_left_of(self.ids.canvas)
+                .down_from(self.ids.button_pause, 45.0)
+                .rgb(0.5, 0.3, 0.6)
+                .label(&"Vel. iterations")
+                .label_color(kiss3d::conrod::color::WHITE)
+                .set(self.ids.slider_vel_iter, &mut ui) {
+                for body in world.bodies_mut() {
+                    body.activate();
+                }
+                world.integration_parameters_mut().max_velocity_iterations = val as usize;
+            }
+
+            for val in conrod::widget::Slider::new(world.integration_parameters().max_position_iterations as f32, 0.0, 50.0)
+                .w_h(200.0, 50.0)
+                .mid_left_of(self.ids.canvas)
+                .down_from(self.ids.slider_vel_iter, 45.0)
+                .rgb(0.5, 0.3, 0.6)
+                .label(&"Pos. iterations")
+                .label_color(kiss3d::conrod::color::WHITE)
+                .set(self.ids.slider_pos_iter, &mut ui) {
+                for body in world.bodies_mut() {
+                    body.activate();
+                }
+                world.integration_parameters_mut().max_position_iterations = val as usize;
+            }
+        }
+
         for mut event in window.events().iter() {
             match event.value {
                 //         WindowEvent::MouseButton(MouseButton::Button2, Action::Press, Key::LControl) |
@@ -402,9 +474,9 @@ impl State for Testbed {
                                     }
                             }
                         }
-                    }
 
-                    event.inhibited = true;
+                        event.inhibited = true;
+                    }
                 }
                 WindowEvent::MouseButton(_, Action::Release, _) => {
                     if let Some(body_part) = self.grabbed_object {
