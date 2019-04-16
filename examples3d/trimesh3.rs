@@ -10,8 +10,8 @@ use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
-use rand::distributions::{Standard, Distribution};
-use rand::{SeedableRng, XorShiftRng};
+use rand::distributions::{Normal, Distribution};
+use rand::thread_rng;
 
 
 
@@ -21,19 +21,41 @@ fn main() {
      */
     let mut world = World::new();
     world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    
+    /*
+     * Use a fourier series to model ground height. This isn't an ideal terrain
+     * model, but is a lot better than using uncorrelated random points.
+     */
+    let distribution = Normal::new(0.0, 0.5);
+
+    let make_fourier = || {
+        let mut rng = thread_rng();
+        let a0 = distribution.sample(&mut rng) as f32;
+        let a1 = distribution.sample(&mut rng) as f32;
+        let b1 = distribution.sample(&mut rng) as f32;
+        let a2 = distribution.sample(&mut rng) as f32;
+        let b2 = distribution.sample(&mut rng) as f32;
+        let a3 = distribution.sample(&mut rng) as f32;
+        let b3 = distribution.sample(&mut rng) as f32;
+        let tau: f32 = 6.283185307179586 / 50f32;
+        move |t: f32| {
+            0.5*a0 + a1 * (tau * t).cos() + b1 * (tau * t).sin()
+                + a2 * (2.0 * tau * t).cos() + b2 * (2.0 * tau * t).sin()
+                + a3 * (3.0 * tau * t).cos() + b3 * (3.0 * tau * t).sin()
+        }
+    };
+    let fourier_x = make_fourier();
+    let fourier_y = make_fourier();
 
     /*
      * Setup a random ground.
      */
-    let quad = ncollide3d::procedural::quad(10.0, 10.0, 10, 10);
+    let quad = ncollide3d::procedural::quad(20.0, 20.0, 100, 100);
     let indices = quad
         .flat_indices()
         .chunks(3)
         .map(|is| Point3::new(is[0] as usize, is[2] as usize, is[1] as usize))
         .collect();
-
-    let mut rng = XorShiftRng::seed_from_u64(42);
-    let distribution = Standard;
 
     let mut vertices = quad.coords;
 
@@ -41,8 +63,7 @@ fn main() {
     // so we switch z and y here and set a random altitude at each point.
     for p in &mut vertices {
         p.z = p.y;
-        let y: f32 = distribution.sample(&mut rng);
-        p.y = y * 1.5;
+        p.y = fourier_x(p.x) + fourier_y(p.z);
     }
 
     let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
