@@ -25,25 +25,15 @@ use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
 use nphysics3d::world::World;
 use nphysics3d::math::ForceType;
 use crate::world_owner::WorldOwner;
+use crate::ui::TestbedUi;
 
-use kiss3d::conrod::{Widget, Positionable, Sizeable, Colorable, Labelable};
-
-const MARGIN: f64 = 10.0;
-
-widget_ids! {
-    pub struct ConrodIds {
-        canvas,
-        button_pause,
-        slider_vel_iter,
-        slider_pos_iter
-    }
-}
 
 #[derive(PartialEq)]
-enum RunMode {
+pub enum RunMode {
     Running,
     Stop,
     Step,
+    Quit
 }
 
 #[cfg(not(feature = "log"))]
@@ -94,7 +84,48 @@ fn usage(exe_name: &str) {
     info!("    b      - draw the bounding boxes.");
 }
 
+bitflags! {
+    #[derive(Default)]
+    pub struct TestbedStateFlags: u32 {
+        const NONE = 0;
+        const SLEEP = 1 << 0;
+        const WARM_STARTING = 1 << 1;
+        const TIME_OF_IMPACT = 1 << 2;
+        const SUB_STEPPING = 1 << 3;
+        const SHAPES = 1 << 4;
+        const JOINTS = 1 << 5;
+        const AABBS = 1 << 6;
+        const CONTACT_POINTS = 1 << 7;
+        const CONTACT_NORMALS = 1 << 8;
+        const CENTER_OF_MASSES = 1 << 9;
+        const WIREFRAME = 1 << 10;
+        const STATISTICS = 1 << 11;
+        const PROFILE = 1 << 12;
+    }
+}
+
+bitflags! {
+    pub struct TestbedActionFlags: u32 {
+        const RESET_WORLD_GRAPHICS = 1 << 0;
+        const EXAMPLE_CHANGED = 1 << 1;
+    }
+}
+
+pub struct TestbedState {
+    pub running: RunMode,
+    pub draw_colls: bool,
+    pub grabbed_object: Option<BodyPartHandle>,
+    pub grabbed_object_constraint: Option<ConstraintHandle>,
+    pub grabbed_object_plane: (Point3<f32>, Vector3<f32>),
+    pub prev_flags: TestbedStateFlags,
+    pub flags: TestbedStateFlags,
+    pub action_flags: TestbedActionFlags,
+    pub example_names: Vec<&'static str>,
+    pub selected_example: usize
+}
+
 pub struct Testbed {
+    builders: Vec<(&'static str, fn(&mut Testbed))>,
     world: Box<WorldOwner>,
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
@@ -103,15 +134,10 @@ pub struct Testbed {
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
-
     font: Rc<Font>,
-    running: RunMode,
-    draw_colls: bool,
     cursor_pos: Point2<f32>,
-    grabbed_object: Option<BodyPartHandle>,
-    grabbed_object_constraint: Option<ConstraintHandle>,
-    grabbed_object_plane: (Point3<f32>, Vector3<f32>),
-    ids: ConrodIds
+    ui: TestbedUi,
+    state: TestbedState
 }
 
 type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
@@ -126,9 +152,23 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
-        let ids = ConrodIds::new(window.conrod_ui_mut().widget_id_generator());
+        let flags = TestbedStateFlags::empty();
+        let ui = TestbedUi::new(&mut window);
+        let state = TestbedState {
+            running: RunMode::Running,
+            draw_colls: false,
+            grabbed_object: None,
+            grabbed_object_constraint: None,
+            grabbed_object_plane: (Point3::origin(), na::zero()),
+            prev_flags: flags,
+            flags,
+            action_flags: TestbedActionFlags::empty(),
+            example_names: Vec::new(),
+            selected_example: 0,
+        };
 
         Testbed {
+            builders: Vec::new(),
             world: Box::new(Arc::new(RwLock::new(world))),
             callbacks: Vec::new(),
             window: Some(window),
@@ -138,13 +178,9 @@ impl Testbed {
             hide_counters: true,
             persistant_contacts: HashMap::new(),
             font: Font::default(),
-            running: RunMode::Running,
-            draw_colls: false,
             cursor_pos: Point2::new(0.0f32, 0.0),
-            grabbed_object: None,
-            grabbed_object_constraint: None,
-            grabbed_object_plane: (Point3::origin(), na::zero()),
-            ids,
+            ui,
+            state,
         }
     }
 
@@ -156,6 +192,14 @@ impl Testbed {
         let mut res = Testbed::new_empty();
 
         res.set_world_owner(world);
+        res
+    }
+
+    pub fn from_builders(default: usize, builders: Vec<(&'static str, fn(&mut Self))>) -> Self {
+        let mut res = Testbed::new_empty();
+        res.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+        res.state.selected_example = default;
+        res.set_builders(builders);
         res
     }
 
@@ -175,17 +219,22 @@ impl Testbed {
         self.set_world_owner(Box::new(world))
     }
 
+    pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {
+        self.state.example_names = builders.iter().map(|e| e.0).collect();
+        self.builders = builders
+    }
+
     pub fn set_world_owner(&mut self, world: Box<WorldOwner>) {
+        let params = {
+            let prev_world = self.world.get();
+            prev_world.integration_parameters().clone()
+        };
+
         self.world = world;
         let mut world = self.world.get_mut();
+        *world.integration_parameters_mut() = params;
         world.enable_performance_counters();
-
-        self.graphics.clear(self.window.as_mut().unwrap());
-
-        for co in world.colliders() {
-            self.graphics
-                .add(self.window.as_mut().unwrap(), co.handle(), &world);
-        }
+        self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
     }
 
     pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {
@@ -235,6 +284,14 @@ impl Testbed {
         res
     }
 
+    fn clear(&mut self, window: &mut Window) {
+        self.callbacks.clear();
+        self.persistant_contacts.clear();
+        self.state.grabbed_object = None;
+        self.state.grabbed_object_constraint = None;
+        self.graphics.clear(window);
+    }
+
     pub fn add_callback<F: Fn(&mut WorldOwner, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
@@ -252,7 +309,7 @@ impl Testbed {
                     usage(&exname[..]);
                     return;
                 } else if &arg[..] == "--pause" {
-                    self.running = RunMode::Stop;
+                    self.state.running = RunMode::Stop;
                 }
             }
         }
@@ -275,58 +332,103 @@ impl State for Testbed {
 
     fn step(&mut self, window: &mut Window) {
         {
-            let mut ui = window.conrod_ui_mut().set_widgets();
-            conrod::widget::Canvas::new()
-                .pad(MARGIN)
-                .scroll_kids_vertically()
-                .align_right()
-                .w(200.0)
-                .color(conrod::Color::Rgba(0.5, 0.5, 0.5, 0.2))
-                .set(self.ids.canvas, &mut ui);
-            for _press in conrod::widget::Button::new()
-                .label("Pause (T)")
-                .align_top_of(self.ids.canvas)
-                .color(conrod::Color::Rgba(0.5, 0.2, 0.2, 0.7))
-                .hover_color(conrod::Color::Rgba(1.0, 0.2, 0.2, 0.7))
-                .h(20.0)
-                .set(self.ids.button_pause, &mut ui) {
-                if self.running == RunMode::Stop {
-                    self.running = RunMode::Running
-                } else {
-                    self.running = RunMode::Stop
-                }
-                println!("Clicked!")
+            let mut world = self.world.get_mut();
+            self.ui.update(window, world.deref_mut(), &mut self.state);
+        }
+
+        // Handle UI actions.
+        {
+            if self.state.action_flags.contains(TestbedActionFlags::EXAMPLE_CHANGED) {
+                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, false);
+                self.clear(window);
+                self.builders[self.state.selected_example].1(self);
             }
 
             let mut world = self.world.get_mut();
-            for val in conrod::widget::Slider::new(world.integration_parameters().max_velocity_iterations as f32, 0.0, 50.0)
-                .w_h(200.0, 50.0)
-                .mid_left_of(self.ids.canvas)
-                .down_from(self.ids.button_pause, 45.0)
-                .rgb(0.5, 0.3, 0.6)
-                .label(&"Vel. iterations")
-                .label_color(kiss3d::conrod::color::WHITE)
-                .set(self.ids.slider_vel_iter, &mut ui) {
-                for body in world.bodies_mut() {
-                    body.activate();
+
+            if self.state.action_flags.contains(TestbedActionFlags::RESET_WORLD_GRAPHICS) {
+                self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, false);
+                for co in world.colliders() {
+                    self.graphics
+                        .add(window, co.handle(), &world);
                 }
-                world.integration_parameters_mut().max_velocity_iterations = val as usize;
             }
 
-            for val in conrod::widget::Slider::new(world.integration_parameters().max_position_iterations as f32, 0.0, 50.0)
-                .w_h(200.0, 50.0)
-                .mid_left_of(self.ids.canvas)
-                .down_from(self.ids.slider_vel_iter, 45.0)
-                .rgb(0.5, 0.3, 0.6)
-                .label(&"Pos. iterations")
-                .label_color(kiss3d::conrod::color::WHITE)
-                .set(self.ids.slider_pos_iter, &mut ui) {
-                for body in world.bodies_mut() {
-                    body.activate();
+            if self.state.prev_flags.contains(TestbedStateFlags::WIREFRAME) !=
+                self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
+
+                for co in world.colliders() {
+                    if let Some(ns) = self.graphics.body_nodes_mut(co.body())
+                    {
+                        for n in ns.iter_mut() {
+                            if self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
+                                n.scene_node_mut().set_lines_width(1.0);
+                                n.scene_node_mut().set_surface_rendering_activation(false);
+                            } else {
+                                n.scene_node_mut().set_lines_width(0.0);
+                                n.scene_node_mut().set_surface_rendering_activation(true);
+                            }
+                        }
+                    }
                 }
-                world.integration_parameters_mut().max_position_iterations = val as usize;
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::SLEEP) !=
+                self.state.flags.contains(TestbedStateFlags::SLEEP) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::WARM_STARTING) !=
+                self.state.flags.contains(TestbedStateFlags::WARM_STARTING) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::TIME_OF_IMPACT) !=
+                self.state.flags.contains(TestbedStateFlags::TIME_OF_IMPACT) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::SUB_STEPPING) !=
+                self.state.flags.contains(TestbedStateFlags::SUB_STEPPING) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::SHAPES) !=
+                self.state.flags.contains(TestbedStateFlags::SHAPES) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::JOINTS) !=
+                self.state.flags.contains(TestbedStateFlags::JOINTS) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::AABBS) !=
+                self.state.flags.contains(TestbedStateFlags::AABBS) {
+                if self.state.flags.contains(TestbedStateFlags::AABBS) {
+                    self.graphics.show_aabbs(&mut world, window)
+                } else {
+                    self.graphics.hide_aabbs(window)
+                }
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::CENTER_OF_MASSES) !=
+                self.state.flags.contains(TestbedStateFlags::CENTER_OF_MASSES) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::STATISTICS) !=
+                self.state.flags.contains(TestbedStateFlags::STATISTICS) {
+                unimplemented!()
+            }
+
+            if self.state.prev_flags.contains(TestbedStateFlags::PROFILE) !=
+                self.state.flags.contains(TestbedStateFlags::PROFILE) {
+                unimplemented!()
             }
         }
+
+        self.state.prev_flags = self.state.flags;
 
         for mut event in window.events().iter() {
             match event.value {
@@ -404,7 +506,7 @@ impl State for Testbed {
 
                         event.inhibited = true;
                     } else if modifier.contains(Modifiers::Control) {
-                        match self.grabbed_object {
+                        match self.state.grabbed_object {
                             Some(body) => for n in self
                                 .graphics
                                 .body_nodes_mut(body.0)
@@ -443,14 +545,14 @@ impl State for Testbed {
 
                         if let Some(body_part_handle) = minb {
                             if physics_world.body(body_part_handle.0).unwrap().status_dependent_ndofs() != 0 {
-                                self.grabbed_object = minb;
+                                self.state.grabbed_object = minb;
                                 for n in self
                                     .graphics
                                     .body_nodes_mut(body_part_handle.0)
                                     .unwrap()
                                     .iter_mut()
                                     {
-                                        if let Some(joint) = self.grabbed_object_constraint {
+                                        if let Some(joint) = self.state.grabbed_object_constraint {
                                             physics_world.remove_constraint(joint);
                                         }
 
@@ -467,8 +569,8 @@ impl State for Testbed {
                                             attach2,
                                             1.0,
                                         );
-                                        self.grabbed_object_plane = (attach1, -ray.dir);
-                                        self.grabbed_object_constraint =
+                                        self.state.grabbed_object_plane = (attach1, -ray.dir);
+                                        self.state.grabbed_object_constraint =
                                             Some(physics_world.add_constraint(constraint));
                                         n.select()
                                     }
@@ -479,7 +581,7 @@ impl State for Testbed {
                     }
                 }
                 WindowEvent::MouseButton(_, Action::Release, _) => {
-                    if let Some(body_part) = self.grabbed_object {
+                    if let Some(body_part) = self.state.grabbed_object {
                         for n in self
                             .graphics
                             .body_nodes_mut(body_part.0)
@@ -490,13 +592,13 @@ impl State for Testbed {
                             }
                     }
 
-                    if let Some(joint) = self.grabbed_object_constraint {
+                    if let Some(joint) = self.state.grabbed_object_constraint {
                         let physics_world = &mut self.world.get_mut();
                         let _ = physics_world.remove_constraint(joint);
                     }
 
-                    self.grabbed_object = None;
-                    self.grabbed_object_constraint = None;
+                    self.state.grabbed_object = None;
+                    self.state.grabbed_object_constraint = None;
                 }
                 WindowEvent::CursorPos(x, y, modifiers) => {
                     let physics_world = &mut self.world.get_mut();
@@ -505,13 +607,13 @@ impl State for Testbed {
                     self.cursor_pos.y = y as f32;
 
                     // update the joint
-                    if let Some(joint) = self.grabbed_object_constraint {
+                    if let Some(joint) = self.state.grabbed_object_constraint {
                         let size = window.size();
                         let (pos, dir) = self
                             .graphics
                             .camera()
                             .unproject(&self.cursor_pos, &na::convert(size));
-                        let (ref ppos, ref pdir) = self.grabbed_object_plane;
+                        let (ref ppos, ref pdir) = self.state.grabbed_object_plane;
 
                         if let Some(inter) =
                         query::ray_internal::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir))
@@ -529,13 +631,13 @@ impl State for Testbed {
                 }
                 //         WindowEvent::Key(Key::Tab, Action::Release, _) => self.graphics.switch_cameras(),
                 WindowEvent::Key(Key::T, Action::Release, _) => {
-                    if self.running == RunMode::Stop {
-                        self.running = RunMode::Running;
+                    if self.state.running == RunMode::Stop {
+                        self.state.running = RunMode::Running;
                     } else {
-                        self.running = RunMode::Stop;
+                        self.state.running = RunMode::Stop;
                     }
                 }
-                WindowEvent::Key(Key::S, Action::Release, _) => self.running = RunMode::Step,
+                WindowEvent::Key(Key::S, Action::Release, _) => self.state.running = RunMode::Step,
                 //         WindowEvent::Key(Key::B, _, Action::Release, _) => {
                 //             // XXX: there is a bug on kiss3d with the removal of objects.
                 //             // draw_aabbs = !draw_aabbs;
@@ -546,27 +648,6 @@ impl State for Testbed {
                 //             //     graphics.disable_aabb_draw(window);
                 //             // }
                 //         },
-                WindowEvent::Key(Key::Space, Action::Release, _) => {
-                    let physics_world = &mut self.world.get_mut();
-
-                    self.draw_colls = !self.draw_colls;
-                    for co in physics_world.colliders() {
-                        // FIXME: ugly clone.
-                        if let Some(ns) =
-                        self.graphics.body_nodes_mut(co.body())
-                            {
-                                for n in ns.iter_mut() {
-                                    if self.draw_colls {
-                                        n.scene_node_mut().set_lines_width(1.0);
-                                        n.scene_node_mut().set_surface_rendering_activation(false);
-                                    } else {
-                                        n.scene_node_mut().set_lines_width(0.0);
-                                        n.scene_node_mut().set_surface_rendering_activation(true);
-                                    }
-                                }
-                            }
-                    }
-                }
                 //      WindowEvent::Key(Key::Num1, _, Action::Press, _) => {
                 //          let mut graphics = self.graphics;
                 //          let geom   = Ball::new(0.5f32);
@@ -613,7 +694,7 @@ impl State for Testbed {
             }
         }
 
-        if self.running != RunMode::Stop {
+        if self.state.running != RunMode::Stop {
             // let before = time::precise_time_s();
             for _ in 0..self.nsteps {
                 for f in &self.callbacks {
@@ -634,17 +715,21 @@ impl State for Testbed {
             self.graphics.draw(&self.world.get(), window);
         }
 
-        if self.draw_colls {
+        if self.state.flags.contains(TestbedStateFlags::CONTACT_POINTS) {
             draw_collisions(
                 window,
                 &self.world.get(),
                 &mut self.persistant_contacts,
-                self.running != RunMode::Stop,
+                self.state.running != RunMode::Stop,
             );
         }
 
-        if self.running == RunMode::Step {
-            self.running = RunMode::Stop;
+        if self.state.running == RunMode::Step {
+            self.state.running = RunMode::Stop;
+        }
+
+        if self.state.running == RunMode::Quit {
+            window.close()
         }
 
         let color = Point3::new(0.0, 0.0, 0.0);
@@ -673,9 +758,7 @@ const CONTROLS: &str = "Controls:
     Ctrl + click + drag: select and move a solid.
     Left click + drag: rotate the camera.
     Right click + drag: pan the camera.
-    Mouse wheel: zoom in/zoom out.
-    T: pause/resume simulation.
-    S: step simulation.";
+    Mouse wheel: zoom in/zoom out.";
 
 fn draw_collisions(
     window: &mut Window,

@@ -10,7 +10,7 @@ use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -20,12 +20,12 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_size = 50.0;
+    let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     ColliderDesc::new(ground_shape)
-        .translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_thickness)
         .build(&mut world);
 
     /*
@@ -33,8 +33,8 @@ fn main() {
      */
     let mut cross_geoms = Vec::new();
 
-    let large_rad = 2.5f32;
-    let small_rad = 0.1f32;
+    let large_rad = 0.25f32;
+    let small_rad = 0.01f32;
 
     let edge_x = Cuboid::new(Vector3::new(large_rad, small_rad, small_rad));
     let edge_y = Cuboid::new(Vector3::new(small_rad, large_rad, small_rad));
@@ -79,7 +79,12 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
-    testbed.look_at(Point3::new(-25.0, 10.0, -25.0), Point3::new(0.0, 3.0, 0.0));
+    testbed.set_world(world);
+    testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

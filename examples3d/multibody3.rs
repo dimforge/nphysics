@@ -15,7 +15,7 @@ use nphysics_testbed3d::Testbed;
 use std::f32::consts::PI;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -215,7 +215,7 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
 
 
     testbed.add_callback(move |world, _, _| {
@@ -261,5 +261,10 @@ fn main() {
     });
 
     testbed.look_at(Point3::new(30.0, -2.0, 0.0), Point3::new(0.0, -2.0, 0.0));
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

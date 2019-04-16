@@ -10,7 +10,7 @@ use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -58,7 +58,7 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
 
     for platform in &platforms {
         testbed.set_body_color(*platform, Point3::new(0.5, 0.5, 0.5));
@@ -95,5 +95,10 @@ fn main() {
 
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
     testbed.show_performance_counters();
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

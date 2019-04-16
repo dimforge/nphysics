@@ -11,9 +11,7 @@ use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
 
-fn main() {
-    let mut testbed = Testbed::new_empty();
-
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -36,12 +34,12 @@ fn main() {
     /*
      * A floor that will collide with everything (default behaviour).
      */
-    let ground_size = 5.0;
+    let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     ColliderDesc::new(ground_shape)
-        .translation(Vector3::y() * -ground_size)
+        .translation(Vector3::y() * -ground_thickness)
         .build(&mut world);
 
     /*
@@ -114,5 +112,10 @@ fn main() {
      */
     testbed.set_world(world);
     testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

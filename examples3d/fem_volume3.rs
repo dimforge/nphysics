@@ -9,7 +9,7 @@ use nphysics3d::object::{FEMVolumeDesc, ColliderDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -19,11 +19,11 @@ fn main() {
     /*
      * Ground.
      */
-    let ground_size = 50.0;
-    let ground = ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+    let ground_thickness = 0.2;
+    let ground = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     ColliderDesc::new(ground)
-        .translation(Vector3::y() * (-ground_size - 1.0))
+        .translation(Vector3::y() * (-ground_thickness - 1.0))
         .build(&mut world);
 
 
@@ -55,7 +55,12 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

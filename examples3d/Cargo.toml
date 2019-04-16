@@ -18,6 +18,10 @@ path = "../build/nphysics3d"
 path = "../nphysics_testbed3d"
 
 [[bin]]
+name = "all_examples3"
+path = "./all_examples3.rs"
+
+[[bin]]
 name = "plasticity3"
 path = "./plasticity3.rs"
 

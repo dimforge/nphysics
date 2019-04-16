@@ -4,7 +4,7 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 extern crate rand;
 
-use na::{Vector3, DMatrix};
+use na::{Vector3, Point3, DMatrix};
 use ncollide3d::shape::{Cuboid, ShapeHandle, HeightField, HeightFieldCellStatus};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
@@ -12,7 +12,7 @@ use nphysics_testbed3d::Testbed;
 use rand::{Rng, SeedableRng, StdRng};
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -80,6 +80,12 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let testbed = Testbed::new(world);
+    testbed.set_world(world);
+    testbed.look_at(Point3::new(-6.0, 6.0, -6.0), Point3::new(0.0, 1.0, 0.0));
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

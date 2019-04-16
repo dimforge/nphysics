@@ -6,6 +6,8 @@ extern crate nphysics3d;
 extern crate num_traits as num;
 extern crate rand;
 extern crate time;
+#[macro_use]
+extern crate bitflags;
 
 #[cfg(feature = "log")]
 #[macro_use]
@@ -19,3 +21,4 @@ mod engine;
 pub mod objects;
 mod testbed;
 mod world_owner;
+mod ui;

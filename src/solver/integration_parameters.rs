@@ -1,6 +1,7 @@
 use na::{self, RealField};
 
 /// Parameters for a time-step of the physics engine.
+#[derive(Clone)]
 pub struct IntegrationParameters<N: RealField> {
     /// The timestep (default: `1.0 / 60.0`)
     pub dt: N,

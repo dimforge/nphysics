@@ -11,7 +11,7 @@ use nphysics3d::material::{BasicMaterial, MaterialHandle};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -123,7 +123,12 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
-    testbed.look_at(Point3::new(-10.0, 4.0, -10.0), Point3::new(0.0, 1.0, 0.0));
+    testbed.set_world(world);
+    testbed.look_at(Point3::new(10.0, 4.0, -10.0), Point3::new(0.0, 1.0, 0.0));
+}
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

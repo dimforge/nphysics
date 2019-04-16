@@ -2,7 +2,7 @@ use kiss3d::camera::{ArcBall, Camera, FirstPerson};
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na;
-use na::{Isometry3, Point3};
+use na::{Isometry3, Point3, Vector3, Translation3};
 use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
 use ncollide3d::transformation;
 use ncollide3d::query::Ray;
@@ -29,7 +29,7 @@ pub struct GraphicsManager {
     arc_ball: ArcBall,
     first_person: FirstPerson,
     curr_is_arc_ball: bool,
-    aabbs: Vec<SceneNode>,
+    aabbs: Vec<(ColliderHandle, SceneNode)>,
 }
 
 impl GraphicsManager {
@@ -66,12 +66,14 @@ impl GraphicsManager {
         }
 
         for aabb in self.aabbs.iter_mut() {
-            window.remove_node(aabb);
+            window.remove_node(&mut aabb.1);
         }
 
         self.b2sn.clear();
         self.aabbs.clear();
         self.rays.clear();
+        self.b2color.clear();
+        self.c2color.clear();
     }
 
     pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {
@@ -391,10 +393,58 @@ impl GraphicsManager {
         )))
     }
 
+    pub fn show_aabbs(&mut self, world: &World<f32>, window: &mut Window) {
+        for (_, ns) in self.b2sn.iter() {
+            for n in ns.iter() {
+                let handle = n.collider();
+                if let Some(collider) = world.collider(handle) {
+                    let aabb = collider.shape().aabb(collider.position());
+                    // FIXME: nphysics/ncollide should provide a way to access the
+                    // AABB actually used by the broad-phase.
+                    let margin = collider.query_type().query_limit();
+                    let w = (aabb.half_extents() + Vector3::repeat(margin)) * 2.0;
+
+                    let color = if let Some(c) = self.c2color.get(&handle).cloned() {
+                        c
+                    } else {
+                        self.b2color[&collider.body()]
+                    };
+
+                    let mut cube = window.add_cube(1.0, 1.0, 1.0);
+                    cube.set_local_translation(Translation3::from(aabb.center().coords));
+                    cube.set_local_scale(w.x, w.y, w.z);
+                    cube.set_surface_rendering_activation(false);
+                    cube.set_lines_width(5.0);
+                    cube.set_color(color.x, color.y, color.z);
+                    self.aabbs.push((handle, cube));
+                }
+            }
+        }
+    }
+
+    pub fn hide_aabbs(&mut self, window: &mut Window) {
+        for mut aabb in self.aabbs.drain(..) {
+            window.remove_node(&mut aabb.1)
+        }
+    }
+
     pub fn draw(&mut self, world: &World<f32>, window: &mut Window) {
         for (_, ns) in self.b2sn.iter_mut() {
             for n in ns.iter_mut() {
                 n.update(world)
+            }
+        }
+
+        for (handle, node) in &mut self.aabbs {
+            if let Some(collider) = world.collider(*handle) {
+                let aabb = collider.shape().aabb(collider.position());
+                // FIXME: nphysics/ncollide should provide a way to access the
+                // AABB actually used by the broad-phase.
+                let margin = collider.query_type().query_limit();
+                let w = (aabb.half_extents() + Vector3::repeat(margin)) * 2.0;
+
+                node.set_local_translation(Translation3::from(aabb.center().coords));
+                node.set_local_scale(w.x, w.y, w.z);
             }
         }
 
