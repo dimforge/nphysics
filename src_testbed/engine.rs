@@ -629,6 +629,14 @@ impl GraphicsManager {
     ) -> Option<&mut Vec<Node>> {
         self.b2sn.get_mut(&handle)
     }
+
+    pub fn nodes(&self) -> impl Iterator<Item = &Node> {
+        self.b2sn.values().flat_map(|val| val.iter())
+    }
+
+    pub fn nodes_mut(&mut self) -> impl Iterator<Item = &mut Node> {
+        self.b2sn.values_mut().flat_map(|val| val.iter_mut())
+    }
 }
 
 impl Default for GraphicsManager {

@@ -666,9 +666,15 @@ impl State for Testbed {
                 for co in world.colliders() {
                     if let Some(ns) = self.graphics.body_nodes_mut(co.body())
                     {
-                        for n in ns.iter_mut() {
+                        for n in self.graphics.nodes_mut() {
+                            let is_sensor = if let Some(collider) = world.collider(n.collider()) {
+                                collider.is_sensor()
+                            } else {
+                                false
+                            };
+
                             if let Some(node) = n.scene_node_mut() {
-                                if self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
+                                if is_sensor || self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
                                     node.set_lines_width(1.0);
                                     node.set_surface_rendering_activation(false);
                                 } else {
