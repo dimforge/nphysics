@@ -1,15 +1,15 @@
-use kiss3d::scene::PlanarSceneNode;
 use kiss3d::window::Window;
-use na::{Isometry2, Point3};
-use nphysics2d::object::ColliderHandle;
-use nphysics2d::world::World;
-use crate::objects::node;
+use na::Point3;
+use nphysics::math::Isometry;
+use nphysics::world::World;
+use nphysics::object::ColliderHandle;
+use crate::objects::node::{self, GraphicsNode};
 
 pub struct Ball {
     color: Point3<f32>,
     base_color: Point3<f32>,
-    delta: Isometry2<f32>,
-    gfx: PlanarSceneNode,
+    delta: Isometry<f32>,
+    gfx: GraphicsNode,
     collider: ColliderHandle,
 }
 
@@ -17,16 +17,21 @@ impl Ball {
     pub fn new(
         collider: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry2<f32>,
+        delta: Isometry<f32>,
         radius: f32,
         color: Point3<f32>,
         window: &mut Window,
     ) -> Ball {
+        #[cfg(feature = "dim2")]
+            let node = window.add_circle(radius);
+        #[cfg(feature = "dim3")]
+            let node = window.add_sphere(radius);
+
         let mut res = Ball {
             color,
             base_color: color,
             delta,
-            gfx: window.add_circle(radius),
+            gfx: node,
             collider,
         };
 
@@ -73,11 +78,11 @@ impl Ball {
         );
     }
 
-    pub fn scene_node(&self) -> &PlanarSceneNode {
+    pub fn scene_node(&self) -> &GraphicsNode {
         &self.gfx
     }
 
-    pub fn scene_node_mut(&mut self) -> &mut PlanarSceneNode {
+    pub fn scene_node_mut(&mut self) -> &mut GraphicsNode {
         &mut self.gfx
     }
 

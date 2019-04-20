@@ -9,7 +9,7 @@ use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -65,7 +65,13 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
     testbed.look_at(Point2::new(0.0, -2.5), 95.0);
+}
+
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

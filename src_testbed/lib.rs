@@ -1,11 +1,15 @@
 #[macro_use]
 extern crate kiss3d;
 extern crate nalgebra as na;
-extern crate ncollide3d;
-extern crate nphysics3d;
 extern crate num_traits as num;
-extern crate rand;
-extern crate time;
+#[cfg(feature = "dim3")]
+extern crate ncollide3d as ncollide;
+#[cfg(feature = "dim2")]
+extern crate ncollide2d as ncollide;
+#[cfg(feature = "dim3")]
+extern crate nphysics3d as nphysics;
+#[cfg(feature = "dim2")]
+extern crate nphysics2d as nphysics;
 #[macro_use]
 extern crate bitflags;
 

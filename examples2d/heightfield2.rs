@@ -12,7 +12,7 @@ use nphysics_testbed2d::Testbed;
 use rand::{Rng, SeedableRng, StdRng};
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -68,7 +68,13 @@ fn main() {
     /*
      * Run the simulation.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
     testbed.look_at(Point2::origin(), 75.0);
+}
+
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

@@ -15,7 +15,7 @@ kiss3d     = "0.19"
 path = "../build/nphysics3d"
 
 [dependencies.nphysics_testbed3d]
-path = "../nphysics_testbed3d"
+path = "../build/nphysics_testbed3d"
 
 [[bin]]
 name = "all_examples3"

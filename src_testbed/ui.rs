@@ -1,6 +1,6 @@
 use kiss3d::window::Window;
 use kiss3d::conrod::{self, Ui, Widget, Positionable, Sizeable, Colorable, Labelable, Borderable};
-use nphysics3d::world::World;
+use nphysics::world::World;
 
 use crate::testbed::{TestbedState, RunMode, TestbedStateFlags, TestbedActionFlags};
 

@@ -1,33 +1,38 @@
 use kiss3d::window;
-use kiss3d::scene::SceneNode;
-use na::{Isometry3, Point3};
-use nphysics3d::world::World;
-use nphysics3d::object::ColliderHandle;
-use crate::objects::node;
+use na::Point3;
+use nphysics::math::{Isometry, Vector};
+use nphysics::world::World;
+use nphysics::object::ColliderHandle;
+use crate::objects::node::{self, GraphicsNode};
 
-pub struct Cylinder {
+pub struct Box {
     color: Point3<f32>,
     base_color: Point3<f32>,
-    delta: Isometry3<f32>,
-    gfx: SceneNode,
+    delta: Isometry<f32>,
+    gfx: GraphicsNode,
     collider: ColliderHandle,
 }
 
-impl Cylinder {
+impl Box {
     pub fn new(
         collider: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
-        r: f32,
-        h: f32,
+        delta: Isometry<f32>,
+        half_extents: Vector<f32>,
         color: Point3<f32>,
         window: &mut window::Window,
-    ) -> Cylinder {
-        let mut res = Cylinder {
+    ) -> Box {
+        let extents = half_extents * 2.0;
+        #[cfg(feature = "dim2")]
+            let node = window.add_rectangle(extents.x, extents.y);
+        #[cfg(feature = "dim3")]
+            let node = window.add_cube(extents.x, extents.y, extents.z);
+
+        let mut res = Box {
             color,
             base_color: color,
             delta,
-            gfx: window.add_cylinder(r, h),
+            gfx: node,
             collider,
         };
 
@@ -40,6 +45,7 @@ impl Cylinder {
             res.gfx.set_surface_rendering_activation(false);
             res.gfx.set_lines_width(1.0);
         }
+
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
             .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
@@ -56,6 +62,12 @@ impl Cylinder {
         self.color = self.base_color;
     }
 
+    pub fn set_color(&mut self, color: Point3<f32>) {
+        self.gfx.set_color(color.x, color.y, color.z);
+        self.color = color;
+        self.base_color = color;
+    }
+
     pub fn update(&mut self, world: &World<f32>) {
         node::update_scene_node(
             &mut self.gfx,
@@ -66,17 +78,11 @@ impl Cylinder {
         );
     }
 
-    pub fn set_color(&mut self, color: Point3<f32>) {
-        self.gfx.set_color(color.x, color.y, color.z);
-        self.color = color;
-        self.base_color = color;
-    }
-
-    pub fn scene_node(&self) -> &SceneNode {
+    pub fn scene_node(&self) -> &GraphicsNode {
         &self.gfx
     }
 
-    pub fn scene_node_mut(&mut self) -> &mut SceneNode {
+    pub fn scene_node_mut(&mut self) -> &mut GraphicsNode {
         &mut self.gfx
     }
 

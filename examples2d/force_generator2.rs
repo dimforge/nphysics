@@ -11,9 +11,7 @@ use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
-    let mut testbed = Testbed::new_empty();
-
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -93,5 +91,11 @@ fn main() {
      * Set up the testbed.
      */
     testbed.set_world(world);
+}
+
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

@@ -1,24 +1,61 @@
-use kiss3d::camera::{ArcBall, Camera, FirstPerson};
-use kiss3d::scene::SceneNode;
+#[cfg(feature = "dim2")]
+use kiss3d::planar_camera::Sidescroll as Camera;
+#[cfg(feature = "dim3")]
+use kiss3d::camera::ArcBall as Camera;
 use kiss3d::window::Window;
 use na;
-use na::{Isometry3, Point3, Vector3, Translation3};
-use ncollide3d::shape::{self, Compound, ConvexHull, Cuboid, Shape, TriMesh};
-use ncollide3d::transformation;
-use ncollide3d::query::Ray;
-use ncollide3d::world::CollisionGroups;
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
-use nphysics3d::world::World;
+use na::Point3;
+use ncollide::shape::{self, Compound, Cuboid, Shape};
+#[cfg(feature = "dim2")]
+use na::Translation2 as Translation;
+#[cfg(feature = "dim3")]
+use na::Translation3 as Translation;
+
+#[cfg(feature = "dim2")]
+use ncollide::shape::ConvexPolygon;
+#[cfg(feature = "dim3")]
+use ncollide::shape::{ConvexHull, TriMesh};
+use ncollide::transformation;
+use ncollide::query::Ray;
+use ncollide::world::CollisionGroups;
+use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
+use nphysics::world::World;
+use nphysics::math::{Isometry, Vector, Point};
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
 use crate::objects::convex::Convex;
+#[cfg(feature = "dim3")]
 use crate::objects::mesh::Mesh;
-use crate::objects::node::Node;
+#[cfg(feature = "dim2")]
+use crate::objects::polyline::Polyline;
+use crate::objects::node::{GraphicsNode, Node};
 use crate::objects::heightfield::HeightField;
 use crate::objects::plane::Plane;
 use crate::objects::capsule::Capsule;
 use rand::{Rng, SeedableRng, XorShiftRng};
 use std::collections::HashMap;
+
+pub trait GraphicsWindow {
+    fn remove_graphics_node(&mut self, node: &mut GraphicsNode);
+    fn draw_graphics_line(&mut self, p1: &Point<f32>, p2: &Point<f32>, color: &Point3<f32>);
+}
+
+impl GraphicsWindow for Window {
+    fn remove_graphics_node(&mut self, node: &mut GraphicsNode) {
+        #[cfg(feature = "dim2")]
+            self.remove_planar_node(node);
+        #[cfg(feature = "dim3")]
+            self.remove_node(node);
+    }
+
+    fn draw_graphics_line(&mut self, p1: &Point<f32>, p2: &Point<f32>, color: &Point3<f32>) {
+        #[cfg(feature = "dim2")]
+            self.draw_planar_line(p1, p2, color);
+        #[cfg(feature = "dim3")]
+            self.draw_line(p1, p2, color);
+    }
+
+}
 
 pub struct GraphicsManager {
     rand: XorShiftRng,
@@ -26,17 +63,21 @@ pub struct GraphicsManager {
     b2color: HashMap<BodyHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
     rays: Vec<Ray<f32>>,
-    arc_ball: ArcBall,
-    first_person: FirstPerson,
-    curr_is_arc_ball: bool,
-    aabbs: Vec<(ColliderHandle, SceneNode)>,
+    camera: Camera,
+    aabbs: Vec<(ColliderHandle, GraphicsNode)>,
 }
 
 impl GraphicsManager {
     pub fn new() -> GraphicsManager {
-        let arc_ball = ArcBall::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
-        let first_person =
-            FirstPerson::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
+        #[cfg(feature = "dim3")]
+            let camera = Camera::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
+
+        #[cfg(feature = "dim2")]
+            let camera = {
+                let mut camera = Camera::new();
+                camera.set_zoom(50.0);
+                camera
+            };
 
         let mut rng: XorShiftRng = SeedableRng::from_seed([0; 16]);
 
@@ -46,9 +87,7 @@ impl GraphicsManager {
         }
 
         GraphicsManager {
-            arc_ball,
-            first_person,
-            curr_is_arc_ball: true,
+            camera,
             rand: rng,
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
@@ -59,14 +98,16 @@ impl GraphicsManager {
     }
 
     pub fn clear(&mut self, window: &mut Window) {
-        for sns in self.b2sn.values() {
-            for sn in sns.iter() {
-                window.remove_node(&mut sn.scene_node().clone());
+        for sns in self.b2sn.values_mut() {
+            for sn in sns.iter_mut() {
+                if let Some(node) = sn.scene_node_mut() {
+                    window.remove_graphics_node(node);
+                }
             }
         }
 
         for aabb in self.aabbs.iter_mut() {
-            window.remove_node(&mut aabb.1);
+            window.remove_graphics_node(&mut aabb.1);
         }
 
         self.b2sn.clear();
@@ -77,9 +118,11 @@ impl GraphicsManager {
     }
 
     pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {
-        if let Some(sns) = self.b2sn.get(&body) {
-            for sn in sns.iter() {
-                window.remove_node(&mut sn.scene_node().clone());
+        if let Some(sns) = self.b2sn.get_mut(&body) {
+            for sn in sns.iter_mut() {
+                if let Some(node) = sn.scene_node_mut() {
+                    window.remove_graphics_node(node);
+                }
             }
         }
 
@@ -101,7 +144,9 @@ impl GraphicsManager {
                 } = world.collider(sn.collider()).unwrap().anchor()
                     {
                         if *body_part == part {
-                            window.remove_node(&mut sn.scene_node().clone());
+                            if let Some(node) = sn.scene_node() {
+                                window.remove_graphics_node(&mut node.clone());
+                            }
                             false
                         } else {
                             delete_array = false;
@@ -214,7 +259,7 @@ impl GraphicsManager {
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
         shape: &Shape<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
@@ -225,23 +270,35 @@ impl GraphicsManager {
             self.add_ball(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Cuboid<f32>>() {
             self.add_box(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
-            self.add_convex(window, object, world, delta, s, color, out) /*
-        } else if let Some(s) = shape.as_shape::<shape::Cylinder<f32>>() {
-            self.add_cylinder(window, object, world, delta, s, color, out)
-        } else if let Some(s) = shape.as_shape::<shape::Cone<f32>>() {
-            self.add_cone(window, object, world, delta, s, color, out)*/
         } else if let Some(s) = shape.as_shape::<shape::Capsule<f32>>() {
             self.add_capsule(window, object, world, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, world, delta * t, s.as_ref(), color, out)
             }
-        } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
-            self.add_mesh(window, object, world, delta, s, color, out);
-        } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
-            self.add_heightfield(window, object, world, delta, s, color, out);
         }
+
+        #[cfg(feature = "dim2")]
+            {
+                if let Some(s) = shape.as_shape::<ConvexPolygon<f32>>() {
+                    self.add_convex(window, object, world, delta, s, color, out)
+                } else if let Some(s) = shape.as_shape::<shape::Polyline<f32>>() {
+                    self.add_polyline(window, object, world, delta, s, color, out);
+                } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+                    self.add_heightfield(window, object, world, delta, s, color, out);
+                }
+            }
+
+        #[cfg(feature = "dim3")]
+            {
+                if let Some(s) = shape.as_shape::<ConvexHull<f32>>() {
+                    self.add_convex(window, object, world, delta, s, color, out)
+                } else if let Some(s) = shape.as_shape::<TriMesh<f32>>() {
+                    self.add_mesh(window, object, world, delta, s, color, out);
+                } else if let Some(s) = shape.as_shape::<shape::HeightField<f32>>() {
+                    self.add_heightfield(window, object, world, delta, s, color, out);
+                }
+            }
     }
 
     fn add_plane(
@@ -254,7 +311,7 @@ impl GraphicsManager {
         out: &mut Vec<Node>,
     ) {
         let pos = world.collider(object).unwrap().position();
-        let position = Point3::from(pos.translation.vector);
+        let position = Point::from(pos.translation.vector);
         let normal = pos * shape.normal();
 
         out.push(Node::Plane(Plane::new(
@@ -262,12 +319,38 @@ impl GraphicsManager {
         )))
     }
 
+    #[cfg(feature = "dim2")]
+    fn add_polyline(
+        &mut self,
+        window: &mut Window,
+        object: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry<f32>,
+        shape: &shape::Polyline<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        let vertices = shape.points().to_vec();
+        let indices = shape.edges().iter().map(|e| e.indices).collect();
+
+        out.push(Node::Polyline(Polyline::new(
+            object,
+            world,
+            delta,
+            vertices,
+            indices,
+            color,
+            window,
+        )))
+    }
+
+    #[cfg(feature = "dim3")]
     fn add_mesh(
         &mut self,
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
         shape: &TriMesh<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
@@ -296,7 +379,7 @@ impl GraphicsManager {
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
@@ -316,7 +399,7 @@ impl GraphicsManager {
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
         shape: &shape::Capsule<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
@@ -338,7 +421,7 @@ impl GraphicsManager {
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
         shape: &shape::Ball<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
@@ -359,27 +442,48 @@ impl GraphicsManager {
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
         shape: &Cuboid<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
         let margin = world.collider(object).unwrap().margin();
-        let rx = shape.half_extents().x + margin;
-        let ry = shape.half_extents().y + margin;
-        let rz = shape.half_extents().z + margin;
 
         out.push(Node::Box(Box::new(
-            object, world, delta, rx, ry, rz, color, window,
+            object, world, delta, shape.half_extents() + Vector::repeat(margin), color, window,
         )))
     }
 
+    #[cfg(feature = "dim2")]
     fn add_convex(
         &mut self,
         window: &mut Window,
         object: ColliderHandle,
         world: &World<f32>,
-        delta: Isometry3<f32>,
+        delta: Isometry<f32>,
+        shape: &ConvexPolygon<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        let points = shape.points();
+
+        out.push(Node::Convex(Convex::new(
+            object,
+            world,
+            delta,
+            points.to_vec(),
+            color,
+            window,
+        )))
+    }
+
+    #[cfg(feature = "dim3")]
+    fn add_convex(
+        &mut self,
+        window: &mut Window,
+        object: ColliderHandle,
+        world: &World<f32>,
+        delta: Isometry<f32>,
         shape: &ConvexHull<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
@@ -402,7 +506,7 @@ impl GraphicsManager {
                     // FIXME: nphysics/ncollide should provide a way to access the
                     // AABB actually used by the broad-phase.
                     let margin = collider.query_type().query_limit();
-                    let w = (aabb.half_extents() + Vector3::repeat(margin)) * 2.0;
+                    let w = (aabb.half_extents() + Vector::repeat(margin)) * 2.0;
 
                     let color = if let Some(c) = self.c2color.get(&handle).cloned() {
                         c
@@ -410,9 +514,15 @@ impl GraphicsManager {
                         self.b2color[&collider.body()]
                     };
 
-                    let mut cube = window.add_cube(1.0, 1.0, 1.0);
-                    cube.set_local_translation(Translation3::from(aabb.center().coords));
-                    cube.set_local_scale(w.x, w.y, w.z);
+                    #[cfg(feature = "dim2")]
+                        let mut cube = window.add_rectangle(1.0, 1.0);
+                    #[cfg(feature = "dim3")]
+                        let mut cube = window.add_cube(1.0, 1.0, 1.0);
+                    cube.set_local_translation(Translation::from(aabb.center().coords));
+                    #[cfg(feature = "dim2")]
+                        cube.set_local_scale(w.x, w.y);
+                    #[cfg(feature = "dim3")]
+                        cube.set_local_scale(w.x, w.y, w.z);
                     cube.set_surface_rendering_activation(false);
                     cube.set_lines_width(5.0);
                     cube.set_color(color.x, color.y, color.z);
@@ -424,7 +534,7 @@ impl GraphicsManager {
 
     pub fn hide_aabbs(&mut self, window: &mut Window) {
         for mut aabb in self.aabbs.drain(..) {
-            window.remove_node(&mut aabb.1)
+            window.remove_graphics_node(&mut aabb.1)
         }
     }
 
@@ -435,16 +545,26 @@ impl GraphicsManager {
             }
         }
 
+        for (_, ns) in self.b2sn.iter_mut() {
+            for n in ns.iter_mut() {
+                n.draw(window)
+            }
+        }
+
         for (handle, node) in &mut self.aabbs {
             if let Some(collider) = world.collider(*handle) {
                 let aabb = collider.shape().aabb(collider.position());
                 // FIXME: nphysics/ncollide should provide a way to access the
                 // AABB actually used by the broad-phase.
                 let margin = collider.query_type().query_limit();
-                let w = (aabb.half_extents() + Vector3::repeat(margin)) * 2.0;
+                let w = (aabb.half_extents() + Vector::repeat(margin)) * 2.0;
 
-                node.set_local_translation(Translation3::from(aabb.center().coords));
-                node.set_local_scale(w.x, w.y, w.z);
+                node.set_local_translation(Translation::from(aabb.center().coords));
+
+                #[cfg(feature = "dim2")]
+                    node.set_local_scale(w.x, w.y);
+                #[cfg(feature = "dim3")]
+                    node.set_local_scale(w.x, w.y, w.z);
             }
         }
 
@@ -454,7 +574,7 @@ impl GraphicsManager {
             let hit = inter.fold(1000.0, |t, hit| hit.1.toi.min(t));
             let p1 = ray.origin;
             let p2 = ray.origin + ray.dir * hit;
-            window.draw_line(&p1, &p2, &Point3::new(1.0, 0.0, 0.0));
+            window.draw_graphics_line(&p1, &p2, &Point3::new(1.0, 0.0, 0.0));
         }
     }
 
@@ -481,37 +601,22 @@ impl GraphicsManager {
 //     }
 // }
 
-    pub fn switch_cameras(&mut self) {
-        if self.curr_is_arc_ball {
-            self.first_person
-                .look_at(self.arc_ball.eye(), self.arc_ball.at());
-        } else {
-            self.arc_ball
-                .look_at(self.first_person.eye(), self.first_person.at());
-        }
-
-        self.curr_is_arc_ball = !self.curr_is_arc_ball;
+    pub fn camera(&self) -> &Camera {
+        &self.camera
     }
 
-    pub fn camera<'a>(&'a self) -> &'a Camera {
-        if self.curr_is_arc_ball {
-            &self.arc_ball as &'a Camera
-        } else {
-            &self.first_person as &'a Camera
-        }
+    pub fn camera_mut(&mut self) -> &mut Camera {
+        &mut self.camera
     }
 
-    pub fn camera_mut<'a>(&'a mut self) -> &'a mut Camera {
-        if self.curr_is_arc_ball {
-            &mut self.arc_ball as &'a mut Camera
-        } else {
-            &mut self.first_person as &'a mut Camera
-        }
+    #[cfg(feature = "dim3")]
+    pub fn look_at(&mut self, eye: Point<f32>, at: Point<f32>) {
+        self.camera.look_at(eye, at);
     }
 
-    pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {
-        self.arc_ball.look_at(eye, at);
-        self.first_person.look_at(eye, at);
+    #[cfg(feature = "dim2")]
+    pub fn look_at(&mut self, at: Point<f32>, zoom: f32) {
+        self.camera.look_at(at, zoom);
     }
 
     pub fn body_nodes(&self, handle: BodyHandle) -> Option<&Vec<Node>> {

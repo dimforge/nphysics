@@ -11,10 +11,14 @@ nalgebra   = "0.18"
 ncollide2d = "0.19"
 
 [dependencies.nphysics_testbed2d]
-path = "../nphysics_testbed2d"
+path = "../build/nphysics_testbed2d"
 
 [dependencies.nphysics2d]
 path = "../build/nphysics2d"
+
+[[bin]]
+name = "all_examples2"
+path = "./all_examples2.rs"
 
 [[bin]]
 name = "balls2"

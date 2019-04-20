@@ -11,7 +11,7 @@ use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -37,9 +37,8 @@ fn main() {
     /*
      * Run the simulation.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
     testbed.look_at(Point2::new(0.0, -5.0), 25.0);
-    testbed.run();
 }
 
 fn add_ragdolls(world: &mut World<f32>) {
@@ -121,4 +120,11 @@ fn add_ragdolls(world: &mut World<f32>) {
                 .build(world);
         }
     }
+}
+
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
+    testbed.run();
 }

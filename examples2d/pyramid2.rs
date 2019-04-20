@@ -10,7 +10,7 @@ use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -31,7 +31,7 @@ fn main() {
     /*
      * Create the boxes
      */
-    let num = 25;
+    let num = 20;
     let rad = 0.1;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
@@ -62,6 +62,12 @@ fn main() {
     /*
      * Run the simulation.
      */
-    let testbed = Testbed::new(world);
+    testbed_set_world(world);
+}
+
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

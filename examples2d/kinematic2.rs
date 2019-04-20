@@ -12,7 +12,7 @@ use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
@@ -105,7 +105,7 @@ fn main() {
     /*
      * Setup a callback to control the platform.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_world(world);
     testbed.add_callback(move |world, _, time| {
         let mut world = world.get_mut();
         if let Some(platform) = world.rigid_body_mut(platform_handle) {
@@ -129,5 +129,11 @@ fn main() {
      * Run the simulation.
      */
     testbed.look_at(Point2::new(0.0, -5.0), 60.0);
+}
+
+
+fn main() {
+    let mut testbed = Testbed::new_empty();
+    init_world(&mut testbed);
     testbed.run();
 }

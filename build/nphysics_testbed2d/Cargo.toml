@@ -1,8 +1,8 @@
 [package]
-name    = "nphysics_testbed3d"
+name    = "nphysics_testbed2d"
 version = "0.5.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
-description = "Testbed for the 3-dimensional physics engine in Rust."
+description = "Testbed for the 2-dimensional physics engine in Rust."
 homepage = "http://nphysics.org"
 repository = "https://github.com/rustsim/nphysics"
 keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
@@ -11,7 +11,13 @@ edition = "2018"
 
 
 [lib]
-name = "nphysics_testbed3d"
+name = "nphysics_testbed2d"
+path = "../../src_testbed/lib.rs"
+required-features = [ "dim2" ]
+
+[features]
+default = [ "dim2" ]
+dim2 = [ ]
 
 [dependencies]
 log        = { version = "0.4", optional = true }
@@ -21,8 +27,8 @@ time       = "0.1"
 rand       = "0.6"
 nalgebra   = "0.18"
 kiss3d     = { version = "0.19", features = [ "conrod" ] }
-ncollide3d = "0.19"
+ncollide2d = "0.19"
 
-[dependencies.nphysics3d]
-path = "../build/nphysics3d"
+[dependencies.nphysics2d]
+path = "../nphysics2d"
 version = "0.11"

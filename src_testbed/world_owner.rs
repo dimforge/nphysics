@@ -1,4 +1,4 @@
-use nphysics2d::world::World;
+use nphysics::world::World;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::sync::Arc;
