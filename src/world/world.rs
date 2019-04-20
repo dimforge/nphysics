@@ -307,6 +307,7 @@ impl<N: RealField> World<N> {
             b.set_companion_id(0);
         }
 
+        self.counters.solver_started();
         self.solver.step(
             &mut self.counters,
             &mut self.bodies,
@@ -323,6 +324,7 @@ impl<N: RealField> World<N> {
                 b.integrate(&self.params)
             }
         }
+        self.counters.solver_completed();
 
 
         /*
@@ -344,10 +346,14 @@ impl<N: RealField> World<N> {
          * body positions.
          *
          */
-        self.cworld.sync_colliders(&self.bodies);
         self.counters.collision_detection_started();
+        self.cworld.sync_colliders(&self.bodies);
+        self.counters.broad_phase_started();
         self.cworld.perform_broad_phase();
+        self.counters.broad_phase_completed();
+        self.counters.narrow_phase_started();
         self.cworld.perform_narrow_phase();
+        self.counters.narrow_phase_completed();
         self.counters.collision_detection_completed();
 
         /*

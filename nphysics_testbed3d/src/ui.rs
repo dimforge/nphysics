@@ -19,6 +19,8 @@ widget_ids! {
         title_demos_list,
         title_slider_vel_iter,
         title_slider_pos_iter,
+        title_warmstart_coeff,
+        title_frequency,
         demos_list,
         button_pause,
         button_single_step,
@@ -26,6 +28,8 @@ widget_ids! {
         button_quit,
         slider_vel_iter,
         slider_pos_iter,
+        slider_warmstart_coeff,
+        slider_frequency,
         toggle_sleep,
         toggle_warm_starting,
         toggle_time_of_impact,
@@ -118,6 +122,8 @@ impl TestbedUi {
 
         let curr_vel_iters = world.integration_parameters().max_velocity_iterations;
         let curr_pos_iters = world.integration_parameters().max_position_iterations;
+        let curr_warmstart_coeff = world.integration_parameters().warmstart_coeff;
+        let curr_frequency = (1.0 / world.integration_parameters().dt).round() as usize;
 
 
         conrod::widget::Text::new("Vel. Iters.:")
@@ -130,9 +136,6 @@ impl TestbedUi {
             .down_from(self.ids.title_slider_vel_iter, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_vel_iter, &mut ui) {
-            for body in world.bodies_mut() {
-                body.activate();
-            }
             world.integration_parameters_mut().max_velocity_iterations = val as usize;
         }
 
@@ -147,15 +150,41 @@ impl TestbedUi {
             .down_from(self.ids.title_slider_pos_iter, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_pos_iter, &mut ui) {
-            for body in world.bodies_mut() {
-                body.activate();
-            }
             world.integration_parameters_mut().max_position_iterations = val as usize;
+        }
+
+
+
+        conrod::widget::Text::new("Warm-start coeff.:")
+            .down_from(self.ids.slider_pos_iter, VSPACE)
+            .set(self.ids.title_warmstart_coeff, &mut ui);
+
+        for val in conrod::widget::Slider::new(curr_warmstart_coeff as f32, 0.0, 1.0)
+            .label(&format!("{:.2}", curr_warmstart_coeff))
+            .align_middle_x_of(self.ids.canvas)
+            .down_from(self.ids.title_warmstart_coeff, TITLE_VSPACE)
+            .w_h(ELEMENT_W, ELEMENT_H)
+            .set(self.ids.slider_warmstart_coeff, &mut ui) {
+            world.integration_parameters_mut().warmstart_coeff = val;
+        }
+
+
+        conrod::widget::Text::new("Frequency:")
+            .down_from(self.ids.slider_warmstart_coeff, VSPACE)
+            .set(self.ids.title_frequency, &mut ui);
+
+        for val in conrod::widget::Slider::new(curr_frequency as f32, 1.0, 120.0)
+            .label(&format!("{:.2}Hz", curr_frequency))
+            .align_middle_x_of(self.ids.canvas)
+            .down_from(self.ids.title_frequency, TITLE_VSPACE)
+            .w_h(ELEMENT_W, ELEMENT_H)
+            .set(self.ids.slider_frequency, &mut ui) {
+            world.integration_parameters_mut().dt = 1.0 / val.round();
         }
 
         let toggle_list = [
             ("Sleep", self.ids.toggle_sleep, TestbedStateFlags::SLEEP),
-            ("Warm Starting", self.ids.toggle_warm_starting, TestbedStateFlags::WARM_STARTING),
+//            ("Warm Starting", self.ids.toggle_warm_starting, TestbedStateFlags::WARM_STARTING),
 //            ("Time of Impact", self.ids.toggle_time_of_impact, TestbedStateFlags::TIME_OF_IMPACT),
 //            ("Sub-Stepping", self.ids.toggle_sub_stepping, TestbedStateFlags::SUB_STEPPING),
             ("", self.ids.separator2, TestbedStateFlags::NONE),
@@ -170,7 +199,7 @@ impl TestbedUi {
             ("Profile", self.ids.toggle_profile, TestbedStateFlags::PROFILE),
         ];
 
-        toggles(&toggle_list, self.ids.canvas, self.ids.slider_pos_iter, &mut ui, &mut state.flags);
+        toggles(&toggle_list, self.ids.canvas, self.ids.slider_frequency, &mut ui, &mut state.flags);
 
         for _press in conrod::widget::Button::new()
             .label("Pause (T)")

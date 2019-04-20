@@ -21,7 +21,7 @@ use ncollide3d::query::{self, Ray};
 use ncollide3d::utils::GenerationalId;
 use ncollide3d::world::CollisionGroups;
 use nphysics3d::joint::{ConstraintHandle, MouseConstraint};
-use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle};
+use nphysics3d::object::{BodyHandle, BodyPartHandle, ColliderHandle, ActivationStatus};
 use nphysics3d::world::World;
 use nphysics3d::math::ForceType;
 use crate::world_owner::WorldOwner;
@@ -89,18 +89,17 @@ bitflags! {
     pub struct TestbedStateFlags: u32 {
         const NONE = 0;
         const SLEEP = 1 << 0;
-        const WARM_STARTING = 1 << 1;
-        const TIME_OF_IMPACT = 1 << 2;
-        const SUB_STEPPING = 1 << 3;
-        const SHAPES = 1 << 4;
-        const JOINTS = 1 << 5;
-        const AABBS = 1 << 6;
-        const CONTACT_POINTS = 1 << 7;
-        const CONTACT_NORMALS = 1 << 8;
-        const CENTER_OF_MASSES = 1 << 9;
-        const WIREFRAME = 1 << 10;
-        const STATISTICS = 1 << 11;
-        const PROFILE = 1 << 12;
+        const TIME_OF_IMPACT = 1 << 1;
+        const SUB_STEPPING = 1 << 2;
+        const SHAPES = 1 << 3;
+        const JOINTS = 1 << 4;
+        const AABBS = 1 << 5;
+        const CONTACT_POINTS = 1 << 6;
+        const CONTACT_NORMALS = 1 << 7;
+        const CENTER_OF_MASSES = 1 << 8;
+        const WIREFRAME = 1 << 9;
+        const STATISTICS = 1 << 10;
+        const PROFILE = 1 << 11;
     }
 }
 
@@ -152,7 +151,8 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
-        let flags = TestbedStateFlags::empty();
+        let mut flags = TestbedStateFlags::SLEEP;
+
         let ui = TestbedUi::new(&mut window);
         let state = TestbedState {
             running: RunMode::Running,
@@ -338,7 +338,8 @@ impl State for Testbed {
 
         // Handle UI actions.
         {
-            if self.state.action_flags.contains(TestbedActionFlags::EXAMPLE_CHANGED) {
+            let example_changed = self.state.action_flags.contains(TestbedActionFlags::EXAMPLE_CHANGED);
+            if example_changed {
                 self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, false);
                 self.clear(window);
                 self.builders[self.state.selected_example].1(self);
@@ -354,7 +355,7 @@ impl State for Testbed {
                 }
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::WIREFRAME) !=
+            if example_changed || self.state.prev_flags.contains(TestbedStateFlags::WIREFRAME) !=
                 self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
 
                 for co in world.colliders() {
@@ -375,12 +376,16 @@ impl State for Testbed {
 
             if self.state.prev_flags.contains(TestbedStateFlags::SLEEP) !=
                 self.state.flags.contains(TestbedStateFlags::SLEEP) {
-                unimplemented!()
-            }
-
-            if self.state.prev_flags.contains(TestbedStateFlags::WARM_STARTING) !=
-                self.state.flags.contains(TestbedStateFlags::WARM_STARTING) {
-                unimplemented!()
+                if self.state.flags.contains(TestbedStateFlags::SLEEP) {
+                    for body in world.bodies_mut() {
+                        body.set_deactivation_threshold(Some(ActivationStatus::default_threshold()))
+                    }
+                } else {
+                    for body in world.bodies_mut() {
+                        body.activate();
+                        body.set_deactivation_threshold(None)
+                    }
+                }
             }
 
             if self.state.prev_flags.contains(TestbedStateFlags::TIME_OF_IMPACT) !=
@@ -403,7 +408,7 @@ impl State for Testbed {
                 unimplemented!()
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::AABBS) !=
+            if example_changed || self.state.prev_flags.contains(TestbedStateFlags::AABBS) !=
                 self.state.flags.contains(TestbedStateFlags::AABBS) {
                 if self.state.flags.contains(TestbedStateFlags::AABBS) {
                     self.graphics.show_aabbs(&mut world, window)
@@ -414,16 +419,6 @@ impl State for Testbed {
 
             if self.state.prev_flags.contains(TestbedStateFlags::CENTER_OF_MASSES) !=
                 self.state.flags.contains(TestbedStateFlags::CENTER_OF_MASSES) {
-                unimplemented!()
-            }
-
-            if self.state.prev_flags.contains(TestbedStateFlags::STATISTICS) !=
-                self.state.flags.contains(TestbedStateFlags::STATISTICS) {
-                unimplemented!()
-            }
-
-            if self.state.prev_flags.contains(TestbedStateFlags::PROFILE) !=
-                self.state.flags.contains(TestbedStateFlags::PROFILE) {
                 unimplemented!()
             }
         }
@@ -735,22 +730,62 @@ impl State for Testbed {
         let color = Point3::new(0.0, 0.0, 0.0);
 
         if true {
-            //running != RunMode::Stop {
-            window.draw_text(
-                &format!(
-                    "Simulation time: {:.*}sec.",
-                    4,
-                    self.world.get().performance_counters().step_time()
-                )[..],
-                &Point2::origin(),
-                60.0,
-                &self.font,
-                &color,
-            );
+            let world = self.world.get();
+            let counters = world.performance_counters();
+
+            let profile = format!(
+            r#"Total: {:.2}ms
+Collision detection: {:.2}ms
+|_ Broad-phase: {:.2}ms
+   Narrow-phase: {:.2}ms
+Island computation: {:.2}ms
+Solver: {:.2}ms
+|_ Assembly: {:.2}ms
+   Velocity resolution: {:.2}ms
+   Position resolution: {:.2}ms"#,
+            counters.step_time() * 1000.0,
+            counters.collision_detection_time() * 1000.0,
+            counters.broad_phase_time() * 1000.0,
+            counters.narrow_phase_time() * 1000.0,
+            counters.island_construction_time() * 1000.0,
+            counters.solver_time() * 1000.0,
+            counters.assembly_time() * 1000.0,
+            counters.velocity_resolution_time() * 1000.0,
+            counters.position_resolution_time() * 1000.0);
+
+//            let stats = format!(
+//                r#"Total: {:.2}ms
+//Collision detection: {:.2}ms
+//|_ Broad-phase: {:.2}ms
+//   Narrow-phase: {:.2}ms
+//Island computation: {:.2}ms
+//Solver: {:.2}ms
+//|_ Assembly: {:.2}ms
+//   Velocity resolution: {:.2}ms
+//   Position resolution: {:.2}ms"#,
+//                counters.step_time() * 1000.0,
+//                counters.collision_detection_time() * 1000.0,
+//                counters.broad_phase_time() * 1000.0,
+//                counters.narrow_phase_time() * 1000.0,
+//                counters.island_construction_time() * 1000.0,
+//                counters.solver_time() * 1000.0,
+//                counters.assembly_time() * 1000.0,
+//                counters.velocity_resolution_time() * 1000.0,
+//                counters.position_resolution_time() * 1000.0);
+
+            if self.state.flags.contains(TestbedStateFlags::PROFILE) {
+                window.draw_text(
+                    &profile,
+                    &Point2::origin(),
+                    45.0,
+                    &self.font,
+                    &color,
+                );
+            }
         } else {
             window.draw_text("Paused", &Point2::origin(), 60.0, &self.font, &color);
         }
-        window.draw_text(CONTROLS, &Point2::new(0.0, 75.0), 40.0, &self.font, &color);
+//        window.draw_text(CONTROLS, &Point2::new(0.0, 75.0), 40.0, &self.font, &color);
     }
 }
 
