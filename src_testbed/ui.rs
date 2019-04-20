@@ -189,7 +189,7 @@ impl TestbedUi {
 //            ("Sub-Stepping", self.ids.toggle_sub_stepping, TestbedStateFlags::SUB_STEPPING),
             ("", self.ids.separator2, TestbedStateFlags::NONE),
 //            ("Shapes", self.ids.toggle_shapes, TestbedStateFlags::SHAPES),
-            ("Joints", self.ids.toggle_joints, TestbedStateFlags::JOINTS),
+//            ("Joints", self.ids.toggle_joints, TestbedStateFlags::JOINTS),
             ("AABBs", self.ids.toggle_aabbs, TestbedStateFlags::AABBS),
             ("Contacts", self.ids.toggle_contact_points, TestbedStateFlags::CONTACT_POINTS),
 //            ("Contact Normals", self.ids.toggle_contact_normals, TestbedStateFlags::CONTACT_NORMALS),
@@ -201,8 +201,13 @@ impl TestbedUi {
 
         toggles(&toggle_list, self.ids.canvas, self.ids.slider_frequency, &mut ui, &mut state.flags);
 
+        let label = if state.running == RunMode::Stop {
+            "Resume (T)"
+        } else {
+            "Pause (T)"
+        };
         for _press in conrod::widget::Button::new()
-            .label("Pause (T)")
+            .label(label)
             .align_middle_x_of(self.ids.canvas)
             .down_from(self.ids.toggle_profile, VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
@@ -232,7 +237,7 @@ impl TestbedUi {
 
         #[cfg(not(target_arch = "wasm32"))]
         for _press in conrod::widget::Button::new()
-            .label("Quit (ESC)")
+            .label("Quit (Esc)")
             .align_middle_x_of(self.ids.canvas)
             .down_from(self.ids.button_restart, VSPACE)
             .set(self.ids.button_quit, &mut ui) {

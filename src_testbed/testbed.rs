@@ -9,7 +9,7 @@ use std::sync::{Arc, RwLock};
 use crate::engine::{GraphicsWindow, GraphicsManager};
 use kiss3d::event::Event;
 use kiss3d::camera::Camera;
-use kiss3d::event::{Action, Key, Modifiers, WindowEvent};
+use kiss3d::event::{Action, Key, Modifiers, WindowEvent, MouseButton};
 use kiss3d::light::Light;
 use kiss3d::loader::obj;
 use kiss3d::planar_camera::PlanarCamera;
@@ -307,6 +307,9 @@ impl Testbed {
                 }
             }
             WindowEvent::Key(Key::S, Action::Release, _) => self.state.running = RunMode::Step,
+            WindowEvent::Key(Key::R, Action::Release, _) => {
+                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+            },
             _ => {}
         }
 
@@ -315,8 +318,12 @@ impl Testbed {
 
     #[cfg(feature = "dim2")]
     fn handle_special_event(&mut self, window: &mut Window, mut event: Event) {
+        if window.is_conrod_ui_capturing_mouse() {
+            return;
+        }
+
         match event.value {
-            WindowEvent::MouseButton(_, Action::Press, modifier) => {
+            WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
                 let physics_world = &mut self.world.get_mut();
                 let all_groups = &CollisionGroups::new();
                 for b in physics_world
@@ -342,7 +349,7 @@ impl Testbed {
                     }
 
                     self.state.grabbed_object = None;
-                } else if modifier.contains(Modifiers::Control) {
+                } else if !modifier.contains(Modifiers::Control) {
                     if let Some(body) = self.state.grabbed_object {
                         if let Some(joint) = self.state.grabbed_object_constraint {
                             let _ = physics_world.remove_constraint(joint);
@@ -378,7 +385,7 @@ impl Testbed {
                     self.state.grabbed_object = None;
                 }
             }
-            WindowEvent::MouseButton(_, Action::Release, _) => {
+            WindowEvent::MouseButton(MouseButton::Button1, Action::Release, _) => {
                 let physics_world = &mut self.world.get_mut();
                 if let Some(body) = self.state.grabbed_object {
                     for n in self
@@ -433,8 +440,12 @@ impl Testbed {
 
     #[cfg(feature = "dim3")]
     fn handle_special_event(&mut self, window: &mut Window, mut event: Event) {
+        if window.is_conrod_ui_capturing_mouse() {
+            return;
+        }
+
         match event.value {
-            WindowEvent::MouseButton(_, Action::Press, modifier) => {
+            WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
                 let physics_world = &mut self.world.get_mut();
 
                 if modifier.contains(Modifiers::Alt) {
@@ -491,7 +502,7 @@ impl Testbed {
                     }
 
                     event.inhibited = true;
-                } else if modifier.contains(Modifiers::Control) {
+                } else if !modifier.contains(Modifiers::Control) {
                     match self.state.grabbed_object {
                         Some(body) => for n in self
                             .graphics
@@ -566,7 +577,7 @@ impl Testbed {
                     event.inhibited = true;
                 }
             }
-            WindowEvent::MouseButton(_, Action::Release, _) => {
+            WindowEvent::MouseButton(MouseButton::Button1, Action::Release, _) => {
                 if let Some(body_part) = self.state.grabbed_object {
                     for n in self
                         .graphics
@@ -612,8 +623,7 @@ impl Testbed {
                     }
                 }
 
-                event.inhibited = modifiers.contains(Modifiers::Control)
-                    || modifiers.contains(Modifiers::Shift);
+                event.inhibited = modifiers.contains(Modifiers::Shift);
             }
             _ => {}
         }

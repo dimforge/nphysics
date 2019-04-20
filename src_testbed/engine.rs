@@ -69,15 +69,19 @@ pub struct GraphicsManager {
 
 impl GraphicsManager {
     pub fn new() -> GraphicsManager {
+        let mut camera;
+
         #[cfg(feature = "dim3")]
-            let camera = Camera::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
+            {
+                camera = Camera::new(Point3::new(10.0, 10.0, 10.0), Point3::new(0.0, 0.0, 0.0));
+                camera.set_rotate_modifiers(Some(kiss3d::event::Modifiers::Control));
+            }
 
         #[cfg(feature = "dim2")]
-            let camera = {
-                let mut camera = Camera::new();
+            {
+                camera = Camera::new();
                 camera.set_zoom(50.0);
-                camera
-            };
+            }
 
         let mut rng: XorShiftRng = SeedableRng::from_seed([0; 16]);
 
