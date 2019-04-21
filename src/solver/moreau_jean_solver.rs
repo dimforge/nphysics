@@ -115,7 +115,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
 
             self.ext_vels
                 .rows_mut(id, accs.len())
-                .axpy(params.dt, &accs, N::zero());
+                .axpy(params.dt(), &accs, N::zero());
         }
 
         /*

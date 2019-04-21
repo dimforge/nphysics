@@ -83,7 +83,7 @@ impl<N: RealField> SignoriniModel<N> {
         // Handle predictive contact if no penetration.
         let depth = c.contact.depth + data1.margin() + data2.margin();
         if depth < N::zero() {
-            rhs += (-depth) / params.dt;
+            rhs += (-depth) * params.inv_dt();
         }
 
         // FIXME: would it be more efficient to consider the contact active iff. the rhs

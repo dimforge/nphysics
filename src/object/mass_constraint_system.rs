@@ -400,7 +400,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 let strain = total_strain - constraint.plastic_strain;
 
                 if strain.abs() > self.plasticity_threshold {
-                    let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
+                    let coeff = params.dt() * params.inv_dt().min(self.plasticity_creep);
                     constraint.plastic_strain += strain * coeff;
                 }
 
@@ -412,7 +412,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
                 constraint.max_force = stiffness * err_with_plasticity.abs();
 
                 if err_with_plasticity.abs() > params.allowed_linear_error {
-                    constraint.target_vel = params.erp * err_with_plasticity / params.dt;
+                    constraint.target_vel = params.erp * err_with_plasticity * params.inv_dt();
                 } else {
                     constraint.target_vel = N::zero();
                 }
@@ -487,7 +487,7 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(params.dt, &self.velocities, N::one())
+        self.positions.axpy(params.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {

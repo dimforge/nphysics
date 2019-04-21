@@ -357,7 +357,7 @@ impl<N: RealField> MassSpringSystem<N> {
                 // Also the damping matrix would be non-zero:
                 //
                 // let damping_matrix = ll * damping;
-                // let damping_stiffness = -damping_matrix * params.dt + stiffness * (params.dt * params.dt).
+                // let damping_stiffness = -damping_matrix * params.dt() + stiffness * (params.dt() * params.dt()).
 
                 // Add to the mass matrix.
                 let damping_stiffness = stiffness * (dt * dt);
@@ -410,7 +410,7 @@ impl<N: RealField> MassSpringSystem<N> {
             let strain = total_strain - spring.plastic_strain;
 
             if strain.abs() > self.plasticity_threshold {
-                let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
+                let coeff = params.dt() * params.inv_dt().min(self.plasticity_creep);
                 spring.plastic_strain += strain * coeff;
             }
 
@@ -584,7 +584,7 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(params.dt, &self.velocities, N::one());
+        self.positions.axpy(params.dt(), &self.velocities, N::one());
     }
 
     fn activate_with_energy(&mut self, energy: N) {

@@ -4,7 +4,9 @@ use na::{self, RealField};
 #[derive(Clone)]
 pub struct IntegrationParameters<N: RealField> {
     /// The timestep (default: `1.0 / 60.0`)
-    pub dt: N,
+    dt: N,
+    /// The inverse of `dt`.
+    inv_dt: N,
     /// The total elapsed time in the physics world.
     ///
     /// This is the accumulation of the `dt` of all the calls to `world.step()`.
@@ -55,6 +57,11 @@ impl<N: RealField> IntegrationParameters<N> {
         IntegrationParameters {
             t: N::zero(),
             dt,
+            inv_dt: if dt == N::zero() {
+                N::zero()
+            } else {
+                N::one() / dt
+            },
             erp,
             warmstart_coeff,
             restitution_velocity_threshold,
@@ -65,6 +72,36 @@ impl<N: RealField> IntegrationParameters<N> {
             max_stabilization_multiplier,
             max_velocity_iterations,
             max_position_iterations,
+        }
+    }
+
+    #[inline(always)]
+    pub fn dt(&self) -> N {
+        self.dt
+    }
+
+    #[inline(always)]
+    pub fn inv_dt(&self) -> N {
+        self.inv_dt
+    }
+
+    #[inline]
+    pub fn set_dt(&mut self, dt: N) {
+        self.dt = dt;
+        if dt == N::zero() {
+            self.inv_dt = N::zero()
+        } else {
+            self.inv_dt = N::one() / dt
+        }
+    }
+
+    #[inline]
+    pub fn set_inv_dt(&mut self, inv_dt: N) {
+        self.inv_dt = inv_dt;
+        if inv_dt == N::zero() {
+            self.dt = N::zero()
+        } else {
+            self.dt = N::one() / inv_dt
         }
     }
 }

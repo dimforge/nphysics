@@ -61,7 +61,7 @@ impl<N: RealField> Joint<N> for CartesianJoint<N> {
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.position += Vector::from_row_slice(&vels[..DIM]) * params.dt;
+        self.position += Vector::from_row_slice(&vels[..DIM]) * params.dt();
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {

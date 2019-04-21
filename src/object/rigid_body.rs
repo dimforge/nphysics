@@ -298,12 +298,14 @@ impl<N: RealField> RigidBody<N> {
         &self.velocity
     }
 
-    #[inline]
-    fn apply_displacement(&mut self, displacement: &Velocity<N>) {
-        let rotation = Rotation::new(displacement.angular);
-        let translation = Translation::from(displacement.linear);
+    fn displacement_wrt_com(&self, disp: &Velocity<N>) -> Isometry<N> {
         let shift = Translation::from(self.com.coords);
-        let disp = translation * shift * rotation * shift.inverse();
+        shift * disp.to_transform() * shift.inverse()
+    }
+
+    #[inline]
+    fn apply_displacement(&mut self, disp: &Velocity<N>) {
+        let disp = self.displacement_wrt_com(disp);
         let new_pos = disp * self.position;
         self.set_position(new_pos);
     }
@@ -409,7 +411,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
 
     #[inline]
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
-        let disp = self.velocity * params.dt;
+        let disp = self.velocity * params.dt();
         self.apply_displacement(&disp);
     }
 
@@ -680,6 +682,11 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn position(&self) -> Isometry<N> {
         self.position
+    }
+
+    fn predicted_position(&self, dt: N) -> Isometry<N> {
+        let disp = self.displacement_wrt_com(&(self.velocity * dt));
+        disp * self.position
     }
 
     #[inline]

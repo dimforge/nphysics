@@ -182,7 +182,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.offset += vels[0] * params.dt
+        self.offset += vels[0] * params.dt()
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {

@@ -505,12 +505,10 @@ impl GraphicsManager {
         for (_, ns) in self.b2sn.iter() {
             for n in ns.iter() {
                 let handle = n.collider();
-                if let Some(collider) = world.collider(handle) {
-                    let aabb = collider.shape().aabb(collider.position());
-                    // FIXME: nphysics/ncollide should provide a way to access the
-                    // AABB actually used by the broad-phase.
-                    let margin = collider.query_type().query_limit();
-                    let w = (aabb.half_extents() + Vector::repeat(margin)) * 2.0;
+                let collider = world.collider(handle);
+                let aabb = world.collider_world().broad_phase_aabb(handle);
+                if let (Some(aabb), Some(collider)) = (aabb, collider) {
+                    let w = aabb.half_extents();
 
                     let color = if let Some(c) = self.c2color.get(&handle).cloned() {
                         c

@@ -1,5 +1,5 @@
 use na::storage::Storage;
-use na::{self, Isometry3, RealField, U6, UnitQuaternion, Vector, Vector3, Vector6};
+use na::{self, Isometry3, Translation3, RealField, Point3, U6, UnitQuaternion, Vector, Vector3, Vector6};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
@@ -44,6 +44,18 @@ impl<N: RealField> Velocity3<N> {
         let linear = delta.translation.vector / time;
         let angular = delta.rotation.scaled_axis() / time;
         Self::new(linear, angular)
+    }
+
+    /// Compute the displacement due to this velocity integrated during the time `dt`.
+    pub fn integrate(&self, dt: N) -> Isometry3<N> {
+        (*self * dt).to_transform()
+    }
+
+    /// Compute the displacement due to this velocity integrated during a time equal to `1.0`.
+    ///
+    /// This is equivalent to `self.integrate(1.0)`.
+    pub fn to_transform(&self) -> Isometry3<N> {
+        Isometry3::new(self.linear, self.angular)
     }
 
     /// Create a zero velocity.

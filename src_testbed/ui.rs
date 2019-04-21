@@ -26,6 +26,8 @@ widget_ids! {
         button_single_step,
         button_restart,
         button_quit,
+        button_prev_example,
+        button_next_example,
         slider_vel_iter,
         slider_pos_iter,
         slider_warmstart_coeff,
@@ -107,12 +109,41 @@ impl TestbedUi {
 //            .mid_top_with_margin_on(self.ids.canvas, 20.0)
             .align_middle_x_of(self.ids.canvas)
             .down_from(self.ids.title_demos_list, TITLE_VSPACE)
+//            .right_from(self.ids.button_prev_example, 0.0)
             .left_justify_label()
-            .w_h(ELEMENT_W, ELEMENT_H)
-            .color(conrod::color::LIGHT_CHARCOAL)
+            .w_h(ELEMENT_W - 20.0, ELEMENT_H)
+            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
             .set(self.ids.demos_list, &mut ui) {
             if selected != state.selected_example {
                 state.selected_example = selected;
+                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+            }
+        }
+
+        for _click in conrod::widget::Button::new()
+            .label("<")
+            .align_middle_x_of(self.ids.canvas)
+            .left_from(self.ids.demos_list, 0.0)
+            .w_h(10.0, ELEMENT_H)
+            .enabled(state.selected_example > 0)
+            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
+            .set(self.ids.button_prev_example, &mut ui) {
+            if state.selected_example > 0 {
+                state.selected_example -= 1;
+                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+            }
+        }
+
+        for _click in conrod::widget::Button::new()
+            .label(">")
+            .align_middle_x_of(self.ids.canvas)
+            .right_from(self.ids.demos_list, 0.0)
+            .w_h(10.0, ELEMENT_H)
+            .enabled(state.selected_example + 1 < state.example_names.len())
+            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
+            .set(self.ids.button_next_example, &mut ui) {
+            if state.selected_example + 1 < state.example_names.len() {
+                state.selected_example += 1;
                 state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
             }
         }
@@ -123,7 +154,7 @@ impl TestbedUi {
         let curr_vel_iters = world.integration_parameters().max_velocity_iterations;
         let curr_pos_iters = world.integration_parameters().max_position_iterations;
         let curr_warmstart_coeff = world.integration_parameters().warmstart_coeff;
-        let curr_frequency = (1.0 / world.integration_parameters().dt).round() as usize;
+        let curr_frequency = world.integration_parameters().inv_dt().round() as usize;
 
 
         conrod::widget::Text::new("Vel. Iters.:")
@@ -173,13 +204,13 @@ impl TestbedUi {
             .down_from(self.ids.slider_warmstart_coeff, VSPACE)
             .set(self.ids.title_frequency, &mut ui);
 
-        for val in conrod::widget::Slider::new(curr_frequency as f32, 1.0, 120.0)
+        for val in conrod::widget::Slider::new(curr_frequency as f32, 0.0, 120.0)
             .label(&format!("{:.2}Hz", curr_frequency))
             .align_middle_x_of(self.ids.canvas)
             .down_from(self.ids.title_frequency, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_frequency, &mut ui) {
-            world.integration_parameters_mut().dt = 1.0 / val.round();
+            world.integration_parameters_mut().set_inv_dt(val.round());
         }
 
         let toggle_list = [
@@ -202,7 +233,7 @@ impl TestbedUi {
         toggles(&toggle_list, self.ids.canvas, self.ids.slider_frequency, &mut ui, &mut state.flags);
 
         let label = if state.running == RunMode::Stop {
-            "Resume (T)"
+            "Start (T)"
         } else {
             "Pause (T)"
         };

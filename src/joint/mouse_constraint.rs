@@ -95,7 +95,7 @@ impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
         let mut i = 0;
         Vector::canonical_basis(|dir| {
             let fdir = ForceDirection::Linear(Unit::new_unchecked(*dir));
-            let mut rhs = -error.dot(&*dir) * params.erp / params.dt;
+            let mut rhs = -error.dot(&*dir) * params.erp * params.inv_dt();
             let geom = helper::constraint_pair_geometry(
                 body1,
                 part1,

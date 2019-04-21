@@ -319,7 +319,7 @@ impl<N: RealField> FEMSurface<N> {
     fn assemble_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
-        let dt = params.dt;
+        let dt = params.dt();
 
         self.accelerations.copy_from(&self.forces);
 
@@ -372,7 +372,7 @@ impl<N: RealField> FEMSurface<N> {
 
             let strain = elt.total_strain - elt.plastic_strain;
             if strain.norm() > self.plasticity_threshold {
-                let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
+                let coeff = params.dt() * params.inv_dt().min(self.plasticity_creep);
                 elt.plastic_strain += strain * coeff;
             }
 
@@ -760,7 +760,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
 
     fn integrate(&mut self, params: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(params.dt, &self.velocities, N::one())
+        self.positions.axpy(params.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {

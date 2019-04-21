@@ -118,12 +118,12 @@ impl<N: RealField> World<N> {
 
     /// Retrieve the timestep used for the integration.
     pub fn timestep(&self) -> N {
-        self.params.dt
+        self.params.dt()
     }
 
     /// Sets the timestep used for the integration.
     pub fn set_timestep(&mut self, dt: N) {
-        self.params.dt = dt;
+        self.params.set_dt(dt);
     }
 
     /// Activate the given body.
@@ -235,7 +235,7 @@ impl<N: RealField> World<N> {
          */
         for b in self.bodies.bodies_mut() {
             b.update_kinematics();
-            b.update_dynamics(self.params.dt);
+            b.update_dynamics(self.params.dt());
         }
 
         let params = &self.params;
@@ -337,7 +337,7 @@ impl<N: RealField> World<N> {
         // updated their kinematics.
         self.bodies.bodies_mut().for_each(|b| {
             b.update_kinematics();
-            b.update_dynamics(params.dt);
+            b.update_dynamics(params.dt());
         });
 
         /*
@@ -366,7 +366,7 @@ impl<N: RealField> World<N> {
             b.clear_update_flags();
         });
 
-        self.params.t += self.params.dt;
+        self.params.t += self.params.dt();
         self.counters.step_completed();
     }
 

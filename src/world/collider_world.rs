@@ -2,7 +2,7 @@ use std::collections::{hash_map, HashMap};
 
 use na::RealField;
 use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
-use ncollide::broad_phase::BroadPhasePairFilter;
+use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter};
 use ncollide::narrow_phase::{Interaction, ContactAlgorithm, ProximityAlgorithm};
 use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
 use ncollide::shape::ShapeHandle;
@@ -278,6 +278,16 @@ impl<N: RealField> ColliderWorld<N> {
     /// Executes the narrow phase of the collision detection pipeline.
     pub fn perform_narrow_phase(&mut self) {
         self.cworld.perform_narrow_phase()
+    }
+
+    /// The broad-phase used by this collider world.
+    pub fn broad_phase(&self) -> &BroadPhase<N, AABB<N>, ColliderHandle> {
+        self.cworld.broad_phase()
+    }
+
+    /// The broad-phase AABB used for this collider.
+    pub fn broad_phase_aabb(&self, handle: ColliderHandle) -> Option<&AABB<N>> {
+        self.cworld.broad_phase_aabb(handle)
     }
 
     /// Iterates through all colliders.

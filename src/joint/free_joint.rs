@@ -58,7 +58,7 @@ impl<N: RealField> Joint<N> for FreeJoint<N> {
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        let disp = Velocity::from_slice(vels) * params.dt;
+        let disp = Velocity::from_slice(vels) * params.dt();
         self.apply_displacement(&disp);
     }
 

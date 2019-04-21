@@ -203,10 +203,14 @@ impl Testbed {
             prev_world.integration_parameters().clone()
         };
 
+        let dt = params.dt();
         self.world = world;
         let mut world = self.world.get_mut();
         *world.integration_parameters_mut() = params;
         world.enable_performance_counters();
+        world.set_timestep(0.0); // Update the internal state so that we can directly visualize things lake AABBs.
+        world.step();
+        world.set_timestep(dt);
         self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
     }
 

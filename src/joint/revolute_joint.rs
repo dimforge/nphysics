@@ -226,7 +226,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
     }
 
     fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.angle += vels[0] * params.dt;
+        self.angle += vels[0] * params.dt();
         self.update_rot();
     }
 
