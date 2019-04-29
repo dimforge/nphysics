@@ -617,7 +617,7 @@ impl Testbed {
                     let (ref ppos, ref pdir) = self.state.grabbed_object_plane;
 
                     if let Some(inter) =
-                    query::ray_internal::plane_toi_with_ray(ppos, pdir, &Ray::new(pos, dir))
+                    query::ray_toi_with_plane(ppos, pdir, &Ray::new(pos, dir))
                     {
                         let joint = physics_world
                             .constraint_mut(joint)

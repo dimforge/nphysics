@@ -3,7 +3,7 @@ extern crate ncollide2d;
 extern crate nphysics2d;
 extern crate nphysics_testbed2d;
 
-use na::Vector2;
+use na::{Vector2, Point2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::joint::{CartesianJoint, PrismaticJoint, RevoluteJoint};
 use nphysics2d::object::{ColliderDesc, MultibodyDesc};
@@ -109,6 +109,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
     testbed.set_world(world);
+    testbed.look_at(Point2::new(0.0, 4.0), 50.0);
 }
 
 

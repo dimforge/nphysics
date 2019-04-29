@@ -7,6 +7,6 @@ members = [ "build/nphysics2d", "build/nphysics_testbed2d", "examples2d",
 #codegen-units = 1
 
 [patch.crates-io]
-kiss3d = { path = "../kiss3d" }
+#kiss3d = { path = "../kiss3d" }
 ncollide3d = { path = "../ncollide-dev/build/ncollide3d" }
 ncollide2d = { path = "../ncollide-dev/build/ncollide2d" }

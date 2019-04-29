@@ -226,7 +226,7 @@ impl TestbedUi {
 //            ("Contact Normals", self.ids.toggle_contact_normals, TestbedStateFlags::CONTACT_NORMALS),
             ("Wireframe", self.ids.toggle_wireframe, TestbedStateFlags::WIREFRAME),
 //            ("Center of Masses", self.ids.toggle_center_of_masses, TestbedStateFlags::CENTER_OF_MASSES),
-            ("Statistics", self.ids.toggle_statistics, TestbedStateFlags::STATISTICS),
+//            ("Statistics", self.ids.toggle_statistics, TestbedStateFlags::STATISTICS),
             ("Profile", self.ids.toggle_profile, TestbedStateFlags::PROFILE),
         ];
 
