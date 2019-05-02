@@ -9,6 +9,7 @@ use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, BodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
+
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum BodyStatus {
@@ -107,6 +108,12 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
             self.activate()
         }
     }
+
+    fn advance(&mut self, time_ratio: N) {
+        unimplemented!()
+    }
+
+    fn step_started(&mut self) { unimplemented!() }
 
     /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);

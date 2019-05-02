@@ -27,12 +27,14 @@ mod plasticity2;
 mod ragdoll2;
 mod sensor2;
 mod polyline2;
+mod ccd2;
 
 fn main() {
     let testbed = Testbed::from_builders(0, vec![
         ("Balls", balls2::init_world),
         ("Boxes", boxes2::init_world),
         ("Capsules", capsules2::init_world),
+        ("CCD", ccd2::init_world),
         ("Collision Groups", collision_groups2::init_world),
         ("CompoundShapes", cross2::init_world),
 //        ("Compound Shapes", compound2::init_world),

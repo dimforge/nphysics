@@ -48,6 +48,9 @@ impl<N: RealField> Body<N> for Ground<N> {
     fn enable_gravity(&mut self, _: bool) {}
 
     #[inline]
+    fn step_started(&mut self) {}
+
+    #[inline]
     fn update_kinematics(&mut self) {}
 
     #[inline]

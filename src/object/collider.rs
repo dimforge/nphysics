@@ -62,6 +62,7 @@ pub struct ColliderData<N: RealField> {
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
     material: MaterialHandle<N>,
+    ccd_enabled: bool,
     user_data: Option<Box<Any + Send + Sync>>,
 }
 
@@ -82,6 +83,7 @@ impl<N: RealField> ColliderData<N> {
             next: None,
             body_status_dependent_ndofs,
             material,
+            ccd_enabled: false,
             user_data: None
         }
     }
@@ -237,6 +239,18 @@ impl<N: RealField> Collider<N> {
         self.query_type().is_proximity_query()
     }
 
+    /// Returns `true` if this collider is subjected to Continuous Collision Detection (CCD).
+    #[inline]
+    pub fn is_ccd_enabled(&self) -> bool {
+        self.0.data().ccd_enabled
+    }
+
+    /// Enable or disable Continuous Collision Detection (CCD) for this collider.
+    #[inline]
+    pub fn enable_ccd(&mut self, enabled: bool) {
+        self.0.data_mut().ccd_enabled = enabled
+    }
+
     /*
      * Original methods from the CollisionObject.
      */
@@ -336,7 +350,8 @@ pub struct ColliderDesc<N: RealField> {
     density: N,
     linear_prediction: N,
     angular_prediction: N,
-    is_sensor: bool
+    is_sensor: bool,
+    ccd_enabled: bool,
 }
 
 impl<N: RealField> ColliderDesc<N> {
@@ -356,7 +371,8 @@ impl<N: RealField> ColliderDesc<N> {
             density: N::zero(),
             linear_prediction,
             angular_prediction,
-            is_sensor: false
+            is_sensor: false,
+            ccd_enabled: false,
         }
     }
 
@@ -393,6 +409,7 @@ impl<N: RealField> ColliderDesc<N> {
         angular_prediction, set_angular_prediction, angular_prediction: N
         sensor, set_is_sensor, is_sensor: bool
         position, set_position, position: Isometry<N>
+        ccd_enabled, set_ccd_enabled, ccd_enabled: bool
     );
 
     #[cfg(feature = "dim3")]
@@ -419,6 +436,7 @@ impl<N: RealField> ColliderDesc<N> {
         [val] get_linear_prediction -> linear_prediction: N
         [val] get_angular_prediction -> angular_prediction: N
         [val] is_sensor -> is_sensor: bool
+        [val] get_ccd_enabled -> ccd_enabled: bool
         [ref] get_position -> position: Isometry<N>
     );
 
@@ -471,6 +489,7 @@ impl<N: RealField> ColliderDesc<N> {
         let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: self.position };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
         let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        data.ccd_enabled = self.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
         Some(cworld.add(pos, self.shape.clone(), self.collision_groups, query, data))
     }
@@ -488,6 +507,7 @@ pub struct DeformableColliderDesc<N: RealField> {
     linear_prediction: N,
     angular_prediction: N,
     is_sensor: bool,
+    ccd_enabled: bool,
     body_parts_mapping: Option<Arc<Vec<usize>>>
 }
 
@@ -510,6 +530,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
             linear_prediction,
             angular_prediction,
             is_sensor: false,
+            ccd_enabled: false,
             body_parts_mapping: None
         }
     }
@@ -547,6 +568,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
         linear_prediction, set_linear_prediction, linear_prediction: N
         angular_prediction, set_angular_prediction, angular_prediction: N
         as_sensor, set_as_sensor, is_sensor: bool
+        ccd_enabled, set_ccd_enabled, ccd_enabled: bool
         body_parts_mapping, set_body_parts_mapping, body_parts_mapping: Option<Arc<Vec<usize>>>
     );
 
@@ -563,6 +585,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
         [val] get_linear_prediction -> linear_prediction: N
         [val] get_angular_prediction -> angular_prediction: N
         [val] get_is_sensor -> is_sensor: bool
+        [val] get_ccd_enabled -> ccd_enabled: bool
     );
 
     /// Builds a deformable collider attached to `parent` into the `world`.
@@ -602,6 +625,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
         let anchor = ColliderAnchor::OnDeformableBody { body, body_parts };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
         let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        data.ccd_enabled = data.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
         cworld.add(Isometry::identity(), self.shape.clone(), self.collision_groups, query, data)
     }

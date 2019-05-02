@@ -21,6 +21,7 @@ use crate::utils::GeneralizedCross;
 pub struct RigidBody<N: RealField> {
     name: String,
     handle: BodyHandle,
+    position0: Isometry<N>,
     position: Isometry<N>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
@@ -49,6 +50,7 @@ impl<N: RealField> RigidBody<N> {
         RigidBody {
             name: String::new(),
             handle,
+            position0: position,
             position,
             velocity: Velocity::zero(),
             local_inertia: inertia,
@@ -424,6 +426,15 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn update_kinematics(&mut self) {
+    }
+
+    fn step_started(&mut self) {
+        self.position0 = self.position;
+    }
+
+    fn advance(&mut self, time_ratio: N) {
+        self.position.translation.vector = self.position0.translation.vector.lerp(&self.position.translation.vector, time_ratio);
+        self.position0 = self.position;
     }
 
     #[allow(unused_variables)] // for params used only in 3D.

@@ -43,7 +43,7 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
-    pub fn sync_colliders(&mut self, bodies: &BodySet<N>) {
+    pub fn sync_colliders(&mut self, dt: N, bodies: &BodySet<N>) {
         let cworld = &mut self.cworld;
         self.colliders_w_parent.retain(|collider_id| {
             // FIXME: update only if the position changed (especially for static bodies).
@@ -62,7 +62,8 @@ impl<N: RealField> ColliderWorld<N> {
                 ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
                     let part = try_ret!(body.part(body_part.1), false);
                     let part_pos = part.position();
-                    Some(part_pos * position_wrt_body_part)
+                    let predicted_part_pos = part.predicted_position(dt);
+                    Some((part_pos * position_wrt_body_part, predicted_part_pos * position_wrt_body_part))
                 }
                 ColliderAnchor::OnDeformableBody { .. } => {
                     None
@@ -70,7 +71,7 @@ impl<N: RealField> ColliderWorld<N> {
             };
 
             match new_pos {
-                Some(pos) => cworld.set_position(*collider_id, pos),
+                Some(pos) => cworld.set_position_with_prediction(*collider_id, pos.0, &pos.1),
                 None => cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1)
             }
 

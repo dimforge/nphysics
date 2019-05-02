@@ -7,6 +7,10 @@ pub struct IntegrationParameters<N: RealField> {
     dt: N,
     /// The inverse of `dt`.
     inv_dt: N,
+    /// If `false`, CCD will be globally disabled independently from collider CCD status.
+    ///
+    /// Default: `true`.
+    pub ccd_enabled: bool,
     /// The total elapsed time in the physics world.
     ///
     /// This is the accumulation of the `dt` of all the calls to `world.step()`.
@@ -53,6 +57,7 @@ impl<N: RealField> IntegrationParameters<N> {
         max_stabilization_multiplier: N,
         max_velocity_iterations: usize,
         max_position_iterations: usize,
+        ccd_enabled: bool,
     ) -> Self {
         IntegrationParameters {
             t: N::zero(),
@@ -72,6 +77,7 @@ impl<N: RealField> IntegrationParameters<N> {
             max_stabilization_multiplier,
             max_velocity_iterations,
             max_position_iterations,
+            ccd_enabled,
         }
     }
 
@@ -130,6 +136,7 @@ impl<N: RealField> Default for IntegrationParameters<N> {
             na::convert(0.2),
             8,
             3,
+            true,
         )
     }
 }

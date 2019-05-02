@@ -502,9 +502,7 @@ impl GraphicsManager {
                 let handle = n.collider();
                 let collider = world.collider(handle);
                 let aabb = world.collider_world().broad_phase_aabb(handle);
-                if let (Some(aabb), Some(collider)) = (aabb, collider) {
-                    let w = aabb.half_extents();
-
+                if let (Some(_), Some(collider)) = (aabb, collider) {
                     let color = if let Some(c) = self.c2color.get(&handle).cloned() {
                         c
                     } else {
@@ -515,11 +513,6 @@ impl GraphicsManager {
                         let mut cube = window.add_rectangle(1.0, 1.0);
                     #[cfg(feature = "dim3")]
                         let mut cube = window.add_cube(1.0, 1.0, 1.0);
-                    cube.set_local_translation(Translation::from(aabb.center().coords));
-                    #[cfg(feature = "dim2")]
-                        cube.set_local_scale(w.x, w.y);
-                    #[cfg(feature = "dim3")]
-                        cube.set_local_scale(w.x, w.y, w.z);
                     cube.set_surface_rendering_activation(false);
                     cube.set_lines_width(5.0);
                     cube.set_color(color.x, color.y, color.z);
@@ -549,12 +542,10 @@ impl GraphicsManager {
         }
 
         for (handle, node) in &mut self.aabbs {
-            if let Some(collider) = world.collider(*handle) {
-                let aabb = collider.shape().aabb(collider.position());
-                // FIXME: nphysics/ncollide should provide a way to access the
-                // AABB actually used by the broad-phase.
-                let margin = collider.query_type().query_limit();
-                let w = (aabb.half_extents() + Vector::repeat(margin)) * 2.0;
+            let collider = world.collider(*handle);
+            let aabb = world.collider_world().broad_phase_aabb(*handle);
+            if let (Some(aabb), Some(collider)) = (aabb, collider) {
+                let w = aabb.half_extents() * 2.0;
 
                 node.set_local_translation(Translation::from(aabb.center().coords));
 

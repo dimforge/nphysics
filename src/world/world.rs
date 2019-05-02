@@ -2,7 +2,9 @@ use slab::Slab;
 
 use na::{self, RealField};
 use ncollide;
+use ncollide::query;
 use ncollide::events::{ContactEvents, ProximityEvents};
+use ncollide::narrow_phase::Interaction;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
@@ -234,6 +236,7 @@ impl<N: RealField> World<N> {
          *
          */
         for b in self.bodies.bodies_mut() {
+            b.step_started();
             b.update_kinematics();
             b.update_dynamics(self.params.dt());
         }
@@ -245,7 +248,7 @@ impl<N: RealField> World<N> {
         });
 
         for b in self.bodies.bodies_mut() {
-            b.update_acceleration(&self.gravity, &self.params);
+            b.update_acceleration(&self.gravity, params);
         }
 
         /*
@@ -254,7 +257,7 @@ impl<N: RealField> World<N> {
          * manually some bodies.
          */
         self.cworld.clear_events();
-        self.cworld.sync_colliders(&self.bodies);
+        self.cworld.sync_colliders(params.dt(), &self.bodies);
         self.cworld.perform_broad_phase();
         self.cworld.perform_narrow_phase();
 
@@ -289,9 +292,9 @@ impl<N: RealField> World<N> {
                 && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
                 && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
                 || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
-                {
-                    contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
-                }
+            {
+                contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
+            }
         }
 
         /*
@@ -314,18 +317,17 @@ impl<N: RealField> World<N> {
             &mut self.constraints,
             &contact_manifolds[..],
             &self.active_bodies[..],
-            &self.params,
+            params,
             &self.material_coefficients,
             &self.cworld,
         );
 
         for b in self.bodies.bodies_mut() {
             if b.status() == BodyStatus::Kinematic {
-                b.integrate(&self.params)
+                b.integrate(params)
             }
         }
         self.counters.solver_completed();
-
 
         /*
          *
@@ -347,7 +349,7 @@ impl<N: RealField> World<N> {
          *
          */
         self.counters.collision_detection_started();
-        self.cworld.sync_colliders(&self.bodies);
+        self.cworld.sync_colliders(self.params.dt(), &self.bodies);
         self.counters.broad_phase_started();
         self.cworld.perform_broad_phase();
         self.counters.broad_phase_completed();
@@ -366,8 +368,190 @@ impl<N: RealField> World<N> {
             b.clear_update_flags();
         });
 
+        self.solve_ccd();
+
         self.params.t += self.params.dt();
         self.counters.step_completed();
+    }
+
+    fn solve_ccd(&mut self) {
+        let mut params = self.params.clone();
+        let dt0 = params.dt();
+        println!("#####$ Before loop");
+        let max_substeps = 8;
+
+        for _ in 0..max_substeps {
+            println!(">>> Remaining dt: {}", params.dt());
+            /*
+             *
+             * Handle sleeping and collision
+             * islands.
+             *
+             */
+            // FIXME: for now, no island is built.
+            self.counters.island_construction_started();
+            self.active_bodies.clear();
+            self.activation_manager.update(
+                &mut self.bodies,
+                &self.cworld,
+                &self.constraints,
+                &mut self.active_bodies,
+            );
+            self.counters.island_construction_completed();
+
+            /*
+             *
+             * Collect contact manifolds.
+             *
+             */
+            let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
+            for (c1, c2, _, manifold) in self.cworld.contact_pairs(false) {
+                let b1 = try_continue!(self.bodies.body(c1.body()));
+                let b2 = try_continue!(self.bodies.body(c2.body()));
+
+                if manifold.len() > 0
+                    && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
+                    && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
+                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+                {
+                    contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
+                }
+            }
+
+            /*
+             *
+             * Solve the system and integrate.
+             *
+             */
+            for b in self.bodies.bodies_mut() {
+                // FIXME This is currently needed by the solver because otherwise
+                // some kinematic bodies may end up with a companion_id (used as
+                // an assembly_id) that it out of bounds of the velocity vector.
+                // Note sure what the best place for this is though.
+                b.set_companion_id(0);
+            }
+
+            self.counters.solver_started();
+            self.solver.step(
+                &mut self.counters,
+                &mut self.bodies,
+                &mut self.constraints,
+                &contact_manifolds[..],
+                &self.active_bodies[..],
+                &params,
+                &self.material_coefficients,
+                &self.cworld,
+            );
+
+            for b in self.bodies.bodies_mut() {
+                if b.status() == BodyStatus::Kinematic {
+                    b.integrate(&params)
+                }
+            }
+            self.counters.solver_completed();
+
+
+            /*
+             * Search for the first TOI.
+             */
+            let mut min_toi = params.dt();
+            'outer: for coll in self.cworld.colliders() {
+                if coll.is_ccd_enabled() {
+                    println!("CCD is enabled.");
+                    // Find a TOI
+                    for (c1, c2, inter) in self.cworld.interactions_with(coll.handle(), false).unwrap() {
+                        use crate::object::BodyPart;
+                        let b1 = self.bodies.body(c1.body()).unwrap();
+                        let b2 = self.bodies.body(c2.body()).unwrap();
+                        let v1 = b1.part(0).unwrap().velocity().linear;
+                        let v2 = b2.part(0).unwrap().velocity().linear;
+
+                        match inter {
+                            Interaction::Contact(alg, manifold) => {
+                                println!("Found interaction pair.");
+                                if let Some(contact) = manifold.deepest_contact() {
+                                    // The contact is already effective.
+                                    println!("v1: {}, v2: {}", v1, v2);
+                                    println!("dvel: {}", v2 - v1);
+                                    println!("contact normal: {}", *contact.contact.normal);
+                                    if true { // contact.contact.normal.dot(&(v2 - v1)) > N::zero() {
+                                        min_toi = N::zero();
+                                        break 'outer;
+                                    }
+                                } else {
+                                    // There is no effective contact, compute the TOI.
+                                    println!("v1: {}, v2: {}", v1, v2);
+                                    let dist = query::distance(c1.position(), &**c1.shape(), c2.position(), &**c2.shape());
+                                    println!("Dist: {}", dist);
+                                    if let Some(toi) = query::time_of_impact(c1.position(), &v1, &**c1.shape(), c2.position(), &v2, &**c2.shape()) {
+                                        println!("Found toi: {}", toi);
+                                        if toi < min_toi {
+                                            min_toi = toi;
+                                        }
+                                    }
+                                }
+                            }
+                            Interaction::Proximity(prox) => unimplemented!()
+                        }
+                    }
+                }
+            }
+
+            if min_toi < params.dt() {
+                for b in self.bodies.bodies_mut() {
+                    b.advance(min_toi / params.dt());
+                }
+            }
+
+            println!("min toi: {}", min_toi);
+            params.set_dt(params.dt() - min_toi);
+
+
+            /*
+             *
+             * Update body kinematics and dynamics
+             * after the contact resolution step.
+             *
+             */
+            // FIXME: objects involved in a non-linear position stabilization already
+            // updated their kinematics.
+            self.bodies.bodies_mut().for_each(|b| {
+                b.update_kinematics();
+                b.update_dynamics(params.dt());
+            });
+
+            /*
+             *
+             * Update colliders and perform CD with the new
+             * body positions.
+             *
+             */
+            self.counters.collision_detection_started();
+            self.cworld.sync_colliders(dt0, &self.bodies);
+            self.counters.broad_phase_started();
+            self.cworld.perform_broad_phase();
+            self.counters.broad_phase_completed();
+            self.counters.narrow_phase_started();
+            self.cworld.perform_narrow_phase();
+            self.counters.narrow_phase_completed();
+            self.counters.collision_detection_completed();
+
+            /*
+             *
+             * Finally, clear the update flag of every body.
+             *
+             */
+            self.bodies.bodies_mut().for_each(|b| {
+                b.clear_forces();
+                b.clear_update_flags();
+            });
+
+            if params.dt() == N::zero() {
+                break;
+            }
+        }
+
+        params.set_dt(dt0);
     }
 
     /// Remove the specified bodies.

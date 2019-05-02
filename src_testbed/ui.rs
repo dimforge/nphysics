@@ -34,7 +34,7 @@ widget_ids! {
         slider_frequency,
         toggle_sleep,
         toggle_warm_starting,
-        toggle_time_of_impact,
+        toggle_ccd,
         toggle_sub_stepping,
         toggle_shapes,
         toggle_joints,
@@ -222,7 +222,7 @@ impl TestbedUi {
         let toggle_list = [
             ("Sleep", self.ids.toggle_sleep, TestbedStateFlags::SLEEP),
 //            ("Warm Starting", self.ids.toggle_warm_starting, TestbedStateFlags::WARM_STARTING),
-//            ("Time of Impact", self.ids.toggle_time_of_impact, TestbedStateFlags::TIME_OF_IMPACT),
+            ("CCD", self.ids.toggle_ccd, TestbedStateFlags::CCD),
 //            ("Sub-Stepping", self.ids.toggle_sub_stepping, TestbedStateFlags::SUB_STEPPING),
             ("", self.ids.separator2, TestbedStateFlags::NONE),
 //            ("Shapes", self.ids.toggle_shapes, TestbedStateFlags::SHAPES),

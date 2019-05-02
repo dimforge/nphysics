@@ -65,7 +65,7 @@ bitflags! {
     pub struct TestbedStateFlags: u32 {
         const NONE = 0;
         const SLEEP = 1 << 0;
-        const TIME_OF_IMPACT = 1 << 1;
+        const CCD = 1 << 1;
         const SUB_STEPPING = 1 << 2;
         const SHAPES = 1 << 3;
         const JOINTS = 1 << 4;
@@ -128,7 +128,7 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
-        let flags = TestbedStateFlags::SLEEP;
+        let mut flags = TestbedStateFlags::SLEEP | TestbedStateFlags::CCD;
 
         let ui = TestbedUi::new(&mut window);
         let state = TestbedState {
@@ -720,9 +720,9 @@ impl State for Testbed {
                 }
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::TIME_OF_IMPACT) !=
-                self.state.flags.contains(TestbedStateFlags::TIME_OF_IMPACT) {
-                unimplemented!()
+            if self.state.prev_flags.contains(TestbedStateFlags::CCD) !=
+                self.state.flags.contains(TestbedStateFlags::CCD) {
+                world.integration_parameters_mut().ccd_enabled = self.state.flags.contains(TestbedStateFlags::CCD);
             }
 
             if self.state.prev_flags.contains(TestbedStateFlags::SUB_STEPPING) !=

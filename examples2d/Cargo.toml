@@ -21,6 +21,10 @@ name = "all_examples2"
 path = "./all_examples2.rs"
 
 [[bin]]
+name = "ccd2"
+path = "./ccd2.rs"
+
+[[bin]]
 name = "balls2"
 path = "./balls2.rs"
 

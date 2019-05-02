@@ -271,6 +271,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
             let ndofs = body.ndofs();
 
             {
+                println!("ext_vels: {:?}, mj_lambda: {:?}", self.ext_vels, self.mj_lambda_vel);
                 let mut mb_vels = body.generalized_velocity_mut();
                 mb_vels += self.ext_vels.rows(id, ndofs);
                 mb_vels += self.mj_lambda_vel.rows(id, ndofs);
