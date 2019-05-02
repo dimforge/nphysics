@@ -78,14 +78,14 @@ impl Node {
         }
     }
 
-    pub fn draw(&mut self, window: &mut Window) {
+    pub fn draw(&mut self, _window: &mut Window) {
         match *self {
             #[cfg(feature = "dim2")]
-            Node::Polyline(ref mut n) => n.draw(window),
+            Node::Polyline(ref mut n) => n.draw(_window),
             #[cfg(feature = "dim2")]
-            Node::HeightField(ref mut n) => n.draw(window),
+            Node::HeightField(ref mut n) => n.draw(_window),
             #[cfg(feature = "dim2")]
-            Node::Plane(ref mut n) => n.draw(window),
+            Node::Plane(ref mut n) => n.draw(_window),
             _ => {}
         }
     }
@@ -102,6 +102,7 @@ impl Node {
             #[cfg(feature = "dim3")]
             Node::Mesh(ref n) => Some(n.scene_node()),
             Node::Convex(ref n) => Some(n.scene_node()),
+            #[cfg(feature = "dim2")]
             _ => None,
         }
     }
@@ -118,6 +119,7 @@ impl Node {
             #[cfg(feature = "dim3")]
             Node::Mesh(ref mut n) => Some(n.scene_node_mut()),
             Node::Convex(ref mut n) => Some(n.scene_node_mut()),
+            #[cfg(feature = "dim2")]
             _ => None,
         }
     }

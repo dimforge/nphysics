@@ -194,7 +194,7 @@ impl<N: RealField> MassConstraintSystem<N> {
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
-        println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
+//        println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
 
         MassConstraintSystem {
             name: String::new(),

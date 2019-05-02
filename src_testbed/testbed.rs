@@ -1,3 +1,4 @@
+#[cfg(feature = "dim3")]
 use num::Bounded;
 use std::collections::HashMap;
 use std::env;
@@ -16,14 +17,18 @@ use kiss3d::planar_camera::PlanarCamera;
 use kiss3d::post_processing::PostProcessingEffect;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
-use kiss3d::conrod;
 use na::{self, Point2, Point3, Vector3};
-use ncollide::query::{self, Ray};
+#[cfg(feature = "dim3")]
+use ncollide::query;
+use ncollide::query::Ray;
 use ncollide::utils::GenerationalId;
 use ncollide::world::CollisionGroups;
 use nphysics::joint::{ConstraintHandle, MouseConstraint};
-use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor, ActivationStatus};
+#[cfg(feature = "dim2")]
+use nphysics::object::ColliderAnchor;
+use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ActivationStatus};
 use nphysics::world::World;
+#[cfg(feature = "dim3")]
 use nphysics::math::ForceType;
 use crate::world_owner::WorldOwner;
 use crate::ui::TestbedUi;
@@ -123,7 +128,7 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
-        let mut flags = TestbedStateFlags::SLEEP;
+        let flags = TestbedStateFlags::SLEEP;
 
         let ui = TestbedUi::new(&mut window);
         let state = TestbedState {
@@ -678,7 +683,7 @@ impl State for Testbed {
                 self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
 
                 for co in world.colliders() {
-                    if let Some(ns) = self.graphics.body_nodes_mut(co.body())
+                    if self.graphics.body_nodes_mut(co.body()).is_some()
                     {
                         for n in self.graphics.nodes_mut() {
                             let is_sensor = if let Some(collider) = world.collider(n.collider()) {
@@ -752,7 +757,7 @@ impl State for Testbed {
 
         self.state.prev_flags = self.state.flags;
 
-        for mut event in window.events().iter() {
+        for event in window.events().iter() {
             let event = self.handle_common_event(event);
             self.handle_special_event(window, event);
         }
@@ -1122,12 +1127,6 @@ Solver: {:.2}ms
 //        window.draw_text(CONTROLS, &Point2::new(0.0, 75.0), 40.0, &self.font, &color);
     }
 }
-
-const CONTROLS: &str = "Controls:
-    Ctrl + click + drag: select and move a solid.
-    Left click + drag: rotate the camera.
-    Right click + drag: pan the camera.
-    Mouse wheel: zoom in/zoom out.";
 
 fn draw_collisions(
     window: &mut Window,

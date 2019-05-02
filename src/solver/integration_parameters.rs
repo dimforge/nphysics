@@ -75,16 +75,23 @@ impl<N: RealField> IntegrationParameters<N> {
         }
     }
 
+    /// The current time-stepping length.
     #[inline(always)]
     pub fn dt(&self) -> N {
         self.dt
     }
 
+    /// The inverse of the time-stepping length.
+    ///
+    /// This is zero if `self.dt` is zero.
     #[inline(always)]
     pub fn inv_dt(&self) -> N {
         self.inv_dt
     }
 
+    /// Sets the time-stepping length.
+    ///
+    /// This automatically recompute `self.inv_dt`.
     #[inline]
     pub fn set_dt(&mut self, dt: N) {
         self.dt = dt;
@@ -95,6 +102,9 @@ impl<N: RealField> IntegrationParameters<N> {
         }
     }
 
+    /// Sets the inverse time-stepping length (i.e. the frequency).
+    ///
+    /// This automatically recompute `self.dt`.
     #[inline]
     pub fn set_inv_dt(&mut self, inv_dt: N) {
         self.inv_dt = inv_dt;

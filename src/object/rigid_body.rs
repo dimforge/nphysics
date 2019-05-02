@@ -684,10 +684,10 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
         self.position
     }
 
-    fn predicted_position(&self, dt: N) -> Isometry<N> {
-        let disp = self.displacement_wrt_com(&(self.velocity * dt));
-        disp * self.position
-    }
+//    fn predicted_position(&self, dt: N) -> Isometry<N> {
+//        let disp = self.displacement_wrt_com(&(self.velocity * dt));
+//        disp * self.position
+//    }
 
     #[inline]
     fn local_inertia(&self) -> Inertia<N> {

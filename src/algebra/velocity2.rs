@@ -1,8 +1,7 @@
 use na::storage::Storage;
-use na::{self, Isometry2, RealField, Rotation2, U3, Vector, Vector1, Vector2, Vector3, Point2};
+use na::{self, Isometry2, RealField, Rotation2, U3, Vector, Vector1, Vector2, Vector3};
 use std::mem;
 use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
-use na::geometry::UnitComplex;
 
 /// A velocity structure combining both the linear angular velocities of a point.
 #[repr(C)]

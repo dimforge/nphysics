@@ -3,7 +3,7 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Point3, Vector3, Point4};
+use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nphysics3d::object::{FEMVolumeDesc, ColliderDesc};
 use nphysics3d::world::World;

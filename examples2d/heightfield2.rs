@@ -9,7 +9,7 @@ use ncollide2d::shape::{Cuboid, HeightField, ShapeHandle};
 use nphysics2d::object::{RigidBodyDesc, ColliderDesc};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
-use rand::{Rng, SeedableRng, StdRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -22,7 +22,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Polyline
      */
-    let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+    let mut rng = StdRng::seed_from_u64(0);
     let heights = DVector::from_fn(20, |_, _| rng.gen::<f32>());
 
     let mut heightfield = HeightField::new(heights, Vector2::new(20.0, 1.0));

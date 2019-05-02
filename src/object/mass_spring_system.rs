@@ -194,7 +194,7 @@ impl<N: RealField> MassSpringSystem<N> {
         }
 
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
-        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
+//        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
         MassSpringSystem {
             name: String::new(),

@@ -1,11 +1,16 @@
 use kiss3d::window::Window;
 use na::{self, Point3};
-use nphysics::math::{Isometry, Point, Vector};
+#[cfg(feature = "dim2")]
+use nphysics::math::Point;
+use nphysics::math::Isometry;
+#[cfg(feature = "dim3")]
+use nphysics::math::Vector;
 use nphysics::object::{ColliderHandle};
 use nphysics::world::World;
 use ncollide::shape;
 #[cfg(feature = "dim3")]
 use ncollide::transformation::ToTriMesh;
+#[cfg(feature = "dim3")]
 use crate::objects::node::{self, GraphicsNode};
 
 pub struct HeightField {
@@ -101,11 +106,11 @@ impl HeightField {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {
+    pub fn update(&mut self, _world: &World<f32>) {
         #[cfg(feature = "dim3")]
             node::update_scene_node(
                 &mut self.gfx,
-                world,
+                _world,
                 self.collider,
                 &self.color,
                 &self.delta,

@@ -9,7 +9,7 @@ use ncollide3d::shape::{Cuboid, ShapeHandle, HeightField, HeightFieldCellStatus}
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
-use rand::{Rng, SeedableRng, StdRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -22,7 +22,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Setup a random ground.
      */
-    let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+    let mut rng = StdRng::from_seed([0; 32]);
     let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<f32>());
 
     let mut heightfield: HeightField<f32> = HeightField::new(heights, Vector3::new(10.0, 1.5, 10.0));

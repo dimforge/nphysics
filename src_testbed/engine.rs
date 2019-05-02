@@ -15,6 +15,7 @@ use na::Translation3 as Translation;
 use ncollide::shape::ConvexPolygon;
 #[cfg(feature = "dim3")]
 use ncollide::shape::{ConvexHull, TriMesh};
+#[cfg(feature = "dim3")]
 use ncollide::transformation;
 use ncollide::query::Ray;
 use ncollide::world::CollisionGroups;
@@ -32,7 +33,7 @@ use crate::objects::node::{GraphicsNode, Node};
 use crate::objects::heightfield::HeightField;
 use crate::objects::plane::Plane;
 use crate::objects::capsule::Capsule;
-use rand::{Rng, SeedableRng, XorShiftRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
 pub trait GraphicsWindow {
@@ -58,7 +59,7 @@ impl GraphicsWindow for Window {
 }
 
 pub struct GraphicsManager {
-    rand: XorShiftRng,
+    rand: StdRng,
     b2sn: HashMap<BodyHandle, Vec<Node>>,
     b2color: HashMap<BodyHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
@@ -83,16 +84,9 @@ impl GraphicsManager {
                 camera.set_zoom(50.0);
             }
 
-        let mut rng: XorShiftRng = SeedableRng::from_seed([0; 16]);
-
-        // the first colors are boring.
-        for _ in 0usize..100 {
-            let _: Point3<f32> = rng.gen();
-        }
-
         GraphicsManager {
             camera,
-            rand: rng,
+            rand: StdRng::seed_from_u64(0),
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
@@ -119,6 +113,7 @@ impl GraphicsManager {
         self.rays.clear();
         self.b2color.clear();
         self.c2color.clear();
+        self.rand = StdRng::seed_from_u64(0);
     }
 
     pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {

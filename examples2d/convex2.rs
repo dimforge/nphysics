@@ -5,7 +5,7 @@ extern crate nphysics_testbed2d;
 extern crate rand;
 
 use rand::distributions::{Standard, Distribution};
-use rand::{SeedableRng, XorShiftRng};
+use rand::{SeedableRng, rngs::StdRng};
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{ConvexPolygon, Cuboid, ShapeHandle};
@@ -40,7 +40,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let shift = 0.4;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift;
-    let mut rng = XorShiftRng::seed_from_u64(0);
+    let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num {

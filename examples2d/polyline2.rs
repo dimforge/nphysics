@@ -11,7 +11,7 @@ use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 use rand::distributions::{Standard, Distribution};
-use rand::{SeedableRng, XorShiftRng};
+use rand::{SeedableRng, rngs::StdRng};
 
 
 pub fn init_world(testbed: &mut Testbed) {
@@ -33,7 +33,7 @@ pub fn init_world(testbed: &mut Testbed) {
         .map(|i| Point2::new(begin + (i as f32) * step, 0.0))
         .collect();
 
-    let mut rng = XorShiftRng::seed_from_u64(42);
+    let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num_split {

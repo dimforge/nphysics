@@ -1,5 +1,5 @@
 use kiss3d::window::Window;
-use kiss3d::conrod::{self, Ui, Widget, Positionable, Sizeable, Colorable, Labelable, Borderable};
+use kiss3d::conrod::{self, Widget, Positionable, Sizeable, Colorable, Labelable, Borderable};
 use nphysics::world::World;
 
 use crate::testbed::{TestbedState, RunMode, TestbedStateFlags, TestbedActionFlags};
@@ -100,55 +100,61 @@ impl TestbedUi {
             .padded_h_of(ui_root, 10.0)
             .set(self.ids.canvas, &mut ui);
 
-        conrod::widget::Text::new("Select example:")
-            .top_left_with_margins_on(self.ids.canvas, VSPACE, LEFT_MARGIN)
+        if !state.example_names.is_empty() {
+            conrod::widget::Text::new("Select example:")
+                .top_left_with_margins_on(self.ids.canvas, VSPACE, LEFT_MARGIN)
 //            .w_h(ELEMENT_W, ELEMENT_H)
-            .set(self.ids.title_demos_list, &mut ui);
+                .set(self.ids.title_demos_list, &mut ui);
 
-        for selected in conrod::widget::DropDownList::new(&state.example_names, Some(state.selected_example))
+            for selected in conrod::widget::DropDownList::new(&state.example_names, Some(state.selected_example))
 //            .mid_top_with_margin_on(self.ids.canvas, 20.0)
-            .align_middle_x_of(self.ids.canvas)
-            .down_from(self.ids.title_demos_list, TITLE_VSPACE)
+                .align_middle_x_of(self.ids.canvas)
+                .down_from(self.ids.title_demos_list, TITLE_VSPACE)
 //            .right_from(self.ids.button_prev_example, 0.0)
-            .left_justify_label()
-            .w_h(ELEMENT_W - 20.0, ELEMENT_H)
-            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
-            .set(self.ids.demos_list, &mut ui) {
-            if selected != state.selected_example {
-                state.selected_example = selected;
-                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+                .left_justify_label()
+                .w_h(ELEMENT_W - 20.0, ELEMENT_H)
+                .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
+                .set(self.ids.demos_list, &mut ui) {
+                if selected != state.selected_example {
+                    state.selected_example = selected;
+                    state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+                }
             }
-        }
 
-        for _click in conrod::widget::Button::new()
-            .label("<")
-            .align_middle_x_of(self.ids.canvas)
-            .left_from(self.ids.demos_list, 0.0)
-            .w_h(10.0, ELEMENT_H)
-            .enabled(state.selected_example > 0)
-            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
-            .set(self.ids.button_prev_example, &mut ui) {
-            if state.selected_example > 0 {
-                state.selected_example -= 1;
-                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+            for _click in conrod::widget::Button::new()
+                .label("<")
+                .align_middle_x_of(self.ids.canvas)
+                .left_from(self.ids.demos_list, 0.0)
+                .w_h(10.0, ELEMENT_H)
+                .enabled(state.selected_example > 0)
+                .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
+                .set(self.ids.button_prev_example, &mut ui) {
+                if state.selected_example > 0 {
+                    state.selected_example -= 1;
+                    state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+                }
             }
-        }
 
-        for _click in conrod::widget::Button::new()
-            .label(">")
-            .align_middle_x_of(self.ids.canvas)
-            .right_from(self.ids.demos_list, 0.0)
-            .w_h(10.0, ELEMENT_H)
-            .enabled(state.selected_example + 1 < state.example_names.len())
-            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
-            .set(self.ids.button_next_example, &mut ui) {
-            if state.selected_example + 1 < state.example_names.len() {
-                state.selected_example += 1;
-                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+            for _click in conrod::widget::Button::new()
+                .label(">")
+                .align_middle_x_of(self.ids.canvas)
+                .right_from(self.ids.demos_list, 0.0)
+                .w_h(10.0, ELEMENT_H)
+                .enabled(state.selected_example + 1 < state.example_names.len())
+                .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
+                .set(self.ids.button_next_example, &mut ui) {
+                if state.selected_example + 1 < state.example_names.len() {
+                    state.selected_example += 1;
+                    state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+                }
             }
-        }
 
-        separator(self.ids.canvas, self.ids.demos_list, self.ids.separator1, &mut ui);
+            separator(self.ids.canvas, self.ids.demos_list, self.ids.separator1, &mut ui);
+        } else {
+            conrod::widget::Text::new("")
+                .top_left_with_margins_on(self.ids.canvas, 0.0, LEFT_MARGIN)
+                .set(self.ids.separator1, &mut ui);
+        }
 
 
         let curr_vel_iters = world.integration_parameters().max_velocity_iterations;
@@ -258,19 +264,26 @@ impl TestbedUi {
             state.running = RunMode::Step
         }
 
-        for _press in conrod::widget::Button::new()
-            .label("Restart (R)")
-            .align_middle_x_of(self.ids.canvas)
-            .down_from(self.ids.button_single_step, VSPACE)
-            .set(self.ids.button_restart, &mut ui) {
-            state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
-        }
+        let before_quit_button_id = if !state.example_names.is_empty() {
+            for _press in conrod::widget::Button::new()
+                .label("Restart (R)")
+                .align_middle_x_of(self.ids.canvas)
+                .down_from(self.ids.button_single_step, VSPACE)
+                .set(self.ids.button_restart, &mut ui) {
+                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+            }
+
+            self.ids.button_restart
+        } else {
+            self.ids.button_single_step
+        };
+
 
         #[cfg(not(target_arch = "wasm32"))]
         for _press in conrod::widget::Button::new()
             .label("Quit (Esc)")
             .align_middle_x_of(self.ids.canvas)
-            .down_from(self.ids.button_restart, VSPACE)
+            .down_from(before_quit_button_id, VSPACE)
             .set(self.ids.button_quit, &mut ui) {
             state.running = RunMode::Quit
         }

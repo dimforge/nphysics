@@ -52,7 +52,7 @@ pub fn init_world(testbed: &mut Testbed) {
             .part_handle();
 
         let revolute_constraint =
-            RevoluteConstraint::new(parent, rb_handle, na::origin(), Point2::new(-rad * 3.0, 0.0));
+            RevoluteConstraint::new(parent, rb_handle, Point2::origin(), Point2::new(-rad * 3.0, 0.0));
 
         world.add_constraint(revolute_constraint);
 

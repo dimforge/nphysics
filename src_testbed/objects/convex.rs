@@ -4,7 +4,9 @@ use na::Point3;
 use ncollide::procedural::TriMesh;
 use nphysics::object::ColliderHandle;
 use nphysics::world::World;
-use nphysics::math::{Isometry, Vector, Point};
+#[cfg(feature = "dim2")]
+use nphysics::math::Point;
+use nphysics::math::{Isometry, Vector};
 use crate::objects::node::{self, GraphicsNode};
 
 pub struct Convex {

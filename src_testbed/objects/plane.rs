@@ -1,9 +1,14 @@
 use kiss3d::window::Window;
-use na::{Point3, Vector3};
+#[cfg(feature = "dim3")]
+use na::Vector3;
+use na::Point3;
 use nphysics::object::ColliderHandle;
 use nphysics::world::World;
+#[cfg(feature = "dim2")]
 use nphysics::math::{Point, Vector};
+#[cfg(feature = "dim3")]
 use crate::objects::node::GraphicsNode;
+#[cfg(feature = "dim3")]
 use num::Zero;
 
 #[cfg(feature = "dim3")]
