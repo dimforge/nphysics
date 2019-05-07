@@ -29,14 +29,27 @@ mod sensor2;
 mod polyline2;
 mod ccd2;
 
+fn demo_name_from_command_line() -> String {
+    let mut args = std::env::args();
+
+    while let Some(arg) = args.next() {
+        if &arg[..] == "--example" {
+            return args.next().unwrap_or(String::new());
+        }
+    }
+
+    String::new()
+}
+
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
+    let demo = demo_name_from_command_line();
+    let mut builders: Vec<(_, fn(&mut Testbed))> = vec![
         ("Balls", balls2::init_world),
         ("Boxes", boxes2::init_world),
         ("Capsules", capsules2::init_world),
         ("CCD", ccd2::init_world),
         ("Collision Groups", collision_groups2::init_world),
-        ("CompoundShapes", cross2::init_world),
+        ("Compound Shapes", cross2::init_world),
 //        ("Compound Shapes", compound2::init_world),
         ("Constraints", constraints2::init_world),
         ("Convex Polygons", convex2::init_world),
@@ -52,7 +65,11 @@ fn main() {
         ("Ragdolls", ragdoll2::init_world),
         ("Sensor", sensor2::init_world),
         ("Polygonal Line", polyline2::init_world),
-    ]);
+    ];
+
+    builders.sort_by_key(|builder| builder.0);
+    let i = builders.binary_search_by_key(&demo.as_str(), |builder| builder.0).unwrap_or(0);
+    let testbed = Testbed::from_builders(i, builders);
 
     testbed.run()
 }

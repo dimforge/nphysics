@@ -433,8 +433,18 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn advance(&mut self, time_ratio: N) {
-        self.position.translation.vector = self.position0.translation.vector.lerp(&self.position.translation.vector, time_ratio);
+        let mut new_pos = self.position;
+        new_pos.translation.vector = self.position0.translation.vector.lerp(&self.position.translation.vector, time_ratio);
+        self.set_position(new_pos);
+        self.position0 = new_pos;
+    }
+
+    fn validate_advancement(&mut self) {
         self.position0 = self.position;
+    }
+
+    fn clamp_advancement(&mut self) {
+        self.set_position(Isometry::from_parts(self.position0.translation, self.position.rotation));
     }
 
     #[allow(unused_variables)] // for params used only in 3D.
@@ -695,10 +705,15 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
         self.position
     }
 
-//    fn predicted_position(&self, dt: N) -> Isometry<N> {
-//        let disp = self.displacement_wrt_com(&(self.velocity * dt));
-//        disp * self.position
-//    }
+    #[inline]
+    fn safe_position(&self) -> Isometry<N> {
+        Isometry::from_parts(self.position0.translation, self.position.rotation)
+    }
+
+    fn predicted_position(&self, dt: N) -> Isometry<N> {
+        let disp = self.displacement_wrt_com(&(self.velocity * dt));
+        disp * self.position
+    }
 
     #[inline]
     fn local_inertia(&self) -> Inertia<N> {

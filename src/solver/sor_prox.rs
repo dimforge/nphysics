@@ -82,29 +82,6 @@ impl SORProx {
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {
-        for c in unilateral.iter_mut() {
-            if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
-                // Most common case (between two free rigid bodies).
-                Self::solve_unilateral(c, jacobians, mj_lambda, SpatialDim {}, SpatialDim {})
-            } else {
-                let dim1 = Dynamic::new(c.ndofs1);
-                let dim2 = Dynamic::new(c.ndofs2);
-                Self::solve_unilateral(c, jacobians, mj_lambda, dim1, dim2)
-            }
-        }
-
-        for c in unilateral_ground.iter_mut() {
-            if c.ndofs == SPATIAL_DIM {
-                // Most common case (with one free rigid body).
-                // NOTE: it's weird that the compiler requires the { } even though SpatialDim is the
-                // alias of a marker type.
-                Self::solve_unilateral_ground(c, jacobians, mj_lambda, SpatialDim {})
-            } else {
-                let dim = Dynamic::new(c.ndofs);
-                Self::solve_unilateral_ground(c, jacobians, mj_lambda, dim)
-            }
-        }
-
         for c in bilateral.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
@@ -143,6 +120,29 @@ impl SORProx {
             if let Some(body) = bodies.body_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
                 body.step_solve_internal_velocity_constraints(&mut dvels);
+            }
+        }
+
+        for c in unilateral.iter_mut() {
+            if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
+                // Most common case (between two free rigid bodies).
+                Self::solve_unilateral(c, jacobians, mj_lambda, SpatialDim {}, SpatialDim {})
+            } else {
+                let dim1 = Dynamic::new(c.ndofs1);
+                let dim2 = Dynamic::new(c.ndofs2);
+                Self::solve_unilateral(c, jacobians, mj_lambda, dim1, dim2)
+            }
+        }
+
+        for c in unilateral_ground.iter_mut() {
+            if c.ndofs == SPATIAL_DIM {
+                // Most common case (with one free rigid body).
+                // NOTE: it's weird that the compiler requires the { } even though SpatialDim is the
+                // alias of a marker type.
+                Self::solve_unilateral_ground(c, jacobians, mj_lambda, SpatialDim {})
+            } else {
+                let dim = Dynamic::new(c.ndofs);
+                Self::solve_unilateral_ground(c, jacobians, mj_lambda, dim)
             }
         }
     }

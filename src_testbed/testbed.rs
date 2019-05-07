@@ -128,7 +128,7 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
-        let mut flags = TestbedStateFlags::SLEEP | TestbedStateFlags::CCD;
+        let flags = TestbedStateFlags::SLEEP | TestbedStateFlags::CCD;
 
         let ui = TestbedUi::new(&mut window);
         let state = TestbedState {

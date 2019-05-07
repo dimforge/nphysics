@@ -25,13 +25,6 @@ impl NonlinearSORProx {
         max_iter: usize,
     ) {
         for _ in 0..max_iter {
-            for constraint in constraints.iter_mut() {
-                // FIXME: specialize for SPATIAL_DIM.
-                let dim1 = Dynamic::new(constraint.ndofs1);
-                let dim2 = Dynamic::new(constraint.ndofs2);
-                Self::solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
-            }
-
             for joint in &*joints_constraints {
                 Self::solve_generator(params, bodies, &**joint.1, jacobians)
             }
@@ -40,6 +33,13 @@ impl NonlinearSORProx {
                 if let Some(body) = bodies.body_mut(*constraint) {
                     body.step_solve_internal_position_constraints(params);
                 }
+            }
+
+            for constraint in constraints.iter_mut() {
+                // FIXME: specialize for SPATIAL_DIM.
+                let dim1 = Dynamic::new(constraint.ndofs1);
+                let dim2 = Dynamic::new(constraint.ndofs2);
+                Self::solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
             }
         }
     }
@@ -185,8 +185,10 @@ impl NonlinearSORProx {
         if let Some(contact) = constraint
             .kinematic
             .contact(&pos1, &**collider1.shape(), coords1, &pos2, &**collider2.shape(), coords2, &constraint.normal1) {
+            println!("Depth: {}", contact.depth);
             constraint.rhs = Self::clamp_rhs(-contact.depth, false, params);
 
+            println!("rhs to solve: {}", constraint.rhs);
             if constraint.rhs >= N::zero() {
                 return false;
             }

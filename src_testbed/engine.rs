@@ -542,9 +542,8 @@ impl GraphicsManager {
         }
 
         for (handle, node) in &mut self.aabbs {
-            let collider = world.collider(*handle);
             let aabb = world.collider_world().broad_phase_aabb(*handle);
-            if let (Some(aabb), Some(collider)) = (aabb, collider) {
+            if let Some(aabb) = aabb {
                 let w = aabb.half_extents() * 2.0;
 
                 node.set_local_translation(Translation::from(aabb.center().coords));

@@ -265,6 +265,11 @@ impl<N: RealField> BodyPart<N> for Ground<N> {
     }
 
     #[inline]
+    fn safe_position(&self) -> Isometry<N> {
+        Isometry::identity()
+    }
+
+    #[inline]
     fn velocity(&self) -> Velocity<N> {
         Velocity::zero()
     }

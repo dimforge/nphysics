@@ -44,14 +44,15 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Create the balls
      */
-    let num = 1;
+    let num = 4;
     let rad = 0.1;
 
-    let ball = ShapeHandle::new(Ball::new(rad));
+    let ball = ShapeHandle::new(Cuboid::new(Vector2::new(rad * 4.0, rad))); // Ball::new(rad));
     let collider_desc = ColliderDesc::new(ball)
 //        .margin(1.0)
         .ccd_enabled(true)
-//        .material(MaterialHandle::new(BasicMaterial::new(3.0, 0.0)))
+        .position(Isometry2::rotation(0.5))
+//        .material(MaterialHandle::new(BasicMaterial::new(2.0, 0.0)))
         .density(1.0);
 
     let mut rb_desc = RigidBodyDesc::new()
@@ -63,13 +64,14 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = 0.0; // i as f32 * shift - centerx;
+            let x = i as f32 * shift - centerx;
             let y = j as f32 * shift + centery;
 
             // Build the rigid body and its collider.
             rb_desc
                 .set_translation(Vector2::new(x, y))
-                .set_velocity(Velocity::linear(0.0, -100.0))
+//                .set_velocity(Velocity::linear(100.0, -100.0))
+//                .set_rotation_kinematic(true)
                 .build(&mut world);
         }
     }

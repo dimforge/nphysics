@@ -75,14 +75,14 @@ impl<N: RealField> SignoriniModel<N> {
             Some(&mut rhs)
         );
 
-        println!("rhs before: {}", rhs);
+//        println!("rhs before: {}", rhs);
 
         // Handle restitution.
         if rhs <= -params.restitution_velocity_threshold {
             rhs += props.restitution.0 * rhs;
         }
 
-        println!("rhs after 1: {}", rhs);
+//        println!("rhs after 1: {}", rhs);
 
 
         // Handle predictive contact if no penetration.
@@ -91,7 +91,7 @@ impl<N: RealField> SignoriniModel<N> {
             rhs += (-depth) * params.inv_dt();
         }
 
-        println!("rhs after 2: {}", rhs);
+//        println!("rhs after 2: {}", rhs);
 
 
         // FIXME: would it be more efficient to consider the contact active iff. the rhs

@@ -228,6 +228,7 @@ impl<N: RealField> World<N> {
 
     /// Execute one time step of the physics simulation.
     pub fn step(&mut self) {
+        println!("##### Loop");
         self.counters.step_started();
 
         /*
@@ -257,7 +258,7 @@ impl<N: RealField> World<N> {
          * manually some bodies.
          */
         self.cworld.clear_events();
-        self.cworld.sync_colliders(params.dt(), &self.bodies);
+        self.cworld.sync_colliders(&self.bodies);
         self.cworld.perform_broad_phase();
         self.cworld.perform_narrow_phase();
 
@@ -342,6 +343,8 @@ impl<N: RealField> World<N> {
             b.update_dynamics(params.dt());
         });
 
+
+
         /*
          *
          * Update colliders and perform CD with the new
@@ -349,14 +352,25 @@ impl<N: RealField> World<N> {
          *
          */
         self.counters.collision_detection_started();
-        self.cworld.sync_colliders(self.params.dt(), &self.bodies);
+        self.cworld.sync_colliders(&self.bodies);
+
         self.counters.broad_phase_started();
         self.cworld.perform_broad_phase();
         self.counters.broad_phase_completed();
+
         self.counters.narrow_phase_started();
         self.cworld.perform_narrow_phase();
         self.counters.narrow_phase_completed();
         self.counters.collision_detection_completed();
+
+        /*
+         *
+         * Handle CCD
+         *
+         */
+        if self.params.ccd_enabled {
+            self.solve_ccd();
+        }
 
         /*
          *
@@ -368,20 +382,138 @@ impl<N: RealField> World<N> {
             b.clear_update_flags();
         });
 
-        self.solve_ccd();
-
         self.params.t += self.params.dt();
         self.counters.step_completed();
     }
 
+    // NOTE: this is an approach very similar to Box2D's.
     fn solve_ccd(&mut self) {
         let mut params = self.params.clone();
-        let dt0 = params.dt();
-        println!("#####$ Before loop");
-        let max_substeps = 8;
+        params.max_position_iterations = 20;
 
-        for _ in 0..max_substeps {
-            println!(">>> Remaining dt: {}", params.dt());
+        let dt0 = params.dt();
+        let max_substeps = 8;
+        let mut ccd_counts = std::collections::HashMap::new();
+        let mut ccd_handles = None;
+
+        for k in 0.. {
+            println!(">>>> Substep: {}", k);
+            /*
+             * Search for the first TOI.
+             */
+            let mut min_toi = params.dt();
+            let mut found_toi = false;
+
+            'outer: for coll in self.cworld.colliders() {
+                if coll.is_ccd_enabled() {
+                    // Find a TOI
+                    for (c1, c2, inter) in self.cworld.interactions_with(coll.handle(), false).unwrap() {
+                        use crate::object::BodyPart;
+                        let b1 = self.bodies.body(c1.body()).unwrap();
+                        let b2 = self.bodies.body(c2.body()).unwrap();
+                        let p1 = b1.part(0).unwrap();
+                        let p2 = b2.part(0).unwrap();
+
+                        let v1 = p1.velocity().linear;
+                        let v2 = p2.velocity().linear;
+                        let count = ccd_counts.entry((c1.handle(), c2.handle())).or_insert(0);
+                        println!("v1: {}, v2: {}", v1, v2);
+
+                        match inter {
+                            Interaction::Contact(alg, manifold) => {
+                                let margins = c1.margin() + c2.margin();
+                                let target = self.params.allowed_linear_error.max(margins - self.params.allowed_linear_error * na::convert(3.0));
+//                                println!("margins: {}, target: {}", margins, target);
+
+                                /*
+                                if let Some(contact) = manifold.deepest_contact() {
+//                                    println!("Contact depth: {}", contact.contact.depth);
+                                    if false { // contact.contact.depth > N::zero() {
+                                        continue; // Give up on penetrations.
+                                    } else if -contact.contact.depth < target {
+                                        found_toi = true;
+
+                                        // There is a TOI, but we are out of substeps.
+                                        if false { // *count >= max_substeps {
+                                            continue;
+                                        }
+
+                                        min_toi = N::zero();
+                                        ccd_handles = Some((c1.handle(), c2.handle()));
+                                        break 'outer;
+                                    } else if false { // contact.contact.normal.dot(&(v2 - v1)) < N::zero() {
+                                        continue;
+                                    }
+
+//                                    println!(">>>>> Contact normal: {:?}, dvel: {}", contact.contact.normal, v2 - v1);
+                                }*/
+
+                                // Compute the TOI.
+                                let pos1 = p1.safe_position() * c1.position_wrt_body();
+                                let pos2 = p2.safe_position() * c2.position_wrt_body();
+                                let distance = query::distance(&pos1, &**c1.shape(), &pos2, &**c2.shape());
+                                println!("pos1: {}", pos1);
+                                println!("pos2: {}", pos2);
+
+                                if let Some(toi) = query::time_of_impact(&pos1, &v1, &**c1.shape(), &pos2, &v2, &**c2.shape(), target) {
+                                    println!("Found toi: {}", toi);
+                                    if toi < min_toi {
+                                        found_toi = true;
+
+                                        // There is a TOI, but we are out of substeps.
+                                        if false { // *count >= max_substeps {
+                                            continue;
+                                        }
+
+                                        min_toi = toi;
+                                        ccd_handles = Some((c1.handle(), c2.handle()))
+                                    }
+                                }
+                            }
+                            Interaction::Proximity(prox) => unimplemented!()
+                        }
+                    }
+                }
+            }
+
+            if let Some((c1, c2)) = ccd_handles {
+                *ccd_counts.get_mut(&(c1, c2)).unwrap() += 1;
+            }
+
+            /*
+             *
+             * Update colliders and perform CD with the new
+             * body positions.
+             *
+             */
+
+            if min_toi != params.dt() || !found_toi {
+                for b in self.bodies.bodies_mut() {
+                    println!("Min toi: {}, params dt: {}, found toi: {}, Advancing: {}", min_toi, params.dt(), found_toi, min_toi / params.dt());
+                    b.advance(min_toi * params.inv_dt());
+                }
+            }
+
+            self.cworld.sync_colliders(&self.bodies);
+            self.cworld.perform_broad_phase();
+            self.cworld.perform_narrow_phase();
+
+            println!("min toi: {}", min_toi);
+            if min_toi == params.dt() || k >= max_substeps {
+                println!("Clamping advancement.");
+                for body in self.bodies.bodies_mut() {
+//                    body.clamp_advancement();
+                }
+
+                break;
+            }
+
+
+            if true { // min_toi != N::zero() && min_toi != params.dt() {
+//                println!("min toi: {}", min_toi);
+                params.set_dt(params.dt() - min_toi);
+            }
+
             /*
              *
              * Handle sleeping and collision
@@ -389,7 +521,6 @@ impl<N: RealField> World<N> {
              *
              */
             // FIXME: for now, no island is built.
-            self.counters.island_construction_started();
             self.active_bodies.clear();
             self.activation_manager.update(
                 &mut self.bodies,
@@ -397,7 +528,6 @@ impl<N: RealField> World<N> {
                 &self.constraints,
                 &mut self.active_bodies,
             );
-            self.counters.island_construction_completed();
 
             /*
              *
@@ -431,8 +561,7 @@ impl<N: RealField> World<N> {
                 b.set_companion_id(0);
             }
 
-            self.counters.solver_started();
-            self.solver.step(
+            self.solver.step_ccd(
                 &mut self.counters,
                 &mut self.bodies,
                 &mut self.constraints,
@@ -448,64 +577,6 @@ impl<N: RealField> World<N> {
                     b.integrate(&params)
                 }
             }
-            self.counters.solver_completed();
-
-
-            /*
-             * Search for the first TOI.
-             */
-            let mut min_toi = params.dt();
-            'outer: for coll in self.cworld.colliders() {
-                if coll.is_ccd_enabled() {
-                    println!("CCD is enabled.");
-                    // Find a TOI
-                    for (c1, c2, inter) in self.cworld.interactions_with(coll.handle(), false).unwrap() {
-                        use crate::object::BodyPart;
-                        let b1 = self.bodies.body(c1.body()).unwrap();
-                        let b2 = self.bodies.body(c2.body()).unwrap();
-                        let v1 = b1.part(0).unwrap().velocity().linear;
-                        let v2 = b2.part(0).unwrap().velocity().linear;
-
-                        match inter {
-                            Interaction::Contact(alg, manifold) => {
-                                println!("Found interaction pair.");
-                                if let Some(contact) = manifold.deepest_contact() {
-                                    // The contact is already effective.
-                                    println!("v1: {}, v2: {}", v1, v2);
-                                    println!("dvel: {}", v2 - v1);
-                                    println!("contact normal: {}", *contact.contact.normal);
-                                    if true { // contact.contact.normal.dot(&(v2 - v1)) > N::zero() {
-                                        min_toi = N::zero();
-                                        break 'outer;
-                                    }
-                                } else {
-                                    // There is no effective contact, compute the TOI.
-                                    println!("v1: {}, v2: {}", v1, v2);
-                                    let dist = query::distance(c1.position(), &**c1.shape(), c2.position(), &**c2.shape());
-                                    println!("Dist: {}", dist);
-                                    if let Some(toi) = query::time_of_impact(c1.position(), &v1, &**c1.shape(), c2.position(), &v2, &**c2.shape()) {
-                                        println!("Found toi: {}", toi);
-                                        if toi < min_toi {
-                                            min_toi = toi;
-                                        }
-                                    }
-                                }
-                            }
-                            Interaction::Proximity(prox) => unimplemented!()
-                        }
-                    }
-                }
-            }
-
-            if min_toi < params.dt() {
-                for b in self.bodies.bodies_mut() {
-                    b.advance(min_toi / params.dt());
-                }
-            }
-
-            println!("min toi: {}", min_toi);
-            params.set_dt(params.dt() - min_toi);
-
 
             /*
              *
@@ -522,33 +593,21 @@ impl<N: RealField> World<N> {
 
             /*
              *
-             * Update colliders and perform CD with the new
-             * body positions.
-             *
-             */
-            self.counters.collision_detection_started();
-            self.cworld.sync_colliders(dt0, &self.bodies);
-            self.counters.broad_phase_started();
-            self.cworld.perform_broad_phase();
-            self.counters.broad_phase_completed();
-            self.counters.narrow_phase_started();
-            self.cworld.perform_narrow_phase();
-            self.counters.narrow_phase_completed();
-            self.counters.collision_detection_completed();
-
-            /*
-             *
              * Finally, clear the update flag of every body.
              *
              */
-            self.bodies.bodies_mut().for_each(|b| {
-                b.clear_forces();
-                b.clear_update_flags();
-            });
+//            self.bodies.bodies_mut().for_each(|b| {
+//                b.clear_forces();
+//                b.clear_update_flags();
+//            });
 
-            if params.dt() == N::zero() {
-                break;
-            }
+//            if params.dt() == N::zero() {
+//                break;
+//            }
+
+            self.cworld.sync_colliders(&self.bodies);
+            self.cworld.perform_broad_phase();
+            self.cworld.perform_narrow_phase();
         }
 
         params.set_dt(dt0);

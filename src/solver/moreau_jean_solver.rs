@@ -73,6 +73,31 @@ impl<N: RealField> MoreauJeanSolver<N> {
         counters.position_resolution_completed();
     }
 
+    // FIXME: this comment is bad.
+    /// Perform one sub-step of the time-stepping scheme as part of a CCD integration.
+    pub fn step_ccd(
+        &mut self,
+        counters: &mut Counters,
+        bodies: &mut BodySet<N>,
+        joints: &mut Slab<Box<JointConstraint<N>>>,
+        manifolds: &[ColliderContactManifold<N>],
+        island: &[BodyHandle],
+        params: &IntegrationParameters<N>,
+        coefficients: &MaterialsCoefficientsTable<N>,
+        cworld: &ColliderWorld<N>,
+    ) {
+        self.assemble_system(counters, params, coefficients, bodies, joints, manifolds, island);
+        self.solve_position_constraints(params, cworld, bodies, joints);
+        for handle in island {
+            let body = try_continue!(bodies.body_mut(*handle));
+            body.validate_advancement();
+        }
+
+        self.solve_velocity_constraints(params, bodies);
+        self.save_cache(bodies, joints);
+        self.update_velocities_and_integrate(params, bodies, island);
+    }
+
     fn assemble_system(
         &mut self,
         counters: &mut Counters,
@@ -227,6 +252,10 @@ impl<N: RealField> MoreauJeanSolver<N> {
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {
+        // XXX: avoid the systematic clone.
+        // This is needed for cases where we perform the position resolution
+        // before the velocity resolution.
+        let mut jacobians = self.jacobians.clone();
         NonlinearSORProx::solve(
             params,
             cworld,
@@ -234,7 +263,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
             &mut self.constraints.position.unilateral,
             joints,
             &self.internal_constraints,
-            &mut self.jacobians,
+            &mut jacobians,
             params.max_position_iterations,
         );
     }
@@ -271,7 +300,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
             let ndofs = body.ndofs();
 
             {
-                println!("ext_vels: {:?}, mj_lambda: {:?}", self.ext_vels, self.mj_lambda_vel);
+//                println!("ext_vels: {:?}, mj_lambda: {:?}", self.ext_vels, self.mj_lambda_vel);
                 let mut mb_vels = body.generalized_velocity_mut();
                 mb_vels += self.ext_vels.rows(id, ndofs);
                 mb_vels += self.mj_lambda_vel.rows(id, ndofs);

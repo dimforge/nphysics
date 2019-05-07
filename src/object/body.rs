@@ -112,6 +112,8 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn advance(&mut self, time_ratio: N) {
         unimplemented!()
     }
+    fn validate_advancement(&mut self) { unimplemented!() }
+    fn clamp_advancement(&mut self) { unimplemented!() }
 
     fn step_started(&mut self) { unimplemented!() }
 
@@ -344,10 +346,13 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
     /// The position of this body part wrt. the ground.
     fn position(&self) -> Isometry<N>;
 
-//    /// The predicted position of this body part wrt. the ground after a time of `dt` assuming a free motion.
-//    fn predicted_position(&self, dt: N) -> Isometry<N> {
-//        unimplemented!()
-//    }
+    /// If CCD is enabled, this is the last position known to be tunnelling-free.
+    fn safe_position(&self) -> Isometry<N> { unimplemented!() }
+
+    /// The predicted position of this body part wrt. the ground after a time of `dt` assuming a free motion.
+    fn predicted_position(&self, dt: N) -> Isometry<N> {
+        unimplemented!()
+    }
 
     /// The velocity of this body part.
     fn velocity(&self) -> Velocity<N>;

@@ -33,7 +33,7 @@ pub struct IntegrationParameters<N: RealField> {
     pub max_linear_correction: N,
     /// Maximum angular correction during one step of the non-linear position solver (default: `0.2`).
     pub max_angular_correction: N,
-    /// Maximum nonlinera SOR-prox scaling parameter when the constraint
+    /// Maximum nonlinear SOR-prox scaling parameter when the constraint
     /// correction direction is close to the kernel of the involved multibody's
     /// jacobian (default: `0.2`).
     pub max_stabilization_multiplier: N,
@@ -131,7 +131,7 @@ impl<N: RealField> Default for IntegrationParameters<N> {
             na::convert(1.0),
             na::convert(0.001),
             na::convert(0.001),
-            na::convert(100.0),
+            na::convert(0.2), // 100000.0),
             na::convert(0.2),
             na::convert(0.2),
             8,
