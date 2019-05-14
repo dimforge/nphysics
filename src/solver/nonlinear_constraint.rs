@@ -96,7 +96,7 @@ pub struct NonlinearUnilateralConstraint<N: RealField> {
 
     /// The contact normal on the local space of `self.body1`.
     pub normal1: Unit<Vector<N>>,
-    /// The contact normal on the local space of `self.body1`.
+    /// The contact normal on the local space of `self.body2`.
     pub normal2: Unit<Vector<N>>,
 }
 

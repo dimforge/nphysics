@@ -163,6 +163,7 @@ impl<N: RealField> SignoriniModel<N> {
         // XXX: don't do this with deformable.
         let pos1 = part1.position();
         let pos2 = part2.position();
+
         let normal1 = pos1.inverse_transform_unit_vector(&c.contact.normal);
         let normal2 = -pos2.inverse_transform_unit_vector(&c.contact.normal);
 

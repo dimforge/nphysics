@@ -223,7 +223,7 @@ impl TestbedUi {
             ("Sleep", self.ids.toggle_sleep, TestbedStateFlags::SLEEP),
 //            ("Warm Starting", self.ids.toggle_warm_starting, TestbedStateFlags::WARM_STARTING),
             ("CCD", self.ids.toggle_ccd, TestbedStateFlags::CCD),
-//            ("Sub-Stepping", self.ids.toggle_sub_stepping, TestbedStateFlags::SUB_STEPPING),
+            ("Sub-Stepping", self.ids.toggle_sub_stepping, TestbedStateFlags::SUB_STEPPING),
             ("", self.ids.separator2, TestbedStateFlags::NONE),
 //            ("Shapes", self.ids.toggle_shapes, TestbedStateFlags::SHAPES),
 //            ("Joints", self.ids.toggle_joints, TestbedStateFlags::JOINTS),

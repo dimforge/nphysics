@@ -168,7 +168,7 @@ impl<N: RealField> BodySet<N> {
         }
     }
 
-    /// Mutable reference to the body identified by `body`.
+    /// Mutable reference to the specified body.
     ///
     /// Returns `None` if the body is not found.
     #[inline]
@@ -177,6 +177,21 @@ impl<N: RealField> BodySet<N> {
             Some(&mut self.ground)
         } else {
             self.bodies.get_mut(handle.0).map(|b| &mut **b)
+        }
+    }
+
+    /// Mutable reference to the two specified bodies.
+    ///
+    /// Returns `None` if the body is not found.
+    /// Panics if both handles are equal.
+    #[inline]
+    pub fn body_pair_mut(&mut self, handle1: BodyHandle, handle2: BodyHandle) -> (Option<&mut Body<N>>, Option<&mut Body<N>>) {
+        assert_ne!(handle1, handle2, "Both body handles must not be equal.");
+        let b1 = self.body_mut(handle1).map(|b| b as *mut Body<N>);
+        let b2 = self.body_mut(handle2).map(|b| b as *mut Body<N>);
+        unsafe {
+            use std::mem;
+            (b1.map(|b| mem::transmute(b)), b2.map(|b| mem::transmute(b)))
         }
     }
 

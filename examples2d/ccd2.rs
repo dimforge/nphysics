@@ -27,18 +27,22 @@ pub fn init_world(testbed: &mut Testbed) {
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
 
     ColliderDesc::new(ground_shape.clone())
+        .ccd_enabled(true)
         .build(&mut world);
 
     ColliderDesc::new(ground_shape.clone())
         .position(Isometry2::new(Vector2::new(-3.0, 0.0), 3.14 / 2.0))
+        .ccd_enabled(true)
         .build(&mut world);
 
     ColliderDesc::new(ground_shape.clone())
         .position(Isometry2::new(Vector2::new(3.0, 0.0), 3.14 / 2.0))
+        .ccd_enabled(true)
         .build(&mut world);
 
     ColliderDesc::new(ground_shape)
         .position(Isometry2::translation(0.0, 10.0))
+        .ccd_enabled(true)
         .build(&mut world);
 
     /*
@@ -51,7 +55,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let collider_desc = ColliderDesc::new(ball)
 //        .margin(1.0)
         .ccd_enabled(true)
-        .position(Isometry2::rotation(0.5))
+//        .position(Isometry2::rotation(0.5))
 //        .material(MaterialHandle::new(BasicMaterial::new(2.0, 0.0)))
         .density(1.0);
 
@@ -64,13 +68,13 @@ pub fn init_world(testbed: &mut Testbed) {
 
     for i in 0usize..num {
         for j in 0..num {
-            let x = i as f32 * shift - centerx;
+            let x = i as f32 * shift * 4.0 - centerx;
             let y = j as f32 * shift + centery;
 
             // Build the rigid body and its collider.
             rb_desc
                 .set_translation(Vector2::new(x, y))
-//                .set_velocity(Velocity::linear(100.0, -100.0))
+                .set_velocity(Velocity::linear(100.0, -100.0))
 //                .set_rotation_kinematic(true)
                 .build(&mut world);
         }

@@ -3,7 +3,7 @@ use std::collections::{hash_map, HashMap};
 use na::RealField;
 use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
 use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter};
-use ncollide::narrow_phase::{Interaction, ContactAlgorithm, ProximityAlgorithm};
+use ncollide::narrow_phase::{Interaction, ContactAlgorithm, ProximityAlgorithm, NarrowPhase};
 use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
@@ -18,7 +18,7 @@ use crate::math::{Isometry, Point};
 /// This is a wrapper over the `CollisionWorld` structure from `ncollide` to simplify
 /// its use with the [object::Collider] structure.
 pub struct ColliderWorld<N: RealField> {
-    cworld: CollisionWorld<N, ColliderData<N>>,
+    pub(crate) cworld: CollisionWorld<N, ColliderData<N>>,
     collider_lists: HashMap<BodyHandle, (ColliderHandle, ColliderHandle)>, // (head, tail)
     colliders_w_parent: Vec<ColliderHandle>,
     default_material: MaterialHandle<N>
@@ -96,7 +96,7 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// Customize the selection of narrow-phase collision detection algorithms
-    pub fn set_narrow_phase(&mut self, narrow_phase: ncollide::narrow_phase::NarrowPhase<N>) {
+    pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N>) {
         self.cworld.set_narrow_phase(narrow_phase);
     }
 
@@ -283,7 +283,7 @@ impl<N: RealField> ColliderWorld<N> {
 
     /// The broad-phase used by this collider world.
     pub fn broad_phase(&self) -> &BroadPhase<N, AABB<N>, ColliderHandle> {
-        self.cworld.broad_phase()
+        &*self.cworld.broad_phase
     }
 
     /// The broad-phase AABB used for this collider.
@@ -308,6 +308,16 @@ impl<N: RealField> ColliderWorld<N> {
     pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N>> {
         self.cworld.collision_object_mut(handle).map(|co| Collider::from_mut(co))
     }
+
+    /// Returns a mutable reference to the two colliders identified by their handles.
+    ///
+    /// Panics if both handle are equal.
+    #[inline]
+    pub fn collider_pair_mut(&mut self, handle1: ColliderHandle, handle2: ColliderHandle) -> (Option<&mut Collider<N>>, Option<&mut Collider<N>>) {
+        let (a, b) = self.cworld.collision_object_pair_mut(handle1, handle2);
+        (a.map(|a| Collider::from_mut(a)), b.map(|b| Collider::from_mut(b)))
+    }
+
 
     /// Sets the collision groups of the given collider.
     #[inline]

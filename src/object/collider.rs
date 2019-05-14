@@ -174,6 +174,14 @@ impl<N: RealField> Collider<N> {
         }
     }
 
+    pub fn as_collision_object(&self) -> &CollisionObject<N, ColliderData<N>> {
+        &self.0
+    }
+
+    pub fn as_collision_object_mut(&mut self) -> &mut CollisionObject<N, ColliderData<N>> {
+        &mut self.0
+    }
+
     /*
      * Methods of ColliderData.
      */

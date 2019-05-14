@@ -207,6 +207,12 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: Option<&mut N>
     ) {}
 
+    fn advance(&mut self, _: N) { }
+
+    fn validate_advancement(&mut self) { }
+
+    fn clamp_advancement(&mut self) { }
+
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {
         false

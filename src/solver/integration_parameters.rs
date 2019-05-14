@@ -11,6 +11,11 @@ pub struct IntegrationParameters<N: RealField> {
     ///
     /// Default: `true`.
     pub ccd_enabled: bool,
+    /// If `true`, the world's `step` method will stop right after resolving exactly one CCD event.
+    /// This allows the user to take action during a timestep, in-between two CCD events.
+    ///
+    /// Default: `false`.
+    pub substepping_enabled: bool,
     /// The total elapsed time in the physics world.
     ///
     /// This is the accumulation of the `dt` of all the calls to `world.step()`.
@@ -58,6 +63,7 @@ impl<N: RealField> IntegrationParameters<N> {
         max_velocity_iterations: usize,
         max_position_iterations: usize,
         ccd_enabled: bool,
+        substepping_enabled: bool,
     ) -> Self {
         IntegrationParameters {
             t: N::zero(),
@@ -78,6 +84,7 @@ impl<N: RealField> IntegrationParameters<N> {
             max_velocity_iterations,
             max_position_iterations,
             ccd_enabled,
+            substepping_enabled,
         }
     }
 
@@ -137,6 +144,7 @@ impl<N: RealField> Default for IntegrationParameters<N> {
             8,
             3,
             true,
+            false,
         )
     }
 }
