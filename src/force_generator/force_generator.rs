@@ -13,7 +13,8 @@ pub type ForceGeneratorHandle = usize;
 /// 
 /// A force generator applies a force to one or several bodies at each step of the simulation.
 pub trait ForceGenerator<N: RealField>: Downcast + Send + Sync {
-    /// Apply forces to some bodies.
+    /// Apply forces to some bodies. Returns false to indicate that the force generator should be
+    /// removed from the simulation.
     fn apply(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool;
 }
 
