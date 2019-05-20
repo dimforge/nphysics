@@ -65,8 +65,8 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
 
         for manifold in manifolds {
-            let body1 = try_continue!(bodies.body(manifold.body1()));
-            let body2 = try_continue!(bodies.body(manifold.body2()));
+            let body1 = &*try_continue!(bodies.body(manifold.body1()));
+            let body2 = &*try_continue!(bodies.body(manifold.body2()));
 
             for c in manifold.contacts() {
                 let part1 = try_continue!(body1.part(manifold.body_part1(c.kinematic.feature1()).1));

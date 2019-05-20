@@ -70,8 +70,8 @@ impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N>,
     ) {
-        let body1 = try_ret!(bodies.body(self.b1.0));
-        let body2 = try_ret!(bodies.body(self.b2.0));
+        let body1 = &*try_ret!(bodies.body(self.b1.0));
+        let body2 = &*try_ret!(bodies.body(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
         let part2 = try_ret!(body2.part(self.b2.1));
 
@@ -179,8 +179,8 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
         bodies: &mut BodySet<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0)?;
-        let body2 = bodies.body(self.b2.0)?;
+        let body1 = &*bodies.body(self.b1.0)?;
+        let body2 = &*bodies.body(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
         let part2 = body2.part(self.b2.1)?;
 

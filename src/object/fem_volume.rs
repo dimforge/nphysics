@@ -991,6 +991,12 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         let world_force = self.elements[part_id].rot * force;
         self.apply_force_at_local_point(part_id, &world_force, &point, force_type, auto_wake_up);
     }
+
+    #[inline]
+    fn push_to_buffer(&mut self) {}
+
+    #[inline]
+    fn update_from_buffer(&mut self) {}
 }
 
 
@@ -1130,7 +1136,7 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     );
 
     /// Build a deformable volume.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMVolume<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> BodyHandle {
         world.add_body(self)
     }
 }

@@ -119,8 +119,12 @@ fn main() {
         .add_collider(&collider);
 
     // Remove the default damping so that it balances indefinitely.
-    let mb = multibody.build(&mut world);
-    mb.damping_mut().fill(0.0);
+    let mb_handle = multibody.build(&mut world);
+
+    {
+        let mut mb_write = world.multibody_mut(mb_handle).unwrap();
+        mb_write.damping_mut().fill(0.0);
+    }
 
     /*
      * Helical joint.
@@ -134,8 +138,7 @@ fn main() {
     let helical_handle = MultibodyDesc::new(hel)
         .parent_shift(parent_shift)
         .collider(&collider)
-        .build(&mut world)
-        .handle();
+        .build(&mut world);
 
     /*
      * Planar joint.
@@ -209,8 +212,7 @@ fn main() {
     let pin_slot_handle = MultibodyDesc::new(pin_slot)
         .parent_shift(shift)
         .collider(&collider)
-        .build(&mut world)
-        .handle();
+        .build(&mut world);
 
     /*
      * Set up the testbed.
@@ -224,7 +226,11 @@ fn main() {
          */
         // Might be None if the user interactively deleted the helical body.
         let mut world = world.get_mut();
-        let link = world.multibody_mut(helical_handle).and_then(|mb| mb.link_mut(0));
+        let mut mb;
+        let mut link = None;
+        let mb_option = world.multibody_mut(helical_handle);
+        if mb_option.is_some() { mb = mb_option.unwrap(); link = mb.link_mut(0) }
+
         if let Some(helical) = link {
             let dof = helical
                 .joint_mut()
@@ -245,7 +251,11 @@ fn main() {
          */
         // Might be None if the user interactively deleted the pin-slot body.
         let mut world = world.get_mut();
-        let link = world.multibody_mut(pin_slot_handle).and_then(|mb| mb.link_mut(0));
+        let mut mb;
+        let mut link = None;
+        let mb_option = world.multibody_mut(pin_slot_handle);
+        if mb_option.is_some() { mb = mb_option.unwrap(); link = mb.link_mut(0) }
+
         if let Some(pin_slot) = link {
             let dof = pin_slot
                 .joint_mut()

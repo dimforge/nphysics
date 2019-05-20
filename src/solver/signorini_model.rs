@@ -202,8 +202,8 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         let id_vel = constraints.velocity.unilateral.len();
 
         for manifold in manifolds {
-            let body1 = try_ret!(bodies.body(manifold.body1()));
-            let body2 = try_ret!(bodies.body(manifold.body2()));
+            let body1 = &*try_ret!(bodies.body(manifold.body1()));
+            let body2 = &*try_ret!(bodies.body(manifold.body2()));
 
             for c in manifold.contacts() {
                  if !Self::is_constraint_active(c, manifold) {

@@ -39,8 +39,7 @@ fn main() {
             .position(*pos)
             .status(BodyStatus::Kinematic)
             .collider(&ColliderDesc::new(platform_shape.clone()))
-            .build(&mut world)
-            .handle();
+            .build(&mut world);
     }
 
     /*
@@ -68,7 +67,7 @@ fn main() {
     testbed.add_callback(move |world, _, _| {
         let mut world = world.get_mut();
         for (i, handle) in platforms.iter().enumerate() {
-            let platform = world.rigid_body_mut(*handle).unwrap();
+            let mut platform = world.rigid_body_mut(*handle).unwrap();
             let platform_y = platform.position().translation.vector.y;
 
             let mut vel = *platform.velocity();

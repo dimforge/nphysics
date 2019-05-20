@@ -319,6 +319,10 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
 
     /// Apply a local force at a given local point of a part of this body.
     fn apply_local_force_at_local_point(&mut self, part_id: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool);
+
+    fn push_to_buffer(&mut self);
+
+    fn update_from_buffer(&mut self);
 }
 
 /// Trait implemented by each part of a body supported by nphysics.

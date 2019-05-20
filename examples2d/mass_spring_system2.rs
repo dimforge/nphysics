@@ -36,14 +36,14 @@ fn main() {
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let deformable = MassSpringSystemDesc::quad(50, 1)
+    let deformable_handle = MassSpringSystemDesc::quad(50, 1)
         .scale(Vector2::new(10.0, 1.0))
         .translation(Vector2::y() * 1.0)
         .stiffness(1.0e3)
         .damping_ratio(0.2)
         .collider_enabled(true)
         .build(&mut world);
-    let deformable_handle = deformable.handle();
+    let mut deformable = world.mass_spring_system_mut(deformable_handle).unwrap();
 
     // Add other springs for volume stiffness.
     deformable.generate_neighbor_springs(1.0e3, 0.5);
@@ -56,6 +56,8 @@ fn main() {
     for spring in extra_springs1.chain(extra_springs2) {
         deformable.add_spring(spring.x, spring.y, 1.0e3, 0.5);
     }
+
+    drop(deformable);
 
     /*
      * Create a pyramid on top of the deformable body.

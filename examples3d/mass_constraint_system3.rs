@@ -56,14 +56,18 @@ fn main() {
             .stiffness(Some(0.1))
             .collider_enabled(true);
 
-        let deformable1 = desc.build(&mut world);
-        deformable1.generate_neighbor_constraints(Some(0.1));
-        deformable1.generate_neighbor_constraints(Some(0.1));
+        {
+            let deformable1_handle = desc.build(&mut world);
+            let mut deformable1 = world.mass_constraint_system_mut(deformable1_handle).unwrap();
+            deformable1.generate_neighbor_constraints(Some(0.1));
+            deformable1.generate_neighbor_constraints(Some(0.1));
+        }
 
-        let deformable2 = desc
+        let deformable2_handle = desc
             .set_position(Isometry3::new(Vector3::y() * 9.5, rot))
             .set_stiffness(Some(100.0))
             .build(&mut world);
+        let mut deformable2 = world.mass_constraint_system_mut(deformable2_handle).unwrap();    
         deformable2.generate_neighbor_constraints(Some(100.0));
         deformable2.generate_neighbor_constraints(Some(100.0));
     }

@@ -69,8 +69,7 @@ fn main() {
         .translation(Vector2::new(0.0, 1.5))
         .velocity(Velocity::linear(1.0, 0.0))
         .status(BodyStatus::Kinematic)
-        .build(&mut world)
-        .handle();
+        .build(&mut world);
 
     /*
      * Setup a kinematic multibody.
@@ -83,8 +82,11 @@ fn main() {
         .collider(&collider_desc)
         .build(&mut world);
 
-    mb.set_status(BodyStatus::Kinematic);
-    mb.generalized_velocity_mut()[0] = -3.0;
+    {
+        let mut mb_write = world.multibody_mut(mb).unwrap();
+        mb_write.set_status(BodyStatus::Kinematic);
+        mb_write.generalized_velocity_mut()[0] = -3.0;
+    }
 
     /*
      * Setup a motorized multibody.
@@ -108,7 +110,7 @@ fn main() {
     let mut testbed = Testbed::new(world);
     testbed.add_callback(move |world, _, time| {
         let mut world = world.get_mut();
-        if let Some(platform) = world.rigid_body_mut(platform_handle) {
+        if let Some(mut platform) = world.rigid_body_mut(platform_handle) {
             let platform_x = platform.position().translation.vector.x;
 
             let mut vel = *platform.velocity();
@@ -122,7 +124,7 @@ fn main() {
             }
 
             platform.set_velocity(vel);
-        }
+        };
     });
 
     /*

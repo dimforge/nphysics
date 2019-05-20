@@ -42,8 +42,7 @@ fn main() {
         .young_modulus(1.0e4)
         .mass_damping(0.2)
         .collider_enabled(true)
-        .build(&mut world)
-        .handle();
+        .build(&mut world);
 
     /*
      * Create a pyramid on top of the deformable body.

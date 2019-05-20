@@ -1184,6 +1184,12 @@ impl<N: RealField> Body<N> for Multibody<N> {
             force_type,
             auto_wake_up)
     }
+
+    #[inline]
+    fn push_to_buffer(&mut self) {}
+
+    #[inline]
+    fn update_from_buffer(&mut self) {}
 }
 
 
@@ -1281,7 +1287,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
 
 
     /// Build into the `world` the multibody represented by `self` and its children.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Multibody<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> BodyHandle {
         world.add_body(self)
     }
 
@@ -1289,14 +1295,16 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     ///
     /// If `parent` is the ground, then a new multibody is created.
     /// If `parent` is not another multibody link, then `None` is returned.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut MultibodyLink<N>> {
+    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<BodyPartHandle> {
         if parent.is_ground() {
-            Some(self.build(world).root_mut())
+            let handle = self.build(world);
+            Some(world.multibody_mut(handle)?.root_mut().part_handle())
         } else {
             let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
             // FIXME: keep the Err so the user gets a more meaningful error?
-            let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>()?;
-            Some(self.do_build(mb, cworld, parent))
+            let mut mb = bodies.body_mut(parent.0)?;
+            let mb = mb.downcast_mut::<Multibody<N>>()?;
+            Some(self.do_build(mb, cworld, parent).part_handle())
         }
     }
 

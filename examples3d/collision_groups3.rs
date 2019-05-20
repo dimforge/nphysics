@@ -101,8 +101,7 @@ fn main() {
                 let body_handle = RigidBodyDesc::new()
                     .collider(&collider_desc)
                     .translation(Vector3::new(x, y, z))
-                    .build(&mut world)
-                    .handle();
+                    .build(&mut world);
 
                 testbed.set_body_color(body_handle, color);
             }

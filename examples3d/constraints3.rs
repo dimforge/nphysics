@@ -64,8 +64,9 @@ fn main() {
 
         let rb_handle = rb_desc
             .set_translation(pos)
-            .build(&mut world)
-            .part_handle();
+            .build(&mut world);
+
+        let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
         let constraint = RevoluteConstraint::new(
             parent,
@@ -101,8 +102,9 @@ fn main() {
 
         let rb_handle = rb_desc
             .set_translation(pos)
-            .build(&mut world)
-            .part_handle();
+            .build(&mut world);
+
+        let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
         let mut constraint =
             PrismaticConstraint::new(parent, rb_handle, parent_anchor, Vector3::y_axis(), body_anchor);
@@ -135,8 +137,9 @@ fn main() {
 
         let rb_handle = rb_desc
             .set_translation(pos)
-            .build(&mut world)
-            .part_handle();
+            .build(&mut world);
+
+        let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
         let constraint = BallConstraint::new(parent, rb_handle, parent_anchor, body_anchor);
         world.add_constraint(constraint);
@@ -155,8 +158,9 @@ fn main() {
 
     let rb_handle = rb_desc
         .set_translation(child_pos)
-        .build(&mut world)
-        .part_handle();
+        .build(&mut world);
+
+    let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
     let constraint = UniversalConstraint::new(
         BodyPartHandle::ground(),
@@ -188,8 +192,9 @@ fn main() {
 
             let rb_handle = rb_desc
                 .set_translation(shift + Vector3::new(0.0, y, z))
-                .build(&mut world)
-                .part_handle();
+                .build(&mut world);
+
+            let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
             let constraint = PlanarConstraint::new(
                 BodyPartHandle::ground(),
@@ -220,8 +225,9 @@ fn main() {
 
             let rb_handle = rb_desc
                 .set_translation(shift + Vector3::new(0.0, y, z))
-                .build(&mut world)
-                .part_handle();
+                .build(&mut world);
+            
+            let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
             let constraint = RectangularConstraint::new(
                 BodyPartHandle::ground(),
@@ -244,8 +250,9 @@ fn main() {
 
     let pin_handle = RigidBodyDesc::new()
         .collider(&collider_desc)
-        .build(&mut world)
-        .part_handle();
+        .build(&mut world);
+    
+    let pin_handle = world.rigid_body(pin_handle).unwrap().part_handle();
 
     let constraint = PinSlotConstraint::new(
         BodyPartHandle::ground(),

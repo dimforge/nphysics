@@ -78,6 +78,9 @@ impl<N: RealField> ForceGenerator<N> for Spring<N> {
             delta_length = -self.length;
         }
 
+        drop(body1);
+        drop(body2);
+        
         let force = force_dir.as_ref() * delta_length * self.stiffness;
         bodies.body_mut(self.b1.0).unwrap().apply_force_at_local_point(self.b1.1, &force, &self.anchor1, ForceType::Force, false);
         bodies.body_mut(self.b2.0).unwrap().apply_force_at_local_point(self.b2.1, &-force, &self.anchor2, ForceType::Force, false);

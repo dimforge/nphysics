@@ -434,7 +434,7 @@ impl<N: RealField> ColliderDesc<N> {
 
     fn do_build<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let body = bodies.body_mut(parent.0)?;
+        let body = &mut *bodies.body_mut(parent.0)?;
         self.build_with_infos(parent, body, cworld)
     }
 
@@ -568,7 +568,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     /// Builds a deformable collider attached to `parent` into the `world`.
     pub fn build_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let parent = bodies.body(parent)?;
+        let parent = &*bodies.body(parent)?;
         Some(self.build_with_infos(parent, cworld))
     }
 

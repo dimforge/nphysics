@@ -1,6 +1,9 @@
 use slab::{Iter, IterMut, Slab};
 
 use na::RealField;
+
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+
 use crate::world::ColliderWorld;
 use crate::object::{Body, Ground};
 
@@ -114,15 +117,15 @@ pub trait BodyDesc<N: RealField> {
 
 /// A set containing all the bodies added to the world.
 pub struct BodySet<N: RealField> {
-    ground: Ground<N>,
-    bodies: Slab<Box<Body<N>>>,
+    ground: Box<RwLock<Body<N>>>,
+    bodies: Slab<Box<RwLock<Body<N>>>>,
 }
 
 impl<N: RealField> BodySet<N> {
     /// Create a new empty set of bodies.
     pub fn new() -> Self {
         BodySet {
-            ground: Ground::new(),
+            ground: Box::new(RwLock::new(Ground::new())),
             bodies: Slab::new(),
         }
     }
@@ -133,12 +136,13 @@ impl<N: RealField> BodySet<N> {
     }
 
     /// Adds a body to the world.
-    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N>) -> &mut B::Body {
+    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N>) -> BodyHandle {
         let b_entry = self.bodies.vacant_entry();
         let b_id = b_entry.key();
         let handle = BodyHandle(b_id);
         let body = desc.build_with_handle(cworld, handle);
-        b_entry.insert(Box::new(body)).downcast_mut::<B::Body>().expect("Body construction failed with type mismatch.")
+        let _ = b_entry.insert(Box::new(RwLock::new(body)));
+        handle
     }
 
     /// Remove a body from this set.
@@ -160,11 +164,11 @@ impl<N: RealField> BodySet<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
+    pub fn body(&self, handle: BodyHandle) -> Option<RwLockReadGuard<Body<N>>> {
         if handle.is_ground() {
-            Some(&self.ground)
+            Some(self.ground.read())
         } else {
-            self.bodies.get(handle.0).map(|b| &**b)
+            self.bodies.get(handle.0).map(|b| b.read())
         }
     }
 
@@ -172,24 +176,24 @@ impl<N: RealField> BodySet<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
+    pub fn body_mut(&self, handle: BodyHandle) -> Option<RwLockWriteGuard<Body<N>>> {
         if handle.is_ground() {
-            Some(&mut self.ground)
+            Some(self.ground.write())
         } else {
-            self.bodies.get_mut(handle.0).map(|b| &mut **b)
+            self.bodies.get(handle.0).map(|b| b.write())
         }
     }
 
     /// Iterator yielding all the bodies on this set.
     #[inline]
-    pub fn bodies(&self) -> impl Iterator<Item = &Body<N>> {
-        self.bodies.iter().map(|e| &**e.1)
+    pub fn bodies(&self) -> impl Iterator<Item = RwLockReadGuard<Body<N>>> {
+        self.bodies.iter().map(|e| (*e.1).read())
     }
 
     /// Mutable iterator yielding all the bodies on this set.
     #[inline]
-    pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut Body<N>> {
-        self.bodies.iter_mut().map(|e| &mut **e.1)
+    pub fn bodies_mut(&mut self) -> impl Iterator<Item = RwLockWriteGuard<Body<N>>> {
+        self.bodies.iter_mut().map(|e| (*e.1).write())
     }
 }
 

@@ -45,7 +45,7 @@ impl<N: RealField> ForceGenerator<N> for ConstantAcceleration<N> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySet<N>) -> bool {
         let acceleration = self.acceleration;
         self.parts.retain(|h| {
-            if let Some(body) = bodies.body_mut(h.0) {
+            if let Some(mut body) = bodies.body_mut(h.0) {
                 body.apply_force(h.1,
                                  &Force::new(acceleration.linear, acceleration.angular),
                                  ForceType::AccelerationChange,

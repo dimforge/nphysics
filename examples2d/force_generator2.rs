@@ -66,8 +66,9 @@ fn main() {
             // Crate the rigid body and its collider.
             let rb_handle = rb_desc
                 .set_translation(Vector2::new(x, y))
-                .build(&mut world)
-                .part_handle();
+                .build(&mut world);
+
+            let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
             /*
              * Set artifical gravity.

@@ -767,6 +767,12 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }
+
+    #[inline]
+    fn push_to_buffer(&mut self) {}
+    
+    #[inline]
+    fn update_from_buffer(&mut self) {}
 }
 
 
@@ -907,7 +913,7 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     );
 
     /// Builds a mass-spring system.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassSpringSystem<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> BodyHandle {
         world.add_body(self)
     }
 }

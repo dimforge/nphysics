@@ -49,7 +49,7 @@ impl SORProx {
         }
 
         for handle in internal {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(mut body) = bodies.body_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
                 body.warmstart_internal_velocity_constraints(&mut dvels);
             }
@@ -140,7 +140,7 @@ impl SORProx {
         }
 
         for handle in internal {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(mut body) = bodies.body_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
                 body.step_solve_internal_velocity_constraints(&mut dvels);
             }

@@ -782,6 +782,12 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         // FIXME: compute an approximate rotation for the conserned element (just like the FEM bodies)?
         self.apply_force_at_local_point(part_id, &force, &point, force_type, auto_wake_up);
     }
+
+    #[inline]
+    fn push_to_buffer(&mut self) {}
+
+    #[inline]
+    fn update_from_buffer(&mut self) {}
 }
 
 
@@ -924,7 +930,7 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     );
 
     /// Build a mass-constraint system.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassConstraintSystem<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N>) -> BodyHandle {
         world.add_body(self)
     }
 }

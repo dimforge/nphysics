@@ -53,8 +53,7 @@ fn main() {
         // Build the rigid body and its collider.
         let handle = rb_desc
             .set_translation(Vector2::new(x, 2.0))
-            .build(&mut world)
-            .handle();
+            .build(&mut world);
 
         testbed.set_body_color(handle, Point3::new(0.5, 0.5, 1.0));
     }
@@ -73,8 +72,7 @@ fn main() {
         .collider(&collider_desc)
         .collider(&sensor_collider)
         .translation(Vector2::new(0.0, 4.0))
-        .build(&mut world)
-        .handle();
+        .build(&mut world);
 
     testbed.set_body_color(sensor_body, Point3::new(0.5, 1.0, 1.0));
 

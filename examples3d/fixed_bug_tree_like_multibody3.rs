@@ -21,7 +21,6 @@ fn new_link<J: Joint<f32>>(world: &mut World<f32>, joint: J, parent: BodyPartHan
         .collider(&collider_desc)
         .build_with_parent(parent, world)
         .unwrap()
-        .part_handle()
 }
 
 fn main() {

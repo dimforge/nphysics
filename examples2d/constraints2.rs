@@ -48,8 +48,9 @@ fn main() {
          */
         let rb_handle = rb_desc
             .set_translation(Vector2::x() * (j + 1) as f32 * rad * 3.0)
-            .build(&mut world)
-            .part_handle();
+            .build(&mut world);
+        
+        let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
         let revolute_constraint =
             RevoluteConstraint::new(parent, rb_handle, na::origin(), Point2::new(-rad * 3.0, 0.0));
@@ -76,8 +77,9 @@ fn main() {
          */
         let rb_handle = rb_desc
             .set_translation(translation)
-            .build(&mut world)
-            .part_handle();
+            .build(&mut world);
+
+        let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
         let mut constraint = PrismaticConstraint::new(
             parent,
@@ -115,8 +117,9 @@ fn main() {
 
             let rb_handle = rb_desc
                 .set_translation(shift + Vector2::new(x, y))
-                .build(&mut world)
-                .part_handle();
+                .build(&mut world);
+
+            let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
             let constraint = CartesianConstraint::new(
                 BodyPartHandle::ground(),

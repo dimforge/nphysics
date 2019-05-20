@@ -238,6 +238,12 @@ impl<N: RealField> Body<N> for Ground<N> {
 
     #[inline]
     fn apply_local_force_at_local_point(&mut self, _: usize, _: &Vector<N>, _: &Point<N>, _: ForceType, _: bool) {}
+
+    #[inline]
+    fn push_to_buffer(&mut self) {}
+
+    #[inline]
+    fn update_from_buffer(&mut self) {}
 }
 
 impl<N: RealField> BodyPart<N> for Ground<N> {

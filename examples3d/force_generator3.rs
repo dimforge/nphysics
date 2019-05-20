@@ -63,8 +63,9 @@ fn main() {
                 // Build the rigid body and its collider.
                 let rb_handle = rb_desc
                     .set_translation(Vector3::new(x, y, z))
-                    .build(&mut world)
-                    .part_handle();
+                    .build(&mut world);
+                
+                let rb_handle = world.rigid_body(rb_handle).unwrap().part_handle();
 
                 /*
                  * Set artificial gravity.

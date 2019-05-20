@@ -87,7 +87,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         let mut system_ndofs = 0;
 
         for handle in island {
-            let body = try_continue!(bodies.body_mut(*handle));
+            let mut body = try_continue!(bodies.body_mut(*handle));
             body.set_companion_id(system_ndofs);
             let ndofs = body.status_dependent_ndofs();
             assert!(
@@ -199,7 +199,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
 
 
         for handle in &self.internal_constraints {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(mut body) = bodies.body_mut(*handle) {
                 let ext_vels = self.ext_vels.rows(body.companion_id(), body.ndofs());
                 body.setup_internal_velocity_constraints(&ext_vels, params);
             }
@@ -266,7 +266,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         island: &[BodyHandle],
     ) {
         for handle in island {
-            let body = try_continue!(bodies.body_mut(*handle));
+            let mut body = try_continue!(bodies.body_mut(*handle));
             let id = body.companion_id();
             let ndofs = body.ndofs();
 

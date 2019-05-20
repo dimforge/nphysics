@@ -4,7 +4,8 @@ use std::env;
 use std::mem;
 use std::path::Path;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Barrier, RwLock};
+use std::sync::atomic::{AtomicPtr, Ordering};
 
 use crate::engine::GraphicsManager;
 use kiss3d::camera::Camera;
@@ -89,6 +90,8 @@ pub struct Testbed {
     time: f32,
     hide_counters: bool,
     persistant_contacts: HashMap<GenerationalId, bool>,
+    threads: usize,
+    barrier: Arc<Barrier>,
 
     font: Rc<Font>,
     running: RunMode,
@@ -120,6 +123,8 @@ impl Testbed {
             time: 0.0,
             hide_counters: true,
             persistant_contacts: HashMap::new(),
+            threads: 8,
+            barrier: Arc::new(Barrier::new(9)),
             font: Font::default(),
             running: RunMode::Running,
             draw_colls: false,
@@ -139,6 +144,11 @@ impl Testbed {
 
         res.set_world_owner(world);
         res
+    }
+
+    pub fn set_thread_number(&mut self, nthreads: usize) {
+        self.threads = nthreads;
+        self.barrier = Arc::new(Barrier::new(nthreads + 1));
     }
 
     pub fn set_number_of_steps_per_frame(&mut self, nsteps: usize) {
@@ -236,6 +246,23 @@ impl Testbed {
                 } else if &arg[..] == "--pause" {
                     self.running = RunMode::Stop;
                 }
+            }
+        }
+
+        {
+            let mut world = self.world.get_mut();
+            let world = AtomicPtr::new(&mut **world);
+            let world = Arc::new(world);
+            for _ in 0..self.threads {
+                let world = world.clone();
+                let barrier = self.barrier.clone();
+                std::thread::spawn(move || {                    
+                    let world = unsafe { &*world.load(Ordering::Relaxed) };
+                    loop {
+                        barrier.wait();
+                        world.step_multithread_slave();
+                    }
+                });
             }
         }
 
@@ -547,9 +574,14 @@ impl State for Testbed {
                 for f in &self.callbacks {
                     f(&mut *self.world, &mut self.graphics, self.time)
                 }
-
                 let mut world = self.world.get_mut();
-                world.step();
+                if self.threads == 0 {
+                    world.step();
+                } else {
+                    self.barrier.wait();
+                    world.step_multithread_master();
+                }
+
                 if !self.hide_counters {
                     #[cfg(not(feature = "log"))]
                     println!("{}", world.performance_counters());

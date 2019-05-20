@@ -42,6 +42,7 @@ pub struct RigidBody<N: RealField> {
 
 impl<N: RealField> RigidBody<N> {
     /// Create a new rigid body with the specified handle and dynamic properties.
+
     fn new(handle: BodyHandle, position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
         let com = Point::from(position.translation.vector);
@@ -658,6 +659,12 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     fn apply_local_force_at_local_point(&mut self, _: usize, force: &Vector<N>, point: &Point<N>, force_type: ForceType, auto_wake_up: bool) {
         self.apply_force_at_point(0, &(self.position * force), &(self.position * point), force_type, auto_wake_up)
     }
+
+    #[inline]
+    fn push_to_buffer(&mut self) {}
+    
+    #[inline]
+    fn update_from_buffer(&mut self) {}
 }
 
 
@@ -821,7 +828,7 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     );
 
     /// Builds a rigid body and all its attached colliders.
-    pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
+    pub fn build<'w>(&mut self, world: &'w mut World<N>) -> BodyHandle {
         world.add_body(self)
     }
 }

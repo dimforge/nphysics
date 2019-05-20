@@ -36,13 +36,14 @@ fn main() {
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let deformable = MassConstraintSystemDesc::quad(50, 1)
+    let deformable_handle = MassConstraintSystemDesc::quad(50, 1)
         .scale(Vector2::new(10.0, 1.0))
         .translation(Vector2::y() * 1.0)
         .stiffness(Some(1.0e4))
         .collider_enabled(true)
         .build(&mut world);
-    let deformable_handle = deformable.handle();
+
+    let mut deformable = world.mass_constraint_system_mut(deformable_handle).unwrap();
 
     // Add other constraints for volume stiffness.
     deformable.generate_neighbor_constraints(Some(1.0e4));
@@ -55,6 +56,8 @@ fn main() {
     for constraint in extra_constraints1.chain(extra_constraints2) {
         deformable.add_constraint(constraint.x, constraint.y, Some(1.0e4));
     }
+
+    drop(deformable);
 
     /*
      * Create a pyramid on top of the deformable body.

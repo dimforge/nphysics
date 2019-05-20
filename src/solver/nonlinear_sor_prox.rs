@@ -37,7 +37,7 @@ impl NonlinearSORProx {
             }
 
             for constraint in internal_constraints {
-                if let Some(body) = bodies.body_mut(*constraint) {
+                if let Some(mut body) = bodies.body_mut(*constraint) {
                     body.step_solve_internal_position_constraints(params);
                 }
             }
@@ -88,13 +88,13 @@ impl NonlinearSORProx {
             // FIXME: the body update should be performed lazily, especially because
             // we dont actually need to update the kinematic of a multibody until
             // we have to solve a contact involving one of its links.
-            if let Some(b1) = bodies.body_mut(constraint.body1.0) {
+            if let Some(mut b1) = bodies.body_mut(constraint.body1.0) {
                 b1.apply_displacement(
                     &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
                 );
             }
 
-            if let Some(b2) = bodies.body_mut(constraint.body2.0) {
+            if let Some(mut b2) = bodies.body_mut(constraint.body2.0) {
                 b2.apply_displacement(
                     &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
                 )
@@ -119,12 +119,12 @@ impl NonlinearSORProx {
                 .mul_assign(impulse);
 
             if dim1.value() != 0 {
-                if let Some(b1) = bodies.body_mut(constraint.body1.0) {
+                if let Some(mut b1) = bodies.body_mut(constraint.body1.0) {
                     b1.apply_displacement(&jacobians[0..dim1.value()]);
                 }
             }
             if dim2.value() != 0 {
-                if let Some(b2) = bodies.body_mut(constraint.body2.0) {
+                if let Some(mut b2) = bodies.body_mut(constraint.body2.0) {
                     b2.apply_displacement(&jacobians[dim1.value()..dim1.value() + dim2.value()]);
                 }
             }
