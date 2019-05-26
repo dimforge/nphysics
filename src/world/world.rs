@@ -1,11 +1,12 @@
 use slab::Slab;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use na::{self, RealField};
 use ncollide;
-use ncollide::query;
+use ncollide::query::{self, NonlinearTOIStatus};
 use ncollide::events::{ContactEvents, ProximityEvents};
 use ncollide::narrow_phase::Interaction;
+use ncollide::interpolation::ConstantVelocityRigidMotion;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
@@ -26,6 +27,8 @@ struct SubstepState<N: RealField> {
     // FIXME: can we avoid the use of a hash-map to save the
     // number of time a contact pair generated a CCD event?
     ccd_counts: HashMap<(ColliderHandle, ColliderHandle), usize>,
+    body_times: HashMap<BodyHandle, N>,
+    body_hit: HashSet<BodyHandle>,
 }
 
 /// The physics world.
@@ -69,6 +72,8 @@ impl<N: RealField> World<N> {
             active: false,
             dt: params.dt(),
             ccd_counts: HashMap::new(),
+            body_times: HashMap::new(),
+            body_hit: HashSet::new(),
         };
 
         World {
@@ -410,15 +415,19 @@ impl<N: RealField> World<N> {
 
     // NOTE: this is an approach very similar to Box2D's.
     fn solve_ccd(&mut self) {
+        let dt0 = self.params.dt();
+        let inv_dt0 = self.params.inv_dt();
+
+        if dt0 == N::zero() {
+            return;
+        }
+
         let mut params = self.params.clone();
 //        params.max_velocity_iterations = 20;
         params.max_position_iterations = 20;
+        params.warmstart_coeff = N::zero();
 
-        if self.substep.active {
-            params.set_dt(self.substep.dt);
-        }
-
-        let max_substeps = 8;
+        let max_substeps = 1;
 
         for k in 0.. {
             self.cworld.sync_colliders(&self.bodies);
@@ -432,7 +441,7 @@ impl<N: RealField> World<N> {
              *
              *
              */
-            let mut min_toi = params.dt();
+            let mut min_toi = N::max_value();
             let mut found_toi = false;
             let mut ccd_handles = None;
 
@@ -441,37 +450,68 @@ impl<N: RealField> World<N> {
                     // Find a TOI
                     for (c1, c2, inter) in self.cworld.interactions_with(coll.handle(), false).unwrap() {
                         use crate::object::BodyPart;
-                        let b1 = self.bodies.body(c1.body()).unwrap();
-                        let b2 = self.bodies.body(c2.body()).unwrap();
-                        let p1 = b1.part(0).unwrap();
-                        let p2 = b2.part(0).unwrap();
+                        let (b1, b2) = self.bodies.body_pair_mut(c1.body(), c2.body());
+                        let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
-                        let v1 = p1.velocity().linear;
-                        let v2 = p2.velocity().linear;
                         let count = self.substep.ccd_counts.entry((c1.handle(), c2.handle())).or_insert(0);
+
+                        if *count >= max_substeps {
+//                            let _ = self.substep.body_hit.insert(b1.handle());
+//                            let _ = self.substep.body_hit.insert(b2.handle());
+                            continue;
+                        }
 
                         match inter {
                             Interaction::Contact(alg, manifold) => {
                                 let margins = c1.margin() + c2.margin();
                                 let target = self.params.allowed_linear_error.max(margins - self.params.allowed_linear_error * na::convert(3.0));
-                                // Compute the TOI.
-                                let pos1 = p1.safe_position() * c1.position_wrt_body();
-                                let pos2 = p2.safe_position() * c2.position_wrt_body();
-                                let distance = query::distance(&pos1, &**c1.shape(), &pos2, &**c2.shape());
 
-                                if let Some(toi) = query::time_of_impact(&pos1, &v1, &**c1.shape(), &pos2, &v2, &**c2.shape(), target) {
-                                    if toi < min_toi {
-                                        found_toi = true;
+                                let time1 = *self.substep.body_times.entry(c1.body()).or_insert(N::zero());
+                                let time2 = *self.substep.body_times.entry(c2.body()).or_insert(N::zero());
+                                let start_time = time1.max(time2);
 
-                                        // There is a TOI, but we are out of substeps.
-                                        if *count >= max_substeps {
-                                            continue;
-                                        }
-
-                                        min_toi = toi;
-                                        ccd_handles = Some((c1.handle(), c2.handle()))
+                                if time1 < time2 {
+                                    if !self.substep.body_hit.contains(&c1.body()) {
+                                        // Advance b1 so it is at the same internal time as b2.
+                                        b1.advance(time2 - time1); // (time2 - time1) / (dt0 - time1));
+                                        let _ = self.substep.body_times.insert(c1.body(), time2);
+                                    }
+                                } else if time2 < time1 {
+                                    if !self.substep.body_hit.contains(&c2.body()) {
+                                        b2.advance(time1 - time2); // (time1 - time2) / (dt0 - time2));
+                                        let _ = self.substep.body_times.insert(c2.body(), time1);
                                     }
                                 }
+
+                                // Compute the TOI.
+                                let p1 = b1.part(0).unwrap();
+                                let p2 = b2.part(0).unwrap();
+
+                                let start1 = p1.safe_position() * c1.position_wrt_body();
+                                let start2 = p2.safe_position() * c2.position_wrt_body();
+                                let end1 = p1.position() * c1.position_wrt_body();
+                                let end2 = p2.position() * c2.position_wrt_body();
+                                let vel1 = p1.velocity();
+                                let vel2 = p2.velocity();
+                                let motion1 = ConstantVelocityRigidMotion::new(&start1, vel1.linear, vel1.angular);
+                                let motion2 = ConstantVelocityRigidMotion::new(&start2, vel2.linear, vel2.angular);
+                                let remaining_time = dt0 - start_time;
+
+//                                if let Some(toi) = query::time_of_impact(&pos1, &v1, &**c1.shape(), &pos2, &v2, &**c2.shape(), target) {
+                                 if let Some(toi) = query::nonlinear_time_of_impact(&motion1, &**c1.shape(), &motion2, &**c2.shape(), remaining_time, target) {
+                                     // Don't use the TOI if the colliders are already penetrating.
+                                     println!("toi: {:?}", toi);
+                                     if toi.status != NonlinearTOIStatus::Penetrating {
+//                                         let toi = start_time + remaining_time * toi.toi;
+//                                     println!("Toi: {} vs time: {}", toi, start_time);
+                                         if toi.toi < min_toi {
+                                             println!("start time: {}", start_time);
+                                             found_toi = true;
+                                             min_toi = toi.toi;
+                                             ccd_handles = Some((c1.handle(), c1.body(), c2.handle(), c2.body()))
+                                         }
+                                     }
+                                 }
                             }
                             Interaction::Proximity(prox) => unimplemented!()
                         }
@@ -479,7 +519,7 @@ impl<N: RealField> World<N> {
                 }
             }
 
-            println!("Min toi: {}", min_toi);
+//            println!("Min toi: {}", min_toi);
 
             /*
              *
@@ -488,7 +528,9 @@ impl<N: RealField> World<N> {
              *
              *
              */
-            if let Some((c1, c2)) = ccd_handles {
+            if let Some((c1, b1, c2, b2)) = ccd_handles {
+                println!("Found min_toi: {}", min_toi);
+                params.set_dt(dt0 - min_toi);
                 // We will use the companion ID to know which body is already on the island.
                 for b in self.bodies.bodies_mut() {
                     b.clear_forces();
@@ -498,50 +540,117 @@ impl<N: RealField> World<N> {
                     b.set_companion_id(0);
                 }
 
-                let time_ratio = min_toi * params.inv_dt();
                 *self.substep.ccd_counts.get_mut(&(c1, c2)).unwrap() += 1;
 
                 let mut island = Vec::new();
                 let mut contact_manifolds = Vec::new();
 
                 let cworld = &mut self.cworld.cworld;
-                let colliders = [c1, c2];
+
+
+                for b in self.bodies.bodies_mut() {
+                    *self.substep.body_times.entry(b.handle()).or_insert(N::zero()) += min_toi;
+                    b.advance(min_toi);
+                    b.clamp_advancement();
+                    island.push(b.handle());
+                }
+
+                self.cworld.sync_colliders(&self.bodies);
+                self.cworld.perform_broad_phase();
+                self.cworld.perform_narrow_phase();
+
+                for (c1, c2, _, manifold) in self.cworld.contact_pairs(false) {
+                    let b1 = try_continue!(self.bodies.body(c1.body()));
+                    let b2 = try_continue!(self.bodies.body(c2.body()));
+
+                    if manifold.len() > 0
+                        && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
+                        && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
+                        || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
+                    {
+                        contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
+                    }
+                }
+
+                /*
+                let mut colliders = vec![c1, c2]; // FIXME: should contain all the colliders attached to b1 and b2.
+                let mut interaction_ids = Vec::new();
+                let (ca, cb) = (c1, c2);
 
                 // Update contact manifolds.
-                for (i, c) in colliders.iter().enumerate() {
-                    let graph_id = {
-                        cworld.objects.get(*c).unwrap().graph_index()
-                    };
+                while let Some(c) = colliders.pop() {
+                    let graph_id = cworld.objects.get(c).unwrap().graph_index();
 
-                    for (c1, c2, inter) in cworld.interactions.interactions_with_mut(graph_id, false) {
+                    for (c1, c2, eid, inter) in cworld.interactions.interactions_with_mut(graph_id, false) {
+                        if c1 == cb && c2 == ca {
+                            // This interaction will be reported twice.
+                            continue;
+                        }
+
                         match inter {
                             Interaction::Contact(alg, manifold) => {
-                                if i == 1 && ((c1 == colliders[0] && c2 == colliders[1]) ||
-                                    (c1 == colliders[1] && c2 == colliders[0])) {
-                                    // We have already seen this contact.
-                                    continue;
-                                }
                                 let (c1, c2) = cworld.objects.get_pair_mut(c1, c2);
                                 let (c1, c2) = (Collider::from_mut(c1.unwrap()), Collider::from_mut(c2.unwrap()));
 
                                 if let (Some(b1), Some(b2)) = self.bodies.body_pair_mut(c1.body(), c2.body()) {
+//                                    if !((c1.is_ccd_enabled() || !b1.is_dynamic()) || (c2.is_ccd_enabled() || !b2.is_dynamic())) {
+//                                        continue;
+//                                    }
+
                                     if b1.companion_id() == 0 && b1.is_dynamic() {
-                                        b1.advance(time_ratio);
+                                        let time1 = self.substep.body_times.entry(b1.handle()).or_insert(N::zero());
+
+                                        if min_toi != *time1 && !self.substep.body_hit.contains(&b1.handle()) {
+                                            if min_toi < *time1 {
+                                                continue;
+                                            }
+                                            assert!(min_toi >= *time1);
+//                                            println!("Advancing by: {}", (min_toi - *time1) / (dt0 - *time1));
+                                            b1.advance(min_toi - *time1); // (min_toi - *time1) / (dt0 - *time1));
+                                            *time1 = min_toi;
+                                        }
+
                                         b1.set_companion_id(1);
                                         b1.activate();
+                                        b1.clamp_advancement();
                                         island.push(c1.body());
                                         c1.set_position(b1.part(0).unwrap().position() * c1.position_wrt_body());
                                     }
 
                                     if b2.companion_id() == 0 && b2.is_dynamic() {
-                                        b2.advance(time_ratio);
+                                        let time2 = self.substep.body_times.entry(b2.handle()).or_insert(N::zero());
+
+                                        if min_toi != *time2 && !self.substep.body_hit.contains(&b2.handle()) {
+                                            if min_toi < *time2 {
+                                                continue;
+                                            }
+                                            assert!(min_toi >= *time2, format!("min_toi: {}, time2: {}", min_toi, *time2));
+//                                            println!("Advancing by: {}", (min_toi - *time2) / (dt0 - *time2));
+                                            b2.advance(min_toi - *time2); // (min_toi - *time2) / (dt0 - *time2));
+                                            *time2 = min_toi;
+                                        }
+
                                         b2.set_companion_id(1);
                                         b2.activate();
+                                        b2.clamp_advancement();
                                         island.push(c2.body());
                                         c2.set_position(b2.part(0).unwrap().position() * c2.position_wrt_body());
                                     }
 
                                     cworld.narrow_phase.update_contact(c1.as_collision_object(), c2.as_collision_object(), &mut **alg, manifold);
+
+                                    if manifold.len() > 0 {
+                                        interaction_ids.push(eid);
+
+//                                        if c1.handle() != c {
+//                                            colliders.push(c1.handle());
+//                                        }
+//
+//                                        if c2.handle() != c {
+//                                            colliders.push(c2.handle());
+//                                        }
+//                                    }
+                                    }
                                 }
                             }
                             Interaction::Proximity(prox) => unimplemented!()
@@ -549,36 +658,20 @@ impl<N: RealField> World<N> {
                     }
                 }
 
-//                self.cworld.sync_colliders(&self.bodies);
-//                self.cworld.perform_broad_phase();
-//                self.cworld.perform_narrow_phase();
 
-                // Collect contact manifolds.
-                for (i, c) in colliders.iter().enumerate() {
-                    for (c1, c2, inter) in self.cworld.interactions_with(*c, false).unwrap() {
-                        if i == 1 && ((c1.handle() == colliders[0] && c2.handle() == colliders[1]) ||
-                            (c1.handle() == colliders[1] && c2.handle() == colliders[0])) {
-                            // We have already seen this interaction.
-                            continue;
+                for eid in interaction_ids {
+                    let (c1, c2, inter) = self.cworld.cworld.interactions.index_interaction(eid).unwrap();
+                    match inter {
+                        Interaction::Contact(_, manifold) => {
+                            let c1 = self.cworld.collider(c1).unwrap();
+                            let c2 = self.cworld.collider(c2).unwrap();
+                            contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
                         }
-
-                        match inter {
-                            Interaction::Contact(_, manifold) => {
-                                let (b1, b2) = (self.bodies.body(c1.body()).unwrap(), self.bodies.body(c2.body()).unwrap());
-
-                                if manifold.len() > 0
-                                    && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
-                                    && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
-                                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
-                                {
-                                    contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
-                                }
-
-                            }
-                            Interaction::Proximity(prox) => unimplemented!()
-                        }
+                        Interaction::Proximity(_) => unimplemented!()
                     }
                 }
+                                */
+
 
                 // Solve the system and integrate.
                 for b in self.bodies.bodies_mut() {
@@ -587,12 +680,16 @@ impl<N: RealField> World<N> {
 
                 // XXX: should joint constraints be taken into account here?
                 let mut empty_constraints = Slab::new();
-                params.set_dt(params.dt() - min_toi);
+                params.set_dt(dt0 - min_toi);
+                println!("Time-stepping length: {}", params.dt());
+                println!("Num contacts: {}", contact_manifolds.len());
+
                 self.solver.step_ccd(
                     &mut self.counters,
                     &mut self.bodies,
                     &mut empty_constraints,
                     &contact_manifolds[..],
+                    [b1, b2],
                     &island[..],
                     &params,
                     &self.material_coefficients,
@@ -617,8 +714,17 @@ impl<N: RealField> World<N> {
                 }
             } else {
                 println!("Full step completed.");
+                for body in self.bodies.bodies_mut() {
+                    if self.substep.body_hit.contains(&body.handle()) {
+                        body.clamp_advancement();
+                    }
+                }
+
+//                self.bodies.bodies_mut().for_each(|b| b.clamp_advancement());
                 self.substep.active = false;
                 self.substep.ccd_counts.clear();
+                self.substep.body_times.clear();
+                self.substep.body_hit.clear();
                 self.cworld.sync_colliders(&self.bodies);
                 self.cworld.perform_broad_phase();
                 self.cworld.perform_narrow_phase();

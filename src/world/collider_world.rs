@@ -513,7 +513,6 @@ impl<N: RealField> ColliderWorld<N> {
         })
     }
 
-
     /// All the interaction pairs involving the specified collider.
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)

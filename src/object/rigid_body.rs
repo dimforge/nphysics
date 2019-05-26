@@ -1,5 +1,6 @@
 use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, RealField};
+use ncollide::utils::IsometryOps;
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
@@ -9,6 +10,7 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
+use ncollide::interpolation::{RigidMotion, ConstantVelocityRigidMotion};
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
@@ -433,10 +435,9 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn advance(&mut self, time_ratio: N) {
-        let mut new_pos = self.position;
-        new_pos.translation.vector = self.position0.translation.vector.lerp(&self.position.translation.vector, time_ratio);
-        self.set_position(new_pos);
-        self.position0 = new_pos;
+        println!("Advancing by {}", time_ratio);
+        let motion = ConstantVelocityRigidMotion::new(&self.position0, self.velocity.linear, self.velocity.angular);
+        self.position0 = motion.position_at_time(time_ratio);
     }
 
     fn validate_advancement(&mut self) {
@@ -444,7 +445,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn clamp_advancement(&mut self) {
-        self.set_position(Isometry::from_parts(self.position0.translation, self.position.rotation));
+        self.set_position(self.position0);
     }
 
     #[allow(unused_variables)] // for params used only in 3D.
@@ -707,12 +708,8 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
 
     #[inline]
     fn safe_position(&self) -> Isometry<N> {
-        Isometry::from_parts(self.position0.translation, self.position.rotation)
-    }
-
-    fn predicted_position(&self, dt: N) -> Isometry<N> {
-        let disp = self.displacement_wrt_com(&(self.velocity * dt));
-        disp * self.position
+        self.position0
+//        Isometry::from_parts(self.position0.translation, self.position.rotation)
     }
 
     #[inline]

@@ -61,7 +61,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
 
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(params, bodies);
-        self.save_cache(bodies, joints);
+        self.cache_impulses(bodies, joints);
         counters.velocity_resolution_completed();
 
         counters.velocity_update_started();
@@ -81,20 +81,34 @@ impl<N: RealField> MoreauJeanSolver<N> {
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
+        ccd_pair: [BodyHandle; 2],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
         cworld: &ColliderWorld<N>,
     ) {
         self.assemble_system(counters, params, coefficients, bodies, joints, manifolds, island);
+//        for constraint in &mut self.constraints.position.unilateral {
+//            if constraint.body1.0 != ccd_pair[0] && constraint.body1.0 != ccd_pair[1] {
+//                constraint.ndofs1 = 0;
+//            }
+//
+//            if constraint.body2.0 != ccd_pair[0] && constraint.body2.0 != ccd_pair[1] {
+//                constraint.ndofs2 = 0;
+//            }
+//        }
+
         self.solve_position_constraints(params, cworld, bodies, joints);
-        for handle in island {
-            let body = try_continue!(bodies.body_mut(*handle));
-            body.validate_advancement();
-        }
+//        bodies.body_mut(ccd_pair[0]).unwrap().validate_advancement();
+//        bodies.body_mut(ccd_pair[1]).unwrap().validate_advancement();
+
+//        for handle in island {
+//            let body = try_continue!(bodies.body_mut(*handle));
+//            body.validate_advancement();
+//        }
 
         self.solve_velocity_constraints(params, bodies);
-        self.save_cache(bodies, joints);
+//        self.cache_impulses(bodies, joints);
         self.update_velocities_and_integrate(params, bodies, island);
     }
 
@@ -127,6 +141,8 @@ impl<N: RealField> MoreauJeanSolver<N> {
             }
         }
 
+        println!("System ndofs: {}", system_ndofs);
+        println!("Island len: {}", island.len());
         self.resize_buffers(system_ndofs);
         self.constraints.clear();
 
@@ -268,7 +284,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         );
     }
 
-    fn save_cache(
+    fn cache_impulses(
         &mut self,
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,

@@ -349,11 +349,6 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
     /// If CCD is enabled, this is the last position known to be tunnelling-free.
     fn safe_position(&self) -> Isometry<N> { unimplemented!() }
 
-    /// The predicted position of this body part wrt. the ground after a time of `dt` assuming a free motion.
-    fn predicted_position(&self, dt: N) -> Isometry<N> {
-        unimplemented!()
-    }
-
     /// The velocity of this body part.
     fn velocity(&self) -> Velocity<N>;
 
