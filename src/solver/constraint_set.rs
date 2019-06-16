@@ -3,21 +3,21 @@ use crate::solver::{BilateralConstraint, BilateralGroundConstraint, NonlinearUni
              UnilateralConstraint, UnilateralGroundConstraint};
 
 /// Set of velocity-based constraints.
-pub struct Constraints<N: RealField> {
+pub struct LinearConstraints<N: RealField, Id> {
     /// Unilateral velocity constraints involving a dynamic body and the ground (or a body without any degrees of freedoms).
-    pub unilateral_ground: Vec<UnilateralGroundConstraint<N>>,
+    pub unilateral_ground: Vec<UnilateralGroundConstraint<N, Id>>,
     /// Unilateral velocity constraints between dynamic bodies.
-    pub unilateral: Vec<UnilateralConstraint<N>>,
+    pub unilateral: Vec<UnilateralConstraint<N, Id>>,
     /// Bilateral velocity constraints involving a dynamic body and the ground (or a body without any degrees of freedoms).
-    pub bilateral_ground: Vec<BilateralGroundConstraint<N>>,
+    pub bilateral_ground: Vec<BilateralGroundConstraint<N, Id>>,
     /// Bilateral velocity constraints between dynamic bodies.
-    pub bilateral: Vec<BilateralConstraint<N>>,
+    pub bilateral: Vec<BilateralConstraint<N, Id>>,
 }
 
-impl<N: RealField> Constraints<N> {
+impl<N: RealField, Id> LinearConstraints<N, Id> {
     /// Creates a new empty set of constraints.
     pub fn new() -> Self {
-        Constraints {
+        LinearConstraints {
             unilateral_ground: Vec::new(),
             unilateral: Vec::new(),
             bilateral_ground: Vec::new(),
@@ -66,18 +66,18 @@ impl<N: RealField> NonlinearConstraints<N> {
 }
 
 /// A set of all velocity constraints and non-linear position-based constraints.
-pub struct ConstraintSet<N: RealField> {
+pub struct ConstraintSet<N: RealField, Id> {
     /// The velocity constraints constructed.
-    pub velocity: Constraints<N>,
+    pub velocity: LinearConstraints<N, Id>,
     /// The position constraints constructed.
     pub position: NonlinearConstraints<N>,
 }
 
-impl<N: RealField> ConstraintSet<N> {
+impl<N: RealField, Id> ConstraintSet<N, Id> {
     /// Create a new empty set of constraints.
     pub fn new() -> Self {
         ConstraintSet {
-            velocity: Constraints::new(),
+            velocity: LinearConstraints::new(),
             position: NonlinearConstraints::new(),
         }
     }

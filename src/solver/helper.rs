@@ -162,7 +162,7 @@ pub fn split_ext_vels<'a, N: RealField>(
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
+pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, Id>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -174,11 +174,11 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
     axis: &Unit<Vector<N>>,
     ext_vels: &DVector<N>,
     impulse: N,
-    impulse_id: usize,
+    impulse_id: Id,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, Id>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -252,7 +252,7 @@ pub fn cancel_relative_linear_velocity<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
     let mut i = 0;
     Vector::canonical_basis(|dir| {
@@ -400,7 +400,7 @@ pub fn cancel_relative_translation<N: RealField>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies wrt. the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
+pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, Id>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
     body2: &Body<N>,
@@ -412,11 +412,11 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
     axis: &Unit<AngularVector<N>>,
     ext_vels: &DVector<N>,
     impulse: N,
-    impulse_id: usize,
+    impulse_id: Id,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, Id>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -490,7 +490,7 @@ pub fn cancel_relative_angular_velocity<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
     let mut i = 0;
     AngularVector::canonical_basis(|dir| {
@@ -595,7 +595,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -744,7 +744,7 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),

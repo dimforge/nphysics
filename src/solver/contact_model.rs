@@ -2,6 +2,7 @@
 
 use downcast_rs::Downcast;
 use na::{DVector, RealField};
+use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
 use crate::object::BodySet;
@@ -23,11 +24,11 @@ pub trait ContactModel<N: RealField>: Downcast + Send + Sync {
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, ContactId>,
     );
 
     /// Stores all the impulses found by the solver into a cache for warmstarting.
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>);
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, ContactId>);
 }
 
 impl_downcast!(ContactModel<N> where N: RealField);

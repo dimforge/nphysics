@@ -728,7 +728,7 @@ impl<N: RealField> MultibodyWorkspace<N> {
 
 struct SolverWorkspace<N: RealField> {
     jacobians: DVector<N>,
-    constraints: ConstraintSet<N>,
+    constraints: ConstraintSet<N, usize>,
 }
 
 impl<N: RealField> SolverWorkspace<N> {

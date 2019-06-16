@@ -113,7 +113,7 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, usize>,
     ) {
         self.prism.velocity_constraints(
             params,

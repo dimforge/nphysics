@@ -20,8 +20,7 @@ use kiss3d::window::{State, Window};
 use na::{self, Point2, Point3, Vector3};
 #[cfg(feature = "dim3")]
 use ncollide::query;
-use ncollide::query::Ray;
-use ncollide::utils::GenerationalId;
+use ncollide::query::{ContactId, Ray};
 use ncollide::world::CollisionGroups;
 use nphysics::joint::{ConstraintHandle, MouseConstraint};
 #[cfg(feature = "dim2")]
@@ -109,7 +108,7 @@ pub struct Testbed {
     callbacks: Callbacks,
     time: f32,
     hide_counters: bool,
-    persistant_contacts: HashMap<GenerationalId, bool>,
+    persistant_contacts: HashMap<ContactId, bool>,
     font: Rc<Font>,
     cursor_pos: Point2<f32>,
     ui: TestbedUi,
@@ -865,7 +864,7 @@ Solver: {:.2}ms
 fn draw_collisions(
     window: &mut Window,
     world: &World<f32>,
-    existing: &mut HashMap<GenerationalId, bool>,
+    existing: &mut HashMap<ContactId, bool>,
     running: bool,
 ) {
     for (_, _, _, manifold) in world.collider_world().contact_pairs(false) {

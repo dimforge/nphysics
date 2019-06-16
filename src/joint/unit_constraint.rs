@@ -23,7 +23,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
     let offset = axis.dot(&(anchor2 - anchor1));
 
@@ -209,7 +209,7 @@ pub fn build_angular_limit_velocity_constraint<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
 }
 */

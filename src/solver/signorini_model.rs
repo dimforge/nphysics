@@ -1,7 +1,7 @@
 use na::{self, DVector, RealField};
 use std::ops::Range;
 
-use ncollide::query::TrackedContact;
+use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
 use crate::object::{BodySet, Body, BodyPart};
@@ -41,11 +41,10 @@ impl<N: RealField> SignoriniModel<N> {
         ext_vels: &DVector<N>,
         c: &TrackedContact<N>,
         impulse: N,
-        impulse_id: usize,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, ContactId>,
     ) -> bool {
         let data1 = manifold.collider1;
         let data2 = manifold.collider2;
@@ -108,7 +107,7 @@ impl<N: RealField> SignoriniModel<N> {
                     assembly_id2,
                     rhs,
                     warmstart,
-                    impulse_id,
+                    c.id,
                 ));
 
             return true;
@@ -122,7 +121,7 @@ impl<N: RealField> SignoriniModel<N> {
                     assembly_id2,
                     rhs,
                     warmstart,
-                    impulse_id,
+                    c.id,
                 ));
 
             return false;
@@ -147,7 +146,7 @@ impl<N: RealField> SignoriniModel<N> {
         bodies: &BodySet<N>,
         manifold: &ColliderContactManifold<N>,
         c: &TrackedContact<N>,
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, ContactId>,
     ) {
         let data1 = manifold.collider1;
         let data2 = manifold.collider2;
@@ -205,7 +204,7 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -238,8 +237,7 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
                     manifold,
                     ext_vels,
                     c,
-                    self.impulses.get(c.id),
-                    self.impulses.entry_id(c.id),
+                    self.impulses.get(c.id).cloned().unwrap_or(N::zero()),
                     ground_j_id,
                     j_id,
                     jacobians,
@@ -254,16 +252,16 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         self.vel_rng = id_vel..constraints.velocity.unilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
 
         for c in ground_contacts {
-            self.impulses[c.impulse_id] = c.impulse;
+            let _ = self.impulses.insert(c.impulse_id, c.impulse);
         }
 
         for c in contacts {
-            self.impulses[c.impulse_id] = c.impulse;
+            let _ = self.impulses.insert(c.impulse_id, c.impulse);
         }
     }
 }

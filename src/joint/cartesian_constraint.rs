@@ -85,7 +85,7 @@ impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, usize>,
     ) {
         let body1 = try_ret!(bodies.body(self.b1.0));
         let body2 = try_ret!(bodies.body(self.b2.0));
@@ -127,7 +127,7 @@ impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
         self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
         }

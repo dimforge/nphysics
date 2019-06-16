@@ -1,6 +1,7 @@
 use slab::Slab;
 
 use na::{DVector, RealField};
+use ncollide::query::ContactId;
 
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
@@ -17,21 +18,21 @@ pub struct MoreauJeanSolver<N: RealField> {
     mj_lambda_vel: DVector<N>,
     ext_vels: DVector<N>,
     contact_model: Box<ContactModel<N>>,
-    constraints: ConstraintSet<N>,
+    contact_constraints: ConstraintSet<N, ContactId>,
+    joint_constraints: ConstraintSet<N, usize>,
     internal_constraints: Vec<BodyHandle>,
 }
 
 impl<N: RealField> MoreauJeanSolver<N> {
     /// Create a new time-stepping scheme with the given contact model.
     pub fn new(contact_model: Box<ContactModel<N>>) -> Self {
-        let constraints = ConstraintSet::new();
-
         MoreauJeanSolver {
             jacobians: Vec::new(),
             mj_lambda_vel: DVector::zeros(0),
             ext_vels: DVector::zeros(0),
             contact_model,
-            constraints,
+            contact_constraints: ConstraintSet::new(),
+            joint_constraints: ConstraintSet::new(),
             internal_constraints: Vec::new(),
         }
     }
@@ -57,18 +58,22 @@ impl<N: RealField> MoreauJeanSolver<N> {
         self.assemble_system(counters, params, coefficients, bodies, joints, manifolds, island);
         counters.assembly_completed();
 
-        counters.set_nconstraints(self.constraints.velocity.len());
+        counters.set_nconstraints(self.contact_constraints.velocity.len() + self.joint_constraints.velocity.len());
 
+        println!("Solving velocity constraints.");
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(params, bodies);
+        println!("Caching impulses.");
         self.cache_impulses(bodies, joints);
         counters.velocity_resolution_completed();
 
         counters.velocity_update_started();
+        println!("Updating velocities.");
         self.update_velocities_and_integrate(params, bodies, island);
         counters.velocity_update_completed();
 
         counters.position_resolution_started();
+        println!("Solving position constraints.");
         self.solve_position_constraints(params, cworld, bodies, joints);
         counters.position_resolution_completed();
     }
@@ -99,8 +104,8 @@ impl<N: RealField> MoreauJeanSolver<N> {
 //        }
 
         self.solve_position_constraints(params, cworld, bodies, joints);
-//        bodies.body_mut(ccd_pair[0]).unwrap().validate_advancement();
-//        bodies.body_mut(ccd_pair[1]).unwrap().validate_advancement();
+        bodies.body_mut(ccd_pair[0]).unwrap().validate_advancement();
+        bodies.body_mut(ccd_pair[1]).unwrap().validate_advancement();
 
 //        for handle in island {
 //            let body = try_continue!(bodies.body_mut(*handle));
@@ -144,7 +149,8 @@ impl<N: RealField> MoreauJeanSolver<N> {
         println!("System ndofs: {}", system_ndofs);
         println!("Island len: {}", island.len());
         self.resize_buffers(system_ndofs);
-        self.constraints.clear();
+        self.contact_constraints.clear();
+        self.joint_constraints.clear();
 
         /*
          * Initialize M^{-1} h * dt
@@ -219,7 +225,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
                     &mut ground_j_id,
                     &mut j_id,
                     &mut self.jacobians,
-                    &mut self.constraints,
+                    &mut self.joint_constraints,
                 );
             }
         }
@@ -234,7 +240,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
             &mut ground_j_id,
             &mut j_id,
             &mut self.jacobians,
-            &mut self.constraints,
+            &mut self.contact_constraints,
         );
         counters.custom_completed();
 
@@ -245,15 +251,15 @@ impl<N: RealField> MoreauJeanSolver<N> {
                 body.setup_internal_velocity_constraints(&ext_vels, params);
             }
         }
+
+        println!("Constraints setup complete.");
     }
 
     fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) {
         SORProx::solve(
             bodies,
-            &mut self.constraints.velocity.unilateral_ground,
-            &mut self.constraints.velocity.unilateral,
-            &mut self.constraints.velocity.bilateral_ground,
-            &mut self.constraints.velocity.bilateral,
+            &mut self.contact_constraints.velocity,
+            &mut self.joint_constraints.velocity,
             &self.internal_constraints,
             &mut self.mj_lambda_vel,
             &self.jacobians,
@@ -276,7 +282,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
             params,
             cworld,
             bodies,
-            &mut self.constraints.position.unilateral,
+            &mut self.contact_constraints.position.unilateral,
             joints,
             &self.internal_constraints,
             &mut jacobians,
@@ -289,11 +295,11 @@ impl<N: RealField> MoreauJeanSolver<N> {
         bodies: &mut BodySet<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {
-        self.contact_model.cache_impulses(&self.constraints);
+        self.contact_model.cache_impulses(&self.contact_constraints);
 
         for (_, g) in joints {
             if g.is_active(bodies) {
-                g.cache_impulses(&self.constraints);
+                g.cache_impulses(&self.joint_constraints);
             }
         }
     }

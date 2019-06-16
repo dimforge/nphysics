@@ -4,8 +4,9 @@ extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
 use na::{Point3, Vector3};
-use ncollide3d::shape::{Cuboid, Capsule, ShapeHandle};
+use ncollide3d::shape::{Cuboid, Capsule, ShapeHandle, ConvexHull};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
+use nphysics3d::algebra::Velocity3;
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
@@ -14,17 +15,35 @@ pub fn init_world(testbed: &mut Testbed) {
      * World
      */
     let mut world = World::new();
-    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+//    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
 
     /*
      * Ground.
      */
-    let ground_thickness = 0.2;
-    let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+//    let ground_thickness = 0.2;
+//    let ground_shape =
+//        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+//
+//    ColliderDesc::new(ground_shape)
+//        .translation(Vector3::y() * -ground_thickness)
+//        .build(&mut world);
 
-    ColliderDesc::new(ground_shape)
-        .translation(Vector3::y() * -ground_thickness)
+    let pts = [
+        Point3::new(0.0, 0.0, 7.55),
+        Point3::new(0.55, 0.0, 7.55),
+        Point3::new(0.55, 0.0, 7.8),
+        Point3::new(0.0, 0.0, 7.8),
+        Point3::new(0.0, 5.45, 7.55),
+        Point3::new(0.55, 5.45, 7.55),
+        Point3::new(0.55, 5.45, 7.8),
+        Point3::new(0.0, 5.45, 7.8),
+    ];
+
+    let convex_shape = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
+
+    ColliderDesc::new(convex_shape)
+//        .rotation(Vector3::x() * 3.14 / 2.0)
+        .translation(Vector3::new(0.0, 0.0, -7.6))
         .build(&mut world);
 
     /*
@@ -34,9 +53,9 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.1;
     let half_height = 0.2;
 
-    let capsule = ShapeHandle::new(Capsule::new(half_height, rad));
+    let capsule = ShapeHandle::new(Capsule::new(0.7, 0.4));// half_height, rad));
     let collider_desc = ColliderDesc::new(capsule)
-        .density(1.0);
+        .density(0.1);
 
     let mut rb_desc = RigidBodyDesc::new()
         .collider(&collider_desc);
@@ -48,26 +67,39 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerz = shift * (num as f32) / 2.0;
     let altitude = 0.0;
 
-    for i in 0usize..num {
-        for j in 0usize..num {
-            for k in 0usize..num {
-                let x = i as f32 * shift - centerx;
-                let y = j as f32 * shifty + centery + altitude;
-                let z = k as f32 * shift - centerz;
+//    for i in 0usize..num {
+////        for j in 0usize..num {
+////            for k in 0usize..num {
+////                let x = i as f32 * shift - centerx;
+////                let y = j as f32 * shifty + centery + altitude;
+////                let z = k as f32 * shift - centerz;
+////
+////                // Build the rigid body and its collider.
+////                rb_desc
+////                    .set_translation(Vector3::new(x, y, z))
+////                    .set_rotations_kinematic(Vector3::repeat(true))
+////                    .build(&mut world);
+////            }
+////        }
+////    }
 
-                // Build the rigid body and its collider.
-                rb_desc
-                    .set_translation(Vector3::new(x, y, z))
-                    .build(&mut world);
-            }
-        }
-    }
+
+    let handle = rb_desc
+        .set_rotations_kinematic(Vector3::repeat(true))
+        .build(&mut world)
+        .handle();
 
     /*
      * Set up the testbed.
      */
     testbed.set_world(world);
     testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
+    testbed.add_callback(move |world, graphics, _| {
+        let mut world = world.get_mut();
+        world.rigid_body_mut(handle)
+            .unwrap()
+            .set_velocity(Velocity3::linear(5.9304643, 0.0, 0.91082025));
+    });
 }
 
 fn main() {

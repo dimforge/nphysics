@@ -1,6 +1,5 @@
 use std::any::Any;
 use na::{DVectorSlice, DVectorSliceMut, RealField};
-use ncollide::utils::IsometryOps;
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};

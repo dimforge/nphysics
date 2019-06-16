@@ -1,6 +1,8 @@
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, RealField, Unit};
 use std::ops::Range;
+use slotmap::Key;
+use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
 use crate::math::{Vector, DIM};
@@ -57,7 +59,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -82,8 +84,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                 //     continue;
                 // }
 
-                let impulse = self.impulses.get(c.id);
-                let impulse_id = self.impulses.entry_id(c.id);
+                let impulse = self.impulses.get(c.id).cloned().unwrap_or(Vector::zeros());
 
                 let ground_constraint = SignoriniModel::build_velocity_constraint(
                     params,
@@ -96,7 +97,6 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     ext_vels,
                     c,
                     impulse[0],
-                    impulse_id,
                     ground_j_id,
                     j_id,
                     jacobians,
@@ -165,7 +165,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                             limits,
                             rhs,
                             warmstart,
-                            impulse_id * DIM + i,
+                            c.id,
                         );
                         constraints.velocity.bilateral_ground.push(constraint);
                     } else {
@@ -176,7 +176,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                             limits,
                             rhs,
                             warmstart,
-                            impulse_id * DIM + i,
+                            c.id,
                         );
                         constraints.velocity.bilateral.push(constraint);
                     }
@@ -194,7 +194,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         self.friction_rng = id_friction..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
         let ground_friction =
@@ -202,19 +202,32 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let friction = &constraints.velocity.bilateral[self.friction_rng.clone()];
 
         for c in ground_contacts {
-            self.impulses[c.impulse_id][0] = c.impulse;
+            if !c.impulse_id.is_null() {
+                let _ = self.impulses.insert(c.impulse_id, Vector::zeros());
+                self.impulses[c.impulse_id][0] = c.impulse;
+            }
         }
 
         for c in contacts {
-            self.impulses[c.impulse_id][0] = c.impulse;
+            if !c.impulse_id.is_null() {
+                let _ = self.impulses.insert(c.impulse_id, Vector::zeros());
+                self.impulses[c.impulse_id][0] = c.impulse;
+            }
         }
 
+        let mut dim = 0;
         for c in ground_friction {
-            self.impulses[c.impulse_id / DIM][c.impulse_id % DIM] = c.impulse;
+            if !c.impulse_id.is_null() {
+                self.impulses[c.impulse_id][1 + dim % (DIM - 1)] = c.impulse;
+                dim += 1;
+            }
         }
 
         for c in friction {
-            self.impulses[c.impulse_id / DIM][c.impulse_id % DIM] = c.impulse;
+            if !c.impulse_id.is_null() {
+                self.impulses[c.impulse_id][1 + dim % (DIM - 1)] = c.impulse;
+                dim += 1;
+            }
         }
     }
 }

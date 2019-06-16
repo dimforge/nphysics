@@ -54,7 +54,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let ball = ShapeHandle::new(Cuboid::new(Vector2::new(rad * 4.0, rad))); // Ball::new(rad));
     let collider_desc = ColliderDesc::new(ball)
 //        .margin(1.0)
-//        .ccd_enabled(true)
+        .ccd_enabled(true)
 //        .position(Isometry2::rotation(0.5))
 //        .material(MaterialHandle::new(BasicMaterial::new(2.0, 0.0)))
         .density(1.0);

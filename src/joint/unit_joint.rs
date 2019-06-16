@@ -51,7 +51,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     ext_vels: &[N],
     ground_j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
     let ndofs = multibody.ndofs();
     let impulses = multibody.impulses();

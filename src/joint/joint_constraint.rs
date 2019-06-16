@@ -38,10 +38,10 @@ pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downc
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        velocity_constraints: &mut ConstraintSet<N>,
+        velocity_constraints: &mut ConstraintSet<N, usize>,
     );
     /// Called after velocity constraint resolution, allows the joint to keep a cache of impulses generated for each constraint.
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>);
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>);
 }
 
 impl_downcast!(JointConstraint<N> where N: RealField);

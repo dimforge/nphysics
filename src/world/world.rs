@@ -427,7 +427,7 @@ impl<N: RealField> World<N> {
         params.max_position_iterations = 20;
         params.warmstart_coeff = N::zero();
 
-        let max_substeps = 1;
+        let max_substeps = 8;
 
         for k in 0.. {
             self.cworld.sync_colliders(&self.bodies);
@@ -456,28 +456,28 @@ impl<N: RealField> World<N> {
                         let count = self.substep.ccd_counts.entry((c1.handle(), c2.handle())).or_insert(0);
 
                         if *count >= max_substeps {
-//                            let _ = self.substep.body_hit.insert(b1.handle());
-//                            let _ = self.substep.body_hit.insert(b2.handle());
+                            let _ = self.substep.body_hit.insert(b1.handle());
+                            let _ = self.substep.body_hit.insert(b2.handle());
                             continue;
                         }
 
                         match inter {
                             Interaction::Contact(alg, manifold) => {
                                 let margins = c1.margin() + c2.margin();
-                                let target = self.params.allowed_linear_error.max(margins - self.params.allowed_linear_error * na::convert(3.0));
+                                let target = self.params.allowed_linear_error; // self.params.allowed_linear_error.max(margins - self.params.allowed_linear_error * na::convert(3.0));
 
                                 let time1 = *self.substep.body_times.entry(c1.body()).or_insert(N::zero());
                                 let time2 = *self.substep.body_times.entry(c2.body()).or_insert(N::zero());
                                 let start_time = time1.max(time2);
 
                                 if time1 < time2 {
-                                    if !self.substep.body_hit.contains(&c1.body()) {
+                                    if b1.is_dynamic() && !self.substep.body_hit.contains(&c1.body()) {
                                         // Advance b1 so it is at the same internal time as b2.
                                         b1.advance(time2 - time1); // (time2 - time1) / (dt0 - time1));
                                         let _ = self.substep.body_times.insert(c1.body(), time2);
                                     }
                                 } else if time2 < time1 {
-                                    if !self.substep.body_hit.contains(&c2.body()) {
+                                    if b2.is_dynamic() && !self.substep.body_hit.contains(&c2.body()) {
                                         b2.advance(time1 - time2); // (time1 - time2) / (dt0 - time2));
                                         let _ = self.substep.body_times.insert(c2.body(), time1);
                                     }
@@ -502,12 +502,12 @@ impl<N: RealField> World<N> {
                                      // Don't use the TOI if the colliders are already penetrating.
                                      println!("toi: {:?}", toi);
                                      if toi.status != NonlinearTOIStatus::Penetrating {
-//                                         let toi = start_time + remaining_time * toi.toi;
+                                         let toi = start_time + toi.toi;
 //                                     println!("Toi: {} vs time: {}", toi, start_time);
-                                         if toi.toi < min_toi {
+                                         if toi < min_toi {
                                              println!("start time: {}", start_time);
                                              found_toi = true;
-                                             min_toi = toi.toi;
+                                             min_toi = toi;
                                              ccd_handles = Some((c1.handle(), c1.body(), c2.handle(), c2.body()))
                                          }
                                      }
@@ -547,7 +547,7 @@ impl<N: RealField> World<N> {
 
                 let cworld = &mut self.cworld.cworld;
 
-
+/*
                 for b in self.bodies.bodies_mut() {
                     *self.substep.body_times.entry(b.handle()).or_insert(N::zero()) += min_toi;
                     b.advance(min_toi);
@@ -570,9 +570,9 @@ impl<N: RealField> World<N> {
                     {
                         contact_manifolds.push(ColliderContactManifold::new(c1, c2, manifold));
                     }
-                }
+                }*/
 
-                /*
+
                 let mut colliders = vec![c1, c2]; // FIXME: should contain all the colliders attached to b1 and b2.
                 let mut interaction_ids = Vec::new();
                 let (ca, cb) = (c1, c2);
@@ -581,8 +581,8 @@ impl<N: RealField> World<N> {
                 while let Some(c) = colliders.pop() {
                     let graph_id = cworld.objects.get(c).unwrap().graph_index();
 
-                    for (c1, c2, eid, inter) in cworld.interactions.interactions_with_mut(graph_id, false) {
-                        if c1 == cb && c2 == ca {
+                    for (c1, c2, eid, inter) in cworld.interactions.interactions_with_mut(graph_id) {
+                        if !(c1 == c && (c2 == ca || c2 == cb)) {
                             // This interaction will be reported twice.
                             continue;
                         }
@@ -670,7 +670,6 @@ impl<N: RealField> World<N> {
                         Interaction::Proximity(_) => unimplemented!()
                     }
                 }
-                                */
 
 
                 // Solve the system and integrate.
@@ -683,6 +682,7 @@ impl<N: RealField> World<N> {
                 params.set_dt(dt0 - min_toi);
                 println!("Time-stepping length: {}", params.dt());
                 println!("Num contacts: {}", contact_manifolds.len());
+                println!("Island len: {}", island.len());
 
                 self.solver.step_ccd(
                     &mut self.counters,
@@ -695,6 +695,7 @@ impl<N: RealField> World<N> {
                     &self.material_coefficients,
                     &self.cworld,
                 );
+                println!("CCD step completed.");
 
 
                 // Update body kinematics and dynamics

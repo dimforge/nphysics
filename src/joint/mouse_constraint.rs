@@ -66,7 +66,7 @@ impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, usize>,
     ) {
         let body1 = try_ret!(bodies.body(self.b1.0));
         let body2 = try_ret!(bodies.body(self.b2.0));
@@ -146,7 +146,7 @@ impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
         });
     }
 
-    fn cache_impulses(&mut self, _: &ConstraintSet<N>) {}
+    fn cache_impulses(&mut self, _: &ConstraintSet<N, usize>) {}
 }
 
 impl<N: RealField> NonlinearConstraintGenerator<N> for MouseConstraint<N> {

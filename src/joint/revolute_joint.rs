@@ -261,7 +261,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, usize>,
     ) {
         joint::unit_joint_velocity_constraints(
             self,

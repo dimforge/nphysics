@@ -18,7 +18,7 @@ impl NonlinearSORProx {
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
-        constraints: &mut [NonlinearUnilateralConstraint<N>],
+        contact_constraints: &mut [NonlinearUnilateralConstraint<N>],
         joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
         internal_constraints: &[BodyHandle],
         jacobians: &mut [N],
@@ -35,7 +35,7 @@ impl NonlinearSORProx {
                 }
             }
 
-            for constraint in constraints.iter_mut() {
+            for constraint in contact_constraints.iter_mut() {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
