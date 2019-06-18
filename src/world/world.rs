@@ -4,8 +4,7 @@ use std::collections::{HashMap, HashSet};
 use na::{self, RealField};
 use ncollide;
 use ncollide::query::{self, NonlinearTOIStatus};
-use ncollide::events::{ContactEvents, ProximityEvents};
-use ncollide::narrow_phase::Interaction;
+use ncollide::narrow_phase::{Interaction, ContactEvents, ProximityEvents};
 use ncollide::interpolation::ConstantVelocityRigidMotion;
 
 use crate::counters::Counters;
@@ -34,18 +33,20 @@ struct SubstepState<N: RealField> {
 /// The physics world.
 pub struct World<N: RealField> {
     counters: Counters,
+
     bodies: BodySet<N>,
-    active_bodies: Vec<BodyHandle>,
+    constraints: Slab<Box<JointConstraint<N>>>,
+    forces: Slab<Box<ForceGenerator<N>>>,
+
     cworld: ColliderWorld<N>,
     solver: MoreauJeanSolver<N>,
     activation_manager: ActivationManager<N>,
-    material_coefficients: MaterialsCoefficientsTable<N>,
-    // FIXME: set those two parameters per-collider?
+
+    // FIXME: set this parameter per-colliders?
     prediction: N,
     gravity: Vector<N>,
-    constraints: Slab<Box<JointConstraint<N>>>,
-    forces: Slab<Box<ForceGenerator<N>>>,
     params: IntegrationParameters<N>,
+    material_coefficients: MaterialsCoefficientsTable<N>,
     substep: SubstepState<N>,
 }
 
@@ -291,12 +292,12 @@ impl<N: RealField> World<N> {
              */
             // FIXME: for now, no island is built.
             self.counters.island_construction_started();
-            self.active_bodies.clear();
+            let mut active_bodies = Vec::new();
             self.activation_manager.update(
                 &mut self.bodies,
                 &self.cworld,
                 &self.constraints,
-                &mut self.active_bodies,
+                &mut active_bodies,
             );
             self.counters.island_construction_completed();
 
@@ -338,7 +339,7 @@ impl<N: RealField> World<N> {
                 &mut self.bodies,
                 &mut self.constraints,
                 &contact_manifolds[..],
-                &self.active_bodies[..],
+                &active_bodies[..],
                 params,
                 &self.material_coefficients,
                 &self.cworld,
@@ -897,12 +898,12 @@ impl<N: RealField> World<N> {
     }
 
     /// An iterator through all the contact events generated during the last execution of `self.step()`.
-    pub fn contact_events(&self) -> &ContactEvents {
+    pub fn contact_events(&self) -> &ContactEvents<ColliderHandle> {
         self.cworld.contact_events()
     }
 
     /// An iterator through all the proximity events generated during the last execution of `self.step()`.
-    pub fn proximity_events(&self) -> &ProximityEvents {
+    pub fn proximity_events(&self) -> &ProximityEvents<ColliderHandle> {
         self.cworld.proximity_events()
     }
 }

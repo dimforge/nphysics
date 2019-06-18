@@ -1,13 +1,13 @@
 use std::collections::{hash_map, HashMap};
 
 use na::RealField;
-use ncollide::world::{CollisionWorld, GeometricQueryType, CollisionGroups, CollisionObject};
+use ncollide::pipeline::world::CollisionWorld;
+use ncollide::pipeline::object::{GeometricQueryType, CollisionGroups, CollisionObject};
 use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter};
-use ncollide::narrow_phase::{Interaction, ContactAlgorithm, ProximityAlgorithm, NarrowPhase};
+use ncollide::narrow_phase::{Interaction, ContactAlgorithm, ProximityAlgorithm, NarrowPhase, ContactEvents, ProximityEvents};
 use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
-use ncollide::events::{ContactEvents, ProximityEvents};
 
 use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodyHandle, BodyPartHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
@@ -29,10 +29,7 @@ impl<N: RealField> ColliderWorld<N> {
     // FIXME: use default values for `margin` and allow its modification by the user ?
     pub fn new(margin: N) -> Self {
         let mut cworld = CollisionWorld::new(margin);
-        cworld.register_broad_phase_pair_filter(
-            "__nphysics_internal_body_status_collision_filter",
-            BodyStatusCollisionFilter,
-        );
+        cworld.set_broad_phase_pair_filter(Some(BodyStatusCollisionFilter));
 
         ColliderWorld {
             cworld,
@@ -71,7 +68,7 @@ impl<N: RealField> ColliderWorld<N> {
             };
 
             match new_pos {
-                Some(pos) => cworld.set_position_with_prediction(*collider_id, pos.0, &pos.1),
+                Some(pos) => cworld.set_position(*collider_id, pos.1), // XXX: cworld.set_position_with_prediction(*collider_id, pos.0, &pos.1),
                 None => cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1)
             }
 
@@ -96,7 +93,7 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// Customize the selection of narrow-phase collision detection algorithms
-    pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N>) {
+    pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N, ColliderHandle>) {
         self.cworld.set_narrow_phase(narrow_phase);
     }
 
@@ -255,6 +252,7 @@ impl<N: RealField> ColliderWorld<N> {
 //        self.cworld.set_deformations(handle, coords)
 //    }
 
+    /*
     /// Adds a filter that tells if a potential collision pair should be ignored or not.
     ///
     /// The proximity filter returns `false` for a given pair of colliders if they should
@@ -269,7 +267,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Removes the pair filter named `name`.
     pub fn unregister_broad_phase_pair_filter(&mut self, name: &str) {
         self.cworld.unregister_broad_phase_pair_filter(name)
-    }
+    }*/
 
     /// Executes the broad phase of the collision detection pipeline.
     pub fn perform_broad_phase(&mut self) {
@@ -294,7 +292,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Iterates through all colliders.
     #[inline]
     pub fn colliders(&self) -> impl Iterator<Item = &Collider<N>> {
-        self.cworld.collision_objects().map(|co| Collider::from_ref(co))
+        self.cworld.collision_objects().map(|co| Collider::from_ref(co.1))
     }
 
     /// Returns a reference to the collider identified by its handle.
@@ -359,12 +357,12 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// The contact events pool.
-    pub fn contact_events(&self) -> &ContactEvents {
+    pub fn contact_events(&self) -> &ContactEvents<ColliderHandle> {
         self.cworld.contact_events()
     }
 
     /// The proximity events pool.
-    pub fn proximity_events(&self) -> &ProximityEvents {
+    pub fn proximity_events(&self) -> &ProximityEvents<ColliderHandle> {
         self.cworld.proximity_events()
     }
 
@@ -578,9 +576,9 @@ impl<N: RealField> ColliderWorld<N> {
 
 struct BodyStatusCollisionFilter;
 
-impl<N: RealField> BroadPhasePairFilter<N, ColliderData<N>> for BodyStatusCollisionFilter {
+impl<'a, N: RealField> BroadPhasePairFilter<N, &'a CollisionObject<N, ColliderData<N>>> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
-    fn is_pair_valid(&self, b1: &CollisionObject<N, ColliderData<N>>, b2: &CollisionObject<N, ColliderData<N>>) -> bool {
+    fn is_pair_valid(&self, b1: &'a CollisionObject<N, ColliderData<N>>, b2: &'a CollisionObject<N, ColliderData<N>>) -> bool {
         b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }

@@ -18,7 +18,7 @@ use ncollide::shape::{ConvexHull, TriMesh};
 #[cfg(feature = "dim3")]
 use ncollide::transformation;
 use ncollide::query::Ray;
-use ncollide::world::CollisionGroups;
+use ncollide::pipeline::object::CollisionGroups;
 use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics::world::World;
 use nphysics::math::{Isometry, Vector, Point};
@@ -542,6 +542,7 @@ impl GraphicsManager {
         }
 
         for (handle, node) in &mut self.aabbs {
+            use ncollide::pipeline::object::CollisionObjectRef;
             let aabb = world.collider_world().broad_phase_aabb(*handle);
             if let Some(aabb) = aabb {
                 let w = aabb.half_extents() * 2.0;

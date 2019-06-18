@@ -21,7 +21,7 @@ use na::{self, Point2, Point3, Vector3};
 #[cfg(feature = "dim3")]
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
-use ncollide::world::CollisionGroups;
+use ncollide::pipeline::object::CollisionGroups;
 use nphysics::joint::{ConstraintHandle, MouseConstraint};
 #[cfg(feature = "dim2")]
 use nphysics::object::ColliderAnchor;

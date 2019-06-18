@@ -5,7 +5,7 @@ extern crate nphysics_testbed3d;
 
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use ncollide3d::world::CollisionGroups;
+use ncollide3d::pipeline::object::CollisionGroups;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
