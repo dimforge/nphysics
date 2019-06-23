@@ -9,7 +9,7 @@ use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
 
-use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodyHandle, BodyPartHandle};
+use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySlab, BodyHandle, BodyPartHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
 use crate::math::{Isometry, Point};
 
@@ -40,7 +40,7 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
-    pub fn sync_colliders(&mut self, bodies: &BodySet<N>) {
+    pub fn sync_colliders(&mut self, bodies: &BodySlab<N>) {
         let cworld = &mut self.cworld;
         self.colliders_w_parent.retain(|collider_id| {
             // FIXME: update only if the position changed (especially for static bodies).

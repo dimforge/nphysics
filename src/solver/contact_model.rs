@@ -5,7 +5,7 @@ use na::{DVector, RealField};
 use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
-use crate::object::BodySet;
+use crate::object::BodySlab;
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, IntegrationParameters};
 
@@ -18,7 +18,7 @@ pub trait ContactModel<N: RealField>: Downcast + Send + Sync {
         &mut self,
         params: &IntegrationParameters<N>,
         material_coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         manifolds: &[ColliderContactManifold<N>],
         ground_j_id: &mut usize,

@@ -4,7 +4,7 @@ use std::ops::MulAssign;
 
 use crate::world::ColliderWorld;
 use crate::joint::JointConstraint;
-use crate::object::{BodySet, ColliderAnchor, BodyHandle};
+use crate::object::{BodySlab, ColliderAnchor, BodyHandle};
 use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
                     NonlinearUnilateralConstraint, GenericNonlinearConstraint};
 use crate::math::Isometry;
@@ -17,7 +17,7 @@ impl NonlinearSORProx {
     pub fn solve<N: RealField>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         contact_constraints: &mut [NonlinearUnilateralConstraint<N>],
         joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
         internal_constraints: &[BodyHandle],
@@ -46,7 +46,7 @@ impl NonlinearSORProx {
 
     fn solve_generator<N: RealField, Gen: ?Sized + NonlinearConstraintGenerator<N>>(
         params: &IntegrationParameters<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         generator: &Gen,
         jacobians: &mut [N],
     ) {
@@ -61,7 +61,7 @@ impl NonlinearSORProx {
 
     pub fn solve_generic<N: RealField>(
         params: &IntegrationParameters<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         constraint: &mut GenericNonlinearConstraint<N>,
         jacobians: &mut [N],
     ) {
@@ -105,7 +105,7 @@ impl NonlinearSORProx {
     fn solve_unilateral<N: RealField, D1: Dim, D2: Dim>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
         dim1: D1,
@@ -134,7 +134,7 @@ impl NonlinearSORProx {
     fn update_contact_constraint<N: RealField>(
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
     ) -> bool {

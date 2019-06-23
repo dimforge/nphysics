@@ -4,7 +4,7 @@ use std::ops::Range;
 use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
-use crate::object::{BodySet, Body, BodyPart};
+use crate::object::{BodySlab, Body, BodyPart};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable, LocalMaterialProperties};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
@@ -143,7 +143,7 @@ impl<N: RealField> SignoriniModel<N> {
 
     /// Builds non-linear position-based non-penetration constraints for the given contact manifold.
     pub fn build_position_constraint(
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         manifold: &ColliderContactManifold<N>,
         c: &TrackedContact<N>,
         constraints: &mut ConstraintSet<N, ContactId>,
@@ -198,7 +198,7 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         &mut self,
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         manifolds: &[ColliderContactManifold<N>],
         ground_j_id: &mut usize,

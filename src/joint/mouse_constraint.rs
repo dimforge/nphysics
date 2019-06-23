@@ -3,7 +3,7 @@ use na::{DVector, RealField, Unit};
 
 use crate::joint::JointConstraint;
 use crate::math::{Point, Vector, DIM};
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySlab};
 use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
@@ -61,7 +61,7 @@ impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
     fn velocity_constraints(
         &mut self,
         params: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -150,7 +150,7 @@ impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
 }
 
 impl<N: RealField> NonlinearConstraintGenerator<N> for MouseConstraint<N> {
-    fn num_position_constraints(&self, _: &BodySet<N>) -> usize {
+    fn num_position_constraints(&self, _: &BodySlab<N>) -> usize {
         0
     }
 
@@ -158,7 +158,7 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for MouseConstraint<N> {
         &self,
         _: &IntegrationParameters<N>,
         _: usize,
-        _: &mut BodySet<N>,
+        _: &mut BodySlab<N>,
         _: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         None

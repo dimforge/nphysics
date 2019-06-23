@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM};
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySlab};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
@@ -64,7 +64,7 @@ impl<N: RealField> JointConstraint<N> for UniversalConstraint<N> {
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -165,7 +165,7 @@ impl<N: RealField> JointConstraint<N> for UniversalConstraint<N> {
 }
 
 impl<N: RealField> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+    fn num_position_constraints(&self, bodies: &BodySlab<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             2
@@ -178,7 +178,7 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for UniversalConstraint<N> {
         &self,
         params: &IntegrationParameters<N>,
         i: usize,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         let body1 = bodies.body(self.b1.0)?;

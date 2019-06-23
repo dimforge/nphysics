@@ -2,7 +2,7 @@ use slab::Slab;
 
 use na::{self, RealField};
 use crate::world::ColliderWorld;
-use crate::object::{BodyHandle, Body, BodySet};
+use crate::object::{BodyHandle, Body, BodySlab, MutableBody}; // , ImmutableBody};
 use crate::joint::JointConstraint;
 use crate::utils::union_find::UnionFindSet;
 use crate::utils::union_find;
@@ -32,7 +32,7 @@ impl<N: RealField> ActivationManager<N> {
         );
 
         ActivationManager {
-            mix_factor: mix_factor,
+            mix_factor,
             ufind: Vec::new(),
             can_deactivate: Vec::new(),
             to_activate: Vec::new(),
@@ -59,10 +59,23 @@ impl<N: RealField> ActivationManager<N> {
         }
     }
 
+    fn update_energy2(&self, body: &mut impl MutableBody<N>) {
+        // FIXME: avoid the Copy when NLL lands ?
+        let status = *body.activation_status();
+
+        if let Some(threshold) = status.deactivation_threshold() {
+            // FIXME: take the time in account (to make a true RWA)
+            let new_energy = (N::one() - self.mix_factor) * status.energy()
+                + self.mix_factor * (body.generalized_velocity().norm_squared());
+
+            body.activate_with_energy(new_energy.min(threshold * na::convert(4.0f64)));
+        }
+    }
+
     /// Update the activation manager, activating and deactivating objects when needed.
     pub fn update(
         &mut self,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         cworld: &ColliderWorld<N>,
         constraints: &Slab<Box<JointConstraint<N>>>,
         active_bodies: &mut Vec<BodyHandle>,
@@ -129,7 +142,7 @@ impl<N: RealField> ActivationManager<N> {
         // FIXME: use the union-find from petgraph?
         #[inline(always)]
         fn make_union<N: RealField>(
-            bodies: &BodySet<N>,
+            bodies: &BodySlab<N>,
             b1: BodyHandle,
             b2: BodyHandle,
             ufs: &mut [UnionFindSet],

@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
 use crate::math::{Vector, DIM};
-use crate::object::BodySet;
+use crate::object::BodySlab;
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
 use crate::solver::helper;
 use crate::solver::{
@@ -53,7 +53,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         &mut self,
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         manifolds: &[ColliderContactManifold<N>],
         ground_j_id: &mut usize,

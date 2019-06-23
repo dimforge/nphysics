@@ -1,7 +1,7 @@
 use std::ops::Range;
 use na::{DVector, RealField};
 
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySlab};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 use crate::solver::helper;
@@ -59,7 +59,7 @@ impl<N: RealField> JointConstraint<N> for BallConstraint<N> {
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -120,7 +120,7 @@ impl<N: RealField> JointConstraint<N> for BallConstraint<N> {
 }
 
 impl<N: RealField> NonlinearConstraintGenerator<N> for BallConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+    fn num_position_constraints(&self, bodies: &BodySlab<N>) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             1
@@ -133,7 +133,7 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for BallConstraint<N> {
         &self,
         params: &IntegrationParameters<N>,
         _: usize,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         let body1 = bodies.body(self.b1.0)?;

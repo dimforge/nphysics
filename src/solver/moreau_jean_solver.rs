@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
 use crate::joint::JointConstraint;
-use crate::object::{BodyHandle, BodySet};
+use crate::object::{BodyHandle, BodySlab};
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 use crate::world::ColliderWorld;
@@ -46,7 +46,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
     pub fn step(
         &mut self,
         counters: &mut Counters,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
@@ -83,7 +83,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
     pub fn step_ccd(
         &mut self,
         counters: &mut Counters,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
         ccd_pair: [BodyHandle; 2],
@@ -122,7 +122,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         counters: &mut Counters,
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
@@ -255,7 +255,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         println!("Constraints setup complete.");
     }
 
-    fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySet<N>) {
+    fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySlab<N>) {
         SORProx::solve(
             bodies,
             &mut self.contact_constraints.velocity,
@@ -271,7 +271,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         &mut self,
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {
         // XXX: avoid the systematic clone.
@@ -292,7 +292,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
 
     fn cache_impulses(
         &mut self,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         joints: &mut Slab<Box<JointConstraint<N>>>,
     ) {
         self.contact_model.cache_impulses(&self.contact_constraints);
@@ -313,7 +313,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
     fn update_velocities_and_integrate(
         &mut self,
         params: &IntegrationParameters<N>,
-        bodies: &mut BodySet<N>,
+        bodies: &mut BodySlab<N>,
         island: &[BodyHandle],
     ) {
         for handle in island {

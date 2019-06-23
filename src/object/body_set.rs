@@ -4,6 +4,74 @@ use na::RealField;
 use crate::world::ColliderWorld;
 use crate::object::{Body, Ground};
 
+
+pub trait BodySet<'a, N: RealField> {
+    type Body: ?Sized + Body<N>;
+    type Handle: Copy;
+    type Iter: Iterator<Item = (Self::Handle, &'a Self::Body)>;
+    type IterMut: Iterator<Item = (Self::Handle, &'a mut Self::Body)>;
+
+    fn get(&self, handle: Self::Handle) -> Option<&Self::Body>;
+    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body>;
+
+    fn contains(&self, handle: Self::Handle) -> bool;
+
+    fn iter(&'a self) -> Self::Iter;
+    fn iter_mut(&'a mut self) -> Self::IterMut;
+}
+
+impl<'a, N: RealField> BodySet<'a, N> for BodySlab<N> {
+    type Body = Body<N>;
+    type Handle = BodyHandle;
+    type Iter = BodySlabIter<'a, N>;
+    type IterMut = BodySlabIterMut<'a, N>;
+
+    fn get(&self, handle: Self::Handle) -> Option<&Self::Body> {
+        self.body(handle)
+    }
+
+    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body> {
+        self.body_mut(handle)
+    }
+
+    fn contains(&self, handle: Self::Handle) -> bool {
+        self.contains(handle)
+    }
+
+    fn iter(&'a self) -> Self::Iter {
+        BodySlabIter { iter: self.bodies.iter() }
+    }
+
+    fn iter_mut(&'a mut self) -> Self::IterMut {
+        BodySlabIterMut { iter_mut: self.bodies.iter_mut() }
+    }
+}
+
+pub struct BodySlabIter<'a, N: RealField> {
+    iter: Iter<'a, Box<Body<N>>>
+}
+
+impl<'a, N: RealField> Iterator for BodySlabIter<'a, N> {
+    type Item = (BodyHandle, &'a Body<N>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(h, b)| (BodyHandle(h), &**b))
+    }
+}
+
+pub struct BodySlabIterMut<'a, N: RealField> {
+    iter_mut: IterMut<'a, Box<Body<N>>>
+}
+
+impl<'a, N: RealField> Iterator for BodySlabIterMut<'a, N> {
+    type Item = (BodyHandle, &'a mut Body<N>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter_mut.next().map(|(h, b)| (BodyHandle(h), &mut **b))
+    }
+}
+
+
 /// A world-specific body handle.
 ///
 /// This structure is automatically allocated by the physics world.
@@ -42,7 +110,7 @@ impl BodyPartHandle {
 }
 
 /*
-pub trait AbstractBodySet<'a, N: RealField> {
+pub trait AbstractBodySlab<'a, N: RealField> {
     type BodyHandle;
     type Body: ?Sized + Body<N>;
     type Bodies: Iterator<Item = &'a Self::Body>;
@@ -56,7 +124,7 @@ pub trait AbstractBodySet<'a, N: RealField> {
     fn bodies_mut(&mut self) -> Self::BodiesMut;
 }
 
-impl<'a, N: RealField> AbstractBodySet<'a, N> for BodySet<N> {
+impl<'a, N: RealField> AbstractBodySlab<'a, N> for BodySlab<N> {
     type BodyHandle = BodyHandle;
     type Body = Body<N>;
     type Bodies = Bodies<'a, N>;
@@ -113,15 +181,15 @@ pub trait BodyDesc<N: RealField> {
 }
 
 /// A set containing all the bodies added to the world.
-pub struct BodySet<N: RealField> {
+pub struct BodySlab<N: RealField> {
     ground: Ground<N>,
     bodies: Slab<Box<Body<N>>>,
 }
 
-impl<N: RealField> BodySet<N> {
+impl<N: RealField> BodySlab<N> {
     /// Create a new empty set of bodies.
     pub fn new() -> Self {
-        BodySet {
+        BodySlab {
             ground: Ground::new(),
             bodies: Slab::new(),
         }

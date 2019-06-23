@@ -3,7 +3,7 @@
 use downcast_rs::Downcast;
 use na::{DVector, RealField};
 
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySlab};
 use crate::solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator};
 
 /// The handle of a consraint.
@@ -14,7 +14,7 @@ pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downc
     /// Return `true` if the constraint is active.
     ///
     /// Typically, a constraint is disable if it is between two sleeping bodies, or, between bodies without any degrees of freedom.
-    fn is_active(&self, bodies: &BodySet<N>) -> bool {
+    fn is_active(&self, bodies: &BodySlab<N>) -> bool {
         let (b1, b2) = self.anchors();
         let body1 = try_ret!(bodies.body(b1.0), false);
         let body2 = try_ret!(bodies.body(b2.0), false);
@@ -33,7 +33,7 @@ pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downc
     fn velocity_constraints(
         &mut self,
         params: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &BodySlab<N>,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,

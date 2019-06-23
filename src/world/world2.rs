@@ -13,12 +13,15 @@ use crate::force_generator::{ForceGenerator, ForceGeneratorHandle};
 use crate::joint::{ConstraintHandle, JointConstraint};
 use crate::math::Vector;
 use crate::object::{
-    Body, BodySlab, BodyDesc, BodyStatus, Collider, ColliderAnchor,
-    ColliderHandle, Multibody, RigidBody, BodyHandle,
+    Body, BodyDesc, BodyStatus, Collider, ColliderAnchor,
+    ColliderHandle, Multibody, RigidBody, BodyHandle, BodySlab, BodySet
 };
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
+use crate::object::{ImmutableBody, MutableBody};
+
+
 
 struct SubstepState<N: RealField> {
     active: bool,
@@ -246,7 +249,7 @@ impl<N: RealField> World<N> {
     }
 
     /// Execute one time step of the physics simulation.
-    pub fn step(&mut self) {
+    pub fn step<'a, Bodies: BodySet<'a, N>>(&mut self, bodies: &'a mut Bodies) {
         if !self.substep.active {
             println!("##### Loop");
             self.counters.step_started();
@@ -262,6 +265,7 @@ impl<N: RealField> World<N> {
                 b.update_dynamics(self.params.dt());
             }
 
+            /*
             let params = &self.params;
             let bodies = &mut self.bodies;
             self.forces.retain(|_, f| {
@@ -409,6 +413,7 @@ impl<N: RealField> World<N> {
             self.bodies.bodies_mut().for_each(|b| {
                 b.clear_update_flags();
             });
+            */
         }
     }
 
@@ -884,16 +889,6 @@ impl<N: RealField> World<N> {
 
     /// A mutable iterator through all the bodies on this world.
     pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut Body<N>> { self.bodies.bodies_mut() }
-
-    /// An iterator through all the bodies with the given name.
-    pub fn bodies_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Body<N>> {
-        self.bodies().filter(move |b| b.name() == name)
-    }
-
-    /// An iterator through all the bodies with the given name.
-    pub fn bodies_with_name_mut<'a>(&'a mut self, name: &'a str) -> impl Iterator<Item = &'a mut Body<N>> {
-        self.bodies_mut().filter(move |b| b.name() == name)
-    }
 
     /// An iterator through all the contact events generated during the last execution of `self.step()`.
     pub fn contact_events(&self) -> &ContactEvents<ColliderHandle> {

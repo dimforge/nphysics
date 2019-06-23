@@ -1,7 +1,7 @@
 //! Objects that may be added to the physical world.
 
 pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus};
-pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySet, BodyHandle, BodyDesc};
+pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySlab, BodySet, BodyHandle, BodyDesc};
 pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, ColliderDesc, DeformableColliderDesc};
 pub use self::ground::Ground;
 pub use self::multibody::{Multibody, MultibodyDesc};
@@ -15,8 +15,10 @@ pub use self::fem_volume::{FEMVolume, FEMVolumeDesc};
 pub use self::mass_constraint_system::{MassConstraintSystem, MassConstraintSystemDesc};
 pub use self::mass_spring_system::{MassSpringSystem, MassSpringSystemDesc};
 pub(crate) use self::fem_helper::FiniteElementIndices;
+pub use self::body2::{ImmutableBody, MutableBody};
 
 mod body;
+mod body2;
 mod body_set;
 mod collider;
 mod ground;
