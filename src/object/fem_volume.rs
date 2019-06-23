@@ -772,10 +772,6 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
         self.positions += disp;
     }
 
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
     fn status(&self) -> BodyStatus {
         self.status
     }
@@ -995,10 +991,6 @@ impl<N: RealField> Body<N> for FEMVolume<N> {
 
 
 impl<N: RealField> BodyPart<N> for TetrahedralElement<N> {
-    fn part_handle(&self) -> BodyPartHandle {
-        self.handle
-    }
-
     fn center_of_mass(&self) -> Point3<N> {
         self.com
     }
@@ -1167,7 +1159,7 @@ impl<'a, N: RealField> BodyDesc<N> for FEMVolumeDesc<'a, N> {
             vol.renumber_dofs(&ids_map);
             let _ = DeformableColliderDesc::new(ShapeHandle::new(mesh))
                 .body_parts_mapping(Some(Arc::new(parts_map)))
-                .build_with_infos(&vol, cworld);
+                .build_with_infos(handle, &vol, cworld);
         }
 
         vol

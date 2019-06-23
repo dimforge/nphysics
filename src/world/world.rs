@@ -14,7 +14,7 @@ use crate::joint::{ConstraintHandle, JointConstraint};
 use crate::math::Vector;
 use crate::object::{
     Body, BodySlab, BodyDesc, BodyStatus, Collider, ColliderAnchor,
-    ColliderHandle, Multibody, RigidBody, BodyHandle,
+    ColliderHandle, Multibody, RigidBody, BodyHandle, BodySet,
 };
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
@@ -449,14 +449,16 @@ impl<N: RealField> World<N> {
                     // Find a TOI
                     for (c1, c2, inter) in self.cworld.interactions_with(coll.handle(), false).unwrap() {
                         use crate::object::BodyPart;
-                        let (b1, b2) = self.bodies.body_pair_mut(c1.body(), c2.body());
+                        let handle1 = c1.body();
+                        let handle2 = c2.body();
+                        let (b1, b2) = self.bodies.body_pair_mut(handle1, handle2);
                         let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
                         let count = self.substep.ccd_counts.entry((c1.handle(), c2.handle())).or_insert(0);
 
                         if *count >= max_substeps {
-                            let _ = self.substep.body_hit.insert(b1.handle());
-                            let _ = self.substep.body_hit.insert(b2.handle());
+                            let _ = self.substep.body_hit.insert(handle1);
+                            let _ = self.substep.body_hit.insert(handle2);
                             continue;
                         }
 
@@ -470,15 +472,15 @@ impl<N: RealField> World<N> {
                                 let start_time = time1.max(time2);
 
                                 if time1 < time2 {
-                                    if b1.is_dynamic() && !self.substep.body_hit.contains(&c1.body()) {
+                                    if b1.is_dynamic() && !self.substep.body_hit.contains(&handle1) {
                                         // Advance b1 so it is at the same internal time as b2.
                                         b1.advance(time2 - time1); // (time2 - time1) / (dt0 - time1));
-                                        let _ = self.substep.body_times.insert(c1.body(), time2);
+                                        let _ = self.substep.body_times.insert(handle1, time2);
                                     }
                                 } else if time2 < time1 {
                                     if b2.is_dynamic() && !self.substep.body_hit.contains(&c2.body()) {
                                         b2.advance(time1 - time2); // (time1 - time2) / (dt0 - time2));
-                                        let _ = self.substep.body_times.insert(c2.body(), time1);
+                                        let _ = self.substep.body_times.insert(handle2, time1);
                                     }
                                 }
 
@@ -590,16 +592,17 @@ impl<N: RealField> World<N> {
                             Interaction::Contact(alg, manifold) => {
                                 let (c1, c2) = cworld.objects.get_pair_mut(c1, c2);
                                 let (c1, c2) = (Collider::from_mut(c1.unwrap()), Collider::from_mut(c2.unwrap()));
+                                let (handle1, handle2) = (c1.body(), c2.body());
 
-                                if let (Some(b1), Some(b2)) = self.bodies.body_pair_mut(c1.body(), c2.body()) {
+                                if let (Some(b1), Some(b2)) = self.bodies.body_pair_mut(handle1, handle2) {
 //                                    if !((c1.is_ccd_enabled() || !b1.is_dynamic()) || (c2.is_ccd_enabled() || !b2.is_dynamic())) {
 //                                        continue;
 //                                    }
 
                                     if b1.companion_id() == 0 && b1.is_dynamic() {
-                                        let time1 = self.substep.body_times.entry(b1.handle()).or_insert(N::zero());
+                                        let time1 = self.substep.body_times.entry(handle1).or_insert(N::zero());
 
-                                        if min_toi != *time1 && !self.substep.body_hit.contains(&b1.handle()) {
+                                        if min_toi != *time1 && !self.substep.body_hit.contains(&handle1) {
                                             if min_toi < *time1 {
                                                 continue;
                                             }
@@ -617,9 +620,9 @@ impl<N: RealField> World<N> {
                                     }
 
                                     if b2.companion_id() == 0 && b2.is_dynamic() {
-                                        let time2 = self.substep.body_times.entry(b2.handle()).or_insert(N::zero());
+                                        let time2 = self.substep.body_times.entry(handle2).or_insert(N::zero());
 
-                                        if min_toi != *time2 && !self.substep.body_hit.contains(&b2.handle()) {
+                                        if min_toi != *time2 && !self.substep.body_hit.contains(&handle2) {
                                             if min_toi < *time2 {
                                                 continue;
                                             }
@@ -714,8 +717,8 @@ impl<N: RealField> World<N> {
                 }
             } else {
                 println!("Full step completed.");
-                for body in self.bodies.bodies_mut() {
-                    if self.substep.body_hit.contains(&body.handle()) {
+                for (handle, body) in self.bodies.iter_mut() {
+                    if self.substep.body_hit.contains(&handle) {
                         body.clamp_advancement();
                     }
                 }

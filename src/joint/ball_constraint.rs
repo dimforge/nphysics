@@ -88,8 +88,10 @@ impl<N: RealField> JointConstraint<N> for BallConstraint<N> {
         helper::cancel_relative_linear_velocity(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -144,6 +146,17 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for BallConstraint<N> {
         let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
         let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
-        helper::cancel_relative_translation(params, body1, part1, body2, part2, &anchor1, &anchor2, jacobians)
+        helper::cancel_relative_translation(
+            params,
+            body1,
+            part1,
+            self.b1,
+            body2,
+            part2,
+            self.b2,
+            &anchor1,
+            &anchor2,
+            jacobians
+        )
     }
 }

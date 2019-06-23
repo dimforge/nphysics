@@ -15,10 +15,8 @@ pub use self::fem_volume::{FEMVolume, FEMVolumeDesc};
 pub use self::mass_constraint_system::{MassConstraintSystem, MassConstraintSystemDesc};
 pub use self::mass_spring_system::{MassSpringSystem, MassSpringSystemDesc};
 pub(crate) use self::fem_helper::FiniteElementIndices;
-pub use self::body2::{ImmutableBody, MutableBody};
 
 mod body;
-mod body2;
 mod body_set;
 mod collider;
 mod ground;

@@ -99,8 +99,10 @@ impl<N: RealField> JointConstraint<N> for MouseConstraint<N> {
             let geom = helper::constraint_pair_geometry(
                 body1,
                 part1,
+                self.b1,
                 body2,
                 part2,
+                self.b2,
                 &anchor1,
                 &anchor2,
                 &fdir,

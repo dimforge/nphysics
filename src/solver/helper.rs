@@ -7,7 +7,7 @@ use na::{DVector, DVectorSlice, RealField, Unit};
 use std::ops::Neg;
 
 use crate::math::{AngularVector, Force, Point, Rotation, Vector};
-use crate::object::{Body, BodyPart};
+use crate::object::{Body, BodyPart, BodyPartHandle};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
              GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
@@ -56,8 +56,10 @@ impl<N: RealField> Neg for ForceDirection<N> {
 pub fn constraint_pair_geometry<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     center1: &Point<N>,
     center2: &Point<N>,
     dir: &ForceDirection<N>,
@@ -116,7 +118,7 @@ pub fn constraint_pair_geometry<N: RealField>(
         out_vel
     );
 
-    if body1.handle() == body2.handle() {
+    if handle1.0 == handle2.0 {
         let j1 = DVectorSlice::from_slice(&jacobians[res.j_id1..], res.ndofs1);
         let j2 = DVectorSlice::from_slice(&jacobians[res.j_id2..], res.ndofs2);
         let invm_j1 = DVectorSlice::from_slice(&jacobians[res.wj_id1..], res.ndofs1);
@@ -165,8 +167,10 @@ pub fn split_ext_vels<'a, N: RealField>(
 pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, Id>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -192,8 +196,10 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, Id>(
     let geom = constraint_pair_geometry(
         body1,
         part1,
+        handle1,
         body2,
         part2,
+        handle2,
         anchor1,
         anchor2,
         &force,
@@ -240,8 +246,10 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, Id>(
 pub fn cancel_relative_linear_velocity<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -259,8 +267,10 @@ pub fn cancel_relative_linear_velocity<N: RealField>(
         cancel_relative_linear_velocity_wrt_axis(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             assembly_id1,
             assembly_id2,
             anchor1,
@@ -288,8 +298,10 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
@@ -311,8 +323,10 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &force,
@@ -326,8 +340,8 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -350,8 +364,10 @@ pub fn cancel_relative_translation<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     jacobians: &mut [N],
@@ -365,8 +381,10 @@ pub fn cancel_relative_translation<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -380,8 +398,8 @@ pub fn cancel_relative_translation<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -403,8 +421,10 @@ pub fn cancel_relative_translation<N: RealField>(
 pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, Id>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -430,8 +450,10 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, Id>(
     let geom = constraint_pair_geometry(
         body1,
         part1,
+        handle1,
         body2,
         part2,
+        handle2,
         anchor1,
         anchor2,
         &force,
@@ -478,8 +500,10 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, Id>(
 pub fn cancel_relative_angular_velocity<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -497,8 +521,10 @@ pub fn cancel_relative_angular_velocity<N: RealField>(
         cancel_relative_angular_velocity_wrt_axis(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             assembly_id1,
             assembly_id2,
             anchor1,
@@ -526,8 +552,10 @@ pub fn cancel_relative_rotation<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     rotation1: &Rotation<N>,
@@ -543,8 +571,10 @@ pub fn cancel_relative_rotation<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
@@ -558,8 +588,8 @@ pub fn cancel_relative_rotation<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -582,8 +612,10 @@ pub fn cancel_relative_rotation<N: RealField>(
 pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     axis: &Unit<AngularVector<N>>,
@@ -611,8 +643,10 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &dir,
@@ -666,8 +700,10 @@ pub fn align_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
@@ -693,8 +729,10 @@ pub fn align_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
@@ -708,8 +746,8 @@ pub fn align_axis<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -731,8 +769,10 @@ pub fn align_axis<N: RealField>(
 pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -761,8 +801,10 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &dir,
@@ -815,8 +857,10 @@ pub fn project_anchor_to_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
@@ -834,8 +878,10 @@ pub fn project_anchor_to_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -849,8 +895,8 @@ pub fn project_anchor_to_axis<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -874,8 +920,10 @@ pub fn restore_angle_between_axis<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
@@ -913,8 +961,10 @@ pub fn restore_angle_between_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
@@ -928,8 +978,8 @@ pub fn restore_angle_between_axis<N: RealField>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             true,
             geom.ndofs1,
             geom.ndofs2,

@@ -71,8 +71,10 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
             let body2 = try_continue!(bodies.body(manifold.body2()));
 
             for c in manifold.contacts() {
-                let part1 = try_continue!(body1.part(manifold.body_part1(c.kinematic.feature1()).1));
-                let part2 = try_continue!(body2.part(manifold.body_part2(c.kinematic.feature2()).1));
+                let handle1 = manifold.body_part1(c.kinematic.feature1());
+                let handle2 = manifold.body_part2(c.kinematic.feature2());
+                let part1 = try_continue!(body1.part(handle1.1));
+                let part2 = try_continue!(body2.part(handle2.1));
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
@@ -90,8 +92,10 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     params,
                     body1,
                     part1,
+                    handle1,
                     body2,
                     part2,
+                    handle2,
                     &props,
                     manifold,
                     ext_vels,
@@ -142,8 +146,10 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     let geom = helper::constraint_pair_geometry(
                         body1,
                         part1,
+                        handle1,
                         body2,
                         part2,
+                        handle2,
                         &center1,
                         &center2,
                         &dir,

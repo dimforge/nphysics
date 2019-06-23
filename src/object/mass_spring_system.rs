@@ -527,10 +527,6 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         self.positions += disp;
     }
 
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
     fn status(&self) -> BodyStatus {
         self.status
     }
@@ -771,10 +767,6 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
 
 
 impl<N: RealField> BodyPart<N> for MassSpringElement<N> {
-    fn part_handle(&self) -> BodyPartHandle {
-        self.handle
-    }
-
     fn center_of_mass(&self) -> Point<N> {
         unimplemented!()
     }
@@ -935,7 +927,7 @@ impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
 
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline.clone()))
-                        .build_with_infos(&vol, cworld);
+                        .build_with_infos(handle, &vol, cworld);
                 }
 
                 vol
@@ -949,7 +941,7 @@ impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
                     handle, &polyline, self.mass, self.stiffness, self.damping_ratio);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
-                        .build_with_infos(&vol, cworld);
+                        .build_with_infos(handle, &vol, cworld);
                 }
 
                 vol
@@ -963,7 +955,7 @@ impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
                 let vol = MassSpringSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness, self.damping_ratio);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
-                        .build_with_infos(&vol, cworld);
+                        .build_with_infos(handle, &vol, cworld);
                 }
 
                 vol

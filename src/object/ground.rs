@@ -84,11 +84,6 @@ impl<N: RealField> Body<N> for Ground<N> {
     fn apply_displacement(&mut self, _: &[N]) {}
 
     #[inline]
-    fn handle(&self) -> BodyHandle {
-        BodyHandle::ground()
-    }
-
-    #[inline]
     fn status(&self) -> BodyStatus {
         BodyStatus::Static
     }
@@ -253,11 +248,6 @@ impl<N: RealField> BodyPart<N> for Ground<N> {
     #[inline]
     fn is_ground(&self) -> bool {
         true
-    }
-
-    #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle::ground()
     }
 
     #[inline]

@@ -872,11 +872,6 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
-    #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }

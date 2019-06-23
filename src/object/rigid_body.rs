@@ -387,11 +387,6 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
-    #[inline]
     fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }
@@ -688,11 +683,6 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn is_ground(&self) -> bool {
         false
-    }
-
-    #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.handle, 0)
     }
 
     #[inline]

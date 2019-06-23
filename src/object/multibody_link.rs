@@ -135,11 +135,6 @@ impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
     }
 
     #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.multibody_handle, self.internal_id)
-    }
-
-    #[inline]
     fn center_of_mass(&self) -> Point<N> {
         self.com
     }

@@ -138,9 +138,6 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     /// Applies a generalized displacement to this body.
     fn apply_displacement(&mut self, disp: &[N]);
 
-    /// The handle of this body.
-    fn handle(&self) -> BodyHandle;
-
     /// The status of this body.
     fn status(&self) -> BodyStatus;
 
@@ -336,9 +333,6 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
     fn is_ground(&self) -> bool {
         false
     }
-
-    /// The handle of this body part.
-    fn part_handle(&self) -> BodyPartHandle;
 
     /// The center of mass of this body part.
     fn center_of_mass(&self) -> Point<N>;

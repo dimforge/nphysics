@@ -4,7 +4,7 @@ use std::ops::Range;
 use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
-use crate::object::{BodySlab, Body, BodyPart};
+use crate::object::{BodySlab, Body, BodyPart, BodyPartHandle};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable, LocalMaterialProperties};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
@@ -34,8 +34,10 @@ impl<N: RealField> SignoriniModel<N> {
         params: &IntegrationParameters<N>,
         body1: &Body<N>,
         part1: &BodyPart<N>,
+        handle1: BodyPartHandle,
         body2: &Body<N>,
         part2: &BodyPart<N>,
+        handle2: BodyPartHandle,
         props: &LocalMaterialProperties<N>,
         manifold: &ColliderContactManifold<N>,
         ext_vels: &DVector<N>,
@@ -61,8 +63,10 @@ impl<N: RealField> SignoriniModel<N> {
         let geom = helper::constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             &center1,
             &center2,
             &dir,
@@ -218,8 +222,10 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
                      continue;
                  }
 
-                let part1 = try_ret!(body1.part(manifold.body_part1(c.kinematic.feature1()).1));
-                let part2 = try_ret!(body2.part(manifold.body_part2(c.kinematic.feature2()).1));
+                let handle1 = manifold.body_part1(c.kinematic.feature1());
+                let handle2 = manifold.body_part2(c.kinematic.feature2());
+                let part1 = try_ret!(body1.part(handle1.1));
+                let part2 = try_ret!(body2.part(handle2.1));
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
@@ -231,8 +237,10 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
                     params,
                     body1,
                     part1,
+                    handle1,
                     body2,
                     part2,
+                    handle2,
                     &props,
                     manifold,
                     ext_vels,

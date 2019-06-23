@@ -1,15 +1,17 @@
 use na::{DVector, RealField, Unit};
 
 use crate::math::{Point, Vector};
-use crate::object::{Body, BodyPart};
+use crate::object::{Body, BodyPart, BodyPartHandle};
 use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 pub fn build_linear_limits_velocity_constraint<N: RealField>(
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -66,8 +68,10 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
     let geom = helper::constraint_pair_geometry(
         body1,
         part1,
+        handle1,
         body2,
         part2,
+        handle2,
         anchor1,
         anchor2,
         &force,
@@ -125,8 +129,10 @@ pub fn build_linear_limits_position_constraint<N: RealField>(
     params: &IntegrationParameters<N>,
     body1: &Body<N>,
     part1: &BodyPart<N>,
+    handle1: BodyPartHandle,
     body2: &Body<N>,
     part2: &BodyPart<N>,
+    handle2: BodyPartHandle,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
@@ -157,8 +163,10 @@ pub fn build_linear_limits_position_constraint<N: RealField>(
         let geom = helper::constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -172,8 +180,8 @@ pub fn build_linear_limits_position_constraint<N: RealField>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            handle2,
             false,
             geom.ndofs1,
             geom.ndofs2,

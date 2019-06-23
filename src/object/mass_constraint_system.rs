@@ -430,10 +430,6 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         self.positions += disp;
     }
 
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
     fn status(&self) -> BodyStatus {
         self.status
     }
@@ -786,10 +782,6 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
 
 
 impl<N: RealField> BodyPart<N> for MassConstraintElement<N> {
-    fn part_handle(&self) -> BodyPartHandle {
-        self.handle
-    }
-
     fn center_of_mass(&self) -> Point<N> {
         unimplemented!()
     }
@@ -966,7 +958,7 @@ impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
                     handle, &polyline, self.mass, self.stiffness);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
-                        .build_with_infos(&vol, cworld);
+                        .build_with_infos(handle, &vol, cworld);
                 }
 
                 vol
@@ -980,7 +972,7 @@ impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
                 let vol = MassConstraintSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness);
                 if self.collider_enabled {
                     let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
-                        .build_with_infos(&vol, cworld);
+                        .build_with_infos(handle, &vol, cworld);
                 }
 
                 vol

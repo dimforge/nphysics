@@ -597,13 +597,14 @@ impl<N: RealField> DeformableColliderDesc<N> {
     );
 
     /// Builds a deformable collider attached to `parent` into the `world`.
-    pub fn build_parent<'w>(&self, parent: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
+    pub fn build_parent<'w>(&self, parent_handle: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let parent = bodies.body(parent)?;
-        Some(self.build_with_infos(parent, cworld))
+        let parent = bodies.body(parent_handle)?;
+        Some(self.build_with_infos(parent_handle, parent, cworld))
     }
 
     pub(crate) fn build_with_infos<'w>(&self,
+                                       parent_handle: BodyHandle,
                                        parent: &Body<N>,
                                        cworld: &'w mut ColliderWorld<N>)
                                        -> &'w mut Collider<N> {
@@ -627,10 +628,9 @@ impl<N: RealField> DeformableColliderDesc<N> {
             "Both the deformable shape and deformable body must support the same deformation types."
         );
 
-        let body = parent.handle();
         let ndofs = parent.status_dependent_ndofs();
         let body_parts = self.body_parts_mapping.clone();
-        let anchor = ColliderAnchor::OnDeformableBody { body, body_parts };
+        let anchor = ColliderAnchor::OnDeformableBody { body: parent_handle, body_parts };
         let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
         let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
         data.ccd_enabled = data.ccd_enabled;
