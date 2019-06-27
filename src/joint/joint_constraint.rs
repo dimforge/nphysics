@@ -1,23 +1,68 @@
 #![allow(missing_docs)] // For downcast.
 
 use downcast_rs::Downcast;
+use slab::Slab;
 use na::{DVector, RealField};
 
-use crate::object::{BodyPartHandle, BodySlab};
+use crate::object::{BodyPartHandle, BodySet, Body};
 use crate::solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator};
 
-/// The handle of a consraint.
-pub type ConstraintHandle = usize;
+
+pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
+    type JointConstraint: ?Sized + JointConstraint<N, Bodies>;
+//    type Handle: Copy;
+
+    fn get(&self, handle: JointConstraintHandle) -> Option<&Self::JointConstraint>;
+    fn get_mut(&mut self, handle: JointConstraintHandle) -> Option<&mut Self::JointConstraint>;
+
+    fn contains(&self, handle: JointConstraintHandle) -> bool;
+
+    fn foreach(&self, f: impl FnMut(JointConstraintHandle, &Self::JointConstraint));
+    fn foreach_mut(&mut self, f: impl FnMut(JointConstraintHandle, &mut Self::JointConstraint));
+}
+
+impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> for Slab<Box<JointConstraint<N, Bodies>>> {
+    type JointConstraint = JointConstraint<N, Bodies>;
+//    type Handle = BodyHandle;
+
+    fn get(&self, handle: JointConstraintHandle) -> Option<&Self::JointConstraint> {
+        self.get(handle).map(|c| &**c)
+    }
+
+    fn get_mut(&mut self, handle: JointConstraintHandle) -> Option<&mut Self::JointConstraint> {
+        self.get_mut(handle).map(|c| &mut **c)
+    }
+
+    fn contains(&self, handle: JointConstraintHandle) -> bool {
+        self.contains(handle)
+    }
+
+    fn foreach(&self, mut f: impl FnMut(JointConstraintHandle, &Self::JointConstraint)) {
+        for (h, b) in self.iter() {
+            f(h, &**b)
+        }
+    }
+
+    fn foreach_mut(&mut self, mut f: impl FnMut(JointConstraintHandle, &mut Self::JointConstraint)) {
+        for (h, b) in self.iter_mut() {
+            f(h, &mut **b)
+        }
+    }
+}
+
+
+/// The handle of a constraint.
+pub type JointConstraintHandle = usize;
 
 /// Trait implemented by joint that operate by generating constraints to restrict the relative motion of two body parts.
-pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downcast + Send + Sync {
+pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>: NonlinearConstraintGenerator<N, Bodies> + Downcast + Send + Sync {
     /// Return `true` if the constraint is active.
     ///
     /// Typically, a constraint is disable if it is between two sleeping bodies, or, between bodies without any degrees of freedom.
-    fn is_active(&self, bodies: &BodySlab<N>) -> bool {
+    fn is_active(&self, bodies: &Bodies) -> bool {
         let (b1, b2) = self.anchors();
-        let body1 = try_ret!(bodies.body(b1.0), false);
-        let body2 = try_ret!(bodies.body(b2.0), false);
+        let body1 = try_ret!(bodies.get(b1.0), false);
+        let body2 = try_ret!(bodies.get(b2.0), false);
 
         let ndofs1 = body1.status_dependent_ndofs();
         let ndofs2 = body2.status_dependent_ndofs();
@@ -33,7 +78,7 @@ pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downc
     fn velocity_constraints(
         &mut self,
         params: &IntegrationParameters<N>,
-        bodies: &BodySlab<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
@@ -44,4 +89,4 @@ pub trait JointConstraint<N: RealField>: NonlinearConstraintGenerator<N> + Downc
     fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>);
 }
 
-impl_downcast!(JointConstraint<N> where N: RealField);
+impl_downcast!(JointConstraint<N, Bodies> where N: RealField, Bodies: BodySet<N>);

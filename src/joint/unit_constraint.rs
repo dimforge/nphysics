@@ -5,11 +5,11 @@ use crate::object::{Body, BodyPart, BodyPartHandle};
 use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
-pub fn build_linear_limits_velocity_constraint<N: RealField>(
-    body1: &Body<N>,
+pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -125,12 +125,12 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
     }
 }
 
-pub fn build_linear_limits_position_constraint<N: RealField>(
+pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,

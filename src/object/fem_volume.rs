@@ -1122,7 +1122,7 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     );
 
     /// Build a deformable volume.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMVolume<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, BodyHandle>) -> &'w mut FEMVolume<N> {
         world.add_body(self)
     }
 }

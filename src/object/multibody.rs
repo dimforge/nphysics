@@ -10,7 +10,7 @@ use crate::math::{
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, RealField, LU};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
-    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc
+    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc, BodySet
 };
 use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
 use crate::world::{World, ColliderWorld};
@@ -1276,7 +1276,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
 
 
     /// Build into the `world` the multibody represented by `self` and its children.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Multibody<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, BodyHandle>) -> &'w mut Multibody<N> {
         world.add_body(self)
     }
 
@@ -1284,13 +1284,13 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     ///
     /// If `parent` is the ground, then a new multibody is created.
     /// If `parent` is not another multibody link, then `None` is returned.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut MultibodyLink<N>> {
+    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N, BodyHandle>) -> Option<&'w mut MultibodyLink<N>> {
         if parent.is_ground() {
             Some(self.build(world).root_mut())
         } else {
             let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
             // FIXME: keep the Err so the user gets a more meaningful error?
-            let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>()?;
+            let mb = bodies.get_mut(parent.0)?.downcast_mut::<Multibody<N>>()?;
             Some(self.do_build(mb, cworld, parent))
         }
     }

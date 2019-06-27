@@ -899,7 +899,7 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     );
 
     /// Builds a mass-spring system.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut MassSpringSystem<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, BodyHandle>) -> &'w mut MassSpringSystem<N> {
         world.add_body(self)
     }
 }

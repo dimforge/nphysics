@@ -4,7 +4,7 @@ use std::ops::Range;
 use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
-use crate::object::{BodySlab, Body, BodyPart, BodyPartHandle};
+use crate::object::{BodySlab, Body, BodyPart, BodyPartHandle, BodySet};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable, LocalMaterialProperties};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
@@ -158,8 +158,8 @@ impl<N: RealField> SignoriniModel<N> {
         let b1 = manifold.body_part1(c.kinematic.feature1());
         let b2 = manifold.body_part2(c.kinematic.feature2());
 
-        let body1 = try_ret!(bodies.body(b1.0));
-        let body2 = try_ret!(bodies.body(b2.0));
+        let body1 = try_ret!(bodies.get(b1.0));
+        let body2 = try_ret!(bodies.get(b2.0));
         let part1 = try_ret!(body1.part(b1.1));
         let part2 = try_ret!(body2.part(b2.1));
 
@@ -214,8 +214,8 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         let id_vel = constraints.velocity.unilateral.len();
 
         for manifold in manifolds {
-            let body1 = try_ret!(bodies.body(manifold.body1()));
-            let body2 = try_ret!(bodies.body(manifold.body2()));
+            let body1 = try_ret!(bodies.get(manifold.body1()));
+            let body2 = try_ret!(bodies.get(manifold.body2()));
 
             for c in manifold.contacts() {
                  if !Self::is_constraint_active(c, manifold) {

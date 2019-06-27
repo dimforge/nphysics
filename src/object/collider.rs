@@ -7,7 +7,7 @@ use ncollide::pipeline::object::{CollisionObject, CollisionObjectHandle, Geometr
 use ncollide::shape::{ShapeHandle, Shape};
 
 use crate::math::{Isometry, Vector, Rotation};
-use crate::object::{BodyPartHandle, BodyHandle, Body};
+use crate::object::{BodyPartHandle, BodyHandle, Body, BodySet};
 use crate::material::{Material, MaterialHandle};
 use crate::world::{World, ColliderWorld};
 use crate::volumetric::Volumetric;
@@ -449,18 +449,18 @@ impl<N: RealField> ColliderDesc<N> {
     );
 
     /// Builds a collider into the `world` attached to the body part `parent`.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
+    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N, BodyHandle>) -> Option<&'w mut Collider<N>> {
         self.do_build(parent, world)
     }
 
     /// Builds a collider into the `world`.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Collider<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, BodyHandle>) -> &'w mut Collider<N> {
         self.do_build(BodyPartHandle::ground(), world).expect("The world should contain a Ground")
     }
 
-    fn do_build<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
+    fn do_build<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N, BodyHandle>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let body = bodies.body_mut(parent.0)?;
+        let body = bodies.get_mut(parent.0)?;
         self.build_with_infos(parent, body, cworld)
     }
 
@@ -597,9 +597,9 @@ impl<N: RealField> DeformableColliderDesc<N> {
     );
 
     /// Builds a deformable collider attached to `parent` into the `world`.
-    pub fn build_parent<'w>(&self, parent_handle: BodyHandle, world: &'w mut World<N>) -> Option<&'w mut Collider<N>> {
+    pub fn build_parent<'w>(&self, parent_handle: BodyHandle, world: &'w mut World<N, BodyHandle>) -> Option<&'w mut Collider<N>> {
         let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let parent = bodies.body(parent_handle)?;
+        let parent = bodies.get(parent_handle)?;
         Some(self.build_with_infos(parent_handle, parent, cworld))
     }
 

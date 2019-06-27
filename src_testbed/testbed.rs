@@ -22,7 +22,7 @@ use na::{self, Point2, Point3, Vector3};
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
 use ncollide::pipeline::object::CollisionGroups;
-use nphysics::joint::{ConstraintHandle, MouseConstraint};
+use nphysics::joint::{JointConstraintHandle, MouseConstraint};
 #[cfg(feature = "dim2")]
 use nphysics::object::ColliderAnchor;
 use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ActivationStatus};
@@ -89,7 +89,7 @@ pub struct TestbedState {
     pub running: RunMode,
     pub draw_colls: bool,
     pub grabbed_object: Option<BodyPartHandle>,
-    pub grabbed_object_constraint: Option<ConstraintHandle>,
+    pub grabbed_object_constraint: Option<JointConstraintHandle>,
     pub grabbed_object_plane: (Point3<f32>, Vector3<f32>),
     pub drawing_ray: Option<Point2<f32>>,
     pub prev_flags: TestbedStateFlags,

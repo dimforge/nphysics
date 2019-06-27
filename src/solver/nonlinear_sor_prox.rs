@@ -4,7 +4,7 @@ use std::ops::MulAssign;
 
 use crate::world::ColliderWorld;
 use crate::joint::JointConstraint;
-use crate::object::{BodySlab, ColliderAnchor, BodyHandle};
+use crate::object::{BodySlab, ColliderAnchor, BodyHandle, BodySet};
 use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
                     NonlinearUnilateralConstraint, GenericNonlinearConstraint};
 use crate::math::Isometry;
@@ -19,7 +19,7 @@ impl NonlinearSORProx {
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySlab<N>,
         contact_constraints: &mut [NonlinearUnilateralConstraint<N>],
-        joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
+        joints_constraints: &Slab<Box<JointConstraint<N, BodySlab<N>>>>, // FIXME: ugly, use a slice of refs instead.
         internal_constraints: &[BodyHandle],
         jacobians: &mut [N],
         max_iter: usize,
@@ -30,7 +30,7 @@ impl NonlinearSORProx {
             }
 
             for constraint in internal_constraints {
-                if let Some(body) = bodies.body_mut(*constraint) {
+                if let Some(body) = bodies.get_mut(*constraint) {
                     body.step_solve_internal_position_constraints(params);
                 }
             }
@@ -44,7 +44,7 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_generator<N: RealField, Gen: ?Sized + NonlinearConstraintGenerator<N>>(
+    fn solve_generator<N: RealField, Gen: ?Sized + NonlinearConstraintGenerator<N, BodySlab<N>>>(
         params: &IntegrationParameters<N>,
         bodies: &mut BodySlab<N>,
         generator: &Gen,
@@ -88,13 +88,13 @@ impl NonlinearSORProx {
             // FIXME: the body update should be performed lazily, especially because
             // we dont actually need to update the kinematic of a multibody until
             // we have to solve a contact involving one of its links.
-            if let Some(b1) = bodies.body_mut(constraint.body1.0) {
+            if let Some(b1) = bodies.get_mut(constraint.body1.0) {
                 b1.apply_displacement(
                     &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
                 );
             }
 
-            if let Some(b2) = bodies.body_mut(constraint.body2.0) {
+            if let Some(b2) = bodies.get_mut(constraint.body2.0) {
                 b2.apply_displacement(
                     &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
                 )
@@ -119,12 +119,12 @@ impl NonlinearSORProx {
                 .mul_assign(impulse);
 
             if dim1.value() != 0 {
-                if let Some(b1) = bodies.body_mut(constraint.body1.0) {
+                if let Some(b1) = bodies.get_mut(constraint.body1.0) {
                     b1.apply_displacement(&jacobians[0..dim1.value()]);
                 }
             }
             if dim2.value() != 0 {
-                if let Some(b2) = bodies.body_mut(constraint.body2.0) {
+                if let Some(b2) = bodies.get_mut(constraint.body2.0) {
                     b2.apply_displacement(&jacobians[dim1.value()..dim1.value() + dim2.value()]);
                 }
             }
@@ -138,8 +138,8 @@ impl NonlinearSORProx {
         constraint: &mut NonlinearUnilateralConstraint<N>,
         jacobians: &mut [N],
     ) -> bool {
-        let body1 = try_ret!(bodies.body(constraint.body1.0), false);
-        let body2 = try_ret!(bodies.body(constraint.body2.0), false);
+        let body1 = try_ret!(bodies.get(constraint.body1.0), false);
+        let body2 = try_ret!(bodies.get(constraint.body2.0), false);
         let part1 = try_ret!(body1.part(constraint.body1.1), false);
         let part2 = try_ret!(body2.part(constraint.body2.1), false);
         let collider1 = try_ret!(cworld.collider(constraint.collider1), false);

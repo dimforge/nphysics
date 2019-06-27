@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 use ncollide::query::ContactKinematic;
 
 use crate::math::Vector;
-use crate::object::{BodyPartHandle, BodySlab, ColliderHandle};
+use crate::object::{BodyPartHandle, BodySlab, ColliderHandle, BodySet};
 use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
@@ -56,15 +56,15 @@ impl<N: RealField> GenericNonlinearConstraint<N> {
 }
 
 /// Implemented by structures that generate non-linear constraints.
-pub trait NonlinearConstraintGenerator<N: RealField> {
+pub trait NonlinearConstraintGenerator<N: RealField, Bodies: BodySet<N>> {
     /// Maximum of non-linear position constraint this generater needs to output.
-    fn num_position_constraints(&self, bodies: &BodySlab<N>) -> usize;
+    fn num_position_constraints(&self, bodies: &Bodies) -> usize;
     /// Generate the `i`-th position constraint of this generator.
     fn position_constraint(
         &self,
         params: &IntegrationParameters<N>,
         i: usize,
-        bodies: &mut BodySlab<N>,
+        bodies: &mut Bodies,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>>;
 }
@@ -142,8 +142,8 @@ impl MultibodyJointLimitsNonlinearConstraintGenerator {
     }
 }
 
-impl<N: RealField> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonlinearConstraintGenerator {
-    fn num_position_constraints(&self, _: &BodySlab<N>) -> usize {
+impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> for MultibodyJointLimitsNonlinearConstraintGenerator {
+    fn num_position_constraints(&self, _: &Bodies) -> usize {
         0
     }
 
@@ -151,7 +151,7 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for MultibodyJointLimitsNonli
         &self,
         _: &IntegrationParameters<N>,
         _: usize,
-        _: &mut BodySlab<N>,
+        _: &mut Bodies,
         _: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
         None

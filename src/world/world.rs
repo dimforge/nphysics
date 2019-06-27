@@ -9,8 +9,8 @@ use ncollide::interpolation::ConstantVelocityRigidMotion;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
-use crate::force_generator::{ForceGenerator, ForceGeneratorHandle};
-use crate::joint::{ConstraintHandle, JointConstraint};
+use crate::force_generator::{ForceGenerator, ForceGeneratorHandle, ForceGeneratorSet};
+use crate::joint::{JointConstraintHandle, JointConstraint, JointConstraintSet};
 use crate::math::Vector;
 use crate::object::{
     Body, BodySlab, BodyDesc, BodyStatus, Collider, ColliderAnchor,
@@ -31,16 +31,16 @@ struct SubstepState<N: RealField> {
 }
 
 /// The physics world.
-pub struct World<N: RealField> {
+pub struct World<N: RealField, Handle: Copy> {
     counters: Counters,
 
     bodies: BodySlab<N>,
-    constraints: Slab<Box<JointConstraint<N>>>,
-    forces: Slab<Box<ForceGenerator<N>>>,
+    constraints: Slab<Box<JointConstraint<N, BodySlab<N>>>>,
+    forces: Slab<Box<ForceGenerator<N, BodySlab<N>>>>,
 
     cworld: ColliderWorld<N>,
     solver: MoreauJeanSolver<N>,
-    activation_manager: ActivationManager<N>,
+    activation_manager: ActivationManager<N, Handle>,
 
     // FIXME: set this parameter per-colliders?
     prediction: N,
@@ -50,7 +50,7 @@ pub struct World<N: RealField> {
     substep: SubstepState<N>,
 }
 
-impl<N: RealField> World<N> {
+impl<N: RealField, Handle: Copy> World<N, Handle> {
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
@@ -154,7 +154,7 @@ impl<N: RealField> World<N> {
 
     // NOTE: static method used to avoid borrowing issues.
     fn activate_body_at(bodies: &mut BodySlab<N>, handle: BodyHandle) {
-        if let Some(body) = bodies.body_mut(handle) {
+        if let Some(body) = bodies.get_mut(handle) {
             if body.status_dependent_ndofs() != 0 {
                 body.activate();
             }
@@ -162,7 +162,7 @@ impl<N: RealField> World<N> {
     }
 
     /// Add a constraints to the physics world and retrieves its handle.
-    pub fn add_constraint<C: JointConstraint<N>>(&mut self, constraint: C) -> ConstraintHandle {
+    pub fn add_constraint<C: JointConstraint<N, BodySlab<N>>>(&mut self, constraint: C) -> JointConstraintHandle {
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1.0);
         self.activate_body(anchor2.0);
@@ -170,12 +170,12 @@ impl<N: RealField> World<N> {
     }
 
     /// Get a reference to the specified constraint.
-    pub fn constraint(&self, handle: ConstraintHandle) -> &JointConstraint<N> {
+    pub fn constraint(&self, handle: JointConstraintHandle) -> &JointConstraint<N, BodySlab<N>> {
         &*self.constraints[handle]
     }
 
     /// Get a mutable reference to the specified constraint.
-    pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut JointConstraint<N> {
+    pub fn constraint_mut(&mut self, handle: JointConstraintHandle) -> &mut JointConstraint<N, BodySlab<N>> {
         let (anchor1, anchor2) = self.constraints[handle].anchors();
         self.activate_body(anchor1.0);
         self.activate_body(anchor2.0);
@@ -183,7 +183,7 @@ impl<N: RealField> World<N> {
     }
 
     /// Remove the specified constraint from the world.
-    pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<JointConstraint<N>> {
+    pub fn remove_constraint(&mut self, handle: JointConstraintHandle) -> Box<JointConstraint<N, BodySlab<N>>> {
         let constraint = self.constraints.remove(handle);
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1.0);
@@ -199,7 +199,7 @@ impl<N: RealField> World<N> {
         for handle in handles {
             if let Some(it) = self.cworld.colliders_in_contact_with(*handle) {
                 it.for_each(|coll| {
-                    if let Some(b) = bodies.body_mut(coll.body()) {
+                    if let Some(b) = bodies.get_mut(coll.body()) {
                         b.activate()
                     }
                 });
@@ -210,7 +210,7 @@ impl<N: RealField> World<N> {
     }
 
     /// Add a force generator to the world.
-    pub fn add_force_generator<G: ForceGenerator<N>>(
+    pub fn add_force_generator<G: ForceGenerator<N, BodySlab<N>>>(
         &mut self,
         force_generator: G,
     ) -> ForceGeneratorHandle {
@@ -218,12 +218,12 @@ impl<N: RealField> World<N> {
     }
 
     /// Retrieve a reference to the specified force generator.
-    pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &ForceGenerator<N> {
+    pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &ForceGenerator<N, BodySlab<N>> {
         &*self.forces[handle]
     }
 
     /// Retrieve a mutable reference to the specified force generator.
-    pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut ForceGenerator<N> {
+    pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut ForceGenerator<N, BodySlab<N>> {
         &mut *self.forces[handle]
     }
 
@@ -231,7 +231,7 @@ impl<N: RealField> World<N> {
     pub fn remove_force_generator(
         &mut self,
         handle: ForceGeneratorHandle,
-    ) -> Box<ForceGenerator<N>> {
+    ) -> Box<ForceGenerator<N, BodySlab<N>>> {
         self.forces.remove(handle)
     }
 
@@ -246,7 +246,10 @@ impl<N: RealField> World<N> {
     }
 
     /// Execute one time step of the physics simulation.
-    pub fn step(&mut self) {
+    pub fn step<Bodies, Constraints, Forces>(&mut self, bodies: &mut Bodies, constraints: &mut Constraints, forces: &mut Forces)
+    where Bodies: BodySet<N, Handle = Handle>,
+          Constraints: JointConstraintSet<N, Bodies>,
+          Forces: ForceGeneratorSet<N, Bodies> {
         if !self.substep.active {
             println!("##### Loop");
             self.counters.step_started();
@@ -256,21 +259,23 @@ impl<N: RealField> World<N> {
              * Update body dynamics and accelerations.
              *
              */
-            for b in self.bodies.bodies_mut() {
+
+            bodies.foreach_mut(|_, b| {
                 b.step_started();
                 b.update_kinematics();
                 b.update_dynamics(self.params.dt());
-            }
+            });
 
+            // FIXME: how to make force generators work
+            // with the external body set?
             let params = &self.params;
-            let bodies = &mut self.bodies;
-            self.forces.retain(|_, f| {
+            forces.foreach_mut(|_, f| {
                 f.apply(params, bodies)
             });
 
-            for b in self.bodies.bodies_mut() {
+            bodies.foreach_mut(|_, b| {
                 b.update_acceleration(&self.gravity, params);
-            }
+            });
 
             /*
              *
@@ -278,7 +283,7 @@ impl<N: RealField> World<N> {
              * manually some bodies.
              */
             self.cworld.clear_events();
-            self.cworld.sync_colliders(&self.bodies);
+            self.cworld.sync_colliders(bodies);
             self.cworld.perform_broad_phase();
             self.cworld.perform_narrow_phase();
 
@@ -292,9 +297,9 @@ impl<N: RealField> World<N> {
             self.counters.island_construction_started();
             let mut active_bodies = Vec::new();
             self.activation_manager.update(
-                &mut self.bodies,
+                bodies,
                 &self.cworld,
-                &self.constraints,
+                constraints,
                 &mut active_bodies,
             );
             self.counters.island_construction_completed();
@@ -306,8 +311,8 @@ impl<N: RealField> World<N> {
              */
             let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
             for (c1, c2, _, manifold) in self.cworld.contact_pairs(false) {
-                let b1 = try_continue!(self.bodies.body(c1.body()));
-                let b2 = try_continue!(self.bodies.body(c2.body()));
+                let b1 = try_continue!(bodies.get(c1.body()));
+                let b2 = try_continue!(bodies.get(c2.body()));
 
                 if manifold.len() > 0
                     && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
@@ -323,19 +328,19 @@ impl<N: RealField> World<N> {
              * Solve the system and integrate.
              *
              */
-            for b in self.bodies.bodies_mut() {
+            bodies.foreach_mut(|_, b| {
                 // FIXME This is currently needed by the solver because otherwise
                 // some kinematic bodies may end up with a companion_id (used as
                 // an assembly_id) that it out of bounds of the velocity vector.
                 // Note sure what the best place for this is though.
                 b.set_companion_id(0);
-            }
+            });
 
             self.counters.solver_started();
             self.solver.step(
                 &mut self.counters,
-                &mut self.bodies,
-                &mut self.constraints,
+                bodies,
+                constraints,
                 &contact_manifolds[..],
                 &active_bodies[..],
                 params,
@@ -343,11 +348,11 @@ impl<N: RealField> World<N> {
                 &self.cworld,
             );
 
-            for b in self.bodies.bodies_mut() {
+            bodies.foreach_mut(|_, b| {
                 if b.status() == BodyStatus::Kinematic {
                     b.integrate(params)
                 }
-            }
+            });
             self.counters.solver_completed();
 
             /*
@@ -358,12 +363,12 @@ impl<N: RealField> World<N> {
              */
             // FIXME: objects involved in a non-linear position stabilization already
             // updated their kinematics.
-            self.bodies.bodies_mut().for_each(|b| {
+            bodies.foreach_mut(|_, b| {
                 b.update_kinematics();
                 b.update_dynamics(params.dt());
             });
         }
-
+/*
         /*
          *
          * Handle CCD
@@ -372,14 +377,14 @@ impl<N: RealField> World<N> {
         if self.params.ccd_enabled {
             self.solve_ccd();
         }
-
+*/
         if !self.substep.active {
             /*
              *
              * Finally, clear the update flag of every body.
              *
              */
-            self.bodies.bodies_mut().for_each(|b| {
+            bodies.foreach_mut(|_, b| {
                 b.clear_forces();
                 b.validate_advancement();
             });
@@ -392,7 +397,7 @@ impl<N: RealField> World<N> {
              *
              */
             self.counters.collision_detection_started();
-            self.cworld.sync_colliders(&self.bodies);
+            self.cworld.sync_colliders(bodies);
 
             self.counters.broad_phase_started();
             self.cworld.perform_broad_phase();
@@ -406,7 +411,7 @@ impl<N: RealField> World<N> {
             self.params.t += self.params.dt();
             self.counters.step_completed();
 
-            self.bodies.bodies_mut().for_each(|b| {
+            bodies.foreach_mut(|_, b| {
                 b.clear_update_flags();
             });
         }
@@ -451,7 +456,7 @@ impl<N: RealField> World<N> {
                         use crate::object::BodyPart;
                         let handle1 = c1.body();
                         let handle2 = c2.body();
-                        let (b1, b2) = self.bodies.body_pair_mut(handle1, handle2);
+                        let (b1, b2) = self.bodies.get_pair_mut(handle1, handle2);
                         let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
                         let count = self.substep.ccd_counts.entry((c1.handle(), c2.handle())).or_insert(0);
@@ -561,8 +566,8 @@ impl<N: RealField> World<N> {
                 self.cworld.perform_narrow_phase();
 
                 for (c1, c2, _, manifold) in self.cworld.contact_pairs(false) {
-                    let b1 = try_continue!(self.bodies.body(c1.body()));
-                    let b2 = try_continue!(self.bodies.body(c2.body()));
+                    let b1 = try_continue!(self.bodies.get(c1.body()));
+                    let b2 = try_continue!(self.bodies.get(c2.body()));
 
                     if manifold.len() > 0
                         && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
@@ -594,7 +599,7 @@ impl<N: RealField> World<N> {
                                 let (c1, c2) = (Collider::from_mut(c1.unwrap()), Collider::from_mut(c2.unwrap()));
                                 let (handle1, handle2) = (c1.body(), c2.body());
 
-                                if let (Some(b1), Some(b2)) = self.bodies.body_pair_mut(handle1, handle2) {
+                                if let (Some(b1), Some(b2)) = self.bodies.get_pair_mut(handle1, handle2) {
 //                                    if !((c1.is_ccd_enabled() || !b1.is_dynamic()) || (c2.is_ccd_enabled() || !b2.is_dynamic())) {
 //                                        continue;
 //                                    }
@@ -717,11 +722,12 @@ impl<N: RealField> World<N> {
                 }
             } else {
                 println!("Full step completed.");
-                for (handle, body) in self.bodies.iter_mut() {
-                    if self.substep.body_hit.contains(&handle) {
+                let mut substep = &mut self.substep;
+                self.bodies.foreach_mut(|handle, body| {
+                    if substep.body_hit.contains(&handle) {
                         body.clamp_advancement();
                     }
-                }
+                });
 
 //                self.bodies.bodies_mut().for_each(|b| b.clamp_advancement());
                 self.substep.active = false;
@@ -758,8 +764,8 @@ impl<N: RealField> World<N> {
         let bodies = &mut self.bodies;
 
         for (c1, c2, _, _) in self.cworld.contact_pairs(true) {
-            let b1_exists = bodies.body(c1.body()).is_some();
-            let b2_exists = bodies.body(c2.body()).is_some();
+            let b1_exists = bodies.get(c1.body()).is_some();
+            let b2_exists = bodies.get(c2.body()).is_some();
 
             if !b1_exists {
                 if b2_exists {
@@ -776,8 +782,8 @@ impl<N: RealField> World<N> {
 
         self.constraints.retain(|_, constraint| {
             let (b1, b2) = constraint.anchors();
-            let b1_exists = bodies.body(b1.0).and_then(|b| b.part(b1.1)).is_some();
-            let b2_exists = bodies.body(b2.0).and_then(|b| b.part(b2.1)).is_some();
+            let b1_exists = bodies.get(b1.0).and_then(|b| b.part(b1.1)).is_some();
+            let b2_exists = bodies.get(b2.0).and_then(|b| b.part(b2.1)).is_some();
 
             if !b1_exists {
                 if b2_exists {
@@ -798,40 +804,40 @@ impl<N: RealField> World<N> {
 
     /// Get a reference to the specified body.
     pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
-        self.bodies.body(handle)
+        self.bodies.get(handle)
     }
 
     /// Get a mutable reference to the specified body.
     pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
-        self.bodies.body_mut(handle)
+        self.bodies.get_mut(handle)
     }
 
     /// Get a reference to the multibody containing the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody(&self, handle: BodyHandle) -> Option<&Multibody<N>> {
-        self.bodies.body(handle)?.downcast_ref::<Multibody<N>>()
+        self.bodies.get(handle)?.downcast_ref::<Multibody<N>>()
     }
 
     /// Get a mutable reference to the multibody containing the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
     pub fn multibody_mut(&mut self, handle: BodyHandle) -> Option<&mut Multibody<N>> {
-        self.bodies.body_mut(handle)?.downcast_mut::<Multibody<N>>()
+        self.bodies.get_mut(handle)?.downcast_mut::<Multibody<N>>()
     }
 
     /// Get a reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body(&self, handle: BodyHandle) -> Option<&RigidBody<N>> {
-        self.bodies.body(handle)?.downcast_ref::<RigidBody<N>>()
+        self.bodies.get(handle)?.downcast_ref::<RigidBody<N>>()
     }
 
     /// Get a mutable reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
     pub fn rigid_body_mut(&mut self, handle: BodyHandle) -> Option<&mut RigidBody<N>> {
-        self.bodies.body_mut(handle)?.downcast_mut::<RigidBody<N>>()
+        self.bodies.get_mut(handle)?.downcast_mut::<RigidBody<N>>()
     }
 
     /// Reference to the underlying collision world.
@@ -909,7 +915,7 @@ impl<N: RealField> World<N> {
     }
 }
 
-impl<N: RealField> Default for World<N> {
+impl<N: RealField> Default for World<N, BodyHandle> {
     fn default() -> Self {
         Self::new()
     }

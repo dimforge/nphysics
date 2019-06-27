@@ -840,7 +840,7 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     );
 
     /// Builds a rigid body and all its attached colliders.
-    pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
+    pub fn build<'w>(&mut self, world: &'w mut World<N, BodyHandle>) -> &'w mut RigidBody<N> {
         world.add_body(self)
     }
 }

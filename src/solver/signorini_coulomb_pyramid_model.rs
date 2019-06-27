@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
 use crate::math::{Vector, DIM};
-use crate::object::BodySlab;
+use crate::object::{BodySlab, BodySet};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
 use crate::solver::helper;
 use crate::solver::{
@@ -67,8 +67,8 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
 
         for manifold in manifolds {
-            let body1 = try_continue!(bodies.body(manifold.body1()));
-            let body2 = try_continue!(bodies.body(manifold.body2()));
+            let body1 = try_continue!(bodies.get(manifold.body1()));
+            let body2 = try_continue!(bodies.get(manifold.body2()));
 
             for c in manifold.contacts() {
                 let handle1 = manifold.body_part1(c.kinematic.feature1());

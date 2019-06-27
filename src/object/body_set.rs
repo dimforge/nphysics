@@ -5,26 +5,23 @@ use crate::world::ColliderWorld;
 use crate::object::{Body, Ground};
 
 
-pub trait BodySet<'a, N: RealField> {
+pub trait BodySet<N: RealField> {
     type Body: ?Sized + Body<N>;
     type Handle: Copy;
-    type Iter: Iterator<Item = (Self::Handle, &'a Self::Body)>;
-    type IterMut: Iterator<Item = (Self::Handle, &'a mut Self::Body)>;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body>;
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body>;
+    fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>);
 
     fn contains(&self, handle: Self::Handle) -> bool;
 
-    fn iter(&'a self) -> Self::Iter;
-    fn iter_mut(&'a mut self) -> Self::IterMut;
+    fn foreach(&self, f: impl FnMut(Self::Handle, &Self::Body));
+    fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::Body));
 }
 
-impl<'a, N: RealField> BodySet<'a, N> for BodySlab<N> {
+impl<N: RealField> BodySet<N> for BodySlab<N> {
     type Body = Body<N>;
     type Handle = BodyHandle;
-    type Iter = BodySlabIter<'a, N>;
-    type IterMut = BodySlabIterMut<'a, N>;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body> {
         self.body(handle)
@@ -34,40 +31,25 @@ impl<'a, N: RealField> BodySet<'a, N> for BodySlab<N> {
         self.body_mut(handle)
     }
 
+    fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>) {
+        self.body_pair_mut(handle1, handle2)
+    }
+
+
     fn contains(&self, handle: Self::Handle) -> bool {
         self.contains(handle)
     }
 
-    fn iter(&'a self) -> Self::Iter {
-        BodySlabIter { iter: self.bodies.iter() }
+    fn foreach(&self, mut f: impl FnMut(Self::Handle, &Self::Body)) {
+        for (h, b) in self.bodies.iter() {
+            f(BodyHandle(h), &**b)
+        }
     }
 
-    fn iter_mut(&'a mut self) -> Self::IterMut {
-        BodySlabIterMut { iter_mut: self.bodies.iter_mut() }
-    }
-}
-
-pub struct BodySlabIter<'a, N: RealField> {
-    iter: Iter<'a, Box<Body<N>>>
-}
-
-impl<'a, N: RealField> Iterator for BodySlabIter<'a, N> {
-    type Item = (BodyHandle, &'a Body<N>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(h, b)| (BodyHandle(h), &**b))
-    }
-}
-
-pub struct BodySlabIterMut<'a, N: RealField> {
-    iter_mut: IterMut<'a, Box<Body<N>>>
-}
-
-impl<'a, N: RealField> Iterator for BodySlabIterMut<'a, N> {
-    type Item = (BodyHandle, &'a mut Body<N>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter_mut.next().map(|(h, b)| (BodyHandle(h), &mut **b))
+    fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Self::Body)) {
+        for (h, b) in self.bodies.iter_mut() {
+            f(BodyHandle(h), &mut **b)
+        }
     }
 }
 

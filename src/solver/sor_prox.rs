@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{BodySlab, BodyHandle};
+use crate::object::{BodySlab, BodyHandle, BodySet};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint, LinearConstraints};
 
@@ -56,7 +56,7 @@ impl SORProx {
         Self::warmstart_set(bodies, joint_constraints, jacobians, mj_lambda);
 
         for handle in internal {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(body) = bodies.get_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
                 body.warmstart_internal_velocity_constraints(&mut dvels);
             }
@@ -160,7 +160,7 @@ impl SORProx {
         Self::step_bilateral(bodies, contact_constraints, jacobians, mj_lambda);
 
         for handle in internal {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(body) = bodies.get_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
                 body.step_solve_internal_velocity_constraints(&mut dvels);
             }

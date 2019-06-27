@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 
 use crate::force_generator::ForceGenerator;
 use crate::math::{ForceType, Point, Vector};
-use crate::object::{BodyPartHandle, BodySlab};
+use crate::object::{BodyPartHandle, BodySlab, BodySet, Body};
 use crate::solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.
@@ -53,16 +53,12 @@ impl<N: RealField> Spring<N> {
     }
 }
 
-impl<N: RealField> ForceGenerator<N> for Spring<N> {
-    fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySlab<N>) -> bool {
-        if bodies.body(self.b1.0).is_none() || bodies.body(self.b2.0).is_none() {
-            return false;
-        }
-
-        let body1 = try_ret!(bodies.body(self.b1.0), false);
-        let body2 = try_ret!(bodies.body(self.b2.0), false);
-        let part1 = try_ret!(body1.part(self.b1.1), false);
-        let part2 = try_ret!(body2.part(self.b2.1), false);
+impl<N: RealField, Bodies: BodySet<N>> ForceGenerator<N, Bodies> for Spring<N> {
+    fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut Bodies) {
+        let body1 = try_ret!(bodies.get(self.b1.0));
+        let body2 = try_ret!(bodies.get(self.b2.0));
+        let part1 = try_ret!(body1.part(self.b1.1));
+        let part2 = try_ret!(body2.part(self.b2.1));
 
         let anchor1 = body1.world_point_at_material_point(part1, &self.anchor1);
         let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
@@ -79,9 +75,7 @@ impl<N: RealField> ForceGenerator<N> for Spring<N> {
         }
 
         let force = force_dir.as_ref() * delta_length * self.stiffness;
-        bodies.body_mut(self.b1.0).unwrap().apply_force_at_local_point(self.b1.1, &force, &self.anchor1, ForceType::Force, false);
-        bodies.body_mut(self.b2.0).unwrap().apply_force_at_local_point(self.b2.1, &-force, &self.anchor2, ForceType::Force, false);
-
-        true
+        bodies.get_mut(self.b1.0).unwrap().apply_force_at_local_point(self.b1.1, &force, &self.anchor1, ForceType::Force, false);
+        bodies.get_mut(self.b2.0).unwrap().apply_force_at_local_point(self.b2.1, &-force, &self.anchor2, ForceType::Force, false);
     }
 }

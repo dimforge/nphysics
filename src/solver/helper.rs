@@ -53,11 +53,11 @@ impl<N: RealField> Neg for ForceDirection<N> {
 /// If the force is a torque, it is applied at the centers of mass of the body parts.
 /// Every input are expressed in world-space.
 #[inline]
-pub fn constraint_pair_geometry<N: RealField>(
-    body1: &Body<N>,
+pub fn constraint_pair_geometry<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     center1: &Point<N>,
@@ -140,18 +140,18 @@ pub fn constraint_pair_geometry<N: RealField>(
 /// Test if a constraint between the two given bodies should be a ground
 /// constraint (a constraint between a dynamic body and one without any degree of freedom).
 #[inline]
-pub fn constraints_are_ground_constraints<N: RealField>(
-    body1: &Body<N>,
-    body2: &Body<N>,
+pub fn constraints_are_ground_constraints<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
+    body2: &B,
 ) -> bool {
     body1.status_dependent_ndofs() == 0 || body2.status_dependent_ndofs() == 0
 }
 
 /// Retrieve the external velocity subvectors for the given bodies.
 #[inline(always)]
-pub fn split_ext_vels<'a, N: RealField>(
-    body1: &Body<N>,
-    body2: &Body<N>,
+pub fn split_ext_vels<'a, N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
+    body2: &B,
     assembly_id1: usize,
     assembly_id2: usize,
     ext_vels: &'a DVector<N>)
@@ -164,11 +164,11 @@ pub fn split_ext_vels<'a, N: RealField>(
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, Id>(
-    body1: &Body<N>,
+pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N>, Id>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -243,11 +243,11 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, Id>(
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity<N: RealField>(
-    body1: &Body<N>,
+pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -294,12 +294,12 @@ pub fn cancel_relative_linear_velocity<N: RealField>(
 /// Generate position constraints to cancel the relative translation of two bodies wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_translation_wrt_axis<N: RealField>(
+pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,
@@ -360,12 +360,12 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
 /// Generate position constraints to cancel the relative translation of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_translation<N: RealField>(
+pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,
@@ -418,11 +418,11 @@ pub fn cancel_relative_translation<N: RealField>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies wrt. the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, Id>(
-    body1: &Body<N>,
+pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N>, Id>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -497,11 +497,11 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, Id>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity<N: RealField>(
-    body1: &Body<N>,
+pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -548,12 +548,12 @@ pub fn cancel_relative_angular_velocity<N: RealField>(
 /// Generate position constraints to cancel the relative rotation of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_rotation<N: RealField>(
+pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,
@@ -609,11 +609,11 @@ pub fn cancel_relative_rotation<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
+pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -696,12 +696,12 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn align_axis<N: RealField>(
+pub fn align_axis<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,
@@ -766,11 +766,11 @@ pub fn align_axis<N: RealField>(
 /// Generate velocity constraints to cancel the relative linear velocity of two bodies along all axis except the one provided.
 ///
 /// All inputs mut be given in world-space.
-pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
+pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     assembly_id1: usize,
@@ -853,12 +853,12 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
 /// Generate position constraints to project `anchor2` into the axis with direction `axis1` and passing through the `anchor1`.
 ///
 /// All inputs mut be given in world-space.
-pub fn project_anchor_to_axis<N: RealField>(
+pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,
@@ -916,12 +916,12 @@ pub fn project_anchor_to_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn restore_angle_between_axis<N: RealField>(
+pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
+    body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle,
-    body2: &Body<N>,
+    body2: &B,
     part2: &BodyPart<N>,
     handle2: BodyPartHandle,
     anchor1: &Point<N>,

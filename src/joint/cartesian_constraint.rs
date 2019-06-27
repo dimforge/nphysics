@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, ANGULAR_DIM, Rotation};
-use crate::object::{BodyPartHandle, BodySlab};
+use crate::object::{BodyPartHandle, BodySet, Body};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
@@ -68,7 +68,7 @@ impl<N: RealField> CartesianConstraint<N> {
     }
 }
 
-impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
+impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for CartesianConstraint<N> {
     fn num_velocity_constraints(&self) -> usize {
         ANGULAR_DIM
     }
@@ -80,15 +80,15 @@ impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySlab<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
         constraints: &mut ConstraintSet<N, usize>,
     ) {
-        let body1 = try_ret!(bodies.body(self.b1.0));
-        let body2 = try_ret!(bodies.body(self.b2.0));
+        let body1 = try_ret!(bodies.get(self.b1.0));
+        let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
         let part2 = try_ret!(body2.part(self.b2.1));
 
@@ -140,8 +140,8 @@ impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
     }
 }
 
-impl<N: RealField> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySlab<N>) -> usize {
+impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> for CartesianConstraint<N> {
+    fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             1
@@ -154,11 +154,11 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
         &self,
         params: &IntegrationParameters<N>,
         _: usize,
-        bodies: &mut BodySlab<N>,
+        bodies: &mut Bodies,
         jacobians: &mut [N],
     ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0)?;
-        let body2 = bodies.body(self.b2.0)?;
+        let body1 = bodies.get(self.b1.0)?;
+        let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
         let part2 = body2.part(self.b2.1)?;
 

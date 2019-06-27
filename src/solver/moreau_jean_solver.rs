@@ -5,8 +5,8 @@ use ncollide::query::ContactId;
 
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
-use crate::joint::JointConstraint;
-use crate::object::{BodyHandle, BodySlab};
+use crate::joint::{JointConstraint, JointConstraintSet};
+use crate::object::{BodyHandle, BodySlab, BodySet, Body};
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 use crate::world::ColliderWorld;
@@ -43,11 +43,11 @@ impl<N: RealField> MoreauJeanSolver<N> {
     }
 
     /// Perform one step of the time-stepping scheme.
-    pub fn step(
+    pub fn step<Bodies: BodySet<N>, Constraints: JointConstraintSet<N, Bodies>>(
         &mut self,
         counters: &mut Counters,
-        bodies: &mut BodySlab<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        bodies: &mut Bodies,
+        joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
@@ -57,7 +57,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         counters.assembly_started();
         self.assemble_system(counters, params, coefficients, bodies, joints, manifolds, island);
         counters.assembly_completed();
-
+/*
         counters.set_nconstraints(self.contact_constraints.velocity.len() + self.joint_constraints.velocity.len());
 
         println!("Solving velocity constraints.");
@@ -76,6 +76,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         println!("Solving position constraints.");
         self.solve_position_constraints(params, cworld, bodies, joints);
         counters.position_resolution_completed();
+        */
     }
 
     // FIXME: this comment is bad.
@@ -84,7 +85,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         &mut self,
         counters: &mut Counters,
         bodies: &mut BodySlab<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<JointConstraint<N, BodySlab<N>>>>,
         manifolds: &[ColliderContactManifold<N>],
         ccd_pair: [BodyHandle; 2],
         island: &[BodyHandle],
@@ -104,11 +105,11 @@ impl<N: RealField> MoreauJeanSolver<N> {
 //        }
 
         self.solve_position_constraints(params, cworld, bodies, joints);
-        bodies.body_mut(ccd_pair[0]).unwrap().validate_advancement();
-        bodies.body_mut(ccd_pair[1]).unwrap().validate_advancement();
+        bodies.get_mut(ccd_pair[0]).unwrap().validate_advancement();
+        bodies.get_mut(ccd_pair[1]).unwrap().validate_advancement();
 
 //        for handle in island {
-//            let body = try_continue!(bodies.body_mut(*handle));
+//            let body = try_continue!(bodies.get_mut(*handle));
 //            body.validate_advancement();
 //        }
 
@@ -117,13 +118,13 @@ impl<N: RealField> MoreauJeanSolver<N> {
         self.update_velocities_and_integrate(params, bodies, island);
     }
 
-    fn assemble_system(
+    fn assemble_system<Bodies: BodySet<N>, Constraints: JointConstraintSet<N, Bodies>>(
         &mut self,
         counters: &mut Counters,
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &mut BodySlab<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        bodies: &mut Bodies,
+        joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
     ) {
@@ -131,7 +132,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         let mut system_ndofs = 0;
 
         for handle in island {
-            let body = try_continue!(bodies.body_mut(*handle));
+            let body = try_continue!(bodies.get_mut(*handle));
             body.set_companion_id(system_ndofs);
             let ndofs = body.status_dependent_ndofs();
             assert!(
@@ -156,7 +157,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
          * Initialize M^{-1} h * dt
          */
         for handle in island {
-            let body = try_continue!(bodies.body(*handle));
+            let body = try_continue!(bodies.get(*handle));
             let id = body.companion_id();
             let accs = body.generalized_acceleration();
 
@@ -173,29 +174,29 @@ impl<N: RealField> MoreauJeanSolver<N> {
         let mut jacobian_sz = 0;
         let mut ground_jacobian_sz = 0;
 
-        for (_, g) in joints.iter() {
+
+        joints.foreach(|_, g| {
             if g.is_active(bodies) {
                 let (b1, b2) = g.anchors();
-                let body1 = try_continue!(bodies.body(b1.0));
-                let body2 = try_continue!(bodies.body(b2.0));
+                if let (Some(body1), Some(body2)) = (bodies.get(b1.0), bodies.get(b2.0)) {
+                    let ndofs1 = body1.status_dependent_ndofs();
+                    let ndofs2 = body2.status_dependent_ndofs();
 
-                let ndofs1 = body1.status_dependent_ndofs();
-                let ndofs2 = body2.status_dependent_ndofs();
+                    let nconstraints = g.num_velocity_constraints();
+                    let sz = nconstraints * 2 * (ndofs1 + ndofs2);
 
-                let nconstraints = g.num_velocity_constraints();
-                let sz = nconstraints * 2 * (ndofs1 + ndofs2);
-
-                if ndofs1 == 0 || ndofs2 == 0 {
-                    ground_jacobian_sz += sz;
-                } else {
-                    jacobian_sz += sz;
+                    if ndofs1 == 0 || ndofs2 == 0 {
+                        ground_jacobian_sz += sz;
+                    } else {
+                        jacobian_sz += sz;
+                    }
                 }
             }
-        }
+        });
 
         for m in manifolds {
-            let ndofs1 = try_continue!(bodies.body(m.body1())).status_dependent_ndofs();
-            let ndofs2 = try_continue!(bodies.body(m.body2())).status_dependent_ndofs();
+            let ndofs1 = try_continue!(bodies.get(m.body1())).status_dependent_ndofs();
+            let ndofs2 = try_continue!(bodies.get(m.body2())).status_dependent_ndofs();
             let sz = self.contact_model.num_velocity_constraints(m) * (ndofs1 + ndofs2) * 2;
 
             if ndofs1 == 0 || ndofs2 == 0 {
@@ -207,7 +208,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
 
         self.jacobians
             .resize(jacobian_sz + ground_jacobian_sz, N::zero());
-
+/*
         /*
          *
          * Initialize constraints.
@@ -246,13 +247,14 @@ impl<N: RealField> MoreauJeanSolver<N> {
 
 
         for handle in &self.internal_constraints {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(body) = bodies.get_mut(*handle) {
                 let ext_vels = self.ext_vels.rows(body.companion_id(), body.ndofs());
                 body.setup_internal_velocity_constraints(&ext_vels, params);
             }
         }
 
         println!("Constraints setup complete.");
+        */
     }
 
     fn solve_velocity_constraints(&mut self, params: &IntegrationParameters<N>, bodies: &mut BodySlab<N>) {
@@ -272,7 +274,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySlab<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<JointConstraint<N, BodySlab<N>>>>,
     ) {
         // XXX: avoid the systematic clone.
         // This is needed for cases where we perform the position resolution
@@ -293,7 +295,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
     fn cache_impulses(
         &mut self,
         bodies: &mut BodySlab<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<JointConstraint<N, BodySlab<N>>>>,
     ) {
         self.contact_model.cache_impulses(&self.contact_constraints);
 
@@ -317,7 +319,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         island: &[BodyHandle],
     ) {
         for handle in island {
-            let body = try_continue!(bodies.body_mut(*handle));
+            let body = try_continue!(bodies.get_mut(*handle));
             let id = body.companion_id();
             let ndofs = body.ndofs();
 

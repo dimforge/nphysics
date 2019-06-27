@@ -2,7 +2,7 @@ use na::RealField;
 
 use crate::solver::IntegrationParameters;
 use crate::force_generator::ForceGenerator;
-use crate::object::{BodyPartHandle, BodySlab};
+use crate::object::{BodyPartHandle, BodySlab, BodySet, Body};
 use crate::math::{Force, ForceType, Velocity, Vector};
 
 /// Force generator adding a constant acceleration
@@ -41,11 +41,11 @@ impl<N: RealField> ConstantAcceleration<N> {
     }
 }
 
-impl<N: RealField> ForceGenerator<N> for ConstantAcceleration<N> {
-    fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut BodySlab<N>) -> bool {
+impl<N: RealField, Bodies: BodySet<N>> ForceGenerator<N, Bodies> for ConstantAcceleration<N> {
+    fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut Bodies) {
         let acceleration = self.acceleration;
         self.parts.retain(|h| {
-            if let Some(body) = bodies.body_mut(h.0) {
+            if let Some(body) = bodies.get_mut(h.0) {
                 body.apply_force(h.1,
                                  &Force::new(acceleration.linear, acceleration.angular),
                                  ForceType::AccelerationChange,
@@ -55,7 +55,5 @@ impl<N: RealField> ForceGenerator<N> for ConstantAcceleration<N> {
                 false
             }
         });
-
-        !self.parts.is_empty()
     }
 }
