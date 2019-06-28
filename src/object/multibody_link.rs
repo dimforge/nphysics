@@ -4,13 +4,13 @@ use na::RealField;
 
 use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
+use crate::object::{BodyPartHandle, BodyPart, BodySlabHandle};
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: RealField> {
     pub(crate) name: String,
     // FIXME: make all those private.
-    pub(crate) multibody_handle: BodyHandle,
+    pub(crate) multibody_handle: BodySlabHandle,
     pub(crate) internal_id: usize,
     pub(crate) assembly_id: usize,
     pub(crate) impulse_id: usize,
@@ -19,7 +19,7 @@ pub struct MultibodyLink<N: RealField> {
     // XXX: rename to "joint".
     // (And rename the full-coordinates joint constraints JointConstraint).
     pub(crate) parent_internal_id: usize,
-    pub(crate) dof: Box<Joint<N>>,
+    pub(crate) dof: Box<Joint<N, BodySlabHandle>>,
     pub(crate) parent_shift: Vector<N>,
     pub(crate) body_shift: Vector<N>,
 
@@ -48,9 +48,9 @@ impl<N: RealField> MultibodyLink<N> {
         internal_id: usize,
         assembly_id: usize,
         impulse_id: usize,
-        multibody_handle: BodyHandle,
+        multibody_handle: BodySlabHandle,
         parent_internal_id: usize,
-        dof: Box<Joint<N>>,
+        dof: Box<Joint<N, BodySlabHandle>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         parent_to_world: Isometry<N>,
@@ -98,13 +98,13 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// Reference to the joint attaching this link to its parent.
     #[inline]
-    pub fn joint(&self) -> &Joint<N> {
+    pub fn joint(&self) -> &Joint<N, BodySlabHandle> {
         &*self.dof
     }
 
     /// Mutable reference to the joint attaching this link to its parent.
     #[inline]
-    pub fn joint_mut(&mut self) -> &mut Joint<N> {
+    pub fn joint_mut(&mut self) -> &mut Joint<N, BodySlabHandle> {
         &mut *self.dof
     }
 
@@ -122,7 +122,7 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// The handle of this multibody link.
     #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle {
+    pub fn part_handle(&self) -> BodyPartHandle<BodySlabHandle> {
         BodyPartHandle(self.multibody_handle, self.internal_id)
     }
 }

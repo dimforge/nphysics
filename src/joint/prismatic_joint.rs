@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody};
+use crate::object::{MultibodyLink, Multibody, BodyHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A unit joint that allows only one translational degree on freedom.
@@ -137,9 +137,9 @@ impl<N: RealField> PrismaticJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for PrismaticJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PrismaticJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 
@@ -198,7 +198,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
     }
 
     fn num_velocity_constraints(&self) -> usize {
-        joint::unit_joint_num_velocity_constraints(self)
+        joint::unit_joint_num_velocity_constraints::<_, Handle, _>(self)
     }
 
     fn velocity_constraints(
@@ -211,7 +211,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         joint::unit_joint_velocity_constraints(
             self,
@@ -242,12 +242,12 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         joint::unit_joint_position_constraint(self, multibody, link, dof_id, false, jacobians)
     }
 }
 
-impl<N: RealField> UnitJoint<N> for PrismaticJoint<N> {
+impl<N: RealField, Handle: BodyHandle> UnitJoint<N, Handle> for PrismaticJoint<N> {
     fn position(&self) -> N {
         self.offset
     }

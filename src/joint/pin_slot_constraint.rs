@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet, Body};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
@@ -12,9 +12,9 @@ use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParame
 ///
 /// This is different frmo the cylindrical constraint since the remaining rotation and translation
 /// are not restricted to be done wrt. the same axis.
-pub struct PinSlotConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct PinSlotConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis_v1: Unit<Vector<N>>,
@@ -28,7 +28,7 @@ pub struct PinSlotConstraint<N: RealField> {
     // max_offset: Option<N>,
 }
 
-impl<N: RealField> PinSlotConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> PinSlotConstraint<N, Handle> {
     /// Creates a new pin-slot constraint.
     ///
     /// This will ensure the relative linear motions are always along `axis_v1` (here expressed
@@ -36,8 +36,8 @@ impl<N: RealField> PinSlotConstraint<N> {
     /// All axises and anchors are expressed in the local coordinate frame of their respective body
     /// part.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         axis_v1: Unit<Vector<N>>,
         axis_w1: Unit<Vector<N>>,
@@ -99,12 +99,12 @@ impl<N: RealField> PinSlotConstraint<N> {
     // }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PinSlotConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for PinSlotConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 2
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
@@ -116,7 +116,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PinSlotCon
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -196,7 +196,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PinSlotCon
         self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, usize>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id < DIM {
                 self.lin_impulses[c.impulse_id] = c.impulse;
@@ -215,7 +215,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PinSlotCon
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> for PinSlotConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for PinSlotConstraint<N, Handle> {
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -231,7 +231,7 @@ impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> f
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;

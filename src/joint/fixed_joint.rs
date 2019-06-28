@@ -1,6 +1,7 @@
 use na::{DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
+use crate::object::BodyHandle;
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
 use crate::solver::IntegrationParameters;
 
@@ -22,9 +23,9 @@ impl<N: RealField> FixedJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for FixedJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for FixedJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 

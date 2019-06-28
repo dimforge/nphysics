@@ -3,15 +3,15 @@ use std::ops::Range;
 
 use crate::joint::{unit_constraint, JointConstraint};
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet, Bodies, Body};
+use crate::object::{BodyPartHandle, BodySet, Bodies, Body, BodyHandle};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that remove all be one translational degrees of freedom.
-pub struct PrismaticConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct PrismaticConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<Vector<N>>,
@@ -25,13 +25,13 @@ pub struct PrismaticConstraint<N: RealField> {
     max_offset: Option<N>,
 }
 
-impl<N: RealField> PrismaticConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> PrismaticConstraint<N, Handle> {
     /// Create a new prismatic constraint that ensures the relative motion between the two
     /// body parts are restricted to a single translation along the `axis1` axis (expressed in
     /// the local coordinates frame of `b1`).
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         axis1: Unit<Vector<N>>,
         anchor2: Point<N>,
@@ -96,12 +96,12 @@ impl<N: RealField> PrismaticConstraint<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PrismaticConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for PrismaticConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         (SPATIAL_DIM - 1) + 2
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
@@ -113,7 +113,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PrismaticC
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -213,7 +213,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PrismaticC
         self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, usize>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id < DIM - 1 {
                 self.lin_impulses[c.impulse_id] = c.impulse;
@@ -236,7 +236,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for PrismaticC
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> for PrismaticConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for PrismaticConstraint<N, Handle> {
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -256,7 +256,7 @@ impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> f
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;

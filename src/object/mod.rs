@@ -1,7 +1,7 @@
 //! Objects that may be added to the physical world.
 
 pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus};
-pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySlab, BodySet, BodyHandle, BodyDesc};
+pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySlab, BodySet, BodySlabHandle, BodyDesc, BodyHandle};
 pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, ColliderDesc, DeformableColliderDesc};
 pub use self::ground::Ground;
 pub use self::multibody::{Multibody, MultibodyDesc};

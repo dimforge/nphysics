@@ -1,6 +1,7 @@
 use na::{self, DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
+use crate::object::BodyHandle;
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
 use crate::solver::IntegrationParameters;
 
@@ -17,9 +18,9 @@ impl<N: RealField> CartesianJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for CartesianJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for CartesianJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 

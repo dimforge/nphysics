@@ -19,7 +19,7 @@ use ncollide::shape::{ConvexHull, TriMesh};
 use ncollide::transformation;
 use ncollide::query::Ray;
 use ncollide::pipeline::object::CollisionGroups;
-use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
+use nphysics::object::{BodySlabHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
 use nphysics::world::World;
 use nphysics::math::{Isometry, Vector, Point};
 use crate::objects::ball::Ball;
@@ -60,8 +60,8 @@ impl GraphicsWindow for Window {
 
 pub struct GraphicsManager {
     rand: StdRng,
-    b2sn: HashMap<BodyHandle, Vec<Node>>,
-    b2color: HashMap<BodyHandle, Point3<f32>>,
+    b2sn: HashMap<BodySlabHandle, Vec<Node>>,
+    b2color: HashMap<BodySlabHandle, Point3<f32>>,
     c2color: HashMap<ColliderHandle, Point3<f32>>,
     rays: Vec<Ray<f32>>,
     camera: Camera,
@@ -116,7 +116,7 @@ impl GraphicsManager {
         self.rand = StdRng::seed_from_u64(0);
     }
 
-    pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodyHandle) {
+    pub fn remove_body_nodes(&mut self, window: &mut Window, body: BodySlabHandle) {
         if let Some(sns) = self.b2sn.get_mut(&body) {
             for sn in sns.iter_mut() {
                 if let Some(node) = sn.scene_node_mut() {
@@ -165,7 +165,7 @@ impl GraphicsManager {
         part
     }
 
-    pub fn update_after_body_key_change(&mut self, world: &World<f32>, body_key: BodyHandle) {
+    pub fn update_after_body_key_change(&mut self, world: &World<f32>, body_key: BodySlabHandle) {
         if let Some(color) = self.b2color.remove(&body_key) {
             if let Some(sns) = self.b2sn.remove(&body_key) {
                 for sn in sns {
@@ -179,7 +179,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn set_body_color(&mut self, b: BodyHandle, color: Point3<f32>) {
+    pub fn set_body_color(&mut self, b: BodySlabHandle, color: Point3<f32>) {
         self.b2color.insert(b, color);
 
         if let Some(ns) = self.b2sn.get_mut(&b) {
@@ -193,7 +193,7 @@ impl GraphicsManager {
         self.c2color.insert(handle, color);
     }
 
-    fn alloc_color(&mut self, handle: BodyHandle) -> Point3<f32> {
+    fn alloc_color(&mut self, handle: BodySlabHandle) -> Point3<f32> {
         let mut color = Point3::new(0.5, 0.5, 0.5);
 
         match self.b2color.get(&handle) {
@@ -607,13 +607,13 @@ impl GraphicsManager {
         self.camera.look_at(at, zoom);
     }
 
-    pub fn body_nodes(&self, handle: BodyHandle) -> Option<&Vec<Node>> {
+    pub fn body_nodes(&self, handle: BodySlabHandle) -> Option<&Vec<Node>> {
         self.b2sn.get(&handle)
     }
 
     pub fn body_nodes_mut(
         &mut self,
-        handle: BodyHandle,
+        handle: BodySlabHandle,
     ) -> Option<&mut Vec<Node>> {
         self.b2sn.get_mut(&handle)
     }

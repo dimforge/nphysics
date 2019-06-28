@@ -2,24 +2,24 @@ use na::RealField;
 use ncollide::query::{ContactManifold, TrackedContact};
 use ncollide::shape::FeatureId;
 
-use crate::object::{BodyHandle, BodyPartHandle, Collider, ColliderAnchor};
+use crate::object::{BodySlabHandle, BodyPartHandle, Collider, ColliderAnchor, BodyHandle};
 
 /// A contact manifold between two bodies.
 #[derive(Clone)]
-pub struct ColliderContactManifold<'a, N: RealField> {
+pub struct ColliderContactManifold<'a, N: RealField, Handle: BodyHandle> {
     /// The first collider involved in the contact.
-    pub collider1: &'a Collider<N>,
+    pub collider1: &'a Collider<N, Handle>,
     /// The second collider involved in the contact.
-    pub collider2: &'a Collider<N>,
+    pub collider2: &'a Collider<N, Handle>,
     /// The contact manifold.
     pub manifold: &'a ContactManifold<N>,
 }
 
-impl<'a, N: RealField> ColliderContactManifold<'a, N> {
+impl<'a, N: RealField, Handle: BodyHandle> ColliderContactManifold<'a, N, Handle> {
     /// Initialize a new contact manifold.
     pub fn new(
-        collider1: &'a Collider<N>,
-        collider2: &'a Collider<N>,
+        collider1: &'a Collider<N, Handle>,
+        collider2: &'a Collider<N, Handle>,
         manifold: &'a ContactManifold<N>,
     ) -> Self {
         ColliderContactManifold {
@@ -45,19 +45,19 @@ impl<'a, N: RealField> ColliderContactManifold<'a, N> {
     }
 
     /// The handle of the first body involved in the contact.
-    pub fn body1(&self) -> BodyHandle {
+    pub fn body1(&self) -> Handle {
         self.collider1.body()
     }
 
     /// The handle of the first body involved in the contact.
-    pub fn body2(&self) -> BodyHandle {
+    pub fn body2(&self) -> Handle {
         self.collider2.body()
     }
 
     /// The handle of the first body part involved in the given contact on the specified feature.
     ///
     /// The feature is assumed to belong to the first collider involved in this contact.
-    pub fn body_part1(&self, feature1: FeatureId) -> BodyPartHandle {
+    pub fn body_part1(&self, feature1: FeatureId) -> BodyPartHandle<Handle> {
         match self.collider1.anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
@@ -74,7 +74,7 @@ impl<'a, N: RealField> ColliderContactManifold<'a, N> {
     /// The handle of the second body part involved in the given contact on the specified feature.
     ///
     /// The feature is assumed to belong to the second collider involved in this contact.
-    pub fn body_part2(&self, feature2: FeatureId) -> BodyPartHandle {
+    pub fn body_part2(&self, feature2: FeatureId) -> BodyPartHandle<Handle> {
         match self.collider2.anchor() {
             ColliderAnchor::OnBodyPart { body_part, .. } => *body_part,
             ColliderAnchor::OnDeformableBody { body, body_parts, .. } => {
@@ -89,12 +89,12 @@ impl<'a, N: RealField> ColliderContactManifold<'a, N> {
     }
 
     /// The anchor between the fist collider and the body it is attached to.
-    pub fn anchor1(&self) -> &ColliderAnchor<N> {
+    pub fn anchor1(&self) -> &ColliderAnchor<N, Handle> {
         self.collider1.anchor()
     }
 
     /// The anchor between the fist collider and the body it is attached to.
-    pub fn anchor2(&self) -> &ColliderAnchor<N> {
+    pub fn anchor2(&self) -> &ColliderAnchor<N, Handle> {
         self.collider2.anchor()
     }
 }

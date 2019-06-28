@@ -30,7 +30,7 @@ impl<N: RealField> SlotJoint<N> {
 }
 
 
-impl<N: RealField> Joint<N> for SlotJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for SlotJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         ANGULAR_DIM + 1

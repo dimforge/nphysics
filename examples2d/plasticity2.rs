@@ -5,7 +5,7 @@ extern crate nphysics_testbed2d;
 
 use na::{Isometry2, Point3, Vector2, Point2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{RigidBodyDesc, ColliderDesc, FEMSurfaceDesc, BodyHandle, BodyStatus};
+use nphysics2d::object::{RigidBodyDesc, ColliderDesc, FEMSurfaceDesc, BodySlabHandle, BodyStatus};
 use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
@@ -31,7 +31,7 @@ pub fn init_world(testbed: &mut Testbed) {
         Isometry2::new(Vector2::new(-0.4, platform_height), na::zero()),
     ];
 
-    let mut platforms = [BodyHandle::ground(); 5];
+    let mut platforms = [BodySlabHandle::ground(); 5];
 
     for (i, pos) in positions.iter().enumerate() {
         platforms[i] = RigidBodyDesc::new()

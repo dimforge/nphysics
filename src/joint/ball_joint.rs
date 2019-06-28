@@ -5,6 +5,7 @@ use na::{
 
 use crate::joint::Joint;
 use crate::math::{JacobianSliceMut, Velocity};
+use crate::object::BodyHandle;
 use crate::solver::IntegrationParameters;
 use crate::utils::GeneralizedCross;
 
@@ -28,9 +29,9 @@ impl<N: RealField> BallJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for BallJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for BallJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 

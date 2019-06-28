@@ -22,7 +22,7 @@ pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
 
 impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for Slab<Box<ForceGenerator<N, Bodies>>> {
     type ForceGenerator = ForceGenerator<N, Bodies>;
-//    type Handle = BodyHandle;
+//    type Handle = BodySlabHandle;
 
     fn get(&self, handle: ForceGeneratorHandle) -> Option<&Self::ForceGenerator> {
         self.get(handle).map(|c| &**c)

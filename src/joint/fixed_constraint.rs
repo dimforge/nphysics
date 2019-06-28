@@ -3,15 +3,15 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Rotation, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet, Body};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all degrees of freedom between two body parts.
-pub struct FixedConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct FixedConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     ref_frame1: Rotation<N>,
     anchor2: Point<N>,
@@ -22,14 +22,14 @@ pub struct FixedConstraint<N: RealField> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: RealField> FixedConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> FixedConstraint<N, Handle> {
     /// Create a fixed constraint between two body parts.
     /// 
     /// This will ensure the frames `joint_to_b1` and `joint_to_b2` attached to the
     /// body parts `b1` adn `b2` respectively always coincide.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         ref_frame1: Rotation<N>,
         anchor2: Point<N>,
@@ -70,12 +70,12 @@ impl<N: RealField> FixedConstraint<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for FixedConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for FixedConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
@@ -87,7 +87,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for FixedConst
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -151,7 +151,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for FixedConst
         self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, usize>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id < DIM {
                 self.lin_impulses[c.impulse_id] = c.impulse;
@@ -170,7 +170,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for FixedConst
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> for FixedConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for FixedConstraint<N, Handle> {
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -186,7 +186,7 @@ impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> f
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;

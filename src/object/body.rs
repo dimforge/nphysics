@@ -6,7 +6,7 @@ use na::{self, DVectorSlice, DVectorSliceMut, RealField};
 use ncollide::shape::DeformationsType;
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyHandle};
+use crate::object::{BodyPartHandle, BodySlabHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
 

@@ -15,8 +15,9 @@ use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
-                    ActivationStatus, FiniteElementIndices, DeformableColliderDesc, BodyDesc};
+use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+                    ActivationStatus, FiniteElementIndices, DeformableColliderDesc, BodyDesc,
+                    BodySlab};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -26,7 +27,7 @@ use crate::utils::{UserData, UserDataBox};
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
 pub struct MassConstraintElement<N: RealField> {
-    handle: BodyPartHandle,
+    handle: BodyPartHandle<BodySlabHandle>,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>,
 }
@@ -74,7 +75,7 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 pub struct MassConstraintSystem<N: RealField> {
     name: String,
-    handle: BodyHandle,
+    handle: BodySlabHandle,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -107,7 +108,7 @@ impl<N: RealField> MassConstraintSystem<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     #[cfg(feature = "dim3")]
-    pub fn from_trimesh(handle: BodyHandle, mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
+    pub fn from_trimesh(handle: BodySlabHandle, mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -168,7 +169,7 @@ impl<N: RealField> MassConstraintSystem<N> {
     }
 
     /// Builds a mass-spring system from a polyline.
-    pub fn from_polyline(handle: BodyHandle, polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
+    pub fn from_polyline(handle: BodySlabHandle, polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = polyline.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(polyline.edges().len());
@@ -227,7 +228,7 @@ impl<N: RealField> MassConstraintSystem<N> {
 
     /// Creates a rectangular-shaped quad.
     #[cfg(feature = "dim3")]
-    pub fn quad(handle: BodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
+    pub fn quad(handle: BodySlabHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
@@ -285,7 +286,7 @@ impl<N: RealField> MassConstraintSystem<N> {
     }
 
     /// The handle of this body.
-    pub fn handle(&self) -> BodyHandle {
+    pub fn handle(&self) -> BodySlabHandle {
         self.handle
     }
 
@@ -916,7 +917,7 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     );
 
     /// Build a mass-constraint system.
-    pub fn build<'w>(&self, world: &'w mut World<N, BodyHandle>) -> &'w mut MassConstraintSystem<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, BodySlab<N>>) -> &'w mut MassConstraintSystem<N> {
         world.add_body(self)
     }
 }
@@ -924,7 +925,7 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
     type Body = MassConstraintSystem<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> MassConstraintSystem<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> MassConstraintSystem<N> {
         let mut vol = match self.geom {
             #[cfg(feature = "dim3")]
             MassConstraintSystemDescGeometry::Quad(nx, ny) => {

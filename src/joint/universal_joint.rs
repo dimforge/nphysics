@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector
 
 use crate::joint::{Joint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink};
+use crate::object::{Multibody, MultibodyLink, BodyHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows only two relative rotations between two multibody links.
@@ -29,9 +29,9 @@ impl<N: RealField> UniversalJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for UniversalJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for UniversalJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 
@@ -134,7 +134,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         self.revo1.velocity_constraints(
             params,
@@ -172,7 +172,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         if i == 0 {
             self.revo1.position_constraint(0, multibody, link, dof_id, jacobians)
         } else {

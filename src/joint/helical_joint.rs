@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector
 
 use crate::joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink};
+use crate::object::{Multibody, MultibodyLink, BodyHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one degree of freedom between two multibody links.
@@ -38,9 +38,9 @@ impl<N: RealField> HelicalJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for HelicalJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for HelicalJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 
@@ -114,7 +114,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(
@@ -142,13 +142,13 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.position_constraint(0, multibody, link, dof_id, jacobians)
     }
 }
 
-impl<N: RealField> UnitJoint<N> for HelicalJoint<N> {
+impl<N: RealField, Handle: BodyHandle> UnitJoint<N, Handle> for HelicalJoint<N> {
     fn position(&self) -> N {
         self.revo.angle()
     }

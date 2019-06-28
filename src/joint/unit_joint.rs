@@ -3,12 +3,12 @@
 use na::{DVectorSliceMut, RealField};
 
 use crate::joint::{Joint, JointMotor};
-use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body};
+use crate::object::{BodyPartHandle, Multibody, MultibodyLink, Body, BodyHandle};
 use crate::solver::{BilateralGroundConstraint, ConstraintSet, GenericNonlinearConstraint,
              IntegrationParameters, UnilateralGroundConstraint};
 
 /// Trait implemented by joints using the reduced-coordinates approach and allowing only one degree of freedom.
-pub trait UnitJoint<N: RealField>: Joint<N> {
+pub trait UnitJoint<N: RealField, Handle: BodyHandle>: Joint<N, Handle> {
     /// The generalized coordinate of the unit joint.
     fn position(&self) -> N;
     /// The motor applied to the degree of freedom of the unit joitn.
@@ -19,10 +19,10 @@ pub trait UnitJoint<N: RealField>: Joint<N> {
     fn max_position(&self) -> Option<N>;
 }
 
-impl_downcast!(UnitJoint<N> where N: RealField);
+impl_downcast!(UnitJoint<N, Handle> where N: RealField, Handle: BodyHandle);
 
 /// Computes the maximum number of velocity constraints to be applied by the given unit joint.
-pub fn unit_joint_num_velocity_constraints<N: RealField, J: UnitJoint<N>>(joint: &J) -> usize {
+pub fn unit_joint_num_velocity_constraints<N: RealField, Handle: BodyHandle, J: UnitJoint<N, Handle>>(joint: &J) -> usize {
     // FIXME: don't always keep the constraints active.
     let mut nconstraints = 0;
 
@@ -41,7 +41,7 @@ pub fn unit_joint_num_velocity_constraints<N: RealField, J: UnitJoint<N>>(joint:
 
 /// Initializes and generate the velocity constraints applicable to the multibody links attached
 /// to this joint.
-pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
+pub fn unit_joint_velocity_constraints<N: RealField, Handle: BodyHandle, J: UnitJoint<N, Handle>>(
     joint: &J,
     params: &IntegrationParameters<N>,
     multibody: &Multibody<N>,
@@ -51,7 +51,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     ext_vels: &[N],
     ground_j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, usize>,
+    constraints: &mut ConstraintSet<N, Handle, usize>,
 ) {
     let ndofs = multibody.ndofs();
     let impulses = multibody.impulses();
@@ -161,14 +161,14 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
 
 /// Initializes and generate the position constraints applicable to the multibody links attached
 /// to this joint.
-pub fn unit_joint_position_constraint<N: RealField, J: UnitJoint<N>>(
+pub fn unit_joint_position_constraint<N: RealField, Handle: BodyHandle, J: UnitJoint<N, Handle>>(
     joint: &J,
     multibody: &Multibody<N>,
     link: &MultibodyLink<N>,
     dof_id: usize,
     is_angular: bool,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, Handle>> {
     let mut sign = N::one();
     let mut rhs = None;
 

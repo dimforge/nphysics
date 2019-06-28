@@ -2,27 +2,27 @@ use na::{RealField, Unit};
 
 use crate::force_generator::ForceGenerator;
 use crate::math::{ForceType, Point, Vector};
-use crate::object::{BodyPartHandle, BodySlab, BodySet, Body};
+use crate::object::{BodyPartHandle, BodyHandle, BodySlab, BodySet, Body};
 use crate::solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.
-pub struct Spring<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct Spring<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     length: N,
     stiffness: N,
 }
 
-impl<N: RealField> Spring<N> {
+impl<N: RealField, Handle: BodyHandle> Spring<N, Handle> {
     /// Initialize a spring attached to `b1` and `b2` at the points `anchor1` and `anchor2`.
     /// 
     /// Anchors are expressed in the local coordinates of the corresponding bodies.
     /// The spring has a rest length of `length` and a stiffness of `stiffness`.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         anchor2: Point<N>,
         length: N,
@@ -53,7 +53,7 @@ impl<N: RealField> Spring<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> ForceGenerator<N, Bodies> for Spring<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> ForceGenerator<N, Bodies> for Spring<N, Handle> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut Bodies) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));

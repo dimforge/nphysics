@@ -2,7 +2,7 @@ use slab::Slab;
 
 use na::{self, RealField};
 use crate::world::ColliderWorld;
-use crate::object::{Body, BodySlab, BodySet};
+use crate::object::{Body, BodySlab, BodySet, BodyHandle};
 use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::utils::union_find::UnionFindSet;
 use crate::utils::union_find;
@@ -11,7 +11,7 @@ use crate::utils::union_find;
 ///
 /// It is responsible for making objects sleep or wake up.
 #[derive(Clone)]
-pub struct ActivationManager<N: RealField, Handle: Copy> {
+pub struct ActivationManager<N: RealField, Handle: BodyHandle> {
     mix_factor: N,
     ufind: Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
@@ -19,7 +19,7 @@ pub struct ActivationManager<N: RealField, Handle: Copy> {
     id_to_body: Vec<Handle>,
 }
 
-impl<N: RealField, Handle: Copy> ActivationManager<N, Handle> {
+impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
     /// Creates a new `ActivationManager2`.
     ///
     /// # Arguments:
@@ -63,7 +63,7 @@ impl<N: RealField, Handle: Copy> ActivationManager<N, Handle> {
     pub fn update<Bodies, Constraints>(
         &mut self,
         bodies: &mut Bodies,
-        cworld: &ColliderWorld<N>,
+        cworld: &ColliderWorld<N, Handle>,
         constraints: &Constraints,
         active_bodies: &mut Vec<Handle>,
     )

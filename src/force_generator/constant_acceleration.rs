@@ -2,17 +2,17 @@ use na::RealField;
 
 use crate::solver::IntegrationParameters;
 use crate::force_generator::ForceGenerator;
-use crate::object::{BodyPartHandle, BodySlab, BodySet, Body};
+use crate::object::{BodyPartHandle, BodySlab, BodySet, Body, BodyHandle};
 use crate::math::{Force, ForceType, Velocity, Vector};
 
 /// Force generator adding a constant acceleration
 /// at the center of mass of a set of body parts.
-pub struct ConstantAcceleration<N: RealField> {
-    parts: Vec<BodyPartHandle>,
+pub struct ConstantAcceleration<N: RealField, Handle: BodyHandle> {
+    parts: Vec<BodyPartHandle<Handle>>,
     acceleration: Velocity<N>,
 }
 
-impl<N: RealField> ConstantAcceleration<N> {
+impl<N: RealField, Handle: BodyHandle> ConstantAcceleration<N, Handle> {
     /// Adds a new constant acceleration generator.
     ///
     /// The acceleration is expressed in world-space.
@@ -36,12 +36,12 @@ impl<N: RealField> ConstantAcceleration<N> {
     }
 
     /// Add a body part to be affected by this force generator.
-    pub fn add_body_part(&mut self, body: BodyPartHandle) {
+    pub fn add_body_part(&mut self, body: BodyPartHandle<Handle>) {
         self.parts.push(body)
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> ForceGenerator<N, Bodies> for ConstantAcceleration<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> ForceGenerator<N, Bodies> for ConstantAcceleration<N, Handle> {
     fn apply(&mut self, _: &IntegrationParameters<N>, bodies: &mut Bodies) {
         let acceleration = self.acceleration;
         self.parts.retain(|h| {

@@ -25,7 +25,7 @@ use ncollide::pipeline::object::CollisionGroups;
 use nphysics::joint::{JointConstraintHandle, MouseConstraint};
 #[cfg(feature = "dim2")]
 use nphysics::object::ColliderAnchor;
-use nphysics::object::{BodyHandle, BodyPartHandle, ColliderHandle, ActivationStatus};
+use nphysics::object::{BodySlabHandle, BodyPartHandle, ColliderHandle, ActivationStatus};
 use nphysics::world::World;
 #[cfg(feature = "dim3")]
 use nphysics::math::ForceType;
@@ -228,7 +228,7 @@ impl Testbed {
         self.graphics.look_at(eye, at);
     }
 
-    pub fn set_body_color(&mut self, body: BodyHandle, color: Point3<f32>) {
+    pub fn set_body_color(&mut self, body: BodySlabHandle, color: Point3<f32>) {
         self.graphics.set_body_color(body, color);
     }
 

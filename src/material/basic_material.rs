@@ -1,6 +1,7 @@
 use na::RealField;
 
 use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties};
+use crate::object::BodyHandle;
 use crate::math::Vector;
 
 
@@ -43,8 +44,8 @@ impl<N: RealField> BasicMaterial<N> {
     }
 }
 
-impl<N: RealField> Material<N> for BasicMaterial<N> {
-    fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N> {
+impl<N: RealField, Handle: BodyHandle> Material<N, Handle> for BasicMaterial<N> {
+    fn local_properties(&self, context: MaterialContext<N, Handle>) -> LocalMaterialProperties<N> {
         LocalMaterialProperties {
             id: self.id,
             restitution: (self.restitution, self.restitution_combine_mode),

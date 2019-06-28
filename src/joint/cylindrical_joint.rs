@@ -2,7 +2,7 @@ use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use crate::object::{Multibody, MultibodyLink};
+use crate::object::{Multibody, MultibodyLink, BodyHandle};
 use crate::math::{JacobianSliceMut, Velocity};
 
 /// A joint that allows one translational and one rotational degrees of freedom along a single axis.
@@ -24,9 +24,9 @@ impl<N: RealField> CylindricalJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for CylindricalJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for CylindricalJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 
@@ -113,7 +113,7 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         self.prism.velocity_constraints(
             params,
@@ -151,7 +151,7 @@ impl<N: RealField> Joint<N> for CylindricalJoint<N> {
         link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         if i == 0 {
             self.prism.position_constraint(0, multibody, link, dof_id, jacobians)
         } else {

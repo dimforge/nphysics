@@ -4,7 +4,7 @@ use std::ops::Range;
 use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
-use crate::object::{BodySlab, Body, BodyPart, BodyPartHandle, BodySet};
+use crate::object::{BodySlab, Body, BodyPart, BodyPartHandle, BodySet, BodyHandle};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable, LocalMaterialProperties};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
@@ -30,23 +30,23 @@ impl<N: RealField> SignoriniModel<N> {
     }
 
     /// Build a non-penetration velocity-based constraint for the given contact.
-    pub fn build_velocity_constraint(
+    pub fn build_velocity_constraint<Handle: BodyHandle>(
         params: &IntegrationParameters<N>,
         body1: &Body<N>,
         part1: &BodyPart<N>,
-        handle1: BodyPartHandle,
+        handle1: BodyPartHandle<Handle>,
         body2: &Body<N>,
         part2: &BodyPart<N>,
-        handle2: BodyPartHandle,
+        handle2: BodyPartHandle<Handle>,
         props: &LocalMaterialProperties<N>,
-        manifold: &ColliderContactManifold<N>,
+        manifold: &ColliderContactManifold<N, Handle>,
         ext_vels: &DVector<N>,
         c: &TrackedContact<N>,
         impulse: N,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, ContactId>,
+        constraints: &mut ConstraintSet<N, Handle, ContactId>,
     ) -> bool {
         let data1 = manifold.collider1;
         let data2 = manifold.collider2;
@@ -133,9 +133,9 @@ impl<N: RealField> SignoriniModel<N> {
     }
 
     /// Checks if the given constraint is active.
-    pub fn is_constraint_active(
+    pub fn is_constraint_active<Handle: BodyHandle>(
         c: &TrackedContact<N>,
-        manifold: &ColliderContactManifold<N>,
+        manifold: &ColliderContactManifold<N, Handle>,
     ) -> bool {
         let depth = c.contact.depth + manifold.collider1.margin()
             + manifold.collider2.margin();
@@ -146,11 +146,11 @@ impl<N: RealField> SignoriniModel<N> {
     }
 
     /// Builds non-linear position-based non-penetration constraints for the given contact manifold.
-    pub fn build_position_constraint(
-        bodies: &BodySlab<N>,
-        manifold: &ColliderContactManifold<N>,
+    pub fn build_position_constraint<Bodies: BodySet<N>>(
+        bodies: &Bodies,
+        manifold: &ColliderContactManifold<N, Bodies::Handle>,
         c: &TrackedContact<N>,
-        constraints: &mut ConstraintSet<N, ContactId>,
+        constraints: &mut ConstraintSet<N, Bodies::Handle, ContactId>,
     ) {
         let data1 = manifold.collider1;
         let data2 = manifold.collider2;
@@ -193,8 +193,8 @@ impl<N: RealField> SignoriniModel<N> {
     }
 }
 
-impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
-    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
+impl<N: RealField, Bodies: BodySet<N>> ContactModel<N, Bodies> for SignoriniModel<N> {
+    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N, Bodies::Handle>) -> usize {
         c.manifold.len()
     }
 
@@ -202,13 +202,13 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         &mut self,
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &BodySlab<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
-        manifolds: &[ColliderContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N, Bodies::Handle>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, ContactId>,
+        constraints: &mut ConstraintSet<N, Bodies::Handle, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -260,7 +260,7 @@ impl<N: RealField> ContactModel<N> for SignoriniModel<N> {
         self.vel_rng = id_vel..constraints.velocity.unilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, ContactId>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Bodies::Handle, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
 

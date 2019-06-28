@@ -1,17 +1,17 @@
 use na::{DVector, RealField, Unit};
 
 use crate::math::{Point, Vector};
-use crate::object::{Body, BodyPart, BodyPartHandle};
+use crate::object::{Body, BodyPart, BodyPartHandle, BodyHandle};
 use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
-pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>>(
+pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
     part1: &BodyPart<N>,
-    handle1: BodyPartHandle,
+    handle1: BodyPartHandle<H>,
     body2: &B,
     part2: &BodyPart<N>,
-    handle2: BodyPartHandle,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -25,7 +25,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, usize>,
+    constraints: &mut ConstraintSet<N, H, usize>,
 ) {
     let offset = axis.dot(&(anchor2 - anchor1));
 
@@ -125,21 +125,21 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
     }
 }
 
-pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>>(
+pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     params: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
-    handle1: BodyPartHandle,
+    handle1: BodyPartHandle<H>,
     body2: &B,
     part2: &BodyPart<N>,
-    handle2: BodyPartHandle,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
     min: Option<N>,
     max: Option<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let offset = axis.dot(&(anchor2 - anchor1));
     let mut error = N::zero();
     let mut dir = *axis;

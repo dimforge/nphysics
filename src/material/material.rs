@@ -4,20 +4,20 @@ use std::ops::Deref;
 use na::{self, RealField};
 
 use ncollide::query::TrackedContact;
-use crate::object::{Body, BodyPart, Collider};
+use crate::object::{Body, BodyPart, Collider, BodyHandle};
 use crate::material::MaterialsCoefficientsTable;
 use crate::math::Vector;
 
 
 /// The context for determining the local material properties at a contact.
 #[derive(Copy, Clone)]
-pub struct MaterialContext<'a, N: RealField> {
+pub struct MaterialContext<'a, N: RealField, Handle: BodyHandle> {
     /// One of the two bodies involved in the contact.
     pub body: &'a Body<N>,
     /// One of the two bodies part involved in the contact.
     pub body_part: &'a BodyPart<N>,
     /// One of the two colliders involved in the contact.
-    pub collider: &'a Collider<N>,
+    pub collider: &'a Collider<N, Handle>,
     /// The contact.
     pub contact: &'a TrackedContact<N>,
     /// Whether the bodies (and collider) in this structure are the first one involved in the
@@ -27,8 +27,8 @@ pub struct MaterialContext<'a, N: RealField> {
     pub is_first: bool,
 }
 
-impl<'a, N: RealField> MaterialContext<'a, N> {
-    pub(crate) fn new(body: &'a Body<N>, body_part: &'a BodyPart<N>, collider: &'a Collider<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
+impl<'a, N: RealField, Handle: BodyHandle> MaterialContext<'a, N, Handle> {
+    pub(crate) fn new(body: &'a Body<N>, body_part: &'a BodyPart<N>, collider: &'a Collider<N, Handle>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
         MaterialContext {
             body,
             body_part,
@@ -91,9 +91,9 @@ pub struct LocalMaterialProperties<N: RealField> {
 }
 
 /// An utility trait to clone material trait-objects.
-pub trait MaterialClone<N: RealField> {
+pub trait MaterialClone<N: RealField, Handle: BodyHandle> {
     /// Clone a material trait-object.
-    fn clone_box(&self) -> Box<Material<N>> {
+    fn clone_box(&self) -> Box<Material<N, Handle>> {
         unimplemented!()
     }
 }
@@ -101,37 +101,37 @@ pub trait MaterialClone<N: RealField> {
 /// The identifier of a material.
 pub type MaterialId = u32;
 
-impl<N: RealField, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
-    fn clone_box(&self) -> Box<Material<N>> {
+impl<N: RealField, Handle: BodyHandle, T: 'static + Material<N, Handle> + Clone> MaterialClone<N, Handle> for T {
+    fn clone_box(&self) -> Box<Material<N, Handle>> {
         Box::new(self.clone())
     }
 }
 
 /// An abstract material.
-pub trait Material<N: RealField>: Downcast + Send + Sync + MaterialClone<N> {
+pub trait Material<N: RealField, Handle: BodyHandle>: Downcast + Send + Sync + MaterialClone<N, Handle> {
     /// Retrieve the local material properties of a collider at the given contact point.
-    fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N>;
+    fn local_properties(&self, context: MaterialContext<N, Handle>) -> LocalMaterialProperties<N>;
 }
 
-impl_downcast!(Material<N> where N: RealField);
+impl_downcast!(Material<N, Handle> where N: RealField, Handle: BodyHandle);
 
-impl<N: RealField> Clone for Box<Material<N>> {
-    fn clone(&self) -> Box<Material<N>> {
+impl<N: RealField, Handle: BodyHandle> Clone for Box<Material<N, Handle>> {
+    fn clone(&self) -> Box<Material<N, Handle>> {
         self.clone_box()
     }
 }
 
-impl<N: RealField> Material<N> {
+impl<N: RealField, Handle: BodyHandle> Material<N, Handle> {
     /// Combine two materials given their contexts and a material lookup table.
     pub fn combine<M1, M2>(
         table: &MaterialsCoefficientsTable<N>,
         material1: &M1,
-        context1: MaterialContext<N>,
+        context1: MaterialContext<N, Handle>,
         material2: &M2,
-        context2: MaterialContext<N>)
+        context2: MaterialContext<N, Handle>)
         -> LocalMaterialProperties<N>
-        where M1: ?Sized + Material<N>,
-              M2: ?Sized + Material<N> {
+        where M1: ?Sized + Material<N, Handle>,
+              M2: ?Sized + Material<N, Handle> {
         let props1 = material1.local_properties(context1);
         let props2 = material2.local_properties(context2);
         let restitution;
@@ -169,32 +169,32 @@ impl<N: RealField> Material<N> {
 ///
 /// This can be mutated using COW.
 #[derive(Clone)]
-pub struct MaterialHandle<N: RealField>(Arc<Box<Material<N>>>);
+pub struct MaterialHandle<N: RealField, Handle: BodyHandle>(Arc<Box<Material<N, Handle>>>);
 
-impl<N: RealField> MaterialHandle<N> {
+impl<N: RealField, Handle: BodyHandle> MaterialHandle<N, Handle> {
     /// Creates a sharable shape handle from a shape.
     #[inline]
-    pub fn new<S: Material<N> + Clone>(material: S) -> MaterialHandle<N> {
+    pub fn new<S: Material<N, Handle> + Clone>(material: S) -> MaterialHandle<N, Handle> {
         MaterialHandle(Arc::new(Box::new(material)))
     }
 
-    pub(crate) fn make_mut(&mut self) -> &mut Material<N> {
+    pub(crate) fn make_mut(&mut self) -> &mut Material<N, Handle> {
         &mut **Arc::make_mut(&mut self.0)
     }
 }
 
-impl<N: RealField> AsRef<Material<N>> for MaterialHandle<N> {
+impl<N: RealField, Handle: BodyHandle> AsRef<Material<N, Handle>> for MaterialHandle<N, Handle> {
     #[inline]
-    fn as_ref(&self) -> &Material<N> {
+    fn as_ref(&self) -> &Material<N, Handle> {
         &*self.deref()
     }
 }
 
-impl<N: RealField> Deref for MaterialHandle<N> {
-    type Target = Material<N>;
+impl<N: RealField, Handle: BodyHandle> Deref for MaterialHandle<N, Handle> {
+    type Target = Material<N, Handle>;
 
     #[inline]
-    fn deref(&self) -> &Material<N> {
+    fn deref(&self) -> &Material<N, Handle> {
         &**self.0.deref()
     }
 }

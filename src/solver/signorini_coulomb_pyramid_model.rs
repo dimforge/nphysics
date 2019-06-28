@@ -44,8 +44,8 @@ impl<N: RealField> Default for SignoriniCoulombPyramidModel<N> {
     }
 }
 
-impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
-    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
+impl<N: RealField, Bodies: BodySet<N>> ContactModel<N, Bodies> for SignoriniCoulombPyramidModel<N> {
+    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N, Bodies::Handle>) -> usize {
         DIM * c.len()
     }
 
@@ -53,13 +53,13 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         &mut self,
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &BodySlab<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
-        manifolds: &[ColliderContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N, Bodies::Handle>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, ContactId>,
+        constraints: &mut ConstraintSet<N, Bodies::Handle, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -200,7 +200,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         self.friction_rng = id_friction..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, ContactId>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Bodies::Handle, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
         let ground_friction =

@@ -3,8 +3,8 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
-                    ColliderDesc, BodyDesc, BodyUpdateStatus};
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodySlabHandle,
+                    ColliderDesc, BodyDesc, BodyUpdateStatus, BodySlab};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use crate::utils::{UserData, UserDataBox};
@@ -21,7 +21,7 @@ use crate::utils::GeneralizedCross;
 #[derive(Debug)]
 pub struct RigidBody<N: RealField> {
     name: String,
-    handle: BodyHandle,
+    handle: BodySlabHandle,
     position0: Isometry<N>,
     position: Isometry<N>,
     velocity: Velocity<N>,
@@ -44,7 +44,7 @@ pub struct RigidBody<N: RealField> {
 
 impl<N: RealField> RigidBody<N> {
     /// Create a new rigid body with the specified handle and dynamic properties.
-    fn new(handle: BodyHandle, position: Isometry<N>) -> Self {
+    fn new(handle: BodySlabHandle, position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
         let com = Point::from(position.translation.vector);
 
@@ -173,7 +173,7 @@ impl<N: RealField> RigidBody<N> {
 
     /// The handle of this rigid body.
     #[inline]
-    pub fn handle(&self) -> BodyHandle {
+    pub fn handle(&self) -> BodySlabHandle {
         self.handle
     }
 
@@ -181,7 +181,7 @@ impl<N: RealField> RigidBody<N> {
     ///
     /// The part id is set to 0 though any value is acceptable.
     #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle {
+    pub fn part_handle(&self) -> BodyPartHandle<BodySlabHandle> {
         BodyPartHandle(self.handle, 0)
     }
 
@@ -840,7 +840,7 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     );
 
     /// Builds a rigid body and all its attached colliders.
-    pub fn build<'w>(&mut self, world: &'w mut World<N, BodyHandle>) -> &'w mut RigidBody<N> {
+    pub fn build<'w>(&mut self, world: &'w mut World<N, BodySlab<N>>) -> &'w mut RigidBody<N> {
         world.add_body(self)
     }
 }
@@ -848,7 +848,7 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
     type Body = RigidBody<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> RigidBody<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> RigidBody<N> {
         let mut rb = RigidBody::new(handle, self.position);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);

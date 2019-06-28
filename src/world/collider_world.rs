@@ -9,7 +9,7 @@ use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
 use ncollide::shape::ShapeHandle;
 use ncollide::bounding_volume::AABB;
 
-use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodyHandle, BodyPartHandle, Body};
+use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, BodySet, BodySlabHandle, BodyPartHandle, Body, BodyHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
 use crate::math::{Isometry, Point};
 
@@ -17,14 +17,14 @@ use crate::math::{Isometry, Point};
 ///
 /// This is a wrapper over the `CollisionWorld` structure from `ncollide` to simplify
 /// its use with the [object::Collider] structure.
-pub struct ColliderWorld<N: RealField> {
-    pub(crate) cworld: CollisionWorld<N, ColliderData<N>>,
-    collider_lists: HashMap<BodyHandle, (ColliderHandle, ColliderHandle)>, // (head, tail)
+pub struct ColliderWorld<N: RealField, Handle: BodyHandle> {
+    pub(crate) cworld: CollisionWorld<N, ColliderData<N, Handle>>,
+    collider_lists: HashMap<Handle, (ColliderHandle, ColliderHandle)>, // (head, tail)
     colliders_w_parent: Vec<ColliderHandle>,
-    default_material: MaterialHandle<N>
+    default_material: MaterialHandle<N, Handle>
 }
 
-impl<N: RealField> ColliderWorld<N> {
+impl<N: RealField, Handle: BodyHandle> ColliderWorld<N, Handle> {
     /// Creates a new collision world.
     // FIXME: use default values for `margin` and allow its modification by the user ?
     pub fn new(margin: N) -> Self {
@@ -77,18 +77,18 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// The material given to colliders without user-defined materials.
-    pub fn default_material(&self) -> MaterialHandle<N> {
+    pub fn default_material(&self) -> MaterialHandle<N, Handle> {
         self.default_material.clone()
     }
 
     /// The underlying collision world from the ncollide crate.
     #[deprecated(since = "0.11.1", note = "renamed to as_collision_world")]
-    pub fn as_collider_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
+    pub fn as_collider_world(&self) -> &CollisionWorld<N, ColliderData<N, Handle>> {
         &self.cworld
     }
 
     /// The underlying collision world from the ncollide crate.
-    pub fn as_collision_world(&self) -> &CollisionWorld<N, ColliderData<N>> {
+    pub fn as_collision_world(&self) -> &CollisionWorld<N, ColliderData<N, Handle>> {
         &self.cworld
     }
 
@@ -98,7 +98,7 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// Unwraps the underlying collision world from the ncollide crate.
-    pub fn into_inner(self) -> CollisionWorld<N, ColliderData<N>> {
+    pub fn into_inner(self) -> CollisionWorld<N, ColliderData<N, Handle>> {
         self.cworld
     }
 
@@ -109,8 +109,8 @@ impl<N: RealField> ColliderWorld<N> {
         shape: ShapeHandle<N>,
         collision_groups: CollisionGroups,
         query_type: GeometricQueryType<N>,
-        data: ColliderData<N>,
-    ) -> &mut Collider<N>
+        data: ColliderData<N, Handle>,
+    ) -> &mut Collider<N, Handle>
     {
         let co = Collider::from_mut(self.cworld.add(position, shape, collision_groups, query_type, data));
         let parent = co.body();
@@ -191,7 +191,7 @@ impl<N: RealField> ColliderWorld<N> {
     }
 
     /// Remove all the colliders attached to `body`.
-    pub(crate) fn remove_body_colliders(&mut self, body: BodyHandle) {
+    pub(crate) fn remove_body_colliders(&mut self, body: Handle) {
         let mut curr = try_ret!(self.collider_lists.get(&body)).0;
 
         loop {
@@ -202,20 +202,20 @@ impl<N: RealField> ColliderWorld<N> {
         }
     }
 
-    pub(crate) fn remove_body(&mut self, handle: BodyHandle) {
+    pub(crate) fn remove_body(&mut self, handle: Handle) {
         self.remove_body_colliders(handle);
         let _ = self.collider_lists.remove(&handle);
     }
 
     /// Iterator through all the colliders with the given name.
-    pub fn colliders_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Collider<N>> {
+    pub fn colliders_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Collider<N, Handle>> {
         self.colliders().filter(move |co| co.name() == name)
     }
 
     /// Iterator through all the colliders attached to the body with the given `handle`.
     ///
     /// Returns an empty iterator if the body does not exists.
-    pub fn body_colliders(&self, handle: BodyHandle) -> ColliderChain<N> {
+    pub fn body_colliders(&self, handle: Handle) -> ColliderChain<N, Handle> {
         let first = self.collider_lists.get(&handle).map(|l| l.0);
 
         ColliderChain {
@@ -228,10 +228,10 @@ impl<N: RealField> ColliderWorld<N> {
     ///
     /// Returns an empty iterator if the body part does not exists.
     /// Does not return deformable colliders.
-    pub fn body_part_colliders(&self, handle: BodyPartHandle) -> impl Iterator<Item = &Collider<N>> {
+    pub fn body_part_colliders(&self, handle: BodyPartHandle<Handle>) -> impl Iterator<Item = &Collider<N, Handle>> {
         self.body_colliders(handle.0).filter(move |co| {
             match co.anchor() {
-                ColliderAnchor::OnBodyPart { body_part, .. } => *body_part == handle,
+                ColliderAnchor::OnBodyPart { body_part, .. } => body_part.is_same(&handle),
                 _ => false
             }
         })
@@ -291,19 +291,19 @@ impl<N: RealField> ColliderWorld<N> {
 
     /// Iterates through all colliders.
     #[inline]
-    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N>> {
+    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N, Handle>> {
         self.cworld.collision_objects().map(|co| Collider::from_ref(co.1))
     }
 
     /// Returns a reference to the collider identified by its handle.
     #[inline]
-    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
+    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N, Handle>> {
         self.cworld.collision_object(handle).map(|co| Collider::from_ref(co))
     }
 
     /// Returns a mutable reference to the collider identified by its handle.
     #[inline]
-    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N>> {
+    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N, Handle>> {
         self.cworld.collision_object_mut(handle).map(|co| Collider::from_mut(co))
     }
 
@@ -311,7 +311,7 @@ impl<N: RealField> ColliderWorld<N> {
     ///
     /// Panics if both handle are equal.
     #[inline]
-    pub fn collider_pair_mut(&mut self, handle1: ColliderHandle, handle2: ColliderHandle) -> (Option<&mut Collider<N>>, Option<&mut Collider<N>>) {
+    pub fn collider_pair_mut(&mut self, handle1: ColliderHandle, handle2: ColliderHandle) -> (Option<&mut Collider<N, Handle>>, Option<&mut Collider<N, Handle>>) {
         let (a, b) = self.cworld.collision_object_pair_mut(handle1, handle2);
         (a.map(|a| Collider::from_mut(a)), b.map(|b| Collider::from_mut(b)))
     }
@@ -329,7 +329,7 @@ impl<N: RealField> ColliderWorld<N> {
         &'a self,
         ray: &'a Ray<N>,
         groups: &'a CollisionGroups,
-    ) -> impl Iterator<Item = (&'a Collider<N>, RayIntersection<N>)>
+    ) -> impl Iterator<Item = (&'a Collider<N, Handle>, RayIntersection<N>)>
     {
         self.cworld.interferences_with_ray(ray, groups).map(|res| (Collider::from_ref(res.0), res.1))
     }
@@ -340,7 +340,7 @@ impl<N: RealField> ColliderWorld<N> {
         &'a self,
         point: &'a Point<N>,
         groups: &'a CollisionGroups,
-    ) -> impl Iterator<Item = &'a Collider<N>>
+    ) -> impl Iterator<Item = &'a Collider<N, Handle>>
     {
         self.cworld.interferences_with_point(point, groups).map(|co| Collider::from_ref(co))
     }
@@ -351,7 +351,7 @@ impl<N: RealField> ColliderWorld<N> {
         &'a self,
         aabb: &'a AABB<N>,
         groups: &'a CollisionGroups,
-    ) -> impl Iterator<Item = &'a Collider<N>>
+    ) -> impl Iterator<Item = &'a Collider<N, Handle>>
     {
         self.cworld.interferences_with_aabb(aabb, groups).map(|co| Collider::from_ref(co))
     }
@@ -371,14 +371,14 @@ impl<N: RealField> ColliderWorld<N> {
      * Iterators on contacts/proximity pairs.
      *
      */
-    fn is_interaction_effective(c1: &Collider<N>, c2: &Collider<N>, interaction: &Interaction<N>) -> bool {
+    fn is_interaction_effective(c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, interaction: &Interaction<N>) -> bool {
         match interaction {
             Interaction::Contact(_, manifold) => Self::is_contact_effective(c1, c2, manifold),
             Interaction::Proximity(prox) => prox.proximity() == Proximity::Intersecting
         }
     }
 
-    fn is_contact_effective(c1: &Collider<N>, c2: &Collider<N>, manifold: &ContactManifold<N>) -> bool {
+    fn is_contact_effective(c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, manifold: &ContactManifold<N>) -> bool {
         if let Some(c) = manifold.deepest_contact() {
             c.contact.depth >= -(c1.margin() + c2.margin())
         } else {
@@ -388,7 +388,7 @@ impl<N: RealField> ColliderWorld<N> {
 
     #[inline(always)]
     fn filter_interactions<'a>(&'a self, iter: impl Iterator<Item = (ColliderHandle, ColliderHandle, &'a Interaction<N>)>, effective_only: bool)
-                               -> impl Iterator<Item = (&'a Collider<N>, &'a Collider<N>, &'a Interaction<N>)> {
+                               -> impl Iterator<Item = (&'a Collider<N, Handle>, &'a Collider<N, Handle>, &'a Interaction<N>)> {
         iter.filter_map(move |inter| {
             let c1 = self.collider(inter.0)?;
             let c2 = self.collider(inter.1)?;
@@ -402,7 +402,7 @@ impl<N: RealField> ColliderWorld<N> {
 
     #[inline(always)]
     fn filter_contacts<'a>(&'a self, iter: impl Iterator<Item = (ColliderHandle, ColliderHandle, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)>, effective_only: bool)
-                           -> impl Iterator<Item = (&'a Collider<N>, &'a Collider<N>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)> {
+                           -> impl Iterator<Item = (&'a Collider<N, Handle>, &'a Collider<N, Handle>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)> {
         iter.filter_map(move |inter| {
             let c1 = self.collider(inter.0)?;
             let c2 = self.collider(inter.1)?;
@@ -416,7 +416,7 @@ impl<N: RealField> ColliderWorld<N> {
 
     #[inline(always)]
     fn filter_proximities<'a>(&'a self, iter: impl Iterator<Item = (ColliderHandle, ColliderHandle, &'a ProximityAlgorithm<N>)>)
-                           -> impl Iterator<Item = (&'a Collider<N>, &'a Collider<N>, &'a ProximityAlgorithm<N>)> {
+                           -> impl Iterator<Item = (&'a Collider<N, Handle>, &'a Collider<N, Handle>, &'a ProximityAlgorithm<N>)> {
         iter.filter_map(move |prox| {
             Some((self.collider(prox.0)?, self.collider(prox.1)?, prox.2))
         })
@@ -431,8 +431,8 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn interaction_pairs(&self, effective_only: bool) -> impl Iterator<Item = (
-        &Collider<N>,
-        &Collider<N>,
+        &Collider<N, Handle>,
+        &Collider<N, Handle>,
         &Interaction<N>
     )> {
         self.filter_interactions(self.cworld.interaction_pairs(false), effective_only)
@@ -444,8 +444,8 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn contact_pairs(&self, effective_only: bool) -> impl Iterator<Item = (
-        &Collider<N>,
-        &Collider<N>,
+        &Collider<N, Handle>,
+        &Collider<N, Handle>,
         &ContactAlgorithm<N>,
         &ContactManifold<N>,
     )> {
@@ -458,8 +458,8 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn proximity_pairs(&self, effective_only: bool) -> impl Iterator<Item = (
-        &Collider<N>,
-        &Collider<N>,
+        &Collider<N, Handle>,
+        &Collider<N, Handle>,
         &ProximityAlgorithm<N>,
     )> {
         self.filter_proximities(self.cworld.proximity_pairs(effective_only))
@@ -471,7 +471,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn interaction_pair(&self, handle1: ColliderHandle, handle2: ColliderHandle, effective_only: bool)
-                            -> Option<(&Collider<N>, &Collider<N>, &Interaction<N>)> {
+                            -> Option<(&Collider<N, Handle>, &Collider<N, Handle>, &Interaction<N>)> {
         self.cworld.interaction_pair(handle1, handle2, false).and_then(move |inter| {
             let c1 = self.collider(inter.0)?;
             let c2 = self.collider(inter.1)?;
@@ -488,7 +488,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn contact_pair(&self, handle1: ColliderHandle, handle2: ColliderHandle, effective_only: bool)
-                        -> Option<(&Collider<N>, &Collider<N>, &ContactAlgorithm<N>, &ContactManifold<N>)> {
+                        -> Option<(&Collider<N, Handle>, &Collider<N, Handle>, &ContactAlgorithm<N>, &ContactManifold<N>)> {
         self.cworld.contact_pair(handle1, handle2, false).and_then(move |inter| {
             let c1 = self.collider(inter.0)?;
             let c2 = self.collider(inter.1)?;
@@ -505,7 +505,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn proximity_pair(&self, handle1: ColliderHandle, handle2: ColliderHandle, effective_only: bool)
-                          -> Option<(&Collider<N>, &Collider<N>, &ProximityAlgorithm<N>)> {
+                          -> Option<(&Collider<N, Handle>, &Collider<N, Handle>, &ProximityAlgorithm<N>)> {
         self.cworld.proximity_pair(handle1, handle2, effective_only).and_then(move |prox| {
             Some((self.collider(prox.0)?, self.collider(prox.1)?, prox.2))
         })
@@ -516,7 +516,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn interactions_with(&self, handle: ColliderHandle, effective_only: bool)
-                             -> Option<impl Iterator<Item = (&Collider<N>, &Collider<N>, &Interaction<N>)>> {
+                             -> Option<impl Iterator<Item = (&Collider<N, Handle>, &Collider<N, Handle>, &Interaction<N>)>> {
         Some(self.filter_interactions(self.cworld.interactions_with(handle, false)?, effective_only))
     }
 
@@ -525,7 +525,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn contacts_with(&self, handle: ColliderHandle, effective_only: bool)
-                         -> Option<impl Iterator<Item = (&Collider<N>, &Collider<N>, &ContactAlgorithm<N>, &ContactManifold<N>)>> {
+                         -> Option<impl Iterator<Item = (&Collider<N, Handle>, &Collider<N, Handle>, &ContactAlgorithm<N>, &ContactManifold<N>)>> {
         Some(self.filter_contacts(self.cworld.contacts_with(handle, false)?, effective_only))
     }
 
@@ -534,7 +534,7 @@ impl<N: RealField> ColliderWorld<N> {
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn proximities_with(&self, handle: ColliderHandle, effective_only: bool)
-                            -> Option<impl Iterator<Item = (&Collider<N>, &Collider<N>, &ProximityAlgorithm<N>)>> {
+                            -> Option<impl Iterator<Item = (&Collider<N, Handle>, &Collider<N, Handle>, &ProximityAlgorithm<N>)>> {
         Some(self.filter_proximities(self.cworld.proximities_with(handle, effective_only)?))
     }
 
@@ -542,7 +542,7 @@ impl<N: RealField> ColliderWorld<N> {
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn colliders_interacting_with<'a>(&'a self, handle: ColliderHandle) -> Option<impl Iterator<Item = &Collider<N>> + 'a> {
+    pub fn colliders_interacting_with<'a>(&'a self, handle: ColliderHandle) -> Option<impl Iterator<Item = &Collider<N, Handle>> + 'a> {
         Some(self.interactions_with(handle, true)?
             .map(move |(c1, c2, _)| {
                 if c1.handle() == handle { c2 } else { c1 }
@@ -554,7 +554,7 @@ impl<N: RealField> ColliderWorld<N> {
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn colliders_in_contact_with<'a>(&'a self, handle: ColliderHandle) -> Option<impl Iterator<Item = &Collider<N>> + 'a> {
+    pub fn colliders_in_contact_with<'a>(&'a self, handle: ColliderHandle) -> Option<impl Iterator<Item = &Collider<N, Handle>> + 'a> {
         Some(self.contacts_with(handle, true)?
             .map(move |(c1, c2, _, _)| {
                 if c1.handle() == handle { c2 } else { c1 }
@@ -566,7 +566,7 @@ impl<N: RealField> ColliderWorld<N> {
     ///
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
-    pub fn colliders_in_proximity_of<'a>(&'a self, handle: ColliderHandle) -> Option<impl Iterator<Item = &Collider<N>> + 'a> {
+    pub fn colliders_in_proximity_of<'a>(&'a self, handle: ColliderHandle) -> Option<impl Iterator<Item = &Collider<N, Handle>> + 'a> {
         Some(self.proximities_with(handle, true)?
             .map(move |(c1, c2, _)| {
                 if c1.handle() == handle { c2 } else { c1 }
@@ -576,22 +576,22 @@ impl<N: RealField> ColliderWorld<N> {
 
 struct BodyStatusCollisionFilter;
 
-impl<'a, N: RealField> BroadPhasePairFilter<N, &'a CollisionObject<N, ColliderData<N>>> for BodyStatusCollisionFilter {
+impl<'a, N: RealField, Handle: BodyHandle> BroadPhasePairFilter<N, &'a CollisionObject<N, ColliderData<N, Handle>>> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
-    fn is_pair_valid(&self, b1: &'a CollisionObject<N, ColliderData<N>>, b2: &'a CollisionObject<N, ColliderData<N>>) -> bool {
+    fn is_pair_valid(&self, b1: &'a CollisionObject<N, ColliderData<N, Handle>>, b2: &'a CollisionObject<N, ColliderData<N, Handle>>) -> bool {
         b1.data().body_status_dependent_ndofs() != 0 || b2.data().body_status_dependent_ndofs() != 0
     }
 }
 
-pub struct ColliderChain<'a, N: RealField> {
-    cworld: &'a ColliderWorld<N>,
+pub struct ColliderChain<'a, N: RealField, Handle: BodyHandle> {
+    cworld: &'a ColliderWorld<N, Handle>,
     curr: Option<ColliderHandle>,
 }
 
-impl<'a, N: RealField> Iterator for ColliderChain<'a, N> {
-    type Item = &'a Collider<N>;
+impl<'a, N: RealField, Handle: BodyHandle> Iterator for ColliderChain<'a, N, Handle> {
+    type Item = &'a Collider<N, Handle>;
 
-    fn next(&mut self) -> Option<&'a Collider<N>> {
+    fn next(&mut self) -> Option<&'a Collider<N, Handle>> {
         let coll = self.cworld.collider(self.curr?)?;
         self.curr = coll.next();
         Some(coll)

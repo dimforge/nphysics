@@ -14,7 +14,7 @@ use crate::joint::{JointConstraintHandle, JointConstraint, JointConstraintSet};
 use crate::math::Vector;
 use crate::object::{
     Body, BodySlab, BodyDesc, BodyStatus, Collider, ColliderAnchor,
-    ColliderHandle, Multibody, RigidBody, BodyHandle, BodySet,
+    ColliderHandle, Multibody, RigidBody, BodySlabHandle, BodySet, BodyHandle
 };
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
@@ -26,21 +26,21 @@ struct SubstepState<N: RealField> {
     // FIXME: can we avoid the use of a hash-map to save the
     // number of time a contact pair generated a CCD event?
     ccd_counts: HashMap<(ColliderHandle, ColliderHandle), usize>,
-    body_times: HashMap<BodyHandle, N>,
-    body_hit: HashSet<BodyHandle>,
+    body_times: HashMap<BodySlabHandle, N>,
+    body_hit: HashSet<BodySlabHandle>,
 }
 
 /// The physics world.
-pub struct World<N: RealField, Handle: Copy> {
+pub struct World<N: RealField, Bodies: BodySet<N>> {
     counters: Counters,
 
     bodies: BodySlab<N>,
     constraints: Slab<Box<JointConstraint<N, BodySlab<N>>>>,
     forces: Slab<Box<ForceGenerator<N, BodySlab<N>>>>,
 
-    cworld: ColliderWorld<N>,
-    solver: MoreauJeanSolver<N>,
-    activation_manager: ActivationManager<N, Handle>,
+    cworld: ColliderWorld<N, Bodies::Handle>,
+    solver: MoreauJeanSolver<N, Bodies>,
+    activation_manager: ActivationManager<N, Bodies::Handle>,
 
     // FIXME: set this parameter per-colliders?
     prediction: N,
@@ -50,7 +50,7 @@ pub struct World<N: RealField, Handle: Copy> {
     substep: SubstepState<N>,
 }
 
-impl<N: RealField, Handle: Copy> World<N, Handle> {
+impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
@@ -113,7 +113,7 @@ impl<N: RealField, Handle: Copy> World<N, Handle> {
     }
 
     /// Set the contact model for all contacts.
-    pub fn set_contact_model<C: ContactModel<N>>(&mut self, model: C) {
+    pub fn set_contact_model<C: ContactModel<N, BodySlab<N>>>(&mut self, model: C) {
         self.solver.set_contact_model(Box::new(model))
     }
 
@@ -148,12 +148,12 @@ impl<N: RealField, Handle: Copy> World<N, Handle> {
     }
 
     /// Activate the given body.
-    pub fn activate_body(&mut self, handle: BodyHandle) {
+    pub fn activate_body(&mut self, handle: BodySlabHandle) {
         Self::activate_body_at(&mut self.bodies, handle)
     }
 
     // NOTE: static method used to avoid borrowing issues.
-    fn activate_body_at(bodies: &mut BodySlab<N>, handle: BodyHandle) {
+    fn activate_body_at(bodies: &mut BodySlab<N>, handle: BodySlabHandle) {
         if let Some(body) = bodies.get_mut(handle) {
             if body.status_dependent_ndofs() != 0 {
                 body.activate();
@@ -246,9 +246,8 @@ impl<N: RealField, Handle: Copy> World<N, Handle> {
     }
 
     /// Execute one time step of the physics simulation.
-    pub fn step<Bodies, Constraints, Forces>(&mut self, bodies: &mut Bodies, constraints: &mut Constraints, forces: &mut Forces)
-    where Bodies: BodySet<N, Handle = Handle>,
-          Constraints: JointConstraintSet<N, Bodies>,
+    pub fn step<Constraints, Forces>(&mut self, bodies: &mut Bodies, constraints: &mut Constraints, forces: &mut Forces)
+    where Constraints: JointConstraintSet<N, Bodies>,
           Forces: ForceGeneratorSet<N, Bodies> {
         if !self.substep.active {
             println!("##### Loop");
@@ -743,7 +742,7 @@ impl<N: RealField, Handle: Copy> World<N, Handle> {
     }
 
     /// Remove the specified bodies.
-    pub fn remove_bodies(&mut self, handles: &[BodyHandle]) {
+    pub fn remove_bodies(&mut self, handles: &[BodySlabHandle]) {
         for handle in handles {
             self.bodies.remove_body(*handle);
         }
@@ -803,88 +802,88 @@ impl<N: RealField, Handle: Copy> World<N, Handle> {
     }
 
     /// Get a reference to the specified body.
-    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
+    pub fn body(&self, handle: BodySlabHandle) -> Option<&Body<N>> {
         self.bodies.get(handle)
     }
 
     /// Get a mutable reference to the specified body.
-    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
+    pub fn body_mut(&mut self, handle: BodySlabHandle) -> Option<&mut Body<N>> {
         self.bodies.get_mut(handle)
     }
 
     /// Get a reference to the multibody containing the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
-    pub fn multibody(&self, handle: BodyHandle) -> Option<&Multibody<N>> {
+    pub fn multibody(&self, handle: BodySlabHandle) -> Option<&Multibody<N>> {
         self.bodies.get(handle)?.downcast_ref::<Multibody<N>>()
     }
 
     /// Get a mutable reference to the multibody containing the specified multibody link.
     ///
     /// Returns `None` if the handle does not correspond to a multibody link in this world.
-    pub fn multibody_mut(&mut self, handle: BodyHandle) -> Option<&mut Multibody<N>> {
+    pub fn multibody_mut(&mut self, handle: BodySlabHandle) -> Option<&mut Multibody<N>> {
         self.bodies.get_mut(handle)?.downcast_mut::<Multibody<N>>()
     }
 
     /// Get a reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
-    pub fn rigid_body(&self, handle: BodyHandle) -> Option<&RigidBody<N>> {
+    pub fn rigid_body(&self, handle: BodySlabHandle) -> Option<&RigidBody<N>> {
         self.bodies.get(handle)?.downcast_ref::<RigidBody<N>>()
     }
 
     /// Get a mutable reference to the specified rigid body.
     ///
     /// Returns `None` if the handle does not correspond to a rigid body in this world.
-    pub fn rigid_body_mut(&mut self, handle: BodyHandle) -> Option<&mut RigidBody<N>> {
+    pub fn rigid_body_mut(&mut self, handle: BodySlabHandle) -> Option<&mut RigidBody<N>> {
         self.bodies.get_mut(handle)?.downcast_mut::<RigidBody<N>>()
     }
 
     /// Reference to the underlying collision world.
-    pub fn collider_world(&self) -> &ColliderWorld<N> {
+    pub fn collider_world(&self) -> &ColliderWorld<N, BodySlabHandle> {
         &self.cworld
     }
 
     /// Mutable reference to the underlying collision world.
-    pub fn collider_world_mut(&mut self) -> &mut ColliderWorld<N> {
+    pub fn collider_world_mut(&mut self) -> &mut ColliderWorld<N, BodySlabHandle> {
         &mut self.cworld
     }
 
 
     /// Mutable reference to the underlying collision world.
     #[doc(hidden)]
-    pub fn bodies_mut_and_collider_world_mut(&mut self) -> (&mut BodySlab<N>, &mut ColliderWorld<N>) {
+    pub fn bodies_mut_and_collider_world_mut(&mut self) -> (&mut BodySlab<N>, &mut ColliderWorld<N, BodySlabHandle>) {
         (&mut self.bodies, &mut self.cworld)
     }
 
     /// Get a reference to the specified collider.
     ///
     /// Returns `None` if the handle does not correspond to a collider in this world.
-    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N>> {
+    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N, Bodies::Handle>> {
         self.cworld.collider(handle)
     }
 
     /// Get a mutable reference to the specified collider.
     ///
     /// Returns `None` if the handle does not correspond to a collider in this world.
-    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N>> {
+    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N, Bodies::Handle>> {
         self.cworld.collider_mut(handle)
     }
 
     /// Gets the handle of the body the specified collider is attached to.
-    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<BodyHandle> {
+    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<Bodies::Handle> {
         self.collider_anchor(handle).map(|anchor| anchor.body())
     }
 
     /// Gets the anchor attaching this collider to a body or body part.
-    pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N>> {
+    pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N, Bodies::Handle>> {
         self.cworld
             .collider(handle)
             .map(|co| co.anchor())
     }
 
     /// An iterator through all the colliders on this collision world.
-    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N>> {
+    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N, Bodies::Handle>> {
         self.cworld.colliders()
     }
 
@@ -915,7 +914,7 @@ impl<N: RealField, Handle: Copy> World<N, Handle> {
     }
 }
 
-impl<N: RealField> Default for World<N, BodyHandle> {
+impl<N: RealField> Default for World<N, BodySlab<N>> {
     fn default() -> Self {
         Self::new()
     }

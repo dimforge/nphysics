@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{BodySlab, BodyHandle, BodySet};
+use crate::object::{BodySlab, BodySlabHandle, BodySet};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint, LinearConstraints};
 
@@ -47,7 +47,7 @@ impl SORProx {
         bodies: &mut BodySlab<N>,
         contact_constraints: &mut LinearConstraints<N, ContactId>,
         joint_constraints: &mut LinearConstraints<N, usize>,
-        internal: &[BodyHandle],
+        internal: &[BodySlabHandle],
         mj_lambda: &mut DVector<N>,
         jacobians: &[N],
         max_iter: usize,
@@ -152,7 +152,7 @@ impl SORProx {
         bodies: &mut BodySlab<N>,
         contact_constraints: &mut LinearConstraints<N, ContactId>,
         joint_constraints: &mut LinearConstraints<N, usize>,
-        internal: &[BodyHandle],
+        internal: &[BodySlabHandle],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {

@@ -4,10 +4,14 @@ use na::RealField;
 use crate::world::ColliderWorld;
 use crate::object::{Body, Ground};
 
+pub trait BodyHandle: Copy + 'static + Send + Sync {
+    fn is_ground(&self) -> bool;
+    fn is_same(&self, other: &Self) -> bool;
+}
 
 pub trait BodySet<N: RealField> {
     type Body: ?Sized + Body<N>;
-    type Handle: Copy;
+    type Handle: BodyHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body>;
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body>;
@@ -21,7 +25,7 @@ pub trait BodySet<N: RealField> {
 
 impl<N: RealField> BodySet<N> for BodySlab<N> {
     type Body = Body<N>;
-    type Handle = BodyHandle;
+    type Handle = BodySlabHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body> {
         self.body(handle)
@@ -42,13 +46,13 @@ impl<N: RealField> BodySet<N> for BodySlab<N> {
 
     fn foreach(&self, mut f: impl FnMut(Self::Handle, &Self::Body)) {
         for (h, b) in self.bodies.iter() {
-            f(BodyHandle(h), &**b)
+            f(BodySlabHandle(h), &**b)
         }
     }
 
     fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Self::Body)) {
         for (h, b) in self.bodies.iter_mut() {
-            f(BodyHandle(h), &mut **b)
+            f(BodySlabHandle(h), &mut **b)
         }
     }
 }
@@ -59,17 +63,28 @@ impl<N: RealField> BodySet<N> for BodySlab<N> {
 /// This structure is automatically allocated by the physics world.
 /// It cannot be constructed by the end-user.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct BodyHandle(usize);
+pub struct BodySlabHandle(usize);
+
+impl BodyHandle for BodySlabHandle {
+    #[inline]
+    fn is_ground(&self) -> bool {
+        self.0 == usize::max_value()
+    }
+
+    #[inline]
+    fn is_same(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
 
 /// A unique identifier of a body part added to the world.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct BodyPartHandle(pub BodyHandle, pub usize);
+pub struct BodyPartHandle<Handle: BodyHandle>(pub Handle, pub usize);
 
-impl BodyHandle {
-    /// The body handle of the ground.
+impl BodySlabHandle {
     #[inline]
     pub fn ground() -> Self {
-        BodyHandle(usize::max_value())
+        BodySlabHandle(usize::max_value())
     }
 
     /// Tests if this handle corresponds to the ground.
@@ -79,35 +94,35 @@ impl BodyHandle {
     }
 }
 
-impl BodyPartHandle {
-    /// The body part handle of the ground.
-    pub fn ground() -> Self {
-        BodyPartHandle(BodyHandle::ground(), 0)
-    }
-
+impl<Handle: BodyHandle> BodyPartHandle<Handle> {
     /// Tests if this handle corresponds to the ground.
     pub fn is_ground(&self) -> bool {
         self.0.is_ground()
+    }
+
+    #[inline]
+    pub fn is_same(&self, other: &Self) -> bool {
+        self.0 == other.0 && self.1 == other.1
     }
 }
 
 /*
 pub trait AbstractBodySlab<'a, N: RealField> {
-    type BodyHandle;
+    type BodySlabHandle;
     type Body: ?Sized + Body<N>;
     type Bodies: Iterator<Item = &'a Self::Body>;
     type BodiesMut: Iterator<Item = &'a mut Self::Body>;
 
     fn add_body(&mut self, body: impl Body<N>) -> &mut Self::Body;
-    fn remove_body(&mut self, key: Self::BodyHandle);
-    fn body(&self, handle: Self::BodyHandle) -> &Self::Body;
-    fn body_mut(&mut self, handle: Self::BodyHandle) -> &mut Self::Body;
+    fn remove_body(&mut self, key: Self::BodySlabHandle);
+    fn body(&self, handle: Self::BodySlabHandle) -> &Self::Body;
+    fn body_mut(&mut self, handle: Self::BodySlabHandle) -> &mut Self::Body;
     fn bodies(&self) -> Self::Bodies;
     fn bodies_mut(&mut self) -> Self::BodiesMut;
 }
 
 impl<'a, N: RealField> AbstractBodySlab<'a, N> for BodySlab<N> {
-    type BodyHandle = BodyHandle;
+    type BodySlabHandle = BodySlabHandle;
     type Body = Body<N>;
     type Bodies = Bodies<'a, N>;
     type BodiesMut = BodiesMut<'a, N>;
@@ -115,12 +130,12 @@ impl<'a, N: RealField> AbstractBodySlab<'a, N> for BodySlab<N> {
     fn add_body(&mut self, mut body: impl Body<N>) -> &mut Self::Body {
         let b_entry = self.bodies.vacant_entry();
         let b_id = b_entry.handle();
-        let handle = BodyHandle(BodyVariant::AbstractBody(b_id));
+        let handle = BodySlabHandle(BodyVariant::AbstractBody(b_id));
         body.set_handle(Some(handle));
         &mut **b_entry.insert(body)
     }
 
-    fn remove_body(&mut self, handle: Self::BodyHandle) {
+    fn remove_body(&mut self, handle: Self::BodySlabHandle) {
         match body.0 {
             BodyVariant::RigidBody(id) => {
                 let _ = self.rbs.remove(id);
@@ -135,11 +150,11 @@ impl<'a, N: RealField> AbstractBodySlab<'a, N> for BodySlab<N> {
         }
     }
 
-    fn body(&self, handle: Self::BodyHandle) -> &Self::Body {
+    fn body(&self, handle: Self::BodySlabHandle) -> &Self::Body {
         unimplemented!()
     }
 
-    fn body_mut(&mut self, handle: Self::BodyHandle) -> &mut Self::Body {
+    fn body_mut(&mut self, handle: Self::BodySlabHandle) -> &mut Self::Body {
         unimplemented!()
     }
 
@@ -159,7 +174,7 @@ pub trait BodyDesc<N: RealField> {
     type Body: Body<N>;
 
     /// Called by the `World` to create a body with the given allocated handle.
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> Self::Body;
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> Self::Body;
 }
 
 /// A set containing all the bodies added to the world.
@@ -183,10 +198,10 @@ impl<N: RealField> BodySlab<N> {
     }
 
     /// Adds a body to the world.
-    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N>) -> &mut B::Body {
+    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N, BodySlabHandle>) -> &mut B::Body {
         let b_entry = self.bodies.vacant_entry();
         let b_id = b_entry.key();
-        let handle = BodyHandle(b_id);
+        let handle = BodySlabHandle(b_id);
         let body = desc.build_with_handle(cworld, handle);
         b_entry.insert(Box::new(body)).downcast_mut::<B::Body>().expect("Body construction failed with type mismatch.")
     }
@@ -194,7 +209,7 @@ impl<N: RealField> BodySlab<N> {
     /// Remove a body from this set.
     ///
     /// If `body` identify a mutibody link, the whole multibody is removed.
-    pub fn remove_body(&mut self, body: BodyHandle) {
+    pub fn remove_body(&mut self, body: BodySlabHandle) {
         if !body.is_ground() {
             let _ = self.bodies.remove(body.0);
         }
@@ -202,7 +217,7 @@ impl<N: RealField> BodySlab<N> {
 
     /// Returns `true` if the given body exists.
     #[inline]
-    pub fn contains(&self, handle: BodyHandle) -> bool {
+    pub fn contains(&self, handle: BodySlabHandle) -> bool {
         handle.is_ground() || self.bodies.contains(handle.0)
     }
 
@@ -210,7 +225,7 @@ impl<N: RealField> BodySlab<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
+    pub fn body(&self, handle: BodySlabHandle) -> Option<&Body<N>> {
         if handle.is_ground() {
             Some(&self.ground)
         } else {
@@ -222,7 +237,7 @@ impl<N: RealField> BodySlab<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
+    pub fn body_mut(&mut self, handle: BodySlabHandle) -> Option<&mut Body<N>> {
         if handle.is_ground() {
             Some(&mut self.ground)
         } else {
@@ -235,7 +250,7 @@ impl<N: RealField> BodySlab<N> {
     /// Returns `None` if the body is not found.
     /// Panics if both handles are equal.
     #[inline]
-    pub fn body_pair_mut(&mut self, handle1: BodyHandle, handle2: BodyHandle) -> (Option<&mut Body<N>>, Option<&mut Body<N>>) {
+    pub fn body_pair_mut(&mut self, handle1: BodySlabHandle, handle2: BodySlabHandle) -> (Option<&mut Body<N>>, Option<&mut Body<N>>) {
         assert_ne!(handle1, handle2, "Both body handles must not be equal.");
         let b1 = self.body_mut(handle1).map(|b| b as *mut Body<N>);
         let b2 = self.body_mut(handle2).map(|b| b as *mut Body<N>);

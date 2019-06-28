@@ -10,7 +10,7 @@ use na::{self, RealField, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
+use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, ActivationStatus,
                     FiniteElementIndices, DeformableColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry,
@@ -41,7 +41,7 @@ pub struct TriangularElement<N: RealField> {
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMSurface<N: RealField> {
     name: String,
-    handle: BodyHandle,
+    handle: BodySlabHandle,
     elements: Vec<TriangularElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -79,7 +79,7 @@ pub struct FEMSurface<N: RealField> {
 
 impl<N: RealField> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
-    fn new(handle: BodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
+    fn new(handle: BodySlabHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
            scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let ndofs = vertices.len() * DIM;
         let mut rest_positions = DVector::zeros(ndofs);
@@ -214,7 +214,7 @@ impl<N: RealField> FEMSurface<N> {
     }
 
     /// The handle of this body.
-    pub fn handle(&self) -> BodyHandle {
+    pub fn handle(&self) -> BodySlabHandle {
         self.handle
     }
 
@@ -546,7 +546,7 @@ impl<N: RealField> FEMSurface<N> {
     ///
     /// The cube is subdivided `nx` (resp. `ny`) times along
     /// the `x` (resp. `y`) axis.
-    fn quad(handle: BodyHandle, pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    fn quad(handle: BodySlabHandle, pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -715,7 +715,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         self.positions += disp;
     }
 
-    fn handle(&self) -> BodyHandle {
+    fn handle(&self) -> BodySlabHandle {
         self.handle
     }
 
@@ -1076,7 +1076,7 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
     type Body = FEMSurface<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> FEMSurface<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodySlabHandle) -> FEMSurface<N> {
         let mut vol = match self.geom {
             FEMSurfaceDescGeometry::Quad(nx, ny) =>
                 FEMSurface::quad(handle, &self.position, &self.scale,

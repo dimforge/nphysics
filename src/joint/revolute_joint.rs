@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody};
+use crate::object::{MultibodyLink, Multibody, BodyHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use crate::utils::GeneralizedCross;
 
@@ -176,9 +176,9 @@ impl<N: RealField> RevoluteJoint<N> {
     }
 }
 
-impl<N: RealField> Joint<N> for RevoluteJoint<N> {
+impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for RevoluteJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<Joint<N, Handle>> {
         Box::new(*self)
     }
 
@@ -248,7 +248,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
     }
 
     fn num_velocity_constraints(&self) -> usize {
-        joint::unit_joint_num_velocity_constraints(self)
+        joint::unit_joint_num_velocity_constraints::<_, Handle, _>(self)
     }
 
     fn velocity_constraints(
@@ -261,7 +261,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         joint::unit_joint_velocity_constraints(
             self,
@@ -292,12 +292,12 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         link: &MultibodyLink<N>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         joint::unit_joint_position_constraint(self, multibody, link, dof_id, true, jacobians)
     }
 }
 
-impl<N: RealField> UnitJoint<N> for RevoluteJoint<N> {
+impl<N: RealField, Handle: BodyHandle> UnitJoint<N, Handle> for RevoluteJoint<N> {
     fn position(&self) -> N {
         self.angle
     }

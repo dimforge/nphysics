@@ -3,15 +3,15 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point};
-use crate::object::{BodyPartHandle, Bodies, BodySet, Body};
+use crate::object::{BodyPartHandle, Bodies, BodySet, Body, BodyHandle};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that remove all relative rotations and one relative translation between two body parts.
-pub struct RectangularConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct RectangularConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<AngularVector<N>>,
@@ -21,14 +21,14 @@ pub struct RectangularConstraint<N: RealField> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: RealField> RectangularConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> RectangularConstraint<N, Handle> {
     /// Create a new rectangular constraint that restrict `b1` and `b2` to move on a plane orthogonal to `axis1`.
     ///
     /// The `axis1` is expressed in the local coordinate system of `b1`.
     /// Both anchors are expressed in the local coordinate system of their respective bodies.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
@@ -47,12 +47,12 @@ impl<N: RealField> RectangularConstraint<N> {
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for RectangularConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for RectangularConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         4
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
@@ -64,7 +64,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for Rectangula
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, usize>,
+        constraints: &mut ConstraintSet<N, Handle, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -142,7 +142,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for Rectangula
         self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, usize>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, usize>) {
         for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id == 0 {
                 self.lin_impulse = c.impulse
@@ -161,7 +161,7 @@ impl<N: RealField, Bodies: BodySet<N>> JointConstraint<N, Bodies> for Rectangula
     }
 }
 
-impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> for RectangularConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for RectangularConstraint<N, Handle> {
     fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
@@ -177,7 +177,7 @@ impl<N: RealField, Bodies: BodySet<N>> NonlinearConstraintGenerator<N, Bodies> f
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
         let body1 = bodies.get(self.b1.0)?;
         let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
