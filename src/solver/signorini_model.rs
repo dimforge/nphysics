@@ -30,12 +30,12 @@ impl<N: RealField> SignoriniModel<N> {
     }
 
     /// Build a non-penetration velocity-based constraint for the given contact.
-    pub fn build_velocity_constraint<Handle: BodyHandle>(
+    pub fn build_velocity_constraint<B: Body<N> + ?Sized, Handle: BodyHandle>(
         params: &IntegrationParameters<N>,
-        body1: &Body<N>,
+        body1: &B,
         part1: &BodyPart<N>,
         handle1: BodyPartHandle<Handle>,
-        body2: &Body<N>,
+        body2: &B,
         part2: &BodyPart<N>,
         handle2: BodyPartHandle<Handle>,
         props: &LocalMaterialProperties<N>,
@@ -229,8 +229,8 @@ impl<N: RealField, Bodies: BodySet<N>> ContactModel<N, Bodies> for SignoriniMode
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(body1, part1, manifold.collider1, c, true);
-                let context2 = MaterialContext::new(body2, part2, manifold.collider2, c, false);
+                let context1 = MaterialContext::new(manifold.collider1, c, true);
+                let context2 = MaterialContext::new(manifold.collider2, c, false);
                 let props = Material::combine(coefficients, material1, context1, material2, context2);
 
                 let _ = Self::build_velocity_constraint(

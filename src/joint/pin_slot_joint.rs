@@ -2,7 +2,7 @@ use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink, BodyHandle};
+use crate::object::{Multibody, MultibodyLink, BodyHandle, BodyPartHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one translational and one rotational degrees of freedom.
@@ -35,12 +35,7 @@ impl<N: RealField> PinSlotJoint<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PinSlotJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N, Handle>> {
-        Box::new(*self)
-    }
-
+impl<N: RealField> Joint<N> for PinSlotJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         2
@@ -110,8 +105,14 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PinSlotJoint<N> {
         self.revo.apply_displacement(&[disp[1]]);
     }
 
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn num_velocity_constraints(&self) -> usize {
-        self.prism.num_velocity_constraints() + self.revo.num_velocity_constraints()
+        self.prism.num_velocity_constraints() +
+            self.revo.num_velocity_constraints()
     }
 
     fn velocity_constraints(
@@ -124,7 +125,7 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PinSlotJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Handle, usize>,
+        constraints: &mut ConstraintSet<N, (), usize>,
     ) {
         self.prism.velocity_constraints(
             params,
@@ -160,14 +161,15 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PinSlotJoint<N> {
         i: usize,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
+        handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         if i == 0 {
-            self.prism.position_constraint(0, multibody, link, dof_id, jacobians)
+            self.prism.position_constraint(0, multibody, link, handle, dof_id, jacobians)
         } else {
             self.revo
-                .position_constraint(0, multibody, link, dof_id + 1, jacobians)
+                .position_constraint(0, multibody, link, handle, dof_id + 1, jacobians)
         }
     }
 }

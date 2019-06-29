@@ -12,10 +12,6 @@ use crate::math::Vector;
 /// The context for determining the local material properties at a contact.
 #[derive(Copy, Clone)]
 pub struct MaterialContext<'a, N: RealField, Handle: BodyHandle> {
-    /// One of the two bodies involved in the contact.
-    pub body: &'a Body<N>,
-    /// One of the two bodies part involved in the contact.
-    pub body_part: &'a BodyPart<N>,
     /// One of the two colliders involved in the contact.
     pub collider: &'a Collider<N, Handle>,
     /// The contact.
@@ -28,10 +24,8 @@ pub struct MaterialContext<'a, N: RealField, Handle: BodyHandle> {
 }
 
 impl<'a, N: RealField, Handle: BodyHandle> MaterialContext<'a, N, Handle> {
-    pub(crate) fn new(body: &'a Body<N>, body_part: &'a BodyPart<N>, collider: &'a Collider<N, Handle>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
+    pub(crate) fn new(collider: &'a Collider<N, Handle>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
         MaterialContext {
-            body,
-            body_part,
             collider,
             contact,
             is_first

@@ -28,12 +28,7 @@ impl<N: RealField> FreeJoint<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for FreeJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N, Handle>> {
-        Box::new(*self)
-    }
-
+impl<N: RealField> Joint<N> for FreeJoint<N> {
     fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }
@@ -78,4 +73,9 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for FreeJoint<N> {
     }
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
 }

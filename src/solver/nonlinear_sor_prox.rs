@@ -3,8 +3,8 @@ use slab::Slab;
 use std::ops::MulAssign;
 
 use crate::world::ColliderWorld;
-use crate::joint::JointConstraint;
-use crate::object::{BodySlab, ColliderAnchor, BodySlabHandle, BodySet, BodyHandle};
+use crate::joint::{JointConstraint, JointConstraintSet};
+use crate::object::{ColliderAnchor, BodySet, BodyHandle, Body};
 use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
                     NonlinearUnilateralConstraint, GenericNonlinearConstraint};
 use crate::math::Isometry;
@@ -14,20 +14,20 @@ pub(crate) struct NonlinearSORProx;
 
 impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
-    pub fn solve<N: RealField, H: BodyHandle>(
+    pub fn solve<N: RealField, Bodies: BodySet<N>, Constraints: JointConstraintSet<N, Bodies>>(
         params: &IntegrationParameters<N>,
-        cworld: &ColliderWorld<N, H>,
-        bodies: &mut BodySlab<N>,
-        contact_constraints: &mut [NonlinearUnilateralConstraint<N, H>],
-        joints_constraints: &Slab<Box<JointConstraint<N, BodySlab<N>>>>, // FIXME: ugly, use a slice of refs instead.
-        internal_constraints: &[BodySlabHandle],
+        cworld: &ColliderWorld<N, Bodies::Handle>,
+        bodies: &mut Bodies,
+        contact_constraints: &mut [NonlinearUnilateralConstraint<N, Bodies::Handle>],
+        joints_constraints: &Constraints,
+        internal_constraints: &[Bodies::Handle],
         jacobians: &mut [N],
         max_iter: usize,
     ) {
         for _ in 0..max_iter {
-            for joint in &*joints_constraints {
-                Self::solve_generator(params, bodies, &**joint.1, jacobians)
-            }
+            joints_constraints.foreach(|_, joint| {
+                Self::solve_generator(params, bodies, joint, jacobians)
+            });
 
             for constraint in internal_constraints {
                 if let Some(body) = bodies.get_mut(*constraint) {
@@ -44,9 +44,9 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_generator<N: RealField, Gen: ?Sized + NonlinearConstraintGenerator<N, BodySlab<N>>>(
+    fn solve_generator<N: RealField, Bodies: BodySet<N>, Gen: ?Sized + NonlinearConstraintGenerator<N, Bodies>>(
         params: &IntegrationParameters<N>,
-        bodies: &mut BodySlab<N>,
+        bodies: &mut Bodies,
         generator: &Gen,
         jacobians: &mut [N],
     ) {
@@ -59,10 +59,10 @@ impl NonlinearSORProx {
         }
     }
 
-    pub fn solve_generic<N: RealField, H: BodyHandle>(
+    pub fn solve_generic<N: RealField, Bodies: BodySet<N>>(
         params: &IntegrationParameters<N>,
-        bodies: &mut BodySlab<N>,
-        constraint: &mut GenericNonlinearConstraint<N, H>,
+        bodies: &mut Bodies,
+        constraint: &mut GenericNonlinearConstraint<N, Bodies::Handle>,
         jacobians: &mut [N],
     ) {
         let dim1 = Dynamic::new(constraint.dim1);
@@ -102,11 +102,11 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_unilateral<N: RealField, H: BodyHandle, D1: Dim, D2: Dim>(
+    fn solve_unilateral<N: RealField, Bodies: BodySet<N>, D1: Dim, D2: Dim>(
         params: &IntegrationParameters<N>,
-        cworld: &ColliderWorld<N, H>,
-        bodies: &mut BodySlab<N>,
-        constraint: &mut NonlinearUnilateralConstraint<N, H>,
+        cworld: &ColliderWorld<N, Bodies::Handle>,
+        bodies: &mut Bodies,
+        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle>,
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
@@ -131,11 +131,11 @@ impl NonlinearSORProx {
         }
     }
 
-    fn update_contact_constraint<N: RealField, H: BodyHandle>(
+    fn update_contact_constraint<N: RealField, Bodies: BodySet<N>>(
         params: &IntegrationParameters<N>,
-        cworld: &ColliderWorld<N, H>,
-        bodies: &BodySlab<N>,
-        constraint: &mut NonlinearUnilateralConstraint<N, H>,
+        cworld: &ColliderWorld<N, Bodies::Handle>,
+        bodies: &Bodies,
+        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle>,
         jacobians: &mut [N],
     ) -> bool {
         let body1 = try_ret!(bodies.get(constraint.body1.0), false);

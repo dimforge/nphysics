@@ -1,12 +1,18 @@
 use slab::{Iter, IterMut, Slab};
+use std::hash::Hash;
 
 use na::RealField;
 use crate::world::ColliderWorld;
 use crate::object::{Body, Ground};
 
-pub trait BodyHandle: Copy + 'static + Send + Sync {
+pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {
     fn is_ground(&self) -> bool;
-    fn is_same(&self, other: &Self) -> bool;
+}
+
+impl BodyHandle for () {
+    fn is_ground(&self) -> bool {
+        false
+    }
 }
 
 pub trait BodySet<N: RealField> {
@@ -70,11 +76,6 @@ impl BodyHandle for BodySlabHandle {
     fn is_ground(&self) -> bool {
         self.0 == usize::max_value()
     }
-
-    #[inline]
-    fn is_same(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
 }
 
 /// A unique identifier of a body part added to the world.
@@ -101,8 +102,9 @@ impl<Handle: BodyHandle> BodyPartHandle<Handle> {
     }
 
     #[inline]
-    pub fn is_same(&self, other: &Self) -> bool {
-        self.0 == other.0 && self.1 == other.1
+    pub fn ground() -> Self {
+        panic!("This should be removed. Though I don't know yet what to do with this.\
+                It is currently used by multibodies. We probably want to replace this with an Option.")
     }
 }
 

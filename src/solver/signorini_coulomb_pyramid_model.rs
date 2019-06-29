@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
 use crate::math::{Vector, DIM};
-use crate::object::{BodySlab, BodySet};
+use crate::object::{BodySet, Body};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
 use crate::solver::helper;
 use crate::solver::{
@@ -78,8 +78,8 @@ impl<N: RealField, Bodies: BodySet<N>> ContactModel<N, Bodies> for SignoriniCoul
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(body1, part1, manifold.collider1, c, true);
-                let context2 = MaterialContext::new(body2, part2, manifold.collider2, c, false);
+                let context1 = MaterialContext::new(manifold.collider1, c, true);
+                let context2 = MaterialContext::new(manifold.collider2, c, false);
                 let props = Material::combine(coefficients, material1, context1, material2, context2);
 
                 // if !SignoriniModel::is_constraint_active(c, manifold) {

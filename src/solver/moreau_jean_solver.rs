@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
 use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::object::{BodySlabHandle, BodySlab, BodySet, Body, BodyHandle};
+use crate::object::{BodySet, Body, BodyHandle};
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
 use crate::world::ColliderWorld;
@@ -20,7 +20,7 @@ pub struct MoreauJeanSolver<N: RealField, Bodies: BodySet<N>> {
     contact_model: Box<ContactModel<N, Bodies>>,
     contact_constraints: ConstraintSet<N, Bodies::Handle, ContactId>,
     joint_constraints: ConstraintSet<N, Bodies::Handle, usize>,
-    internal_constraints: Vec<BodySlabHandle>,
+    internal_constraints: Vec<Bodies::Handle>,
 }
 
 impl<N: RealField, Bodies: BodySet<N>> MoreauJeanSolver<N, Bodies> {
@@ -49,7 +49,7 @@ impl<N: RealField, Bodies: BodySet<N>> MoreauJeanSolver<N, Bodies> {
         bodies: &mut Bodies,
         joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle>],
-        island: &[BodySlabHandle],
+        island: &[Bodies::Handle],
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
         cworld: &ColliderWorld<N, Bodies::Handle>,
@@ -81,14 +81,14 @@ impl<N: RealField, Bodies: BodySet<N>> MoreauJeanSolver<N, Bodies> {
 
     // FIXME: this comment is bad.
     /// Perform one sub-step of the time-stepping scheme as part of a CCD integration.
-    pub fn step_ccd(
+    pub fn step_ccd<Constraints: JointConstraintSet<N, Bodies>>(
         &mut self,
         counters: &mut Counters,
         bodies: &mut Bodies,
-        joints: &mut Slab<Box<JointConstraint<N, Bodies>>>,
+        joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle>],
-        ccd_pair: [BodySlabHandle; 2],
-        island: &[BodySlabHandle],
+        ccd_pair: [Bodies::Handle; 2],
+        island: &[Bodies::Handle],
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
         cworld: &ColliderWorld<N, Bodies::Handle>,
@@ -126,7 +126,7 @@ impl<N: RealField, Bodies: BodySet<N>> MoreauJeanSolver<N, Bodies> {
         bodies: &mut Bodies,
         joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle>],
-        island: &[BodySlabHandle],
+        island: &[Bodies::Handle],
     ) {
         self.internal_constraints.clear();
         let mut system_ndofs = 0;
@@ -269,12 +269,12 @@ impl<N: RealField, Bodies: BodySet<N>> MoreauJeanSolver<N, Bodies> {
         );
     }
 
-    fn solve_position_constraints(
+    fn solve_position_constraints<Constraints: JointConstraintSet<N, Bodies>>(
         &mut self,
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N, Bodies::Handle>,
         bodies: &mut Bodies,
-        joints: &mut Slab<Box<JointConstraint<N, Bodies>>>,
+        joints: &mut Constraints,
     ) {
         // XXX: avoid the systematic clone.
         // This is needed for cases where we perform the position resolution
@@ -316,7 +316,7 @@ impl<N: RealField, Bodies: BodySet<N>> MoreauJeanSolver<N, Bodies> {
         &mut self,
         params: &IntegrationParameters<N>,
         bodies: &mut Bodies,
-        island: &[BodySlabHandle],
+        island: &[Bodies::Handle],
     ) {
         for handle in island {
             let body = try_continue!(bodies.get_mut(*handle));

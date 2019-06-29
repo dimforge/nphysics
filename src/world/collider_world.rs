@@ -40,7 +40,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderWorld<N, Handle> {
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
-    pub fn sync_colliders<Bodies: BodySet<N>>(&mut self, bodies: &Bodies) {
+    pub fn sync_colliders<Bodies: BodySet<N, Handle = Handle>>(&mut self, bodies: &Bodies) {
         let cworld = &mut self.cworld;
         self.colliders_w_parent.retain(|collider_id| {
             // FIXME: update only if the position changed (especially for static bodies).
@@ -231,7 +231,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderWorld<N, Handle> {
     pub fn body_part_colliders(&self, handle: BodyPartHandle<Handle>) -> impl Iterator<Item = &Collider<N, Handle>> {
         self.body_colliders(handle.0).filter(move |co| {
             match co.anchor() {
-                ColliderAnchor::OnBodyPart { body_part, .. } => body_part.is_same(&handle),
+                ColliderAnchor::OnBodyPart { body_part, .. } => *body_part == handle,
                 _ => false
             }
         })

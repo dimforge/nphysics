@@ -52,7 +52,7 @@ pub struct Multibody<N: RealField> {
      * FIXME: we should void explicitly generating those constraints by
      * just iterating on all joints at each step of the resolution.
      */
-    solver_workspace: Option<SolverWorkspace<N, BodySlabHandle>>
+    solver_workspace: Option<SolverWorkspace<N, ()>>
 }
 
 impl<N: RealField> Multibody<N> {
@@ -166,7 +166,7 @@ impl<N: RealField> Multibody<N> {
     fn add_link(
         &mut self,
         parent: BodyPartHandle<BodySlabHandle>,
-        mut dof: Box<Joint<N, BodySlabHandle>>,
+        mut dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
@@ -1086,7 +1086,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
                 // every time.
                 let c = link
                     .joint()
-                    .position_constraint(j, self, link, 0, jacobians.as_mut_slice());
+                    .position_constraint(j, self, link, BodyPartHandle((), i), 0, jacobians.as_mut_slice());
 
                 if let Some(c) = c {
                     // FIXME: the following has been copy-pasted from the NonlinearSORProx.
@@ -1187,7 +1187,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
 pub struct MultibodyDesc<'a, N: RealField> {
     name: String,
     children: Vec<MultibodyDesc<'a, N>>,
-    joint: Box<Joint<N, BodySlabHandle>>,
+    joint: Box<Joint<N>>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
@@ -1198,7 +1198,7 @@ pub struct MultibodyDesc<'a, N: RealField> {
 
 impl<'a, N: RealField> MultibodyDesc<'a, N> {
     /// Initialize a multibody builder with one link with one joint.
-    pub fn new<J: Joint<N, BodySlabHandle>>(joint: J) -> Self {
+    pub fn new<J: Joint<N>>(joint: J) -> Self {
         MultibodyDesc {
             name: String::new(),
             joint: Box::new(joint),
@@ -1213,7 +1213,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     }
 
     /// Add a children link to the multibody link represented by `self`.
-    pub fn add_child<J: Joint<N, BodySlabHandle>>(&mut self, joint: J) -> &mut MultibodyDesc<'a, N> {
+    pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<'a, N> {
         let child = MultibodyDesc::new(joint);
 
         self.children.push(child);
@@ -1221,7 +1221,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     }
 
     /// Sets the joint of this multibody builder.
-    pub fn set_joint<J: Joint<N, BodySlabHandle>>(&mut self, joint: J) -> &mut Self {
+    pub fn set_joint<J: Joint<N>>(&mut self, joint: J) -> &mut Self {
         self.joint = Box::new(joint);
         self
     }

@@ -29,12 +29,7 @@ impl<N: RealField> BallJoint<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for BallJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N, Handle>> {
-        Box::new(*self)
-    }
-
+impl<N: RealField> Joint<N> for BallJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         3
@@ -105,5 +100,10 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for BallJoint<N> {
         let angle = Vector3::from_row_slice(&disp[..3]);
         let disp = UnitQuaternion::new(angle);
         self.rot = disp * self.rot;
+    }
+
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
     }
 }

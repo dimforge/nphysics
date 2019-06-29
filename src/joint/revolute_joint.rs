@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{AngularVector, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody, BodyHandle};
+use crate::object::{MultibodyLink, Multibody, BodyHandle, BodyPartHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 use crate::utils::GeneralizedCross;
 
@@ -176,12 +176,7 @@ impl<N: RealField> RevoluteJoint<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for RevoluteJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N, Handle>> {
-        Box::new(*self)
-    }
-
+impl<N: RealField> Joint<N> for RevoluteJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         1
@@ -247,8 +242,13 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for RevoluteJoint<N> {
         self.jacobian_dot * acc[0]
     }
 
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn num_velocity_constraints(&self) -> usize {
-        joint::unit_joint_num_velocity_constraints::<_, Handle, _>(self)
+        joint::unit_joint_num_velocity_constraints(self)
     }
 
     fn velocity_constraints(
@@ -261,7 +261,7 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for RevoluteJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Handle, usize>,
+        constraints: &mut ConstraintSet<N, (), usize>,
     ) {
         joint::unit_joint_velocity_constraints(
             self,
@@ -290,14 +290,15 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for RevoluteJoint<N> {
         _: usize,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
+        handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
-        joint::unit_joint_position_constraint(self, multibody, link, dof_id, true, jacobians)
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+        joint::unit_joint_position_constraint(self, multibody, link, handle, dof_id, true, jacobians)
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> UnitJoint<N, Handle> for RevoluteJoint<N> {
+impl<N: RealField> UnitJoint<N> for RevoluteJoint<N> {
     fn position(&self) -> N {
         self.angle
     }

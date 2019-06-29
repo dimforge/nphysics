@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody, BodyHandle};
+use crate::object::{MultibodyLink, Multibody, BodyHandle, BodyPart, BodyPartHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A unit joint that allows only one translational degree on freedom.
@@ -27,9 +27,9 @@ impl<N: RealField> PrismaticJoint<N> {
     #[cfg(feature = "dim2")]
     pub fn new(axis: Unit<Vector<N>>, offset: N) -> Self {
         PrismaticJoint {
-            axis: axis,
+            axis,
             jacobian: Velocity::zero(),
-            offset: offset,
+            offset,
             min_offset: None,
             max_offset: None,
             motor: JointMotor::new(),
@@ -137,12 +137,7 @@ impl<N: RealField> PrismaticJoint<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PrismaticJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N, Handle>> {
-        Box::new(*self)
-    }
-
+impl<N: RealField> Joint<N> for PrismaticJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         1
@@ -197,8 +192,13 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PrismaticJoint<N> {
         Velocity::zero()
     }
 
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
+    }
+
     fn num_velocity_constraints(&self) -> usize {
-        joint::unit_joint_num_velocity_constraints::<_, Handle, _>(self)
+        joint::unit_joint_num_velocity_constraints(self)
     }
 
     fn velocity_constraints(
@@ -211,7 +211,7 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PrismaticJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Handle, usize>,
+        constraints: &mut ConstraintSet<N, (), usize>,
     ) {
         joint::unit_joint_velocity_constraints(
             self,
@@ -240,14 +240,15 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for PrismaticJoint<N> {
         _: usize,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
+        handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
-        joint::unit_joint_position_constraint(self, multibody, link, dof_id, false, jacobians)
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+        joint::unit_joint_position_constraint(self, multibody, link, handle, dof_id, false, jacobians)
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> UnitJoint<N, Handle> for PrismaticJoint<N> {
+impl<N: RealField> UnitJoint<N> for PrismaticJoint<N> {
     fn position(&self) -> N {
         self.offset
     }

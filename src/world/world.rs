@@ -38,7 +38,7 @@ pub struct World<N: RealField, Bodies: BodySet<N>> {
     constraints: Slab<Box<JointConstraint<N, BodySlab<N>>>>,
     forces: Slab<Box<ForceGenerator<N, BodySlab<N>>>>,
 
-    cworld: ColliderWorld<N, Bodies::Handle>,
+    cworld: ColliderWorld<N, BodySlabHandle>,
     solver: MoreauJeanSolver<N, Bodies>,
     activation_manager: ActivationManager<N, Bodies::Handle>,
 
@@ -113,7 +113,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     }
 
     /// Set the contact model for all contacts.
-    pub fn set_contact_model<C: ContactModel<N, BodySlab<N>>>(&mut self, model: C) {
+    pub fn set_contact_model<C: ContactModel<N, Bodies>>(&mut self, model: C) {
         self.solver.set_contact_model(Box::new(model))
     }
 
@@ -246,7 +246,11 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     }
 
     /// Execute one time step of the physics simulation.
-    pub fn step<Constraints, Forces>(&mut self, bodies: &mut Bodies, constraints: &mut Constraints, forces: &mut Forces)
+    pub fn step<Constraints, Forces>(&mut self,
+                                     cworld: &mut ColliderWorld<N, Bodies::Handle>,
+                                     bodies: &mut Bodies,
+                                     constraints: &mut Constraints,
+                                     forces: &mut Forces)
     where Constraints: JointConstraintSet<N, Bodies>,
           Forces: ForceGeneratorSet<N, Bodies> {
         if !self.substep.active {
@@ -281,10 +285,10 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
              * Sync colliders and perform CD if the user moved
              * manually some bodies.
              */
-            self.cworld.clear_events();
-            self.cworld.sync_colliders(bodies);
-            self.cworld.perform_broad_phase();
-            self.cworld.perform_narrow_phase();
+            cworld.clear_events();
+            cworld.sync_colliders(bodies);
+            cworld.perform_broad_phase();
+            cworld.perform_narrow_phase();
 
             /*
              *
@@ -297,7 +301,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
             let mut active_bodies = Vec::new();
             self.activation_manager.update(
                 bodies,
-                &self.cworld,
+                cworld,
                 constraints,
                 &mut active_bodies,
             );
@@ -309,7 +313,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
              *
              */
             let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
-            for (c1, c2, _, manifold) in self.cworld.contact_pairs(false) {
+            for (c1, c2, _, manifold) in cworld.contact_pairs(false) {
                 let b1 = try_continue!(bodies.get(c1.body()));
                 let b2 = try_continue!(bodies.get(c2.body()));
 
@@ -344,7 +348,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
                 &active_bodies[..],
                 params,
                 &self.material_coefficients,
-                &self.cworld,
+                cworld,
             );
 
             bodies.foreach_mut(|_, b| {
@@ -396,14 +400,14 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
              *
              */
             self.counters.collision_detection_started();
-            self.cworld.sync_colliders(bodies);
+            cworld.sync_colliders(bodies);
 
             self.counters.broad_phase_started();
-            self.cworld.perform_broad_phase();
+            cworld.perform_broad_phase();
             self.counters.broad_phase_completed();
 
             self.counters.narrow_phase_started();
-            self.cworld.perform_narrow_phase();
+            cworld.perform_narrow_phase();
             self.counters.narrow_phase_completed();
             self.counters.collision_detection_completed();
 
@@ -416,6 +420,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
         }
     }
 
+    /*
     // NOTE: this is an approach very similar to Box2D's.
     fn solve_ccd(&mut self) {
         let dt0 = self.params.dt();
@@ -740,7 +745,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
             }
         }
     }
-
+*/
     /// Remove the specified bodies.
     pub fn remove_bodies(&mut self, handles: &[BodySlabHandle]) {
         for handle in handles {
@@ -859,31 +864,31 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     /// Get a reference to the specified collider.
     ///
     /// Returns `None` if the handle does not correspond to a collider in this world.
-    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N, Bodies::Handle>> {
+    pub fn collider(&self, handle: ColliderHandle) -> Option<&Collider<N, BodySlabHandle>> {
         self.cworld.collider(handle)
     }
 
     /// Get a mutable reference to the specified collider.
     ///
     /// Returns `None` if the handle does not correspond to a collider in this world.
-    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N, Bodies::Handle>> {
+    pub fn collider_mut(&mut self, handle: ColliderHandle) -> Option<&mut Collider<N, BodySlabHandle>> {
         self.cworld.collider_mut(handle)
     }
 
     /// Gets the handle of the body the specified collider is attached to.
-    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<Bodies::Handle> {
+    pub fn collider_body_handle(&self, handle: ColliderHandle) -> Option<BodySlabHandle> {
         self.collider_anchor(handle).map(|anchor| anchor.body())
     }
 
     /// Gets the anchor attaching this collider to a body or body part.
-    pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N, Bodies::Handle>> {
+    pub fn collider_anchor(&self, handle: ColliderHandle) -> Option<&ColliderAnchor<N, BodySlabHandle>> {
         self.cworld
             .collider(handle)
             .map(|co| co.anchor())
     }
 
     /// An iterator through all the colliders on this collision world.
-    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N, Bodies::Handle>> {
+    pub fn colliders(&self) -> impl Iterator<Item = &Collider<N, BodySlabHandle>> {
         self.cworld.colliders()
     }
 

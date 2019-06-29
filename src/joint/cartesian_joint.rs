@@ -18,12 +18,7 @@ impl<N: RealField> CartesianJoint<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for CartesianJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N, Handle>> {
-        Box::new(*self)
-    }
-
+impl<N: RealField> Joint<N> for CartesianJoint<N> {
     #[inline]
     fn ndofs(&self) -> usize {
         DIM
@@ -67,5 +62,10 @@ impl<N: RealField, Handle: BodyHandle> Joint<N, Handle> for CartesianJoint<N> {
 
     fn apply_displacement(&mut self, disp: &[N]) {
         self.position += Vector::from_row_slice(&disp[..DIM]);
+    }
+
+    #[inline]
+    fn clone(&self) -> Box<Joint<N>> {
+        Box::new(*self)
     }
 }
