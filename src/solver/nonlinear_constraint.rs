@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 use ncollide::query::ContactKinematic;
 
 use crate::math::Vector;
-use crate::object::{BodyPartHandle, BodySlab, ColliderHandle, BodySet, BodyHandle};
+use crate::object::{BodyPartHandle, BodySlab, ColliderSlabHandle, BodySet, BodyHandle, ColliderHandle};
 use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
@@ -71,7 +71,7 @@ pub trait NonlinearConstraintGenerator<N: RealField, Bodies: BodySet<N>> {
 
 /// A non-linear position-based non-penetration constraint.
 #[derive(Debug)]
-pub struct NonlinearUnilateralConstraint<N: RealField, Handle: BodyHandle> {
+pub struct NonlinearUnilateralConstraint<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     /// The scaling parameter of the SOR-prox method.
     pub r: N,
     /// The target position change this constraint must apply.
@@ -82,14 +82,14 @@ pub struct NonlinearUnilateralConstraint<N: RealField, Handle: BodyHandle> {
     /// The first body affected by the constraint.
     pub body1: BodyPartHandle<Handle>,
     /// The first collider affected by the constraint.
-    pub collider1: ColliderHandle,
+    pub collider1: CollHandle,
 
     /// Number of degree of freedom of the second body.
     pub ndofs2: usize,
     /// The second body affected by the constraint.
     pub body2: BodyPartHandle<Handle>,
     /// The second collider affected by the constraint.
-    pub collider2: ColliderHandle,
+    pub collider2: CollHandle,
 
     /// The kinematic information used to update the contact location.
     pub kinematic: ContactKinematic<N>,
@@ -100,14 +100,14 @@ pub struct NonlinearUnilateralConstraint<N: RealField, Handle: BodyHandle> {
     pub normal2: Unit<Vector<N>>,
 }
 
-impl<N: RealField, Handle: BodyHandle> NonlinearUnilateralConstraint<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> NonlinearUnilateralConstraint<N, Handle, CollHandle> {
     /// Create a new nonlinear position-based non-penetration constraint.
     pub fn new(
         body1: BodyPartHandle<Handle>,
-        collider1: ColliderHandle,
+        collider1: CollHandle,
         ndofs1: usize,
         body2: BodyPartHandle<Handle>,
-        collider2: ColliderHandle,
+        collider2: CollHandle,
         ndofs2: usize,
         normal1: Unit<Vector<N>>,
         normal2: Unit<Vector<N>>,

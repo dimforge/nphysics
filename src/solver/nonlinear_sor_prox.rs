@@ -4,7 +4,7 @@ use std::ops::MulAssign;
 
 use crate::world::ColliderWorld;
 use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::object::{ColliderAnchor, BodySet, BodyHandle, Body};
+use crate::object::{ColliderAnchor, BodySet, BodyHandle, Body, ColliderHandle, ColliderSet};
 use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
                     NonlinearUnilateralConstraint, GenericNonlinearConstraint};
 use crate::math::Isometry;
@@ -14,11 +14,11 @@ pub(crate) struct NonlinearSORProx;
 
 impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
-    pub fn solve<N: RealField, Bodies: BodySet<N>, Constraints: JointConstraintSet<N, Bodies>>(
+    pub fn solve<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>, Constraints: JointConstraintSet<N, Bodies>>(
         params: &IntegrationParameters<N>,
-        cworld: &ColliderWorld<N, Bodies::Handle>,
         bodies: &mut Bodies,
-        contact_constraints: &mut [NonlinearUnilateralConstraint<N, Bodies::Handle>],
+        colliders: &Colliders,
+        contact_constraints: &mut [NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>],
         joints_constraints: &Constraints,
         internal_constraints: &[Bodies::Handle],
         jacobians: &mut [N],
@@ -39,7 +39,7 @@ impl NonlinearSORProx {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                Self::solve_unilateral(params, cworld, bodies, constraint, jacobians, dim1, dim2);
+                Self::solve_unilateral(params, bodies, colliders, constraint, jacobians, dim1, dim2);
             }
         }
     }
@@ -102,16 +102,16 @@ impl NonlinearSORProx {
         }
     }
 
-    fn solve_unilateral<N: RealField, Bodies: BodySet<N>, D1: Dim, D2: Dim>(
+    fn solve_unilateral<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>, D1: Dim, D2: Dim>(
         params: &IntegrationParameters<N>,
-        cworld: &ColliderWorld<N, Bodies::Handle>,
         bodies: &mut Bodies,
-        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle>,
+        colliders: &Colliders,
+        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
         jacobians: &mut [N],
         dim1: D1,
         dim2: D2,
     ) {
-        if Self::update_contact_constraint(params, cworld, bodies, constraint, jacobians) {
+        if Self::update_contact_constraint(params, bodies, colliders, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
             VectorSliceMutN::from_slice_generic(jacobians, dim1, U1).mul_assign(impulse);
@@ -131,19 +131,19 @@ impl NonlinearSORProx {
         }
     }
 
-    fn update_contact_constraint<N: RealField, Bodies: BodySet<N>>(
+    fn update_contact_constraint<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>>(
         params: &IntegrationParameters<N>,
-        cworld: &ColliderWorld<N, Bodies::Handle>,
         bodies: &Bodies,
-        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle>,
+        colliders: &Colliders,
+        constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
         jacobians: &mut [N],
     ) -> bool {
         let body1 = try_ret!(bodies.get(constraint.body1.0), false);
         let body2 = try_ret!(bodies.get(constraint.body2.0), false);
         let part1 = try_ret!(body1.part(constraint.body1.1), false);
         let part2 = try_ret!(body2.part(constraint.body2.1), false);
-        let collider1 = try_ret!(cworld.collider(constraint.collider1), false);
-        let collider2 = try_ret!(cworld.collider(constraint.collider2), false);
+        let collider1 = try_ret!(colliders.get(constraint.collider1), false);
+        let collider2 = try_ret!(colliders.get(constraint.collider2), false);
 
         let pos1;
         let pos2;

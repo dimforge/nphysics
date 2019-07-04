@@ -3,7 +3,7 @@ use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, Vector3};
 use ncollide::shape::TriMesh;
-use nphysics::object::{ColliderHandle, ColliderAnchor};
+use nphysics::object::{ColliderSlabHandle, ColliderAnchor};
 use nphysics::world::World;
 use crate::objects::node;
 use std::cell::RefCell;
@@ -14,12 +14,12 @@ pub struct Mesh {
     base_color: Point3<f32>,
     delta: Isometry3<f32>,
     gfx: SceneNode,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 impl Mesh {
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
         vertices: Vec<Point3<f32>>,
@@ -107,7 +107,7 @@ impl Mesh {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 }

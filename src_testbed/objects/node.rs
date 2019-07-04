@@ -1,6 +1,6 @@
 use na::Point3;
 use kiss3d::window::Window;
-use nphysics::object::ColliderHandle;
+use nphysics::object::ColliderSlabHandle;
 use nphysics::world::World;
 use nphysics::math::Isometry;
 use crate::objects::ball::Ball;
@@ -124,7 +124,7 @@ impl Node {
         }
     }
 
-    pub fn collider(&self) -> ColliderHandle {
+    pub fn collider(&self) -> ColliderSlabHandle {
         match *self {
             Node::Plane(ref n) => n.object(),
             Node::Ball(ref n) => n.object(),
@@ -158,7 +158,7 @@ impl Node {
 pub fn update_scene_node(
     node: &mut GraphicsNode,
     world: &World<f32>,
-    coll: ColliderHandle,
+    coll: ColliderSlabHandle,
     color: &Point3<f32>,
     delta: &Isometry<f32>,
 ) {

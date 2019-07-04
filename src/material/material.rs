@@ -4,7 +4,7 @@ use std::ops::Deref;
 use na::{self, RealField};
 
 use ncollide::query::TrackedContact;
-use crate::object::{Body, BodyPart, Collider, BodyHandle};
+use crate::object::{Body, BodyPart, Collider, BodyHandle, ColliderHandle};
 use crate::material::MaterialsCoefficientsTable;
 use crate::math::Vector;
 

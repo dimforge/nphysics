@@ -2,7 +2,7 @@ use slab::Slab;
 
 use na::{self, RealField};
 use crate::world::ColliderWorld;
-use crate::object::{Body, BodySlab, BodySet, BodyHandle};
+use crate::object::{Body, BodySlab, BodySet, BodyHandle, ColliderHandle, ColliderSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::utils::union_find::UnionFindSet;
 use crate::utils::union_find;
@@ -60,14 +60,16 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
-    pub fn update<Bodies, Constraints>(
+    pub fn update<Bodies, Colliders, Constraints>(
         &mut self,
         bodies: &mut Bodies,
-        cworld: &ColliderWorld<N, Handle>,
+        colliders: &Colliders,
+        cworld: &ColliderWorld<N, Handle, Colliders::Handle>,
         constraints: &Constraints,
         active_bodies: &mut Vec<Handle>,
     )
         where Bodies: BodySet<N, Handle = Handle>,
+              Colliders: ColliderSet<N, Handle>,
               Constraints: JointConstraintSet<N, Bodies> {
         /*
          *
@@ -145,7 +147,7 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
                 }
         }
 
-        for (c1, c2, _, manifold) in cworld.contact_pairs(false) {
+        for (_, c1, _, c2, _, manifold) in cworld.contact_pairs(colliders, false) {
             if manifold.len() > 0 {
                 make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }

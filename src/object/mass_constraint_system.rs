@@ -17,7 +17,7 @@ use ncollide::shape::TriMesh;
 
 use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, DeformableColliderDesc, BodyDesc,
-                    BodySlab};
+                    BodySlab, ColliderSlabHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -832,6 +832,7 @@ pub struct MassConstraintSystemDesc<'a, N: RealField> {
     gravity_enabled: bool,
 }
 
+/*
 impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
@@ -925,7 +926,7 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
     type Body = MassConstraintSystem<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> MassConstraintSystem<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> MassConstraintSystem<N> {
         let mut vol = match self.geom {
             #[cfg(feature = "dim3")]
             MassConstraintSystemDescGeometry::Quad(nx, ny) => {
@@ -994,3 +995,4 @@ impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
         vol
     }
 }
+*/

@@ -8,8 +8,8 @@ use std::ops::Neg;
 
 use crate::math::{AngularVector, Force, Point, Rotation, Vector};
 use crate::object::{Body, BodyPart, BodyPartHandle, BodyHandle};
-use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
-             GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
+use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry,
+             GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters, LinearConstraints};
 
 /// The direction of a force in world-space.
 #[derive(Copy, Clone, Debug)]
@@ -182,7 +182,7 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, Id>,
+    constraints: &mut LinearConstraints<N, Id>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -213,7 +213,6 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
         constraints
-            .velocity
             .bilateral_ground
             .push(BilateralGroundConstraint::new(
                 geom,
@@ -226,7 +225,6 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N
             ));
     } else {
         constraints
-            .velocity
             .bilateral
             .push(BilateralConstraint::new(
                 geom,
@@ -260,7 +258,7 @@ pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: Bod
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, usize>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let mut i = 0;
     Vector::canonical_basis(|dir| {
@@ -436,7 +434,7 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, Id>,
+    constraints: &mut LinearConstraints<N, Id>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -467,7 +465,6 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
         constraints
-            .velocity
             .bilateral_ground
             .push(BilateralGroundConstraint::new(
                 geom,
@@ -480,7 +477,6 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<
             ));
     } else {
         constraints
-            .velocity
             .bilateral
             .push(BilateralConstraint::new(
                 geom,
@@ -514,7 +510,7 @@ pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: Bo
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, usize>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let mut i = 0;
     AngularVector::canonical_basis(|dir| {
@@ -627,7 +623,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, usize>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -660,7 +656,6 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
-                .velocity
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
@@ -673,7 +668,6 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body
                 ));
         } else {
             constraints
-                .velocity
                 .bilateral
                 .push(BilateralConstraint::new(
                     geom,
@@ -784,7 +778,7 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, usize>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -818,7 +812,6 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
-                .velocity
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
@@ -831,7 +824,6 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<
                 ));
         } else {
             constraints
-                .velocity
                 .bilateral
                 .push(BilateralConstraint::new(
                     geom,

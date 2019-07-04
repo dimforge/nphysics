@@ -5,7 +5,7 @@ use crate::joint::JointConstraint;
 use crate::math::{Point, Vector, DIM};
 use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ForceDirection, ImpulseLimits};
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A spring-like constraint to be used to drag a body part with the mouse.
@@ -66,7 +66,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Handle, usize>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -116,7 +116,6 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
             if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
                 constraints
-                    .velocity
                     .bilateral_ground
                     .push(BilateralGroundConstraint::new(
                         geom,
@@ -129,7 +128,6 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
                     ));
             } else {
                 constraints
-                    .velocity
                     .bilateral
                     .push(BilateralConstraint::new(
                         geom,
@@ -148,7 +146,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         });
     }
 
-    fn cache_impulses(&mut self, _: &ConstraintSet<N, Handle, usize>) {}
+    fn cache_impulses(&mut self, _: &LinearConstraints<N, usize>) {}
 }
 
 impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for MouseConstraint<N, Handle> {

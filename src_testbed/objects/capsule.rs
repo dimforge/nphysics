@@ -1,7 +1,7 @@
 use kiss3d::window;
 use na::Point3;
 use nphysics::world::World;
-use nphysics::object::ColliderHandle;
+use nphysics::object::ColliderSlabHandle;
 use crate::objects::node::{self, GraphicsNode};
 use nphysics::math::Isometry;
 
@@ -10,12 +10,12 @@ pub struct Capsule {
     base_color: Point3<f32>,
     delta: Isometry<f32>,
     gfx: GraphicsNode,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 impl Capsule {
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         r: f32,
@@ -86,7 +86,7 @@ impl Capsule {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 }

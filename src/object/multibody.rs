@@ -11,7 +11,7 @@ use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixM
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
     MultibodyLinkVec, Body, BodyPart, BodySlabHandle, ColliderDesc, BodyDesc, BodySet,
-    BodyHandle, BodySlab,
+    BodyHandle, BodySlab, ColliderSlabHandle, ColliderHandle,
 };
 use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
 use crate::world::{World, ColliderWorld};
@@ -52,7 +52,7 @@ pub struct Multibody<N: RealField> {
      * FIXME: we should void explicitly generating those constraints by
      * just iterating on all joints at each step of the resolution.
      */
-    solver_workspace: Option<SolverWorkspace<N, ()>>
+    solver_workspace: Option<SolverWorkspace<N, (), ()>>
 }
 
 impl<N: RealField> Multibody<N> {
@@ -727,12 +727,12 @@ impl<N: RealField> MultibodyWorkspace<N> {
     }
 }
 
-struct SolverWorkspace<N: RealField, Handle: BodyHandle> {
+struct SolverWorkspace<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     jacobians: DVector<N>,
-    constraints: ConstraintSet<N, Handle, usize>,
+    constraints: ConstraintSet<N, Handle, CollHandle, usize>,
 }
 
-impl<N: RealField, Handle: BodyHandle> SolverWorkspace<N, Handle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> SolverWorkspace<N, Handle, CollHandle> {
     pub fn new() -> Self {
         SolverWorkspace {
             jacobians: DVector::zeros(0),
@@ -1196,6 +1196,7 @@ pub struct MultibodyDesc<'a, N: RealField> {
     parent_shift: Vector<N>
 }
 
+/*
 impl<'a, N: RealField> MultibodyDesc<'a, N> {
     /// Initialize a multibody builder with one link with one joint.
     pub fn new<J: Joint<N>>(joint: J) -> Self {
@@ -1296,7 +1297,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
         }
     }
 
-    fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N, BodySlabHandle>, parent: BodyPartHandle<BodySlabHandle>) -> &'m mut MultibodyLink<N> {
+    fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, parent: BodyPartHandle<BodySlabHandle>) -> &'m mut MultibodyLink<N> {
         let link = mb.add_link(
             parent,
             self.joint.clone(),
@@ -1325,9 +1326,9 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for MultibodyDesc<'a, N> {
     type Body = Multibody<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> Multibody<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> Multibody<N> {
         let mut mb = Multibody::new(handle);
         let _ = self.do_build(&mut mb, cworld, BodyPartHandle::ground());
         mb
     }
-}
+}*/

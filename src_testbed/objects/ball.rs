@@ -2,7 +2,7 @@ use kiss3d::window::Window;
 use na::Point3;
 use nphysics::math::Isometry;
 use nphysics::world::World;
-use nphysics::object::ColliderHandle;
+use nphysics::object::ColliderSlabHandle;
 use crate::objects::node::{self, GraphicsNode};
 
 pub struct Ball {
@@ -10,12 +10,12 @@ pub struct Ball {
     base_color: Point3<f32>,
     delta: Isometry<f32>,
     gfx: GraphicsNode,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 impl Ball {
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         radius: f32,
@@ -86,7 +86,7 @@ impl Ball {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 }

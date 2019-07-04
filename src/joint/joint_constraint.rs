@@ -5,7 +5,7 @@ use slab::Slab;
 use na::{DVector, RealField};
 
 use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
-use crate::solver::{ConstraintSet, IntegrationParameters, NonlinearConstraintGenerator};
+use crate::solver::{LinearConstraints, IntegrationParameters, NonlinearConstraintGenerator};
 
 
 pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
@@ -83,10 +83,10 @@ pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>: NonlinearConstraint
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        velocity_constraints: &mut ConstraintSet<N, Bodies::Handle, usize>,
+        velocity_constraints: &mut LinearConstraints<N, usize>,
     );
     /// Called after velocity constraint resolution, allows the joint to keep a cache of impulses generated for each constraint.
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Bodies::Handle, usize>);
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>);
 }
 
 impl_downcast!(JointConstraint<N, Bodies> where N: RealField, Bodies: BodySet<N>);

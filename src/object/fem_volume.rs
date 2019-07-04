@@ -12,7 +12,7 @@ use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 
 use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     BodyDesc, ActivationStatus, FiniteElementIndices, DeformableColliderDesc,
-                    BodySlab};
+                    BodySlab, ColliderSlabHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, DIM};
 use crate::world::{World, ColliderWorld};
@@ -1038,6 +1038,7 @@ pub struct FEMVolumeDesc<'a, N: RealField> {
     status: BodyStatus
 }
 
+/*
 impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
@@ -1131,7 +1132,7 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for FEMVolumeDesc<'a, N> {
     type Body = FEMVolume<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> FEMVolume<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> FEMVolume<N> {
         let mut vol = match self.geom {
             FEMVolumeDescGeometry::Cube(nx, ny, nz) =>
                 FEMVolume::cube(handle, &self.position, &self.scale,
@@ -1165,4 +1166,4 @@ impl<'a, N: RealField> BodyDesc<N> for FEMVolumeDesc<'a, N> {
 
         vol
     }
-}
+}*/

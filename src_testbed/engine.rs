@@ -19,7 +19,7 @@ use ncollide::shape::{ConvexHull, TriMesh};
 use ncollide::transformation;
 use ncollide::query::Ray;
 use ncollide::pipeline::object::CollisionGroups;
-use nphysics::object::{BodySlabHandle, BodyPartHandle, ColliderHandle, ColliderAnchor};
+use nphysics::object::{BodySlabHandle, BodyPartHandle, ColliderSlabHandle, ColliderAnchor};
 use nphysics::world::World;
 use nphysics::math::{Isometry, Vector, Point};
 use crate::objects::ball::Ball;
@@ -62,10 +62,10 @@ pub struct GraphicsManager {
     rand: StdRng,
     b2sn: HashMap<BodySlabHandle, Vec<Node>>,
     b2color: HashMap<BodySlabHandle, Point3<f32>>,
-    c2color: HashMap<ColliderHandle, Point3<f32>>,
+    c2color: HashMap<ColliderSlabHandle, Point3<f32>>,
     rays: Vec<Ray<f32>>,
     camera: Camera,
-    aabbs: Vec<(ColliderHandle, GraphicsNode)>,
+    aabbs: Vec<(ColliderSlabHandle, GraphicsNode)>,
 }
 
 impl GraphicsManager {
@@ -189,7 +189,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn set_collider_color(&mut self, handle: ColliderHandle, color: Point3<f32>) {
+    pub fn set_collider_color(&mut self, handle: ColliderSlabHandle, color: Point3<f32>) {
         self.c2color.insert(handle, color);
     }
 
@@ -218,7 +218,7 @@ impl GraphicsManager {
         self.rays.push(ray)
     }
 
-    pub fn add(&mut self, window: &mut Window, id: ColliderHandle, world: &World<f32>) {
+    pub fn add(&mut self, window: &mut Window, id: ColliderSlabHandle, world: &World<f32>) {
         let collider = world.collider(id).unwrap();
 
         let color = if let Some(c) = self.c2color.get(&id).cloned() {
@@ -235,7 +235,7 @@ impl GraphicsManager {
     pub fn add_with_color(
         &mut self,
         window: &mut Window,
-        id: ColliderHandle,
+        id: ColliderSlabHandle,
         world: &World<f32>,
         color: Point3<f32>,
     ) {
@@ -256,7 +256,7 @@ impl GraphicsManager {
     fn add_shape(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &Shape<f32>,
@@ -303,7 +303,7 @@ impl GraphicsManager {
     fn add_plane(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         shape: &shape::Plane<f32>,
         color: Point3<f32>,
@@ -322,7 +322,7 @@ impl GraphicsManager {
     fn add_polyline(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &shape::Polyline<f32>,
@@ -347,7 +347,7 @@ impl GraphicsManager {
     fn add_mesh(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &TriMesh<f32>,
@@ -376,7 +376,7 @@ impl GraphicsManager {
     fn add_heightfield(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         heightfield: &shape::HeightField<f32>,
@@ -396,7 +396,7 @@ impl GraphicsManager {
     fn add_capsule(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &shape::Capsule<f32>,
@@ -418,7 +418,7 @@ impl GraphicsManager {
     fn add_ball(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &shape::Ball<f32>,
@@ -439,7 +439,7 @@ impl GraphicsManager {
     fn add_box(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &Cuboid<f32>,
@@ -457,7 +457,7 @@ impl GraphicsManager {
     fn add_convex(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &ConvexPolygon<f32>,
@@ -480,7 +480,7 @@ impl GraphicsManager {
     fn add_convex(
         &mut self,
         window: &mut Window,
-        object: ColliderHandle,
+        object: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         shape: &ConvexHull<f32>,

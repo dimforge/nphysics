@@ -125,7 +125,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, (), usize>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.prism.velocity_constraints(
             params,

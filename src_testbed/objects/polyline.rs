@@ -1,7 +1,7 @@
 use kiss3d::window::Window;
 use na::{Isometry2, Point2, Point3};
 use ncollide2d::shape;
-use nphysics2d::object::{ColliderHandle, ColliderAnchor};
+use nphysics2d::object::{ColliderSlabHandle, ColliderAnchor};
 use nphysics2d::world::World;
 
 pub struct Polyline {
@@ -9,13 +9,13 @@ pub struct Polyline {
     base_color: Point3<f32>,
     vertices: Vec<Point2<f32>>,
     indices: Vec<Point2<usize>>,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
     pos: Isometry2<f32>
 }
 
 impl Polyline {
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         _: Isometry2<f32>,
         vertices: Vec<Point2<f32>>,
@@ -66,7 +66,7 @@ impl Polyline {
         }
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 

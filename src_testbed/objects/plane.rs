@@ -2,7 +2,7 @@ use kiss3d::window::Window;
 #[cfg(feature = "dim3")]
 use na::Vector3;
 use na::Point3;
-use nphysics::object::ColliderHandle;
+use nphysics::object::ColliderSlabHandle;
 use nphysics::world::World;
 #[cfg(feature = "dim2")]
 use nphysics::math::{Point, Vector};
@@ -14,7 +14,7 @@ use num::Zero;
 #[cfg(feature = "dim3")]
 pub struct Plane {
     gfx: GraphicsNode,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 #[cfg(feature = "dim2")]
@@ -23,13 +23,13 @@ pub struct Plane {
     base_color: Point3<f32>,
     position: Point<f32>,
     normal: na::Unit<Vector<f32>>,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 impl Plane {
     #[cfg(feature = "dim2")]
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         position: &Point<f32>,
         normal: &Vector<f32>,
@@ -50,7 +50,7 @@ impl Plane {
 
     #[cfg(feature = "dim3")]
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         world_pos: &Point3<f32>,
         world_normal: &Vector3<f32>,
@@ -117,7 +117,7 @@ impl Plane {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 

@@ -983,6 +983,7 @@ pub struct FEMSurfaceDesc<'a, N: RealField> {
     gravity_enabled: bool,
 }
 
+/*
 impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
@@ -1110,4 +1111,4 @@ impl<'a, N: RealField> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
 
         vol
     }
-}
+}*/

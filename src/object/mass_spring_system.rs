@@ -17,7 +17,7 @@ use ncollide::shape::TriMesh;
 
 use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, BodyDesc, DeformableColliderDesc,
-                    BodySlab};
+                    BodySlab, ColliderSlabHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -815,6 +815,7 @@ pub struct MassSpringSystemDesc<'a, N: RealField> {
     gravity_enabled: bool,
 }
 
+/*
 impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     fn with_geometry(geom: MassSpringSystemDescGeometry<'a, N>) -> Self {
         MassSpringSystemDesc {
@@ -908,7 +909,7 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
     type Body = MassSpringSystem<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> MassSpringSystem<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> MassSpringSystem<N> {
         let mut vol = match self.geom {
             #[cfg(feature = "dim3")]
             MassSpringSystemDescGeometry::Quad(nx, ny) => {
@@ -977,3 +978,4 @@ impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
         vol
     }
 }
+*/

@@ -114,7 +114,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, (), usize>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(

@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use na::RealField;
 use crate::world::ColliderWorld;
-use crate::object::{Body, Ground};
+use crate::object::{Body, Ground, ColliderSlabHandle};
 
 pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {
     fn is_ground(&self) -> bool;
@@ -108,75 +108,13 @@ impl<Handle: BodyHandle> BodyPartHandle<Handle> {
     }
 }
 
-/*
-pub trait AbstractBodySlab<'a, N: RealField> {
-    type BodySlabHandle;
-    type Body: ?Sized + Body<N>;
-    type Bodies: Iterator<Item = &'a Self::Body>;
-    type BodiesMut: Iterator<Item = &'a mut Self::Body>;
-
-    fn add_body(&mut self, body: impl Body<N>) -> &mut Self::Body;
-    fn remove_body(&mut self, key: Self::BodySlabHandle);
-    fn body(&self, handle: Self::BodySlabHandle) -> &Self::Body;
-    fn body_mut(&mut self, handle: Self::BodySlabHandle) -> &mut Self::Body;
-    fn bodies(&self) -> Self::Bodies;
-    fn bodies_mut(&mut self) -> Self::BodiesMut;
-}
-
-impl<'a, N: RealField> AbstractBodySlab<'a, N> for BodySlab<N> {
-    type BodySlabHandle = BodySlabHandle;
-    type Body = Body<N>;
-    type Bodies = Bodies<'a, N>;
-    type BodiesMut = BodiesMut<'a, N>;
-
-    fn add_body(&mut self, mut body: impl Body<N>) -> &mut Self::Body {
-        let b_entry = self.bodies.vacant_entry();
-        let b_id = b_entry.handle();
-        let handle = BodySlabHandle(BodyVariant::AbstractBody(b_id));
-        body.set_handle(Some(handle));
-        &mut **b_entry.insert(body)
-    }
-
-    fn remove_body(&mut self, handle: Self::BodySlabHandle) {
-        match body.0 {
-            BodyVariant::RigidBody(id) => {
-                let _ = self.rbs.remove(id);
-            }
-            BodyVariant::Multibody(id) => {
-                let _ = self.mbs.remove(id);
-            }
-            BodyVariant::AbstractBody(id) => {
-                let _ = self.bodies.remove(id);
-            }
-            BodyVariant::Ground => {}
-        }
-    }
-
-    fn body(&self, handle: Self::BodySlabHandle) -> &Self::Body {
-        unimplemented!()
-    }
-
-    fn body_mut(&mut self, handle: Self::BodySlabHandle) -> &mut Self::Body {
-        unimplemented!()
-    }
-
-    fn bodies(&self) -> Self::Bodies {
-        unimplemented!()
-    }
-
-    fn bodies_mut(&mut self) -> Self::BodiesMut {
-        unimplemented!()
-    }
-}
-*/
-
 /// A abstract body descriptor to be passed to the physics `World` to create a body.
 pub trait BodyDesc<N: RealField> {
     /// The type of body being generated.
     type Body: Body<N>;
 
     /// Called by the `World` to create a body with the given allocated handle.
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> Self::Body;
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> Self::Body;
 }
 
 /// A set containing all the bodies added to the world.
@@ -200,7 +138,7 @@ impl<N: RealField> BodySlab<N> {
     }
 
     /// Adds a body to the world.
-    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N, BodySlabHandle>) -> &mut B::Body {
+    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>) -> &mut B::Body {
         let b_entry = self.bodies.vacant_entry();
         let b_id = b_entry.key();
         let handle = BodySlabHandle(b_id);

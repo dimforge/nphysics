@@ -5,7 +5,7 @@ use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, ANGULAR_DIM, Rotation};
 use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all relative angular motion between two body parts.
@@ -85,7 +85,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Handle, usize>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -101,8 +101,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral.len();
+        let first_bilateral_ground = constraints.bilateral_ground.len();
+        let first_bilateral = constraints.bilateral.len();
 
         helper::cancel_relative_angular_velocity(
             body1,
@@ -125,16 +125,16 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         );
 
         self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
-        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
+            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, usize>) {
-        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+        for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
         }
 
-        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+        for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
         }
     }

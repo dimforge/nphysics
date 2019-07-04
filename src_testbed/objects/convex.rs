@@ -2,7 +2,7 @@ use kiss3d::window::Window;
 use na::Point3;
 #[cfg(feature = "dim3")]
 use ncollide::procedural::TriMesh;
-use nphysics::object::ColliderHandle;
+use nphysics::object::ColliderSlabHandle;
 use nphysics::world::World;
 #[cfg(feature = "dim2")]
 use nphysics::math::Point;
@@ -14,13 +14,13 @@ pub struct Convex {
     base_color: Point3<f32>,
     delta: Isometry<f32>,
     gfx: GraphicsNode,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 impl Convex {
     #[cfg(feature = "dim2")]
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         vertices: Vec<Point<f32>>,
@@ -56,7 +56,7 @@ impl Convex {
 
     #[cfg(feature = "dim3")]
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         convex: &TriMesh<f32>,
@@ -121,7 +121,7 @@ impl Convex {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 }

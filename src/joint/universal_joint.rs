@@ -135,7 +135,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, (), usize>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.revo1.velocity_constraints(
             params,

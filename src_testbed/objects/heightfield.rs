@@ -5,7 +5,7 @@ use nphysics::math::Point;
 use nphysics::math::Isometry;
 #[cfg(feature = "dim3")]
 use nphysics::math::Vector;
-use nphysics::object::{ColliderHandle};
+use nphysics::object::{ColliderSlabHandle};
 use nphysics::world::World;
 use ncollide::shape;
 #[cfg(feature = "dim3")]
@@ -22,13 +22,13 @@ pub struct HeightField {
     vertices: Vec<Point<f32>>,
     #[cfg(feature = "dim3")]
     gfx: GraphicsNode,
-    collider: ColliderHandle,
+    collider: ColliderSlabHandle,
 }
 
 impl HeightField {
     #[cfg(feature = "dim2")]
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         _: Isometry<f32>,
         heightfield: &shape::HeightField<f32>,
@@ -55,7 +55,7 @@ impl HeightField {
 
     #[cfg(feature = "dim3")]
     pub fn new(
-        collider: ColliderHandle,
+        collider: ColliderSlabHandle,
         world: &World<f32>,
         delta: Isometry<f32>,
         heightfield: &shape::HeightField<f32>,
@@ -127,7 +127,7 @@ impl HeightField {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderHandle {
+    pub fn object(&self) -> ColliderSlabHandle {
         self.collider
     }
 

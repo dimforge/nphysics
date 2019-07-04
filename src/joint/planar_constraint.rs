@@ -5,7 +5,7 @@ use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point};
 use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes one relative translational degree of freedom, and all but one rotational degrees of freedom.
@@ -68,7 +68,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, Handle, usize>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
         let body2 = try_ret!(bodies.get(self.b2.0));
@@ -89,8 +89,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral.len();
+        let first_bilateral_ground = constraints.bilateral_ground.len();
+        let first_bilateral = constraints.bilateral.len();
 
         let axis1 = pos1 * self.axis1;
 
@@ -143,12 +143,12 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
          */
 
         self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
-        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
+            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Handle, usize>) {
-        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+        for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id == 0 {
                 self.lin_impulse = c.impulse
             } else {
@@ -156,7 +156,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             }
         }
 
-        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+        for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             if c.impulse_id == 0 {
                 self.lin_impulse = c.impulse
             } else {

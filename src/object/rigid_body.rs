@@ -4,7 +4,7 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
 use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodySlabHandle,
-                    ColliderDesc, BodyDesc, BodyUpdateStatus, BodySlab};
+                    ColliderDesc, BodyDesc, BodyUpdateStatus, BodySlab, ColliderSlabHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::{World, ColliderWorld};
 use crate::utils::{UserData, UserDataBox};
@@ -752,6 +752,7 @@ pub struct RigidBodyDesc<'a, N: RealField> {
     kinematic_rotation: bool,
 }
 
+/*
 impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     /// A default rigid body builder.
     pub fn new() -> RigidBodyDesc<'a, N> {
@@ -848,7 +849,7 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
     type Body = RigidBody<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle>, handle: BodySlabHandle) -> RigidBody<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> RigidBody<N> {
         let mut rb = RigidBody::new(handle, self.position);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);
@@ -876,4 +877,4 @@ impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
 
         rb
     }
-}
+}*/

@@ -99,7 +99,7 @@ impl<N: RealField> Joint<N> for RectangularJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N, (), usize>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.prism1.velocity_constraints(
             params,

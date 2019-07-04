@@ -2,7 +2,7 @@ use na::{DVector, RealField, Unit};
 
 use crate::math::{Point, Vector};
 use crate::object::{Body, BodyPart, BodyPartHandle, BodyHandle};
-use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
+use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, LinearConstraints,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
 pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
@@ -25,7 +25,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N, H, usize>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let offset = axis.dot(&(anchor2 - anchor1));
 
@@ -98,7 +98,6 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
         constraints
-            .velocity
             .bilateral_ground
             .push(BilateralGroundConstraint::new(
                 geom,
@@ -111,7 +110,6 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
             ));
     } else {
         constraints
-            .velocity
             .bilateral
             .push(BilateralConstraint::new(
                 geom,
