@@ -4,7 +4,7 @@ use std::ops::Range;
 use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
-use crate::object::{BodySlab, Body, BodyPart, BodyPartHandle, BodySet, BodyHandle, ColliderHandle};
+use crate::object::{DefaultBodySet, Body, BodyPart, BodyPartHandle, BodySet, BodyHandle, ColliderHandle};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable, LocalMaterialProperties};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,
@@ -31,7 +31,7 @@ impl<N: RealField> SignoriniModel<N> {
 
     /// Build a non-penetration velocity-based constraint for the given contact.
     pub fn build_velocity_constraint<B: Body<N> + ?Sized, Handle: BodyHandle, CollHandle: ColliderHandle>(
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         body1: &B,
         part1: &BodyPart<N>,
         handle1: BodyPartHandle<Handle>,
@@ -81,7 +81,7 @@ impl<N: RealField> SignoriniModel<N> {
 //        println!("rhs before: {}", rhs);
 
         // Handle restitution.
-        if rhs <= -params.restitution_velocity_threshold {
+        if rhs <= -parameters.restitution_velocity_threshold {
             rhs += props.restitution.0 * rhs;
         }
 
@@ -91,7 +91,7 @@ impl<N: RealField> SignoriniModel<N> {
         // Handle predictive contact if no penetration.
         let depth = c.contact.depth + data1.margin() + data2.margin();
         if depth < N::zero() {
-            rhs += (-depth) * params.inv_dt();
+            rhs += (-depth) * parameters.inv_dt();
         }
 
 //        println!("rhs after 2: {}", rhs);
@@ -100,7 +100,7 @@ impl<N: RealField> SignoriniModel<N> {
         // FIXME: would it be more efficient to consider the contact active iff. the rhs
         // is still negative at this point?
 
-        let warmstart = impulse * params.warmstart_coeff;
+        let warmstart = impulse * parameters.warmstart_coeff;
         if geom.is_ground_constraint() {
             constraints
                 .velocity
@@ -200,7 +200,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
     fn constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &Bodies,
         ext_vels: &DVector<N>,
@@ -229,12 +229,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(manifold.collider1, c, true);
-                let context2 = MaterialContext::new(manifold.collider2, c, false);
+                let context1 = MaterialContext::new(&**manifold.collider1.shape(), manifold.collider1.position(), c, true);
+                let context2 = MaterialContext::new(&**manifold.collider2.shape(), manifold.collider2.position(), c, false);
                 let props = Material::combine(coefficients, material1, context1, material2, context2);
 
                 let _ = Self::build_velocity_constraint(
-                    params,
+                    parameters,
                     body1,
                     part1,
                     handle1,

@@ -1,6 +1,7 @@
 use na::RealField;
+use std::sync::Arc;
 
-use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties};
+use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties, MaterialHandle};
 use crate::object::BodyHandle;
 use crate::math::Vector;
 
@@ -29,7 +30,6 @@ pub struct BasicMaterial<N: RealField> {
     pub friction_combine_mode: MaterialCombineMode,
 }
 
-
 impl<N: RealField> BasicMaterial<N> {
     /// Initialize a material with the specified restitution and friction coefficients.
     pub fn new(restitution: N, friction: N) -> Self {
@@ -44,13 +44,13 @@ impl<N: RealField> BasicMaterial<N> {
     }
 }
 
-impl<N: RealField, Handle: BodyHandle> Material<N, Handle> for BasicMaterial<N> {
-    fn local_properties(&self, context: MaterialContext<N, Handle>) -> LocalMaterialProperties<N> {
+impl<N: RealField> Material<N> for BasicMaterial<N> {
+    fn local_properties(&self, context: MaterialContext<N>) -> LocalMaterialProperties<N> {
         LocalMaterialProperties {
             id: self.id,
             restitution: (self.restitution, self.restitution_combine_mode),
             friction: (self.friction, self.friction_combine_mode),
-            surface_velocity: self.surface_velocity.map(|v| context.collider.position() * v).unwrap_or(Vector::zeros()),
+            surface_velocity: self.surface_velocity.map(|v| context.position * v).unwrap_or(Vector::zeros()),
         }
     }
 }

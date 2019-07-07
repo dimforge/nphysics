@@ -293,7 +293,7 @@ pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: Bod
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -314,7 +314,7 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H
         ForceDirection::Linear(*axis)
     };
 
-    if depth > params.allowed_linear_error {
+    if depth > parameters.allowed_linear_error {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -359,7 +359,7 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -372,7 +372,7 @@ pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHan
 ) -> Option<GenericNonlinearConstraint<N, H>> {
     let error = anchor2 - anchor1;
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_linear_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -545,7 +545,7 @@ pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: Bo
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -560,7 +560,7 @@ pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle
 ) -> Option<GenericNonlinearConstraint<N, H>> {
     let error = (rotation2 / rotation1).scaled_axis();
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_angular_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -691,7 +691,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
 pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -716,7 +716,7 @@ pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
         error = error.cross(&axis1).normalize() * N::pi();
     }
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_angular_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -846,7 +846,7 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<
 ///
 /// All inputs mut be given in world-space.
 pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -863,7 +863,7 @@ pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     let proj = anchor1 + axis1.into_inner() * axis1.dot(&dpt);
     let error = anchor2 - proj;
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_linear_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -909,7 +909,7 @@ pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
 pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -943,7 +943,7 @@ pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHand
             dir = -dir;
         }
 
-        if error < params.allowed_angular_error {
+        if error < parameters.allowed_angular_error {
             return None;
         }
 

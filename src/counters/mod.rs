@@ -13,7 +13,7 @@ mod stages_counters;
 mod timer;
 
 /// Aggregation of all the performances counters tracked by nphysics.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Counters {
     enabled: bool,
     step_time: Timer,

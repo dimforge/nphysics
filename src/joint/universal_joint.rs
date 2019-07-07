@@ -105,9 +105,9 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         self.revo2.default_damping(&mut out.rows_mut(1, 1));
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.revo1.integrate(params, vels);
-        self.revo2.integrate(params, &[vels[1]]);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.revo1.integrate(parameters, vels);
+        self.revo2.integrate(parameters, &[vels[1]]);
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -127,7 +127,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -138,7 +138,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
         constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.revo1.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -149,7 +149,7 @@ impl<N: RealField> Joint<N> for UniversalJoint<N> {
             constraints,
         );
         self.revo2.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,

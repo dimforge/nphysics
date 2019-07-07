@@ -4,13 +4,13 @@ use na::RealField;
 
 use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyPart, BodySlabHandle};
+use crate::object::{BodyPartHandle, BodyPart, DefaultBodyHandle};
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: RealField> {
     pub(crate) name: String,
     // FIXME: make all those private.
-    pub(crate) multibody_handle: BodySlabHandle,
+    pub(crate) multibody_handle: DefaultBodyHandle,
     pub(crate) internal_id: usize,
     pub(crate) assembly_id: usize,
     pub(crate) impulse_id: usize,
@@ -48,7 +48,7 @@ impl<N: RealField> MultibodyLink<N> {
         internal_id: usize,
         assembly_id: usize,
         impulse_id: usize,
-        multibody_handle: BodySlabHandle,
+        multibody_handle: DefaultBodyHandle,
         parent_internal_id: usize,
         dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
@@ -122,7 +122,7 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// The handle of this multibody link.
     #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle<BodySlabHandle> {
+    pub fn part_handle(&self) -> BodyPartHandle<DefaultBodyHandle> {
         BodyPartHandle(self.multibody_handle, self.internal_id)
     }
 }

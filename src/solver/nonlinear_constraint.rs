@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 use ncollide::query::ContactKinematic;
 
 use crate::math::Vector;
-use crate::object::{BodyPartHandle, BodySlab, ColliderSlabHandle, BodySet, BodyHandle, ColliderHandle};
+use crate::object::{BodyPartHandle, DefaultBodySet, DefaultColliderHandle, BodySet, BodyHandle, ColliderHandle};
 use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.
@@ -62,7 +62,7 @@ pub trait NonlinearConstraintGenerator<N: RealField, Bodies: BodySet<N>> {
     /// Generate the `i`-th position constraint of this generator.
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],

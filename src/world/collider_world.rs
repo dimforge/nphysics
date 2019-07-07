@@ -1,20 +1,25 @@
 use std::collections::{hash_map, HashMap};
+use smallvec::SmallVec;
 
 use na::RealField;
 use ncollide::pipeline::world::CollisionWorld;
+use ncollide::pipeline::narrow_phase::{DefaultProximityDispatcher, DefaultContactDispatcher};
+use ncollide::pipeline::broad_phase::DBVTBroadPhase;
 use ncollide::pipeline::object::{GeometricQueryType, CollisionGroups};
-use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter};
-use ncollide::narrow_phase::{InteractionGraph, Interaction, ContactAlgorithm, ProximityAlgorithm, NarrowPhase, ContactEvents, ProximityEvents};
+use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter, BroadPhaseProxyHandle};
+use ncollide::narrow_phase::{InteractionGraph, Interaction, ContactAlgorithm, ProximityAlgorithm, NarrowPhase, ContactEvents, ProximityEvents, CollisionObjectGraphIndex};
 use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
-use ncollide::shape::ShapeHandle;
+use ncollide::shape::{ShapeHandle, Shape};
 use ncollide::bounding_volume::AABB;
 use ncollide::pipeline::glue;
 
-use crate::object::{Collider, ColliderData, ColliderHandle, ColliderAnchor, ColliderSet,
-                    BodySet, BodySlabHandle, BodyPartHandle, Body, BodyHandle};
+use crate::object::{Collider, ColliderData, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
+                    ColliderSet, BodySet, DefaultBodyHandle, BodyPartHandle, Body, BodyHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
 use crate::math::{Isometry, Point};
+use num::real::Real;
 
+pub type DefaultColliderWorld<N> = ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
 
 /// The world managing all geometric queries.
 ///
@@ -27,49 +32,74 @@ pub struct ColliderWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderH
     pub(crate) narrow_phase: NarrowPhase<N, CollHandle>,
     /// The graph of interactions detected so far.
     pub(crate) interactions: InteractionGraph<N, CollHandle>,
-//    /// A user-defined broad-phase pair filter.
-//    pub pair_filters: Option<Box<for <'a> BroadPhasePairFilter<N, &'a Collider<N, T>>>>,
-    collider_lists: HashMap<Handle, (CollHandle, CollHandle)>, // (head, tail)
-    colliders_w_parent: Vec<CollHandle>,
-    default_material: MaterialHandle<N, Handle>
+    /// A user-defined broad-phase pair filter.
+    // FIXME: we don't actually use this currently.
+    pub(crate) pair_filters: Option<Box<BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
 }
 
 impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld<N, Handle, CollHandle> {
+    pub fn from_parts<BF>(mut broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
+        where BF: BroadPhase<N, AABB<N>, CollHandle> {
+
+        ColliderWorld {
+            broad_phase: Box::new(broad_phase),
+            narrow_phase,
+            interactions: InteractionGraph::new(),
+            pair_filters: None
+        }
+    }
+
     /// Creates a new collision world.
     // FIXME: use default values for `margin` and allow its modification by the user ?
-    pub fn new(margin: N) -> Self {
-        unimplemented!()
-//        let mut cworld = CollisionWorld::new(margin);
-//        cworld.set_broad_phase_pair_filter(Some(BodyStatusCollisionFilter));
-//
-//        ColliderWorld {
-//            collider_lists: HashMap::new(),
-//            colliders_w_parent: Vec::new(),
-//            default_material: MaterialHandle::new(BasicMaterial::default())
-//        }
+    pub fn new() -> Self {
+        let coll_dispatcher = Box::new(DefaultContactDispatcher::new());
+        let prox_dispatcher = Box::new(DefaultProximityDispatcher::new());
+        let broad_phase = DBVTBroadPhase::new(na::convert(0.01));
+        let narrow_phase = NarrowPhase::new(coll_dispatcher, prox_dispatcher);
+        Self::from_parts(broad_phase, narrow_phase)
+
+    }
+
+    pub fn register_collider(&mut self, handle: CollHandle, collider: &mut Collider<N, Handle>) {
+        assert!(collider.proxy_handle().is_none(), "Cannot register a collider that is already registered.");
+        assert!(collider.graph_index().is_none(), "Cannot register a collider that is already registered.");
+
+        let proxies = glue::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), &**collider.shape(), collider.query_type());
+
+        collider.set_proxy_handle(Some(proxies.0));
+        collider.set_graph_index(Some(proxies.1));
+    }
+
+    pub fn unregister_collider<Colliders>(&mut self, colliders: &mut Colliders, to_remove: &mut Collider<N, Handle>)
+        where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+        let proxy_handle = to_remove.proxy_handle().expect("Attempting to unregister a collider which is not yet registered.");
+        let graph_index = to_remove.graph_index().expect("Attempting to unregister a collider which is not yet registered.");
+
+        if let Some(to_change) = glue::remove_proxies(&mut *self.broad_phase, &mut self.interactions, proxy_handle, graph_index) {
+            let c = colliders.get_mut(to_change.0).expect("Found a handle to a collider that does not exist.");
+            c.set_graph_index(Some(to_change.1));
+        }
+
+        to_remove.set_proxy_handle(None);
+        to_remove.set_graph_index(None);
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
     pub fn sync_colliders<Bodies, Colliders>(&mut self, bodies: &Bodies, colliders: &mut Colliders)
         where Bodies: BodySet<N, Handle = Handle>,
               Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
-        unimplemented!()
-        /*
         colliders.foreach_mut(|collider_id, collider| {
-            // FIXME: update only if the position changed (especially for static bodies).
-            let body = try_ret!(bodies.get(collider.data().body()));
+            let body = try_ret!(bodies.get(collider.body()));
 
-            collider
-                .data_mut()
-                .set_body_status_dependent_ndofs(body.status_dependent_ndofs());
+            collider.set_body_status_dependent_ndofs(body.status_dependent_ndofs());
 
-            if !body.is_active() || !body.update_status().colliders_need_update() {
-                return true;
+            if !body.update_status().colliders_need_update() {
+                return;
             }
 
-            let new_pos = match collider.data().anchor() {
+            let new_pos = match collider.anchor() {
                 ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
-                    let part = try_ret!(body.part(body_part.1), false);
+                    let part = try_ret!(body.part(body_part.1));
                     let part_pos1 = part.safe_position();
                     let part_pos2 = part.position();
                     Some((part_pos1 * position_wrt_body_part, part_pos2 * position_wrt_body_part))
@@ -80,18 +110,10 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
             };
 
             match new_pos {
-                Some(pos) => cworld.set_position(*collider_id, pos.1), // XXX: cworld.set_position_with_prediction(*collider_id, pos.0, &pos.1),
-                None => cworld.set_deformations(*collider_id, body.deformed_positions().unwrap().1)
+                Some(pos) => collider.set_position(pos.1), // XXX: cworld.set_position_with_prediction(*collider_id, pos.0, &pos.1),
+                None => collider.set_deformations(body.deformed_positions().unwrap().1)
             }
-
-            true
         });
-        */
-    }
-
-    /// The material given to colliders without user-defined materials.
-    pub fn default_material(&self) -> MaterialHandle<N, Handle> {
-        self.default_material.clone()
     }
 
     /*
@@ -254,7 +276,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
             &mut *self.broad_phase,
             &mut self.narrow_phase,
             &mut self.interactions,
-            None::<&()>,
+            None::<&BodyStatusCollisionFilter>,
 //            self.pair_filters.as_ref().map(|f| &**f)
         )
     }
@@ -264,61 +286,57 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
         glue::perform_narrow_phase(colliders, &mut self.narrow_phase, &mut self.interactions)
     }
-/*
+
     /// The broad-phase used by this collider world.
     pub fn broad_phase(&self) -> &BroadPhase<N, AABB<N>, CollHandle> {
-        &*self.cworld.broad_phase
+        &*self.broad_phase
     }
 
-    /// The broad-phase AABB used for this collider.
-    pub fn broad_phase_aabb(&self, handle: CollHandle) -> Option<&AABB<N>> {
-        self.cworld.broad_phase_aabb(handle)
-    }
-
-    /*
     /// Computes the interferences between every rigid bodies on this world and a ray.
     #[inline]
-    pub fn interferences_with_ray<'a>(
+    pub fn interferences_with_ray<'a, 'b, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
         &'a self,
-        ray: &'a Ray<N>,
-        groups: &'a CollisionGroups,
-    ) -> impl Iterator<Item = (&'a Collider<N, Handle>, RayIntersection<N>)>
+        colliders: &'a Colliders,
+        ray: &'b Ray<N>,
+        groups: &'b CollisionGroups,
+    ) -> glue::InterferencesWithRay<'a, 'b, N, Colliders>
     {
-        self.cworld.interferences_with_ray(ray, groups).map(|res| (Collider::from_ref(res.0), res.1))
+        glue::interferences_with_ray(&colliders, &*self.broad_phase, ray, groups)
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a point.
     #[inline]
-    pub fn interferences_with_point<'a>(
+    pub fn interferences_with_point<'a, 'b, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
         &'a self,
-        point: &'a Point<N>,
-        groups: &'a CollisionGroups,
-    ) -> impl Iterator<Item = &'a Collider<N, Handle>>
+        colliders: &'a Colliders,
+        point: &'b Point<N>,
+        groups: &'b CollisionGroups,
+    ) -> glue::InterferencesWithPoint<'a, 'b, N, Colliders>
     {
-        self.cworld.interferences_with_point(point, groups).map(|co| Collider::from_ref(co))
+        glue::interferences_with_point(&colliders, &*self.broad_phase, point, groups)
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a aabb.
     #[inline]
-    pub fn interferences_with_aabb<'a>(
+    pub fn interferences_with_aabb<'a, 'b, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(
         &'a self,
-        aabb: &'a AABB<N>,
-        groups: &'a CollisionGroups,
-    ) -> impl Iterator<Item = &'a Collider<N, Handle>>
+        colliders: &'a Colliders,
+        aabb: &'b AABB<N>,
+        groups: &'b CollisionGroups,
+    ) -> glue::InterferencesWithAABB<'a, 'b, N, Colliders>
     {
-        self.cworld.interferences_with_aabb(aabb, groups).map(|co| Collider::from_ref(co))
+        glue::interferences_with_aabb(&colliders, &*self.broad_phase, aabb, groups)
     }
-    */
 
     /// The contact events pool.
     pub fn contact_events(&self) -> &ContactEvents<CollHandle> {
-        self.cworld.contact_events()
+        self.narrow_phase.contact_events()
     }
 
     /// The proximity events pool.
     pub fn proximity_events(&self) -> &ProximityEvents<CollHandle> {
-        self.cworld.proximity_events()
-    }*/
+        self.narrow_phase.proximity_events()
+    }
 
     /*
      *
@@ -432,8 +450,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// for details.
     pub fn interaction_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
                             -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a Interaction<N>)> {
-        let id1 = colliders.get(handle1)?.graph_index();
-        let id2 = colliders.get(handle2)?.graph_index();
+        let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
+        let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
 
         self.interactions.interaction_pair(id1, id2, false).and_then(move |inter| {
             let c1 = colliders.get(inter.0)?;
@@ -453,8 +471,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// for details.
     pub fn contact_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
                         -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)> {
-        let id1 = colliders.get(handle1)?.graph_index();
-        let id2 = colliders.get(handle2)?.graph_index();
+        let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
+        let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
 
         self.interactions.contact_pair(id1, id2, false).and_then(move |inter| {
             let c1 = colliders.get(inter.0)?;
@@ -473,8 +491,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// for details.
     pub fn proximity_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
                           -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ProximityAlgorithm<N>)> {
-        let id1 = colliders.get(handle1)?.graph_index();
-        let id2 = colliders.get(handle2)?.graph_index();
+        let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
+        let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
 
         self.interactions.proximity_pair(id1, id2, effective_only).and_then(move |prox| {
             Some((prox.0, colliders.get(prox.0)?, prox.1, colliders.get(prox.1)?, prox.2))
@@ -487,7 +505,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// for details.
     pub fn interactions_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
                              -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a Interaction<N>)>> {
-        let idx = colliders.get(handle)?.graph_index();
+        let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
         Some(self.filter_interactions(colliders, self.interactions.interactions_with(idx, false), effective_only))
     }
 
@@ -497,7 +515,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// for details.
     pub fn contacts_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
                          -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ContactAlgorithm<N>, &'a ContactManifold<N>)>> {
-        let idx = colliders.get(handle)?.graph_index();
+        let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
         Some(self.filter_contacts(colliders, self.interactions.contacts_with(idx, false), effective_only))
     }
 
@@ -507,7 +525,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// for details.
     pub fn proximities_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
                             -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ProximityAlgorithm<N>)>> {
-        let idx = colliders.get(handle)?.graph_index();
+        let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
         Some(self.filter_proximities(colliders, self.interactions.proximities_with(idx, effective_only)))
     }
 
@@ -549,9 +567,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
 
 struct BodyStatusCollisionFilter;
 
-impl<'a, N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> BroadPhasePairFilter<N, &'a Collider<N, Handle>, CollHandle> for BodyStatusCollisionFilter {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle> for BodyStatusCollisionFilter {
     /// Activate an action for when two objects start or stop to be close to each other.
-    fn is_pair_valid(&self, c1: &'a Collider<N, Handle>, c2: &'a Collider<N, Handle>, _: CollHandle, _: CollHandle) -> bool {
-        c1.0.data().body_status_dependent_ndofs() != 0 || c2.0.data().body_status_dependent_ndofs() != 0
+    fn is_pair_valid(&self, c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, _: CollHandle, _: CollHandle) -> bool {
+        c1.body_status_dependent_ndofs() != 0 || c2.body_status_dependent_ndofs() != 0
     }
 }

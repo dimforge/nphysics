@@ -51,7 +51,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
     fn constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &Bodies,
         ext_vels: &DVector<N>,
@@ -78,8 +78,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(manifold.collider1, c, true);
-                let context2 = MaterialContext::new(manifold.collider2, c, false);
+                let context1 = MaterialContext::new(&**manifold.collider1.shape(), manifold.collider1.position(), c, true);
+                let context2 = MaterialContext::new(&**manifold.collider2.shape(), manifold.collider2.position(), c, false);
                 let props = Material::combine(coefficients, material1, context1, material2, context2);
 
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
@@ -89,7 +89,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
                 let impulse = self.impulses.get(c.id).cloned().unwrap_or(Vector::zeros());
 
                 let ground_constraint = SignoriniModel::build_velocity_constraint(
-                    params,
+                    parameters,
                     body1,
                     part1,
                     handle1,
@@ -161,7 +161,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
                         Some(&mut rhs)
                     );
 
-                    let warmstart = impulse[i] * params.warmstart_coeff;
+                    let warmstart = impulse[i] * parameters.warmstart_coeff;
 
                     if geom.is_ground_constraint() {
                         let constraint = BilateralGroundConstraint::new(

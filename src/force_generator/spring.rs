@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 
 use crate::force_generator::ForceGenerator;
 use crate::math::{ForceType, Point, Vector};
-use crate::object::{BodyPartHandle, BodyHandle, BodySlab, BodySet, Body};
+use crate::object::{BodyPartHandle, BodyHandle, DefaultBodySet, BodySet, Body};
 use crate::solver::IntegrationParameters;
 
 /// Generator of a force proportional to the distance separating two bodies.

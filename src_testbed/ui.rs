@@ -1,7 +1,7 @@
 use kiss3d::window::Window;
 use kiss3d::conrod::{self, Widget, Positionable, Sizeable, Colorable, Labelable, Borderable};
-use nphysics::world::World;
 
+use nphysics::world::DefaultDynamicWorld;
 use crate::testbed::{TestbedState, RunMode, TestbedStateFlags, TestbedActionFlags};
 
 
@@ -85,7 +85,7 @@ impl TestbedUi {
         }
     }
 
-    pub fn update(&mut self, window: &mut Window, world: &mut World<f32>, state: &mut TestbedState) {
+    pub fn update(&mut self, window: &mut Window, world: &mut DefaultDynamicWorld<f32>, state: &mut TestbedState) {
         let ui_root = window.conrod_ui().window;
         let mut ui = window.conrod_ui_mut().set_widgets();
         conrod::widget::Canvas::new()
@@ -157,10 +157,10 @@ impl TestbedUi {
         }
 
 
-        let curr_vel_iters = world.integration_parameters().max_velocity_iterations;
-        let curr_pos_iters = world.integration_parameters().max_position_iterations;
-        let curr_warmstart_coeff = world.integration_parameters().warmstart_coeff;
-        let curr_frequency = world.integration_parameters().inv_dt().round() as usize;
+        let curr_vel_iters = world.parameters.max_velocity_iterations;
+        let curr_pos_iters = world.parameters.max_position_iterations;
+        let curr_warmstart_coeff = world.parameters.warmstart_coeff;
+        let curr_frequency = world.parameters.inv_dt().round() as usize;
 
 
         conrod::widget::Text::new("Vel. Iters.:")
@@ -173,7 +173,7 @@ impl TestbedUi {
             .down_from(self.ids.title_slider_vel_iter, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_vel_iter, &mut ui) {
-            world.integration_parameters_mut().max_velocity_iterations = val as usize;
+            world.parameters.max_velocity_iterations = val as usize;
         }
 
 
@@ -187,7 +187,7 @@ impl TestbedUi {
             .down_from(self.ids.title_slider_pos_iter, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_pos_iter, &mut ui) {
-            world.integration_parameters_mut().max_position_iterations = val as usize;
+            world.parameters.max_position_iterations = val as usize;
         }
 
 
@@ -202,7 +202,7 @@ impl TestbedUi {
             .down_from(self.ids.title_warmstart_coeff, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_warmstart_coeff, &mut ui) {
-            world.integration_parameters_mut().warmstart_coeff = val;
+            world.parameters.warmstart_coeff = val;
         }
 
 
@@ -216,7 +216,7 @@ impl TestbedUi {
             .down_from(self.ids.title_frequency, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_frequency, &mut ui) {
-            world.integration_parameters_mut().set_inv_dt(val.round());
+            world.parameters.set_inv_dt(val.round());
         }
 
         let toggle_list = [

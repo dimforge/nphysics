@@ -15,19 +15,19 @@ use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
 
-use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+use crate::object::{Body, BodyPart, DefaultBodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, BodyDesc, DeformableColliderDesc,
-                    BodySlab, ColliderSlabHandle};
+                    DefaultBodySet, DefaultColliderHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
-use crate::world::{World, ColliderWorld};
+use crate::world::ColliderWorld;
 use crate::utils::{UserData, UserDataBox};
 
 /// An element of the mass-spring system.
 #[derive(Clone)]
 pub struct MassSpringElement<N: RealField> {
-    handle: BodyPartHandle<BodySlabHandle>,
+    handle: BodyPartHandle<DefaultBodyHandle>,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>
 }
@@ -65,7 +65,7 @@ impl<N: RealField> Spring<N> {
 /// A deformable surface using a mass-spring model with triangular elements.
 pub struct MassSpringSystem<N: RealField> {
     name: String,
-    handle: BodySlabHandle,
+    handle: DefaultBodyHandle,
     springs: Vec<Spring<N>>,
     elements: Vec<MassSpringElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -106,7 +106,7 @@ impl<N: RealField> MassSpringSystem<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     #[cfg(feature = "dim3")]
-    fn from_trimesh(handle: BodySlabHandle, mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn from_trimesh(handle: DefaultBodyHandle, mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -169,7 +169,7 @@ impl<N: RealField> MassSpringSystem<N> {
     user_data_accessors!();
 
     /// Builds a mass-spring system from a polyline.
-    fn from_polyline(handle: BodySlabHandle, polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn from_polyline(handle: DefaultBodyHandle, polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = polyline.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(polyline.edges().len());
@@ -226,7 +226,7 @@ impl<N: RealField> MassSpringSystem<N> {
 
     /// Creates a rectangular quad.
     #[cfg(feature = "dim3")]
-    fn quad(handle: BodySlabHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn quad(handle: DefaultBodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
@@ -245,7 +245,7 @@ impl<N: RealField> MassSpringSystem<N> {
     }
 
     /// The handle of this mass-spring system.
-    pub fn handle(&self) -> BodySlabHandle {
+    pub fn handle(&self) -> DefaultBodyHandle {
         self.handle
     }
 
@@ -358,7 +358,7 @@ impl<N: RealField> MassSpringSystem<N> {
                 // Also the damping matrix would be non-zero:
                 //
                 // let damping_matrix = ll * damping;
-                // let damping_stiffness = -damping_matrix * params.dt() + stiffness * (params.dt() * params.dt()).
+                // let damping_stiffness = -damping_matrix * parameters.dt() + stiffness * (parameters.dt() * parameters.dt()).
 
                 // Add to the mass matrix.
                 let damping_stiffness = stiffness * (dt * dt);
@@ -390,7 +390,7 @@ impl<N: RealField> MassSpringSystem<N> {
         self.inv_augmented_mass = Cholesky::new(self.augmented_mass.clone()).unwrap();
     }
 
-    fn update_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn update_forces(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>) {
         self.accelerations.copy_from(&self.forces);
 
         for spring in &mut self.springs {
@@ -411,7 +411,7 @@ impl<N: RealField> MassSpringSystem<N> {
             let strain = total_strain - spring.plastic_strain;
 
             if strain.abs() > self.plasticity_threshold {
-                let coeff = params.dt() * params.inv_dt().min(self.plasticity_creep);
+                let coeff = parameters.dt() * parameters.inv_dt().min(self.plasticity_creep);
                 spring.plastic_strain += strain * coeff;
             }
 
@@ -514,8 +514,8 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         }
     }
 
-    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
-        self.update_forces(gravity, params);
+    fn update_acceleration(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>) {
+        self.update_forces(gravity, parameters);
     }
 
     fn clear_forces(&mut self) {
@@ -579,9 +579,9 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), len)
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>) {
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(params.dt(), &self.velocities, N::one());
+        self.positions.axpy(parameters.dt(), &self.velocities, N::one());
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -901,7 +901,7 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     );
 
     /// Builds a mass-spring system.
-    pub fn build<'w>(&self, world: &'w mut World<N, BodySlab<N>>) -> &'w mut MassSpringSystem<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut MassSpringSystem<N> {
         world.add_body(self)
     }
 }
@@ -909,7 +909,7 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
     type Body = MassSpringSystem<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> MassSpringSystem<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> MassSpringSystem<N> {
         let mut vol = match self.geom {
             #[cfg(feature = "dim3")]
             MassSpringSystemDescGeometry::Quad(nx, ny) => {

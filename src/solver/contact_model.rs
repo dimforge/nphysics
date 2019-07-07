@@ -16,7 +16,7 @@ pub trait ContactModel<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHan
     /// Generate all constraints for the given contact manifolds.
     fn constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         material_coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &Bodies,
         ext_vels: &DVector<N>,

@@ -16,7 +16,7 @@ pub trait Joint<N: RealField>: Downcast + Send + Sync {
     /// Update the jacobians of this joint.
     fn update_jacobians(&mut self, body_shift: &Vector<N>, vels: &[N]);
     /// Integrate the position of this joint.
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]);
     /// Apply a displacement to the joint.
     fn apply_displacement(&mut self, disp: &[N]);
 

@@ -60,7 +60,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
@@ -95,7 +95,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         let mut i = 0;
         Vector::canonical_basis(|dir| {
             let fdir = ForceDirection::Linear(Unit::new_unchecked(*dir));
-            let mut rhs = -error.dot(&*dir) * params.erp * params.inv_dt();
+            let mut rhs = -error.dot(&*dir) * parameters.erp * parameters.inv_dt();
             let geom = helper::constraint_pair_geometry(
                 body1,
                 part1,

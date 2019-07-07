@@ -152,7 +152,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         _: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
@@ -172,7 +172,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
         let rotation2 = pos2.rotation;
 
         helper::cancel_relative_rotation(
-            params,
+            parameters,
             body1,
             part1,
             self.b1,

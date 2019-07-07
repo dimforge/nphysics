@@ -252,7 +252,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
@@ -270,7 +270,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
         if i == 0 {
             return helper::cancel_relative_rotation(
-                params,
+                parameters,
                 body1,
                 part1,
                 self.b1,
@@ -287,7 +287,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
             let axis = pos1 * self.axis1;
 
             return helper::project_anchor_to_axis(
-                params,
+                parameters,
                 body1,
                 part1,
                 self.b1,
@@ -303,7 +303,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
             let axis = pos1 * self.axis1;
 
             return unit_constraint::build_linear_limits_position_constraint(
-                params,
+                parameters,
                 body1,
                 part1,
                 self.b1,

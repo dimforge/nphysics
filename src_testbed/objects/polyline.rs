@@ -1,22 +1,21 @@
 use kiss3d::window::Window;
 use na::{Isometry2, Point2, Point3};
 use ncollide2d::shape;
-use nphysics2d::object::{ColliderSlabHandle, ColliderAnchor};
-use nphysics2d::world::World;
+use nphysics2d::object::{DefaultColliderHandle, ColliderAnchor, DefaultColliderSet};
 
 pub struct Polyline {
     color: Point3<f32>,
     base_color: Point3<f32>,
     vertices: Vec<Point2<f32>>,
     indices: Vec<Point2<usize>>,
-    collider: ColliderSlabHandle,
+    collider: DefaultColliderHandle,
     pos: Isometry2<f32>
 }
 
 impl Polyline {
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         _: Isometry2<f32>,
         vertices: Vec<Point2<f32>>,
         indices: Vec<Point2<usize>>,
@@ -32,7 +31,7 @@ impl Polyline {
             collider,
         };
 
-        res.update(world);
+        res.update(colliders);
         res
     }
 
@@ -49,10 +48,10 @@ impl Polyline {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {
+    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
-        if let Some(c) = world.collider(self.collider) {
+        if let Some(c) = colliders.get(self.collider) {
             self.pos = *c.position();
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
                 let shape = c.shape().as_shape::<shape::Polyline<f32>>().unwrap();
@@ -66,7 +65,7 @@ impl Polyline {
         }
     }
 
-    pub fn object(&self) -> ColliderSlabHandle {
+    pub fn object(&self) -> DefaultColliderHandle {
         self.collider
     }
 

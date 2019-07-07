@@ -87,8 +87,8 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         out.fill(na::convert(0.1f64))
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.revo.integrate(params, vels)
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.revo.integrate(parameters, vels)
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -106,7 +106,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -118,7 +118,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
     ) {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,

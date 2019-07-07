@@ -6,7 +6,7 @@ extern crate nphysics_testbed3d;
 use na::{Point3, Vector3};
 use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics3d::world::World;
+use nphysics3d::world::{DynamicWorld, ColliderWorld}
 use nphysics_testbed3d::Testbed;
 
 pub fn init_world(testbed: &mut Testbed) {

@@ -4,46 +4,47 @@ use downcast_rs::Downcast;
 use slab::Slab;
 use na::{DVector, RealField};
 
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle, DefaultBodySet};
 use crate::solver::{LinearConstraints, IntegrationParameters, NonlinearConstraintGenerator};
 
+pub type DefaultJointConstraintSet<N: RealField> = Slab<Box<JointConstraint<N, DefaultBodySet<N>>>>;
 
 pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     type JointConstraint: ?Sized + JointConstraint<N, Bodies>;
-//    type Handle: Copy;
+    type Handle: Copy;
 
-    fn get(&self, handle: JointConstraintHandle) -> Option<&Self::JointConstraint>;
-    fn get_mut(&mut self, handle: JointConstraintHandle) -> Option<&mut Self::JointConstraint>;
+    fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint>;
+    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::JointConstraint>;
 
-    fn contains(&self, handle: JointConstraintHandle) -> bool;
+    fn contains(&self, handle: Self::Handle) -> bool;
 
-    fn foreach(&self, f: impl FnMut(JointConstraintHandle, &Self::JointConstraint));
-    fn foreach_mut(&mut self, f: impl FnMut(JointConstraintHandle, &mut Self::JointConstraint));
+    fn foreach(&self, f: impl FnMut(Self::Handle, &Self::JointConstraint));
+    fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::JointConstraint));
 }
 
 impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> for Slab<Box<JointConstraint<N, Bodies>>> {
     type JointConstraint = JointConstraint<N, Bodies>;
-//    type Handle = BodySlabHandle;
+    type Handle = JointConstraintHandle;
 
-    fn get(&self, handle: JointConstraintHandle) -> Option<&Self::JointConstraint> {
+    fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint> {
         self.get(handle).map(|c| &**c)
     }
 
-    fn get_mut(&mut self, handle: JointConstraintHandle) -> Option<&mut Self::JointConstraint> {
+    fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::JointConstraint> {
         self.get_mut(handle).map(|c| &mut **c)
     }
 
-    fn contains(&self, handle: JointConstraintHandle) -> bool {
+    fn contains(&self, handle: Self::Handle) -> bool {
         self.contains(handle)
     }
 
-    fn foreach(&self, mut f: impl FnMut(JointConstraintHandle, &Self::JointConstraint)) {
+    fn foreach(&self, mut f: impl FnMut(Self::Handle, &Self::JointConstraint)) {
         for (h, b) in self.iter() {
             f(h, &**b)
         }
     }
 
-    fn foreach_mut(&mut self, mut f: impl FnMut(JointConstraintHandle, &mut Self::JointConstraint)) {
+    fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Self::JointConstraint)) {
         for (h, b) in self.iter_mut() {
             f(h, &mut **b)
         }
@@ -77,7 +78,7 @@ pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>: NonlinearConstraint
     /// Initialize and retrieve all the constraints appied to the bodies attached to this joint.
     fn velocity_constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,

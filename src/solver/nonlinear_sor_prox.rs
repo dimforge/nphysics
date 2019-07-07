@@ -15,7 +15,7 @@ pub(crate) struct NonlinearSORProx;
 impl NonlinearSORProx {
     /// Solve a set of nonlinear position-based constraints.
     pub fn solve<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>, Constraints: JointConstraintSet<N, Bodies>>(
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         colliders: &Colliders,
         contact_constraints: &mut [NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>],
@@ -26,12 +26,12 @@ impl NonlinearSORProx {
     ) {
         for _ in 0..max_iter {
             joints_constraints.foreach(|_, joint| {
-                Self::solve_generator(params, bodies, joint, jacobians)
+                Self::solve_generator(parameters, bodies, joint, jacobians)
             });
 
             for constraint in internal_constraints {
                 if let Some(body) = bodies.get_mut(*constraint) {
-                    body.step_solve_internal_position_constraints(params);
+                    body.step_solve_internal_position_constraints(parameters);
                 }
             }
 
@@ -39,13 +39,13 @@ impl NonlinearSORProx {
                 // FIXME: specialize for SPATIAL_DIM.
                 let dim1 = Dynamic::new(constraint.ndofs1);
                 let dim2 = Dynamic::new(constraint.ndofs2);
-                Self::solve_unilateral(params, bodies, colliders, constraint, jacobians, dim1, dim2);
+                Self::solve_unilateral(parameters, bodies, colliders, constraint, jacobians, dim1, dim2);
             }
         }
     }
 
     fn solve_generator<N: RealField, Bodies: BodySet<N>, Gen: ?Sized + NonlinearConstraintGenerator<N, Bodies>>(
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         generator: &Gen,
         jacobians: &mut [N],
@@ -53,14 +53,14 @@ impl NonlinearSORProx {
         let nconstraints = generator.num_position_constraints(bodies);
 
         for i in 0..nconstraints {
-            if let Some(mut constraint) = generator.position_constraint(params, i, bodies, jacobians) {
-                Self::solve_generic(params, bodies, &mut constraint, jacobians)
+            if let Some(mut constraint) = generator.position_constraint(parameters, i, bodies, jacobians) {
+                Self::solve_generic(parameters, bodies, &mut constraint, jacobians)
             }
         }
     }
 
     pub fn solve_generic<N: RealField, Bodies: BodySet<N>>(
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         constraint: &mut GenericNonlinearConstraint<N, Bodies::Handle>,
         jacobians: &mut [N],
@@ -68,7 +68,7 @@ impl NonlinearSORProx {
         let dim1 = Dynamic::new(constraint.dim1);
         let dim2 = Dynamic::new(constraint.dim2);
 
-        let rhs = Self::clamp_rhs(constraint.rhs, constraint.is_angular, params);
+        let rhs = Self::clamp_rhs(constraint.rhs, constraint.is_angular, parameters);
 
         if rhs < N::zero() {
             let impulse = -rhs * constraint.r;
@@ -103,7 +103,7 @@ impl NonlinearSORProx {
     }
 
     fn solve_unilateral<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>, D1: Dim, D2: Dim>(
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &mut Bodies,
         colliders: &Colliders,
         constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
@@ -111,7 +111,7 @@ impl NonlinearSORProx {
         dim1: D1,
         dim2: D2,
     ) {
-        if Self::update_contact_constraint(params, bodies, colliders, constraint, jacobians) {
+        if Self::update_contact_constraint(parameters, bodies, colliders, constraint, jacobians) {
             let impulse = -constraint.rhs * constraint.r;
 
             VectorSliceMutN::from_slice_generic(jacobians, dim1, U1).mul_assign(impulse);
@@ -132,7 +132,7 @@ impl NonlinearSORProx {
     }
 
     fn update_contact_constraint<N: RealField, Bodies: BodySet<N>, Colliders: ColliderSet<N, Bodies::Handle>>(
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         bodies: &Bodies,
         colliders: &Colliders,
         constraint: &mut NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>,
@@ -185,7 +185,7 @@ impl NonlinearSORProx {
         if let Some(contact) = constraint
             .kinematic
             .contact(&pos1, &**collider1.shape(), coords1, &pos2, &**collider2.shape(), coords2, &constraint.normal1) {
-            constraint.rhs = Self::clamp_rhs(-contact.depth, false, params);
+            constraint.rhs = Self::clamp_rhs(-contact.depth, false, parameters);
 
             if constraint.rhs >= N::zero() {
                 return false;
@@ -236,8 +236,8 @@ impl NonlinearSORProx {
             // let j2 = DVectorSlice::from_slice(&jacobians[j_id2..], constraint.ndofs2);
 
             if false {
-                // j1.dot(&j1) + j2.dot(&j2) < N::one() / params.max_stabilization_multiplier {
-                constraint.r = params.max_stabilization_multiplier;
+                // j1.dot(&j1) + j2.dot(&j2) < N::one() / parameters.max_stabilization_multiplier {
+                constraint.r = parameters.max_stabilization_multiplier;
             } else {
                 if inv_r == N::zero() {
                     return false;
@@ -252,16 +252,16 @@ impl NonlinearSORProx {
     }
 
     #[inline]
-    pub fn clamp_rhs<N: RealField>(rhs: N, is_angular: bool, params: &IntegrationParameters<N>) -> N {
+    pub fn clamp_rhs<N: RealField>(rhs: N, is_angular: bool, parameters: &IntegrationParameters<N>) -> N {
         if is_angular {
             na::sup(
-                &((rhs + params.allowed_angular_error) * params.erp),
-                &(-params.max_angular_correction),
+                &((rhs + parameters.allowed_angular_error) * parameters.erp),
+                &(-parameters.max_angular_correction),
             )
         } else {
             na::sup(
-                &((rhs + params.allowed_linear_error) * params.erp),
-                &(-params.max_linear_correction),
+                &((rhs + parameters.allowed_linear_error) * parameters.erp),
+                &(-parameters.max_linear_correction),
             )
         }
     }

@@ -10,13 +10,13 @@ use na::{self, RealField, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, BodySlabHandle, BodyPartHandle, BodyStatus, ActivationStatus,
+use crate::object::{Body, BodyPart, DefaultBodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
                     FiniteElementIndices, DeformableColliderDesc, BodyDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry,
                   SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
-use crate::world::{World, ColliderWorld};
+use crate::world::ColliderWorld;
 use crate::utils::{UserData, UserDataBox};
 
 /// One element of a deformable surface.
@@ -41,7 +41,7 @@ pub struct TriangularElement<N: RealField> {
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMSurface<N: RealField> {
     name: String,
-    handle: BodySlabHandle,
+    handle: DefaultBodyHandle,
     elements: Vec<TriangularElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -79,7 +79,7 @@ pub struct FEMSurface<N: RealField> {
 
 impl<N: RealField> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
-    fn new(handle: BodySlabHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
+    fn new(handle: DefaultBodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
            scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let ndofs = vertices.len() * DIM;
         let mut rest_positions = DVector::zeros(ndofs);
@@ -214,7 +214,7 @@ impl<N: RealField> FEMSurface<N> {
     }
 
     /// The handle of this body.
-    pub fn handle(&self) -> BodySlabHandle {
+    pub fn handle(&self) -> DefaultBodyHandle {
         self.handle
     }
 
@@ -316,10 +316,10 @@ impl<N: RealField> FEMSurface<N> {
         }
     }
 
-    fn assemble_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn assemble_forces(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
-        let dt = params.dt();
+        let dt = parameters.dt();
 
         self.accelerations.copy_from(&self.forces);
 
@@ -372,7 +372,7 @@ impl<N: RealField> FEMSurface<N> {
 
             let strain = elt.total_strain - elt.plastic_strain;
             if strain.norm() > self.plasticity_threshold {
-                let coeff = params.dt() * params.inv_dt().min(self.plasticity_creep);
+                let coeff = parameters.dt() * parameters.inv_dt().min(self.plasticity_creep);
                 elt.plastic_strain += strain * coeff;
             }
 
@@ -546,7 +546,7 @@ impl<N: RealField> FEMSurface<N> {
     ///
     /// The cube is subdivided `nx` (resp. `ny`) times along
     /// the `x` (resp. `y`) axis.
-    fn quad(handle: BodySlabHandle, pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    fn quad(handle: DefaultBodyHandle, pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -692,8 +692,8 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
     /// Update the dynamics property of this deformable surface.
     fn update_acceleration(&mut self,
                            gravity: &Vector<N>,
-                           params: &IntegrationParameters<N>) {
-        self.assemble_forces(gravity, params);
+                           parameters: &IntegrationParameters<N>) {
+        self.assemble_forces(gravity, parameters);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
 
@@ -715,7 +715,7 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         self.positions += disp;
     }
 
-    fn handle(&self) -> BodySlabHandle {
+    fn handle(&self) -> DefaultBodyHandle {
         self.handle
     }
 
@@ -758,9 +758,9 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), ndofs)
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>) {
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(params.dt(), &self.velocities, N::one())
+        self.positions.axpy(parameters.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -1077,7 +1077,7 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
     type Body = FEMSurface<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodySlabHandle) -> FEMSurface<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: DefaultBodyHandle) -> FEMSurface<N> {
         let mut vol = match self.geom {
             FEMSurfaceDescGeometry::Quad(nx, ny) =>
                 FEMSurface::quad(handle, &self.position, &self.scale,

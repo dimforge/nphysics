@@ -13,28 +13,30 @@ use crate::force_generator::{ForceGenerator, ForceGeneratorHandle, ForceGenerato
 use crate::joint::{JointConstraintHandle, JointConstraint, JointConstraintSet};
 use crate::math::Vector;
 use crate::object::{
-    Body, BodySlab, BodyDesc, BodyStatus, Collider, ColliderAnchor, ColliderHandle,
-    ColliderSlabHandle, Multibody, RigidBody, BodySlabHandle, BodySet, BodyHandle, ColliderSet
+    Body, DefaultBodySet, BodyDesc, BodyStatus, Collider, ColliderAnchor, ColliderHandle,
+    DefaultColliderHandle, Multibody, RigidBody, DefaultBodyHandle, BodySet, BodyHandle, ColliderSet,
 };
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
+
+pub type DefaultDynamicWorld<N> = DynamicWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
 
 struct SubstepState<N: RealField> {
     active: bool,
     dt: N,
     // FIXME: can we avoid the use of a hash-map to save the
     // number of time a contact pair generated a CCD event?
-    ccd_counts: HashMap<(ColliderSlabHandle, ColliderSlabHandle), usize>,
-    body_times: HashMap<BodySlabHandle, N>,
-    body_hit: HashSet<BodySlabHandle>,
+    ccd_counts: HashMap<(DefaultColliderHandle, DefaultColliderHandle), usize>,
+    body_times: HashMap<DefaultBodyHandle, N>,
+    body_hit: HashSet<DefaultBodyHandle>,
 }
 
 /// The physics world.
 pub struct DynamicWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
     pub counters: Counters,
     pub solver: MoreauJeanSolver<N, Bodies, CollHandle>,
-    pub params: IntegrationParameters<N>,
+    pub parameters: IntegrationParameters<N>,
     pub material_coefficients: MaterialsCoefficientsTable<N>,
     pub gravity: Vector<N>,
     activation_manager: ActivationManager<N, Bodies::Handle>,
@@ -51,11 +53,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
         let gravity = Vector::zeros();
-        let params = IntegrationParameters::default();
+        let parameters = IntegrationParameters::default();
         let material_coefficients = MaterialsCoefficientsTable::new();
         let substep = SubstepState {
             active: false,
-            dt: params.dt(),
+            dt: parameters.dt(),
             ccd_counts: HashMap::new(),
             body_times: HashMap::new(),
             body_hit: HashSet::new(),
@@ -67,76 +69,26 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             activation_manager,
             material_coefficients,
             gravity,
-            params,
+            parameters,
             substep,
         }
     }
 
-    /// Disable the perfomance counters that measure various times and statistics during a timestep.
-    pub fn disable_performance_counters(&mut self) {
-        self.counters.disable();
-    }
-
-    /// Enable the perfomance counters that measure various times and statistics during a timestep.
-    pub fn enable_performance_counters(&mut self) {
-        self.counters.enable();
-    }
-
-    /// Retrieve the perfomance counters that measure various times and statistics during a timestep.
-    pub fn performance_counters(&self) -> &Counters {
-        &self.counters
-    }
-
-    /// Set the contact model for all contacts.
-    pub fn set_contact_model<C: ContactModel<N, Bodies, CollHandle>>(&mut self, model: C) {
-        self.solver.set_contact_model(Box::new(model))
-    }
-
-    /// Retrieve a reference to the parameters for the integration.
-    pub fn integration_parameters(&self) -> &IntegrationParameters<N> {
-        &self.params
-    }
-
-    /// Retrieve a mutable reference to the parameters for the integration.
-    pub fn integration_parameters_mut(&mut self) -> &mut IntegrationParameters<N> {
-        &mut self.params
-    }
-
-    /// Reference to the lookup table for friction and restitution coefficients.
-    pub fn materials_coefficients_table(&self) -> &MaterialsCoefficientsTable<N> {
-        &self.material_coefficients
-    }
-
-    /// Mutable reference to the lookup table for friction and restitution coefficients.
-    pub fn materials_coefficients_table_mut(&mut self) -> &mut MaterialsCoefficientsTable<N> {
-        &mut self.material_coefficients
-    }
-
     /// Retrieve the timestep used for the integration.
     pub fn timestep(&self) -> N {
-        self.params.dt()
+        self.parameters.dt()
     }
 
     /// Sets the timestep used for the integration.
     pub fn set_timestep(&mut self, dt: N) {
-        self.params.set_dt(dt);
-    }
-
-    /// Set the gravity.
-    pub fn set_gravity(&mut self, gravity: Vector<N>) {
-        self.gravity = gravity
-    }
-
-    /// The gravity applied to all dynamic bodies.
-    pub fn gravity(&self) -> &Vector<N> {
-        &self.gravity
+        self.parameters.set_dt(dt);
     }
 
     /// Execute one time step of the physics simulation.
     pub fn step<Colliders, Constraints, Forces>(&mut self,
                                                 cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
-                                                colliders: &mut Colliders,
                                                 bodies: &mut Bodies,
+                                                colliders: &mut Colliders,
                                                 constraints: &mut Constraints,
                                                 forces: &mut Forces)
     where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
@@ -155,18 +107,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             bodies.foreach_mut(|_, b| {
                 b.step_started();
                 b.update_kinematics();
-                b.update_dynamics(self.params.dt());
+                b.update_dynamics(self.parameters.dt());
             });
 
             // FIXME: how to make force generators work
             // with the external body set?
-            let params = &self.params;
+            let parameters = &self.parameters;
             forces.foreach_mut(|_, f| {
-                f.apply(params, bodies)
+                f.apply(parameters, bodies)
             });
 
             bodies.foreach_mut(|_, b| {
-                b.update_acceleration(&self.gravity, params);
+                b.update_acceleration(&self.gravity, parameters);
             });
 
             /*
@@ -237,13 +189,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 constraints,
                 &contact_manifolds[..],
                 &active_bodies[..],
-                params,
+                parameters,
                 &self.material_coefficients,
             );
 
             bodies.foreach_mut(|_, b| {
                 if b.status() == BodyStatus::Kinematic {
-                    b.integrate(params)
+                    b.integrate(parameters)
                 }
             });
             self.counters.solver_completed();
@@ -258,7 +210,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             // updated their kinematics.
             bodies.foreach_mut(|_, b| {
                 b.update_kinematics();
-                b.update_dynamics(params.dt());
+                b.update_dynamics(parameters.dt());
             });
         }
 /*
@@ -267,7 +219,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
          * Handle CCD
          *
          */
-        if self.params.ccd_enabled {
+        if self.parameters.ccd_enabled {
             self.solve_ccd();
         }
 */
@@ -301,7 +253,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             self.counters.narrow_phase_completed();
             self.counters.collision_detection_completed();
 
-            self.params.t += self.params.dt();
+            self.parameters.t += self.parameters.dt();
             self.counters.step_completed();
 
             bodies.foreach_mut(|_, b| {
@@ -313,17 +265,17 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
     /*
     // NOTE: this is an approach very similar to Box2D's.
     fn solve_ccd(&mut self) {
-        let dt0 = self.params.dt();
-        let inv_dt0 = self.params.inv_dt();
+        let dt0 = self.parameters.dt();
+        let inv_dt0 = self.parameters.inv_dt();
 
         if dt0 == N::zero() {
             return;
         }
 
-        let mut params = self.params.clone();
-//        params.max_velocity_iterations = 20;
-        params.max_position_iterations = 20;
-        params.warmstart_coeff = N::zero();
+        let mut parameters = self.parameters.clone();
+//        parameters.max_velocity_iterations = 20;
+        parameters.max_position_iterations = 20;
+        parameters.warmstart_coeff = N::zero();
 
         let max_substeps = 8;
 
@@ -364,7 +316,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         match inter {
                             Interaction::Contact(alg, manifold) => {
                                 let margins = c1.margin() + c2.margin();
-                                let target = self.params.allowed_linear_error; // self.params.allowed_linear_error.max(margins - self.params.allowed_linear_error * na::convert(3.0));
+                                let target = self.parameters.allowed_linear_error; // self.parameters.allowed_linear_error.max(margins - self.parameters.allowed_linear_error * na::convert(3.0));
 
                                 let time1 = *self.substep.body_times.entry(c1.body()).or_insert(N::zero());
                                 let time2 = *self.substep.body_times.entry(c2.body()).or_insert(N::zero());
@@ -430,13 +382,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              */
             if let Some((c1, b1, c2, b2)) = ccd_handles {
                 println!("Found min_toi: {}", min_toi);
-                params.set_dt(dt0 - min_toi);
+                parameters.set_dt(dt0 - min_toi);
                 // We will use the companion ID to know which body is already on the island.
                 for b in self.bodies.bodies_mut() {
                     b.clear_forces();
                     b.update_kinematics();
-                    b.update_dynamics(params.dt());
-                    b.update_acceleration(&Vector::zeros(), &params);
+                    b.update_dynamics(parameters.dt());
+                    b.update_acceleration(&Vector::zeros(), &parameters);
                     b.set_companion_id(0);
                 }
 
@@ -580,8 +532,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 // XXX: should joint constraints be taken into account here?
                 let mut empty_constraints = Slab::new();
-                params.set_dt(dt0 - min_toi);
-                println!("Time-stepping length: {}", params.dt());
+                parameters.set_dt(dt0 - min_toi);
+                println!("Time-stepping length: {}", parameters.dt());
                 println!("Num contacts: {}", contact_manifolds.len());
                 println!("Island len: {}", island.len());
 
@@ -592,7 +544,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     &contact_manifolds[..],
                     [b1, b2],
                     &island[..],
-                    &params,
+                    &parameters,
                     &self.material_coefficients,
                     &self.cworld,
                 );
@@ -605,13 +557,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 self.bodies.bodies_mut().for_each(|b| {
                     b.clear_forces();
                     b.update_kinematics();
-                    b.update_dynamics(params.dt());
+                    b.update_dynamics(parameters.dt());
                 });
 
-                if self.params.substepping_enabled {
+                if self.parameters.substepping_enabled {
                     println!("Substep completed.");
                     self.substep.active = true;
-                    self.substep.dt = params.dt();
+                    self.substep.dt = parameters.dt();
                     break;
                 }
             } else {

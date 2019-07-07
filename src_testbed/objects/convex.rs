@@ -2,8 +2,7 @@ use kiss3d::window::Window;
 use na::Point3;
 #[cfg(feature = "dim3")]
 use ncollide::procedural::TriMesh;
-use nphysics::object::ColliderSlabHandle;
-use nphysics::world::World;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 #[cfg(feature = "dim2")]
 use nphysics::math::Point;
 use nphysics::math::{Isometry, Vector};
@@ -14,14 +13,14 @@ pub struct Convex {
     base_color: Point3<f32>,
     delta: Isometry<f32>,
     gfx: GraphicsNode,
-    collider: ColliderSlabHandle,
+    collider: DefaultColliderHandle,
 }
 
 impl Convex {
     #[cfg(feature = "dim2")]
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         delta: Isometry<f32>,
         vertices: Vec<Point<f32>>,
         color: Point3<f32>,
@@ -35,8 +34,8 @@ impl Convex {
             collider,
         };
 
-        if world
-            .collider(collider)
+        if colliders
+            .get(collider)
             .unwrap()
             .query_type()
             .is_proximity_query()
@@ -47,8 +46,8 @@ impl Convex {
 
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
-            .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
-        res.update(world);
+            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.update(colliders);
 
         res
     }
@@ -56,8 +55,8 @@ impl Convex {
 
     #[cfg(feature = "dim3")]
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         delta: Isometry<f32>,
         convex: &TriMesh<f32>,
         color: Point3<f32>,
@@ -71,8 +70,8 @@ impl Convex {
             collider,
         };
 
-        if world
-            .collider(collider)
+        if colliders
+            .get(collider)
             .unwrap()
             .query_type()
             .is_proximity_query()
@@ -83,8 +82,8 @@ impl Convex {
 
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
-            .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
-        res.update(world);
+            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.update(colliders);
 
         res
     }
@@ -103,10 +102,10 @@ impl Convex {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {
+    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
         node::update_scene_node(
             &mut self.gfx,
-            world,
+            colliders,
             self.collider,
             &self.color,
             &self.delta,
@@ -121,7 +120,7 @@ impl Convex {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderSlabHandle {
+    pub fn object(&self) -> DefaultColliderHandle {
         self.collider
     }
 }

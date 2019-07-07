@@ -124,7 +124,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
 }
 
 pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &B,
     part1: &BodyPart<N>,
     handle1: BodyPartHandle<H>,
@@ -154,7 +154,7 @@ pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>
         }
     }
 
-    if error > params.allowed_linear_error {
+    if error > parameters.allowed_linear_error {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
@@ -197,7 +197,7 @@ pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>
 
 /*
 pub fn build_angular_limit_velocity_constraint<N: RealField>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     pos1: &Isometry<N>,

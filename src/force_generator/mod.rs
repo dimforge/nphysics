@@ -1,6 +1,6 @@
 //! Persistent force generation.
 
-pub use self::force_generator::{ForceGenerator, ForceGeneratorHandle, ForceGeneratorSet};
+pub use self::force_generator::{ForceGenerator, ForceGeneratorHandle, ForceGeneratorSet, DefaultForceGeneratorSet};
 pub use self::constant_acceleration::ConstantAcceleration;
 pub use self::spring::Spring;
 

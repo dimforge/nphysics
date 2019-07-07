@@ -10,17 +10,17 @@ use crate::math::{
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, RealField, LU};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
-    MultibodyLinkVec, Body, BodyPart, BodySlabHandle, ColliderDesc, BodyDesc, BodySet,
-    BodyHandle, BodySlab, ColliderSlabHandle, ColliderHandle,
+    MultibodyLinkVec, Body, BodyPart, DefaultBodyHandle, ColliderDesc, BodyDesc, BodySet,
+    BodyHandle, DefaultBodySet, DefaultColliderHandle, ColliderHandle,
 };
 use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
-use crate::world::{World, ColliderWorld};
+use crate::world::ColliderWorld;
 use crate::utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: RealField> {
     name: String,
-    handle: BodySlabHandle,
+    handle: DefaultBodyHandle,
     rbs: MultibodyLinkVec<N>,
     velocities: DVector<N>,
     damping: DVector<N>,
@@ -57,7 +57,7 @@ pub struct Multibody<N: RealField> {
 
 impl<N: RealField> Multibody<N> {
     /// Creates a new multibody with no link.
-    fn new(handle: BodySlabHandle) -> Self {
+    fn new(handle: DefaultBodyHandle) -> Self {
         Multibody {
             name: String::new(),
             handle,
@@ -165,7 +165,7 @@ impl<N: RealField> Multibody<N> {
 
     fn add_link(
         &mut self,
-        parent: BodyPartHandle<BodySlabHandle>,
+        parent: BodyPartHandle<DefaultBodyHandle>,
         mut dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
@@ -784,11 +784,11 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn integrate(&mut self, params: &IntegrationParameters<N>) {
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
 
         for rb in self.rbs.iter_mut() {
-            rb.dof.integrate(params, &self.velocities.as_slice()[rb.assembly_id..])
+            rb.dof.integrate(parameters, &self.velocities.as_slice()[rb.assembly_id..])
         }
     }
 
@@ -998,7 +998,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, params: &IntegrationParameters<N>) {
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, parameters: &IntegrationParameters<N>) {
         let mut ground_j_id = 0;
         let mut workspace = self.solver_workspace.take().unwrap();
 
@@ -1028,7 +1028,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
         for link in self.rbs.iter() {
             link.joint().velocity_constraints(
-                params,
+                parameters,
                 self,
                 &link,
                 0,
@@ -1072,7 +1072,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
+    fn step_solve_internal_position_constraints(&mut self, parameters: &IntegrationParameters<N>) {
         // FIXME: this `.take()` trick is ugly.
         // We should not pass a reference to the multibody to the link position constraint method.
         let mut workspace = self.solver_workspace.take().unwrap();
@@ -1091,7 +1091,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
                 if let Some(c) = c {
                     // FIXME: the following has been copy-pasted from the NonlinearSORProx.
                     // We should refactor the code better.
-                    let rhs = NonlinearSORProx::clamp_rhs(c.rhs, c.is_angular, params);
+                    let rhs = NonlinearSORProx::clamp_rhs(c.rhs, c.is_angular, parameters);
 
                     if rhs < N::zero() {
                         let impulse = -rhs * c.r;
@@ -1278,7 +1278,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
 
 
     /// Build into the `world` the multibody represented by `self` and its children.
-    pub fn build<'w>(&self, world: &'w mut World<N, BodySlab<N>>) -> &'w mut Multibody<N> {
+    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut Multibody<N> {
         world.add_body(self)
     }
 
@@ -1286,7 +1286,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     ///
     /// If `parent` is the ground, then a new multibody is created.
     /// If `parent` is not another multibody link, then `None` is returned.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle<BodySlabHandle>, world: &'w mut World<N, BodySlab<N>>) -> Option<&'w mut MultibodyLink<N>> {
+    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle<DefaultBodyHandle>, world: &'w mut World<N, DefaultBodySet<N>>) -> Option<&'w mut MultibodyLink<N>> {
         if parent.is_ground() {
             Some(self.build(world).root_mut())
         } else {
@@ -1297,7 +1297,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
         }
     }
 
-    fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, parent: BodyPartHandle<BodySlabHandle>) -> &'m mut MultibodyLink<N> {
+    fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, parent: BodyPartHandle<DefaultBodyHandle>) -> &'m mut MultibodyLink<N> {
         let link = mb.add_link(
             parent,
             self.joint.clone(),
@@ -1326,7 +1326,7 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
 impl<'a, N: RealField> BodyDesc<N> for MultibodyDesc<'a, N> {
     type Body = Multibody<N>;
 
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> Multibody<N> {
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Multibody<N> {
         let mut mb = Multibody::new(handle);
         let _ = self.do_build(&mut mb, cworld, BodyPartHandle::ground());
         mb

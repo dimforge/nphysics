@@ -116,10 +116,10 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         self.revo.default_damping(&mut out.rows_mut(2, 1));
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.prism1.integrate(params, vels);
-        self.prism2.integrate(params, &[vels[1]]);
-        self.revo.integrate(params, &[vels[2]]);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.prism1.integrate(parameters, vels);
+        self.prism2.integrate(parameters, &[vels[1]]);
+        self.revo.integrate(parameters, &[vels[2]]);
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -141,7 +141,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -152,7 +152,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.prism1.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -163,7 +163,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
             constraints,
         );
         self.prism2.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -174,7 +174,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
             constraints,
         );
         self.revo.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,

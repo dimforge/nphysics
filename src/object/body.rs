@@ -6,7 +6,7 @@ use na::{self, DVectorSlice, DVectorSliceMut, RealField};
 use ncollide::shape::DeformationsType;
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodySlabHandle};
+use crate::object::{BodyPartHandle, DefaultBodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
 
@@ -124,7 +124,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn update_dynamics(&mut self, dt: N);
 
     /// Update the acceleration of this body given the forces it is subject to and the gravity.
-    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
+    fn update_acceleration(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>);
 
     /// Reset the timestep-specific dynamic information of this body.
     fn clear_forces(&mut self);
@@ -171,7 +171,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N>;
 
     /// Integrate the position of this body.
-    fn integrate(&mut self, params: &IntegrationParameters<N>);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>);
 
     /// Force the activation of this body with the given level of energy.
     fn activate_with_energy(&mut self, energy: N);
@@ -220,7 +220,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn has_active_internal_constraints(&mut self) -> bool;
 
     /// Initializes the internal velocity constraints of a body.
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, params: &IntegrationParameters<N>);
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, parameters: &IntegrationParameters<N>);
 
     /// For warmstarting the solver, modifies the delta velocity applied by the internal constraints of this body.
     fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
@@ -230,7 +230,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
 
     /// Execute one step for the iterative resolution of this body's internal position constraints.
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>);
+    fn step_solve_internal_position_constraints(&mut self, parameters: &IntegrationParameters<N>);
 
     /// Add the given inertia to the local inertia of this body part.
     fn add_local_inertia_and_com(&mut self, _part_index: usize, _com: Point<N>, _inertia: Inertia<N>)

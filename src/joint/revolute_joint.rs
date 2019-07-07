@@ -220,8 +220,8 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
         out.copy_from((self.jacobian_dot_veldiff.transformed(transform) * acc[0]).as_vector())
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.angle += vels[0] * params.dt();
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.angle += vels[0] * parameters.dt();
         self.update_rot();
     }
 
@@ -253,7 +253,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -265,7 +265,7 @@ impl<N: RealField> Joint<N> for RevoluteJoint<N> {
     ) {
         joint::unit_joint_velocity_constraints(
             self,
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,

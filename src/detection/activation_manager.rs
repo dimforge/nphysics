@@ -2,7 +2,7 @@ use slab::Slab;
 
 use na::{self, RealField};
 use crate::world::ColliderWorld;
-use crate::object::{Body, BodySlab, BodySet, BodyHandle, ColliderHandle, ColliderSet};
+use crate::object::{Body, DefaultBodySet, BodySet, BodyHandle, ColliderHandle, ColliderSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::utils::union_find::UnionFindSet;
 use crate::utils::union_find;
@@ -147,11 +147,12 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
                 }
         }
 
+        /*
         for (_, c1, _, c2, _, manifold) in cworld.contact_pairs(colliders, false) {
             if manifold.len() > 0 {
                 make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }
-        }
+        }*/
 
         constraints.foreach(|_, c| {
             let (b1, b2) = c.anchors();

@@ -1,7 +1,6 @@
 use na::Point3;
 use kiss3d::window::Window;
-use nphysics::object::ColliderSlabHandle;
-use nphysics::world::World;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 use nphysics::math::Isometry;
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
@@ -63,18 +62,18 @@ impl Node {
         }
     }
 
-    pub fn update(&mut self, world: &World<f32>) {
+    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
         match *self {
-            Node::Plane(ref mut n) => n.update(world),
-            Node::Ball(ref mut n) => n.update(world),
-            Node::Box(ref mut n) => n.update(world),
-            Node::Capsule(ref mut n) => n.update(world),
-            Node::HeightField(ref mut n) => n.update(world),
+            Node::Plane(ref mut n) => n.update(colliders),
+            Node::Ball(ref mut n) => n.update(colliders),
+            Node::Box(ref mut n) => n.update(colliders),
+            Node::Capsule(ref mut n) => n.update(colliders),
+            Node::HeightField(ref mut n) => n.update(colliders),
             #[cfg(feature = "dim2")]
-            Node::Polyline(ref mut n) => n.update(world),
+            Node::Polyline(ref mut n) => n.update(colliders),
             #[cfg(feature = "dim3")]
-            Node::Mesh(ref mut n) => n.update(world),
-            Node::Convex(ref mut n) => n.update(world),
+            Node::Mesh(ref mut n) => n.update(colliders),
+            Node::Convex(ref mut n) => n.update(colliders),
         }
     }
 
@@ -124,7 +123,7 @@ impl Node {
         }
     }
 
-    pub fn collider(&self) -> ColliderSlabHandle {
+    pub fn collider(&self) -> DefaultColliderHandle {
         match *self {
             Node::Plane(ref n) => n.object(),
             Node::Ball(ref n) => n.object(),
@@ -157,12 +156,12 @@ impl Node {
 
 pub fn update_scene_node(
     node: &mut GraphicsNode,
-    world: &World<f32>,
-    coll: ColliderSlabHandle,
+    colliders: &DefaultColliderSet<f32>,
+    coll: DefaultColliderHandle,
     color: &Point3<f32>,
     delta: &Isometry<f32>,
 ) {
-    if let Some(co) = world.collider(coll) {
+    if let Some(co) = colliders.get(coll) {
         node.set_local_transformation(co.position() * delta);
         node.set_color(color.x, color.y, color.z);
     } else {

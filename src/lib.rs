@@ -260,6 +260,8 @@ macro_rules! user_data_desc_accessors(
     }
 );
 
+const NOT_REGISTERED_ERROR: &'static str = "This collider has not been registered into a world (proxy indexes are None).";
+
 pub mod algebra;
 pub mod counters;
 pub mod detection;

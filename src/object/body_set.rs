@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use na::RealField;
 use crate::world::ColliderWorld;
-use crate::object::{Body, Ground, ColliderSlabHandle};
+use crate::object::{Body, Ground, DefaultColliderHandle};
 
 pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {
     fn is_ground(&self) -> bool;
@@ -29,20 +29,20 @@ pub trait BodySet<N: RealField> {
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::Body));
 }
 
-impl<N: RealField> BodySet<N> for BodySlab<N> {
+impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
     type Body = Body<N>;
-    type Handle = BodySlabHandle;
+    type Handle = DefaultBodyHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body> {
-        self.body(handle)
+        self.get(handle)
     }
 
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body> {
-        self.body_mut(handle)
+        self.get_mut(handle)
     }
 
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>) {
-        self.body_pair_mut(handle1, handle2)
+        self.get_pair_mut(handle1, handle2)
     }
 
 
@@ -52,13 +52,13 @@ impl<N: RealField> BodySet<N> for BodySlab<N> {
 
     fn foreach(&self, mut f: impl FnMut(Self::Handle, &Self::Body)) {
         for (h, b) in self.bodies.iter() {
-            f(BodySlabHandle(h), &**b)
+            f(DefaultBodyHandle(h), &**b)
         }
     }
 
     fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Self::Body)) {
         for (h, b) in self.bodies.iter_mut() {
-            f(BodySlabHandle(h), &mut **b)
+            f(DefaultBodyHandle(h), &mut **b)
         }
     }
 }
@@ -69,9 +69,10 @@ impl<N: RealField> BodySet<N> for BodySlab<N> {
 /// This structure is automatically allocated by the physics world.
 /// It cannot be constructed by the end-user.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct BodySlabHandle(usize);
+pub struct DefaultBodyHandle(usize);
+pub type DefaultBodyPartHandle = BodyPartHandle<DefaultBodyHandle>;
 
-impl BodyHandle for BodySlabHandle {
+impl BodyHandle for DefaultBodyHandle {
     #[inline]
     fn is_ground(&self) -> bool {
         self.0 == usize::max_value()
@@ -82,10 +83,10 @@ impl BodyHandle for BodySlabHandle {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BodyPartHandle<Handle: BodyHandle>(pub Handle, pub usize);
 
-impl BodySlabHandle {
+impl DefaultBodyHandle {
     #[inline]
     pub fn ground() -> Self {
-        BodySlabHandle(usize::max_value())
+        DefaultBodyHandle(usize::max_value())
     }
 
     /// Tests if this handle corresponds to the ground.
@@ -114,19 +115,19 @@ pub trait BodyDesc<N: RealField> {
     type Body: Body<N>;
 
     /// Called by the `World` to create a body with the given allocated handle.
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>, handle: BodySlabHandle) -> Self::Body;
+    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Self::Body;
 }
 
 /// A set containing all the bodies added to the world.
-pub struct BodySlab<N: RealField> {
+pub struct DefaultBodySet<N: RealField> {
     ground: Ground<N>,
     bodies: Slab<Box<Body<N>>>,
 }
 
-impl<N: RealField> BodySlab<N> {
+impl<N: RealField> DefaultBodySet<N> {
     /// Create a new empty set of bodies.
     pub fn new() -> Self {
-        BodySlab {
+        DefaultBodySet {
             ground: Ground::new(),
             bodies: Slab::new(),
         }
@@ -138,10 +139,10 @@ impl<N: RealField> BodySlab<N> {
     }
 
     /// Adds a body to the world.
-    pub fn add_body<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N, BodySlabHandle, ColliderSlabHandle>) -> &mut B::Body {
+    pub fn add<B: BodyDesc<N>>(&mut self, desc: &B, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>) -> &mut B::Body {
         let b_entry = self.bodies.vacant_entry();
         let b_id = b_entry.key();
-        let handle = BodySlabHandle(b_id);
+        let handle = DefaultBodyHandle(b_id);
         let body = desc.build_with_handle(cworld, handle);
         b_entry.insert(Box::new(body)).downcast_mut::<B::Body>().expect("Body construction failed with type mismatch.")
     }
@@ -149,7 +150,7 @@ impl<N: RealField> BodySlab<N> {
     /// Remove a body from this set.
     ///
     /// If `body` identify a mutibody link, the whole multibody is removed.
-    pub fn remove_body(&mut self, body: BodySlabHandle) {
+    pub fn remove(&mut self, body: DefaultBodyHandle) {
         if !body.is_ground() {
             let _ = self.bodies.remove(body.0);
         }
@@ -157,7 +158,7 @@ impl<N: RealField> BodySlab<N> {
 
     /// Returns `true` if the given body exists.
     #[inline]
-    pub fn contains(&self, handle: BodySlabHandle) -> bool {
+    pub fn contains(&self, handle: DefaultBodyHandle) -> bool {
         handle.is_ground() || self.bodies.contains(handle.0)
     }
 
@@ -165,7 +166,7 @@ impl<N: RealField> BodySlab<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body(&self, handle: BodySlabHandle) -> Option<&Body<N>> {
+    pub fn get(&self, handle: DefaultBodyHandle) -> Option<&Body<N>> {
         if handle.is_ground() {
             Some(&self.ground)
         } else {
@@ -177,7 +178,7 @@ impl<N: RealField> BodySlab<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body_mut(&mut self, handle: BodySlabHandle) -> Option<&mut Body<N>> {
+    pub fn get_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut Body<N>> {
         if handle.is_ground() {
             Some(&mut self.ground)
         } else {
@@ -190,10 +191,10 @@ impl<N: RealField> BodySlab<N> {
     /// Returns `None` if the body is not found.
     /// Panics if both handles are equal.
     #[inline]
-    pub fn body_pair_mut(&mut self, handle1: BodySlabHandle, handle2: BodySlabHandle) -> (Option<&mut Body<N>>, Option<&mut Body<N>>) {
+    pub fn get_pair_mut(&mut self, handle1: DefaultBodyHandle, handle2: DefaultBodyHandle) -> (Option<&mut Body<N>>, Option<&mut Body<N>>) {
         assert_ne!(handle1, handle2, "Both body handles must not be equal.");
-        let b1 = self.body_mut(handle1).map(|b| b as *mut Body<N>);
-        let b2 = self.body_mut(handle2).map(|b| b as *mut Body<N>);
+        let b1 = self.get_mut(handle1).map(|b| b as *mut Body<N>);
+        let b2 = self.get_mut(handle2).map(|b| b as *mut Body<N>);
         unsafe {
             use std::mem;
             (b1.map(|b| mem::transmute(b)), b2.map(|b| mem::transmute(b)))
@@ -202,14 +203,14 @@ impl<N: RealField> BodySlab<N> {
 
     /// Iterator yielding all the bodies on this set.
     #[inline]
-    pub fn bodies(&self) -> impl Iterator<Item = &Body<N>> {
-        self.bodies.iter().map(|e| &**e.1)
+    pub fn iter(&self) -> impl Iterator<Item = (DefaultBodyHandle, &Body<N>)> {
+        self.bodies.iter().map(|e| (DefaultBodyHandle(e.0), &**e.1))
     }
 
     /// Mutable iterator yielding all the bodies on this set.
     #[inline]
-    pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut Body<N>> {
-        self.bodies.iter_mut().map(|e| &mut **e.1)
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultBodyHandle, &mut Body<N>)> {
+        self.bodies.iter_mut().map(|e| (DefaultBodyHandle(e.0), &mut **e.1))
     }
 }
 

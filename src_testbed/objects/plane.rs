@@ -2,8 +2,7 @@ use kiss3d::window::Window;
 #[cfg(feature = "dim3")]
 use na::Vector3;
 use na::Point3;
-use nphysics::object::ColliderSlabHandle;
-use nphysics::world::World;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 #[cfg(feature = "dim2")]
 use nphysics::math::{Point, Vector};
 #[cfg(feature = "dim3")]
@@ -14,7 +13,7 @@ use num::Zero;
 #[cfg(feature = "dim3")]
 pub struct Plane {
     gfx: GraphicsNode,
-    collider: ColliderSlabHandle,
+    collider: DefaultColliderHandle,
 }
 
 #[cfg(feature = "dim2")]
@@ -23,14 +22,14 @@ pub struct Plane {
     base_color: Point3<f32>,
     position: Point<f32>,
     normal: na::Unit<Vector<f32>>,
-    collider: ColliderSlabHandle,
+    collider: DefaultColliderHandle,
 }
 
 impl Plane {
     #[cfg(feature = "dim2")]
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         position: &Point<f32>,
         normal: &Vector<f32>,
         color: Point3<f32>,
@@ -44,14 +43,14 @@ impl Plane {
             collider,
         };
 
-        res.update(world);
+        res.update(colliders);
         res
     }
 
     #[cfg(feature = "dim3")]
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         world_pos: &Point3<f32>,
         world_normal: &Vector3<f32>,
         color: Point3<f32>,
@@ -62,8 +61,8 @@ impl Plane {
             collider,
         };
 
-        if world
-            .collider(collider)
+        if colliders
+            .get(collider)
             .unwrap()
             .query_type()
             .is_proximity_query()
@@ -83,7 +82,7 @@ impl Plane {
         res.gfx
             .reorient(world_pos, &(*world_pos + *world_normal), &up);
 
-        res.update(world);
+        res.update(colliders);
 
         res
     }
@@ -92,7 +91,7 @@ impl Plane {
 
     pub fn unselect(&mut self) {}
 
-    pub fn update(&mut self, _: &World<f32>) {
+    pub fn update(&mut self, _: &DefaultColliderSet<f32>) {
         // FIXME: atm we assume the plane does not move
     }
 
@@ -117,7 +116,7 @@ impl Plane {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderSlabHandle {
+    pub fn object(&self) -> DefaultColliderHandle {
         self.collider
     }
 

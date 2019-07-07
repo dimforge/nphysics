@@ -95,9 +95,9 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
         self.revo.default_damping(&mut out.rows_mut(1, 1));
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.prism.integrate(params, vels);
-        self.revo.integrate(params, &[vels[1]]);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.prism.integrate(parameters, vels);
+        self.revo.integrate(parameters, &[vels[1]]);
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -117,7 +117,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -128,7 +128,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
         constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.prism.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -139,7 +139,7 @@ impl<N: RealField> Joint<N> for PinSlotJoint<N> {
             constraints,
         );
         self.revo.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,

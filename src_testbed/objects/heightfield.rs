@@ -5,8 +5,7 @@ use nphysics::math::Point;
 use nphysics::math::Isometry;
 #[cfg(feature = "dim3")]
 use nphysics::math::Vector;
-use nphysics::object::{ColliderSlabHandle};
-use nphysics::world::World;
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
 use ncollide::shape;
 #[cfg(feature = "dim3")]
 use ncollide::transformation::ToTriMesh;
@@ -22,14 +21,14 @@ pub struct HeightField {
     vertices: Vec<Point<f32>>,
     #[cfg(feature = "dim3")]
     gfx: GraphicsNode,
-    collider: ColliderSlabHandle,
+    collider: DefaultColliderHandle,
 }
 
 impl HeightField {
     #[cfg(feature = "dim2")]
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         _: Isometry<f32>,
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
@@ -49,14 +48,14 @@ impl HeightField {
             collider,
         };
 
-        res.update(world);
+        res.update(colliders);
         res
     }
 
     #[cfg(feature = "dim3")]
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         delta: Isometry<f32>,
         heightfield: &shape::HeightField<f32>,
         color: Point3<f32>,
@@ -72,8 +71,8 @@ impl HeightField {
             collider: collider,
         };
 
-        if world
-            .collider(collider)
+        if colliders
+            .get(collider)
             .unwrap()
             .query_type()
             .is_proximity_query()
@@ -85,8 +84,8 @@ impl HeightField {
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
-            .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
-        res.update(world);
+            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.update(colliders);
 
         res
     }
@@ -106,11 +105,11 @@ impl HeightField {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, _world: &World<f32>) {
+    pub fn update(&mut self, _colliders: &DefaultColliderSet<f32>) {
         #[cfg(feature = "dim3")]
             node::update_scene_node(
                 &mut self.gfx,
-                _world,
+                _colliders,
                 self.collider,
                 &self.color,
                 &self.delta,
@@ -127,7 +126,7 @@ impl HeightField {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderSlabHandle {
+    pub fn object(&self) -> DefaultColliderHandle {
         self.collider
     }
 

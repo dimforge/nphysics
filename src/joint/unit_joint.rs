@@ -43,7 +43,7 @@ pub fn unit_joint_num_velocity_constraints<N: RealField, J: UnitJoint<N>>(joint:
 /// to this joint.
 pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     joint: &J,
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     multibody: &Multibody<N>,
     link: &MultibodyLink<N>,
     assembly_id: usize,
@@ -73,7 +73,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
         let impulse_id = link.impulse_id + dof_id * 3;
 
         let constraint = BilateralGroundConstraint {
-            impulse: impulses[impulse_id] * params.warmstart_coeff,
+            impulse: impulses[impulse_id] * parameters.warmstart_coeff,
             r: N::one() / inv_r,
             rhs,
             limits,
@@ -105,7 +105,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
 
             let impulse_id = link.impulse_id + dof_id * 3 + 1;
             let constraint = UnilateralGroundConstraint {
-                impulse: impulses[impulse_id] * params.warmstart_coeff,
+                impulse: impulses[impulse_id] * parameters.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
                 impulse_id,
@@ -143,7 +143,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
 
             let impulse_id = link.impulse_id + dof_id * 3 + 2;
             let constraint = UnilateralGroundConstraint {
-                impulse: impulses[impulse_id] * params.warmstart_coeff,
+                impulse: impulses[impulse_id] * parameters.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
                 impulse_id,

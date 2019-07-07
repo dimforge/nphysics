@@ -219,7 +219,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         i: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
@@ -240,7 +240,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
         if i == 0 {
             return helper::align_axis(
-                params,
+                parameters,
                 body1,
                 part1,
                 self.b1,
@@ -257,7 +257,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
         if i == 1 {
             return helper::project_anchor_to_axis(
-                params,
+                parameters,
                 body1,
                 part1,
                 self.b1,

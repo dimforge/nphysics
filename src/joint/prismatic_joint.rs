@@ -176,8 +176,8 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.offset += vels[0] * params.dt()
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.offset += vels[0] * parameters.dt()
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -203,7 +203,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -215,7 +215,7 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
     ) {
         joint::unit_joint_velocity_constraints(
             self,
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,

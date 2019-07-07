@@ -133,7 +133,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         _: usize,
         bodies: &mut Bodies,
         jacobians: &mut [N],
@@ -147,7 +147,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Nonl
         let anchor2 = body2.world_point_at_material_point(part2, &self.anchor2);
 
         helper::cancel_relative_translation(
-            params,
+            parameters,
             body1,
             part1,
             self.b1,

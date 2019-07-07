@@ -3,8 +3,7 @@ use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 use na::{self, Isometry3, Point3, Vector3};
 use ncollide::shape::TriMesh;
-use nphysics::object::{ColliderSlabHandle, ColliderAnchor};
-use nphysics::world::World;
+use nphysics::object::{DefaultColliderHandle, ColliderAnchor, DefaultColliderSet};
 use crate::objects::node;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -14,13 +13,13 @@ pub struct Mesh {
     base_color: Point3<f32>,
     delta: Isometry3<f32>,
     gfx: SceneNode,
-    collider: ColliderSlabHandle,
+    collider: DefaultColliderHandle,
 }
 
 impl Mesh {
     pub fn new(
-        collider: ColliderSlabHandle,
-        world: &World<f32>,
+        collider: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
         delta: Isometry3<f32>,
         vertices: Vec<Point3<f32>>,
         indices: Vec<Point3<u32>>,
@@ -40,8 +39,8 @@ impl Mesh {
             collider,
         };
 
-        if world
-            .collider(collider)
+        if colliders
+            .get(collider)
             .unwrap()
             .query_type()
             .is_proximity_query()
@@ -53,8 +52,8 @@ impl Mesh {
         res.gfx.enable_backface_culling(false);
         res.gfx.set_color(color.x, color.y, color.z);
         res.gfx
-            .set_local_transformation(world.collider(collider).unwrap().position() * res.delta);
-        res.update(world);
+            .set_local_transformation(colliders.get(collider).unwrap().position() * res.delta);
+        res.update(colliders);
 
         res
     }
@@ -73,10 +72,10 @@ impl Mesh {
         self.base_color = color;
     }
 
-    pub fn update(&mut self, world: &World<f32>) {
+    pub fn update(&mut self, colliders: &DefaultColliderSet<f32>) {
         node::update_scene_node(
             &mut self.gfx,
-            world,
+            colliders,
             self.collider,
             &self.color,
             &self.delta,
@@ -84,7 +83,7 @@ impl Mesh {
 
         // Update if some deformation occurred.
         // FIXME: don't update if it did not move.
-        if let Some(c) = world.collider(self.collider) {
+        if let Some(c) = colliders.get(self.collider) {
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
                 let shape = c.shape().as_shape::<TriMesh<f32>>().unwrap();
                 let vtx = shape.points();
@@ -107,7 +106,7 @@ impl Mesh {
         &mut self.gfx
     }
 
-    pub fn object(&self) -> ColliderSlabHandle {
+    pub fn object(&self) -> DefaultColliderHandle {
         self.collider
     }
 }

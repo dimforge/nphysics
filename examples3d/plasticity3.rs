@@ -5,7 +5,7 @@ extern crate nphysics_testbed3d;
 
 use na::{Isometry3, Point3, Vector3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, FEMVolumeDesc, BodySlabHandle, BodyStatus};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc, FEMVolumeDesc, DefaultBodyHandle, BodyStatus};
 use nphysics3d::world::World;
 use nphysics_testbed3d::Testbed;
 
@@ -32,7 +32,7 @@ pub fn init_world(testbed: &mut Testbed) {
         Isometry3::new(Vector3::new(-0.4, platform_height, 0.0), na::zero()),
     ];
 
-    let mut platforms = [BodySlabHandle::ground(); 5];
+    let mut platforms = [DefaultBodyHandle::ground(); 5];
 
     for (i, pos) in positions.iter().enumerate() {
         platforms[i] = RigidBodyDesc::new()
