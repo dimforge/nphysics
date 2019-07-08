@@ -33,9 +33,8 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let co = ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * -ground_thickness)
-        .build(BodyPartHandle(ground_handle, 0), &mut *bodies[ground_handle]);
-    let co_handle = colliders.insert(co);
-    collider_world.register_collider(co_handle, &mut colliders[co_handle]);
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
 
     /*
@@ -63,15 +62,13 @@ pub fn init_world(testbed: &mut Testbed) {
 
                 // Build the rigid body.
                 let rb = RigidBodyDesc::new()
-                    .set_translation(Vector3::new(x, y, z))
+                    .translation(Vector3::new(x, y, z))
                     .build();
                 let rb_handle = bodies.insert(Box::new(rb));
 
                 // Build the collider.
-                let co = collider_desc
-                    .build(BodyPartHandle(rb_handle, 0), &mut *bodies[rb_handle]);
-                let co_handle = colliders.insert(co);
-                collider_world.register_collider(co_handle, &mut colliders[co_handle]);
+                let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
+                colliders.insert(co);
             }
         }
     }

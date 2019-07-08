@@ -127,6 +127,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              * manually some bodies.
              */
             cworld.clear_events();
+            cworld.handle_registrations(bodies, colliders);
             cworld.sync_colliders(bodies, colliders);
             cworld.perform_broad_phase(colliders);
             cworld.perform_narrow_phase(colliders);

@@ -13,6 +13,7 @@ use ncollide::shape::{ShapeHandle, Shape};
 use ncollide::bounding_volume::AABB;
 use ncollide::pipeline::glue;
 
+use crate::volumetric::Volumetric;
 use crate::object::{Collider, ColliderData, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
                     ColliderSet, BodySet, DefaultBodyHandle, BodyPartHandle, Body, BodyHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
@@ -82,6 +83,39 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
 
         to_remove.set_proxy_handle(None);
         to_remove.set_graph_index(None);
+    }
+
+    pub fn handle_registrations<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
+        where Bodies: BodySet<N, Handle = Handle>,
+              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+        colliders.foreach_mut(|handle, collider| {
+            if collider.proxy_handle().is_none() {
+                self.register_collider(handle, collider);
+
+                match collider.anchor() {
+                    ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
+                        let body = bodies.get_mut(body_part.0).expect("Invalid parent body part handle.");
+
+                        // Update the parent body's density.
+                        if collider.density() != N::zero() {
+                            let com = position_wrt_body_part * collider.shape().center_of_mass();
+                            let inertia = collider.shape().inertia(collider.density()).transformed(&position_wrt_body_part);
+
+                            body.add_local_inertia_and_com(body_part.1, com, inertia);
+                        }
+
+                        // Set the position and ndofs (note this will be done in the `sync_collider` too.
+                        let ndofs = body.status_dependent_ndofs();
+                        let part = body.part(body_part.1).expect("Invalid parent body part handle.");
+                        let pos = part.position() * position_wrt_body_part;
+
+                        collider.set_body_status_dependent_ndofs(ndofs);
+                        collider.set_position(pos);
+                    }
+                    _ => {}
+                }
+            }
+        });
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.
