@@ -147,12 +147,11 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
                 }
         }
 
-        /*
         for (_, c1, _, c2, _, manifold) in cworld.contact_pairs(colliders, false) {
             if manifold.len() > 0 {
                 make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }
-        }*/
+        }
 
         constraints.foreach(|_, c| {
             let (b1, b2) = c.anchors();
