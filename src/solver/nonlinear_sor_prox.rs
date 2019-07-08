@@ -94,10 +94,12 @@ impl NonlinearSORProx {
                 );
             }
 
-            if let Some(b2) = bodies.get_mut(constraint.body2.0) {
-                b2.apply_displacement(
-                    &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
-                )
+            if let Some(handle2) = constraint.body2 {
+                if let Some(b2) = bodies.get_mut(handle2.0) {
+                    b2.apply_displacement(
+                        &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
+                    )
+                }
             }
         }
     }

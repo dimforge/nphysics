@@ -179,7 +179,7 @@ pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,

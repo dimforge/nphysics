@@ -165,7 +165,7 @@ impl<N: RealField> Multibody<N> {
 
     fn add_link(
         &mut self,
-        parent: BodyPartHandle<DefaultBodyHandle>,
+        parent: Option<BodyPartHandle<DefaultBodyHandle>>,
         mut dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
@@ -173,7 +173,7 @@ impl<N: RealField> Multibody<N> {
         local_com: Point<N>,
     ) -> &mut MultibodyLink<N> {
         assert!(
-            parent.is_ground() || !self.rbs.is_empty(),
+            parent.is_none() || !self.rbs.is_empty(),
             "Multibody::build_body: invalid parent id."
         );
 
@@ -206,7 +206,7 @@ impl<N: RealField> Multibody<N> {
         let parent_to_world;
 
         let parent_internal_id;
-        if !parent.is_ground() {
+        if let Some(parent) = parent {
             parent_internal_id = parent.1;
             let parent_rb = &mut self.rbs[parent_internal_id];
             parent_rb.is_leaf = false;

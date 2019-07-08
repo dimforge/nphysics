@@ -199,7 +199,7 @@ pub fn unit_joint_position_constraint<N: RealField, J: UnitJoint<N>>(
 
         return Some(GenericNonlinearConstraint::new(
             handle,
-            BodyPartHandle::ground(),
+            None,
             is_angular,
             ndofs,
             0,

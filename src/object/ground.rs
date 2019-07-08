@@ -18,7 +18,7 @@ pub struct Ground<N: RealField> {
 }
 
 impl<N: RealField> Ground<N> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Ground {
             name: String::new(),
             companion_id: 0,

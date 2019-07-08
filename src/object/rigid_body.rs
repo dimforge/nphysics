@@ -21,7 +21,6 @@ use crate::utils::GeneralizedCross;
 #[derive(Debug)]
 pub struct RigidBody<N: RealField> {
     name: String,
-    handle: DefaultBodyHandle,
     position0: Isometry<N>,
     position: Isometry<N>,
     velocity: Velocity<N>,
@@ -43,14 +42,13 @@ pub struct RigidBody<N: RealField> {
 }
 
 impl<N: RealField> RigidBody<N> {
-    /// Create a new rigid body with the specified handle and dynamic properties.
-    fn new(handle: DefaultBodyHandle, position: Isometry<N>) -> Self {
+    /// Create a new rigid body with the specified position.
+    fn new(position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
         let com = Point::from(position.translation.vector);
 
         RigidBody {
             name: String::new(),
-            handle,
             position0: position,
             position,
             velocity: Velocity::zero(),
@@ -93,7 +91,7 @@ impl<N: RealField> RigidBody<N> {
 
     /// Mark rotations as kinematic.
     #[cfg(feature = "dim2")]
-    pub fn set_rotation_kinematic(&mut self, is_kinematic: bool) {
+    pub fn set_rotations_kinematic(&mut self, is_kinematic: bool) {
         self.update_status.set_status_changed(true);
         self.jacobian_mask[2] = if is_kinematic { N::zero() } else { N::one() };
     }
@@ -116,7 +114,7 @@ impl<N: RealField> RigidBody<N> {
 
     /// Flags indicating if rotations are kinematic.
     #[cfg(feature = "dim2")]
-    pub fn kinematic_rotation(&self) -> bool {
+    pub fn kinematic_rotations(&self) -> bool {
         self.jacobian_mask[2].is_zero()
     }
 
@@ -134,7 +132,7 @@ impl<N: RealField> RigidBody<N> {
             }
         #[cfg(feature = "dim2")]
             {
-                self.set_rotation_kinematic(true);
+                self.set_rotations_kinematic(true);
                 self.velocity.angular = N::zero();
             }
     }
@@ -149,7 +147,7 @@ impl<N: RealField> RigidBody<N> {
             }
         #[cfg(feature = "dim2")]
             {
-                self.set_rotation_kinematic(false)
+                self.set_rotations_kinematic(false)
             }
     }
 
@@ -169,20 +167,6 @@ impl<N: RealField> RigidBody<N> {
     /// This is the same as setting all the translations of this rigid body as non-kinematic.
     pub fn enable_all_translations(&mut self) {
         self.set_translations_kinematic(Vector::repeat(false))
-    }
-
-    /// The handle of this rigid body.
-    #[inline]
-    pub fn handle(&self) -> DefaultBodyHandle {
-        self.handle
-    }
-
-    /// The part-handle of this rigid body.
-    ///
-    /// The part id is set to 0 though any value is acceptable.
-    #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle<DefaultBodyHandle> {
-        BodyPartHandle(self.handle, 0)
     }
 
     /// Mutable information regarding activation and deactivation (sleeping) of this rigid body.
@@ -734,7 +718,7 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
 /// `RigidBodyDesc` for the first time. The `.set_` methods are useful when modifying it after
 /// this initialization (including after calls to `.build`).
 #[derive(Clone)]
-pub struct RigidBodyDesc<'a, N: RealField> {
+pub struct RigidBodyDesc<N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
@@ -743,19 +727,17 @@ pub struct RigidBodyDesc<'a, N: RealField> {
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
     status: BodyStatus,
-    colliders: Vec<&'a ColliderDesc<N>>,
     sleep_threshold: Option<N>,
     kinematic_translations: Vector<bool>,
     #[cfg(feature = "dim3")]
     kinematic_rotations: Vector<bool>,
     #[cfg(feature = "dim2")]
-    kinematic_rotation: bool,
+    kinematic_rotations: bool,
 }
 
-/*
-impl<'a, N: RealField> RigidBodyDesc<'a, N> {
+impl<'a, N: RealField> RigidBodyDesc<N> {
     /// A default rigid body builder.
-    pub fn new() -> RigidBodyDesc<'a, N> {
+    pub fn new() -> RigidBodyDesc<N> {
         RigidBodyDesc {
             name: String::new(),
             user_data: None,
@@ -765,13 +747,12 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
             status: BodyStatus::Dynamic,
-            colliders: Vec::new(),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
             kinematic_translations: Vector::repeat(false),
             #[cfg(feature = "dim3")]
             kinematic_rotations: Vector::repeat(false),
             #[cfg(feature = "dim2")]
-            kinematic_rotation: false
+            kinematic_rotations: false
         }
     }
 
@@ -787,14 +768,13 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
         self.rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
-        self.kinematic_rotation, set_rotation_kinematic, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
+        self.kinematic_rotations, set_rotations_kinematic, is_kinematic: bool | { self.kinematic_rotations = is_kinematic }
         self.angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_custom_setters!(
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
-        self.collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
     desc_setters!(
@@ -819,7 +799,7 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
         self.get_rotation: N | { self.position.rotation.angle() }
-        self.get_kinematic_rotation: bool | { self.kinematic_rotation }
+        self.get_kinematic_rotations: bool | { self.kinematic_rotations }
         self.get_angular_inertia: N | { self.local_inertia.angular }
     );
 
@@ -827,7 +807,6 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_mass: N | { self.local_inertia.linear }
         self.get_name: &str | { &self.name }
-        self.get_colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
     );
 
     desc_getters!(
@@ -840,17 +819,8 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
-    /// Builds a rigid body and all its attached colliders.
-    pub fn build<'w>(&mut self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut RigidBody<N> {
-        world.add_body(self)
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
-    type Body = RigidBody<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> RigidBody<N> {
-        let mut rb = RigidBody::new(handle, self.position);
+    pub fn build(&self) -> RigidBody<N> {
+        let mut rb = RigidBody::new(self.position);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);
         rb.set_local_center_of_mass(self.local_center_of_mass);
@@ -860,21 +830,8 @@ impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.enable_gravity(self.gravity_enabled);
         rb.set_name(self.name.clone());
         let _ = rb.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
-
-        #[cfg(feature = "dim3")]
-            {
-                rb.set_rotations_kinematic(self.kinematic_rotations);
-            }
-        #[cfg(feature = "dim2")]
-            {
-                rb.set_rotation_kinematic(self.kinematic_rotation);
-            }
-
-        for desc in &self.colliders {
-            let part_handle = rb.part_handle();
-            let _ = desc.build_with_infos(part_handle, &mut rb, cworld);
-        }
+        rb.set_rotations_kinematic(self.kinematic_rotations);
 
         rb
     }
-}*/
+}

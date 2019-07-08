@@ -206,7 +206,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 
         self.jacobians
             .resize(jacobian_sz + ground_jacobian_sz, N::zero());
-/*
+
         /*
          *
          * Initialize constraints.
@@ -215,7 +215,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         let mut j_id = 0;
         let mut ground_j_id = jacobian_sz;
 
-        for (_, g) in joints {
+        joints.foreach_mut(|_, g| {
             if g.is_active(bodies) {
                 g.velocity_constraints(
                     parameters,
@@ -224,10 +224,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
                     &mut ground_j_id,
                     &mut j_id,
                     &mut self.jacobians,
-                    &mut self.joint_constraints,
+                    &mut self.joint_constraints.velocity,
                 );
             }
-        }
+        });
 
         counters.custom_started();
         self.contact_model.constraints(
@@ -252,7 +252,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         }
 
         println!("Constraints setup complete.");
-        */
     }
 
     fn solve_velocity_constraints(&mut self, parameters: &IntegrationParameters<N>, bodies: &mut Bodies) {

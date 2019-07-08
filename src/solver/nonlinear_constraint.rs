@@ -10,7 +10,7 @@ pub struct GenericNonlinearConstraint<N: RealField, Handle: BodyHandle> {
     /// The first body affected by the constraint.
     pub body1: BodyPartHandle<Handle>,
     /// The second body affected by the constraint.
-    pub body2: BodyPartHandle<Handle>,
+    pub body2: Option<BodyPartHandle<Handle>>,
     /// Whether this constraint affects the bodies translation or orientation.
     pub is_angular: bool,
     //  FIXME: rename ndofs1?
@@ -32,7 +32,7 @@ impl<N: RealField, Handle: BodyHandle> GenericNonlinearConstraint<N, Handle> {
     /// Initialize a new nonlinear constraint.
     pub fn new(
         body1: BodyPartHandle<Handle>,
-        body2: BodyPartHandle<Handle>,
+        body2: Option<BodyPartHandle<Handle>>,
         is_angular: bool,
         dim1: usize,
         dim2: usize,

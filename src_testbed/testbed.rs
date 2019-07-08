@@ -116,6 +116,7 @@ pub struct Testbed {
     persistant_contacts: HashMap<ContactId, bool>,
     font: Rc<Font>,
     cursor_pos: Point2<f32>,
+    ground_handle: Option<DefaultBodyHandle>,
     ui: TestbedUi,
     state: TestbedState
 }
@@ -172,6 +173,7 @@ impl Testbed {
             persistant_contacts: HashMap::new(),
             font: Font::default(),
             cursor_pos: Point2::new(0.0f32, 0.0),
+            ground_handle: None,
             ui,
             state,
         }
@@ -201,6 +203,11 @@ impl Testbed {
         self.nsteps = nsteps
     }
 
+    pub fn set_ground_handle(&mut self, handle: Option<DefaultBodyHandle>) {
+        self.ground_handle = handle;
+        self.graphics.set_ground_handle(handle);
+    }
+
     pub fn hide_performance_counters(&mut self) {
         self.hide_counters = true;
     }
@@ -222,6 +229,7 @@ impl Testbed {
         self.colliders = colliders;
         self.constraints = constraints;
         self.forces = forces;
+        self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
     }
 
     pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {
@@ -523,7 +531,7 @@ impl Testbed {
 
                     if let Some(body_part) = minb {
                         if modifier.contains(Modifiers::Control) {
-                            if !body_part.is_ground() {
+                            if Some(body_part.0) != self.ground_handle {
                                 self.graphics.remove_body_nodes(window, body_part.0);
                                 self.bodies.remove(body_part.0);
                             }
@@ -600,6 +608,8 @@ impl Testbed {
                                         let part = body.part(body_part_handle.1).unwrap();
                                         body.material_point_at_world_point(part, &attach1)
                                     };
+
+                                    /*
                                     let constraint = MouseConstraint::new(
                                         BodyPartHandle::ground(),
                                         body_part_handle,
@@ -609,6 +619,7 @@ impl Testbed {
                                     );
                                     self.state.grabbed_object_plane = (attach1, -ray.dir);
                                     self.state.grabbed_object_constraint = Some(self.constraints.insert(Box::new(constraint)));
+                                    */
                                     n.select()
                                 }
                         }

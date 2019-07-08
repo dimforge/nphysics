@@ -465,12 +465,11 @@ impl<N: RealField> ColliderDesc<N> {
     */
 
     // Returns `None` if the given body part does not exist.
-    pub(crate) fn build_with_infos<Handle: BodyHandle>(
+    pub fn build<Handle: BodyHandle>(
         &self,
-        parent: BodyPartHandle<Handle>,
-        body: &mut Body<N>
-    ) -> Option<Collider<N, Handle>> {
-
+        parent_handle: BodyPartHandle<Handle>,
+        parent_body: &mut Body<N>
+    ) -> Collider<N, Handle> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)
         } else {
@@ -480,28 +479,22 @@ impl<N: RealField> ColliderDesc<N> {
             )
         };
 
-        let (pos, ndofs) = if parent.is_ground() {
-            (self.position, 0)
-        } else {
-            if !self.density.is_zero() {
-                let com = self.position * self.shape.center_of_mass();
-                let inertia = self.shape.inertia(self.density).transformed(&self.position);
-                body.add_local_inertia_and_com(parent.1, com, inertia);
-            }
+        if !self.density.is_zero() {
+            let com = self.position * self.shape.center_of_mass();
+            let inertia = self.shape.inertia(self.density).transformed(&self.position);
+            parent_body.add_local_inertia_and_com(parent_handle.1, com, inertia);
+        }
 
-            (
-                body.part(parent.1)?.position() * self.position,
-                body.status_dependent_ndofs()
-            )
-        };
+        let pos = parent_body.part(parent_handle.1).expect("Invalid parent body part handle.").position() * self.position;
+        let ndofs = parent_body.status_dependent_ndofs();
 
-        let anchor = ColliderAnchor::OnBodyPart { body_part: parent, position_wrt_body_part: self.position };
+        let anchor = ColliderAnchor::OnBodyPart { body_part: parent_handle, position_wrt_body_part: self.position };
         let material = self.material.clone().unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
         let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
         data.ccd_enabled = self.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
         let co = CollisionObject::new(None, None, pos, self.shape.clone(), self.collision_groups, query, data);
-        Some(Collider(co))
+        Collider(co)
     }
 }
 

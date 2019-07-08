@@ -69,6 +69,7 @@ pub struct GraphicsManager {
     rays: Vec<Ray<f32>>,
     camera: Camera,
     aabbs: Vec<(DefaultColliderHandle, GraphicsNode)>,
+    ground_handle: Option<DefaultBodyHandle>
 }
 
 impl GraphicsManager {
@@ -95,7 +96,12 @@ impl GraphicsManager {
             c2color: HashMap::new(),
             rays: Vec::new(),
             aabbs: Vec::new(),
+            ground_handle: None,
         }
+    }
+
+    pub fn set_ground_handle(&mut self, handle: Option<DefaultBodyHandle>) {
+        self.ground_handle = handle
     }
 
     pub fn clear(&mut self, window: &mut Window) {
@@ -202,7 +208,7 @@ impl GraphicsManager {
         match self.b2color.get(&handle) {
             Some(c) => color = *c,
             None => {
-                if !handle.is_ground() {
+                if Some(handle) != self.ground_handle {
                     color = self.rand.gen();
                     color *= 1.5;
                     color.x = color.x.min(1.0);

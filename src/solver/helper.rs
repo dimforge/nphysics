@@ -339,7 +339,7 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -397,7 +397,7 @@ pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHan
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -585,7 +585,7 @@ pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -741,7 +741,7 @@ pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -888,7 +888,7 @@ pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -971,7 +971,7 @@ pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHand
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
             handle1,
-            handle2,
+            Some(handle2),
             true,
             geom.ndofs1,
             geom.ndofs2,
