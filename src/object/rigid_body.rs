@@ -37,7 +37,7 @@ pub struct RigidBody<N: RealField> {
     jacobian_mask: SpatialVector<N>,
     companion_id: usize,
     update_status: BodyUpdateStatus,
-    user_data: Option<Box<Any + Send + Sync>>
+    user_data: Option<Box<dyn Any + Send + Sync>>
 }
 
 impl<N: RealField> RigidBody<N> {
@@ -487,7 +487,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
+    fn part(&self, _: usize) -> Option<&dyn BodyPart<N>> {
         Some(self)
     }
 
@@ -497,17 +497,17 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.position * point
     }
 
     #[inline]
-    fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         self.position * Translation::from(point.coords)
     }
 
     #[inline]
-    fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.position.inverse_transform_point(point)
     }
 
@@ -524,7 +524,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     #[inline]
     fn fill_constraint_geometry(
         &self,
-        _: &BodyPart<N>,
+        _: &dyn BodyPart<N>,
         _: usize,
         point: &Point<N>,
         force_dir: &ForceDirection<N>,

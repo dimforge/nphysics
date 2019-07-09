@@ -62,7 +62,7 @@ pub struct ColliderData<N: RealField> {
     // NOTE: needed for the collision filter.
     body_status_dependent_ndofs: usize,
     material: MaterialHandle<N>,
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
 impl<N: RealField> ColliderData<N> {
@@ -129,7 +129,7 @@ impl<N: RealField> ColliderData<N> {
 
     /// The material of this collider.
     #[inline]
-    pub fn material(&self) -> &Material<N> {
+    pub fn material(&self) -> &dyn Material<N> {
         &*self.material
     }
 
@@ -139,7 +139,7 @@ impl<N: RealField> ColliderData<N> {
     /// before returning the mutable reference (this effectively call
     /// the `Arc::make_mut` method to get a copy-on-write behavior).
     #[inline]
-    pub fn material_mut(&mut self) -> &mut Material<N> {
+    pub fn material_mut(&mut self) -> &mut dyn Material<N> {
         self.material.make_mut()
     }
 
@@ -177,25 +177,25 @@ impl<N: RealField> Collider<N> {
      */
     /// The user-data attached to this collider.
     #[inline]
-    pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
+    pub fn user_data(&self) -> Option<&(dyn Any + Send + Sync)> {
         self.0.data().user_data.as_ref().map(|d| &**d)
     }
 
     /// Mutable reference to the user-data attached to this collider.
     #[inline]
-    pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
+    pub fn user_data_mut(&mut self) -> Option<&mut (dyn Any + Send + Sync)> {
         self.0.data_mut().user_data.as_mut().map(|d| &mut **d)
     }
 
     /// Sets the user-data attached to this collider.
     #[inline]
-    pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
+    pub fn set_user_data(&mut self, data: Option<Box<dyn Any + Send + Sync>>) -> Option<Box<dyn Any + Send + Sync>> {
         std::mem::replace(&mut self.0.data_mut().user_data, data)
     }
 
     /// Replace the user-data of this collider by `None` and returns the old value.
     #[inline]
-    pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
+    pub fn take_user_data(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
         self.0.data_mut().user_data.take()
     }
 
@@ -227,7 +227,7 @@ impl<N: RealField> Collider<N> {
 
     /// The material of this collider.
     #[inline]
-    pub fn material(&self) -> &Material<N> {
+    pub fn material(&self) -> &dyn Material<N> {
         self.0.data().material()
     }
 
@@ -406,10 +406,10 @@ impl<N: RealField> ColliderDesc<N> {
     );
 
     desc_custom_getters!(
-        self.get_shape: &Shape<N> | { &*self.shape }
+        self.get_shape: &dyn Shape<N> | { &*self.shape }
         self.get_name: &str | { &self.name }
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
-        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
 
     desc_getters!(
@@ -441,7 +441,7 @@ impl<N: RealField> ColliderDesc<N> {
     // Returns `None` if the given body part does not exist.
     pub(crate) fn build_with_infos<'w>(&self,
                                        parent: BodyPartHandle,
-                                       body: &mut Body<N>,
+                                       body: &mut dyn Body<N>,
                                        cworld: &'w mut ColliderWorld<N>)
                                     -> Option<&'w mut Collider<N>> {
         let query = if self.is_sensor {
@@ -551,9 +551,9 @@ impl<N: RealField> DeformableColliderDesc<N> {
     );
 
     desc_custom_getters!(
-        self.get_shape: &Shape<N> | { &*self.shape }
+        self.get_shape: &dyn Shape<N> | { &*self.shape }
         self.get_name: &str | { &self.name }
-        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );
 
@@ -573,7 +573,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     }
 
     pub(crate) fn build_with_infos<'w>(&self,
-                                       parent: &Body<N>,
+                                       parent: &dyn Body<N>,
                                        cworld: &'w mut ColliderWorld<N>)
                                        -> &'w mut Collider<N> {
         let query = if self.is_sensor {

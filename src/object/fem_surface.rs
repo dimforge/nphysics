@@ -74,7 +74,7 @@ pub struct FEMSurface<N: RealField> {
     update_status: BodyUpdateStatus,
 
 
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
 impl<N: RealField> FEMSurface<N> {
@@ -777,29 +777,29 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
-    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
-        self.elements.get(id).map(|b| b as &BodyPart<N>)
+    fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
+        self.elements.get(id).map(|b| b as &dyn BodyPart<N>)
     }
 
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
     }
 
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point);
         Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         fem_helper::material_point_at_world_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
     }
 
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         _: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         force_dir: &ForceDirection<N>,
