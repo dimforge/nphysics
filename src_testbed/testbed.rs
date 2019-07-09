@@ -506,7 +506,7 @@ impl Testbed {
 
                     event.inhibited = true;
                 } else if modifier.contains(Modifiers::Shift) {
-                    // XXX: huge and uggly code duplication for the ray cast.
+                    // XXX: huge and ugly code duplication for the ray cast.
                     let size = window.size();
                     let (pos, dir) = self
                         .graphics
@@ -610,17 +610,18 @@ impl Testbed {
                                         body.material_point_at_world_point(part, &attach1)
                                     };
 
-                                    /*
-                                    let constraint = MouseConstraint::new(
-                                        BodyPartHandle::ground(),
-                                        body_part_handle,
-                                        attach1,
-                                        attach2,
-                                        1.0,
-                                    );
-                                    self.state.grabbed_object_plane = (attach1, -ray.dir);
-                                    self.state.grabbed_object_constraint = Some(self.constraints.insert(Box::new(constraint)));
-                                    */
+                                    if let Some(ground_handle) = self.ground_handle {
+                                        let constraint = MouseConstraint::new(
+                                            BodyPartHandle(ground_handle, 0),
+                                            body_part_handle,
+                                            attach1,
+                                            attach2,
+                                            1.0,
+                                        );
+                                        self.state.grabbed_object_plane = (attach1, -ray.dir);
+                                        self.state.grabbed_object_constraint = Some(self.constraints.insert(Box::new(constraint)));
+                                    }
+
                                     n.select()
                                 }
                         }

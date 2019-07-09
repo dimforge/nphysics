@@ -53,6 +53,7 @@ impl<N: RealField> DefaultColliderSet<N> {
     }
 
     pub fn remove(&mut self, to_remove: DefaultColliderHandle) -> Option<Collider<N, DefaultBodyHandle>> {
+        println!("Collider removed.");
         let res = self.colliders.remove(to_remove)?;
 
         if let Some(data) = res.removal_data() {
@@ -106,7 +107,13 @@ impl<N: RealField> ColliderSet<N, DefaultBodyHandle> for DefaultColliderSet<N> {
     }
 
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Collider<N, DefaultBodyHandle>>, Option<&mut Collider<N, DefaultBodyHandle>>) {
-        unimplemented!()
+        assert_ne!(handle1, handle2, "Both body handles must not be equal.");
+        let b1 = self.get_mut(handle1).map(|b| b as *mut Collider<N, DefaultBodyHandle>);
+        let b2 = self.get_mut(handle2).map(|b| b as *mut Collider<N, DefaultBodyHandle>);
+        unsafe {
+            use std::mem;
+            (b1.map(|b| mem::transmute(b)), b2.map(|b| mem::transmute(b)))
+        }
     }
 
     fn contains(&self, handle: Self::Handle) -> bool {

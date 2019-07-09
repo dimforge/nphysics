@@ -82,6 +82,70 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         self.parameters.set_dt(dt);
     }
 
+    pub fn maintain<Colliders, Constraints>(&mut self,
+                                            cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
+                                            bodies: &mut Bodies,
+                                            colliders: &mut Colliders,
+                                            constraints: &mut Constraints)
+        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+              Constraints: JointConstraintSet<N, Bodies> {
+        // NOTE: the order of handling events matters.
+        // In particular, handling body removal events must be done first because it
+        // can itself cause constraints or colliders to be automatically removed too.
+
+        let mut at_least_one_body_removed = false; // If at least one body is removed we need to find the constraints to remove too.
+
+        while let Some(handle) = bodies.pop_removal_event() {
+            // Remove every colliders attached to this body.
+            if let Some(colls_to_remove) = cworld.body_colliders(handle) {
+                for collider in colls_to_remove {
+                    let _ = colliders.remove(*collider);
+                }
+            }
+
+            at_least_one_body_removed = true;
+        }
+
+        // Remove constraints with a missing body.
+        if at_least_one_body_removed {
+            let mut constraints_to_remove = Vec::new();
+            constraints.foreach(|h, c| {
+                let (b1, b2) = c.anchors();
+                if !bodies.contains(b1.0) || !bodies.contains(b2.0) {
+                    constraints_to_remove.push(h)
+                }
+            });
+
+            for to_remove in constraints_to_remove {
+                constraints.remove(to_remove);
+            }
+        }
+
+        while let Some((_, body1, body2)) = constraints.pop_removal_event() {
+            // Wake-up the bodies this was attached to.
+            if let Some(body1) = bodies.get_mut(body1.0) {
+                body1.activate()
+            }
+
+            if let Some(body2) = bodies.get_mut(body2.0) {
+                body2.activate()
+            }
+        }
+
+        while let Some((_, body1, body2)) = constraints.pop_insertion_event() {
+            // Wake-up the bodies this was attached to.
+            if let Some(body1) = bodies.get_mut(body1.0) {
+                body1.activate()
+            }
+
+            if let Some(body2) = bodies.get_mut(body2.0) {
+                body2.activate()
+            }
+        }
+
+        cworld.maintain(bodies, colliders);
+    }
+
     /// Execute one time step of the physics simulation.
     pub fn step<Colliders, Constraints, Forces>(&mut self,
                                                 cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
@@ -98,10 +162,16 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
             /*
              *
+             * Handle insertions/removals.
+             *
+             */
+            self.maintain(cworld, bodies, colliders, constraints);
+
+            /*
+             *
              * Update body dynamics and accelerations.
              *
              */
-
             bodies.foreach_mut(|_, b| {
                 b.step_started();
                 b.update_kinematics();
@@ -125,7 +195,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              * manually some bodies.
              */
             cworld.clear_events();
-            cworld.maintain(bodies, colliders);
             cworld.sync_colliders(bodies, colliders);
             cworld.perform_broad_phase(colliders);
             cworld.perform_narrow_phase(colliders);

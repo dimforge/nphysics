@@ -23,6 +23,49 @@ pub trait BodySet<N: RealField> {
 
     fn foreach(&self, f: impl FnMut(Self::Handle, &Self::Body));
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::Body));
+
+    fn pop_removal_event(&mut self) -> Option<Self::Handle>;
+}
+
+/// A set containing all the bodies added to the world.
+pub struct DefaultBodySet<N: RealField> {
+    bodies: Arena<Box<Body<N>>>,
+    removed: Vec<DefaultBodyHandle>,
+}
+
+impl<N: RealField> DefaultBodySet<N> {
+    pub fn new() -> Self {
+        DefaultBodySet {
+            bodies: Arena::new(),
+            removed: Vec::new(),
+        }
+    }
+
+    pub fn insert(&mut self, body: Box<Body<N>>) -> DefaultBodyHandle {
+        self.bodies.insert(body)
+    }
+
+    pub fn remove(&mut self, to_remove: DefaultBodyHandle) -> Option<Box<Body<N>>> {
+        let res = self.bodies.remove(to_remove)?;
+        self.removed.push(to_remove);
+        Some(res)
+    }
+
+    pub fn get(&self, handle: DefaultBodyHandle) -> Option<&Body<N>> {
+        self.bodies.get(handle).map(|b| &**b)
+    }
+
+    pub fn get_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut Body<N>> {
+        self.bodies.get_mut(handle).map(|b| &mut **b)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (DefaultBodyHandle, &Body<N>)> {
+        self.bodies.iter().map(|b| (b.0, &**b.1))
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultBodyHandle, &mut Body<N>)> {
+        self.bodies.iter_mut().map(|b| (b.0, &mut **b.1))
+    }
 }
 
 impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
@@ -30,20 +73,23 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
     type Handle = DefaultBodyHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body> {
-        self.get(handle).map(|e| &**e)
+        self.get(handle)
     }
 
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body> {
-        self.get_mut(handle).map(|e| &mut **e)
+        self.get_mut(handle)
     }
 
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>) {
         assert_ne!(handle1, handle2, "Both body handles must not be equal.");
-        let b1 = self.get_mut(handle1).map(|b| &mut **b as *mut Body<N>);
-        let b2 = self.get_mut(handle2).map(|b| &mut **b as *mut Body<N>);
+        let b1 = self.get_mut(handle1).map(|b| b as *mut Body<N>);
+        let b2 = self.get_mut(handle2).map(|b| b as *mut Body<N>);
         unsafe {
             use std::mem;
-            (b1.map(|b| mem::transmute(b)), b2.map(|b| mem::transmute(b)))
+            (
+                b1.map(|b| mem::transmute(b)),
+                b2.map(|b| mem::transmute(b))
+            )
         }
     }
 
@@ -54,14 +100,18 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
 
     fn foreach(&self, mut f: impl FnMut(Self::Handle, &Self::Body)) {
         for (h, b) in self.iter() {
-            f(h, &**b)
+            f(h, b)
         }
     }
 
     fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Self::Body)) {
         for (h, b) in self.iter_mut() {
-            f(h, &mut **b)
+            f(h, b)
         }
+    }
+
+    fn pop_removal_event(&mut self) -> Option<Self::Handle> {
+        self.removed.pop()
     }
 }
 
@@ -81,6 +131,3 @@ pub trait BodyDesc<N: RealField> {
     /// Called by the `World` to create a body with the given allocated handle.
     fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Self::Body;
 }
-
-/// A set containing all the bodies added to the world.
-pub type DefaultBodySet<N: RealField> = Arena<Box<Body<N>>>;
