@@ -10,7 +10,7 @@ use ncollide::shape::{ShapeHandle, Shape};
 use ncollide::pipeline::narrow_phase::CollisionObjectGraphIndex;
 use ncollide::pipeline::broad_phase::BroadPhaseProxyHandle;
 
-use crate::math::{Isometry, Vector, Rotation};
+use crate::math::{Isometry, Vector, Point, Rotation, Inertia};
 use crate::object::{BodyPartHandle, DefaultBodyHandle, Body, BodySet, BodyHandle, DefaultBodySet,
                     ColliderHandle, DefaultColliderHandle};
 use crate::material::{Material, MaterialHandle, BasicMaterial};
@@ -20,6 +20,7 @@ use crate::utils::{UserData, UserDataBox};
 
 
 /// Description of the way a collider is attached to a body.
+#[derive(Clone)]
 pub enum ColliderAnchor<N: RealField, Handle: BodyHandle> {
     /// Attach of a collider with a body part.
     OnBodyPart {
@@ -50,6 +51,16 @@ impl<N: RealField, Handle: BodyHandle> ColliderAnchor<N, Handle> {
         }
     }
 }
+
+
+pub struct ColliderRemovalData<N: RealField, Handle: BodyHandle> {
+    pub(crate) anchor: ColliderAnchor<N, Handle>,
+    pub(crate) shape: ShapeHandle<N>,
+    pub(crate) density: N,
+    pub(crate) proxy_handle: BroadPhaseProxyHandle,
+    pub(crate) graph_index: CollisionObjectGraphIndex,
+}
+
 
 /// Data stored into each collider.
 ///
@@ -155,6 +166,16 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
 pub struct Collider<N: RealField, Handle: BodyHandle>(pub(crate) CollisionObject<N, ColliderData<N, Handle>>); // FIXME: keep this pub(crate) or private?
 
 impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
+    pub fn removal_data(&self) -> Option<ColliderRemovalData<N, Handle>> {
+        Some(ColliderRemovalData {
+            anchor: self.0.data().anchor.clone(),
+            shape: self.shape().clone(),
+            density: self.0.data().density,
+            proxy_handle: self.0.proxy_handle()?,
+            graph_index: self.0.graph_index()?,
+        })
+    }
+
     /*
      * Methods of ColliderData.
      */

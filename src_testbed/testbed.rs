@@ -230,7 +230,7 @@ impl Testbed {
         self.constraints = constraints;
         self.forces = forces;
         self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
-        self.collider_world.handle_registrations(&mut self.bodies, &mut self.colliders);
+        self.collider_world.maintain(&mut self.bodies, &mut self.colliders);
     }
 
     pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {

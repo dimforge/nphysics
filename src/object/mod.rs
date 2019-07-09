@@ -5,7 +5,7 @@ pub use self::body_set::{
     Bodies, BodiesMut, BodyPartHandle, DefaultBodySet, BodySet,
     DefaultBodyHandle, DefaultBodyPartHandle, BodyDesc, BodyHandle
 };
-pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderDesc, DeformableColliderDesc};
+pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderDesc, DeformableColliderDesc, ColliderRemovalData};
 pub use self::collider_set::{ColliderSet, ColliderHandle, DefaultColliderSet, DefaultColliderHandle};
 pub use self::ground::Ground;
 pub use self::multibody::{Multibody, MultibodyDesc};

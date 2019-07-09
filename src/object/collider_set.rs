@@ -4,7 +4,7 @@ use slab::Slab;
 
 use na::RealField;
 use ncollide::pipeline::object::{CollisionObjectHandle, CollisionObjectSet};
-use crate::object::{Collider, BodyHandle, DefaultBodyHandle};
+use crate::object::{Collider, BodyHandle, DefaultBodyHandle, ColliderRemovalData};
 
 pub trait ColliderHandle: CollisionObjectHandle {
 }
@@ -22,30 +22,59 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
 
     fn foreach(&self, f: impl FnMut(Self::Handle, &Collider<N, Handle>));
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Collider<N, Handle>));
+
+    fn pop_insertion_event(&mut self) -> Option<Self::Handle>;
+    fn pop_removal_event(&mut self) -> Option<(Self::Handle, ColliderRemovalData<N, Handle>)>;
+    fn remove(&mut self, to_remove: Self::Handle) -> Option<&mut ColliderRemovalData<N, Handle>>;
 }
 
 pub type DefaultColliderHandle = usize;
-pub struct DefaultColliderSet<N: RealField>(Slab<Collider<N, DefaultBodyHandle>>);
 
-impl<N: RealField> Deref for DefaultColliderSet<N> {
-    type Target = Slab<Collider<N, DefaultBodyHandle>>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+pub struct DefaultColliderSet<N: RealField> {
+    colliders: Slab<Collider<N, DefaultBodyHandle>>,
+    removed: Vec<(DefaultColliderHandle, ColliderRemovalData<N, DefaultBodyHandle>)>,
+    inserted: Vec<DefaultColliderHandle>,
 }
 
-impl<N: RealField> DerefMut for DefaultColliderSet<N> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
 
 impl<N: RealField> DefaultColliderSet<N> {
     pub fn new() -> Self {
-        DefaultColliderSet(Slab::new())
+        DefaultColliderSet {
+            colliders: Slab::new(),
+            removed: Vec::new(),
+            inserted: Vec::new(),
+        }
+    }
+
+    pub fn insert(&mut self, collider: Collider<N, DefaultBodyHandle>) -> DefaultColliderHandle {
+        let res = self.colliders.insert(collider);
+        self.inserted.push(res);
+        res
+    }
+
+    pub fn remove(&mut self, to_remove: DefaultColliderHandle) -> Collider<N, DefaultBodyHandle> {
+        let res = self.colliders.remove(to_remove);
+        if let Some(data) = res.removal_data() {
+            self.removed.push((to_remove, data));
+        }
+
+        res
+    }
+
+    pub fn get(&self, handle: DefaultColliderHandle) -> Option<&Collider<N, DefaultBodyHandle>> {
+        self.colliders.get(handle)
+    }
+
+    pub fn get_mut(&mut self, handle: DefaultColliderHandle) -> Option<&mut Collider<N, DefaultBodyHandle>> {
+        self.colliders.get_mut(handle)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (DefaultColliderHandle, &Collider<N, DefaultBodyHandle>)> {
+        self.colliders.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultColliderHandle, &mut Collider<N, DefaultBodyHandle>)> {
+        self.colliders.iter_mut()
     }
 }
 
@@ -54,11 +83,11 @@ impl<N: RealField> CollisionObjectSet<N> for DefaultColliderSet<N> {
     type CollisionObjectHandle = DefaultColliderHandle;
 
     fn collision_object(&self, handle: Self::CollisionObjectHandle) -> Option<&Self::CollisionObject> {
-        self.0.get(handle)
+        self.get(handle)
     }
 
     fn foreach(&self, mut f: impl FnMut(Self::CollisionObjectHandle, &Self::CollisionObject)) {
-        for (handle, co) in self.0.iter() {
+        for (handle, co) in self.iter() {
             f(handle, &co)
         }
     }
@@ -68,11 +97,11 @@ impl<N: RealField> ColliderSet<N, DefaultBodyHandle> for DefaultColliderSet<N> {
     type Handle = DefaultColliderHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Collider<N, DefaultBodyHandle>> {
-        self.0.get(handle)
+        self.get(handle)
     }
 
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Collider<N, DefaultBodyHandle>> {
-        self.0.get_mut(handle)
+        self.get_mut(handle)
     }
 
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Collider<N, DefaultBodyHandle>>, Option<&mut Collider<N, DefaultBodyHandle>>) {
@@ -80,18 +109,36 @@ impl<N: RealField> ColliderSet<N, DefaultBodyHandle> for DefaultColliderSet<N> {
     }
 
     fn contains(&self, handle: Self::Handle) -> bool {
-        self.0.contains(handle)
+        self.colliders.contains(handle)
     }
 
     fn foreach(&self, mut f: impl FnMut(Self::Handle, &Collider<N, DefaultBodyHandle>)) {
-        for (h, b) in self.0.iter() {
+        for (h, b) in self.iter() {
             f(h, b)
         }
     }
 
     fn foreach_mut(&mut self, mut f: impl FnMut(Self::Handle, &mut Collider<N, DefaultBodyHandle>)) {
-        for (h, b) in self.0.iter_mut() {
+        for (h, b) in self.iter_mut() {
             f(h, b)
+        }
+    }
+
+    fn pop_insertion_event(&mut self) -> Option<Self::Handle> {
+        self.inserted.pop()
+    }
+
+    fn pop_removal_event(&mut self) -> Option<(Self::Handle, ColliderRemovalData<N, DefaultBodyHandle>)> {
+        self.removed.pop()
+    }
+
+    fn remove(&mut self, to_remove: Self::Handle) -> Option<&mut ColliderRemovalData<N, DefaultBodyHandle>> {
+        let res = self.colliders.remove(to_remove);
+        if let Some(data) = res.removal_data() {
+            self.removed.push((to_remove, data));
+            self.removed.last_mut().map(|r| &mut r.1)
+        } else {
+            None
         }
     }
 }

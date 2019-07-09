@@ -17,7 +17,7 @@ use crate::volumetric::Volumetric;
 use crate::object::{Collider, ColliderData, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
                     ColliderSet, BodySet, DefaultBodyHandle, BodyPartHandle, Body, BodyHandle};
 use crate::material::{BasicMaterial, MaterialHandle};
-use crate::math::{Isometry, Point};
+use crate::math::{Isometry, Point, Inertia};
 use num::real::Real;
 
 pub type DefaultColliderWorld<N> = ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
@@ -85,22 +85,27 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         to_remove.set_graph_index(None);
     }
 
-    pub fn handle_registrations<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
+    pub fn maintain<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
         where Bodies: BodySet<N, Handle = Handle>,
               Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
-        colliders.foreach_mut(|handle, collider| {
-            if collider.proxy_handle().is_none() {
+        self.handle_removals(bodies, colliders);
+        self.handle_insertions(bodies, colliders);
+    }
+
+    fn handle_insertions<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
+        where Bodies: BodySet<N, Handle = Handle>,
+              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+        while let Some(handle) = colliders.pop_insertion_event() {
+            if let Some(collider) = colliders.get_mut(handle) {
                 self.register_collider(handle, collider);
 
                 match collider.anchor() {
                     ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } => {
                         let body = bodies.get_mut(body_part.0).expect("Invalid parent body part handle.");
 
-                        // Update the parent body's density.
-                        if collider.density() != N::zero() {
-                            let com = position_wrt_body_part * collider.shape().center_of_mass();
-                            let inertia = collider.shape().inertia(collider.density()).transformed(&position_wrt_body_part);
-
+                        // Update the parent body's inertia.
+                        if !collider.density().is_zero() {
+                            let (com, inertia) = collider.shape().transformed_mass_properties(collider.density(), position_wrt_body_part);
                             body.add_local_inertia_and_com(body_part.1, com, inertia);
                         }
 
@@ -115,7 +120,63 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
                     _ => {}
                 }
             }
-        });
+        }
+    }
+
+    fn handle_removals<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
+        where Bodies: BodySet<N, Handle = Handle>,
+              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
+        let mut graph_id_remapping = HashMap::new();
+
+        while let Some((removed_handle, mut removed)) = colliders.pop_removal_event() {
+            // Adjust the graph index of the removed collider if it was affected by other removals.
+            if let Some(new_id) = graph_id_remapping.get(&removed_handle) {
+                removed.graph_index = *new_id
+            }
+
+            // Activate the bodies in contact with the deleted collider.
+            for (coll1, coll2, _, _) in self.interactions.contacts_with(removed.graph_index, true) {
+                if coll1 == removed_handle {
+                    if let Some(coll) = colliders.get(coll2) {
+                        if let Some(body) = bodies.get_mut(coll.body()) {
+                            body.activate()
+                        }
+                    }
+                }
+
+                if coll2 == removed_handle {
+                    if let Some(coll) = colliders.get(coll1) {
+                        if let Some(body) = bodies.get_mut(coll.body()) {
+                            body.activate()
+                        }
+                    }
+                }
+            }
+
+            // Activate the body the deleted collider was attached to.
+            if let Some(body) = bodies.get_mut(removed.anchor.body()) {
+                // Update the parent body's inertia.
+                if !removed.density.is_zero() {
+                    if let ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } = &removed.anchor {
+                        let (com, inertia) = removed.shape.transformed_mass_properties(removed.density, position_wrt_body_part);
+                        body.add_local_inertia_and_com(body_part.1, -com, -inertia)
+                    }
+                }
+
+                body.activate()
+            }
+
+            // Remove proxies and handle the graph index remapping.
+            if let Some(to_change) = glue::remove_proxies(&mut *self.broad_phase, &mut self.interactions, removed.proxy_handle, removed.graph_index) {
+                if let Some(collider) = colliders.get_mut(to_change.0) {
+                    // Apply the graph index remapping.
+                    collider.set_graph_index(Some(to_change.1))
+                } else {
+                    // Register the graph index remapping for other removed colliders.
+                    let _ = graph_id_remapping.insert(to_change.0, to_change.1);
+                }
+            }
+        }
     }
 
     /// Synchronize all colliders with their body parent and the underlying collision world.

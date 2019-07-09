@@ -1112,11 +1112,15 @@ impl<N: RealField> Body<N> for Multibody<N> {
     fn add_local_inertia_and_com(&mut self, part_id: usize, com: Point<N>, inertia: Inertia<N>) {
         self.update_status.set_local_inertia_changed(true);
         let mut link = &mut self.rbs[part_id];
+        let mass_sum = link.inertia.linear + inertia.linear;
+
         // Update center of mass.
-        if !link.inertia.linear.is_zero() {
-            let mass_sum = link.inertia.linear + inertia.linear;
+        if !mass_sum.is_zero() {
             link.local_com = (link.local_com * link.inertia.linear + com.coords * inertia.linear) / mass_sum;
             link.com = link.local_to_world * link.local_com;
+        } else {
+            link.local_com = Point::origin();
+            link.com = link.local_to_world.translation.vector.into();
         }
 
         // Update inertia.

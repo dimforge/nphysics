@@ -1,5 +1,5 @@
 use std::mem;
-use std::ops::{Add, AddAssign, Mul};
+use std::ops::{Add, AddAssign, Mul, Neg};
 
 use na::{self, Isometry2, Matrix1, Matrix3, RealField, Vector3};
 use crate::algebra::{Force2, Velocity2};
@@ -68,6 +68,15 @@ impl<N: RealField> Inertia2<N> {
             N::one() / self.angular
         };
         Inertia2::new(inv_mass, inv_angular)
+    }
+}
+
+impl<N: RealField> Neg for Inertia2<N> {
+    type Output = Self;
+
+    #[inline]
+    fn neg(self) -> Self {
+        Self::new(-self.linear, -self.angular)
     }
 }
 

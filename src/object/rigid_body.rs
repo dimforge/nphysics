@@ -595,11 +595,15 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         self.update_status.set_local_com_changed(true);
         self.update_status.set_local_inertia_changed(true);
 
+        let mass_sum = self.inertia.linear + inertia.linear;
+
         // Update center of mass.
-        if !inertia.linear.is_zero() {
-            let mass_sum = self.inertia.linear + inertia.linear;
+        if !mass_sum.is_zero() {
             self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
             self.com = self.position * self.local_com;
+        } else {
+            self.local_com = Point::origin();
+            self.com = self.position.translation.vector.into();
         }
 
         // Update local inertia.
