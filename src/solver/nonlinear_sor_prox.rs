@@ -19,7 +19,7 @@ impl NonlinearSORProx {
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
         constraints: &mut [NonlinearUnilateralConstraint<N>],
-        joints_constraints: &Slab<Box<JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
+        joints_constraints: &Slab<Box<dyn JointConstraint<N>>>, // FIXME: ugly, use a slice of refs instead.
         internal_constraints: &[BodyHandle],
         jacobians: &mut [N],
         max_iter: usize,

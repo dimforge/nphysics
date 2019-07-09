@@ -16,14 +16,14 @@ pub struct MoreauJeanSolver<N: RealField> {
     // FIXME: use a Vec or a DVector?
     mj_lambda_vel: DVector<N>,
     ext_vels: DVector<N>,
-    contact_model: Box<ContactModel<N>>,
+    contact_model: Box<dyn ContactModel<N>>,
     constraints: ConstraintSet<N>,
     internal_constraints: Vec<BodyHandle>,
 }
 
 impl<N: RealField> MoreauJeanSolver<N> {
     /// Create a new time-stepping scheme with the given contact model.
-    pub fn new(contact_model: Box<ContactModel<N>>) -> Self {
+    pub fn new(contact_model: Box<dyn ContactModel<N>>) -> Self {
         let constraints = ConstraintSet::new();
 
         MoreauJeanSolver {
@@ -37,7 +37,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
     }
 
     /// Sets the contact model.
-    pub fn set_contact_model(&mut self, model: Box<ContactModel<N>>) {
+    pub fn set_contact_model(&mut self, model: Box<dyn ContactModel<N>>) {
         self.contact_model = model
     }
 
@@ -46,7 +46,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         &mut self,
         counters: &mut Counters,
         bodies: &mut BodySet<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<dyn JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
         params: &IntegrationParameters<N>,
@@ -79,7 +79,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         params: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
         bodies: &mut BodySet<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<dyn JointConstraint<N>>>,
         manifolds: &[ColliderContactManifold<N>],
         island: &[BodyHandle],
     ) {
@@ -225,7 +225,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
         params: &IntegrationParameters<N>,
         cworld: &ColliderWorld<N>,
         bodies: &mut BodySet<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<dyn JointConstraint<N>>>,
     ) {
         NonlinearSORProx::solve(
             params,
@@ -242,7 +242,7 @@ impl<N: RealField> MoreauJeanSolver<N> {
     fn save_cache(
         &mut self,
         bodies: &mut BodySet<N>,
-        joints: &mut Slab<Box<JointConstraint<N>>>,
+        joints: &mut Slab<Box<dyn JointConstraint<N>>>,
     ) {
         self.contact_model.cache_impulses(&self.constraints);
 

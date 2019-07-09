@@ -213,7 +213,7 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry3<f32>,
-        shape: &Shape<f32>,
+        shape: &dyn Shape<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -443,19 +443,19 @@ impl GraphicsManager {
         self.curr_is_arc_ball = !self.curr_is_arc_ball;
     }
 
-    pub fn camera<'a>(&'a self) -> &'a Camera {
+    pub fn camera<'a>(&'a self) -> &'a dyn Camera {
         if self.curr_is_arc_ball {
-            &self.arc_ball as &'a Camera
+            &self.arc_ball as &'a dyn Camera
         } else {
-            &self.first_person as &'a Camera
+            &self.first_person as &'a dyn Camera
         }
     }
 
-    pub fn camera_mut<'a>(&'a mut self) -> &'a mut Camera {
+    pub fn camera_mut<'a>(&'a mut self) -> &'a mut dyn Camera {
         if self.curr_is_arc_ball {
-            &mut self.arc_ball as &'a mut Camera
+            &mut self.arc_ball as &'a mut dyn Camera
         } else {
-            &mut self.first_person as &'a mut Camera
+            &mut self.first_person as &'a mut dyn Camera
         }
     }
 

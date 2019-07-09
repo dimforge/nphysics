@@ -32,10 +32,10 @@ impl<N: RealField> SignoriniModel<N> {
     /// Build a non-penetration velocity-based constraint for the given contact.
     pub fn build_velocity_constraint(
         params: &IntegrationParameters<N>,
-        body1: &Body<N>,
-        part1: &BodyPart<N>,
-        body2: &Body<N>,
-        part2: &BodyPart<N>,
+        body1: &dyn Body<N>,
+        part1: &dyn BodyPart<N>,
+        body2: &dyn Body<N>,
+        part2: &dyn BodyPart<N>,
         props: &LocalMaterialProperties<N>,
         manifold: &ColliderContactManifold<N>,
         ext_vels: &DVector<N>,

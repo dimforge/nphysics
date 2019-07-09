@@ -156,9 +156,9 @@ impl<N: RealField> Volumetric<N> for ConvexPolygon<N> {
 
 #[cfg(test)]
 mod test {
-    use na::{self, Matrix1, Point2, Vector2, Vector3};
+    use na::{self, Matrix1, Point2, Vector2};
     use ncollide::shape::{Cuboid, ConvexPolygon};
-    use ncollide::procedural;
+    
     use crate::volumetric::Volumetric;
 
     #[test]

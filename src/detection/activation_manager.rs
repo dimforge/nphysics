@@ -45,7 +45,7 @@ impl<N: RealField> ActivationManager<N> {
         self.to_activate.push(handle);
     }
 
-    fn update_energy(&self, body: &mut Body<N>) {
+    fn update_energy(&self, body: &mut dyn Body<N>) {
         // FIXME: avoid the Copy when NLL lands ?
         let status = *body.activation_status();
 
@@ -63,7 +63,7 @@ impl<N: RealField> ActivationManager<N> {
         &mut self,
         bodies: &mut BodySet<N>,
         cworld: &ColliderWorld<N>,
-        constraints: &Slab<Box<JointConstraint<N>>>,
+        constraints: &Slab<Box<dyn JointConstraint<N>>>,
         active_bodies: &mut Vec<BodyHandle>,
     ) {
         /*

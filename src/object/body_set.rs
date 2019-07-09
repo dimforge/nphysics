@@ -115,7 +115,7 @@ pub trait BodyDesc<N: RealField> {
 /// A set containing all the bodies added to the world.
 pub struct BodySet<N: RealField> {
     ground: Ground<N>,
-    bodies: Slab<Box<Body<N>>>,
+    bodies: Slab<Box<dyn Body<N>>>,
 }
 
 impl<N: RealField> BodySet<N> {
@@ -160,7 +160,7 @@ impl<N: RealField> BodySet<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
+    pub fn body(&self, handle: BodyHandle) -> Option<&dyn Body<N>> {
         if handle.is_ground() {
             Some(&self.ground)
         } else {
@@ -172,7 +172,7 @@ impl<N: RealField> BodySet<N> {
     ///
     /// Returns `None` if the body is not found.
     #[inline]
-    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
+    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut dyn Body<N>> {
         if handle.is_ground() {
             Some(&mut self.ground)
         } else {
@@ -182,18 +182,18 @@ impl<N: RealField> BodySet<N> {
 
     /// Iterator yielding all the bodies on this set.
     #[inline]
-    pub fn bodies(&self) -> impl Iterator<Item = &Body<N>> {
+    pub fn bodies(&self) -> impl Iterator<Item = &dyn Body<N>> {
         self.bodies.iter().map(|e| &**e.1)
     }
 
     /// Mutable iterator yielding all the bodies on this set.
     #[inline]
-    pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut Body<N>> {
+    pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut dyn Body<N>> {
         self.bodies.iter_mut().map(|e| &mut **e.1)
     }
 }
 
 /// Iterator yielding all the bodies on a body set.
-pub type Bodies<'a, N> = Iter<'a, Box<Body<N>>>;
+pub type Bodies<'a, N> = Iter<'a, Box<dyn Body<N>>>;
 /// Mutable iterator yielding all the bodies on a body set.
-pub type BodiesMut<'a, N> = IterMut<'a, Box<Body<N>>>;
+pub type BodiesMut<'a, N> = IterMut<'a, Box<dyn Body<N>>>;

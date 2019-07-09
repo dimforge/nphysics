@@ -54,10 +54,10 @@ impl<N: RealField> Neg for ForceDirection<N> {
 /// Every input are expressed in world-space.
 #[inline]
 pub fn constraint_pair_geometry<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     center1: &Point<N>,
     center2: &Point<N>,
     dir: &ForceDirection<N>,
@@ -139,8 +139,8 @@ pub fn constraint_pair_geometry<N: RealField>(
 /// constraint (a constraint between a dynamic body and one without any degree of freedom).
 #[inline]
 pub fn constraints_are_ground_constraints<N: RealField>(
-    body1: &Body<N>,
-    body2: &Body<N>,
+    body1: &dyn Body<N>,
+    body2: &dyn Body<N>,
 ) -> bool {
     body1.status_dependent_ndofs() == 0 || body2.status_dependent_ndofs() == 0
 }
@@ -148,8 +148,8 @@ pub fn constraints_are_ground_constraints<N: RealField>(
 /// Retrieve the external velocity subvectors for the given bodies.
 #[inline(always)]
 pub fn split_ext_vels<'a, N: RealField>(
-    body1: &Body<N>,
-    body2: &Body<N>,
+    body1: &dyn Body<N>,
+    body2: &dyn Body<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     ext_vels: &'a DVector<N>)
@@ -164,10 +164,10 @@ pub fn split_ext_vels<'a, N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -239,10 +239,10 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_linear_velocity<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -287,10 +287,10 @@ pub fn cancel_relative_linear_velocity<N: RealField>(
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_translation_wrt_axis<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
@@ -349,10 +349,10 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_translation<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     jacobians: &mut [N],
@@ -402,10 +402,10 @@ pub fn cancel_relative_translation<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -477,10 +477,10 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_angular_velocity<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -525,10 +525,10 @@ pub fn cancel_relative_angular_velocity<N: RealField>(
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_rotation<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     rotation1: &Rotation<N>,
@@ -581,10 +581,10 @@ pub fn cancel_relative_rotation<N: RealField>(
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
 pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     axis: &Unit<AngularVector<N>>,
@@ -665,10 +665,10 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
 #[cfg(feature = "dim3")]
 pub fn align_axis<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
@@ -730,10 +730,10 @@ pub fn align_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -814,10 +814,10 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
 /// All inputs mut be given in world-space.
 pub fn project_anchor_to_axis<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
@@ -873,10 +873,10 @@ pub fn project_anchor_to_axis<N: RealField>(
 #[cfg(feature = "dim3")]
 pub fn restore_angle_between_axis<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,

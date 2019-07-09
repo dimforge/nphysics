@@ -19,7 +19,7 @@ pub struct MultibodyLink<N: RealField> {
     // XXX: rename to "joint".
     // (And rename the full-coordinates joint constraints JointConstraint).
     pub(crate) parent_internal_id: usize,
-    pub(crate) dof: Box<Joint<N>>,
+    pub(crate) dof: Box<dyn Joint<N>>,
     pub(crate) parent_shift: Vector<N>,
     pub(crate) body_shift: Vector<N>,
 
@@ -50,7 +50,7 @@ impl<N: RealField> MultibodyLink<N> {
         impulse_id: usize,
         multibody_handle: BodyHandle,
         parent_internal_id: usize,
-        dof: Box<Joint<N>>,
+        dof: Box<dyn Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         parent_to_world: Isometry<N>,
@@ -98,13 +98,13 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// Reference to the joint attaching this link to its parent.
     #[inline]
-    pub fn joint(&self) -> &Joint<N> {
+    pub fn joint(&self) -> &dyn Joint<N> {
         &*self.dof
     }
 
     /// Mutable reference to the joint attaching this link to its parent.
     #[inline]
-    pub fn joint_mut(&mut self) -> &mut Joint<N> {
+    pub fn joint_mut(&mut self) -> &mut dyn Joint<N> {
         &mut *self.dof
     }
 

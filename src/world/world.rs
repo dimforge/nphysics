@@ -30,8 +30,8 @@ pub struct World<N: RealField> {
     // FIXME: set those two parameters per-collider?
     prediction: N,
     gravity: Vector<N>,
-    constraints: Slab<Box<JointConstraint<N>>>,
-    forces: Slab<Box<ForceGenerator<N>>>,
+    constraints: Slab<Box<dyn JointConstraint<N>>>,
+    forces: Slab<Box<dyn ForceGenerator<N>>>,
     params: IntegrationParameters<N>,
 }
 
@@ -149,12 +149,12 @@ impl<N: RealField> World<N> {
     }
 
     /// Get a reference to the specified constraint.
-    pub fn constraint(&self, handle: ConstraintHandle) -> &JointConstraint<N> {
+    pub fn constraint(&self, handle: ConstraintHandle) -> &dyn JointConstraint<N> {
         &*self.constraints[handle]
     }
 
     /// Get a mutable reference to the specified constraint.
-    pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut JointConstraint<N> {
+    pub fn constraint_mut(&mut self, handle: ConstraintHandle) -> &mut dyn JointConstraint<N> {
         let (anchor1, anchor2) = self.constraints[handle].anchors();
         self.activate_body(anchor1.0);
         self.activate_body(anchor2.0);
@@ -162,7 +162,7 @@ impl<N: RealField> World<N> {
     }
 
     /// Remove the specified constraint from the world.
-    pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<JointConstraint<N>> {
+    pub fn remove_constraint(&mut self, handle: ConstraintHandle) -> Box<dyn JointConstraint<N>> {
         let constraint = self.constraints.remove(handle);
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1.0);
@@ -197,12 +197,12 @@ impl<N: RealField> World<N> {
     }
 
     /// Retrieve a reference to the specified force generator.
-    pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &ForceGenerator<N> {
+    pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &dyn ForceGenerator<N> {
         &*self.forces[handle]
     }
 
     /// Retrieve a mutable reference to the specified force generator.
-    pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut ForceGenerator<N> {
+    pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut dyn ForceGenerator<N> {
         &mut *self.forces[handle]
     }
 
@@ -210,7 +210,7 @@ impl<N: RealField> World<N> {
     pub fn remove_force_generator(
         &mut self,
         handle: ForceGeneratorHandle,
-    ) -> Box<ForceGenerator<N>> {
+    ) -> Box<dyn ForceGenerator<N>> {
         self.forces.remove(handle)
     }
 
@@ -425,12 +425,12 @@ impl<N: RealField> World<N> {
     }
 
     /// Get a reference to the specified body.
-    pub fn body(&self, handle: BodyHandle) -> Option<&Body<N>> {
+    pub fn body(&self, handle: BodyHandle) -> Option<&dyn Body<N>> {
         self.bodies.body(handle)
     }
 
     /// Get a mutable reference to the specified body.
-    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut Body<N>> {
+    pub fn body_mut(&mut self, handle: BodyHandle) -> Option<&mut dyn Body<N>> {
         self.bodies.body_mut(handle)
     }
 
@@ -511,18 +511,18 @@ impl<N: RealField> World<N> {
     }
 
     /// An iterator through all the bodies on this world.
-    pub fn bodies(&self) -> impl Iterator<Item = &Body<N>> { self.bodies.bodies() }
+    pub fn bodies(&self) -> impl Iterator<Item = &dyn Body<N>> { self.bodies.bodies() }
 
     /// A mutable iterator through all the bodies on this world.
-    pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut Body<N>> { self.bodies.bodies_mut() }
+    pub fn bodies_mut(&mut self) -> impl Iterator<Item = &mut dyn Body<N>> { self.bodies.bodies_mut() }
 
     /// An iterator through all the bodies with the given name.
-    pub fn bodies_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Body<N>> {
+    pub fn bodies_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a dyn Body<N>> {
         self.bodies().filter(move |b| b.name() == name)
     }
 
     /// An iterator through all the bodies with the given name.
-    pub fn bodies_with_name_mut<'a>(&'a mut self, name: &'a str) -> impl Iterator<Item = &'a mut Body<N>> {
+    pub fn bodies_with_name_mut<'a>(&'a mut self, name: &'a str) -> impl Iterator<Item = &'a mut dyn Body<N>> {
         self.bodies_mut().filter(move |b| b.name() == name)
     }
 
@@ -549,6 +549,6 @@ mod test {
 
     #[test]
     fn world_is_send_sync() {
-        let _ = Box::new(World::<f32>::new()) as Box<Send + Sync>;
+        let _ = Box::new(World::<f32>::new()) as Box<dyn Send + Sync>;
     }
 }

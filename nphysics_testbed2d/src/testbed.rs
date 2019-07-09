@@ -91,11 +91,11 @@ pub struct Testbed {
     cursor_pos: Point2<f32>,
     grabbed_object: Option<BodyPartHandle>,
     grabbed_object_constraint: Option<ConstraintHandle>,
-    world: Box<WorldOwner>,
+    world: Box<dyn WorldOwner>,
     drawing_ray: Option<Point2<f32>>,
 }
 
-type Callbacks = Vec<Box<Fn(&mut WorldOwner, &mut GraphicsManager, f32)>>;
+type Callbacks = Vec<Box<dyn Fn(&mut dyn WorldOwner, &mut GraphicsManager, f32)>>;
 
 impl Testbed {
     pub fn new_empty() -> Testbed {
@@ -130,7 +130,7 @@ impl Testbed {
         Testbed::new_with_world_owner(Box::new(world))
     }
 
-    pub fn new_with_world_owner(world_owner: Box<WorldOwner>) -> Testbed {
+    pub fn new_with_world_owner(world_owner: Box<dyn WorldOwner>) -> Testbed {
         let mut res = Testbed::new_empty();
 
         res.set_world_owner(world_owner);
@@ -154,7 +154,7 @@ impl Testbed {
         self.set_world_owner(Box::new(world));
     }
 
-    pub fn set_world_owner(&mut self, world: Box<WorldOwner>) {
+    pub fn set_world_owner(&mut self, world: Box<dyn WorldOwner>) {
         self.world = world;
         let mut world = self.world.get_mut();
         world.enable_performance_counters();
@@ -179,7 +179,7 @@ impl Testbed {
         self.graphics.set_collider_color(collider, color);
     }
 
-    pub fn world(&self) -> &Box<WorldOwner> {
+    pub fn world(&self) -> &Box<dyn WorldOwner> {
         &self.world
     }
 
@@ -214,7 +214,7 @@ impl Testbed {
         res
     }
 
-    pub fn add_callback<F: Fn(&mut WorldOwner, &mut GraphicsManager, f32) + 'static>(
+    pub fn add_callback<F: Fn(&mut dyn WorldOwner, &mut GraphicsManager, f32) + 'static>(
         &mut self,
         callback: F,
     ) {
@@ -242,9 +242,9 @@ impl Testbed {
 }
 
 type CameraEffects<'a> = (
-    Option<&'a mut Camera>,
-    Option<&'a mut PlanarCamera>,
-    Option<&'a mut PostProcessingEffect>,
+    Option<&'a mut dyn Camera>,
+    Option<&'a mut dyn PlanarCamera>,
+    Option<&'a mut dyn PostProcessingEffect>,
 );
 
 impl State for Testbed {
