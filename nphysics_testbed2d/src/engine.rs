@@ -213,7 +213,7 @@ impl GraphicsManager {
         object: ColliderHandle,
         world: &World<f32>,
         delta: Isometry2<f32>,
-        shape: &Shape<f32>,
+        shape: &dyn Shape<f32>,
         color: Point3<f32>,
         out: &mut Vec<Node>,
     ) {
@@ -429,8 +429,8 @@ impl GraphicsManager {
     //     }
     // }
 
-    pub fn camera_mut<'a>(&'a mut self) -> &'a mut PlanarCamera {
-        &mut self.camera as &'a mut PlanarCamera
+    pub fn camera_mut<'a>(&'a mut self) -> &'a mut dyn PlanarCamera {
+        &mut self.camera as &'a mut dyn PlanarCamera
     }
 
     pub fn look_at(&mut self, at: Point2<f32>, zoom: f32) {

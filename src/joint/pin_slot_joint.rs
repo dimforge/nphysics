@@ -37,7 +37,7 @@ impl<N: RealField> PinSlotJoint<N> {
 
 impl<N: RealField> Joint<N> for PinSlotJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<dyn Joint<N>> {
         Box::new(*self)
     }
 

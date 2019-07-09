@@ -24,12 +24,12 @@ extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate nphysics_testbed3d;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Point3, Vector3};
 use ncollide3d::shape::{ConvexHull, Cuboid, ShapeHandle};
-use ncollide3d::procedural;
+
 use nphysics3d::world::World;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics3d::volumetric::Volumetric;
+
 use nphysics_testbed3d::Testbed;
 
 

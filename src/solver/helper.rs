@@ -581,10 +581,10 @@ pub fn cancel_relative_rotation<N: RealField>(
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
 pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     assembly_id1: usize,
     assembly_id2: usize,
     axis: &Unit<AngularVector<N>>,
@@ -665,10 +665,10 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
 #[cfg(feature = "dim3")]
 pub fn align_axis<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
@@ -873,10 +873,10 @@ pub fn project_anchor_to_axis<N: RealField>(
 #[cfg(feature = "dim3")]
 pub fn restore_angle_between_axis<N: RealField>(
     params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+    body1: &dyn Body<N>,
+    part1: &dyn BodyPart<N>,
+    body2: &dyn Body<N>,
+    part2: &dyn BodyPart<N>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
