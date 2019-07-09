@@ -1,6 +1,6 @@
 use std::hash::Hash;
 use std::ops::{Deref, DerefMut};
-use slab::Slab;
+use generational_arena::Arena;
 
 use na::RealField;
 use ncollide::pipeline::object::{CollisionObjectHandle, CollisionObjectSet};
@@ -28,10 +28,10 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
     fn remove(&mut self, to_remove: Self::Handle) -> Option<&mut ColliderRemovalData<N, Handle>>;
 }
 
-pub type DefaultColliderHandle = usize;
+pub type DefaultColliderHandle = generational_arena::Index;
 
 pub struct DefaultColliderSet<N: RealField> {
-    colliders: Slab<Collider<N, DefaultBodyHandle>>,
+    colliders: Arena<Collider<N, DefaultBodyHandle>>,
     removed: Vec<(DefaultColliderHandle, ColliderRemovalData<N, DefaultBodyHandle>)>,
     inserted: Vec<DefaultColliderHandle>,
 }
@@ -40,7 +40,7 @@ pub struct DefaultColliderSet<N: RealField> {
 impl<N: RealField> DefaultColliderSet<N> {
     pub fn new() -> Self {
         DefaultColliderSet {
-            colliders: Slab::new(),
+            colliders: Arena::new(),
             removed: Vec::new(),
             inserted: Vec::new(),
         }
@@ -52,13 +52,14 @@ impl<N: RealField> DefaultColliderSet<N> {
         res
     }
 
-    pub fn remove(&mut self, to_remove: DefaultColliderHandle) -> Collider<N, DefaultBodyHandle> {
-        let res = self.colliders.remove(to_remove);
+    pub fn remove(&mut self, to_remove: DefaultColliderHandle) -> Option<Collider<N, DefaultBodyHandle>> {
+        let res = self.colliders.remove(to_remove)?;
+
         if let Some(data) = res.removal_data() {
             self.removed.push((to_remove, data));
         }
 
-        res
+        Some(res)
     }
 
     pub fn get(&self, handle: DefaultColliderHandle) -> Option<&Collider<N, DefaultBodyHandle>> {
@@ -133,7 +134,7 @@ impl<N: RealField> ColliderSet<N, DefaultBodyHandle> for DefaultColliderSet<N> {
     }
 
     fn remove(&mut self, to_remove: Self::Handle) -> Option<&mut ColliderRemovalData<N, DefaultBodyHandle>> {
-        let res = self.colliders.remove(to_remove);
+        let res = self.colliders.remove(to_remove)?;
         if let Some(data) = res.removal_data() {
             self.removed.push((to_remove, data));
             self.removed.last_mut().map(|r| &mut r.1)

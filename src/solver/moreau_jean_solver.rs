@@ -1,5 +1,3 @@
-use slab::Slab;
-
 use na::{DVector, RealField};
 use ncollide::query::ContactId;
 

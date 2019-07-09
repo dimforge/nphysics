@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::joint::{unit_constraint, JointConstraint};
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet, Bodies, Body, BodyHandle};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
 use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};

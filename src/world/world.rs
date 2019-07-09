@@ -9,8 +9,8 @@ use ncollide::interpolation::ConstantVelocityRigidMotion;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
-use crate::force_generator::{ForceGenerator, ForceGeneratorHandle, ForceGeneratorSet};
-use crate::joint::{JointConstraintHandle, JointConstraint, JointConstraintSet};
+use crate::force_generator::{ForceGenerator, DefaultForceGeneratorHandle, ForceGeneratorSet};
+use crate::joint::{DefaultJointConstraintHandle, JointConstraint, JointConstraintSet};
 use crate::math::Vector;
 use crate::object::{
     Body, DefaultBodySet, BodyDesc, BodyStatus, Collider, ColliderAnchor, ColliderHandle, DefaultColliderSet,
@@ -164,7 +164,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     }
 
     /// Add a constraints to the physics world and retrieves its handle.
-    pub fn add_constraint<C: JointConstraint<N, DefaultBodySet<N>>>(&mut self, constraint: C) -> JointConstraintHandle {
+    pub fn add_constraint<C: JointConstraint<N, DefaultBodySet<N>>>(&mut self, constraint: C) -> DefaultJointConstraintHandle {
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1.0);
         self.activate_body(anchor2.0);
@@ -172,12 +172,12 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     }
 
     /// Get a reference to the specified constraint.
-    pub fn constraint(&self, handle: JointConstraintHandle) -> &JointConstraint<N, DefaultBodySet<N>> {
+    pub fn constraint(&self, handle: DefaultJointConstraintHandle) -> &JointConstraint<N, DefaultBodySet<N>> {
         &*self.constraints[handle]
     }
 
     /// Get a mutable reference to the specified constraint.
-    pub fn constraint_mut(&mut self, handle: JointConstraintHandle) -> &mut JointConstraint<N, DefaultBodySet<N>> {
+    pub fn constraint_mut(&mut self, handle: DefaultJointConstraintHandle) -> &mut JointConstraint<N, DefaultBodySet<N>> {
         let (anchor1, anchor2) = self.constraints[handle].anchors();
         self.activate_body(anchor1.0);
         self.activate_body(anchor2.0);
@@ -185,7 +185,7 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     }
 
     /// Remove the specified constraint from the world.
-    pub fn remove_constraint(&mut self, handle: JointConstraintHandle) -> Box<JointConstraint<N, DefaultBodySet<N>>> {
+    pub fn remove_constraint(&mut self, handle: DefaultJointConstraintHandle) -> Box<JointConstraint<N, DefaultBodySet<N>>> {
         let constraint = self.constraints.remove(handle);
         let (anchor1, anchor2) = constraint.anchors();
         self.activate_body(anchor1.0);
@@ -216,24 +216,24 @@ impl<N: RealField, Bodies: BodySet<N>> World<N, Bodies> {
     pub fn add_force_generator<G: ForceGenerator<N, DefaultBodySet<N>>>(
         &mut self,
         force_generator: G,
-    ) -> ForceGeneratorHandle {
+    ) -> DefaultForceGeneratorHandle {
         self.forces.insert(Box::new(force_generator))
     }
 
     /// Retrieve a reference to the specified force generator.
-    pub fn force_generator(&self, handle: ForceGeneratorHandle) -> &ForceGenerator<N, DefaultBodySet<N>> {
+    pub fn force_generator(&self, handle: DefaultForceGeneratorHandle) -> &ForceGenerator<N, DefaultBodySet<N>> {
         &*self.forces[handle]
     }
 
     /// Retrieve a mutable reference to the specified force generator.
-    pub fn force_generator_mut(&mut self, handle: ForceGeneratorHandle) -> &mut ForceGenerator<N, DefaultBodySet<N>> {
+    pub fn force_generator_mut(&mut self, handle: DefaultForceGeneratorHandle) -> &mut ForceGenerator<N, DefaultBodySet<N>> {
         &mut *self.forces[handle]
     }
 
     /// Remove the specified force generator from the world.
     pub fn remove_force_generator(
         &mut self,
-        handle: ForceGeneratorHandle,
+        handle: DefaultForceGeneratorHandle,
     ) -> Box<ForceGenerator<N, DefaultBodySet<N>>> {
         self.forces.remove(handle)
     }

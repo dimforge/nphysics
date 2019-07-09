@@ -2,7 +2,7 @@
 
 pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus};
 pub use self::body_set::{
-    Bodies, BodiesMut, BodyPartHandle, DefaultBodySet, BodySet,
+    BodyPartHandle, DefaultBodySet, BodySet,
     DefaultBodyHandle, DefaultBodyPartHandle, BodyDesc, BodyHandle
 };
 pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderDesc, DeformableColliderDesc, ColliderRemovalData};

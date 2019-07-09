@@ -1,5 +1,3 @@
-use slab::Slab;
-
 use na::{self, RealField};
 use crate::world::ColliderWorld;
 use crate::object::{Body, DefaultBodySet, BodySet, BodyHandle, ColliderHandle, ColliderSet};

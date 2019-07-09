@@ -1,5 +1,5 @@
-use slab::{Iter, IterMut, Slab};
 use std::hash::Hash;
+use generational_arena::Arena;
 
 use na::RealField;
 use crate::world::ColliderWorld;
@@ -66,7 +66,7 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
 }
 
 
-pub type DefaultBodyHandle = usize;
+pub type DefaultBodyHandle = generational_arena::Index;
 pub type DefaultBodyPartHandle = BodyPartHandle<DefaultBodyHandle>;
 
 /// A unique identifier of a body part added to the world.
@@ -83,9 +83,4 @@ pub trait BodyDesc<N: RealField> {
 }
 
 /// A set containing all the bodies added to the world.
-pub type DefaultBodySet<N: RealField> = Slab<Box<Body<N>>>;
-
-/// Iterator yielding all the bodies on a body set.
-pub type Bodies<'a, N> = Iter<'a, Box<Body<N>>>;
-/// Mutable iterator yielding all the bodies on a body set.
-pub type BodiesMut<'a, N> = IterMut<'a, Box<Body<N>>>;
+pub type DefaultBodySet<N: RealField> = Arena<Box<Body<N>>>;

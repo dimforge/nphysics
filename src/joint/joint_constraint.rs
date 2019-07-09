@@ -1,13 +1,13 @@
 #![allow(missing_docs)] // For downcast.
 
 use downcast_rs::Downcast;
-use slab::Slab;
+use generational_arena::Arena;
 use na::{DVector, RealField};
 
 use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle, DefaultBodySet};
 use crate::solver::{LinearConstraints, IntegrationParameters, NonlinearConstraintGenerator};
 
-pub type DefaultJointConstraintSet<N: RealField> = Slab<Box<JointConstraint<N, DefaultBodySet<N>>>>;
+pub type DefaultJointConstraintSet<N: RealField> = Arena<Box<JointConstraint<N, DefaultBodySet<N>>>>;
 
 pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     type JointConstraint: ?Sized + JointConstraint<N, Bodies>;
@@ -22,9 +22,9 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::JointConstraint));
 }
 
-impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> for Slab<Box<JointConstraint<N, Bodies>>> {
+impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> for Arena<Box<JointConstraint<N, Bodies>>> {
     type JointConstraint = JointConstraint<N, Bodies>;
-    type Handle = JointConstraintHandle;
+    type Handle = DefaultJointConstraintHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint> {
         self.get(handle).map(|c| &**c)
@@ -53,7 +53,7 @@ impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> f
 
 
 /// The handle of a constraint.
-pub type JointConstraintHandle = usize;
+pub type DefaultJointConstraintHandle = generational_arena::Index;
 
 /// Trait implemented by joint that operate by generating constraints to restrict the relative motion of two body parts.
 pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>: NonlinearConstraintGenerator<N, Bodies> + Downcast + Send + Sync {

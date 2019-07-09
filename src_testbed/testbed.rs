@@ -23,7 +23,7 @@ use ncollide::query;
 use ncollide::query::{ContactId, Ray};
 use ncollide::pipeline::object::CollisionGroups;
 use nphysics::force_generator::DefaultForceGeneratorSet;
-use nphysics::joint::{JointConstraintHandle, MouseConstraint, DefaultJointConstraintSet};
+use nphysics::joint::{DefaultJointConstraintHandle, MouseConstraint, DefaultJointConstraintSet};
 #[cfg(feature = "dim2")]
 use nphysics::object::ColliderAnchor;
 use nphysics::object::{DefaultBodyHandle, BodyPartHandle, DefaultBodyPartHandle,  DefaultColliderHandle, ActivationStatus, DefaultBodySet, DefaultColliderSet};
@@ -89,7 +89,7 @@ pub struct TestbedState {
     pub running: RunMode,
     pub draw_colls: bool,
     pub grabbed_object: Option<DefaultBodyPartHandle>,
-    pub grabbed_object_constraint: Option<JointConstraintHandle>,
+    pub grabbed_object_constraint: Option<DefaultJointConstraintHandle>,
     pub grabbed_object_plane: (Point3<f32>, Vector3<f32>),
     pub drawing_ray: Option<Point2<f32>>,
     pub prev_flags: TestbedStateFlags,
@@ -158,7 +158,7 @@ impl Testbed {
 
         Testbed {
             builders: Vec::new(),
-            dynamic_world: DefaultDynamicWorld::new(),
+            dynamic_world: DefaultDynamicWorld::new(Vector3::zeros()),
             collider_world: DefaultColliderWorld::new(),
             bodies: DefaultBodySet::new(),
             colliders: DefaultColliderSet::new(),
@@ -596,7 +596,7 @@ impl Testbed {
                                 .iter_mut()
                                 {
                                     if let Some(joint) = self.state.grabbed_object_constraint {
-                                        let constraint = self.constraints.remove(joint);
+                                        let constraint = self.constraints.remove(joint).unwrap();
                                         let (b1, b2) = constraint.anchors();
                                         self.bodies.get_mut(b1.0).unwrap().activate();
                                         self.bodies.get_mut(b2.0).unwrap().activate();
@@ -642,7 +642,7 @@ impl Testbed {
                 }
 
                 if let Some(joint) = self.state.grabbed_object_constraint {
-                    let constraint = self.constraints.remove(joint);
+                    let constraint = self.constraints.remove(joint).unwrap();
                     let (b1, b2) = constraint.anchors();
                     self.bodies.get_mut(b1.0).unwrap().activate();
                     self.bodies.get_mut(b2.0).unwrap().activate();

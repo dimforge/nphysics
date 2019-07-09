@@ -1,4 +1,3 @@
-use slab::Slab;
 use std::collections::{HashMap, HashSet};
 
 use na::{self, RealField};
@@ -9,8 +8,8 @@ use ncollide::interpolation::ConstantVelocityRigidMotion;
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
-use crate::force_generator::{ForceGenerator, ForceGeneratorHandle, ForceGeneratorSet};
-use crate::joint::{JointConstraintHandle, JointConstraint, JointConstraintSet};
+use crate::force_generator::{ForceGenerator, DefaultForceGeneratorHandle, ForceGeneratorSet};
+use crate::joint::{DefaultJointConstraintHandle, JointConstraint, JointConstraintSet};
 use crate::math::Vector;
 use crate::object::{
     Body, DefaultBodySet, BodyDesc, BodyStatus, Collider, ColliderAnchor, ColliderHandle,
@@ -47,12 +46,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
-    pub fn new() -> Self {
+    pub fn new(gravity: Vector<N>) -> Self {
         let counters = Counters::new(false);
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
-        let gravity = Vector::zeros();
         let parameters = IntegrationParameters::default();
         let material_coefficients = MaterialsCoefficientsTable::new();
         let substep = SubstepState {

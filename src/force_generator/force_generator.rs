@@ -1,13 +1,13 @@
 #![allow(missing_docs)] // for downcast.
 
 use downcast_rs::Downcast;
-use slab::Slab;
+use generational_arena::Arena;
 use na::RealField;
 
 use crate::object::{BodySet, DefaultBodySet};
 use crate::solver::IntegrationParameters;
 
-pub type DefaultForceGeneratorSet<N: RealField> = Slab<Box<ForceGenerator<N, DefaultBodySet<N>>>>;
+pub type DefaultForceGeneratorSet<N: RealField> = Arena<Box<ForceGenerator<N, DefaultBodySet<N>>>>;
 
 pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
     type ForceGenerator: ?Sized + ForceGenerator<N, Bodies>;
@@ -22,9 +22,9 @@ pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::ForceGenerator));
 }
 
-impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for Slab<Box<ForceGenerator<N, Bodies>>> {
+impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for Arena<Box<ForceGenerator<N, Bodies>>> {
     type ForceGenerator = ForceGenerator<N, Bodies>;
-    type Handle = ForceGeneratorHandle;
+    type Handle = DefaultForceGeneratorHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::ForceGenerator> {
         self.get(handle).map(|c| &**c)
@@ -52,7 +52,7 @@ impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> fo
 }
 
 /// The handle of a force generator.
-pub type ForceGeneratorHandle = usize;
+pub type DefaultForceGeneratorHandle = generational_arena::Index;
 
 /// A persistent force generator.
 /// 

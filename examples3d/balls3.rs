@@ -15,12 +15,10 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut dynamic_world = DefaultDynamicWorld::new();
-    let mut collider_world = DefaultColliderWorld::new();
+    let dynamic_world = DefaultDynamicWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let collider_world = DefaultColliderWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
-
-    dynamic_world.gravity = Vector3::new(0.0, -9.81, 0.0);
 
     /*
      * Ground.

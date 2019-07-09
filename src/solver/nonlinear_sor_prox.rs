@@ -1,5 +1,4 @@
 use na::{self, Dim, Dynamic, RealField, U1, VectorSliceMutN};
-use slab::Slab;
 use std::ops::MulAssign;
 
 use crate::world::ColliderWorld;
