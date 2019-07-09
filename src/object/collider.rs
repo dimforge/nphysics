@@ -216,6 +216,11 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     }
 
     #[inline]
+    pub fn clear_update_flags(&mut self) {
+        self.0.clear_update_flags()
+    }
+
+    #[inline]
     pub fn density(&self) -> N {
         self.0.data().density
     }

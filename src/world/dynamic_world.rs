@@ -199,6 +199,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             cworld.perform_broad_phase(colliders);
             cworld.perform_narrow_phase(colliders);
 
+            colliders.foreach_mut(|_, c| {
+                c.clear_update_flags()
+            });
+
             /*
              *
              * Handle sleeping and collision
@@ -327,6 +331,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             bodies.foreach_mut(|_, b| {
                 b.clear_update_flags();
             });
+
+            colliders.foreach_mut(|_, c| {
+                c.clear_update_flags()
+            })
         }
     }
 
