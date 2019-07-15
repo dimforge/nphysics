@@ -11,13 +11,13 @@ use na::Vector2;
 use ncollide::utils::DeterministicState;
 #[cfg(feature = "dim3")]
 use ncollide::procedural;
-use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
+use ncollide::shape::{DeformationsType, Polyline};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
 
-use crate::object::{Body, BodyPart, DefaultBodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, DeformableColliderDesc, BodyDesc,
-                    DefaultBodySet, DefaultColliderHandle};
+                    DefaultBodySet};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -27,7 +27,6 @@ use crate::utils::{UserData, UserDataBox};
 /// A triangular element of the mass-LengthConstraint surface.
 #[derive(Clone)]
 pub struct MassConstraintElement<N: RealField> {
-    handle: BodyPartHandle<DefaultBodyHandle>,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>,
 }
@@ -75,7 +74,6 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 pub struct MassConstraintSystem<N: RealField> {
     name: String,
-    handle: DefaultBodyHandle,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -108,7 +106,7 @@ impl<N: RealField> MassConstraintSystem<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     #[cfg(feature = "dim3")]
-    pub fn from_trimesh(handle: DefaultBodyHandle, mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
+    pub fn from_trimesh(mesh: &TriMesh<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -121,7 +119,6 @@ impl<N: RealField> MassConstraintSystem<N> {
         for (i, face) in mesh.faces().iter().enumerate() {
             let idx = face.indices * DIM;
             let elt = MassConstraintElement {
-                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Triangle(idx),
                 phantom: PhantomData
             };
@@ -143,7 +140,6 @@ impl<N: RealField> MassConstraintSystem<N> {
 
         MassConstraintSystem {
             name: String::new(),
-            handle,
             constraints: constraints.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(mesh.points().len(), false),
@@ -169,7 +165,7 @@ impl<N: RealField> MassConstraintSystem<N> {
     }
 
     /// Builds a mass-spring system from a polyline.
-    pub fn from_polyline(handle: DefaultBodyHandle, polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
+    pub fn from_polyline(polyline: &Polyline<N>, mass: N, stiffness: Option<N>) -> Self {
         let ndofs = polyline.points().len() * DIM;
         let mut constraints = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(polyline.edges().len());
@@ -182,7 +178,6 @@ impl<N: RealField> MassConstraintSystem<N> {
         for (i, edge) in polyline.edges().iter().enumerate() {
             let idx = edge.indices * DIM;
             let elt = MassConstraintElement {
-                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Segment(idx),
                 phantom: PhantomData
             };
@@ -199,7 +194,6 @@ impl<N: RealField> MassConstraintSystem<N> {
 
         MassConstraintSystem {
             name: String::new(),
-            handle,
             constraints: constraints.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(polyline.points().len(), false),
@@ -228,12 +222,12 @@ impl<N: RealField> MassConstraintSystem<N> {
 
     /// Creates a rectangular-shaped quad.
     #[cfg(feature = "dim3")]
-    pub fn quad(handle: DefaultBodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
+    pub fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: Option<N>) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::from_trimesh(handle, &trimesh, mass, stiffness)
+        Self::from_trimesh(&trimesh, mass, stiffness)
     }
 
     /// Add one constraint to this mass-constraint system.
@@ -283,11 +277,6 @@ impl<N: RealField> MassConstraintSystem<N> {
     /// The number of nodes of this mass-constraint system.
     pub fn num_nodes(&self) -> usize {
         self.positions.len() / DIM
-    }
-
-    /// The handle of this body.
-    pub fn handle(&self) -> DefaultBodyHandle {
-        self.handle
     }
 
     /// The total mass of this body.
@@ -819,8 +808,6 @@ pub struct MassConstraintSystemDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     geom: MassConstraintSystemDescGeometry<'a, N>,
-    scale: Vector<N>,
-    position: Isometry<N>,
     stiffness: Option<N>,
     sleep_threshold: Option<N>,
 //    damping_ratio: N,
@@ -828,11 +815,10 @@ pub struct MassConstraintSystemDesc<'a, N: RealField> {
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
     status: BodyStatus,
-    collider_enabled: bool,
     gravity_enabled: bool,
 }
 
-/*
+
 impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
@@ -840,8 +826,6 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
             user_data: None,
             gravity_enabled: true,
             geom,
-            scale: Vector::repeat(N::one()),
-            position: Isometry::identity(),
             stiffness: Some(na::convert(1.0e3)),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
 //            damping_ratio: na::convert(0.2),
@@ -849,7 +833,6 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
             plasticity: (N::zero(), N::zero(), N::zero()),
             kinematic_nodes: Vec::new(),
             status: BodyStatus::Dynamic,
-            collider_enabled: false
         }
     }
 
@@ -880,20 +863,16 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     desc_custom_setters!(
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
-        self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
         gravity_enabled, enable_gravity, gravity_enabled: bool
-        collider_enabled, set_collider_enabled, collider_enabled: bool
-        scale, set_scale, scale: Vector<N>
         stiffness, set_stiffness, stiffness: Option<N>
         sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
 //        damping_ratio, set_damping_ratio, damping_ratio: N
         mass, set_mass, mass: N
         status, set_status, status: BodyStatus
-        position, set_position, position: Isometry<N>
     );
 
     desc_custom_getters!(
@@ -901,7 +880,6 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
         self.get_plasticity_creep: N | { self.plasticity.1 }
         self.get_plasticity_max_force: N | { self.plasticity.2 }
         self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
-        self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_name: &str | { &self.name }
     );
 
@@ -912,72 +890,22 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
 //        [val] get_damping_ratio -> damping_ratio: N
         [val] get_mass -> mass: N
         [val] get_status -> status: BodyStatus
-        [val] is_collider_enabled -> collider_enabled: bool
-        [ref] get_position -> position: Isometry<N>
-        [ref] get_scale -> scale: Vector<N>
     );
 
-    /// Build a mass-constraint system.
-    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut MassConstraintSystem<N> {
-        world.add_body(self)
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
-    type Body = MassConstraintSystem<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> MassConstraintSystem<N> {
+    pub fn build(&self) -> MassConstraintSystem<N> {
         let mut vol = match self.geom {
-            #[cfg(feature = "dim3")]
-            MassConstraintSystemDescGeometry::Quad(nx, ny) => {
-                MassConstraintSystem::quad(
-                    handle, &self.position, &self.scale.xy(), nx, ny,
-                    self.mass, self.stiffness)
-            }
-            #[cfg(feature = "dim2")]
             MassConstraintSystemDescGeometry::Quad(nx, ny) => {
                 let mut polyline = Polyline::quad(nx, ny);
-                polyline.scale_by(&self.scale);
-                polyline.transform_by(&self.position);
-
-                let vol = MassConstraintSystem::from_polyline(
-                    handle, &polyline, self.mass, self.stiffness);
-
-
-                if self.collider_enabled {
-                    let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline.clone()))
-                        .build_with_infos(&vol, cworld);
-                }
-
-                vol
+                MassConstraintSystem::from_polyline(&polyline, self.mass, self.stiffness)
             }
             MassConstraintSystemDescGeometry::Polyline(polyline) => {
                 let mut polyline = polyline.clone();
-                polyline.scale_by(&self.scale);
-                polyline.transform_by(&self.position);
-
-                let vol = MassConstraintSystem::from_polyline(
-                    handle, &polyline, self.mass, self.stiffness);
-                if self.collider_enabled {
-                    let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
-                        .build_with_infos(handle, &vol, cworld);
-                }
-
-                vol
+                MassConstraintSystem::from_polyline(&polyline, self.mass, self.stiffness)
             }
             #[cfg(feature = "dim3")]
             MassConstraintSystemDescGeometry::TriMesh(trimesh) => {
                 let mut trimesh = trimesh.clone();
-                trimesh.scale_by(&self.scale);
-                trimesh.transform_by(&self.position);
-
-                let vol = MassConstraintSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness);
-                if self.collider_enabled {
-                    let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
-                        .build_with_infos(handle, &vol, cworld);
-                }
-
-                vol
+                MassConstraintSystem::from_trimesh(&trimesh, self.mass, self.stiffness)
             }
         };
 
@@ -995,4 +923,3 @@ impl<'a, N: RealField> BodyDesc<N> for MassConstraintSystemDesc<'a, N> {
         vol
     }
 }
-*/

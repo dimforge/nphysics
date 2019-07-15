@@ -67,7 +67,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         assert!(collider.proxy_handle().is_none(), "Cannot register a collider that is already registered.");
         assert!(collider.graph_index().is_none(), "Cannot register a collider that is already registered.");
 
-        let proxies = glue::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), &**collider.shape(), collider.query_type());
+        let proxies = glue::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), collider.shape(), collider.query_type());
 
         self.body_colliders.entry(collider.body()).or_insert(Vec::new()).push(handle);
         collider.set_proxy_handle(Some(proxies.0));
@@ -227,137 +227,12 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N, CollHandle>) {
         self.cworld.set_narrow_phase(narrow_phase);
     }
-
-    /// Adds a collider to the world.
-    pub(crate) fn add(
-        &mut self,
-        position: Isometry<N>,
-        shape: ShapeHandle<N>,
-        collision_groups: CollisionGroups,
-        query_type: GeometricQueryType<N>,
-        data: ColliderData<N, Handle>,
-    ) -> &mut Collider<N, Handle>
-    {
-        let co = Collider::from_mut(self.cworld.add(position, shape, collision_groups, query_type, data));
-        let parent = co.body();
-        let result = co.handle();
-
-        if !parent.is_ground() {
-            self.colliders_w_parent.push(result);
-        }
-
-        // Update the colliders list.
-        match self.collider_lists.entry(parent) {
-            hash_map::Entry::Vacant(e) => {
-                let _ = e.insert((result, result));
-            }
-            hash_map::Entry::Occupied(mut e) => {
-                let (head, tail) = *e.get();
-                let _ = e.insert((head, result));
-                co.set_prev(Some(tail));
-
-                let tail = Collider::from_mut(self.cworld.collision_object_mut(tail).unwrap());
-                assert!(tail.next().is_none());
-                tail.set_next(Some(result));
-
-            }
-        }
-
-        // Return the result.
-        self.collider_mut(result).unwrap()
-    }
-
-    /// Updates the collision world.
-    ///
-    /// This executes the whole collision detection pipeline:
-    /// 1. Clears the event pools.
-    /// 2. Executes the broad phase first.
-    /// 3. Executes the narrow phase.
-    pub fn update(&mut self) {
-        self.cworld.update()
-    }
 */
     /// Empty the contact and proximity event pools.
     pub fn clear_events(&mut self) {
         self.narrow_phase.clear_events()
     }
 /*
-    /// Removed the specified set of colliders from the world.
-    ///
-    /// Panics of any handle is invalid, or if the list contains duplicates.
-    pub(crate) fn remove(&mut self, handles: &[CollHandle]) {
-        // Update the collider lists.
-        for handle in handles {
-            if let Some(co) = colliders.get(*handle) {
-                let (prev, next, body) = (co.prev(), co.next(), co.body());
-
-                match (prev, next) {
-                    (Some(prev), Some(next)) => {
-                        self.collider_mut(next).unwrap().set_prev(Some(prev));
-                        self.collider_mut(prev).unwrap().set_next(Some(next));
-                    }
-                    (Some(prev), None) => {
-                        self.collider_mut(prev).unwrap().set_next(None);
-                        self.collider_lists.get_mut(&body).unwrap().1 = prev;
-                    }
-                    (None, Some(next)) => {
-                        self.collider_mut(next).unwrap().set_prev(None);
-                        self.collider_lists.get_mut(&body).unwrap().0 = next;
-                    }
-                    (None, None) => {
-                        let _ = self.collider_lists.remove(&body);
-                    }
-                }
-            }
-        }
-
-        // Remove the colliders.
-        self.cworld.remove(handles)
-    }
-
-    /// Remove all the colliders attached to `body`.
-    pub(crate) fn remove_body_colliders(&mut self, body: Handle) {
-        let mut curr = try_ret!(self.collider_lists.get(&body)).0;
-
-        loop {
-            let co = try_ret!(colliders.get(curr));
-            let next = co.next();
-            self.cworld.remove(&[curr]);
-            curr = try_ret!(next);
-        }
-    }
-
-    pub(crate) fn remove_body(&mut self, handle: Handle) {
-        self.remove_body_colliders(handle);
-        let _ = self.collider_lists.remove(&handle);
-    }
-
-    /// Iterator through all the colliders attached to the body with the given `handle`.
-    ///
-    /// Returns an empty iterator if the body does not exists.
-    pub fn body_colliders(&self, handle: Handle) -> ColliderChain<N, Handle, CollHandle> {
-        let first = self.collider_lists.get(&handle).map(|l| l.0);
-
-        ColliderChain {
-            cworld: self,
-            curr: first
-        }
-    }
-
-    /// Iterator through all the colliders attached to the body part with the given `handle`.
-    ///
-    /// Returns an empty iterator if the body part does not exists.
-    /// Does not return deformable colliders.
-    pub fn body_part_colliders(&self, handle: BodyPartHandle<Handle>) -> impl Iterator<Item = &Collider<N, Handle>> {
-        self.body_colliders(handle.0).filter(move |co| {
-            match co.anchor() {
-                ColliderAnchor::OnBodyPart { body_part, .. } => *body_part == handle,
-                _ => false
-            }
-        })
-    }
-
-    /*
     /// Adds a filter that tells if a potential collision pair should be ignored or not.
     ///
     /// The proximity filter returns `false` for a given pair of colliders if they should
@@ -372,8 +247,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// Removes the pair filter named `name`.
     pub fn unregister_broad_phase_pair_filter(&mut self, name: &str) {
         self.cworld.unregister_broad_phase_pair_filter(name)
-    }*/
-*/
+    }
+    */
+
     /// Executes the broad phase of the collision detection pipeline.
     pub fn perform_broad_phase<Colliders>(&mut self, colliders: &Colliders)
         where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {

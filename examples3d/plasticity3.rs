@@ -1,12 +1,11 @@
 extern crate nalgebra as na;
-extern crate ncollide3d;
-extern crate nphysics3d;
-extern crate nphysics_testbed3d;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Point3, Vector3, Isometry3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, FEMVolumeDesc, DefaultBodyHandle, BodyStatus};
-use nphysics3d::world::World;
+use nphysics3d::object::{Ground, BodyStatus, FEMVolumeDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
+use nphysics3d::force_generator::DefaultForceGeneratorSet;
+use nphysics3d::joint::DefaultJointConstraintSet;
+use nphysics3d::world::{DefaultDynamicWorld, DefaultColliderWorld};
 use nphysics_testbed3d::Testbed;
 
 
@@ -14,7 +13,12 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
+    let dynamic_world = DefaultDynamicWorld::new(Vector3::zeros());
+    let collider_world = DefaultColliderWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
 
     /*
      * Ground.
@@ -32,43 +36,48 @@ pub fn init_world(testbed: &mut Testbed) {
         Isometry3::new(Vector3::new(-0.4, platform_height, 0.0), na::zero()),
     ];
 
-    let mut platforms = [DefaultBodyHandle::ground(); 5];
+    let mut platforms = Vec::new();
 
     for (i, pos) in positions.iter().enumerate() {
-        platforms[i] = RigidBodyDesc::new()
+        let platform = RigidBodyDesc::new()
             .position(*pos)
             .status(BodyStatus::Kinematic)
-            .collider(&ColliderDesc::new(platform_shape.clone()))
-            .build(&mut world)
-            .handle();
+            .build();
+        platforms.push(bodies.insert(platform));
+
+        let co = ColliderDesc::new(platform_shape.clone())
+            .build(BodyPartHandle(platforms[i], 0));
+        colliders.insert(co);
     }
 
     /*
      * Create the deformable body and a collider for its contour.
      */
-    FEMVolumeDesc::cube(20, 1, 1)
+    let mut deformable = FEMVolumeDesc::cube(20, 1, 1)
         .scale(Vector3::new(1.1, 0.1, 0.1))
         .density(1.0)
         .young_modulus(1.0e2)
         .mass_damping(0.2)
         .plasticity(0.1, 5.0, 10.0)
-        .collider_enabled(true)
-        .build(&mut world);
+        .build();
+    let collider_desc = deformable.boundary_collider_desc();
+    let deformable_surface_handle = bodies.insert(deformable);
+    let co = collider_desc.build(deformable_surface_handle);
+    colliders.insert(co);
 
     /*
      * Set up the testbed.
      */
-    testbed.set_world(world);
+    testbed.set_body_color(deformable_surface_handle, Point3::new(0.0, 0.0, 1.0));
 
     for platform in &platforms {
         testbed.set_body_color(*platform, Point3::new(0.5, 0.5, 0.5));
     }
 
 
-    testbed.add_callback(move |world, _, _| {
-        let mut world = world.get_mut();
+    testbed.add_callback(move |_, _, bodies, _, _, _| {
         for (i, handle) in platforms.iter().enumerate() {
-            let platform = world.rigid_body_mut(*handle).unwrap();
+            let platform = bodies.rigid_body_mut(*handle).unwrap();
             let platform_y = platform.position().translation.vector.y;
 
             let mut vel = *platform.velocity();
@@ -93,12 +102,19 @@ pub fn init_world(testbed: &mut Testbed) {
         }
     });
 
+    // NOTE: we add another static body to the scene. It is not necessary for our simulation
+    // but this is required so that we can call `testbed.set_ground_handle` which will
+    // enable the testbed's feature that lets us grab an object with the mouse.
+    let ground_handle = bodies.insert(Ground::new());
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
     testbed.show_performance_counters();
 }
 
 fn main() {
-    let mut testbed = Testbed::new_empty();
-    init_world(&mut testbed);
-    testbed.run();
+    let testbed = Testbed::from_builders(0, vec![
+        ("Plasticity", init_world),
+    ]);
+    testbed.run()
 }

@@ -1,13 +1,11 @@
 extern crate nalgebra as na;
-extern crate ncollide2d;
-extern crate nphysics2d;
-extern crate nphysics_testbed2d;
 
-use std::f32;
-use na::{Point2, Point3, Vector2};
-use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{FEMSurfaceDesc, ColliderDesc, RigidBodyDesc};
-use nphysics2d::world::World;
+use na::{Point2, Vector2};
+use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
+use nphysics2d::object::{FEMSurfaceDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics2d::force_generator::DefaultForceGeneratorSet;
+use nphysics2d::joint::DefaultJointConstraintSet;
+use nphysics2d::world::{DefaultDynamicWorld, DefaultColliderWorld};
 use nphysics_testbed2d::Testbed;
 
 
@@ -15,35 +13,48 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, -9.81));
+    let dynamic_world = DefaultDynamicWorld::new(Vector2::new(0.0, -9.81));
+    let collider_world = DefaultColliderWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
 
     /*
      * Ground.
      */
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
+    // Ground body shared to which both obstacle colliders will be attached.
+    let ground_handle = bodies.insert(Ground::new());
 
+    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
-    obstacle_desc
+    let co = obstacle_desc
         .set_translation(Vector2::x() * 4.0)
-        .build(&mut world);
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
-    obstacle_desc
+
+    let co = obstacle_desc
         .set_translation(Vector2::x() * -4.0)
-        .build(&mut world);
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
+
 
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let deformable_handle = FEMSurfaceDesc::quad(50, 1)
+    let mut deformable = FEMSurfaceDesc::quad(50, 1)
         .scale(Vector2::new(10.0, 1.0))
         .translation(Vector2::y() * 1.0)
         .young_modulus(1.0e4)
         .mass_damping(0.2)
-        .collider_enabled(true)
-        .build(&mut world)
-        .handle();
+        .build();
+    let collider_desc = deformable.boundary_collider_desc();
+    let deformable_handle = bodies.insert(deformable);
+
+    let co = collider_desc.build(deformable_handle);
+    colliders.insert(co);
 
     /*
      * Create a pyramid on top of the deformable body.
@@ -54,37 +65,40 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerx = shift * (num as f32) / 2.0;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let collider_desc = ColliderDesc::new(cuboid)
-        .density(1.0);
-
-    let mut rb_desc = RigidBodyDesc::new()
-        .collider(&collider_desc);
 
     for i in 0usize..num {
         for j in i..num {
             let fj = j as f32;
             let fi = i as f32;
             let x = (fi * shift / 2.0) + (fj - fi) * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) - centerx;
-            let y = fi * 2.0 * (rad + collider_desc.get_margin()) + rad + 2.0;
+            let y = fi * 2.0 * (rad + ColliderDesc::<f32>::default_margin()) + rad + 2.0;
 
-            // Build the rigid body and its collider.
-            rb_desc
-                .set_translation(Vector2::new(x, y))
-                .build(&mut world);
+            // Build the rigid body.
+            let rb = RigidBodyDesc::new()
+                .translation(Vector2::new(x, y))
+                .build();
+            let rb_handle = bodies.insert(rb);
+
+            // Build the collider.
+            let co = ColliderDesc::new(cuboid.clone())
+                .density(1.0)
+                .build(BodyPartHandle(rb_handle, 0));
+            colliders.insert(co);
         }
     }
 
     /*
      * Set up the testbed.
      */
-    testbed.set_world(world);
-    testbed.set_body_color(deformable_handle, Point3::new(0.0, 0.0, 1.0));
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point2::new(0.0, -3.0), 100.0);
 }
 
 
 fn main() {
-    let mut testbed = Testbed::new_empty();
-    init_world(&mut testbed);
-    testbed.run();
+    let testbed = Testbed::from_builders(0, vec![
+        ("FEM surface", init_world),
+    ]);
+    testbed.run()
 }

@@ -157,7 +157,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
           Constraints: JointConstraintSet<N, Bodies>,
           Forces: ForceGeneratorSet<N, Bodies> {
         if !self.substep.active {
-            println!("##### Loop");
             self.counters.step_started();
 
             /*

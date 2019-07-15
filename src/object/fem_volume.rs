@@ -23,7 +23,6 @@ use crate::utils::{UserData, UserDataBox};
 /// One element of a deformable volume.
 #[derive(Clone)]
 pub struct TetrahedralElement<N: RealField> {
-    handle: BodyPartHandle<DefaultBodyHandle>,
     indices: Point4<usize>,
     com: Point3<N>,
     rot: Rotation3<N>,
@@ -42,7 +41,6 @@ pub struct TetrahedralElement<N: RealField> {
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMVolume<N: RealField> {
     name: String,
-    handle: DefaultBodyHandle,
     elements: Vec<TetrahedralElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -80,7 +78,7 @@ pub struct FEMVolume<N: RealField> {
 
 impl<N: RealField> FEMVolume<N> {
     /// Initializes a new deformable volume from its tetrahedral elements.
-    pub fn new(handle: DefaultBodyHandle, vertices: &[Point3<N>], tetrahedrons: &[Point4<usize>], pos: &Isometry3<N>,
+    pub fn new(vertices: &[Point3<N>], tetrahedrons: &[Point4<usize>], pos: &Isometry3<N>,
                scale: &Vector3<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let ndofs = vertices.len() * 3;
         let mut rest_positions = DVector::zeros(ndofs);
@@ -114,7 +112,6 @@ impl<N: RealField> FEMVolume<N> {
             );
 
             TetrahedralElement {
-                handle: BodyPartHandle(handle, i),
                 indices: idx * 3,
                 com: Point3::origin(),
                 rot: Rotation3::identity(),
@@ -132,7 +129,6 @@ impl<N: RealField> FEMVolume<N> {
 
         FEMVolume {
             name: String::new(),
-            handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
             positions: rest_positions.clone(),
@@ -217,12 +213,6 @@ impl<N: RealField> FEMVolume<N> {
         self.d0 = d0;
         self.d1 = d1;
         self.d2 = d2;
-    }
-
-    /// The handle of this body.
-    #[inline]
-    pub fn handle(&self) -> DefaultBodyHandle {
-        self.handle
     }
 
     fn assemble_mass_with_damping(&mut self, dt: N) {
@@ -532,6 +522,18 @@ impl<N: RealField> FEMVolume<N> {
         (TriMesh::new(vertices, indices, None), deformation_indices, body_parts)
     }
 
+    /// Computes the `DeformableColliderDesc` that can generate a collider covering the boundary surface of this FEM volume.
+    ///
+    /// As a side-effect, this will rearrange the degrees-of-freedom (DOF) of this FEM surface so that all the
+    /// DOFs linked to the boundary collider are located at the beginning of the array of DOFs of this surface.
+    pub fn boundary_collider_desc(&mut self) -> DeformableColliderDesc<N> {
+        let (mesh, ids_map, parts_map) = self.boundary_mesh();
+        self.renumber_dofs(&ids_map);
+
+        DeformableColliderDesc::new(ShapeHandle::new(mesh))
+            .body_parts_mapping(Some(Arc::new(parts_map)))
+    }
+
     /// Renumber degrees of freedom so that the `deformation_indices[i]`-th DOF becomes the `i`-th one.
     pub fn renumber_dofs(&mut self, deformation_indices: &[usize]) {
         let mut dof_map: Vec<_> = (0..).take(self.positions.len()).collect();
@@ -573,7 +575,7 @@ impl<N: RealField> FEMVolume<N> {
     ///
     /// The cube is subdivided `nx` (resp. `ny` and `nz`) times along
     /// the `x` (resp. `y` and `z`) axis.
-    pub fn cube(handle: DefaultBodyHandle, pos: &Isometry3<N>, extents: &Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    pub fn cube(pos: &Isometry3<N>, extents: &Vector3<N>, nx: usize, ny: usize, nz: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -648,7 +650,7 @@ impl<N: RealField> FEMVolume<N> {
             }
         }
 
-        Self::new(handle, &vertices, &indices, pos, extents, density,
+        Self::new(&vertices, &indices, pos, extents, density,
                   young_modulus, poisson_ratio, damping_coeffs)
     }
 
@@ -1038,7 +1040,7 @@ pub struct FEMVolumeDesc<'a, N: RealField> {
     status: BodyStatus
 }
 
-/*
+
 impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
@@ -1123,24 +1125,15 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
         [ref] get_scale -> scale: Vector3<N>
     );
 
-    /// Build a deformable volume.
-    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut FEMVolume<N> {
-        world.add_body(self)
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for FEMVolumeDesc<'a, N> {
-    type Body = FEMVolume<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> FEMVolume<N> {
+    pub fn build(&self) -> FEMVolume<N> {
         let mut vol = match self.geom {
             FEMVolumeDescGeometry::Cube(nx, ny, nz) =>
-                FEMVolume::cube(handle, &self.position, &self.scale,
+                FEMVolume::cube(&self.position, &self.scale,
                                        nx, ny, nz, self.density, self.young_modulus,
                                        self.poisson_ratio,
                                        (self.mass_damping, self.stiffness_damping)),
             FEMVolumeDescGeometry::Tetrahedrons(pts, idx) =>
-                FEMVolume::new(handle, pts, idx, &self.position, &self.scale,
+                FEMVolume::new(pts, idx, &self.position, &self.scale,
                                       self.density, self.young_modulus, self.poisson_ratio,
                                       (self.mass_damping, self.stiffness_damping))
         };
@@ -1156,14 +1149,6 @@ impl<'a, N: RealField> BodyDesc<N> for FEMVolumeDesc<'a, N> {
             vol.set_node_kinematic(*i, true)
         }
 
-        if self.collider_enabled {
-            let (mesh, ids_map, parts_map) = vol.boundary_mesh();
-            vol.renumber_dofs(&ids_map);
-            let _ = DeformableColliderDesc::new(ShapeHandle::new(mesh))
-                .body_parts_mapping(Some(Arc::new(parts_map)))
-                .build_with_infos(handle, &vol, cworld);
-        }
-
         vol
     }
-}*/
+}

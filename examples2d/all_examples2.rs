@@ -27,7 +27,7 @@ mod plasticity2;
 mod ragdoll2;
 mod sensor2;
 mod polyline2;
-mod ccd2;
+//mod ccd2;
 
 fn demo_name_from_command_line() -> String {
     let mut args = std::env::args();
@@ -47,7 +47,7 @@ fn main() {
         ("Balls", balls2::init_world),
         ("Boxes", boxes2::init_world),
         ("Capsules", capsules2::init_world),
-        ("CCD", ccd2::init_world),
+//        ("CCD", ccd2::init_world),
         ("Collision Groups", collision_groups2::init_world),
         ("Compound Shapes", cross2::init_world),
 //        ("Compound Shapes", compound2::init_world),

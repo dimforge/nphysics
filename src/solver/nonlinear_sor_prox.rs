@@ -185,7 +185,7 @@ impl NonlinearSORProx {
 
         if let Some(contact) = constraint
             .kinematic
-            .contact(&pos1, &**collider1.shape(), coords1, &pos2, &**collider2.shape(), coords2, &constraint.normal1) {
+            .contact(&pos1, collider1.shape(), coords1, &pos2, collider2.shape(), coords2, &constraint.normal1) {
             constraint.rhs = Self::clamp_rhs(-contact.depth, false, parameters);
 
             if constraint.rhs >= N::zero() {

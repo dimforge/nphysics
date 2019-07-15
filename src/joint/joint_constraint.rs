@@ -40,7 +40,11 @@ impl<N: RealField> DefaultJointConstraintSet<N> {
         }
     }
 
-    pub fn insert(&mut self, constraint: Box<JointConstraint<N, DefaultBodySet<N>>>) -> DefaultJointConstraintHandle {
+    pub fn insert(&mut self, constraint: impl JointConstraint<N, DefaultBodySet<N>>) -> DefaultJointConstraintHandle {
+        self.insert_boxed(Box::new(constraint))
+    }
+
+    pub fn insert_boxed(&mut self, constraint: Box<JointConstraint<N, DefaultBodySet<N>>>) -> DefaultJointConstraintHandle {
         let (part1, part2) = constraint.anchors();
         let handle = self.constraints.insert(constraint);
         self.inserted.push((handle, part1, part2));

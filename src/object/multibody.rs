@@ -20,7 +20,6 @@ use crate::utils::{GeneralizedCross, IndexMut2};
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: RealField> {
     name: String,
-    handle: DefaultBodyHandle,
     rbs: MultibodyLinkVec<N>,
     velocities: DVector<N>,
     damping: DVector<N>,
@@ -57,10 +56,9 @@ pub struct Multibody<N: RealField> {
 
 impl<N: RealField> Multibody<N> {
     /// Creates a new multibody with no link.
-    fn new(handle: DefaultBodyHandle) -> Self {
+    fn new() -> Self {
         Multibody {
             name: String::new(),
-            handle,
             rbs: MultibodyLinkVec(Vec::new()),
             velocities: DVector::zeros(0),
             forces: DVector::zeros(0),
@@ -99,9 +97,9 @@ impl<N: RealField> Multibody<N> {
         &mut self.rbs[0]
     }
 
-    /// Reference to the multibody link with the given handle.
+    /// Reference `i`-th multibody link of this multibody.
     ///
-    /// Return `None` if the given handle does not identifies a multibody link part of `self`.
+    /// Return `None` if there is less than `i + 1` multibody links.
     #[inline]
     pub fn link(&self, id: usize) -> Option<&MultibodyLink<N>> {
         self.rbs.get(id)
@@ -165,7 +163,7 @@ impl<N: RealField> Multibody<N> {
 
     fn add_link(
         &mut self,
-        parent: Option<BodyPartHandle<DefaultBodyHandle>>,
+        parent: Option<usize>,
         mut dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
@@ -207,7 +205,7 @@ impl<N: RealField> Multibody<N> {
 
         let parent_internal_id;
         if let Some(parent) = parent {
-            parent_internal_id = parent.1;
+            parent_internal_id = parent;
             let parent_rb = &mut self.rbs[parent_internal_id];
             parent_rb.is_leaf = false;
             parent_to_world = parent_rb.local_to_world;
@@ -222,7 +220,6 @@ impl<N: RealField> Multibody<N> {
             internal_id,
             assembly_id,
             impulse_id,
-            self.handle,
             parent_internal_id,
             dof,
             parent_shift,
@@ -1188,20 +1185,18 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
 
 /// A multibody builder.
-pub struct MultibodyDesc<'a, N: RealField> {
+pub struct MultibodyDesc<N: RealField> {
     name: String,
-    children: Vec<MultibodyDesc<'a, N>>,
+    children: Vec<MultibodyDesc<N>>,
     joint: Box<Joint<N>>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
-    colliders: Vec<&'a ColliderDesc<N>>,
     body_shift: Vector<N>,
     parent_shift: Vector<N>
 }
 
-/*
-impl<'a, N: RealField> MultibodyDesc<'a, N> {
+impl<N: RealField> MultibodyDesc<N> {
     /// Initialize a multibody builder with one link with one joint.
     pub fn new<J: Joint<N>>(joint: J) -> Self {
         MultibodyDesc {
@@ -1211,14 +1206,13 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
             velocity: Velocity::zero(),
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
-            colliders: Vec::new(),
             body_shift: Vector::zeros(),
             parent_shift: Vector::zeros()
         }
     }
 
     /// Add a children link to the multibody link represented by `self`.
-    pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<'a, N> {
+    pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<N> {
         let child = MultibodyDesc::new(joint);
 
         self.children.push(child);
@@ -1242,7 +1236,6 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     );
 
     desc_custom_setters!(
-        self.collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
         self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
     );
 
@@ -1280,30 +1273,19 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
-
-    /// Build into the `world` the multibody represented by `self` and its children.
-    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut Multibody<N> {
-        world.add_body(self)
+    pub fn build(&self) -> Multibody<N> {
+        let mut multibody = Multibody::new();
+        let _  = self.do_build_with_parent(&mut multibody, None);
+        multibody
     }
 
-    /// Adds the links represented by `self` and its children to the multibody identified by `parent`.
-    ///
-    /// If `parent` is the ground, then a new multibody is created.
-    /// If `parent` is not another multibody link, then `None` is returned.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle<DefaultBodyHandle>, world: &'w mut World<N, DefaultBodySet<N>>) -> Option<&'w mut MultibodyLink<N>> {
-        if parent.is_ground() {
-            Some(self.build(world).root_mut())
-        } else {
-            let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-            // FIXME: keep the Err so the user gets a more meaningful error?
-            let mb = bodies.get_mut(parent.0)?.downcast_mut::<Multibody<N>>()?;
-            Some(self.do_build(mb, cworld, parent))
-        }
+    pub fn build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: usize) -> &'m mut MultibodyLink<N> {
+        self.do_build_with_parent(multibody, Some(parent_id))
     }
 
-    fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, parent: BodyPartHandle<DefaultBodyHandle>) -> &'m mut MultibodyLink<N> {
-        let link = mb.add_link(
-            parent,
+    fn do_build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: Option<usize>) -> &'m mut MultibodyLink<N> {
+        let mut link = multibody.add_link(
+            parent_id,
             self.joint.clone(),
             self.parent_shift,
             self.body_shift,
@@ -1313,26 +1295,12 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
         link.velocity = self.velocity;
         link.name = self.name.clone();
 
-        let me = link.part_handle();
-
-        for desc in &self.colliders {
-            let _ = desc.build_with_infos(me, mb, cworld);
-        }
+        let me = link.link_id();
 
         for child in &self.children {
-            let _ = child.do_build(mb, cworld, me);
+            let _ = child.do_build_with_parent(multibody, Some(me));
         }
 
-        mb.link_mut(me.1).unwrap()
+        multibody.link_mut(me).unwrap()
     }
 }
-
-impl<'a, N: RealField> BodyDesc<N> for MultibodyDesc<'a, N> {
-    type Body = Multibody<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Multibody<N> {
-        let mut mb = Multibody::new(handle);
-        let _ = self.do_build(&mut mb, cworld, BodyPartHandle::ground());
-        mb
-    }
-}*/

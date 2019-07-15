@@ -10,7 +10,6 @@ use crate::object::{BodyPartHandle, BodyPart, DefaultBodyHandle};
 pub struct MultibodyLink<N: RealField> {
     pub(crate) name: String,
     // FIXME: make all those private.
-    pub(crate) multibody_handle: DefaultBodyHandle,
     pub(crate) internal_id: usize,
     pub(crate) assembly_id: usize,
     pub(crate) impulse_id: usize,
@@ -48,7 +47,6 @@ impl<N: RealField> MultibodyLink<N> {
         internal_id: usize,
         assembly_id: usize,
         impulse_id: usize,
-        multibody_handle: DefaultBodyHandle,
         parent_internal_id: usize,
         dof: Box<Joint<N>>,
         parent_shift: Vector<N>,
@@ -68,7 +66,6 @@ impl<N: RealField> MultibodyLink<N> {
 
         MultibodyLink {
             name: String::new(),
-            multibody_handle,
             internal_id,
             assembly_id,
             impulse_id,
@@ -108,6 +105,16 @@ impl<N: RealField> MultibodyLink<N> {
         &mut *self.dof
     }
 
+    #[inline]
+    pub fn parent_shift(&self) -> &Vector<N> {
+        &self.parent_shift
+    }
+
+    #[inline]
+    pub fn body_shift(&self) -> &Vector<N> {
+        &self.body_shift
+    }
+
     /// This link's name.
     #[inline]
     pub fn name(&self) -> &str {
@@ -122,8 +129,8 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// The handle of this multibody link.
     #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle<DefaultBodyHandle> {
-        BodyPartHandle(self.multibody_handle, self.internal_id)
+    pub fn link_id(&self) -> usize {
+        self.internal_id
     }
 }
 

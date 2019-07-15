@@ -11,13 +11,13 @@ use na::Vector2;
 use ncollide::utils::DeterministicState;
 #[cfg(feature = "dim3")]
 use ncollide::procedural;
-use ncollide::shape::{DeformationsType, Polyline, ShapeHandle};
+use ncollide::shape::{DeformationsType, Polyline};
 #[cfg(feature = "dim3")]
 use ncollide::shape::TriMesh;
 
-use crate::object::{Body, BodyPart, DefaultBodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
+use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices, BodyDesc, DeformableColliderDesc,
-                    DefaultBodySet, DefaultColliderHandle};
+                    DefaultBodySet};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
@@ -27,7 +27,6 @@ use crate::utils::{UserData, UserDataBox};
 /// An element of the mass-spring system.
 #[derive(Clone)]
 pub struct MassSpringElement<N: RealField> {
-    handle: BodyPartHandle<DefaultBodyHandle>,
     indices: FiniteElementIndices,
     phantom: PhantomData<N>
 }
@@ -65,7 +64,6 @@ impl<N: RealField> Spring<N> {
 /// A deformable surface using a mass-spring model with triangular elements.
 pub struct MassSpringSystem<N: RealField> {
     name: String,
-    handle: DefaultBodyHandle,
     springs: Vec<Spring<N>>,
     elements: Vec<MassSpringElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -106,7 +104,7 @@ impl<N: RealField> MassSpringSystem<N> {
     ///
     /// The surface is initialized with a set of links corresponding to each trimesh edges.
     #[cfg(feature = "dim3")]
-    fn from_trimesh(handle: DefaultBodyHandle, mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn from_trimesh(mesh: &TriMesh<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = mesh.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(mesh.faces().len());
@@ -119,7 +117,6 @@ impl<N: RealField> MassSpringSystem<N> {
         for (i, face) in mesh.faces().iter().enumerate() {
             let idx = face.indices * DIM;
             let elt = MassSpringElement {
-                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Triangle(idx),
                 phantom: PhantomData
             };
@@ -141,7 +138,6 @@ impl<N: RealField> MassSpringSystem<N> {
 
         MassSpringSystem {
             name: String::new(),
-            handle,
             springs: springs.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(ndofs / DIM, false),
@@ -169,7 +165,7 @@ impl<N: RealField> MassSpringSystem<N> {
     user_data_accessors!();
 
     /// Builds a mass-spring system from a polyline.
-    fn from_polyline(handle: DefaultBodyHandle, polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn from_polyline(polyline: &Polyline<N>, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let ndofs = polyline.points().len() * DIM;
         let mut springs = HashMap::with_hasher(DeterministicState::new());
         let mut elements = Vec::with_capacity(polyline.edges().len());
@@ -182,7 +178,6 @@ impl<N: RealField> MassSpringSystem<N> {
         for (i, edge) in polyline.edges().iter().enumerate() {
             let idx = edge.indices * DIM;
             let elt = MassSpringElement {
-                handle: BodyPartHandle(handle, i),
                 indices: FiniteElementIndices::Segment(idx),
                 phantom: PhantomData
             };
@@ -199,7 +194,6 @@ impl<N: RealField> MassSpringSystem<N> {
 
         MassSpringSystem {
             name: String::new(),
-            handle,
             springs: springs.values().cloned().collect(),
             kinematic_nodes: DVector::repeat(ndofs / DIM, false),
             elements,
@@ -226,12 +220,12 @@ impl<N: RealField> MassSpringSystem<N> {
 
     /// Creates a rectangular quad.
     #[cfg(feature = "dim3")]
-    fn quad(handle: DefaultBodyHandle, transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
+    fn quad(transform: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, mass: N, stiffness: N, damping_ratio: N) -> Self {
         let mesh = procedural::quad(extents.x, extents.y, nx, ny);
         let vertices = mesh.coords.iter().map(|pt| transform * pt).collect();
         let indices = mesh.indices.unwrap_unified().into_iter().map(|tri| na::convert(tri)).collect();
         let trimesh = TriMesh::new(vertices, indices, None);
-        Self::from_trimesh(handle,&trimesh, mass, stiffness, damping_ratio)
+        Self::from_trimesh(&trimesh, mass, stiffness, damping_ratio)
     }
 
     /// The total mass of this mass-spring system.
@@ -242,11 +236,6 @@ impl<N: RealField> MassSpringSystem<N> {
     /// The number of nodes of this mass-spring system.
     pub fn num_nodes(&self) -> usize {
         self.positions.len() / DIM
-    }
-
-    /// The handle of this mass-spring system.
-    pub fn handle(&self) -> DefaultBodyHandle {
-        self.handle
     }
 
     /// Generate additional springs between nodes that are transitively neighbors.
@@ -802,8 +791,6 @@ pub struct MassSpringSystemDesc<'a, N: RealField> {
     name: String,
     user_data: Option<UserDataBox>,
     geom: MassSpringSystemDescGeometry<'a, N>,
-    scale: Vector<N>,
-    position: Isometry<N>,
     stiffness: N,
     sleep_threshold: Option<N>,
     damping_ratio: N,
@@ -811,11 +798,9 @@ pub struct MassSpringSystemDesc<'a, N: RealField> {
     plasticity: (N, N, N),
     kinematic_nodes: Vec<usize>,
     status: BodyStatus,
-    collider_enabled: bool,
     gravity_enabled: bool,
 }
 
-/*
 impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     fn with_geometry(geom: MassSpringSystemDescGeometry<'a, N>) -> Self {
         MassSpringSystemDesc {
@@ -823,8 +808,6 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
             user_data: None,
             gravity_enabled: true,
             geom,
-            scale: Vector::repeat(N::one()),
-            position: Isometry::identity(),
             stiffness: na::convert(1.0e3),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
             damping_ratio: na::convert(0.2),
@@ -832,7 +815,6 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
             plasticity: (N::zero(), N::zero(), N::zero()),
             kinematic_nodes: Vec::new(),
             status: BodyStatus::Dynamic,
-            collider_enabled: false
         }
     }
 
@@ -863,20 +845,16 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     desc_custom_setters!(
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
-        self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
         gravity_enabled, enable_gravity, gravity_enabled: bool
-        collider_enabled, set_collider_enabled, collider_enabled: bool
-        scale, set_scale, scale: Vector<N>
         stiffness, set_stiffness, stiffness: N
         sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
         damping_ratio, set_damping_ratio, damping_ratio: N
         mass, set_mass, mass: N
         status, set_status, status: BodyStatus
-        position, set_position, position: Isometry<N>
     );
 
     desc_custom_getters!(
@@ -884,7 +862,6 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
         self.get_plasticity_creep: N | { self.plasticity.1 }
         self.get_plasticity_max_force: N | { self.plasticity.2 }
         self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
-        self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_name: &str | { &self.name }
     );
 
@@ -895,72 +872,22 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
         [val] get_damping_ratio -> damping_ratio: N
         [val] get_mass -> mass: N
         [val] get_status -> status: BodyStatus
-        [val] is_collider_enabled -> collider_enabled: bool
-        [ref] get_position -> position: Isometry<N>
-        [ref] get_scale -> scale: Vector<N>
     );
 
-    /// Builds a mass-spring system.
-    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut MassSpringSystem<N> {
-        world.add_body(self)
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
-    type Body = MassSpringSystem<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> MassSpringSystem<N> {
+    pub fn build(&self) -> MassSpringSystem<N> {
         let mut vol = match self.geom {
-            #[cfg(feature = "dim3")]
-            MassSpringSystemDescGeometry::Quad(nx, ny) => {
-                MassSpringSystem::quad(
-                    handle, &self.position, &self.scale.xy(), nx, ny,
-                    self.mass, self.stiffness, self.damping_ratio)
-            }
-            #[cfg(feature = "dim2")]
             MassSpringSystemDescGeometry::Quad(nx, ny) => {
                 let mut polyline = Polyline::quad(nx, ny);
-                polyline.scale_by(&self.scale);
-                polyline.transform_by(&self.position);
-
-                let vol = MassSpringSystem::from_polyline(
-                    handle, &polyline, self.mass, self.stiffness, self.damping_ratio);
-
-
-                if self.collider_enabled {
-                    let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline.clone()))
-                        .build_with_infos(handle, &vol, cworld);
-                }
-
-                vol
+                MassSpringSystem::from_polyline(&polyline, self.mass, self.stiffness, self.damping_ratio)
             }
             MassSpringSystemDescGeometry::Polyline(polyline) => {
                 let mut polyline = polyline.clone();
-                polyline.scale_by(&self.scale);
-                polyline.transform_by(&self.position);
-
-                let vol = MassSpringSystem::from_polyline(
-                    handle, &polyline, self.mass, self.stiffness, self.damping_ratio);
-                if self.collider_enabled {
-                    let _ = DeformableColliderDesc::new(ShapeHandle::new(polyline))
-                        .build_with_infos(handle, &vol, cworld);
-                }
-
-                vol
+                MassSpringSystem::from_polyline(&polyline, self.mass, self.stiffness, self.damping_ratio)
             }
             #[cfg(feature = "dim3")]
             MassSpringSystemDescGeometry::TriMesh(trimesh) => {
                 let mut trimesh = trimesh.clone();
-                trimesh.scale_by(&self.scale);
-                trimesh.transform_by(&self.position);
-
-                let vol = MassSpringSystem::from_trimesh(handle, &trimesh, self.mass, self.stiffness, self.damping_ratio);
-                if self.collider_enabled {
-                    let _ = DeformableColliderDesc::new(ShapeHandle::new(trimesh.clone()))
-                        .build_with_infos(handle, &vol, cworld);
-                }
-
-                vol
+                MassSpringSystem::from_trimesh(&trimesh, self.mass, self.stiffness, self.damping_ratio)
             }
         };
 
@@ -978,4 +905,3 @@ impl<'a, N: RealField> BodyDesc<N> for MassSpringSystemDesc<'a, N> {
         vol
     }
 }
-*/

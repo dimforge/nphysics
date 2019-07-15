@@ -169,7 +169,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     pub fn removal_data(&self) -> Option<ColliderRemovalData<N, Handle>> {
         Some(ColliderRemovalData {
             anchor: self.0.data().anchor.clone(),
-            shape: self.shape().clone(),
+            shape: self.shape_handle().clone(),
             density: self.0.data().density,
             proxy_handle: self.0.proxy_handle()?,
             graph_index: self.0.graph_index()?,
@@ -350,7 +350,13 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
 
     /// The collider shape.
     #[inline]
-    pub fn shape(&self) -> &ShapeHandle<N> {
+    pub fn shape(&self) -> &Shape<N> {
+        &**self.0.shape()
+    }
+
+    /// The collider shape.
+    #[inline]
+    pub fn shape_handle(&self) -> &ShapeHandle<N> {
         self.0.shape()
     }
 
@@ -382,6 +388,36 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     #[inline]
     pub fn set_query_type(&mut self, query_type: GeometricQueryType<N>) {
         self.0.set_query_type(query_type);
+    }
+}
+
+impl<N: RealField, Handle: BodyHandle> CollisionObjectRef<N> for Collider<N, Handle> {
+    fn graph_index(&self) -> Option<CollisionObjectGraphIndex> {
+        self.0.graph_index()
+    }
+
+    fn proxy_handle(&self) -> Option<BroadPhaseProxyHandle> {
+        self.0.proxy_handle()
+    }
+
+    fn position(&self) -> &Isometry<N> {
+        self.0.position()
+    }
+
+    fn shape(&self) -> &Shape<N> {
+        self.0.shape().as_ref()
+    }
+
+    fn collision_groups(&self) -> &CollisionGroups {
+        self.0.collision_groups()
+    }
+
+    fn query_type(&self) -> GeometricQueryType<N> {
+        self.0.query_type()
+    }
+
+    fn update_flags(&self) -> CollisionObjectUpdateFlags {
+        self.0.update_flags()
     }
 }
 
@@ -489,24 +525,6 @@ impl<N: RealField> ColliderDesc<N> {
         [ref] get_position -> position: Isometry<N>
     );
 
-    /*
-    /// Builds a collider into the `world` attached to the body part `parent`.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle<DefaultBodyHandle>, world: &'w mut World<N, DefaultBodySet<N>>) -> Option<&'w mut Collider<N, DefaultBodyHandle>> {
-        self.do_build(parent, world)
-    }
-
-    /// Builds a collider into the `world`.
-    pub fn build<'w>(&self, world: &'w mut World<N, DefaultBodySet<N>>) -> &'w mut Collider<N, DefaultBodyHandle> {
-        self.do_build(BodyPartHandle::ground(), world).expect("The world should contain a Ground")
-    }
-
-    fn do_build<'w>(&self, parent: BodyPartHandle<DefaultBodyHandle>, world: &'w mut World<N, DefaultBodySet<N>>) -> Option<&'w mut Collider<N, DefaultBodyHandle>> {
-        let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let body = bodies.get_mut(parent.0)?;
-        self.build_with_infos(parent, body, cworld)
-    }
-    */
-
     // Returns `None` if the given body part does not exist.
     pub fn build<Handle: BodyHandle>(&self, parent_handle: BodyPartHandle<Handle>) -> Collider<N, Handle> {
         let query = if self.is_sensor {
@@ -545,7 +563,7 @@ pub struct DeformableColliderDesc<N: RealField> {
     body_parts_mapping: Option<Arc<Vec<usize>>>
 }
 
-/*
+
 impl<N: RealField> DeformableColliderDesc<N> {
     /// Creates a deformable collider from the given shape.
     ///
@@ -593,7 +611,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     }
 
     desc_custom_setters!(
-        self.material, set_material, material: MaterialHandle<N, DefaultBodyHandle> | { self.material = Some(material) }
+        self.material, set_material, material: MaterialHandle<N> | { self.material = Some(material) }
     );
 
     desc_setters!(
@@ -610,7 +628,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     desc_custom_getters!(
         self.get_shape: &Shape<N> | { &*self.shape }
         self.get_name: &str | { &self.name }
-        self.get_material: Option<&Material<N, DefaultBodyHandle>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );
 
@@ -623,18 +641,8 @@ impl<N: RealField> DeformableColliderDesc<N> {
         [val] get_ccd_enabled -> ccd_enabled: bool
     );
 
-    /// Builds a deformable collider attached to `parent` into the `world`.
-    pub fn build_parent<'w>(&self, parent_handle: DefaultBodyHandle, world: &'w mut World<N, DefaultBodySet<N>>) -> Option<&'w mut Collider<N, DefaultBodyHandle>> {
-        let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-        let parent = bodies.get(parent_handle)?;
-        Some(self.build_with_infos(parent_handle, parent, cworld))
-    }
 
-    pub(crate) fn build_with_infos<'w>(&self,
-                                       parent_handle: DefaultBodyHandle,
-                                       parent: &Body<N>,
-                                       cworld: &'w mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>)
-                                       -> &'w mut Collider<N, DefaultBodyHandle> {
+    pub fn build<Handle: BodyHandle>(&self, parent_handle: Handle) -> Collider<N, Handle> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)
         } else {
@@ -644,55 +652,14 @@ impl<N: RealField> DeformableColliderDesc<N> {
             )
         };
 
-        let parent_deformation_type = parent
-            .deformed_positions()
-            .expect("A deformable collider can only be attached to a deformable body.")
-            .0;
-
-        assert_eq!(
-            parent_deformation_type,
-            self.shape.as_deformable_shape().unwrap().deformations_type(),
-            "Both the deformable shape and deformable body must support the same deformation types."
-        );
-
-        let ndofs = parent.status_dependent_ndofs();
         let body_parts = self.body_parts_mapping.clone();
         let anchor = ColliderAnchor::OnDeformableBody { body: parent_handle, body_parts };
-        let material = self.material.clone().unwrap_or_else(|| cworld.default_material());
-        let mut data = ColliderData::new(self.name.clone(), self.margin, anchor, ndofs, material);
+        let material = self.material.clone().unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
+        let mut data = ColliderData::new(self.name.clone(), self.margin, N::zero(), anchor, 0, material);
         data.ccd_enabled = data.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
-        cworld.add(Isometry::identity(), self.shape.clone(), self.collision_groups, query, data)
-    }
-}
-*/
 
-impl<N: RealField, Handle: BodyHandle> CollisionObjectRef<N> for Collider<N, Handle> {
-    fn graph_index(&self) -> Option<CollisionObjectGraphIndex> {
-        self.0.graph_index()
-    }
-
-    fn proxy_handle(&self) -> Option<BroadPhaseProxyHandle> {
-        self.0.proxy_handle()
-    }
-
-    fn position(&self) -> &Isometry<N> {
-        self.0.position()
-    }
-
-    fn shape(&self) -> &Shape<N> {
-        self.0.shape().as_ref()
-    }
-
-    fn collision_groups(&self) -> &CollisionGroups {
-        self.0.collision_groups()
-    }
-
-    fn query_type(&self) -> GeometricQueryType<N> {
-        self.0.query_type()
-    }
-
-    fn update_flags(&self) -> CollisionObjectUpdateFlags {
-        self.0.update_flags()
+        let co = CollisionObject::new(None, None, Isometry::identity(), self.shape.clone(), self.collision_groups, query, data);
+        Collider(co)
     }
 }

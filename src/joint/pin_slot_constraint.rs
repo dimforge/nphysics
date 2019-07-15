@@ -119,8 +119,8 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         constraints: &mut LinearConstraints<N, usize>,
     ) {
         let body1 = try_ret!(bodies.get(self.b1.0));
-        let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
+        let body2 = try_ret!(bodies.get(self.b2.0));
         let part2 = try_ret!(body2.part(self.b2.1));
 
         /*
@@ -167,7 +167,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         helper::restrict_relative_angular_velocity_to_axis(
             body1,
             part1,
-            self.b2,
+            self.b1,
             body2,
             part2,
             self.b2,

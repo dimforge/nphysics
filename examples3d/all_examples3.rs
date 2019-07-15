@@ -35,7 +35,7 @@ fn main() {
         ("Boxes", boxes3::init_world),
         ("Capsules", capsules3::init_world),
         ("Collision Groups", collision_groups3::init_world),
-        ("CompoundShapes", cross3::init_world),
+        ("Compound Shapes", cross3::init_world),
 //        ("Compound Shapes", compound3::init_world),
         ("Constraints", constraints3::init_world),
         ("Convex Polyhedra", convex3::init_world),

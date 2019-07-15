@@ -1,13 +1,11 @@
 extern crate nalgebra as na;
-extern crate ncollide3d;
-extern crate nphysics3d;
-extern crate nphysics_testbed3d;
 
 use na::{Point3, Vector3};
-use ncollide3d::shape::{Ball, Plane, ShapeHandle};
-use nphysics3d::world::World;
-use nphysics3d::force_generator::ConstantAcceleration;
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
+use ncollide3d::shape::{Plane, Ball, ShapeHandle};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics3d::force_generator::{DefaultForceGeneratorSet, ConstantAcceleration};
+use nphysics3d::joint::DefaultJointConstraintSet;
+use nphysics3d::world::{DefaultDynamicWorld, DefaultColliderWorld};
 use nphysics_testbed3d::Testbed;
 
 
@@ -15,7 +13,12 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
+    let dynamic_world = DefaultDynamicWorld::new(Vector3::zeros());
+    let collider_world = DefaultColliderWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let mut force_generators = DefaultForceGeneratorSet::new();
 
     // We setup two force generators that will replace the gravity.
     let mut up_gravity = ConstantAcceleration::new(Vector3::y() * 9.81, Vector3::zeros());
@@ -24,16 +27,19 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Planes
      */
+    // Ground body shared by all floors.
+    let ground_handle = bodies.insert(Ground::new());
     let plane = ShapeHandle::new(Plane::new(Vector3::y_axis()));
 
-    ColliderDesc::new(plane)
-        .build(&mut world);
+    let co = ColliderDesc::new(plane)
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
     let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
-
-    ColliderDesc::new(plane)
+    let co = ColliderDesc::new(plane)
         .translation(Vector3::y() * 20.0)
-        .build(&mut world);
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
     /*
      * Create the balls
@@ -45,11 +51,6 @@ pub fn init_world(testbed: &mut Testbed) {
     let centery = 0.5;
 
     let ball = ShapeHandle::new(Ball::new(rad));
-    let collider_desc = ColliderDesc::new(ball)
-        .density(1.0);
-
-    let mut rb_desc = RigidBodyDesc::new()
-        .collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0usize..2 {
@@ -58,11 +59,17 @@ pub fn init_world(testbed: &mut Testbed) {
                 let y = 1.0 + j as f32 * 2.5 * rad + centery;
                 let z = k as f32 * 2.5 * rad - centerx;
 
-                // Build the rigid body and its collider.
-                let rb_handle = rb_desc
-                    .set_translation(Vector3::new(x, y, z))
-                    .build(&mut world)
-                    .part_handle();
+                // Build the rigid body.
+                let rb = RigidBodyDesc::new()
+                    .translation(Vector3::new(x, y, z))
+                    .build();
+                let rb_handle = bodies.insert(rb);
+
+                // Build the collider.
+                let co = ColliderDesc::new(ball.clone())
+                    .density(1.0)
+                    .build(BodyPartHandle(rb_handle, 0));
+                colliders.insert(co);
 
                 /*
                  * Set artificial gravity.
@@ -70,14 +77,14 @@ pub fn init_world(testbed: &mut Testbed) {
                 let color;
 
                 if j == 1 {
-                    up_gravity.add_body_part(rb_handle);
+                    up_gravity.add_body_part(BodyPartHandle(rb_handle, 0));
                     color = Point3::new(0.0, 0.0, 1.0);
                 } else {
-                    down_gravity.add_body_part(rb_handle);
+                    down_gravity.add_body_part(BodyPartHandle(rb_handle, 0));
                     color = Point3::new(0.0, 1.0, 0.0);
                 }
 
-                testbed.set_body_color(rb_handle.0, color);
+                testbed.set_body_color(rb_handle, color);
             }
         }
     }
@@ -85,18 +92,20 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Add the force generators to the world.
      */
-    world.add_force_generator(up_gravity);
-    world.add_force_generator(down_gravity);
+    force_generators.insert(Box::new(up_gravity));
+    force_generators.insert(Box::new(down_gravity));
 
     /*
      * Set up the testbed.
      */
-    testbed.set_world(world);
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point3::new(-1.0, 5.0, -1.0), Point3::new(0.0, 0.0, 0.0));
 }
 
 fn main() {
-    let mut testbed = Testbed::new_empty();
-    init_world(&mut testbed);
-    testbed.run();
+    let testbed = Testbed::from_builders(0, vec![
+        ("Force generators", init_world),
+    ]);
+    testbed.run()
 }

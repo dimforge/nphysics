@@ -3,7 +3,7 @@ use generational_arena::Arena;
 
 use na::RealField;
 use crate::world::ColliderWorld;
-use crate::object::{Body, Ground, DefaultColliderHandle};
+use crate::object::{Body, Ground, DefaultColliderHandle, RigidBody, Multibody};
 
 pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {
 }
@@ -41,7 +41,11 @@ impl<N: RealField> DefaultBodySet<N> {
         }
     }
 
-    pub fn insert(&mut self, body: Box<Body<N>>) -> DefaultBodyHandle {
+    pub fn insert(&mut self, body: impl Body<N>) -> DefaultBodyHandle {
+        self.bodies.insert(Box::new(body))
+    }
+
+    pub fn insert_boxed(&mut self, body: Box<Body<N>>) -> DefaultBodyHandle {
         self.bodies.insert(body)
     }
 
@@ -65,6 +69,22 @@ impl<N: RealField> DefaultBodySet<N> {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultBodyHandle, &mut Body<N>)> {
         self.bodies.iter_mut().map(|b| (b.0, &mut **b.1))
+    }
+
+    pub fn rigid_body(&self, handle: DefaultBodyHandle) -> Option<&RigidBody<N>> {
+        self.get(handle).and_then(|b| b.downcast_ref())
+    }
+
+    pub fn rigid_body_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut RigidBody<N>> {
+        self.get_mut(handle).and_then(|b| b.downcast_mut())
+    }
+
+    pub fn multibody(&self, handle: DefaultBodyHandle) -> Option<&Multibody<N>> {
+        self.get(handle).and_then(|b| b.downcast_ref())
+    }
+
+    pub fn multibody_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut Multibody<N>> {
+        self.get_mut(handle).and_then(|b| b.downcast_mut())
     }
 }
 

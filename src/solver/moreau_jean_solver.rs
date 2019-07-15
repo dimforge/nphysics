@@ -57,20 +57,16 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         counters.assembly_completed();
         counters.set_nconstraints(self.contact_constraints.velocity.len() + self.joint_constraints.velocity.len());
 
-        println!("Solving velocity constraints.");
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(parameters, bodies);
-        println!("Caching impulses.");
         self.cache_impulses(bodies, joints);
         counters.velocity_resolution_completed();
 
         counters.velocity_update_started();
-        println!("Updating velocities.");
         self.update_velocities_and_integrate(parameters, bodies, island);
         counters.velocity_update_completed();
 
         counters.position_resolution_started();
-        println!("Solving position constraints.");
         self.solve_position_constraints(parameters, bodies, colliders, joints);
         counters.position_resolution_completed();
     }
@@ -143,8 +139,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
             }
         }
 
-        println!("System ndofs: {}", system_ndofs);
-        println!("Island len: {}", island.len());
         self.resize_buffers(system_ndofs);
         self.contact_constraints.clear();
         self.joint_constraints.clear();
@@ -248,8 +242,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
                 body.setup_internal_velocity_constraints(&ext_vels, parameters);
             }
         }
-
-        println!("Constraints setup complete.");
     }
 
     fn solve_velocity_constraints(&mut self, parameters: &IntegrationParameters<N>, bodies: &mut Bodies) {

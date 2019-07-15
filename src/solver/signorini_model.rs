@@ -229,8 +229,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(&**manifold.collider1.shape(), manifold.collider1.position(), c, true);
-                let context2 = MaterialContext::new(&**manifold.collider2.shape(), manifold.collider2.position(), c, false);
+                let context1 = MaterialContext::new(manifold.collider1.shape(), manifold.collider1.position(), c, true);
+                let context2 = MaterialContext::new(manifold.collider2.shape(), manifold.collider2.position(), c, false);
                 let props = Material::combine(coefficients, material1, context1, material2, context2);
 
                 let _ = Self::build_velocity_constraint(
