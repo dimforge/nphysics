@@ -414,7 +414,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
 
     fn advance(&mut self, time_ratio: N) {
         println!("Advancing by {}", time_ratio);
-        let motion = ConstantVelocityRigidMotion::new(&self.position0, self.velocity.linear, self.velocity.angular);
+        let motion = ConstantVelocityRigidMotion::new(N::zero(), &self.position0, self.velocity.linear, self.velocity.angular);
         self.position0 = motion.position_at_time(time_ratio);
     }
 

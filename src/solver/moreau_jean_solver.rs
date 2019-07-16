@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use na::{DVector, RealField};
 use ncollide::query::ContactId;
 
@@ -84,9 +85,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         island: &[Bodies::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
+        locked_bodies: &HashSet<Bodies::Handle>,
     ) {
         self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island);
-//        for constraint in &mut self.constraints.position.unilateral {
+
+//        for constraint in &mut self.contact_constraints.position.unilateral {
 //            if constraint.body1.0 != ccd_pair[0] && constraint.body1.0 != ccd_pair[1] {
 //                constraint.ndofs1 = 0;
 //            }
@@ -97,8 +100,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 //        }
 
         self.solve_position_constraints(parameters, bodies, colliders, joints);
-        bodies.get_mut(ccd_pair[0]).unwrap().validate_advancement();
-        bodies.get_mut(ccd_pair[1]).unwrap().validate_advancement();
+        if !locked_bodies.contains(&ccd_pair[0]) {
+            bodies.get_mut(ccd_pair[0]).unwrap().validate_advancement();
+        }
+
+        if !locked_bodies.contains(&ccd_pair[1]) {
+            bodies.get_mut(ccd_pair[1]).unwrap().validate_advancement();
+        }
 
 //        for handle in island {
 //            let body = try_continue!(bodies.get_mut(*handle));

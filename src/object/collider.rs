@@ -340,6 +340,12 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.set_position(pos)
     }
 
+    /// Sets the position of the collider.
+    #[inline]
+    pub fn set_position_with_prediction(&mut self, position: Isometry<N>, prediction: Isometry<N>) {
+        self.0.set_position_with_prediction(position, prediction)
+    }
+
     /// Deforms the underlying shape if possible.
     ///
     /// Panics if the shape is not deformable.
@@ -402,6 +408,10 @@ impl<N: RealField, Handle: BodyHandle> CollisionObjectRef<N> for Collider<N, Han
 
     fn position(&self) -> &Isometry<N> {
         self.0.position()
+    }
+
+    fn predicted_position(&self) -> Option<&Isometry<N>> {
+        self.0.predicted_position()
     }
 
     fn shape(&self) -> &Shape<N> {

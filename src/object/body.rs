@@ -109,13 +109,11 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
         }
     }
 
-    fn advance(&mut self, time_ratio: N) {
-        unimplemented!()
-    }
-    fn validate_advancement(&mut self) { unimplemented!() }
-    fn clamp_advancement(&mut self) { unimplemented!() }
+    fn advance(&mut self, time_ratio: N) { }
+    fn validate_advancement(&mut self) { }
+    fn clamp_advancement(&mut self) { }
 
-    fn step_started(&mut self) { unimplemented!() }
+    fn step_started(&mut self) {  }
 
     /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);
@@ -341,7 +339,10 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
     fn position(&self) -> Isometry<N>;
 
     /// If CCD is enabled, this is the last position known to be tunnelling-free.
-    fn safe_position(&self) -> Isometry<N> { unimplemented!() }
+    fn safe_position(&self) -> Isometry<N> {
+        println!("Safe_position, unimplemented.");
+        self.position()
+    }
 
     /// The velocity of this body part.
     fn velocity(&self) -> Velocity<N>;

@@ -209,7 +209,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
             };
 
             match new_pos {
-                Some(pos) => collider.set_position(pos.1), // XXX: cworld.set_position_with_prediction(*collider_id, pos.0, &pos.1),
+                Some(pos) => collider.set_position_with_prediction(pos.0, pos.1),
                 None => collider.set_deformations(body.deformed_positions().unwrap().1)
             }
         });
@@ -258,7 +258,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
             &mut *self.broad_phase,
             &mut self.narrow_phase,
             &mut self.interactions,
-            None::<&BodyStatusCollisionFilter>,
+            Some(&BodyStatusCollisionFilter),
 //            self.pair_filters.as_ref().map(|f| &**f)
         )
     }
