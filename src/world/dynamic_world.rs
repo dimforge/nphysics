@@ -443,7 +443,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             // Perform collision detection.
             cworld.sync_colliders(bodies, colliders);
             cworld.perform_broad_phase(colliders);
-            cworld.perform_narrow_phase(colliders);
 
             // Compute the next TOI.
             let ccd_handles = self.compute_next_toi(cworld, bodies, colliders);
@@ -451,8 +450,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             // Resolve the minimum TOI event, if any.
             if let Some((min_toi, c1, b1, c2, b2)) = ccd_handles {
                 let mut island = Vec::new();
+                let mut contact_manifolds = Vec::new();
 
                 parameters.set_dt(dt0 - min_toi);
+
+
+                /*
                 // We will use the companion ID to know which body is already on the island.
                 bodies.foreach_mut(|h, b| {
                     b.clear_forces();
@@ -474,8 +477,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     }
                 });
 
-                let mut contact_manifolds = Vec::new();
-
                 cworld.sync_colliders(bodies, colliders);
                 cworld.perform_broad_phase(colliders);
                 cworld.perform_narrow_phase(colliders);
@@ -492,19 +493,37 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         contact_manifolds.push(ColliderContactManifold::new(ch1, c1, ch2, c2, manifold));
                     }
                 }
+                */
 
-                /*
+                // We will use the companion ID to know which body is already on the island.
+                bodies.foreach_mut(|h, b| {
+                    b.clear_forces();
+                    b.update_kinematics();
+                    b.update_dynamics(parameters.dt());
+                    b.update_acceleration(&Vector::zeros(), &parameters);
+                    b.set_companion_id(0);
+
+                    let curr_body_time = self.substep.body_times.entry(h).or_insert(N::zero());
+
+                    if !self.substep.locked_bodies.contains(&h) {
+                        b.advance(min_toi - *curr_body_time);
+                        b.clamp_advancement();
+                    }
+                    *curr_body_time = min_toi;
+                });
+
                 let mut colliders_to_traverse = vec![c1, c2]; // FIXME: should contain all the colliders attached to b1 and b2.
                 let mut interaction_ids = Vec::new();
                 let (ca, cb) = (c1, c2);
+
+                let mut visited = HashSet::new();
 
                 // Update contact manifolds.
                 while let Some(c) = colliders_to_traverse.pop() {
                     let graph_id = colliders.get(c).unwrap().graph_index().unwrap();
 
                     for (ch1, ch2, eid, inter) in cworld.interactions.interactions_with_mut(graph_id) {
-                        if !(ch1 == c && (ch2 == ca || ch2 == cb)) {
-                            // This interaction will be reported twice.
+                        if (ch1 == c && visited.contains(&ch2)) || (ch2 == c && visited.contains(&ch1)) {
                             continue;
                         }
 
@@ -520,41 +539,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 //                                    }
 
                                     if b1.companion_id() == 0 && b1.is_dynamic() {
-                                        let time1 = self.substep.body_times.entry(handle1).or_insert(N::zero());
-
-                                        if min_toi != *time1 && !self.substep.locked_bodies.contains(&handle1) {
-                                            if min_toi < *time1 {
-                                                continue;
-                                            }
-                                            assert!(min_toi >= *time1);
-//                                            println!("Advancing by: {}", (min_toi - *time1) / (dt0 - *time1));
-                                            b1.advance(min_toi - *time1); // (min_toi - *time1) / (dt0 - *time1));
-                                            *time1 = min_toi;
-                                        }
-
                                         b1.set_companion_id(1);
-                                        b1.activate();
-                                        b1.clamp_advancement();
                                         island.push(c1.body());
                                         c1.set_position(b1.part(0).unwrap().position() * c1.position_wrt_body());
                                     }
 
                                     if b2.companion_id() == 0 && b2.is_dynamic() {
-                                        let time2 = self.substep.body_times.entry(handle2).or_insert(N::zero());
-
-                                        if min_toi != *time2 && !self.substep.locked_bodies.contains(&handle2) {
-                                            if min_toi < *time2 {
-                                                continue;
-                                            }
-                                            assert!(min_toi >= *time2, format!("min_toi: {}, time2: {}", min_toi, *time2));
-//                                            println!("Advancing by: {}", (min_toi - *time2) / (dt0 - *time2));
-                                            b2.advance(min_toi - *time2); // (min_toi - *time2) / (dt0 - *time2));
-                                            *time2 = min_toi;
-                                        }
-
                                         b2.set_companion_id(1);
-                                        b2.activate();
-                                        b2.clamp_advancement();
                                         island.push(c2.body());
                                         c2.set_position(b2.part(0).unwrap().position() * c2.position_wrt_body());
                                     }
@@ -564,20 +555,21 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                     if manifold.len() > 0 {
                                         interaction_ids.push(eid);
 
-//                                        if ch1 != c {
-//                                            colliders_to_traverse.push(ch1);
-//                                        }
-//
-//                                        if ch2 != c {
-//                                            colliders_to_traverse.push(ch2);
-//                                        }
-//                                    }
+                                        if ch1 != c {
+                                            colliders_to_traverse.push(ch1);
+                                        }
+
+                                        if ch2 != c {
+                                            colliders_to_traverse.push(ch2);
+                                        }
                                     }
                                 }
                             }
                             Interaction::Proximity(prox) => unimplemented!()
                         }
                     }
+
+                    let _ = visited.insert(c);
                 }
 
                 for eid in interaction_ids {
@@ -591,7 +583,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         Interaction::Proximity(_) => unimplemented!()
                     }
                 }
-                */
+
 
                 // Solve the system and integrate.
                 bodies.foreach_mut(|_, b| {
@@ -645,9 +637,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 self.substep.ccd_counts.clear();
                 self.substep.body_times.clear();
                 self.substep.locked_bodies.clear();
-                cworld.sync_colliders(bodies, colliders);
-                cworld.perform_broad_phase(colliders);
-                cworld.perform_narrow_phase(colliders);
                 break;
             }
         }
