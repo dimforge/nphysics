@@ -12,6 +12,8 @@ pub struct StagesCounters {
     pub island_construction_time: Timer,
     /// Total time spent for the constraints resolution and position update.t
     pub solver_time: Timer,
+    /// Total time spent for CCD and CCD resolution.
+    pub ccd_time: Timer,
 }
 
 impl StagesCounters {
@@ -22,6 +24,7 @@ impl StagesCounters {
             collision_detection_time: Timer::new(),
             island_construction_time: Timer::new(),
             solver_time: Timer::new(),
+            ccd_time: Timer::new(),
         }
     }
 }
@@ -39,6 +42,7 @@ impl Display for StagesCounters {
             "Island construction time: {}",
             self.island_construction_time
         )?;
-        writeln!(f, "Solver time: {}", self.solver_time)
+        writeln!(f, "Solver time: {}", self.solver_time)?;
+        writeln!(f, "CCD time: {}", self.ccd_time)
     }
 }

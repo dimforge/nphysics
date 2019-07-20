@@ -16,6 +16,10 @@ impl Timer {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.time = 0.0
+    }
+
     /// Start the timer.
     pub fn start(&mut self) {
         self.time = 0.0;

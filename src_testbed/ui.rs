@@ -16,11 +16,13 @@ const ALPHA: f32 = 0.9;
 widget_ids! {
     pub struct ConrodIds {
         canvas,
+        title_backends_list,
         title_demos_list,
         title_slider_vel_iter,
         title_slider_pos_iter,
         title_warmstart_coeff,
         title_frequency,
+        backends_list,
         demos_list,
         button_pause,
         button_single_step,
@@ -45,6 +47,7 @@ widget_ids! {
         toggle_statistics,
         toggle_profile,
         toggle_wireframe,
+        separator0,
         separator1,
         separator2,
     }
@@ -100,27 +103,65 @@ impl TestbedUi {
             .padded_h_of(ui_root, 10.0)
             .set(self.ids.canvas, &mut ui);
 
-        if !state.example_names.is_empty() {
-            conrod::widget::Text::new("Select example:")
+        // NOTE: If examples_names is empty, we can't change the backend because
+        // we have no way to properly restart the simulation.
+        if state.backend_names.len() > 1 && !state.example_names.is_empty() {
+            /*
+             * Backend drop-down.
+             */
+            conrod::widget::Text::new("Select backend:")
                 .top_left_with_margins_on(self.ids.canvas, VSPACE, LEFT_MARGIN)
-//            .w_h(ELEMENT_W, ELEMENT_H)
-                .set(self.ids.title_demos_list, &mut ui);
+                .set(self.ids.title_backends_list, &mut ui);
 
-            for selected in conrod::widget::DropDownList::new(&state.example_names, Some(state.selected_example))
-//            .mid_top_with_margin_on(self.ids.canvas, 20.0)
+            for selected in conrod::widget::DropDownList::new(&state.backend_names, Some(state.selected_backend))
                 .align_middle_x_of(self.ids.canvas)
-                .down_from(self.ids.title_demos_list, TITLE_VSPACE)
-//            .right_from(self.ids.button_prev_example, 0.0)
+                .down_from(self.ids.title_backends_list, TITLE_VSPACE)
                 .left_justify_label()
-                .w_h(ELEMENT_W - 20.0, ELEMENT_H)
+                .w_h(ELEMENT_W, ELEMENT_H)
                 .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
-                .set(self.ids.demos_list, &mut ui) {
-                if selected != state.selected_example {
-                    state.selected_example = selected;
-                    state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+                .set(self.ids.backends_list, &mut ui) {
+                if selected != state.selected_backend {
+                    state.selected_backend = selected;
+                    state.action_flags.set(TestbedActionFlags::BACKEND_CHANGED, true)
                 }
             }
 
+            separator(self.ids.canvas, self.ids.backends_list, self.ids.separator0, &mut ui);
+        } else {
+            conrod::widget::Text::new("")
+                .top_left_with_margins_on(self.ids.canvas, 0.0, LEFT_MARGIN)
+                .set(self.ids.separator0, &mut ui);
+        }
+
+        let display_ticks = state.example_names.len() > 1;
+        let select_example_title = if display_ticks { "Select example:" } else { "Current example:" };
+        let tick_width = if display_ticks { 20.0 } else { 0.0 };
+
+        /*
+         * Examples drop-down.
+         */
+        conrod::widget::Text::new("Select example:")
+            .down_from(self.ids.separator0, VSPACE)
+//                .top_left_with_margins_on(self.ids.canvas, VSPACE, LEFT_MARGIN)
+//            .w_h(ELEMENT_W, ELEMENT_H)
+            .set(self.ids.title_demos_list, &mut ui);
+
+        for selected in conrod::widget::DropDownList::new(&state.example_names, Some(state.selected_example))
+//            .mid_top_with_margin_on(self.ids.canvas, 20.0)
+            .align_middle_x_of(self.ids.canvas)
+            .down_from(self.ids.title_demos_list, TITLE_VSPACE)
+//            .right_from(self.ids.button_prev_example, 0.0)
+            .left_justify_label()
+            .w_h(ELEMENT_W - tick_width, ELEMENT_H)
+            .color(conrod::color::LIGHT_CHARCOAL) // No alpha.
+            .set(self.ids.demos_list, &mut ui) {
+            if selected != state.selected_example {
+                state.selected_example = selected;
+                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
+            }
+        }
+
+        if display_ticks {
             for _click in conrod::widget::Button::new()
                 .label("<")
                 .align_middle_x_of(self.ids.canvas)
@@ -148,13 +189,9 @@ impl TestbedUi {
                     state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true)
                 }
             }
-
-            separator(self.ids.canvas, self.ids.demos_list, self.ids.separator1, &mut ui);
-        } else {
-            conrod::widget::Text::new("")
-                .top_left_with_margins_on(self.ids.canvas, 0.0, LEFT_MARGIN)
-                .set(self.ids.separator1, &mut ui);
         }
+
+        separator(self.ids.canvas, self.ids.demos_list, self.ids.separator1, &mut ui);
 
 
         let curr_vel_iters = world.parameters.max_velocity_iterations;

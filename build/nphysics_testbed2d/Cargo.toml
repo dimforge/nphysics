@@ -18,6 +18,7 @@ required-features = [ "dim2" ]
 [features]
 default = [ "dim2" ]
 dim2 = [ ]
+box2d-backend = [ "wrapped2d" ]
 
 [dependencies]
 log        = { version = "0.4", optional = true }
@@ -28,6 +29,7 @@ rand       = "0.6"
 nalgebra   = "0.18"
 kiss3d     = { version = "0.20", features = [ "conrod" ] }
 ncollide2d = "0.19"
+wrapped2d  = { version = "0.4", optional = true }
 
 [dependencies.nphysics2d]
 path = "../nphysics2d"

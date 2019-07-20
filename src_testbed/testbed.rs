@@ -5,7 +5,6 @@ use std::env;
 use std::mem;
 use std::path::Path;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
 
 use crate::engine::{GraphicsWindow, GraphicsManager};
 use kiss3d::event::Event;
@@ -32,6 +31,13 @@ use nphysics::world::{DefaultDynamicWorld, DefaultColliderWorld};
 use nphysics::math::ForceType;
 use crate::ui::TestbedUi;
 
+#[cfg(feature = "box2d-backend")]
+use crate::box2d_world::Box2dWorld;
+
+
+const NPHYSICS_BACKEND: usize = 0;
+#[cfg(feature = "box2d-backend")]
+const BOX2D_BACKEND: usize = 1;
 
 #[derive(PartialEq)]
 pub enum RunMode {
@@ -82,6 +88,7 @@ bitflags! {
     pub struct TestbedActionFlags: u32 {
         const RESET_WORLD_GRAPHICS = 1 << 0;
         const EXAMPLE_CHANGED = 1 << 1;
+        const BACKEND_CHANGED = 1 << 2;
     }
 }
 
@@ -95,8 +102,10 @@ pub struct TestbedState {
     pub prev_flags: TestbedStateFlags,
     pub flags: TestbedStateFlags,
     pub action_flags: TestbedActionFlags,
+    pub backend_names: Vec<&'static str>,
     pub example_names: Vec<&'static str>,
-    pub selected_example: usize
+    pub selected_example: usize,
+    pub selected_backend: usize,
 }
 
 pub struct Testbed {
@@ -118,7 +127,9 @@ pub struct Testbed {
     cursor_pos: Point2<f32>,
     ground_handle: Option<DefaultBodyHandle>,
     ui: TestbedUi,
-    state: TestbedState
+    state: TestbedState,
+    #[cfg(feature = "box2d-backend")]
+    box2d: Option<Box2dWorld>,
 }
 
 type Callbacks = Vec<Box<Fn(
@@ -134,15 +145,22 @@ impl Testbed {
     pub fn new_empty() -> Testbed {
         let graphics = GraphicsManager::new();
 
-        let mut window = Box::new(Window::new("nphysics: 3d demo"));
+        #[cfg(feature = "dim3")]
+            let mut window = Box::new(Window::new("nphysics: 3d demo"));
+        #[cfg(feature = "dim2")]
+            let mut window = Box::new(Window::new("nphysics: 2d demo"));
         window.set_background_color(0.9, 0.9, 0.9);
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
         let flags = TestbedStateFlags::SLEEP | TestbedStateFlags::CCD;
-
         let ui = TestbedUi::new(&mut window);
-        let state = TestbedState {
+
+        let mut backend_names = vec!["nphysics"];
+        #[cfg(feature = "box2d-backend")]
+            backend_names.push("box2d");
+
+            let state = TestbedState {
             running: RunMode::Running,
             draw_colls: false,
             grabbed_object: None,
@@ -152,18 +170,27 @@ impl Testbed {
             prev_flags: flags,
             flags,
             action_flags: TestbedActionFlags::empty(),
+            backend_names,
             example_names: Vec::new(),
             selected_example: 0,
+            selected_backend: 0,
         };
+
+        let dynamic_world = DefaultDynamicWorld::new(na::zero());
+        let collider_world = DefaultColliderWorld::new();
+        let bodies = DefaultBodySet::new();
+        let colliders = DefaultColliderSet::new();
+        let forces = DefaultForceGeneratorSet::new();
+        let constraints = DefaultJointConstraintSet::new();
 
         Testbed {
             builders: Vec::new(),
-            dynamic_world: DefaultDynamicWorld::new(Vector3::zeros()),
-            collider_world: DefaultColliderWorld::new(),
-            bodies: DefaultBodySet::new(),
-            colliders: DefaultColliderSet::new(),
-            forces: DefaultForceGeneratorSet::new(),
-            constraints: DefaultJointConstraintSet::new(),
+            dynamic_world,
+            collider_world,
+            bodies,
+            colliders,
+            forces,
+            constraints,
             callbacks: Vec::new(),
             window: Some(window),
             graphics,
@@ -176,6 +203,8 @@ impl Testbed {
             ground_handle: None,
             ui,
             state,
+            #[cfg(feature = "box2d-backend")]
+            box2d: None,
         }
     }
 
@@ -217,20 +246,30 @@ impl Testbed {
     }
 
     pub fn set_world(&mut self,
-                     dynamic_world: DefaultDynamicWorld<f32>,
+                     mut dynamic_world: DefaultDynamicWorld<f32>,
                      collider_world: DefaultColliderWorld<f32>,
                      bodies: DefaultBodySet<f32>,
                      colliders: DefaultColliderSet<f32>,
-                     constraints: DefaultJointConstraintSet<f32>,
-                     forces: DefaultForceGeneratorSet<f32>) {
+                     joint_constraints: DefaultJointConstraintSet<f32>,
+                     force_generators: DefaultForceGeneratorSet<f32>) {
+        dynamic_world.parameters = self.dynamic_world.parameters.clone();
+
         self.dynamic_world = dynamic_world;
         self.collider_world = collider_world;
         self.bodies = bodies;
         self.colliders = colliders;
-        self.constraints = constraints;
-        self.forces = forces;
+        self.constraints = joint_constraints;
+        self.forces = force_generators;
         self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
+        self.dynamic_world.counters.enable();
         self.collider_world.maintain(&mut self.bodies, &mut self.colliders);
+
+        #[cfg(feature = "box2d-backend")]
+            {
+                if self.state.selected_backend == BOX2D_BACKEND {
+                    self.box2d = Some(Box2dWorld::from_nphysics(&self.dynamic_world, &self.collider_world, &self.bodies, &self.colliders, &self.constraints, &self.forces));
+                }
+            }
     }
 
     pub fn set_builders(&mut self, builders: Vec<(&'static str, fn(&mut Self))>) {
@@ -320,7 +359,8 @@ impl Testbed {
                               &mut DefaultColliderWorld<f32>,
                               &mut DefaultBodySet<f32>,
                               &mut DefaultColliderSet<f32>,
-                              &mut GraphicsManager, f32) + 'static>(
+                              &mut GraphicsManager,
+                              f32) + 'static>(
         &mut self,
         callback: F,
     ) {
@@ -373,13 +413,12 @@ impl Testbed {
 
         match event.value {
             WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
-                let physics_world = &mut self.world.get_mut();
                 let all_groups = &CollisionGroups::new();
-                for b in physics_world
-                    .collider_world()
-                    .interferences_with_point(&self.cursor_pos, all_groups)
+                for b in self
+                    .collider_world
+                    .interferences_with_point(&self.colliders, &self.cursor_pos, all_groups)
                     {
-                        if !b.query_type().is_proximity_query() && !b.body().is_ground() {
+                        if !b.query_type().is_proximity_query() && Some(b.body()) != self.ground_handle {
 
                             if
                             let ColliderAnchor::OnBodyPart { body_part, .. } = b.anchor()
@@ -391,9 +430,9 @@ impl Testbed {
 
                 if modifier.contains(Modifiers::Shift) {
                     if let Some(body_part) = self.state.grabbed_object {
-                        if !body_part.is_ground() {
+                        if Some(body_part.0) != self.ground_handle {
                             self.graphics.remove_body_nodes(window, body_part.0);
-                            physics_world.remove_bodies(&[body_part.0]);
+                            self.bodies.remove(body_part.0);
                         }
                     }
 
@@ -401,21 +440,25 @@ impl Testbed {
                 } else if !modifier.contains(Modifiers::Control) {
                     if let Some(body) = self.state.grabbed_object {
                         if let Some(joint) = self.state.grabbed_object_constraint {
-                            let _ = physics_world.remove_constraint(joint);
+                            let _ = self.constraints.remove(joint);
                         }
 
-                        let body_pos = physics_world.body(body.0).unwrap().part(body.1).unwrap().position();
+                        let body_pos = self.bodies.get(body.0).unwrap().part(body.1).unwrap().position();
                         let attach1 = self.cursor_pos;
                         let attach2 = body_pos.inverse() * attach1;
-                        let joint = MouseConstraint::new(
-                            BodyPartHandle::ground(),
-                            body,
-                            attach1,
-                            attach2,
-                            1.0,
-                        );
-                        self.state.grabbed_object_constraint =
-                            Some(physics_world.add_constraint(joint));
+
+                        if let Some(ground) = self.ground_handle {
+                            let joint = MouseConstraint::new(
+                                BodyPartHandle(ground, 0),
+                                body,
+                                attach1,
+                                attach2,
+                                1.0,
+                            );
+                            self.state.grabbed_object_constraint =
+                                Some(self.constraints.insert(joint));
+                        }
+
 
                         for node in self
                             .graphics
@@ -435,7 +478,6 @@ impl Testbed {
                 }
             }
             WindowEvent::MouseButton(MouseButton::Button1, Action::Release, _) => {
-                let physics_world = &mut self.world.get_mut();
                 if let Some(body) = self.state.grabbed_object {
                     for n in self
                         .graphics
@@ -448,7 +490,7 @@ impl Testbed {
                 }
 
                 if let Some(joint) = self.state.grabbed_object_constraint {
-                    let _ = physics_world.remove_constraint(joint);
+                    let _ = self.constraints.remove(joint);
                 }
 
 
@@ -461,7 +503,6 @@ impl Testbed {
                 self.state.grabbed_object_constraint = None;
             }
             WindowEvent::CursorPos(x, y, modifiers) => {
-                let physics_world = &mut self.world.get_mut();
                 self.cursor_pos.x = x as f32;
                 self.cursor_pos.y = y as f32;
 
@@ -473,9 +514,11 @@ impl Testbed {
                 let attach2 = self.cursor_pos;
                 if self.state.grabbed_object.is_some() {
                     let joint = self.state.grabbed_object_constraint.unwrap();
-                    let joint = physics_world
-                        .constraint_mut(joint)
-                        .downcast_mut::<MouseConstraint<f32>>()
+                    let joint = self
+                        .constraints
+                        .get_mut(joint)
+                        .unwrap()
+                        .downcast_mut::<MouseConstraint<f32, DefaultBodyHandle>>()
                         .unwrap();
                     joint.set_anchor_1(attach2);
                 }
@@ -619,7 +662,7 @@ impl Testbed {
                                             1.0,
                                         );
                                         self.state.grabbed_object_plane = (attach1, -ray.dir);
-                                        self.state.grabbed_object_constraint = Some(self.constraints.insert(Box::new(constraint)));
+                                        self.state.grabbed_object_constraint = Some(self.constraints.insert(constraint));
                                     }
 
                                     n.select()
@@ -704,6 +747,14 @@ impl State for Testbed {
 
         // Handle UI actions.
         {
+            let backend_changed = self.state.action_flags.contains(TestbedActionFlags::BACKEND_CHANGED);
+            if backend_changed {
+                // Marking the example as changed will make the simulation
+                // restart with the selected backend.
+                self.state.action_flags.set(TestbedActionFlags::BACKEND_CHANGED, false);
+                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+            }
+
             let example_changed = self.state.action_flags.contains(TestbedActionFlags::EXAMPLE_CHANGED);
             if example_changed {
                 self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, false);
@@ -807,13 +858,24 @@ impl State for Testbed {
                     f(&mut self.dynamic_world, &mut self.collider_world, &mut self.bodies, &mut self.colliders, &mut self.graphics, self.time)
                 }
 
-                self.dynamic_world.step(
-                    &mut self.collider_world,
-                    &mut self.bodies,
-                    &mut self.colliders,
-                    &mut self.constraints,
-                    &mut self.forces
-                );
+                if self.state.selected_backend == NPHYSICS_BACKEND {
+                    self.dynamic_world.step(
+                        &mut self.collider_world,
+                        &mut self.bodies,
+                        &mut self.colliders,
+                        &mut self.constraints,
+                        &mut self.forces
+                    );
+                }
+
+                #[cfg(feature = "box2d-backend")]
+                    {
+                        if self.state.selected_backend == BOX2D_BACKEND {
+                            self.box2d.as_mut().unwrap().step(&mut self.dynamic_world.counters, self.dynamic_world.parameters.dt());
+                            self.box2d.as_mut().unwrap().sync(&mut self.dynamic_world, &mut self.collider_world, &mut self.bodies, &mut self.colliders);
+                        }
+                    }
+
                 if !self.hide_counters {
                     #[cfg(not(feature = "log"))]
                     println!("{}", self.dynamic_world.counters);
@@ -858,7 +920,13 @@ Island computation: {:.2}ms
 Solver: {:.2}ms
 |_ Assembly: {:.2}ms
    Velocity resolution: {:.2}ms
-   Position resolution: {:.2}ms"#,
+   Position resolution: {:.2}ms
+CCD: {:.2}ms
+|_ # of substeps: {}
+   TOI computation: {:.2}ms
+   Broad-phase: {:.2}ms
+   Narrow-phase: {:.2}ms
+   Solver: {:.2}ms"#,
             counters.step_time() * 1000.0,
             counters.collision_detection_time() * 1000.0,
             counters.broad_phase_time() * 1000.0,
@@ -867,7 +935,13 @@ Solver: {:.2}ms
             counters.solver_time() * 1000.0,
             counters.assembly_time() * 1000.0,
             counters.velocity_resolution_time() * 1000.0,
-            counters.position_resolution_time() * 1000.0);
+            counters.position_resolution_time() * 1000.0,
+            counters.ccd_time() * 1000.0,
+            counters.ccd.num_substeps,
+            counters.ccd.toi_computation_time.time() * 1000.0,
+            counters.ccd.broad_phase_time.time() * 1000.0,
+            counters.ccd.narrow_phase_time.time() * 1000.0,
+            counters.ccd.solver_time.time() * 1000.0);
 
 //            let stats = format!(
 //                r#"Total: {:.2}ms
