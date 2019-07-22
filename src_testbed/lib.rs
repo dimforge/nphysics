@@ -25,3 +25,5 @@ mod engine;
 pub mod objects;
 mod testbed;
 mod ui;
+#[cfg(feature = "box2d-backend")]
+mod box2d_world;

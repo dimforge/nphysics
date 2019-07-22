@@ -308,6 +308,10 @@ impl Testbed {
         self.graphics.set_body_color(body, color);
     }
 
+    pub fn set_body_wireframe(&mut self, body: DefaultBodyHandle, wireframe_enabled: bool) {
+        self.graphics.set_body_wireframe(body, wireframe_enabled);
+    }
+
     pub fn set_collider_color(&mut self, collider: DefaultColliderHandle, color: Point3<f32>) {
         self.graphics.set_collider_color(collider, color);
     }
@@ -771,28 +775,7 @@ impl State for Testbed {
 
             if example_changed || self.state.prev_flags.contains(TestbedStateFlags::WIREFRAME) !=
                 self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
-
-                for (_, co) in self.colliders.iter() {
-                    if self.graphics.body_nodes_mut(co.body()).is_some() {
-                        for n in self.graphics.nodes_mut() {
-                            let is_sensor = if let Some(collider) = self.colliders.get(n.collider()) {
-                                collider.is_sensor()
-                            } else {
-                                false
-                            };
-
-                            if let Some(node) = n.scene_node_mut() {
-                                if is_sensor || self.state.flags.contains(TestbedStateFlags::WIREFRAME) {
-                                    node.set_lines_width(1.0);
-                                    node.set_surface_rendering_activation(false);
-                                } else {
-                                    node.set_lines_width(0.0);
-                                    node.set_surface_rendering_activation(true);
-                                }
-                            }
-                        }
-                    }
-                }
+                self.graphics.toggle_wireframe_mode(&self.colliders, self.state.flags.contains(TestbedStateFlags::WIREFRAME))
             }
 
             if self.state.prev_flags.contains(TestbedStateFlags::SLEEP) !=

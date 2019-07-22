@@ -66,6 +66,7 @@ pub struct GraphicsManager {
     b2sn: HashMap<DefaultBodyHandle, Vec<Node>>,
     b2color: HashMap<DefaultBodyHandle, Point3<f32>>,
     c2color: HashMap<DefaultColliderHandle, Point3<f32>>,
+    b2wireframe: HashMap<DefaultBodyHandle, bool>,
     rays: Vec<Ray<f32>>,
     camera: Camera,
     aabbs: Vec<(DefaultColliderHandle, GraphicsNode)>,
@@ -94,6 +95,7 @@ impl GraphicsManager {
             b2sn: HashMap::new(),
             b2color: HashMap::new(),
             c2color: HashMap::new(),
+            b2wireframe: HashMap::new(),
             rays: Vec::new(),
             aabbs: Vec::new(),
             ground_handle: None,
@@ -198,6 +200,22 @@ impl GraphicsManager {
         }
     }
 
+    pub fn set_body_wireframe(&mut self, b: DefaultBodyHandle, enabled: bool) {
+        self.b2wireframe.insert(b, enabled);
+
+        if let Some(ns) = self.b2sn.get_mut(&b) {
+            for n in ns.iter_mut().filter_map(|n| n.scene_node_mut()) {
+                if enabled {
+                    n.set_surface_rendering_activation(true);
+                    n.set_lines_width(1.0);
+                } else {
+                    n.set_surface_rendering_activation(false);
+                    n.set_lines_width(1.0);
+                }
+            }
+        }
+    }
+
     pub fn set_collider_color(&mut self, handle: DefaultColliderHandle, color: Point3<f32>) {
         self.c2color.insert(handle, color);
     }
@@ -221,6 +239,26 @@ impl GraphicsManager {
         self.set_body_color(handle, color);
 
         color
+    }
+
+    pub fn toggle_wireframe_mode(&mut self, colliders: &DefaultColliderSet<f32>, enabled: bool) {
+        for n in self.b2sn.values_mut().flat_map(|val| val.iter_mut()) {
+            let force_wireframe = if let Some(collider) = colliders.get(n.collider()) {
+                collider.is_sensor() || self.b2wireframe.get(&collider.body()).cloned().unwrap_or(false)
+            } else {
+                false
+            };
+
+            if let Some(node) = n.scene_node_mut() {
+                if force_wireframe || enabled {
+                    node.set_lines_width(1.0);
+                    node.set_surface_rendering_activation(false);
+                } else {
+                    node.set_lines_width(0.0);
+                    node.set_surface_rendering_activation(true);
+                }
+            }
+        }
     }
 
     pub fn add_ray(&mut self, ray: Ray<f32>) {
@@ -250,13 +288,23 @@ impl GraphicsManager {
     ) {
         let collider = colliders.get(id).unwrap();
         let key = collider.body();
-        let shape = collider.shape().as_ref();
+        let shape = collider.shape();
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
         let mut new_nodes = Vec::new();
         self.add_shape(window, id, colliders, na::one(), shape, color, &mut new_nodes);
 
         {
+            for node in new_nodes.iter_mut().filter_map(|n| n.scene_node_mut()) {
+                if self.b2wireframe.get(&collider.body()).cloned().unwrap_or(false) {
+                    node.set_lines_width(1.0);
+                    node.set_surface_rendering_activation(false);
+                } else {
+                    node.set_lines_width(0.0);
+                    node.set_surface_rendering_activation(true);
+                }
+            }
+
             let nodes = self.b2sn.entry(key).or_insert_with(Vec::new);
             nodes.append(&mut new_nodes);
         }
@@ -549,8 +597,6 @@ impl GraphicsManager {
         }
 
         for (handle, node) in &mut self.aabbs {
-            use ncollide::pipeline::object::CollisionObjectRef;
-
             if let Some(collider) = colliders.get(*handle) {
                 let bf = collider_world.broad_phase();
                 let aabb = collider
