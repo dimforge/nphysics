@@ -18,6 +18,9 @@ pub trait BodySet<N: RealField> {
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body>;
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body>;
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>);
+    fn get_pair(&self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&Self::Body>, Option<&Self::Body>) {
+        (self.get(handle1), self.get(handle2))
+    }
 
     fn contains(&self, handle: Self::Handle) -> bool;
 

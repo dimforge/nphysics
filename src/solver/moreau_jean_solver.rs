@@ -81,40 +81,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         colliders: &Colliders,
         joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
-        ccd_pair: [Bodies::Handle; 2],
+        ccd_bodies: &[Bodies::Handle],
         island: &[Bodies::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        locked_bodies: &HashSet<Bodies::Handle>,
     ) {
         self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island);
-
-//        for constraint in &mut self.contact_constraints.position.unilateral {
-//            if constraint.body1.0 != ccd_pair[0] && constraint.body1.0 != ccd_pair[1] {
-//                constraint.ndofs1 = 0;
-//            }
-//
-//            if constraint.body2.0 != ccd_pair[0] && constraint.body2.0 != ccd_pair[1] {
-//                constraint.ndofs2 = 0;
-//            }
-//        }
-
         self.solve_position_constraints(parameters, bodies, colliders, joints);
-        if !locked_bodies.contains(&ccd_pair[0]) {
-            bodies.get_mut(ccd_pair[0]).unwrap().validate_advancement();
+        for ccd_body in ccd_bodies {
+            bodies.get_mut(*ccd_body).unwrap().validate_advancement();
         }
-
-        if !locked_bodies.contains(&ccd_pair[1]) {
-            bodies.get_mut(ccd_pair[1]).unwrap().validate_advancement();
-        }
-
-//        for handle in island {
-//            let body = try_continue!(bodies.get_mut(*handle));
-//            body.validate_advancement();
-//        }
 
         self.solve_velocity_constraints(parameters, bodies);
-//        self.cache_impulses(bodies, joints);
         self.update_velocities_and_integrate(parameters, bodies, island);
     }
 
@@ -319,7 +297,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
             let ndofs = body.ndofs();
 
             {
-//                println!("ext_vels: {:?}, mj_lambda: {:?}", self.ext_vels, self.mj_lambda_vel);
                 let mut mb_vels = body.generalized_velocity_mut();
                 mb_vels += self.ext_vels.rows(id, ndofs);
                 mb_vels += self.mj_lambda_vel.rows(id, ndofs);

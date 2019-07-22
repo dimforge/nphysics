@@ -85,9 +85,6 @@ impl<N: RealField> SignoriniModel<N> {
             rhs += props.restitution.0 * rhs;
         }
 
-//        println!("rhs after 1: {}", rhs);
-
-
         // Handle predictive contact if no penetration.
         let depth = c.contact.depth + data1.margin() + data2.margin();
         if depth < N::zero() {

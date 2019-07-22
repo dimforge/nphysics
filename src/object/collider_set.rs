@@ -17,6 +17,9 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
     fn get(&self, handle: Self::Handle) -> Option<&Collider<N, Handle>>;
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Collider<N, Handle>>;
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Collider<N, Handle>>, Option<&mut Collider<N, Handle>>);
+    fn get_pair(&self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&Collider<N, Handle>>, Option<&Collider<N, Handle>>) {
+        (self.get(handle1), self.get(handle2))
+    }
 
     fn contains(&self, handle: Self::Handle) -> bool;
 
