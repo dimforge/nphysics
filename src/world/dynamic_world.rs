@@ -339,62 +339,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         }
     }
 
-    fn compute_next_toi<Colliders>(&mut self,
-                                    cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
-                                    bodies: &mut Bodies,
-                                    colliders: &mut Colliders)
-        -> Option<(N, CollHandle, Bodies::Handle, CollHandle, Bodies::Handle)>
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle> {
-
-        let mut all_toi = std::collections::BinaryHeap::new();
-
-        let dt0 = self.parameters.dt();
-
-        ColliderSet::foreach(colliders, |coll_handle, coll| {
-            if coll.is_ccd_enabled() {
-                // Find a TOI
-                for (ch1, c1, ch2, c2, inter) in cworld.interactions_with(colliders, coll_handle, false).unwrap() {
-                    use crate::object::BodyPart;
-                    let handle1 = c1.body();
-                    let handle2 = c2.body();
-
-                    let (b1, b2) = bodies.get_pair_mut(handle1, handle2);
-                    let (b1, b2) = (b1.unwrap(), b2.unwrap());
-
-                    match inter {
-                        Interaction::Contact(alg, manifold) => {
-                            if let Some(toi) = TOIEntry::try_from_colliders(
-                                ch1, ch2, c1, c2, b1, b2, None, None, &self.parameters, dt0, &self.substep.body_times) {
-                                all_toi.push(toi)
-                            }
-                        }
-                        Interaction::Proximity(prox) => unimplemented!()
-                    }
-                }
-            }
-        });
-
-        let max_substeps = 1;
-        let min_substep_size = 1.0;
-
-        self.substep.locked_bodies.clear();
-
-        while let Some(toi) = all_toi.pop() {
-            let count = self.substep.ccd_counts.entry((toi.c1, toi.c2)).or_insert(0);
-            if *count == max_substeps {
-                let _ = self.substep.locked_bodies.insert(toi.b1);
-                let _ = self.substep.locked_bodies.insert(toi.b2);
-            } else {
-                *count += 1;
-                return Some((toi.toi, toi.c1, toi.b1, toi.c2, toi.b2));
-            }
-        }
-
-        None
-    }
-
     // Outputs a sorted list of TOI event for the given time interval, assuming montions clamped at the first TOI.
-    fn compute_next_toi2<Colliders>(&mut self,
+    fn predict_next_impacts<Colliders>(&mut self,
                                     cworld: &ColliderWorld<N, Bodies::Handle, CollHandle>,
                                     bodies: &Bodies,
                                     colliders: &Colliders,
@@ -468,6 +414,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         let c1 = colliders.get(ch1).unwrap();
                         let c2 = colliders.get(ch2).unwrap();
 
+                        if !c1.is_ccd_enabled() && !c2.is_ccd_enabled() {
+                            continue;
+                        }
+
                         if frozen.contains_key(&c1.body()) && frozen.contains_key(&c2.body()) {
                             continue;
                         }
@@ -534,7 +484,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             // Compute the next TOI.
             self.counters.ccd.toi_computation_time.resume();
             let (toi_entries, frozen) =
-                self.compute_next_toi2(cworld, bodies, colliders, time_interval);
+                self.predict_next_impacts(cworld, bodies, colliders, time_interval);
             self.counters.ccd.toi_computation_time.pause();
 
             // Resolve the minimum TOI events, if any.
