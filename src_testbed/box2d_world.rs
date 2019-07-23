@@ -141,10 +141,15 @@ impl Box2dWorld {
         }
     }
 
-    pub fn step(&mut self, counters: &mut Counters, timestep: f32) {
-        counters.step_started();
-        self.world.step(timestep, 8, 3);
-        counters.step_completed();
+    pub fn step(&mut self, dynamic_world: &mut DefaultDynamicWorld<f32>) {
+        self.world.set_continuous_physics(dynamic_world.parameters.ccd_enabled);
+
+        dynamic_world.counters.step_started();
+        self.world.step(
+            dynamic_world.parameters.dt(),
+            dynamic_world.parameters.max_velocity_iterations as i32,
+            dynamic_world.parameters.max_position_iterations as i32);
+        dynamic_world.counters.step_completed();
     }
 
     pub fn sync(&self,

@@ -760,6 +760,9 @@ impl<N: RealField> BodyPart<N> for MassSpringElement<N> {
     fn center_of_mass(&self) -> Point<N> {
         unimplemented!()
     }
+    fn local_center_of_mass(&self) -> Point<N> {
+        unimplemented!()
+    }
 
     fn position(&self) -> Isometry<N> {
         Isometry::new(Vector::<N>::y() * na::convert::<_, N>(100.0f64), na::zero()) // XXX

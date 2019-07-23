@@ -147,6 +147,11 @@ impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
     }
 
     #[inline]
+    fn local_center_of_mass(&self) -> Point<N> {
+        self.local_com
+    }
+
+    #[inline]
     fn velocity(&self) -> Velocity<N> {
         self.velocity
     }

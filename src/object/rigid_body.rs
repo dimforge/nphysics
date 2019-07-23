@@ -9,7 +9,7 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::ColliderWorld;
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
-use ncollide::interpolation::{RigidMotion, ConstantVelocityRigidMotion};
+use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion};
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
@@ -413,7 +413,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn advance(&mut self, time_ratio: N) {
-        let motion = ConstantVelocityRigidMotion::new(N::zero(), self.position0, self.velocity.linear, self.velocity.angular);
+        let motion = ConstantVelocityRigidMotion::new(N::zero(), self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
         self.position0 = motion.position_at_time(time_ratio);
     }
 
@@ -701,6 +701,11 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn center_of_mass(&self) -> Point<N> {
         self.com
+    }
+
+    #[inline]
+    fn local_center_of_mass(&self) -> Point<N> {
+        self.local_com
     }
 }
 

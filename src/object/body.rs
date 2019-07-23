@@ -335,6 +335,9 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
     /// The center of mass of this body part.
     fn center_of_mass(&self) -> Point<N>;
 
+    /// The local center of mass of this body part.
+    fn local_center_of_mass(&self) -> Point<N>;
+
     /// The position of this body part wrt. the ground.
     fn position(&self) -> Isometry<N>;
 

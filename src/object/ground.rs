@@ -256,6 +256,11 @@ impl<N: RealField> BodyPart<N> for Ground<N> {
     }
 
     #[inline]
+    fn local_center_of_mass(&self) -> Point<N> {
+        Point::origin()
+    }
+
+    #[inline]
     fn position(&self) -> Isometry<N> {
         Isometry::identity()
     }

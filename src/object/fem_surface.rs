@@ -935,6 +935,9 @@ impl<N: RealField> BodyPart<N> for TriangularElement<N> {
     fn center_of_mass(&self) -> Point<N> {
         self.com
     }
+    fn local_center_of_mass(&self) -> Point<N> {
+        self.com
+    }
 
     fn position(&self) -> Isometry<N> {
         Isometry::from_parts(self.com.coords.into(), self.rot.into())

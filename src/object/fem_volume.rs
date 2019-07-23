@@ -998,6 +998,10 @@ impl<N: RealField> BodyPart<N> for TetrahedralElement<N> {
         self.com
     }
 
+    fn local_center_of_mass(&self) -> Point3<N> {
+        self.com
+    }
+
     fn position(&self) -> Isometry3<N> {
         Isometry3::from_parts(self.com.coords.into(), self.rot.into())
     }

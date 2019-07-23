@@ -4,7 +4,7 @@ use na::{self, RealField};
 use ncollide;
 use ncollide::query::{self, NonlinearTOIStatus};
 use ncollide::narrow_phase::{Interaction, ContactEvents, ProximityEvents};
-use ncollide::interpolation::{RigidMotion, ConstantVelocityRigidMotion};
+use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion};
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
@@ -339,54 +339,50 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         }
     }
 
-    // Outputs a sorted list of TOI event for the given time interval, assuming montions clamped at the first TOI.
+    // Outputs a sorted list of TOI event for the given time interval, assuming body motions clamped at their first TOI.
     fn predict_next_impacts<Colliders>(&mut self,
-                                    cworld: &ColliderWorld<N, Bodies::Handle, CollHandle>,
-                                    bodies: &Bodies,
-                                    colliders: &Colliders,
-                                    time_interval: (N, N))
-                                    -> (Vec<TOIEntry<N, Bodies::Handle, CollHandle>>, HashMap<Bodies::Handle, N>)
+                                       cworld: &ColliderWorld<N, Bodies::Handle, CollHandle>,
+                                       bodies: &Bodies,
+                                       colliders: &Colliders,
+                                       time_interval: (N, N))
+                                       -> (Vec<TOIEntry<N, Bodies::Handle, CollHandle>>, HashMap<Bodies::Handle, N>)
         where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle> {
 
         let mut impacts = Vec::new();
         let mut frozen = HashMap::new();
         let mut timestamps = HashMap::new();
         let mut all_toi = std::collections::BinaryHeap::new();
+        let mut pairs_seen = HashSet::new();
 
         let dt0 = self.parameters.dt();
 
         ColliderSet::foreach(colliders, |coll_handle, coll| {
             if coll.is_ccd_enabled() {
                 for (ch1, c1, ch2, c2, inter) in cworld.interactions_with(colliders, coll_handle, false).unwrap() {
-                    use crate::object::BodyPart;
-                    let handle1 = c1.body();
-                    let handle2 = c2.body();
+                    if pairs_seen.insert((ch1, ch2)) {
+                        use crate::object::BodyPart;
+                        let handle1 = c1.body();
+                        let handle2 = c2.body();
 
-                    let (b1, b2) = bodies.get_pair(handle1, handle2);
-                    let (b1, b2) = (b1.unwrap(), b2.unwrap());
+                        let (b1, b2) = bodies.get_pair(handle1, handle2);
+                        let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
-                    match inter {
-                        Interaction::Contact(alg, manifold) => {
-                            if let Some(toi) = TOIEntry::try_from_colliders(
-                                ch1, ch2, c1, c2, b1, b2, None, None, &self.parameters, dt0, &self.substep.body_times) {
-                                all_toi.push(toi);
-                                let _ = timestamps.insert((ch1, ch2), 0);
+                        match inter {
+                            Interaction::Contact(alg, manifold) => {
+                                if let Some(toi) = TOIEntry::try_from_colliders(
+                                    ch1, ch2, c1, c2, b1, b2, None, None, &self.parameters, dt0, &self.substep.body_times) {
+                                    all_toi.push(toi);
+                                    let _ = timestamps.insert((ch1, ch2), 0);
+                                }
                             }
+                            Interaction::Proximity(prox) => unimplemented!()
                         }
-                        Interaction::Proximity(prox) => unimplemented!()
                     }
                 }
             }
         });
 
-        let max_substeps = 1;
-        let min_substep_size = 1.0;
-
         self.substep.locked_bodies.clear();
-
-//        for toi in all_toi.iter() {
-//            println!("Found initial toi: {}", toi.toi);
-//        }
 
         while let Some(toi) = all_toi.pop() {
             if toi.timestamp != timestamps[&(toi.c1, toi.c2)] {
@@ -718,12 +714,13 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         let p1 = b1.part(0).unwrap();
         let p2 = b2.part(0).unwrap();
 
-        let start1 = p1.safe_position() * c1.position_wrt_body();
-        let start2 = p2.safe_position() * c2.position_wrt_body();
+        let start1 = p1.safe_position();
+        let start2 = p2.safe_position();
         let vel1 = p1.velocity();
         let vel2 = p2.velocity();
-        let mut motion1 = ConstantVelocityRigidMotion::new(time_origin1, start1, vel1.linear, vel1.angular);
-        let mut motion2 = ConstantVelocityRigidMotion::new(time_origin2, start2, vel2.linear, vel2.angular);
+        let mut motion1 = ConstantVelocityRigidMotion::new(time_origin1, start1, p1.local_center_of_mass(), vel1.linear, vel1.angular);
+        let mut motion2 = ConstantVelocityRigidMotion::new(time_origin2, start2, p2.local_center_of_mass(), vel2.linear, vel2.angular);
+
 
         if let Some(t) = frozen1 {
             motion1.t0 = N::zero();
@@ -740,6 +737,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
             motion2.linvel = na::zero();
             motion2.angvel = na::zero();
         }
+
+        let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
+        let motion2 = motion2.prepend_transformation(c2.position_wrt_body());
 
         let remaining_time = dt0 - start_time;
 

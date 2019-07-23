@@ -42,10 +42,12 @@ pub struct IntegrationParameters<N: RealField> {
     /// correction direction is close to the kernel of the involved multibody's
     /// jacobian (default: `0.2`).
     pub max_stabilization_multiplier: N,
-    /// Maximum number of iterations performed by the velocity constraints solver.
+    /// Maximum number of iterations performed by the velocity constraints solver (default: 8).
     pub max_velocity_iterations: usize,
-    /// Maximum number of iterations performed by the position-based constraints solver.
+    /// Maximum number of iterations performed by the position-based constraints solver (default: 3).
     pub max_position_iterations: usize,
+    /// Maximum number of substeps performed by the  solver.
+    pub max_ccd_substeps: usize,
 }
 
 impl<N: RealField> IntegrationParameters<N> {
@@ -62,6 +64,7 @@ impl<N: RealField> IntegrationParameters<N> {
         max_stabilization_multiplier: N,
         max_velocity_iterations: usize,
         max_position_iterations: usize,
+        max_ccd_substeps: usize,
         ccd_enabled: bool,
         substepping_enabled: bool,
     ) -> Self {
@@ -83,6 +86,7 @@ impl<N: RealField> IntegrationParameters<N> {
             max_stabilization_multiplier,
             max_velocity_iterations,
             max_position_iterations,
+            max_ccd_substeps,
             ccd_enabled,
             substepping_enabled,
         }
@@ -144,6 +148,7 @@ impl<N: RealField> Default for IntegrationParameters<N> {
             na::convert(0.2),
             8,
             3,
+            1,
             true,
             false,
         )

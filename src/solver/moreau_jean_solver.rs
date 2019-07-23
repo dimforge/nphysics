@@ -92,6 +92,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
             bodies.get_mut(*ccd_body).unwrap().validate_advancement();
         }
 
+
         self.solve_velocity_constraints(parameters, bodies);
         self.update_velocities_and_integrate(parameters, bodies, island);
     }
