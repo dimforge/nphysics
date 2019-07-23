@@ -21,14 +21,12 @@ use crate::world::ColliderWorld;
 
 pub type DefaultDynamicWorld<N> = DynamicWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
 
-struct SubstepState<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
+struct SubstepState<N: RealField, Handle: BodyHandle> {
     active: bool,
     dt: N,
     // FIXME: can we avoid the use of a hash-map to save the
     // number of time a contact pair generated a CCD event?
-    ccd_counts: HashMap<(CollHandle, CollHandle), usize>,
     body_times: HashMap<Handle, N>,
-    locked_bodies: HashSet<Handle>,
 }
 
 /// The physics world.
@@ -39,7 +37,7 @@ pub struct DynamicWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHa
     pub material_coefficients: MaterialsCoefficientsTable<N>,
     pub gravity: Vector<N>,
     activation_manager: ActivationManager<N, Bodies::Handle>,
-    substep: SubstepState<N, Bodies::Handle, CollHandle>,
+    substep: SubstepState<N, Bodies::Handle>,
 }
 
 impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<N, Bodies, CollHandle> {
@@ -56,9 +54,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         let substep = SubstepState {
             active: false,
             dt: parameters.dt(),
-            ccd_counts: HashMap::new(),
             body_times: HashMap::new(),
-            locked_bodies: HashSet::new(),
         };
 
         DynamicWorld {
@@ -367,22 +363,15 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         let (b1, b2) = bodies.get_pair(handle1, handle2);
                         let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
-                        match inter {
-                            Interaction::Contact(alg, manifold) => {
-                                if let Some(toi) = TOIEntry::try_from_colliders(
-                                    ch1, ch2, c1, c2, b1, b2, None, None, &self.parameters, dt0, &self.substep.body_times) {
-                                    all_toi.push(toi);
-                                    let _ = timestamps.insert((ch1, ch2), 0);
-                                }
-                            }
-                            Interaction::Proximity(prox) => unimplemented!()
+                        if let Some(toi) = TOIEntry::try_from_colliders(
+                            ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), None, None, &self.parameters, dt0, &self.substep.body_times) {
+                            all_toi.push(toi);
+                            let _ = timestamps.insert((ch1, ch2), 0);
                         }
                     }
                 }
             }
         });
-
-        self.substep.locked_bodies.clear();
 
         while let Some(toi) = all_toi.pop() {
             if toi.timestamp != timestamps[&(toi.c1, toi.c2)] {
@@ -390,53 +379,45 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 continue;
             }
 
-            let count = self.substep.ccd_counts.entry((toi.c1, toi.c2)).or_insert(0);
-            if false { // *count == max_substeps {
-                let _ = self.substep.locked_bodies.insert(toi.b1);
-                let _ = self.substep.locked_bodies.insert(toi.b2);
-            } else {
-                *count += 1;
+            let _ = frozen.entry(toi.b1).or_insert(toi.toi);
+            let _ = frozen.entry(toi.b2).or_insert(toi.toi);
 
-                let _ = frozen.entry(toi.b1).or_insert(toi.toi);
-                let _ = frozen.entry(toi.b2).or_insert(toi.toi);
+            let to_traverse = [ toi.c1, toi.c2 ];
 
-                let to_traverse = [ toi.c1, toi.c2 ];
+            for c in to_traverse.iter() {
+                let graph_id = colliders.get(*c).unwrap().graph_index().unwrap();
 
-                for c in to_traverse.iter() {
-                    let graph_id = colliders.get(*c).unwrap().graph_index().unwrap();
+                // Update any TOI involving c1 or c2.
+                for (ch1, ch2, inter) in cworld.interactions.interactions_with(graph_id, false) {
+                    let c1 = colliders.get(ch1).unwrap();
+                    let c2 = colliders.get(ch2).unwrap();
 
-                    // Update any TOI involving c1 or c2.
-                    for (ch1, ch2, inter) in cworld.interactions.interactions_with(graph_id, false) {
-                        let c1 = colliders.get(ch1).unwrap();
-                        let c2 = colliders.get(ch2).unwrap();
+                    if !c1.is_ccd_enabled() && !c2.is_ccd_enabled() {
+                        continue;
+                    }
 
-                        if !c1.is_ccd_enabled() && !c2.is_ccd_enabled() {
-                            continue;
-                        }
+                    if frozen.contains_key(&c1.body()) && frozen.contains_key(&c2.body()) {
+                        continue;
+                    }
 
-                        if frozen.contains_key(&c1.body()) && frozen.contains_key(&c2.body()) {
-                            continue;
-                        }
+                    let b1 = bodies.get(c1.body()).unwrap();
+                    let b2 = bodies.get(c2.body()).unwrap();
 
-                        let b1 = bodies.get(c1.body()).unwrap();
-                        let b2 = bodies.get(c2.body()).unwrap();
+                    let timestamp = timestamps.entry((ch1, ch2)).or_insert(0);
+                    *timestamp += 1;
 
-                        let timestamp = timestamps.entry((ch1, ch2)).or_insert(0);
-                        *timestamp += 1;
+                    let frozen1 = frozen.get(&c1.body()).cloned();
+                    let frozen2 = frozen.get(&c2.body()).cloned();
 
-                        let frozen1 = frozen.get(&c1.body()).cloned();
-                        let frozen2 = frozen.get(&c2.body()).cloned();
-
-                        if let Some(mut toi) = TOIEntry::try_from_colliders(
-                            ch1, ch2, c1, c2, b1, b2, frozen1, frozen2, &self.parameters, dt0, &self.substep.body_times) {
-                            toi.timestamp = *timestamp;
-                            all_toi.push(toi)
-                        }
+                    if let Some(mut toi) = TOIEntry::try_from_colliders(
+                        ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), frozen1, frozen2, &self.parameters, dt0, &self.substep.body_times) {
+                        toi.timestamp = *timestamp;
+                        all_toi.push(toi)
                     }
                 }
-
-                impacts.push(toi);
             }
+
+            impacts.push(toi);
         }
 
         (impacts, frozen)
@@ -505,13 +486,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     colliders_to_traverse.push(entry.c1);
                     colliders_to_traverse.push(entry.c2);
 
-                    if !self.substep.locked_bodies.contains(&entry.b1) {
-                        ccd_bodies.push(entry.b1);
-                    }
-
-                    if !self.substep.locked_bodies.contains(&entry.b2) {
-                        ccd_bodies.push(entry.b2);
-                    }
+                    ccd_bodies.push(entry.b1);
+                    ccd_bodies.push(entry.b2);
                 }
 
                 let mut interaction_ids = Vec::new();
@@ -550,11 +526,9 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                         let target_time = frozen.get(&h).cloned().unwrap_or(time_interval.1);
                                         println!("Preparing body with traget time: {}", target_time);
 
-                                        if !self.substep.locked_bodies.contains(&h) {
-                                            println!("Advancing to: {}", target_time - *curr_body_time);
-                                            b.advance(target_time - *curr_body_time);
-                                            b.clamp_advancement();
-                                        }
+                                        println!("Advancing to: {}", target_time - *curr_body_time);
+                                        b.advance(target_time - *curr_body_time);
+                                        b.clamp_advancement();
 
                                         *curr_body_time = target_time;
 
@@ -637,12 +611,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     b.update_dynamics(parameters.dt());
                 });
 
-                bodies.foreach_mut(|handle, body| {
-                    if !body.is_static() && self.substep.locked_bodies.contains(&handle) {
-                        body.clamp_advancement();
-                    }
-                });
-
                 if self.parameters.substepping_enabled {
                     self.substep.active = true;
                     self.substep.dt = parameters.dt();
@@ -651,15 +619,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             } else {
                 let mut substep = &mut self.substep;
                 bodies.foreach_mut(|handle, body| {
-                    if !body.is_static() && frozen.contains_key(&handle) { // substep.locked_bodies.contains(&handle) {
+                    if !body.is_static() && frozen.contains_key(&handle) {
                         body.clamp_advancement();
                     }
                 });
 
                 self.substep.active = false;
-                self.substep.ccd_counts.clear();
                 self.substep.body_times.clear();
-                self.substep.locked_bodies.clear();
                 break;
             }
         }
@@ -673,6 +639,7 @@ struct TOIEntry<N: RealField, Handle, CollHandle> {
     b1: Handle,
     c2: CollHandle,
     b2: Handle,
+    is_proximity: bool,
     timestamp: usize
 }
 
@@ -682,10 +649,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
            b1: Handle,
            c2: CollHandle,
            b2: Handle,
+           is_proximity: bool,
            timestamp: usize)
     -> Self {
         Self {
-            toi, c1, b1, c2, b2, timestamp
+            toi, c1, b1, c2, b2, is_proximity, timestamp
         }
     }
 
@@ -695,6 +663,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
                           c2: &Collider<N, Handle>,
                           b1: &(impl Body<N> + ?Sized),
                           b2: &(impl Body<N> + ?Sized),
+                          is_proximity: bool,
                           frozen1: Option<N>,
                           frozen2: Option<N>,
                           params: &IntegrationParameters<N>,
@@ -748,7 +717,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         // SUGGESTION: Don't use the TOI if the colliders are already penetrating?
         if true { // toi.status != NonlinearTOIStatus::Penetrating {
             let toi = start_time + toi.toi;
-            Some(Self::new(toi, ch1, c1.body(), ch2, c2.body(), 0))
+            Some(Self::new(toi, ch1, c1.body(), ch2, c2.body(), is_proximity, 0))
         } else {
             None
         }
