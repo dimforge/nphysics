@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use na::{self, RealField};
 use ncollide;
-use ncollide::query::{self, NonlinearTOIStatus};
+use ncollide::query::{self, NonlinearTOIStatus, Proximity};
 use ncollide::narrow_phase::{Interaction, ContactEvents, ProximityEvents};
 use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion};
 
@@ -379,6 +379,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 continue;
             }
 
+            if toi.is_proximity {
+                // This is only a proximity so we must freeze and there is no need to resweep.
+                impacts.push(toi);
+                continue;
+            }
+
             let _ = frozen.entry(toi.b1).or_insert(toi.toi);
             let _ = frozen.entry(toi.b2).or_insert(toi.toi);
 
@@ -483,11 +489,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 let mut ccd_bodies = Vec::new();
 
                 for entry in &toi_entries {
-                    colliders_to_traverse.push(entry.c1);
-                    colliders_to_traverse.push(entry.c2);
+                    if !entry.is_proximity {
+                        colliders_to_traverse.push(entry.c1);
+                        colliders_to_traverse.push(entry.c2);
 
-                    ccd_bodies.push(entry.b1);
-                    ccd_bodies.push(entry.b2);
+                        ccd_bodies.push(entry.b1);
+                        ccd_bodies.push(entry.b2);
+                    }
                 }
 
                 let mut interaction_ids = Vec::new();
@@ -495,7 +503,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 self.counters.ccd.narrow_phase_time.resume();
 
-                // Update contact manifolds.
+                // Advance colliders and update contact manifolds.
                 while let Some(c) = colliders_to_traverse.pop() {
                     let graph_id = colliders.get(c).unwrap().graph_index().unwrap();
 
@@ -511,10 +519,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                 let (handle1, handle2) = (c1.body(), c2.body());
 
                                 if let (Some(b1), Some(b2)) = bodies.get_pair_mut(handle1, handle2) {
-//                                    if !((c1.is_ccd_enabled() || !b1.is_dynamic()) || (c2.is_ccd_enabled() || !b2.is_dynamic())) {
-//                                        continue;
-//                                    }
-
                                     let mut prepare_body = |h, b: &mut Bodies::Body, c: &mut Collider<N, Bodies::Handle>| {
                                         b.clear_forces();
                                         b.update_kinematics();
@@ -560,13 +564,44 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                     }
                                 }
                             }
-                            Interaction::Proximity(prox) => unimplemented!()
+                            Interaction::Proximity(..) => {
+                                // Proximities are handled in another loop,
+                                // after all the bodies have been advanced.
+                            }
                         }
                     }
 
                     let _ = visited.insert(c);
                 }
 
+                // Handle proximities.
+                for toi in &toi_entries {
+                    if toi.is_proximity {
+                        let mut c1 = colliders.get(toi.c1).unwrap();
+                        let mut c2 = colliders.get(toi.c2).unwrap();
+                        let (ch1, ch2, detector, prox) = cworld.interactions.proximity_pair_mut(c1.graph_index().unwrap(), c2.graph_index().unwrap()).unwrap();
+
+                        if ch1 != toi.c1 {
+                            // The order of the colliders may not be the same in the interaction.
+                            std::mem::swap(&mut c1, &mut c2)
+                        }
+
+                        // Emit an event (the case where we already have *prox == Intersecting will be filtered out automatically).
+                        cworld.narrow_phase.emit_proximity_event(ch1, ch2, *prox, Proximity::Intersecting);
+
+                        // Set the proximity as intersecting.
+                        *prox = Proximity::Intersecting;
+
+                        // That's all we have to do for now. If there is only one substep, then
+                        // the narrow-phase update at the end of the non-ccd step will handle the
+                        // case where there is no longer any proximity when the colliders reach their
+                        // end destination (in which case a Proximity::Disjoint event will be dispatched
+                        // because we have set it to Proximity::Intersecting here).
+                        // FIXME: for multistep, we need to perform a proximity update somewhere.
+                    }
+                }
+
+                // Collect contact manifolds.
                 for eid in interaction_ids {
                     let (ch1, ch2, inter) = cworld.interactions.index_interaction(eid).unwrap();
                     match inter {
@@ -575,9 +610,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                             let c2 = colliders.get(ch2).unwrap();
                             contact_manifolds.push(ColliderContactManifold::new(ch1, c1, ch2, c2, manifold));
                         }
-                        Interaction::Proximity(_) => unimplemented!()
+                        Interaction::Proximity(..) => {}
                     }
                 }
+
                 self.counters.ccd.narrow_phase_time.pause();
 
                 // Solve the system and integrate.
@@ -617,6 +653,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     break;
                 }
             } else {
+                println!("End loop.");
                 let mut substep = &mut self.substep;
                 bodies.foreach_mut(|handle, body| {
                     if !body.is_static() && frozen.contains_key(&handle) {
