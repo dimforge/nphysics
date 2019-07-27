@@ -28,6 +28,7 @@ mod ragdoll2;
 mod sensor2;
 mod polyline2;
 mod ccd2;
+mod damping2;
 
 fn demo_name_from_command_line() -> String {
     let mut args = std::env::args();
@@ -54,6 +55,7 @@ fn main() {
         ("Constraints", constraints2::init_world),
         ("Convex Polygons", convex2::init_world),
         ("Conveyor Belt", conveyor_belt2::init_world),
+        ("Damping", damping2::init_world),
         ("FEM Surface", fem_surface2::init_world),
         ("Force Generator", force_generator2::init_world),
         ("Heightfield", heightfield2::init_world),

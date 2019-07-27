@@ -65,12 +65,25 @@ impl Box2dWorld {
                 b2::BodyType::Dynamic
             };
 
+            let linear_damping;
+            let angular_damping;
+
+            if let Some(rb) = body.downcast_ref::<RigidBody<f32>>() {
+                linear_damping = rb.linear_damping();
+                angular_damping = rb.angular_damping();
+            } else {
+                linear_damping = 0.0;
+                angular_damping = 0.0;
+            }
+
             let mut def = b2::BodyDef {
                 body_type,
                 position: na_vec_to_b2_vec(&pos.translation.vector),
                 angle: pos.rotation.angle(),
                 linear_velocity: na_vec_to_b2_vec(&vel.linear),
                 angular_velocity: vel.angular,
+                linear_damping,
+                angular_damping,
                 .. b2::BodyDef::new()
             };
             let b2_handle = self.world.create_body(&def);

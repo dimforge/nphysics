@@ -584,6 +584,8 @@ impl GraphicsManager {
     }
 
     pub fn draw(&mut self, collider_world: &DefaultColliderWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
+//        use crate::kiss3d::camera::Camera;
+//        println!("eye: {}, at: {}", self.camera.eye(), self.camera.at());
         for (_, ns) in self.b2sn.iter_mut() {
             for n in ns.iter_mut() {
                 n.update(colliders)

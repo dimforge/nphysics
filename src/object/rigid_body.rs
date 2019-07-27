@@ -32,6 +32,10 @@ pub struct RigidBody<N: RealField> {
     inv_augmented_mass: Inertia<N>,
     external_forces: Force<N>,
     acceleration: Velocity<N>,
+    linear_damping: N,
+    angular_damping: N,
+    max_linear_velocity: N,
+    max_angular_velocity: N,
     status: BodyStatus,
     gravity_enabled: bool,
     activation: ActivationStatus<N>,
@@ -60,6 +64,10 @@ impl<N: RealField> RigidBody<N> {
             inv_augmented_mass: inertia.inverse(),
             external_forces: Force::zero(),
             acceleration: Velocity::zero(),
+            linear_damping: N::zero(),
+            angular_damping: N::zero(),
+            max_linear_velocity: N::max_value(),
+            max_angular_velocity: N::max_value(),
             status: BodyStatus::Dynamic,
             gravity_enabled: true,
             activation: ActivationStatus::new_active(),
@@ -167,6 +175,38 @@ impl<N: RealField> RigidBody<N> {
     /// This is the same as setting all the translations of this rigid body as non-kinematic.
     pub fn enable_all_translations(&mut self) {
         self.set_translations_kinematic(Vector::repeat(false))
+    }
+
+    pub fn set_linear_damping(&mut self, damping: N) {
+        self.linear_damping = damping
+    }
+
+    pub fn linear_damping(&self) -> N {
+        self.linear_damping
+    }
+
+    pub fn set_angular_damping(&mut self, damping: N) {
+        self.angular_damping = damping
+    }
+
+    pub fn angular_damping(&self) -> N {
+        self.angular_damping
+    }
+
+    pub fn set_max_linear_velocity(&mut self, max_vel: N) {
+        self.max_linear_velocity = max_vel
+    }
+
+    pub fn max_linear_velocity(&self) -> N {
+        self.max_linear_velocity
+    }
+
+    pub fn set_max_angular_velocity(&mut self, max_vel: N) {
+        self.max_angular_velocity = max_vel
+    }
+
+    pub fn max_angular_velocity(&self) -> N {
+        self.max_angular_velocity
     }
 
     /// Mutable information regarding activation and deactivation (sleeping) of this rigid body.
@@ -393,6 +433,41 @@ impl<N: RealField> Body<N> for RigidBody<N> {
 
     #[inline]
     fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
+        self.velocity.linear *= N::one() / (N::one() + parameters.dt() * self.linear_damping);
+        self.velocity.angular *= N::one() / (N::one() + parameters.dt() * self.angular_damping);
+
+        let linvel_norm = self.velocity.linear.norm();
+
+        if linvel_norm > self.max_linear_velocity {
+            if self.max_linear_velocity.is_zero() {
+                self.velocity.linear = na::zero();
+            } else {
+                self.velocity.linear /= self.max_linear_velocity * linvel_norm;
+            }
+        }
+
+        #[cfg(feature = "dim2")]
+            {
+                if self.velocity.angular > self.max_angular_velocity {
+                    self.velocity.angular = self.max_angular_velocity;
+                } else if self.velocity.angular < -self.max_angular_velocity {
+                    self.velocity.angular = -self.max_angular_velocity;
+                }
+            }
+
+        #[cfg(feature = "dim3")]
+            {
+                let angvel_norm = self.velocity.angular.norm();
+
+                if angvel_norm > self.max_angular_velocity {
+                    if self.max_angular_velocity.is_zero() {
+                        self.velocity.angular = na::zero()
+                    } else {
+                        self.velocity.angular *= self.max_angular_velocity / angvel_norm;
+                    }
+                }
+            }
+
         let disp = self.velocity * parameters.dt();
         self.apply_displacement(&disp);
     }
@@ -732,6 +807,10 @@ pub struct RigidBodyDesc<N: RealField> {
     gravity_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
+    linear_damping: N,
+    angular_damping: N,
+    max_linear_velocity: N,
+    max_angular_velocity: N,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
     status: BodyStatus,
@@ -752,6 +831,10 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
             gravity_enabled: true,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
+            linear_damping: N::zero(),
+            angular_damping: N::zero(),
+            max_linear_velocity: N::max_value(),
+            max_angular_velocity: N::max_value(),
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
             status: BodyStatus::Dynamic,
@@ -791,6 +874,10 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
         name, set_name, name: String
         position, set_position, position: Isometry<N>
         velocity, set_velocity, velocity: Velocity<N>
+        linear_damping, set_linear_damping, linear_damping: N
+        angular_damping, set_angular_damping, angular_damping: N
+        max_linear_velocity, set_max_linear_velocity, max_linear_velocity: N
+        max_angular_velocity, set_max_angular_velocity, max_angular_velocity: N
         local_inertia, set_local_inertia, local_inertia: Inertia<N>
         local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
         sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
@@ -821,6 +908,10 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
         [val] is_gravity_enabled -> gravity_enabled: bool
         [val] get_status -> status: BodyStatus
         [val] get_sleep_threshold -> sleep_threshold: Option<N>
+        [val] get_linear_damping -> linear_damping: N
+        [val] get_angular_damping -> angular_damping: N
+        [val] get_max_linear_velocity -> max_linear_velocity: N
+        [val] get_max_angular_velocity -> max_angular_velocity: N
         [ref] get_position -> position: Isometry<N>
         [ref] get_velocity -> velocity: Velocity<N>
         [ref] get_local_inertia -> local_inertia: Inertia<N>
@@ -837,6 +928,10 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
         rb.set_translations_kinematic(self.kinematic_translations);
         rb.enable_gravity(self.gravity_enabled);
         rb.set_name(self.name.clone());
+        rb.set_linear_damping(self.linear_damping);
+        rb.set_angular_damping(self.angular_damping);
+        rb.set_max_linear_velocity(self.max_linear_velocity);
+        rb.set_max_angular_velocity(self.max_angular_velocity);
         let _ = rb.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
         rb.set_rotations_kinematic(self.kinematic_rotations);
 

@@ -88,7 +88,8 @@ bitflags! {
     pub struct TestbedActionFlags: u32 {
         const RESET_WORLD_GRAPHICS = 1 << 0;
         const EXAMPLE_CHANGED = 1 << 1;
-        const BACKEND_CHANGED = 1 << 2;
+        const RESTART = 1 << 2;
+        const BACKEND_CHANGED = 1 << 3;
     }
 }
 
@@ -98,6 +99,7 @@ pub struct TestbedState {
     pub grabbed_object: Option<DefaultBodyPartHandle>,
     pub grabbed_object_constraint: Option<DefaultJointConstraintHandle>,
     pub grabbed_object_plane: (Point3<f32>, Vector3<f32>),
+    pub can_grab_behind_ground: bool,
     pub drawing_ray: Option<Point2<f32>>,
     pub prev_flags: TestbedStateFlags,
     pub flags: TestbedStateFlags,
@@ -119,6 +121,7 @@ pub struct Testbed {
     window: Option<Box<Window>>,
     graphics: GraphicsManager,
     nsteps: usize,
+    camera_locked: bool, // Used so that the camera can remain the same before and after we change backend or press the restart button.
     callbacks: Callbacks,
     time: f32,
     hide_counters: bool,
@@ -161,20 +164,21 @@ impl Testbed {
             backend_names.push("box2d");
 
             let state = TestbedState {
-            running: RunMode::Running,
-            draw_colls: false,
-            grabbed_object: None,
-            grabbed_object_constraint: None,
-            grabbed_object_plane: (Point3::origin(), na::zero()),
-            drawing_ray: None,
-            prev_flags: flags,
-            flags,
-            action_flags: TestbedActionFlags::empty(),
-            backend_names,
-            example_names: Vec::new(),
-            selected_example: 0,
-            selected_backend: 0,
-        };
+                running: RunMode::Running,
+                draw_colls: false,
+                grabbed_object: None,
+                grabbed_object_constraint: None,
+                grabbed_object_plane: (Point3::origin(), na::zero()),
+                can_grab_behind_ground: false,
+                drawing_ray: None,
+                prev_flags: flags,
+                flags,
+                action_flags: TestbedActionFlags::empty(),
+                backend_names,
+                example_names: Vec::new(),
+                selected_example: 0,
+                selected_backend: NPHYSICS_BACKEND,
+            };
 
         let dynamic_world = DefaultDynamicWorld::new(na::zero());
         let collider_world = DefaultColliderWorld::new();
@@ -195,6 +199,7 @@ impl Testbed {
             window: Some(window),
             graphics,
             nsteps: 1,
+            camera_locked: false,
             time: 0.0,
             hide_counters: true,
             persistant_contacts: HashMap::new(),
@@ -237,6 +242,10 @@ impl Testbed {
         self.graphics.set_ground_handle(handle);
     }
 
+    pub fn allow_grabbing_behind_ground(&mut self, allow: bool) {
+        self.state.can_grab_behind_ground = allow;
+    }
+
     pub fn hide_performance_counters(&mut self) {
         self.hide_counters = true;
     }
@@ -277,31 +286,18 @@ impl Testbed {
         self.builders = builders
     }
 
-//    pub fn set_world_owner(&mut self, world: Box<WorldOwner>) {
-//        let parameters = {
-//            let prev_world = self.world.get();
-//            prev_world.parameters().clone()
-//        };
-//
-//        let dt = parameters.dt();
-//        self.world = world;
-//        let mut world = self.world.get_mut();
-//        *world.parameters = parameters;
-//        world.enable_performance_counters();
-//        world.set_timestep(0.0); // Update the internal state so that we can directly visualize things lake AABBs.
-//        world.step();
-//        world.set_timestep(dt);
-//        self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
-//    }
-
     #[cfg(feature = "dim2")]
     pub fn look_at(&mut self, at: Point2<f32>, zoom: f32) {
-        self.graphics.look_at(at, zoom);
+        if !self.camera_locked {
+            self.graphics.look_at(at, zoom);
+        }
     }
 
     #[cfg(feature = "dim3")]
     pub fn look_at(&mut self, eye: Point3<f32>, at: Point3<f32>) {
-        self.graphics.look_at(eye, at);
+        if !self.camera_locked {
+            self.graphics.look_at(eye, at);
+        }
     }
 
     pub fn set_body_color(&mut self, body: DefaultBodyHandle, color: Point3<f32>) {
@@ -354,8 +350,10 @@ impl Testbed {
     fn clear(&mut self, window: &mut Window) {
         self.callbacks.clear();
         self.persistant_contacts.clear();
+        self.ground_handle = None;
         self.state.grabbed_object = None;
         self.state.grabbed_object_constraint = None;
+        self.state.can_grab_behind_ground = false;
         self.graphics.clear(window);
     }
 
@@ -625,7 +623,8 @@ impl Testbed {
                         .collider_world
                         .interferences_with_ray(&self.colliders, &ray, &all_groups)
                         {
-                            if !b.query_type().is_proximity_query() && inter.toi < mintoi {
+                            if ((Some(b.body()) == self.ground_handle) ^ self.state.can_grab_behind_ground) &&
+                                !b.query_type().is_proximity_query() && inter.toi < mintoi {
                                 mintoi = inter.toi;
 
                                 let subshape = b.shape().subshape_containing_feature(inter.feature);
@@ -757,6 +756,14 @@ impl State for Testbed {
                 // restart with the selected backend.
                 self.state.action_flags.set(TestbedActionFlags::BACKEND_CHANGED, false);
                 self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+                self.camera_locked = true;
+            }
+
+            let restarted = self.state.action_flags.contains(TestbedActionFlags::RESTART);
+            if restarted {
+                self.state.action_flags.set(TestbedActionFlags::RESTART, false);
+                self.camera_locked = true;
+                self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
             }
 
             let example_changed = self.state.action_flags.contains(TestbedActionFlags::EXAMPLE_CHANGED);
@@ -764,6 +771,7 @@ impl State for Testbed {
                 self.state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, false);
                 self.clear(window);
                 self.builders[self.state.selected_example].1(self);
+                self.camera_locked = false;
             }
 
             if self.state.action_flags.contains(TestbedActionFlags::RESET_WORLD_GRAPHICS) {
@@ -837,10 +845,6 @@ impl State for Testbed {
         if self.state.running != RunMode::Stop {
             // let before = time::precise_time_s();
             for _ in 0..self.nsteps {
-                for f in &self.callbacks {
-                    f(&mut self.dynamic_world, &mut self.collider_world, &mut self.bodies, &mut self.colliders, &mut self.graphics, self.time)
-                }
-
                 if self.state.selected_backend == NPHYSICS_BACKEND {
                     self.dynamic_world.step(
                         &mut self.collider_world,
@@ -854,10 +858,14 @@ impl State for Testbed {
                 #[cfg(feature = "box2d-backend")]
                     {
                         if self.state.selected_backend == BOX2D_BACKEND {
-                            self.box2d.as_mut().unwrap().step(&mut self.dynamic_world.counters, self.dynamic_world.parameters.dt());
+                            self.box2d.as_mut().unwrap().step(&mut self.dynamic_world);
                             self.box2d.as_mut().unwrap().sync(&mut self.dynamic_world, &mut self.collider_world, &mut self.bodies, &mut self.colliders);
                         }
                     }
+
+                for f in &self.callbacks {
+                    f(&mut self.dynamic_world, &mut self.collider_world, &mut self.bodies, &mut self.colliders, &mut self.graphics, self.time)
+                }
 
                 if !self.hide_counters {
                     #[cfg(not(feature = "log"))]

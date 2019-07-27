@@ -307,7 +307,7 @@ impl TestbedUi {
                 .align_middle_x_of(self.ids.canvas)
                 .down_from(self.ids.button_single_step, VSPACE)
                 .set(self.ids.button_restart, &mut ui) {
-                state.action_flags.set(TestbedActionFlags::EXAMPLE_CHANGED, true);
+                state.action_flags.set(TestbedActionFlags::RESTART, true);
             }
 
             self.ids.button_restart

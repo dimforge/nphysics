@@ -28,18 +28,22 @@ mod plasticity3;
 mod ragdoll3;
 mod sensor3;
 mod trimesh3;
+mod ccd3;
+mod damping3;
 
 fn main() {
     let testbed = Testbed::from_builders(0, vec![
         ("Balls", balls3::init_world),
         ("Boxes", boxes3::init_world),
         ("Capsules", capsules3::init_world),
+        ("CCD", ccd3::init_world),
         ("Collision Groups", collision_groups3::init_world),
         ("Compound Shapes", cross3::init_world),
 //        ("Compound Shapes", compound3::init_world),
         ("Constraints", constraints3::init_world),
         ("Convex Polyhedra", convex3::init_world),
         ("Conveyor Belt", conveyor_belt3::init_world),
+        ("Damping", damping3::init_world),
         ("Dzhanibekov Effect", dzhanibekov3::init_world),
         ("FEM Volume", fem_volume3::init_world),
         ("Force Generator", force_generator3::init_world),

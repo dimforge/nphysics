@@ -90,8 +90,9 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     testbed.set_body_wireframe(ground_handle, true);
     testbed.set_ground_handle(Some(ground_handle));
+    testbed.allow_grabbing_behind_ground(true);
     testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
-    testbed.look_at(Point3::new(-10.0, 1.0, -10.0), Point3::new(0.0, 1.0, 0.0));
+    testbed.look_at(Point3::new(-11.0, 0.2, -9.0), Point3::new(-1.0, -0.6, 1.0));
 }
 
 fn main() {
