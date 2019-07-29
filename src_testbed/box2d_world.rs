@@ -155,13 +155,13 @@ impl Box2dWorld {
     }
 
     pub fn step(&mut self, dynamic_world: &mut DefaultDynamicWorld<f32>) {
-        self.world.set_continuous_physics(dynamic_world.parameters.ccd_enabled);
+        self.world.set_continuous_physics(dynamic_world.integration_parameters.max_ccd_substeps != 0);
 
         dynamic_world.counters.step_started();
         self.world.step(
-            dynamic_world.parameters.dt(),
-            dynamic_world.parameters.max_velocity_iterations as i32,
-            dynamic_world.parameters.max_position_iterations as i32);
+            dynamic_world.integration_parameters.dt(),
+            dynamic_world.integration_parameters.max_velocity_iterations as i32,
+            dynamic_world.integration_parameters.max_position_iterations as i32);
         dynamic_world.counters.step_completed();
     }
 

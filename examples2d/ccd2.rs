@@ -7,7 +7,6 @@ use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultCol
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultDynamicWorld, DefaultColliderWorld};
-use nphysics2d::material::{MaterialHandle, BasicMaterial};
 use nphysics2d::math::Velocity;
 use nphysics_testbed2d::Testbed;
 
@@ -25,38 +24,33 @@ pub fn init_world(testbed: &mut Testbed) {
 
     /*
      * Ground
+     *
+     * NOTE: Enabling CCD on the walls here won't change anything since
+     * in this demo we chose to enable CCD on every collider attached to
+     * dynamic rigid bodies (to show that CCD between moving colliders work
+     * as well).
      */
     let ground_size = 25.0;
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
 
-    let material = MaterialHandle::new(BasicMaterial::new(0.0, 0.5));
-
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape.clone())
-        .ccd_enabled(true)
-        .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
         .position(Isometry2::new(Vector2::new(-3.0, 0.0), 3.14 / 2.0))
-        .ccd_enabled(true)
-        .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
         .position(Isometry2::new(Vector2::new(6.0, 0.0), 3.14 / 2.0))
-        .ccd_enabled(true)
-        .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
     let co = ColliderDesc::new(ground_shape.clone())
         .position(Isometry2::translation(0.0, 10.0))
-        .ccd_enabled(true)
-        .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -64,9 +58,7 @@ pub fn init_world(testbed: &mut Testbed) {
     // Add a sensor, to show that CCD works on sensors too.
     let co = ColliderDesc::new(ground_shape)
         .position(Isometry2::new(Vector2::new(2.5, 0.0), 3.14 / 2.0))
-        .ccd_enabled(true)
         .sensor(true)
-        .material(material.clone())
         .build(BodyPartHandle(ground_handle, 0));
     let sensor_handle = colliders.insert(co);
     testbed.set_collider_color(sensor_handle, Point3::new(1.0, 1.0, 0.0));
@@ -78,53 +70,53 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut rady = 0.1;
     let mut radx = rady * 4.0;
 
-    let shape = {
-        let mut cross_geoms = Vec::new();
-
-        let large_rad = 0.4f32;
-        let small_rad = 0.05f32;
-
-        radx = large_rad;
-        rady = large_rad;
-
-        let edge_x = Cuboid::new(Vector2::new(large_rad, small_rad));
-        let edge_y = Cuboid::new(Vector2::new(small_rad, large_rad));
-
-        cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
-        cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
-
-        let compound = Compound::new(cross_geoms);
-        ShapeHandle::new(compound)
-    };
-
-
 //    let shape = {
+//        let mut cross_geoms = Vec::new();
+//
 //        let large_rad = 0.4f32;
 //        let small_rad = 0.05f32;
 //
 //        radx = large_rad;
 //        rady = large_rad;
 //
-//        let delta1 = Isometry2::new(Vector2::new(0.0, large_rad - small_rad), na::zero());
-//        let delta2 = Isometry2::new(Vector2::new(-large_rad + small_rad, 0.0), na::zero());
-//        let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
+//        let edge_x = Cuboid::new(Vector2::new(large_rad, small_rad));
+//        let edge_y = Cuboid::new(Vector2::new(small_rad, large_rad));
 //
-//        let mut cross_geoms = Vec::new();
-//        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
-//            small_rad,
-//            large_rad,
-//        )));
-//        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
-//            large_rad,
-//            small_rad,
-//        )));
-//        cross_geoms.push((delta1, horizontal));
-//        cross_geoms.push((delta2, vertical.clone()));
-//        cross_geoms.push((delta3, vertical));
+//        cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
+//        cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
 //
 //        let compound = Compound::new(cross_geoms);
 //        ShapeHandle::new(compound)
 //    };
+
+
+    let shape = {
+        let large_rad = 0.4f32;
+        let small_rad = 0.05f32;
+
+        radx = large_rad;
+        rady = large_rad;
+
+        let delta1 = Isometry2::new(Vector2::new(0.0, large_rad - small_rad), na::zero());
+        let delta2 = Isometry2::new(Vector2::new(-large_rad + small_rad, 0.0), na::zero());
+        let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
+
+        let mut compound_geoms = Vec::new();
+        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
+            small_rad,
+            large_rad,
+        )));
+        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
+            large_rad,
+            small_rad,
+        )));
+        compound_geoms.push((delta1, horizontal));
+        compound_geoms.push((delta2, vertical.clone()));
+        compound_geoms.push((delta3, vertical));
+
+        let compound = Compound::new(compound_geoms);
+        ShapeHandle::new(compound)
+    };
 
 
 //    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
@@ -162,10 +154,9 @@ pub fn init_world(testbed: &mut Testbed) {
      * Set up the testbed.
      */
 
-    // Callback that will be executed on the main loop to handle proximities.
+    // Callback that will be executed on the main loop to handle proximities by recoloring bodies.
     testbed.add_callback(move |_, collider_world, _, colliders, graphics, _| {
         for prox in collider_world.proximity_events() {
-            println!("Detected proximity {:?} between {:?} and {:?}.", prox.new_status, prox.collider1, prox.collider2);
             let c1 = colliders.get(prox.collider1).unwrap();
             let c2= colliders.get(prox.collider2).unwrap();
             let body1 = c1.body();

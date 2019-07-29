@@ -801,7 +801,7 @@ impl State for Testbed {
 
             if self.state.prev_flags.contains(TestbedStateFlags::SUB_STEPPING) !=
                 self.state.flags.contains(TestbedStateFlags::SUB_STEPPING) {
-                self.dynamic_world.integration_parameters.return_between_substeps = self.state.flags.contains(TestbedStateFlags::SUB_STEPPING);
+                self.dynamic_world.integration_parameters.return_after_ccd_substep = self.state.flags.contains(TestbedStateFlags::SUB_STEPPING);
             }
 
             if self.state.prev_flags.contains(TestbedStateFlags::SHAPES) !=

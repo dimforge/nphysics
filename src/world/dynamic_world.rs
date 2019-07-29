@@ -805,7 +805,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
                           frozen2: Option<N>,
                           params: &IntegrationParameters<N>,
                           end_time: N,
-                          body_times: &HashMap<Handle, N>,)
+                          body_times: &HashMap<Handle, N>)
                         -> Option<Self> {
         let margins = c1.margin() + c2.margin();
         let target = params.allowed_linear_error; // self.integration_parameters.allowed_linear_error.max(margins - self.integration_parameters.allowed_linear_error * na::convert(3.0));
@@ -853,8 +853,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
 
 //                                if let Some(toi) = query::time_of_impact(&pos1, &v1, &**c1.shape(), &pos2, &v2, &**c2.shape(), target) {
         let toi = query::nonlinear_time_of_impact(&motion1, c1.shape(), &motion2, c2.shape(), remaining_time, target)?;
-        // SUGGESTION: Don't use the TOI if the colliders are already penetrating?
-        if true { // toi.status != NonlinearTOIStatus::Penetrating {
+
+        if params.ccd_on_penetration_enabled || toi.status != NonlinearTOIStatus::Penetrating {
             let toi = start_time + toi.toi;
             Some(Self::new(toi, ch1, c1.body(), ch2, c2.body(), is_proximity, 0))
         } else {
