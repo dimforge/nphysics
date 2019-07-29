@@ -21,9 +21,28 @@ use crate::world::ColliderWorld;
 
 pub type DefaultDynamicWorld<N> = DynamicWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
 
+enum PredictedImpacts<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
+    Impacts(Vec<TOIEntry<N, Handle, CollHandle>>, HashMap<Handle, N>),
+    ImpactsAfterEndTime(N),
+    NoImpacts,
+}
+
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> PredictedImpacts<N, Handle, CollHandle> {
+    fn unwrap_impacts(self) -> (Vec<TOIEntry<N, Handle, CollHandle>>, HashMap<Handle, N>) {
+        match self {
+            PredictedImpacts::Impacts(entries, frozen) => (entries, frozen),
+            PredictedImpacts::ImpactsAfterEndTime(_) => panic!("Impacts have not been computed."),
+            PredictedImpacts::NoImpacts => (Vec::new(), HashMap::new())
+        }
+    }
+}
+
+
 struct SubstepState<N: RealField, Handle: BodyHandle> {
     active: bool,
     dt: N,
+    end_time: N,
+    next_substep: usize,
     // FIXME: can we avoid the use of a hash-map to save the
     // number of time a contact pair generated a CCD event?
     body_times: HashMap<Handle, N>,
@@ -33,7 +52,7 @@ struct SubstepState<N: RealField, Handle: BodyHandle> {
 pub struct DynamicWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
     pub counters: Counters,
     pub solver: MoreauJeanSolver<N, Bodies, CollHandle>,
-    pub parameters: IntegrationParameters<N>,
+    pub integration_parameters: IntegrationParameters<N>,
     pub material_coefficients: MaterialsCoefficientsTable<N>,
     pub gravity: Vector<N>,
     activation_manager: ActivationManager<N, Bodies::Handle>,
@@ -49,11 +68,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
-        let parameters = IntegrationParameters::default();
+        let integration_parameters = IntegrationParameters::default();
         let material_coefficients = MaterialsCoefficientsTable::new();
         let substep = SubstepState {
             active: false,
-            dt: parameters.dt(),
+            dt: integration_parameters.dt(),
+            end_time: N::zero(),
+            next_substep: 0,
             body_times: HashMap::new(),
         };
 
@@ -63,19 +84,19 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             activation_manager,
             material_coefficients,
             gravity,
-            parameters,
+            integration_parameters,
             substep,
         }
     }
 
     /// Retrieve the timestep used for the integration.
     pub fn timestep(&self) -> N {
-        self.parameters.dt()
+        self.integration_parameters.dt()
     }
 
     /// Sets the timestep used for the integration.
     pub fn set_timestep(&mut self, dt: N) {
-        self.parameters.set_dt(dt);
+        self.integration_parameters.set_dt(dt);
     }
 
     pub fn maintain<Colliders, Constraints>(&mut self,
@@ -170,12 +191,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             bodies.foreach_mut(|_, b| {
                 b.step_started();
                 b.update_kinematics();
-                b.update_dynamics(self.parameters.dt());
+                b.update_dynamics(self.integration_parameters.dt());
             });
 
             // FIXME: how to make force generators work
             // with the external body set?
-            let parameters = &self.parameters;
+            let parameters = &self.integration_parameters;
             forces.foreach_mut(|_, f| {
                 f.apply(parameters, bodies)
             });
@@ -286,11 +307,9 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
          * Handle CCD
          *
          */
-        if self.parameters.ccd_enabled {
-            self.counters.ccd_started();
-            self.solve_ccd(cworld, bodies, colliders, constraints, forces);
-            self.counters.ccd_completed();
-        }
+        self.counters.ccd_started();
+        self.solve_ccd(cworld, bodies, colliders, constraints, forces);
+        self.counters.ccd_completed();
 
         if !self.substep.active {
             /*
@@ -322,7 +341,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             self.counters.narrow_phase_completed();
             self.counters.collision_detection_completed();
 
-            self.parameters.t += self.parameters.dt();
+            self.integration_parameters.t += self.integration_parameters.dt();
             self.counters.step_completed();
 
             bodies.foreach_mut(|_, b| {
@@ -335,13 +354,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         }
     }
 
-    // Outputs a sorted list of TOI event for the given time interval, assuming body motions clamped at their first TOI.
+    // Outputs a sorted list of TOI event (in ascending order) for the given time interval,
+    // assuming body motions clamped at their first TOI.
     fn predict_next_impacts<Colliders>(&mut self,
                                        cworld: &ColliderWorld<N, Bodies::Handle, CollHandle>,
                                        bodies: &Bodies,
                                        colliders: &Colliders,
-                                       time_interval: (N, N))
-                                       -> (Vec<TOIEntry<N, Bodies::Handle, CollHandle>>, HashMap<Bodies::Handle, N>)
+                                       end_time: N)
+                                       -> PredictedImpacts<N, Bodies::Handle, CollHandle>
         where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle> {
 
         let mut impacts = Vec::new();
@@ -349,8 +369,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         let mut timestamps = HashMap::new();
         let mut all_toi = std::collections::BinaryHeap::new();
         let mut pairs_seen = HashSet::new();
-
-        let dt0 = self.parameters.dt();
+        let mut min_overstep = self.integration_parameters.dt();
 
         ColliderSet::foreach(colliders, |coll_handle, coll| {
             if coll.is_ccd_enabled() {
@@ -364,26 +383,62 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         let (b1, b2) = (b1.unwrap(), b2.unwrap());
 
                         if let Some(toi) = TOIEntry::try_from_colliders(
-                            ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), None, None, &self.parameters, dt0, &self.substep.body_times) {
-                            all_toi.push(toi);
-                            let _ = timestamps.insert((ch1, ch2), 0);
+                            ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), None, None, &self.integration_parameters, min_overstep, &self.substep.body_times) {
+
+                            if toi.toi > end_time {
+                                min_overstep = min_overstep.min(toi.toi);
+                            } else {
+
+                                println!("Found toi: {}", toi.toi);
+                                min_overstep = end_time;
+                                all_toi.push(toi);
+                                let _ = timestamps.insert((ch1, ch2), 0);
+                            }
                         }
                     }
                 }
             }
         });
 
+//        println!("Found min_overstep: {}, end_time: {}", min_overstep, end_time);
+
+        if min_overstep == self.integration_parameters.dt() && all_toi.is_empty() {
+            return PredictedImpacts::NoImpacts;
+        } else if min_overstep > end_time {
+            return PredictedImpacts::ImpactsAfterEndTime(min_overstep);
+        }
+
+        println!("End time: {}", end_time);
+
+        // NOTE: all static bodies should be considered as "frozen", this
+        // may avoid some resweeps.
+
         while let Some(toi) = all_toi.pop() {
+            assert!(toi.toi <= end_time);
+
             if toi.timestamp != timestamps[&(toi.c1, toi.c2)] {
                 // This TOI has been updated and is no longer valid.
                 continue;
             }
 
+            if frozen.contains_key(&toi.b1) && frozen.contains_key(&toi.b2) {
+                // If both objects are frozen, they won't move anymore
+                // so they can't touch in the future anymore (and there is
+                // no need for any resweep since the resweep already happened
+                // the time it has been frozen).
+                if toi.toi.is_zero() {
+                    impacts.push(toi);
+                }
+                continue;
+            }
+
             if toi.is_proximity {
-                // This is only a proximity so we must freeze and there is no need to resweep.
+                // This is only a proximity so we don't have to freeze and there is no need to resweep.
                 impacts.push(toi);
                 continue;
             }
+
+            println!("Registering toi: {}", toi.toi);
 
             let _ = frozen.entry(toi.b1).or_insert(toi.toi);
             let _ = frozen.entry(toi.b2).or_insert(toi.toi);
@@ -391,7 +446,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             let to_traverse = [ toi.c1, toi.c2 ];
 
             for c in to_traverse.iter() {
-                let graph_id = colliders.get(*c).unwrap().graph_index().unwrap();
+                let c = colliders.get(*c).unwrap();
+
+//                if bodies.get(c.body()).unwrap().status_dependent_ndofs() == 0 {
+//                    continue;
+//                }
+                let graph_id = c.graph_index().unwrap();
 
                 // Update any TOI involving c1 or c2.
                 for (ch1, ch2, inter) in cworld.interactions.interactions_with(graph_id, false) {
@@ -416,7 +476,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     let frozen2 = frozen.get(&c2.body()).cloned();
 
                     if let Some(mut toi) = TOIEntry::try_from_colliders(
-                        ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), frozen1, frozen2, &self.parameters, dt0, &self.substep.body_times) {
+                        ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), frozen1, frozen2, &self.integration_parameters, end_time, &self.substep.body_times) {
                         toi.timestamp = *timestamp;
                         all_toi.push(toi)
                     }
@@ -426,7 +486,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             impacts.push(toi);
         }
 
-        (impacts, frozen)
+        println!("Number of impacts: {}", impacts.len());
+        println!("Num frozen: {}", frozen.len());
+
+        PredictedImpacts::Impacts(impacts, frozen)
     }
 
 
@@ -440,24 +503,35 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
               Constraints: JointConstraintSet<N, Bodies>,
               Forces: ForceGeneratorSet<N, Bodies> {
-        let dt0 = self.parameters.dt();
-        let inv_dt0 = self.parameters.inv_dt();
+        let dt0 = self.integration_parameters.dt();
+        let inv_dt0 = self.integration_parameters.inv_dt();
 
-        if dt0 == N::zero() {
+        if dt0 == N::zero() || self.integration_parameters.max_ccd_substeps == 0 {
             return;
         }
-        println!("Loop");
 
-        let mut parameters = self.parameters.clone();
-//        parameters.max_velocity_iterations = 20;
+        println!("Begin CCD loop starting at time: {}", self.substep.end_time);
+
+        let substep_length = self.integration_parameters.dt() / na::convert(self.integration_parameters.max_ccd_substeps as f64);
+
+        let mut parameters = self.integration_parameters.clone();
+
         parameters.max_position_iterations = 20;
         parameters.warmstart_coeff = N::zero();
 
-        let time_interval = (N::zero(), self.parameters.dt());
-
         self.counters.ccd.reset();
 
-        for k in 0.. {
+        let mut last_iter = false;
+
+        loop {
+            if self.substep.end_time < dt0 {
+                self.substep.end_time = (self.substep.end_time + substep_length).min(dt0);
+            } else {
+                last_iter = true;
+            }
+
+//            println!("Loop with end time: {}", self.substep.end_time);
+
             // Update the broad phase.
             self.counters.ccd.broad_phase_time.resume();
             cworld.sync_colliders(bodies, colliders);
@@ -466,18 +540,35 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
             // Compute the next TOI.
             self.counters.ccd.toi_computation_time.resume();
-            let (toi_entries, frozen) =
-                self.predict_next_impacts(cworld, bodies, colliders, time_interval);
+
+            let (toi_entries, frozen) = match self.predict_next_impacts(cworld, bodies, colliders, self.substep.end_time) {
+                PredictedImpacts::Impacts(toi_entries, frozen) => {
+                    (toi_entries, frozen)
+                },
+                PredictedImpacts::ImpactsAfterEndTime(min_toi) => {
+                    self.substep.end_time = (min_toi / substep_length).floor() * substep_length;
+                    self.substep.end_time = (self.substep.end_time + substep_length).min(dt0);
+
+                    self.predict_next_impacts(cworld, bodies, colliders, self.substep.end_time).unwrap_impacts()
+                },
+                PredictedImpacts::NoImpacts => {
+                    (Vec::new(), HashMap::new())
+                }
+            };
+
             self.counters.ccd.toi_computation_time.pause();
 
             // Resolve the minimum TOI events, if any.
-            if !toi_entries.is_empty() && k != 1 {
+            if !toi_entries.is_empty() && !last_iter {
                 self.counters.ccd.num_substeps += 1;
 
                 let mut island = Vec::new();
                 let mut contact_manifolds = Vec::new();
 
-                parameters.set_dt(dt0 - time_interval.1);
+                // We will start the integration at the date of the latest TOI before the end_time.
+                // (We don't start at end_time directly to avoid clamping some motion needlessly).
+                let last_toi = toi_entries.last().unwrap().toi;
+                parameters.set_dt(dt0 - last_toi);
 
 
                 // We will use the companion ID to know which body is already on the island.
@@ -527,10 +618,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                                         let curr_body_time = self.substep.body_times.entry(h).or_insert(N::zero());
 
-                                        let target_time = frozen.get(&h).cloned().unwrap_or(time_interval.1);
-                                        println!("Preparing body with traget time: {}", target_time);
-
-                                        println!("Advancing to: {}", target_time - *curr_body_time);
+                                        let target_time = frozen.get(&h).cloned().unwrap_or(last_toi);
                                         b.advance(target_time - *curr_body_time);
                                         b.clamp_advancement();
 
@@ -592,12 +680,37 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         // Set the proximity as intersecting.
                         *prox = Proximity::Intersecting;
 
-                        // That's all we have to do for now. If there is only one substep, then
-                        // the narrow-phase update at the end of the non-ccd step will handle the
-                        // case where there is no longer any proximity when the colliders reach their
-                        // end destination (in which case a Proximity::Disjoint event will be dispatched
-                        // because we have set it to Proximity::Intersecting here).
-                        // FIXME: for multistep, we need to perform a proximity update somewhere.
+                        // If we mulitple events is disabled, there is nothing more to do as the
+                        // final proximity event will only depend on the final position of the
+                        // colliders (and thus will be handled by the final narrow-phase update of
+                        // the non-ccd step).
+                        if self.integration_parameters.multiple_ccd_trigger_events_enabled {
+                            // If the bodies of the colliders have been
+                            // teleported at a time of impact, then we have to update the proximity now
+                            // to account for multiple on/off proximity events during consecutive substeps.
+                            //
+                            // If the bodies have not been teleported, they will be handled later during the
+                            // final narrow-phase update of the non-ccd step.
+                            //
+                            // FIXME: In the case where this is the last substep to
+                            // be performed, and the related bodies remain frozen at the end of CCD
+                            // handling, then this proximity update will happen twice. The results will
+                            // still be correct, but this will unfortunately cost two proximity updates
+                            // instead of just one.
+                            let b1 = bodies.get(c1.body()).unwrap();
+                            let b2 = bodies.get(c2.body()).unwrap();
+
+                            if b1.companion_id() == 1 || b2.companion_id() == 1 {
+                                cworld.narrow_phase.update_proximity(
+                                    c1,
+                                    c2,
+                                    ch1,
+                                    ch2,
+                                    detector,
+                                    prox
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -621,8 +734,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     b.set_companion_id(0);
                 });
 
-                parameters.set_dt(dt0 - time_interval.1);
-                println!("Integrating remaining time: {}", dt0 - time_interval.1);
+//                println!("Integrating remaining time: {}", parameters.dt());
 
                 self.counters.ccd.solver_time.resume();
                 self.solver.step_ccd(
@@ -647,7 +759,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     b.update_dynamics(parameters.dt());
                 });
 
-                if self.parameters.substepping_enabled {
+                if self.integration_parameters.return_between_substeps {
                     self.substep.active = true;
                     self.substep.dt = parameters.dt();
                     break;
@@ -663,6 +775,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 self.substep.active = false;
                 self.substep.body_times.clear();
+                self.substep.next_substep = 0;
+                self.substep.end_time = N::zero();
                 break;
             }
         }
@@ -704,11 +818,11 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
                           frozen1: Option<N>,
                           frozen2: Option<N>,
                           params: &IntegrationParameters<N>,
-                          dt0: N,
+                          end_time: N,
                           body_times: &HashMap<Handle, N>,)
                         -> Option<Self> {
         let margins = c1.margin() + c2.margin();
-        let target = params.allowed_linear_error; // self.parameters.allowed_linear_error.max(margins - self.parameters.allowed_linear_error * na::convert(3.0));
+        let target = params.allowed_linear_error; // self.integration_parameters.allowed_linear_error.max(margins - self.integration_parameters.allowed_linear_error * na::convert(3.0));
 
         let time1 = frozen1.unwrap_or(body_times.get(&c1.body()).cloned().unwrap_or(N::zero()));
         let time2 = frozen2.unwrap_or(body_times.get(&c2.body()).cloned().unwrap_or(N::zero()));
@@ -747,7 +861,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
         let motion2 = motion2.prepend_transformation(c2.position_wrt_body());
 
-        let remaining_time = dt0 - start_time;
+        let remaining_time = end_time - start_time;
 
 //                                if let Some(toi) = query::time_of_impact(&pos1, &v1, &**c1.shape(), &pos2, &v2, &**c2.shape(), target) {
         let toi = query::nonlinear_time_of_impact(&motion1, c1.shape(), &motion2, c2.shape(), remaining_time, target)?;

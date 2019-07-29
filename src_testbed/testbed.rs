@@ -70,17 +70,16 @@ bitflags! {
     pub struct TestbedStateFlags: u32 {
         const NONE = 0;
         const SLEEP = 1 << 0;
-        const CCD = 1 << 1;
-        const SUB_STEPPING = 1 << 2;
-        const SHAPES = 1 << 3;
-        const JOINTS = 1 << 4;
-        const AABBS = 1 << 5;
-        const CONTACT_POINTS = 1 << 6;
-        const CONTACT_NORMALS = 1 << 7;
-        const CENTER_OF_MASSES = 1 << 8;
-        const WIREFRAME = 1 << 9;
-        const STATISTICS = 1 << 10;
-        const PROFILE = 1 << 11;
+        const SUB_STEPPING = 1 << 1;
+        const SHAPES = 1 << 2;
+        const JOINTS = 1 << 3;
+        const AABBS = 1 << 4;
+        const CONTACT_POINTS = 1 << 5;
+        const CONTACT_NORMALS = 1 << 6;
+        const CENTER_OF_MASSES = 1 << 7;
+        const WIREFRAME = 1 << 8;
+        const STATISTICS = 1 << 9;
+        const PROFILE = 1 << 10;
     }
 }
 
@@ -156,7 +155,7 @@ impl Testbed {
         window.set_framerate_limit(Some(60));
         window.set_light(Light::StickToCamera);
 
-        let flags = TestbedStateFlags::SLEEP | TestbedStateFlags::CCD;
+        let flags = TestbedStateFlags::SLEEP;
         let ui = TestbedUi::new(&mut window);
 
         let mut backend_names = vec!["nphysics"];
@@ -261,7 +260,7 @@ impl Testbed {
                      colliders: DefaultColliderSet<f32>,
                      joint_constraints: DefaultJointConstraintSet<f32>,
                      force_generators: DefaultForceGeneratorSet<f32>) {
-        dynamic_world.parameters = self.dynamic_world.parameters.clone();
+        dynamic_world.integration_parameters = self.dynamic_world.integration_parameters.clone();
 
         self.dynamic_world = dynamic_world;
         self.collider_world = collider_world;
@@ -800,14 +799,9 @@ impl State for Testbed {
                 }
             }
 
-            if self.state.prev_flags.contains(TestbedStateFlags::CCD) !=
-                self.state.flags.contains(TestbedStateFlags::CCD) {
-                self.dynamic_world.parameters.ccd_enabled = self.state.flags.contains(TestbedStateFlags::CCD);
-            }
-
             if self.state.prev_flags.contains(TestbedStateFlags::SUB_STEPPING) !=
                 self.state.flags.contains(TestbedStateFlags::SUB_STEPPING) {
-                self.dynamic_world.parameters.substepping_enabled = self.state.flags.contains(TestbedStateFlags::SUB_STEPPING);
+                self.dynamic_world.integration_parameters.return_between_substeps = self.state.flags.contains(TestbedStateFlags::SUB_STEPPING);
             }
 
             if self.state.prev_flags.contains(TestbedStateFlags::SHAPES) !=

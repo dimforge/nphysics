@@ -20,6 +20,7 @@ widget_ids! {
         title_demos_list,
         title_slider_vel_iter,
         title_slider_pos_iter,
+        title_slider_ccd_substeps,
         title_warmstart_coeff,
         title_frequency,
         backends_list,
@@ -32,11 +33,11 @@ widget_ids! {
         button_next_example,
         slider_vel_iter,
         slider_pos_iter,
+        slider_ccd_substeps,
         slider_warmstart_coeff,
         slider_frequency,
         toggle_sleep,
         toggle_warm_starting,
-        toggle_ccd,
         toggle_sub_stepping,
         toggle_shapes,
         toggle_joints,
@@ -194,10 +195,11 @@ impl TestbedUi {
         separator(self.ids.canvas, self.ids.demos_list, self.ids.separator1, &mut ui);
 
 
-        let curr_vel_iters = world.parameters.max_velocity_iterations;
-        let curr_pos_iters = world.parameters.max_position_iterations;
-        let curr_warmstart_coeff = world.parameters.warmstart_coeff;
-        let curr_frequency = world.parameters.inv_dt().round() as usize;
+        let curr_vel_iters = world.integration_parameters.max_velocity_iterations;
+        let curr_pos_iters = world.integration_parameters.max_position_iterations;
+        let curr_max_ccd_substeps = world.integration_parameters.max_ccd_substeps;
+        let curr_warmstart_coeff = world.integration_parameters.warmstart_coeff;
+        let curr_frequency = world.integration_parameters.inv_dt().round() as usize;
 
 
         conrod::widget::Text::new("Vel. Iters.:")
@@ -210,8 +212,9 @@ impl TestbedUi {
             .down_from(self.ids.title_slider_vel_iter, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_vel_iter, &mut ui) {
-            world.parameters.max_velocity_iterations = val as usize;
+            world.integration_parameters.max_velocity_iterations = val as usize;
         }
+
 
 
         conrod::widget::Text::new("Pos. Iters.:")
@@ -224,13 +227,28 @@ impl TestbedUi {
             .down_from(self.ids.title_slider_pos_iter, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_pos_iter, &mut ui) {
-            world.parameters.max_position_iterations = val as usize;
+            world.integration_parameters.max_position_iterations = val as usize;
+        }
+
+
+
+        conrod::widget::Text::new("CCD substeps:")
+            .down_from(self.ids.slider_pos_iter, VSPACE)
+            .set(self.ids.title_slider_ccd_substeps, &mut ui);
+
+        for val in conrod::widget::Slider::new(curr_max_ccd_substeps as f32, 0.0, 10.0)
+            .label(&curr_max_ccd_substeps.to_string())
+            .align_middle_x_of(self.ids.canvas)
+            .down_from(self.ids.title_slider_ccd_substeps, TITLE_VSPACE)
+            .w_h(ELEMENT_W, ELEMENT_H)
+            .set(self.ids.slider_ccd_substeps, &mut ui) {
+            world.integration_parameters.max_ccd_substeps = val as usize;
         }
 
 
 
         conrod::widget::Text::new("Warm-start coeff.:")
-            .down_from(self.ids.slider_pos_iter, VSPACE)
+            .down_from(self.ids.slider_ccd_substeps, VSPACE)
             .set(self.ids.title_warmstart_coeff, &mut ui);
 
         for val in conrod::widget::Slider::new(curr_warmstart_coeff as f32, 0.0, 1.0)
@@ -239,7 +257,7 @@ impl TestbedUi {
             .down_from(self.ids.title_warmstart_coeff, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_warmstart_coeff, &mut ui) {
-            world.parameters.warmstart_coeff = val;
+            world.integration_parameters.warmstart_coeff = val;
         }
 
 
@@ -253,13 +271,12 @@ impl TestbedUi {
             .down_from(self.ids.title_frequency, TITLE_VSPACE)
             .w_h(ELEMENT_W, ELEMENT_H)
             .set(self.ids.slider_frequency, &mut ui) {
-            world.parameters.set_inv_dt(val.round());
+            world.integration_parameters.set_inv_dt(val.round());
         }
 
         let toggle_list = [
             ("Sleep", self.ids.toggle_sleep, TestbedStateFlags::SLEEP),
 //            ("Warm Starting", self.ids.toggle_warm_starting, TestbedStateFlags::WARM_STARTING),
-            ("CCD", self.ids.toggle_ccd, TestbedStateFlags::CCD),
             ("Sub-Stepping", self.ids.toggle_sub_stepping, TestbedStateFlags::SUB_STEPPING),
             ("", self.ids.separator2, TestbedStateFlags::NONE),
 //            ("Shapes", self.ids.toggle_shapes, TestbedStateFlags::SHAPES),
