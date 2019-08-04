@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point2, Vector2, Isometry2, Point3};
-use ncollide2d::shape::{Cuboid, ShapeHandle, Compound, Ball};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
 use ncollide2d::query::Proximity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -67,8 +67,8 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the shapes
      */
     let num = 5;
-    let mut rady = 0.1;
-    let mut radx = rady * 4.0;
+    let rady = 0.1;
+    let radx = rady * 4.0;
 
 //    let shape = {
 //        let mut cross_geoms = Vec::new();
@@ -90,36 +90,36 @@ pub fn init_world(testbed: &mut Testbed) {
 //    };
 
 
-    let shape = {
-        let large_rad = 0.4f32;
-        let small_rad = 0.05f32;
+//    let shape = {
+//        let large_rad = 0.4f32;
+//        let small_rad = 0.05f32;
+//
+//        radx = large_rad;
+//        rady = large_rad;
+//
+//        let delta1 = Isometry2::new(Vector2::new(0.0, large_rad - small_rad), na::zero());
+//        let delta2 = Isometry2::new(Vector2::new(-large_rad + small_rad, 0.0), na::zero());
+//        let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
+//
+//        let mut compound_geoms = Vec::new();
+//        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
+//            small_rad,
+//            large_rad,
+//        )));
+//        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
+//            large_rad,
+//            small_rad,
+//        )));
+//        compound_geoms.push((delta1, horizontal));
+//        compound_geoms.push((delta2, vertical.clone()));
+//        compound_geoms.push((delta3, vertical));
+//
+//        let compound = Compound::new(compound_geoms);
+//        ShapeHandle::new(compound)
+//    };
 
-        radx = large_rad;
-        rady = large_rad;
 
-        let delta1 = Isometry2::new(Vector2::new(0.0, large_rad - small_rad), na::zero());
-        let delta2 = Isometry2::new(Vector2::new(-large_rad + small_rad, 0.0), na::zero());
-        let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
-
-        let mut compound_geoms = Vec::new();
-        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
-            small_rad,
-            large_rad,
-        )));
-        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
-            large_rad,
-            small_rad,
-        )));
-        compound_geoms.push((delta1, horizontal));
-        compound_geoms.push((delta2, vertical.clone()));
-        compound_geoms.push((delta3, vertical));
-
-        let compound = Compound::new(compound_geoms);
-        ShapeHandle::new(compound)
-    };
-
-
-//    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
+    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
 //    let shape = ShapeHandle::new(Ball::new(rady));
 
     let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;

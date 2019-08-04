@@ -2,7 +2,7 @@ use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
-use crate::object::{Multibody, MultibodyLink, BodyHandle, BodyPartHandle};
+use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
 use crate::math::{JacobianSliceMut, Velocity};
 
 /// A joint that allows one translational and one rotational degrees of freedom along a single axis.

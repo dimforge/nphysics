@@ -1,14 +1,14 @@
-use std::collections::HashSet;
+
 use na::{DVector, RealField};
 use ncollide::query::ContactId;
 
 use crate::counters::Counters;
 use crate::detection::ColliderContactManifold;
 use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::object::{BodySet, Body, BodyHandle, ColliderHandle, ColliderSet};
+use crate::object::{BodySet, Body, ColliderHandle, ColliderSet};
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{ConstraintSet, ContactModel, IntegrationParameters, NonlinearSORProx, SORProx};
-use crate::world::ColliderWorld;
+
 
 /// Moreau-Jean time-stepping scheme.
 pub struct MoreauJeanSolver<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {

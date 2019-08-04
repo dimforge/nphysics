@@ -1,7 +1,7 @@
 use na::{self, DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
-use crate::object::BodyHandle;
+
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
 use crate::solver::IntegrationParameters;
 

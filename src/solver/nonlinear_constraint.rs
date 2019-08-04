@@ -2,7 +2,7 @@ use na::{RealField, Unit};
 use ncollide::query::ContactKinematic;
 
 use crate::math::Vector;
-use crate::object::{BodyPartHandle, DefaultBodySet, DefaultColliderHandle, BodySet, BodyHandle, ColliderHandle};
+use crate::object::{BodyPartHandle, BodySet, BodyHandle, ColliderHandle};
 use crate::solver::IntegrationParameters;
 
 /// A generic non-linear position constraint.

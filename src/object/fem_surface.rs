@@ -10,13 +10,13 @@ use na::{self, RealField, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, DefaultBodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
-                    FiniteElementIndices, DeformableColliderDesc, BodyDesc, BodyUpdateStatus};
+use crate::object::{Body, BodyPart, BodyStatus, ActivationStatus,
+                    FiniteElementIndices, DeformableColliderDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry,
                   SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
-use crate::world::ColliderWorld;
+
 use crate::utils::{UserData, UserDataBox};
 
 /// One element of a deformable surface.
@@ -86,7 +86,7 @@ impl<N: RealField> FEMSurface<N> {
             rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
         }
 
-        let elements = triangles.iter().enumerate().map(|(i, idx)| {
+        let elements = triangles.iter().enumerate().map(|(_i, idx)| {
             let rest_a = rest_positions.fixed_rows::<Dim>(idx.x * 2);
             let rest_b = rest_positions.fixed_rows::<Dim>(idx.y * 2);
             let rest_c = rest_positions.fixed_rows::<Dim>(idx.z * 2);

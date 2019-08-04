@@ -3,7 +3,7 @@ use generational_arena::Arena;
 
 use na::RealField;
 use crate::world::ColliderWorld;
-use crate::object::{Body, Ground, DefaultColliderHandle, RigidBody, Multibody};
+use crate::object::{Body, DefaultColliderHandle, RigidBody, Multibody};
 
 pub trait BodyHandle: Copy + Hash + PartialEq + Eq + 'static + Send + Sync {
 }
@@ -56,6 +56,10 @@ impl<N: RealField> DefaultBodySet<N> {
         let res = self.bodies.remove(to_remove)?;
         self.removed.push(to_remove);
         Some(res)
+    }
+
+    fn contains(&self, handle: DefaultBodyHandle) -> bool {
+        self.bodies.contains(handle)
     }
 
     pub fn get(&self, handle: DefaultBodyHandle) -> Option<&Body<N>> {

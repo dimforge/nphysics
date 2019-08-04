@@ -1,16 +1,14 @@
 use std::collections::HashMap;
 
 use std::f32;
-use std::ptr;
 use na::{Isometry2, Vector2};
 use ncollide::shape::{self, Shape};
-use nphysics::counters::Counters;
 use nphysics::object::{ColliderAnchor, Collider, DefaultBodySet, DefaultColliderSet, DefaultBodyHandle,
-                       RigidBody, Multibody};
+                       RigidBody};
 use nphysics::joint::DefaultJointConstraintSet;
 use nphysics::material::BasicMaterial;
 use nphysics::force_generator::DefaultForceGeneratorSet;
-use nphysics::world::{DefaultDynamicWorld, DefaultColliderWorld};
+use nphysics::world::DefaultDynamicWorld;
 
 use wrapped2d::b2;
 use wrapped2d::user_data::NoUserData;
@@ -35,11 +33,10 @@ pub struct Box2dWorld {
 impl Box2dWorld {
     pub fn from_nphysics(
         dynamic_world: &DefaultDynamicWorld<f32>,
-        collider_world: &DefaultColliderWorld<f32>,
         bodies: &DefaultBodySet<f32>,
         colliders: &DefaultColliderSet<f32>,
-        joint_constraints: &DefaultJointConstraintSet<f32>,
-        force_generators: &DefaultForceGeneratorSet<f32>
+        _joint_constraints: &DefaultJointConstraintSet<f32>,
+        _force_generators: &DefaultForceGeneratorSet<f32>
     )
     -> Self {
         let world = b2::World::new(&na_vec_to_b2_vec(&dynamic_world.gravity));
@@ -76,7 +73,7 @@ impl Box2dWorld {
                 angular_damping = 0.0;
             }
 
-            let mut def = b2::BodyDef {
+            let def = b2::BodyDef {
                 body_type,
                 position: na_vec_to_b2_vec(&pos.translation.vector),
                 angle: pos.rotation.angle(),
@@ -132,9 +129,9 @@ impl Box2dWorld {
             body.create_fixture(&b2_shape, &mut fixture_def);
         } else if let Some(s) = shape.as_shape::<shape::Cuboid<f32>>() {
             let half_extents = s.half_extents();
-            let mut b2_shape = b2::PolygonShape::new_oriented_box(half_extents.x, half_extents.y, &center, dpos.rotation.angle());
+            let b2_shape = b2::PolygonShape::new_oriented_box(half_extents.x, half_extents.y, &center, dpos.rotation.angle());
             body.create_fixture(&b2_shape, &mut fixture_def);
-        } else if let Some(s) = shape.as_shape::<shape::Capsule<f32>>() {
+        } else if let Some(_s) = shape.as_shape::<shape::Capsule<f32>>() {
 //            let geom = PhysicsGeometry::from(&ColliderDesc::Capsule(s.radius(), s.height()));
 //            result.push((geom, Isometry3::rotation(Vector3::z() * f32::consts::PI / 2.0)))
         } else if let Some(cp) = shape.as_shape::<shape::Compound<f32>>() {
@@ -166,9 +163,7 @@ impl Box2dWorld {
     }
 
     pub fn sync(&self,
-                dynamic_world: &mut DefaultDynamicWorld<f32>,
-                collider_world: &mut DefaultColliderWorld<f32>,
-                bodies: &mut DefaultBodySet<f32>,
+                _bodies: &mut DefaultBodySet<f32>,
                 colliders: &mut DefaultColliderSet<f32>) {
         for (_, collider) in colliders.iter_mut() {
             match collider.anchor() {
@@ -176,7 +171,8 @@ impl Box2dWorld {
                     if let Some(pb2_handle) = self.nphysics2box2d.get(&body_part.0) {
                         let body = self.world.body(*pb2_handle);
                         let pos = b2_transform_to_na_isometry(body.transform());
-                        collider.set_position(pos * position_wrt_body_part)
+                        let new_pos = pos * position_wrt_body_part;
+                        collider.set_position(new_pos)
                     }
                 }
                 ColliderAnchor::OnDeformableBody { .. } => {}

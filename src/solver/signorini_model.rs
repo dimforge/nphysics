@@ -4,7 +4,7 @@ use std::ops::Range;
 use ncollide::query::{TrackedContact, ContactId};
 use ncollide::utils::IsometryOps;
 use crate::detection::ColliderContactManifold;
-use crate::object::{DefaultBodySet, Body, BodyPart, BodyPartHandle, BodySet, BodyHandle, ColliderHandle};
+use crate::object::{Body, BodyPart, BodyPartHandle, BodySet, BodyHandle, ColliderHandle};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable, LocalMaterialProperties};
 use crate::solver::helper;
 use crate::solver::{ConstraintSet, ContactModel, ForceDirection, ImpulseCache, IntegrationParameters,

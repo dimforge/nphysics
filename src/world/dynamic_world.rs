@@ -3,20 +3,20 @@ use std::collections::{HashMap, HashSet};
 use na::{self, RealField};
 use ncollide;
 use ncollide::query::{self, TOIStatus, Proximity};
-use ncollide::narrow_phase::{Interaction, ContactEvents, ProximityEvents};
-use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion};
+use ncollide::narrow_phase::{Interaction};
+use ncollide::interpolation::{RigidMotion, RigidMotionComposition};
 
 use crate::counters::Counters;
 use crate::detection::{ActivationManager, ColliderContactManifold};
-use crate::force_generator::{ForceGenerator, DefaultForceGeneratorHandle, ForceGeneratorSet};
-use crate::joint::{DefaultJointConstraintHandle, JointConstraint, JointConstraintSet};
-use crate::math::{Vector, Velocity};
+use crate::force_generator::{ForceGenerator, ForceGeneratorSet};
+use crate::joint::{JointConstraint, JointConstraintSet};
+use crate::math::{Vector};
 use crate::object::{
-    Body, DefaultBodySet, BodyDesc, BodyStatus, BodyPartMotion, Collider, ColliderAnchor, ColliderHandle,
-    DefaultColliderHandle, Multibody, RigidBody, DefaultBodyHandle, BodySet, BodyHandle, ColliderSet,
+    Body, DefaultBodySet, BodyStatus, BodyPartMotion, Collider, ColliderHandle,
+    DefaultColliderHandle, BodySet, BodyHandle, ColliderSet,
 };
 use crate::material::MaterialsCoefficientsTable;
-use crate::solver::{ContactModel, IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
+use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
 
 pub type DefaultDynamicWorld<N> = DynamicWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
@@ -375,7 +375,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             if coll.is_ccd_enabled() {
                 for (ch1, c1, ch2, c2, inter) in cworld.interactions_with(colliders, coll_handle, false).unwrap() {
                     if pairs_seen.insert((ch1, ch2)) {
-                        use crate::object::BodyPart;
+                        
                         let handle1 = c1.body();
                         let handle2 = c2.body();
 
@@ -494,12 +494,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                                 bodies: &mut Bodies,
                                                 colliders: &mut Colliders,
                                                 constraints: &mut Constraints,
-                                                forces: &mut Forces)
+                                                _forces: &mut Forces)
         where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
               Constraints: JointConstraintSet<N, Bodies>,
               Forces: ForceGeneratorSet<N, Bodies> {
         let dt0 = self.integration_parameters.dt();
-        let inv_dt0 = self.integration_parameters.inv_dt();
+        let _inv_dt0 = self.integration_parameters.inv_dt();
 
         if dt0 == N::zero() || self.integration_parameters.max_ccd_substeps == 0 {
             return;
@@ -562,7 +562,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 parameters.set_dt(dt0 - last_toi);
 
                 // We will use the companion ID to know which body is already on the island.
-                bodies.foreach_mut(|h, b| {
+                bodies.foreach_mut(|_h, b| {
                     b.set_companion_id(0);
                 });
 
@@ -741,7 +741,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 // Update body kinematics and dynamics
                 // after the contact resolution step.
-                let gravity = &self.gravity;
+                let _gravity = &self.gravity;
                 bodies.foreach_mut(|_, b| {
                     b.clear_forces();
                     b.update_kinematics();
@@ -754,7 +754,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     break;
                 }
             } else {
-                let mut substep = &mut self.substep;
+                let _substep = &mut self.substep;
                 bodies.foreach_mut(|handle, body| {
                     if !body.is_static() && frozen.contains_key(&handle) {
                         body.clamp_advancement();
@@ -809,7 +809,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
                           end_time: N,
                           body_times: &HashMap<Handle, N>)
                         -> Option<Self> {
-        let margins = c1.margin() + c2.margin();
+        let _margins = c1.margin() + c2.margin();
         let target = params.allowed_linear_error; // self.integration_parameters.allowed_linear_error.max(margins - self.integration_parameters.allowed_linear_error * na::convert(3.0));
 
         let body_time1 = body_times.get(&c1.body()).cloned().unwrap_or(N::zero());

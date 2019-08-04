@@ -3,13 +3,12 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyPartMotion, DefaultBodyHandle,
-                    ColliderDesc, BodyDesc, BodyUpdateStatus, DefaultBodySet, DefaultColliderHandle};
+use crate::object::{ActivationStatus, BodyStatus, Body, BodyPart, BodyPartMotion, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::world::ColliderWorld;
+
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
-use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion, ConstantLinearVelocityRigidMotion};
+use ncollide::interpolation::{RigidMotion, ConstantLinearVelocityRigidMotion, ConstantVelocityRigidMotion};
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
@@ -489,12 +488,12 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn part_motion(&self, _: usize, time_origin: N) -> Option<BodyPartMotion<N>> {
-//        let motion = ConstantVelocityRigidMotion::new(time_origin, self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
-//        Some(BodyPartMotion::RigidNonlinear(motion))
+        let motion = ConstantVelocityRigidMotion::new(time_origin, self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
+        Some(BodyPartMotion::RigidNonlinear(motion))
 
-        let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
-        let motion = ConstantLinearVelocityRigidMotion::new(time_origin, p0, self.velocity.linear);
-        Some(BodyPartMotion::RigidLinear(motion))
+//        let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
+//        let motion = ConstantLinearVelocityRigidMotion::new(time_origin, p0, self.velocity.linear);
+//        Some(BodyPartMotion::RigidLinear(motion))
     }
 
     #[allow(unused_variables)] // for parameters used only in 3D.

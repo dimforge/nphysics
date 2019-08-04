@@ -65,8 +65,9 @@ The libraries needed to compile the examples are:
 #![deny(unused_parens)]
 #![deny(non_upper_case_globals)]
 #![deny(unused_qualifications)]
-#![warn(missing_docs)]
+#![allow(missing_docs)] // FIXME: deny this
 #![deny(unused_results)]
+#![allow(type_alias_bounds)]
 #![warn(non_camel_case_types)]
 #![allow(missing_copy_implementations)]
 #![doc(html_root_url = "http://nphysics.org/rustdoc/")]

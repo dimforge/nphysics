@@ -4,7 +4,7 @@ use downcast_rs::Downcast;
 use generational_arena::Arena;
 use na::{DVector, RealField};
 
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle, DefaultBodySet};
+use crate::object::{BodyPartHandle, BodySet, Body, DefaultBodySet};
 use crate::solver::{LinearConstraints, IntegrationParameters, NonlinearConstraintGenerator};
 
 
@@ -56,6 +56,10 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
         let (part1, part2) = res.anchors();
         self.removed.push((to_remove, part1, part2));
         Some(res)
+    }
+
+    pub fn contains(&self, handle: DefaultJointConstraintHandle) -> bool {
+        self.constraints.contains(handle)
     }
 
     pub fn get(&self, handle: DefaultJointConstraintHandle) -> Option<&JointConstraint<N, Bodies>> {

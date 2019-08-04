@@ -135,7 +135,7 @@ impl TestbedUi {
         }
 
         let display_ticks = state.example_names.len() > 1;
-        let select_example_title = if display_ticks { "Select example:" } else { "Current example:" };
+        let _select_example_title = if display_ticks { "Select example:" } else { "Current example:" };
         let tick_width = if display_ticks { 20.0 } else { 0.0 };
 
         /*

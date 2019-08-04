@@ -6,7 +6,7 @@ use ncollide::query::ContactId;
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{BodySet, BodyHandle, Body};
+use crate::object::{BodySet, Body};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
              UnilateralGroundConstraint, LinearConstraints};
 
@@ -15,7 +15,7 @@ pub(crate) struct SORProx;
 
 impl SORProx {
     fn warmstart_set<N: RealField, Bodies: BodySet<N>, Id>(
-        bodies: &mut Bodies,
+        _bodies: &mut Bodies,
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -78,7 +78,7 @@ impl SORProx {
     }
 
     fn step_unilateral<N: RealField, Bodies: BodySet<N>, Id>(
-        bodies: &mut Bodies,
+        _bodies: &mut Bodies,
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
@@ -108,7 +108,7 @@ impl SORProx {
     }
 
     fn step_bilateral<N: RealField, Bodies: BodySet<N>, Id>(
-        bodies: &mut Bodies,
+        _bodies: &mut Bodies,
         constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,

@@ -5,7 +5,7 @@ use na::{self, RealField};
 
 use ncollide::query::TrackedContact;
 use ncollide::shape::Shape;
-use crate::object::{Body, BodyPart, Collider, BodyHandle, ColliderHandle};
+
 use crate::material::MaterialsCoefficientsTable;
 use crate::math::{Isometry, Vector};
 

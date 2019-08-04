@@ -1,21 +1,20 @@
 use std::sync::Arc;
 use std::f64;
-use std::mem;
+
 use std::any::Any;
 use na::RealField;
-use ncollide::pipeline::object::{CollisionObject, CollisionObjectHandle, CollisionObjectSlabHandle,
+use ncollide::pipeline::object::{CollisionObject,
                                  CollisionGroups, CollisionObjectUpdateFlags,  GeometricQueryType,
                                  CollisionObjectRef};
 use ncollide::shape::{ShapeHandle, Shape};
 use ncollide::pipeline::narrow_phase::CollisionObjectGraphIndex;
 use ncollide::pipeline::broad_phase::BroadPhaseProxyHandle;
 
-use crate::math::{Isometry, Vector, Point, Rotation, Inertia};
-use crate::object::{BodyPartHandle, DefaultBodyHandle, Body, BodySet, BodyHandle, DefaultBodySet,
-                    ColliderHandle, DefaultColliderHandle};
+use crate::math::{Isometry, Vector, Rotation};
+use crate::object::{BodyPartHandle, BodyHandle};
 use crate::material::{Material, MaterialHandle, BasicMaterial};
-use crate::world::ColliderWorld;
-use crate::volumetric::Volumetric;
+
+
 use crate::utils::{UserData, UserDataBox};
 
 
@@ -115,7 +114,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
     }
 
     pub fn density(&self) -> N {
-        self.density()
+        self.density
     }
 
     /// The position of this collider geometry wrt. the body it is attached to.

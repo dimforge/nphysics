@@ -1,24 +1,24 @@
 use std::collections::{hash_map, HashMap};
-use smallvec::SmallVec;
+
 
 use na::RealField;
-use ncollide::pipeline::world::CollisionWorld;
+
 use ncollide::pipeline::narrow_phase::{DefaultProximityDispatcher, DefaultContactDispatcher};
 use ncollide::pipeline::broad_phase::DBVTBroadPhase;
-use ncollide::pipeline::object::{GeometricQueryType, CollisionGroups};
-use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter, BroadPhaseProxyHandle};
-use ncollide::narrow_phase::{InteractionGraph, Interaction, ContactAlgorithm, ProximityDetector, NarrowPhase, ContactEvents, ProximityEvents, CollisionObjectGraphIndex};
-use ncollide::query::{Ray, RayIntersection, ContactManifold, Proximity};
-use ncollide::shape::{ShapeHandle, Shape};
+use ncollide::pipeline::object::{CollisionGroups};
+use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter};
+use ncollide::narrow_phase::{InteractionGraph, Interaction, ContactAlgorithm, ProximityDetector, NarrowPhase, ContactEvents, ProximityEvents};
+use ncollide::query::{Ray, ContactManifold, Proximity};
+
 use ncollide::bounding_volume::AABB;
 use ncollide::pipeline::glue;
 
 use crate::volumetric::Volumetric;
-use crate::object::{Collider, ColliderData, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
-                    ColliderSet, BodySet, DefaultBodyHandle, BodyPartHandle, Body, BodyHandle};
-use crate::material::{BasicMaterial, MaterialHandle};
-use crate::math::{Isometry, Point, Inertia};
-use num::real::Real;
+use crate::object::{Collider, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
+                    ColliderSet, BodySet, DefaultBodyHandle, Body, BodyHandle};
+
+use crate::math::Point;
+
 
 pub type DefaultColliderWorld<N> = ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
 
@@ -40,7 +40,7 @@ pub struct ColliderWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderH
 }
 
 impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld<N, Handle, CollHandle> {
-    pub fn from_parts<BF>(mut broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
+    pub fn from_parts<BF>(broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
         where BF: BroadPhase<N, AABB<N>, CollHandle> {
 
         ColliderWorld {
@@ -187,7 +187,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     pub fn sync_colliders<Bodies, Colliders>(&mut self, bodies: &Bodies, colliders: &mut Colliders)
         where Bodies: BodySet<N, Handle = Handle>,
               Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
-        colliders.foreach_mut(|collider_id, collider| {
+        colliders.foreach_mut(|_collider_id, collider| {
             let body = try_ret!(bodies.get(collider.body()));
 
             collider.set_body_status_dependent_ndofs(body.status_dependent_ndofs());

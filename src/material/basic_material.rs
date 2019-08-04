@@ -1,8 +1,8 @@
 use na::RealField;
-use std::sync::Arc;
 
-use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties, MaterialHandle};
-use crate::object::BodyHandle;
+
+use crate::material::{Material, MaterialCombineMode, MaterialContext, LocalMaterialProperties};
+
 use crate::math::Vector;
 
 

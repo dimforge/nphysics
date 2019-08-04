@@ -2,7 +2,7 @@ use na::RealField;
 
 use crate::solver::IntegrationParameters;
 use crate::force_generator::ForceGenerator;
-use crate::object::{BodyPartHandle, DefaultBodySet, BodySet, Body, BodyHandle};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::math::{Force, ForceType, Velocity, Vector};
 
 /// Force generator adding a constant acceleration

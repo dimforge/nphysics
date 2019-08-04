@@ -3,7 +3,7 @@ extern crate nalgebra as na;
 use std::f32;
 
 use na::{Point2, Vector2};
-use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -31,7 +31,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.2;
 
     let cube = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
-    let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0 + 0.002;
+    let _shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0 + 0.002;
     let subdiv = 1.0 / (num as f32);
 
     for i in 0usize..num {

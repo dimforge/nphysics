@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 edition = "2018"
 
+[features]
+physx-backend = [ "nphysics_testbed3d/physx-backend" ]
+
 [dependencies]
 rand       = { version = "0.6", features = [ "stdweb" ] }
 num-traits = "0.2"

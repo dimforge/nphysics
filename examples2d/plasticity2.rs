@@ -1,8 +1,8 @@
 extern crate nalgebra as na;
 
 use na::{Point2, Vector2, Isometry2, Point3};
-use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
-use nphysics2d::object::{BodyStatus, FEMSurfaceDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::object::{BodyStatus, FEMSurfaceDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultDynamicWorld, DefaultColliderWorld};

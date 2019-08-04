@@ -554,7 +554,7 @@ impl GraphicsManager {
         )))
     }
 
-    pub fn show_aabbs(&mut self, collider_world: &DefaultColliderWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
+    pub fn show_aabbs(&mut self, _collider_world: &DefaultColliderWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
         for (_, ns) in self.b2sn.iter() {
             for n in ns.iter() {
                 let handle = n.collider();

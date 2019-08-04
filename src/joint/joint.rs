@@ -3,7 +3,7 @@
 use downcast_rs::Downcast;
 use na::{DVectorSliceMut, RealField};
 
-use crate::object::{Multibody, MultibodyLink, BodyHandle, BodyPartHandle};
+use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
 use crate::math::{Isometry, JacobianSliceMut, Vector, Velocity};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 

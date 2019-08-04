@@ -5,7 +5,6 @@ use na::{
 
 use crate::joint::Joint;
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::BodyHandle;
 use crate::solver::IntegrationParameters;
 use crate::utils::GeneralizedCross;
 

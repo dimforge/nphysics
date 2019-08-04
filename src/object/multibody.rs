@@ -10,11 +10,10 @@ use crate::math::{
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, RealField, LU};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
-    MultibodyLinkVec, Body, BodyPart, DefaultBodyHandle, ColliderDesc, BodyDesc, BodySet,
-    BodyHandle, DefaultBodySet, DefaultColliderHandle, ColliderHandle,
+    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderHandle,
 };
 use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
-use crate::world::ColliderWorld;
+
 use crate::utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.

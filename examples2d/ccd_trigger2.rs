@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2, Point3};
-use ncollide2d::shape::{Cuboid, ShapeHandle, ConvexPolygon, Ball};
+use na::{Vector2, Point3};
+use ncollide2d::shape::{Cuboid, ShapeHandle, Ball};
 use ncollide2d::query::Proximity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;

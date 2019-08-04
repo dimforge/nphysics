@@ -1,5 +1,5 @@
-use std::hash::Hash;
-use std::ops::{Deref, DerefMut};
+
+
 use generational_arena::Arena;
 
 use na::RealField;

@@ -16,12 +16,11 @@ use ncollide::shape::{DeformationsType, Polyline};
 use ncollide::shape::TriMesh;
 
 use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
-                    ActivationStatus, FiniteElementIndices, BodyDesc, DeformableColliderDesc,
-                    DefaultBodySet};
+                    ActivationStatus, FiniteElementIndices};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
 use crate::object::fem_helper;
-use crate::world::ColliderWorld;
+
 use crate::utils::{UserData, UserDataBox};
 
 /// An element of the mass-spring system.
@@ -113,7 +112,7 @@ impl<N: RealField> MassSpringSystem<N> {
             pos.copy_from_slice(mesh.points()[i].coords.as_slice())
         }
 
-        for (i, face) in mesh.faces().iter().enumerate() {
+        for face in mesh.faces() {
             let idx = face.indices * DIM;
             let elt = MassSpringElement {
                 indices: FiniteElementIndices::Triangle(idx),
@@ -173,7 +172,7 @@ impl<N: RealField> MassSpringSystem<N> {
             pos.copy_from_slice(polyline.points()[i].coords.as_slice())
         }
 
-        for (i, edge) in polyline.edges().iter().enumerate() {
+        for (_i, edge) in polyline.edges().iter().enumerate() {
             let idx = edge.indices * DIM;
             let elt = MassSpringElement {
                 indices: FiniteElementIndices::Segment(idx),
@@ -863,17 +862,15 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     pub fn build(&self) -> MassSpringSystem<N> {
         let mut vol = match self.geom {
             MassSpringSystemDescGeometry::Quad(nx, ny) => {
-                let mut polyline = Polyline::quad(nx, ny);
+                let polyline = Polyline::quad(nx, ny);
                 MassSpringSystem::from_polyline(&polyline, self.mass, self.stiffness, self.damping_ratio)
             }
             MassSpringSystemDescGeometry::Polyline(polyline) => {
-                let mut polyline = polyline.clone();
-                MassSpringSystem::from_polyline(&polyline, self.mass, self.stiffness, self.damping_ratio)
+                MassSpringSystem::from_polyline(polyline, self.mass, self.stiffness, self.damping_ratio)
             }
             #[cfg(feature = "dim3")]
             MassSpringSystemDescGeometry::TriMesh(trimesh) => {
-                let mut trimesh = trimesh.clone();
-                MassSpringSystem::from_trimesh(&trimesh, self.mass, self.stiffness, self.damping_ratio)
+                MassSpringSystem::from_trimesh(trimesh, self.mass, self.stiffness, self.damping_ratio)
             }
         };
 

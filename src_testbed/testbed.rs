@@ -275,7 +275,7 @@ impl Testbed {
         #[cfg(feature = "box2d-backend")]
             {
                 if self.state.selected_backend == BOX2D_BACKEND {
-                    self.box2d = Some(Box2dWorld::from_nphysics(&self.dynamic_world, &self.collider_world, &self.bodies, &self.colliders, &self.constraints, &self.forces));
+                    self.box2d = Some(Box2dWorld::from_nphysics(&self.dynamic_world, &self.bodies, &self.colliders, &self.constraints, &self.forces));
                 }
             }
     }
@@ -622,7 +622,7 @@ impl Testbed {
                         .collider_world
                         .interferences_with_ray(&self.colliders, &ray, &all_groups)
                         {
-                            if ((Some(b.body()) == self.ground_handle) ^ self.state.can_grab_behind_ground) &&
+                            if ((Some(b.body()) != self.ground_handle) || self.state.can_grab_behind_ground) &&
                                 !b.query_type().is_proximity_query() && inter.toi < mintoi {
                                 mintoi = inter.toi;
 
@@ -853,7 +853,7 @@ impl State for Testbed {
                     {
                         if self.state.selected_backend == BOX2D_BACKEND {
                             self.box2d.as_mut().unwrap().step(&mut self.dynamic_world);
-                            self.box2d.as_mut().unwrap().sync(&mut self.dynamic_world, &mut self.collider_world, &mut self.bodies, &mut self.colliders);
+                            self.box2d.as_mut().unwrap().sync(&mut self.bodies, &mut self.colliders);
                         }
                     }
 

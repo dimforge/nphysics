@@ -10,12 +10,10 @@ use na::{self, RealField, Point3, Point4, Vector3, Vector6, Matrix3, Matrix3x4, 
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{TriMesh, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, DefaultBodyHandle, BodyPartHandle, BodyStatus, BodyUpdateStatus,
-                    BodyDesc, ActivationStatus, FiniteElementIndices, DeformableColliderDesc,
-                    DefaultBodySet, DefaultColliderHandle};
+use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
+                    ActivationStatus, FiniteElementIndices, DeformableColliderDesc};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, DIM};
-use crate::world::ColliderWorld;
 use crate::object::fem_helper;
 use crate::utils::{UserData, UserDataBox};
 
@@ -87,7 +85,7 @@ impl<N: RealField> FEMVolume<N> {
             rest_positions.fixed_rows_mut::<U3>(i * 3).copy_from(&pt.coords);
         }
 
-        let elements = tetrahedrons.iter().enumerate().map(|(i, idx)| {
+        let elements = tetrahedrons.iter().map(|idx| {
             let rest_a = rest_positions.fixed_rows::<U3>(idx.x * 3);
             let rest_b = rest_positions.fixed_rows::<U3>(idx.y * 3);
             let rest_c = rest_positions.fixed_rows::<U3>(idx.z * 3);

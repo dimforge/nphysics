@@ -4,7 +4,7 @@ use na::RealField;
 
 use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyPart, DefaultBodyHandle};
+use crate::object::BodyPart;
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: RealField> {

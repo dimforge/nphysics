@@ -8,7 +8,7 @@ use ncollide::interpolation::{RigidMotion, ConstantLinearVelocityRigidMotion,
                               ConstantVelocityRigidMotion};
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, DefaultBodyHandle};
+
 use crate::solver::{IntegrationParameters, ForceDirection};
 
 pub enum BodyPartMotion<N: RealField> {
@@ -29,7 +29,7 @@ impl<N: RealField> BodyPartMotion<N> {
         match self {
             BodyPartMotion::RigidLinear(m) => m.velocity,
             BodyPartMotion::RigidNonlinear(m) => m.linvel,
-            BodyPartMotion::Static(m) => Vector::zeros(),
+            BodyPartMotion::Static(_m) => Vector::zeros(),
         }
     }
 }
@@ -137,13 +137,13 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
         }
     }
 
-    fn advance(&mut self, time_ratio: N) { }
+    fn advance(&mut self, _time_ratio: N) { }
 
     fn validate_advancement(&mut self) { }
 
     fn clamp_advancement(&mut self) { }
 
-    fn part_motion(&self, part_id: usize, time_origin: N) -> Option<BodyPartMotion<N>> {
+    fn part_motion(&self, _part_id: usize, _time_origin: N) -> Option<BodyPartMotion<N>> {
         None
     }
 

@@ -1,6 +1,6 @@
 use na::{self, RealField};
 use crate::world::ColliderWorld;
-use crate::object::{Body, DefaultBodySet, BodySet, BodyHandle, ColliderHandle, ColliderSet};
+use crate::object::{Body, BodySet, BodyHandle, ColliderSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::utils::union_find::UnionFindSet;
 use crate::utils::union_find;

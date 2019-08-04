@@ -2,7 +2,7 @@ extern crate nalgebra as na;
 
 use na::{Point3, Vector3, Isometry3};
 use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nphysics3d::object::{MultibodyDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics3d::object::{MultibodyDesc, ColliderDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
 use nphysics3d::world::{DefaultDynamicWorld, DefaultColliderWorld};

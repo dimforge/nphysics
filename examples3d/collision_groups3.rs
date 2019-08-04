@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point3, Vector3};
-use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
+use ncollide3d::shape::{Cuboid, ShapeHandle};
 use ncollide3d::pipeline::object::CollisionGroups;
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground,
                          BodyPartHandle};

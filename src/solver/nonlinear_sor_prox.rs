@@ -1,9 +1,9 @@
 use na::{self, Dim, Dynamic, RealField, U1, VectorSliceMutN};
 use std::ops::MulAssign;
 
-use crate::world::ColliderWorld;
-use crate::joint::{JointConstraint, JointConstraintSet};
-use crate::object::{ColliderAnchor, BodySet, BodyHandle, Body, ColliderHandle, ColliderSet};
+
+use crate::joint::{JointConstraintSet};
+use crate::object::{ColliderAnchor, BodySet, Body, ColliderSet};
 use crate::solver::{ForceDirection, IntegrationParameters, NonlinearConstraintGenerator,
                     NonlinearUnilateralConstraint, GenericNonlinearConstraint};
 use crate::math::Isometry;

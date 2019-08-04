@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point2, Vector2, Point3, Isometry2};
-use ncollide2d::shape::{Ball, Cuboid, ShapeHandle, Polyline};
+use ncollide2d::shape::{Cuboid, ShapeHandle, Polyline};
 use nphysics2d::object::{MassConstraintSystemDesc, ColliderDesc, DeformableColliderDesc, RigidBodyDesc,
                          DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -44,7 +44,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Create the deformable body and a collider for its boundary.
      */
-    let mut polyline = Polyline::quad(50, 1)
+    let polyline = Polyline::quad(50, 1)
         .scaled(&Vector2::new(10.0, 1.0))
         .transformed(&Isometry2::translation(0.0, 1.0));
 
