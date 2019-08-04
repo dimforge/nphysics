@@ -1260,12 +1260,14 @@ impl<N: RealField> MultibodyDesc<N> {
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
+    /// Build the multibody described by this factory.
     pub fn build(&self) -> Multibody<N> {
         let mut multibody = Multibody::new();
         let _  = self.do_build_with_parent(&mut multibody, None);
         multibody
     }
 
+    /// Build the multibody links described by this factory and attach them to the `parent_id`-th link of the given `multibody`.
     pub fn build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: usize) -> &'m mut MultibodyLink<N> {
         self.do_build_with_parent(multibody, Some(parent_id))
     }

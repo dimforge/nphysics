@@ -51,7 +51,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderAnchor<N, Handle> {
     }
 }
 
-
+/// The data a collider set must return after a collider has been removed.
 pub struct ColliderRemovalData<N: RealField, Handle: BodyHandle> {
     pub(crate) anchor: ColliderAnchor<N, Handle>,
     pub(crate) shape: ShapeHandle<N>,
@@ -113,6 +113,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
         &self.anchor
     }
 
+    /// The density of this collider.
     pub fn density(&self) -> N {
         self.density
     }
@@ -162,6 +163,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
 pub struct Collider<N: RealField, Handle: BodyHandle>(pub(crate) CollisionObject<N, ColliderData<N, Handle>>); // FIXME: keep this pub(crate) or private?
 
 impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
+    /// Computes the data that needs to be returned once this collider has been removed from a collider set.
     pub fn removal_data(&self) -> Option<ColliderRemovalData<N, Handle>> {
         Some(ColliderRemovalData {
             anchor: self.0.data().anchor.clone(),
@@ -205,17 +207,20 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.data().margin()
     }
 
+    /// Sets the marging on this collider's shapes.
     #[inline]
     pub fn set_margin(&mut self, margin: N) {
         *self.0.update_flags_mut() |= CollisionObjectUpdateFlags::SHAPE_CHANGED;
         self.0.data_mut().margin = margin;
     }
 
+    /// Clear all the internal flags tracking changes made to this collider.
     #[inline]
     pub fn clear_update_flags(&mut self) {
         self.0.clear_update_flags()
     }
 
+    /// The density of this collider.
     #[inline]
     pub fn density(&self) -> N {
         self.0.data().density
@@ -359,6 +364,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.collision_groups()
     }
 
+    /// Sets the collision groups of this collider.
     #[inline]
     pub fn set_collision_groups(&mut self, groups: CollisionGroups) {
         self.0.set_collision_groups(groups)
@@ -512,7 +518,7 @@ impl<N: RealField> ColliderDesc<N> {
         [ref] get_position -> position: Isometry<N>
     );
 
-    // Returns `None` if the given body part does not exist.
+    /// Build a collider and configure it to be attached to the given parent body part.
     pub fn build<Handle: BodyHandle>(&self, parent_handle: BodyPartHandle<Handle>) -> Collider<N, Handle> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)
@@ -624,7 +630,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
         [val] get_ccd_enabled -> ccd_enabled: bool
     );
 
-
+    /// Build a deformable collider and configure it to be attached to the given parent body.
     pub fn build<Handle: BodyHandle>(&self, parent_handle: Handle) -> Collider<N, Handle> {
         let query = if self.is_sensor {
             GeometricQueryType::Proximity(self.linear_prediction)

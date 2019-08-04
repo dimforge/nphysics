@@ -174,34 +174,54 @@ impl<N: RealField> RigidBody<N> {
         self.set_translations_kinematic(Vector::repeat(false))
     }
 
+    /// Sets the linear damping coefficient of this rigid body.
+    ///
+    /// Linear damping will make the rigid body loose linear velocity automatically velocity at each timestep.
+    /// There is no damping by default.
     pub fn set_linear_damping(&mut self, damping: N) {
         self.linear_damping = damping
     }
 
+    /// The linear damping coefficient of this rigid body.
     pub fn linear_damping(&self) -> N {
         self.linear_damping
     }
 
+
+    /// Sets the angular damping coefficient of this rigid body.
+    ///
+    /// Angular damping will make the rigid body loose angular velocity automatically velocity at each timestep.
+    /// There is no damping by default.
     pub fn set_angular_damping(&mut self, damping: N) {
         self.angular_damping = damping
     }
 
+    /// The angular damping coefficient of this rigid body.
     pub fn angular_damping(&self) -> N {
         self.angular_damping
     }
 
+    /// Caps the linear velocity of this rigid body to the given maximum.
+    ///
+    /// This will prevent a rigid body from having a linear velocity with magnitude greater than `max_vel`.
     pub fn set_max_linear_velocity(&mut self, max_vel: N) {
         self.max_linear_velocity = max_vel
     }
 
+    /// The maximum allowed linear velocity of this rigid body.
     pub fn max_linear_velocity(&self) -> N {
         self.max_linear_velocity
     }
 
+
+    /// Caps the angular velocity of this rigid body to the given maximum.
+    ///
+    /// This will prevent a rigid body from having a angular velocity with magnitude greater than `max_vel`.
     pub fn set_max_angular_velocity(&mut self, max_vel: N) {
         self.max_angular_velocity = max_vel
     }
 
+    /// The maximum allowed angular velocity of this rigid body.
     pub fn max_angular_velocity(&self) -> N {
         self.max_angular_velocity
     }
@@ -910,6 +930,7 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
+    /// Builds a rigid body from this description.
     pub fn build(&self) -> RigidBody<N> {
         let mut rb = RigidBody::new(self.position);
         rb.set_velocity(self.velocity);

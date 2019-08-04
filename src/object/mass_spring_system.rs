@@ -859,6 +859,7 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
         [val] get_status -> status: BodyStatus
     );
 
+    /// Builds a mass-spring based deformable body from this description.
     pub fn build(&self) -> MassSpringSystem<N> {
         let mut vol = match self.geom {
             MassSpringSystemDescGeometry::Quad(nx, ny) => {

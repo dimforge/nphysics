@@ -19,6 +19,7 @@ use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::ColliderWorld;
 
+/// The default dynamic world, that can be used with a `DefaultBodySet` and `DefaultColliderHandle`.
 pub type DefaultDynamicWorld<N> = DynamicWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
 
 enum PredictedImpacts<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
@@ -50,10 +51,15 @@ struct SubstepState<N: RealField, Handle: BodyHandle> {
 
 /// The physics world.
 pub struct DynamicWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
+    /// Performance counters used for debugging and benchmarking nphysics.
     pub counters: Counters,
+    /// The constraints solver.
     pub solver: MoreauJeanSolver<N, Bodies, CollHandle>,
+    /// Parameters of the whole simulation.
     pub integration_parameters: IntegrationParameters<N>,
+    /// Coefficient table used for resolving material properties to apply at one contact.
     pub material_coefficients: MaterialsCoefficientsTable<N>,
+    /// The acting on this dynamic world.
     pub gravity: Vector<N>,
     activation_manager: ActivationManager<N, Bodies::Handle>,
     substep: SubstepState<N, Bodies::Handle>,
@@ -99,6 +105,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         self.integration_parameters.set_dt(dt);
     }
 
+    /// Maintain the internal structures of the dynamic world by handling insersion and removal
+    /// events from every sets this dynamic world interacts with.
     pub fn maintain<Colliders, Constraints>(&mut self,
                                             cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
                                             bodies: &mut Bodies,
@@ -489,7 +497,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
 
 
-    pub fn solve_ccd<Colliders, Constraints, Forces>(&mut self,
+    fn solve_ccd<Colliders, Constraints, Forces>(&mut self,
                                                 cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
                                                 bodies: &mut Bodies,
                                                 colliders: &mut Colliders,

@@ -16,6 +16,7 @@ impl Timer {
         }
     }
 
+    /// Resets the timer to 0.
     pub fn reset(&mut self) {
         self.time = 0.0
     }

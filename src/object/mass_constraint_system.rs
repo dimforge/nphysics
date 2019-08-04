@@ -877,6 +877,7 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
         [val] get_status -> status: BodyStatus
     );
 
+    /// Builds a mass-constraint based deformable body from this description.
     pub fn build(&self) -> MassConstraintSystem<N> {
         let mut vol = match self.geom {
             MassConstraintSystemDescGeometry::Quad(nx, ny) => {

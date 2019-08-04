@@ -20,6 +20,7 @@ use crate::object::{Collider, ColliderHandle, DefaultColliderHandle, ColliderAnc
 use crate::math::Point;
 
 
+/// The default collider world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
 pub type DefaultColliderWorld<N> = ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
 
 /// The world managing all geometric queries.
@@ -40,6 +41,7 @@ pub struct ColliderWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderH
 }
 
 impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld<N, Handle, CollHandle> {
+    /// Creates a collider world from the provided broad-phase and narrow-phase structures.
     pub fn from_parts<BF>(broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
         where BF: BroadPhase<N, AABB<N>, CollHandle> {
 
@@ -74,6 +76,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         collider.set_graph_index(Some(proxies.1));
     }
 
+    /// Maintain the internal structures of the collider world by handling body removals and colliders insersion and removals.
     pub fn maintain<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
         where Bodies: BodySet<N, Handle = Handle>,
               Colliders: ColliderSet<N, Handle, Handle = CollHandle> {

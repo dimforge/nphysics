@@ -1111,6 +1111,7 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
         [ref] get_scale -> scale: Vector3<N>
     );
 
+    /// Builds a finite-element based deformable body from this description.
     pub fn build(&self) -> FEMVolume<N> {
         let mut vol = match self.geom {
             FEMVolumeDescGeometry::Cube(nx, ny, nz) =>

@@ -17,6 +17,7 @@ pub struct Ground<N: RealField> {
 }
 
 impl<N: RealField> Ground<N> {
+    /// Build a new ground structrure.
     pub fn new() -> Self {
         Ground {
             companion_id: 0,

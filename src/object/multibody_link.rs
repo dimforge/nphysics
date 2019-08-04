@@ -105,11 +105,13 @@ impl<N: RealField> MultibodyLink<N> {
         &mut *self.dof
     }
 
+    /// The shift between this link's parent and this link joint origin.
     #[inline]
     pub fn parent_shift(&self) -> &Vector<N> {
         &self.parent_shift
     }
 
+    /// The shift between this link's joint origin and this link origin.
     #[inline]
     pub fn body_shift(&self) -> &Vector<N> {
         &self.body_shift

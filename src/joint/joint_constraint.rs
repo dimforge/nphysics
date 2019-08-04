@@ -7,24 +7,54 @@ use na::{DVector, RealField};
 use crate::object::{BodyPartHandle, BodySet, Body, DefaultBodySet};
 use crate::solver::{LinearConstraints, IntegrationParameters, NonlinearConstraintGenerator};
 
-
+/// Trait implemented by sets of constraint-based joints.
+///
+/// A set of constraint-based joints maps a joint handle to a joint instance. In addition, it must maintain a set of
+/// joint handle of joints that have been inserted removed (see the `pop_insertion_event` and `pop_removal_event` methods for details).
 pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
+    /// Type of a constraint-based joints stored in this set.
     type JointConstraint: ?Sized + JointConstraint<N, Bodies>;
+    /// Type of a joint handle identifying a joint in this set.
     type Handle: Copy;
 
+    /// Gets a reference to the joint identified by `handle`.
     fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint>;
+    /// Gets a mutable reference to the joint identified by `handle`.
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::JointConstraint>;
 
+
+    /// Check if this set contains a joint identified by `handle`.
     fn contains(&self, handle: Self::Handle) -> bool;
 
+    /// Iterate through all the bodies on this set, applying the closure `f` on them.
     fn foreach(&self, f: impl FnMut(Self::Handle, &Self::JointConstraint));
+    /// Mutable iterates through all the bodies on this set, applying the closure `f` on them.
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::JointConstraint));
 
+    /// Gets the handle of one joint that has been inserted.
+    ///
+    /// A joint set must keep track (using typically a stack or a queue) of every joint that has been
+    /// inserted into it. This is used by nphysics to perform some internal setup actions, or
+    /// physical actions like waking bodies attached to this joint.
+    ///
+    /// This method should return a removed joint handle only once.
     fn pop_insertion_event(&mut self) -> Option<(Self::Handle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>;
+    /// Gets the handle of one joint that has been removed.
+    ///
+    /// A joint set must keep track (using typically a stack or a queue) of every joint that has been
+    /// removed from it. This is used by nphysics to perform some internal cleanup actions, or
+    /// physical actions like waking bodies that were attached to this joint.
     fn pop_removal_event(&mut self) -> Option<(Self::Handle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>;
+    /// Remove a joint from this set.
+    ///
+    /// A constraint-based joint can be removed automatically by nphysics when one of its attached
+    /// bodies is removed from the dynamic world.
     fn remove(&mut self, to_remove: Self::Handle);
 }
 
+/// A set containing all the joint-constraints added to the world.
+///
+/// It is based on an arena using generational indices to avoid the ABA problem.
 pub struct DefaultJointConstraintSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> {
     constraints: Arena<Box<JointConstraint<N, Bodies>>>,
     inserted: Vec<(DefaultJointConstraintHandle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>,
@@ -32,6 +62,7 @@ pub struct DefaultJointConstraintSet<N: RealField, Bodies: BodySet<N> = DefaultB
 }
 
 impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
+    /// Creates an empty set.
     pub fn new() -> Self {
         DefaultJointConstraintSet {
             constraints: Arena::new(),
@@ -40,10 +71,12 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
         }
     }
 
+    /// Adds a joint to this set.
     pub fn insert(&mut self, constraint: impl JointConstraint<N, Bodies>) -> DefaultJointConstraintHandle {
         self.insert_boxed(Box::new(constraint))
     }
 
+    /// Adds a joint (represented as a boxed trait-object) to this set.
     pub fn insert_boxed(&mut self, constraint: Box<JointConstraint<N, Bodies>>) -> DefaultJointConstraintHandle {
         let (part1, part2) = constraint.anchors();
         let handle = self.constraints.insert(constraint);
@@ -51,6 +84,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
         handle
     }
 
+    /// Removes a joint from this set.
     pub fn remove(&mut self, to_remove: DefaultJointConstraintHandle) -> Option<Box<JointConstraint<N, Bodies>>> {
         let res = self.constraints.remove(to_remove)?;
         let (part1, part2) = res.anchors();
@@ -58,22 +92,27 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
         Some(res)
     }
 
+    /// Check if this set contains a joint identified by `handle`.
     pub fn contains(&self, handle: DefaultJointConstraintHandle) -> bool {
         self.constraints.contains(handle)
     }
 
+    /// Gets a reference to the joint identified by `handle`.
     pub fn get(&self, handle: DefaultJointConstraintHandle) -> Option<&JointConstraint<N, Bodies>> {
         self.constraints.get(handle).map(|b| &**b)
     }
 
+    /// Gets a mutable reference to the joint identified by `handle`.
     pub fn get_mut(&mut self, handle: DefaultJointConstraintHandle) -> Option<&mut JointConstraint<N, Bodies>> {
         self.constraints.get_mut(handle).map(|b| &mut **b)
     }
 
+    /// Iter through all the joints and their handles.
     pub fn iter(&self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &JointConstraint<N, Bodies>)> {
         self.constraints.iter().map(|b| (b.0, &**b.1))
     }
 
+    /// Mutably iter through all the joints and their handles.
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &mut JointConstraint<N, Bodies>)> {
         self.constraints.iter_mut().map(|b| (b.0, &mut **b.1))
     }
@@ -121,7 +160,7 @@ impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> f
 }
 
 
-/// The handle of a constraint.
+/// The handle of a joint on a `DefaultJointConstraintsSet`.
 pub type DefaultJointConstraintHandle = generational_arena::Index;
 
 /// Trait implemented by joint that operate by generating constraints to restrict the relative motion of two body parts.

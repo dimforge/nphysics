@@ -1047,6 +1047,7 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
         [ref] get_scale -> scale: Vector<N>
     );
 
+    /// Builds a finite-element based deformable body from this description.
     pub fn build(&self) -> FEMSurface<N> {
         let mut vol = match self.geom {
             FEMSurfaceDescGeometry::Quad(nx, ny) =>
