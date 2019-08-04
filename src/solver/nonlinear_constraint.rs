@@ -57,7 +57,7 @@ impl<N: RealField, Handle: BodyHandle> GenericNonlinearConstraint<N, Handle> {
 
 /// Implemented by structures that generate non-linear constraints.
 pub trait NonlinearConstraintGenerator<N: RealField, Bodies: BodySet<N>> {
-    /// Maximum of non-linear position constraint this generater needs to output.
+    /// Maximum of non-linear position constraint this generator needs to output.
     fn num_position_constraints(&self, bodies: &Bodies) -> usize;
     /// Generate the `i`-th position constraint of this generator.
     fn position_constraint(

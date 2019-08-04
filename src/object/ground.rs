@@ -2,7 +2,8 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use ncollide::shape::DeformationsType;
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity, Translation};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, BodyUpdateStatus, Body, BodyPart, DefaultBodyHandle};
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, BodyUpdateStatus, Body, BodyPart,
+                    BodyPartMotion, DefaultBodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
 /// A singleton representing the ground.
@@ -11,7 +12,6 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 /// similar to the other bodies.
 #[derive(Clone, Debug)]
 pub struct Ground<N: RealField> {
-    name: String,
     companion_id: usize,
     activation: ActivationStatus<N>,
     data: [N; 0],
@@ -20,7 +20,6 @@ pub struct Ground<N: RealField> {
 impl<N: RealField> Ground<N> {
     pub fn new() -> Self {
         Ground {
-            name: String::new(),
             companion_id: 0,
             activation: ActivationStatus::new_inactive(),
             data: [],
@@ -29,16 +28,6 @@ impl<N: RealField> Ground<N> {
 }
 
 impl<N: RealField> Body<N> for Ground<N> {
-    #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     #[inline]
     fn gravity_enabled(&self) -> bool {
         false
@@ -207,6 +196,10 @@ impl<N: RealField> Body<N> for Ground<N> {
     fn validate_advancement(&mut self) { }
 
     fn clamp_advancement(&mut self) { }
+
+    fn part_motion(&self, _: usize, _: N) -> Option<BodyPartMotion<N>> {
+        Some(BodyPartMotion::Static(Isometry::identity()))
+    }
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {

@@ -73,7 +73,6 @@ fn key(i: usize, j: usize) -> (usize, usize) {
 
 /// A deformable surface using a mass-LengthConstraint model with triangular elements.
 pub struct MassConstraintSystem<N: RealField> {
-    name: String,
     constraints: Vec<LengthConstraint<N>>,
     elements: Vec<MassConstraintElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -139,7 +138,6 @@ impl<N: RealField> MassConstraintSystem<N> {
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
         MassConstraintSystem {
-            name: String::new(),
             constraints: constraints.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(mesh.points().len(), false),
@@ -193,7 +191,6 @@ impl<N: RealField> MassConstraintSystem<N> {
 //        println!("Number of nodes: {}, of constraints: {}", positions.len() / DIM, constraints.len());
 
         MassConstraintSystem {
-            name: String::new(),
             constraints: constraints.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(polyline.points().len(), false),
@@ -321,16 +318,6 @@ impl<N: RealField> MassConstraintSystem<N> {
 }
 
 impl<N: RealField> Body<N> for MassConstraintSystem<N> {
-    #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -808,7 +795,6 @@ enum MassConstraintSystemDescGeometry<'a, N: RealField> {
 
 /// A builder of a mass-constraint system.
 pub struct MassConstraintSystemDesc<'a, N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     geom: MassConstraintSystemDescGeometry<'a, N>,
     stiffness: Option<N>,
@@ -825,7 +811,6 @@ pub struct MassConstraintSystemDesc<'a, N: RealField> {
 impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     fn with_geometry(geom: MassConstraintSystemDescGeometry<'a, N>) -> Self {
         MassConstraintSystemDesc {
-            name: String::new(),
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -866,7 +851,6 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
     desc_custom_setters!(
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
-        self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
@@ -883,7 +867,6 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
         self.get_plasticity_creep: N | { self.plasticity.1 }
         self.get_plasticity_max_force: N | { self.plasticity.2 }
         self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
-        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -915,7 +898,6 @@ impl<'a, N: RealField> MassConstraintSystemDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
-        vol.set_name(self.name.clone());
         vol.set_status(self.status);
         let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 

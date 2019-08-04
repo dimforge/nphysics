@@ -66,7 +66,6 @@ pub struct ColliderRemovalData<N: RealField, Handle: BodyHandle> {
 ///
 /// Those are needed by nphysics.
 pub struct ColliderData<N: RealField, Handle: BodyHandle> {
-    name: String,
     margin: N,
     density: N,
     anchor: ColliderAnchor<N, Handle>,
@@ -80,7 +79,6 @@ pub struct ColliderData<N: RealField, Handle: BodyHandle> {
 impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
     /// Initializes data for a collider.
     pub fn new(
-        name: String,
         margin: N,
         density: N,
         anchor: ColliderAnchor<N, Handle>,
@@ -88,7 +86,6 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
         material: MaterialHandle<N>,
     ) -> Self {
         ColliderData {
-            name,
             margin,
             density,
             anchor,
@@ -273,21 +270,6 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
         self.0.data_mut().ccd_enabled = enabled
     }
 
-
-    /// The user-defined name of this collider.
-    #[inline]
-    pub fn name(&self) -> &str {
-        &self.0.data().name
-    }
-
-    /// Sets the name of this collider.
-    #[inline]
-    pub fn set_name(&mut self, name: String) {
-        self.0.data_mut().name = name
-    }
-
-
-
     #[inline]
     pub(crate) fn body_status_dependent_ndofs(&self) -> usize {
         self.0.data().body_status_dependent_ndofs
@@ -435,7 +417,6 @@ impl<N: RealField, Handle: BodyHandle> CollisionObjectRef<N> for Collider<N, Han
 ///
 /// See https://www.nphysics.org/rigid_body_simulations_with_contacts/#colliders for details.
 pub struct ColliderDesc<N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     margin: N,
     collision_groups: CollisionGroups,
@@ -456,7 +437,6 @@ impl<N: RealField> ColliderDesc<N> {
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
         ColliderDesc {
-            name: String::new(),
             user_data: None,
             shape,
             margin: Self::default_margin(),
@@ -498,7 +478,6 @@ impl<N: RealField> ColliderDesc<N> {
         shape, set_shape, shape: ShapeHandle<N>
         margin, set_margin, margin: N
         density, set_density, density: N
-        name, set_name, name: String
         collision_groups, set_collision_groups, collision_groups: CollisionGroups
         linear_prediction, set_linear_prediction, linear_prediction: N
         angular_prediction, set_angular_prediction, angular_prediction: N
@@ -519,7 +498,6 @@ impl<N: RealField> ColliderDesc<N> {
 
     desc_custom_getters!(
         self.get_shape: &Shape<N> | { &*self.shape }
-        self.get_name: &str | { &self.name }
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
@@ -548,7 +526,7 @@ impl<N: RealField> ColliderDesc<N> {
 
         let anchor = ColliderAnchor::OnBodyPart { body_part: parent_handle, position_wrt_body_part: self.position };
         let material = self.material.clone().unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
-        let mut data = ColliderData::new(self.name.clone(), self.margin, self.density, anchor, 0, material);
+        let mut data = ColliderData::new(self.margin, self.density, anchor, 0, material);
         data.ccd_enabled = self.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
         let co = CollisionObject::new(None, None, self.position, self.shape.clone(), self.collision_groups, query, data);
@@ -560,7 +538,6 @@ impl<N: RealField> ColliderDesc<N> {
 
 /// A deformable collider builder.
 pub struct DeformableColliderDesc<N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     margin: N,
     collision_groups: CollisionGroups,
@@ -584,7 +561,6 @@ impl<N: RealField> DeformableColliderDesc<N> {
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
         DeformableColliderDesc {
-            name: String::new(),
             user_data: None,
             shape,
             margin: na::convert(0.01),
@@ -625,7 +601,6 @@ impl<N: RealField> DeformableColliderDesc<N> {
     );
 
     desc_setters!(
-        name, set_name, name: String
         margin, set_margin, margin: N
         collision_groups, set_collision_groups, collision_groups: CollisionGroups
         linear_prediction, set_linear_prediction, linear_prediction: N
@@ -637,7 +612,6 @@ impl<N: RealField> DeformableColliderDesc<N> {
 
     desc_custom_getters!(
         self.get_shape: &Shape<N> | { &*self.shape }
-        self.get_name: &str | { &self.name }
         self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );
@@ -665,7 +639,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
         let body_parts = self.body_parts_mapping.clone();
         let anchor = ColliderAnchor::OnDeformableBody { body: parent_handle, body_parts };
         let material = self.material.clone().unwrap_or_else(|| MaterialHandle::new(BasicMaterial::default()));
-        let mut data = ColliderData::new(self.name.clone(), self.margin, N::zero(), anchor, 0, material);
+        let mut data = ColliderData::new(self.margin, N::zero(), anchor, 0, material);
         data.ccd_enabled = data.ccd_enabled;
         data.user_data = self.user_data.as_ref().map(|data| data.0.to_any());
 

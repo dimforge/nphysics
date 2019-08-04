@@ -4,11 +4,45 @@ use downcast_rs::Downcast;
 
 use na::{self, DVectorSlice, DVectorSliceMut, RealField};
 use ncollide::shape::DeformationsType;
+use ncollide::interpolation::{RigidMotion, ConstantLinearVelocityRigidMotion,
+                              ConstantVelocityRigidMotion};
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
 use crate::object::{BodyPartHandle, DefaultBodyHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
+pub enum BodyPartMotion<N: RealField> {
+    RigidLinear(ConstantLinearVelocityRigidMotion<N>),
+    RigidNonlinear(ConstantVelocityRigidMotion<N>),
+    Static(Isometry<N>),
+}
+
+impl<N: RealField> BodyPartMotion<N> {
+    pub(crate) fn is_static_or_linear(&self) -> bool {
+        match self {
+            BodyPartMotion::RigidLinear(_) | BodyPartMotion::Static(_) => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn linvel(&self) -> Vector<N> {
+        match self {
+            BodyPartMotion::RigidLinear(m) => m.velocity,
+            BodyPartMotion::RigidNonlinear(m) => m.linvel,
+            BodyPartMotion::Static(m) => Vector::zeros(),
+        }
+    }
+}
+
+impl<N: RealField> RigidMotion<N> for BodyPartMotion<N> {
+    fn position_at_time(&self, t: N) -> Isometry<N> {
+        match self {
+            BodyPartMotion::RigidLinear(m) => m.position_at_time(t),
+            BodyPartMotion::RigidNonlinear(m) => m.position_at_time(t),
+            BodyPartMotion::Static(m) => m.position_at_time(t),
+        }
+    }
+}
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -91,12 +125,6 @@ impl<N: RealField> ActivationStatus<N> {
 
 /// Trait implemented by all bodies supported by nphysics.
 pub trait Body<N: RealField>: Downcast + Send + Sync {
-    /// The name of this body.
-    fn name(&self) -> &str;
-
-    /// Sets the name of this body.
-    fn set_name(&mut self, name: String);
-
     /// Returns `true` if this body is the ground.
     fn is_ground(&self) -> bool {
         false
@@ -110,8 +138,14 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     }
 
     fn advance(&mut self, time_ratio: N) { }
+
     fn validate_advancement(&mut self) { }
+
     fn clamp_advancement(&mut self) { }
+
+    fn part_motion(&self, part_id: usize, time_origin: N) -> Option<BodyPartMotion<N>> {
+        None
+    }
 
     fn step_started(&mut self) {  }
 

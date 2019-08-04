@@ -124,6 +124,7 @@ impl GraphicsManager {
         self.rays.clear();
         self.b2color.clear();
         self.c2color.clear();
+        self.b2wireframe.clear();
         self.rand = StdRng::seed_from_u64(0);
     }
 

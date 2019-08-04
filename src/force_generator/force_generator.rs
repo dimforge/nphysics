@@ -7,7 +7,7 @@ use na::RealField;
 use crate::object::{BodySet, DefaultBodySet};
 use crate::solver::IntegrationParameters;
 
-pub type DefaultForceGeneratorSet<N: RealField> = Arena<Box<ForceGenerator<N, DefaultBodySet<N>>>>;
+pub type DefaultForceGeneratorSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> = Arena<Box<ForceGenerator<N, Bodies>>>;
 
 pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
     type ForceGenerator: ?Sized + ForceGenerator<N, Bodies>;
@@ -22,7 +22,7 @@ pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
     fn foreach_mut(&mut self, f: impl FnMut(Self::Handle, &mut Self::ForceGenerator));
 }
 
-impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for Arena<Box<ForceGenerator<N, Bodies>>> {
+impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for DefaultForceGeneratorSet<N, Bodies> {
     type ForceGenerator = ForceGenerator<N, Bodies>;
     type Handle = DefaultForceGeneratorHandle;
 

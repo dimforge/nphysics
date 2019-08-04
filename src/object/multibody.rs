@@ -19,7 +19,6 @@ use crate::utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: RealField> {
-    name: String,
     rbs: MultibodyLinkVec<N>,
     velocities: DVector<N>,
     damping: DVector<N>,
@@ -58,7 +57,6 @@ impl<N: RealField> Multibody<N> {
     /// Creates a new multibody with no link.
     fn new() -> Self {
         Multibody {
-            name: String::new(),
             rbs: MultibodyLinkVec(Vec::new()),
             velocities: DVector::zeros(0),
             forces: DVector::zeros(0),
@@ -747,16 +745,6 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> SolverWorkspa
 }
 
 impl<N: RealField> Body<N> for Multibody<N> {
-    #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     #[inline]
     fn part(&self, id: usize) -> Option<&BodyPart<N>> {
         self.link(id).map(|l| l as &BodyPart<N>)

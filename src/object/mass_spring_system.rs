@@ -63,7 +63,6 @@ impl<N: RealField> Spring<N> {
 
 /// A deformable surface using a mass-spring model with triangular elements.
 pub struct MassSpringSystem<N: RealField> {
-    name: String,
     springs: Vec<Spring<N>>,
     elements: Vec<MassSpringElement<N>>,
     kinematic_nodes: DVector<bool>,
@@ -137,7 +136,6 @@ impl<N: RealField> MassSpringSystem<N> {
         let node_mass = mass / na::convert((ndofs / DIM) as f64);
 
         MassSpringSystem {
-            name: String::new(),
             springs: springs.values().cloned().collect(),
             elements,
             kinematic_nodes: DVector::repeat(ndofs / DIM, false),
@@ -193,7 +191,6 @@ impl<N: RealField> MassSpringSystem<N> {
 //        println!("Number of nodes: {}, of springs: {}", positions.len() / DIM, springs.len());
 
         MassSpringSystem {
-            name: String::new(),
             springs: springs.values().cloned().collect(),
             kinematic_nodes: DVector::repeat(ndofs / DIM, false),
             elements,
@@ -455,16 +452,6 @@ impl<N: RealField> MassSpringSystem<N> {
 }
 
 impl<N: RealField> Body<N> for MassSpringSystem<N> {
-    #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -791,7 +778,6 @@ enum MassSpringSystemDescGeometry<'a, N: RealField> {
 
 /// A builder for mass-spring systems.
 pub struct MassSpringSystemDesc<'a, N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     geom: MassSpringSystemDescGeometry<'a, N>,
     stiffness: N,
@@ -807,7 +793,6 @@ pub struct MassSpringSystemDesc<'a, N: RealField> {
 impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     fn with_geometry(geom: MassSpringSystemDescGeometry<'a, N>) -> Self {
         MassSpringSystemDesc {
-            name: String::new(),
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -848,7 +833,6 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
     desc_custom_setters!(
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
-        self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
@@ -865,7 +849,6 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
         self.get_plasticity_creep: N | { self.plasticity.1 }
         self.get_plasticity_max_force: N | { self.plasticity.2 }
         self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
-        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -897,7 +880,6 @@ impl<'a, N: RealField> MassSpringSystemDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
-        vol.set_name(self.name.clone());
         vol.set_status(self.status);
         let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 

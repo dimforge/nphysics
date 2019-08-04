@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use na::{self, RealField};
 use ncollide;
-use ncollide::query::{self, NonlinearTOIStatus, Proximity};
+use ncollide::query::{self, TOIStatus, Proximity};
 use ncollide::narrow_phase::{Interaction, ContactEvents, ProximityEvents};
 use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion};
 
@@ -12,7 +12,7 @@ use crate::force_generator::{ForceGenerator, DefaultForceGeneratorHandle, ForceG
 use crate::joint::{DefaultJointConstraintHandle, JointConstraint, JointConstraintSet};
 use crate::math::{Vector, Velocity};
 use crate::object::{
-    Body, DefaultBodySet, BodyDesc, BodyStatus, Collider, ColliderAnchor, ColliderHandle,
+    Body, DefaultBodySet, BodyDesc, BodyStatus, BodyPartMotion, Collider, ColliderAnchor, ColliderHandle,
     DefaultColliderHandle, Multibody, RigidBody, DefaultBodyHandle, BodySet, BodyHandle, ColliderSet,
 };
 use crate::material::MaterialsCoefficientsTable;
@@ -458,7 +458,11 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         continue;
                     }
 
-                    if frozen.contains_key(&c1.body()) && frozen.contains_key(&c2.body()) {
+                    let frozen1 = frozen.get(&c1.body()).cloned();
+                    let frozen2 = frozen.get(&c2.body()).cloned();
+
+                    if (frozen1.is_some() || c1.body_status_dependent_ndofs() == 0) &&
+                        (frozen2.is_some() || c2.body_status_dependent_ndofs() == 0) {
                         continue;
                     }
 
@@ -468,8 +472,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     let timestamp = timestamps.entry((ch1, ch2)).or_insert(0);
                     *timestamp += 1;
 
-                    let frozen1 = frozen.get(&c1.body()).cloned();
-                    let frozen2 = frozen.get(&c2.body()).cloned();
 
                     if let Some(mut toi) = TOIEntry::try_from_colliders(
                         ch1, ch2, c1, c2, b1, b2, inter.is_proximity(), frozen1, frozen2, &self.integration_parameters, end_time, &self.substep.body_times) {
@@ -820,41 +822,33 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         let time_origin2 = time2 - start_time;
 
         // Compute the TOI.
-        let p1 = b1.part(0).unwrap();
-        let p2 = b2.part(0).unwrap();
-
-        let start1 = p1.safe_position();
-        let start2 = p2.safe_position();
-        let vel1 = p1.velocity();
-        let vel2 = p2.velocity();
-        let mut motion1 = ConstantVelocityRigidMotion::new(time_origin1, start1, p1.local_center_of_mass(), vel1.linear, vel1.angular);
-        let mut motion2 = ConstantVelocityRigidMotion::new(time_origin2, start2, p2.local_center_of_mass(), vel2.linear, vel2.angular);
+        let mut motion1 = b1.part_motion(0, time_origin1)?;
+        let mut motion2 = b2.part_motion(0, time_origin2)?;
 
         if let Some(t) = frozen1 {
-            motion1.t0 = body_time1;
-            let pos = motion1.position_at_time(t);
-            motion1.start = pos;
-            motion1.linvel = na::zero();
-            motion1.angvel = na::zero();
+            let pos = motion1.position_at_time(t + time_origin1 - body_time1);
+            motion1 = BodyPartMotion::Static(pos);
         }
 
         if let Some(t) = frozen2 {
-            motion2.t0 = body_time2;
-            let pos = motion2.position_at_time(t);
-            motion2.start = pos;
-            motion2.linvel = na::zero();
-            motion2.angvel = na::zero();
+            let pos = motion2.position_at_time(t + time_origin2 - body_time2);
+            motion2 = BodyPartMotion::Static(pos);
         }
 
-        let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
-        let motion2 = motion2.prepend_transformation(c2.position_wrt_body());
-
         let remaining_time = end_time - start_time;
+        let toi;
 
-//                                if let Some(toi) = query::time_of_impact(&pos1, &v1, &**c1.shape(), &pos2, &v2, &**c2.shape(), target) {
-        let toi = query::nonlinear_time_of_impact(&motion1, c1.shape(), &motion2, c2.shape(), remaining_time, target)?;
+        if motion1.is_static_or_linear() && motion2.is_static_or_linear() {
+            let pos1 = motion1.position_at_time(N::zero()) * c1.position_wrt_body();
+            let pos2 = motion2.position_at_time(N::zero()) * c2.position_wrt_body();
+            toi = query::time_of_impact(&pos1, &motion1.linvel(), c1.shape(), &pos2, &motion2.linvel(), c2.shape(), target)?
+        } else {
+            let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
+            let motion2 = motion2.prepend_transformation(c2.position_wrt_body());
+            toi = query::nonlinear_time_of_impact(&motion1, c1.shape(), &motion2, c2.shape(), remaining_time, target)?
+        }
 
-        if params.ccd_on_penetration_enabled || toi.status != NonlinearTOIStatus::Penetrating {
+        if params.ccd_on_penetration_enabled || toi.status != TOIStatus::Penetrating {
             let toi = start_time + toi.toi;
             Some(Self::new(toi, ch1, c1.body(), ch2, c2.body(), is_proximity, 0))
         } else {

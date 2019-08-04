@@ -3,13 +3,13 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, DefaultBodyHandle,
+use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyPartMotion, DefaultBodyHandle,
                     ColliderDesc, BodyDesc, BodyUpdateStatus, DefaultBodySet, DefaultColliderHandle};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::world::ColliderWorld;
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
-use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion};
+use ncollide::interpolation::{RigidMotion, RigidMotionComposition, ConstantVelocityRigidMotion, ConstantLinearVelocityRigidMotion};
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
@@ -20,7 +20,6 @@ use crate::utils::GeneralizedCross;
 /// A rigid body.
 #[derive(Debug)]
 pub struct RigidBody<N: RealField> {
-    name: String,
     position0: Isometry<N>,
     position: Isometry<N>,
     velocity: Velocity<N>,
@@ -52,7 +51,6 @@ impl<N: RealField> RigidBody<N> {
         let com = Point::from(position.translation.vector);
 
         RigidBody {
-            name: String::new(),
             position0: position,
             position,
             velocity: Velocity::zero(),
@@ -341,16 +339,6 @@ impl<N: RealField> RigidBody<N> {
 
 impl<N: RealField> Body<N> for RigidBody<N> {
     #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
-    #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }
@@ -488,7 +476,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn advance(&mut self, time_ratio: N) {
-        let motion = ConstantVelocityRigidMotion::new(N::zero(), self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
+        let motion = self.part_motion(0, N::zero()).unwrap();
         self.position0 = motion.position_at_time(time_ratio);
     }
 
@@ -498,6 +486,15 @@ impl<N: RealField> Body<N> for RigidBody<N> {
 
     fn clamp_advancement(&mut self) {
         self.set_position(self.position0);
+    }
+
+    fn part_motion(&self, _: usize, time_origin: N) -> Option<BodyPartMotion<N>> {
+//        let motion = ConstantVelocityRigidMotion::new(time_origin, self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
+//        Some(BodyPartMotion::RigidNonlinear(motion))
+
+        let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
+        let motion = ConstantLinearVelocityRigidMotion::new(time_origin, p0, self.velocity.linear);
+        Some(BodyPartMotion::RigidLinear(motion))
     }
 
     #[allow(unused_variables)] // for parameters used only in 3D.
@@ -802,7 +799,6 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
 /// this initialization (including after calls to `.build`).
 #[derive(Clone)]
 pub struct RigidBodyDesc<N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
     position: Isometry<N>,
@@ -826,7 +822,6 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
     /// A default rigid body builder.
     pub fn new() -> RigidBodyDesc<N> {
         RigidBodyDesc {
-            name: String::new(),
             user_data: None,
             gravity_enabled: true,
             position: Isometry::identity(),
@@ -871,7 +866,6 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
     desc_setters!(
         gravity_enabled, enable_gravity, gravity_enabled: bool
         status, set_status, status: BodyStatus
-        name, set_name, name: String
         position, set_position, position: Isometry<N>
         velocity, set_velocity, velocity: Velocity<N>
         linear_damping, set_linear_damping, linear_damping: N
@@ -901,7 +895,6 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
     desc_custom_getters!(
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_mass: N | { self.local_inertia.linear }
-        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -927,7 +920,6 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
         rb.set_deactivation_threshold(self.sleep_threshold);
         rb.set_translations_kinematic(self.kinematic_translations);
         rb.enable_gravity(self.gravity_enabled);
-        rb.set_name(self.name.clone());
         rb.set_linear_damping(self.linear_damping);
         rb.set_angular_damping(self.angular_damping);
         rb.set_max_linear_velocity(self.max_linear_velocity);

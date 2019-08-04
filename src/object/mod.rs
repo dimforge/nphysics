@@ -1,6 +1,6 @@
 //! Objects that may be added to the physical world.
 
-pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus};
+pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus, BodyPartMotion};
 pub use self::body_set::{
     BodyPartHandle, DefaultBodySet, BodySet,
     DefaultBodyHandle, DefaultBodyPartHandle, BodyDesc, BodyHandle

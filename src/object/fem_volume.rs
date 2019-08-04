@@ -40,7 +40,6 @@ pub struct TetrahedralElement<N: RealField> {
 /// The volume is described by a set of tetrahedral elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMVolume<N: RealField> {
-    name: String,
     elements: Vec<TetrahedralElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -128,7 +127,6 @@ impl<N: RealField> FEMVolume<N> {
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
         FEMVolume {
-            name: String::new(),
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
             positions: rest_positions.clone(),
@@ -673,16 +671,6 @@ impl<N: RealField> FEMVolume<N> {
 
 impl<N: RealField> Body<N> for FEMVolume<N> {
     #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
-    #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
     }
@@ -1026,7 +1014,6 @@ enum FEMVolumeDescGeometry<'a, N: RealField> {
 
 /// A builder for FEMVolume bodies.
 pub struct FEMVolumeDesc<'a, N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
     geom: FEMVolumeDescGeometry<'a, N>,
@@ -1048,7 +1035,6 @@ pub struct FEMVolumeDesc<'a, N: RealField> {
 impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
     fn with_geometry(geom: FEMVolumeDescGeometry<'a, N>) -> Self {
         FEMVolumeDesc {
-            name: String::new(),
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -1090,7 +1076,6 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.translation, set_translation, vector: Vector3<N> | { self.position.translation.vector = vector }
-        self.name, set_name, name: String | { self.name = name }
     );
 
     desc_setters!(
@@ -1112,7 +1097,6 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
         self.get_plasticity_max_force: N | { self.plasticity.2 }
         self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
         self.get_translation: &Vector3<N> | { &self.position.translation.vector }
-        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -1145,7 +1129,6 @@ impl<'a, N: RealField> FEMVolumeDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
-        vol.set_name(self.name.clone());
         vol.set_status(self.status);
         let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 

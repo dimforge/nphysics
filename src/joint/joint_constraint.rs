@@ -4,7 +4,7 @@ use downcast_rs::Downcast;
 use generational_arena::Arena;
 use na::{DVector, RealField};
 
-use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle, DefaultBodySet, DefaultBodyPartHandle};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle, DefaultBodySet};
 use crate::solver::{LinearConstraints, IntegrationParameters, NonlinearConstraintGenerator};
 
 
@@ -25,13 +25,13 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     fn remove(&mut self, to_remove: Self::Handle);
 }
 
-pub struct DefaultJointConstraintSet<N: RealField> {
-    constraints: Arena<Box<JointConstraint<N, DefaultBodySet<N>>>>,
-    inserted: Vec<(DefaultJointConstraintHandle, DefaultBodyPartHandle, DefaultBodyPartHandle)>,
-    removed: Vec<(DefaultJointConstraintHandle, DefaultBodyPartHandle, DefaultBodyPartHandle)>,
+pub struct DefaultJointConstraintSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> {
+    constraints: Arena<Box<JointConstraint<N, Bodies>>>,
+    inserted: Vec<(DefaultJointConstraintHandle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>,
+    removed: Vec<(DefaultJointConstraintHandle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>,
 }
 
-impl<N: RealField> DefaultJointConstraintSet<N> {
+impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     pub fn new() -> Self {
         DefaultJointConstraintSet {
             constraints: Arena::new(),
@@ -40,43 +40,43 @@ impl<N: RealField> DefaultJointConstraintSet<N> {
         }
     }
 
-    pub fn insert(&mut self, constraint: impl JointConstraint<N, DefaultBodySet<N>>) -> DefaultJointConstraintHandle {
+    pub fn insert(&mut self, constraint: impl JointConstraint<N, Bodies>) -> DefaultJointConstraintHandle {
         self.insert_boxed(Box::new(constraint))
     }
 
-    pub fn insert_boxed(&mut self, constraint: Box<JointConstraint<N, DefaultBodySet<N>>>) -> DefaultJointConstraintHandle {
+    pub fn insert_boxed(&mut self, constraint: Box<JointConstraint<N, Bodies>>) -> DefaultJointConstraintHandle {
         let (part1, part2) = constraint.anchors();
         let handle = self.constraints.insert(constraint);
         self.inserted.push((handle, part1, part2));
         handle
     }
 
-    pub fn remove(&mut self, to_remove: DefaultJointConstraintHandle) -> Option<Box<JointConstraint<N, DefaultBodySet<N>>>> {
+    pub fn remove(&mut self, to_remove: DefaultJointConstraintHandle) -> Option<Box<JointConstraint<N, Bodies>>> {
         let res = self.constraints.remove(to_remove)?;
         let (part1, part2) = res.anchors();
         self.removed.push((to_remove, part1, part2));
         Some(res)
     }
 
-    pub fn get(&self, handle: DefaultJointConstraintHandle) -> Option<&JointConstraint<N, DefaultBodySet<N>>> {
+    pub fn get(&self, handle: DefaultJointConstraintHandle) -> Option<&JointConstraint<N, Bodies>> {
         self.constraints.get(handle).map(|b| &**b)
     }
 
-    pub fn get_mut(&mut self, handle: DefaultJointConstraintHandle) -> Option<&mut JointConstraint<N, DefaultBodySet<N>>> {
+    pub fn get_mut(&mut self, handle: DefaultJointConstraintHandle) -> Option<&mut JointConstraint<N, Bodies>> {
         self.constraints.get_mut(handle).map(|b| &mut **b)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &JointConstraint<N, DefaultBodySet<N>>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &JointConstraint<N, Bodies>)> {
         self.constraints.iter().map(|b| (b.0, &**b.1))
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &mut JointConstraint<N, DefaultBodySet<N>>)> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &mut JointConstraint<N, Bodies>)> {
         self.constraints.iter_mut().map(|b| (b.0, &mut **b.1))
     }
 }
 
-impl<N: RealField> JointConstraintSet<N, DefaultBodySet<N>> for DefaultJointConstraintSet<N> {
-    type JointConstraint = JointConstraint<N, DefaultBodySet<N>>;
+impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> for DefaultJointConstraintSet<N, Bodies> {
+    type JointConstraint = JointConstraint<N, Bodies>;
     type Handle = DefaultJointConstraintHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint> {
@@ -103,11 +103,11 @@ impl<N: RealField> JointConstraintSet<N, DefaultBodySet<N>> for DefaultJointCons
         }
     }
 
-    fn pop_insertion_event(&mut self) -> Option<(Self::Handle, DefaultBodyPartHandle, DefaultBodyPartHandle)> {
+    fn pop_insertion_event(&mut self) -> Option<(Self::Handle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)> {
         self.inserted.pop()
     }
 
-    fn pop_removal_event(&mut self) -> Option<(Self::Handle, DefaultBodyPartHandle, DefaultBodyPartHandle)> {
+    fn pop_removal_event(&mut self) -> Option<(Self::Handle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)> {
         self.removed.pop()
     }
 
