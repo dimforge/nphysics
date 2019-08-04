@@ -50,17 +50,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
         island: &[Bodies::Handle],
+        island_joints: &[Constraints::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
     ) {
         counters.assembly_started();
-        self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island);
+        self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island, island_joints);
         counters.assembly_completed();
         counters.set_nconstraints(self.contact_constraints.velocity.len() + self.joint_constraints.velocity.len());
 
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(parameters, bodies);
-        self.cache_impulses(bodies, joints);
+        self.cache_impulses(bodies, joints, island_joints);
         counters.velocity_resolution_completed();
 
         counters.velocity_update_started();
@@ -68,7 +69,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         counters.velocity_update_completed();
 
         counters.position_resolution_started();
-        self.solve_position_constraints(parameters, bodies, colliders, joints);
+        self.solve_position_constraints(parameters, bodies, colliders, joints, island_joints);
         counters.position_resolution_completed();
     }
 
@@ -83,11 +84,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
         ccd_bodies: &[Bodies::Handle],
         island: &[Bodies::Handle],
+        island_joints: &[Constraints::Handle],
         parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
     ) {
-        self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island);
-        self.solve_position_constraints(parameters, bodies, colliders, joints);
+        self.assemble_system(counters, parameters, coefficients, bodies, joints, manifolds, island, island_joints);
+        self.solve_position_constraints(parameters, bodies, colliders, joints, island_joints);
         for ccd_body in ccd_bodies {
             bodies.get_mut(*ccd_body).unwrap().validate_advancement();
         }
@@ -106,6 +108,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         joints: &mut Constraints,
         manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
         island: &[Bodies::Handle],
+        island_joints: &[Constraints::Handle]
     ) {
         self.internal_constraints.clear();
         let mut system_ndofs = 0;
@@ -151,15 +154,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         let mut jacobian_sz = 0;
         let mut ground_jacobian_sz = 0;
 
-
-        joints.foreach(|_, g| {
-            if g.is_active(bodies) {
-                let (b1, b2) = g.anchors();
+        for handle in island_joints {
+            if let Some(joint) = joints.get(*handle) {
+                let (b1, b2) = joint.anchors();
                 if let (Some(body1), Some(body2)) = (bodies.get(b1.0), bodies.get(b2.0)) {
                     let ndofs1 = body1.status_dependent_ndofs();
                     let ndofs2 = body2.status_dependent_ndofs();
 
-                    let nconstraints = g.num_velocity_constraints();
+                    let nconstraints = joint.num_velocity_constraints();
                     let sz = nconstraints * 2 * (ndofs1 + ndofs2);
 
                     if ndofs1 == 0 || ndofs2 == 0 {
@@ -169,7 +171,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
                     }
                 }
             }
-        });
+        }
 
         for m in manifolds {
             let ndofs1 = try_continue!(bodies.get(m.body1())).status_dependent_ndofs();
@@ -194,9 +196,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         let mut j_id = 0;
         let mut ground_j_id = jacobian_sz;
 
-        joints.foreach_mut(|_, g| {
-            if g.is_active(bodies) {
-                g.velocity_constraints(
+
+        for handle in island_joints {
+            if let Some(joint) = joints.get_mut(*handle) {
+                joint.velocity_constraints(
                     parameters,
                     bodies,
                     &self.ext_vels,
@@ -206,7 +209,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
                     &mut self.joint_constraints.velocity,
                 );
             }
-        });
+        }
 
         counters.custom_started();
         self.contact_model.constraints(
@@ -249,6 +252,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         bodies: &mut Bodies,
         colliders: &Colliders,
         joints: &mut Constraints,
+        island_joints: &[Constraints::Handle],
     ) {
         // XXX: avoid the systematic clone.
         // This is needed for cases where we perform the position resolution
@@ -260,6 +264,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
             colliders,
             &mut self.contact_constraints.position.unilateral,
             joints,
+            island_joints,
             &self.internal_constraints,
             &mut jacobians,
             parameters.max_position_iterations,
@@ -270,14 +275,15 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
         &mut self,
         bodies: &mut Bodies,
         joints: &mut Constraints,
+        island_joints: &[Constraints::Handle],
     ) {
         self.contact_model.cache_impulses(&self.contact_constraints);
 
-        joints.foreach_mut(|_, j| {
-            if j.is_active(bodies) {
+        for handle in island_joints {
+            if let Some(j) = joints.get_mut(*handle) {
                 j.cache_impulses(&self.joint_constraints.velocity);
             }
-        });
+        }
     }
 
     fn resize_buffers(&mut self, ndofs: usize) {

@@ -19,14 +19,17 @@ impl NonlinearSORProx {
         colliders: &Colliders,
         contact_constraints: &mut [NonlinearUnilateralConstraint<N, Bodies::Handle, Colliders::Handle>],
         joints_constraints: &Constraints,
+        island_joints: &[Constraints::Handle],
         internal_constraints: &[Bodies::Handle],
         jacobians: &mut [N],
         max_iter: usize,
     ) {
         for _ in 0..max_iter {
-            joints_constraints.foreach(|_, joint| {
-                Self::solve_generator(parameters, bodies, joint, jacobians)
-            });
+            for handle in island_joints {
+                if let Some(joint) = joints_constraints.get(*handle) {
+                    Self::solve_generator(parameters, bodies, joint, jacobians)
+                }
+            }
 
             for constraint in internal_constraints {
                 if let Some(body) = bodies.get_mut(*constraint) {

@@ -243,6 +243,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 constraints,
                 &mut active_bodies,
             );
+
+            let mut active_joints = Vec::new();
+            constraints.foreach(|h, j| {
+                if j.is_active(bodies) {
+                    active_joints.push(h)
+                }
+            });
             self.counters.island_construction_completed();
 
             /*
@@ -285,6 +292,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 constraints,
                 &contact_manifolds[..],
                 &active_bodies[..],
+                &active_joints[..],
                 parameters,
                 &self.material_coefficients,
             );
@@ -742,6 +750,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     &contact_manifolds[..],
                     &ccd_bodies[..],
                     &island[..],
+                    &[], // FIXME: take constraints into account?
                     &parameters,
                     &self.material_coefficients,
                 );
