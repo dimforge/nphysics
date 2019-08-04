@@ -3,7 +3,7 @@
 use generational_arena::Arena;
 
 use na::RealField;
-use ncollide::pipeline::object::{CollisionObjectHandle, CollisionObjectSet};
+use ncollide::pipeline::{CollisionObjectHandle, CollisionObjectSet};
 use crate::object::{Collider, BodyHandle, DefaultBodyHandle, ColliderRemovalData};
 
 /// Trait auto-implemented for types that can be used as a Collider handle.

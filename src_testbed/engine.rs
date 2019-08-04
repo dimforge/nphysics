@@ -18,7 +18,7 @@ use ncollide::shape::{ConvexHull, TriMesh};
 #[cfg(feature = "dim3")]
 use ncollide::transformation;
 use ncollide::query::Ray;
-use ncollide::pipeline::object::CollisionGroups;
+use ncollide::pipeline::CollisionGroups;
 use nphysics::object::{
     DefaultBodyHandle, DefaultBodyPartHandle, DefaultColliderHandle,
     ColliderAnchor, DefaultColliderSet

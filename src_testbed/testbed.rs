@@ -20,7 +20,7 @@ use na::{self, Point2, Point3, Vector3};
 #[cfg(feature = "dim3")]
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
-use ncollide::pipeline::object::CollisionGroups;
+use ncollide::pipeline::CollisionGroups;
 use nphysics::force_generator::DefaultForceGeneratorSet;
 use nphysics::joint::{DefaultJointConstraintHandle, MouseConstraint, DefaultJointConstraintSet};
 #[cfg(feature = "dim2")]

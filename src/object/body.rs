@@ -377,7 +377,6 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
 
     /// If CCD is enabled, this is the last position known to be tunnelling-free.
     fn safe_position(&self) -> Isometry<N> {
-        println!("Safe_position, unimplemented.");
         self.position()
     }
 

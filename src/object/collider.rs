@@ -3,12 +3,11 @@ use std::f64;
 
 use std::any::Any;
 use na::RealField;
-use ncollide::pipeline::object::{CollisionObject,
-                                 CollisionGroups, CollisionObjectUpdateFlags,  GeometricQueryType,
-                                 CollisionObjectRef};
+use ncollide::pipeline::{
+    CollisionObject, CollisionGroups, CollisionObjectUpdateFlags,  GeometricQueryType, CollisionObjectRef,
+    CollisionObjectGraphIndex, BroadPhaseProxyHandle
+};
 use ncollide::shape::{ShapeHandle, Shape};
-use ncollide::pipeline::narrow_phase::CollisionObjectGraphIndex;
-use ncollide::pipeline::broad_phase::BroadPhaseProxyHandle;
 
 use crate::math::{Isometry, Vector, Rotation};
 use crate::object::{BodyPartHandle, BodyHandle};

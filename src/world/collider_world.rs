@@ -3,15 +3,15 @@ use std::collections::{hash_map, HashMap};
 
 use na::RealField;
 
-use ncollide::pipeline::narrow_phase::{DefaultProximityDispatcher, DefaultContactDispatcher};
-use ncollide::pipeline::broad_phase::DBVTBroadPhase;
-use ncollide::pipeline::object::{CollisionGroups};
-use ncollide::broad_phase::{BroadPhase, BroadPhasePairFilter};
-use ncollide::narrow_phase::{InteractionGraph, Interaction, ContactAlgorithm, ProximityDetector, NarrowPhase, ContactEvents, ProximityEvents};
+use ncollide::pipeline::{
+    self,
+    DefaultProximityDispatcher, DefaultContactDispatcher,
+    InteractionGraph, Interaction, ContactAlgorithm, ProximityDetector, NarrowPhase, ContactEvents, ProximityEvents,
+    DBVTBroadPhase, BroadPhase, BroadPhasePairFilter,
+    CollisionGroups
+};
 use ncollide::query::{Ray, ContactManifold, Proximity};
-
 use ncollide::bounding_volume::AABB;
-use ncollide::pipeline::glue;
 
 use crate::volumetric::Volumetric;
 use crate::object::{Collider, ColliderHandle, DefaultColliderHandle, ColliderAnchor,
@@ -69,7 +69,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         assert!(collider.proxy_handle().is_none(), "Cannot register a collider that is already registered.");
         assert!(collider.graph_index().is_none(), "Cannot register a collider that is already registered.");
 
-        let proxies = glue::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), collider.shape(), collider.query_type());
+        let proxies = pipeline::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), collider.shape(), collider.query_type());
 
         self.body_colliders.entry(collider.body()).or_insert(Vec::new()).push(handle);
         collider.set_proxy_handle(Some(proxies.0));
@@ -174,7 +174,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
 
 
             // Remove proxies and handle the graph index remapping.
-            if let Some(to_change) = glue::remove_proxies(&mut *self.broad_phase, &mut self.interactions, removed.proxy_handle, removed.graph_index) {
+            if let Some(to_change) = pipeline::remove_proxies(&mut *self.broad_phase, &mut self.interactions, removed.proxy_handle, removed.graph_index) {
                 if let Some(collider) = colliders.get_mut(to_change.0) {
                     // Apply the graph index remapping.
                     collider.set_graph_index(Some(to_change.1))
@@ -256,7 +256,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// Executes the broad phase of the collision detection pipeline.
     pub fn perform_broad_phase<Colliders>(&mut self, colliders: &Colliders)
         where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
-        glue::perform_broad_phase(
+        pipeline::perform_broad_phase(
             colliders,
             &mut *self.broad_phase,
             &mut self.narrow_phase,
@@ -269,7 +269,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// Executes the narrow phase of the collision detection pipeline.
     pub fn perform_narrow_phase<Colliders>(&mut self, colliders: &Colliders)
         where Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
-        glue::perform_narrow_phase(colliders, &mut self.narrow_phase, &mut self.interactions)
+        pipeline::perform_narrow_phase(colliders, &mut self.narrow_phase, &mut self.interactions)
     }
 
     /// The broad-phase used by this collider world.
@@ -284,9 +284,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         colliders: &'a Colliders,
         ray: &'b Ray<N>,
         groups: &'b CollisionGroups,
-    ) -> glue::InterferencesWithRay<'a, 'b, N, Colliders>
+    ) -> pipeline::InterferencesWithRay<'a, 'b, N, Colliders>
     {
-        glue::interferences_with_ray(&colliders, &*self.broad_phase, ray, groups)
+        pipeline::interferences_with_ray(&colliders, &*self.broad_phase, ray, groups)
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a point.
@@ -296,9 +296,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         colliders: &'a Colliders,
         point: &'b Point<N>,
         groups: &'b CollisionGroups,
-    ) -> glue::InterferencesWithPoint<'a, 'b, N, Colliders>
+    ) -> pipeline::InterferencesWithPoint<'a, 'b, N, Colliders>
     {
-        glue::interferences_with_point(&colliders, &*self.broad_phase, point, groups)
+        pipeline::interferences_with_point(&colliders, &*self.broad_phase, point, groups)
     }
 
     /// Computes the interferences between every rigid bodies of a given broad phase, and a aabb.
@@ -308,9 +308,9 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         colliders: &'a Colliders,
         aabb: &'b AABB<N>,
         groups: &'b CollisionGroups,
-    ) -> glue::InterferencesWithAABB<'a, 'b, N, Colliders>
+    ) -> pipeline::InterferencesWithAABB<'a, 'b, N, Colliders>
     {
-        glue::interferences_with_aabb(&colliders, &*self.broad_phase, aabb, groups)
+        pipeline::interferences_with_aabb(&colliders, &*self.broad_phase, aabb, groups)
     }
 
     /// The contact events pool.

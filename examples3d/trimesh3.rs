@@ -84,7 +84,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0;
     let centerz = shift * (num as f32) / 2.0;
-    let height = 1.0;
+    let height = 2.0;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
 
@@ -115,7 +115,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     testbed.set_ground_handle(Some(ground_handle));
     testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
-    testbed.look_at(Point3::new(-4.0, 1.0, -4.0), Point3::new(0.0, 1.0, 0.0));
+    testbed.look_at(Point3::new(-20.0, 20.0, -20.0), Point3::new(0.0, 1.0, 0.0));
 }
 
 fn main() {
