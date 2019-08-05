@@ -69,6 +69,9 @@ pub struct IntegrationParameters<N: RealField> {
     /// equal to 0 until the constraints solver manages to separate them. This will prevent tunnelling
     /// almost completely, but may introduce stuttering effects when the constraints solver fails to completely
     /// seperate two colliders after a CCD contact.
+    // FIXME: this is a very binary way of handling penetration.
+    // We should provide a more flexible solution by letting the user choose some
+    // minimal amount of movement applied to an object that get stuck.
     pub ccd_on_penetration_enabled: bool,
 }
 
