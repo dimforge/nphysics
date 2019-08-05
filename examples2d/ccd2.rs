@@ -122,8 +122,8 @@ pub fn init_world(testbed: &mut Testbed) {
 //    let shape = ShapeHandle::new(Cuboid::new(Vector2::new(radx, rady)));
 //    let shape = ShapeHandle::new(Ball::new(rady));
 
-    let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;
-    let shifty = (rady + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;
+    let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.005) * 2.0;
+    let shifty = (rady + ColliderDesc::<f32>::default_margin() + 0.005) * 2.0;
     let centerx = shiftx * (num as f32) / 2.0 - 0.5;
     let centery = shifty / 2.0 + 4.0;
 

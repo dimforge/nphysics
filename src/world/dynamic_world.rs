@@ -605,8 +605,16 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 self.counters.ccd.narrow_phase_time.resume();
 
+
                 // Advance colliders and update contact manifolds.
                 while let Some(c) = colliders_to_traverse.pop() {
+                    if visited.contains(&c) {
+                        // It is possible that we pop several time the same collider handle.
+                        // For example this happens if the collider was involved in a TOI event
+                        // and has be pushed again after the narrow-phase contact update bellow.
+                        continue;
+                    }
+
                     let graph_id = colliders.get(c).unwrap().graph_index().unwrap();
 
                     for (ch1, ch2, eid, inter) in cworld.interactions.interactions_with_mut(graph_id) {
