@@ -422,7 +422,6 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
         // NOTE: all static bodies should be considered as "frozen", this
         // may avoid some resweeps.
-
         while let Some(toi) = all_toi.pop() {
             assert!(toi.toi <= end_time);
 
@@ -454,9 +453,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             let _ = frozen.entry(toi.b1).or_insert(toi.toi);
             let _ = frozen.entry(toi.b2).or_insert(toi.toi);
 
-            let to_traverse = [ toi.c1, toi.c2 ];
+            // The resweep must involve all the colliders of the frozen bodies.
+            // FIXME: there is no need to include the colliders of a body that is static, if any.
+            // It is also not necessary to resweep if one body is frozen and the other is static.
+            let colliders1 = cworld.body_colliders(toi.b1).unwrap();
+            let colliders2 = cworld.body_colliders(toi.b2).unwrap();
 
-            for c in to_traverse.iter() {
+            for c in colliders1.iter().chain(colliders2.iter()) {
                 let c = colliders.get(*c).unwrap();
 
                 // No need to resweep if the collider is static.
@@ -565,7 +568,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
             self.counters.ccd.toi_computation_time.pause();
 
-            // Resolve the minimum TOI events, if any.
+            // Resolve the predicted TOI events.
             if !last_iter && !toi_entries.is_empty() {
                 self.counters.ccd.num_substeps += 1;
 
@@ -587,8 +590,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 for entry in &toi_entries {
                     if !entry.is_proximity {
-                        colliders_to_traverse.push(entry.c1);
-                        colliders_to_traverse.push(entry.c2);
+                        let all_colliders1 = cworld.body_colliders(entry.b1).unwrap();
+                        let all_colliders2 = cworld.body_colliders(entry.b2).unwrap();
+                        colliders_to_traverse.extend_from_slice(all_colliders1);
+                        colliders_to_traverse.extend_from_slice(all_colliders2);
 
                         ccd_bodies.push(entry.b1);
                         ccd_bodies.push(entry.b2);
@@ -636,11 +641,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                         c.set_position(b.part(0).unwrap().position() * c.position_wrt_body());
                                     };
 
-                                    if b1.companion_id() == 0 && b1.is_dynamic() {
+                                    let b1_needs_preparation = b1.companion_id() == 0 && b1.is_dynamic();
+                                    let b2_needs_preparation = b2.companion_id() == 0 && b2.is_dynamic();
+
+                                    if b1_needs_preparation {
                                         prepare_body(handle1, b1, c1)
                                     }
 
-                                    if b2.companion_id() == 0 && b2.is_dynamic() {
+                                    if b2_needs_preparation {
                                         prepare_body(handle2, b2, c2)
                                     }
 
@@ -649,12 +657,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                     if manifold.len() > 0 {
                                         interaction_ids.push(eid);
 
-                                        if ch1 != c {
-                                            colliders_to_traverse.push(ch1);
+                                        if ch1 != c && b1_needs_preparation {
+                                            let all_colliders1 = cworld.body_colliders.get(&handle1).unwrap();
+                                            colliders_to_traverse.extend_from_slice(&all_colliders1[..]);
                                         }
 
-                                        if ch2 != c {
-                                            colliders_to_traverse.push(ch2);
+                                        if ch2 != c && b2_needs_preparation {
+                                            let all_colliders2 = cworld.body_colliders.get(&handle2).unwrap();
+                                            colliders_to_traverse.extend_from_slice(&all_colliders2[..]);
                                         }
                                     }
                                 }

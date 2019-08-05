@@ -37,7 +37,7 @@ pub struct ColliderWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderH
     /// A user-defined broad-phase pair filter.
     // FIXME: we don't actually use this currently.
     pub(crate) pair_filters: Option<Box<BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
-    body_colliders: HashMap<Handle, Vec<CollHandle>>,
+    pub(crate) body_colliders: HashMap<Handle, Vec<CollHandle>>,
 }
 
 impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld<N, Handle, CollHandle> {
