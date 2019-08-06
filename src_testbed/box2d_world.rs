@@ -106,7 +106,7 @@ impl Box2dWorld {
         }
     }
 
-    fn create_fixtures(collider: &Collider<f32, DefaultBodyHandle>, shape: &Shape<f32>, dpos: &Isometry2<f32>, body: &mut b2::MetaBody<NoUserData>) {
+    fn create_fixtures(collider: &Collider<f32, DefaultBodyHandle>, shape: &dyn Shape<f32>, dpos: &Isometry2<f32>, body: &mut b2::MetaBody<NoUserData>) {
         let center = na_vec_to_b2_vec(&dpos.translation.vector);
         let mut fixture_def = b2::FixtureDef::new();
 
