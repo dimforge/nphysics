@@ -31,11 +31,15 @@ use nphysics::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics::math::ForceType;
 use crate::ui::TestbedUi;
 
+#[cfg(feature = "physx-backend")]
+use crate::physx_world::PhysXWorld;
 #[cfg(feature = "box2d-backend")]
 use crate::box2d_world::Box2dWorld;
 
 
 const NPHYSICS_BACKEND: usize = 0;
+#[cfg(feature = "physx-backend")]
+const PHYSX_BACKEND: usize = 1;
 #[cfg(feature = "box2d-backend")]
 const BOX2D_BACKEND: usize = 1;
 
@@ -130,6 +134,8 @@ pub struct Testbed {
     ground_handle: Option<DefaultBodyHandle>,
     ui: TestbedUi,
     state: TestbedState,
+    #[cfg(feature = "physx-backend")]
+    physx: Option<PhysXWorld>,
     #[cfg(feature = "box2d-backend")]
     box2d: Option<Box2dWorld>,
 }
@@ -159,6 +165,8 @@ impl Testbed {
         let ui = TestbedUi::new(&mut window);
 
         let mut backend_names = vec!["nphysics"];
+        #[cfg(feature = "physx-backend")]
+            backend_names.push("physx");
         #[cfg(feature = "box2d-backend")]
             backend_names.push("box2d");
 
@@ -207,6 +215,8 @@ impl Testbed {
             ground_handle: None,
             ui,
             state,
+            #[cfg(feature = "physx-backend")]
+            physx: None,
             #[cfg(feature = "box2d-backend")]
             box2d: None,
         }
@@ -272,6 +282,18 @@ impl Testbed {
         self.mechanical_world.counters.enable();
         self.geometrical_world.maintain(&mut self.bodies, &mut self.colliders);
 
+        #[cfg(feature = "physx-backend")]
+            {
+                if let Some(physx) = self.physx.take() {
+                    // NOTE: not dropping before the new PhysX world
+                    // is created causes a segfault.
+                    drop(physx);
+                }
+
+                if self.state.selected_backend == PHYSX_BACKEND {
+                    self.physx = Some(PhysXWorld::from_nphysics(&self.mechanical_world, &self.bodies, &self.colliders, &self.constraints, &self.forces));
+                }
+            }
         #[cfg(feature = "box2d-backend")]
             {
                 if self.state.selected_backend == BOX2D_BACKEND {
@@ -848,6 +870,14 @@ impl State for Testbed {
                         &mut self.forces
                     );
                 }
+
+                #[cfg(feature = "physx-backend")]
+                    {
+                        if self.state.selected_backend == PHYSX_BACKEND {
+                            self.physx.as_mut().unwrap().step(&mut self.mechanical_world.counters, self.mechanical_world.integration_parameters.dt());
+                            self.physx.as_mut().unwrap().sync(&mut self.bodies, &mut self.colliders);
+                        }
+                    }
 
                 #[cfg(feature = "box2d-backend")]
                     {

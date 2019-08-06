@@ -25,5 +25,7 @@ mod engine;
 pub mod objects;
 mod testbed;
 mod ui;
+#[cfg(feature = "physx-backend")]
+mod physx_world;
 #[cfg(feature = "box2d-backend")]
 mod box2d_world;
