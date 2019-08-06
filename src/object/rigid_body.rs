@@ -36,6 +36,7 @@ pub struct RigidBody<N: RealField> {
     max_angular_velocity: N,
     status: BodyStatus,
     gravity_enabled: bool,
+    linear_motion_interpolation_enabled: bool,
     activation: ActivationStatus<N>,
     jacobian_mask: SpatialVector<N>,
     companion_id: usize,
@@ -67,6 +68,7 @@ impl<N: RealField> RigidBody<N> {
             max_angular_velocity: N::max_value(),
             status: BodyStatus::Dynamic,
             gravity_enabled: true,
+            linear_motion_interpolation_enabled: false,
             activation: ActivationStatus::new_active(),
             jacobian_mask: SpatialVector::repeat(N::one()),
             companion_id: 0,
@@ -76,6 +78,22 @@ impl<N: RealField> RigidBody<N> {
     }
 
     user_data_accessors!();
+
+    /// Check if linear motion interpolation is enabled for CCD.
+    ///
+    /// If this is disabled, non-linear interpolation will be used.
+    #[inline]
+    pub fn linear_motion_interpolation_enabled(&self) -> bool {
+        self.linear_motion_interpolation_enabled
+    }
+
+    /// Enable linear motion interpolation for CCD.
+    ///
+    /// If this is disabled, non-linear interpolation will be used.
+    #[inline]
+    pub fn enable_linear_motion_interpolation(&mut self, enabled: bool) {
+        self.linear_motion_interpolation_enabled = enabled
+    }
 
     /// Mark some translational degrees of freedom as kinematic.
     pub fn set_translations_kinematic(&mut self, is_kinematic: Vector<bool>) {
@@ -504,16 +522,23 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     fn clamp_advancement(&mut self) {
-        self.set_position(self.position0);
+        if self.linear_motion_interpolation_enabled {
+            let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
+            self.set_position(p0);
+        } else {
+            self.set_position(self.position0);
+        }
     }
 
     fn part_motion(&self, _: usize, time_origin: N) -> Option<BodyPartMotion<N>> {
-        let motion = ConstantVelocityRigidMotion::new(time_origin, self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
-        Some(BodyPartMotion::RigidNonlinear(motion))
-
-//        let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
-//        let motion = ConstantLinearVelocityRigidMotion::new(time_origin, p0, self.velocity.linear);
-//        Some(BodyPartMotion::RigidLinear(motion))
+        if self.linear_motion_interpolation_enabled {
+            let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
+            let motion = ConstantLinearVelocityRigidMotion::new(time_origin, p0, self.velocity.linear);
+            Some(BodyPartMotion::RigidLinear(motion))
+        } else {
+            let motion = ConstantVelocityRigidMotion::new(time_origin, self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
+            Some(BodyPartMotion::RigidNonlinear(motion))
+        }
     }
 
     #[allow(unused_variables)] // for parameters used only in 3D.
@@ -775,8 +800,11 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
 
     #[inline]
     fn safe_position(&self) -> Isometry<N> {
-        self.position0
-//        Isometry::from_parts(self.position0.translation, self.position.rotation)
+        if self.linear_motion_interpolation_enabled {
+            Isometry::from_parts(self.position0.translation, self.position.rotation)
+        } else {
+            self.position0
+        }
     }
 
     #[inline]
@@ -820,6 +848,7 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
 pub struct RigidBodyDesc<N: RealField> {
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
+    linear_motion_interpolation_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
     linear_damping: N,
@@ -843,6 +872,7 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
         RigidBodyDesc {
             user_data: None,
             gravity_enabled: true,
+            linear_motion_interpolation_enabled: false,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
             linear_damping: N::zero(),
@@ -884,6 +914,7 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
 
     desc_setters!(
         gravity_enabled, enable_gravity, gravity_enabled: bool
+        linear_motion_interpolation_enabled, enable_linear_motion_interpolation, linear_motion_interpolation_enabled: bool
         status, set_status, status: BodyStatus
         position, set_position, position: Isometry<N>
         velocity, set_velocity, velocity: Velocity<N>
@@ -918,6 +949,7 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
 
     desc_getters!(
         [val] is_gravity_enabled -> gravity_enabled: bool
+        [val] is_linear_motion_interpolation_enabled -> linear_motion_interpolation_enabled: bool
         [val] get_status -> status: BodyStatus
         [val] get_sleep_threshold -> sleep_threshold: Option<N>
         [val] get_linear_damping -> linear_damping: N
@@ -933,6 +965,7 @@ impl<'a, N: RealField> RigidBodyDesc<N> {
     /// Builds a rigid body from this description.
     pub fn build(&self) -> RigidBody<N> {
         let mut rb = RigidBody::new(self.position);
+        rb.enable_linear_motion_interpolation(self.linear_motion_interpolation_enabled);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);
         rb.set_local_center_of_mass(self.local_center_of_mass);
