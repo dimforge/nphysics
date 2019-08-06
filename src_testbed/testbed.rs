@@ -563,7 +563,7 @@ impl Testbed {
                     let mut minb = None;
 
                     let all_groups = CollisionGroups::new();
-                    for (b, inter) in self.geometrical_world
+                    for (_, b, inter) in self.geometrical_world
                         .interferences_with_ray(&self.colliders, &ray, &all_groups)
                         {
                             if !b.query_type().is_proximity_query() && inter.toi < mintoi {
@@ -618,7 +618,7 @@ impl Testbed {
                     let mut minb = None;
 
                     let all_groups = CollisionGroups::new();
-                    for (b, inter) in self
+                    for (_, b, inter) in self
                         .geometrical_world
                         .interferences_with_ray(&self.colliders, &ray, &all_groups)
                         {
