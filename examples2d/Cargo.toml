@@ -11,7 +11,7 @@ box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
 rand       = "0.6"
 alga       = "0.9"
 nalgebra   = "0.18"
-ncollide2d = "0.19"
+ncollide2d = "0.20"
 
 [dependencies.nphysics_testbed2d]
 path = "../build/nphysics_testbed2d"

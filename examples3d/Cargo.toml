@@ -11,8 +11,8 @@ physx-backend = [ "nphysics_testbed3d/physx-backend" ]
 rand       = { version = "0.6", features = [ "stdweb" ] }
 num-traits = "0.2"
 nalgebra   = "0.18"
-ncollide3d = "0.19"
-kiss3d     = "0.20"
+ncollide3d = "0.20"
+kiss3d     = "0.21"
 
 [dependencies.nphysics3d]
 path = "../build/nphysics3d"

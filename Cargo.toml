@@ -1,8 +1,8 @@
 [workspace]
 members = [ "build/nphysics2d", "build/nphysics_testbed2d", "examples2d",
-            "build/nphysics3d", "build/nphysics_testbed3d", "examples3d" ]
+            "build/nphysics3d", "build/nphysics_testbed3d", "examples3d", ]
 
-#[profile.release]
+[profile.release]
 #lto = true
 #codegen-units = 1
 

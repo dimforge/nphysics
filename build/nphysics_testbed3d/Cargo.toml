@@ -26,8 +26,8 @@ num-traits = "0.2"
 time       = "0.1"
 rand       = "0.6"
 nalgebra   = "0.18"
-kiss3d     = { version = "0.20", features = [ "conrod" ] }
-ncollide3d = "0.19"
+kiss3d     = { version = "0.21", features = [ "conrod" ] }
+ncollide3d = "0.20"
 
 [dependencies.nphysics3d]
 path = "../nphysics3d"

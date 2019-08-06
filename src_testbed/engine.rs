@@ -623,7 +623,7 @@ impl GraphicsManager {
         for ray in &self.rays {
             let groups = CollisionGroups::new();
             let inter = geometrical_world.interferences_with_ray(colliders, ray, &groups);
-            let hit = inter.fold(1000.0, |t, hit| hit.1.toi.min(t));
+            let hit = inter.fold(1000.0, |t, (_, _, hit)| hit.toi.min(t));
             let p1 = ray.origin;
             let p2 = ray.origin + ray.dir * hit;
             window.draw_graphics_line(&p1, &p2, &Point3::new(1.0, 0.0, 0.0));

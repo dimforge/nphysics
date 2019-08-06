@@ -876,7 +876,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> TOIEntry<N, H
         if motion1.is_static_or_linear() && motion2.is_static_or_linear() {
             let pos1 = motion1.position_at_time(N::zero()) * c1.position_wrt_body();
             let pos2 = motion2.position_at_time(N::zero()) * c2.position_wrt_body();
-            toi = query::time_of_impact(&pos1, &motion1.linvel(), c1.shape(), &pos2, &motion2.linvel(), c2.shape(), target)?
+            toi = query::time_of_impact(&pos1, &motion1.linvel(), c1.shape(), &pos2, &motion2.linvel(), c2.shape(), remaining_time, target)?
         } else {
             let motion1 = motion1.prepend_transformation(c1.position_wrt_body());
             let motion2 = motion2.prepend_transformation(c2.position_wrt_body());

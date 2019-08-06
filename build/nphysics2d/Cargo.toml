@@ -33,7 +33,7 @@ nalgebra   = { version = "0.18", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1.0"
 bitflags   = "1.0"
-ncollide2d = "0.19"
+ncollide2d = "0.20"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = {version = "0.4", optional = true}

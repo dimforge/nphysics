@@ -67,8 +67,10 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the shapes
      */
     let num = 5;
-    let mut rady = 0.1;
-    let mut radx = rady * 4.0;
+//    let mut rady = 0.1;
+//    let mut radx = rady * 4.0;
+    let rady;
+    let radx;
 
 //    let shape = {
 //        let mut cross_geoms = Vec::new();

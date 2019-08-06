@@ -419,10 +419,10 @@ impl Testbed {
                     .geometrical_world
                     .interferences_with_point(&self.colliders, &self.cursor_pos, all_groups)
                     {
-                        if !b.query_type().is_proximity_query() && Some(b.body()) != self.ground_handle {
+                        if !b.1.query_type().is_proximity_query() && Some(b.1.body()) != self.ground_handle {
 
                             if
-                            let ColliderAnchor::OnBodyPart { body_part, .. } = b.anchor()
+                            let ColliderAnchor::OnBodyPart { body_part, .. } = b.1.anchor()
                             {
                                 self.state.grabbed_object = Some(*body_part);
                             } else { continue; }
