@@ -5,8 +5,11 @@
     <a href="https://discord.gg/vt9DJSW">
         <img src="https://img.shields.io/discord/507548572338880513.svg?logo=discord&colorB=7289DA">
     </a>
-    <a href="https://crates.io/crates/nphysics">
-         <img src="http://meritbadge.herokuapp.com/nphysics3d?style=flat-square" alt="crates.io">
+    <a href="https://crates.io/crates/nphysics2d">
+         <img src="https://img.shields.io/crates/v/nphysics3d.svg?style=flat-square&label=crates.io%20(nphysics2d)" alt="crates.io (nphysics2d)">
+    </a>
+    <a href="https://crates.io/crates/nphysics3d">
+         <img src="https://img.shields.io/crates/v/nphysics3d.svg?style=flat-square&label=crates.io%20(nphysics3d)" alt="crates.io (nphysics3d)">
     </a>
     <a href="https://travis-ci.org/rustsim/nphysics">
         <img src="https://travis-ci.org/rustsim/nphysics.svg?branch=master" alt="Build status">
