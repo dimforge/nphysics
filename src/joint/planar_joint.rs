@@ -129,7 +129,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
     }
 
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<dyn Joint<N>> {
         Box::new(*self)
     }
 

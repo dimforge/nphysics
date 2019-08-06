@@ -607,10 +607,10 @@ pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle
 #[cfg(feature = "dim3")]
 pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -693,10 +693,10 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body
 pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
@@ -911,10 +911,10 @@ pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
 pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
