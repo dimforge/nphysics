@@ -34,7 +34,7 @@ pub struct Multibody<N: RealField> {
     activation: ActivationStatus<N>,
     ndofs: usize,
     companion_id: usize,
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 
     /*
      * Workspaces.
@@ -112,7 +112,7 @@ impl<N: RealField> Multibody<N> {
 
     /// The links of this multibody with the given `name`.
     pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)> {
-        self.rbs.iter().enumerate().filter(move |(i, l)| l.name == name)
+        self.rbs.iter().enumerate().filter(move |(_i, l)| l.name == name)
     }
 
     /// Iterator through all the links of this multibody.
@@ -161,7 +161,7 @@ impl<N: RealField> Multibody<N> {
     fn add_link(
         &mut self,
         parent: Option<usize>,
-        mut dof: Box<Joint<N>>,
+        mut dof: Box<dyn Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
@@ -745,8 +745,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> SolverWorkspa
 
 impl<N: RealField> Body<N> for Multibody<N> {
     #[inline]
-    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
-        self.link(id).map(|l| l as &BodyPart<N>)
+    fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
+        self.link(id).map(|l| l as &dyn BodyPart<N>)
     }
 
     #[inline]
@@ -906,26 +906,26 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world * point
     }
 
     #[inline]
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world * Translation::from(point.coords)
     }
 
     #[inline]
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world.inverse_transform_point(point)
     }
 
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         ndofs: usize, // FIXME: keep this parameter?
         point: &Point<N>,
         force_dir: &ForceDirection<N>,
@@ -1175,7 +1175,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
 pub struct MultibodyDesc<N: RealField> {
     name: String,
     children: Vec<MultibodyDesc<N>>,
-    joint: Box<Joint<N>>,
+    joint: Box<dyn Joint<N>>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,

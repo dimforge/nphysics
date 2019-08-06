@@ -14,7 +14,7 @@ use crate::math::{Isometry, Vector};
 #[derive(Copy, Clone)]
 pub struct MaterialContext<'a, N: RealField> {
     /// The shape of the collider involved in the contact.
-    pub shape: &'a Shape<N>,
+    pub shape: &'a dyn Shape<N>,
     /// The position of the collider involved in the contact.
     pub position: &'a Isometry<N>,
     /// The contact.
@@ -27,7 +27,7 @@ pub struct MaterialContext<'a, N: RealField> {
 }
 
 impl<'a, N: RealField> MaterialContext<'a, N> {
-    pub(crate) fn new(shape: &'a Shape<N>, position: &'a Isometry<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
+    pub(crate) fn new(shape: &'a dyn Shape<N>, position: &'a Isometry<N>, contact: &'a TrackedContact<N>, is_first: bool) -> Self {
         MaterialContext {
             shape,
             position,
@@ -91,7 +91,7 @@ pub struct LocalMaterialProperties<N: RealField> {
 /// An utility trait to clone material trait-objects.
 pub trait MaterialClone<N: RealField> {
     /// Clone a material trait-object.
-    fn clone_box(&self) -> Box<Material<N>> {
+    fn clone_box(&self) -> Box<dyn Material<N>> {
         unimplemented!()
     }
 }
@@ -100,7 +100,7 @@ pub trait MaterialClone<N: RealField> {
 pub type MaterialId = u32;
 
 impl<N: RealField, T: 'static + Material<N> + Clone> MaterialClone<N> for T {
-    fn clone_box(&self) -> Box<Material<N>> {
+    fn clone_box(&self) -> Box<dyn Material<N>> {
         Box::new(self.clone())
     }
 }
@@ -113,13 +113,13 @@ pub trait Material<N: RealField>: Downcast + Send + Sync + MaterialClone<N> {
 
 impl_downcast!(Material<N> where N: RealField);
 
-impl<N: RealField> Clone for Box<Material<N>> {
-    fn clone(&self) -> Box<Material<N>> {
+impl<N: RealField> Clone for Box<dyn Material<N>> {
+    fn clone(&self) -> Box<dyn Material<N>> {
         self.clone_box()
     }
 }
 
-impl<N: RealField> Material<N> {
+impl<N: RealField> dyn Material<N> {
     /// Combine two materials given their contexts and a material lookup table.
     pub fn combine<M1, M2>(
         table: &MaterialsCoefficientsTable<N>,
@@ -167,7 +167,7 @@ impl<N: RealField> Material<N> {
 ///
 /// This can be mutated using COW.
 #[derive(Clone)]
-pub struct MaterialHandle<N: RealField>(Arc<Box<Material<N>>>);
+pub struct MaterialHandle<N: RealField>(Arc<Box<dyn Material<N>>>);
 
 impl<N: RealField> MaterialHandle<N> {
     /// Creates a sharable shape handle from a shape.
@@ -176,23 +176,23 @@ impl<N: RealField> MaterialHandle<N> {
         MaterialHandle(Arc::new(Box::new(material)))
     }
 
-    pub(crate) fn make_mut(&mut self) -> &mut Material<N> {
+    pub(crate) fn make_mut(&mut self) -> &mut dyn Material<N> {
         &mut **Arc::make_mut(&mut self.0)
     }
 }
 
-impl<N: RealField> AsRef<Material<N>> for MaterialHandle<N> {
+impl<N: RealField> AsRef<dyn Material<N>> for MaterialHandle<N> {
     #[inline]
-    fn as_ref(&self) -> &Material<N> {
+    fn as_ref(&self) -> &dyn Material<N> {
         &*self.deref()
     }
 }
 
 impl<N: RealField> Deref for MaterialHandle<N> {
-    type Target = Material<N>;
+    type Target = dyn Material<N>;
 
     #[inline]
-    fn deref(&self) -> &Material<N> {
+    fn deref(&self) -> &dyn Material<N> {
         &**self.0.deref()
     }
 }

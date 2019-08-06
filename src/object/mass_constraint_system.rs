@@ -95,7 +95,7 @@ pub struct MassConstraintSystem<N: RealField> {
     plasticity_creep: N,
     plasticity_max_force: N,
 
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
 
@@ -472,8 +472,8 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         self.velocities.fill(N::zero());
     }
 
-    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
-        self.elements.get(id).map(|e| e as &BodyPart<N>)
+    fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
+        self.elements.get(id).map(|e| e as &dyn BodyPart<N>)
     }
 
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
@@ -485,25 +485,25 @@ impl<N: RealField> Body<N> for MassConstraintSystem<N> {
         Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
         fem_helper::world_point_at_material_point(elt.indices, &self.positions, point)
     }
 
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
         let pt = fem_helper::world_point_at_material_point(elt.indices, &self.positions, point);
         Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<MassConstraintElement<N>>().expect("The provided body part must be a mass-constraint element");
         fem_helper::material_point_at_world_point(elt.indices, &self.positions, point)
     }
 
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         _: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         force_dir: &ForceDirection<N>,

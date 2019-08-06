@@ -16,7 +16,7 @@ pub struct MoreauJeanSolver<N: RealField, Bodies: BodySet<N>, CollHandle: Collid
     // FIXME: use a Vec or a DVector?
     mj_lambda_vel: DVector<N>,
     ext_vels: DVector<N>,
-    contact_model: Box<ContactModel<N, Bodies, CollHandle>>,
+    contact_model: Box<dyn ContactModel<N, Bodies, CollHandle>>,
     contact_constraints: ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
     joint_constraints: ConstraintSet<N, Bodies::Handle, CollHandle, usize>,
     internal_constraints: Vec<Bodies::Handle>,
@@ -24,7 +24,7 @@ pub struct MoreauJeanSolver<N: RealField, Bodies: BodySet<N>, CollHandle: Collid
 
 impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSolver<N, Bodies, CollHandle> {
     /// Create a new time-stepping scheme with the given contact model.
-    pub fn new(contact_model: Box<ContactModel<N, Bodies, CollHandle>>) -> Self {
+    pub fn new(contact_model: Box<dyn ContactModel<N, Bodies, CollHandle>>) -> Self {
         MoreauJeanSolver {
             jacobians: Vec::new(),
             mj_lambda_vel: DVector::zeros(0),
@@ -37,7 +37,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
     }
 
     /// Sets the contact model.
-    pub fn set_contact_model(&mut self, model: Box<ContactModel<N, Bodies, CollHandle>>) {
+    pub fn set_contact_model(&mut self, model: Box<dyn ContactModel<N, Bodies, CollHandle>>) {
         self.contact_model = model
     }
 
@@ -273,7 +273,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 
     fn cache_impulses<Constraints: JointConstraintSet<N, Bodies>>(
         &mut self,
-        bodies: &mut Bodies,
+        _bodies: &mut Bodies,
         joints: &mut Constraints,
         island_joints: &[Constraints::Handle],
     ) {

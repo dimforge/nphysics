@@ -8,7 +8,7 @@ use crate::object::{BodySet, DefaultBodySet};
 use crate::solver::IntegrationParameters;
 
 /// Default force generator set based on an arena with generational indices.
-pub type DefaultForceGeneratorSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> = Arena<Box<ForceGenerator<N, Bodies>>>;
+pub type DefaultForceGeneratorSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> = Arena<Box<dyn ForceGenerator<N, Bodies>>>;
 
 /// Trait implemented by sets of force generators.
 ///
@@ -34,7 +34,7 @@ pub trait ForceGeneratorSet<N: RealField, Bodies: BodySet<N>> {
 }
 
 impl<N: RealField, Bodies: BodySet<N> + 'static> ForceGeneratorSet<N, Bodies> for DefaultForceGeneratorSet<N, Bodies> {
-    type ForceGenerator = ForceGenerator<N, Bodies>;
+    type ForceGenerator = dyn ForceGenerator<N, Bodies>;
     type Handle = DefaultForceGeneratorHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::ForceGenerator> {

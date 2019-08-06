@@ -86,7 +86,7 @@ pub trait Joint<N: RealField>: Downcast + Send + Sync {
         None
     }
 
-    fn clone(&self) -> Box<Joint<N>>;
+    fn clone(&self) -> Box<dyn Joint<N>>;
 }
 
 impl_downcast!(Joint<N> where N: RealField);

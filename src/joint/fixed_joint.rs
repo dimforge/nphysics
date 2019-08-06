@@ -62,7 +62,7 @@ impl<N: RealField> Joint<N> for FixedJoint<N> {
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<dyn Joint<N>> {
         Box::new(*self)
     }
 }

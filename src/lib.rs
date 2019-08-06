@@ -212,25 +212,25 @@ macro_rules! user_data_accessors(
     () => {
         /// Retrieves a reference to the user-defined user-data attached to this object.
         #[inline]
-        pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
+        pub fn user_data(&self) -> Option<&(dyn Any + Send + Sync)> {
             self.user_data.as_ref().map(|d| &**d)
         }
 
         /// Retrieves a mutable reference to the user-defined user-data attached to this object.
         #[inline]
-        pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
+        pub fn user_data_mut(&mut self) -> Option<&mut (dyn Any + Send + Sync)> {
             self.user_data.as_mut().map(|d| &mut **d)
         }
 
         /// Sets the user-defined data attached to this object.
         #[inline]
-        pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
+        pub fn set_user_data(&mut self, data: Option<Box<dyn Any + Send + Sync>>) -> Option<Box<dyn Any + Send + Sync>> {
             std::mem::replace(&mut self.user_data, data)
         }
 
         /// Replace by `None` the user-defined data attached to this object and returns the old value.
         #[inline]
-        pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
+        pub fn take_user_data(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
             self.user_data.take()
         }
     }
@@ -241,18 +241,18 @@ macro_rules! user_data_desc_accessors(
     () => {
         /// Sets a user-data to be attached to the object being built.
         pub fn user_data(mut self, data: impl UserData) -> Self {
-            self.user_data = Some(UserDataBox(Box::new(data) as Box<UserData>));
+            self.user_data = Some(UserDataBox(Box::new(data) as Box<dyn UserData>));
             self
         }
 
         /// Sets the user-data to be attached to the object being built.
         pub fn set_user_data(&mut self, data: Option<impl UserData>) -> &mut Self {
-            self.user_data = data.map(|data| UserDataBox(Box::new(data) as Box<UserData>));
+            self.user_data = data.map(|data| UserDataBox(Box::new(data) as Box<dyn UserData>));
             self
         }
 
         /// Reference to the user-data to be attached to the object being built.
-        pub fn get_user_data(&self) -> Option<&(Any + Send + Sync)> {
+        pub fn get_user_data(&self) -> Option<&(dyn Any + Send + Sync)> {
             self.user_data.as_ref().map(|data| data.0.as_any())
         }
     }

@@ -56,7 +56,7 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
 ///
 /// It is based on an arena using generational indices to avoid the ABA problem.
 pub struct DefaultJointConstraintSet<N: RealField, Bodies: BodySet<N> = DefaultBodySet<N>> {
-    constraints: Arena<Box<JointConstraint<N, Bodies>>>,
+    constraints: Arena<Box<dyn JointConstraint<N, Bodies>>>,
     inserted: Vec<(DefaultJointConstraintHandle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>,
     removed: Vec<(DefaultJointConstraintHandle, BodyPartHandle<Bodies::Handle>, BodyPartHandle<Bodies::Handle>)>,
 }
@@ -77,7 +77,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     }
 
     /// Adds a joint (represented as a boxed trait-object) to this set.
-    pub fn insert_boxed(&mut self, constraint: Box<JointConstraint<N, Bodies>>) -> DefaultJointConstraintHandle {
+    pub fn insert_boxed(&mut self, constraint: Box<dyn JointConstraint<N, Bodies>>) -> DefaultJointConstraintHandle {
         let (part1, part2) = constraint.anchors();
         let handle = self.constraints.insert(constraint);
         self.inserted.push((handle, part1, part2));
@@ -85,7 +85,7 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     }
 
     /// Removes a joint from this set.
-    pub fn remove(&mut self, to_remove: DefaultJointConstraintHandle) -> Option<Box<JointConstraint<N, Bodies>>> {
+    pub fn remove(&mut self, to_remove: DefaultJointConstraintHandle) -> Option<Box<dyn JointConstraint<N, Bodies>>> {
         let res = self.constraints.remove(to_remove)?;
         let (part1, part2) = res.anchors();
         self.removed.push((to_remove, part1, part2));
@@ -98,28 +98,28 @@ impl<N: RealField, Bodies: BodySet<N>> DefaultJointConstraintSet<N, Bodies> {
     }
 
     /// Gets a reference to the joint identified by `handle`.
-    pub fn get(&self, handle: DefaultJointConstraintHandle) -> Option<&JointConstraint<N, Bodies>> {
+    pub fn get(&self, handle: DefaultJointConstraintHandle) -> Option<&dyn JointConstraint<N, Bodies>> {
         self.constraints.get(handle).map(|b| &**b)
     }
 
     /// Gets a mutable reference to the joint identified by `handle`.
-    pub fn get_mut(&mut self, handle: DefaultJointConstraintHandle) -> Option<&mut JointConstraint<N, Bodies>> {
+    pub fn get_mut(&mut self, handle: DefaultJointConstraintHandle) -> Option<&mut dyn JointConstraint<N, Bodies>> {
         self.constraints.get_mut(handle).map(|b| &mut **b)
     }
 
     /// Iter through all the joints and their handles.
-    pub fn iter(&self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &JointConstraint<N, Bodies>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &dyn JointConstraint<N, Bodies>)> {
         self.constraints.iter().map(|b| (b.0, &**b.1))
     }
 
     /// Mutably iter through all the joints and their handles.
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &mut JointConstraint<N, Bodies>)> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (DefaultJointConstraintHandle, &mut dyn JointConstraint<N, Bodies>)> {
         self.constraints.iter_mut().map(|b| (b.0, &mut **b.1))
     }
 }
 
 impl<N: RealField, Bodies: BodySet<N> + 'static> JointConstraintSet<N, Bodies> for DefaultJointConstraintSet<N, Bodies> {
-    type JointConstraint = JointConstraint<N, Bodies>;
+    type JointConstraint = dyn JointConstraint<N, Bodies>;
     type Handle = DefaultJointConstraintHandle;
 
     fn get(&self, handle: Self::Handle) -> Option<&Self::JointConstraint> {

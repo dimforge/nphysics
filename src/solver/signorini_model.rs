@@ -33,10 +33,10 @@ impl<N: RealField> SignoriniModel<N> {
     pub fn build_velocity_constraint<B: Body<N> + ?Sized, Handle: BodyHandle, CollHandle: ColliderHandle>(
         parameters: &IntegrationParameters<N>,
         body1: &B,
-        part1: &BodyPart<N>,
+        part1: &dyn BodyPart<N>,
         handle1: BodyPartHandle<Handle>,
         body2: &B,
-        part2: &BodyPart<N>,
+        part2: &dyn BodyPart<N>,
         handle2: BodyPartHandle<Handle>,
         props: &LocalMaterialProperties<N>,
         manifold: &ColliderContactManifold<N, Handle, CollHandle>,

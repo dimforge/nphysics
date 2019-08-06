@@ -212,7 +212,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn deactivate(&mut self);
 
     /// A reference to the specified body part.
-    fn part(&self, i: usize) -> Option<&BodyPart<N>>;
+    fn part(&self, i: usize) -> Option<&dyn BodyPart<N>>;
 
     /// If this is a deformable body, returns its deformed positions.
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
@@ -227,7 +227,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     /// If the force is a torque, it is applied at the center of mass of the body part.
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         ndofs: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         dir: &ForceDirection<N>,
@@ -240,13 +240,13 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     );
 
     /// Transform the given point expressed in material coordinates to world-space.
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N>;
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N>;
 
     /// Transform the given point expressed in material coordinates to world-space.
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N>;
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N>;
 
     /// Transform the given point expressed in material coordinates to world-space.
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N>;
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N>;
 
     /// Returns `true` if this bodies contains internal constraints that need to be solved.
     fn has_active_internal_constraints(&mut self) -> bool;
@@ -284,7 +284,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     ///
     /// This will return a zero velocity for any body with a status different than `BodyStatus::Dynamic`.
     #[inline]
-    fn status_dependent_body_part_velocity(&self, part: &BodyPart<N>) -> Velocity<N> {
+    fn status_dependent_body_part_velocity(&self, part: &dyn BodyPart<N>) -> Velocity<N> {
         if self.is_dynamic() {
             part.velocity()
         } else {

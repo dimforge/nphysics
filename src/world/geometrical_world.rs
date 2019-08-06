@@ -29,14 +29,14 @@ pub type DefaultGeometricalWorld<N> = GeometricalWorld<N, DefaultBodyHandle, Def
 /// its use with the [object::Collider] structure.
 pub struct GeometricalWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     /// The broad phase used by this collision world.
-    pub(crate) broad_phase: Box<BroadPhase<N, AABB<N>, CollHandle>>,
+    pub(crate) broad_phase: Box<dyn BroadPhase<N, AABB<N>, CollHandle>>,
     /// The narrow-phase used by this collision world.
     pub(crate) narrow_phase: NarrowPhase<N, CollHandle>,
     /// The graph of interactions detected so far.
     pub(crate) interactions: InteractionGraph<N, CollHandle>,
     /// A user-defined broad-phase pair filter.
     // FIXME: we don't actually use this currently.
-    pub(crate) pair_filters: Option<Box<BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
+    pub(crate) pair_filters: Option<Box<dyn BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle>>>,
     pub(crate) body_colliders: HashMap<Handle, Vec<CollHandle>>,
 }
 
@@ -273,7 +273,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     /// The broad-phase used by this geometrical world.
-    pub fn broad_phase(&self) -> &BroadPhase<N, AABB<N>, CollHandle> {
+    pub fn broad_phase(&self) -> &dyn BroadPhase<N, AABB<N>, CollHandle> {
         &*self.broad_phase
     }
 
@@ -372,8 +372,8 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 
     #[inline(always)]
-    fn filter_proximities<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(colliders: &'a Colliders, iter: impl Iterator<Item = (CollHandle, CollHandle, &'a ProximityDetector<N>, Proximity)>)
-                           -> impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ProximityDetector<N>, Proximity)> {
+    fn filter_proximities<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(colliders: &'a Colliders, iter: impl Iterator<Item = (CollHandle, CollHandle, &'a dyn ProximityDetector<N>, Proximity)>)
+                           -> impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a dyn ProximityDetector<N>, Proximity)> {
         iter.filter_map(move |prox| {
             Some((prox.0, colliders.get(prox.0)?, prox.1, colliders.get(prox.1)?, prox.2, prox.3))
         })
@@ -423,7 +423,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
         &'a Collider<N, Handle>,
         CollHandle,
         &'a Collider<N, Handle>,
-        &'a ProximityDetector<N>,
+        &'a dyn ProximityDetector<N>,
         Proximity,
     )> {
         Self::filter_proximities(colliders, self.interactions.proximity_pairs(effective_only))
@@ -476,7 +476,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn proximity_pair<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle1: CollHandle, handle2: CollHandle, effective_only: bool)
-                          -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ProximityDetector<N>, Proximity)> {
+                          -> Option<(CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a dyn ProximityDetector<N>, Proximity)> {
         let id1 = colliders.get(handle1)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
         let id2 = colliders.get(handle2)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
 
@@ -510,7 +510,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     /// Refer to the official [user guide](https://nphysics.org/interaction_handling_and_sensors/#interaction-iterators)
     /// for details.
     pub fn proximities_with<'a, Colliders: ColliderSet<N, Handle, Handle = CollHandle>>(&'a self, colliders: &'a Colliders, handle: CollHandle, effective_only: bool)
-                            -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a ProximityDetector<N>, Proximity)>> {
+                            -> Option<impl Iterator<Item = (CollHandle, &'a Collider<N, Handle>, CollHandle, &'a Collider<N, Handle>, &'a dyn ProximityDetector<N>, Proximity)>> {
         let idx = colliders.get(handle)?.graph_index().expect(crate::NOT_REGISTERED_ERROR);
         Some(Self::filter_proximities(colliders, self.interactions.proximities_with(idx, effective_only)))
     }

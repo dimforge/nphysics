@@ -55,10 +55,10 @@ impl<N: RealField> Neg for ForceDirection<N> {
 #[inline]
 pub fn constraint_pair_geometry<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     center1: &Point<N>,
     center2: &Point<N>,
@@ -166,10 +166,10 @@ pub fn split_ext_vels<'a, N: RealField, B: ?Sized + Body<N>>(
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle, Id>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -243,10 +243,10 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -295,10 +295,10 @@ pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: Bod
 pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
@@ -361,10 +361,10 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H
 pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
@@ -418,10 +418,10 @@ pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHan
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle, Id>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -495,10 +495,10 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<
 /// All inputs mut be given in world-space.
 pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -547,10 +547,10 @@ pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: Bo
 pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
@@ -762,10 +762,10 @@ pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
 /// All inputs mut be given in world-space.
 pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -848,10 +848,10 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<
 pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,

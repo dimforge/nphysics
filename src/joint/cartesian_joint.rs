@@ -65,7 +65,7 @@ impl<N: RealField> Joint<N> for CartesianJoint<N> {
     }
 
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
+    fn clone(&self) -> Box<dyn Joint<N>> {
         Box::new(*self)
     }
 }

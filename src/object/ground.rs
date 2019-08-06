@@ -60,7 +60,7 @@ impl<N: RealField> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
+    fn part(&self, _: usize) -> Option<&dyn BodyPart<N>> {
         Some(self)
     }
 
@@ -161,17 +161,17 @@ impl<N: RealField> Body<N> for Ground<N> {
     fn set_deactivation_threshold(&mut self, _: Option<N>) {}
 
     #[inline]
-    fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         *point
     }
 
     #[inline]
-    fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         Isometry::from_parts(Translation::from(point.coords), na::one())
     }
 
     #[inline]
-    fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         *point
     }
 
@@ -179,7 +179,7 @@ impl<N: RealField> Body<N> for Ground<N> {
     #[inline]
     fn fill_constraint_geometry(
         &self,
-        _: &BodyPart<N>,
+        _: &dyn BodyPart<N>,
         _: usize, // FIXME: keep this parameter?
         _: &Point<N>,
         _: &ForceDirection<N>,

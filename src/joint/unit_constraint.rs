@@ -7,10 +7,10 @@ use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, Line
 
 pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
@@ -126,10 +126,10 @@ pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>
 pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
     parameters: &IntegrationParameters<N>,
     body1: &B,
-    part1: &BodyPart<N>,
+    part1: &dyn BodyPart<N>,
     handle1: BodyPartHandle<H>,
     body2: &B,
-    part2: &BodyPart<N>,
+    part2: &dyn BodyPart<N>,
     handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,

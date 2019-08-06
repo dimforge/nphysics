@@ -71,7 +71,7 @@ pub struct ColliderData<N: RealField, Handle: BodyHandle> {
     body_status_dependent_ndofs: usize,
     material: MaterialHandle<N>,
     ccd_enabled: bool,
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
 impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
@@ -142,7 +142,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
 
     /// The material of this collider.
     #[inline]
-    pub fn material(&self) -> &Material<N> {
+    pub fn material(&self) -> &dyn Material<N> {
         &*self.material
     }
 
@@ -152,7 +152,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderData<N, Handle> {
     /// before returning the mutable reference (this effectively call
     /// the `Arc::make_mut` method to get a copy-on-write behavior).
     #[inline]
-    pub fn material_mut(&mut self) -> &mut Material<N> {
+    pub fn material_mut(&mut self) -> &mut dyn Material<N> {
         self.material.make_mut()
     }
 }
@@ -178,25 +178,25 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
      */
     /// The user-data attached to this collider.
     #[inline]
-    pub fn user_data(&self) -> Option<&(Any + Send + Sync)> {
+    pub fn user_data(&self) -> Option<&(dyn Any + Send + Sync)> {
         self.0.data().user_data.as_ref().map(|d| &**d)
     }
 
     /// Mutable reference to the user-data attached to this collider.
     #[inline]
-    pub fn user_data_mut(&mut self) -> Option<&mut (Any + Send + Sync)> {
+    pub fn user_data_mut(&mut self) -> Option<&mut (dyn Any + Send + Sync)> {
         self.0.data_mut().user_data.as_mut().map(|d| &mut **d)
     }
 
     /// Sets the user-data attached to this collider.
     #[inline]
-    pub fn set_user_data(&mut self, data: Option<Box<Any + Send + Sync>>) -> Option<Box<Any + Send + Sync>> {
+    pub fn set_user_data(&mut self, data: Option<Box<dyn Any + Send + Sync>>) -> Option<Box<dyn Any + Send + Sync>> {
         std::mem::replace(&mut self.0.data_mut().user_data, data)
     }
 
     /// Replace the user-data of this collider by `None` and returns the old value.
     #[inline]
-    pub fn take_user_data(&mut self) -> Option<Box<Any + Send + Sync>> {
+    pub fn take_user_data(&mut self) -> Option<Box<dyn Any + Send + Sync>> {
         self.0.data_mut().user_data.take()
     }
 
@@ -251,7 +251,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
 
     /// The material of this collider.
     #[inline]
-    pub fn material(&self) -> &Material<N> {
+    pub fn material(&self) -> &dyn Material<N> {
         self.0.data().material()
     }
 
@@ -341,7 +341,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
 
     /// The collider shape.
     #[inline]
-    pub fn shape(&self) -> &Shape<N> {
+    pub fn shape(&self) -> &dyn Shape<N> {
         &**self.0.shape()
     }
 
@@ -400,7 +400,7 @@ impl<N: RealField, Handle: BodyHandle> CollisionObjectRef<N> for Collider<N, Han
         self.0.predicted_position()
     }
 
-    fn shape(&self) -> &Shape<N> {
+    fn shape(&self) -> &dyn Shape<N> {
         self.0.shape().as_ref()
     }
 
@@ -501,9 +501,9 @@ impl<N: RealField> ColliderDesc<N> {
     );
 
     desc_custom_getters!(
-        self.get_shape: &Shape<N> | { &*self.shape }
+        self.get_shape: &dyn Shape<N> | { &*self.shape }
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
-        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
 
     desc_getters!(
@@ -615,8 +615,8 @@ impl<N: RealField> DeformableColliderDesc<N> {
     );
 
     desc_custom_getters!(
-        self.get_shape: &Shape<N> | { &*self.shape }
-        self.get_material: Option<&Material<N>> | { self.material.as_ref().map(|m| &**m) }
+        self.get_shape: &dyn Shape<N> | { &*self.shape }
+        self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );
 
