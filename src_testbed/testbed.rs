@@ -740,7 +740,7 @@ impl State for Testbed {
          #[cfg(feature = "dim2")]
             let result = (None, Some(self.graphics.camera_mut() as &mut dyn PlanarCamera), None);
         #[cfg(feature = "dim3")]
-            let result = (Some(self.graphics.camera_mut() as &mut Camera), None, None);
+            let result = (Some(self.graphics.camera_mut() as &mut dyn Camera), None, None);
         result
     }
 
