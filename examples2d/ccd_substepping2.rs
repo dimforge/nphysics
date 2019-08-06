@@ -8,7 +8,7 @@ use ncollide2d::query::Proximity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultDynamicWorld, DefaultColliderWorld};
+use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics2d::material::{MaterialHandle, BasicMaterial};
 use nphysics2d::math::Velocity;
 use nphysics_testbed2d::Testbed;
@@ -18,14 +18,14 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut dynamic_world = DefaultDynamicWorld::new(Vector2::new(0.0, -9.81));
-    let collider_world = DefaultColliderWorld::new();
+    let mut mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
     let joint_constraints = DefaultJointConstraintSet::new();
     let force_generators = DefaultForceGeneratorSet::new();
 
-    // Note that setting dynamic_world.integration_parameters.multiple_ccd_trigger_events_enabled
+    // Note that setting mechanical_world.integration_parameters.multiple_ccd_substep_sensor_events_enabled
     // to `true` here will have no effect because it will be overwritten by the testbed.
 
     /*
@@ -118,8 +118,8 @@ pub fn init_world(testbed: &mut Testbed) {
      */
 
     // Callback that will be executed on the main loop to handle proximities.
-    testbed.add_callback(move |_, collider_world, _, colliders, graphics, _| {
-        for prox in collider_world.proximity_events() {
+    testbed.add_callback(move |_, geometrical_world, _, colliders, graphics, _| {
+        for prox in geometrical_world.proximity_events() {
             println!("Detected proximity {:?} between {:?} and {:?}.", prox.new_status, prox.collider1, prox.collider2);
             let c1 = colliders.get(prox.collider1).unwrap();
             let c2= colliders.get(prox.collider2).unwrap();
@@ -156,7 +156,7 @@ pub fn init_world(testbed: &mut Testbed) {
     });
 
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point2::new(-3.0, -5.0), 95.0);
 }
 

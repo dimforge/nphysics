@@ -23,7 +23,7 @@ use nphysics::object::{
     DefaultBodyHandle, DefaultBodyPartHandle, DefaultColliderHandle,
     ColliderAnchor, DefaultColliderSet
 };
-use nphysics::world::DefaultColliderWorld;
+use nphysics::world::DefaultGeometricalWorld;
 use nphysics::math::{Isometry, Vector, Point};
 use crate::objects::ball::Ball;
 use crate::objects::box_node::Box;
@@ -554,7 +554,7 @@ impl GraphicsManager {
         )))
     }
 
-    pub fn show_aabbs(&mut self, _collider_world: &DefaultColliderWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
+    pub fn show_aabbs(&mut self, _geometrical_world: &DefaultGeometricalWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
         for (_, ns) in self.b2sn.iter() {
             for n in ns.iter() {
                 let handle = n.collider();
@@ -584,7 +584,7 @@ impl GraphicsManager {
         }
     }
 
-    pub fn draw(&mut self, collider_world: &DefaultColliderWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
+    pub fn draw(&mut self, geometrical_world: &DefaultGeometricalWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
 //        use crate::kiss3d::camera::Camera;
 //        println!("eye: {}, at: {}", self.camera.eye(), self.camera.at());
         for (_, ns) in self.b2sn.iter_mut() {
@@ -601,7 +601,7 @@ impl GraphicsManager {
 
         for (handle, node) in &mut self.aabbs {
             if let Some(collider) = colliders.get(*handle) {
-                let bf = collider_world.broad_phase();
+                let bf = geometrical_world.broad_phase();
                 let aabb = collider
                     .proxy_handle()
                     .and_then(|h| bf.proxy(h))
@@ -622,7 +622,7 @@ impl GraphicsManager {
 
         for ray in &self.rays {
             let groups = CollisionGroups::new();
-            let inter = collider_world.interferences_with_ray(colliders, ray, &groups);
+            let inter = geometrical_world.interferences_with_ray(colliders, ray, &groups);
             let hit = inter.fold(1000.0, |t, hit| hit.1.toi.min(t));
             let p1 = ray.origin;
             let p2 = ray.origin + ray.dir * hit;

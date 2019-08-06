@@ -8,7 +8,7 @@ use nphysics::object::{ColliderAnchor, Collider, DefaultBodySet, DefaultCollider
 use nphysics::joint::DefaultJointConstraintSet;
 use nphysics::material::BasicMaterial;
 use nphysics::force_generator::DefaultForceGeneratorSet;
-use nphysics::world::DefaultDynamicWorld;
+use nphysics::world::DefaultMechanicalWorld;
 
 use wrapped2d::b2;
 use wrapped2d::user_data::NoUserData;
@@ -32,14 +32,14 @@ pub struct Box2dWorld {
 
 impl Box2dWorld {
     pub fn from_nphysics(
-        dynamic_world: &DefaultDynamicWorld<f32>,
+        mechanical_world: &DefaultMechanicalWorld<f32>,
         bodies: &DefaultBodySet<f32>,
         colliders: &DefaultColliderSet<f32>,
         _joint_constraints: &DefaultJointConstraintSet<f32>,
         _force_generators: &DefaultForceGeneratorSet<f32>
     )
     -> Self {
-        let world = b2::World::new(&na_vec_to_b2_vec(&dynamic_world.gravity));
+        let world = b2::World::new(&na_vec_to_b2_vec(&mechanical_world.gravity));
 
         let mut res = Box2dWorld {
             world,
@@ -151,15 +151,15 @@ impl Box2dWorld {
         }
     }
 
-    pub fn step(&mut self, dynamic_world: &mut DefaultDynamicWorld<f32>) {
-        self.world.set_continuous_physics(dynamic_world.integration_parameters.max_ccd_substeps != 0);
+    pub fn step(&mut self, mechanical_world: &mut DefaultMechanicalWorld<f32>) {
+        self.world.set_continuous_physics(mechanical_world.integration_parameters.max_ccd_substeps != 0);
 
-        dynamic_world.counters.step_started();
+        mechanical_world.counters.step_started();
         self.world.step(
-            dynamic_world.integration_parameters.dt(),
-            dynamic_world.integration_parameters.max_velocity_iterations as i32,
-            dynamic_world.integration_parameters.max_position_iterations as i32);
-        dynamic_world.counters.step_completed();
+            mechanical_world.integration_parameters.dt(),
+            mechanical_world.integration_parameters.max_velocity_iterations as i32,
+            mechanical_world.integration_parameters.max_position_iterations as i32);
+        mechanical_world.counters.step_completed();
     }
 
     pub fn sync(&self,

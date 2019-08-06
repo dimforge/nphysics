@@ -17,10 +17,10 @@ use crate::object::{
 };
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
-use crate::world::ColliderWorld;
+use crate::world::GeometricalWorld;
 
-/// The default dynamic world, that can be used with a `DefaultBodySet` and `DefaultColliderHandle`.
-pub type DefaultDynamicWorld<N> = DynamicWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
+/// The default mechanical world, that can be used with a `DefaultBodySet` and `DefaultColliderHandle`.
+pub type DefaultMechanicalWorld<N> = MechanicalWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
 
 enum PredictedImpacts<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     Impacts(Vec<TOIEntry<N, Handle, CollHandle>>, HashMap<Handle, N>),
@@ -50,7 +50,7 @@ struct SubstepState<N: RealField, Handle: BodyHandle> {
 }
 
 /// The physics world.
-pub struct DynamicWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
+pub struct MechanicalWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
     /// Performance counters used for debugging and benchmarking nphysics.
     pub counters: Counters,
     /// The constraints solver.
@@ -59,13 +59,13 @@ pub struct DynamicWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHa
     pub integration_parameters: IntegrationParameters<N>,
     /// Coefficient table used for resolving material properties to apply at one contact.
     pub material_coefficients: MaterialsCoefficientsTable<N>,
-    /// The acting on this dynamic world.
+    /// The acting on this mechanical world.
     pub gravity: Vector<N>,
     activation_manager: ActivationManager<N, Bodies::Handle>,
     substep: SubstepState<N, Bodies::Handle>,
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<N, Bodies, CollHandle> {
+impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWorld<N, Bodies, CollHandle> {
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
@@ -84,7 +84,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             body_times: HashMap::new(),
         };
 
-        DynamicWorld {
+        MechanicalWorld {
             counters,
             solver,
             activation_manager,
@@ -105,10 +105,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
         self.integration_parameters.set_dt(dt);
     }
 
-    /// Maintain the internal structures of the dynamic world by handling insersion and removal
-    /// events from every sets this dynamic world interacts with.
+    /// Maintain the internal structures of the mechanical world by handling insersion and removal
+    /// events from every sets this mechanical world interacts with.
     pub fn maintain<Colliders, Constraints>(&mut self,
-                                            cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
+                                            gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
                                             bodies: &mut Bodies,
                                             colliders: &mut Colliders,
                                             constraints: &mut Constraints)
@@ -122,7 +122,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
         while let Some(handle) = bodies.pop_removal_event() {
             // Remove every colliders attached to this body.
-            if let Some(colls_to_remove) = cworld.body_colliders(handle) {
+            if let Some(colls_to_remove) = gworld.body_colliders(handle) {
                 for collider in colls_to_remove {
                     let _ = colliders.remove(*collider);
                 }
@@ -168,12 +168,12 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             }
         }
 
-        cworld.maintain(bodies, colliders);
+        gworld.maintain(bodies, colliders);
     }
 
     /// Execute one time step of the physics simulation.
     pub fn step<Colliders, Constraints, Forces>(&mut self,
-                                                cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
+                                                gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
                                                 bodies: &mut Bodies,
                                                 colliders: &mut Colliders,
                                                 constraints: &mut Constraints,
@@ -189,7 +189,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              * Handle insertions/removals.
              *
              */
-            self.maintain(cworld, bodies, colliders, constraints);
+            self.maintain(gworld, bodies, colliders, constraints);
 
             /*
              *
@@ -218,10 +218,10 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              * Sync colliders and perform CD if the user moved
              * manually some bodies.
              */
-            cworld.clear_events();
-            cworld.sync_colliders(bodies, colliders);
-            cworld.perform_broad_phase(colliders);
-            cworld.perform_narrow_phase(colliders);
+            gworld.clear_events();
+            gworld.sync_colliders(bodies, colliders);
+            gworld.perform_broad_phase(colliders);
+            gworld.perform_narrow_phase(colliders);
 
             colliders.foreach_mut(|_, c| {
                 c.clear_update_flags()
@@ -239,7 +239,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             self.activation_manager.update(
                 bodies,
                 colliders,
-                cworld,
+                gworld,
                 constraints,
                 &mut active_bodies,
             );
@@ -258,7 +258,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              *
              */
             let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
-            for (h1, c1, h2, c2, _, manifold) in cworld.contact_pairs(colliders, false) {
+            for (h1, c1, h2, c2, _, manifold) in gworld.contact_pairs(colliders, false) {
                 let b1 = try_continue!(bodies.get(c1.body()));
                 let b2 = try_continue!(bodies.get(c2.body()));
 
@@ -324,7 +324,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
          *
          */
         self.counters.ccd_started();
-        self.solve_ccd(cworld, bodies, colliders, constraints, forces);
+        self.solve_ccd(gworld, bodies, colliders, constraints, forces);
         self.counters.ccd_completed();
 
         if !self.substep.active {
@@ -346,14 +346,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
              *
              */
             self.counters.collision_detection_started();
-            cworld.sync_colliders(bodies, colliders);
+            gworld.sync_colliders(bodies, colliders);
 
             self.counters.broad_phase_started();
-            cworld.perform_broad_phase(colliders);
+            gworld.perform_broad_phase(colliders);
             self.counters.broad_phase_completed();
 
             self.counters.narrow_phase_started();
-            cworld.perform_narrow_phase(colliders);
+            gworld.perform_narrow_phase(colliders);
             self.counters.narrow_phase_completed();
             self.counters.collision_detection_completed();
 
@@ -373,7 +373,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
     // Outputs a sorted list of TOI event (in ascending order) for the given time interval,
     // assuming body motions clamped at their first TOI.
     fn predict_next_impacts<Colliders>(&self,
-                                       cworld: &ColliderWorld<N, Bodies::Handle, CollHandle>,
+                                       gworld: &GeometricalWorld<N, Bodies::Handle, CollHandle>,
                                        bodies: &Bodies,
                                        colliders: &Colliders,
                                        end_time: N)
@@ -389,7 +389,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
         ColliderSet::foreach(colliders, |coll_handle, coll| {
             if coll.is_ccd_enabled() {
-                for (ch1, c1, ch2, c2, inter) in cworld.interactions_with(colliders, coll_handle, false).unwrap() {
+                for (ch1, c1, ch2, c2, inter) in gworld.interactions_with(colliders, coll_handle, false).unwrap() {
                     if pairs_seen.insert((ch1, ch2)) {
                         
                         let handle1 = c1.body();
@@ -456,8 +456,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
             // The resweep must involve all the colliders of the frozen bodies.
             // FIXME: there is no need to include the colliders of a body that is static, if any.
             // It is also not necessary to resweep if one body is frozen and the other is static.
-            let colliders1 = cworld.body_colliders(toi.b1).unwrap();
-            let colliders2 = cworld.body_colliders(toi.b2).unwrap();
+            let colliders1 = gworld.body_colliders(toi.b1).unwrap();
+            let colliders2 = gworld.body_colliders(toi.b2).unwrap();
 
             for c in colliders1.iter().chain(colliders2.iter()) {
                 let c = colliders.get(*c).unwrap();
@@ -469,7 +469,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                 let graph_id = c.graph_index().unwrap();
 
                 // Update any TOI involving c1 or c2.
-                for (ch1, ch2, inter) in cworld.interactions.interactions_with(graph_id, false) {
+                for (ch1, ch2, inter) in gworld.interactions.interactions_with(graph_id, false) {
                     let c1 = colliders.get(ch1).unwrap();
                     let c2 = colliders.get(ch2).unwrap();
 
@@ -509,7 +509,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
 
     fn solve_ccd<Colliders, Constraints, Forces>(&mut self,
-                                                cworld: &mut ColliderWorld<N, Bodies::Handle, CollHandle>,
+                                                gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
                                                 bodies: &mut Bodies,
                                                 colliders: &mut Colliders,
                                                 constraints: &mut Constraints,
@@ -544,14 +544,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
             // Update the broad phase.
             self.counters.ccd.broad_phase_time.resume();
-            cworld.sync_colliders(bodies, colliders);
-            cworld.perform_broad_phase(colliders);
+            gworld.sync_colliders(bodies, colliders);
+            gworld.perform_broad_phase(colliders);
             self.counters.ccd.broad_phase_time.pause();
 
             // Compute the next TOI.
             self.counters.ccd.toi_computation_time.resume();
 
-            let (toi_entries, frozen) = match self.predict_next_impacts(cworld, bodies, colliders, self.substep.end_time) {
+            let (toi_entries, frozen) = match self.predict_next_impacts(gworld, bodies, colliders, self.substep.end_time) {
                 PredictedImpacts::Impacts(toi_entries, frozen) => {
                     (toi_entries, frozen)
                 },
@@ -559,7 +559,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     self.substep.end_time = (min_toi / substep_length).floor() * substep_length;
                     self.substep.end_time = (self.substep.end_time + substep_length).min(dt0);
 
-                    self.predict_next_impacts(cworld, bodies, colliders, self.substep.end_time).unwrap_impacts()
+                    self.predict_next_impacts(gworld, bodies, colliders, self.substep.end_time).unwrap_impacts()
                 },
                 PredictedImpacts::NoImpacts => {
                     (Vec::new(), HashMap::new())
@@ -590,8 +590,8 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 for entry in &toi_entries {
                     if !entry.is_proximity {
-                        let all_colliders1 = cworld.body_colliders(entry.b1).unwrap();
-                        let all_colliders2 = cworld.body_colliders(entry.b2).unwrap();
+                        let all_colliders1 = gworld.body_colliders(entry.b1).unwrap();
+                        let all_colliders2 = gworld.body_colliders(entry.b2).unwrap();
                         colliders_to_traverse.extend_from_slice(all_colliders1);
                         colliders_to_traverse.extend_from_slice(all_colliders2);
 
@@ -617,7 +617,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                     let graph_id = colliders.get(c).unwrap().graph_index().unwrap();
 
-                    for (ch1, ch2, eid, inter) in cworld.interactions.interactions_with_mut(graph_id) {
+                    for (ch1, ch2, eid, inter) in gworld.interactions.interactions_with_mut(graph_id) {
                         if (ch1 == c && visited.contains(&ch2)) || (ch2 == c && visited.contains(&ch1)) {
                             continue;
                         }
@@ -660,18 +660,18 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                                         prepare_body(handle2, b2, c2)
                                     }
 
-                                    cworld.narrow_phase.update_contact(c1, c2, ch1, ch2, &mut **alg, manifold);
+                                    gworld.narrow_phase.update_contact(c1, c2, ch1, ch2, &mut **alg, manifold);
 
                                     if manifold.len() > 0 {
                                         interaction_ids.push(eid);
 
                                         if ch1 != c && b1_needs_preparation {
-                                            let all_colliders1 = cworld.body_colliders.get(&handle1).unwrap();
+                                            let all_colliders1 = gworld.body_colliders.get(&handle1).unwrap();
                                             colliders_to_traverse.extend_from_slice(&all_colliders1[..]);
                                         }
 
                                         if ch2 != c && b2_needs_preparation {
-                                            let all_colliders2 = cworld.body_colliders.get(&handle2).unwrap();
+                                            let all_colliders2 = gworld.body_colliders.get(&handle2).unwrap();
                                             colliders_to_traverse.extend_from_slice(&all_colliders2[..]);
                                         }
                                     }
@@ -692,7 +692,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                     if toi.is_proximity {
                         let mut c1 = colliders.get(toi.c1).unwrap();
                         let mut c2 = colliders.get(toi.c2).unwrap();
-                        let (ch1, ch2, detector, prox) = cworld.interactions.proximity_pair_mut(c1.graph_index().unwrap(), c2.graph_index().unwrap()).unwrap();
+                        let (ch1, ch2, detector, prox) = gworld.interactions.proximity_pair_mut(c1.graph_index().unwrap(), c2.graph_index().unwrap()).unwrap();
 
                         if ch1 != toi.c1 {
                             // The order of the colliders may not be the same in the interaction.
@@ -700,7 +700,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         }
 
                         // Emit an event (the case where we already have *prox == Intersecting will be filtered out automatically).
-                        cworld.narrow_phase.emit_proximity_event(ch1, ch2, *prox, Proximity::Intersecting);
+                        gworld.narrow_phase.emit_proximity_event(ch1, ch2, *prox, Proximity::Intersecting);
 
                         // Set the proximity as intersecting.
                         *prox = Proximity::Intersecting;
@@ -709,7 +709,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                         // final proximity event will only depend on the final position of the
                         // colliders (and thus will be handled by the final narrow-phase update of
                         // the non-ccd step).
-                        if self.integration_parameters.multiple_ccd_trigger_events_enabled {
+                        if self.integration_parameters.multiple_ccd_substep_sensor_events_enabled {
                             // If the bodies of the colliders have been
                             // teleported at a time of impact, then we have to update the proximity now
                             // to account for multiple on/off proximity events during consecutive substeps.
@@ -726,7 +726,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
                             let b2 = bodies.get(c2.body()).unwrap();
 
                             if b1.companion_id() == 1 || b2.companion_id() == 1 {
-                                cworld.narrow_phase.update_proximity(
+                                gworld.narrow_phase.update_proximity(
                                     c1,
                                     c2,
                                     ch1,
@@ -741,7 +741,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> DynamicWorld<
 
                 // Collect contact manifolds.
                 for eid in interaction_ids {
-                    let (ch1, ch2, inter) = cworld.interactions.index_interaction(eid).unwrap();
+                    let (ch1, ch2, inter) = gworld.interactions.index_interaction(eid).unwrap();
                     match inter {
                         Interaction::Contact(_, manifold) => {
                             let c1 = colliders.get(ch1).unwrap();

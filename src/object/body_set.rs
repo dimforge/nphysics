@@ -2,7 +2,7 @@ use std::hash::Hash;
 use generational_arena::Arena;
 
 use na::RealField;
-use crate::world::ColliderWorld;
+use crate::world::GeometricalWorld;
 use crate::object::{Body, DefaultColliderHandle, RigidBody, Multibody};
 
 /// Trait auto-implemented for types that can be used as a Body handle.
@@ -208,5 +208,5 @@ pub trait BodyDesc<N: RealField> {
     type Body: Body<N>;
 
     /// Called by the `World` to create a body with the given allocated handle.
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Self::Body;
+    fn build_with_handle(&self, gworld: &mut GeometricalWorld<N, DefaultBodyHandle, DefaultColliderHandle>, handle: DefaultBodyHandle) -> Self::Body;
 }

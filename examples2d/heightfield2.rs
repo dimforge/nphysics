@@ -5,7 +5,7 @@ use ncollide2d::shape::{HeightField, Cuboid, ShapeHandle};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultDynamicWorld, DefaultColliderWorld};
+use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics_testbed2d::Testbed;
 
 use rand::{Rng, SeedableRng, rngs::StdRng};
@@ -15,8 +15,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let dynamic_world = DefaultDynamicWorld::new(Vector2::new(0.0, -9.81));
-    let collider_world = DefaultColliderWorld::new();
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
     let joint_constraints = DefaultJointConstraintSet::new();
@@ -76,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Run the simulation.
      */
     testbed.set_ground_handle(Some(ground_handle));
-    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point2::origin(), 75.0);
 }
 

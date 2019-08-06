@@ -5,15 +5,15 @@ use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::object::{BodyStatus, FEMSurfaceDesc, ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultDynamicWorld, DefaultColliderWorld};
+use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics_testbed2d::Testbed;
 
 pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let dynamic_world = DefaultDynamicWorld::new(Vector2::zeros());
-    let collider_world = DefaultColliderWorld::new();
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::zeros());
+    let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
     let joint_constraints = DefaultJointConstraintSet::new();
@@ -66,7 +66,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Set up the testbed.
      */
-    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.set_body_color(deformable_surface_handle, Point3::new(0.0, 0.0, 1.0));
 
     for platform in &platforms {

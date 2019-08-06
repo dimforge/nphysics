@@ -111,8 +111,8 @@ impl<N: RealField> Multibody<N> {
     }
 
     /// The links of this multibody with the given `name`.
-    pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a MultibodyLink<N>> {
-        self.rbs.iter().filter(move |l| l.name == name)
+    pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)> {
+        self.rbs.iter().enumerate().filter(move |(i, l)| l.name == name)
     }
 
     /// Iterator through all the links of this multibody.

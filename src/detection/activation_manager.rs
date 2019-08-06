@@ -1,5 +1,5 @@
 use na::{self, RealField};
-use crate::world::ColliderWorld;
+use crate::world::GeometricalWorld;
 use crate::object::{Body, BodySet, BodyHandle, ColliderSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::utils::union_find::UnionFindSet;
@@ -62,7 +62,7 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
         &mut self,
         bodies: &mut Bodies,
         colliders: &Colliders,
-        cworld: &ColliderWorld<N, Handle, Colliders::Handle>,
+        gworld: &GeometricalWorld<N, Handle, Colliders::Handle>,
         constraints: &Constraints,
         active_bodies: &mut Vec<Handle>,
     )
@@ -145,7 +145,7 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
                 }
         }
 
-        for (_, c1, _, c2, _, manifold) in cworld.contact_pairs(colliders, false) {
+        for (_, c1, _, c2, _, manifold) in gworld.contact_pairs(colliders, false) {
             if manifold.len() > 0 {
                 make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }

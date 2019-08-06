@@ -48,7 +48,7 @@ pub trait JointConstraintSet<N: RealField, Bodies: BodySet<N>> {
     /// Remove a joint from this set.
     ///
     /// A constraint-based joint can be removed automatically by nphysics when one of its attached
-    /// bodies is removed from the dynamic world.
+    /// bodies is removed from the mechanical world.
     fn remove(&mut self, to_remove: Self::Handle);
 }
 

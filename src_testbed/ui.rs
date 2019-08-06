@@ -1,7 +1,7 @@
 use kiss3d::window::Window;
 use kiss3d::conrod::{self, Widget, Positionable, Sizeable, Colorable, Labelable, Borderable};
 
-use nphysics::world::DefaultDynamicWorld;
+use nphysics::world::DefaultMechanicalWorld;
 use crate::testbed::{TestbedState, RunMode, TestbedStateFlags, TestbedActionFlags};
 
 
@@ -89,7 +89,7 @@ impl TestbedUi {
         }
     }
 
-    pub fn update(&mut self, window: &mut Window, world: &mut DefaultDynamicWorld<f32>, state: &mut TestbedState) {
+    pub fn update(&mut self, window: &mut Window, world: &mut DefaultMechanicalWorld<f32>, state: &mut TestbedState) {
         let ui_root = window.conrod_ui().window;
         let mut ui = window.conrod_ui_mut().set_widgets();
         conrod::widget::Canvas::new()

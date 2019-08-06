@@ -1,7 +1,7 @@
 //! The physics world.
 
-pub use self::collider_world::{ColliderWorld, DefaultColliderWorld};
-pub use self::dynamic_world::{DynamicWorld, DefaultDynamicWorld};
+pub use self::geometrical_world::{GeometricalWorld, DefaultGeometricalWorld};
+pub use self::mechanical_world::{MechanicalWorld, DefaultMechanicalWorld};
 
-mod collider_world;
-mod dynamic_world;
+mod geometrical_world;
+mod mechanical_world;

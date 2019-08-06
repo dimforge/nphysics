@@ -58,7 +58,7 @@ pub struct IntegrationParameters<N: RealField> {
     /// If true, triggers will generate as many Proximity::Intersecting and Proximity::Disjoint/Proximity::WithinMargin
     /// events as the number of times a collider repeatedly enters and leaves the triggers during multiple CCD substeps.
     /// This is more computationally intensive.
-    pub multiple_ccd_trigger_events_enabled: bool,
+    pub multiple_ccd_substep_sensor_events_enabled: bool,
     /// Whether penetration are taken into account in CCD resolution (default: `false`).
     ///
     /// If this is set to `false` two penetrating colliders will not be considered to have any time of impact
@@ -92,7 +92,7 @@ impl<N: RealField> IntegrationParameters<N> {
         max_ccd_position_iterations: usize,
         max_ccd_substeps: usize,
         return_after_ccd_substep: bool,
-        multiple_ccd_trigger_events_enabled: bool,
+        multiple_ccd_substep_sensor_events_enabled: bool,
         ccd_on_penetration_enabled: bool,
     ) -> Self {
         IntegrationParameters {
@@ -116,7 +116,7 @@ impl<N: RealField> IntegrationParameters<N> {
             max_ccd_position_iterations,
             max_ccd_substeps,
             return_after_ccd_substep,
-            multiple_ccd_trigger_events_enabled,
+            multiple_ccd_substep_sensor_events_enabled,
             ccd_on_penetration_enabled,
         }
     }

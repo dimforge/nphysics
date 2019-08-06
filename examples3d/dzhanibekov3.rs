@@ -5,7 +5,7 @@ use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
-use nphysics3d::world::{DefaultDynamicWorld, DefaultColliderWorld};
+use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics3d::math::Velocity;
 use nphysics_testbed3d::Testbed;
 
@@ -13,8 +13,8 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let dynamic_world = DefaultDynamicWorld::new(Vector3::zeros());
-    let collider_world = DefaultColliderWorld::new();
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::zeros());
+    let geometrical_world = DefaultGeometricalWorld::new();
     let mut bodies = DefaultBodySet::new();
     let mut colliders = DefaultColliderSet::new();
     let joint_constraints = DefaultJointConstraintSet::new();
@@ -54,7 +54,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Set up the testbed.
      */
-    testbed.set_world(dynamic_world, collider_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point3::new(0.0, 0.0, 5.0), Point3::new(0.0, 0.0, 0.0));
 }
 

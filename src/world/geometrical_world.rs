@@ -20,14 +20,14 @@ use crate::object::{Collider, ColliderHandle, DefaultColliderHandle, ColliderAnc
 use crate::math::Point;
 
 
-/// The default collider world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
-pub type DefaultColliderWorld<N> = ColliderWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
+/// The default geometrical world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
+pub type DefaultGeometricalWorld<N> = GeometricalWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
 
 /// The world managing all geometric queries.
 ///
 /// This is a wrapper over the `CollisionWorld` structure from `ncollide` to simplify
 /// its use with the [object::Collider] structure.
-pub struct ColliderWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
+pub struct GeometricalWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     /// The broad phase used by this collision world.
     pub(crate) broad_phase: Box<BroadPhase<N, AABB<N>, CollHandle>>,
     /// The narrow-phase used by this collision world.
@@ -40,12 +40,12 @@ pub struct ColliderWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderH
     pub(crate) body_colliders: HashMap<Handle, Vec<CollHandle>>,
 }
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld<N, Handle, CollHandle> {
-    /// Creates a collider world from the provided broad-phase and narrow-phase structures.
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWorld<N, Handle, CollHandle> {
+    /// Creates a geometrical world from the provided broad-phase and narrow-phase structures.
     pub fn from_parts<BF>(broad_phase: BF, narrow_phase: NarrowPhase<N, CollHandle>) -> Self
         where BF: BroadPhase<N, AABB<N>, CollHandle> {
 
-        ColliderWorld {
+        GeometricalWorld {
             broad_phase: Box::new(broad_phase),
             narrow_phase,
             interactions: InteractionGraph::new(),
@@ -76,7 +76,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         collider.set_graph_index(Some(proxies.1));
     }
 
-    /// Maintain the internal structures of the collider world by handling body removals and colliders insersion and removals.
+    /// Maintain the internal structures of the geometrical world by handling body removals and colliders insersion and removals.
     pub fn maintain<Bodies, Colliders>(&mut self, bodies: &mut Bodies, colliders: &mut Colliders)
         where Bodies: BodySet<N, Handle = Handle>,
               Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
@@ -228,7 +228,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /*
     /// Customize the selection of narrow-phase collision detection algorithms
     pub fn set_narrow_phase(&mut self, narrow_phase: NarrowPhase<N, CollHandle>) {
-        self.cworld.set_narrow_phase(narrow_phase);
+        self.gworld.set_narrow_phase(narrow_phase);
     }
 */
     /// Empty the contact and proximity event pools.
@@ -244,12 +244,12 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
     /// collision pairs.
     pub fn register_broad_phase_pair_filter<F>(&mut self, name: &str, filter: F)
         where F: BroadPhasePairFilter<N, ColliderData<N>> {
-        self.cworld.register_broad_phase_pair_filter(name, filter)
+        self.gworld.register_broad_phase_pair_filter(name, filter)
     }
 
     /// Removes the pair filter named `name`.
     pub fn unregister_broad_phase_pair_filter(&mut self, name: &str) {
-        self.cworld.unregister_broad_phase_pair_filter(name)
+        self.gworld.unregister_broad_phase_pair_filter(name)
     }
     */
 
@@ -272,7 +272,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> ColliderWorld
         pipeline::perform_narrow_phase(colliders, &mut self.narrow_phase, &mut self.interactions)
     }
 
-    /// The broad-phase used by this collider world.
+    /// The broad-phase used by this geometrical world.
     pub fn broad_phase(&self) -> &BroadPhase<N, AABB<N>, CollHandle> {
         &*self.broad_phase
     }
