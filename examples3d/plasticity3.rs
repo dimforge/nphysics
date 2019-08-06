@@ -109,7 +109,6 @@ pub fn init_world(testbed: &mut Testbed) {
     testbed.set_ground_handle(Some(ground_handle));
     testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point3::new(0.0, 0.0, 2.0), Point3::new(0.0, 0.0, 0.0));
-    testbed.show_performance_counters();
 }
 
 fn main() {
