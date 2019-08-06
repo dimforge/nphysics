@@ -68,7 +68,6 @@ pub fn init_world(testbed: &mut Testbed) {
             // Build the collider.
             let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
             let co = ColliderDesc::new(geom)
-                .ccd_enabled(true)
                 .density(1.0)
                 .build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
