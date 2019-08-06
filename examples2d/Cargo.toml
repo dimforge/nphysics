@@ -67,9 +67,9 @@ path = "./convex2.rs"
 name = "cross2"
 path = "./cross2.rs"
 
-[[bin]]
-name = "disable_sleeping2"
-path = "./disable_sleeping2.rs"
+#[[bin]]
+#name = "disable_sleeping2"
+#path = "./disable_sleeping2.rs"
 
 [[bin]]
 name = "force_generator2"
