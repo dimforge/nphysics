@@ -134,7 +134,7 @@ pub struct Testbed {
     box2d: Option<Box2dWorld>,
 }
 
-type Callbacks = Vec<Box<Fn(
+type Callbacks = Vec<Box<dyn Fn(
     &mut DefaultMechanicalWorld<f32>,
     &mut DefaultGeometricalWorld<f32>,
     &mut DefaultBodySet<f32>,
@@ -158,7 +158,7 @@ impl Testbed {
         let flags = TestbedStateFlags::SLEEP;
         let ui = TestbedUi::new(&mut window);
 
-        let mut backend_names = vec!["nphysics"];
+        let backend_names = vec!["nphysics"];
         #[cfg(feature = "box2d-backend")]
             backend_names.push("box2d");
 
@@ -730,15 +730,15 @@ impl Testbed {
 }
 
 type CameraEffects<'a> = (
-    Option<&'a mut Camera>,
-    Option<&'a mut PlanarCamera>,
-    Option<&'a mut PostProcessingEffect>,
+    Option<&'a mut dyn Camera>,
+    Option<&'a mut dyn PlanarCamera>,
+    Option<&'a mut dyn PostProcessingEffect>,
 );
 
 impl State for Testbed {
     fn cameras_and_effect(&mut self) -> CameraEffects<'_> {
          #[cfg(feature = "dim2")]
-            let result = (None, Some(self.graphics.camera_mut() as &mut PlanarCamera), None);
+            let result = (None, Some(self.graphics.camera_mut() as &mut dyn PlanarCamera), None);
         #[cfg(feature = "dim3")]
             let result = (Some(self.graphics.camera_mut() as &mut Camera), None, None);
         result
