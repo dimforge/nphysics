@@ -5,16 +5,16 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all relative motions except the rotation between two body parts.
 #[cfg(feature = "dim2")]
-pub struct RevoluteConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct RevoluteConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     lin_impulses: Vector<N>,
@@ -28,9 +28,9 @@ pub struct RevoluteConstraint<N: RealField> {
 
 /// A constraint that removes all relative motions except one rotation between two body parts.
 #[cfg(feature = "dim3")]
-pub struct RevoluteConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct RevoluteConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<AngularVector<N>>,
@@ -43,14 +43,14 @@ pub struct RevoluteConstraint<N: RealField> {
     // max_angle: Option<N>,
 }
 
-impl<N: RealField> RevoluteConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> RevoluteConstraint<N, Handle> {
     /// Create a new revolute constraint which ensures the provided axii and anchors always coincide.
     ///
     /// All axii and achors are expressed in the local coordinate system of the corresponding body parts.
     #[cfg(feature = "dim3")]
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
@@ -78,7 +78,7 @@ impl<N: RealField> RevoluteConstraint<N> {
     ///
     /// Both achors are expressed in the local coordinate system of the corresponding body parts.
     #[cfg(feature = "dim2")]
-    pub fn new(b1: BodyPartHandle, b2: BodyPartHandle, anchor1: Point<N>, anchor2: Point<N>) -> Self {
+    pub fn new(b1: BodyPartHandle<Handle>, b2: BodyPartHandle<Handle>, anchor1: Point<N>, anchor2: Point<N>) -> Self {
         // let min_angle = None;
         // let max_angle = None;
 
@@ -131,27 +131,27 @@ impl<N: RealField> RevoluteConstraint<N> {
     // }
 }
 
-impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for RevoluteConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 1
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
-        let body1 = try_ret!(bodies.body(self.b1.0));
-        let body2 = try_ret!(bodies.body(self.b2.0));
+        let body1 = try_ret!(bodies.get(self.b1.0));
+        let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
         let part2 = try_ret!(body2.part(self.b2.1));
 
@@ -169,14 +169,16 @@ impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral.len();
+        let first_bilateral_ground = constraints.bilateral_ground.len();
+        let first_bilateral = constraints.bilateral.len();
 
         helper::cancel_relative_linear_velocity(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -197,8 +199,10 @@ impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
                 helper::restrict_relative_angular_velocity_to_axis(
                     body1,
                     part1,
+                    self.b1,
                     body2,
                     part2,
+                    self.b2,
                     assembly_id1,
                     assembly_id2,
                     &axis1,
@@ -221,12 +225,12 @@ impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
          */
 
         self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
-        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
+            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
-        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+        for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id < DIM {
                 self.lin_impulses[c.impulse_id] = c.impulse;
             } else {
@@ -234,7 +238,7 @@ impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
             }
         }
 
-        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+        for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             if c.impulse_id < DIM {
                 self.lin_impulses[c.impulse_id] = c.impulse;
             } else {
@@ -244,8 +248,8 @@ impl<N: RealField> JointConstraint<N> for RevoluteConstraint<N> {
     }
 }
 
-impl<N: RealField> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for RevoluteConstraint<N, Handle> {
+    fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             if DIM == 3 {
@@ -260,13 +264,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         i: usize,
-        bodies: &mut BodySet<N>,
+        bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0)?;
-        let body2 = bodies.body(self.b2.0)?;
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+        let body1 = bodies.get(self.b1.0)?;
+        let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
         let part2 = body2.part(self.b2.1)?;
 
@@ -278,11 +282,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
 
         if i == 0 {
             return helper::cancel_relative_translation(
-                params,
+                parameters,
                 body1,
                 part1,
+                self.b1,
                 body2,
                 part2,
+                self.b2,
                 &anchor1,
                 &anchor2,
                 jacobians,
@@ -296,11 +302,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for RevoluteConstraint<N> {
                     let axis2 = pos2 * self.axis2;
 
                     return helper::align_axis(
-                        params,
+                        parameters,
                         body1,
                         part1,
+                        self.b1,
                         body2,
                         part2,
+                        self.b2,
                         &anchor1,
                         &anchor2,
                         &axis1,

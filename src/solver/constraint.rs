@@ -42,7 +42,7 @@ impl<N: RealField> ConstraintGeometry<N> {
 }
 
 /// A unilateral (inequality) consraint.
-pub struct UnilateralConstraint<N: RealField> {
+pub struct UnilateralConstraint<N: RealField, Id> {
     /// The impulse applied by this constraint.
     pub impulse: N,
 
@@ -52,7 +52,7 @@ pub struct UnilateralConstraint<N: RealField> {
     pub rhs: N,
 
     /// The index of the impulse used for its storage in an impuse cache.
-    pub impulse_id: usize,
+    pub impulse_id: Id,
 
     /// The assembly index of the first body.
     pub assembly_id1: usize,
@@ -75,7 +75,7 @@ pub struct UnilateralConstraint<N: RealField> {
     pub ndofs2: usize,
 }
 
-impl<N: RealField> UnilateralConstraint<N> {
+impl<N: RealField, Id> UnilateralConstraint<N, Id> {
     /// Create a new unilateral constraint.
     #[inline]
     pub fn new(
@@ -84,7 +84,7 @@ impl<N: RealField> UnilateralConstraint<N> {
         assembly_id2: usize,
         rhs: N,
         impulse: N,
-        impulse_id: usize,
+        impulse_id: Id,
     ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         UnilateralConstraint {
@@ -92,8 +92,8 @@ impl<N: RealField> UnilateralConstraint<N> {
             r: geom.r,
             rhs,
             impulse_id,
-            assembly_id1: assembly_id1,
-            assembly_id2: assembly_id2,
+            assembly_id1,
+            assembly_id2,
             j_id1: geom.j_id1,
             j_id2: geom.j_id2,
             wj_id1: geom.wj_id1,
@@ -105,7 +105,7 @@ impl<N: RealField> UnilateralConstraint<N> {
 }
 
 /// A unilateral (inequality) constraint between a dynamic body and one without any degrees of freedom.
-pub struct UnilateralGroundConstraint<N: RealField> {
+pub struct UnilateralGroundConstraint<N: RealField, Id> {
     /// The impulse applied by the constraint.
     pub impulse: N,
 
@@ -115,7 +115,7 @@ pub struct UnilateralGroundConstraint<N: RealField> {
     pub rhs: N,
 
     /// The index of the impulse used for its storage in an impuse cache.
-    pub impulse_id: usize,
+    pub impulse_id: Id,
     /// The assembly index of the dynamic body.
     pub assembly_id: usize,
     /// Index of the first entry of the jacobian of the constraint affecting the dynamic body.
@@ -126,7 +126,7 @@ pub struct UnilateralGroundConstraint<N: RealField> {
     pub ndofs: usize,
 }
 
-impl<N: RealField> UnilateralGroundConstraint<N> {
+impl<N: RealField, Id> UnilateralGroundConstraint<N, Id> {
     /// Create a new unilateral ground constraint.
     #[inline]
     pub fn new(
@@ -135,7 +135,7 @@ impl<N: RealField> UnilateralGroundConstraint<N> {
         assembly_id2: usize,
         rhs: N,
         impulse: N,
-        impulse_id: usize,
+        impulse_id: Id,
     ) -> Self {
         if geom.ndofs1 == 0 {
             UnilateralGroundConstraint {
@@ -183,7 +183,7 @@ pub enum ImpulseLimits<N: RealField> {
 }
 
 /// A bilateral (equality) constraint between two bodies.
-pub struct BilateralConstraint<N: RealField> {
+pub struct BilateralConstraint<N: RealField, Id> {
     /// The impulse applied by this constraint.
     pub impulse: N,
 
@@ -196,7 +196,7 @@ pub struct BilateralConstraint<N: RealField> {
     pub limits: ImpulseLimits<N>,
 
     /// The index of the impulse used for its storage in an impuse cache.
-    pub impulse_id: usize,
+    pub impulse_id: Id,
 
     /// The assembly index of the first body.
     pub assembly_id1: usize,
@@ -219,7 +219,7 @@ pub struct BilateralConstraint<N: RealField> {
     pub ndofs2: usize,
 }
 
-impl<N: RealField> BilateralConstraint<N> {
+impl<N: RealField, Id> BilateralConstraint<N, Id> {
     /// Create a new bilateral constraint.
     #[inline]
     pub fn new(
@@ -229,7 +229,7 @@ impl<N: RealField> BilateralConstraint<N> {
         limits: ImpulseLimits<N>,
         rhs: N,
         impulse: N,
-        impulse_id: usize,
+        impulse_id: Id,
     ) -> Self {
         assert!(geom.ndofs1 != 0 && geom.ndofs2 != 0);
         BilateralConstraint {
@@ -238,8 +238,8 @@ impl<N: RealField> BilateralConstraint<N> {
             rhs,
             limits,
             impulse_id,
-            assembly_id1: assembly_id1,
-            assembly_id2: assembly_id2,
+            assembly_id1,
+            assembly_id2,
             j_id1: geom.j_id1,
             j_id2: geom.j_id2,
             wj_id1: geom.wj_id1,
@@ -251,7 +251,7 @@ impl<N: RealField> BilateralConstraint<N> {
 }
 
 /// A bilateral (equality) constraint between a dynamic body and one without any degrees of freedom.
-pub struct BilateralGroundConstraint<N: RealField> {
+pub struct BilateralGroundConstraint<N: RealField, Id> {
     /// The impulse applied by the constraint.
     pub impulse: N,
 
@@ -264,7 +264,7 @@ pub struct BilateralGroundConstraint<N: RealField> {
     pub limits: ImpulseLimits<N>,
 
     /// The index of the impulse used for its storage in an impuse cache.
-    pub impulse_id: usize,
+    pub impulse_id: Id,
     /// The assembly index of the dynamic body.
     pub assembly_id: usize,
     /// Index of the first entry of the jacobian of the constraint affecting the dynamic body.
@@ -275,7 +275,7 @@ pub struct BilateralGroundConstraint<N: RealField> {
     pub ndofs: usize,
 }
 
-impl<N: RealField> BilateralGroundConstraint<N> {
+impl<N: RealField, Id> BilateralGroundConstraint<N, Id> {
     /// Create a new unilateral ground constraint.
     #[inline]
     pub fn new(
@@ -285,7 +285,7 @@ impl<N: RealField> BilateralGroundConstraint<N> {
         limits: ImpulseLimits<N>,
         rhs: N,
         impulse: N,
-        impulse_id: usize,
+        impulse_id: Id,
     ) -> Self {
         if geom.ndofs1 == 0 {
             BilateralGroundConstraint {

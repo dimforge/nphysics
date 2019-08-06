@@ -1,24 +1,30 @@
 extern crate nalgebra as na;
-extern crate ncollide2d;
-extern crate nphysics2d;
-extern crate nphysics_testbed2d;
 
-use na::{Point2, Point3, Vector2};
+use na::{Point2, Vector2, Point3};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use ncollide2d::world::CollisionGroups;
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics2d::world::World;
+use ncollide2d::pipeline::CollisionGroups;
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics2d::force_generator::DefaultForceGeneratorSet;
+use nphysics2d::joint::DefaultJointConstraintSet;
+use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
-    let mut testbed = Testbed::new_empty();
-
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let geometrical_world = DefaultGeometricalWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
+
+    /*
+     * Setup a static body used as the ground.
+     */
+    let ground_handle = bodies.insert(Ground::new());
 
     /*
      * Setup groups.
@@ -36,40 +42,37 @@ fn main() {
     /*
      * A floor that will collide with everything (default behaviour).
      */
-    let ground_radx = 5.0;
-    let ground_rady = 1.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-        ground_radx,
-        ground_rady,
-    )));
+    let ground_thickness = 0.2;
+    let ground_shape =
+        ShapeHandle::new(Cuboid::new(Vector2::new(3.0, ground_thickness)));
 
-    ColliderDesc::new(ground_shape)
-        .translation(-Vector2::y() * ground_rady)
-        .build(&mut world);
+    let main_floor = ColliderDesc::new(ground_shape)
+        .translation(Vector2::y() * -ground_thickness)
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(main_floor);
 
     /*
      * A green floor that will collide with the GREEN group only.
      */
     let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 0.1)));
-
-    let collider_handle = ColliderDesc::new(ground_shape.clone())
+    let green_floor = ColliderDesc::new(ground_shape.clone())
         .translation(Vector2::y())
         .collision_groups(green_group)
-        .build(&mut world)
-        .handle();
+        .build(BodyPartHandle(ground_handle, 0));
+    let green_collider_handle = colliders.insert(green_floor);
 
-    testbed.set_collider_color(collider_handle, Point3::new(0.0, 1.0, 0.0));
+    testbed.set_collider_color(green_collider_handle, Point3::new(0.0, 1.0, 0.0));
 
     /*
      * A blue floor that will collide with the BLUE group only.
      */
-    let collider_handle = ColliderDesc::new(ground_shape)
+    let blue_floor = ColliderDesc::new(ground_shape)
         .translation(Vector2::y() * 2.0)
         .collision_groups(blue_group)
-        .build(&mut world)
-        .handle();
+        .build(BodyPartHandle(ground_handle, 0));
+    let blue_collider_handle = colliders.insert(blue_floor);
 
-    testbed.set_collider_color(collider_handle, Point3::new(0.0, 0.0, 1.0));
+    testbed.set_collider_color(blue_collider_handle, Point3::new(0.0, 0.0, 1.0));
 
     /*
      * Create the boxes
@@ -94,25 +97,35 @@ fn main() {
                 (blue_group, Point3::new(0.0, 0.0, 1.0))
             };
 
-            // Build the rigid body and its collider.
-            let collider_desc = ColliderDesc::new(cuboid.clone())
-                .density(1.0)
-                .collision_groups(group);
-
-            let body_handle = RigidBodyDesc::new()
-                .collider(&collider_desc)
+            // Build the rigid body.
+            let rb = RigidBodyDesc::new()
                 .translation(Vector2::new(x, y))
-                .build(&mut world)
-                .handle();
+                .build();
+            let rb_handle = bodies.insert(rb);
 
-            testbed.set_body_color(body_handle, color);
+            // Build the collider.
+            let co = ColliderDesc::new(cuboid.clone())
+                .density(1.0)
+                .collision_groups(group)
+                .build(BodyPartHandle(rb_handle, 0));
+            colliders.insert(co);
+
+            testbed.set_body_color(rb_handle, color);
         }
     }
 
     /*
      * Set up the testbed.
      */
-    testbed.set_world(world);
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point2::new(0.0, -1.0), 100.0);
-    testbed.run();
+}
+
+
+fn main() {
+    let testbed = Testbed::from_builders(0, vec![
+        ("Collision groups", init_world),
+    ]);
+    testbed.run()
 }

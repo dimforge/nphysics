@@ -1,37 +1,36 @@
-use slab::Slab;
-
 use na::{self, RealField};
-use crate::world::ColliderWorld;
-use crate::object::{BodyHandle, Body, BodySet};
-use crate::joint::JointConstraint;
+use crate::world::GeometricalWorld;
+use crate::object::{Body, BodySet, BodyHandle, ColliderSet};
+use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::utils::union_find::UnionFindSet;
 use crate::utils::union_find;
 
 /// Structure that monitors island-based activation/deactivation of bodies.
 ///
 /// It is responsible for making objects sleep or wake up.
-pub struct ActivationManager<N: RealField> {
+#[derive(Clone)]
+pub struct ActivationManager<N: RealField, Handle: BodyHandle> {
     mix_factor: N,
     ufind: Vec<UnionFindSet>,
     can_deactivate: Vec<bool>,
-    to_activate: Vec<BodyHandle>,
-    id_to_body: Vec<BodyHandle>,
+    to_activate: Vec<Handle>,
+    id_to_body: Vec<Handle>,
 }
 
-impl<N: RealField> ActivationManager<N> {
+impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
     /// Creates a new `ActivationManager2`.
     ///
     /// # Arguments:
     /// * `thresold`   - the minimum energy required to keep an object awake.
     /// * `mix_factor` - the ratio of energy to keep between two frames.
-    pub fn new(mix_factor: N) -> ActivationManager<N> {
+    pub fn new(mix_factor: N) -> ActivationManager<N, Handle> {
         assert!(
             mix_factor >= na::zero(),
             "The energy mixing factor must be between 0.0 and 1.0."
         );
 
         ActivationManager {
-            mix_factor: mix_factor,
+            mix_factor,
             ufind: Vec::new(),
             can_deactivate: Vec::new(),
             to_activate: Vec::new(),
@@ -41,11 +40,11 @@ impl<N: RealField> ActivationManager<N> {
 
     /// Notify the `ActivationManager2` that is has to activate an object at the next update.
     // FIXME: this is not a very good name
-    pub fn deferred_activate(&mut self, handle: BodyHandle) {
+    pub fn deferred_activate(&mut self, handle: Handle) {
         self.to_activate.push(handle);
     }
 
-    fn update_energy(&self, body: &mut Body<N>) {
+    fn update_energy(&self, body: &mut (impl Body<N> + ?Sized)) {
         // FIXME: avoid the Copy when NLL lands ?
         let status = *body.activation_status();
 
@@ -59,13 +58,17 @@ impl<N: RealField> ActivationManager<N> {
     }
 
     /// Update the activation manager, activating and deactivating objects when needed.
-    pub fn update(
+    pub fn update<Bodies, Colliders, Constraints>(
         &mut self,
-        bodies: &mut BodySet<N>,
-        cworld: &ColliderWorld<N>,
-        constraints: &Slab<Box<JointConstraint<N>>>,
-        active_bodies: &mut Vec<BodyHandle>,
-    ) {
+        bodies: &mut Bodies,
+        colliders: &Colliders,
+        gworld: &GeometricalWorld<N, Handle, Colliders::Handle>,
+        constraints: &Constraints,
+        active_bodies: &mut Vec<Handle>,
+    )
+        where Bodies: BodySet<N, Handle = Handle>,
+              Colliders: ColliderSet<N, Handle>,
+              Constraints: JointConstraintSet<N, Bodies> {
         /*
          *
          * Update bodies energy
@@ -73,21 +76,21 @@ impl<N: RealField> ActivationManager<N> {
          */
         self.id_to_body.clear();
 
-        for body in bodies.bodies_mut() {
+        bodies.foreach_mut(|handle, body| {
             if body.status_dependent_ndofs() != 0 {
                 if body.is_active() {
                     self.update_energy(body);
                 }
 
                 body.set_companion_id(self.id_to_body.len());
-                self.id_to_body.push(body.handle());
+                self.id_to_body.push(handle);
             }
 
             if body.is_kinematic() {
                 body.set_companion_id(self.id_to_body.len());
-                self.id_to_body.push(body.handle());
+                self.id_to_body.push(handle);
             }
-        }
+        });
 
         /*
          *
@@ -95,7 +98,7 @@ impl<N: RealField> ActivationManager<N> {
          *
          */
         for handle in self.to_activate.iter() {
-            let body = try_continue!(bodies.body_mut(*handle));
+            let body = try_continue!(bodies.get_mut(*handle));
 
             if body.activation_status().deactivation_threshold().is_some() {
                 body.activate()
@@ -127,14 +130,14 @@ impl<N: RealField> ActivationManager<N> {
         // Run the union-find.
         // FIXME: use the union-find from petgraph?
         #[inline(always)]
-        fn make_union<N: RealField>(
-            bodies: &BodySet<N>,
-            b1: BodyHandle,
-            b2: BodyHandle,
+        fn make_union<N: RealField, Bodies: BodySet<N>>(
+            bodies: &Bodies,
+            b1: Bodies::Handle,
+            b2: Bodies::Handle,
             ufs: &mut [UnionFindSet],
         ) {
-            let b1 = try_ret!(bodies.body(b1));
-            let b2 = try_ret!(bodies.body(b2));
+            let b1 = try_ret!(bodies.get(b1));
+            let b2 = try_ret!(bodies.get(b2));
             if (b1.status_dependent_ndofs() != 0 || b1.is_kinematic())
                 && (b2.status_dependent_ndofs() != 0 || b2.is_kinematic())
                 {
@@ -142,16 +145,16 @@ impl<N: RealField> ActivationManager<N> {
                 }
         }
 
-        for (c1, c2, _, manifold) in cworld.contact_pairs(false) {
+        for (_, c1, _, c2, _, manifold) in gworld.contact_pairs(colliders, false) {
             if manifold.len() > 0 {
                 make_union(bodies, c1.body(), c2.body(), &mut self.ufind)
             }
         }
 
-        for (_, c) in constraints.iter() {
+        constraints.foreach(|_, c| {
             let (b1, b2) = c.anchors();
             make_union(bodies, b1.0, b2.0, &mut self.ufind);
-        }
+        });
 
         /*
          * Body activation/deactivation.
@@ -160,7 +163,7 @@ impl<N: RealField> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let body = try_continue!(bodies.body(handle));
+            let body = try_continue!(bodies.get(handle));
             // FIXME: avoid the Copy when NLL lands ?
             let status = *body.activation_status();
 
@@ -174,7 +177,7 @@ impl<N: RealField> ActivationManager<N> {
         for i in 0usize..self.ufind.len() {
             let root = union_find::find(i, &mut self.ufind[..]);
             let handle = self.id_to_body[i];
-            let body = try_continue!(bodies.body_mut(handle));
+            let body = try_continue!(bodies.get_mut(handle));
 
             if self.can_deactivate[root] {
                 // Everybody in this set can be deactivacted.

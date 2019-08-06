@@ -1,15 +1,17 @@
 use na::{DVector, RealField, Unit};
 
 use crate::math::{Point, Vector};
-use crate::object::{Body, BodyPart};
-use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, ConstraintSet,
+use crate::object::{Body, BodyPart, BodyPartHandle, BodyHandle};
+use crate::solver::{helper, BilateralConstraint, BilateralGroundConstraint, LinearConstraints,
              ForceDirection, GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
 
-pub fn build_linear_limits_velocity_constraint<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn build_linear_limits_velocity_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -23,7 +25,7 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let offset = axis.dot(&(anchor2 - anchor1));
 
@@ -66,8 +68,10 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
     let geom = helper::constraint_pair_geometry(
         body1,
         part1,
+        handle1,
         body2,
         part2,
+        handle2,
         anchor1,
         anchor2,
         &force,
@@ -94,7 +98,6 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
         constraints
-            .velocity
             .bilateral_ground
             .push(BilateralGroundConstraint::new(
                 geom,
@@ -107,7 +110,6 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
             ));
     } else {
         constraints
-            .velocity
             .bilateral
             .push(BilateralConstraint::new(
                 geom,
@@ -121,19 +123,21 @@ pub fn build_linear_limits_velocity_constraint<N: RealField>(
     }
 }
 
-pub fn build_linear_limits_position_constraint<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn build_linear_limits_position_constraint<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
     min: Option<N>,
     max: Option<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let offset = axis.dot(&(anchor2 - anchor1));
     let mut error = N::zero();
     let mut dir = *axis;
@@ -150,15 +154,17 @@ pub fn build_linear_limits_position_constraint<N: RealField>(
         }
     }
 
-    if error > params.allowed_linear_error {
+    if error > parameters.allowed_linear_error {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
         let geom = helper::constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -172,8 +178,8 @@ pub fn build_linear_limits_position_constraint<N: RealField>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -191,7 +197,7 @@ pub fn build_linear_limits_position_constraint<N: RealField>(
 
 /*
 pub fn build_angular_limit_velocity_constraint<N: RealField>(
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     body1: &BodyPart<N>,
     body2: &BodyPart<N>,
     pos1: &Isometry<N>,
@@ -209,7 +215,7 @@ pub fn build_angular_limit_velocity_constraint<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, usize>,
 ) {
 }
 */

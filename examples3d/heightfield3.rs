@@ -1,28 +1,31 @@
 extern crate nalgebra as na;
-extern crate ncollide3d;
-extern crate nphysics3d;
-extern crate nphysics_testbed3d;
-extern crate rand;
 
-use na::{Vector3, DMatrix};
+use na::{Point3, Vector3, DMatrix};
 use ncollide3d::shape::{Cuboid, ShapeHandle, HeightField, HeightFieldCellStatus};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics3d::world::World;
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics3d::force_generator::DefaultForceGeneratorSet;
+use nphysics3d::joint::DefaultJointConstraintSet;
+use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics_testbed3d::Testbed;
-use rand::{Rng, SeedableRng, StdRng};
+
+use rand::{Rng, SeedableRng, rngs::StdRng};
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
-    world.set_gravity(Vector3::new(0.0, -9.81, 0.0));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::new(0.0, -9.81, 0.0));
+    let geometrical_world = DefaultGeometricalWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
 
     /*
      * Setup a random ground.
      */
-    let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+    let mut rng = StdRng::from_seed([0; 32]);
     let heights = DMatrix::from_fn(10, 15, |_, _| rng.gen::<f32>());
 
     let mut heightfield: HeightField<f32> = HeightField::new(heights, Vector3::new(10.0, 1.5, 10.0));
@@ -41,8 +44,10 @@ fn main() {
     statuses.column_mut(10).apply(|status| status | HeightFieldCellStatus::LEFT_TRIANGLE_REMOVED);
     statuses.row_mut(5).apply(|status| status | HeightFieldCellStatus::CELL_REMOVED);
 
-    ColliderDesc::new(ShapeHandle::new(heightfield))
-        .build(&mut world);
+    let ground_handle = bodies.insert(Ground::new());
+    let co = ColliderDesc::new(ShapeHandle::new(heightfield))
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
     /*
      * Create some boxes and spheres.
@@ -56,11 +61,6 @@ fn main() {
     let height = 1.0;
 
     let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
-    let collider_desc = ColliderDesc::new(cuboid)
-        .density(1.0);
-
-    let mut rb_desc = RigidBodyDesc::new()
-        .collider(&collider_desc);
 
     for i in 0usize..num {
         for j in 0usize..num {
@@ -69,10 +69,17 @@ fn main() {
                 let y = j as f32 * shift + centery + height;
                 let z = k as f32 * shift - centerz;
 
-                // Build the rigid body and its collider.
-                rb_desc
-                    .set_translation(Vector3::new(x, y, z))
-                    .build(&mut world);
+                // Build the rigid body.
+                let rb = RigidBodyDesc::new()
+                    .translation(Vector3::new(x, y, z))
+                    .build();
+                let rb_handle = bodies.insert(rb);
+
+                // Build the collider.
+                let co = ColliderDesc::new(cuboid.clone())
+                    .density(1.0)
+                    .build(BodyPartHandle(rb_handle, 0));
+                colliders.insert(co);
             }
         }
     }
@@ -80,6 +87,15 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let testbed = Testbed::new(world);
-    testbed.run();
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.look_at(Point3::new(-6.0, 6.0, -6.0), Point3::new(0.0, 1.0, 0.0));
+}
+
+fn main() {
+    let testbed = Testbed::from_builders(0, vec![
+        ("Heightfield", init_world),
+    ]);
+
+    testbed.run()
 }

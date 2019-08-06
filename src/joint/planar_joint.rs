@@ -2,7 +2,7 @@ use na::{DVectorSliceMut, Isometry3, RealField, Unit, Vector3};
 
 use crate::joint::{Joint, PrismaticJoint, RevoluteJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink};
+use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows 1 rotational and 2 translational degrees of freedom.
@@ -43,11 +43,6 @@ impl<N: RealField> PlanarJoint<N> {
 }
 
 impl<N: RealField> Joint<N> for PlanarJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
     #[inline]
     fn ndofs(&self) -> usize {
         3
@@ -121,10 +116,10 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         self.revo.default_damping(&mut out.rows_mut(2, 1));
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.prism1.integrate(params, vels);
-        self.prism2.integrate(params, &[vels[1]]);
-        self.revo.integrate(params, &[vels[2]]);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.prism1.integrate(parameters, vels);
+        self.prism2.integrate(parameters, &[vels[1]]);
+        self.revo.integrate(parameters, &[vels[2]]);
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -133,14 +128,20 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         self.revo.apply_displacement(&[disp[2]]);
     }
 
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
+    }
+
     fn num_velocity_constraints(&self) -> usize {
-        self.prism1.num_velocity_constraints() + self.prism2.num_velocity_constraints()
-            + self.revo.num_velocity_constraints()
+        self.prism1.num_velocity_constraints() +
+            self.prism2.num_velocity_constraints() +
+            self.revo.num_velocity_constraints()
     }
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -148,10 +149,10 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         self.prism1.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -162,7 +163,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
             constraints,
         );
         self.prism2.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -173,7 +174,7 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
             constraints,
         );
         self.revo.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -195,17 +196,18 @@ impl<N: RealField> Joint<N> for PlanarJoint<N> {
         i: usize,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
+        handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         if i == 0 {
-            self.prism1.position_constraint(0, multibody, link, dof_id, jacobians)
+            self.prism1.position_constraint(0, multibody, link, handle, dof_id, jacobians)
         } else if i == 1 {
             self.prism2
-                .position_constraint(0, multibody, link, dof_id + 1, jacobians)
+                .position_constraint(0, multibody, link, handle, dof_id + 1, jacobians)
         } else {
             self.revo
-                .position_constraint(0, multibody, link, dof_id + 2, jacobians)
+                .position_constraint(0, multibody, link, handle, dof_id + 2, jacobians)
         }
     }
 }

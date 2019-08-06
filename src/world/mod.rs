@@ -1,7 +1,7 @@
 //! The physics world.
 
-pub use self::world::World;
-pub use self::collider_world::ColliderWorld;
+pub use self::geometrical_world::{GeometricalWorld, DefaultGeometricalWorld};
+pub use self::mechanical_world::{MechanicalWorld, DefaultMechanicalWorld};
 
-mod world;
-mod collider_world;
+mod geometrical_world;
+mod mechanical_world;

@@ -16,6 +16,11 @@ impl Timer {
         }
     }
 
+    /// Resets the timer to 0.
+    pub fn reset(&mut self) {
+        self.time = 0.0
+    }
+
     /// Start the timer.
     pub fn start(&mut self) {
         self.time = 0.0;
@@ -43,7 +48,6 @@ impl Timer {
 
 #[cfg(not(any(target_arch = "wasm32", target_arch = "asmjs")))]
 fn now() -> f64 {
-    use time;
     time::precise_time_s()
 }
 

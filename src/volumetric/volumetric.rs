@@ -2,7 +2,7 @@
 
 use na::{self, RealField};
 use na::{Isometry2, Isometry3, Matrix1, Matrix3, Point2, Point3, Vector1, Vector3};
-use crate::math::{AngularInertia, Inertia, Point};
+use crate::math::{AngularInertia, Inertia, Point, Isometry};
 
 /// Trait implemented by inertia tensors.
 pub trait InertiaTensor<N, P, AV, M> {
@@ -49,6 +49,13 @@ pub trait Volumetric<N: RealField> {
         let ai = self.angular_inertia(mass);
 
         (mass, com, ai)
+    }
+
+    /// Given its density and position, this computes the mass, transformed center of mass, and transformed inertia tensor of this object.
+    fn transformed_mass_properties(&self, density: N, pos: &Isometry<N>) -> (Point<N>, Inertia<N>) {
+        let (mass, com, ai) = self.mass_properties(density);
+        let inertia = Inertia::new_with_angular_matrix(mass, ai);
+        (pos * com, inertia.transformed(pos))
     }
 
     fn inertia(&self, density: N) -> Inertia<N> {

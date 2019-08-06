@@ -10,16 +10,14 @@ use crate::math::{
 use na::{self, DMatrix, DVector, DVectorSlice, DVectorSliceMut, Dynamic, MatrixMN, RealField, LU};
 use crate::object::{
     ActivationStatus, BodyPartHandle, BodyStatus, MultibodyLink, BodyUpdateStatus,
-    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderDesc, BodyDesc
+    MultibodyLinkVec, Body, BodyPart, BodyHandle, ColliderHandle,
 };
 use crate::solver::{ConstraintSet, IntegrationParameters, ForceDirection, SORProx, NonlinearSORProx};
-use crate::world::{World, ColliderWorld};
+
 use crate::utils::{GeneralizedCross, IndexMut2};
 
 /// An articulated body simulated using the reduced-coordinates approach.
 pub struct Multibody<N: RealField> {
-    name: String,
-    handle: BodyHandle,
     rbs: MultibodyLinkVec<N>,
     velocities: DVector<N>,
     damping: DVector<N>,
@@ -36,7 +34,7 @@ pub struct Multibody<N: RealField> {
     activation: ActivationStatus<N>,
     ndofs: usize,
     companion_id: usize,
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 
     /*
      * Workspaces.
@@ -51,15 +49,13 @@ pub struct Multibody<N: RealField> {
      * FIXME: we should void explicitly generating those constraints by
      * just iterating on all joints at each step of the resolution.
      */
-    solver_workspace: Option<SolverWorkspace<N>>
+    solver_workspace: Option<SolverWorkspace<N, (), ()>>
 }
 
 impl<N: RealField> Multibody<N> {
     /// Creates a new multibody with no link.
-    fn new(handle: BodyHandle) -> Self {
+    fn new() -> Self {
         Multibody {
-            name: String::new(),
-            handle,
             rbs: MultibodyLinkVec(Vec::new()),
             velocities: DVector::zeros(0),
             forces: DVector::zeros(0),
@@ -98,9 +94,9 @@ impl<N: RealField> Multibody<N> {
         &mut self.rbs[0]
     }
 
-    /// Reference to the multibody link with the given handle.
+    /// Reference `i`-th multibody link of this multibody.
     ///
-    /// Return `None` if the given handle does not identifies a multibody link part of `self`.
+    /// Return `None` if there is less than `i + 1` multibody links.
     #[inline]
     pub fn link(&self, id: usize) -> Option<&MultibodyLink<N>> {
         self.rbs.get(id)
@@ -115,8 +111,8 @@ impl<N: RealField> Multibody<N> {
     }
 
     /// The links of this multibody with the given `name`.
-    pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a MultibodyLink<N>> {
-        self.rbs.iter().filter(move |l| l.name == name)
+    pub fn links_with_name<'a>(&'a self, name: &'a str) -> impl Iterator<Item = (usize, &'a MultibodyLink<N>)> {
+        self.rbs.iter().enumerate().filter(move |(_i, l)| l.name == name)
     }
 
     /// Iterator through all the links of this multibody.
@@ -164,15 +160,15 @@ impl<N: RealField> Multibody<N> {
 
     fn add_link(
         &mut self,
-        parent: BodyPartHandle,
-        mut dof: Box<Joint<N>>,
+        parent: Option<usize>,
+        mut dof: Box<dyn Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         local_inertia: Inertia<N>,
         local_com: Point<N>,
     ) -> &mut MultibodyLink<N> {
         assert!(
-            parent.is_ground() || !self.rbs.is_empty(),
+            parent.is_none() || !self.rbs.is_empty(),
             "Multibody::build_body: invalid parent id."
         );
 
@@ -205,8 +201,8 @@ impl<N: RealField> Multibody<N> {
         let parent_to_world;
 
         let parent_internal_id;
-        if !parent.is_ground() {
-            parent_internal_id = parent.1;
+        if let Some(parent) = parent {
+            parent_internal_id = parent;
             let parent_rb = &mut self.rbs[parent_internal_id];
             parent_rb.is_leaf = false;
             parent_to_world = parent_rb.local_to_world;
@@ -221,7 +217,6 @@ impl<N: RealField> Multibody<N> {
             internal_id,
             assembly_id,
             impulse_id,
-            self.handle,
             parent_internal_id,
             dof,
             parent_shift,
@@ -726,12 +721,12 @@ impl<N: RealField> MultibodyWorkspace<N> {
     }
 }
 
-struct SolverWorkspace<N: RealField> {
+struct SolverWorkspace<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     jacobians: DVector<N>,
-    constraints: ConstraintSet<N>,
+    constraints: ConstraintSet<N, Handle, CollHandle, usize>,
 }
 
-impl<N: RealField> SolverWorkspace<N> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> SolverWorkspace<N, Handle, CollHandle> {
     pub fn new() -> Self {
         SolverWorkspace {
             jacobians: DVector::zeros(0),
@@ -750,18 +745,8 @@ impl<N: RealField> SolverWorkspace<N> {
 
 impl<N: RealField> Body<N> for Multibody<N> {
     #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
-    #[inline]
-    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
-        self.link(id).map(|l| l as &BodyPart<N>)
+    fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
+        self.link(id).map(|l| l as &dyn BodyPart<N>)
     }
 
     #[inline]
@@ -783,11 +768,11 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn integrate(&mut self, params: &IntegrationParameters<N>) {
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
 
         for rb in self.rbs.iter_mut() {
-            rb.dof.integrate(params, &self.velocities.as_slice()[rb.assembly_id..])
+            rb.dof.integrate(parameters, &self.velocities.as_slice()[rb.assembly_id..])
         }
     }
 
@@ -872,11 +857,6 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
-    #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
     }
@@ -926,26 +906,26 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world * point
     }
 
     #[inline]
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world * Translation::from(point.coords)
     }
 
     #[inline]
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let link = part.downcast_ref::<MultibodyLink<N>>().expect("The provided body part must be a multibody link");
         link.local_to_world.inverse_transform_point(point)
     }
 
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         ndofs: usize, // FIXME: keep this parameter?
         point: &Point<N>,
         force_dir: &ForceDirection<N>,
@@ -1002,7 +982,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, params: &IntegrationParameters<N>) {
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, parameters: &IntegrationParameters<N>) {
         let mut ground_j_id = 0;
         let mut workspace = self.solver_workspace.take().unwrap();
 
@@ -1032,7 +1012,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
         for link in self.rbs.iter() {
             link.joint().velocity_constraints(
-                params,
+                parameters,
                 self,
                 &link,
                 0,
@@ -1076,7 +1056,7 @@ impl<N: RealField> Body<N> for Multibody<N> {
     }
 
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>) {
+    fn step_solve_internal_position_constraints(&mut self, parameters: &IntegrationParameters<N>) {
         // FIXME: this `.take()` trick is ugly.
         // We should not pass a reference to the multibody to the link position constraint method.
         let mut workspace = self.solver_workspace.take().unwrap();
@@ -1090,12 +1070,12 @@ impl<N: RealField> Body<N> for Multibody<N> {
                 // every time.
                 let c = link
                     .joint()
-                    .position_constraint(j, self, link, 0, jacobians.as_mut_slice());
+                    .position_constraint(j, self, link, BodyPartHandle((), i), 0, jacobians.as_mut_slice());
 
                 if let Some(c) = c {
                     // FIXME: the following has been copy-pasted from the NonlinearSORProx.
                     // We should refactor the code better.
-                    let rhs = NonlinearSORProx::clamp_rhs(c.rhs, c.is_angular, params);
+                    let rhs = NonlinearSORProx::clamp_rhs(c.rhs, c.is_angular, parameters);
 
                     if rhs < N::zero() {
                         let impulse = -rhs * c.r;
@@ -1116,11 +1096,15 @@ impl<N: RealField> Body<N> for Multibody<N> {
     fn add_local_inertia_and_com(&mut self, part_id: usize, com: Point<N>, inertia: Inertia<N>) {
         self.update_status.set_local_inertia_changed(true);
         let mut link = &mut self.rbs[part_id];
+        let mass_sum = link.inertia.linear + inertia.linear;
+
         // Update center of mass.
-        if !link.inertia.linear.is_zero() {
-            let mass_sum = link.inertia.linear + inertia.linear;
+        if !mass_sum.is_zero() {
             link.local_com = (link.local_com * link.inertia.linear + com.coords * inertia.linear) / mass_sum;
             link.com = link.local_to_world * link.local_com;
+        } else {
+            link.local_com = Point::origin();
+            link.com = link.local_to_world.translation.vector.into();
         }
 
         // Update inertia.
@@ -1188,19 +1172,18 @@ impl<N: RealField> Body<N> for Multibody<N> {
 
 
 /// A multibody builder.
-pub struct MultibodyDesc<'a, N: RealField> {
+pub struct MultibodyDesc<N: RealField> {
     name: String,
-    children: Vec<MultibodyDesc<'a, N>>,
-    joint: Box<Joint<N>>,
+    children: Vec<MultibodyDesc<N>>,
+    joint: Box<dyn Joint<N>>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
-    colliders: Vec<&'a ColliderDesc<N>>,
     body_shift: Vector<N>,
     parent_shift: Vector<N>
 }
 
-impl<'a, N: RealField> MultibodyDesc<'a, N> {
+impl<N: RealField> MultibodyDesc<N> {
     /// Initialize a multibody builder with one link with one joint.
     pub fn new<J: Joint<N>>(joint: J) -> Self {
         MultibodyDesc {
@@ -1210,14 +1193,13 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
             velocity: Velocity::zero(),
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
-            colliders: Vec::new(),
             body_shift: Vector::zeros(),
             parent_shift: Vector::zeros()
         }
     }
 
     /// Add a children link to the multibody link represented by `self`.
-    pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<'a, N> {
+    pub fn add_child<J: Joint<N>>(&mut self, joint: J) -> &mut MultibodyDesc<N> {
         let child = MultibodyDesc::new(joint);
 
         self.children.push(child);
@@ -1241,7 +1223,6 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
     );
 
     desc_custom_setters!(
-        self.collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
         self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
     );
 
@@ -1279,30 +1260,21 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
-
-    /// Build into the `world` the multibody represented by `self` and its children.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut Multibody<N> {
-        world.add_body(self)
+    /// Build the multibody described by this factory.
+    pub fn build(&self) -> Multibody<N> {
+        let mut multibody = Multibody::new();
+        let _  = self.do_build_with_parent(&mut multibody, None);
+        multibody
     }
 
-    /// Adds the links represented by `self` and its children to the multibody identified by `parent`.
-    ///
-    /// If `parent` is the ground, then a new multibody is created.
-    /// If `parent` is not another multibody link, then `None` is returned.
-    pub fn build_with_parent<'w>(&self, parent: BodyPartHandle, world: &'w mut World<N>) -> Option<&'w mut MultibodyLink<N>> {
-        if parent.is_ground() {
-            Some(self.build(world).root_mut())
-        } else {
-            let (bodies, cworld) = world.bodies_mut_and_collider_world_mut();
-            // FIXME: keep the Err so the user gets a more meaningful error?
-            let mb = bodies.body_mut(parent.0)?.downcast_mut::<Multibody<N>>()?;
-            Some(self.do_build(mb, cworld, parent))
-        }
+    /// Build the multibody links described by this factory and attach them to the `parent_id`-th link of the given `multibody`.
+    pub fn build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: usize) -> &'m mut MultibodyLink<N> {
+        self.do_build_with_parent(multibody, Some(parent_id))
     }
 
-    fn do_build<'m>(&self, mb: &'m mut Multibody<N>, cworld: &mut ColliderWorld<N>, parent: BodyPartHandle) -> &'m mut MultibodyLink<N> {
-        let link = mb.add_link(
-            parent,
+    fn do_build_with_parent<'m>(&self, multibody: &'m mut Multibody<N>, parent_id: Option<usize>) -> &'m mut MultibodyLink<N> {
+        let mut link = multibody.add_link(
+            parent_id,
             self.joint.clone(),
             self.parent_shift,
             self.body_shift,
@@ -1312,26 +1284,12 @@ impl<'a, N: RealField> MultibodyDesc<'a, N> {
         link.velocity = self.velocity;
         link.name = self.name.clone();
 
-        let me = link.part_handle();
-
-        for desc in &self.colliders {
-            let _ = desc.build_with_infos(me, mb, cworld);
-        }
+        let me = link.link_id();
 
         for child in &self.children {
-            let _ = child.do_build(mb, cworld, me);
+            let _ = child.do_build_with_parent(multibody, Some(me));
         }
 
-        mb.link_mut(me.1).unwrap()
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for MultibodyDesc<'a, N> {
-    type Body = Multibody<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> Multibody<N> {
-        let mut mb = Multibody::new(handle);
-        let _ = self.do_build(&mut mb, cworld, BodyPartHandle::ground());
-        mb
+        multibody.link_mut(me).unwrap()
     }
 }

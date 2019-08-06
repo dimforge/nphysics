@@ -2,7 +2,7 @@ use na::{self, DVectorSliceMut, Isometry3, RealField, Translation3, Unit, Vector
 
 use crate::joint::{Joint, JointMotor, RevoluteJoint, UnitJoint};
 use crate::math::{JacobianSliceMut, Velocity};
-use crate::object::{Multibody, MultibodyLink};
+use crate::object::{Multibody, MultibodyLink, BodyPartHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A joint that allows one degree of freedom between two multibody links.
@@ -39,11 +39,6 @@ impl<N: RealField> HelicalJoint<N> {
 }
 
 impl<N: RealField> Joint<N> for HelicalJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
     #[inline]
     fn ndofs(&self) -> usize {
         1
@@ -92,12 +87,17 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         out.fill(na::convert(0.1f64))
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.revo.integrate(params, vels)
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.revo.integrate(parameters, vels)
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
         self.revo.apply_displacement(disp)
+    }
+
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
     }
 
     fn num_velocity_constraints(&self) -> usize {
@@ -106,7 +106,7 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -114,11 +114,11 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         // XXX: is this correct even though we don't have the same jacobian?
         self.revo.velocity_constraints(
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -140,11 +140,12 @@ impl<N: RealField> Joint<N> for HelicalJoint<N> {
         _: usize,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
+        handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
         // XXX: is this correct even though we don't have the same jacobian?
-        self.revo.position_constraint(0, multibody, link, dof_id, jacobians)
+        self.revo.position_constraint(0, multibody, link, handle, dof_id, jacobians)
     }
 }
 

@@ -1,25 +1,27 @@
 extern crate nalgebra as na;
-extern crate ncollide2d;
-extern crate nphysics2d;
-extern crate nphysics_testbed2d;
-extern crate rand;
 
 use rand::distributions::{Standard, Distribution};
-use rand::{SeedableRng, XorShiftRng};
+use rand::{SeedableRng, rngs::StdRng};
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{ConvexPolygon, Cuboid, ShapeHandle};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics2d::world::World;
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics2d::force_generator::DefaultForceGeneratorSet;
+use nphysics2d::joint::DefaultJointConstraintSet;
+use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let geometrical_world = DefaultGeometricalWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
 
     /*
      * Ground
@@ -28,9 +30,11 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
-    ColliderDesc::new(ground_shape)
+    let ground_handle = bodies.insert(Ground::new());
+    let co = ColliderDesc::new(ground_shape)
         .translation(-Vector2::y())
-        .build(&mut world);
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
     /*
      * Create the convex geometries.
@@ -40,7 +44,7 @@ fn main() {
     let shift = 0.4;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift;
-    let mut rng = XorShiftRng::seed_from_u64(0);
+    let mut rng = StdRng::seed_from_u64(0);
     let distribution = Standard;
 
     for i in 0usize..num {
@@ -55,21 +59,32 @@ fn main() {
                 pts.push(pt * 0.4);
             }
 
-            let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
-            let collider_desc = ColliderDesc::new(geom)
-                .density(1.0);
-
-            RigidBodyDesc::new()
-                .collider(&collider_desc)
+            // Build the rigid body.
+            let rb = RigidBodyDesc::new()
                 .translation(Vector2::new(x, y))
-                .build(&mut world);
+                .build();
+            let rb_handle = bodies.insert(rb);
+
+            // Build the collider.
+            let geom = ShapeHandle::new(ConvexPolygon::try_from_points(&pts).unwrap());
+            let co = ColliderDesc::new(geom)
+                .density(1.0)
+                .build(BodyPartHandle(rb_handle, 0));
+            colliders.insert(co);
         }
     }
 
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point2::new(0.0, -2.5), 95.0);
-    testbed.run();
+}
+
+fn main() {
+    let testbed = Testbed::from_builders(0, vec![
+        ("Convex", init_world),
+    ]);
+    testbed.run()
 }

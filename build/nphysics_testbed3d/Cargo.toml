@@ -1,0 +1,34 @@
+[package]
+name    = "nphysics_testbed3d"
+version = "0.5.0"
+authors = [ "Sébastien Crozet <developer@crozet.re>" ]
+description = "Testbed for the 3-dimensional physics engine in Rust."
+homepage = "http://nphysics.org"
+repository = "https://github.com/rustsim/nphysics"
+keywords = [ "physics", "dynamics", "rigid", "real-time", "joints" ]
+license = "BSD-3-Clause"
+edition = "2018"
+
+
+[lib]
+name = "nphysics_testbed3d"
+path = "../../src_testbed/lib.rs"
+required-features = [ "dim3" ]
+
+[features]
+default = [ "dim3" ]
+dim3 = [ ]
+
+[dependencies]
+log        = { version = "0.4", optional = true }
+bitflags   = "1.0"
+num-traits = "0.2"
+time       = "0.1"
+rand       = "0.6"
+nalgebra   = "0.18"
+kiss3d     = { version = "0.21", features = [ "conrod" ] }
+ncollide3d = "0.20"
+
+[dependencies.nphysics3d]
+path = "../nphysics3d"
+version = "0.11"

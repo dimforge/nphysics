@@ -3,12 +3,12 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use crate::math::{Force, Inertia, Isometry, Point, Rotation, Translation, Vector, Velocity,
                   SpatialVector, SPATIAL_DIM, DIM, Dim, ForceType};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, Body, BodyPart, BodyHandle,
-                    ColliderDesc, BodyDesc, BodyUpdateStatus};
+use crate::object::{ActivationStatus, BodyStatus, Body, BodyPart, BodyPartMotion, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
-use crate::world::{World, ColliderWorld};
+
 use crate::utils::{UserData, UserDataBox};
 use ncollide::shape::DeformationsType;
+use ncollide::interpolation::{RigidMotion, ConstantLinearVelocityRigidMotion, ConstantVelocityRigidMotion};
 
 #[cfg(feature = "dim3")]
 use crate::math::AngularVector;
@@ -19,8 +19,7 @@ use crate::utils::GeneralizedCross;
 /// A rigid body.
 #[derive(Debug)]
 pub struct RigidBody<N: RealField> {
-    name: String,
-    handle: BodyHandle,
+    position0: Isometry<N>,
     position: Isometry<N>,
     velocity: Velocity<N>,
     local_inertia: Inertia<N>,
@@ -31,24 +30,28 @@ pub struct RigidBody<N: RealField> {
     inv_augmented_mass: Inertia<N>,
     external_forces: Force<N>,
     acceleration: Velocity<N>,
+    linear_damping: N,
+    angular_damping: N,
+    max_linear_velocity: N,
+    max_angular_velocity: N,
     status: BodyStatus,
     gravity_enabled: bool,
+    linear_motion_interpolation_enabled: bool,
     activation: ActivationStatus<N>,
     jacobian_mask: SpatialVector<N>,
     companion_id: usize,
     update_status: BodyUpdateStatus,
-    user_data: Option<Box<Any + Send + Sync>>
+    user_data: Option<Box<dyn Any + Send + Sync>>
 }
 
 impl<N: RealField> RigidBody<N> {
-    /// Create a new rigid body with the specified handle and dynamic properties.
-    fn new(handle: BodyHandle, position: Isometry<N>) -> Self {
+    /// Create a new rigid body with the specified position.
+    fn new(position: Isometry<N>) -> Self {
         let inertia = Inertia::zero();
         let com = Point::from(position.translation.vector);
 
         RigidBody {
-            name: String::new(),
-            handle,
+            position0: position,
             position,
             velocity: Velocity::zero(),
             local_inertia: inertia,
@@ -59,8 +62,13 @@ impl<N: RealField> RigidBody<N> {
             inv_augmented_mass: inertia.inverse(),
             external_forces: Force::zero(),
             acceleration: Velocity::zero(),
+            linear_damping: N::zero(),
+            angular_damping: N::zero(),
+            max_linear_velocity: N::max_value(),
+            max_angular_velocity: N::max_value(),
             status: BodyStatus::Dynamic,
             gravity_enabled: true,
+            linear_motion_interpolation_enabled: false,
             activation: ActivationStatus::new_active(),
             jacobian_mask: SpatialVector::repeat(N::one()),
             companion_id: 0,
@@ -70,6 +78,22 @@ impl<N: RealField> RigidBody<N> {
     }
 
     user_data_accessors!();
+
+    /// Check if linear motion interpolation is enabled for CCD.
+    ///
+    /// If this is disabled, non-linear interpolation will be used.
+    #[inline]
+    pub fn linear_motion_interpolation_enabled(&self) -> bool {
+        self.linear_motion_interpolation_enabled
+    }
+
+    /// Enable linear motion interpolation for CCD.
+    ///
+    /// If this is disabled, non-linear interpolation will be used.
+    #[inline]
+    pub fn enable_linear_motion_interpolation(&mut self, enabled: bool) {
+        self.linear_motion_interpolation_enabled = enabled
+    }
 
     /// Mark some translational degrees of freedom as kinematic.
     pub fn set_translations_kinematic(&mut self, is_kinematic: Vector<bool>) {
@@ -90,7 +114,7 @@ impl<N: RealField> RigidBody<N> {
 
     /// Mark rotations as kinematic.
     #[cfg(feature = "dim2")]
-    pub fn set_rotation_kinematic(&mut self, is_kinematic: bool) {
+    pub fn set_rotations_kinematic(&mut self, is_kinematic: bool) {
         self.update_status.set_status_changed(true);
         self.jacobian_mask[2] = if is_kinematic { N::zero() } else { N::one() };
     }
@@ -113,7 +137,7 @@ impl<N: RealField> RigidBody<N> {
 
     /// Flags indicating if rotations are kinematic.
     #[cfg(feature = "dim2")]
-    pub fn kinematic_rotation(&self) -> bool {
+    pub fn kinematic_rotations(&self) -> bool {
         self.jacobian_mask[2].is_zero()
     }
 
@@ -131,7 +155,7 @@ impl<N: RealField> RigidBody<N> {
             }
         #[cfg(feature = "dim2")]
             {
-                self.set_rotation_kinematic(true);
+                self.set_rotations_kinematic(true);
                 self.velocity.angular = N::zero();
             }
     }
@@ -146,7 +170,7 @@ impl<N: RealField> RigidBody<N> {
             }
         #[cfg(feature = "dim2")]
             {
-                self.set_rotation_kinematic(false)
+                self.set_rotations_kinematic(false)
             }
     }
 
@@ -168,18 +192,56 @@ impl<N: RealField> RigidBody<N> {
         self.set_translations_kinematic(Vector::repeat(false))
     }
 
-    /// The handle of this rigid body.
-    #[inline]
-    pub fn handle(&self) -> BodyHandle {
-        self.handle
+    /// Sets the linear damping coefficient of this rigid body.
+    ///
+    /// Linear damping will make the rigid body loose linear velocity automatically velocity at each timestep.
+    /// There is no damping by default.
+    pub fn set_linear_damping(&mut self, damping: N) {
+        self.linear_damping = damping
     }
 
-    /// The part-handle of this rigid body.
+    /// The linear damping coefficient of this rigid body.
+    pub fn linear_damping(&self) -> N {
+        self.linear_damping
+    }
+
+
+    /// Sets the angular damping coefficient of this rigid body.
     ///
-    /// The part id is set to 0 though any value is acceptable.
-    #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.handle, 0)
+    /// Angular damping will make the rigid body loose angular velocity automatically velocity at each timestep.
+    /// There is no damping by default.
+    pub fn set_angular_damping(&mut self, damping: N) {
+        self.angular_damping = damping
+    }
+
+    /// The angular damping coefficient of this rigid body.
+    pub fn angular_damping(&self) -> N {
+        self.angular_damping
+    }
+
+    /// Caps the linear velocity of this rigid body to the given maximum.
+    ///
+    /// This will prevent a rigid body from having a linear velocity with magnitude greater than `max_vel`.
+    pub fn set_max_linear_velocity(&mut self, max_vel: N) {
+        self.max_linear_velocity = max_vel
+    }
+
+    /// The maximum allowed linear velocity of this rigid body.
+    pub fn max_linear_velocity(&self) -> N {
+        self.max_linear_velocity
+    }
+
+
+    /// Caps the angular velocity of this rigid body to the given maximum.
+    ///
+    /// This will prevent a rigid body from having a angular velocity with magnitude greater than `max_vel`.
+    pub fn set_max_angular_velocity(&mut self, max_vel: N) {
+        self.max_angular_velocity = max_vel
+    }
+
+    /// The maximum allowed angular velocity of this rigid body.
+    pub fn max_angular_velocity(&self) -> N {
+        self.max_angular_velocity
     }
 
     /// Mutable information regarding activation and deactivation (sleeping) of this rigid body.
@@ -298,12 +360,14 @@ impl<N: RealField> RigidBody<N> {
         &self.velocity
     }
 
-    #[inline]
-    fn apply_displacement(&mut self, displacement: &Velocity<N>) {
-        let rotation = Rotation::new(displacement.angular);
-        let translation = Translation::from(displacement.linear);
+    fn displacement_wrt_com(&self, disp: &Velocity<N>) -> Isometry<N> {
         let shift = Translation::from(self.com.coords);
-        let disp = translation * shift * rotation * shift.inverse();
+        shift * disp.to_transform() * shift.inverse()
+    }
+
+    #[inline]
+    fn apply_displacement(&mut self, disp: &Velocity<N>) {
+        let disp = self.displacement_wrt_com(disp);
         let new_pos = disp * self.position;
         self.set_position(new_pos);
     }
@@ -311,16 +375,6 @@ impl<N: RealField> RigidBody<N> {
 
 
 impl<N: RealField> Body<N> for RigidBody<N> {
-    #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     #[inline]
     fn activation_status(&self) -> &ActivationStatus<N> {
         &self.activation
@@ -382,11 +436,6 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn handle(&self) -> BodyHandle {
-        self.handle
-    }
-
-    #[inline]
     fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }
@@ -408,8 +457,43 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn integrate(&mut self, params: &IntegrationParameters<N>) {
-        let disp = self.velocity * params.dt;
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
+        self.velocity.linear *= N::one() / (N::one() + parameters.dt() * self.linear_damping);
+        self.velocity.angular *= N::one() / (N::one() + parameters.dt() * self.angular_damping);
+
+        let linvel_norm = self.velocity.linear.norm();
+
+        if linvel_norm > self.max_linear_velocity {
+            if self.max_linear_velocity.is_zero() {
+                self.velocity.linear = na::zero();
+            } else {
+                self.velocity.linear /= self.max_linear_velocity * linvel_norm;
+            }
+        }
+
+        #[cfg(feature = "dim2")]
+            {
+                if self.velocity.angular > self.max_angular_velocity {
+                    self.velocity.angular = self.max_angular_velocity;
+                } else if self.velocity.angular < -self.max_angular_velocity {
+                    self.velocity.angular = -self.max_angular_velocity;
+                }
+            }
+
+        #[cfg(feature = "dim3")]
+            {
+                let angvel_norm = self.velocity.angular.norm();
+
+                if angvel_norm > self.max_angular_velocity {
+                    if self.max_angular_velocity.is_zero() {
+                        self.velocity.angular = na::zero()
+                    } else {
+                        self.velocity.angular *= self.max_angular_velocity / angvel_norm;
+                    }
+                }
+            }
+
+        let disp = self.velocity * parameters.dt();
         self.apply_displacement(&disp);
     }
 
@@ -424,7 +508,40 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     fn update_kinematics(&mut self) {
     }
 
-    #[allow(unused_variables)] // for params used only in 3D.
+    fn step_started(&mut self) {
+        self.position0 = self.position;
+    }
+
+    fn advance(&mut self, time_ratio: N) {
+        let motion = self.part_motion(0, N::zero()).unwrap();
+        self.position0 = motion.position_at_time(time_ratio);
+    }
+
+    fn validate_advancement(&mut self) {
+        self.position0 = self.position;
+    }
+
+    fn clamp_advancement(&mut self) {
+        if self.linear_motion_interpolation_enabled {
+            let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
+            self.set_position(p0);
+        } else {
+            self.set_position(self.position0);
+        }
+    }
+
+    fn part_motion(&self, _: usize, time_origin: N) -> Option<BodyPartMotion<N>> {
+        if self.linear_motion_interpolation_enabled {
+            let p0 = Isometry::from_parts(self.position0.translation, self.position.rotation);
+            let motion = ConstantLinearVelocityRigidMotion::new(time_origin, p0, self.velocity.linear);
+            Some(BodyPartMotion::RigidLinear(motion))
+        } else {
+            let motion = ConstantVelocityRigidMotion::new(time_origin, self.position0, self.local_com, self.velocity.linear, self.velocity.angular);
+            Some(BodyPartMotion::RigidNonlinear(motion))
+        }
+    }
+
+    #[allow(unused_variables)] // for parameters used only in 3D.
     fn update_dynamics(&mut self, dt: N) {
         if !self.update_status.inertia_needs_update() || self.status != BodyStatus::Dynamic {
             return;
@@ -487,7 +604,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
+    fn part(&self, _: usize) -> Option<&dyn BodyPart<N>> {
         Some(self)
     }
 
@@ -497,17 +614,17 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.position * point
     }
 
     #[inline]
-    fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         self.position * Translation::from(point.coords)
     }
 
     #[inline]
-    fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         self.position.inverse_transform_point(point)
     }
 
@@ -524,7 +641,7 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     #[inline]
     fn fill_constraint_geometry(
         &self,
-        _: &BodyPart<N>,
+        _: &dyn BodyPart<N>,
         _: usize,
         point: &Point<N>,
         force_dir: &ForceDirection<N>,
@@ -593,11 +710,15 @@ impl<N: RealField> Body<N> for RigidBody<N> {
         self.update_status.set_local_com_changed(true);
         self.update_status.set_local_inertia_changed(true);
 
+        let mass_sum = self.inertia.linear + inertia.linear;
+
         // Update center of mass.
-        if !inertia.linear.is_zero() {
-            let mass_sum = self.inertia.linear + inertia.linear;
+        if !mass_sum.is_zero() {
             self.local_com = (self.local_com * self.inertia.linear + com.coords * inertia.linear) / mass_sum;
             self.com = self.position * self.local_com;
+        } else {
+            self.local_com = Point::origin();
+            self.com = self.position.translation.vector.into();
         }
 
         // Update local inertia.
@@ -668,11 +789,6 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.handle, 0)
-    }
-
-    #[inline]
     fn velocity(&self) -> Velocity<N> {
         self.velocity
     }
@@ -680,6 +796,15 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn position(&self) -> Isometry<N> {
         self.position
+    }
+
+    #[inline]
+    fn safe_position(&self) -> Isometry<N> {
+        if self.linear_motion_interpolation_enabled {
+            Isometry::from_parts(self.position0.translation, self.position.rotation)
+        } else {
+            self.position0
+        }
     }
 
     #[inline]
@@ -695,6 +820,11 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
     #[inline]
     fn center_of_mass(&self) -> Point<N> {
         self.com
+    }
+
+    #[inline]
+    fn local_center_of_mass(&self) -> Point<N> {
+        self.local_com
     }
 }
 
@@ -715,43 +845,49 @@ impl<N: RealField> BodyPart<N> for RigidBody<N> {
 /// `RigidBodyDesc` for the first time. The `.set_` methods are useful when modifying it after
 /// this initialization (including after calls to `.build`).
 #[derive(Clone)]
-pub struct RigidBodyDesc<'a, N: RealField> {
-    name: String,
+pub struct RigidBodyDesc<N: RealField> {
     user_data: Option<UserDataBox>,
     gravity_enabled: bool,
+    linear_motion_interpolation_enabled: bool,
     position: Isometry<N>,
     velocity: Velocity<N>,
+    linear_damping: N,
+    angular_damping: N,
+    max_linear_velocity: N,
+    max_angular_velocity: N,
     local_inertia: Inertia<N>,
     local_center_of_mass: Point<N>,
     status: BodyStatus,
-    colliders: Vec<&'a ColliderDesc<N>>,
     sleep_threshold: Option<N>,
     kinematic_translations: Vector<bool>,
     #[cfg(feature = "dim3")]
     kinematic_rotations: Vector<bool>,
     #[cfg(feature = "dim2")]
-    kinematic_rotation: bool,
+    kinematic_rotations: bool,
 }
 
-impl<'a, N: RealField> RigidBodyDesc<'a, N> {
+impl<'a, N: RealField> RigidBodyDesc<N> {
     /// A default rigid body builder.
-    pub fn new() -> RigidBodyDesc<'a, N> {
+    pub fn new() -> RigidBodyDesc<N> {
         RigidBodyDesc {
-            name: String::new(),
             user_data: None,
             gravity_enabled: true,
+            linear_motion_interpolation_enabled: false,
             position: Isometry::identity(),
             velocity: Velocity::zero(),
+            linear_damping: N::zero(),
+            angular_damping: N::zero(),
+            max_linear_velocity: N::max_value(),
+            max_angular_velocity: N::max_value(),
             local_inertia: Inertia::zero(),
             local_center_of_mass: Point::origin(),
             status: BodyStatus::Dynamic,
-            colliders: Vec::new(),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
             kinematic_translations: Vector::repeat(false),
             #[cfg(feature = "dim3")]
             kinematic_rotations: Vector::repeat(false),
             #[cfg(feature = "dim2")]
-            kinematic_rotation: false
+            kinematic_rotations: false
         }
     }
 
@@ -767,22 +903,25 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     #[cfg(feature = "dim2")]
     desc_custom_setters!(
         self.rotation, set_rotation, angle: N | { self.position.rotation = Rotation::new(angle) }
-        self.kinematic_rotation, set_rotation_kinematic, is_kinematic: bool | { self.kinematic_rotation = is_kinematic }
+        self.kinematic_rotations, set_rotations_kinematic, is_kinematic: bool | { self.kinematic_rotations = is_kinematic }
         self.angular_inertia, set_angular_inertia, angular_inertia: N | { self.local_inertia.angular = angular_inertia }
     );
 
     desc_custom_setters!(
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
         self.mass, set_mass, mass: N | { self.local_inertia.linear = mass }
-        self.collider, add_collider, collider: &'a ColliderDesc<N> | { self.colliders.push(collider) }
     );
 
     desc_setters!(
         gravity_enabled, enable_gravity, gravity_enabled: bool
+        linear_motion_interpolation_enabled, enable_linear_motion_interpolation, linear_motion_interpolation_enabled: bool
         status, set_status, status: BodyStatus
-        name, set_name, name: String
         position, set_position, position: Isometry<N>
         velocity, set_velocity, velocity: Velocity<N>
+        linear_damping, set_linear_damping, linear_damping: N
+        angular_damping, set_angular_damping, angular_damping: N
+        max_linear_velocity, set_max_linear_velocity, max_linear_velocity: N
+        max_angular_velocity, set_max_angular_velocity, max_angular_velocity: N
         local_inertia, set_local_inertia, local_inertia: Inertia<N>
         local_center_of_mass, set_local_center_of_mass, local_center_of_mass: Point<N>
         sleep_threshold, set_sleep_threshold, sleep_threshold: Option<N>
@@ -799,38 +938,34 @@ impl<'a, N: RealField> RigidBodyDesc<'a, N> {
     #[cfg(feature = "dim2")]
     desc_custom_getters!(
         self.get_rotation: N | { self.position.rotation.angle() }
-        self.get_kinematic_rotation: bool | { self.kinematic_rotation }
+        self.get_kinematic_rotations: bool | { self.kinematic_rotations }
         self.get_angular_inertia: N | { self.local_inertia.angular }
     );
 
     desc_custom_getters!(
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_mass: N | { self.local_inertia.linear }
-        self.get_name: &str | { &self.name }
-        self.get_colliders: &[&'a ColliderDesc<N>] | { &self.colliders[..] }
     );
 
     desc_getters!(
         [val] is_gravity_enabled -> gravity_enabled: bool
+        [val] is_linear_motion_interpolation_enabled -> linear_motion_interpolation_enabled: bool
         [val] get_status -> status: BodyStatus
         [val] get_sleep_threshold -> sleep_threshold: Option<N>
+        [val] get_linear_damping -> linear_damping: N
+        [val] get_angular_damping -> angular_damping: N
+        [val] get_max_linear_velocity -> max_linear_velocity: N
+        [val] get_max_angular_velocity -> max_angular_velocity: N
         [ref] get_position -> position: Isometry<N>
         [ref] get_velocity -> velocity: Velocity<N>
         [ref] get_local_inertia -> local_inertia: Inertia<N>
         [ref] get_local_center_of_mass -> local_center_of_mass: Point<N>
     );
 
-    /// Builds a rigid body and all its attached colliders.
-    pub fn build<'w>(&mut self, world: &'w mut World<N>) -> &'w mut RigidBody<N> {
-        world.add_body(self)
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
-    type Body = RigidBody<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> RigidBody<N> {
-        let mut rb = RigidBody::new(handle, self.position);
+    /// Builds a rigid body from this description.
+    pub fn build(&self) -> RigidBody<N> {
+        let mut rb = RigidBody::new(self.position);
+        rb.enable_linear_motion_interpolation(self.linear_motion_interpolation_enabled);
         rb.set_velocity(self.velocity);
         rb.set_local_inertia(self.local_inertia);
         rb.set_local_center_of_mass(self.local_center_of_mass);
@@ -838,22 +973,12 @@ impl<'a, N: RealField> BodyDesc<N> for RigidBodyDesc<'a, N> {
         rb.set_deactivation_threshold(self.sleep_threshold);
         rb.set_translations_kinematic(self.kinematic_translations);
         rb.enable_gravity(self.gravity_enabled);
-        rb.set_name(self.name.clone());
+        rb.set_linear_damping(self.linear_damping);
+        rb.set_angular_damping(self.angular_damping);
+        rb.set_max_linear_velocity(self.max_linear_velocity);
+        rb.set_max_angular_velocity(self.max_angular_velocity);
         let _ = rb.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
-
-        #[cfg(feature = "dim3")]
-            {
-                rb.set_rotations_kinematic(self.kinematic_rotations);
-            }
-        #[cfg(feature = "dim2")]
-            {
-                rb.set_rotation_kinematic(self.kinematic_rotation);
-            }
-
-        for desc in &self.colliders {
-            let part_handle = rb.part_handle();
-            let _ = desc.build_with_infos(part_handle, &mut rb, cworld);
-        }
+        rb.set_rotations_kinematic(self.kinematic_rotations);
 
         rb
     }

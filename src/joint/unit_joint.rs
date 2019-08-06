@@ -43,7 +43,7 @@ pub fn unit_joint_num_velocity_constraints<N: RealField, J: UnitJoint<N>>(joint:
 /// to this joint.
 pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     joint: &J,
-    params: &IntegrationParameters<N>,
+    parameters: &IntegrationParameters<N>,
     multibody: &Multibody<N>,
     link: &MultibodyLink<N>,
     assembly_id: usize,
@@ -51,7 +51,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
     ext_vels: &[N],
     ground_j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut ConstraintSet<N, (), (), usize>,
 ) {
     let ndofs = multibody.ndofs();
     let impulses = multibody.impulses();
@@ -73,7 +73,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
         let impulse_id = link.impulse_id + dof_id * 3;
 
         let constraint = BilateralGroundConstraint {
-            impulse: impulses[impulse_id] * params.warmstart_coeff,
+            impulse: impulses[impulse_id] * parameters.warmstart_coeff,
             r: N::one() / inv_r,
             rhs,
             limits,
@@ -105,7 +105,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
 
             let impulse_id = link.impulse_id + dof_id * 3 + 1;
             let constraint = UnilateralGroundConstraint {
-                impulse: impulses[impulse_id] * params.warmstart_coeff,
+                impulse: impulses[impulse_id] * parameters.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
                 impulse_id,
@@ -143,7 +143,7 @@ pub fn unit_joint_velocity_constraints<N: RealField, J: UnitJoint<N>>(
 
             let impulse_id = link.impulse_id + dof_id * 3 + 2;
             let constraint = UnilateralGroundConstraint {
-                impulse: impulses[impulse_id] * params.warmstart_coeff,
+                impulse: impulses[impulse_id] * parameters.warmstart_coeff,
                 r: N::one() / inv_r,
                 rhs: dvel,
                 impulse_id,
@@ -165,10 +165,11 @@ pub fn unit_joint_position_constraint<N: RealField, J: UnitJoint<N>>(
     joint: &J,
     multibody: &Multibody<N>,
     link: &MultibodyLink<N>,
+    handle: BodyPartHandle<()>,
     dof_id: usize,
     is_angular: bool,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, ()>> {
     let mut sign = N::one();
     let mut rhs = None;
 
@@ -197,8 +198,8 @@ pub fn unit_joint_position_constraint<N: RealField, J: UnitJoint<N>>(
         let inv_r = sign * jacobians[link.assembly_id + dof_id]; // = J^t * M^-1 J
 
         return Some(GenericNonlinearConstraint::new(
-            link.part_handle(),
-            BodyPartHandle::ground(),
+            handle,
+            None,
             is_angular,
             ndofs,
             0,

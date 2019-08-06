@@ -2,7 +2,7 @@ use na::{DVectorSlice, DVectorSliceMut, RealField};
 
 use ncollide::shape::DeformationsType;
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity, Translation};
-use crate::object::{ActivationStatus, BodyPartHandle, BodyStatus, BodyUpdateStatus, Body, BodyPart, BodyHandle};
+use crate::object::{ActivationStatus, BodyStatus, BodyUpdateStatus, Body, BodyPart, BodyPartMotion};
 use crate::solver::{IntegrationParameters, ForceDirection};
 
 /// A singleton representing the ground.
@@ -11,16 +11,15 @@ use crate::solver::{IntegrationParameters, ForceDirection};
 /// similar to the other bodies.
 #[derive(Clone, Debug)]
 pub struct Ground<N: RealField> {
-    name: String,
     companion_id: usize,
     activation: ActivationStatus<N>,
     data: [N; 0],
 }
 
 impl<N: RealField> Ground<N> {
-    pub(crate) fn new() -> Self {
+    /// Build a new ground structrure.
+    pub fn new() -> Self {
         Ground {
-            name: String::new(),
             companion_id: 0,
             activation: ActivationStatus::new_inactive(),
             data: [],
@@ -30,22 +29,15 @@ impl<N: RealField> Ground<N> {
 
 impl<N: RealField> Body<N> for Ground<N> {
     #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
-    #[inline]
     fn gravity_enabled(&self) -> bool {
         false
     }
 
     #[inline]
     fn enable_gravity(&mut self, _: bool) {}
+
+    #[inline]
+    fn step_started(&mut self) {}
 
     #[inline]
     fn update_kinematics(&mut self) {}
@@ -68,7 +60,7 @@ impl<N: RealField> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn part(&self, _: usize) -> Option<&BodyPart<N>> {
+    fn part(&self, _: usize) -> Option<&dyn BodyPart<N>> {
         Some(self)
     }
 
@@ -79,11 +71,6 @@ impl<N: RealField> Body<N> for Ground<N> {
 
     #[inline]
     fn apply_displacement(&mut self, _: &[N]) {}
-
-    #[inline]
-    fn handle(&self) -> BodyHandle {
-        BodyHandle::ground()
-    }
 
     #[inline]
     fn status(&self) -> BodyStatus {
@@ -174,17 +161,17 @@ impl<N: RealField> Body<N> for Ground<N> {
     fn set_deactivation_threshold(&mut self, _: Option<N>) {}
 
     #[inline]
-    fn world_point_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         *point
     }
 
     #[inline]
-    fn position_at_material_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         Isometry::from_parts(Translation::from(point.coords), na::one())
     }
 
     #[inline]
-    fn material_point_at_world_point(&self, _: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, _: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         *point
     }
 
@@ -192,7 +179,7 @@ impl<N: RealField> Body<N> for Ground<N> {
     #[inline]
     fn fill_constraint_geometry(
         &self,
-        _: &BodyPart<N>,
+        _: &dyn BodyPart<N>,
         _: usize, // FIXME: keep this parameter?
         _: &Point<N>,
         _: &ForceDirection<N>,
@@ -203,6 +190,16 @@ impl<N: RealField> Body<N> for Ground<N> {
         _: Option<&DVectorSlice<N>>,
         _: Option<&mut N>
     ) {}
+
+    fn advance(&mut self, _: N) { }
+
+    fn validate_advancement(&mut self) { }
+
+    fn clamp_advancement(&mut self) { }
+
+    fn part_motion(&self, _: usize, _: N) -> Option<BodyPartMotion<N>> {
+        Some(BodyPartMotion::Static(Isometry::identity()))
+    }
 
     #[inline]
     fn has_active_internal_constraints(&mut self) -> bool {
@@ -247,17 +244,22 @@ impl<N: RealField> BodyPart<N> for Ground<N> {
     }
 
     #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle::ground()
-    }
-
-    #[inline]
     fn center_of_mass(&self) -> Point<N> {
         Point::origin()
     }
 
     #[inline]
+    fn local_center_of_mass(&self) -> Point<N> {
+        Point::origin()
+    }
+
+    #[inline]
     fn position(&self) -> Isometry<N> {
+        Isometry::identity()
+    }
+
+    #[inline]
+    fn safe_position(&self) -> Isometry<N> {
         Isometry::identity()
     }
 

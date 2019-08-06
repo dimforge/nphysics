@@ -49,7 +49,7 @@ macro_rules! dispatch(
     }
 );
 
-impl<N: RealField> Volumetric<N> for Shape<N> {
+impl<N: RealField> Volumetric<N> for dyn Shape<N> {
     fn area(&self) -> N {
         dispatch!(Point<N>, AngularInertia<N>, self.area())
     }

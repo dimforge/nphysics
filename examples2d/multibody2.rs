@@ -1,22 +1,26 @@
 extern crate nalgebra as na;
-extern crate ncollide2d;
-extern crate nphysics2d;
-extern crate nphysics_testbed2d;
 
-use na::Vector2;
+use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::object::{ColliderDesc, MultibodyDesc, DefaultBodySet, DefaultColliderSet,
+                         Ground, BodyPartHandle};
+use nphysics2d::force_generator::DefaultForceGeneratorSet;
+use nphysics2d::joint::DefaultJointConstraintSet;
+use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics2d::joint::{CartesianJoint, PrismaticJoint, RevoluteJoint};
-use nphysics2d::object::{ColliderDesc, MultibodyDesc};
-use nphysics2d::world::World;
 use nphysics_testbed2d::Testbed;
 
 
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
-    world.set_gravity(Vector2::new(0.0, -9.81));
+    let mechanical_world = DefaultMechanicalWorld::new(Vector2::new(0.0, -9.81));
+    let geometrical_world = DefaultGeometricalWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
 
     /*
      * Ground
@@ -25,15 +29,18 @@ fn main() {
     let ground_shape =
         ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
-    ColliderDesc::new(ground_shape)
+    let ground_handle = bodies.insert(Ground::new());
+    let co = ColliderDesc::new(ground_shape)
         .translation(-Vector2::y() * 5.0)
-        .build(&mut world);
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
     /*
      * Shape that will be re-used for several multibody links.
      */
     let rad = 0.2;
     let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let collider_desc = ColliderDesc::new(cuboid.clone()).density(1.0);
 
     /*
      * Revolute joint.
@@ -42,22 +49,26 @@ fn main() {
     let revo = RevoluteJoint::new(-0.1);
     let body_shift = Vector2::x() * (rad * 3.0 + 0.2);
 
-    let collider = ColliderDesc::new(cuboid.clone()).density(1.0);
-    let mut multibody = MultibodyDesc::new(revo)
+    let mut multibody_desc = MultibodyDesc::new(revo)
         .body_shift(body_shift)
-        .parent_shift(Vector2::new(-4.0, 5.0))
-        .collider(&collider);
+        .parent_shift(Vector2::new(-4.0, 5.0));
 
-    let mut curr = &mut multibody;
+    let mut curr = &mut multibody_desc;
 
     for _ in 0usize..num {
         curr = curr
             .add_child(revo)
-            .set_body_shift(body_shift)
-            .add_collider(&collider);
+            .set_body_shift(body_shift);
     }
 
-    multibody.build(&mut world);
+    let multibody = multibody_desc.build();
+    let multibody_handle = bodies.insert(multibody);
+
+    // Create one collider for each link.
+    for i in 0..num + 1 {
+        let co = collider_desc.build(BodyPartHandle(multibody_handle, i));
+        colliders.insert(co);
+    }
 
     /*
      * Prismatic joint.
@@ -65,20 +76,25 @@ fn main() {
     let mut prism = PrismaticJoint::new(Vector2::y_axis(), 0.0);
     // Joint limit so that it does not fall indefinitely.
     prism.enable_min_offset(-rad * 2.0);
-    let mut multibody = MultibodyDesc::new(prism)
-        .parent_shift(Vector2::new(5.0, 5.0))
-        .collider(&collider);
+    let mut multibody_desc = MultibodyDesc::new(prism)
+        .parent_shift(Vector2::new(5.0, 5.0));
 
-    let mut curr = &mut multibody;
+    let mut curr = &mut multibody_desc;
 
     for _ in 0usize..num {
         curr = curr
             .add_child(prism)
-            .set_parent_shift(Vector2::x() * rad * 3.0)
-            .add_collider(&collider);
+            .set_parent_shift(Vector2::x() * rad * 3.0);
     }
 
-    multibody.build(&mut world);
+    let multibody = multibody_desc.build();
+    let multibody_handle = bodies.insert(multibody);
+
+    // Create one collider for each link.
+    for i in 0..num + 1 {
+        let co = collider_desc.build(BodyPartHandle(multibody_handle, i));
+        colliders.insert(co);
+    }
 
     /*
      * Cartesian joint.
@@ -95,12 +111,13 @@ fn main() {
                 x += rad * 2.0;
             }
 
-            let rect = CartesianJoint::new(Vector2::new(x, y));
+            let cart = CartesianJoint::new(Vector2::new(x, y));
 
-            MultibodyDesc::new(rect)
+            let multibody = MultibodyDesc::new(cart)
                 .parent_shift(shift)
-                .collider(&collider)
-                .build(&mut world);
+                .build();
+            let multibody_handle = bodies.insert(multibody);
+            colliders.insert(collider_desc.build(BodyPartHandle(multibody_handle, 0)));
         }
     }
 
@@ -108,6 +125,15 @@ fn main() {
     /*
      * Set up the testbed.
      */
-    let testbed = Testbed::new(world);
-    testbed.run();
+    testbed.set_ground_handle(Some(ground_handle));
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
+    testbed.look_at(Point2::new(0.0, 4.0), 50.0);
+}
+
+
+fn main() {
+    let testbed = Testbed::from_builders(0, vec![
+        ("Multibody", init_world),
+    ]);
+    testbed.run()
 }

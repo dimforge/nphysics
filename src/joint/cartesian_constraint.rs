@@ -3,15 +3,15 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, ANGULAR_DIM, Rotation};
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes all relative angular motion between two body parts.
-pub struct CartesianConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct CartesianConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     ref_frame1: Rotation<N>,
     anchor2: Point<N>,
@@ -21,14 +21,14 @@ pub struct CartesianConstraint<N: RealField> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: RealField> CartesianConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> CartesianConstraint<N, Handle> {
     /// Creates a cartesian constraint between two body parts.
     /// 
     /// This will ensure the rotational parts of the frames given identified by `ref_frame1` and
     /// `ref_frame2` and attached to the corresponding bodies will coincide.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         ref_frame1: Rotation<N>,
         anchor2: Point<N>,
@@ -68,27 +68,27 @@ impl<N: RealField> CartesianConstraint<N> {
     }
 }
 
-impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for CartesianConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         ANGULAR_DIM
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
-        let body1 = try_ret!(bodies.body(self.b1.0));
-        let body2 = try_ret!(bodies.body(self.b2.0));
+        let body1 = try_ret!(bodies.get(self.b1.0));
+        let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
         let part2 = try_ret!(body2.part(self.b2.1));
 
@@ -101,14 +101,16 @@ impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral.len();
+        let first_bilateral_ground = constraints.bilateral_ground.len();
+        let first_bilateral = constraints.bilateral.len();
 
         helper::cancel_relative_angular_velocity(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -123,23 +125,23 @@ impl<N: RealField> JointConstraint<N> for CartesianConstraint<N> {
         );
 
         self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
-        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
+            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
-        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+        for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
         }
 
-        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+        for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
         }
     }
 }
 
-impl<N: RealField> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for CartesianConstraint<N, Handle> {
+    fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             1
@@ -150,13 +152,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         _: usize,
-        bodies: &mut BodySet<N>,
+        bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0)?;
-        let body2 = bodies.body(self.b2.0)?;
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+        let body1 = bodies.get(self.b1.0)?;
+        let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
         let part2 = body2.part(self.b2.1)?;
 
@@ -170,11 +172,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for CartesianConstraint<N> {
         let rotation2 = pos2.rotation;
 
         helper::cancel_relative_rotation(
-            params,
+            parameters,
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             &anchor1,
             &anchor2,
             &rotation1,

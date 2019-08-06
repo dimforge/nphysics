@@ -1,17 +1,17 @@
 use std::ops::Range;
 use na::{DVector, RealField, Unit};
 
-use crate::object::{BodyPartHandle, BodySet};
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 use crate::solver::helper;
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point, Vector, DIM, SPATIAL_DIM};
 
 /// A constraint that removes all degrees of freedom (of one body part relative to a second one) except one translation along an axis and one rotation along the same axis.
-pub struct CylindricalConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct CylindricalConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<Vector<N>>,
@@ -25,14 +25,14 @@ pub struct CylindricalConstraint<N: RealField> {
     // max_offset: Option<N>,
 }
 
-impl<N: RealField> CylindricalConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> CylindricalConstraint<N, Handle> {
     /// Creates a cartesian constraint between two body parts.
     /// 
     /// This will ensure `axis1` and `axis2` always coincide. All the axis and anchors
     /// are provided on the local space of the corresponding body parts.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         axis1: Unit<Vector<N>>,
         anchor2: Point<N>,
@@ -92,27 +92,27 @@ impl<N: RealField> CylindricalConstraint<N> {
     // }
 }
 
-impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for CylindricalConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 2
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
-        let body1 = try_ret!(bodies.body(self.b1.0));
-        let body2 = try_ret!(bodies.body(self.b2.0));
+        let body1 = try_ret!(bodies.get(self.b1.0));
+        let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
         let part2 = try_ret!(body2.part(self.b2.1));
 
@@ -130,16 +130,18 @@ impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral.len();
+        let first_bilateral_ground = constraints.bilateral_ground.len();
+        let first_bilateral = constraints.bilateral.len();
 
         let axis1 = pos1 * self.axis1;
 
         helper::restrict_relative_linear_velocity_to_axis(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -157,8 +159,10 @@ impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
         helper::restrict_relative_angular_velocity_to_axis(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &axis1,
@@ -180,12 +184,12 @@ impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
          */
 
         self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
-        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
+            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
-        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+        for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id < DIM {
                 self.lin_impulses[c.impulse_id] = c.impulse;
             } else {
@@ -193,7 +197,7 @@ impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
             }
         }
 
-        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+        for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             if c.impulse_id < DIM {
                 self.lin_impulses[c.impulse_id] = c.impulse;
             } else {
@@ -203,8 +207,8 @@ impl<N: RealField> JointConstraint<N> for CylindricalConstraint<N> {
     }
 }
 
-impl<N: RealField> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for CylindricalConstraint<N, Handle> {
+    fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             2
@@ -215,13 +219,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> 
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         i: usize,
-        bodies: &mut BodySet<N>,
+        bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0)?;
-        let body2 = bodies.body(self.b2.0)?;
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+        let body1 = bodies.get(self.b1.0)?;
+        let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
         let part2 = body2.part(self.b2.1)?;
 
@@ -236,11 +240,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> 
 
         if i == 0 {
             return helper::align_axis(
-                params,
+                parameters,
                 body1,
                 part1,
+                self.b1,
                 body2,
                 part2,
+                self.b2,
                 &anchor1,
                 &anchor2,
                 &axis1,
@@ -251,11 +257,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for CylindricalConstraint<N> 
 
         if i == 1 {
             return helper::project_anchor_to_axis(
-                params,
+                parameters,
                 body1,
                 part1,
+                self.b1,
                 body2,
                 part2,
+                self.b2,
                 &anchor1,
                 &anchor2,
                 &axis1,

@@ -1,55 +1,62 @@
 use na::{self, DVector, Dim, Dynamic, RealField, U1, VectorSliceN, Vector};
 use na::storage::StorageMut;
 
+use ncollide::query::ContactId;
+
 // FIXME: could we just merge UnilateralConstraint and Bilateral constraint into a single structure
 // without performance impact due to clamping?
 use crate::math::{SpatialDim, SPATIAL_DIM};
-use crate::object::{BodySet, BodyHandle};
+use crate::object::{BodySet, Body};
 use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ImpulseLimits, UnilateralConstraint,
-             UnilateralGroundConstraint};
+             UnilateralGroundConstraint, LinearConstraints};
 
 /// A SOR-Prox velocity-based constraints solver.
 pub(crate) struct SORProx;
 
 impl SORProx {
-    /// Solve the given set of constraints.
-    pub fn solve<N: RealField>(
-        bodies: &mut BodySet<N>,
-        unilateral_ground: &mut [UnilateralGroundConstraint<N>],
-        unilateral: &mut [UnilateralConstraint<N>],
-        bilateral_ground: &mut [BilateralGroundConstraint<N>],
-        bilateral: &mut [BilateralConstraint<N>],
-        internal: &[BodyHandle],
-        mj_lambda: &mut DVector<N>,
+    fn warmstart_set<N: RealField, Bodies: BodySet<N>, Id>(
+        _bodies: &mut Bodies,
+        constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
-        max_iter: usize,
+        mj_lambda: &mut DVector<N>,
     ) {
-        /*
-         * Setup constraints.
-         */
-        for c in unilateral.iter_mut() {
+        for c in constraints.unilateral.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
             Self::warmstart_unilateral(c, jacobians, mj_lambda, dim1, dim2);
         }
 
-        for c in unilateral_ground.iter_mut() {
+        for c in constraints.unilateral_ground.iter_mut() {
             let dim = Dynamic::new(c.ndofs);
             Self::warmstart_unilateral_ground(c, jacobians, mj_lambda, dim);
         }
 
-        for c in bilateral.iter_mut() {
+        for c in constraints.bilateral.iter_mut() {
             let dim1 = Dynamic::new(c.ndofs1);
             let dim2 = Dynamic::new(c.ndofs2);
             Self::warmstart_bilateral(c, jacobians, mj_lambda, dim1, dim2);
         }
 
-        for c in bilateral_ground.iter_mut() {
+        for c in constraints.bilateral_ground.iter_mut() {
             Self::warmstart_bilateral_ground(c, jacobians, mj_lambda, Dynamic::new(c.ndofs));
         }
+    }
+
+    /// Solve the given set of constraints.
+    pub fn solve<N: RealField, Bodies: BodySet<N>>(
+        bodies: &mut Bodies,
+        contact_constraints: &mut LinearConstraints<N, ContactId>,
+        joint_constraints: &mut LinearConstraints<N, usize>,
+        internal: &[Bodies::Handle],
+        mj_lambda: &mut DVector<N>,
+        jacobians: &[N],
+        max_iter: usize,
+    ) {
+        Self::warmstart_set(bodies, contact_constraints, jacobians, mj_lambda);
+        Self::warmstart_set(bodies, joint_constraints, jacobians, mj_lambda);
 
         for handle in internal {
-            if let Some(body) = bodies.body_mut(*handle) {
+            if let Some(body) = bodies.get_mut(*handle) {
                 let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
                 body.warmstart_internal_velocity_constraints(&mut dvels);
             }
@@ -61,10 +68,8 @@ impl SORProx {
         for _ in 0..max_iter {
             Self::step(
                 bodies,
-                unilateral_ground,
-                unilateral,
-                bilateral_ground,
-                bilateral,
+                contact_constraints,
+                joint_constraints,
                 internal,
                 jacobians,
                 mj_lambda,
@@ -72,17 +77,13 @@ impl SORProx {
         }
     }
 
-    fn step<N: RealField>(
-        bodies: &mut BodySet<N>,
-        unilateral_ground: &mut [UnilateralGroundConstraint<N>],
-        unilateral: &mut [UnilateralConstraint<N>],
-        bilateral_ground: &mut [BilateralGroundConstraint<N>],
-        bilateral: &mut [BilateralConstraint<N>],
-        internal: &[BodyHandle],
+    fn step_unilateral<N: RealField, Bodies: BodySet<N>, Id>(
+        _bodies: &mut Bodies,
+        constraints: &mut LinearConstraints<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
     ) {
-        for c in unilateral.iter_mut() {
+        for c in constraints.unilateral.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
                 Self::solve_unilateral(c, jacobians, mj_lambda, SpatialDim {}, SpatialDim {})
@@ -93,7 +94,7 @@ impl SORProx {
             }
         }
 
-        for c in unilateral_ground.iter_mut() {
+        for c in constraints.unilateral_ground.iter_mut() {
             if c.ndofs == SPATIAL_DIM {
                 // Most common case (with one free rigid body).
                 // NOTE: it's weird that the compiler requires the { } even though SpatialDim is the
@@ -104,13 +105,20 @@ impl SORProx {
                 Self::solve_unilateral_ground(c, jacobians, mj_lambda, dim)
             }
         }
+    }
 
-        for c in bilateral.iter_mut() {
+    fn step_bilateral<N: RealField, Bodies: BodySet<N>, Id>(
+        _bodies: &mut Bodies,
+        constraints: &mut LinearConstraints<N, Id>,
+        jacobians: &[N],
+        mj_lambda: &mut DVector<N>,
+    ) {
+        for c in constraints.bilateral.iter_mut() {
             if c.ndofs1 == SPATIAL_DIM && c.ndofs2 == SPATIAL_DIM {
                 // Most common case (between two free rigid bodies).
                 Self::solve_bilateral(
                     c,
-                    unilateral,
+                    &constraints.unilateral,
                     jacobians,
                     mj_lambda,
                     SpatialDim {},
@@ -119,36 +127,51 @@ impl SORProx {
             } else {
                 let dim1 = Dynamic::new(c.ndofs1);
                 let dim2 = Dynamic::new(c.ndofs2);
-                Self::solve_bilateral(c, unilateral, jacobians, mj_lambda, dim1, dim2)
+                Self::solve_bilateral(c, &constraints.unilateral, jacobians, mj_lambda, dim1, dim2)
             }
         }
 
-        for c in bilateral_ground.iter_mut() {
+        for c in constraints.bilateral_ground.iter_mut() {
             if c.ndofs == SPATIAL_DIM {
                 // Most common case (with one free rigid body).
                 Self::solve_bilateral_ground(
                     c,
-                    unilateral_ground,
+                    &constraints.unilateral_ground,
                     jacobians,
                     mj_lambda,
                     SpatialDim {},
                 )
             } else {
                 let dim = Dynamic::new(c.ndofs);
-                Self::solve_bilateral_ground(c, unilateral_ground, jacobians, mj_lambda, dim)
-            }
-        }
-
-        for handle in internal {
-            if let Some(body) = bodies.body_mut(*handle) {
-                let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
-                body.step_solve_internal_velocity_constraints(&mut dvels);
+                Self::solve_bilateral_ground(c, &constraints.unilateral_ground, jacobians, mj_lambda, dim)
             }
         }
     }
 
-    fn solve_unilateral<N: RealField, D1: Dim, D2: Dim>(
-        c: &mut UnilateralConstraint<N>,
+    fn step<N: RealField, Bodies: BodySet<N>>(
+        bodies: &mut Bodies,
+        contact_constraints: &mut LinearConstraints<N, ContactId>,
+        joint_constraints: &mut LinearConstraints<N, usize>,
+        internal: &[Bodies::Handle],
+        jacobians: &[N],
+        mj_lambda: &mut DVector<N>,
+    ) {
+        Self::step_bilateral(bodies, joint_constraints, jacobians, mj_lambda);
+        Self::step_bilateral(bodies, contact_constraints, jacobians, mj_lambda);
+
+        for handle in internal {
+            if let Some(body) = bodies.get_mut(*handle) {
+                let mut dvels = mj_lambda.rows_mut(body.companion_id(), body.ndofs());
+                body.step_solve_internal_velocity_constraints(&mut dvels);
+            }
+        }
+
+        Self::step_unilateral(bodies, joint_constraints, jacobians, mj_lambda);
+        Self::step_unilateral(bodies, contact_constraints, jacobians, mj_lambda);
+    }
+
+    fn solve_unilateral<N: RealField, D1: Dim, D2: Dim, Id>(
+        c: &mut UnilateralConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
         dim1: D1,
@@ -177,8 +200,8 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_unilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
-        c: &mut UnilateralGroundConstraint<N>,
+    pub fn solve_unilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>, Id>(
+        c: &mut UnilateralGroundConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
@@ -197,9 +220,9 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian, N::one());
     }
 
-    fn solve_bilateral<N: RealField, D1: Dim, D2: Dim>(
-        c: &mut BilateralConstraint<N>,
-        unilateral: &[UnilateralConstraint<N>],
+    fn solve_bilateral<N: RealField, D1: Dim, D2: Dim, Id>(
+        c: &mut BilateralConstraint<N, Id>,
+        unilateral: &[UnilateralConstraint<N, Id>],
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
         dim1: D1,
@@ -260,9 +283,9 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian2, N::one());
     }
 
-    pub fn solve_bilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
-        c: &mut BilateralGroundConstraint<N>,
-        unilateral: &[UnilateralGroundConstraint<N>],
+    pub fn solve_bilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>, Id>(
+        c: &mut BilateralGroundConstraint<N, Id>,
+        unilateral: &[UnilateralGroundConstraint<N, Id>],
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
@@ -309,8 +332,8 @@ impl SORProx {
             .axpy(dlambda, &weighted_jacobian, N::one());
     }
 
-    fn warmstart_unilateral<N: RealField, D1: Dim, D2: Dim>(
-        c: &UnilateralConstraint<N>,
+    fn warmstart_unilateral<N: RealField, D1: Dim, D2: Dim, Id>(
+        c: &UnilateralConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
         dim1: D1,
@@ -334,8 +357,8 @@ impl SORProx {
         }
     }
 
-    pub fn warmstart_unilateral_ground<N: RealField, D: Dim,  DMJ: Dim, S: StorageMut<N, DMJ>>(
-        c: &UnilateralGroundConstraint<N>,
+    pub fn warmstart_unilateral_ground<N: RealField, D: Dim,  DMJ: Dim, S: StorageMut<N, DMJ>, Id>(
+        c: &UnilateralGroundConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,
@@ -352,8 +375,8 @@ impl SORProx {
         }
     }
 
-    fn warmstart_bilateral<N: RealField, D1: Dim, D2: Dim>(
-        c: &BilateralConstraint<N>,
+    fn warmstart_bilateral<N: RealField, D1: Dim, D2: Dim, Id>(
+        c: &BilateralConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut DVector<N>,
         dim1: D1,
@@ -377,8 +400,8 @@ impl SORProx {
         }
     }
 
-    pub fn warmstart_bilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>>(
-        c: &BilateralGroundConstraint<N>,
+    pub fn warmstart_bilateral_ground<N: RealField, D: Dim, DMJ: Dim, S: StorageMut<N, DMJ>, Id>(
+        c: &BilateralGroundConstraint<N, Id>,
         jacobians: &[N],
         mj_lambda: &mut Vector<N, DMJ, S>,
         dim: D,

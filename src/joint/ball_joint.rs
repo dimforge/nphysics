@@ -30,11 +30,6 @@ impl<N: RealField> BallJoint<N> {
 
 impl<N: RealField> Joint<N> for BallJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
-    #[inline]
     fn ndofs(&self) -> usize {
         3
     }
@@ -94,9 +89,9 @@ impl<N: RealField> Joint<N> for BallJoint<N> {
         out.fill(na::convert(0.1f64))
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
         let angvel = Vector3::from_row_slice(&vels[..3]);
-        let disp = UnitQuaternion::new_eps(angvel * params.dt, N::zero());
+        let disp = UnitQuaternion::new_eps(angvel * parameters.dt(), N::zero());
         self.rot = disp * self.rot;
     }
 
@@ -104,5 +99,10 @@ impl<N: RealField> Joint<N> for BallJoint<N> {
         let angle = Vector3::from_row_slice(&disp[..3]);
         let disp = UnitQuaternion::new(angle);
         self.rot = disp * self.rot;
+    }
+
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
     }
 }

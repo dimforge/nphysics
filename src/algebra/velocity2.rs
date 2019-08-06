@@ -58,6 +58,19 @@ impl<N: RealField> Velocity2<N> {
         Vector1::new(self.angular)
     }
 
+
+    /// Compute the displacement due to this velocity integrated during the time `dt`.
+    pub fn integrate(&self, dt: N) -> Isometry2<N> {
+        (*self * dt).to_transform()
+    }
+
+    /// Compute the displacement due to this velocity integrated during a time equal to `1.0`.
+    ///
+    /// This is equivalent to `self.integrate(1.0)`.
+    pub fn to_transform(&self) -> Isometry2<N> {
+        Isometry2::new(self.linear, self.angular)
+    }
+
     /// This velocity seen as a slice.
     ///
     /// The linear part is stored first.

@@ -4,13 +4,12 @@ use na::RealField;
 
 use crate::joint::Joint;
 use crate::math::{Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyPart, BodyHandle};
+use crate::object::BodyPart;
 
 /// One link of a multibody.
 pub struct MultibodyLink<N: RealField> {
     pub(crate) name: String,
     // FIXME: make all those private.
-    pub(crate) multibody_handle: BodyHandle,
     pub(crate) internal_id: usize,
     pub(crate) assembly_id: usize,
     pub(crate) impulse_id: usize,
@@ -19,7 +18,7 @@ pub struct MultibodyLink<N: RealField> {
     // XXX: rename to "joint".
     // (And rename the full-coordinates joint constraints JointConstraint).
     pub(crate) parent_internal_id: usize,
-    pub(crate) dof: Box<Joint<N>>,
+    pub(crate) dof: Box<dyn Joint<N>>,
     pub(crate) parent_shift: Vector<N>,
     pub(crate) body_shift: Vector<N>,
 
@@ -48,9 +47,8 @@ impl<N: RealField> MultibodyLink<N> {
         internal_id: usize,
         assembly_id: usize,
         impulse_id: usize,
-        multibody_handle: BodyHandle,
         parent_internal_id: usize,
-        dof: Box<Joint<N>>,
+        dof: Box<dyn Joint<N>>,
         parent_shift: Vector<N>,
         body_shift: Vector<N>,
         parent_to_world: Isometry<N>,
@@ -68,7 +66,6 @@ impl<N: RealField> MultibodyLink<N> {
 
         MultibodyLink {
             name: String::new(),
-            multibody_handle,
             internal_id,
             assembly_id,
             impulse_id,
@@ -98,14 +95,26 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// Reference to the joint attaching this link to its parent.
     #[inline]
-    pub fn joint(&self) -> &Joint<N> {
+    pub fn joint(&self) -> &dyn Joint<N> {
         &*self.dof
     }
 
     /// Mutable reference to the joint attaching this link to its parent.
     #[inline]
-    pub fn joint_mut(&mut self) -> &mut Joint<N> {
+    pub fn joint_mut(&mut self) -> &mut dyn Joint<N> {
         &mut *self.dof
+    }
+
+    /// The shift between this link's parent and this link joint origin.
+    #[inline]
+    pub fn parent_shift(&self) -> &Vector<N> {
+        &self.parent_shift
+    }
+
+    /// The shift between this link's joint origin and this link origin.
+    #[inline]
+    pub fn body_shift(&self) -> &Vector<N> {
+        &self.body_shift
     }
 
     /// This link's name.
@@ -122,8 +131,8 @@ impl<N: RealField> MultibodyLink<N> {
 
     /// The handle of this multibody link.
     #[inline]
-    pub fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.multibody_handle, self.internal_id)
+    pub fn link_id(&self) -> usize {
+        self.internal_id
     }
 }
 
@@ -135,13 +144,13 @@ impl<N: RealField> BodyPart<N> for MultibodyLink<N> {
     }
 
     #[inline]
-    fn part_handle(&self) -> BodyPartHandle {
-        BodyPartHandle(self.multibody_handle, self.internal_id)
+    fn center_of_mass(&self) -> Point<N> {
+        self.com
     }
 
     #[inline]
-    fn center_of_mass(&self) -> Point<N> {
-        self.com
+    fn local_center_of_mass(&self) -> Point<N> {
+        self.local_com
     }
 
     #[inline]

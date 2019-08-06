@@ -1,21 +1,24 @@
 extern crate nalgebra as na;
-extern crate ncollide3d;
-extern crate nphysics3d;
-extern crate nphysics_testbed3d;
 
-use na::{Isometry3, Point3, Vector3};
+use na::{Point3, Vector3, Isometry3};
 use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc};
-use nphysics3d::world::World;
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
+use nphysics3d::force_generator::DefaultForceGeneratorSet;
+use nphysics3d::joint::DefaultJointConstraintSet;
+use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 use nphysics3d::math::Velocity;
 use nphysics_testbed3d::Testbed;
 
-
-fn main() {
+pub fn init_world(testbed: &mut Testbed) {
     /*
      * World
      */
-    let mut world = World::new();
+    let mechanical_world = DefaultMechanicalWorld::new(Vector3::zeros());
+    let geometrical_world = DefaultGeometricalWorld::new();
+    let mut bodies = DefaultBodySet::new();
+    let mut colliders = DefaultColliderSet::new();
+    let joint_constraints = DefaultJointConstraintSet::new();
+    let force_generators = DefaultForceGeneratorSet::new();
 
     /*
      * Create boxes to compute the inertia.
@@ -30,23 +33,35 @@ fn main() {
         ShapeHandle::new(Cuboid::new(Vector3::new(0.1, 0.2, 0.1))),
     ));
 
-    let geom = ShapeHandle::new(Compound::new(shapes));
-    let collider_desc = ColliderDesc::new(geom)
-        .density(1.0);
 
     /*
      * Create the rigid body.
      */
-    RigidBodyDesc::new()
-        .collider(&collider_desc)
+    let rb = RigidBodyDesc::new()
         .velocity(Velocity::angular(0.0, 10.0, 0.1))
-        .build(&mut world);
+        .build();
+    let rb_handle = bodies.insert(rb);
+
+    /*
+     * Create the collider from which the inertia will be automatically computed.
+     */
+    let geom = ShapeHandle::new(Compound::new(shapes));
+    let co = ColliderDesc::new(geom)
+        .density(1.0)
+        .build(BodyPartHandle(rb_handle, 0));
+    colliders.insert(co);
 
     /*
      * Set up the testbed.
      */
-    let mut testbed = Testbed::new(world);
-
+    testbed.set_world(mechanical_world, geometrical_world, bodies, colliders, joint_constraints, force_generators);
     testbed.look_at(Point3::new(0.0, 0.0, 5.0), Point3::new(0.0, 0.0, 0.0));
-    testbed.run();
+}
+
+fn main() {
+    let testbed = Testbed::from_builders(0, vec![
+        ("Dzhanibekov effect", init_world),
+    ]);
+
+    testbed.run()
 }

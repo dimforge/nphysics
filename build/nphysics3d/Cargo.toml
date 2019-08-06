@@ -24,13 +24,16 @@ required-features = [ "dim3" ]
 [dependencies]
 either     = "1.0"
 num-traits = "0.2"
-slab       = "0.4"
+slotmap    = "0.3" # For impulse cache.
+generational-arena = "0.2" # For default body/collide/constraint/force sets.
+smallvec   = "0.6"
+lazy_static = "1.0"
 alga       = "0.9"
 nalgebra   = { version = "0.18", features = [ "sparse" ] }
 approx     = "0.3"
 downcast-rs = "1.0"
 bitflags   = "1.0"
-ncollide3d = "0.19"
+ncollide3d = "0.20"
 
 [target.wasm32-unknown-unknown.dependencies]
 stdweb = {version = "0.4", optional = true}

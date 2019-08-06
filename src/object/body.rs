@@ -4,10 +4,45 @@ use downcast_rs::Downcast;
 
 use na::{self, DVectorSlice, DVectorSliceMut, RealField};
 use ncollide::shape::DeformationsType;
+use ncollide::interpolation::{RigidMotion, ConstantLinearVelocityRigidMotion,
+                              ConstantVelocityRigidMotion};
 
 use crate::math::{Force, ForceType, Inertia, Isometry, Point, Vector, Velocity};
-use crate::object::{BodyPartHandle, BodyHandle};
+
 use crate::solver::{IntegrationParameters, ForceDirection};
+
+pub enum BodyPartMotion<N: RealField> {
+    RigidLinear(ConstantLinearVelocityRigidMotion<N>),
+    RigidNonlinear(ConstantVelocityRigidMotion<N>),
+    Static(Isometry<N>),
+}
+
+impl<N: RealField> BodyPartMotion<N> {
+    pub(crate) fn is_static_or_linear(&self) -> bool {
+        match self {
+            BodyPartMotion::RigidLinear(_) | BodyPartMotion::Static(_) => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn linvel(&self) -> Vector<N> {
+        match self {
+            BodyPartMotion::RigidLinear(m) => m.velocity,
+            BodyPartMotion::RigidNonlinear(m) => m.linvel,
+            BodyPartMotion::Static(_m) => Vector::zeros(),
+        }
+    }
+}
+
+impl<N: RealField> RigidMotion<N> for BodyPartMotion<N> {
+    fn position_at_time(&self, t: N) -> Isometry<N> {
+        match self {
+            BodyPartMotion::RigidLinear(m) => m.position_at_time(t),
+            BodyPartMotion::RigidNonlinear(m) => m.position_at_time(t),
+            BodyPartMotion::Static(m) => m.position_at_time(t),
+        }
+    }
+}
 
 /// The status of a body.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -90,12 +125,6 @@ impl<N: RealField> ActivationStatus<N> {
 
 /// Trait implemented by all bodies supported by nphysics.
 pub trait Body<N: RealField>: Downcast + Send + Sync {
-    /// The name of this body.
-    fn name(&self) -> &str;
-
-    /// Sets the name of this body.
-    fn set_name(&mut self, name: String);
-
     /// Returns `true` if this body is the ground.
     fn is_ground(&self) -> bool {
         false
@@ -108,6 +137,18 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
         }
     }
 
+    fn advance(&mut self, _time_ratio: N) { }
+
+    fn validate_advancement(&mut self) { }
+
+    fn clamp_advancement(&mut self) { }
+
+    fn part_motion(&self, _part_id: usize, _time_origin: N) -> Option<BodyPartMotion<N>> {
+        None
+    }
+
+    fn step_started(&mut self) {  }
+
     /// Updates the kinematics, e.g., positions and jacobians, of this body.
     fn update_kinematics(&mut self);
 
@@ -115,7 +156,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn update_dynamics(&mut self, dt: N);
 
     /// Update the acceleration of this body given the forces it is subject to and the gravity.
-    fn update_acceleration(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>);
+    fn update_acceleration(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>);
 
     /// Reset the timestep-specific dynamic information of this body.
     fn clear_forces(&mut self);
@@ -128,9 +169,6 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
 
     /// Applies a generalized displacement to this body.
     fn apply_displacement(&mut self, disp: &[N]);
-
-    /// The handle of this body.
-    fn handle(&self) -> BodyHandle;
 
     /// The status of this body.
     fn status(&self) -> BodyStatus;
@@ -165,7 +203,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn generalized_velocity_mut(&mut self) -> DVectorSliceMut<N>;
 
     /// Integrate the position of this body.
-    fn integrate(&mut self, params: &IntegrationParameters<N>);
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>);
 
     /// Force the activation of this body with the given level of energy.
     fn activate_with_energy(&mut self, energy: N);
@@ -174,7 +212,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     fn deactivate(&mut self);
 
     /// A reference to the specified body part.
-    fn part(&self, i: usize) -> Option<&BodyPart<N>>;
+    fn part(&self, i: usize) -> Option<&dyn BodyPart<N>>;
 
     /// If this is a deformable body, returns its deformed positions.
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
@@ -189,7 +227,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     /// If the force is a torque, it is applied at the center of mass of the body part.
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         ndofs: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         dir: &ForceDirection<N>,
@@ -202,19 +240,19 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     );
 
     /// Transform the given point expressed in material coordinates to world-space.
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N>;
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N>;
 
     /// Transform the given point expressed in material coordinates to world-space.
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N>;
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N>;
 
     /// Transform the given point expressed in material coordinates to world-space.
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N>;
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N>;
 
     /// Returns `true` if this bodies contains internal constraints that need to be solved.
     fn has_active_internal_constraints(&mut self) -> bool;
 
     /// Initializes the internal velocity constraints of a body.
-    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, params: &IntegrationParameters<N>);
+    fn setup_internal_velocity_constraints(&mut self, ext_vels: &DVectorSlice<N>, parameters: &IntegrationParameters<N>);
 
     /// For warmstarting the solver, modifies the delta velocity applied by the internal constraints of this body.
     fn warmstart_internal_velocity_constraints(&mut self, dvels: &mut DVectorSliceMut<N>);
@@ -224,7 +262,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
 
     /// Execute one step for the iterative resolution of this body's internal position constraints.
     #[inline]
-    fn step_solve_internal_position_constraints(&mut self, params: &IntegrationParameters<N>);
+    fn step_solve_internal_position_constraints(&mut self, parameters: &IntegrationParameters<N>);
 
     /// Add the given inertia to the local inertia of this body part.
     fn add_local_inertia_and_com(&mut self, _part_index: usize, _com: Point<N>, _inertia: Inertia<N>)
@@ -246,7 +284,7 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     ///
     /// This will return a zero velocity for any body with a status different than `BodyStatus::Dynamic`.
     #[inline]
-    fn status_dependent_body_part_velocity(&self, part: &BodyPart<N>) -> Velocity<N> {
+    fn status_dependent_body_part_velocity(&self, part: &dyn BodyPart<N>) -> Velocity<N> {
         if self.is_dynamic() {
             part.velocity()
         } else {
@@ -328,14 +366,19 @@ pub trait BodyPart<N: RealField>: Downcast + Send + Sync {
         false
     }
 
-    /// The handle of this body part.
-    fn part_handle(&self) -> BodyPartHandle;
-
     /// The center of mass of this body part.
     fn center_of_mass(&self) -> Point<N>;
 
+    /// The local center of mass of this body part.
+    fn local_center_of_mass(&self) -> Point<N>;
+
     /// The position of this body part wrt. the ground.
     fn position(&self) -> Isometry<N>;
+
+    /// If CCD is enabled, this is the last position known to be tunnelling-free.
+    fn safe_position(&self) -> Isometry<N> {
+        self.position()
+    }
 
     /// The velocity of this body part.
     fn velocity(&self) -> Velocity<N>;

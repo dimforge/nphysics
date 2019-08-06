@@ -1,6 +1,7 @@
 use na::{DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
+
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity};
 use crate::solver::IntegrationParameters;
 
@@ -23,11 +24,6 @@ impl<N: RealField> FixedJoint<N> {
 }
 
 impl<N: RealField> Joint<N> for FixedJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
     fn ndofs(&self) -> usize {
         0
     }
@@ -64,4 +60,9 @@ impl<N: RealField> Joint<N> for FixedJoint<N> {
     }
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
+    }
 }

@@ -5,21 +5,32 @@ use std::fmt::{Display, Formatter, Result};
 pub use self::collision_detection_counters::CollisionDetectionCounters;
 pub use self::solver_counters::SolverCounters;
 pub use self::stages_counters::StagesCounters;
+pub use self::ccd_counters::CCDCounters;
 pub use self::timer::Timer;
 
 mod collision_detection_counters;
 mod solver_counters;
 mod stages_counters;
 mod timer;
+mod ccd_counters;
 
 /// Aggregation of all the performances counters tracked by nphysics.
+#[derive(Clone, Copy)]
 pub struct Counters {
-    enabled: bool,
-    step_time: Timer,
-    custom: Timer,
-    stages: StagesCounters,
-    cd: CollisionDetectionCounters,
-    solver: SolverCounters,
+    /// Whether thi counter is enabled or not.
+    pub enabled: bool,
+    /// Timer for a whole timestep.
+    pub step_time: Timer,
+    /// Timer used for debugging.
+    pub custom: Timer,
+    /// Counters of every satge of one time step.
+    pub stages: StagesCounters,
+    /// Counters of the collision-detection stage.
+    pub cd: CollisionDetectionCounters,
+    /// Counters of the constraints resolution and force computation stage.
+    pub solver: SolverCounters,
+    /// Counters for the CCD resolution stage.
+    pub ccd: CCDCounters,
 }
 
 impl Counters {
@@ -32,6 +43,7 @@ impl Counters {
             stages: StagesCounters::new(),
             cd: CollisionDetectionCounters::new(),
             solver: SolverCounters::new(),
+            ccd: CCDCounters::new(),
         }
     }
 
@@ -156,6 +168,12 @@ measure_method!(
     solver_completed,
     solver_time,
     stages.solver_time
+);
+measure_method!(
+    ccd_started,
+    ccd_completed,
+    ccd_time,
+    stages.ccd_time
 );
 
 measure_method!(

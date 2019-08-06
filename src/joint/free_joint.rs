@@ -1,6 +1,7 @@
 use na::{DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
+
 use crate::math::{Isometry, JacobianSliceMut, Vector, Velocity, SPATIAL_DIM};
 use crate::solver::IntegrationParameters;
 
@@ -28,11 +29,6 @@ impl<N: RealField> FreeJoint<N> {
 }
 
 impl<N: RealField> Joint<N> for FreeJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
     fn ndofs(&self) -> usize {
         SPATIAL_DIM
     }
@@ -57,8 +53,8 @@ impl<N: RealField> Joint<N> for FreeJoint<N> {
     ) {
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        let disp = Velocity::from_slice(vels) * params.dt;
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        let disp = Velocity::from_slice(vels) * parameters.dt();
         self.apply_displacement(&disp);
     }
 
@@ -77,4 +73,9 @@ impl<N: RealField> Joint<N> for FreeJoint<N> {
     }
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
+
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
+    }
 }

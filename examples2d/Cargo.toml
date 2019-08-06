@@ -4,17 +4,28 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 edition = "2018"
 
+[features]
+box2d-backend = [ "nphysics_testbed2d/box2d-backend" ]
+
 [dependencies]
 rand       = "0.6"
 alga       = "0.9"
 nalgebra   = "0.18"
-ncollide2d = "0.19"
+ncollide2d = "0.20"
 
 [dependencies.nphysics_testbed2d]
-path = "../nphysics_testbed2d"
+path = "../build/nphysics_testbed2d"
 
 [dependencies.nphysics2d]
 path = "../build/nphysics2d"
+
+[[bin]]
+name = "all_examples2"
+path = "./all_examples2.rs"
+
+[[bin]]
+name = "ccd2"
+path = "./ccd2.rs"
 
 [[bin]]
 name = "balls2"
@@ -56,9 +67,9 @@ path = "./convex2.rs"
 name = "cross2"
 path = "./cross2.rs"
 
-[[bin]]
-name = "disable_sleeping2"
-path = "./disable_sleeping2.rs"
+#[[bin]]
+#name = "disable_sleeping2"
+#path = "./disable_sleeping2.rs"
 
 [[bin]]
 name = "force_generator2"

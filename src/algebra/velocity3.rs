@@ -46,6 +46,18 @@ impl<N: RealField> Velocity3<N> {
         Self::new(linear, angular)
     }
 
+    /// Compute the displacement due to this velocity integrated during the time `dt`.
+    pub fn integrate(&self, dt: N) -> Isometry3<N> {
+        (*self * dt).to_transform()
+    }
+
+    /// Compute the displacement due to this velocity integrated during a time equal to `1.0`.
+    ///
+    /// This is equivalent to `self.integrate(1.0)`.
+    pub fn to_transform(&self) -> Isometry3<N> {
+        Isometry3::new(self.linear, self.angular)
+    }
+
     /// Create a zero velocity.
     #[inline]
     pub fn zero() -> Self {

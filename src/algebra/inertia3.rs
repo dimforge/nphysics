@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul};
+use std::ops::{Add, AddAssign, Mul, Neg};
 
 use na::{self, Isometry3, Matrix3, Matrix6, RealField, U3};
 use crate::algebra::{Force3, Velocity3};
@@ -66,6 +66,15 @@ impl<N: RealField> Inertia3<N> {
         let inv_mass = if self.linear.is_zero() { N::zero() } else { N::one() / self.linear };
         let inv_angular = self.angular.try_inverse().unwrap_or_else(na::zero);
         Inertia3::new(inv_mass, inv_angular)
+    }
+}
+
+impl<N: RealField> Neg for Inertia3<N> {
+    type Output = Self;
+
+    #[inline]
+    fn neg(self) -> Self {
+        Self::new(-self.linear, -self.angular)
     }
 }
 

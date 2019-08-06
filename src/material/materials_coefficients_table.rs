@@ -6,6 +6,7 @@ use crate::material::MaterialId;
 
 
 /// A lookup table for friction and restitution coefficient associated to certain pairs of materials.
+#[derive(Clone)]
 pub struct MaterialsCoefficientsTable<N: RealField> {
     friction: HashMap<SortedPair<u32>, N>,
     restitution: HashMap<SortedPair<u32>, N>,

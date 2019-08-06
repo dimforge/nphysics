@@ -1,6 +1,7 @@
 use na::{self, DVectorSliceMut, RealField};
 
 use crate::joint::Joint;
+
 use crate::math::{Isometry, JacobianSliceMut, Translation, Vector, Velocity, DIM};
 use crate::solver::IntegrationParameters;
 
@@ -18,11 +19,6 @@ impl<N: RealField> CartesianJoint<N> {
 }
 
 impl<N: RealField> Joint<N> for CartesianJoint<N> {
-    #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
     #[inline]
     fn ndofs(&self) -> usize {
         DIM
@@ -60,11 +56,16 @@ impl<N: RealField> Joint<N> for CartesianJoint<N> {
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.position += Vector::from_row_slice(&vels[..DIM]) * params.dt;
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.position += Vector::from_row_slice(&vels[..DIM]) * parameters.dt();
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
         self.position += Vector::from_row_slice(&disp[..DIM]);
+    }
+
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
     }
 }

@@ -4,7 +4,7 @@ use na::{self, DVectorSliceMut, RealField, Unit};
 
 use crate::joint::{self, Joint, JointMotor, UnitJoint};
 use crate::math::{Dim, Isometry, JacobianSliceMut, Rotation, Translation, Vector, Velocity};
-use crate::object::{MultibodyLink, Multibody};
+use crate::object::{MultibodyLink, Multibody, BodyPartHandle};
 use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters};
 
 /// A unit joint that allows only one translational degree on freedom.
@@ -27,9 +27,9 @@ impl<N: RealField> PrismaticJoint<N> {
     #[cfg(feature = "dim2")]
     pub fn new(axis: Unit<Vector<N>>, offset: N) -> Self {
         PrismaticJoint {
-            axis: axis,
+            axis,
             jacobian: Velocity::zero(),
-            offset: offset,
+            offset,
             min_offset: None,
             max_offset: None,
             motor: JointMotor::new(),
@@ -139,11 +139,6 @@ impl<N: RealField> PrismaticJoint<N> {
 
 impl<N: RealField> Joint<N> for PrismaticJoint<N> {
     #[inline]
-    fn clone(&self) -> Box<Joint<N>> {
-        Box::new(*self)
-    }
-
-    #[inline]
     fn ndofs(&self) -> usize {
         1
     }
@@ -181,8 +176,8 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
 
     fn default_damping(&self, _: &mut DVectorSliceMut<N>) {}
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>, vels: &[N]) {
-        self.offset += vels[0] * params.dt
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>, vels: &[N]) {
+        self.offset += vels[0] * parameters.dt()
     }
 
     fn apply_displacement(&mut self, disp: &[N]) {
@@ -197,13 +192,18 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         Velocity::zero()
     }
 
+    #[inline]
+    fn clone(&self) -> Box<dyn Joint<N>> {
+        Box::new(*self)
+    }
+
     fn num_velocity_constraints(&self) -> usize {
         joint::unit_joint_num_velocity_constraints(self)
     }
 
     fn velocity_constraints(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
         assembly_id: usize,
@@ -211,11 +211,11 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         ext_vels: &[N],
         ground_j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, (), (), usize>,
     ) {
         joint::unit_joint_velocity_constraints(
             self,
-            params,
+            parameters,
             multibody,
             link,
             assembly_id,
@@ -240,10 +240,11 @@ impl<N: RealField> Joint<N> for PrismaticJoint<N> {
         _: usize,
         multibody: &Multibody<N>,
         link: &MultibodyLink<N>,
+        handle: BodyPartHandle<()>,
         dof_id: usize,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
-        joint::unit_joint_position_constraint(self, multibody, link, dof_id, false, jacobians)
+    ) -> Option<GenericNonlinearConstraint<N, ()>> {
+        joint::unit_joint_position_constraint(self, multibody, link, handle, dof_id, false, jacobians)
     }
 }
 

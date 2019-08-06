@@ -1,10 +1,12 @@
 use alga::linear::FiniteDimInnerSpace;
 use na::{self, DVector, RealField, Unit};
 use std::ops::Range;
+use slotmap::Key;
+use ncollide::query::ContactId;
 
 use crate::detection::ColliderContactManifold;
 use crate::math::{Vector, DIM};
-use crate::object::BodySet;
+use crate::object::{BodySet, Body, ColliderHandle};
 use crate::material::{Material, MaterialContext, MaterialsCoefficientsTable};
 use crate::solver::helper;
 use crate::solver::{
@@ -42,22 +44,22 @@ impl<N: RealField> Default for SignoriniCoulombPyramidModel<N> {
     }
 }
 
-impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
-    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N>) -> usize {
+impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> ContactModel<N, Bodies, CollHandle> for SignoriniCoulombPyramidModel<N> {
+    fn num_velocity_constraints(&self, c: &ColliderContactManifold<N, Bodies::Handle, CollHandle>) -> usize {
         DIM * c.len()
     }
 
     fn constraints(
         &mut self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         coefficients: &MaterialsCoefficientsTable<N>,
-        bodies: &BodySet<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
-        manifolds: &[ColliderContactManifold<N>],
+        manifolds: &[ColliderContactManifold<N, Bodies::Handle, CollHandle>],
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>,
     ) {
         let id_vel_ground = constraints.velocity.unilateral_ground.len();
         let id_vel = constraints.velocity.unilateral.len();
@@ -65,38 +67,40 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let id_friction = constraints.velocity.bilateral.len();
 
         for manifold in manifolds {
-            let body1 = try_continue!(bodies.body(manifold.body1()));
-            let body2 = try_continue!(bodies.body(manifold.body2()));
+            let body1 = try_continue!(bodies.get(manifold.body1()));
+            let body2 = try_continue!(bodies.get(manifold.body2()));
 
             for c in manifold.contacts() {
-                let part1 = try_continue!(body1.part(manifold.body_part1(c.kinematic.feature1()).1));
-                let part2 = try_continue!(body2.part(manifold.body_part2(c.kinematic.feature2()).1));
+                let handle1 = manifold.body_part1(c.kinematic.feature1());
+                let handle2 = manifold.body_part2(c.kinematic.feature2());
+                let part1 = try_continue!(body1.part(handle1.1));
+                let part2 = try_continue!(body2.part(handle2.1));
 
                 let material1 = manifold.collider1.material();
                 let material2 = manifold.collider2.material();
-                let context1 = MaterialContext::new(body1, part1, manifold.collider1, c, true);
-                let context2 = MaterialContext::new(body2, part2, manifold.collider2, c, false);
+                let context1 = MaterialContext::new(manifold.collider1.shape(), manifold.collider1.position(), c, true);
+                let context2 = MaterialContext::new(manifold.collider2.shape(), manifold.collider2.position(), c, false);
                 let props = Material::combine(coefficients, material1, context1, material2, context2);
 
                 // if !SignoriniModel::is_constraint_active(c, manifold) {
                 //     continue;
                 // }
 
-                let impulse = self.impulses.get(c.id);
-                let impulse_id = self.impulses.entry_id(c.id);
+                let impulse = self.impulses.get(c.id).cloned().unwrap_or(Vector::zeros());
 
                 let ground_constraint = SignoriniModel::build_velocity_constraint(
-                    params,
+                    parameters,
                     body1,
                     part1,
+                    handle1,
                     body2,
                     part2,
+                    handle2,
                     &props,
                     manifold,
                     ext_vels,
                     c,
                     impulse[0],
-                    impulse_id,
                     ground_j_id,
                     j_id,
                     jacobians,
@@ -142,8 +146,10 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                     let geom = helper::constraint_pair_geometry(
                         body1,
                         part1,
+                        handle1,
                         body2,
                         part2,
+                        handle2,
                         &center1,
                         &center2,
                         &dir,
@@ -155,7 +161,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                         Some(&mut rhs)
                     );
 
-                    let warmstart = impulse[i] * params.warmstart_coeff;
+                    let warmstart = impulse[i] * parameters.warmstart_coeff;
 
                     if geom.is_ground_constraint() {
                         let constraint = BilateralGroundConstraint::new(
@@ -165,7 +171,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                             limits,
                             rhs,
                             warmstart,
-                            impulse_id * DIM + i,
+                            c.id,
                         );
                         constraints.velocity.bilateral_ground.push(constraint);
                     } else {
@@ -176,7 +182,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
                             limits,
                             rhs,
                             warmstart,
-                            impulse_id * DIM + i,
+                            c.id,
                         );
                         constraints.velocity.bilateral.push(constraint);
                     }
@@ -194,7 +200,7 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         self.friction_rng = id_friction..constraints.velocity.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
+    fn cache_impulses(&mut self, constraints: &ConstraintSet<N, Bodies::Handle, CollHandle, ContactId>) {
         let ground_contacts = &constraints.velocity.unilateral_ground[self.vel_ground_rng.clone()];
         let contacts = &constraints.velocity.unilateral[self.vel_rng.clone()];
         let ground_friction =
@@ -202,19 +208,32 @@ impl<N: RealField> ContactModel<N> for SignoriniCoulombPyramidModel<N> {
         let friction = &constraints.velocity.bilateral[self.friction_rng.clone()];
 
         for c in ground_contacts {
-            self.impulses[c.impulse_id][0] = c.impulse;
+            if !c.impulse_id.is_null() {
+                let _ = self.impulses.insert(c.impulse_id, Vector::zeros());
+                self.impulses[c.impulse_id][0] = c.impulse;
+            }
         }
 
         for c in contacts {
-            self.impulses[c.impulse_id][0] = c.impulse;
+            if !c.impulse_id.is_null() {
+                let _ = self.impulses.insert(c.impulse_id, Vector::zeros());
+                self.impulses[c.impulse_id][0] = c.impulse;
+            }
         }
 
+        let mut dim = 0;
         for c in ground_friction {
-            self.impulses[c.impulse_id / DIM][c.impulse_id % DIM] = c.impulse;
+            if !c.impulse_id.is_null() {
+                self.impulses[c.impulse_id][1 + dim % (DIM - 1)] = c.impulse;
+                dim += 1;
+            }
         }
 
         for c in friction {
-            self.impulses[c.impulse_id / DIM][c.impulse_id % DIM] = c.impulse;
+            if !c.impulse_id.is_null() {
+                self.impulses[c.impulse_id][1 + dim % (DIM - 1)] = c.impulse;
+                dim += 1;
+            }
         }
     }
 }

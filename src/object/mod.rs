@@ -1,8 +1,12 @@
 //! Objects that may be added to the physical world.
 
-pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus};
-pub use self::body_set::{Bodies, BodiesMut, BodyPartHandle, BodySet, BodyHandle, BodyDesc};
-pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderHandle, ColliderDesc, DeformableColliderDesc};
+pub use self::body::{ActivationStatus, Body, BodyPart, BodyStatus, BodyUpdateStatus, BodyPartMotion};
+pub use self::body_set::{
+    BodyPartHandle, DefaultBodySet, BodySet,
+    DefaultBodyHandle, DefaultBodyPartHandle, BodyDesc, BodyHandle
+};
+pub use self::collider::{Collider, ColliderData, ColliderAnchor, ColliderDesc, DeformableColliderDesc, ColliderRemovalData};
+pub use self::collider_set::{ColliderSet, ColliderHandle, DefaultColliderSet, DefaultColliderHandle};
 pub use self::ground::Ground;
 pub use self::multibody::{Multibody, MultibodyDesc};
 pub(crate) use self::multibody_link::MultibodyLinkVec;
@@ -19,6 +23,7 @@ pub(crate) use self::fem_helper::FiniteElementIndices;
 mod body;
 mod body_set;
 mod collider;
+mod collider_set;
 mod ground;
 mod multibody;
 mod multibody_link;

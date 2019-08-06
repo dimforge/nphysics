@@ -4,7 +4,7 @@ pub use self::constraint::{
     BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ImpulseLimits,
     UnilateralConstraint, UnilateralGroundConstraint,
 };
-pub use self::constraint_set::ConstraintSet;
+pub use self::constraint_set::{ConstraintSet, LinearConstraints};
 pub use self::contact_model::ContactModel;
 pub use self::helper::ForceDirection;
 pub use self::impulse_cache::ImpulseCache;

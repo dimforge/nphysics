@@ -26,7 +26,7 @@ pub use self::universal_joint::UniversalJoint;
 
 pub use self::cartesian_constraint::CartesianConstraint;
 pub use self::fixed_constraint::FixedConstraint;
-pub use self::joint_constraint::{ConstraintHandle, JointConstraint};
+pub use self::joint_constraint::{DefaultJointConstraintHandle, JointConstraint, JointConstraintSet, DefaultJointConstraintSet};
 pub use self::joint_motor::JointMotor;
 pub use self::mouse_constraint::MouseConstraint;
 pub use self::prismatic_constraint::PrismaticConstraint;

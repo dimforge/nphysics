@@ -10,19 +10,18 @@ use na::{self, RealField, Point2, Point3, Vector3, Matrix2, Matrix2x3, DMatrix,
 use ncollide::utils::{self, DeterministicState};
 use ncollide::shape::{Polyline, DeformationsType, ShapeHandle};
 
-use crate::object::{Body, BodyPart, BodyHandle, BodyPartHandle, BodyStatus, ActivationStatus,
-                    FiniteElementIndices, DeformableColliderDesc, BodyDesc, BodyUpdateStatus};
+use crate::object::{Body, BodyPart, BodyStatus, ActivationStatus,
+                    FiniteElementIndices, DeformableColliderDesc, BodyUpdateStatus};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Matrix, Dim, DIM, Point, Isometry,
                   SpatialVector, RotationMatrix, Vector, Translation};
 use crate::object::fem_helper;
-use crate::world::{World, ColliderWorld};
+
 use crate::utils::{UserData, UserDataBox};
 
 /// One element of a deformable surface.
 #[derive(Clone)]
 pub struct TriangularElement<N: RealField> {
-    handle: BodyPartHandle,
     indices: Point3<usize>,
     com: Point<N>,
     rot: RotationMatrix<N>,
@@ -40,8 +39,6 @@ pub struct TriangularElement<N: RealField> {
 /// The surface is described by a set of triangle elements. This
 /// implements an isoparametric approach where the interpolations are linear.
 pub struct FEMSurface<N: RealField> {
-    name: String,
-    handle: BodyHandle,
     elements: Vec<TriangularElement<N>>,
     kinematic_nodes: DVector<bool>,
     positions: DVector<N>,
@@ -74,12 +71,12 @@ pub struct FEMSurface<N: RealField> {
     update_status: BodyUpdateStatus,
 
 
-    user_data: Option<Box<Any + Send + Sync>>,
+    user_data: Option<Box<dyn Any + Send + Sync>>,
 }
 
 impl<N: RealField> FEMSurface<N> {
     /// Initializes a new deformable surface from its triangle elements.
-    fn new(handle: BodyHandle, vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
+    fn new(vertices: &[Point<N>], triangles: &[Point3<usize>], pos: &Isometry<N>,
            scale: &Vector<N>, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let ndofs = vertices.len() * DIM;
         let mut rest_positions = DVector::zeros(ndofs);
@@ -89,7 +86,7 @@ impl<N: RealField> FEMSurface<N> {
             rest_positions.fixed_rows_mut::<Dim>(i * DIM).copy_from(&pt.coords);
         }
 
-        let elements = triangles.iter().enumerate().map(|(i, idx)| {
+        let elements = triangles.iter().enumerate().map(|(_i, idx)| {
             let rest_a = rest_positions.fixed_rows::<Dim>(idx.x * 2);
             let rest_b = rest_positions.fixed_rows::<Dim>(idx.y * 2);
             let rest_c = rest_positions.fixed_rows::<Dim>(idx.z * 2);
@@ -109,7 +106,6 @@ impl<N: RealField> FEMSurface<N> {
             );
 
             TriangularElement {
-                handle: BodyPartHandle(handle, i),
                 indices: idx * DIM,
                 com: Point::origin(),
                 rot: RotationMatrix::identity(),
@@ -126,8 +122,6 @@ impl<N: RealField> FEMSurface<N> {
         let (d0, d1, d2) = fem_helper::elasticity_coefficients(young_modulus, poisson_ratio);
 
         FEMSurface {
-            name: String::new(),
-            handle,
             elements,
             kinematic_nodes: DVector::repeat(vertices.len(), false),
             positions: rest_positions.clone(),
@@ -211,11 +205,6 @@ impl<N: RealField> FEMSurface<N> {
         self.d0 = d0;
         self.d1 = d1;
         self.d2 = d2;
-    }
-
-    /// The handle of this body.
-    pub fn handle(&self) -> BodyHandle {
-        self.handle
     }
 
     fn assemble_mass_with_damping(&mut self, dt: N) {
@@ -316,10 +305,10 @@ impl<N: RealField> FEMSurface<N> {
         }
     }
 
-    fn assemble_forces(&mut self, gravity: &Vector<N>, params: &IntegrationParameters<N>) {
+    fn assemble_forces(&mut self, gravity: &Vector<N>, parameters: &IntegrationParameters<N>) {
         let _1: N = na::one();
         let _2: N = na::convert(2.0);
-        let dt = params.dt;
+        let dt = parameters.dt();
 
         self.accelerations.copy_from(&self.forces);
 
@@ -372,7 +361,7 @@ impl<N: RealField> FEMSurface<N> {
 
             let strain = elt.total_strain - elt.plastic_strain;
             if strain.norm() > self.plasticity_threshold {
-                let coeff = params.dt * (N::one() / params.dt).min(self.plasticity_creep);
+                let coeff = parameters.dt() * parameters.inv_dt().min(self.plasticity_creep);
                 elt.plastic_strain += strain * coeff;
             }
 
@@ -505,6 +494,19 @@ impl<N: RealField> FEMSurface<N> {
         (Polyline::new(vertices, Some(indices)), deformation_indices, body_parts)
     }
 
+    /// Computes the `DeformableColliderDesc` that can generate a collider covering the boundary polyline of this FEM surface.
+    ///
+    /// As a side-effect, this will rearrange the degrees-of-freedom (DOF) of this FEM surface so that all the
+    /// DOFs linked to the boundary collider are located at the beginning of the array of DOFs of this surface.
+    #[cfg(feature = "dim2")]
+    pub fn boundary_collider_desc(&mut self) -> DeformableColliderDesc<N> {
+        let (mesh, ids_map, parts_map) = self.boundary_polyline();
+        self.renumber_dofs(&ids_map);
+
+        DeformableColliderDesc::new(ShapeHandle::new(mesh))
+            .body_parts_mapping(Some(Arc::new(parts_map)))
+    }
+
     /// Renumber degrees of freedom so that the `deformation_indices[i]`-th DOF becomes the `i`-th one.
     pub fn renumber_dofs(&mut self, deformation_indices: &[usize]) {
         let mut dof_map: Vec<_> = (0..).take(self.positions.len()).collect();
@@ -546,7 +548,7 @@ impl<N: RealField> FEMSurface<N> {
     ///
     /// The cube is subdivided `nx` (resp. `ny`) times along
     /// the `x` (resp. `y`) axis.
-    fn quad(handle: BodyHandle, pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
+    fn quad(pos: &Isometry<N>, extents: &Vector2<N>, nx: usize, ny: usize, density: N, young_modulus: N, poisson_ratio: N, damping_coeffs: (N, N)) -> Self {
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
 
@@ -593,7 +595,7 @@ impl<N: RealField> FEMSurface<N> {
             }
         }
 
-        Self::new(handle, &vertices, &indices, pos, extents, density, young_modulus, poisson_ratio, damping_coeffs)
+        Self::new(&vertices, &indices, pos, extents, density, young_modulus, poisson_ratio, damping_coeffs)
     }
 
     /// Restrict the specified node acceleration to always be zero so
@@ -614,16 +616,6 @@ impl<N: RealField> FEMSurface<N> {
 }
 
 impl<N: RealField> Body<N> for FEMSurface<N> {
-    #[inline]
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    #[inline]
-    fn set_name(&mut self, name: String) {
-        self.name = name
-    }
-
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -692,8 +684,8 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
     /// Update the dynamics property of this deformable surface.
     fn update_acceleration(&mut self,
                            gravity: &Vector<N>,
-                           params: &IntegrationParameters<N>) {
-        self.assemble_forces(gravity, params);
+                           parameters: &IntegrationParameters<N>) {
+        self.assemble_forces(gravity, parameters);
         self.inv_augmented_mass.solve_mut(&mut self.accelerations);
     }
 
@@ -713,10 +705,6 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         self.update_status.set_position_changed(true);
         let disp = DVectorSlice::from_slice(disp, self.positions.len());
         self.positions += disp;
-    }
-
-    fn handle(&self) -> BodyHandle {
-        self.handle
     }
 
     fn status(&self) -> BodyStatus {
@@ -758,9 +746,9 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         DVectorSliceMut::from_slice(self.velocities.as_mut_slice(), ndofs)
     }
 
-    fn integrate(&mut self, params: &IntegrationParameters<N>) {
+    fn integrate(&mut self, parameters: &IntegrationParameters<N>) {
         self.update_status.set_position_changed(true);
-        self.positions.axpy(params.dt, &self.velocities, N::one())
+        self.positions.axpy(parameters.dt(), &self.velocities, N::one())
     }
 
     fn activate_with_energy(&mut self, energy: N) {
@@ -777,29 +765,29 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
         self.activation.set_deactivation_threshold(threshold)
     }
 
-    fn part(&self, id: usize) -> Option<&BodyPart<N>> {
-        self.elements.get(id).map(|b| b as &BodyPart<N>)
+    fn part(&self, id: usize) -> Option<&dyn BodyPart<N>> {
+        self.elements.get(id).map(|b| b as &dyn BodyPart<N>)
     }
 
-    fn world_point_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
     }
 
-    fn position_at_material_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Isometry<N> {
+    fn position_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Isometry<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         let pt = fem_helper::world_point_at_material_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point);
         Isometry::from_parts(Translation::from(pt.coords), na::one())
     }
 
-    fn material_point_at_world_point(&self, part: &BodyPart<N>, point: &Point<N>) -> Point<N> {
+    fn material_point_at_world_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<TriangularElement<N>>().expect("The provided body part must be a triangular element");
         fem_helper::material_point_at_world_point(FiniteElementIndices::Triangle(elt.indices), &self.positions, point)
     }
 
     fn fill_constraint_geometry(
         &self,
-        part: &BodyPart<N>,
+        part: &dyn BodyPart<N>,
         _: usize, // FIXME: keep this parameter?
         center: &Point<N>,
         force_dir: &ForceDirection<N>,
@@ -932,11 +920,10 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
 
 
 impl<N: RealField> BodyPart<N> for TriangularElement<N> {
-    fn part_handle(&self) -> BodyPartHandle {
-        self.handle
-    }
-
     fn center_of_mass(&self) -> Point<N> {
+        self.com
+    }
+    fn local_center_of_mass(&self) -> Point<N> {
         self.com
     }
 
@@ -965,7 +952,6 @@ enum FEMSurfaceDescGeometry<'a, N: RealField> {
 
 /// A builder for FEMSurface bodies.
 pub struct FEMSurfaceDesc<'a, N: RealField> {
-    name: String,
     user_data: Option<UserDataBox>,
     geom: FEMSurfaceDescGeometry<'a, N>,
     scale: Vector<N>,
@@ -973,7 +959,6 @@ pub struct FEMSurfaceDesc<'a, N: RealField> {
     young_modulus: N,
     poisson_ratio: N,
     sleep_threshold: Option<N>,
-    collider_enabled: bool,
     mass_damping: N,
     stiffness_damping: N,
     density: N,
@@ -983,10 +968,10 @@ pub struct FEMSurfaceDesc<'a, N: RealField> {
     gravity_enabled: bool,
 }
 
+
 impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
     fn with_geometry(geom: FEMSurfaceDescGeometry<'a, N>) -> Self {
         FEMSurfaceDesc {
-            name: String::new(),
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -995,7 +980,6 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
             young_modulus: na::convert(1.0e3),
             poisson_ratio: N::zero(),
             sleep_threshold: Some(ActivationStatus::default_threshold()),
-            collider_enabled: false,
             mass_damping: na::convert(0.2),
             stiffness_damping: N::zero(),
             density: N::one(),
@@ -1024,7 +1008,6 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
     user_data_desc_accessors!();
 
     desc_custom_setters!(
-        self.collider_enabled, set_collider_enabled, enable: bool | { self.collider_enabled = enable }
         self.plasticity, set_plasticity, strain_threshold: N, creep: N, max_force: N | { self.plasticity = (strain_threshold, creep, max_force) }
         self.kinematic_nodes, set_nodes_kinematic, nodes: &[usize] | { self.kinematic_nodes.extend_from_slice(nodes) }
         self.translation, set_translation, vector: Vector<N> | { self.position.translation.vector = vector }
@@ -1041,7 +1024,6 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
         density, set_density, density: N
         status, set_status, status: BodyStatus
         position, set_position, position: Isometry<N>
-        name, set_name, name: String
     );
 
     desc_custom_getters!(
@@ -1050,7 +1032,6 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
         self.get_plasticity_max_force: N | { self.plasticity.2 }
         self.get_kinematic_nodes: &[usize] | { &self.kinematic_nodes[..] }
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
-        self.get_name: &str | { &self.name }
     );
 
     desc_getters!(
@@ -1062,29 +1043,20 @@ impl<'a, N: RealField> FEMSurfaceDesc<'a, N> {
         [val] get_stiffness_damping -> stiffness_damping: N
         [val] get_density -> density: N
         [val] get_status -> status: BodyStatus
-        [val] is_collider_enabled -> collider_enabled: bool
         [ref] get_position -> position: Isometry<N>
         [ref] get_scale -> scale: Vector<N>
     );
 
-    /// Build a deformable surface.
-    pub fn build<'w>(&self, world: &'w mut World<N>) -> &'w mut FEMSurface<N> {
-        world.add_body(self)
-    }
-}
-
-impl<'a, N: RealField> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
-    type Body = FEMSurface<N>;
-
-    fn build_with_handle(&self, cworld: &mut ColliderWorld<N>, handle: BodyHandle) -> FEMSurface<N> {
+    /// Builds a finite-element based deformable body from this description.
+    pub fn build(&self) -> FEMSurface<N> {
         let mut vol = match self.geom {
             FEMSurfaceDescGeometry::Quad(nx, ny) =>
-                FEMSurface::quad(handle, &self.position, &self.scale,
+                FEMSurface::quad(&self.position, &self.scale,
                                  nx, ny, self.density, self.young_modulus,
                                  self.poisson_ratio,
                                  (self.mass_damping, self.stiffness_damping)),
             FEMSurfaceDescGeometry::Triangles(pts, idx) =>
-                FEMSurface::new(handle, pts, idx, &self.position, &self.scale,
+                FEMSurface::new(pts, idx, &self.position, &self.scale,
                                 self.density, self.young_modulus, self.poisson_ratio,
                                 (self.mass_damping, self.stiffness_damping))
         };
@@ -1092,20 +1064,11 @@ impl<'a, N: RealField> BodyDesc<N> for FEMSurfaceDesc<'a, N> {
         vol.set_deactivation_threshold(self.sleep_threshold);
         vol.set_plasticity(self.plasticity.0, self.plasticity.1, self.plasticity.2);
         vol.enable_gravity(self.gravity_enabled);
-        vol.set_name(self.name.clone());
         vol.set_status(self.status);
         let _ = vol.set_user_data(self.user_data.as_ref().map(|data| data.0.to_any()));
 
         for i in &self.kinematic_nodes {
             vol.set_node_kinematic(*i, true)
-        }
-
-        if self.collider_enabled {
-            let (mesh, ids_map, parts_map) = vol.boundary_polyline();
-            vol.renumber_dofs(&ids_map);
-            let _ = DeformableColliderDesc::new(ShapeHandle::new(mesh))
-                .body_parts_mapping(Some(Arc::new(parts_map)))
-                .build_with_infos(&vol, cworld);
         }
 
         vol

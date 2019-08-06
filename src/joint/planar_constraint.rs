@@ -3,17 +3,17 @@ use std::ops::Range;
 
 use crate::joint::JointConstraint;
 use crate::math::{AngularVector, Point};
-use crate::object::{BodyPartHandle, BodySet};
+use crate::object::{BodyPartHandle, BodySet, Body, BodyHandle};
 use crate::solver::helper;
-use crate::solver::{ConstraintSet, GenericNonlinearConstraint, IntegrationParameters,
+use crate::solver::{LinearConstraints, GenericNonlinearConstraint, IntegrationParameters,
              NonlinearConstraintGenerator};
 
 /// A constraint that removes one relative translational degree of freedom, and all but one rotational degrees of freedom.
 ///
 /// This ensures a body moves only on a plane wrt. its parent.
-pub struct PlanarConstraint<N: RealField> {
-    b1: BodyPartHandle,
-    b2: BodyPartHandle,
+pub struct PlanarConstraint<N: RealField, Handle: BodyHandle> {
+    b1: BodyPartHandle<Handle>,
+    b2: BodyPartHandle<Handle>,
     anchor1: Point<N>,
     anchor2: Point<N>,
     axis1: Unit<AngularVector<N>>,
@@ -24,13 +24,13 @@ pub struct PlanarConstraint<N: RealField> {
     bilateral_rng: Range<usize>,
 }
 
-impl<N: RealField> PlanarConstraint<N> {
+impl<N: RealField, Handle: BodyHandle> PlanarConstraint<N, Handle> {
     /// Create a new planar constraint which ensures the two provided axii always coincide.
     ///
     /// All anchros and axii are expressed in their corresponding body part local coordinate frame.
     pub fn new(
-        b1: BodyPartHandle,
-        b2: BodyPartHandle,
+        b1: BodyPartHandle<Handle>,
+        b2: BodyPartHandle<Handle>,
         anchor1: Point<N>,
         axis1: Unit<AngularVector<N>>,
         anchor2: Point<N>,
@@ -51,27 +51,27 @@ impl<N: RealField> PlanarConstraint<N> {
     }
 }
 
-impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for PlanarConstraint<N, Handle> {
     fn num_velocity_constraints(&self) -> usize {
         3
     }
 
-    fn anchors(&self) -> (BodyPartHandle, BodyPartHandle) {
+    fn anchors(&self) -> (BodyPartHandle<Handle>, BodyPartHandle<Handle>) {
         (self.b1, self.b2)
     }
 
     fn velocity_constraints(
         &mut self,
         _: &IntegrationParameters<N>,
-        bodies: &BodySet<N>,
+        bodies: &Bodies,
         ext_vels: &DVector<N>,
         ground_j_id: &mut usize,
         j_id: &mut usize,
         jacobians: &mut [N],
-        constraints: &mut ConstraintSet<N>,
+        constraints: &mut LinearConstraints<N, usize>,
     ) {
-        let body1 = try_ret!(bodies.body(self.b1.0));
-        let body2 = try_ret!(bodies.body(self.b2.0));
+        let body1 = try_ret!(bodies.get(self.b1.0));
+        let body2 = try_ret!(bodies.get(self.b2.0));
         let part1 = try_ret!(body1.part(self.b1.1));
         let part2 = try_ret!(body2.part(self.b2.1));
 
@@ -89,16 +89,18 @@ impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
         let assembly_id1 = body1.companion_id();
         let assembly_id2 = body2.companion_id();
 
-        let first_bilateral_ground = constraints.velocity.bilateral_ground.len();
-        let first_bilateral = constraints.velocity.bilateral.len();
+        let first_bilateral_ground = constraints.bilateral_ground.len();
+        let first_bilateral = constraints.bilateral.len();
 
         let axis1 = pos1 * self.axis1;
 
         helper::cancel_relative_linear_velocity_wrt_axis(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &anchor1,
@@ -116,8 +118,10 @@ impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
         helper::restrict_relative_angular_velocity_to_axis(
             body1,
             part1,
+            self.b1,
             body2,
             part2,
+            self.b2,
             assembly_id1,
             assembly_id2,
             &axis1,
@@ -139,12 +143,12 @@ impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
          */
 
         self.bilateral_ground_rng =
-            first_bilateral_ground..constraints.velocity.bilateral_ground.len();
-        self.bilateral_rng = first_bilateral..constraints.velocity.bilateral.len();
+            first_bilateral_ground..constraints.bilateral_ground.len();
+        self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &ConstraintSet<N>) {
-        for c in &constraints.velocity.bilateral_ground[self.bilateral_ground_rng.clone()] {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+        for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             if c.impulse_id == 0 {
                 self.lin_impulse = c.impulse
             } else {
@@ -152,7 +156,7 @@ impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
             }
         }
 
-        for c in &constraints.velocity.bilateral[self.bilateral_rng.clone()] {
+        for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             if c.impulse_id == 0 {
                 self.lin_impulse = c.impulse
             } else {
@@ -162,8 +166,8 @@ impl<N: RealField> JointConstraint<N> for PlanarConstraint<N> {
     }
 }
 
-impl<N: RealField> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
-    fn num_position_constraints(&self, bodies: &BodySet<N>) -> usize {
+impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for PlanarConstraint<N, Handle> {
+    fn num_position_constraints(&self, bodies: &Bodies) -> usize {
         // FIXME: calling this at each iteration of the non-linear resolution is costly.
         if self.is_active(bodies) {
             2
@@ -174,13 +178,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
 
     fn position_constraint(
         &self,
-        params: &IntegrationParameters<N>,
+        parameters: &IntegrationParameters<N>,
         i: usize,
-        bodies: &mut BodySet<N>,
+        bodies: &mut Bodies,
         jacobians: &mut [N],
-    ) -> Option<GenericNonlinearConstraint<N>> {
-        let body1 = bodies.body(self.b1.0)?;
-        let body2 = bodies.body(self.b2.0)?;
+    ) -> Option<GenericNonlinearConstraint<N, Handle>> {
+        let body1 = bodies.get(self.b1.0)?;
+        let body2 = bodies.get(self.b2.0)?;
         let part1 = body1.part(self.b1.1)?;
         let part2 = body2.part(self.b2.1)?;
 
@@ -194,11 +198,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
 
         if i == 0 {
             return helper::cancel_relative_translation_wrt_axis(
-                params,
+                parameters,
                 body1,
                 part1,
+                self.b1,
                 body2,
                 part2,
+                self.b2,
                 &anchor1,
                 &anchor2,
                 &axis1,
@@ -210,11 +216,13 @@ impl<N: RealField> NonlinearConstraintGenerator<N> for PlanarConstraint<N> {
             let axis2 = pos2 * self.axis2;
 
             return helper::align_axis(
-                params,
+                parameters,
                 body1,
                 part1,
+                self.b1,
                 body2,
                 part2,
+                self.b2,
                 &anchor1,
                 &anchor2,
                 &axis1,

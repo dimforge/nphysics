@@ -7,9 +7,9 @@ use na::{DVector, DVectorSlice, RealField, Unit};
 use std::ops::Neg;
 
 use crate::math::{AngularVector, Force, Point, Rotation, Vector};
-use crate::object::{Body, BodyPart};
-use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry, ConstraintSet,
-             GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters};
+use crate::object::{Body, BodyPart, BodyPartHandle, BodyHandle};
+use crate::solver::{BilateralConstraint, BilateralGroundConstraint, ConstraintGeometry,
+             GenericNonlinearConstraint, ImpulseLimits, IntegrationParameters, LinearConstraints};
 
 /// The direction of a force in world-space.
 #[derive(Copy, Clone, Debug)]
@@ -53,11 +53,13 @@ impl<N: RealField> Neg for ForceDirection<N> {
 /// If the force is a torque, it is applied at the centers of mass of the body parts.
 /// Every input are expressed in world-space.
 #[inline]
-pub fn constraint_pair_geometry<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn constraint_pair_geometry<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     center1: &Point<N>,
     center2: &Point<N>,
     dir: &ForceDirection<N>,
@@ -116,7 +118,7 @@ pub fn constraint_pair_geometry<N: RealField>(
         out_vel
     );
 
-    if body1.handle() == body2.handle() {
+    if handle1.0 == handle2.0 {
         let j1 = DVectorSlice::from_slice(&jacobians[res.j_id1..], res.ndofs1);
         let j2 = DVectorSlice::from_slice(&jacobians[res.j_id2..], res.ndofs2);
         let invm_j1 = DVectorSlice::from_slice(&jacobians[res.wj_id1..], res.ndofs1);
@@ -138,36 +140,37 @@ pub fn constraint_pair_geometry<N: RealField>(
 /// Test if a constraint between the two given bodies should be a ground
 /// constraint (a constraint between a dynamic body and one without any degree of freedom).
 #[inline]
-pub fn constraints_are_ground_constraints<N: RealField>(
-    body1: &Body<N>,
-    body2: &Body<N>,
+pub fn constraints_are_ground_constraints<N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
+    body2: &B,
 ) -> bool {
     body1.status_dependent_ndofs() == 0 || body2.status_dependent_ndofs() == 0
 }
 
 /// Retrieve the external velocity subvectors for the given bodies.
 #[inline(always)]
-pub fn split_ext_vels<'a, N: RealField>(
-    body1: &Body<N>,
-    body2: &Body<N>,
+pub fn split_ext_vels<'a, N: RealField, B: ?Sized + Body<N>>(
+    body1: &B,
+    body2: &B,
     assembly_id1: usize,
     assembly_id2: usize,
     ext_vels: &'a DVector<N>)
     -> (DVectorSlice<'a, N>, DVectorSlice<'a, N>){
     let ndofs1 = body1.status_dependent_ndofs();
     let ndofs2 = body2.status_dependent_ndofs();
-
     (ext_vels.rows(assembly_id1, ndofs1), ext_vels.rows(assembly_id2, ndofs2))
 }
 
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle, Id>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -175,11 +178,11 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
     axis: &Unit<Vector<N>>,
     ext_vels: &DVector<N>,
     impulse: N,
-    impulse_id: usize,
+    impulse_id: Id,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, Id>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -193,8 +196,10 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
     let geom = constraint_pair_geometry(
         body1,
         part1,
+        handle1,
         body2,
         part2,
+        handle2,
         anchor1,
         anchor2,
         &force,
@@ -208,7 +213,6 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
         constraints
-            .velocity
             .bilateral_ground
             .push(BilateralGroundConstraint::new(
                 geom,
@@ -221,7 +225,6 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
             ));
     } else {
         constraints
-            .velocity
             .bilateral
             .push(BilateralConstraint::new(
                 geom,
@@ -238,11 +241,13 @@ pub fn cancel_relative_linear_velocity_wrt_axis<N: RealField>(
 /// Generates velocity constraints to cancel the relative linear velocity of two body parts.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_linear_velocity<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_linear_velocity<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -253,15 +258,17 @@ pub fn cancel_relative_linear_velocity<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let mut i = 0;
     Vector::canonical_basis(|dir| {
         cancel_relative_linear_velocity_wrt_axis(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             assembly_id1,
             assembly_id2,
             anchor1,
@@ -285,17 +292,19 @@ pub fn cancel_relative_linear_velocity<N: RealField>(
 /// Generate position constraints to cancel the relative translation of two bodies wrt the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_translation_wrt_axis<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_translation_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis: &Unit<Vector<N>>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let mut depth = axis.dot(&(anchor2 - anchor1));
 
     let force = if depth < N::zero() {
@@ -305,15 +314,17 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
         ForceDirection::Linear(*axis)
     };
 
-    if depth > params.allowed_linear_error {
+    if depth > parameters.allowed_linear_error {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &force,
@@ -327,8 +338,8 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -347,27 +358,31 @@ pub fn cancel_relative_translation_wrt_axis<N: RealField>(
 /// Generate position constraints to cancel the relative translation of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_translation<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_translation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let error = anchor2 - anchor1;
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_linear_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -381,8 +396,8 @@ pub fn cancel_relative_translation<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -401,11 +416,13 @@ pub fn cancel_relative_translation<N: RealField>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies wrt. the given axis.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle, Id>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -413,11 +430,11 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
     axis: &Unit<AngularVector<N>>,
     ext_vels: &DVector<N>,
     impulse: N,
-    impulse_id: usize,
+    impulse_id: Id,
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, Id>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -431,8 +448,10 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
     let geom = constraint_pair_geometry(
         body1,
         part1,
+        handle1,
         body2,
         part2,
+        handle2,
         anchor1,
         anchor2,
         &force,
@@ -446,7 +465,6 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
 
     if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
         constraints
-            .velocity
             .bilateral_ground
             .push(BilateralGroundConstraint::new(
                 geom,
@@ -459,7 +477,6 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
             ));
     } else {
         constraints
-            .velocity
             .bilateral
             .push(BilateralConstraint::new(
                 geom,
@@ -476,11 +493,13 @@ pub fn cancel_relative_angular_velocity_wrt_axis<N: RealField>(
 /// Generate velocity constraints to cancel the relative angular velocity of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_angular_velocity<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_angular_velocity<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -491,15 +510,17 @@ pub fn cancel_relative_angular_velocity<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let mut i = 0;
     AngularVector::canonical_basis(|dir| {
         cancel_relative_angular_velocity_wrt_axis(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             assembly_id1,
             assembly_id2,
             anchor1,
@@ -523,29 +544,33 @@ pub fn cancel_relative_angular_velocity<N: RealField>(
 /// Generate position constraints to cancel the relative rotation of two bodies.
 ///
 /// All inputs mut be given in world-space.
-pub fn cancel_relative_rotation<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn cancel_relative_rotation<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     rotation1: &Rotation<N>,
     rotation2: &Rotation<N>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     let error = (rotation2 / rotation1).scaled_axis();
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_angular_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
@@ -559,8 +584,8 @@ pub fn cancel_relative_rotation<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -580,11 +605,13 @@ pub fn cancel_relative_rotation<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn restrict_relative_angular_velocity_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     axis: &Unit<AngularVector<N>>,
@@ -596,7 +623,7 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -612,8 +639,10 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &dir,
@@ -627,7 +656,6 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
-                .velocity
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
@@ -640,7 +668,6 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
                 ));
         } else {
             constraints
-                .velocity
                 .bilateral
                 .push(BilateralConstraint::new(
                     geom,
@@ -663,18 +690,20 @@ pub fn restrict_relative_angular_velocity_to_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn align_axis<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn align_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
     axis2: &Unit<Vector<N>>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     // Angular regularization for two coincident axis.
     let mut error;
     if let Some(error_rot) = Rotation::rotation_between_axis(&axis1, &axis2) {
@@ -687,15 +716,17 @@ pub fn align_axis<N: RealField>(
         error = error.cross(&axis1).normalize() * N::pi();
     }
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_angular_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_angular_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
@@ -709,8 +740,8 @@ pub fn align_axis<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             true,
             geom.ndofs1,
             geom.ndofs2,
@@ -729,11 +760,13 @@ pub fn align_axis<N: RealField>(
 /// Generate velocity constraints to cancel the relative linear velocity of two bodies along all axis except the one provided.
 ///
 /// All inputs mut be given in world-space.
-pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn restrict_relative_linear_velocity_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     assembly_id1: usize,
     assembly_id2: usize,
     anchor1: &Point<N>,
@@ -745,7 +778,7 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
     ground_j_id: &mut usize,
     j_id: &mut usize,
     jacobians: &mut [N],
-    constraints: &mut ConstraintSet<N>,
+    constraints: &mut LinearConstraints<N, usize>,
 ) {
     let limits = ImpulseLimits::Independent {
         min: -N::max_value(),
@@ -762,8 +795,10 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &dir,
@@ -777,7 +812,6 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
 
         if geom.ndofs1 == 0 || geom.ndofs2 == 0 {
             constraints
-                .velocity
                 .bilateral_ground
                 .push(BilateralGroundConstraint::new(
                     geom,
@@ -790,7 +824,6 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
                 ));
         } else {
             constraints
-                .velocity
                 .bilateral
                 .push(BilateralConstraint::new(
                     geom,
@@ -812,31 +845,35 @@ pub fn restrict_relative_linear_velocity_to_axis<N: RealField>(
 /// Generate position constraints to project `anchor2` into the axis with direction `axis1` and passing through the `anchor1`.
 ///
 /// All inputs mut be given in world-space.
-pub fn project_anchor_to_axis<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn project_anchor_to_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     // Linear regularization of a point on an axis.
     let dpt = anchor2 - anchor1;
     let proj = anchor1 + axis1.into_inner() * axis1.dot(&dpt);
     let error = anchor2 - proj;
 
-    if let Some((dir, depth)) = Unit::try_new_and_get(error, params.allowed_linear_error) {
+    if let Some((dir, depth)) = Unit::try_new_and_get(error, parameters.allowed_linear_error) {
         let mut j_id = 0;
         let mut ground_j_id = 0;
 
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Linear(dir),
@@ -850,8 +887,8 @@ pub fn project_anchor_to_axis<N: RealField>(
 
         let rhs = -depth;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             false,
             geom.ndofs1,
             geom.ndofs2,
@@ -871,19 +908,21 @@ pub fn project_anchor_to_axis<N: RealField>(
 ///
 /// All inputs mut be given in world-space.
 #[cfg(feature = "dim3")]
-pub fn restore_angle_between_axis<N: RealField>(
-    params: &IntegrationParameters<N>,
-    body1: &Body<N>,
-    part1: &BodyPart<N>,
-    body2: &Body<N>,
-    part2: &BodyPart<N>,
+pub fn restore_angle_between_axis<N: RealField, B: ?Sized + Body<N>, H: BodyHandle>(
+    parameters: &IntegrationParameters<N>,
+    body1: &B,
+    part1: &dyn BodyPart<N>,
+    handle1: BodyPartHandle<H>,
+    body2: &B,
+    part2: &dyn BodyPart<N>,
+    handle2: BodyPartHandle<H>,
     anchor1: &Point<N>,
     anchor2: &Point<N>,
     axis1: &Unit<Vector<N>>,
     axis2: &Unit<Vector<N>>,
     angle: N,
     jacobians: &mut [N],
-) -> Option<GenericNonlinearConstraint<N>> {
+) -> Option<GenericNonlinearConstraint<N, H>> {
     // Angular regularization for two coincident axis.
     let mut separation;
     if let Some(separation_rot) = Rotation::rotation_between_axis(&axis1, &axis2) {
@@ -904,7 +943,7 @@ pub fn restore_angle_between_axis<N: RealField>(
             dir = -dir;
         }
 
-        if error < params.allowed_angular_error {
+        if error < parameters.allowed_angular_error {
             return None;
         }
 
@@ -914,8 +953,10 @@ pub fn restore_angle_between_axis<N: RealField>(
         let geom = constraint_pair_geometry(
             body1,
             part1,
+            handle1,
             body2,
             part2,
+            handle2,
             anchor1,
             anchor2,
             &ForceDirection::Angular(dir),
@@ -929,8 +970,8 @@ pub fn restore_angle_between_axis<N: RealField>(
 
         let rhs = -error;
         let constraint = GenericNonlinearConstraint::new(
-            part1.part_handle(),
-            part2.part_handle(),
+            handle1,
+            Some(handle2),
             true,
             geom.ndofs1,
             geom.ndofs2,
