@@ -28,6 +28,10 @@ name = "ccd2"
 path = "./ccd2.rs"
 
 [[bin]]
+name = "fluids2"
+path = "./fluids2.rs"
+
+[[bin]]
 name = "balls2"
 path = "./balls2.rs"
 

@@ -12,6 +12,7 @@ use crate::objects::polyline::Polyline;
 use crate::objects::mesh::Mesh;
 use crate::objects::heightfield::HeightField;
 use crate::objects::plane::Plane;
+use crate::objects::Multiball::Multiball;
 
 #[cfg(feature = "dim2")]
 pub type GraphicsNode = kiss3d::scene::PlanarSceneNode;
@@ -21,6 +22,7 @@ pub type GraphicsNode = kiss3d::scene::SceneNode;
 pub enum Node {
     Plane(Plane),
     Ball(Ball),
+    Multiball(Multiball),
     Box(Box),
     HeightField(HeightField),
     Capsule(Capsule),
@@ -36,6 +38,7 @@ impl Node {
         match *self {
             Node::Plane(ref mut n) => n.select(),
             Node::Ball(ref mut n) => n.select(),
+            Node::Multiball(ref mut n) => n.select(),
             Node::Box(ref mut n) => n.select(),
             Node::Capsule(ref mut n) => n.select(),
             Node::HeightField(ref mut n) => n.select(),
@@ -51,6 +54,7 @@ impl Node {
         match *self {
             Node::Plane(ref mut n) => n.unselect(),
             Node::Ball(ref mut n) => n.unselect(),
+            Node::Multiball(ref mut n) => n.unselect(),
             Node::Box(ref mut n) => n.unselect(),
             Node::Capsule(ref mut n) => n.unselect(),
             Node::HeightField(ref mut n) => n.unselect(),
@@ -66,6 +70,7 @@ impl Node {
         match *self {
             Node::Plane(ref mut n) => n.update(colliders),
             Node::Ball(ref mut n) => n.update(colliders),
+            Node::Multiball(ref mut n) => n.update(colliders),
             Node::Box(ref mut n) => n.update(colliders),
             Node::Capsule(ref mut n) => n.update(colliders),
             Node::HeightField(ref mut n) => n.update(colliders),
@@ -94,6 +99,7 @@ impl Node {
             #[cfg(feature = "dim3")]
             Node::Plane(ref n) => Some(n.scene_node()),
             Node::Ball(ref n) => Some(n.scene_node()),
+            Node::Multiball(ref n) => Some(n.scene_node()),
             Node::Box(ref n) => Some(n.scene_node()),
             Node::Capsule(ref n) => Some(n.scene_node()),
             #[cfg(feature = "dim3")]
@@ -111,6 +117,7 @@ impl Node {
             #[cfg(feature = "dim3")]
             Node::Plane(ref mut n) => Some(n.scene_node_mut()),
             Node::Ball(ref mut n) => Some(n.scene_node_mut()),
+            Node::Multiball(ref mut n) => Some(n.scene_node_mut()),
             Node::Box(ref mut n) => Some(n.scene_node_mut()),
             Node::Capsule(ref mut n) => Some(n.scene_node_mut()),
             #[cfg(feature = "dim3")]
@@ -127,6 +134,7 @@ impl Node {
         match *self {
             Node::Plane(ref n) => n.object(),
             Node::Ball(ref n) => n.object(),
+            Node::Multiball(ref n) => n.object(),
             Node::Box(ref n) => n.object(),
             Node::Capsule(ref n) => n.object(),
             Node::HeightField(ref n) => n.object(),
@@ -142,6 +150,7 @@ impl Node {
         match *self {
             Node::Plane(ref mut n) => n.set_color(color),
             Node::Ball(ref mut n) => n.set_color(color),
+            Node::Multiball(ref mut n) => n.set_color(color),
             Node::Box(ref mut n) => n.set_color(color),
             Node::Capsule(ref mut n) => n.set_color(color),
             Node::HeightField(ref mut n) => n.set_color(color),

@@ -34,6 +34,7 @@ use crate::objects::mesh::Mesh;
 use crate::objects::polyline::Polyline;
 use crate::objects::node::{GraphicsNode, Node};
 use crate::objects::heightfield::HeightField;
+use crate::objects::Multiball::Multiball;
 use crate::objects::plane::Plane;
 use crate::objects::capsule::Capsule;
 use rand::{Rng, SeedableRng, rngs::StdRng};
@@ -333,6 +334,8 @@ impl GraphicsManager {
             for &(t, ref s) in s.shapes().iter() {
                 self.add_shape(window, object, colliders, delta * t, s.as_ref(), color, out)
             }
+        } else if let Some(s) = shape.as_shape::<shape::Multiball<f32>>() {
+            self.add_Multiball(window, object, colliders, delta, s, color, out)
         }
 
         #[cfg(feature = "dim2")]
@@ -489,6 +492,28 @@ impl GraphicsManager {
             colliders,
             delta,
             shape.radius() + margin,
+            color,
+            window,
+        )))
+    }
+
+    fn add_Multiball(
+        &mut self,
+        window: &mut Window,
+        object: DefaultColliderHandle,
+        colliders: &DefaultColliderSet<f32>,
+        delta: Isometry<f32>,
+        shape: &shape::Multiball<f32>,
+        color: Point3<f32>,
+        out: &mut Vec<Node>,
+    ) {
+        let margin = colliders.get(object).unwrap().margin();
+        out.push(Node::Multiball(Multiball::new(
+            object,
+            colliders,
+            delta,
+            shape.radius() + margin,
+            shape.centers(),
             color,
             window,
         )))
