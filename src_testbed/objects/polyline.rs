@@ -54,7 +54,8 @@ impl Polyline {
         if let Some(c) = colliders.get(self.collider) {
             self.pos = *c.position();
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
-                let shape = c.shape().as_shape::<shape::Polyline<f32>>().unwrap();
+                let shape_ref = c.shape();
+                let shape = shape_ref.as_shape::<shape::Polyline<f32>>().unwrap();
                 self.vertices = shape.points().to_vec();
                 self.indices.clear();
 

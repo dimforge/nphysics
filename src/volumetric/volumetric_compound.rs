@@ -10,7 +10,7 @@ impl<N: RealField> Volumetric<N> for Compound<N> {
         let mut stot: N = na::zero();
 
         for &(_, ref s) in self.shapes().iter() {
-            stot += s.area()
+            stot += s.as_ref().area()
         }
 
         stot
@@ -20,7 +20,7 @@ impl<N: RealField> Volumetric<N> for Compound<N> {
         let mut vtot: N = na::zero();
 
         for &(_, ref s) in self.shapes().iter() {
-            vtot += s.volume()
+            vtot += s.as_ref().volume()
         }
 
         vtot
@@ -34,7 +34,7 @@ impl<N: RealField> Volumetric<N> for Compound<N> {
         let shapes = self.shapes();
 
         for &(ref m, ref s) in shapes.iter() {
-            let (mpart, cpart, _) = s.mass_properties(na::one());
+            let (mpart, cpart, _) = s.as_ref().mass_properties(na::one());
 
             mtot += mpart;
             ctot += (*m * cpart * mpart).coords;
@@ -55,7 +55,7 @@ impl<N: RealField> Volumetric<N> for Compound<N> {
         let shapes = self.shapes();
 
         for &(ref m, ref s) in shapes.iter() {
-            let (mpart, cpart, ipart) = s.mass_properties(na::one());
+            let (mpart, cpart, ipart) = s.as_ref().mass_properties(na::one());
 
             itot += ipart
                 .to_world_space(m)
@@ -78,7 +78,7 @@ impl<N: RealField> Volumetric<N> for Compound<N> {
         let shapes = self.shapes();
         let props: Vec<_> = shapes
             .iter()
-            .map(|&(_, ref s)| s.mass_properties(na::one()))
+            .map(|&(_, ref s)| s.as_ref().mass_properties(na::one()))
             .collect();
 
         for (&(ref m, _), &(ref mpart, ref cpart, _)) in shapes.iter().zip(props.iter()) {

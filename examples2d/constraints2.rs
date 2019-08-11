@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -40,7 +40,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.2;
     let mut parent = BodyPartHandle(ground_handle, 0);
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let geom = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(geom).density(1.0);
 
     for j in 0usize..num {

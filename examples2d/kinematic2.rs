@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -41,7 +41,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 10;
     let rad = 0.2;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid.clone())
         .density(1.0);
 
@@ -76,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
         .build();
     let platform_handle = bodies.insert(platform_body);
 
-    let platform_geom = ShapeHandle::new(Cuboid::new(Vector2::new(rad * 10.0, rad)));
+    let platform_geom = ShapeHandle::new_owned(Cuboid::new(Vector2::new(rad * 10.0, rad)));
     let platform_collider = ColliderDesc::new(platform_geom)
         .density(1.0)
         .build(BodyPartHandle(platform_handle, 0));
@@ -113,7 +113,7 @@ pub fn init_world(testbed: &mut Testbed) {
         .build();
     let mb_handle = bodies.insert(mb);
 
-    let geom = ShapeHandle::new(Ball::new(2.0 * rad));
+    let geom = ShapeHandle::new_shared(Ball::new(2.0 * rad));
     let ball_collider_desc = ColliderDesc::new(geom).density(1.0);
     let mb_collider = ball_collider_desc.build(BodyPartHandle(mb_handle, 0));
     colliders.insert(mb_collider);

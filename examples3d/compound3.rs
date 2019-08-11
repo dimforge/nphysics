@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(35.0, ground_thickness, 35.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(35.0, ground_thickness, 35.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -44,14 +44,14 @@ pub fn init_world(testbed: &mut Testbed) {
     let delta3 = Isometry3::new(Vector3::new(large_rad, 0.0, 0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    let vertical = ShapeHandle::new(Capsule::new(large_rad, small_rad));
-    let horizontal = ShapeHandle::new(Cuboid::new(Vector3::new(large_rad, small_rad, small_rad)));
-    cross_geoms.push((delta1, horizontal));
-    cross_geoms.push((delta2, vertical.clone()));
-    cross_geoms.push((delta3, vertical));
+    let vertical = Capsule::new(large_rad, small_rad);
+    let horizontal = Cuboid::new(Vector3::new(large_rad, small_rad, small_rad));
+    cross_geoms.push((delta1, Box::new(horizontal) as Box<dyn Shape<_>>));
+    cross_geoms.push((delta2, Box::new(vertical) as Box<dyn Shape<_>>));
+    cross_geoms.push((delta3, Box::new(vertical) as Box<dyn Shape<_>>));
 
     let compound = Compound::new(cross_geoms);
-    let cross = ShapeHandle::new(compound);
+    let cross = ShapeHandle::new_shared(compound);
 
 
     /*

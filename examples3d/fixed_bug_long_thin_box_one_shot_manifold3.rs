@@ -42,7 +42,7 @@ fn main() {
     /*
      * Plane
      */
-    let ground_shape = ShapeHandle::new(Plane::new(Vector3::y_axis()));
+    let ground_shape = ShapeHandle::new_owned(Plane::new(Vector3::y_axis()));
     ColliderDesc::new(ground_shape).build(&mut world);
 
     /*
@@ -53,7 +53,7 @@ fn main() {
     let y = rad + 10.0;
     let z = rad;
 
-    let geom = ShapeHandle::new(Cuboid::new(Vector3::new(rad, rad * 10.0, rad)));
+    let geom = ShapeHandle::new_shared(Cuboid::new(Vector3::new(rad, rad * 10.0, rad)));
     let collider_desc = ColliderDesc::new(geom)
         .density(1.0);
 

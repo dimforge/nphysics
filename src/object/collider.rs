@@ -7,7 +7,7 @@ use ncollide::pipeline::{
     CollisionObject, CollisionGroups, CollisionObjectUpdateFlags,  GeometricQueryType, CollisionObjectRef,
     CollisionObjectGraphIndex, BroadPhaseProxyHandle
 };
-use ncollide::shape::{ShapeHandle, Shape};
+use ncollide::shape::{ShapeHandle, Shape, ShapeRef, ShapeMut};
 
 use crate::math::{Isometry, Vector, Rotation};
 use crate::object::{BodyPartHandle, BodyHandle};
@@ -166,7 +166,7 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
     pub fn removal_data(&self) -> Option<ColliderRemovalData<N, Handle>> {
         Some(ColliderRemovalData {
             anchor: self.0.data().anchor.clone(),
-            shape: self.shape_handle().clone(),
+            shape: self.clone_shape(),
             density: self.0.data().density,
             proxy_handle: self.0.proxy_handle()?,
             graph_index: self.0.graph_index()?,
@@ -341,14 +341,14 @@ impl<N: RealField, Handle: BodyHandle> Collider<N, Handle> {
 
     /// The collider shape.
     #[inline]
-    pub fn shape(&self) -> &dyn Shape<N> {
-        &**self.0.shape()
+    pub fn shape(&self) -> ShapeRef<N> {
+        self.0.shape()
     }
 
-    /// The collider shape.
+    /// Clones the collider shape.
     #[inline]
-    pub fn shape_handle(&self) -> &ShapeHandle<N> {
-        self.0.shape()
+    pub fn clone_shape(&self) -> ShapeHandle<N> {
+        self.0.clone_shape()
     }
 
     /// Set the collider shape.
@@ -400,8 +400,8 @@ impl<N: RealField, Handle: BodyHandle> CollisionObjectRef<N> for Collider<N, Han
         self.0.predicted_position()
     }
 
-    fn shape(&self) -> &dyn Shape<N> {
-        self.0.shape().as_ref()
+    fn shape(&self) -> ShapeRef<N> {
+        self.0.shape()
     }
 
     fn collision_groups(&self) -> &CollisionGroups {
@@ -501,7 +501,7 @@ impl<N: RealField> ColliderDesc<N> {
     );
 
     desc_custom_getters!(
-        self.get_shape: &dyn Shape<N> | { &*self.shape }
+        self.get_shape: ShapeRef<N> | { self.shape.as_ref() }
         self.get_translation: &Vector<N> | { &self.position.translation.vector }
         self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
     );
@@ -560,7 +560,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     ///
     /// Panics if the shape is not deformable.
     pub fn new(shape: ShapeHandle<N>) -> Self {
-        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        assert!(shape.as_ref().is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
         let linear_prediction = na::convert(0.002);
         let angular_prediction = na::convert(f64::consts::PI / 180.0 * 5.0);
 
@@ -586,7 +586,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     ///
     /// Panics if the shape is not deformable.
     pub fn shape(mut self, shape: ShapeHandle<N>) -> Self {
-        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        assert!(shape.as_ref().is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
         self.shape = shape;
         self
     }
@@ -595,7 +595,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     ///
     /// Panics if the shape is not deformable.
     pub fn set_shape(&mut self, shape: ShapeHandle<N>) -> &mut Self {
-        assert!(shape.is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
+        assert!(shape.as_ref().is_deformable_shape(), "The the shape of a deformable collider must be deformable.");
         self.shape = shape;
         self
     }
@@ -615,7 +615,7 @@ impl<N: RealField> DeformableColliderDesc<N> {
     );
 
     desc_custom_getters!(
-        self.get_shape: &dyn Shape<N> | { &*self.shape }
+        self.get_shape: ShapeRef<N> | { self.shape.as_ref() }
         self.get_material: Option<&dyn Material<N>> | { self.material.as_ref().map(|m| &**m) }
 
     );

@@ -33,7 +33,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
+        ShapeHandle::new_shared(Cuboid::new(Vector2::new(ground_size, 0.1)));
 
     let material = MaterialHandle::new(BasicMaterial::new(2.0, 0.5));
 
@@ -83,7 +83,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut rady = 0.1;
     let mut radx = rady * 4.0;
 
-    let shape = ShapeHandle::new(Ball::new(rady));
+    let shape = ShapeHandle::new_shared(Ball::new(rady));
 
     let shiftx = (radx + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;
     let shifty = (rady + ColliderDesc::<f32>::default_margin() + 0.003) * 2.0;

@@ -29,7 +29,7 @@ pub use self::volumetric_convex3::{convex_hull_area, convex_hull_center_of_mass,
 pub mod volumetric;
 
 mod volumetric_ball;
-mod volumetric_Multiball;
+mod volumetric_multiball;
 mod volumetric_cuboid;
 mod volumetric_capsule;
 mod volumetric_cone;

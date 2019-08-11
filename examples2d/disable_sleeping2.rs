@@ -22,7 +22,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create the box that will be deactivated.
      */
     let rad = 0.1;
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::new(rad, rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector2::new(rad, rad)));
     let collider_desc = ColliderDesc::new(cuboid).density(1.0);
 
     /*

@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Vector2, Isometry2};
-use ncollide2d::shape::{Compound, Cuboid, ShapeHandle};
+use ncollide2d::shape::{Compound, Cuboid, ShapeHandle, Shape};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -26,7 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -45,20 +45,15 @@ pub fn init_world(testbed: &mut Testbed) {
     let delta3 = Isometry2::new(Vector2::new(large_rad, 0.0), na::zero());
 
     let mut cross_geoms = Vec::new();
-    let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
-        small_rad,
-        large_rad,
-    )));
-    let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
-        large_rad,
-        small_rad,
-    )));
-    cross_geoms.push((delta1, horizontal));
-    cross_geoms.push((delta2, vertical.clone()));
-    cross_geoms.push((delta3, vertical));
+    let vertical = Cuboid::new(Vector2::new(small_rad, large_rad,));
+    let horizontal = Cuboid::new(Vector2::new(large_rad, small_rad));
+
+    cross_geoms.push((delta1, Box::new(horizontal) as Box<dyn Shape<_>>));
+    cross_geoms.push((delta2, Box::new(vertical) as Box<dyn Shape<_>>));
+    cross_geoms.push((delta3, Box::new(vertical) as Box<dyn Shape<_>>));
 
     let compound = Compound::new(cross_geoms);
-    let cross = ShapeHandle::new(compound);
+    let cross = ShapeHandle::new_shared(compound);
 
     /*
      * Create the rigid bodies.

@@ -26,11 +26,11 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut shapes = Vec::new();
     shapes.push((
         Isometry3::identity(),
-        ShapeHandle::new(Cuboid::new(Vector3::new(1.0, 0.1, 0.1))),
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(1.0, 0.1, 0.1))),
     ));
     shapes.push((
         Isometry3::translation(0.0, 0.4, 0.0),
-        ShapeHandle::new(Cuboid::new(Vector3::new(0.1, 0.2, 0.1))),
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(0.1, 0.2, 0.1))),
     ));
 
 
@@ -45,7 +45,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Create the collider from which the inertia will be automatically computed.
      */
-    let geom = ShapeHandle::new(Compound::new(shapes));
+    let geom = ShapeHandle::new_owned(Compound::new(shapes));
     let co = ColliderDesc::new(geom)
         .density(1.0)
         .build(BodyPartHandle(rb_handle, 0));

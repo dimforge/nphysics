@@ -577,11 +577,6 @@ impl<N: RealField> Body<N> for MassSpringSystem<N> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
     }
 
-    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
-        self.update_status.set_position_changed(true);
-        Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
-    }
-
     fn world_point_at_material_point(&self, part: &dyn BodyPart<N>, point: &Point<N>) -> Point<N> {
         let elt = part.downcast_ref::<MassSpringElement<N>>().expect("The provided body part must be a mass-spring element");
         fem_helper::world_point_at_material_point(elt.indices, &self.positions, point)

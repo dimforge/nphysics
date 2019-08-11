@@ -30,7 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 10;
     let rad = 0.2;
 
-    let cube = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let cube = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
     let _shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0 + 0.002;
     let subdiv = 1.0 / (num as f32);
 

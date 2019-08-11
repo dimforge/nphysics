@@ -71,7 +71,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
     let trimesh: TriMesh<f32> = TriMesh::new(vertices, indices, None);
     let ground_handle = bodies.insert(Ground::new());
-    let co = ColliderDesc::new(ShapeHandle::new(trimesh))
+    let co = ColliderDesc::new(ShapeHandle::new_owned(trimesh))
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
@@ -86,7 +86,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerz = shift * (num as f32) / 2.0;
     let height = 2.0;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector3::repeat(rad)));
 
     for i in 0usize..num {
         for j in 0usize..num {

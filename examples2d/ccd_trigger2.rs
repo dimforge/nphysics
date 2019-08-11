@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_shared(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -47,7 +47,7 @@ pub fn init_world(testbed: &mut Testbed) {
         .build();
     let projectile_handle = bodies.insert(projectile_body);
 
-    let projectile_shape = ShapeHandle::new(Ball::new(0.3));
+    let projectile_shape = ShapeHandle::new_shared(Ball::new(0.3));
 
     let projectile_collider = ColliderDesc::new(projectile_shape)
         .ccd_enabled(true)
@@ -65,7 +65,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 20;
     let rad = 0.1;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
 
     let shift = 2.0 * (rad + ColliderDesc::<f32>::default_margin());
     let centerx = shift * (num as f32) / 2.0;

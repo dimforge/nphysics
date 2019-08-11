@@ -27,7 +27,7 @@ pub fn init_world(testbed: &mut Testbed) {
     // Ground body shared to which both obstacle colliders will be attached.
     let ground_handle = bodies.insert(Ground::new());
 
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector2::repeat(0.2)));
+    let obstacle = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(0.2)));
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 
     let co = obstacle_desc
@@ -68,7 +68,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let deformable_handle = bodies.insert(deformable);
 
     // Collider for the deformable body.
-    let deformable_collider = DeformableColliderDesc::new(ShapeHandle::new(polyline))
+    let deformable_collider = DeformableColliderDesc::new(ShapeHandle::new_shared(polyline))
         .build(deformable_handle);
     colliders.insert(deformable_collider);
 
@@ -80,7 +80,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let shift = 2.0 * rad;
     let centerx = shift * (num as f32) / 2.0;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
 
     for i in 0usize..num {
         for j in i..num {

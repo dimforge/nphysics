@@ -1,7 +1,8 @@
 use kiss3d::window::Window;
 use na::Point3;
+use ncollide::shape;
 use nphysics::math::{Isometry, Point};
-use nphysics::object::{DefaultColliderHandle, DefaultColliderSet};
+use nphysics::object::{DefaultColliderHandle, DefaultColliderSet, ColliderAnchor};
 use crate::objects::node::{self, GraphicsNode};
 
 pub struct Multiball {
@@ -89,6 +90,20 @@ impl Multiball {
             &self.color,
             &self.delta,
         );
+
+        // Update if some deformation occurred.
+        // FIXME: don't update if it did not move.
+        if let Some(c) = colliders.get(self.collider) {
+            if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
+                let shape = c.shape();
+                let shape = shape.as_shape::<shape::Multiball<f32>>().unwrap();
+                let vtx = shape.centers();
+
+                for (i, pt) in shape.centers().iter().enumerate() {
+                    self.balls_gfx[i].set_local_translation(pt.coords.into())
+                }
+            }
+        }
     }
 
     pub fn scene_node(&self) -> &GraphicsNode {

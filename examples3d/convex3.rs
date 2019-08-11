@@ -29,7 +29,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -71,7 +71,7 @@ pub fn init_world(testbed: &mut Testbed) {
                 let rb_handle = bodies.insert(rb);
 
                 // Build the collider.
-                let geom = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
+                let geom = ShapeHandle::new_owned(ConvexHull::try_from_points(&pts).unwrap());
                 let co = ColliderDesc::new(geom)
                     .density(1.0)
                     .build(BodyPartHandle(rb_handle, 0));

@@ -421,11 +421,6 @@ impl<N: RealField> Body<N> for RigidBody<N> {
     }
 
     #[inline]
-    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
-        None
-    }
-
-    #[inline]
     fn companion_id(&self) -> usize {
         self.companion_id
     }

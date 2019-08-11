@@ -29,7 +29,7 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * -ground_size)
@@ -83,14 +83,14 @@ fn main() {
                     let vertices = hull.coords;
 
                     if let Some(chull) = ConvexHull::try_new(vertices, &indices) {
-                        let convex = ShapeHandle::new(chull);
+                        let convex = ShapeHandle::new_owned(chull);
                         geom_data.push((deltas, convex));
                     }
                 }
             }
 
             let compound = Compound::new(geom_data);
-            let geom = ShapeHandle::new(compound);
+            let geom = ShapeHandle::new_owned(compound);
             let collider_desc = ColliderDesc::new(geom)
                 .density(1.0);
             let mut rb_desc = RigidBodyDesc::new()

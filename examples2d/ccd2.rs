@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point2, Vector2, Isometry2, Point3};
-use ncollide2d::shape::{Cuboid, Compound, ShapeHandle};
+use ncollide2d::shape::{Cuboid, Compound, ShapeHandle, Shape};
 use ncollide2d::query::Proximity;
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -32,7 +32,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.1)));
+        ShapeHandle::new_shared(Cuboid::new(Vector2::new(ground_size, 0.1)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape.clone())
@@ -104,20 +104,14 @@ pub fn init_world(testbed: &mut Testbed) {
         let delta3 = Isometry2::new(Vector2::new(large_rad - small_rad, 0.0), na::zero());
 
         let mut compound_geoms = Vec::new();
-        let vertical = ShapeHandle::new(Cuboid::new(Vector2::new(
-            small_rad,
-            large_rad,
-        )));
-        let horizontal = ShapeHandle::new(Cuboid::new(Vector2::new(
-            large_rad,
-            small_rad,
-        )));
-        compound_geoms.push((delta1, horizontal));
-        compound_geoms.push((delta2, vertical.clone()));
-        compound_geoms.push((delta3, vertical));
+        let vertical = Cuboid::new(Vector2::new(small_rad, large_rad));
+        let horizontal = Cuboid::new(Vector2::new(large_rad, small_rad));
+        compound_geoms.push((delta1, Box::new(horizontal) as Box<dyn Shape<_>>));
+        compound_geoms.push((delta2, Box::new(vertical) as Box<dyn Shape<_>>));
+        compound_geoms.push((delta3, Box::new(vertical) as Box<dyn Shape<_>>));
 
         let compound = Compound::new(compound_geoms);
-        ShapeHandle::new(compound)
+        ShapeHandle::new_shared(compound)
     };
 
 

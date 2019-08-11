@@ -69,7 +69,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
         assert!(collider.proxy_handle().is_none(), "Cannot register a collider that is already registered.");
         assert!(collider.graph_index().is_none(), "Cannot register a collider that is already registered.");
 
-        let proxies = pipeline::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), collider.shape(), collider.query_type());
+        let proxies = pipeline::create_proxies(handle, &mut *self.broad_phase, &mut self.interactions, collider.position(), &*collider.shape(), collider.query_type());
 
         self.body_colliders.entry(collider.body()).or_insert(Vec::new()).push(handle);
         collider.set_proxy_handle(Some(proxies.0));
@@ -150,7 +150,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
                 // Update the parent body's inertia.
                 if !removed.density.is_zero() {
                     if let ColliderAnchor::OnBodyPart { body_part, position_wrt_body_part } = &removed.anchor {
-                        let (com, inertia) = removed.shape.transformed_mass_properties(removed.density, position_wrt_body_part);
+                        let (com, inertia) = removed.shape.as_ref().transformed_mass_properties(removed.density, position_wrt_body_part);
                         body.add_local_inertia_and_com(body_part.1, -com, -inertia)
                     }
                 }

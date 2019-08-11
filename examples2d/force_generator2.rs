@@ -29,7 +29,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_radx = 25.0;
     let ground_rady = 1.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+    let ground_shape = ShapeHandle::new_owned(Cuboid::new(Vector2::new(
         ground_radx,
         ground_rady,
     )));
@@ -58,7 +58,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerx = shift * (num as f32) / 2.0;
     let centery = rad * 4.0;
 
-    let ball = ShapeHandle::new(Ball::new(rad));
+    let ball = ShapeHandle::new_shared(Ball::new(rad));
 
     for i in 0usize..num {
         for j in 0usize..2 {

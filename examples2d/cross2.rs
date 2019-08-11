@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point2, Vector2};
-use ncollide2d::shape::{Compound, Cuboid, ShapeHandle};
+use ncollide2d::shape::{Compound, Cuboid, ShapeHandle, Shape};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
@@ -26,7 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -45,11 +45,11 @@ pub fn init_world(testbed: &mut Testbed) {
     let edge_x = Cuboid::new(Vector2::new(large_rad, small_rad));
     let edge_y = Cuboid::new(Vector2::new(small_rad, large_rad));
 
-    cross_geoms.push((na::one(), ShapeHandle::new(edge_x)));
-    cross_geoms.push((na::one(), ShapeHandle::new(edge_y)));
+    cross_geoms.push((na::one(), Box::new(edge_x) as Box<dyn Shape<_>>));
+    cross_geoms.push((na::one(), Box::new(edge_y) as Box<dyn Shape<_>>));
 
     let compound = Compound::new(cross_geoms);
-    let cross = ShapeHandle::new(compound);
+    let cross = ShapeHandle::new_shared(compound);
 
     /*
      * Create the boxes

@@ -26,7 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let ground_handle = bodies.insert(Ground::new());
 
     let ground_thickness = 0.2;
-    let ground = ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+    let ground = ShapeHandle::new_owned(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let co = ColliderDesc::new(ground)
         .translation(Vector3::y() * (-ground_thickness - 1.0))
@@ -35,7 +35,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
 
     let ground_size = 3.0;
-    let obstacle = ShapeHandle::new(Cuboid::new(Vector3::new(0.02, 0.02, ground_size)));
+    let obstacle = ShapeHandle::new_shared(Cuboid::new(Vector3::new(0.02, 0.02, ground_size)));
 
     let mut obstacle_desc = ColliderDesc::new(obstacle);
 

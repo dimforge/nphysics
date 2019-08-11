@@ -21,13 +21,13 @@ pub fn init_world(testbed: &mut Testbed) {
     let force_generators = DefaultForceGeneratorSet::new();
 
     /*
-     * Planes
+     * Ground
      */
     let ground_handle = bodies.insert(Ground::new());
 
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(6.0, ground_thickness, 6.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(6.0, ground_thickness, 6.0)));
 
     let co = ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * -ground_thickness)
@@ -40,7 +40,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 30;
     let rad = 0.1;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector3::repeat(rad)));
 
     let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;

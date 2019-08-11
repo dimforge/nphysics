@@ -44,7 +44,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(3.0, ground_thickness)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(3.0, ground_thickness)));
 
     let main_floor = ColliderDesc::new(ground_shape)
         .translation(Vector2::y() * -ground_thickness)
@@ -54,7 +54,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * A green floor that will collide with the GREEN group only.
      */
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 0.1)));
+    let ground_shape = ShapeHandle::new_shared(Cuboid::new(Vector2::new(1.0, 0.1)));
     let green_floor = ColliderDesc::new(ground_shape.clone())
         .translation(Vector2::y())
         .collision_groups(green_group)
@@ -80,7 +80,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 8;
     let rad = 0.1;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
     let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
     let centery = 2.5;

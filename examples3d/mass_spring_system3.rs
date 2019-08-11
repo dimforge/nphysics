@@ -30,7 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(50.0, ground_thickness, 50.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(50.0, ground_thickness, 50.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -67,7 +67,7 @@ pub fn init_world(testbed: &mut Testbed) {
         deformable1.generate_neighbor_springs(10.0, 0.5);
         deformable1.generate_neighbor_springs(10.0, 0.5);
         let deformable1_handle = bodies.insert(deformable1);
-        let co1 = DeformableColliderDesc::new(ShapeHandle::new(trimesh1)).build(deformable1_handle);
+        let co1 = DeformableColliderDesc::new(ShapeHandle::new_owned(trimesh1)).build(deformable1_handle);
         colliders.insert(co1);
 
         let mut deformable2 = MassSpringSystemDesc::from_trimesh(&trimesh2)
@@ -77,7 +77,7 @@ pub fn init_world(testbed: &mut Testbed) {
         deformable2.generate_neighbor_springs(100.0, 0.5);
         deformable2.generate_neighbor_springs(100.0, 0.5);
         let deformable2_handle = bodies.insert(deformable2);
-        let co2 = DeformableColliderDesc::new(ShapeHandle::new(trimesh2)).build(deformable2_handle);
+        let co2 = DeformableColliderDesc::new(ShapeHandle::new_owned(trimesh2)).build(deformable2_handle);
         colliders.insert(co2);
     }
 

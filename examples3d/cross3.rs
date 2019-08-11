@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -45,12 +45,12 @@ pub fn init_world(testbed: &mut Testbed) {
     let edge_y = Cuboid::new(Vector3::new(small_rad, large_rad, small_rad));
     let edge_z = Cuboid::new(Vector3::new(small_rad, small_rad, large_rad));
 
-    cross_geoms.push((Isometry3::identity(), ShapeHandle::new(edge_x)));
-    cross_geoms.push((Isometry3::identity(), ShapeHandle::new(edge_y)));
-    cross_geoms.push((Isometry3::identity(), ShapeHandle::new(edge_z)));
+    cross_geoms.push((Isometry3::identity(), ShapeHandle::new_owned(edge_x)));
+    cross_geoms.push((Isometry3::identity(), ShapeHandle::new_owned(edge_y)));
+    cross_geoms.push((Isometry3::identity(), ShapeHandle::new_owned(edge_z)));
 
     let compound = Compound::new(cross_geoms);
-    let cross = ShapeHandle::new(compound);
+    let cross = ShapeHandle::new_shared(compound);
 
     /*
      * Create the crosses

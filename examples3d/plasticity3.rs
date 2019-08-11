@@ -26,7 +26,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let platform_height = 0.4;
     let platform_size = 0.6;
     let platform_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(0.03, 0.03, platform_size)));
+        ShapeHandle::new_shared(Cuboid::new(Vector3::new(0.03, 0.03, platform_size)));
 
     let positions = [
         Isometry3::new(Vector3::new(0.4, platform_height, 0.0), na::zero()),

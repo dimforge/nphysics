@@ -18,6 +18,7 @@ pub use self::fem_surface::{FEMSurface, FEMSurfaceDesc};
 pub use self::fem_volume::{FEMVolume, FEMVolumeDesc};
 pub use self::mass_constraint_system::{MassConstraintSystem, MassConstraintSystemDesc};
 pub use self::mass_spring_system::{MassSpringSystem, MassSpringSystemDesc};
+pub use self::sph_fluid::SPHFluid;
 pub(crate) use self::fem_helper::FiniteElementIndices;
 
 mod body;
@@ -34,4 +35,5 @@ mod fem_surface;
 mod fem_volume;
 mod mass_spring_system;
 mod mass_constraint_system;
+mod sph_fluid;
 pub(crate) mod fem_helper;

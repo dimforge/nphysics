@@ -31,7 +31,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Ground
      */
     let ground_size = 5.0;
-    let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 0.2)));
+    let ground_shape = ShapeHandle::new_shared(Cuboid::new(Vector2::new(ground_size, 0.2)));
     let conveyor_material1 = BasicMaterial { surface_velocity: Some(Vector2::x()), ..BasicMaterial::default() };
     let conveyor_material2 = BasicMaterial { surface_velocity: Some(-Vector2::x()), ..BasicMaterial::default() };
 
@@ -58,7 +58,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 5;
     let rad = 0.1;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector2::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector2::repeat(rad)));
 
     let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0 + 5.0;

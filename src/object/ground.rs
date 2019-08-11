@@ -111,11 +111,6 @@ impl<N: RealField> Body<N> for Ground<N> {
     }
 
     #[inline]
-    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
-        None
-    }
-
-    #[inline]
     fn ndofs(&self) -> usize {
         0
     }

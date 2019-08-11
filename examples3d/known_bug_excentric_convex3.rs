@@ -45,7 +45,7 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * -ground_size)
@@ -69,7 +69,7 @@ fn main() {
         Point3::new( rad,  rad,  rad) + Vector3::repeat(excentricity),
     ];
 
-    let shape = ShapeHandle::new(ConvexHull::try_from_points(&pts).unwrap());
+    let shape = ShapeHandle::new_shared(ConvexHull::try_from_points(&pts).unwrap());
     let collider_desc = ColliderDesc::new(shape)
         .density(1.0);
 

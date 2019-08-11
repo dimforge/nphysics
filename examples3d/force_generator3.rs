@@ -25,17 +25,17 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut down_gravity = ConstantAcceleration::new(Vector3::y() * -9.81, Vector3::zeros());
 
     /*
-     * Planes
+     * Floors
      */
     // Ground body shared by all floors.
     let ground_handle = bodies.insert(Ground::new());
-    let plane = ShapeHandle::new(Plane::new(Vector3::y_axis()));
+    let plane = ShapeHandle::new_owned(Plane::new(Vector3::y_axis()));
 
     let co = ColliderDesc::new(plane)
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
-    let plane = ShapeHandle::new(Plane::new(-Vector3::y_axis()));
+    let plane = ShapeHandle::new_owned(Plane::new(-Vector3::y_axis()));
     let co = ColliderDesc::new(plane)
         .translation(Vector3::y() * 20.0)
         .build(BodyPartHandle(ground_handle, 0));
@@ -50,7 +50,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let centerx = shift * (num as f32) / 2.0;
     let centery = 0.5;
 
-    let ball = ShapeHandle::new(Ball::new(rad));
+    let ball = ShapeHandle::new_shared(Ball::new(rad));
 
     for i in 0usize..num {
         for j in 0usize..2 {

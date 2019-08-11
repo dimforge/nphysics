@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -55,10 +55,10 @@ fn build_ragdolls(bodies: &mut DefaultBodySet<f32>, colliders: &mut DefaultColli
     let leg_length = 1.4;
     let space = 0.1;
 
-    let body_geom = ShapeHandle::new(Cuboid::new(Vector2::new(body_radx, body_rady)));
-    let head_geom = ShapeHandle::new(Ball::new(head_rad));
-    let arm_geom = ShapeHandle::new(Cuboid::new(Vector2::new(member_rad, arm_length)));
-    let leg_geom = ShapeHandle::new(Cuboid::new(Vector2::new(member_rad, leg_length)));
+    let body_geom = ShapeHandle::new_shared(Cuboid::new(Vector2::new(body_radx, body_rady)));
+    let head_geom = ShapeHandle::new_shared(Ball::new(head_rad));
+    let arm_geom = ShapeHandle::new_shared(Cuboid::new(Vector2::new(member_rad, arm_length)));
+    let leg_geom = ShapeHandle::new_shared(Cuboid::new(Vector2::new(member_rad, leg_length)));
 
     // The position of the free joint will be modified in the
     // final loop of this function (before we actually build the

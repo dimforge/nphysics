@@ -503,7 +503,7 @@ impl<N: RealField> FEMSurface<N> {
         let (mesh, ids_map, parts_map) = self.boundary_polyline();
         self.renumber_dofs(&ids_map);
 
-        DeformableColliderDesc::new(ShapeHandle::new(mesh))
+        DeformableColliderDesc::new(ShapeHandle::new_shared(mesh))
             .body_parts_mapping(Some(Arc::new(parts_map)))
     }
 
@@ -629,12 +629,6 @@ impl<N: RealField> Body<N> for FEMSurface<N> {
     #[inline]
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])> {
         Some((DeformationsType::Vectors, self.positions.as_slice()))
-    }
-
-    #[inline]
-    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
-        self.update_status.set_local_inertia_changed(true);
-        Some((DeformationsType::Vectors, self.positions.as_mut_slice()))
     }
 
     fn update_kinematics(&mut self) {

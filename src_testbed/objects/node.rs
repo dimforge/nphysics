@@ -12,7 +12,7 @@ use crate::objects::polyline::Polyline;
 use crate::objects::mesh::Mesh;
 use crate::objects::heightfield::HeightField;
 use crate::objects::plane::Plane;
-use crate::objects::Multiball::Multiball;
+use crate::objects::multiball::Multiball;
 
 #[cfg(feature = "dim2")]
 pub type GraphicsNode = kiss3d::scene::PlanarSceneNode;

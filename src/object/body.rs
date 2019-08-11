@@ -217,9 +217,6 @@ pub trait Body<N: RealField>: Downcast + Send + Sync {
     /// If this is a deformable body, returns its deformed positions.
     fn deformed_positions(&self) -> Option<(DeformationsType, &[N])>;
 
-    /// If this is a deformable body, returns a mutable reference to its deformed positions.
-    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])>;
-
     /// Fills all the jacobians (and the jacobians multiplied by the inverse augmented mass matrix) for a
     /// constraint applying a force at the point `center` (relative to the body part's center of mass) and
     /// the direction `dir`.

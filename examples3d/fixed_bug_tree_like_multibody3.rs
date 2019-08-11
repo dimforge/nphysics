@@ -13,7 +13,7 @@ use nphysics_testbed3d::Testbed;
 
 
 fn new_link<J: Joint<f32>>(world: &mut World<f32>, joint: J, parent: BodyPartHandle) -> BodyPartHandle {
-    let shape = ShapeHandle::new(Cuboid::new(Vector3::new(0.2, 0.2, 0.2)));
+    let shape = ShapeHandle::new_owned(Cuboid::new(Vector3::new(0.2, 0.2, 0.2)));
     let collider_desc = ColliderDesc::new(shape)
         .density(1.0);
 
@@ -33,7 +33,7 @@ fn main() {
      */
     let ground_size = 50.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::repeat(ground_size)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::repeat(ground_size)));
 
     ColliderDesc::new(ground_shape)
         .translation(Vector3::y() * (-ground_size - 5.0))

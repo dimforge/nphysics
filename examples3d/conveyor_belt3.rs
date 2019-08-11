@@ -30,9 +30,9 @@ pub fn init_world(testbed: &mut Testbed) {
     let conveyor_length = 5.0;
     let conveyor_half_width = 1.0;
     let conveyor_side_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(conveyor_length - conveyor_half_width, 0.2, conveyor_half_width)));
+        ShapeHandle::_shared(Cuboid::new(Vector3::new(conveyor_length - conveyor_half_width, 0.2, conveyor_half_width)));
     let conveyor_corner_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(conveyor_half_width, 0.2, conveyor_half_width)));
+        ShapeHandle::new_shared(Cuboid::new(Vector3::new(conveyor_half_width, 0.2, conveyor_half_width)));
     let conveyor_shift = conveyor_length;
 
     let conveyor_side_material = BasicMaterial { surface_velocity: Some(Vector3::new(1.0, 0.0, 0.0)), ..BasicMaterial::default() };
@@ -108,7 +108,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 4;
     let rad = 0.1;
 
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector3::repeat(rad)));
 
     let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0 + conveyor_shift;

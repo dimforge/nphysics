@@ -754,11 +754,6 @@ impl<N: RealField> Body<N> for Multibody<N> {
         None
     }
 
-    #[inline]
-    fn deformed_positions_mut(&mut self) -> Option<(DeformationsType, &mut [N])> {
-        None
-    }
-
     fn clear_update_flags(&mut self) {
         self.update_status.clear();
     }

@@ -30,7 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Shape that will be re-used for several multibody links.
      */
     let rad = 0.2;
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let cuboid = ShapeHandle::new_shared(Cuboid::new(Vector3::repeat(rad)));
     let collider_desc = ColliderDesc::new(cuboid.clone()).density(1.0);
 
     /*
@@ -221,7 +221,7 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Pin-slot joint.
      */
-    let cuboid = ShapeHandle::new(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
+    let cuboid = ShapeHandle::new_owned(Cuboid::new(Vector3::new(rad * 5.0, rad, rad * 5.0)));
     let collider_desc = ColliderDesc::new(cuboid).density(1.0);
     let axis_v = Vector3::y_axis();
     let axis_w = Vector3::x_axis();

@@ -30,7 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 10;
     let rad = 0.2;
 
-    let cube = ShapeHandle::new(Cuboid::new(Vector3::repeat(rad)));
+    let cube = ShapeHandle::new_shared(Cuboid::new(Vector3::repeat(rad)));
     let subdiv = 1.0 / (num as f32);
 
     for i in 0usize..num {

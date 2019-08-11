@@ -34,7 +34,7 @@ use crate::objects::mesh::Mesh;
 use crate::objects::polyline::Polyline;
 use crate::objects::node::{GraphicsNode, Node};
 use crate::objects::heightfield::HeightField;
-use crate::objects::Multiball::Multiball;
+use crate::objects::multiball::Multiball;
 use crate::objects::plane::Plane;
 use crate::objects::capsule::Capsule;
 use rand::{Rng, SeedableRng, rngs::StdRng};
@@ -294,7 +294,7 @@ impl GraphicsManager {
 
         // NOTE: not optimal allocation-wise, but it is not critical here.
         let mut new_nodes = Vec::new();
-        self.add_shape(window, id, colliders, na::one(), shape, color, &mut new_nodes);
+        self.add_shape(window, id, colliders, na::one(), &*shape, color, &mut new_nodes);
 
         {
             for node in new_nodes.iter_mut().filter_map(|n| n.scene_node_mut()) {
@@ -332,10 +332,10 @@ impl GraphicsManager {
             self.add_capsule(window, object, colliders, delta, s, color, out)
         } else if let Some(s) = shape.as_shape::<Compound<f32>>() {
             for &(t, ref s) in s.shapes().iter() {
-                self.add_shape(window, object, colliders, delta * t, s.as_ref(), color, out)
+                self.add_shape(window, object, colliders, delta * t, &*s.as_ref(), color, out)
             }
         } else if let Some(s) = shape.as_shape::<shape::Multiball<f32>>() {
-            self.add_Multiball(window, object, colliders, delta, s, color, out)
+            self.add_multiball(window, object, colliders, delta, s, color, out)
         }
 
         #[cfg(feature = "dim2")]
@@ -497,7 +497,7 @@ impl GraphicsManager {
         )))
     }
 
-    fn add_Multiball(
+    fn add_multiball(
         &mut self,
         window: &mut Window,
         object: DefaultColliderHandle,

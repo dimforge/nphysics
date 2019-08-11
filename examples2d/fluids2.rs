@@ -2,7 +2,7 @@ extern crate nalgebra as na;
 
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle, Multiball};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, SPHFluid};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
@@ -25,7 +25,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -53,18 +53,12 @@ pub fn init_world(testbed: &mut Testbed) {
         }
     }
 
-    // Build the rigid body.
-    let rb = RigidBodyDesc::new()
-        .translation(Vector2::new(0.0, 3.0))
-        .build();
-    let rb_handle = bodies.insert(rb);
-
-    // Build the collider.
-    let Multiball = ShapeHandle::new(Multiball::new(particles_radius, particle_centers));
-    let co = ColliderDesc::new(Multiball)
-        .density(1.0)
-        .build(BodyPartHandle(rb_handle, 0));
-    colliders.insert(co);
+    // Build the fluid.
+    let fluid = SPHFluid::new(1.0, particles_radius, particle_centers);
+    let fluid_collider_desc = fluid.particles_collider_desc();
+    let fluid_handle = bodies.insert(fluid);
+    let fluid_collider = fluid_collider_desc.build(fluid_handle);
+    colliders.insert(fluid_collider);
 
     /*
      * Set up the testbed.

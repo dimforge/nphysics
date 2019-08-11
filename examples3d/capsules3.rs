@@ -24,7 +24,7 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_thickness = 0.2;
     let ground_shape =
-        ShapeHandle::new(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
+        ShapeHandle::new_owned(Cuboid::new(Vector3::new(3.0, ground_thickness, 3.0)));
 
     let ground_handle = bodies.insert(Ground::new());
     let co = ColliderDesc::new(ground_shape)
@@ -39,7 +39,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let rad = 0.1;
     let half_height = 0.2;
 
-    let capsule = ShapeHandle::new(Capsule::new(half_height, rad));
+    let capsule = ShapeHandle::new_shared(Capsule::new(half_height, rad));
 
     let shift = (rad + ColliderDesc::<f32>::default_margin()) * 2.0;
     let shifty = (rad + half_height + ColliderDesc::<f32>::default_margin()) * 2.0;
