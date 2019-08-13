@@ -105,7 +105,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
         self.integration_parameters.set_dt(dt);
     }
 
-    /// Maintain the internal structures of the mechanical world by handling insersion and removal
+    /// Maintain the internal structures of the mechanical world by handling insertion and removal
     /// events from every sets this mechanical world interacts with.
     pub fn maintain<Colliders, Constraints>(&mut self,
                                             gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,

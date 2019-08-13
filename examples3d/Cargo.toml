@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = [ "Sébastien Crozet <developer@crozet.re>" ]
 edition = "2018"
 
+[features]
+physx-backend = [ "nphysics_testbed3d/physx-backend" ]
 
 [dependencies]
 rand       = { version = "0.6", features = [ "stdweb" ] }
@@ -25,6 +27,10 @@ path = "./all_examples3.rs"
 [[bin]]
 name = "plasticity3"
 path = "./plasticity3.rs"
+
+[[bin]]
+name = "fluids3"
+path = "./fluids3.rs"
 
 [[bin]]
 name = "collision_groups3"

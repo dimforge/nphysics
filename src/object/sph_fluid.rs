@@ -45,13 +45,19 @@ pub struct SPHFluid<N: RealField> {
     elements: Vec<SPHElement<N>>,
     kinematic_particles: DVector<bool>,
     positions: DVector<N>, // FIXME: would it be a good idea to reuse the position vector from the multiball?
+    velocities_wo_pressure: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
     forces: DVector<N>,
     impulses: DVector<N>,
+    densities: DVector<N>,
+    pressures: DVector<N>,
 
     multiball: ShapeHandle<N>,
 
+    stiffness_constant: N,
+    h: N,
+    density: N,
     particle_mass: N,
     inv_particle_mass: N,
 
@@ -83,12 +89,18 @@ impl<N: RealField> SPHFluid<N> {
         Self {
             elements: (0..num_particles).map(|i| SPHElement::new(i)).collect(),
             kinematic_particles: DVector::repeat(num_particles, false),
+            stiffness_constant: na::convert(10.8),
+            h: radius * na::convert(2.0),
+            density,
             positions,
             velocities: DVector::repeat(num_particles * DIM, N::zero()),
+            velocities_wo_pressure: DVector::repeat(num_particles * DIM, N::zero()),
             accelerations: DVector::repeat(num_particles * DIM, N::zero()),
             forces: DVector::repeat(num_particles * DIM, N::zero()),
             impulses: DVector::repeat(num_particles, N::zero()),
-            multiball: ShapeHandle::new_shared(multiball),
+            densities: DVector::repeat(num_particles, N::zero()),
+            pressures: DVector::repeat(num_particles, N::zero()),
+            multiball: ShapeHandle::new_shared_mutable(multiball),
             companion_id: 0,
             gravity_enabled: true,
             activation: ActivationStatus::new_active(),
@@ -124,6 +136,336 @@ impl<N: RealField> SPHFluid<N> {
         self.update_status.set_local_inertia_changed(true);
         self.kinematic_particles.fill(false)
     }
+
+    // Equation 5 from "SPH Fluids in Computer Graphics", Eurographics 2014
+    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
+    fn kernel_function(q: N) -> N {
+        let _2: N = na::convert(2.0);
+        assert!(q >= N::zero());
+        if q >= _2 {
+            return N::zero();
+        }
+
+        let _1: N = N::one();
+        let _3: N = na::convert(3.0);
+        let _6: N = na::convert(6.0);
+        let coeff = _3 / (_2 * N::pi());
+
+        if q < _1 {
+            let qq = q * q;
+            coeff * (_2 / _3 - qq + _1 / _2 * qq * q)
+        } else { // q < _2
+            let rhs = _2 - q;
+            coeff * (_1 / _6 * rhs * rhs * rhs)
+        }
+    }
+
+    // Derivative of the equation 5 from "SPH Fluids in Computer Graphics", Eurographics 2014
+    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
+    fn kernel_function_derivative(q: N) -> N {
+        let _2: N = na::convert(2.0);
+
+        if q >= _2 {
+            return N::zero();
+        }
+
+        let _1: N = N::one();
+        let _3: N = na::convert(3.0);
+        let coeff = _3 / (_2 * N::pi());
+
+        if q < _1 {
+            coeff * (-_2 + _3 / _2 * q) * q
+        } else { // q < _2
+            let rhs = _2 - q;
+            coeff * (-_1 / _2 * rhs * rhs)
+        }
+    }
+
+    fn kernel_function2(q: N) -> N {
+        let _2: N = na::convert(2.0);
+        assert!(q >= N::zero());
+        if q >= _2 {
+            return N::zero();
+        }
+
+        let _1: N = N::one();
+        let _3: N = na::convert(3.0);
+        let _4: N = na::convert(4.0);
+        let _6: N = na::convert(6.0);
+        let _7: N = na::convert(7.0);
+        let _10: N = na::convert(10.0);
+        let coeff = _10 / (_7 * N::pi());
+
+        if q < _1 {
+            let qq = q * q;
+            coeff * (_1 - qq * _3 / _2 * (_1 - q / _2))
+        } else { // q < _2
+            let rhs = _2 - q;
+            coeff * (_1 / _4 * rhs * rhs * rhs)
+        }
+    }
+
+    fn kernel_function_derivative2(q: N) -> N {
+        let _2: N = na::convert(2.0);
+
+        if q >= _2 {
+            return N::zero();
+        }
+
+        let _1: N = N::one();
+        let _3: N = na::convert(3.0);
+        let _4: N = na::convert(4.0);
+        let _7: N = na::convert(7.0);
+        let _10: N = na::convert(10.0);
+        let coeff = _10 / (_7 * N::pi());
+
+        if q < _1 {
+            coeff * (-q * _3 + q * q * _3 * _3 / _4)
+        } else { // q < _2
+            let rhs = _2 - q;
+            coeff * (-_3 / _4 * rhs * rhs)
+        }
+    }
+
+    // Equation 4 from "SPH Fluids in Computer Graphics", Eurographics 2014
+    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
+    fn kernel(p1: &Point<N>, p2: &Point<N>, h: N) -> N {
+        let dist = na::distance(p1, p2) / h;
+        N::one() / h.powi(DIM as i32) * Self::kernel_function(dist)
+    }
+
+
+    // Gradient of equation 4 from "SPH Fluids in Computer Graphics", Eurographics 2014
+    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
+    fn kernel_gradient(p1: &Point<N>, p2: &Point<N>, h: N) -> Vector<N> {
+        if let Some((dir, dist)) = Unit::try_new_and_get(p1 - p2, N::default_epsilon()) {
+            *dir * (Self::kernel_function_derivative(dist / h) / (h.powi(DIM as i32)))
+        } else {
+            Vector::zeros()
+        }
+    }
+
+
+    fn update_densities_and_pressures(&mut self) {
+        let multiball_ref = self.multiball.as_ref();
+        let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
+        let num_particles = self.elements.len();
+        let search_radius = N::zero();
+
+    }
+
+    fn update_internal_accelerations2(&mut self, params: &IntegrationParameters<N>) {
+        let multiball_ref = self.multiball.as_ref();
+        let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
+
+        let num_particles = self.elements.len();
+        self.velocities_wo_pressure.copy_from(&self.velocities);
+        self.velocities_wo_pressure.axpy(params.dt(), &self.accelerations, N::one());
+        let mut predicted_positions = self.positions.clone();
+        predicted_positions.axpy(params.dt(), &self.velocities_wo_pressure, N::one());
+        let mut lambdas = DVector::zeros(num_particles);
+        let mut position_changes = DVector::zeros(num_particles * DIM);
+
+        let niters = 4;
+        for _ in 0..niters {
+            /*
+             *
+             * Compute densities.
+             *
+             */
+            for i in 0..num_particles {
+                let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
+                let mut density = N::zero();
+
+                for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
+                    let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
+                    let kernel_value = Self::kernel(&pi, &pj, self.h);
+
+                    density += self.particle_mass * kernel_value;
+                }
+
+                self.densities[i] = density;
+            }
+
+//            println!("densities: {:?}", self.densities);
+
+            /*
+             *
+             * Compute lambdas.
+             *
+             */
+            for i in 0..num_particles {
+                let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
+                let mut denominator = N::zero();
+                let mut total_gradient = Vector::zeros();
+                let ci = self.densities[i] / self.density - N::one();
+
+                for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
+                    let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
+                    let kernel_gradient = Self::kernel_gradient(&pi, &pj, self.h);
+                    total_gradient += Self::kernel_gradient(&pi, &pj, self.h);
+
+                    if i != j {
+                        denominator += (-kernel_gradient * (self.particle_mass / self.density)).norm_squared();
+                    }
+                }
+
+                denominator += (total_gradient * (self.particle_mass / self.density)).norm_squared();
+
+                if !denominator.is_zero() {
+                    lambdas[i] = -ci / (denominator + na::convert(20.0));
+                }
+            }
+
+//            println!("lambdas: {:?}", lambdas);
+
+            /*
+             *
+             * Compute position changes.
+             *
+             */
+            for i in 0..num_particles {
+                let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
+                let mut dpos = Vector::zeros();
+
+                for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
+                    let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
+                    let kernel_gradient = Self::kernel_gradient(&pi, &pj, self.h);
+                    dpos += kernel_gradient * ((lambdas[i] + lambdas[j]) * (self.particle_mass / self.density));
+                }
+
+                position_changes.fixed_rows_mut::<Dim>(i * DIM).copy_from(&dpos);
+            }
+
+//            println!("Position changes: {:?}", position_changes);
+
+            /*
+             *
+             * Apply position changes.
+             *
+             */
+            predicted_positions += &position_changes;
+        }
+
+        // Compute actual velocities.
+        let mut velocities = (&predicted_positions - &self.positions) / params.dt();
+
+        // Add XSPH viscosity
+        let mut viscosity_velocities = DVector::zeros(num_particles * DIM);
+
+        for i in 0..num_particles {
+            let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
+            let vi = velocities.fixed_rows::<Dim>(i * DIM);
+
+            let mut extra_vel = Vector::zeros();
+
+            for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
+                let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
+                let kernel_value = Self::kernel(&pi, &pj, self.h);
+                let vj = velocities.fixed_rows::<Dim>(j * DIM);
+
+                extra_vel += (vj - vi) * kernel_value;
+            }
+
+            viscosity_velocities.fixed_rows_mut::<Dim>(i * DIM).copy_from(&extra_vel);
+        }
+
+        let c: N = na::convert(0.01);
+        velocities.axpy(c, &viscosity_velocities, N::one());
+
+        // Compute final accelerations.
+        self.accelerations = (velocities - &self.velocities) / params.dt();
+    }
+
+    fn update_internal_accelerations(&mut self, params: &IntegrationParameters<N>) {
+        let multiball_ref = self.multiball.as_ref();
+        let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
+        let num_particles = self.elements.len();
+
+        let search_radius = N::zero();
+
+        /*
+        // Add non-pressure forces.
+        for i in 0..num_particles {
+            let mut viscosity = Vector::zeros();
+
+// XXX           for j in multiball.neighbors_of(i, search_radius) {
+            for j in 0..num_particles {
+                let pi = Point::from(self.positions.fixed_rows::<Dim>(i * DIM).into_owned()); // &multiball.centers()[i];
+                let pj = Point::from(self.positions.fixed_rows::<Dim>(j * DIM).into_owned()); // &multiball.centers()[j];
+                let sqd_i = self.densities[i] * self.densities[i];
+                let sqd_j = self.densities[j] * self.densities[j];
+            }
+
+            let f = viscosity / self.particle_mass;
+            println!("Found pressure acceleration: {}", f);
+
+            self.accelerations.fixed_rows_mut::<Dim>(i * DIM).add_assign(&f);
+        }*/
+
+        // Compute the predicted velocity.
+        self.velocities_wo_pressure.copy_from(&self.velocities);
+        self.velocities_wo_pressure.axpy(params.dt(), &self.accelerations, N::one());
+        let mut pressure_forces = DVector::zeros(self.elements.len() * DIM);
+
+        println!("loop");
+        for _ in 0..5 {
+            let mut density_error = N::zero();
+            // Update densities and pressure taking the new velocity into account.
+            for i in 0..num_particles {
+                let mut density = N::zero();
+
+// XXX           for j in multiball.neighbors_of(i, search_radius) {
+                for j in 0..num_particles {
+                    let shifti = self.velocities_wo_pressure.fixed_rows::<Dim>(i * DIM) * params.dt();
+                    let shiftj = self.velocities_wo_pressure.fixed_rows::<Dim>(j * DIM) * params.dt();
+                    let pi = Point::from(self.positions.fixed_rows::<Dim>(i * DIM).into_owned()) + shifti; // &multiball.centers()[i];
+                    let pj = Point::from(self.positions.fixed_rows::<Dim>(j * DIM).into_owned()) + shiftj; // &multiball.centers()[j];
+                    let kernel_value = Self::kernel(&pi, &pj, self.h);
+                    density += self.particle_mass * kernel_value;
+                }
+
+//            println!("Density: {}", density);
+                density_error = density_error.max((density - self.density).abs());
+//                println!("Extra vel: {}", self.velocities_wo_pressure);
+                let pressure = self.stiffness_constant * /*(density - self.density); */ ((density / self.density).powi(7) - N::one());
+
+                let max_pressure: N = na::convert(50.0);
+                self.densities[i] = density;
+                self.pressures[i] = *na::clamp(&pressure, &-max_pressure, &max_pressure);
+            }
+
+            // Add pressure force.
+            for i in 0..num_particles {
+                let mut pressure_force = Vector::zeros();
+
+// XXX           for j in multiball.neighbors_of(i, search_radius) {
+                for j in 0..num_particles {
+                    let shifti = self.velocities_wo_pressure.fixed_rows::<Dim>(i * DIM) * params.dt();
+                    let shiftj = self.velocities_wo_pressure.fixed_rows::<Dim>(j * DIM) * params.dt();
+//                    println!("shift i: {:?}, shift j: {:?}", shifti, shiftj);
+                    let pi = Point::from(self.positions.fixed_rows::<Dim>(i * DIM).into_owned()); // + shifti; // &multiball.centers()[i];
+                    let pj = Point::from(self.positions.fixed_rows::<Dim>(j * DIM).into_owned()); //  + shiftj; // &multiball.centers()[j];
+                    let sqd_i = self.densities[i] * self.densities[i];
+                    let sqd_j = self.densities[j] * self.densities[j];
+                    let kernel_gradient = Self::kernel_gradient(&pi, &pj, self.h);
+                    let pressure_gradient = kernel_gradient * (self.densities[i] * self.particle_mass * (self.pressures[i] / sqd_i + self.pressures[j] / sqd_j));
+                    pressure_force -= pressure_gradient * (self.particle_mass / self.densities[i]);
+                }
+
+                let pressure_acc = pressure_force / self.particle_mass;
+//            println!("Found pressure acceleration: {}", f);
+
+                pressure_forces.fixed_rows_mut::<Dim>(i * DIM).add_assign(&pressure_acc);
+                self.velocities_wo_pressure.fixed_rows_mut::<Dim>(i * DIM).axpy(params.dt(), &pressure_acc, N::one());
+                self.accelerations.fixed_rows_mut::<Dim>(i * DIM).add_assign(&pressure_acc);
+            }
+
+//            self.velocities_wo_pressure.axpy(params.dt(), &pressure_forces, N::one());
+            pressure_forces.fill(N::zero());
+//            println!("Density error: {}", density_error);
+        }
+    }
 }
 
 impl<N: RealField> Body<N> for SPHFluid<N> {
@@ -139,7 +481,7 @@ impl<N: RealField> Body<N> for SPHFluid<N> {
 
     fn update_kinematics(&mut self) {
         if self.update_status.position_changed() {
-            // XXX
+            self.update_densities_and_pressures();
         }
     }
 
@@ -162,6 +504,8 @@ impl<N: RealField> Body<N> for SPHFluid<N> {
                 }
             }
         }
+
+        self.update_internal_accelerations2(parameters);
     }
 
     fn clear_forces(&mut self) {

@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point3, Vector3, Isometry3};
-use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
+use ncollide3d::shape::{Compound, Cuboid, ShapeHandle, Shape};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -45,9 +45,9 @@ pub fn init_world(testbed: &mut Testbed) {
     let edge_y = Cuboid::new(Vector3::new(small_rad, large_rad, small_rad));
     let edge_z = Cuboid::new(Vector3::new(small_rad, small_rad, large_rad));
 
-    cross_geoms.push((Isometry3::identity(), ShapeHandle::new_owned(edge_x)));
-    cross_geoms.push((Isometry3::identity(), ShapeHandle::new_owned(edge_y)));
-    cross_geoms.push((Isometry3::identity(), ShapeHandle::new_owned(edge_z)));
+    cross_geoms.push((Isometry3::identity(), Box::new(edge_x) as Box<dyn Shape<_>>));
+    cross_geoms.push((Isometry3::identity(), Box::new(edge_y) as Box<dyn Shape<_>>));
+    cross_geoms.push((Isometry3::identity(), Box::new(edge_z) as Box<dyn Shape<_>>));
 
     let compound = Compound::new(cross_geoms);
     let cross = ShapeHandle::new_shared(compound);

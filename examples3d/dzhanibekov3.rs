@@ -1,7 +1,7 @@
 extern crate nalgebra as na;
 
 use na::{Point3, Vector3, Isometry3};
-use ncollide3d::shape::{Compound, Cuboid, ShapeHandle};
+use ncollide3d::shape::{Compound, Cuboid, ShapeHandle, Shape};
 use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, BodyPartHandle};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
@@ -26,11 +26,11 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut shapes = Vec::new();
     shapes.push((
         Isometry3::identity(),
-        ShapeHandle::new_owned(Cuboid::new(Vector3::new(1.0, 0.1, 0.1))),
+        Box::new(Cuboid::new(Vector3::new(1.0f32, 0.1, 0.1))) as Box<dyn Shape<_>>,
     ));
     shapes.push((
         Isometry3::translation(0.0, 0.4, 0.0),
-        ShapeHandle::new_owned(Cuboid::new(Vector3::new(0.1, 0.2, 0.1))),
+        Box::new(Cuboid::new(Vector3::new(0.1f32, 0.2, 0.1))) as Box<dyn Shape<_>>,
     ));
 
 

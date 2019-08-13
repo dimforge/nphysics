@@ -265,7 +265,7 @@ impl TestbedUi {
             .down_from(self.ids.slider_warmstart_coeff, VSPACE)
             .set(self.ids.title_frequency, &mut ui);
 
-        for val in conrod::widget::Slider::new(curr_frequency as f32, 0.0, 120.0)
+        for val in conrod::widget::Slider::new(curr_frequency as f32, 0.0, 1200.0)
             .label(&format!("{:.2}Hz", curr_frequency))
             .align_middle_x_of(self.ids.canvas)
             .down_from(self.ids.title_frequency, TITLE_VSPACE)

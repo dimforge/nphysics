@@ -30,7 +30,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let conveyor_length = 5.0;
     let conveyor_half_width = 1.0;
     let conveyor_side_shape =
-        ShapeHandle::_shared(Cuboid::new(Vector3::new(conveyor_length - conveyor_half_width, 0.2, conveyor_half_width)));
+        ShapeHandle::new_shared(Cuboid::new(Vector3::new(conveyor_length - conveyor_half_width, 0.2, conveyor_half_width)));
     let conveyor_corner_shape =
         ShapeHandle::new_shared(Cuboid::new(Vector3::new(conveyor_half_width, 0.2, conveyor_half_width)));
     let conveyor_shift = conveyor_length;

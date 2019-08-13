@@ -20,6 +20,7 @@ use na::{self, Point2, Point3, Vector3};
 #[cfg(feature = "dim3")]
 use ncollide::query;
 use ncollide::query::{ContactId, Ray};
+use ncollide::math::Point;
 use ncollide::pipeline::CollisionGroups;
 use nphysics::force_generator::DefaultForceGeneratorSet;
 use nphysics::joint::{DefaultJointConstraintHandle, MouseConstraint, DefaultJointConstraintSet};
@@ -99,6 +100,7 @@ bitflags! {
 pub struct TestbedState {
     pub running: RunMode,
     pub draw_colls: bool,
+    pub part_under_cursor: Option<(DefaultBodyPartHandle, Point<f32>)>,
     pub grabbed_object: Option<DefaultBodyPartHandle>,
     pub grabbed_object_constraint: Option<DefaultJointConstraintHandle>,
     pub grabbed_object_plane: (Point3<f32>, Vector3<f32>),
@@ -173,6 +175,7 @@ impl Testbed {
             let state = TestbedState {
                 running: RunMode::Running,
                 draw_colls: false,
+                part_under_cursor: None,
                 grabbed_object: None,
                 grabbed_object_constraint: None,
                 grabbed_object_plane: (Point3::origin(), na::zero()),
@@ -280,7 +283,14 @@ impl Testbed {
         self.forces = force_generators;
         self.state.action_flags.set(TestbedActionFlags::RESET_WORLD_GRAPHICS, true);
         self.mechanical_world.counters.enable();
-        self.geometrical_world.maintain(&mut self.bodies, &mut self.colliders);
+        self.mechanical_world.maintain(
+            &mut self.geometrical_world,
+            &mut self.bodies,
+            &mut self.colliders,
+            &mut self.constraints,
+        );
+
+        self.geometrical_world.perform_broad_phase(&self.colliders);
 
         #[cfg(feature = "physx-backend")]
             {
@@ -429,6 +439,57 @@ impl Testbed {
     }
 
     #[cfg(feature = "dim2")]
+    fn find_body_part_under_cursor(&self, _: &Window) -> Option<(DefaultBodyPartHandle, Point<f32>)> {
+        let all_groups = &CollisionGroups::new();
+        let mut result = None;
+
+        for b in self
+            .geometrical_world
+            .interferences_with_point(&self.colliders, &self.cursor_pos, all_groups)
+            {
+                if !b.1.query_type().is_proximity_query() && Some(b.1.body()) != self.ground_handle {
+                    if let ColliderAnchor::OnBodyPart { body_part, .. } = b.1.anchor()
+                    {
+                        result = Some(*body_part);
+                    } else { continue; }
+                }
+            }
+
+        result.map(|b| (b, self.cursor_pos))
+    }
+
+    #[cfg(feature = "dim3")]
+    fn find_body_part_under_cursor(&self, window: &Window) -> Option<(DefaultBodyPartHandle, Point<f32>)> {
+        let size = window.size();
+        let (pos, dir) = self
+            .graphics
+            .camera()
+            .unproject(&self.cursor_pos, &na::convert(size));
+        let ray = Ray::new(pos, dir);
+
+        // cast the ray
+        let mut mintoi = Bounded::max_value();
+        let mut minb = None;
+
+        let all_groups = CollisionGroups::new();
+        for (_, b, inter) in self.geometrical_world
+            .interferences_with_ray(&self.colliders, &ray, &all_groups)
+            {
+                if !b.query_type().is_proximity_query() &&
+                    (Some(b.body()) != self.ground_handle || self.state.can_grab_behind_ground) &&
+                    inter.toi < mintoi {
+
+                    mintoi = inter.toi;
+
+                    let subshape = b.shape().subshape_containing_feature(inter.feature);
+                    minb = Some((b.body_part(subshape), ray.point_at(inter.toi)));
+                }
+            }
+
+        minb
+    }
+
+    #[cfg(feature = "dim2")]
     fn handle_special_event(&mut self, window: &mut Window, mut event: Event) {
         if window.is_conrod_ui_capturing_mouse() {
             return;
@@ -436,20 +497,7 @@ impl Testbed {
 
         match event.value {
             WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
-                let all_groups = &CollisionGroups::new();
-                for b in self
-                    .geometrical_world
-                    .interferences_with_point(&self.colliders, &self.cursor_pos, all_groups)
-                    {
-                        if !b.1.query_type().is_proximity_query() && Some(b.1.body()) != self.ground_handle {
-
-                            if
-                            let ColliderAnchor::OnBodyPart { body_part, .. } = b.1.anchor()
-                            {
-                                self.state.grabbed_object = Some(*body_part);
-                            } else { continue; }
-                        }
-                    }
+                self.state.grabbed_object = self.state.part_under_cursor.map(|e| e.0);
 
                 if modifier.contains(Modifiers::Shift) {
                     if let Some(body_part) = self.state.grabbed_object {
@@ -484,15 +532,7 @@ impl Testbed {
                                 Some(self.constraints.insert(joint));
                         }
 
-
-                        for node in self
-                            .graphics
-                            .body_nodes_mut(body.0)
-                            .unwrap()
-                            .iter_mut()
-                            {
-                                node.select()
-                            }
+                        self.graphics.select(body.0);
                     }
 
                     event.inhibited = true;
@@ -502,20 +542,12 @@ impl Testbed {
             }
             WindowEvent::MouseButton(MouseButton::Button1, Action::Release, _) => {
                 if let Some(body) = self.state.grabbed_object {
-                    for n in self
-                        .graphics
-                        .body_nodes_mut(body.0)
-                        .unwrap()
-                        .iter_mut()
-                        {
-                            n.unselect()
-                        }
+                    self.graphics.unselect(body.0);
                 }
 
                 if let Some(joint) = self.state.grabbed_object_constraint {
                     let _ = self.constraints.remove(joint);
                 }
-
 
                 if let Some(start) = self.state.drawing_ray {
                     self.graphics.add_ray(Ray::new(start, self.cursor_pos - start));
@@ -559,44 +591,21 @@ impl Testbed {
             return;
         }
 
+        let size = window.size();
+        let (pos, dir) = self
+            .graphics
+            .camera()
+            .unproject(&self.cursor_pos, &na::convert(size));
+        let ray = Ray::new(pos, dir);
+
         match event.value {
             WindowEvent::MouseButton(MouseButton::Button1, Action::Press, modifier) => {
                 if modifier.contains(Modifiers::Alt) {
-                    let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
-                    let ray = Ray::new(pos, dir);
                     self.graphics.add_ray(ray);
 
                     event.inhibited = true;
                 } else if modifier.contains(Modifiers::Shift) {
-                    // XXX: huge and ugly code duplication for the ray cast.
-                    let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
-                    let ray = Ray::new(pos, dir);
-
-                    // cast the ray
-                    let mut mintoi = Bounded::max_value();
-                    let mut minb = None;
-
-                    let all_groups = CollisionGroups::new();
-                    for (_, b, inter) in self.geometrical_world
-                        .interferences_with_ray(&self.colliders, &ray, &all_groups)
-                        {
-                            if !b.query_type().is_proximity_query() && inter.toi < mintoi {
-                                mintoi = inter.toi;
-
-                                let subshape = b.shape().subshape_containing_feature(inter.feature);
-                                minb = Some(b.body_part(subshape));
-                            }
-                        }
-
-                    if let Some(body_part) = minb {
+                    if let Some((body_part, point_hit)) = self.state.part_under_cursor {
                         if modifier.contains(Modifiers::Control) {
                             if Some(body_part.0) != self.ground_handle {
                                 self.graphics.remove_body_nodes(window, body_part.0);
@@ -607,7 +616,7 @@ impl Testbed {
                                 .unwrap()
                                 .apply_force_at_point(body_part.1,
                                                       &(ray.dir.normalize() * 0.01),
-                                                      &ray.point_at(mintoi),
+                                                      &point_hit,
                                                       ForceType::Impulse,
                                                       true);
                         }
@@ -616,25 +625,11 @@ impl Testbed {
                     event.inhibited = true;
                 } else if !modifier.contains(Modifiers::Control) {
                     match self.state.grabbed_object {
-                        Some(body) => for n in self
-                            .graphics
-                            .body_nodes_mut(body.0)
-                            .unwrap()
-                            .iter_mut()
-                            {
-                                n.unselect()
-                            },
+                        Some(body) => self.graphics.unselect(body.0),
                         None => {}
                     }
 
                     // XXX: huge and uggly code duplication for the ray cast.
-                    let size = window.size();
-                    let (pos, dir) = self
-                        .graphics
-                        .camera()
-                        .unproject(&self.cursor_pos, &na::convert(size));
-                    let ray = Ray::new(pos, dir);
-
                     // cast the ray
                     let mut mintoi = Bounded::max_value();
                     let mut minb = None;
@@ -699,14 +694,7 @@ impl Testbed {
             }
             WindowEvent::MouseButton(MouseButton::Button1, Action::Release, _) => {
                 if let Some(body_part) = self.state.grabbed_object {
-                    for n in self
-                        .graphics
-                        .body_nodes_mut(body_part.0)
-                        .unwrap()
-                        .iter_mut()
-                        {
-                            n.unselect()
-                        }
+                    self.graphics.unselect(body_part.0)
                 }
 
                 if let Some(joint) = self.state.grabbed_object_constraint {
@@ -853,6 +841,25 @@ impl State for Testbed {
 
         self.state.prev_flags = self.state.flags;
 
+        // Highlight objects under the cursor.
+        let part_under_cursor = self.find_body_part_under_cursor(window);
+
+        if !self.state.grabbed_object.is_some() {
+            if let Some((current_under_cursor, _)) = self.state.part_under_cursor {
+                self.graphics.unhighlight(current_under_cursor.0);
+            }
+
+            if let Some((part_under_cursor, _)) = part_under_cursor {
+                if self.bodies.get(part_under_cursor.0).unwrap().status_dependent_ndofs() != 0 {
+                    self.graphics.highlight(part_under_cursor.0)
+                }
+            }
+        }
+
+        self.state.part_under_cursor = part_under_cursor;
+
+
+        // Handle events.
         for event in window.events().iter() {
             let event = self.handle_common_event(event);
             self.handle_special_event(window, event);

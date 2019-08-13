@@ -1,6 +1,6 @@
 extern crate nalgebra as na;
 
-use na::{Point2, Vector2};
+use na::{Point2, Vector2, Isometry2};
 use ncollide2d::shape::{Cuboid, ShapeHandle, Multiball};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, SPHFluid};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
@@ -25,29 +25,52 @@ pub fn init_world(testbed: &mut Testbed) {
      */
     let ground_size = 25.0;
     let ground_shape =
-        ShapeHandle::new_owned(Cuboid::new(Vector2::new(ground_size, 1.0)));
+        ShapeHandle::new_shared(Cuboid::new(Vector2::new(ground_size, 1.0)));
 
     let ground_handle = bodies.insert(Ground::new());
-    let co = ColliderDesc::new(ground_shape)
+
+    let co = ColliderDesc::new(ground_shape.clone())
         .translation(-Vector2::y())
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
+    let co = ColliderDesc::new(ground_shape.clone())
+        .position(Isometry2::new(Vector2::x() * 3.0, std::f32::consts::PI / 2.0))
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
+
+    let co = ColliderDesc::new(ground_shape.clone())
+        .position(Isometry2::new(Vector2::x() * -3.0, std::f32::consts::PI / 2.0))
+        .build(BodyPartHandle(ground_handle, 0));
+    colliders.insert(co);
 
     /*
-     * Create the boxes
+     * Create a cube
      */
-    let num = 10;
+    let rb = RigidBodyDesc::new()
+        .translation(Vector2::y() * 10.0)
+        .build();
+    let rb_handle = bodies.insert(rb);
+    let cube = Cuboid::new(Vector2::repeat(0.4));
+    let co = ColliderDesc::new(ShapeHandle::new_owned(cube))
+        .density(1.0)
+        .build(BodyPartHandle(rb_handle, 0));
+    colliders.insert(co);
+
+    /*
+     * Create the fluid
+     */
+    let num = 20;
     let particles_radius = 0.1;
 
     let shift = (particles_radius + ColliderDesc::<f32>::default_margin()) * 2.0;
     let centerx = shift * (num as f32) / 2.0;
-    let centery = shift / 2.0;
+    let centery = shift / 2.0 + 2.0;
     let mut particle_centers = Vec::new();
 
-    for i in 0usize..num {
-        for j in 0..num {
-            let x = i as f32 * shift - centerx;
+    for i in 0usize.. num {
+        for j in 0..num * 2 {
+            let x = i as f32 * shift - centerx + j as f32 * 0.001;
             let y = j as f32 * shift + centery;
             particle_centers.push(Point2::new(x, y));
         }

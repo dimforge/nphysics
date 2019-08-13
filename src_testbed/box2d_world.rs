@@ -98,7 +98,7 @@ impl Box2dWorld {
                             b2_body.set_bullet(true);
                         }
 
-                        Self::create_fixtures(collider, collider.shape(), &collider.position_wrt_body(), &mut *b2_body);
+                        Self::create_fixtures(collider, &*collider.shape(), &collider.position_wrt_body(), &mut *b2_body);
                     }
                 }
                 ColliderAnchor::OnDeformableBody { .. } => println!("Deformable bodies are not supported by Box2D.")

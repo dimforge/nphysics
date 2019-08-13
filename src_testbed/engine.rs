@@ -609,6 +609,34 @@ impl GraphicsManager {
         }
     }
 
+    fn apply_to_nodes(&mut self, body: DefaultBodyHandle, mut f: impl FnMut(&mut Node)) {
+        if let Some(nodes) = self.body_nodes_mut(body) {
+            for node in nodes {
+                f(node)
+            }
+        }
+    }
+
+    pub fn select(&mut self, body: DefaultBodyHandle) {
+        self.apply_to_nodes(body, |n| n.select())
+    }
+
+    pub fn unselect(&mut self, body: DefaultBodyHandle) {
+        self.apply_to_nodes(body, |n| n.unselect())
+    }
+
+    pub fn highlight(&mut self, body: DefaultBodyHandle) {
+        self.apply_to_nodes(body, |n| {
+            n.select()
+        })
+    }
+
+    pub fn unhighlight(&mut self, body: DefaultBodyHandle) {
+        self.apply_to_nodes(body, |n| {
+            n.unselect()
+        })
+    }
+
     pub fn draw(&mut self, geometrical_world: &DefaultGeometricalWorld<f32>, colliders: &DefaultColliderSet<f32>, window: &mut Window) {
 //        use crate::kiss3d::camera::Camera;
 //        println!("eye: {}, at: {}", self.camera.eye(), self.camera.at());

@@ -30,9 +30,24 @@ mod sensor3;
 mod trimesh3;
 mod ccd3;
 mod damping3;
+mod fluids3;
+
+
+fn demo_name_from_command_line() -> String {
+    let mut args = std::env::args();
+
+    while let Some(arg) = args.next() {
+        if &arg[..] == "--example" {
+            return args.next().unwrap_or(String::new());
+        }
+    }
+
+    String::new()
+}
 
 fn main() {
-    let testbed = Testbed::from_builders(0, vec![
+    let demo = demo_name_from_command_line();
+    let mut builders: Vec<(_, fn(&mut Testbed))> = vec![
         ("Balls", balls3::init_world),
         ("Boxes", boxes3::init_world),
         ("Capsules", capsules3::init_world),
@@ -46,6 +61,7 @@ fn main() {
         ("Damping", damping3::init_world),
         ("Dzhanibekov Effect", dzhanibekov3::init_world),
         ("FEM Volume", fem_volume3::init_world),
+        ("Fluids", fluids3::init_world),
         ("Force Generator", force_generator3::init_world),
         ("Heightfield", heightfield3::init_world),
         ("Kinematic body", kinematic3::init_world),
@@ -56,7 +72,11 @@ fn main() {
         ("Ragdolls", ragdoll3::init_world),
         ("Sensor", sensor3::init_world),
         ("Triangle Mesh", trimesh3::init_world),
-    ]);
+    ];
+
+    builders.sort_by_key(|builder| builder.0);
+    let i = builders.binary_search_by_key(&demo.as_str(), |builder| builder.0).unwrap_or(0);
+    let testbed = Testbed::from_builders(i, builders);
 
     testbed.run()
 }

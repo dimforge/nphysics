@@ -85,7 +85,8 @@ impl Mesh {
         // FIXME: don't update if it did not move.
         if let Some(c) = colliders.get(self.collider) {
             if let ColliderAnchor::OnDeformableBody { .. } = c.anchor() {
-                let shape = c.shape().as_shape::<TriMesh<f32>>().unwrap();
+                let shape_ref = c.shape();
+                let shape = shape_ref.as_shape::<TriMesh<f32>>().unwrap();
                 let vtx = shape.points();
 
                 self.gfx.modify_vertices(&mut |vertices| {
