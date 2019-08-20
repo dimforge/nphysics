@@ -19,19 +19,19 @@ use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
-use crate::object::{fem_helper, DeformableColliderDesc};
+use crate::object::{fem_helper, DeformableColliderDesc, SPHKernel, Poly6Kernel, CubicSplineKernel, SpikyKernel, ViscosityKernel};
 use crate::volumetric::Volumetric;
 
 use crate::utils::{UserData, UserDataBox};
 
-/// A particle of a SPH fluid.
+/// A particle of a PBF fluid.
 #[derive(Clone)]
-pub struct SPHElement<N: RealField> {
+pub struct PBFElement<N: RealField> {
     index: usize,
     phantom: PhantomData<N>,
 }
 
-impl<N: RealField> SPHElement<N> {
+impl<N: RealField> PBFElement<N> {
     fn new(index: usize) -> Self {
         Self {
             index,
@@ -40,9 +40,9 @@ impl<N: RealField> SPHElement<N> {
     }
 }
 
-/// A fluid modeled with the Smoothed Particle Hydrodynamics (SPH) method.
-pub struct SPHFluid<N: RealField> {
-    elements: Vec<SPHElement<N>>,
+/// A fluid modeled with the Smoothed Particle Hydrodynamics (PBF) method.
+pub struct PBFFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradient: SPHKernel = SpikyKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
+    elements: Vec<PBFElement<N>>,
     kinematic_particles: DVector<bool>,
     positions: DVector<N>, // FIXME: would it be a good idea to reuse the position vector from the multiball?
     velocities_wo_pressure: DVector<N>,
@@ -68,11 +68,12 @@ pub struct SPHFluid<N: RealField> {
     update_status: BodyUpdateStatus,
 
     user_data: Option<Box<dyn Any + Send + Sync>>,
+    kernels: PhantomData<(Kernel, KernelGradient, KernelLaplacian)>
 }
 
 
-impl<N: RealField> SPHFluid<N> {
-    /// Creates a new SPH fluid with the given density, particle radius, and initial particle positions.
+impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian: SPHKernel> PBFFluid<N, Kernel, KernelGradient, KernelLaplacian> {
+    /// Creates a new PBF fluid with the given density, particle radius, and initial particle positions.
     pub fn new(density: N, radius: N, centers: Vec<Point<N>>) -> Self {
         let num_particles = centers.len();
         let mut positions = DVector::repeat(num_particles * DIM, N::zero());
@@ -87,7 +88,7 @@ impl<N: RealField> SPHFluid<N> {
         let particle_mass = Ball::new(radius).mass(density);
 
         Self {
-            elements: (0..num_particles).map(|i| SPHElement::new(i)).collect(),
+            elements: (0..num_particles).map(|i| PBFElement::new(i)).collect(),
             kinematic_particles: DVector::repeat(num_particles, false),
             stiffness_constant: na::convert(10.8),
             h: radius * na::convert(2.0),
@@ -109,9 +110,10 @@ impl<N: RealField> SPHFluid<N> {
             particle_mass,
             inv_particle_mass: N::one() / particle_mass,
             user_data: None,
+            kernels: PhantomData,
         }
     }
-    /// The number of particle forming this SPH fluid.
+    /// The number of particle forming this PBF fluid.
     pub fn num_particles(&self) -> usize {
         self.positions.len() / DIM
     }
@@ -137,124 +139,7 @@ impl<N: RealField> SPHFluid<N> {
         self.kinematic_particles.fill(false)
     }
 
-    // Equation 5 from "SPH Fluids in Computer Graphics", Eurographics 2014
-    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
-    fn kernel_function(q: N) -> N {
-        let _2: N = na::convert(2.0);
-        assert!(q >= N::zero());
-        if q >= _2 {
-            return N::zero();
-        }
-
-        let _1: N = N::one();
-        let _3: N = na::convert(3.0);
-        let _6: N = na::convert(6.0);
-        let coeff = _3 / (_2 * N::pi());
-
-        if q < _1 {
-            let qq = q * q;
-            coeff * (_2 / _3 - qq + _1 / _2 * qq * q)
-        } else { // q < _2
-            let rhs = _2 - q;
-            coeff * (_1 / _6 * rhs * rhs * rhs)
-        }
-    }
-
-    // Derivative of the equation 5 from "SPH Fluids in Computer Graphics", Eurographics 2014
-    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
-    fn kernel_function_derivative(q: N) -> N {
-        let _2: N = na::convert(2.0);
-
-        if q >= _2 {
-            return N::zero();
-        }
-
-        let _1: N = N::one();
-        let _3: N = na::convert(3.0);
-        let coeff = _3 / (_2 * N::pi());
-
-        if q < _1 {
-            coeff * (-_2 + _3 / _2 * q) * q
-        } else { // q < _2
-            let rhs = _2 - q;
-            coeff * (-_1 / _2 * rhs * rhs)
-        }
-    }
-
-    fn kernel_function2(q: N) -> N {
-        let _2: N = na::convert(2.0);
-        assert!(q >= N::zero());
-        if q >= _2 {
-            return N::zero();
-        }
-
-        let _1: N = N::one();
-        let _3: N = na::convert(3.0);
-        let _4: N = na::convert(4.0);
-        let _6: N = na::convert(6.0);
-        let _7: N = na::convert(7.0);
-        let _10: N = na::convert(10.0);
-        let coeff = _10 / (_7 * N::pi());
-
-        if q < _1 {
-            let qq = q * q;
-            coeff * (_1 - qq * _3 / _2 * (_1 - q / _2))
-        } else { // q < _2
-            let rhs = _2 - q;
-            coeff * (_1 / _4 * rhs * rhs * rhs)
-        }
-    }
-
-    fn kernel_function_derivative2(q: N) -> N {
-        let _2: N = na::convert(2.0);
-
-        if q >= _2 {
-            return N::zero();
-        }
-
-        let _1: N = N::one();
-        let _3: N = na::convert(3.0);
-        let _4: N = na::convert(4.0);
-        let _7: N = na::convert(7.0);
-        let _10: N = na::convert(10.0);
-        let coeff = _10 / (_7 * N::pi());
-
-        if q < _1 {
-            coeff * (-q * _3 + q * q * _3 * _3 / _4)
-        } else { // q < _2
-            let rhs = _2 - q;
-            coeff * (-_3 / _4 * rhs * rhs)
-        }
-    }
-
-    // Equation 4 from "SPH Fluids in Computer Graphics", Eurographics 2014
-    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
-    fn kernel(p1: &Point<N>, p2: &Point<N>, h: N) -> N {
-        let dist = na::distance(p1, p2) / h;
-        N::one() / h.powi(DIM as i32) * Self::kernel_function(dist)
-    }
-
-
-    // Gradient of equation 4 from "SPH Fluids in Computer Graphics", Eurographics 2014
-    // https://cg.informatik.uni-freiburg.de/publications/2014_EG_SPH_STAR.pdf
-    fn kernel_gradient(p1: &Point<N>, p2: &Point<N>, h: N) -> Vector<N> {
-        if let Some((dir, dist)) = Unit::try_new_and_get(p1 - p2, N::default_epsilon()) {
-            *dir * (Self::kernel_function_derivative(dist / h) / (h.powi(DIM as i32)))
-        } else {
-            Vector::zeros()
-        }
-    }
-
-
-    fn update_densities_and_pressures(&mut self) {
-        let multiball_ref = self.multiball.as_ref();
-        let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
-        let num_particles = self.elements.len();
-        let search_radius = N::zero();
-
-    }
-
-    fn update_internal_accelerations2(&mut self, params: &IntegrationParameters<N>) {
+    fn update_internal_accelerations(&mut self, params: &IntegrationParameters<N>) {
         let multiball_ref = self.multiball.as_ref();
         let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
 
@@ -279,7 +164,7 @@ impl<N: RealField> SPHFluid<N> {
 
                 for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
                     let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                    let kernel_value = Self::kernel(&pi, &pj, self.h);
+                    let kernel_value = Kernel::points_apply(&pi, &pj, self.h);
 
                     density += self.particle_mass * kernel_value;
                 }
@@ -302,8 +187,8 @@ impl<N: RealField> SPHFluid<N> {
 
                 for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
                     let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                    let kernel_gradient = Self::kernel_gradient(&pi, &pj, self.h);
-                    total_gradient += Self::kernel_gradient(&pi, &pj, self.h);
+                    let kernel_gradient = KernelGradient::points_apply_diff1(&pi, &pj, self.h);
+                    total_gradient += KernelGradient::points_apply_diff1(&pi, &pj, self.h);
 
                     if i != j {
                         denominator += (-kernel_gradient * (self.particle_mass / self.density)).norm_squared();
@@ -313,7 +198,7 @@ impl<N: RealField> SPHFluid<N> {
                 denominator += (total_gradient * (self.particle_mass / self.density)).norm_squared();
 
                 if !denominator.is_zero() {
-                    lambdas[i] = -ci / (denominator + na::convert(20.0));
+                    lambdas[i] = -ci / (denominator + na::convert(200.0));
                 }
             }
 
@@ -330,8 +215,17 @@ impl<N: RealField> SPHFluid<N> {
 
                 for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
                     let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                    let kernel_gradient = Self::kernel_gradient(&pi, &pj, self.h);
-                    dpos += kernel_gradient * ((lambdas[i] + lambdas[j]) * (self.particle_mass / self.density));
+                    let kernel = Kernel::points_apply(&pi, &pj, self.h);
+                    let kernel_gradient = KernelGradient::points_apply_diff1(&pi, &pj, self.h);
+
+                    // Compute virtual pressure.
+                    let k: N = na::convert(0.001);
+                    let n = 4;
+                    let dq = N::zero();
+                    let scorr = -k * (kernel / Kernel::scalar_apply(dq, self.h)).powi(n);
+
+                    // Compute velocity change.
+                    dpos += kernel_gradient * ((lambdas[i] + lambdas[j] + scorr) * (self.particle_mass / self.density));
                 }
 
                 position_changes.fixed_rows_mut::<Dim>(i * DIM).copy_from(&dpos);
@@ -348,9 +242,9 @@ impl<N: RealField> SPHFluid<N> {
         }
 
         // Compute actual velocities.
-        let mut velocities = (&predicted_positions - &self.positions) / params.dt();
+        let mut velocities = (&predicted_positions - &self.positions) * params.inv_dt();
 
-        // Add XSPH viscosity
+        // Add XPBF viscosity
         let mut viscosity_velocities = DVector::zeros(num_particles * DIM);
 
         for i in 0..num_particles {
@@ -361,7 +255,7 @@ impl<N: RealField> SPHFluid<N> {
 
             for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
                 let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                let kernel_value = Self::kernel(&pi, &pj, self.h);
+                let kernel_value = Kernel::points_apply(&pi, &pj, self.h);
                 let vj = velocities.fixed_rows::<Dim>(j * DIM);
 
                 extra_vel += (vj - vi) * kernel_value;
@@ -374,101 +268,11 @@ impl<N: RealField> SPHFluid<N> {
         velocities.axpy(c, &viscosity_velocities, N::one());
 
         // Compute final accelerations.
-        self.accelerations = (velocities - &self.velocities) / params.dt();
-    }
-
-    fn update_internal_accelerations(&mut self, params: &IntegrationParameters<N>) {
-        let multiball_ref = self.multiball.as_ref();
-        let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
-        let num_particles = self.elements.len();
-
-        let search_radius = N::zero();
-
-        /*
-        // Add non-pressure forces.
-        for i in 0..num_particles {
-            let mut viscosity = Vector::zeros();
-
-// XXX           for j in multiball.neighbors_of(i, search_radius) {
-            for j in 0..num_particles {
-                let pi = Point::from(self.positions.fixed_rows::<Dim>(i * DIM).into_owned()); // &multiball.centers()[i];
-                let pj = Point::from(self.positions.fixed_rows::<Dim>(j * DIM).into_owned()); // &multiball.centers()[j];
-                let sqd_i = self.densities[i] * self.densities[i];
-                let sqd_j = self.densities[j] * self.densities[j];
-            }
-
-            let f = viscosity / self.particle_mass;
-            println!("Found pressure acceleration: {}", f);
-
-            self.accelerations.fixed_rows_mut::<Dim>(i * DIM).add_assign(&f);
-        }*/
-
-        // Compute the predicted velocity.
-        self.velocities_wo_pressure.copy_from(&self.velocities);
-        self.velocities_wo_pressure.axpy(params.dt(), &self.accelerations, N::one());
-        let mut pressure_forces = DVector::zeros(self.elements.len() * DIM);
-
-        println!("loop");
-        for _ in 0..5 {
-            let mut density_error = N::zero();
-            // Update densities and pressure taking the new velocity into account.
-            for i in 0..num_particles {
-                let mut density = N::zero();
-
-// XXX           for j in multiball.neighbors_of(i, search_radius) {
-                for j in 0..num_particles {
-                    let shifti = self.velocities_wo_pressure.fixed_rows::<Dim>(i * DIM) * params.dt();
-                    let shiftj = self.velocities_wo_pressure.fixed_rows::<Dim>(j * DIM) * params.dt();
-                    let pi = Point::from(self.positions.fixed_rows::<Dim>(i * DIM).into_owned()) + shifti; // &multiball.centers()[i];
-                    let pj = Point::from(self.positions.fixed_rows::<Dim>(j * DIM).into_owned()) + shiftj; // &multiball.centers()[j];
-                    let kernel_value = Self::kernel(&pi, &pj, self.h);
-                    density += self.particle_mass * kernel_value;
-                }
-
-//            println!("Density: {}", density);
-                density_error = density_error.max((density - self.density).abs());
-//                println!("Extra vel: {}", self.velocities_wo_pressure);
-                let pressure = self.stiffness_constant * /*(density - self.density); */ ((density / self.density).powi(7) - N::one());
-
-                let max_pressure: N = na::convert(50.0);
-                self.densities[i] = density;
-                self.pressures[i] = *na::clamp(&pressure, &-max_pressure, &max_pressure);
-            }
-
-            // Add pressure force.
-            for i in 0..num_particles {
-                let mut pressure_force = Vector::zeros();
-
-// XXX           for j in multiball.neighbors_of(i, search_radius) {
-                for j in 0..num_particles {
-                    let shifti = self.velocities_wo_pressure.fixed_rows::<Dim>(i * DIM) * params.dt();
-                    let shiftj = self.velocities_wo_pressure.fixed_rows::<Dim>(j * DIM) * params.dt();
-//                    println!("shift i: {:?}, shift j: {:?}", shifti, shiftj);
-                    let pi = Point::from(self.positions.fixed_rows::<Dim>(i * DIM).into_owned()); // + shifti; // &multiball.centers()[i];
-                    let pj = Point::from(self.positions.fixed_rows::<Dim>(j * DIM).into_owned()); //  + shiftj; // &multiball.centers()[j];
-                    let sqd_i = self.densities[i] * self.densities[i];
-                    let sqd_j = self.densities[j] * self.densities[j];
-                    let kernel_gradient = Self::kernel_gradient(&pi, &pj, self.h);
-                    let pressure_gradient = kernel_gradient * (self.densities[i] * self.particle_mass * (self.pressures[i] / sqd_i + self.pressures[j] / sqd_j));
-                    pressure_force -= pressure_gradient * (self.particle_mass / self.densities[i]);
-                }
-
-                let pressure_acc = pressure_force / self.particle_mass;
-//            println!("Found pressure acceleration: {}", f);
-
-                pressure_forces.fixed_rows_mut::<Dim>(i * DIM).add_assign(&pressure_acc);
-                self.velocities_wo_pressure.fixed_rows_mut::<Dim>(i * DIM).axpy(params.dt(), &pressure_acc, N::one());
-                self.accelerations.fixed_rows_mut::<Dim>(i * DIM).add_assign(&pressure_acc);
-            }
-
-//            self.velocities_wo_pressure.axpy(params.dt(), &pressure_forces, N::one());
-            pressure_forces.fill(N::zero());
-//            println!("Density error: {}", density_error);
-        }
+        self.accelerations = (velocities - &self.velocities) * params.inv_dt();
     }
 }
 
-impl<N: RealField> Body<N> for SPHFluid<N> {
+impl<N: RealField> Body<N> for PBFFluid<N> {
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -480,9 +284,6 @@ impl<N: RealField> Body<N> for SPHFluid<N> {
     }
 
     fn update_kinematics(&mut self) {
-        if self.update_status.position_changed() {
-            self.update_densities_and_pressures();
-        }
     }
 
     fn update_dynamics(&mut self, _: N) {
@@ -505,7 +306,7 @@ impl<N: RealField> Body<N> for SPHFluid<N> {
             }
         }
 
-        self.update_internal_accelerations2(parameters);
+        self.update_internal_accelerations(parameters);
     }
 
     fn clear_forces(&mut self) {
@@ -622,7 +423,7 @@ impl<N: RealField> Body<N> for SPHFluid<N> {
         }
 
         let ndofs = self.ndofs();
-        let elt = part.downcast_ref::<SPHElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        let elt = part.downcast_ref::<PBFElement<N>>().expect("The provided body part must be a triangular mass-spring element");
 
 
         // Needed by the non-linear SOR-prox.
@@ -743,7 +544,7 @@ impl<N: RealField> Body<N> for SPHFluid<N> {
 }
 
 
-impl<N: RealField> BodyPart<N> for SPHElement<N> {
+impl<N: RealField> BodyPart<N> for PBFElement<N> {
     fn center_of_mass(&self) -> Point<N> {
         unimplemented!()
     }
@@ -771,7 +572,7 @@ impl<N: RealField> BodyPart<N> for SPHElement<N> {
 
 /*
 
-enum SPHFluidDescGeometry<'a, N: RealField> {
+enum PBFFluidDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Polyline(&'a Polyline<N>),
     #[cfg(feature = "dim3")]
@@ -779,9 +580,9 @@ enum SPHFluidDescGeometry<'a, N: RealField> {
 }
 
 /// A builder of a mass-constraint system.
-pub struct SPHFluidDesc<'a, N: RealField> {
+pub struct PBFFluidDesc<'a, N: RealField> {
     user_data: Option<UserDataBox>,
-    geom: SPHFluidDescGeometry<'a, N>,
+    geom: PBFFluidDescGeometry<'a, N>,
     stiffness: Option<N>,
     sleep_threshold: Option<N>,
     //    damping_ratio: N,
@@ -793,9 +594,9 @@ pub struct SPHFluidDesc<'a, N: RealField> {
 }
 
 
-impl<'a, N: RealField> SPHFluidDesc<'a, N> {
-    fn with_geometry(geom: SPHFluidDescGeometry<'a, N>) -> Self {
-        SPHFluidDesc {
+impl<'a, N: RealField> PBFFluidDesc<'a, N> {
+    fn with_geometry(geom: PBFFluidDescGeometry<'a, N>) -> Self {
+        PBFFluidDesc {
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -814,17 +615,17 @@ impl<'a, N: RealField> SPHFluidDesc<'a, N> {
     /// Create a mass-constraints system form a triangle mesh.
     #[cfg(feature = "dim3")]
     pub fn from_trimesh(mesh: &'a TriMesh<N>) -> Self {
-        Self::with_geometry(SPHFluidDescGeometry::TriMesh(mesh))
+        Self::with_geometry(PBFFluidDescGeometry::TriMesh(mesh))
     }
 
     /// Create a mass-constraints system form a polygonal line.
     pub fn from_polyline(polyline: &'a Polyline<N>) -> Self {
-        Self::with_geometry(SPHFluidDescGeometry::Polyline(polyline))
+        Self::with_geometry(PBFFluidDescGeometry::Polyline(polyline))
     }
 
     /// Create a quad-shaped body.
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
-        Self::with_geometry(SPHFluidDescGeometry::Quad(subdiv_x, subdiv_y))
+        Self::with_geometry(PBFFluidDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
     /// Mark all nodes as non-kinematic.
@@ -864,18 +665,18 @@ impl<'a, N: RealField> SPHFluidDesc<'a, N> {
     );
 
     /// Builds a mass-constraint based deformable body from this description.
-    pub fn build(&self) -> SPHFluid<N> {
+    pub fn build(&self) -> PBFFluid<N> {
         let mut vol = match self.geom {
-            SPHFluidDescGeometry::Quad(nx, ny) => {
+            PBFFluidDescGeometry::Quad(nx, ny) => {
                 let polyline = Polyline::quad(nx, ny);
-                SPHFluid::from_polyline(&polyline, self.mass, self.stiffness)
+                PBFFluid::from_polyline(&polyline, self.mass, self.stiffness)
             }
-            SPHFluidDescGeometry::Polyline(polyline) => {
-                SPHFluid::from_polyline(polyline, self.mass, self.stiffness)
+            PBFFluidDescGeometry::Polyline(polyline) => {
+                PBFFluid::from_polyline(polyline, self.mass, self.stiffness)
             }
             #[cfg(feature = "dim3")]
-            SPHFluidDescGeometry::TriMesh(trimesh) => {
-                SPHFluid::from_trimesh(trimesh, self.mass, self.stiffness)
+            PBFFluidDescGeometry::TriMesh(trimesh) => {
+                PBFFluid::from_trimesh(trimesh, self.mass, self.stiffness)
             }
         };
 

@@ -1,8 +1,8 @@
 extern crate nalgebra as na;
 
 use na::{Point2, Vector2, Isometry2};
-use ncollide2d::shape::{Cuboid, ShapeHandle, Multiball};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, SPHFluid};
+use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, PBFFluid, IISPHFluid};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
@@ -48,7 +48,7 @@ pub fn init_world(testbed: &mut Testbed) {
      * Create a cube
      */
     let rb = RigidBodyDesc::new()
-        .translation(Vector2::y() * 10.0)
+        .translation(Vector2::y() * 13.0)
         .build();
     let rb_handle = bodies.insert(rb);
     let cube = Cuboid::new(Vector2::repeat(0.4));
@@ -77,7 +77,7 @@ pub fn init_world(testbed: &mut Testbed) {
     }
 
     // Build the fluid.
-    let fluid = SPHFluid::new(1.0, particles_radius, particle_centers);
+    let fluid = IISPHFluid::new(1000.0, particles_radius, particle_centers);
     let fluid_collider_desc = fluid.particles_collider_desc();
     let fluid_handle = bodies.insert(fluid);
     let fluid_collider = fluid_collider_desc.build(fluid_handle);

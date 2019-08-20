@@ -3,7 +3,7 @@ extern crate nalgebra as na;
 use std::f32;
 use na::{Point3, Vector3, Isometry3};
 use ncollide3d::shape::{Cuboid, ShapeHandle, Multiball};
-use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, SPHFluid};
+use nphysics3d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, PBFFluid};
 use nphysics3d::force_generator::DefaultForceGeneratorSet;
 use nphysics3d::joint::DefaultJointConstraintSet;
 use nphysics3d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
@@ -83,7 +83,7 @@ pub fn init_world(testbed: &mut Testbed) {
     }
 
     // Build the fluid.
-    let fluid = SPHFluid::new(1.0, particles_radius, particle_centers);
+    let fluid = PBFFluid::new(1.0, particles_radius, particle_centers);
     let fluid_collider_desc = fluid.particles_collider_desc();
     let fluid_handle = bodies.insert(fluid);
     let fluid_collider = fluid_collider_desc.build(fluid_handle);
