@@ -6,7 +6,7 @@ executors:
       - image: rust:latest
 
 jobs:
-  build:
+  build-native:
     executor: rust-executor
     steps:
       - checkout
@@ -65,3 +65,11 @@ jobs:
       - run:
           name: build nphysics_testbed3d
           command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed3d;
+
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build-native
+      - build-wasm
