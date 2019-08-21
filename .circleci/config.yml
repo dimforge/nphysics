@@ -1,0 +1,75 @@
+version: 2.1
+
+executors:
+  rust-executor:
+    docker:
+      - image: rust:latest
+
+jobs:
+  build-native:
+    executor: rust-executor
+    steps:
+      - checkout
+      - run:
+          name: build nphysics2d
+          command: cargo build --verbose -p nphysics2d;
+      - run:
+          name: build nphysics3d
+          command: cargo build --verbose -p nphysics3d;
+      - run:
+          name: build nphysics-examples-2d
+          command: cargo build -j 1 --verbose -p nphysics-examples-2d;
+      - run:
+          name: build nphysics-examples-3d
+          command: cargo build -j 1 --verbose -p nphysics-examples-3d;
+      - run:
+          name: build nphysics_testbed2d
+          command: cargo build --verbose -p nphysics_testbed2d;
+      - run:
+          name: build nphysics_testbed3d
+          command: cargo build --verbose -p nphysics_testbed3d;
+      - run:
+          name: test nphysics2d
+          command: cargo test --verbose -p nphysics2d;
+      - run:
+          name: test nphysics3d
+          command: cargo test --verbose -p nphysics3d;
+      - run:
+          name: test nphysics_testbed2d
+          command: cargo test --verbose -p nphysics_testbed2d;
+      - run:
+          name: test nphysics_testbed3d
+          command: cargo test --verbose -p nphysics_testbed3d;
+  build-wasm:
+    executor: rust-executor
+    steps:
+      - checkout
+      - run:
+          name: install cargo-web
+          command: cargo install -f cargo-web;
+      - run:
+          name: build nphysics2d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics2d;
+      - run:
+          name: build nphysics3d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics3d;
+      - run:
+          name: build nphysics-examples-2d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-2d;
+      - run:
+          name: build nphysics-examples-3d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-3d;
+      - run:
+          name: build nphysics_testbed2d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed2d;
+      - run:
+          name: build nphysics_testbed3d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed3d;
+
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build-native
+      - build-wasm
