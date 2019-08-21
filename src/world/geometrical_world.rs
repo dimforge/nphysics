@@ -261,7 +261,7 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
             &mut *self.broad_phase,
             &mut self.narrow_phase,
             &mut self.interactions,
-            Some(&BodyStatusCollisionFilter),
+            Some(&DefaultCollisionFilter),
 //            self.pair_filters.as_ref().map(|f| &**f)
         )
     }
@@ -551,11 +551,20 @@ impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> GeometricalWo
     }
 }
 
-struct BodyStatusCollisionFilter;
+struct DefaultCollisionFilter;
 
-impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle> for BodyStatusCollisionFilter {
-    /// Activate an action for when two objects start or stop to be close to each other.
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> BroadPhasePairFilter<N, Collider<N, Handle>, CollHandle> for DefaultCollisionFilter {
     fn is_pair_valid(&self, c1: &Collider<N, Handle>, c2: &Collider<N, Handle>, _: CollHandle, _: CollHandle) -> bool {
+        match (c1.anchor(), c2.anchor()) {
+            (ColliderAnchor::OnBodyPart { body_part: part1, .. },
+                ColliderAnchor::OnBodyPart { body_part: part2, .. }) => {
+                if part1 == part2 {
+                    return false;
+                }
+            }
+            _ => {}
+        }
+
         c1.body_status_dependent_ndofs() != 0 || c2.body_status_dependent_ndofs() != 0
     }
 }
