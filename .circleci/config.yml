@@ -11,57 +11,57 @@ jobs:
     steps:
       - checkout
       - run:
-        name: build nphysics2d
-        command: cargo build --verbose -p nphysics2d;
+          name: build nphysics2d
+          command: cargo build --verbose -p nphysics2d;
       - run:
-        name: build nphysics3d
-        command: cargo build --verbose -p nphysics3d;
+          name: build nphysics3d
+          command: cargo build --verbose -p nphysics3d;
       - run:
-        name: build nphysics-examples-2d
-        command: cargo build --verbose -p nphysics-examples-2d;
+          name: build nphysics-examples-2d
+          command: cargo build --verbose -p nphysics-examples-2d;
       - run:
-        name: build nphysics-examples-3d
-        command: cargo build --verbose -p nphysics-examples-3d;
+          name: build nphysics-examples-3d
+          command: cargo build --verbose -p nphysics-examples-3d;
       - run:
-        name: build nphysics_testbed2d
-        command: cargo build --verbose -p nphysics_testbed2d;
+          name: build nphysics_testbed2d
+          command: cargo build --verbose -p nphysics_testbed2d;
       - run:
-        name: build nphysics_testbed3d
-        command: cargo build --verbose -p nphysics_testbed3d;
+          name: build nphysics_testbed3d
+          command: cargo build --verbose -p nphysics_testbed3d;
       - run:
-        name: test nphysics2d
-        command: cargo test --verbose -p nphysics2d;
+          name: test nphysics2d
+          command: cargo test --verbose -p nphysics2d;
       - run:
-        name: test nphysics3d
-        command: cargo test --verbose -p nphysics3d;
+          name: test nphysics3d
+          command: cargo test --verbose -p nphysics3d;
       - run:
-        name: test nphysics_testbed2d
-        command: cargo test --verbose -p nphysics_testbed2d;
+          name: test nphysics_testbed2d
+          command: cargo test --verbose -p nphysics_testbed2d;
       - run:
-        name: test nphysics_testbed3d
-        command: cargo test --verbose -p nphysics_testbed3d;
+          name: test nphysics_testbed3d
+          command: cargo test --verbose -p nphysics_testbed3d;
   build-wasm:
     executor: rust-executor
     steps:
       - checkout
       - run:
-        name: install cargo-web
-        command: cargo install -f cargo-web;
+          name: install cargo-web
+          command: cargo install -f cargo-web;
       - run:
-        name: build nphysics2d
-        command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics2d;
+          name: build nphysics2d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics2d;
       - run:
-        name: build nphysics3d
-        command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics3d;
+          name: build nphysics3d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics3d;
       - run:
-        name: build nphysics-examples-2d
-        command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-2d;
+          name: build nphysics-examples-2d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-2d;
       - run:
-        name: build nphysics-examples-3d
-        command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-3d;
+          name: build nphysics-examples-3d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics-examples-3d;
       - run:
-        name: build nphysics_testbed2d
-        command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed2d;
+          name: build nphysics_testbed2d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed2d;
       - run:
-        name: build nphysics_testbed3d
-        command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed3d;
+          name: build nphysics_testbed3d
+          command: cargo web build --verbose --target wasm32-unknown-unknown -p nphysics_testbed3d;
