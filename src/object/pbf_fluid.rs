@@ -24,6 +24,13 @@ use crate::volumetric::Volumetric;
 
 use crate::utils::{UserData, UserDataBox};
 
+struct ParticleContact<N: RealField> {
+    i: usize,
+    j: usize,
+    weight: N,
+    gradient: Vector<N>,
+}
+
 /// A particle of a PBF fluid.
 #[derive(Clone)]
 pub struct PBFElement<N: RealField> {
@@ -52,10 +59,10 @@ pub struct PBFFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradien
     impulses: DVector<N>,
     densities: DVector<N>,
     pressures: DVector<N>,
+    contacts: Vec<ParticleContact<N>>,
 
     multiball: ShapeHandle<N>,
 
-    stiffness_constant: N,
     h: N,
     density: N,
     particle_mass: N,
@@ -90,8 +97,8 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         Self {
             elements: (0..num_particles).map(|i| PBFElement::new(i)).collect(),
             kinematic_particles: DVector::repeat(num_particles, false),
-            stiffness_constant: na::convert(10.8),
-            h: radius * na::convert(2.0),
+            h: radius * na::convert(4.0),
+            contacts: Vec::new(),
             density,
             positions,
             velocities: DVector::repeat(num_particles * DIM, N::zero()),
@@ -139,7 +146,44 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         self.kinematic_particles.fill(false)
     }
 
+    fn compute_contact_list(positions: &DVector<N>, multiball: &Multiball<N>, contacts: &mut Vec<ParticleContact<N>>, h: N) {
+        let num_particles = positions.len() / DIM;
+        let search_radius = h * na::convert(2.0);
+
+        contacts.clear();
+
+        for i in 0..num_particles {
+            let pi = Point::from(positions.fixed_rows::<Dim>(i * DIM).into_owned());
+
+            for j in multiball.balls_close_to_point(&pi, search_radius) {
+                // Don't output the same contact twice.
+                if i <= j {
+                    let pj = Point::from(positions.fixed_rows::<Dim>(j * DIM).into_owned());
+                    let weight = Kernel::points_apply(&pi, &pj, h);
+
+                    if !weight.is_zero() {
+                        let gradient = KernelGradient::points_apply_diff1(&pi, &pj, h);
+                        contacts.push(ParticleContact { weight, gradient, i, j });
+                    }
+                }
+            }
+        }
+    }
+
+
+    fn update_contacts(positions: &DVector<N>, contacts: &mut Vec<ParticleContact<N>>, h: N) {
+        for c in contacts {
+            let pi = Point::from(positions.fixed_rows::<Dim>(c.i * DIM).into_owned());
+            let pj = Point::from(positions.fixed_rows::<Dim>(c.j * DIM).into_owned());
+
+            c.weight = Kernel::points_apply(&pi, &pj, h);
+            c.gradient = KernelGradient::points_apply_diff1(&pi, &pj, h);
+        }
+    }
+
     fn update_internal_accelerations(&mut self, params: &IntegrationParameters<N>) {
+        let start = time::precise_time_s();
+
         let multiball_ref = self.multiball.as_ref();
         let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
 
@@ -151,87 +195,91 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         let mut lambdas = DVector::zeros(num_particles);
         let mut position_changes = DVector::zeros(num_particles * DIM);
 
+
+        Self::compute_contact_list(&predicted_positions, multiball, &mut self.contacts, self.h);
+
         let niters = 4;
-        for _ in 0..niters {
+        for loop_i in 0..niters {
+            /*
+             *
+             * Update per-contact data.
+             *
+             */
+            if loop_i > 0 { // If 0, the contact are already up-to-date.
+                Self::update_contacts(&predicted_positions, &mut self.contacts, self.h);
+            }
+
             /*
              *
              * Compute densities.
              *
              */
-            for i in 0..num_particles {
-                let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
-                let mut density = N::zero();
+            self.densities.fill(N::zero());
 
-                for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
-                    let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                    let kernel_value = Kernel::points_apply(&pi, &pj, self.h);
+            for c in &self.contacts {
+                self.densities[c.i] += self.particle_mass * c.weight;
 
-                    density += self.particle_mass * kernel_value;
+                if c.i != c.j {
+                    self.densities[c.j] += self.particle_mass * c.weight;
                 }
-
-                self.densities[i] = density;
             }
-
-//            println!("densities: {:?}", self.densities);
 
             /*
              *
              * Compute lambdas.
              *
              */
-            for i in 0..num_particles {
-                let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
-                let mut denominator = N::zero();
-                let mut total_gradient = Vector::zeros();
-                let ci = self.densities[i] / self.density - N::one();
+            let mut total_gradient: Vec<_> = (0..num_particles).map(|_| Vector::zeros()).collect();
+            let mut denominator: Vec<_> = (0..num_particles).map(|_| N::zero()).collect();
 
-                for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
-                    let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                    let kernel_gradient = KernelGradient::points_apply_diff1(&pi, &pj, self.h);
-                    total_gradient += KernelGradient::points_apply_diff1(&pi, &pj, self.h);
+            for c in &self.contacts {
+                let ci = self.densities[c.i] / self.density - N::one();
 
-                    if i != j {
-                        denominator += (-kernel_gradient * (self.particle_mass / self.density)).norm_squared();
-                    }
-                }
+                total_gradient[c.i] += c.gradient;
 
-                denominator += (total_gradient * (self.particle_mass / self.density)).norm_squared();
+                if c.i != c.j {
+                    total_gradient[c.j] -= c.gradient;
 
-                if !denominator.is_zero() {
-                    lambdas[i] = -ci / (denominator + na::convert(200.0));
+                    let denom = (-c.gradient * (self.particle_mass / self.density)).norm_squared();
+                    denominator[c.i] += denom;
+                    denominator[c.j] -= denom;
                 }
             }
 
-//            println!("lambdas: {:?}", lambdas);
+            for i in 0..num_particles {
+                let denominator = denominator[i] + (total_gradient[i] * (self.particle_mass / self.density)).norm_squared();
+
+                if !denominator.is_zero() {
+                    let ci = self.densities[i] / self.density - N::one();
+                    lambdas[i] = -ci / (denominator + na::convert(200.0));
+                } else {
+                    lambdas[i] = N::zero();
+                }
+            }
 
             /*
              *
              * Compute position changes.
              *
              */
-            for i in 0..num_particles {
-                let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
-                let mut dpos = Vector::zeros();
+            position_changes.fill(N::zero());
 
-                for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
-                    let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                    let kernel = Kernel::points_apply(&pi, &pj, self.h);
-                    let kernel_gradient = KernelGradient::points_apply_diff1(&pi, &pj, self.h);
+            for c in &self.contacts {
+                // Compute virtual pressure.
+                let k: N = na::convert(0.001);
+                let n = 4;
+                let dq = N::zero();
+                let scorr = -k * (c.weight / Kernel::scalar_apply(dq, self.h)).powi(n);
 
-                    // Compute virtual pressure.
-                    let k: N = na::convert(0.001);
-                    let n = 4;
-                    let dq = N::zero();
-                    let scorr = -k * (kernel / Kernel::scalar_apply(dq, self.h)).powi(n);
+                // Compute velocity change.
+                let dpos = c.gradient * ((lambdas[c.i] + lambdas[c.j] + scorr) * (self.particle_mass / self.density));
 
-                    // Compute velocity change.
-                    dpos += kernel_gradient * ((lambdas[i] + lambdas[j] + scorr) * (self.particle_mass / self.density));
+                position_changes.fixed_rows_mut::<Dim>(c.i * DIM).add_assign(&dpos);
+
+                if c.i != c.j {
+                    position_changes.fixed_rows_mut::<Dim>(c.j * DIM).sub_assign(&dpos);
                 }
-
-                position_changes.fixed_rows_mut::<Dim>(i * DIM).copy_from(&dpos);
             }
-
-//            println!("Position changes: {:?}", position_changes);
 
             /*
              *
@@ -239,33 +287,29 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
              *
              */
             predicted_positions += &position_changes;
+            println!("Fluid simulation time: {}", time::precise_time_s() - start);
         }
 
         // Compute actual velocities.
         let mut velocities = (&predicted_positions - &self.positions) * params.inv_dt();
 
-        // Add XPBF viscosity
+        // Add XSPH viscosity
         let mut viscosity_velocities = DVector::zeros(num_particles * DIM);
 
-        for i in 0..num_particles {
-            let pi = Point::from(predicted_positions.fixed_rows::<Dim>(i * DIM).into_owned());
-            let vi = velocities.fixed_rows::<Dim>(i * DIM);
+        for c in &self.contacts {
+            let vi = velocities.fixed_rows::<Dim>(c.i * DIM);
+            let vj = velocities.fixed_rows::<Dim>(c.j * DIM);
+            let extra_vel = (vj - vi) * c.weight;
 
-            let mut extra_vel = Vector::zeros();
+            viscosity_velocities.fixed_rows_mut::<Dim>(c.i * DIM).add_assign(&extra_vel);
 
-            for j in multiball.balls_close_to_point(&pi, self.h * na::convert(2.0)) {
-                let pj = Point::from(predicted_positions.fixed_rows::<Dim>(j * DIM).into_owned());
-                let kernel_value = Kernel::points_apply(&pi, &pj, self.h);
-                let vj = velocities.fixed_rows::<Dim>(j * DIM);
-
-                extra_vel += (vj - vi) * kernel_value;
+            if c.i != c.j {
+                viscosity_velocities.fixed_rows_mut::<Dim>(c.j * DIM).sub_assign(&extra_vel);
             }
-
-            viscosity_velocities.fixed_rows_mut::<Dim>(i * DIM).copy_from(&extra_vel);
         }
 
-        let c: N = na::convert(0.01);
-        velocities.axpy(c, &viscosity_velocities, N::one());
+        let viscosity_coeff: N = na::convert(0.01);
+        velocities.axpy(viscosity_coeff, &viscosity_velocities, N::one());
 
         // Compute final accelerations.
         self.accelerations = (velocities - &self.velocities) * params.inv_dt();

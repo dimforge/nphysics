@@ -47,15 +47,15 @@ pub fn init_world(testbed: &mut Testbed) {
     /*
      * Create a cube
      */
-    let rb = RigidBodyDesc::new()
-        .translation(Vector2::y() * 13.0)
-        .build();
-    let rb_handle = bodies.insert(rb);
-    let cube = Cuboid::new(Vector2::repeat(0.4));
-    let co = ColliderDesc::new(ShapeHandle::new_owned(cube))
-        .density(1.0)
-        .build(BodyPartHandle(rb_handle, 0));
-    colliders.insert(co);
+//    let rb = RigidBodyDesc::new()
+//        .translation(Vector2::y() * 13.0)
+//        .build();
+//    let rb_handle = bodies.insert(rb);
+//    let cube = Cuboid::new(Vector2::repeat(0.4));
+//    let co = ColliderDesc::new(ShapeHandle::new_owned(cube))
+//        .density(1.0)
+//        .build(BodyPartHandle(rb_handle, 0));
+//    colliders.insert(co);
 
     /*
      * Create the fluid
@@ -69,7 +69,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let mut particle_centers = Vec::new();
 
     for i in 0usize.. num {
-        for j in 0..num * 2 {
+        for j in 0..num * 5 {
             let x = i as f32 * shift - centerx + j as f32 * 0.001;
             let y = j as f32 * shift + centery;
             particle_centers.push(Point2::new(x, y));
