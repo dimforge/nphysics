@@ -34,6 +34,12 @@ jobs:
       - run:
         name: test nphysics3d
         command: cargo test --verbose -p nphysics3d;
+      - run:
+        name: test nphysics_testbed2d
+        command: cargo test --verbose -p nphysics_testbed2d;
+      - run:
+        name: test nphysics_testbed3d
+        command: cargo test --verbose -p nphysics_testbed3d;
   build-wasm:
     executor: rust-executor
     steps:
