@@ -18,10 +18,10 @@ jobs:
           command: cargo build --verbose -p nphysics3d;
       - run:
           name: build nphysics-examples-2d
-          command: cargo build --verbose -p nphysics-examples-2d;
+          command: cargo build -j 1 --verbose -p nphysics-examples-2d;
       - run:
           name: build nphysics-examples-3d
-          command: cargo build --verbose -p nphysics-examples-3d;
+          command: cargo build -j 1 --verbose -p nphysics-examples-3d;
       - run:
           name: build nphysics_testbed2d
           command: cargo build --verbose -p nphysics_testbed2d;
