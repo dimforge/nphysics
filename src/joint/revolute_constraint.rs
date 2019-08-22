@@ -19,8 +19,8 @@ pub struct RevoluteConstraint<N: RealField, Handle: BodyHandle> {
     anchor2: Point<N>,
     lin_impulses: Vector<N>,
     ang_impulses: AngularVector<N>,
-    break_force: N,
-    break_torque: N,
+    break_force_squared: N,
+    break_torque_squared: N,
     broken: bool,
     // FIXME: not actually needed in 2D.
     bilateral_ground_rng: Range<usize>,
