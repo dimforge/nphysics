@@ -17,6 +17,9 @@ pub struct RectangularConstraint<N: RealField, Handle: BodyHandle> {
     axis1: Unit<AngularVector<N>>,
     lin_impulse: N,
     ang_impulses: Vector3<N>,
+    break_force_squared: N,
+    break_torque_squared: N,
+    broken: bool,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 }
@@ -41,13 +44,30 @@ impl<N: RealField, Handle: BodyHandle> RectangularConstraint<N, Handle> {
             axis1,
             lin_impulse: N::zero(),
             ang_impulses: Vector3::zeros(),
+            break_force_squared: N::max_value(),
+            break_torque_squared: N::max_value(),
+            broken: false,
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
         }
     }
+
+    /// The maximum force this joint can absorb before breaking.
+    pub fn set_break_force(&mut self, break_force: N) {
+        self.break_force_squared = break_force * break_force;
+    }
+
+    /// The maximum torque this joint can absorb before breaking.
+    pub fn set_break_torque(&mut self, break_torque: N) {
+        self.break_torque_squared = break_torque * break_torque;
+    }
 }
 
 impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for RectangularConstraint<N, Handle> {
+    fn is_broken(&self) -> bool {
+        self.broken
+    }
+
     fn num_velocity_constraints(&self) -> usize {
         4
     }
@@ -157,6 +177,11 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             } else {
                 self.ang_impulses[c.impulse_id - 1] = c.impulse;
             }
+        }
+
+        if self.lin_impulse * self.lin_impulse > self.break_force_squared ||
+            self.ang_impulses.norm_squared() > self.break_torque_squared {
+            self.broken = true;
         }
     }
 }

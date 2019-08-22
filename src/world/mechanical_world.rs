@@ -246,7 +246,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
             let mut active_joints = Vec::new();
             constraints.foreach(|h, j| {
-                if j.is_active(bodies) {
+                if !j.is_broken() && j.is_active(bodies) {
                     active_joints.push(h)
                 }
             });

@@ -22,6 +22,9 @@ pub struct PinSlotConstraint<N: RealField, Handle: BodyHandle> {
     axis_w2: Unit<Vector<N>>,
     lin_impulses: Vector<N>,
     ang_impulses: AngularVector<N>,
+    break_torque_squared: N,
+    break_force_squared: N,
+    broken: bool,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
     // min_offset: Option<N>,
@@ -57,11 +60,24 @@ impl<N: RealField, Handle: BodyHandle> PinSlotConstraint<N, Handle> {
             axis_w2,
             lin_impulses: Vector::zeros(),
             ang_impulses: AngularVector::zeros(),
+            break_force_squared: N::max_value(),
+            break_torque_squared: N::max_value(),
+            broken: false,
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
             // min_offset,
             // max_offset,
         }
+    }
+
+    /// The maximum force this joint can absorb before breaking.
+    pub fn set_break_force(&mut self, break_force: N) {
+        self.break_force_squared = break_force * break_force;
+    }
+
+    /// The maximum torque this joint can absorb before breaking.
+    pub fn set_break_torque(&mut self, break_torque: N) {
+        self.break_torque_squared = break_torque * break_torque;
     }
 
     // pub fn min_offset(&self) -> Option<N> {
@@ -100,6 +116,10 @@ impl<N: RealField, Handle: BodyHandle> PinSlotConstraint<N, Handle> {
 }
 
 impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for PinSlotConstraint<N, Handle> {
+    fn is_broken(&self) -> bool {
+        self.broken
+    }
+
     fn num_velocity_constraints(&self) -> usize {
         SPATIAL_DIM - 2
     }
@@ -211,6 +231,11 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             } else {
                 self.ang_impulses[c.impulse_id - DIM] = c.impulse;
             }
+        }
+
+        if self.lin_impulses.norm_squared() > self.break_force_squared ||
+            self.ang_impulses.norm_squared() > self.break_torque_squared {
+            self.broken = true;
         }
     }
 }

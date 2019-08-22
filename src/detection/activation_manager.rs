@@ -152,8 +152,10 @@ impl<N: RealField, Handle: BodyHandle> ActivationManager<N, Handle> {
         }
 
         constraints.foreach(|_, c| {
-            let (b1, b2) = c.anchors();
-            make_union(bodies, b1.0, b2.0, &mut self.ufind);
+            if !c.is_broken() {
+                let (b1, b2) = c.anchors();
+                make_union(bodies, b1.0, b2.0, &mut self.ufind);
+            }
         });
 
         /*
