@@ -15,6 +15,8 @@ pub struct BallConstraint<N: RealField, Handle: BodyHandle> {
     anchor1: Point<N>,
     anchor2: Point<N>,
     impulses: Vector<N>,
+    break_force_squared: N,
+    broken: bool,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 }
@@ -31,6 +33,8 @@ impl<N: RealField, Handle: BodyHandle> BallConstraint<N, Handle> {
             anchor1,
             anchor2,
             impulses: Vector::zeros(),
+            break_force_squared: N::max_value(),
+            broken: false,
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
         }
@@ -45,9 +49,18 @@ impl<N: RealField, Handle: BodyHandle> BallConstraint<N, Handle> {
     pub fn set_anchor_2(&mut self, anchor2: Point<N>) {
         self.anchor2 = anchor2;
     }
+
+    /// The maximum force this joint can absorb before breaking.
+    pub fn set_break_force(&mut self, break_force: N) {
+        self.break_force_squared = break_force * break_force;
+    }
 }
 
 impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for BallConstraint<N, Handle> {
+    fn is_broken(&self) -> bool {
+        self.broken
+    }
+
     fn num_velocity_constraints(&self) -> usize {
         DIM
     }
@@ -117,6 +130,10 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
         for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             self.impulses[c.impulse_id] = c.impulse;
+        }
+
+        if self.impulses.norm_squared() > self.break_force_squared {
+            self.broken = true;
         }
     }
 }

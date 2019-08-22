@@ -17,6 +17,8 @@ pub struct CartesianConstraint<N: RealField, Handle: BodyHandle> {
     anchor2: Point<N>,
     ref_frame2: Rotation<N>,
     ang_impulses: AngularVector<N>,
+    break_torque_squared: N,
+    broken: bool,
     bilateral_ground_rng: Range<usize>,
     bilateral_rng: Range<usize>,
 }
@@ -41,6 +43,8 @@ impl<N: RealField, Handle: BodyHandle> CartesianConstraint<N, Handle> {
             ref_frame1,
             anchor2,
             ref_frame2,
+            break_torque_squared: N::max_value(),
+            broken: false,
             ang_impulses: AngularVector::zeros(),
             bilateral_ground_rng: 0..0,
             bilateral_rng: 0..0,
@@ -66,9 +70,18 @@ impl<N: RealField, Handle: BodyHandle> CartesianConstraint<N, Handle> {
     pub fn set_anchor_2(&mut self, anchor2: Point<N>) {
         self.anchor2 = anchor2
     }
+
+    /// The maximum torque this joint can absorb before breaking.
+    pub fn set_break_torque(&mut self, break_torque: N) {
+        self.break_torque_squared = break_torque * break_torque;
+    }
 }
 
 impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> JointConstraint<N, Bodies> for CartesianConstraint<N, Handle> {
+    fn is_broken(&self) -> bool {
+        self.broken
+    }
+
     fn num_velocity_constraints(&self) -> usize {
         ANGULAR_DIM
     }
@@ -136,6 +149,10 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
 
         for c in &constraints.bilateral[self.bilateral_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
+        }
+
+        if self.ang_impulses.norm_squared() > self.break_torque_squared {
+            self.broken = true;
         }
     }
 }

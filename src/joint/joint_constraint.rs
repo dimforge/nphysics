@@ -196,6 +196,11 @@ pub trait JointConstraint<N: RealField, Bodies: BodySet<N>>: NonlinearConstraint
     );
     /// Called after velocity constraint resolution, allows the joint to keep a cache of impulses generated for each constraint.
     fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>);
+
+    /// Returns `true` if this joint is broken.
+    fn is_broken(&self) -> bool {
+        false // FIXME: we provide a default impl just to avoid a breaking change.
+    }
 }
 
 impl_downcast!(JointConstraint<N, Bodies> where N: RealField, Bodies: BodySet<N>);
