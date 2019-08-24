@@ -146,7 +146,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         });
     }
 
-    fn cache_impulses(&mut self, _: &LinearConstraints<N, usize>) {}
+    fn cache_impulses(&mut self, _: &LinearConstraints<N, usize>, _: N) {}
 }
 
 impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> NonlinearConstraintGenerator<N, Bodies> for MouseConstraint<N, Handle> {

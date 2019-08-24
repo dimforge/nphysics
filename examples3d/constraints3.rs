@@ -73,7 +73,7 @@ pub fn init_world(testbed: &mut Testbed) {
         let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
         colliders.insert(co);
 
-        let constraint = RevoluteConstraint::new(
+        let mut constraint = RevoluteConstraint::new(
             parent,
             BodyPartHandle(rb_handle, 0),
             parent_anchor,
@@ -81,6 +81,8 @@ pub fn init_world(testbed: &mut Testbed) {
             body_anchor,
             Vector3::x_axis(),
         );
+
+        constraint.set_break_force(40.0);
         joint_constraints.insert(constraint);
 
         parent = BodyPartHandle(rb_handle, 0);
@@ -114,6 +116,7 @@ pub fn init_world(testbed: &mut Testbed) {
 
         let mut constraint =
             PrismaticConstraint::new(parent, BodyPartHandle(rb_handle, 0), parent_anchor, Vector3::y_axis(), body_anchor);
+        constraint.set_break_force(40.0);
         constraint.enable_min_offset(-rad * 2.0);
         joint_constraints.insert(constraint);
 
@@ -147,7 +150,8 @@ pub fn init_world(testbed: &mut Testbed) {
         let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
         colliders.insert(co);
 
-        let constraint = BallConstraint::new(parent, BodyPartHandle(rb_handle, 0), parent_anchor, body_anchor);
+        let mut constraint = BallConstraint::new(parent, BodyPartHandle(rb_handle, 0), parent_anchor, body_anchor);
+        constraint.set_break_force(40.0);
         joint_constraints.insert(constraint);
         parent = BodyPartHandle(rb_handle, 0);
     }
@@ -171,7 +175,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
     colliders.insert(co);
 
-    let constraint = UniversalConstraint::new(
+    let mut constraint = UniversalConstraint::new(
         BodyPartHandle(ground_handle, 0),
         BodyPartHandle(rb_handle, 0),
         Point3::from(parent_pos),
@@ -181,6 +185,7 @@ pub fn init_world(testbed: &mut Testbed) {
         FRAC_PI_2,
     );
 
+    constraint.set_break_force(40.0);
     joint_constraints.insert(constraint);
 
     /*
@@ -206,7 +211,7 @@ pub fn init_world(testbed: &mut Testbed) {
             let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 
-            let constraint = PlanarConstraint::new(
+            let mut constraint = PlanarConstraint::new(
                 BodyPartHandle(ground_handle, 0),
                 BodyPartHandle(rb_handle, 0),
                 Point3::origin(),
@@ -215,6 +220,7 @@ pub fn init_world(testbed: &mut Testbed) {
                 Vector3::x_axis(),
             );
 
+            constraint.set_break_force(40.0);
             joint_constraints.insert(constraint);
         }
     }
@@ -240,7 +246,7 @@ pub fn init_world(testbed: &mut Testbed) {
             let co = collider_desc.build(BodyPartHandle(rb_handle, 0));
             colliders.insert(co);
 
-            let constraint = RectangularConstraint::new(
+            let mut constraint = RectangularConstraint::new(
                 BodyPartHandle(ground_handle, 0),
                 BodyPartHandle(rb_handle, 0),
                 Point3::origin(),
@@ -248,6 +254,7 @@ pub fn init_world(testbed: &mut Testbed) {
                 Point3::origin(),
             );
 
+            constraint.set_break_force(40.0);
             joint_constraints.insert(constraint);
         }
     }
@@ -264,7 +271,7 @@ pub fn init_world(testbed: &mut Testbed) {
         .build(BodyPartHandle(pin_handle, 0));
     colliders.insert(co);
 
-    let constraint = PinSlotConstraint::new(
+    let mut constraint = PinSlotConstraint::new(
         BodyPartHandle(ground_handle, 0),
         BodyPartHandle(pin_handle, 0),
         Point3::origin(),
@@ -274,6 +281,7 @@ pub fn init_world(testbed: &mut Testbed) {
         Vector3::x_axis(),
     );
 
+    constraint.set_break_force(40.0);
     joint_constraints.insert(constraint);
 
     /*

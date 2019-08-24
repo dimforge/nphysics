@@ -61,7 +61,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 
         counters.velocity_resolution_started();
         self.solve_velocity_constraints(parameters, bodies);
-        self.cache_impulses(bodies, joints, island_joints);
+        self.cache_impulses(parameters, bodies, joints, island_joints);
         counters.velocity_resolution_completed();
 
         counters.velocity_update_started();
@@ -273,6 +273,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 
     fn cache_impulses<Constraints: JointConstraintSet<N, Bodies>>(
         &mut self,
+        parameters: &IntegrationParameters<N>,
         _bodies: &mut Bodies,
         joints: &mut Constraints,
         island_joints: &[Constraints::Handle],
@@ -281,7 +282,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MoreauJeanSol
 
         for handle in island_joints {
             if let Some(j) = joints.get_mut(*handle) {
-                j.cache_impulses(&self.joint_constraints.velocity);
+                j.cache_impulses(&self.joint_constraints.velocity, parameters.inv_dt());
             }
         }
     }
