@@ -142,7 +142,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
         self.bilateral_rng = first_bilateral..constraints.bilateral.len();
     }
 
-    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>) {
+    fn cache_impulses(&mut self, constraints: &LinearConstraints<N, usize>, inv_dt: N) {
         for c in &constraints.bilateral_ground[self.bilateral_ground_rng.clone()] {
             self.ang_impulses[c.impulse_id] = c.impulse;
         }
@@ -151,7 +151,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             self.ang_impulses[c.impulse_id] = c.impulse;
         }
 
-        if self.ang_impulses.norm_squared() > self.break_torque_squared {
+        if self.ang_impulses.norm_squared() * inv_dt * inv_dt > self.break_torque_squared {
             self.broken = true;
         }
     }
