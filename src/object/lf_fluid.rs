@@ -29,17 +29,17 @@ struct ParticleContact<N: RealField> {
     i: usize,
     j: usize,
     weight: N,
-    gradient: Vector<N>,
+    normal: Unit<Vector<N>>,
 }
 
-/// A particle of a IISPH fluid.
+/// A particle of a LF fluid.
 #[derive(Clone)]
-pub struct IISPHElement<N: RealField> {
+pub struct LFElement<N: RealField> {
     index: usize,
     phantom: PhantomData<N>,
 }
 
-impl<N: RealField> IISPHElement<N> {
+impl<N: RealField> LFElement<N> {
     fn new(index: usize) -> Self {
         Self {
             index,
@@ -48,9 +48,9 @@ impl<N: RealField> IISPHElement<N> {
     }
 }
 
-/// A fluid modeled with the Smoothed Particle Hydrodynamics (IISPH) method.
-pub struct IISPHFluid<N: RealField, Kernel: SPHKernel = CubicSplineKernel, KernelGradient: SPHKernel = CubicSplineKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
-    elements: Vec<IISPHElement<N>>,
+/// A fluid modeled with the Smoothed Particle Hydrodynamics (LF) method.
+pub struct LFFluid<N: RealField, Kernel: SPHKernel = CubicSplineKernel, KernelGradient: SPHKernel = CubicSplineKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
+    elements: Vec<LFElement<N>>,
     kinematic_particles: DVector<bool>,
     positions: DVector<N>, // FIXME: would it be a good idea to reuse the position vector from the multiball?
     velocities_adv: DVector<N>,
@@ -64,7 +64,7 @@ pub struct IISPHFluid<N: RealField, Kernel: SPHKernel = CubicSplineKernel, Kerne
 
     multiball: ShapeHandle<N>,
 
-    stiffness_constant: N,
+    stiffness: N,
     h: N,
     density: N,
     particle_mass: N,
@@ -81,8 +81,8 @@ pub struct IISPHFluid<N: RealField, Kernel: SPHKernel = CubicSplineKernel, Kerne
 }
 
 
-impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian: SPHKernel> IISPHFluid<N, Kernel, KernelGradient, KernelLaplacian> {
-    /// Creates a new IISPH fluid with the given density, particle radius, and initial particle positions.
+impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian: SPHKernel> LFFluid<N, Kernel, KernelGradient, KernelLaplacian> {
+    /// Creates a new LF fluid with the given density, particle radius, and initial particle positions.
     pub fn new(density: N, radius: N, centers: Vec<Point<N>>) -> Self {
         let num_particles = centers.len();
         let mut positions = DVector::repeat(num_particles * DIM, N::zero());
@@ -97,9 +97,9 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         let particle_mass = Ball::new(radius).mass(density);
 
         Self {
-            elements: (0..num_particles).map(|i| IISPHElement::new(i)).collect(),
+            elements: (0..num_particles).map(|i| LFElement::new(i)).collect(),
             kinematic_particles: DVector::repeat(num_particles, false),
-            stiffness_constant: na::convert(10.8),
+            stiffness: na::convert(0.05),
             h: radius * na::convert(2.0),
             density,
             positions,
@@ -123,7 +123,7 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
             kernels: PhantomData,
         }
     }
-    /// The number of particle forming this IISPH fluid.
+    /// The number of particle forming this LF fluid.
     pub fn num_particles(&self) -> usize {
         self.positions.len() / DIM
     }
@@ -162,19 +162,35 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
                 // Don't output the same contact twice.
                 if i <= j {
                     let pj = Point::from(positions.fixed_rows::<Dim>(j * DIM).into_owned());
+                    if let Some((normal, dist)) = Unit::try_new_and_get(pj - pi, N::default_epsilon()) {
+                        let diameter = multiball.radius() * na::convert(2.0);
+
+                        if dist < diameter {
+                            // Linear kernel: 1 - x.norm() / rad
+                            // Gradiant: -x.normalize() / diameter
+                            let weight = N::one() - dist / diameter;
+                            contacts.push(ParticleContact { weight, normal, i, j })
+                        }
+                    }
+
+                    /*
                     let weight = Kernel::points_apply(&pi, &pj, h);
 
                     if !weight.is_zero() {
                         let gradient = KernelGradient::points_apply_diff1(&pi, &pj, h);
                         contacts.push(ParticleContact { weight, gradient, i, j });
                     }
+                    */
                 }
             }
         }
+
+        println!("Num contacts: {}, search radius: {}",  contacts.len(), search_radius);
     }
 
 
     fn update_contacts(positions: &DVector<N>, contacts: &mut Vec<ParticleContact<N>>, h: N) {
+        /*
         for c in contacts {
             let pi = Point::from(positions.fixed_rows::<Dim>(c.i * DIM).into_owned());
             let pj = Point::from(positions.fixed_rows::<Dim>(c.j * DIM).into_owned());
@@ -182,159 +198,68 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
             c.weight = Kernel::points_apply(&pi, &pj, h);
             c.gradient = KernelGradient::points_apply_diff1(&pi, &pj, h);
         }
+        */
     }
 
     fn update_internal_accelerations(&mut self, params: &IntegrationParameters<N>) {
         let num_particles = self.elements.len();
         let multiball_ref = self.multiball.as_ref();
         let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
+        let radius = multiball.radius();
 
+        /*
+         * Advect velocities.
+         */
+        let mut new_velocities = self.velocities.clone();
+        new_velocities.axpy(params.dt(), &self.accelerations, N::one());
+
+        /*
+         * Update contacts.
+         */
         Self::compute_contact_list(&self.positions, multiball, &mut self.contacts, self.h);
 
         /*
-         *
-         * Predict advection.
-         *
+         * Compute densities.
          */
-        // Compute densities and d_ii.
-        let mut dii = Matrix::<N, Dim, Dynamic, _>::zeros(num_particles);
-
         self.densities.fill(N::zero());
         for c in &self.contacts {
-            self.densities[c.i] += self.particle_mass * c.weight;
-            dii.column_mut(c.i).axpy(self.particle_mass, &c.gradient, N::one());
-
-            if c.i != c.j {
-                self.densities[c.j] += self.particle_mass * c.weight;
-                dii.column_mut(c.j).axpy(-self.particle_mass, &c.gradient, N::one());
-            }
-        }
-
-        for i in 0..num_particles {
-            let mut dii = dii.column_mut(i);
-            dii *= -params.dt().powi(2) / self.densities[i].powi(2);
-        }
-
-        // Compute v^adv
-        self.velocities_adv.copy_from(&self.velocities);
-        self.velocities_adv.axpy(params.dt(), &self.accelerations, N::one());
-
-
-        // Compute densities with advection.
-        let mut densities_adv = self.densities.clone();
-
-        for c in &self.contacts {
-            if c.i != c.j {
-                let vi = self.velocities_adv.fixed_rows::<Dim>(c.i * DIM);
-                let vj = self.velocities_adv.fixed_rows::<Dim>(c.j * DIM);
-                let contribution = params.dt() * self.particle_mass * (vi - vj).dot(&c.gradient);
-
-                densities_adv[c.i] += contribution;
-                // It's still a += and not a -= because `(vi - vj).dot(&c.gradient)`
-                // becomes `(vj - vi).dot(&-c.gradient)` which has the same sign.
-                densities_adv[c.j] += contribution;
-            }
-        }
-
-        // Warm-starting before pressure resolution.
-        self.pressures *= na::convert::<_, N>(0.5);
-
-        // Compute a_ii
-        let mut aii = DVector::<N>::zeros(num_particles);
-
-        for c in &self.contacts {
-            if c.i != c.j {
-                let dji = c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.i].powi(2)));
-                aii[c.i] += self.particle_mass * (dii.column(c.i) - dji).dot(&c.gradient);
-
-                let dij = -c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.j].powi(2)));
-                aii[c.j] += self.particle_mass * (dii.column(c.j) - dij).dot(&-c.gradient);
-            }
+            self.densities[c.i] += c.weight;
+            self.densities[c.j] += c.weight;
         }
 
 
         /*
-         *
-         * Solve the pressure forces.
-         *
+         * Solve pressures.
          */
-        let niters = 4;
-        let mut new_pressures = DVector::zeros(num_particles);
-
-        for loop_i in 0..niters {
-            let mut sum_dij_pjl = Matrix::<N, Dim, Dynamic, _>::zeros(num_particles);
-
-            for c in &self.contacts {
-                let mut sum_i = sum_dij_pjl.column_mut(c.i);
-                let coeff_i = -params.dt().powi(2) * self.particle_mass * self.pressures[c.j] / self.densities[c.j].powi(2);
-                sum_i.axpy(coeff_i, &c.gradient, N::one());
-
-                if c.i != c.j {
-                    let mut sum_j = sum_dij_pjl.column_mut(c.j);
-                    let coeff_j = -params.dt().powi(2) * self.particle_mass * self.pressures[c.i] / self.densities[c.i].powi(2);
-                    sum_j.axpy(-coeff_j, &c.gradient, N::one());
-                }
-            }
-
-
-            let w: N = na::convert(0.5);
-
-            for i in 0..num_particles {
-                if aii[i].abs() > N::default_epsilon() {
-                    new_pressures[i] = (N::one() - w) * self.pressures[i] + w / aii[i] * (self.density - densities_adv[i]);
-                } else {
-                    new_pressures[i] = (N::one() - w) * self.pressures[i];
-                }
-            }
-
-            for c in &self.contacts {
-                if aii[c.i].abs() > N::default_epsilon() {
-                    let w_aii = w / aii[c.i];
-                    let dji = c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.i].powi(2)));
-                    let inner = sum_dij_pjl.column(c.i) - dii.column(c.j) * self.pressures[c.j] - (sum_dij_pjl.column(c.j) - dji * self.pressures[c.i]);
-                    new_pressures[c.i] += -w_aii * self.particle_mass * inner.dot(&c.gradient);
-                }
-
-
-                if aii[c.j].abs() > N::default_epsilon() {
-                    let w_aii = w / aii[c.j];
-                    let dij = -c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.j].powi(2)));
-                    let inner = sum_dij_pjl.column(c.j) - dii.column(c.i) * self.pressures[c.i] - (sum_dij_pjl.column(c.i) - dij * self.pressures[c.j]);
-                    new_pressures[c.j] += w_aii * self.particle_mass * inner.dot(&-c.gradient);
-                }
-            }
-
-            new_pressures.apply(|e| e.max(N::zero()));
-            self.pressures.copy_from(&new_pressures);
-        }
-
-//        println!("Pressures: {:?}", self.pressures);
-        let mut new_velocities = self.velocities_adv.clone();
+        let min_particle_weight: N = na::convert(1.0); // XXX
+        let critical_pressure = self.density * (radius * na::convert(2.0) * params.inv_dt()).powi(2);
+        let velocity_per_pressure = params.dt() / (self.density * radius * na::convert(2.0));
+        let pressure_per_weight = self.stiffness * critical_pressure;
 
         for c in &self.contacts {
-            if c.i != c.j {
-                let coeff = -params.dt() * self.particle_mass *
-                    (self.pressures[c.i] / self.densities[c.i].powi(2) + self.pressures[c.j] / self.densities[c.j].powi(2));
-
-                new_velocities.fixed_rows_mut::<Dim>(c.i * DIM).axpy(coeff, &c.gradient, N::one());
-                new_velocities.fixed_rows_mut::<Dim>(c.j * DIM).axpy(-coeff, &c.gradient, N::one());
-            }
+            let pa = pressure_per_weight * (self.densities[c.i] - min_particle_weight).max(N::zero());
+            let pb = pressure_per_weight * (self.densities[c.j] - min_particle_weight).max(N::zero());
+            let dvel = *c.normal * (velocity_per_pressure * c.weight * (pa + pb));
+            new_velocities.fixed_rows_mut::<Dim>(c.i * DIM).sub_assign(dvel);
+            new_velocities.fixed_rows_mut::<Dim>(c.j * DIM).add_assign(dvel);
         }
 
-        // Damping.
-        let damping: N = na::convert(1.0);
+        /*
+         * Solve damping.
+         */
+
+        let damping_coeff: N = na::convert(0.5);
         for c in &self.contacts {
-            if c.i != c.j {
-                let vi = new_velocities.fixed_rows::<Dim>(c.i * DIM);
-                let vj = new_velocities.fixed_rows::<Dim>(c.j * DIM);
-                let n = c.gradient.normalize();
+            let vi = new_velocities.fixed_rows::<Dim>(c.i * DIM);
+            let vj = new_velocities.fixed_rows::<Dim>(c.j * DIM);
+            let vij = vj - vi;
+            let vn = vij.dot(&c.normal);
 
-                let coeff = damping * c.weight * (vj - vi).dot(&n);
-
-                if coeff < N::zero() {
-                    new_velocities.fixed_rows_mut::<Dim>(c.i * DIM).axpy(coeff, &n, N::one());
-                    new_velocities.fixed_rows_mut::<Dim>(c.j * DIM).axpy(-coeff, &n, N::one());
-                }
+            if vn < N::zero() {
+                let damping = damping_coeff * c.weight;
+                let f = *c.normal * (damping * vn);
+                new_velocities.fixed_rows_mut::<Dim>(c.i * DIM).add_assign(f);
+                new_velocities.fixed_rows_mut::<Dim>(c.j * DIM).sub_assign(f);
             }
         }
 
@@ -343,7 +268,7 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
     }
 }
 
-impl<N: RealField> Body<N> for IISPHFluid<N> {
+impl<N: RealField> Body<N> for LFFluid<N> {
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -494,7 +419,7 @@ impl<N: RealField> Body<N> for IISPHFluid<N> {
         }
 
         let ndofs = self.ndofs();
-        let elt = part.downcast_ref::<IISPHElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        let elt = part.downcast_ref::<LFElement<N>>().expect("The provided body part must be a triangular mass-spring element");
 
 
         // Needed by the non-linear SOR-prox.
@@ -615,7 +540,7 @@ impl<N: RealField> Body<N> for IISPHFluid<N> {
 }
 
 
-impl<N: RealField> BodyPart<N> for IISPHElement<N> {
+impl<N: RealField> BodyPart<N> for LFElement<N> {
     fn center_of_mass(&self) -> Point<N> {
         unimplemented!()
     }
@@ -643,7 +568,7 @@ impl<N: RealField> BodyPart<N> for IISPHElement<N> {
 
 /*
 
-enum IISPHFluidDescGeometry<'a, N: RealField> {
+enum LFFluidDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Polyline(&'a Polyline<N>),
     #[cfg(feature = "dim3")]
@@ -651,9 +576,9 @@ enum IISPHFluidDescGeometry<'a, N: RealField> {
 }
 
 /// A builder of a mass-constraint system.
-pub struct IISPHFluidDesc<'a, N: RealField> {
+pub struct LFFluidDesc<'a, N: RealField> {
     user_data: Option<UserDataBox>,
-    geom: IISPHFluidDescGeometry<'a, N>,
+    geom: LFFluidDescGeometry<'a, N>,
     stiffness: Option<N>,
     sleep_threshold: Option<N>,
     //    damping_ratio: N,
@@ -665,9 +590,9 @@ pub struct IISPHFluidDesc<'a, N: RealField> {
 }
 
 
-impl<'a, N: RealField> IISPHFluidDesc<'a, N> {
-    fn with_geometry(geom: IISPHFluidDescGeometry<'a, N>) -> Self {
-        IISPHFluidDesc {
+impl<'a, N: RealField> LFFluidDesc<'a, N> {
+    fn with_geometry(geom: LFFluidDescGeometry<'a, N>) -> Self {
+        LFFluidDesc {
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -686,17 +611,17 @@ impl<'a, N: RealField> IISPHFluidDesc<'a, N> {
     /// Create a mass-constraints system form a triangle mesh.
     #[cfg(feature = "dim3")]
     pub fn from_trimesh(mesh: &'a TriMesh<N>) -> Self {
-        Self::with_geometry(IISPHFluidDescGeometry::TriMesh(mesh))
+        Self::with_geometry(LFFluidDescGeometry::TriMesh(mesh))
     }
 
     /// Create a mass-constraints system form a polygonal line.
     pub fn from_polyline(polyline: &'a Polyline<N>) -> Self {
-        Self::with_geometry(IISPHFluidDescGeometry::Polyline(polyline))
+        Self::with_geometry(LFFluidDescGeometry::Polyline(polyline))
     }
 
     /// Create a quad-shaped body.
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
-        Self::with_geometry(IISPHFluidDescGeometry::Quad(subdiv_x, subdiv_y))
+        Self::with_geometry(LFFluidDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
     /// Mark all nodes as non-kinematic.
@@ -736,18 +661,18 @@ impl<'a, N: RealField> IISPHFluidDesc<'a, N> {
     );
 
     /// Builds a mass-constraint based deformable body from this description.
-    pub fn build(&self) -> IISPHFluid<N> {
+    pub fn build(&self) -> LFFluid<N> {
         let mut vol = match self.geom {
-            IISPHFluidDescGeometry::Quad(nx, ny) => {
+            LFFluidDescGeometry::Quad(nx, ny) => {
                 let polyline = Polyline::quad(nx, ny);
-                IISPHFluid::from_polyline(&polyline, self.mass, self.stiffness)
+                LFFluid::from_polyline(&polyline, self.mass, self.stiffness)
             }
-            IISPHFluidDescGeometry::Polyline(polyline) => {
-                IISPHFluid::from_polyline(polyline, self.mass, self.stiffness)
+            LFFluidDescGeometry::Polyline(polyline) => {
+                LFFluid::from_polyline(polyline, self.mass, self.stiffness)
             }
             #[cfg(feature = "dim3")]
-            IISPHFluidDescGeometry::TriMesh(trimesh) => {
-                IISPHFluid::from_trimesh(trimesh, self.mass, self.stiffness)
+            LFFluidDescGeometry::TriMesh(trimesh) => {
+                LFFluid::from_trimesh(trimesh, self.mass, self.stiffness)
             }
         };
 

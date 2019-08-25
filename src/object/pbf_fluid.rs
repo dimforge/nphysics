@@ -19,7 +19,7 @@ use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
-use crate::object::{fem_helper, DeformableColliderDesc, SPHKernel, Poly6Kernel, CubicSplineKernel, SpikyKernel, ViscosityKernel};
+use crate::object::{fem_helper, DeformableColliderDesc, SPHKernel, Poly6Kernel, CubicSplineKernel, SpikyKernel, ViscosityKernel, LinearKernel};
 use crate::volumetric::Volumetric;
 
 use crate::utils::{UserData, UserDataBox};
@@ -48,7 +48,7 @@ impl<N: RealField> PBFElement<N> {
 }
 
 /// A fluid modeled with the Smoothed Particle Hydrodynamics (PBF) method.
-pub struct PBFFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradient: SPHKernel = SpikyKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
+pub struct PBFFluid<N: RealField, Kernel: SPHKernel = LinearKernel, KernelGradient: SPHKernel = LinearKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
     elements: Vec<PBFElement<N>>,
     kinematic_particles: DVector<bool>,
     positions: DVector<N>, // FIXME: would it be a good idea to reuse the position vector from the multiball?

@@ -39,6 +39,9 @@ pub trait SPHKernel {
     }
 }
 
+
+/// Kernel used by liquidfun.
+pub struct LinearKernel;
 /// https://pysph.readthedocs.io/en/latest/reference/kernels.html
 pub struct CubicSplineKernel;
 /// Particle-Based Fluid Simulation for Interactive Applications, Müller et al.
@@ -47,6 +50,26 @@ pub struct Poly6Kernel;
 pub struct SpikyKernel;
 /// Particle-Based Fluid Simulation for Interactive Applications, Müller et al.
 pub struct ViscosityKernel;
+
+impl SPHKernel for LinearKernel {
+    fn scalar_apply<N: RealField>(r: N, h: N) -> N {
+        if r < h {
+            h - r
+//            N::one() - (r / h)
+        } else {
+            N::zero()
+        }
+    }
+
+    fn scalar_apply_diff<N: RealField>(r: N, h: N) -> N {
+        if r < h {
+            -N::one()
+//            -N::one() / h
+        } else {
+            N::zero()
+        }
+    }
+}
 
 impl SPHKernel for CubicSplineKernel {
     fn scalar_apply<N: RealField>(r: N, h: N) -> N {

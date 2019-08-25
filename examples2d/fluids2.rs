@@ -2,7 +2,8 @@ extern crate nalgebra as na;
 
 use na::{Point2, Vector2, Isometry2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, PBFFluid, IISPHFluid};
+use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground,
+                         BodyPartHandle, PBFFluid, IISPHFluid, LFFluid};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
@@ -63,13 +64,13 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 20;
     let particles_radius = 0.1;
 
-    let shift = (particles_radius + ColliderDesc::<f32>::default_margin()) * 2.0;
+    let shift = particles_radius * 2.0 - 0.1;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 2.0;
     let mut particle_centers = Vec::new();
 
     for i in 0usize.. num {
-        for j in 0..num * 5 {
+        for j in 0..num * 4 {
             let x = i as f32 * shift - centerx + j as f32 * 0.001;
             let y = j as f32 * shift + centery;
             particle_centers.push(Point2::new(x, y));
@@ -77,7 +78,7 @@ pub fn init_world(testbed: &mut Testbed) {
     }
 
     // Build the fluid.
-    let fluid = IISPHFluid::new(1000.0, particles_radius, particle_centers);
+    let fluid = PBFFluid::new(1.2, particles_radius, particle_centers);
     let fluid_collider_desc = fluid.particles_collider_desc();
     let fluid_handle = bodies.insert(fluid);
     let fluid_collider = fluid_collider_desc.build(fluid_handle);
