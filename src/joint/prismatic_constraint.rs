@@ -218,7 +218,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             if c.impulse_id < DIM - 1 {
                 self.lin_impulses[c.impulse_id] = c.impulse;
             } else if c.impulse_id < SPATIAL_DIM - 1 {
-                self.ang_impulses[c.impulse_id - DIM + 1] = c.impulse;
+                self.ang_impulses[c.impulse_id + 1 - DIM] = c.impulse;
             } else {
                 self.limit_impulse = c.impulse
             }
@@ -228,7 +228,7 @@ impl<N: RealField, Handle: BodyHandle, Bodies: BodySet<N, Handle = Handle>> Join
             if c.impulse_id < DIM - 1 {
                 self.lin_impulses[c.impulse_id] = c.impulse;
             } else if c.impulse_id < SPATIAL_DIM - 1 {
-                self.ang_impulses[c.impulse_id - DIM + 1] = c.impulse;
+                self.ang_impulses[c.impulse_id + 1 - DIM] = c.impulse;
             } else {
                 self.limit_impulse = c.impulse
             }
