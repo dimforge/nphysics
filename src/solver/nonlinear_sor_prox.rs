@@ -90,17 +90,21 @@ impl NonlinearSORProx {
             // FIXME: the body update should be performed lazily, especially because
             // we dont actually need to update the kinematic of a multibody until
             // we have to solve a contact involving one of its links.
-            if let Some(b1) = bodies.get_mut(constraint.body1.0) {
-                b1.apply_displacement(
-                    &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
-                );
+            if constraint.dim1 != 0 {
+                if let Some(b1) = bodies.get_mut(constraint.body1.0) {
+                    b1.apply_displacement(
+                        &jacobians[constraint.wj_id1..constraint.wj_id1 + constraint.dim1],
+                    );
+                }
             }
 
-            if let Some(handle2) = constraint.body2 {
-                if let Some(b2) = bodies.get_mut(handle2.0) {
-                    b2.apply_displacement(
-                        &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
-                    )
+            if constraint.dim2 != 0 {
+                if let Some(handle2) = constraint.body2 {
+                    if let Some(b2) = bodies.get_mut(handle2.0) {
+                        b2.apply_displacement(
+                            &jacobians[constraint.wj_id2..constraint.wj_id2 + constraint.dim2],
+                        )
+                    }
                 }
             }
         }
