@@ -115,11 +115,23 @@ impl<N: RealField> Multibody<N> {
         self.rbs.iter().enumerate().filter(move |(_i, l)| l.name == name)
     }
 
+    /// The number of links on this multibody.
+    pub fn num_links(&self) -> usize {
+        self.rbs.len()
+    }
+
     /// Iterator through all the links of this multibody.
     ///
     /// All link are guaranteed to be yielded before its descendant.
     pub fn links(&self) -> impl Iterator<Item = &MultibodyLink<N>> {
         self.rbs.iter()
+    }
+
+    /// Mutable iterator through all the links of this multibody.
+    ///
+    /// All link are guaranteed to be yielded before its descendant.
+    pub fn links_mut(&mut self) -> impl Iterator<Item = &mut MultibodyLink<N>> {
+        self.rbs.iter_mut()
     }
 
     /// The vector of damping applied to this multibody.
