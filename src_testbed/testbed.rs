@@ -865,7 +865,7 @@ impl State for Testbed {
             self.handle_special_event(window, event);
         }
 
-        if self.state.running != RunMode::Stop {
+        if self.state.running != RunMode::Stop && self.state.running != RunMode::Quit {
             // let before = time::precise_time_s();
             for _ in 0..self.nsteps {
                 if self.state.selected_backend == NPHYSICS_BACKEND {

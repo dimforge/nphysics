@@ -69,6 +69,7 @@ pub struct IISPHFluid<N: RealField, Kernel: SPHKernel = CubicSplineKernel, Kerne
     density: N,
     particle_mass: N,
     inv_particle_mass: N,
+    viscosity: N,
 
     companion_id: usize,
     gravity_enabled: bool,
@@ -100,7 +101,7 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
             elements: (0..num_particles).map(|i| IISPHElement::new(i)).collect(),
             kinematic_particles: DVector::repeat(num_particles, false),
             stiffness_constant: na::convert(10.8),
-            h: radius * na::convert(2.0),
+            h: radius * na::convert(2.2),
             density,
             positions,
             contacts: Vec::new(),
@@ -119,6 +120,7 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
             update_status: BodyUpdateStatus::all(),
             particle_mass,
             inv_particle_mass: N::one() / particle_mass,
+            viscosity: na::convert(0.1),
             user_data: None,
             kernels: PhantomData,
         }
@@ -198,8 +200,8 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
          */
         // Compute densities and d_ii.
         let mut dii = Matrix::<N, Dim, Dynamic, _>::zeros(num_particles);
-
         self.densities.fill(N::zero());
+
         for c in &self.contacts {
             self.densities[c.i] += self.particle_mass * c.weight;
             dii.column_mut(c.i).axpy(self.particle_mass, &c.gradient, N::one());
@@ -237,7 +239,8 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         }
 
         // Warm-starting before pressure resolution.
-        self.pressures *= na::convert::<_, N>(0.5);
+//        self.pressures *= na::convert::<_, N>(0.5);
+        self.pressures.fill(N::zero());
 
         // Compute a_ii
         let mut aii = DVector::<N>::zeros(num_particles);
@@ -245,9 +248,9 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         for c in &self.contacts {
             if c.i != c.j {
                 let dji = c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.i].powi(2)));
-                aii[c.i] += self.particle_mass * (dii.column(c.i) - dji).dot(&c.gradient);
-
                 let dij = -c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.j].powi(2)));
+
+                aii[c.i] += self.particle_mass * (dii.column(c.i) - dji).dot(&c.gradient);
                 aii[c.j] += self.particle_mass * (dii.column(c.j) - dij).dot(&-c.gradient);
             }
         }
@@ -263,6 +266,7 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
 
         for loop_i in 0..niters {
             let mut sum_dij_pjl = Matrix::<N, Dim, Dynamic, _>::zeros(num_particles);
+            let mut sums = DVector::zeros(num_particles);
 
             for c in &self.contacts {
                 let mut sum_i = sum_dij_pjl.column_mut(c.i);
@@ -281,7 +285,8 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
 
             for i in 0..num_particles {
                 if aii[i].abs() > N::default_epsilon() {
-                    new_pressures[i] = (N::one() - w) * self.pressures[i] + w / aii[i] * (self.density - densities_adv[i]);
+                    let stiffness = N::one() / aii[i];
+                    new_pressures[i] = (N::one() - w) * self.pressures[i] + w * stiffness * (self.density - densities_adv[i]);
                 } else {
                     new_pressures[i] = (N::one() - w) * self.pressures[i];
                 }
@@ -289,22 +294,39 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
 
             for c in &self.contacts {
                 if aii[c.i].abs() > N::default_epsilon() {
-                    let w_aii = w / aii[c.i];
+                    let stiffness = N::one() / aii[c.i];
                     let dji = c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.i].powi(2)));
                     let inner = sum_dij_pjl.column(c.i) - dii.column(c.j) * self.pressures[c.j] - (sum_dij_pjl.column(c.j) - dji * self.pressures[c.i]);
-                    new_pressures[c.i] += -w_aii * self.particle_mass * inner.dot(&c.gradient);
+                    let delta_density = self.particle_mass * inner.dot(&c.gradient);
+                    sums[c.i] += delta_density;
+                    new_pressures[c.i] += -w * stiffness * delta_density;
                 }
 
 
                 if aii[c.j].abs() > N::default_epsilon() {
-                    let w_aii = w / aii[c.j];
+                    let stiffness = N::one() / aii[c.j];
                     let dij = -c.gradient * (params.dt().powi(2) * self.particle_mass / (self.densities[c.j].powi(2)));
                     let inner = sum_dij_pjl.column(c.j) - dii.column(c.i) * self.pressures[c.i] - (sum_dij_pjl.column(c.i) - dij * self.pressures[c.j]);
-                    new_pressures[c.j] += w_aii * self.particle_mass * inner.dot(&-c.gradient);
+                    let delta_density = self.particle_mass * inner.dot(&-c.gradient);
+                    sums[c.j] += delta_density;
+                    new_pressures[c.j] += -w * stiffness * delta_density;
                 }
             }
 
             new_pressures.apply(|e| e.max(N::zero()));
+
+            let mut density_error = N::zero();
+
+            for i in 0..num_particles {
+                if aii[i].abs() > N::default_epsilon() {
+                    let new_density = self.pressures[i] * aii[i] + densities_adv[i] + sums[i];
+                    density_error += new_density - self.density;
+                }
+            }
+
+            println!("Avg density error: {}", density_error / na::convert(num_particles as f64));
+
+
             self.pressures.copy_from(&new_pressures);
         }
 
@@ -321,22 +343,6 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
             }
         }
 
-        // Damping.
-        let damping: N = na::convert(1.0);
-        for c in &self.contacts {
-            if c.i != c.j {
-                let vi = new_velocities.fixed_rows::<Dim>(c.i * DIM);
-                let vj = new_velocities.fixed_rows::<Dim>(c.j * DIM);
-                let n = c.gradient.normalize();
-
-                let coeff = damping * c.weight * (vj - vi).dot(&n);
-
-                if coeff < N::zero() {
-                    new_velocities.fixed_rows_mut::<Dim>(c.i * DIM).axpy(coeff, &n, N::one());
-                    new_velocities.fixed_rows_mut::<Dim>(c.j * DIM).axpy(-coeff, &n, N::one());
-                }
-            }
-        }
 
         // Compute final accelerations.
         self.accelerations = (new_velocities - &self.velocities) * params.inv_dt();

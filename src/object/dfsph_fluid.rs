@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::any::Any;
 use either::Either;
 
-use na::{self, RealField, DVector, DVectorSlice, DVectorSliceMut, Unit, VectorSliceMutN};
+use na::{self, RealField, DVector, DVectorSlice, DVectorSliceMut, Unit, VectorSliceMutN, Matrix, Dynamic};
 #[cfg(feature = "dim3")]
 use na::Vector2;
 use ncollide::utils::DeterministicState;
@@ -19,10 +19,11 @@ use crate::object::{Body, BodyPart, BodyStatus, BodyUpdateStatus,
                     ActivationStatus, FiniteElementIndices};
 use crate::solver::{IntegrationParameters, ForceDirection};
 use crate::math::{Force, ForceType, Inertia, Velocity, Vector, Point, Isometry, DIM, Dim, Translation};
-use crate::object::{fem_helper, DeformableColliderDesc, SPHKernel, Poly6Kernel, CubicSplineKernel, SpikyKernel, ViscosityKernel, LinearKernel};
+use crate::object::{fem_helper, DeformableColliderDesc, SPHKernel, Poly6Kernel, CubicSplineKernel, SpikyKernel, ViscosityKernel};
 use crate::volumetric::Volumetric;
 
 use crate::utils::{UserData, UserDataBox};
+
 
 struct ParticleContact<N: RealField> {
     i: usize,
@@ -31,14 +32,14 @@ struct ParticleContact<N: RealField> {
     gradient: Vector<N>,
 }
 
-/// A particle of a PBF fluid.
+/// A particle of a DFSPH fluid.
 #[derive(Clone)]
-pub struct PBFElement<N: RealField> {
+pub struct DFSPHElement<N: RealField> {
     index: usize,
     phantom: PhantomData<N>,
 }
 
-impl<N: RealField> PBFElement<N> {
+impl<N: RealField> DFSPHElement<N> {
     fn new(index: usize) -> Self {
         Self {
             index,
@@ -47,12 +48,12 @@ impl<N: RealField> PBFElement<N> {
     }
 }
 
-/// A fluid modeled with the Smoothed Particle Hydrodynamics (PBF) method.
-pub struct PBFFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradient: SPHKernel = SpikyKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
-    elements: Vec<PBFElement<N>>,
+/// A fluid modeled with the Smoothed Particle Hydrodynamics (DFSPH) method.
+pub struct DFSPHFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradient: SPHKernel = SpikyKernel, KernelLaplacian: SPHKernel = ViscosityKernel> {
+    elements: Vec<DFSPHElement<N>>,
     kinematic_particles: DVector<bool>,
     positions: DVector<N>, // FIXME: would it be a good idea to reuse the position vector from the multiball?
-    velocities_wo_pressure: DVector<N>,
+    velocities_adv: DVector<N>,
     velocities: DVector<N>,
     accelerations: DVector<N>,
     forces: DVector<N>,
@@ -63,6 +64,7 @@ pub struct PBFFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradien
 
     multiball: ShapeHandle<N>,
 
+    stiffness_constant: N,
     h: N,
     density: N,
     particle_mass: N,
@@ -80,8 +82,8 @@ pub struct PBFFluid<N: RealField, Kernel: SPHKernel = Poly6Kernel, KernelGradien
 }
 
 
-impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian: SPHKernel> PBFFluid<N, Kernel, KernelGradient, KernelLaplacian> {
-    /// Creates a new PBF fluid with the given density, particle radius, and initial particle positions.
+impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian: SPHKernel> DFSPHFluid<N, Kernel, KernelGradient, KernelLaplacian> {
+    /// Creates a new DFSPH fluid with the given density, particle radius, and initial particle positions.
     pub fn new(density: N, radius: N, centers: Vec<Point<N>>) -> Self {
         let num_particles = centers.len();
         let mut positions = DVector::repeat(num_particles * DIM, N::zero());
@@ -96,14 +98,15 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
         let particle_mass = Ball::new(radius).mass(density);
 
         Self {
-            elements: (0..num_particles).map(|i| PBFElement::new(i)).collect(),
+            elements: (0..num_particles).map(|i| DFSPHElement::new(i)).collect(),
             kinematic_particles: DVector::repeat(num_particles, false),
-            h: radius * na::convert(4.0),
-            contacts: Vec::new(),
+            stiffness_constant: na::convert(10.8),
+            h: radius * na::convert(2.2),
             density,
             positions,
+            contacts: Vec::new(),
             velocities: DVector::repeat(num_particles * DIM, N::zero()),
-            velocities_wo_pressure: DVector::repeat(num_particles * DIM, N::zero()),
+            velocities_adv: DVector::repeat(num_particles * DIM, N::zero()),
             accelerations: DVector::repeat(num_particles * DIM, N::zero()),
             forces: DVector::repeat(num_particles * DIM, N::zero()),
             impulses: DVector::repeat(num_particles, N::zero()),
@@ -117,12 +120,12 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
             update_status: BodyUpdateStatus::all(),
             particle_mass,
             inv_particle_mass: N::one() / particle_mass,
-            viscosity: na::convert(0.01),
+            viscosity: na::convert(0.1),
             user_data: None,
             kernels: PhantomData,
         }
     }
-    /// The number of particle forming this PBF fluid.
+    /// The number of particle forming this DFSPH fluid.
     pub fn num_particles(&self) -> usize {
         self.positions.len() / DIM
     }
@@ -184,139 +187,93 @@ impl<N: RealField, Kernel: SPHKernel, KernelGradient: SPHKernel, KernelLaplacian
     }
 
     fn update_internal_accelerations(&mut self, params: &IntegrationParameters<N>) {
-        let start = time::precise_time_s();
-
+        let num_particles = self.elements.len();
         let multiball_ref = self.multiball.as_ref();
         let multiball = multiball_ref.downcast_ref::<Multiball<N>>().unwrap();
 
-        let num_particles = self.elements.len();
-        self.velocities_wo_pressure.copy_from(&self.velocities);
-        self.velocities_wo_pressure.axpy(params.dt(), &self.accelerations, N::one());
-        let mut predicted_positions = self.positions.clone();
-        predicted_positions.axpy(params.dt(), &self.velocities_wo_pressure, N::one());
-        let mut lambdas = DVector::zeros(num_particles);
-        let mut position_changes = DVector::zeros(num_particles * DIM);
+        Self::compute_contact_list(&self.positions, multiball, &mut self.contacts, self.h);
 
+        /*
+         *
+         * Predict advection.
+         *
+         */
+        // Compute densities and alpha_i.
+        self.densities.fill(N::zero());
 
-        Self::compute_contact_list(&predicted_positions, multiball, &mut self.contacts, self.h);
+        for c in &self.contacts {
+            self.densities[c.i] += self.particle_mass * c.weight;
 
-        let niters = 4;
-        for loop_i in 0..niters {
-            /*
-             *
-             * Update per-contact data.
-             *
-             */
-            if loop_i > 0 { // If 0, the contact are already up-to-date.
-                Self::update_contacts(&predicted_positions, &mut self.contacts, self.h);
+            if c.i != c.j {
+                self.densities[c.j] += self.particle_mass * c.weight;
             }
-
-            /*
-             *
-             * Compute densities.
-             *
-             */
-            self.densities.fill(N::zero());
-
-            for c in &self.contacts {
-                self.densities[c.i] += self.particle_mass * c.weight;
-
-                if c.i != c.j {
-                    self.densities[c.j] += self.particle_mass * c.weight;
-                }
-            }
-
-            /*
-             *
-             * Compute lambdas.
-             *
-             */
-            let mut total_gradient: Vec<_> = (0..num_particles).map(|_| Vector::zeros()).collect();
-            let mut denominator: Vec<_> = (0..num_particles).map(|_| N::zero()).collect();
-
-            for c in &self.contacts {
-                let ci = self.densities[c.i] / self.density - N::one();
-
-                total_gradient[c.i] += c.gradient;
-
-                if c.i != c.j {
-                    total_gradient[c.j] -= c.gradient;
-
-                    let denom = (-c.gradient * (self.particle_mass / self.density)).norm_squared();
-                    denominator[c.i] += denom;
-                    denominator[c.j] -= denom;
-                }
-            }
-
-            for i in 0..num_particles {
-                let denominator = denominator[i] + (total_gradient[i] * (self.particle_mass / self.density)).norm_squared();
-
-                if !denominator.is_zero() {
-                    let ci = self.densities[i] / self.density - N::one();
-                    lambdas[i] = -ci / (denominator + na::convert(200.0));
-                } else {
-                    lambdas[i] = N::zero();
-                }
-            }
-
-            /*
-             *
-             * Compute position changes.
-             *
-             */
-            position_changes.fill(N::zero());
-
-            for c in &self.contacts {
-                // Compute virtual pressure.
-                let k: N = na::convert(0.001);
-                let n = 4;
-                let dq = N::zero();
-                let scorr = -k * (c.weight / Kernel::scalar_apply(dq, self.h)).powi(n);
-
-                // Compute velocity change.
-                let dpos = c.gradient * ((lambdas[c.i] + lambdas[c.j] + scorr) * (self.particle_mass / self.density));
-
-                position_changes.fixed_rows_mut::<Dim>(c.i * DIM).add_assign(&dpos);
-
-                if c.i != c.j {
-                    position_changes.fixed_rows_mut::<Dim>(c.j * DIM).sub_assign(&dpos);
-                }
-            }
-
-            /*
-             *
-             * Apply position changes.
-             *
-             */
-            predicted_positions += &position_changes;
-            println!("Fluid simulation time: {}", time::precise_time_s() - start);
         }
 
-        // Compute actual velocities.
-        let mut velocities = (&predicted_positions - &self.positions) * params.inv_dt();
+        // Compute v^adv
+        self.velocities_adv.copy_from(&self.velocities);
+        self.velocities_adv.axpy(params.dt(), &self.accelerations, N::one());
 
-        // Add XSPH viscosity
-        let mut viscosity_velocities = DVector::zeros(num_particles * DIM);
+
+        // Compute alpha_i
+        let mut sum = Matrix::<N, Dim, Dynamic, _>::zeros(num_particles);
+        let mut alpha = DVector::<N>::zeros(num_particles);
 
         for c in &self.contacts {
             if c.i != c.j {
-                let vi = velocities.fixed_rows::<Dim>(c.i * DIM);
-                let vj = velocities.fixed_rows::<Dim>(c.j * DIM);
-                let extra_vel = (vj - vi) * c.weight;
-
-                viscosity_velocities.fixed_rows_mut::<Dim>(c.i * DIM).add_assign(&extra_vel);
-                viscosity_velocities.fixed_rows_mut::<Dim>(c.j * DIM).sub_assign(&extra_vel);
+                let contribution_ij = (c.gradient * self.particle_mass).norm_squared();
+                // NOTE: in this loop, we put the denominator of alpha instead of alpha itself.
+                alpha[c.i] += contribution_ij;
+                alpha[c.j] += contribution_ij;
+                sum.column_mut(c.i).axpy(self.particle_mass, &c.gradient, N::one());
+                sum.column_mut(c.j).axpy(-self.particle_mass, &c.gradient, N::one());
             }
         }
 
-        velocities.axpy(self.viscosity, &viscosity_velocities, N::one());
+        let min_alpha: N = na::convert(200.0);
+        for i in 0..num_particles {
+            alpha[i] += sum.column(i).norm_squared();
+            alpha[i] = self.densities[i] / alpha[i].max(min_alpha);
+        }
+
+
+        let niters = 10;
+        for loop_i in 0..niters {
+            // Compute densities with advection.
+            let mut densities_adv = self.densities.clone();
+
+            for c in &self.contacts {
+                if c.i != c.j {
+                    let vi = self.velocities_adv.fixed_rows::<Dim>(c.i * DIM);
+                    let vj = self.velocities_adv.fixed_rows::<Dim>(c.j * DIM);
+                    let contribution = params.dt() * self.particle_mass * (vi - vj).dot(&c.gradient);
+
+                    densities_adv[c.i] += contribution;
+                    // It's still a += and not a -= because `(vi - vj).dot(&c.gradient)`
+                    // becomes `(vj - vi).dot(&-c.gradient)` which has the same sign.
+                    densities_adv[c.j] += contribution;
+                }
+            }
+
+            let mut stiffness = DVector::<N>::zeros(num_particles);
+            for i in 0..num_particles {
+                stiffness[i] = alpha[i] * (densities_adv[i] - self.density) * params.inv_dt().powi(2);
+            }
+
+            for c in &self.contacts {
+                if c.i != c.j {
+                    let coeff = params.dt() * self.particle_mass * (stiffness[c.i] / self.densities[c.i] + stiffness[c.j] / self.densities[c.j]);
+                    self.velocities_adv.fixed_rows_mut::<Dim>(c.i * DIM).axpy(-coeff, &c.gradient, N::one());
+                    self.velocities_adv.fixed_rows_mut::<Dim>(c.j * DIM).axpy(coeff, &c.gradient, N::one());
+                }
+            }
+        }
 
         // Compute final accelerations.
-        self.accelerations = (velocities - &self.velocities) * params.inv_dt();
+        self.accelerations = (&self.velocities_adv - &self.velocities) * params.inv_dt();
     }
 }
 
-impl<N: RealField> Body<N> for PBFFluid<N> {
+impl<N: RealField> Body<N> for DFSPHFluid<N> {
     #[inline]
     fn gravity_enabled(&self) -> bool {
         self.gravity_enabled
@@ -467,7 +424,7 @@ impl<N: RealField> Body<N> for PBFFluid<N> {
         }
 
         let ndofs = self.ndofs();
-        let elt = part.downcast_ref::<PBFElement<N>>().expect("The provided body part must be a triangular mass-spring element");
+        let elt = part.downcast_ref::<DFSPHElement<N>>().expect("The provided body part must be a triangular mass-spring element");
 
 
         // Needed by the non-linear SOR-prox.
@@ -588,7 +545,7 @@ impl<N: RealField> Body<N> for PBFFluid<N> {
 }
 
 
-impl<N: RealField> BodyPart<N> for PBFElement<N> {
+impl<N: RealField> BodyPart<N> for DFSPHElement<N> {
     fn center_of_mass(&self) -> Point<N> {
         unimplemented!()
     }
@@ -616,7 +573,7 @@ impl<N: RealField> BodyPart<N> for PBFElement<N> {
 
 /*
 
-enum PBFFluidDescGeometry<'a, N: RealField> {
+enum DFSPHFluidDescGeometry<'a, N: RealField> {
     Quad(usize, usize),
     Polyline(&'a Polyline<N>),
     #[cfg(feature = "dim3")]
@@ -624,9 +581,9 @@ enum PBFFluidDescGeometry<'a, N: RealField> {
 }
 
 /// A builder of a mass-constraint system.
-pub struct PBFFluidDesc<'a, N: RealField> {
+pub struct DFSPHFluidDesc<'a, N: RealField> {
     user_data: Option<UserDataBox>,
-    geom: PBFFluidDescGeometry<'a, N>,
+    geom: DFSPHFluidDescGeometry<'a, N>,
     stiffness: Option<N>,
     sleep_threshold: Option<N>,
     //    damping_ratio: N,
@@ -638,9 +595,9 @@ pub struct PBFFluidDesc<'a, N: RealField> {
 }
 
 
-impl<'a, N: RealField> PBFFluidDesc<'a, N> {
-    fn with_geometry(geom: PBFFluidDescGeometry<'a, N>) -> Self {
-        PBFFluidDesc {
+impl<'a, N: RealField> DFSPHFluidDesc<'a, N> {
+    fn with_geometry(geom: DFSPHFluidDescGeometry<'a, N>) -> Self {
+        DFSPHFluidDesc {
             user_data: None,
             gravity_enabled: true,
             geom,
@@ -659,17 +616,17 @@ impl<'a, N: RealField> PBFFluidDesc<'a, N> {
     /// Create a mass-constraints system form a triangle mesh.
     #[cfg(feature = "dim3")]
     pub fn from_trimesh(mesh: &'a TriMesh<N>) -> Self {
-        Self::with_geometry(PBFFluidDescGeometry::TriMesh(mesh))
+        Self::with_geometry(DFSPHFluidDescGeometry::TriMesh(mesh))
     }
 
     /// Create a mass-constraints system form a polygonal line.
     pub fn from_polyline(polyline: &'a Polyline<N>) -> Self {
-        Self::with_geometry(PBFFluidDescGeometry::Polyline(polyline))
+        Self::with_geometry(DFSPHFluidDescGeometry::Polyline(polyline))
     }
 
     /// Create a quad-shaped body.
     pub fn quad(subdiv_x: usize, subdiv_y: usize) -> Self {
-        Self::with_geometry(PBFFluidDescGeometry::Quad(subdiv_x, subdiv_y))
+        Self::with_geometry(DFSPHFluidDescGeometry::Quad(subdiv_x, subdiv_y))
     }
 
     /// Mark all nodes as non-kinematic.
@@ -709,18 +666,18 @@ impl<'a, N: RealField> PBFFluidDesc<'a, N> {
     );
 
     /// Builds a mass-constraint based deformable body from this description.
-    pub fn build(&self) -> PBFFluid<N> {
+    pub fn build(&self) -> DFSPHFluid<N> {
         let mut vol = match self.geom {
-            PBFFluidDescGeometry::Quad(nx, ny) => {
+            DFSPHFluidDescGeometry::Quad(nx, ny) => {
                 let polyline = Polyline::quad(nx, ny);
-                PBFFluid::from_polyline(&polyline, self.mass, self.stiffness)
+                DFSPHFluid::from_polyline(&polyline, self.mass, self.stiffness)
             }
-            PBFFluidDescGeometry::Polyline(polyline) => {
-                PBFFluid::from_polyline(polyline, self.mass, self.stiffness)
+            DFSPHFluidDescGeometry::Polyline(polyline) => {
+                DFSPHFluid::from_polyline(polyline, self.mass, self.stiffness)
             }
             #[cfg(feature = "dim3")]
-            PBFFluidDescGeometry::TriMesh(trimesh) => {
-                PBFFluid::from_trimesh(trimesh, self.mass, self.stiffness)
+            DFSPHFluidDescGeometry::TriMesh(trimesh) => {
+                DFSPHFluid::from_trimesh(trimesh, self.mass, self.stiffness)
             }
         };
 

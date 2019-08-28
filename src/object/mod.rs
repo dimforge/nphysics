@@ -21,6 +21,7 @@ pub use self::mass_spring_system::{MassSpringSystem, MassSpringSystemDesc};
 pub use self::pbf_fluid::PBFFluid;
 pub use self::iisph_fluid::IISPHFluid;
 pub use self::lf_fluid::LFFluid;
+pub use self::dfsph_fluid::DFSPHFluid;
 pub use self::sph_kernel::{SPHKernel, SpikyKernel, CubicSplineKernel, ViscosityKernel, Poly6Kernel, LinearKernel};
 pub(crate) use self::fem_helper::FiniteElementIndices;
 
@@ -41,5 +42,6 @@ mod mass_constraint_system;
 mod pbf_fluid;
 mod iisph_fluid;
 mod lf_fluid;
+mod dfsph_fluid;
 mod sph_kernel;
 pub(crate) mod fem_helper;

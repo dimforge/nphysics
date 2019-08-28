@@ -3,7 +3,7 @@ extern crate nalgebra as na;
 use na::{Point2, Vector2, Isometry2};
 use ncollide2d::shape::{Cuboid, ShapeHandle};
 use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground,
-                         BodyPartHandle, PBFFluid, IISPHFluid, LFFluid};
+                         BodyPartHandle, PBFFluid, IISPHFluid, LFFluid, DFSPHFluid};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
@@ -45,18 +45,30 @@ pub fn init_world(testbed: &mut Testbed) {
         .build(BodyPartHandle(ground_handle, 0));
     colliders.insert(co);
 
+    use nphysics2d::object::Multibody;
+    use nphysics2d::joint::RevoluteJoint;
+    for (handle, body) in bodies.iter() {
+        if let Some(multibody) = body.downcast_ref::<Multibody<f32>>() {
+            for link in multibody.links().filter_map(|l| l.joint().downcast_ref::<RevoluteJoint<f32>>()) {
+                // Do something.
+            }
+        }
+    }
+
     /*
      * Create a cube
      */
-//    let rb = RigidBodyDesc::new()
-//        .translation(Vector2::y() * 13.0)
-//        .build();
-//    let rb_handle = bodies.insert(rb);
-//    let cube = Cuboid::new(Vector2::repeat(0.4));
-//    let co = ColliderDesc::new(ShapeHandle::new_owned(cube))
-//        .density(1.0)
-//        .build(BodyPartHandle(rb_handle, 0));
-//    colliders.insert(co);
+    /*
+    let rb = RigidBodyDesc::new()
+        .translation(Vector2::y() * 13.0)
+        .build();
+    let rb_handle = bodies.insert(rb);
+    let cube = Cuboid::new(Vector2::repeat(0.4));
+    let co = ColliderDesc::new(ShapeHandle::new_owned(cube))
+        .density(1.0)
+        .build(BodyPartHandle(rb_handle, 0));
+    colliders.insert(co);
+    */
 
     /*
      * Create the fluid
@@ -64,7 +76,7 @@ pub fn init_world(testbed: &mut Testbed) {
     let num = 20;
     let particles_radius = 0.1;
 
-    let shift = particles_radius * 2.0 - 0.1;
+    let shift = particles_radius * 2.0;// - 0.1;
     let centerx = shift * (num as f32) / 2.0;
     let centery = shift / 2.0 + 2.0;
     let mut particle_centers = Vec::new();
@@ -78,7 +90,7 @@ pub fn init_world(testbed: &mut Testbed) {
     }
 
     // Build the fluid.
-    let fluid = PBFFluid::new(1.2, particles_radius, particle_centers);
+    let fluid = DFSPHFluid::new(1.2, particles_radius, particle_centers);
     let fluid_collider_desc = fluid.particles_collider_desc();
     let fluid_handle = bodies.insert(fluid);
     let fluid_collider = fluid_collider_desc.build(fluid_handle);
