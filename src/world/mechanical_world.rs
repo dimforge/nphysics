@@ -624,11 +624,9 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
                         match inter {
                             Interaction::Contact(alg, manifold) => {
-                                let (c1, c2) = colliders.get_pair_mut(ch1, ch2);
-                                let (c1, c2) = (c1.unwrap(), c2.unwrap());
-                                let (handle1, handle2) = (c1.body(), c2.body());
-
-                                if let (Some(b1), Some(b2)) = bodies.get_pair_mut(handle1, handle2) {
+                                let handle1 = colliders.get(ch1).unwrap().body();
+                                let handle2 = colliders.get(ch2).unwrap().body();
+                                if bodies.contains(handle1) && bodies.contains(handle2) {
                                     let mut prepare_body = |h, b: &mut Bodies::Body, c: &mut Collider<N, Bodies::Handle>| {
                                         b.clear_forces();
                                         b.update_kinematics();
@@ -649,16 +647,28 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                                         c.set_position(b.part(0).unwrap().position() * c.position_wrt_body());
                                     };
 
-                                    let b1_needs_preparation = b1.companion_id() == 0 && b1.is_dynamic();
-                                    let b2_needs_preparation = b2.companion_id() == 0 && b2.is_dynamic();
+                                    let b1_needs_preparation = {
+                                        let b1 = bodies.get_mut(handle1).unwrap();
+                                        let needs_prep = b1.companion_id() == 0 && b1.is_dynamic();
 
-                                    if b1_needs_preparation {
-                                        prepare_body(handle1, b1, c1)
-                                    }
+                                        if needs_prep {
+                                            prepare_body(handle1, b1, colliders.get_mut(ch1).unwrap())
+                                        }
+                                        needs_prep
+                                    };
 
-                                    if b2_needs_preparation {
-                                        prepare_body(handle2, b2, c2)
-                                    }
+                                    let b2_needs_preparation = {
+                                        let b2 = bodies.get_mut(handle2).unwrap();
+                                        let needs_prep = b2.companion_id() == 0 && b2.is_dynamic();
+
+                                        if needs_prep {
+                                            prepare_body(handle1, b2, colliders.get_mut(ch2).unwrap())
+                                        }
+                                        needs_prep
+                                    };
+
+                                    let (c1, c2) = colliders.get_pair(ch1, ch2);
+                                    let (c1, c2) = (c1.unwrap(), c2.unwrap());
 
                                     gworld.narrow_phase.update_contact(c1, c2, ch1, ch2, &mut **alg, manifold);
 
