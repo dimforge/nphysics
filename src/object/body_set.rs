@@ -39,6 +39,11 @@ pub trait BodySet<N: RealField> {
         (self.get(handle1), self.get(handle2))
     }
 
+    /// Gets a reference to the body with the given `handle` and with the concrete type `B`.
+    fn get_as<B: Body<N>>(&self, handle: Self::Handle) -> Option<&B>;
+    /// Gets a mutable reference to the body with the given `handle` and with the concrete type `B`.
+    fn get_as_mut<B: Body<N>>(&mut self, handle: Self::Handle) -> Option<&mut B>;
+
     /// Check if this set contains a body identified by `handle`.
     fn contains(&self, handle: Self::Handle) -> bool;
 
@@ -106,6 +111,17 @@ impl<N: RealField> DefaultBodySet<N> {
         self.bodies.get_mut(handle).map(|b| &mut **b)
     }
 
+
+    /// Gets a reference to the body with the given `handle` and with the concrete type `B`.
+    pub fn get_as<B: Body<N>>(&self, handle: DefaultBodyHandle) -> Option<&B> {
+        self.bodies.get(handle).and_then(|b| b.downcast_ref::<B>())
+    }
+
+    /// Gets a mutable reference to the body with the given `handle` and with the concrete type `B`.
+    pub fn get_as_mut<B: Body<N>>(&mut self, handle: DefaultBodyHandle) -> Option<&mut B> {
+        self.bodies.get_mut(handle).and_then(|b| b.downcast_mut::<B>())
+    }
+
     /// Iterate through all the bodies and their handles.
     pub fn iter(&self) -> impl Iterator<Item = (DefaultBodyHandle, &dyn Body<N>)> {
         self.bodies.iter().map(|b| (b.0, &**b.1))
@@ -120,28 +136,28 @@ impl<N: RealField> DefaultBodySet<N> {
     ///
     /// Returns `None` if the body does not exists, of if it exists but is not a rigid body.
     pub fn rigid_body(&self, handle: DefaultBodyHandle) -> Option<&RigidBody<N>> {
-        self.get(handle).and_then(|b| b.downcast_ref())
+        self.get_as(handle)
     }
 
     /// Gets a mutable reference to the rigid body identified by `handle`.
     ///
     /// Returns `None` if the body does not exists, of if it exists but is not a rigid body.
     pub fn rigid_body_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut RigidBody<N>> {
-        self.get_mut(handle).and_then(|b| b.downcast_mut())
+        self.get_as_mut(handle)
     }
 
     /// Gets the multibody identified by `handle`.
     ///
     /// Returns `None` if the body does not exists, of if it exists but is not a multibody.
     pub fn multibody(&self, handle: DefaultBodyHandle) -> Option<&Multibody<N>> {
-        self.get(handle).and_then(|b| b.downcast_ref())
+        self.get_as(handle)
     }
 
     /// Gets a mutable reference to the multibody identified by `handle`.
     ///
     /// Returns `None` if the body does not exists, of if it exists but is not a multibody.
     pub fn multibody_mut(&mut self, handle: DefaultBodyHandle) -> Option<&mut Multibody<N>> {
-        self.get_mut(handle).and_then(|b| b.downcast_mut())
+        self.get_as_mut(handle)
     }
 }
 
@@ -158,18 +174,17 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
     }
 
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>) {
-        assert_ne!(handle1, handle2, "Both body handles must not be equal.");
-        let b1 = self.get_mut(handle1).map(|b| b as *mut dyn Body<N>);
-        let b2 = self.get_mut(handle2).map(|b| b as *mut dyn Body<N>);
-        unsafe {
-            use std::mem;
-            (
-                b1.map(|b| mem::transmute(b)),
-                b2.map(|b| mem::transmute(b))
-            )
-        }
+        let (a, b) = self.bodies.get2_mut(handle1, handle2);
+        (a.map(|a| &mut **a), b.map(|b| &mut **b))
     }
 
+    fn get_as<B: Body<N>>(&self, handle: Self::Handle) -> Option<&B> {
+        self.get_as(handle)
+    }
+
+    fn get_as_mut<B: Body<N>>(&mut self, handle: Self::Handle) -> Option<&mut B> {
+        self.get_as_mut(handle)
+    }
 
     fn contains(&self, handle: Self::Handle) -> bool {
         self.contains(handle)

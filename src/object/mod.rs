@@ -22,6 +22,7 @@ pub use self::pbf_fluid::PBFFluid;
 pub use self::iisph_fluid::IISPHFluid;
 pub use self::lf_fluid::LFFluid;
 pub use self::dfsph_fluid::DFSPHFluid;
+pub use self::fluid_body::FluidBody;
 pub use self::sph_kernel::{SPHKernel, SpikyKernel, CubicSplineKernel, ViscosityKernel, Poly6Kernel, LinearKernel};
 pub(crate) use self::fem_helper::FiniteElementIndices;
 
@@ -43,5 +44,6 @@ mod pbf_fluid;
 mod iisph_fluid;
 mod lf_fluid;
 mod dfsph_fluid;
+mod fluid_body;
 mod sph_kernel;
 pub(crate) mod fem_helper;

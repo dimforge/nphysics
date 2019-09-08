@@ -16,7 +16,7 @@ use crate::object::{
     DefaultColliderHandle, BodySet, BodyHandle, ColliderSet,
 };
 use crate::material::MaterialsCoefficientsTable;
-use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
+use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel, MechanicalSolver};
 use crate::world::GeometricalWorld;
 
 /// The default mechanical world, that can be used with a `DefaultBodySet` and `DefaultColliderHandle`.
@@ -217,6 +217,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
              *
              * Sync colliders and perform CD if the user moved
              * manually some bodies.
+             *
              */
             gworld.clear_events();
             gworld.sync_colliders(bodies, colliders);
@@ -244,78 +245,30 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                 &mut active_bodies,
             );
 
-            let mut active_joints = Vec::new();
-            constraints.foreach(|h, j| {
-                if j.is_active(bodies) {
-                    active_joints.push(h)
-                }
-            });
             self.counters.island_construction_completed();
 
-            /*
-             *
-             * Collect contact manifolds.
-             *
-             */
-            let mut contact_manifolds = Vec::new(); // FIXME: avoid allocations.
-            for (h1, c1, h2, c2, _, manifold) in gworld.contact_pairs(colliders, false) {
-                let b1 = try_continue!(bodies.get(c1.body()));
-                let b2 = try_continue!(bodies.get(c2.body()));
-
-                if manifold.len() > 0
-                    && b1.status() != BodyStatus::Disabled && b2.status() != BodyStatus::Disabled
-                    && ((b1.status_dependent_ndofs() != 0 && b1.is_active())
-                    || (b2.status_dependent_ndofs() != 0 && b2.is_active()))
-                {
-                    contact_manifolds.push(ColliderContactManifold::new(h1, c1, h2, c2, manifold));
-                }
-            }
-
-            /*
-             *
-             * Solve the system and integrate.
-             *
-             */
-            bodies.foreach_mut(|_, b| {
-                // FIXME This is currently needed by the solver because otherwise
-                // some kinematic bodies may end up with a companion_id (used as
-                // an assembly_id) that it out of bounds of the velocity vector.
-                // Note sure what the best place for this is though.
-                b.set_companion_id(0);
-            });
-
-            self.counters.solver_started();
-            self.solver.step(
+            let mut pbf: crate::solver::PBFSolver<N> = crate::solver::PBFSolver::new();
+            pbf.solve(
+                gworld,
                 &mut self.counters,
                 bodies,
                 colliders,
                 constraints,
-                &contact_manifolds[..],
-                &active_bodies[..],
-                &active_joints[..],
-                parameters,
+                &self.integration_parameters,
                 &self.material_coefficients,
+                &active_bodies
             );
 
-            bodies.foreach_mut(|_, b| {
-                if b.status() == BodyStatus::Kinematic {
-                    b.integrate(parameters)
-                }
-            });
-            self.counters.solver_completed();
-
-            /*
-             *
-             * Update body kinematics and dynamics
-             * after the contact resolution step.
-             *
-             */
-            // FIXME: objects involved in a non-linear position stabilization already
-            // updated their kinematics.
-            bodies.foreach_mut(|_, b| {
-                b.update_kinematics();
-                b.update_dynamics(parameters.dt());
-            });
+//            self.solver.solve(
+//                gworld,
+//                &mut self.counters,
+//                bodies,
+//                colliders,
+//                constraints,
+//                &self.integration_parameters,
+//                &self.material_coefficients,
+//                &active_bodies
+//            );
         }
 
         /*

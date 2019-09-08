@@ -163,13 +163,7 @@ impl<N: RealField, Handle: BodyHandle> ColliderSet<N, Handle> for DefaultCollide
     }
 
     fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Collider<N, Handle>>, Option<&mut Collider<N, Handle>>) {
-        assert_ne!(handle1, handle2, "Both body handles must not be equal.");
-        let b1 = self.get_mut(handle1).map(|b| b as *mut Collider<N, Handle>);
-        let b2 = self.get_mut(handle2).map(|b| b as *mut Collider<N, Handle>);
-        unsafe {
-            use std::mem;
-            (b1.map(|b| mem::transmute(b)), b2.map(|b| mem::transmute(b)))
-        }
+        self.colliders.get2_mut(handle1, handle2)
     }
 
     fn contains(&self, handle: Self::Handle) -> bool {

@@ -18,6 +18,8 @@ pub(crate) use self::nonlinear_sor_prox::NonlinearSORProx;
 pub use self::signorini_coulomb_pyramid_model::SignoriniCoulombPyramidModel;
 pub use self::signorini_model::SignoriniModel;
 pub(crate) use self::sor_prox::SORProx;
+pub use self::mechanical_solver::MechanicalSolver;
+pub use self::pbf_solver::PBFSolver;
 
 mod constraint;
 mod constraint_set;
@@ -31,3 +33,5 @@ mod nonlinear_sor_prox;
 mod signorini_coulomb_pyramid_model;
 mod signorini_model;
 mod sor_prox;
+mod mechanical_solver;
+mod pbf_solver;
