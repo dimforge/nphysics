@@ -12,15 +12,15 @@ use crate::force_generator::{ForceGenerator, ForceGeneratorSet};
 use crate::joint::{JointConstraint, JointConstraintSet};
 use crate::math::{Vector};
 use crate::object::{
-    Body, DefaultBodySet, BodyStatus, BodyPartMotion, Collider, ColliderHandle,
-    DefaultColliderHandle, BodySet, BodyHandle, ColliderSet,
+    Body, BodyStatus, BodyPartMotion, Collider, ColliderHandle,
+    DefaultColliderHandle, BodySet, BodyHandle, ColliderSet, DefaultBodyHandle
 };
 use crate::material::MaterialsCoefficientsTable;
 use crate::solver::{IntegrationParameters, MoreauJeanSolver, SignoriniCoulombPyramidModel};
 use crate::world::GeometricalWorld;
 
-/// The default mechanical world, that can be used with a `DefaultBodySet` and `DefaultColliderHandle`.
-pub type DefaultMechanicalWorld<N> = MechanicalWorld<N, DefaultBodySet<N>, DefaultColliderHandle>;
+/// The default mechanical world, that can be used with a `DefaultBodyHandle` and `DefaultColliderHandle`.
+pub type DefaultMechanicalWorld<N> = MechanicalWorld<N, DefaultBodyHandle, DefaultColliderHandle>;
 
 enum PredictedImpacts<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     Impacts(Vec<TOIEntry<N, Handle, CollHandle>>, HashMap<Handle, N>),
@@ -50,28 +50,28 @@ struct SubstepState<N: RealField, Handle: BodyHandle> {
 }
 
 /// The physics world.
-pub struct MechanicalWorld<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> {
+pub struct MechanicalWorld<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> {
     /// Performance counters used for debugging and benchmarking nphysics.
     pub counters: Counters,
     /// The constraints solver.
-    pub solver: MoreauJeanSolver<N, Bodies, CollHandle>,
+    pub solver: MoreauJeanSolver<N, Handle, CollHandle, SignoriniCoulombPyramidModel<N>>,
     /// Parameters of the whole simulation.
     pub integration_parameters: IntegrationParameters<N>,
     /// Coefficient table used for resolving material properties to apply at one contact.
     pub material_coefficients: MaterialsCoefficientsTable<N>,
     /// The acting on this mechanical world.
     pub gravity: Vector<N>,
-    activation_manager: ActivationManager<N, Bodies::Handle>,
-    substep: SubstepState<N, Bodies::Handle>,
+    activation_manager: ActivationManager<N, Handle>,
+    substep: SubstepState<N, Handle>,
 }
 
-impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWorld<N, Bodies, CollHandle> {
+impl<N: RealField, Handle: BodyHandle, CollHandle: ColliderHandle> MechanicalWorld<N, Handle, CollHandle> {
     /// Creates a new physics world with default parameters.
     ///
     /// The ground body is automatically created and added to the world without any colliders attached.
     pub fn new(gravity: Vector<N>) -> Self {
         let counters = Counters::new(false);
-        let contact_model = Box::new(SignoriniCoulombPyramidModel::new());
+        let contact_model = SignoriniCoulombPyramidModel::new();
         let solver = MoreauJeanSolver::new(contact_model);
         let activation_manager = ActivationManager::new(na::convert(0.01f64));
         let integration_parameters = IntegrationParameters::default();
@@ -107,12 +107,13 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
     /// Maintain the internal structures of the mechanical world by handling insersion and removal
     /// events from every sets this mechanical world interacts with.
-    pub fn maintain<Colliders, Constraints>(&mut self,
-                                            gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
+    pub fn maintain<Bodies, Colliders, Constraints>(&mut self,
+                                            gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
                                             bodies: &mut Bodies,
                                             colliders: &mut Colliders,
                                             constraints: &mut Constraints)
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        where Bodies: BodySet<N, Handle=Handle>,
+              Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
               Constraints: JointConstraintSet<N, Bodies> {
         // NOTE: the order of handling events matters.
         // In particular, handling body removal events must be done first because it
@@ -172,13 +173,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
     }
 
     /// Execute one time step of the physics simulation.
-    pub fn step<Colliders, Constraints, Forces>(&mut self,
-                                                gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
+    pub fn step<Bodies, Colliders, Constraints, Forces>(&mut self,
+                                                gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
                                                 bodies: &mut Bodies,
                                                 colliders: &mut Colliders,
                                                 constraints: &mut Constraints,
                                                 forces: &mut Forces)
-    where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+    where Bodies: BodySet<N, Handle=Handle>,
+          Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
           Constraints: JointConstraintSet<N, Bodies>,
           Forces: ForceGeneratorSet<N, Bodies> {
         if !self.substep.active {
@@ -372,13 +374,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
     // Outputs a sorted list of TOI event (in ascending order) for the given time interval,
     // assuming body motions clamped at their first TOI.
-    fn predict_next_impacts<Colliders>(&self,
-                                       gworld: &GeometricalWorld<N, Bodies::Handle, CollHandle>,
+    fn predict_next_impacts<Bodies, Colliders>(&self,
+                                       gworld: &GeometricalWorld<N, Handle, CollHandle>,
                                        bodies: &Bodies,
                                        colliders: &Colliders,
                                        end_time: N)
-                                       -> PredictedImpacts<N, Bodies::Handle, CollHandle>
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle> {
+                                       -> PredictedImpacts<N, Handle, CollHandle>
+        where Bodies: BodySet<N, Handle=Handle>,
+              Colliders: ColliderSet<N, Handle, Handle = CollHandle> {
 
         let mut impacts = Vec::new();
         let mut frozen = HashMap::<_, N>::new();
@@ -508,13 +511,14 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
 
 
 
-    fn solve_ccd<Colliders, Constraints, Forces>(&mut self,
-                                                gworld: &mut GeometricalWorld<N, Bodies::Handle, CollHandle>,
+    fn solve_ccd<Bodies, Colliders, Constraints, Forces>(&mut self,
+                                                gworld: &mut GeometricalWorld<N, Handle, CollHandle>,
                                                 bodies: &mut Bodies,
                                                 colliders: &mut Colliders,
                                                 constraints: &mut Constraints,
                                                 _forces: &mut Forces)
-        where Colliders: ColliderSet<N, Bodies::Handle, Handle = CollHandle>,
+        where Bodies: BodySet<N, Handle=Handle>,
+              Colliders: ColliderSet<N, Handle, Handle = CollHandle>,
               Constraints: JointConstraintSet<N, Bodies>,
               Forces: ForceGeneratorSet<N, Bodies> {
         let dt0 = self.integration_parameters.dt();
