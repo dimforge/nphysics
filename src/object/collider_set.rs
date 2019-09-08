@@ -26,10 +26,7 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
     fn get(&self, handle: Self::Handle) -> Option<&Collider<N, Handle>>;
     /// Gets a mutable reference to the collider identified by `handle`.
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Collider<N, Handle>>;
-    /// Gets a mutable reference to the two colliders identified by `handle1` and `handle2`.
-    ///
-    /// Panics if both handles are equal.
-    fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Collider<N, Handle>>, Option<&mut Collider<N, Handle>>);
+
     /// Gets a reference to the two colliders identified by `handle1` and `handle2`.
     ///
     /// Both handles are allowed to be equal.
@@ -64,7 +61,7 @@ pub trait ColliderSet<N: RealField, Handle: BodyHandle>: CollisionObjectSet<N, C
     fn pop_removal_event(&mut self) -> Option<(Self::Handle, ColliderRemovalData<N, Handle>)>;
     /// Removes a collider from this set.
     ///
-    /// A collider can be removed automatically by nphysics whene the collider it was attached too has been removed.
+    /// A collider can be removed automatically by nphysics when the collider it was attached too has been removed.
     fn remove(&mut self, to_remove: Self::Handle) -> Option<&mut ColliderRemovalData<N, Handle>>;
 }
 
@@ -160,16 +157,6 @@ impl<N: RealField, Handle: BodyHandle> ColliderSet<N, Handle> for DefaultCollide
 
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Collider<N, Handle>> {
         self.get_mut(handle)
-    }
-
-    fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Collider<N, Handle>>, Option<&mut Collider<N, Handle>>) {
-        assert_ne!(handle1, handle2, "Both body handles must not be equal.");
-        let b1 = self.get_mut(handle1).map(|b| b as *mut Collider<N, Handle>);
-        let b2 = self.get_mut(handle2).map(|b| b as *mut Collider<N, Handle>);
-        unsafe {
-            use std::mem;
-            (b1.map(|b| mem::transmute(b)), b2.map(|b| mem::transmute(b)))
-        }
     }
 
     fn contains(&self, handle: Self::Handle) -> bool {

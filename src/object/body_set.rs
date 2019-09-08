@@ -28,10 +28,7 @@ pub trait BodySet<N: RealField> {
     fn get(&self, handle: Self::Handle) -> Option<&Self::Body>;
     /// Gets a mutable reference to the body identified by `handle`.
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body>;
-    /// Gets a mutable reference to the two bodies identified by `handle1` and `handle2`.
-    ///
-    /// Panics if both handles are equal.
-    fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>);
+
     /// Gets a reference to the two bodies identified by `handle1` and `handle2`.
     ///
     /// Both handles are allowed to be equal.
@@ -156,20 +153,6 @@ impl<N: RealField> BodySet<N> for DefaultBodySet<N> {
     fn get_mut(&mut self, handle: Self::Handle) -> Option<&mut Self::Body> {
         self.get_mut(handle)
     }
-
-    fn get_pair_mut(&mut self, handle1: Self::Handle, handle2: Self::Handle) -> (Option<&mut Self::Body>, Option<&mut Self::Body>) {
-        assert_ne!(handle1, handle2, "Both body handles must not be equal.");
-        let b1 = self.get_mut(handle1).map(|b| b as *mut dyn Body<N>);
-        let b2 = self.get_mut(handle2).map(|b| b as *mut dyn Body<N>);
-        unsafe {
-            use std::mem;
-            (
-                b1.map(|b| mem::transmute(b)),
-                b2.map(|b| mem::transmute(b))
-            )
-        }
-    }
-
 
     fn contains(&self, handle: Self::Handle) -> bool {
         self.contains(handle)
