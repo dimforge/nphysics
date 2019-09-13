@@ -662,7 +662,7 @@ impl<N: RealField, Bodies: BodySet<N>, CollHandle: ColliderHandle> MechanicalWor
                                         let needs_prep = b2.companion_id() == 0 && b2.is_dynamic();
 
                                         if needs_prep {
-                                            prepare_body(handle1, b2, colliders.get_mut(ch2).unwrap())
+                                            prepare_body(handle2, b2, colliders.get_mut(ch2).unwrap())
                                         }
                                         needs_prep
                                     };
