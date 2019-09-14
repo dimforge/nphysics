@@ -11,6 +11,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: check formatting
+          command: cargo fmt -- --check
+      - run:
           name: build nphysics2d
           command: cargo build --verbose -p nphysics2d;
       - run:
